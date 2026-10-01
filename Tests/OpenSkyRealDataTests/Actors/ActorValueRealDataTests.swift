@@ -1,19 +1,8 @@
-// Env-gated actor-value derivation sweep over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP).
-//
-// The strong check is the census: for every auto-calc NPC_ in Skyrim.esm, the
-// derivation is compared against the three values the Creation Kit itself baked
-// into that record's DNAM. DNAM is documented as the editor's own calculated
-// health/magicka/stamina "if auto-calc stats is on"
-// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_>), so it is an
-// independent statement of the answer rather than a restatement of the formula.
-// Nothing here feeds DNAM into the derivation; it is only ever compared to.
-//
-// The named-NPC test pins numbers observed from that same probed data — the
-// output of `openskycli actor-values --npc <editor-id>` — never from memory.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable (CI has
-// no game data). Run with `make realtest`.
+// Actor-value derivation checked on the real install. For every auto-calc NPC_,
+// the derived health, magicka, and stamina must equal the values the Creation
+// Kit baked into DNAM (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/NPC_>).
+// DNAM is only compared against, never used. Named-NPC numbers come from
+// `openskycli actor-values --npc <editor-id>`.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -44,16 +33,6 @@ private struct NamedActor {
 }
 
 struct ActorValueRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private func resolver(root: GameDataRoot) throws -> ActorValueResolver {
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         return ActorValueResolver.build(
@@ -69,9 +48,9 @@ struct ActorValueRealDataTests {
     /// The two game settings the per-level spread reads, as `Skyrim.esm`
     /// actually authors them. Observed 2026-08-07 through
     /// `openskycli actor-values --race NordRace`, which prints both.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theLevelSettingsMatchTheDocumentedDefaults() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let settings = ActorValueLevelSettings.resolve(
             store: GameSettingLoader.load(root: root, baseFile: file)
@@ -82,9 +61,9 @@ struct ActorValueRealDataTests {
     /// Every playable race authors the same level-1 attributes, which is why
     /// `ActorValueBaselineResolver` can have one documented player fallback.
     /// Observed through `openskycli actor-values --race <editor-id>`.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func playableRacesShareTheirStartingAttributes() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         let playable = resolver.races.values
             .filter { $0.flags.contains(.playable) && $0.stats.startingHealth > 0 }
@@ -106,9 +85,9 @@ struct ActorValueRealDataTests {
     /// Named vanilla NPCs, with the numbers observed from probed data. The
     /// player's 100/100/100 is `NordRace`'s 50 plus the `Player` record's +50
     /// ACBS offsets, not a constant anyone typed.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func derivesNamedVanillaActors() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         let expected = [
             NamedActor(0x0000_0007, "Player", 100, 100, 100, level: 1),
@@ -131,30 +110,16 @@ struct ActorValueRealDataTests {
         }
     }
 
-    /// The one vanilla template whose baked DNAM contradicts its own ACBS.
-    ///
-    /// `EncBandit04TemplateMelee` (`0001E60D`) resolves its stats from itself:
-    /// `NordRace`'s 50 starting health plus its own +125 health offset is 175,
-    /// and its DNAM says 170. Its sibling `EncBandit03TemplateMelee` matches the
-    /// same formula exactly, so the formula is not what differs — the baked
-    /// value is stale. The Creation Kit documents that it can be: "one must
-    /// refresh the Stats Tab (click on another tab then back to the Stats Tab)
-    /// to update Calculated Health, Magicka, and Stamina if Attribute Offsets
-    /// or underlying Race or Class Base Attributes change."
-    /// (<https://ck.uesp.net/wiki/Stats_Tab>) Every record that inherits its
-    /// stats inherits the stale number with them.
+    /// `EncBandit04TemplateMelee` (`0001E60D`): race health 50 plus its +125
+    /// offset is 175, but DNAM says 170. The Creation Kit only refreshes DNAM
+    /// when the Stats tab is reopened (<https://ck.uesp.net/wiki/Stats_Tab>).
     private static let staleTemplate = FormID(0x0001_E60D)
 
-    /// The census: every auto-calc NPC_ that carries a baked DNAM triple must
-    /// derive to exactly that triple, or trace its stats to the one vanilla
-    /// template whose baked value is stale.
-    ///
-    /// Actors whose template chain will not walk are counted and reported
-    /// rather than failing the sweep — a dangling TPLT is the plugin's problem,
-    /// and the derivation has nothing to say about one.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// Every auto-calc NPC_ with a baked DNAM derives to it, or inherits the one
+    /// stale template. Actors whose template chain does not resolve are counted.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func derivationMatchesEveryBakedDNAMTriple() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         var compared = 0
         var unresolved = 0
@@ -205,14 +170,14 @@ struct ActorValueRealDataTests {
         )
     }
 
-    // MARK: - Non-primary actor values (issue #468, roadmap item 19.5)
+    // MARK: - Non-primary actor values
 
     /// `iAVDSkillsLevelUp`, which UESP states as "the fixed 8 skill points per
     /// level" and `Skyrim.esm` authors at exactly that. Observed 2026-08-16
     /// through `openskycli gmst list --prefix iavd`.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theSkillPointSettingMatchesTheDocumentedDefault() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let settings = ActorValueLevelSettings.resolve(
             store: GameSettingLoader.load(root: root, baseFile: file)
@@ -220,16 +185,12 @@ struct ActorValueRealDataTests {
         #expect(settings.skillPointsPerLevel == 8)
     }
 
-    /// The RACE DATA skill bonuses, checked against a race whose bonuses are
-    /// independently documented: "Nord ... Two-Handed +10; One-Handed, Block,
-    /// Light Armor, Smithing, Speech +5"
-    /// (<https://en.uesp.net/wiki/Skyrim:Nord>). Getting all six out of the
-    /// byte pairs at DATA 0x00 is what says the decode is aligned.
-    ///
-    /// Observed 2026-08-16 through `openskycli actor-values --race NordRace`.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// Nord race skill bonuses, as documented: "Two-Handed +10; One-Handed,
+    /// Block, Light Armor, Smithing, Speech +5" (<https://en.uesp.net/wiki/Skyrim:Nord>).
+    /// All six matching shows the DATA 0x00 decode is aligned.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theNordSkillBonusesMatchTheDocumentedOnes() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         let nord = try #require(resolver.races.values.first { $0.editorID == "NordRace" })
         let bonuses = Dictionary(
@@ -252,9 +213,9 @@ struct ActorValueRealDataTests {
     /// Every playable race authors the same carry weight and mass, and a full
     /// set of skill bonuses — which is what lets the derived table be built
     /// from the race alone for a player who has not picked a class.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyPlayableRaceAuthorsTheSameNonPrimaryBaselines() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         let playable = resolver.races.values
             .filter { $0.flags.contains(.playable) && $0.stats.startingHealth > 0 }
@@ -273,9 +234,9 @@ struct ActorValueRealDataTests {
     /// observed through `openskycli actor-values --npc EncBandit03TemplateMelee`
     /// (2026-08-16) rather than recalled: a level-9 Nord bandit whose class
     /// weights One-Handed, Block, Light Armor and Heavy Armor.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func derivesTheNonPrimaryTableForANamedActor() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let resolver = try resolver(root: root)
         let resolved = try resolver.resolve(base: FormID(0x0001_BCDA))
         let values = resolved.generalBaseValues
@@ -295,19 +256,12 @@ struct ActorValueRealDataTests {
         #expect(values[ActorValueIndex.resistFire] == nil)
     }
 
-    /// The census behind item 19.5's acceptance gate: every `GetActorValue`
-    /// (14) and `GetActorValuePercent` (640) condition `Skyrim.esm` authors,
-    /// bucketed by whether OpenSky can answer its actor-value parameter.
-    ///
-    /// Before 19.5 only the three primaries answered and every other parameter
-    /// was a tallied `.unresolvedParameter`. Observed 2026-08-16: 607 such
-    /// conditions, 68 of them on a primary and 539 on one of the other actor
-    /// values — so 539 tallied misses became 539 answers. This pins that the
-    /// remaining miss bucket is empty, so a load order that introduces an
-    /// out-of-table index says so rather than quietly regressing.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// Every `GetActorValue` (14) and `GetActorValuePercent` (640) condition in
+    /// `Skyrim.esm`, by whether OpenSky answers its actor value. The miss bucket
+    /// must stay empty, so a new out-of-table index fails loudly.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyActorValueConditionInSkyrimESMResolvesItsParameter() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         var total = 0
         var primaries = 0

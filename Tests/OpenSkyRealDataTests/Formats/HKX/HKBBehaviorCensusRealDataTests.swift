@@ -1,15 +1,7 @@
-// Env-gated behavior census over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP). Sweeps every `.hkx`
-// under the character actor folder, third-person and `_1stperson`, asserts the
-// container parses with zero throws, and reports role, class signature,
-// variable and event inventories, and referenced file names. The report is
-// counts, names, and paths only and goes to gitignored `logs/`; nothing
-// extracted from the install enters the repository.
-//
-// This census fixes the class list item 14.2 (#329) must decode and the
-// variable and event names item 14.5 binds to. Skips automatically when
-// OPENSKY_DATA_ROOT is unset or unresolvable. Run with
-// `make realtest T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`.
+// Behavior census on the real install: every character `.hkx`, third person
+// and `_1stperson`, parses, and the report lists roles, class signatures,
+// variables, events, and referenced files. This census sets the classes the
+// evaluator must decode. The report in `logs/` holds counts, names, and paths.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation
@@ -24,23 +16,13 @@ private struct CensusRow {
 }
 
 struct HKBBehaviorCensusRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Both player behavior sets live under this prefix; `_1stperson` is a
     /// subfolder of it, so one prefix covers third and first person.
     private static let characterPrefix = "meshes\\actors\\character\\"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func censusesCharacterBehaviorFiles() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries()
             .map(\.path)

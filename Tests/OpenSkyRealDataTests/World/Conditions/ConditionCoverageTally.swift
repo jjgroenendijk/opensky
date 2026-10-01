@@ -1,19 +1,7 @@
-// Per-function coverage tally for the real-data CTDA sweep (issue #251),
-// split out of `ConditionRealDataTests` to stay inside the file-length cap.
-//
-// This answers two questions the sweep exists to answer. First, "how much of
-// the condition traffic in a real plugin can OpenSky actually evaluate today?",
-// which is the ratio of conditions whose raw function index is in
-// `ConditionFunctionRegistry.standard` to conditions overall, plus a ranked
-// list of the misses so the next function to implement is the one that buys the
-// most. Second, "what shape does a given function index have on disk?", which
-// is how a disputed index is settled: a function that takes no parameters
-// leaves both parameter words zero in every authored condition, and a function
-// returning a percentage is compared against values spread over 0-100.
-//
-// Everything here is aggregate. No count identifies an individual record, so
-// the report is a statistic about the user's install rather than an extract of
-// it (AGENTS.md Legal & IP), and it is written only to gitignored `logs/`.
+// Per-function coverage tally for the real-data CTDA sweep. It measures how
+// much condition traffic `ConditionFunctionRegistry.standard` can evaluate, and
+// the on-disk shape of each function index. Counts are aggregate only, so the
+// report written to gitignored `logs/` extracts no record.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -96,6 +84,25 @@ struct ConditionFunctionShape {
 struct ConditionCoverage {
     private(set) var shapes: [UInt16: ConditionFunctionShape] = [:]
     private(set) var total = 0
+
+    /// Decodes every CTDA in every plugin; a field that fails to decode is skipped.
+    static func sweep(plugins: [(name: String, file: ESMFile)]) -> Self {
+        var coverage = Self()
+        for plugin in plugins {
+            ESMWalk.forEachRecord(in: plugin.file) { record in
+                guard let fields = try? record.fields() else { return true }
+                var list = ConditionList()
+                for field in fields {
+                    _ = try? list.decode(field: field)
+                }
+                for condition in list.conditions {
+                    coverage.record(condition)
+                }
+                return true
+            }
+        }
+        return coverage
+    }
 
     mutating func record(_ condition: Condition) {
         total += 1

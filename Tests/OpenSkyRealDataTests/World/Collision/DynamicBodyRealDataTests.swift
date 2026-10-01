@@ -16,19 +16,6 @@ import simd
 import Testing
 
 struct DynamicBodyRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static let device = MTLCreateSystemDefaultDevice()
-
-    private static var canRun: Bool {
-        dataRoot != nil && (device?.supportsFamily(.metal4) ?? false)
-    }
-
     /// Wall-clock budget for one 1/120 s physics step, in milliseconds. An
     /// optimized build (`make realtest-perf`) is held to 2 ms; measured 0.37.
     /// `-Onone` runs about 24x slower, so a plain `make realtest` gets 20 ms.
@@ -53,18 +40,9 @@ struct DynamicBodyRealDataTests {
     /// How many settled bodies the shove phase walks into, in key order.
     private static let shovedBodyCount = 8
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func settlesAndPushesVanillaClutter() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
-        let fileSystem = VirtualFileSystem(root: root)
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let builder = try CellSceneBuilder(
-            file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
-            meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
-            textures: textures,
-            fileSystem: fileSystem
-        )
+        let builder = try RealDataInstall.load().sceneBuilder(readsLooseFiles: true)
         builder.simulatesDynamicBodies = true
         let scene = try builder.buildInteriorScene(cellFormID: WalkPathRoute.farmInterior)
 
@@ -122,18 +100,9 @@ extension DynamicBodyRealDataTests {
     /// Exterior acceptance: take a vanilla dynamic placement and its tagged draw,
     /// push it across a real adjacent-cell boundary, then remove the placing
     /// cell while the occupied cell remains.
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func rebinsVanillaExteriorClutterAcrossResidentCells() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
-        let fileSystem = VirtualFileSystem(root: root)
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let builder = try CellSceneBuilder(
-            file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
-            meshes: MeshLibrary(fileSystem: fileSystem, device: device, textures: textures),
-            textures: textures,
-            fileSystem: fileSystem
-        )
+        let builder = try RealDataInstall.load().sceneBuilder(readsLooseFiles: true)
         builder.simulatesDynamicBodies = true
         try Self.runExteriorProbe(builder: builder)
     }

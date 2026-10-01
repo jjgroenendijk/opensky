@@ -24,30 +24,13 @@ struct M13AcceptanceRenderTests {
     /// tuned value.
     private static let minimumChangedPixels = 200
 
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun)) @MainActor
+    @Test(.enabled(if: RealDataEnvironment.canRender)) @MainActor
     func advancingAStageDrawsANewJournalParagraph() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let renderer = try Self.makeRenderer(device: device)
-        let runtime = try Self.openJournal(renderer: renderer, fileSystem: fileSystem)
+        let runtime = try JournalMovieFixture.open(renderer: renderer, fileSystem: fileSystem)
 
         let walked = try M13AcceptanceRenderWalk(root: root, fileSystem: fileSystem)
         let early = try Self.publish(walked.earlyPage, renderer: renderer)
@@ -105,31 +88,6 @@ struct M13AcceptanceRenderTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         return try Renderer(view: view)
-    }
-
-    /// Brings the journal up on its Quests page, the same way the app does.
-    @MainActor
-    private static func openJournal(
-        renderer: Renderer,
-        fileSystem: VirtualFileSystem
-    ) throws -> SWFMovieRuntime {
-        let movie = try SWFMovieLoader(fileSystem: fileSystem).load(
-            path: QuestJournalMovieBridge.moviePath
-        )
-        try renderer.setSWFMovie(movie)
-        renderer.swfEnabled = true
-        renderer.swfScale = 1
-        let runtime = try #require(
-            try renderer.startSWFRuntime(prepare: SystemMenuMovieBridge.prepare(runtime:))
-        )
-        try renderer.updateSWFRuntime { runtime in
-            SystemMenuMovieBridge.activate(runtime: runtime) {}
-            QuestJournalMovieBridge.activate(runtime: runtime)
-        }
-        for _ in 0 ..< GameViewController.journalActivationTicks {
-            try renderer.advanceSWFRuntime()
-        }
-        return runtime
     }
 
     @MainActor

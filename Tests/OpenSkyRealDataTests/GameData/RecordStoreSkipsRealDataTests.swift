@@ -7,16 +7,9 @@ import Foundation
 import Testing
 
 struct RecordStoreSkipsRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func loadOrderStoresReportTheirSkippedRecords() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,
@@ -57,9 +50,9 @@ struct RecordStoreSkipsRealDataTests {
         }
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func skyrimMasterStoresReportTheirSkippedRecords() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let skyrim = try #require(
             ActivePluginFiles.load(root: root).first {
                 $0.name.caseInsensitiveCompare("Skyrim.esm") == .orderedSame

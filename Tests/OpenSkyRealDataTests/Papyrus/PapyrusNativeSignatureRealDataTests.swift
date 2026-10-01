@@ -12,13 +12,6 @@ import Testing
 
 @MainActor
 struct PapyrusNativeSignatureRealDataTests {
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// One expectation: the script, the function, how many arguments the
     /// engine's registration reads, and whether the shipped declaration carries
     /// the `native` flag.
@@ -63,9 +56,9 @@ struct PapyrusNativeSignatureRealDataTests {
         Expected("Faction", "ModReaction", 2)
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyInstalledFactionNativeMatchesTheShippedDeclaration() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let loader = PexScriptLoader(fileSystem: VirtualFileSystem(root: root))
         var declarations: [String: [String: PexFunction]] = [:]
         for script in Set((Self.installed + Self.unregistered).map(\.script)) {

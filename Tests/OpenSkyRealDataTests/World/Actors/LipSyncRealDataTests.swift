@@ -9,16 +9,9 @@ import Foundation
 import Testing
 
 struct LipSyncRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func parsesEveryEmbeddedLipTrack() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries().map(\.path).filter { $0.hasSuffix(".fuz") }
         var lipBlobCount = 0
@@ -68,9 +61,7 @@ struct LipSyncRealDataTests {
         }
 
         #expect(lipBlobCount == 74070, "embedded lip count drifted to \(lipBlobCount)")
-        // 70,926 decoded on 2026-08-12, the first sweep after issue #449 taught
-        // the decoder the alternate header family, the tick-derived slot stride
-        // and the ambiguous marker framing. It was 61,484 before.
+        // 70,926 decoded, measured on 2026-08-12.
         #expect(lipCount > 70000, "only \(lipCount) tracks decoded")
         let failureCount = failureTallies.values.reduce(0, +)
         #expect(lipCount + failureCount == lipBlobCount)

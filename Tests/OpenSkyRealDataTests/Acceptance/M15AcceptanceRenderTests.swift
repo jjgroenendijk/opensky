@@ -44,47 +44,18 @@ struct M15AcceptanceRenderTests {
 
     private static let step: Float = 1.0 / 120
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func drawsThePlayerFollowingItsCombatState() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: FirstRenderCell.gridX,
-            gridY: FirstRenderCell.gridY
-        )
-        let bounds = try #require(scene.bounds, "no world bounds — nothing drew")
-        let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))
-        let feet = LocomotionRealTerrain.startPosition(on: terrain)
-        let renderer = try FirstPersonRenderRealDataTests.renderer(
-            device: device, scene: scene, bounds: bounds
-        )
+        let cell = try PlayerBodyFixture.stage()
+        let assembled = cell.assembled
+        let feet = try cell.terrainStart()
+        let renderer = try cell.renderer()
         try renderer.setPlayerBody(assembled.body)
         try renderer.setPlayerFirstPersonRig(assembled.arms)
         var report: [String] = []
 
-        let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: root))
+        let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: cell.root))
         let stage = M15RenderStage(
             renderer: renderer, feet: feet, settings: settings
         )
@@ -108,7 +79,7 @@ struct M15AcceptanceRenderTests {
         // never been stepped. Byte-identical is the strongest statement
         // available — it says the difference above is the combat state rather
         // than the republish, and that the state is reached deterministically.
-        let second = try PlayerBodyFixture.assemble(device: device, root: root)
+        let second = try PlayerBodyFixture.assemble(device: cell.device, root: cell.root)
         try renderer.setPlayerBody(second.body)
         try renderer.setPlayerFirstPersonRig(second.arms)
         let again = try Self.poses(second, stage: stage)

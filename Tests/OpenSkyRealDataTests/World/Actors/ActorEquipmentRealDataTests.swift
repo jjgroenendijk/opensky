@@ -18,25 +18,6 @@ import simd
 import Testing
 
 struct ActorEquipmentRealDataTests {
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     /// Heimskr, the Whiterun street preacher: the same ACHR the actor render
     /// acceptance uses, so the frames are comparable.
     private static let heimskrACHR = FormID(0x0001_A682)
@@ -47,11 +28,11 @@ struct ActorEquipmentRealDataTests {
     /// `IronSword`, the vanilla one-handed sword.
     private static let ironSword = FormID(0x0001_2EB7)
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func resolvesADressedNPCBeforeAndAfterAnEquip() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let record = try #require(ESMWalk.record(withFormID: Self.heimskrACHR.rawValue, in: file))
         let actor = try PlacedActor(record: record)
@@ -120,11 +101,11 @@ struct ActorEquipmentRealDataTests {
     /// The attachment's skinning palette must name the rig's `Weapon` bone, or
     /// the weapon will never move with the hand at runtime. Checked against the
     /// real vanilla skeleton, because the bone name is observed data.
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func attachmentBindsToTheRealSkeletonsWeaponNode() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
         let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)

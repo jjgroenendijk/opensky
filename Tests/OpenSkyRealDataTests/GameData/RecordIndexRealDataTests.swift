@@ -7,16 +7,9 @@ import Foundation
 import Testing
 
 struct RecordIndexRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func indexesReferenceRecordFamiliesAcrossTheLoadOrder() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let started = DispatchTime.now().uptimeNanoseconds
         let index = RecordIndexLoader.load(root: root)
         let elapsed = Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000

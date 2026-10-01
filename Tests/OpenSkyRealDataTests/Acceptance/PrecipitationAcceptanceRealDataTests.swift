@@ -6,7 +6,6 @@
 
 import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyFormatsESM
@@ -14,26 +13,8 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import Testing
-import UniformTypeIdentifiers
 
 struct PrecipitationAcceptanceRealDataTests {
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     private static let width = 640
     private static let height = 360
     private static let channelNoiseFloor = 8
@@ -55,7 +36,7 @@ struct PrecipitationAcceptanceRealDataTests {
         let returnedClear: [UInt8]
     }
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func rainSnowPauseAndClearProduceVisibleFrames() throws {
         let harness = try makeHarness()
@@ -149,27 +130,21 @@ struct PrecipitationAcceptanceRealDataTests {
 
     @MainActor
     private func makeHarness() throws -> Harness {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let vfs = VirtualFileSystem(root: root)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = try TextureLibrary(fileSystem: vfs, device: device)
-        let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-        let scene = try CellSceneBuilder(file: file, meshes: meshes, textures: textures)
-            .buildScene(
-                worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-                gridX: FirstRenderCell.gridX,
-                gridY: FirstRenderCell.gridY
-            )
+        let install = try RealDataInstall.load()
+        let scene = try install.sceneBuilder().buildFirstRenderCell()
         let bounds = try #require(scene.bounds)
         let weather = try #require(
-            WeatherSystem(file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID)
+            WeatherSystem(
+                file: install.file,
+                worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+            )
         )
         func preset(_ value: WeatherPreset) throws -> FormID {
             try #require(weather.store.weather(for: value)?.formID)
         }
         let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height), device: device
+            frame: CGRect(x: 0, y: 0, width: Self.width, height: Self.height),
+            device: install.device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
@@ -203,7 +178,12 @@ struct PrecipitationAcceptanceRealDataTests {
             ("rain", frames.rain), ("snow", frames.snow),
             ("returned-clear", frames.returnedClear)
         ] {
-            try writePNG(pixels, to: logs.appending(path: "precipitation-\(name).png"))
+            try RenderedPixels.writePNG(
+                pixels,
+                width: Self.width,
+                height: Self.height,
+                to: logs.appending(path: "precipitation-\(name).png")
+            )
         }
         try report.write(
             to: logs.appending(path: "precipitation-acceptance.log"),
@@ -211,26 +191,5 @@ struct PrecipitationAcceptanceRealDataTests {
             encoding: .utf8
         )
         print(report)
-    }
-
-    private func writePNG(_ pixels: [UInt8], to url: URL) throws {
-        var pixels = pixels
-        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
-            data: &pixels,
-            width: Self.width,
-            height: Self.height,
-            bitsPerComponent: 8,
-            bytesPerRow: Self.width * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                | CGBitmapInfo.byteOrder32Little.rawValue
-        ))
-        let image = try #require(context.makeImage())
-        let destination = try #require(CGImageDestinationCreateWithURL(
-            url as CFURL, UTType.png.identifier as CFString, 1, nil
-        ))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
     }
 }

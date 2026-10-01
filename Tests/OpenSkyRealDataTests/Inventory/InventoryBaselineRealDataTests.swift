@@ -1,12 +1,6 @@
-// Env-gated inventory-baseline sweep over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP).
-// Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable.
-// Summaries print and are written to gitignored logs/. Run with
-// `make realtest T=InventoryBaselineRealDataTests/sweepsEveryContainerBaseline()`.
-//
-// A synthetic fixture cannot tell you whether the leveled expansion terminates
-// on the real data, or whether the vanilla gold form is what this engine thinks
-// it is. That is what this sweep is for.
+// Inventory baseline sweep on the real install. Only real data shows that the
+// leveled-list expansion ends and that the vanilla gold form is the one the
+// engine expects. Summaries go to `logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -16,22 +10,15 @@ import Foundation
 import Testing
 
 struct InventoryBaselineRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Resolves a baseline for every CONT and every NPC_ in Skyrim.esm.
     ///
     /// The assertions are invariants rather than counts: expansion terminates,
     /// every produced stack is positive and unique, an actor's equipped set is
     /// a subset of what it carries, and the gold form this engine defaults to
     /// really is a weightless MISC record called `Gold001`.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryContainerBaseline() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let resolver = InventoryBaselineResolver.build(from: file)
 

@@ -77,9 +77,10 @@ skipped there, and the plan needed a long hand-kept list of suites. The shared f
 into both bundles instead. Types that mixed a fixture with `@Test` methods were split into a fixture
 in `Tests/TestSupport/` and tests in an extension under `Tests/OpenSkyTests/`, so no test name changed.
 
-`make realdata-plan`, part of `make lint`, checks that every suite with a `dataRoot: GameDataRoot?`
-and a `@Test` is in `Tests/OpenSkyRealDataTests/`, that the plan selects that target and nothing narrows
-it, and that no plan lists an app-hosted bundle beside `OpenSkyUITests`.
+`make realdata-plan`, part of `make lint`, checks that every suite with a `@Test` that reads
+`RealDataEnvironment` or declares a `dataRoot: GameDataRoot?` is in `Tests/OpenSkyRealDataTests/`,
+that the plan selects that target and nothing narrows it, and that no plan lists an app-hosted
+bundle beside `OpenSkyUITests`.
 
 ## Code coverage
 

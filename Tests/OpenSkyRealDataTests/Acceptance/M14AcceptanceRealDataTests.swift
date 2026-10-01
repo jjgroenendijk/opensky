@@ -1,22 +1,8 @@
-// M14 acceptance against the user's own read-only Skyrim SE install (issue
-// #191): the same route the synthetic gate drives, over the vanilla player
-// behavior graph, with the coverage tally pinned rather than described.
-//
-// This is the honest-coverage half of the gate. `M14AcceptanceTests` proves the
-// route works over a graph OpenSky wrote; what this proves is that the graph
-// the install ships survives the same route — every class it reaches decoded,
-// every census name bound, every clip resolved or counted, and the evaluator's
-// own tally reported with numbers instead of adjectives.
-//
-// The whole thing is device-free on purpose (the M13 env-gated/device-gated
-// split): the motion, state, streaming and tally evidence stands on a runner
-// with no GPU, and only the pixel evidence in `M14AcceptanceRenderTests` needs
-// one.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries class names and counts only — never clip data, never a pose. Run
-// it with `make realtest T='M14AcceptanceRealDataTests/...'`, which supplies
-// the data root and the RSS watchdog.
+// Locomotion acceptance on the real install: the synthetic route over the
+// vanilla player behavior graph. Every class the route reaches decodes, every
+// census name binds, and the evaluator's tally is pinned. It needs no GPU;
+// `M14AcceptanceRenderTests` holds the pixel half. The report in `logs/` holds
+// class names and counts only.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -29,19 +15,12 @@ import simd
 import Testing
 
 struct M14AcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let step = LocomotionDriveHarness.step
     private static let secondOfSteps = LocomotionDriveHarness.secondOfSteps
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func drivesTheWholeRouteThroughTheVanillaPlayerGraph() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let graph = try PlayerBehaviorGraph.load(fileSystem: vfs)
         let firstPerson = try PlayerBehaviorGraph.load(
@@ -77,24 +56,16 @@ struct M14AcceptanceRealDataTests {
 
     // MARK: - The route
 
-    /// Every gait the milestone names, driven through the real controller over
-    /// the launch cell's real terrain, then a jump, then a forced swim.
-    ///
-    /// Swimming is forced rather than waded into: the launch cell is dry land,
-    /// and the point of the leg is that the vanilla graph answers a swim gait
-    /// with swim states and swim clips. That is the `forcedGait` dev control
-    /// doing exactly the job it was added for, and it is called out here so
-    /// nothing reads the leg as a claim about that cell's water.
+    /// Every gait over the launch cell's real terrain, then a jump and a swim.
+    /// The cell is dry land, so the swim is forced with `forcedGait`; the leg
+    /// checks the graph's swim states, not the cell's water.
     private static func driveTheRoute(_ harness: LocomotionDriveHarness) throws {
         let configuration = harness.bridge.configuration
         let walked = harness.run(
             input: CameraInput(moveForward: 1, dt: step), steps: secondOfSteps, label: "walk"
         )
-        // Monotone as well as bounded: every step of the walk leg moves the
-        // capsule forward. It did not always — a vanilla clip's root bone
-        // jitters, and while movement authority was decided by a per-step
-        // speed threshold the jitter crossed it often enough to push a few
-        // steps backwards (issue #370).
+        // Every walk step moves the capsule forward. A vanilla clip's root
+        // bone jitters, and that jitter must not push a step backwards.
         #expect(walked.isMonotoneForward)
         #expect(walked.distance <= configuration.walkSpeed.value + 1)
         #expect(walked.distance > configuration.walkSpeed.value / 2)
@@ -154,12 +125,8 @@ struct M14AcceptanceRealDataTests {
         #expect(status.firstPersonMissingEvents.isEmpty)
         #expect(status.graphUpdates > 0)
         #expect(status.firstPersonGraphUpdates == status.graphUpdates)
-        // Vanilla locomotion clips animate in place, so the route is the
-        // configured gait driving the capsule and nothing else: the install's
-        // clips leave `m_extractedMotion` null, which is the #188 measurement,
-        // and a clip that carries no extracted motion cannot take movement
-        // authority at all. Exactly zero rather than a small bound — the bound
-        // was root-bone jitter crossing a speed threshold (issue #370).
+        // Vanilla locomotion clips animate in place (`m_extractedMotion` is
+        // null), so only the gait moves the capsule, and clip motion is zero.
         #expect(status.configuredSpeedDistance > 0)
         #expect(status.rootMotionDistance == 0)
     }

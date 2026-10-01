@@ -7,16 +7,9 @@ import Foundation
 import Testing
 
 struct ActorValueInformationRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryActorValueRecordAndPinsTheSkills() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(plugins: plugins, recordTypes: ["AVIF"])
         let definitions = index.definitions(of: "AVIF")
@@ -116,16 +109,12 @@ struct ActorValueInformationRealDataTests {
             .count { store.information(actorValueIndex: $0) != nil }
     }
 
-    /// Where `ActorValueIdentity.recordNameAliases` comes from.
-    ///
-    /// Three vanilla skills carry an editor id the actor-value name table does
-    /// not spell — `AVMarksman`, `AVSpeechcraft`, `AVMysticism`. Rather than
-    /// assert the mapping from memory, this reads each record's own FULL string
-    /// out of Skyrim.esm's string table and pins what it says, so the alias
-    /// table has a standing source and breaks loudly if it is ever wrong.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// The source of `ActorValueIdentity.recordNameAliases`: `AVMarksman`,
+    /// `AVSpeechcraft`, and `AVMysticism` use editor IDs the name table does not
+    /// spell, so this pins each record's own FULL string.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func legacyEditorIDsNameTheSkillTheirOwnFullStringSpells() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let strings = LocalizedStrings(
             vfs: VirtualFileSystem(root: root),
             pluginName: "Skyrim.esm"

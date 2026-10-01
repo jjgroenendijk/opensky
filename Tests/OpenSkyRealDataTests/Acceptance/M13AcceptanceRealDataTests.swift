@@ -25,16 +25,9 @@ struct M13AcceptanceRealDataTests {
     private static let pluginName = "Skyrim.esm"
     private static let slot = "m13-acceptance-real"
 
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil)) @MainActor
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
     func walksTheTargetQuestEndToEndAndResumesFromASave() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let session = try M13RealDataSession(root: root, pluginName: Self.pluginName)
         let quest = try #require(session.quests.quest(editorID: Self.targetEditorID))
         let key = try #require(session.quests.key(for: quest.formID))

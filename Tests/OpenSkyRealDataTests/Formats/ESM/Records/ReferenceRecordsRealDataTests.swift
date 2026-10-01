@@ -8,17 +8,9 @@ import Foundation
 import Testing
 
 struct ReferenceRecordsRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty else {
-            return nil
-        }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesStoresAndEnumeratesEveryDefaultObjectRecord() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndexLoader.load(root: root)
         let zoneStore = EncounterZoneStore(index: index)
         let layerStore = CollisionLayerStore(index: index)

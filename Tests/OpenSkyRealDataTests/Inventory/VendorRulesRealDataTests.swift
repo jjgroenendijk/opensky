@@ -1,10 +1,6 @@
-// Env-gated vendor acceptance over the user's own read-only load order (issue
-// #506, roadmap item 21.7): Belethor resolves to his vendor faction, merchant
-// chest, hours and negated buy/sell list through his `SNAM` run; a Thieves
-// Guild fence buys the stolen goods Belethor refuses.
-//
-// Editor IDs, flags and counts only — no game bytes leave the run (AGENTS.md
-// "Legal & IP boundary").
+// Vendor checks on the real load order: Belethor's `SNAM` run resolves to his
+// vendor faction, merchant chest, hours, and negated buy and sell list, and a
+// Thieves Guild fence buys the stolen goods Belethor refuses.
 
 import Foundation
 @testable import OpenSkyFactionsInterface
@@ -15,22 +11,15 @@ import Foundation
 import Testing
 
 struct VendorRulesRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let pawnbrokerEditorID = "Belethor"
     private static let pawnbrokerFactionEditorID = "ServicesWhiterunBelethorsGoods"
     private static let fenceFactionEditorID = "ServicesThievesGuildTonilia"
     /// A keyword the pawnbroker's negated `VendorItemsMisc` list names.
     private static let excludedKeywordEditorID = "VendorItemKey"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func belethorTradesByHisListAndOnlyTheFenceBuysStolenGoods() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
         let factions = FactionStore(index: index)

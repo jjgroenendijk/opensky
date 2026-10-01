@@ -17,13 +17,6 @@ import Foundation
 import Testing
 
 struct ConditionFactionRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The six raw indices the faction step registers, from xEdit's TES5 condition
     /// table: `GetFactionRankDifference`, `GetInFaction`, `GetFactionRank`,
     /// `GetRelationshipRank`, `GetFactionRelation` and `IsHostileToActor`.
@@ -47,10 +40,10 @@ struct ConditionFactionRealDataTests {
         let seam: FactionConditionResolution
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func aVanillaGetInFactionConditionAnswersForTheWhiterunGuard() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try Self.harness(root: root)
         let memberKeys = Set(harness.memberships.map { ReferenceKey(resolved: $0.id) })
         #expect(!memberKeys.isEmpty, "the guard's SNAM run seeded nothing")
@@ -84,10 +77,10 @@ struct ConditionFactionRealDataTests {
 
     /// The rank the same guard holds reads back through `GetFactionRank`, and a
     /// faction it is not in answers the documented -1 rather than a gap.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func getFactionRankAnswersTheSeededRank() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try Self.harness(root: root)
         let membership = try #require(harness.memberships.first)
         let key = ReferenceKey(resolved: membership.id)
@@ -109,10 +102,10 @@ struct ConditionFactionRealDataTests {
 
     // MARK: - The coverage delta
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func recordsTheConditionCoverageDelta() throws {
-        let root = try #require(Self.dataRoot)
-        let coverage = Self.sweep(plugins: ActivePluginFiles.load(root: root))
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let coverage = ConditionCoverage.sweep(plugins: ActivePluginFiles.load(root: root))
         let registry = ConditionFunctionRegistry.standard
         let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
         let after = coverage.implementedCount(in: registry) - later
@@ -279,25 +272,5 @@ struct ConditionFactionRealDataTests {
             throw ESMError.malformed("fixture CTDA did not decode")
         }
         return condition
-    }
-
-    private static func sweep(
-        plugins: [(name: String, file: ESMFile)]
-    ) -> ConditionCoverage {
-        var coverage = ConditionCoverage()
-        for plugin in plugins {
-            ESMWalk.forEachRecord(in: plugin.file) { record in
-                guard let fields = try? record.fields() else { return true }
-                var list = ConditionList()
-                for field in fields {
-                    _ = try? list.decode(field: field)
-                }
-                for condition in list.conditions {
-                    coverage.record(condition)
-                }
-                return true
-            }
-        }
-        return coverage
     }
 }

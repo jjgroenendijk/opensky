@@ -25,47 +25,20 @@ struct DialogueCameraRenderRealDataTests {
     /// equal numbers agreeing by accident.
     private static let probeFOVYDegrees: Float = 95
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func engagingTheDialogueCameraMovesTheFrameAndReleasingRestoresIt() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: WalkPathRoute.farmCell.x,
-            gridY: WalkPathRoute.farmCell.y
+        let cell = try PlayerBodyFixture.stage(
+            gridX: WalkPathRoute.farmCell.x, gridY: WalkPathRoute.farmCell.y
         )
-        let bounds = try #require(scene.bounds, "no cell bounds — nothing drew")
-        let renderer = try FirstPersonRenderRealDataTests.renderer(
-            device: device, scene: scene, bounds: bounds
-        )
+        let renderer = try cell.renderer()
 
         // Stand in the middle of the cell looking east, in first person, at a
         // field of view that is nobody's default.
         let feet = SIMD3<Float>(
-            (bounds.min.x + bounds.max.x) / 2,
-            (bounds.min.y + bounds.max.y) / 2,
-            bounds.min.z
+            (cell.bounds.min.x + cell.bounds.max.x) / 2,
+            (cell.bounds.min.y + cell.bounds.max.y) / 2,
+            cell.bounds.min.z
         )
         FirstPersonRenderRealDataTests.frameFirstPerson(renderer, feet: feet)
         renderer.setFirstPersonFOVY(

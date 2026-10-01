@@ -1,14 +1,7 @@
-// Env-gated guard recognition and jail-link acceptance over the user's own
-// read-only load order (issue #505, roadmap item 21.6).
-//
-// Two questions: does the `GFAC` default object name the faction every vanilla
-// guard belongs to, so that a Whiterun guard resolved through its template
-// chain is recognised as policing `CrimeFactionWhiterun`; and do the crime
-// faction's `STOL` and `JAIL` links resolve to the runtime identities an
-// arrest writes to and moves the player to.
-//
-// Counts, editor IDs and keys only — no game bytes leave the run (AGENTS.md
-// "Legal & IP boundary").
+// Guard recognition on the real load order: the `GFAC` default object names
+// the faction of every vanilla guard, so a Whiterun guard polices
+// `CrimeFactionWhiterun`, and the crime faction's `STOL` and `JAIL` links
+// resolve to the identities an arrest uses. Counts, editor IDs, and keys only.
 
 import Foundation
 @testable import OpenSkyCrimeInterface
@@ -18,22 +11,15 @@ import Foundation
 import Testing
 
 struct GuardResponseRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let crimeFactionEditorID = "CrimeFactionWhiterun"
     /// Observed on the local install as the `GFAC` target.
     private static let guardFactionEditorID = "IsGuardFaction"
     /// A vanilla guard whose `CRIF` and `SNAM` were checked by hand.
     private static let pinnedGuardEditorID = "GuardWhiterunImperialPatrolDay"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func recognisesVanillaGuardsAndResolvesTheJailLinks() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root),
             recordTypes: RecordIndex.referenceRecordTypes

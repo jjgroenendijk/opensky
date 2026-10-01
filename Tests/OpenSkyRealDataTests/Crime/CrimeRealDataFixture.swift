@@ -164,8 +164,8 @@ extension CrimeRealDataTests {
 
     @MainActor
     static func harness() throws -> Harness {
-        let root = try #require(dataRoot)
-        let device = try #require(device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
         let fileSystem = VirtualFileSystem(root: root)

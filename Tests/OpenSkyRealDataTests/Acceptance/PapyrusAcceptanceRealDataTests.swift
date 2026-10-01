@@ -1,4 +1,4 @@
-// Env-gated M11.1 acceptance over the user's read-only vanilla PEX corpus.
+// Env-gated Papyrus acceptance over the user's read-only vanilla PEX corpus.
 
 import Foundation
 @testable import OpenSkyFormatsPEX
@@ -21,16 +21,9 @@ struct PapyrusAcceptanceRealDataTests {
         "OnInit", "OnLoad", "OnPlayerLoadGame"
     ]
 
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func closesHeadlessNativeAcceptance() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let loader = PexScriptLoader(fileSystem: VirtualFileSystem(root: root))
         let paths = loader.scriptPaths()
         let files = try paths.map(loader.load)

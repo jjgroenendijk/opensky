@@ -23,13 +23,6 @@ import OpenSkyWorldTesting
 import Testing
 
 struct M17AcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// `Skyrim.esm`'s Delphine NPC_ record, and the synthetic placement key she
     /// is selected against. The placement is this suite's own: selection needs
     /// a `ReferenceKey` with a base form, not a loaded cell.
@@ -39,7 +32,7 @@ struct M17AcceptanceRealDataTests {
     /// The whole gate in one run, because every step reads what the one before
     /// it wrote.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theConversationHoldsAgainstTheUsersOwnInstall() throws {
         let world = try Self.world()
         let selection = try Self.expectAConditionFilteredList(world)
@@ -271,7 +264,7 @@ extension M17AcceptanceRealDataTests {
 
     @MainActor
     private static func world() throws -> World {
-        let root = try #require(dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let localized = try file.pluginHeader().isLocalized
         let dialogue = DialogueStore(

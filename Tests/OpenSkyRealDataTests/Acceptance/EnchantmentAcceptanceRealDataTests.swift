@@ -19,13 +19,6 @@ import Foundation
 import Testing
 
 struct EnchantmentAcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The weapon UESP prints as 1000 charge at 18 per use — 55 uses.
     private static let publishedWeaponID: UInt32 = 0x000A_CC70
 
@@ -148,10 +141,10 @@ struct EnchantmentAcceptanceRealDataTests {
         subject: .player
     )
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func anEnchantedWeaponAppliesItsEffectsAndAFortifyArmorChangesADamageNumber() throws {
-        let indexes = try Indexes(root: #require(Self.dataRoot))
+        let indexes = try Indexes(root: #require(RealDataEnvironment.dataRoot))
         var session = Session(indexes: indexes)
         let target = Self.target
 

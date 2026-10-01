@@ -1,14 +1,6 @@
-// The real-data half of issue #413's acceptance: what the vanilla humanoid
-// skeleton's Havok biped filter bits actually say, and what they admit.
-//
-// Split from `RagdollRealDataTests` for the type-length limit, and gated and
-// shaped exactly like it: `OPENSKY_DATA_ROOT` only, headless, no renderer, and
-// a report into gitignored `logs/`. Nothing extracted from the install is
-// written there — the file records bone names and pair counts, which are
-// measurements rather than content.
-//
-// The synthetic half lives in `RagdollSelfCollisionTests`, which needs no
-// install.
+// What the vanilla humanoid skeleton's Havok biped filter bits say, and which
+// body pairs they let collide. Headless; the report in `logs/` holds bone names
+// and pair counts only. `RagdollSelfCollisionTests` is the synthetic half.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -22,30 +14,14 @@ import simd
 import Testing
 
 struct RagdollSelfCollisionRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the locator's
-    /// Steam-default fallback is deliberately not consulted so machines without
-    /// the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let skeletonMesh = "meshes\\actors\\character\\character assets\\skeleton.nif"
     private static let skeletonRig = "meshes\\actors\\character\\character assets\\skeleton.hkx"
 
-    /// The vanilla humanoid's biped filter bits, and what they admit (issue
-    /// #413).
-    ///
-    /// The part numbers are asserted by name against nif.xml's `BipedPart` enum,
-    /// bone by bone, because that anatomy lining up is the evidence the mask is
-    /// read at the right width and offset. A part number read from the wrong
-    /// bits would still be *a* number; it would not put `P_L_CALF` on the left
-    /// calf.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// Each bone's part number matches nif.xml's `BipedPart` name, which shows
+    /// the mask is read at the right width and offset.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theVanillaHumanoidCarriesBipedPartsOnEveryBone() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let model = try NIFCollisionLibrary(fileSystem: vfs).model(path: Self.skeletonMesh)
         for body in model.bodies where body.dynamics.isSimulated {
@@ -65,16 +41,11 @@ struct RagdollSelfCollisionRealDataTests {
         }
     }
 
-    /// What the admitted set comes to on the real skeleton: a large majority of
-    /// the pairs, and **none of the ones that already overlap at the bind pose**.
-    ///
-    /// That second half is the whole acceptance for issue #413. Item 15.6 turned
-    /// self-collision off because a corpse lying still carried 30 to 45 standing
-    /// contacts; if the filter admits no pair that is interpenetrating before
-    /// anything has moved, those contacts cannot exist.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// The filter admits most pairs, and none that overlap at the bind pose.
+    /// A still corpse once held 30 to 45 contacts from such pairs.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theBipedFilterAdmitsNoPairThatOverlapsAtTheBindPose() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let definition = try #require(Self.definition(vfs: vfs))
         let bind = try Self.bindMatrices(vfs: vfs)

@@ -1,25 +1,9 @@
-// The enchantment runtime against the user's own read-only install (issue #472,
-// roadmap item 19.9): the two facts the runtime is built on, measured rather than
-// assumed.
-//
-// 1. **The charge model.** UESP's "Skyrim:Generic Magic Weapons" prints a
-//    "Charge/Cost = Uses" column for every randomly generated magic weapon and
-//    states its numbers are "base values, equivalent to the values for a player
-//    with 0 in all skills"
-//    (<https://en.uesp.net/wiki/Skyrim:Generic_Magic_Weapons>). Five of its rows
-//    are pinned here against the records: the weapon's `EAMT`, the enchantment's
-//    resolved cost, and `floor(charge / cost)`. If a decode or the cost formula
-//    ever drifts, this fails rather than a charge quietly meaning something else.
-//
-// 2. **The worn restriction is not a runtime gate.** The Creation Kit wiki
-//    describes it as an authoring restriction, and the records agree: a
-//    measurable minority of enchanted ARMO records carry no keyword their own
-//    enchantment's restriction list names. Those counterexamples are asserted to
-//    still exist, so nothing can quietly start enforcing the list and silently
-//    strip effects off vanilla artifacts.
-//
-// Read-only and headless: counts, editor IDs and shapes only, so no game bytes
-// leave the machine (AGENTS.md "Legal & IP boundary").
+// The two facts the enchantment runtime is built on, measured on the real
+// install. The charge model: five rows of UESP's "Charge/Cost = Uses" column
+// (<https://en.uesp.net/wiki/Skyrim:Generic_Magic_Weapons>) match `EAMT`, the
+// resolved cost, and `floor(charge / cost)`. The worn restriction is authoring
+// only: some enchanted ARMO lack every keyword their restriction list names, and
+// those records must stay, so the list is never enforced at runtime.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -29,13 +13,6 @@ import Foundation
 import Testing
 
 struct EnchantmentRuntimeRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// One UESP row: the weapon, and the three numbers its table prints.
     private struct ChargePin {
         let objectID: UInt32
@@ -73,9 +50,9 @@ struct EnchantmentRuntimeRealDataTests {
         )
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func chargeModelMatchesThePublishedUsesForEveryPinnedWeapon() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root),
             recordTypes: ["MGEF", "ENCH", "WEAP"]
@@ -107,9 +84,9 @@ struct EnchantmentRuntimeRealDataTests {
     /// delivery or is a staff, and every enchanted piece of armour resolves a worn
     /// one. That is the classification the two runtime paths switch on, so a record
     /// shape this engine does not expect would show up here as a count.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyEnchantedItemClassifiesAsWornContactOrStaff() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let baseName = try #require(plugins.first?.name)
         let index = RecordIndex(
@@ -151,9 +128,9 @@ struct EnchantmentRuntimeRealDataTests {
 
     /// The measurement that settles why the worn restriction gates nothing at
     /// runtime: some vanilla enchanted armour does not satisfy its own list.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func someVanillaArmorFailsItsOwnWornRestriction() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root),
             recordTypes: ["MGEF", "ENCH", "ARMO", "FLST"]

@@ -1,22 +1,9 @@
-// M16 acceptance against the user's own read-only Skyrim SE install (issue
-// #203): the same chain the synthetic gate drives, over vanilla records.
-//
-// `M16AcceptanceTests` proves the chain works over a world OpenSky invented.
-// What this proves is that the world the install ships answers the same route:
-// a named Whiterun resident's own package stack selects off the game clock all
-// day, its corridor is the real Chillfurrow navmesh through the real door
-// `0001633D`, the detection constants are the ones the plugins resolve to rather
-// than OpenSky defaults, and the combat machine runs the whole entry-to-resume
-// arc against them.
-//
-// Device-free on purpose (the M13 env-gated/device-gated split): the record,
-// path and behaviour evidence stands on a runner with no GPU, and only the pixel
-// evidence in `M16AcceptanceRenderTests` needs one.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries FormIDs, counts and timings only — never geometry, never a pose.
-// Run it with `make realtest T='M16AcceptanceRealDataTests/...'`, which supplies
-// the data root and the RSS watchdog.
+// Navigation, detection, and combat acceptance on vanilla records: a Whiterun
+// resident's packages follow the game clock, its path is the real Chillfurrow
+// navmesh through door `0001633D`, detection uses the plugins' constants, and
+// the combat machine runs its full arc. It needs no GPU;
+// `M16AcceptanceRenderTests` holds the pixel half. The report in `logs/` holds
+// FormIDs, counts, and timings only.
 
 import Foundation
 @testable import OpenSkyCombat
@@ -33,22 +20,15 @@ import Testing
 
 @MainActor
 struct M16AcceptanceRealDataTests {
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Ysolda, whose stack is the one `PackageRealDataTests` pins across a full
     /// day: three distinct packages over twenty-four hours, so "the schedule
     /// decides" is a claim this route can actually fail.
     private static let residentBase = FormID(0x0001_3BAB)
     private static let residentKey = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x13BAB)
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theWholeChainRunsOverVanillaRecords() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var lines = ["OpenSky M16 acceptance chain"]
 
         let packages = try Self.theScheduleDecidesAllDay(root: root, report: &lines)

@@ -1,8 +1,12 @@
 import CoreGraphics
+import Foundation
+import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import Testing
+import UniformTypeIdentifiers
 
 /// Readback and A/B comparison for offscreen frames in the real-data render
 /// checks, shared so each suite does not carry its own copy.
@@ -67,5 +71,27 @@ enum RenderedPixels {
             }
             return count + (changed ? 1 : 0)
         }
+    }
+
+    /// Writes BGRA8 frame bytes, as `read` returns them, to a PNG under `logs/`.
+    static func writePNG(_ pixels: [UInt8], width: Int, height: Int, to url: URL) throws {
+        var pixels = pixels
+        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        let context = try #require(CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
+                | CGBitmapInfo.byteOrder32Little.rawValue
+        ))
+        let image = try #require(context.makeImage())
+        let destination = try #require(CGImageDestinationCreateWithURL(
+            url as CFURL, UTType.png.identifier as CFString, 1, nil
+        ))
+        CGImageDestinationAddImage(destination, image, nil)
+        #expect(CGImageDestinationFinalize(destination))
     }
 }

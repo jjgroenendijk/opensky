@@ -20,13 +20,6 @@ import simd
 import Testing
 
 struct SpellDeliveryAcceptanceRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The spell the picture uses: vanilla `Firebolt`, aimed, fire and forget,
     /// one hostile Fire Damage entry resisted through `Resist Fire`.
     private static let pinnedSpell = "Firebolt"
@@ -179,7 +172,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
     /// pinned spell in the caster's right hand.
     @MainActor
     private func session() throws -> Session {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root, baseFile: file),
@@ -239,7 +232,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
     }
 
     /// The whole chain, end to end: ready, cast, fly, hit, resist, provoke.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func castingAtAnActorLandsResistanceAdjustedDamage() throws {
         let session = try session()

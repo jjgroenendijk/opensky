@@ -1,20 +1,8 @@
-// Env-gated XPRM sweep over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): walks every REFR in
-// Skyrim.esm, tallies the on-disk shape of every primitive-volume subrecord,
-// and pins the numbers `PlacedReference.decodePrimitive` relies on. Skips
-// automatically when OPENSKY_DATA_ROOT is unset (CI has no game data).
-//
-// The counts are asserted rather than only written to logs/, because print()
-// never reaches the .xcresult and a number nobody checks is not evidence. The
-// tally holds counters and small bounded sets only; nothing accumulates a
-// per-record object, so the sweep stays flat in memory over 693k references.
-//
-// Layout under test: UESP "Skyrim Mod:Mod File Format/REFR" XPRM row ("32 byte
-// struct: float[3] x,y,z Bounds / 2; float[3] r,g,b Color / 255; float
-// unknown; uint32 unknown: 1-4 seen") and xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas line 9701 `wbStruct(XPRM, 'Primitive',
-// [wbStruct('Bounds', ...), wbFloatRGBA, wbInteger('Type', itU32,
-// wbEnum(['None', 'Box', 'Sphere', 'Portal Box', 'Line']))])`.
+// XPRM sweep over every REFR in `Skyrim.esm`, pinning the numbers
+// `PlacedReference.decodePrimitive` relies on. Counts are asserted, because
+// print() never reaches the .xcresult. The tally keeps only counters and small
+// sets, so memory stays flat over 693k references. Layout: UESP REFR XPRM row
+// and xEdit `wbDefinitionsTES5.pas` `wbStruct(XPRM, 'Primitive', ...)`.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -23,19 +11,9 @@ import Foundation
 import Testing
 
 struct PlacedReferenceXPRMRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryPrimitiveVolumeInSkyrimESM() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let tally = Self.sweep(file: file)
 
@@ -210,10 +188,8 @@ struct PlacedReferenceXPRMRealDataTests {
         if PlacedReference.PrimitiveType(rawValue: rawType) == nil {
             tally.unknownTypes.insert(rawType)
         }
-        // A sphere has one radius but three stored axes, and neither UESP nor
-        // xEdit names which axis holds it. Counting the disagreements answers
-        // it from the data: if no vanilla sphere disagrees, every axis carries
-        // the radius and reading `halfExtents.x` is unambiguous (issue #173).
+        // Neither UESP nor xEdit says which of a sphere's three axes holds its
+        // radius. No disagreement means every axis does, so `halfExtents.x` is safe.
         if rawType == PlacedReference.PrimitiveType.sphere.rawValue {
             tally.spheres += 1
             if floats[0] != floats[1] || floats[1] != floats[2] {

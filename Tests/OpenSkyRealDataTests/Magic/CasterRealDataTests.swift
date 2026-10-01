@@ -1,12 +1,6 @@
-// Env-gated caster checks against the user's read-only active load order
-// (issue #470, roadmap item 19.7). Read-only throughout: nothing here writes to
-// the install, and no game bytes leave the machine.
-//
-// What it pins is exactly the ground the synthetic suites cannot: where the
-// player's start spells actually come from (not the SPIT flag that looks like
-// it should answer), that the vanilla spells the acceptance picture uses carry
-// the SPIT shapes the cast loop was written against, and how many spells the
-// EQUP walk can and cannot put in a hand.
+// Caster checks on the real load order that synthetic suites cannot make: where
+// the player's start spells come from, the SPIT shapes of the spells the
+// acceptance picture uses, and how many spells the EQUP walk can put in a hand.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -15,15 +9,8 @@ import Foundation
 import Testing
 
 struct CasterRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private func stores() throws -> (spells: SpellStore, slots: EquipSlotStore) {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root),
             recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP"]
@@ -34,16 +21,10 @@ struct CasterRealDataTests {
         )
     }
 
-    /// The finding that decides where start spells come from, pinned so it
-    /// cannot quietly rot.
-    ///
-    /// The obvious data source would be the SPIT "PC Start Spell" flag. It is
-    /// not the mechanism: across the whole vanilla load order that bit is set on
-    /// exactly one record, `PCHealRateCombat`, which is not a spell the player
-    /// starts with. Vanilla grants Flames and Healing from the intro quest's
-    /// Papyrus script instead, so `SpellStore.vanillaStartSpellEditorIDs` names
-    /// them and resolves them through the load order.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// The SPIT "PC Start Spell" flag is not how start spells work: vanilla sets
+    /// it only on `PCHealRateCombat`. The intro quest's script grants Flames and
+    /// Healing, so `SpellStore.vanillaStartSpellEditorIDs` names them.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func thePCStartSpellFlagIsNotWhereStartSpellsComeFrom() throws {
         let (spells, _) = try stores()
 
@@ -62,9 +43,9 @@ struct CasterRealDataTests {
 
     /// The other half of the same mechanism: a race's own `SPLO` run, which is
     /// where an actor's abilities and its greater power come from.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aRaceCarriesItsAbilitiesAndPowerInItsSpellList() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(plugins: plugins, recordTypes: ["RACE"])
         var checked = 0
@@ -87,7 +68,7 @@ struct CasterRealDataTests {
 
     /// The two spells the acceptance picture uses, pinned against the SPIT
     /// shapes the cast loop was written against.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theVanillaHealingSpellsCarryTheCastingShapesTheLoopExpects() throws {
         let (spells, _) = try stores()
 
@@ -107,17 +88,10 @@ struct CasterRealDataTests {
         #expect(healing.record.effects.allSatisfy { $0.duration == 1 })
     }
 
-    /// Almost every SPIT-type `spell` record resolves to a hand it can be
-    /// readied in — and the handful that do not are real, so the number is
-    /// measured rather than asserted to be zero.
-    ///
-    /// The exceptions are effect shells: `WerewolfChangeFX`,
-    /// `DLC1VampireChangeFX` and the `DLC2VoiceElementalFury` run are typed as
-    /// spells but authored against the Voice slot or none at all, because
-    /// nothing equips them — a script or a shout applies them. Readying one is
-    /// the documented `SpellbookError.notHandEquippable`, which is the right
-    /// answer rather than a gap.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// Almost every SPIT `spell` resolves to a hand. The exceptions, such as
+    /// `WerewolfChangeFX`, are effect shells a script or shout applies, so
+    /// `SpellbookError.notHandEquippable` is the right answer for them.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func almostEverySpellResolvesToAHandItCanBeReadiedIn() throws {
         let (spells, slots) = try stores()
         var handed = 0
@@ -149,7 +123,7 @@ struct CasterRealDataTests {
     /// gets. Most vanilla powers say so through the Voice slot; a minority
     /// author a hand slot they never use, so this measures the split instead of
     /// claiming one side of it.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func mostPowersResolveToNoHandAtAll() throws {
         let (spells, slots) = try stores()
         var handless = 0

@@ -13,26 +13,12 @@ import OpenSkySaveTesting
 import Testing
 
 struct M10StateAcceptanceRealDataTests {
-    /// Env-gated exactly like `M9AudioAcceptanceRealDataTests`: without
-    /// `OPENSKY_DATA_ROOT` the test skips instead of consulting the Steam
-    /// default. No Metal device is needed — nothing here renders.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        dataRoot != nil
-    }
-
     /// A save written against the installed load order round-trips through a
     /// real slot file and verifies against the fingerprint of the very same
     /// install it was written on.
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func savedStateRoundTripsAgainstTheInstalledLoadOrder() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let installed = try OpenSkySaveStore.fingerprint(forRoot: root)
         #expect(!installed.isEmpty, "the install resolves no plugins at all")
         #expect(
@@ -78,9 +64,9 @@ struct M10StateAcceptanceRealDataTests {
     /// A fingerprint that no longer matches the file is refused, and the error
     /// names the difference. This is the check that stops a save from being
     /// applied to a world its references no longer describe.
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func aChangedLoadOrderIsDetectedOnLoad() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let installed = try OpenSkySaveStore.fingerprint(forRoot: root)
         let first = try #require(installed.first)
 

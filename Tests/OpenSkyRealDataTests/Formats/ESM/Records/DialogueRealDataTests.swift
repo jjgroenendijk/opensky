@@ -1,11 +1,7 @@
-// Env-gated DIAL/INFO/VTYP sweep over the user's read-only vanilla install.
-// It decodes every matching record in Skyrim.esm and the three DLC masters,
-// pins the record totals after the probe, and records every deliberately
-// skipped field category in a gitignored per-run report.
-//
-// Since issue #426 the INFO VMAD fragment tail is decoded rather than skipped,
-// so the `script INFO fragments` bucket is gone from the pinned tally and the
-// sweep counts the decoded result scripts instead.
+// DIAL, INFO, and VTYP sweep over `Skyrim.esm` and the three DLC masters: every
+// record decodes, the totals are pinned, and each skipped field category goes
+// to a report in `logs/`. INFO VMAD fragment tails decode, and the sweep counts
+// their result scripts.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -14,13 +10,6 @@ import Foundation
 import Testing
 
 struct DialogueRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let pluginNames = [
         "Skyrim.esm",
         "Update.esm",
@@ -44,9 +33,9 @@ struct DialogueRealDataTests {
         "unknown SCHR": 1722
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesVanillaDialogueRecordsWithoutFailures() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var total = Sweep()
         var pluginReports: [String] = []
         for pluginName in Self.pluginNames {
@@ -72,8 +61,7 @@ struct DialogueRealDataTests {
         #expect(total.records["INFO", default: 0] > 0)
         #expect(total.records["VTYP", default: 0] > 0)
         #expect(total.skips == Self.expectedSkips, "dialogue skip tally drift")
-        // Every tail the sweep used to skip now decodes, and each carries one
-        // or two result-script fragments (issue #426).
+        // Every tail decodes and carries one or two result-script fragments.
         #expect(total.fragmentTails == 7661, "INFO fragment tail drift")
         #expect(total.fragments == 8009, "INFO fragment drift")
 
@@ -87,7 +75,7 @@ struct DialogueRealDataTests {
         var records: [String: Int] = [:]
         var skips: [String: Int] = [:]
         var failures = 0
-        /// INFO records whose VMAD fragment tail decoded (issue #426).
+        /// INFO records whose VMAD fragment tail decoded.
         var fragmentTails = 0
         /// Result-script fragments across those tails.
         var fragments = 0

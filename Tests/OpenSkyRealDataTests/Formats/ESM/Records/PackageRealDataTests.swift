@@ -1,5 +1,5 @@
-// Real-data acceptance for issue #201. Reads the user's Skyrim.esm in place;
-// no bytes, dumps, or rendered game content leave the gitignored run output.
+// Package decode on the real `Skyrim.esm`, read in place. Nothing leaves the
+// gitignored run output.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -16,14 +16,6 @@ struct PackageRealDataTests {
         let base: UInt32
         let expected: [UInt32]
     }
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty else {
-            return nil
-        }
-        return try? GameDataLocator.locate()
-    }()
 
     private static let residents = [
         Resident(name: "Ysolda", base: 0x0001_3BAB, expected: [
@@ -57,7 +49,7 @@ struct PackageRealDataTests {
         ])
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func censusesReachablePackagesAndHeaderConditions() throws {
         let file = try skyrimFile()
         let store = PackageStore(file: file)
@@ -87,7 +79,7 @@ struct PackageRealDataTests {
         #expect(functionTally == [35: 3, 606: 1, 629: 1])
     }
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func selectsFourResidentsAcrossAFullDay() throws {
         let file = try skyrimFile()
         let store = PackageStore(file: file)
@@ -111,7 +103,7 @@ struct PackageRealDataTests {
     }
 
     private func skyrimFile() throws -> ESMFile {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         return try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
     }
 

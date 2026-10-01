@@ -1,12 +1,7 @@
-// Env-gated skill-advancement spot check over the user's read-only active load
-// order (issue #498, roadmap item 20.5): the `AVSK` parameters two vanilla
-// skills carry, the game settings the curve reads, and the experience a fixed
-// use amount is worth against them. Derived numbers and editor IDs only — no
-// game bytes leave the run.
-//
-// This is the pin under `SkillAdvancementTests`, which states the same four
-// numbers in code. If Bethesda's records and this suite ever disagree, the
-// synthetic suite is the one that is wrong.
+// Skill advancement spot check on the real load order: two vanilla skills'
+// `AVSK` values, the curve's game settings, and the experience a fixed use is
+// worth. `SkillAdvancementTests` states the same numbers in code; if the two
+// disagree, the synthetic suite is wrong.
 
 import Foundation
 @testable import OpenSkyActors
@@ -19,15 +14,6 @@ import Foundation
 import Testing
 
 struct SkillAdvancementRealDataTests {
-    /// `nonisolated` so the `.enabled(if:)` trait can read it from the sendable
-    /// closure the macro builds.
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The two records this suite pins, by editor ID and by the vanilla table
     /// index each joins to.
     private static let oneHanded: Int32 = 6
@@ -44,9 +30,9 @@ struct SkillAdvancementRealDataTests {
 
     /// Every skill carries advancement parameters, and the two pinned records
     /// carry exactly the numbers the synthetic suites state.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everySkillCarriesTheAuthoredAdvancementParameters() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let store = ActorValueInformationStoreLoader.load(root: root)
         let source = SkillUseParameterSource(store: store)
 
@@ -64,9 +50,9 @@ struct SkillAdvancementRealDataTests {
     /// `fSkillUseCurve` produce the experience and the threshold UESP works
     /// through by hand — 45 * 50 + 10 = 2260 experience for a use of 50, and
     /// 0.25 * 15^1.95 + 300 = 349.13 to leave Lockpicking level 15.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func pinnedParametersProduceTheDocumentedExperienceAndThreshold() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let store = ActorValueInformationStoreLoader.load(root: root)
         let settings = SkillAdvancementSettings.resolve(
             store: GameSettingLoader.load(root: root)
@@ -99,9 +85,9 @@ struct SkillAdvancementRealDataTests {
     /// The whole path over real parameters: a use amount lands in the skill's
     /// `Skill Advance` actor value, and enough of them raise the skill by one.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func realParametersDriveARealLevelUp() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let store = WorldStateStore()
         let settings = GameSettingLoader.load(root: root)
         let values = ActorValueRuntime(
@@ -121,9 +107,8 @@ struct SkillAdvancementRealDataTests {
             ),
             settings: SkillAdvancementSettings.resolve(store: settings)
         )
-        // The whole path, not the skill half alone (issue #499): the point the
-        // skill gains banks its character experience into the level runtime,
-        // against the curve this install authors.
+        // The whole path: the skill point banks character experience into the
+        // level runtime, on the install's own curve.
         runtime.leveling = PlayerLevelRuntime(
             values: values,
             settings: CharacterLevelSettings.resolve(store: settings)

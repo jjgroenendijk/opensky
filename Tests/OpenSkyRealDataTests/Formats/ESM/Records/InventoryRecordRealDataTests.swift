@@ -11,19 +11,12 @@ import Foundation
 import Testing
 
 struct InventoryRecordRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// Decodes every CONT, MISC, BOOK, ALCH, INGR, WEAP and AMMO record in
     /// Skyrim.esm with zero throws, then asserts the link invariants the
     /// inventory runtime depends on.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryInventoryRecord() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = ItemDefinitionStore(file: file)
 
@@ -41,13 +34,9 @@ struct InventoryRecordRealDataTests {
             )
         }
 
-        // Every CNTO target must resolve to a record of one of the types xEdit
-        // constrains the slot to (wbCNTO, wbDefinitionsTES5.pas line 2315).
-        // Anything else would mean the 8-byte CNTO layout is being misread —
-        // this is the invariant that pins item-then-count rather than the
-        // reverse. Only ARMO/AMMO/BOOK/ALCH/INGR/MISC/WEAP land in the item
-        // index; the rest (APPA, KEYM, LIGH, SLGM, SCRL, LVLI) are legal
-        // container contents whose own decoders are out of scope for #175.
+        // Every CNTO target has a type xEdit allows in the slot (`wbCNTO`), which
+        // pins the item-then-count order. APPA, KEYM, LIGH, SLGM, SCRL, and LVLI
+        // are legal contents that the item index does not decode.
         let contents = store.containers.values.flatMap(\.entries)
         let types = ESMWalk.recordTypeIndex(in: file)
         var unexpected: Set<String> = []

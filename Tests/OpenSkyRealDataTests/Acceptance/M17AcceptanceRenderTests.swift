@@ -21,15 +21,11 @@ import simd
 import Testing
 
 struct M17AcceptanceRenderTests {
-    /// One vanilla line whose lip track decodes, and three times inside it.
-    /// Same line `LipSyncRenderRealDataTests` drives, so a failure here and a
-    /// pass there is a difference in what is measured, not in what was played.
-    private static let voicePath =
-        "sound\\voice\\skyrim.esm\\maleeventoned\\wigreeting__000c7917_1.fuz"
+    /// Three times inside the `HeimskrFace` lip track.
     private static let sampleTimes: [Double] = [0.30, 11.0 / 30.0, 0.50]
 
     /// The head shot's frame, and the fraction of it the mouth region covers.
-    private static let size = 800
+    private static let size = HeimskrFace.size
     private static let mouthRegion = FrameRegion(x: 260, y: 260, width: 280, height: 280)
 
     /// How many pixels a toggle has to move before it counts as visible. The
@@ -39,31 +35,12 @@ struct M17AcceptanceRenderTests {
     private static let minimumChangedPixels = 200
     private static let minimumMouthPixels = 20
 
-    private static let device: MTLDevice? = {
-        guard
-            let device = MTLCreateSystemDefaultDevice(),
-            device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
     // MARK: - The mouth
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func lipSyncMovesTheMouthAndOnlyTheMouth() throws {
-        let harness = try Self.makeFaceHarness()
+        let harness = try HeimskrFace.lipSyncHarness()
         var mouthDeltas: [Int] = []
         var onFrames: [[UInt8]] = []
 
@@ -91,8 +68,12 @@ struct M17AcceptanceRenderTests {
             let repeated = try Self.frame(harness.renderer, time: Float(time))
             #expect(Self.changedPixels(on, repeated) == 0, "\(time)s was not deterministic")
 
-            try Self.writePNG(off, name: "m17-lip-\(index)-off.png")
-            try Self.writePNG(on, name: "m17-lip-\(index)-on.png")
+            try FirstPersonRenderRealDataTests.writePNG(
+                off, name: "m17-lip-\(index)-off.png", size: Self.size
+            )
+            try FirstPersonRenderRealDataTests.writePNG(
+                on, name: "m17-lip-\(index)-on.png", size: Self.size
+            )
         }
 
         // Two different points in one line are two different mouth shapes. A
@@ -108,31 +89,23 @@ struct M17AcceptanceRenderTests {
         print(
             "[INFO] M17 mouth deltas: \(mouthDeltas) px on/off at \(Self.sampleTimes)s,"
                 + " \(acrossTime) px between the first and last time,"
-                + " line \(Self.voicePath)"
+                + " line \(HeimskrFace.voicePath)"
         )
     }
 
     // MARK: - The view and the menu
 
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func theConversationTakesTheViewAndPutsTheMenuOverIt() throws {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
-        let scene = try assembled.builder.buildScene(
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-            gridX: WalkPathRoute.farmCell.x,
-            gridY: WalkPathRoute.farmCell.y
+        let cell = try PlayerBodyFixture.stage(
+            gridX: WalkPathRoute.farmCell.x, gridY: WalkPathRoute.farmCell.y
         )
-        let bounds = try #require(scene.bounds, "no cell bounds — nothing drew")
-        let renderer = try FirstPersonRenderRealDataTests.renderer(
-            device: device, scene: scene, bounds: bounds
-        )
+        let renderer = try cell.renderer()
         FirstPersonRenderRealDataTests.frameFirstPerson(renderer, feet: SIMD3(
-            (bounds.min.x + bounds.max.x) / 2,
-            (bounds.min.y + bounds.max.y) / 2,
-            bounds.min.z
+            (cell.bounds.min.x + cell.bounds.max.x) / 2,
+            (cell.bounds.min.y + cell.bounds.max.y) / 2,
+            cell.bounds.min.z
         ))
 
         let world = try FirstPersonRenderRealDataTests.frame(renderer)
@@ -143,7 +116,7 @@ struct M17AcceptanceRenderTests {
             "the dialogue camera moved \(cameraDelta) pixels"
         )
 
-        let withMenu = try Self.bringUpTheMenu(renderer, root: root)
+        let withMenu = try Self.bringUpTheMenu(renderer, root: cell.root)
         let menuDelta = FirstPersonRenderRealDataTests.changedPixels(engaged, withMenu)
         #expect(
             menuDelta >= Self.minimumChangedPixels,
@@ -222,85 +195,6 @@ struct M17AcceptanceRenderTests {
 /// The head-shot harness and the pixel helpers, split off the suite so its own
 /// body stays inside the repo's type-length limit.
 extension M17AcceptanceRenderTests {
-    // MARK: - The face harness
-
-    @MainActor
-    private struct FaceHarness {
-        let renderer: Renderer
-        let lip: LipSyncPlayback
-        let clock: VoicePlaybackClock
-    }
-
-    /// One vanilla actor's head, its TRI morph targets and one archive lip
-    /// track, framed close enough that a mouth is worth measuring. The same
-    /// assembly `LipSyncRenderRealDataTests` builds.
-    @MainActor
-    private static func makeFaceHarness() throws -> FaceHarness {
-        let device = try #require(Self.device)
-        let root = try #require(Self.dataRoot)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let vfs = VirtualFileSystem(root: root)
-        try #require(vfs.exists(Self.voicePath))
-        let lipData = try #require(
-            FUZFile(data: vfs.contents(forPath: Self.voicePath)).lipData
-        )
-        let textures = try TextureLibrary(fileSystem: vfs, device: device)
-        let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-        let builder = CellSceneBuilder(
-            file: file, meshes: meshes, textures: textures, fileSystem: vfs
-        )
-        let placed = try PlacedActor(record: #require(
-            ESMWalk.record(withFormID: 0x0001_A682, in: file)
-        ))
-        let resolvers = builder.actorResolversBuildingIfNeeded(localized: true)
-        let appearance = try resolvers.template.resolve(base: placed.base)
-        let visual = try resolvers.visual.resolve(appearance: appearance)
-        let assembly = ActorAssembler(provider: meshes).assemble(placed: placed, visual: visual)
-        let face = try #require(builder.makeFaceMorphPlayback(assembly: assembly))
-        let lip = LipSyncPlayback(faceMorph: face)
-        let clock = VoicePlaybackClock()
-        try lip.start(
-            track: LIPFile(data: lipData),
-            clock: clock,
-            line: Self.voicePath,
-            animationTime: 0
-        )
-        let scene = RenderScene(
-            instances: assembly.renderPlacements(
-                at: assembly.transform, faceMorphs: face.bindings
-            ),
-            animations: [face, lip]
-        )
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size), device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
-            view: view, scene: scene, camera: faceCamera(assembly: assembly)
-        )
-        return FaceHarness(renderer: renderer, lip: lip, clock: clock)
-    }
-
-    /// Looking at the head from in front and slightly above, close enough that
-    /// the mouth region is a mouth.
-    private static func faceCamera(assembly: ActorAssembly<ActorRenderAsset>) -> SceneCamera {
-        let origin = SIMD3(
-            assembly.transform.columns.3.x,
-            assembly.transform.columns.3.y,
-            assembly.transform.columns.3.z
-        )
-        let head = origin + SIMD3<Float>(0, 0, 112)
-        let direction = simd_normalize(SIMD3<Float>(-1, -1, 0.25))
-        return SceneCamera(
-            eye: head + direction * 160,
-            target: head,
-            sunDirection: SceneCamera.demo.sunDirection,
-            sunColor: SceneCamera.demo.sunColor,
-            ambientColor: SceneCamera.demo.ambientColor
-        )
-    }
-
     // MARK: - Pixels
 
     @MainActor
@@ -334,29 +228,6 @@ extension M17AcceptanceRenderTests {
             }
         }
         return changed
-    }
-
-    private static func writePNG(_ pixels: [UInt8], name: String) throws {
-        let url = try PlayerBodyFixture.logsDirectory().appending(path: name)
-        guard
-            let provider = CGDataProvider(data: Data(pixels) as CFData),
-            let image = CGImage(
-                width: size,
-                height: size,
-                bitsPerComponent: 8,
-                bitsPerPixel: 32,
-                bytesPerRow: size * 4,
-                space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                provider: provider,
-                decode: nil,
-                shouldInterpolate: false,
-                intent: .defaultIntent
-            )
-        else {
-            return
-        }
-        try FrameScreenshot.write(image: image, to: url)
     }
 }
 

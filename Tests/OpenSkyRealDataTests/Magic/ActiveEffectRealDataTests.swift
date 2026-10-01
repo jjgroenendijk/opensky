@@ -1,18 +1,7 @@
-// Env-gated active-effect sweep over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md Legal & IP).
-//
-// Two things this proves that a synthetic suite cannot. First, the acceptance
-// path itself: a real vanilla healing potion, resolved out of the real load
-// order, restores the player's health when consumed. Second, the coverage
-// picture: every ALCH and INGR effect entry in `Skyrim.esm` is planned, and the
-// archetypes this milestone does not implement are counted rather than guessed
-// at, so the tally on the panel is a number somebody measured.
-//
-// Nothing game-derived leaves the run: the assertions are counts, editor IDs and
-// health arithmetic.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable (CI has no
-// game data). Run with `make realtest`.
+// Active-effect checks on the real install: a vanilla healing potion from the
+// load order restores the player's health, and every ALCH and INGR effect in
+// `Skyrim.esm` is planned, with unimplemented archetypes counted. Only counts,
+// editor IDs, and health numbers are checked.
 
 import Foundation
 @testable import OpenSkyActors
@@ -29,16 +18,6 @@ import Testing
 
 @MainActor
 struct ActiveEffectRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the locator's
-    /// Steam-default fallback is deliberately not consulted so machines without
-    /// the override skip deterministically.
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let pluginName = "Skyrim.esm"
 
     /// Health, as `ActorValueIdentity` numbers it.
@@ -88,9 +67,9 @@ struct ActiveEffectRealDataTests {
 
     /// The milestone's acceptance path against real records: a real healing
     /// potion restores real health.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aVanillaHealingPotionRestoresThePlayersHealth() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try harness(root: root)
         var effects = harness.effects
         // Found by what it does rather than by a remembered editor ID or
@@ -150,9 +129,9 @@ struct ActiveEffectRealDataTests {
     }
 
     /// Eating a real ingredient applies its first effect and only its first.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func eatingARealIngredientUsesOnlyItsFirstEffect() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try harness(root: root)
         let multiEffect = try #require(
             harness.items.definitions(of: .ingredient)
@@ -181,16 +160,15 @@ struct ActiveEffectRealDataTests {
     /// Deliberately asserts shape rather than exact numbers. The counts move
     /// with the load order, and a suite pinned to one install's totals would
     /// fail on a modded one for no reason worth failing over.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyConsumableEffectEntryIsPlannedOrCounted() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try harness(root: root)
         var applied = 0
         var skips: [MagicEffectPlanFailure: Int] = [:]
         var unresolved = 0
-        // Timed Recover effects on health, magicka or stamina — Fortify Health
-        // and its siblings — which issue #511 moved from a skip bucket to
-        // applied.
+        // Timed Recover effects on health, magicka, or stamina, such as Fortify
+        // Health, are applied.
         var appliedPrimaryModifiers = 0
         for definition in harness.items.definitions(of: .ingestible) {
             guard let use = harness.items.magicItemUse(definition.formID) else { continue }

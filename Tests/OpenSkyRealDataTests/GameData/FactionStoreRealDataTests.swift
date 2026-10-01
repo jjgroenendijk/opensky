@@ -1,14 +1,7 @@
-// Env-gated FACT decode, faction-store and NPC_ membership acceptance over the
-// user's own read-only load order (issue #501).
-//
-// Four questions, in the order milestone M21 needs them answered: does every
-// FACT record in the masters decode, do the pinned Whiterun crime and guard
-// factions carry the values the spec describes, does every LCTN crime-faction
-// link find its record, and does a vanilla Whiterun guard resolve a non-empty
-// membership list through the `useFactions` template chain.
-//
-// Counts, editor IDs and tallies only — no game bytes leave the run
-// (AGENTS.md "Legal & IP boundary").
+// Faction checks on the real load order: every FACT in the masters decodes, the
+// pinned Whiterun crime and guard factions carry the documented values, every
+// LCTN crime-faction link finds its record, and a Whiterun guard resolves its
+// memberships through the `useFactions` template chain.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -17,13 +10,6 @@ import Foundation
 import Testing
 
 struct FactionStoreRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The hold's crime faction, and the faction its guards belong to. Editor
     /// IDs rather than FormIDs, so a patch that moves a record does not fail
     /// the suite for the wrong reason.
@@ -33,9 +19,9 @@ struct FactionStoreRealDataTests {
     /// (`WhiterunGuardFixture`).
     private static let guardEditorIDPrefix = "GuardWhiterun"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryFactionAndResolvesTheCrimeAndGuardJoins() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins,
@@ -77,8 +63,7 @@ struct FactionStoreRealDataTests {
         try checkGuardMemberships(root: root, store: store, guardFaction: guards)
     }
 
-    /// Every LCTN `FNAM` in the load order has to name a FACT the store holds:
-    /// crime response (issues #504 and #505) reads exactly this link.
+    /// Every LCTN `FNAM` names a FACT the store holds; crime response reads this link.
     private func checkLocationCrimeFactionLinks(
         index: RecordIndex,
         store: FactionStore

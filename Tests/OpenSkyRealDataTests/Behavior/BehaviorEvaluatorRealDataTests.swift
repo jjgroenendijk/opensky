@@ -1,16 +1,7 @@
-// Env-gated behavior-evaluator smoke probe over the user's own Skyrim SE
-// install (read-only external input, never committed — AGENTS.md Legal & IP).
-//
-// Builds one `BehaviorGraphInstance` over every behavior file under the
-// character actor folder, third-person and `_1stperson`, steps each with no
-// input, and asserts the two things this milestone item promises: nothing
-// crashes, and every gap is named in the `BehaviorTally` rather than silently
-// approximated. The tally is pinned so a later change that quietly widens the
-// gap fails here.
-//
-// The report is class names, counts, and file paths only, and goes to
-// gitignored `logs/`. Skips automatically when OPENSKY_DATA_ROOT is unset. Run
-// with `make realtest T='BehaviorEvaluatorRealDataTests/stepsEveryPlayerBehaviorGraph()'`.
+// Behavior-evaluator smoke test on the real install: every character behavior
+// file, third person and `_1stperson`, steps with no input. Nothing may crash,
+// and every gap is named in the pinned `BehaviorTally`. The report in `logs/`
+// holds class names, counts, and paths only.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -27,21 +18,11 @@ private struct BehaviorRunRow {
     let firedEventCount: Int
     let posedBoneCount: Int
     let movedRoot: Bool
-    /// How many state machines the last update reached (issue #330).
+    /// How many state machines the last update reached.
     let activeStateCount: Int
 }
 
 struct BehaviorEvaluatorRealDataTests {
-    /// Real data only when explicitly pointed at via the env var, matching the
-    /// other HKX real-data tests, so machines without the override skip
-    /// deterministically rather than falling back to the Steam default.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let characterPrefix = "meshes\\actors\\character\\"
     private static let skeletonPath =
         "meshes\\actors\\character\\character assets\\skeleton.hkx"
@@ -49,9 +30,9 @@ struct BehaviorEvaluatorRealDataTests {
     private static let updateCount = 60
     private static let timestep: Float = 1.0 / 30.0
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func stepsEveryPlayerBehaviorGraph() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries()
             .map(\.path)
@@ -157,9 +138,8 @@ struct BehaviorEvaluatorRealDataTests {
                 "\(row.path) hit \(row.tally.undecodableObjectTotal) undecodable: \(undecodable)"
             )
         }
-        // Every player behavior file is rooted in a state machine, and since
-        // issue #330 a machine reports the state it is in rather than tallying
-        // a shortcut. A graph reporting none means the walk stopped early.
+        // Every player behavior file has a state machine at its root, and a
+        // machine reports its state. None reported means the walk stopped early.
         let withoutStateMachine = rows.filter { $0.activeStateCount == 0 }
         #expect(
             withoutStateMachine.isEmpty,

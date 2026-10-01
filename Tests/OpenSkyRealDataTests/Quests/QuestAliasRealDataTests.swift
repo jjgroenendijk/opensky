@@ -1,17 +1,8 @@
-// Env-gated acceptance for issue #183 over the user's own install: the
-// census-chosen target quest's aliases fill against real data, and a corpus
-// sweep says how much of vanilla each stated deferral actually affects.
-//
-// The target quest is `MGRArniel01`, the cheapest entry on the 13.1 census
-// shortlist (docs/formats/quest-records.md): one forced-reference alias, which is the
-// one fill type item 13.4 implements. Named here rather than rediscovered,
-// because the shortlist is the record of that choice.
-//
-// Nothing from the install is committed: the report goes to gitignored `logs/`
-// and carries counts, alias names, fill types and editor IDs only — never
-// journal text and never a script body. Run it with
-// `make realtest T='QuestAliasRealDataTests/fillsTheTargetQuestsAliases()'`,
-// which supplies the data root and the RSS watchdog.
+// Quest alias checks on the real install: `MGRArniel01`, the cheapest quest on
+// the census shortlist (docs/formats/quest-records.md), fills its one
+// forced-reference alias, and a corpus sweep counts how much of vanilla each
+// deferred fill type affects. The report in `logs/` holds counts, alias names,
+// fill types, and editor IDs only.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -24,16 +15,9 @@ import Testing
 struct QuestAliasRealDataTests {
     private static let targetEditorID = "MGRArniel01"
 
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil)) @MainActor
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
     func fillsTheTargetQuestsAliases() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let pluginName = "Skyrim.esm"
         let file = try ESMFile(url: root.dataURL.appending(path: pluginName))
         let quests = QuestStore(file: file, pluginName: pluginName)

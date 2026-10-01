@@ -17,9 +17,9 @@
 # app-hosted unit bundle beside OpenSkyUITests, or the test host and the UI
 # runner deadlock.
 #
-# A suite counts as env-gated when its file declares the real-data root
-# (`dataRoot: GameDataRoot?`, the shape Tests/OpenSkyRealDataTests/CLAUDE.md
-# prescribes) and the type carries at least one @Test.
+# A suite counts as env-gated when its file reads `RealDataEnvironment` (the
+# gate Tests/OpenSkyRealDataTests/AGENTS.md prescribes) or declares its own
+# `dataRoot: GameDataRoot?`, and the type carries at least one @Test.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -46,6 +46,7 @@ DECLARATION = re.compile(
     r"^(?:@MainActor\s*\n)?(?:struct|final class|class|extension) ([A-Za-z0-9_]+)",
     re.M,
 )
+GATE_MARKERS = ("RealDataEnvironment.", "dataRoot: GameDataRoot?")
 problems = []
 
 
@@ -53,7 +54,7 @@ def gated_suites(folder: pathlib.Path) -> list[str]:
     suites = []
     for path in sorted(folder.rglob("*.swift")):
         text = path.read_text()
-        if "dataRoot: GameDataRoot?" not in text:
+        if not any(marker in text for marker in GATE_MARKERS):
             continue
         marks = [(m.start(), m.group(1)) for m in DECLARATION.finditer(text)]
         for index, (start, name) in enumerate(marks):

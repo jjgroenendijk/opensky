@@ -1,22 +1,8 @@
-// Env-gated QUST sweep over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP): decodes every QUST
-// in Skyrim.esm, asserts the count and link invariants, and writes the M13
-// target-quest census to gitignored logs/.
-//
-// The census is the deliverable, not a by-product. M13 picks its target quest
-// from real data the way M11 picked its demo activator from the script census:
-// the shortlist below ranks quests by how little they need that OpenSky does
-// not have yet — condition functions outside
-// `ConditionFunctionRegistry.standard`, alias fill types the runtime cannot
-// perform, and stage scripts with no fragment table. Coverage numbers are
-// asserted as well as printed, because print() never reaches the .xcresult.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable (CI has
-// no game data). Run with `make realtest`.
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format/QUST" and the "QUST Records"
-// section of "/VMAD Field"; xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-// `wbRecord(QUST, ...)` line 8759 and `wbVMADFragmentedQUST` line 2929.
+// QUST sweep over `Skyrim.esm`: count and link invariants, plus a target-quest
+// census in `logs/` that ranks quests by what OpenSky still lacks (condition
+// functions, alias fill types, stage scripts without fragments). Coverage is
+// asserted, because print() never reaches the .xcresult. Layout: UESP "QUST"
+// and "VMAD Field", and xEdit `wbRecord(QUST, ...)` and `wbVMADFragmentedQUST`.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -27,19 +13,9 @@ import Foundation
 import Testing
 
 struct QuestRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryQuestInSkyrimESM() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let header = try file.pluginHeader()
 

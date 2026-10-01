@@ -11,24 +11,14 @@ import Foundation
 import Testing
 
 struct ParticleRealDataTests {
-    /// Real data only when explicitly pointed at via the env var; the
-    /// locator's Steam-default fallback is deliberately not consulted so
-    /// machines without the override skip deterministically.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// WhiterunWorld's populated grid span is a handful of cells around the
     /// origin; the range is deliberately generous and misses throw
     /// cellNotFound, which the sweep skips.
     private static let whiterunGrid = (x: Int32(-6) ... 10, y: Int32(-8) ... 6)
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsWhiterunReferencedNIFs() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let fileSystem = VirtualFileSystem(root: root)
         let paths = try referencedModelPaths(file: file)

@@ -16,13 +16,6 @@ import simd
 import Testing
 
 struct FootstepRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// The vanilla humanoid sets, and the number of footsteps each carries per
     /// non-swimming gait. Probed 2026-08-04 through `openskycli footstep`; a
     /// load order that changes them is a real difference worth failing on.
@@ -31,9 +24,9 @@ struct FootstepRealDataTests {
         "FSTArmorLightFootstepSet", "FSTArmorHeavyFootstepSet"
     ]
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaSetsResolveTheirTagsToRealAudioFiles() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = FootstepStore(file: file)
         let sounds = SoundRecordStore(file: file)
@@ -71,9 +64,9 @@ struct FootstepRealDataTests {
 
     /// The player's own outfit decides the set: vanilla `Player` (`NPC_
     /// 00000007`) wears iron boots, whose `ARMA.SNDD` names the heavy-armor set.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func thePlayersBootsSelectTheirFootstepSet() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = FootstepStore(file: file)
         let appearance = try ActorTemplateResolver.build(from: file, localized: true)
@@ -93,9 +86,9 @@ struct FootstepRealDataTests {
     /// Drives the real graph through a second of walking and checks that at
     /// least one of the tags the vanilla default set answers to came back
     /// through the drain. This is the whole feature's load-bearing claim.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaGraphFiresTagsTheVanillaSetAnswers() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let store = FootstepStore(file: file)
         let set = try #require(store.defaultSet)
@@ -116,9 +109,9 @@ struct FootstepRealDataTests {
     /// every vanilla `MATT` is reachable from a collision mesh by its hash, the
     /// landscape textures name materials, and naming one takes the same tag to a
     /// different sound than the representative fallback does.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaMaterialsResolveAndChangeTheSound() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let materials = MaterialTypeIndex(file: file)
         let store = FootstepStore(file: file)
@@ -153,9 +146,9 @@ struct FootstepRealDataTests {
     /// through Havok, so the landscape textures have to resolve too — and a
     /// snowy one has to reach a snow material, or terrain footsteps would be
     /// resolvable but wrong.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func landscapeTexturesNameTheirMaterials() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let materials = MaterialTypeIndex(file: file)
         let group = try #require(file.topGroup(of: "LTEX"))

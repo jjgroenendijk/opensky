@@ -1,31 +1,9 @@
-// Env-gated combat loop over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md "Legal & IP"), issues #374 and
-// #424.
-//
-// The synthetic suites prove the loop's arithmetic against a fake world, and
-// every name and path they use is quoted from the census. The claims they cannot
-// make are the ones here:
-//
-// 1. the *vanilla* player graph declares the hit-reaction event and variables
-//    the loop raises — a census name the graph refuses would leave every
-//    synthetic test green and the reaction dead;
-// 2. the three reaction clip paths exist in this install and decode against a
-//    real character skeleton, including the documented substitution of a
-//    one-handed stagger for the unarmed one vanilla does not ship;
-// 3. the loop's own per-step cost, measured against the install's real combat
-//    GMSTs and a crowd of actors, so item 15.9 has a number to put beside the
-//    15.2 physics gate rather than an assumption;
-// 4. item 16.7's own acceptance line — a real Whiterun-area hostile running the
-//    whole loop against the player over the real city geometry, offscreen, with
-//    the per-step cost recorded.
-//
-// What this deliberately does *not* do is drive the app's shipping entry points
-// end to end. That route is the milestone gate's (item 15.9, issue #198, and
-// item 16.8 for M16); duplicating half of it here would give two partial answers
-// instead of one whole one.
-//
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='CombatLoopRealDataTests/vanillaGraphAcceptsTheCensusNamedRecoilNames()'`.
+// Combat loop checks on the real install that the synthetic suites cannot make:
+// the vanilla player graph declares the hit-reaction event and variables, the
+// three reaction clips decode against a real skeleton, the loop's per-step cost
+// with real combat GMSTs and a crowd, and a Whiterun-area hostile runs the full
+// loop against the player offscreen. The app's entry points are the milestone
+// gate's job, not this suite's.
 
 import Foundation
 import Metal
@@ -43,21 +21,6 @@ import simd
 import Testing
 
 struct CombatLoopRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    /// The device the Whiterun cell is built with. Nil on a machine with no
-    /// Metal 4 GPU, which skips the one case that needs geometry.
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
     /// Actors the budget measurement runs over. More than a room holds, so the
     /// number is a ceiling rather than a typical case.
     private static let crowdSize = 32
@@ -65,23 +28,18 @@ struct CombatLoopRealDataTests {
     /// Steps the budget measurement averages over.
     private static let budgetSteps = 600
 
-    /// What one fixed step of the loop may cost, milliseconds.
-    ///
-    /// An OpenSky budget, chosen the way the 15.2 step budget was: the loop runs
-    /// once per fixed step beside physics, animation and the Papyrus VM, and a
-    /// tenth of a millisecond leaves the frame to the systems that actually
-    /// draw. It is deliberately generous — the loop derives a state over a small
-    /// array and advances one clock — so a regression that trips it is a real
-    /// one.
+    /// An OpenSky budget for one fixed loop step, in milliseconds. The loop runs
+    /// beside physics, animation, and Papyrus, and does little work, so a
+    /// generous tenth of a millisecond is tripped only by a real regression.
     private static let stepBudgetMS = 0.1
 
     // MARK: - The graph
 
     /// Every name the loop raises has to resolve on the vanilla player graph.
     /// This is the one that fails loudly if a census reading was wrong.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func vanillaGraphAcceptsTheCensusNamedRecoilNames() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let bridge = try Self.bridge(root: root)
 
         for name in [CombatGraphNames.recoilStart, CombatGraphNames.recoilStop] {
@@ -103,16 +61,11 @@ struct CombatLoopRealDataTests {
 
     // MARK: - The clips
 
-    /// The three reaction clips exist in this install and decode against a real
-    /// character skeleton.
-    ///
-    /// The stagger is the interesting one: vanilla ships no unarmed stagger, so
-    /// the loader substitutes the one-handed small stagger, and this is what
-    /// proves the substitution actually binds to the same rig rather than being
-    /// a plausible-looking path.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    /// The three reaction clips decode against a real skeleton. Vanilla ships no
+    /// unarmed stagger, so this also proves the one-handed substitute binds.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyReactionClipDecodesAgainstAVanillaSkeleton() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let skeletonMeshPath = ActorAnimationClipLoader.characterRoot
             + "character assets\\skeleton.nif"
@@ -144,10 +97,10 @@ struct CombatLoopRealDataTests {
     ///
     /// The report goes to gitignored `logs/` and is linked from the PR; item
     /// 15.9 reads the number beside the 15.2 physics gate.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
     func theLoopStepStaysInsideItsBudgetWithACrowd() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let settings = CombatSettings.resolve(store: GameSettingLoader.load(root: root))
         // The install's numbers, not the fallbacks, or the measurement is of a
         // session that never loaded game data.
@@ -172,29 +125,17 @@ struct CombatLoopRealDataTests {
 
     // MARK: - The whole loop, on a real hostile
 
-    /// Item 16.7's acceptance line: a Whiterun-area hostile runs the loop
-    /// against the player — detect, engage, attack for real damage, lose the
-    /// player, search, give up and be handed back to its package — offscreen,
-    /// over the real city geometry and the install's own GMSTs, with the frame
-    /// budget recorded.
-    ///
-    /// The two runtimes are wired the way the session wires them: perception is
-    /// advanced first over the real static collision, and what it concluded is
-    /// what the fight is told. Nothing is asserted about *when* a transition
-    /// falls — that depends on where this install's guard is standing — only
-    /// that the whole sequence happens and in that order.
-    ///
-    /// The mover is deliberately absent. This is the decision layer's evidence,
-    /// and 16.4 has its own; a refused path is the honest answer here, and the
-    /// guard fights from where the level designer put it while the player walks
-    /// in. The approach commands it issued are counted and printed rather than
-    /// ignored.
-    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    /// A Whiterun-area hostile runs the loop against the player offscreen:
+    /// detect, engage, attack, lose, search, give up, and return to its package.
+    /// Perception runs first, as in the session. Only the order of transitions
+    /// is checked, not their timing. There is no mover, so the guard fights
+    /// from its placed position; its approach commands are counted.
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func aWhiterunHostileRunsTheWholeLoopAgainstThePlayer() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let scene = try WhiterunGuardFixture.buildCell(
-            root: root, device: #require(Self.device)
+            root: root, device: #require(RealDataEnvironment.device)
         )
         let located = try #require(
             WhiterunGuardFixture.locate(

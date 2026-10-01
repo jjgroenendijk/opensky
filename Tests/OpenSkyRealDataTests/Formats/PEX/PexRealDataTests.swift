@@ -8,16 +8,9 @@ import Foundation
 import Testing
 
 struct PexRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryScript() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let fileSystem = VirtualFileSystem(root: root)
         let loader = PexScriptLoader(fileSystem: fileSystem)
         let paths = loader.scriptPaths()

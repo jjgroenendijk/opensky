@@ -1,8 +1,5 @@
-// Env-gated perk-runtime spot check over the user's read-only active load
-// order (issue #497, roadmap item 20.4): grant the player a pinned vanilla
-// damage perk and assert the melee number moves in the documented direction and
-// magnitude. Counts, editor IDs and derived numbers only — no game bytes leave
-// the run.
+// Perk runtime spot check on the real load order: a pinned vanilla damage perk
+// moves the melee number in the documented direction and by the documented size.
 
 import Foundation
 @testable import OpenSkyActors
@@ -20,16 +17,6 @@ import Foundation
 import Testing
 
 struct PerkRuntimeRealDataTests {
-    /// `nonisolated` so the `.enabled(if:)` trait can read it from the sendable
-    /// closure the macro builds; the test bodies are `@MainActor` because the
-    /// runtimes they drive write through `WorldStateStore`.
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     /// A ten-damage swing, which is a sword's order of magnitude and keeps the
     /// assertion arithmetic rather than data-dependent.
     private static let baseDamage: Float = 10
@@ -49,9 +36,9 @@ struct PerkRuntimeRealDataTests {
     /// exactly 1.2× the WEAP base, and the skipped weapon tab is counted rather
     /// than silently widening the perk.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func grantingArmsmanMovesTheMeleeNumberByTheAuthoredFactor() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var (perks, store) = Self.runtime(root: root)
         let armsman = try #require(store.perk(editorID: "Armsman00"))
         let weapon = MeleeWeaponProfile(damage: Self.baseDamage, reach: 1, handType: .sword)
@@ -85,9 +72,9 @@ struct PerkRuntimeRealDataTests {
     /// `HasPerk Armsman20 == 0`. Without the `HasPerk` condition function every
     /// rank of every vanilla chain would stack.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func aLaterRankSwitchesTheEarlierOneOff() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         var (perks, store) = Self.runtime(root: root)
         let first = try #require(store.perk(editorID: "Armsman00"))
         let second = try #require(store.perk(editorID: "Armsman20"))
@@ -116,9 +103,9 @@ struct PerkRuntimeRealDataTests {
     /// twice. A caster who owns it pays half, not a quarter, which is what the
     /// no-double-count rule in `CasterRuntimePerkCost` exists for.
     @MainActor
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theHalfCostPerkHalvesARealSpellOnlyForItsOwner() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(
             plugins: plugins, recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "PERK"]

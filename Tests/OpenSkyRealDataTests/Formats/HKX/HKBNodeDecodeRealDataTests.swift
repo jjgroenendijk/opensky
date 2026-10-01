@@ -1,13 +1,6 @@
-// Env-gated node-class sweep over the user's own Skyrim SE install (read-only
-// external input, never committed — AGENTS.md Legal & IP). Decodes every
-// registered object of every behavior file under the character actor folder,
-// third-person and `_1stperson`, and asserts the milestone's full-graph rule:
-// every class those files declare has a decoder, every object of every such
-// class decodes, and no member misreads its bytes.
-//
-// The report is class names and counts only and goes to gitignored `logs/`.
-// Skips automatically when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='HKBNodeDecodeRealDataTests/decodesEveryBehaviorNodeClass()'`.
+// Node-class sweep on the real install: every class the character behavior
+// files declare has a decoder, every object decodes, and no member misreads its
+// bytes. The report in `logs/` holds class names and counts only.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation
@@ -24,21 +17,11 @@ private struct DecodeRow {
 }
 
 struct HKBNodeDecodeRealDataTests {
-    /// Real data only when explicitly pointed at via the env var, matching
-    /// HKBBehaviorCensusRealDataTests, so machines without the override skip
-    /// deterministically rather than falling back to the Steam default.
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let characterPrefix = "meshes\\actors\\character\\"
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryBehaviorNodeClass() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
         let paths = vfs.archiveEntries()
             .map(\.path)

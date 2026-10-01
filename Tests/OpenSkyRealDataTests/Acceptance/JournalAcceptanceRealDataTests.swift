@@ -1,12 +1,6 @@
-// M13.5 journal acceptance against the user's read-only Skyrim SE install
-// (issue #184). The Quests page of `quest_journal.swf` had never been driven —
-// `docs/decisions/swf-as2-scope.md` deferred its data contract to the milestone
-// that owns its data — so this test is the standing gate for that contract:
-// the target quest's title, objective and journal text reach the movie, the tab
-// strip still switches pages, and the bring-up tallies stay at zero.
-//
-// Rendered frames and numeric evidence stay in ignored `logs/`; a frame embeds
-// the user's game art and is never committed.
+// Journal acceptance on the real install: the target quest's title, objective,
+// and text reach the Quests page of `quest_journal.swf`, the tabs still switch
+// pages, and the bring-up tallies stay at zero. Frames stay in gitignored `logs/`.
 
 import Foundation
 import Metal
@@ -22,40 +16,22 @@ import MetalKit
 import Testing
 
 struct JournalAcceptanceRealDataTests {
-    /// `MGRArniel01`, the M13 target quest: the cheapest journal-visible quest
-    /// in vanilla `Skyrim.esm` by the issue-#181 census — two stages, one
-    /// objective, one forced-reference alias, no conditions.
+    /// The cheapest journal-visible quest in vanilla `Skyrim.esm`: two stages,
+    /// one objective, one forced-reference alias, and no conditions.
     private static let targetQuest = "MGRArniel01"
     private static let width = 1280
     private static let height = 720
 
-    private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    private static var canRun: Bool {
-        device != nil && dataRoot != nil
-    }
-
-    @Test(.enabled(if: Self.canRun))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func vanillaJournalShowsTheTargetQuestAndSwitchesTabs() throws {
-        let root = try #require(Self.dataRoot)
-        let device = try #require(Self.device)
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let device = try #require(RealDataEnvironment.device)
         let fileSystem = VirtualFileSystem(root: root)
         let renderer = try makeRenderer(device: device)
         let empty = try render(renderer)
 
-        let runtime = try openJournal(renderer: renderer, fileSystem: fileSystem)
+        let runtime = try JournalMovieFixture.open(renderer: renderer, fileSystem: fileSystem)
         // The tab index is the movie's own constant, not a number this test
         // remembers.
         #expect(
@@ -225,30 +201,6 @@ extension JournalAcceptanceRealDataTests {
         )
         model.select(row)
         return Session(model: model)
-    }
-
-    @MainActor
-    private func openJournal(
-        renderer: Renderer,
-        fileSystem: VirtualFileSystem
-    ) throws -> SWFMovieRuntime {
-        let movie = try SWFMovieLoader(fileSystem: fileSystem).load(
-            path: QuestJournalMovieBridge.moviePath
-        )
-        try renderer.setSWFMovie(movie)
-        renderer.swfEnabled = true
-        renderer.swfScale = 1
-        let runtime = try #require(
-            try renderer.startSWFRuntime(prepare: SystemMenuMovieBridge.prepare(runtime:))
-        )
-        try renderer.updateSWFRuntime { runtime in
-            SystemMenuMovieBridge.activate(runtime: runtime) {}
-            QuestJournalMovieBridge.activate(runtime: runtime)
-        }
-        for _ in 0 ..< GameViewController.journalActivationTicks {
-            try renderer.advanceSWFRuntime()
-        }
-        return runtime
     }
 }
 

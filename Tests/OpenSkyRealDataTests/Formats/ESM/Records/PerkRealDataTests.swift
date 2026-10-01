@@ -1,7 +1,6 @@
-// Env-gated PERK sweep over the user's read-only active load order: decode
-// every record, pin a few well-known perks, and report the entry-point
-// histogram that scopes which entry points the perk runtime has to implement
-// first (issue 20.4). Counts and editor IDs only — no game bytes leave the run.
+// PERK sweep on the real load order: every record decodes, a few known perks
+// are pinned, and an entry-point histogram shows which entry points the perk
+// runtime needs first. Counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -10,16 +9,9 @@ import Foundation
 import Testing
 
 struct PerkRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryPerkRecordAndReportsTheEntryPointHistogram() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let plugins = ActivePluginFiles.load(root: root)
         let index = RecordIndex(plugins: plugins, recordTypes: ["MGEF", "SPEL", "SCRL", "PERK"])
         let definitions = index.definitions(of: "PERK")
@@ -119,9 +111,9 @@ struct PerkRealDataTests {
     /// chain: vanilla authors 1 on every rank of `Armsman`, whose chain is five
     /// records long, and xEdit computes the rank count it displays after load
     /// rather than reading it. Pinned so nothing starts trusting the byte.
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theDeclaredRankCountDoesNotTrackTheRankChain() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let index = RecordIndex(
             plugins: ActivePluginFiles.load(root: root),
             recordTypes: ["PERK"]

@@ -1,9 +1,5 @@
-// Real-install perception evidence (issue #202, roadmap item 16.6): the
-// detection GMSTs as the shipped game carries them, and a real Whiterun guard
-// picking up a player who walks toward it across the real city geometry.
-//
-// No game bytes or frames leave the read-only install; the guard's identity,
-// the state transitions and the timings are printed into the realtest run.
+// Perception on the real install: the shipped detection GMSTs, and a Whiterun
+// guard that notices a player walking toward it over the real city geometry.
 
 import Foundation
 import Metal
@@ -29,24 +25,11 @@ struct PerceptionRealDataTests {
     /// approach into a sequence of states rather than one jump.
     private static let stepsPerStride = 20
 
-    nonisolated private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
-    nonisolated private static let device: MTLDevice? = {
-        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4)
-        else { return nil }
-        return device
-    }()
-
     // MARK: - Provenance
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func everyVanillaDetectionSettingResolvesFromTheLoadOrder() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let settings = DetectionSettings.resolve(
             store: GameSettingLoader.load(root: root)
         )
@@ -78,11 +61,11 @@ struct PerceptionRealDataTests {
 
     // MARK: - The guard
 
-    @Test(.enabled(if: Self.dataRoot != nil && Self.device != nil))
+    @Test(.enabled(if: RealDataEnvironment.canRender))
     func aWhiterunGuardDetectsTheApproachingPlayer() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let scene = try WhiterunGuardFixture.buildCell(
-            root: root, device: #require(Self.device)
+            root: root, device: #require(RealDataEnvironment.device)
         )
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let located = try #require(

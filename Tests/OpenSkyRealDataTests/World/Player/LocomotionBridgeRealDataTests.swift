@@ -1,17 +1,8 @@
-// Env-gated locomotion drive over the user's own Skyrim SE install
-// (read-only external input, never committed — AGENTS.md "Legal & IP").
-//
-// The vanilla player behavior graph (`0_master.hkx`, the entry point all three
-// character files name) is loaded, bound to the locomotion bridge, and driven
-// by a scripted input sequence through the real `WalkController` over the
-// launch cell's real LAND terrain. What is asserted is numeric and device-free:
-// monotone forward travel bounded by the gait the install's own data resolves,
-// a jump arc that leaves the ground and lands, and not one census name the
-// graph fails to declare.
-//
-// The per-step trace goes to gitignored `logs/`. Skips automatically when
-// OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='LocomotionBridgeRealDataTests/drivesTheVanillaGraphThroughACell()'`.
+// Locomotion drive on the real install: the vanilla player graph
+// (`0_master.hkx`) on the locomotion bridge, driven by scripted input through
+// `WalkController` over the launch cell's LAND. Travel moves forward within the
+// install's gait speed, a jump leaves the ground and lands, and every census
+// name is declared. The per-step trace goes to `logs/`.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -24,13 +15,6 @@ import simd
 import Testing
 
 struct LocomotionBridgeRealDataTests {
-    private static let dataRoot: GameDataRoot? = {
-        let environment = ProcessInfo.processInfo.environment
-        guard let path = environment[GameDataLocator.environmentKey], !path.isEmpty
-        else { return nil }
-        return try? GameDataLocator.locate()
-    }()
-
     private static let behaviorPath =
         "meshes\\actors\\character\\behaviors\\0_master.hkx"
     private static let skeletonPath =
@@ -39,9 +23,9 @@ struct LocomotionBridgeRealDataTests {
     private static let step = LocomotionDriveHarness.step
     private static let secondOfSteps = LocomotionDriveHarness.secondOfSteps
 
-    @Test(.enabled(if: Self.dataRoot != nil))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func drivesTheVanillaGraphThroughACell() throws {
-        let root = try #require(Self.dataRoot)
+        let root = try #require(RealDataEnvironment.dataRoot)
         let harness = try harness(root: root)
         let configuration = harness.bridge.configuration
 
