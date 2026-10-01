@@ -104,9 +104,11 @@ order. No class references and no dictionary lookups inside the loop.
 Examples: `SkinningPalette` keeps its bone matrices in `[float4x4]`. `HKABonePose` and
 `RagdollPose` are plain value types, stored in arrays.
 
+The same goes for work whose inputs change only at load: a sort, a template resolve, or a bounds
+union. Do it when the inputs change and store the result, not on every frame.
+
 Where it applies: only a per-frame loop where a measurement, such as an Instruments Time
-Profiler run, shows a cost. The audit is 30.34.1
-([#653](https://github.com/jjgroenendijk/opensky/issues/653)).
+Profiler run, shows a cost. [Profiling](/testing.md#profiling) says how to record one.
 
 Where it does not apply: everything else. Code that runs once per cell load or once per user
 action stays in the clearest shape. A layout change without a measurement is a performance

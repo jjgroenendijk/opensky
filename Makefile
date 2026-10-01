@@ -349,7 +349,7 @@ test-perms: ## Check the one-time macOS permission grants tests need
 # memory watchdog (CAP=MB sets its limit). realdata-build compiles them without
 # running, and verify-build includes that.
 
-.PHONY: realtest realtest-all realdata-build realtest-perf realtest-npc-perf
+.PHONY: realtest realtest-all realdata-build realtest-perf realtest-npc-perf profile
 
 # One test through the fast path of test-fast (issue #417): a warm rerun pays
 # only for the test itself.
@@ -385,6 +385,10 @@ realtest-npc-perf: link-shared ## Measure NPC behavior graphs at the mover cap, 
 	@./tools/realtest.sh -O \
 		-t 'OpenSkyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
 		$(if $(CAP),-c $(CAP),)
+
+profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
+	@$(MAKE) --no-print-directory cli CONFIG=Release
+	@./tools/profile.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(or $(MODE),walk) $(ARGS)
 
 ##@ Housekeeping
 

@@ -97,6 +97,16 @@ if it survived. `launchd` starts a new one on the next run.
 
 Retires when a fresh daemon stops going stale over days.
 
+## xctrace --launch never starts the process
+
+Observed 2026-10-01 on xctrace 27.0. `xcrun xctrace record --template 'Time Profiler' --launch --
+openskycli ...` printed "Launching process" and then waited for more than ten minutes. The CLI sat
+at 0% CPU with about 90 KB resident, so it never ran its first line. Starting the CLI first and
+attaching with `--attach <pid>` recorded normally, and `tools/profile.sh` does that
+([profiling](/testing.md#profiling)).
+
+Retires when a `--launch` recording of the CLI runs to completion.
+
 ## Memory watchdog for heavy real-data tests
 
 Observed 2026-07-20. A runaway real-data test used about 30 GB of resident memory and locked the

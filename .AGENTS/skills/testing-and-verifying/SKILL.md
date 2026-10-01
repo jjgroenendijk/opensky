@@ -28,6 +28,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Rendering or shaders | Unit tests plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make realtest T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |
+| A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
 | Milestone acceptance | `make realtest-all`, `make test-sanitize`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`.

@@ -52,5 +52,17 @@
       "Runs make verify-build once at the end, in the background, and reads the errors from the notification without polling or grepping the transcript",
       "Does not delete .swiftmodule folders by hand"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "The walk feels slow. Find which per-frame loop costs the most.",
+    "files": [],
+    "expected_behavior": [
+      "Runs make profile (Release build, xctrace attached to the running bench) instead of timing a Debug build",
+      "Reads only the samples under the frame function, not the background cell builds",
+      "Opens one GitHub issue per finding instead of fixing it inline"
+    ]
   }
 ]
