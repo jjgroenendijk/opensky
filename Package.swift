@@ -548,7 +548,8 @@ targets += feature(
     ],
     tests: [
         "OpenSkyActorsInterface", "OpenSkyBehavior", "OpenSkyCombatFixtures",
-        "OpenSkyCombatInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData",
+        "OpenSkyCombatInterface", "OpenSkyFormatsAnimation", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData",
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
         "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyWorldState", "PhysicsTesting"
     ]

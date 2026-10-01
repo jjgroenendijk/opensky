@@ -59,6 +59,11 @@ port `AudioWorld` in `Sources/OpenSkyWorld/Session/`, answered by `AudioWorldAda
 coordinator sits in `OpenSkyWorld`, not `OpenSkyAudio`, because the directors it owns and
 `LipSyncPlayback` live there. It is also the panel's `AudioControlProviding`. The view
 controller conforms through `AudioControlForwarding`, which forwards every member to it.
+The ragdoll domain has `RagdollCoordinator` and `RagdollSessionWorld` in `Sources/OpenSkyCombat/`,
+answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is the runtime's
+`RagdollWorldSeam`. The player has `PlayerCore`, `PlayerCoordinator`, and `PlayerWorld` in
+`Sources/OpenSkyWorld/Player/`, and the Face Morphs panel has `FaceMorphCoordinator` and
+`FaceMorphWorld`. `PlayerWorldAdapter` answers both ports.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
 `Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
 state machine: it returns hold, face, and release effects, and the coordinator sends them
