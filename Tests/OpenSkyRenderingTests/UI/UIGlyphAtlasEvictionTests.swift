@@ -1,7 +1,6 @@
-// Eviction tests for the shared glyph atlas (issue #127): a fixed-size atlas
-// shared by every movie must hand cells back when a movie is released, or a
-// host that swaps movies exhausts the shelf and later text vanishes. Fixtures
-// are synthetic rectangle paths — no game content, no CoreText dependency.
+// Shared glyph atlas eviction: a released movie must return its cells, or a
+// host that swaps movies fills the shelf and text vanishes. Fixtures are
+// synthetic rectangle paths.
 
 import CoreGraphics
 @testable import OpenSkyRendering

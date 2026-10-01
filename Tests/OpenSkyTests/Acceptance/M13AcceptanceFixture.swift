@@ -1,20 +1,7 @@
-// The records and compiled scripts behind `M13AcceptanceChain` (issue #185).
-//
-// Split from the chain because the chain is the wiring and this is the data:
-// one QUST assembled field by field from the published layout, two REFR
-// records, and the five PEX objects a quest session needs. Every byte is built
-// in code (AGENTS.md "Legal & IP boundary").
-//
-// The scripts are shaped the way a real install's are, which is what makes the
-// dispatch real rather than arranged:
-//
-// * `Quest` is a parent class whose members are all `native`, exactly as the
-//   shipped `Quest.psc` declares them, so `theQuest.SetStage(10)` resolves as
-//   the native `Quest.SetStage` rather than under the calling script's name.
-// * `QF_OpenSkyGateQuest_00000900` is the generated fragment script the VMAD
-//   tail names, extending `Quest` so its own `Self` is the quest.
-// * `OpenSkyGateLeverScript` reaches its quest through an automatic VMAD
-//   property, which is how an authored lever names the quest it advances.
+// Records and compiled scripts behind `M13AcceptanceChain`: one QUST, two REFR,
+// and five PEX objects. `Quest` has only `native` members, as in `Quest.psc`;
+// the fragment script extends `Quest`; the lever finds its quest through an
+// automatic VMAD property.
 
 import FormatsESMTesting
 import FormatsPEXTesting
@@ -33,13 +20,9 @@ enum M13AcceptanceFixture {
 
     // MARK: - The QUST record
 
-    /// The gate's quest: a main-quest-typed, journal-visible record with two
-    /// stages carrying journal text, one objective, one attached quest script,
-    /// a fragment table whose single entry runs `Fragment_0` for stage 10, and
-    /// one forced-reference alias carrying a `ReferenceAlias` script.
-    ///
-    /// Deliberately *not* start-game-enabled: the gate starts it, so the start
-    /// is a step of the loop rather than a property of the fixture.
+    /// The gate's quest: main-quest type, journal-visible, two stages with
+    /// text, one objective, a script, a stage-10 fragment, and a forced alias.
+    /// Not start-game-enabled, because starting it is a step of the loop.
     static func quest() throws -> Quest {
         let tail = QuestFixture.fragmentTail(
             fileName: Chain.fragmentScript,
@@ -123,19 +106,10 @@ enum M13AcceptanceFixture {
         )
     }
 
-    /// The generated fragment script:
-    ///
-    /// ```papyrus
-    /// Function Fragment_0()
-    ///     Probe.Note("fragment.10")
-    ///     SetObjectiveDisplayed(10)
-    /// EndFunction
-    /// ```
-    ///
-    /// The `SetObjectiveDisplayed` call is what makes the fragment mutate world
-    /// state rather than only prove it ran, and it is the shape a Creation Kit
-    /// stage fragment really has — the generated script extends `Quest`, so an
-    /// unqualified objective call dispatches on the quest itself.
+    /// The generated fragment script: `Fragment_0()` calls
+    /// `Probe.Note("fragment.10")` and `SetObjectiveDisplayed(10)`. It extends
+    /// `Quest`, so the unqualified call dispatches on the quest, as in a real
+    /// stage fragment.
     private static func fragmentScriptObject() -> PexObject {
         let body = PexFixture.runtimeFunction(instructions: [
             PapyrusTestSupport.instruction(
@@ -174,20 +148,9 @@ enum M13AcceptanceFixture {
         )
     }
 
-    /// The lever:
-    ///
-    /// ```papyrus
-    /// Quest Property GateQuest Auto
-    ///
-    /// Event OnActivate(ObjectReference akActionRef)
-    ///     Probe.Seen(akActionRef)
-    ///     GateQuest.SetStage(10)
-    /// EndEvent
-    /// ```
-    ///
-    /// assembled as the instructions a compiler emits for it. The `Probe.Seen`
-    /// call is the gate's only addition and observes `akActionRef` without
-    /// touching the world.
+    /// The lever: `Quest Property GateQuest Auto`, and `OnActivate` calls
+    /// `Probe.Seen(akActionRef)` then `GateQuest.SetStage(10)`, assembled as a
+    /// compiler would emit it. `Probe.Seen` only observes.
     private static func leverScriptObject() -> PexObject {
         let body = PexFixture.runtimeFunction(
             parameters: [PexTypedName(name: "akActionRef", typeName: "ObjectReference")],

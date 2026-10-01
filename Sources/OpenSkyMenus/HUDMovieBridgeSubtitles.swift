@@ -1,39 +1,8 @@
-// Gameplay subtitles on the vanilla HUD (issue #205, roadmap item 17.3, scope
-// point 6). Satellite of UI/HUDMovieBridge.swift.
-//
-// The field was located when the HUD came up in M8.4.2 and deliberately left
-// hidden: `SubtitleTextHolder` ships with a visible authoring sample in it, and
-// `HUDMovieBridge.setAuthoredPlaceholderTextEnabled(false:)` hides the holder
-// rather than showing the movie's own placeholder text in normal gameplay. The
-// comment there reserved it for this milestone; this file is that milestone.
-//
-// ## The measured shape
-//
-// `openskycli swf action-run --movie hudmenu.swf --tree-depth 3` puts one text
-// field under the holder:
-//
-//   /HUDMovieBaseInstance/SubtitleTextHolder          the holder clip
-//   /HUDMovieBaseInstance/SubtitleTextHolder/textField  the field itself
-//
-// and `--dump /HUDMovieBaseInstance` shows `SubtitleText` as a property of the
-// HUD instance rather than as a display node, which is the field's bound
-// variable name: `SWFMovieRuntime.setText(_:of:)` writes the runtime content
-// *and* the binding, so one call keeps the drawn string and the variable the
-// movie reads in step.
-//
-// The holder's own properties (`All`, `StealthMode`, `Swimming`, `HorseMode`,
-// `CartMode`, `WarHorseMode`, `Favor`, `MovementDisabled`) are the HUD-mode
-// flags that decide when the vanilla HUD shows it. OpenSky drives none of them:
-// it has one HUD mode, so the holder's visibility is set directly and the flags
-// are left as the movie authored them.
-//
-// ## What this deliberately does not do
-//
-// Nothing here times a line out. Precise end-of-line timing arrives with item
-// 17.5's playback clock; until then the caller clears on advance and on exit,
-// which issue #205 states as the interim rule. A subtitle that stayed up
-// because nothing told it to go down would be a bug in the caller, and
-// `subtitleText(runtime:)` is here so a test can prove it did not happen.
+// Gameplay subtitles on the vanilla HUD. Measured with `swf action-run`: the
+// field is `/HUDMovieBaseInstance/SubtitleTextHolder/textField`, bound to the
+// `SubtitleText` variable, so `setText(_:of:)` updates both. The holder's
+// HUD-mode flags stay as authored; OpenSky sets its visibility directly.
+// Nothing here times a line out; the caller clears it.
 
 import Foundation
 import OpenSkyFormatsSWF

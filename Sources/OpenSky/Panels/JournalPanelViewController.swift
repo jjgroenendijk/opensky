@@ -1,16 +1,6 @@
-// World > Quests & Journal destination panel (issue #184): the sidebar
-// verification surface for quest state and the vanilla journal page. Thin
-// composition of self-contained sections on the shared panel framework, the
-// same shape as ScriptsPanelViewController. Exact sidebar path and controls:
-// docs/engine/journal.md.
-//
-// Section order follows the order a session reaches for them: what the quests
-// are doing, then how to drive one by hand, then what the movie made of it.
-//
-// It is a destination of its own rather than sections under World > Scripts
-// because quest *state* is not a script fact: a quest runs, reaches stages and
-// shows objectives whether or not it carries a single line of Papyrus, and
-// World > Scripts > Quests deliberately counts only the script side.
+// World > Quests & Journal: quest state and the vanilla journal page
+// (docs/engine/journal.md). It is not under World > Scripts because a quest
+// runs and shows objectives whether or not it has any Papyrus.
 
 import AppKit
 import OpenSkyMenus

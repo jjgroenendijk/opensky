@@ -1,10 +1,6 @@
-// `swf action-sweep`: parses every vanilla
-// `interface\*.swf` movie, decodes its full action side (main timeline,
-// sprites, DoInitAction, CLIPACTIONS) through `SWFActionInventory`, and prints
-// the opcode/host-API/clip-event/structure inventory the census page
-// (`docs/decisions/swf-as2-census.md`) draws its numbers from. This command
-// only parses args and prints; the tallying lives in
-// `Sources/OpenSkyFormatsSWF/SWF/SWFActionInventory.swift` and is unit-tested there.
+// `swf action-sweep`: decode the action side of every vanilla
+// `interface\*.swf` and print the inventory that
+// `docs/decisions/swf-as2-census.md` cites. Tallying is in `SWFActionInventory`.
 
 import Foundation
 import OpenSkyFormatsSWF

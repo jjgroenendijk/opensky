@@ -1,8 +1,4 @@
-// `Game.GetPlayer` (issue #172): the one `Game` native with an engine behind
-// it, and the way a script names the player.
-//
-// Fixtures are built in code — never extracted game files (AGENTS.md "Legal &
-// IP boundary").
+// `Game.GetPlayer`: the one `Game` native with an engine behind it.
 
 import FormatsESMTesting
 import Foundation

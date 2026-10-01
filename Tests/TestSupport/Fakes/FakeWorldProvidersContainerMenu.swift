@@ -1,9 +1,5 @@
-// The container/barter-menu half of the world-provider fake (issue #179), in
-// its own file so `FakeWorldProviders` stays inside the lint caps. Stored state
-// lives on the class; everything here is behaviour.
-//
-// The two lists are deliberately different so a test can tell which side the
-// panel is showing without inspecting the model.
+// The container and barter menu part of the world-provider fake, split for the
+// lint caps. The two lists differ so a test can tell which side is showing.
 
 @testable import OpenSky
 @testable import OpenSkyFormatsESM

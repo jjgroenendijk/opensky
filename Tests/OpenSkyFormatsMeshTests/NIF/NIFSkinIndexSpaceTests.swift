@@ -71,11 +71,9 @@ struct NIFSkinIndexSpaceTests {
         #expect(skinning.bindPoseMatrices.count == 3)
     }
 
-    /// Vanilla first-person armour (issue #190) carries vertices whose
-    /// top-level influence lanes are all zero while the partition-local ones
-    /// for the same vertex are populated. Reading the empty global lanes gave
-    /// a zero-total vertex and threw the whole file away, so an empty global
-    /// entry defers to the partition when the partition has influences.
+    /// Vanilla first-person armour has vertices with all-zero global influence
+    /// lanes but filled partition-local ones. An empty global entry defers to
+    /// the partition when the partition has influences.
     @Test func fallsBackToPartitionInfluencesWhenTheGlobalEntryIsEmpty() throws {
         let globalWeights: [SIMD4<Float>] = [
             SIMD4(1, 0, 0, 0), .zero, SIMD4(1, 0, 0, 0)

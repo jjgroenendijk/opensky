@@ -24,10 +24,9 @@ public enum LIPFixture: Sendable {
         }
     }
 
-    /// `headerPadding` reproduces the alternate header family, which carries
-    /// extra bytes between the frame count and the tuple width (issue #449).
-    /// `slotsPerFrame` drives both the grid and the duration field, because the
-    /// two are the same fact on disk.
+    /// `headerPadding` builds the header family with extra bytes between the
+    /// frame count and the tuple width. `slotsPerFrame` sets both the grid and
+    /// the duration, because they are one fact on disk.
     public static func file(
         version: UInt32 = 1,
         frameCount: UInt16 = 2,

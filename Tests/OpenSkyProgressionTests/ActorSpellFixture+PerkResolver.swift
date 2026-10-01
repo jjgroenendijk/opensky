@@ -6,8 +6,8 @@ import OpenSkyMagicTesting
 @testable import OpenSkyProgression
 
 extension ActorSpellFixture {
-    /// The perk half of the same template resolution (issue #497), over the
-    /// same NPC_ records.
+    /// The perk half of the same template resolution, over the same NPC_
+    /// records.
     static func perkResolver(npcs: [ActorBase]) -> ActorPerkBaselineResolver {
         ActorPerkBaselineResolver(
             templates: ActorTemplateResolver(

@@ -1,12 +1,6 @@
-// `swf inventory-menu`: drive `interface\inventorymenu.swf` through
-// `InventoryMenuMovieBridge` with a real player inventory and report what the
-// movie built (M12.2.2, issue #289).
-//
-// This is the bring-up gate for the menu's data contract, in the CLI rather
-// than only in a test because the real-data XCTest host is unreliable on this
-// machine (docs/tools/environment.md). It only parses args and prints; the
-// bridge and the row list it publishes live in `Sources/OpenSkyMenus/` and are unit
-// tested there against synthetic fixtures.
+// `swf inventory-menu`: drive `inventorymenu.swf` through
+// `InventoryMenuMovieBridge` with a real inventory. A CLI gate because the
+// real-data XCTest host is unreliable here (docs/tools/environment.md).
 
 import Foundation
 import OpenSkyFormatsSWF

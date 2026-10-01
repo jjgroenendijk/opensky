@@ -1,10 +1,6 @@
-// Alias substitution in journal text (issue #184): the `<Alias=Name>` family
-// the Creation Kit documents under text replacement, resolved through the #183
-// fill table.
-//
-// The tag syntax is not invented here — `openskycli swf quest-journal --text`
-// prints resolved vanilla journal strings, and `<Alias=QuestNameLocation>` is
-// one of them verbatim. The quests below are synthetic all the same.
+// Alias substitution in journal text: the `<Alias=Name>` family from the
+// Creation Kit text replacement page. Vanilla journal strings contain
+// `<Alias=QuestNameLocation>` verbatim; the quests below are synthetic.
 
 import FormatsESMTesting
 import Foundation

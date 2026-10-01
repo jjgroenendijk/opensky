@@ -1,15 +1,7 @@
-// One whole fight against a real Whiterun guard (issue #424, roadmap item
-// 16.7), driven step by step so `CombatLoopRealDataTests` can assert on the
-// sequence rather than on an end state.
-//
-// Support for the gated suite beside it, in its own file for the lint file cap.
-// The two runtimes are wired the way `GameViewController` wires them: perception
-// is advanced over the real static collision first, and what it concluded is
-// what the fight is told. Nothing here reads a clock, so the sequence is a pure
-// function of the step counts below.
-//
-// Read-only external input: the guard's placement and the city's collision come
-// out of the install and stay there (AGENTS.md "Legal & IP boundary").
+// One whole fight against a real Whiterun guard, driven step by step so
+// `CombatLoopRealDataTests` can check the sequence. Wired like
+// `GameViewController`: perception runs over real collision first. No clock is
+// read, so the sequence depends only on the step counts.
 
 import Foundation
 @testable import OpenSkyActorsInterface

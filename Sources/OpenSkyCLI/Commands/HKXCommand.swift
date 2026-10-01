@@ -1,6 +1,6 @@
 // `hkx <key>`: fetch one Havok packfile through the VFS and dump its
 // container inventory — header layout, section table, class-name table, and
-// the fixup-derived object list. Same parser the engine uses (todo 6.1), so a
+// the fixup-derived object list. Same parser the engine uses, so a
 // parse failure here reproduces what later animation/skeleton loading sees.
 
 import Foundation
@@ -33,7 +33,7 @@ enum HKXCommand {
         HKXTopologyDump.print(file: file)
     }
 
-    /// Behavior census (todo 14.1): the same role, variable, event, and
+    /// Behavior census: the same role, variable, event, and
     /// referenced-file fields the env-gated sweep reports, for one file, so any
     /// behavior file is inspectable without the test suite. A census failure is
     /// a warning: the container-level dump above still stands on its own.

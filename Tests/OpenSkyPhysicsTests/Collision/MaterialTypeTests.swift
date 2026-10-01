@@ -1,5 +1,4 @@
-// MATT decoding and the two lookups into it (issue #358): a NIF's Havok
-// material value, and an LTEX's MNAM. Synthetic records only.
+// MATT decoding and its two lookups: a NIF's Havok material and an LTEX MNAM.
 
 import FormatsESMTesting
 import Foundation

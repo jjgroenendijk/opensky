@@ -165,7 +165,7 @@ struct HUDMovieBridgeTests {
         #expect(arguments[5] == .boolean(true))
     }
 
-    // MARK: - Subtitles (issue #205)
+    // MARK: - Subtitles
 
     /// The holder and its field, in the shape `swf action-run --movie
     /// hudmenu.swf --tree-depth 3` measured off the vanilla movie.

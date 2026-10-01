@@ -1,25 +1,7 @@
-// Builds a `JournalMenuModel` out of live quest state (issue #184). Satellite
-// of UI/JournalMenuModel.swift, which holds the value types.
-//
-// Two rules decide what a row says, and both are quest-record facts rather than
-// journal conventions invented here:
-//
-// * A quest appears at all only when its `Kind` is not `.none`. Type 0 "keeps
-//   the quest out of the journal entirely" (docs/formats/quest-records.md, from the
-//   DNAM type field), which is why `QuestStore.journalQuests()` already filters
-//   it and why the row set is filtered the same way.
-// * An objective appears only while its `isDisplayed` flag is set, the flag
-//   `SetObjectiveDisplayed` exists to control
-//   (<https://ck.uesp.net/wiki/SetObjectiveDisplayed_-_Quest>).
-//
-// Text resolution goes through `LocalizedStrings`, never through a table kind
-// picked by feel. `openskycli swf quest-journal --text` resolves each field out
-// of all three tables and prints what each answered, and on vanilla
-// `Skyrim.esm` exactly one answers per field: the quest FULL and the objective
-// NNAM come from `.strings`, and the stage CNAM journal paragraph — the one
-// long-form field of the three — comes from `.dlstrings`. That split matches
-// the general rule docs/formats/records.md already states for the tables
-// (FULL -> `.strings`, long-form body text -> `.dlstrings`).
+// Builds a `JournalMenuModel` from quest state. A quest is listed only when its
+// `Kind` is not `.none` (docs/formats/quest-records.md); an objective only
+// while `isDisplayed` is set. Text goes through `LocalizedStrings`: FULL and
+// NNAM resolve from `.strings`, the CNAM paragraph from `.dlstrings`.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -59,16 +41,8 @@ nonisolated extension JournalMenuModel {
 
 extension JournalMenuModel {
     /// Everything the journal page shows, sampled from one quest runtime.
-    ///
-    /// - Parameters:
-    ///   - runtime: the quest state layer; its store is the session's.
-    ///   - strings: the plugin's string tables, or nil for a plugin that writes
-    ///     its text inline rather than into tables.
-    ///   - aliases: alias fills, used to substitute the alias tokens the
-    ///     journal text carries (issue #183). `.empty` leaves tokens as
-    ///     written, which is what a session with no fills would show anyway.
-    ///   - showsCompleted: which of the two lists to select into.
-    ///   - selectedIndex: the row to keep selected, clamped into the list.
+    /// `strings` is nil for a plugin with inline text. `.empty` aliases leave
+    /// tokens as written. `selectedIndex` is clamped into the list.
     @MainActor
     public static func build(
         runtime: any QuestAccess,
@@ -164,13 +138,8 @@ extension JournalMenuModel {
         return display.isCompleted ? .completed : .displayed
     }
 
-    /// The journal paragraphs of every reached stage, in stage order.
-    ///
-    /// A stage may carry several QSDT log entries and the vanilla journal picks
-    /// between them by condition. Conditions are not evaluated here — the page
-    /// has no condition context — so the file-order default
-    /// `Quest.Stage.primaryLogEntry` is taken, and a stage index appearing more
-    /// than once contributes each of its texts in file order.
+    /// The journal paragraphs of every reached stage, in stage order. The page
+    /// has no condition context, so it takes `Quest.Stage.primaryLogEntry`.
     private static func logEntries(
         of quest: Quest,
         state: QuestRuntimeState,

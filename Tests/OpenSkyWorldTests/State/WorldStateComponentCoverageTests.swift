@@ -72,12 +72,12 @@ struct WorldStateComponentCoverageTests {
         )
     }
 
-    /// One actor knowing a spell and holding it in a hand (issue #470).
+    /// One actor knowing a spell and holding it in a hand.
     private var spellbook: SpellbookState {
         SpellbookState(known: [key(0x600)], readBooks: [key(0x601)], rightHand: key(0x600))
     }
 
-    /// One actor carrying a timed magic effect (issue #469).
+    /// One actor carrying a timed magic effect.
     private var activeEffects: ActiveEffectState {
         ActiveEffectState(effects: [
             ActiveEffect(
@@ -92,36 +92,35 @@ struct WorldStateComponentCoverageTests {
         ])
     }
 
-    /// One owner with a drained enchanted weapon and a worn item owning an effect
-    /// (issue #472).
+    /// One owner with a drained enchanted weapon and a worn item owning an
+    /// effect.
     private var enchantedItems: EnchantedItemState {
         EnchantedItemState(charges: [0x700: 72], wornEffects: [0x701: [1]])
     }
 
-    /// One actor owning a perk (issue #497). The key is a placement's, which
-    /// the store does not care about any more than it does for a quest.
+    /// One actor owning a perk. The key is a placement's; the store does not
+    /// care.
     private var perks: PerkState {
         PerkState(owned: [key(0x800)])
     }
 
-    /// One actor in a faction (issue #503). Its own subject is
-    /// `FactionRuntimeTests`.
+    /// One actor in a faction. Its own subject is `FactionRuntimeTests`.
     private var memberships: ActorFactionState {
         ActorFactionState(memberships: [
             ActorFactionMembership(faction: key(0x900), rank: 2)
         ])
     }
 
-    /// One actor a script gave a relationship rank (issue #508). Its own subject
-    /// is `RelationshipRuntimeTests`.
+    /// One actor a script gave a relationship rank. Its own subject is
+    /// `RelationshipRuntimeTests`.
     private var relationships: ActorRelationshipState {
         ActorRelationshipState(overrides: [
             ActorRelationshipOverride(other: key(0x901), rank: -3)
         ])
     }
 
-    /// One levelled player (issue #499). Normally keyed by `ReferenceKey.player`
-    /// rather than by a placement, which the store does not care about either.
+    /// One levelled player. Normally keyed by `ReferenceKey.player`; the store
+    /// does not care.
     private var crimeLedger: CrimeLedgerState {
         CrimeLedgerState(entries: [
             CrimeLedgerEntry(

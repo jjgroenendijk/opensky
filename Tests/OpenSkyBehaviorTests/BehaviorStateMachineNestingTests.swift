@@ -1,5 +1,4 @@
-// Nested machines, clip synchronization, and determinism across both
-// (issue #330). Synthetic graphs built in code, nothing from the install.
+// Nested machines, clip synchronization, and determinism across both.
 
 import BehaviorTesting
 import Foundation
@@ -167,9 +166,8 @@ struct BehaviorStateMachineNestingTests {
 
     // MARK: - Determinism
 
-    /// The #187 determinism test extended to a nested graph driven through a
-    /// transition: two instances over the same decoded objects, stepped with
-    /// the same events, produce the same poses and the same event log.
+    /// Determinism on a nested graph driven through a transition: two instances
+    /// stepped with the same events give the same poses and event log.
     @Test func twoNestedInstancesStepIdentically() {
         let fixture = NestedGraph()
         let first = fixture.instance()

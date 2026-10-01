@@ -1,10 +1,6 @@
-// The melee state machine (issue #195, roadmap item 15.4): draw and sheath
-// follow the clip annotations, the attack phase follows the events the graph
-// fires back, and a stagger takes the swing away.
-//
-// Every name here comes from the M14 behavior census over the install
-// (`logs/hkx-behavior-census.log`); the fixture is a list of strings, which is
-// exactly what the queue hands a consumer.
+// The melee state machine: draw and sheath follow clip annotations, attack
+// phase follows graph events, and a stagger cancels the swing. Event names
+// come from the behavior census over the install.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
@@ -40,9 +36,8 @@ struct MeleeCombatStateTests {
         #expect(state.drawState == .sheathed)
     }
 
-    /// Five of the vanilla equip clips carry no `BeginWeaponDraw` at all, so
-    /// the graph's own end-of-equip transition has to move the state too
-    /// (issue #403).
+    /// Five vanilla equip clips have no `BeginWeaponDraw`, so the graph's
+    /// end-of-equip transition must move the state too.
     @Test func theGraphsOwnEquipTransitionAlsoReportsTheWeaponInHand() {
         var state = MeleeCombatState()
         state.handle(CombatGraphNames.weaponDraw)

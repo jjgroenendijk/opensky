@@ -1,8 +1,6 @@
-// World > Scripts verification-surface coverage (issue #278): the panel the
-// registry factory builds, the literal accessibility-id contract, the readouts
-// each section renders from one snapshot, and the provider round-trip for every
-// control — which tick count each step button carries, and how the pause
-// checkbox and the destination's override state stay in step.
+// World > Scripts: the registry-built panel, literal ids, readouts from one
+// snapshot, and each control's provider call, including step tick counts and
+// the pause checkbox staying in step with the override state.
 
 import AppKit
 @testable import OpenSky
@@ -190,8 +188,8 @@ struct ScriptsPanelTests {
         #expect(panel.nativeTallySection.readout.contains("1. Game.GetPlayer 8"))
     }
 
-    /// The alias inspector is the sidebar path for issue #183: picking a quest
-    /// shows every alias it declares, what should fill it, and what did.
+    /// The alias inspector: picking a quest shows each alias, what should fill
+    /// it, and what did.
     @Test @MainActor
     func questAliasInspectorShowsFilledAndEmptyAliases() {
         let panel = ScriptsPanelViewController()

@@ -1,8 +1,5 @@
-// Renderer-routed input for the system menu bridge (issue #300). Satellite of
-// UI/SystemMenuMovieBridge.swift.
-//
-// `handle(_:runtime:)` mutates the runtime and nothing else. A live movie must
-// instead enter through this overload so the renderer pulls the regenerated
+// Renderer-routed input for the system menu bridge. `handle(_:runtime:)` only
+// mutates the runtime; a live movie enters here so the renderer pulls the new
 // command stream before the next draw.
 
 import Foundation

@@ -1,16 +1,6 @@
-// The projectile runtime end to end (issue #196, roadmap item 15.5, scope
-// points 3 to 5).
-//
-// The issue's acceptance in one file: "deterministic tests pin a full
-// trajectory (spawn, apex, impact point) and verify range despawn, inventory
-// consumption, damage combination, and one-impact-per-projectile", plus the
-// stuck-arrow cap and the streaming lifecycle.
-//
-// The graph is stood in for by `ArcheryRuntime.loose` and by the list of names
-// the graph would have fired, which is exactly what
-// `LocomotionGraphEventQueue` hands the runtime. `ArcheryStateTests` covers the
-// state machine those names drive and the env-gated `ProjectileRealDataTests`
-// closes the loop on vanilla PROJ values.
+// The projectile runtime end to end: trajectory, range despawn, ammo use,
+// damage, and one impact per projectile. `ArcheryRuntime.loose` and a list of
+// event names stand in for the graph.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

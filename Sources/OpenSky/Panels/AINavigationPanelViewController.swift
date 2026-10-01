@@ -1,18 +1,7 @@
-// World > AI & Navigation destination panel (issue #203, roadmap item 16.8):
-// the sidebar verification surface for the whole M16 mind, composed from
-// sections items 16.3 through 16.7 each specified a provider seam for.
-//
-// A destination of its own rather than more sections under `World > Combat &
-// Physics`. Six sections and six readouts is past the promotion threshold in
-// docs/tools/app-ui.md, the M16 gate names this path top-level (which outranks
-// the threshold anyway), and the two destinations answer different questions: a
-// fight is what one opponent in front of you is doing, and this is what one
-// named actor in a crowd is doing all day.
-//
-// Section order follows the order a session uses them in: switch on what you
-// want to see, choose whom you are watching, send it somewhere, read the
-// schedule it keeps on its own, read what it notices, and read what it does when
-// what it notices is an enemy.
+// World > AI & Navigation: the sidebar surface for actor AI. It is its own
+// destination because it answers what one named actor does all day, not what
+// one opponent does in a fight. Sections follow a session: switch on, pick an
+// actor, send it, read its schedule, perception, and combat reaction.
 
 import AppKit
 import OpenSkyCombat

@@ -1,5 +1,4 @@
-// World > Environment > Actor animation section: A/B enable toggle + live
-// playback readout (issue #98 decomposition).
+// World > Environment > Actor animation: enable toggle and playback readout.
 
 import AppKit
 import OpenSkyWorld

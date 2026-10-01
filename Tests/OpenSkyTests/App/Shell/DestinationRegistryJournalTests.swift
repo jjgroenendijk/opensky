@@ -1,8 +1,6 @@
-// Satellite of DestinationRegistryTests (issue #184): the World > Quests &
-// Journal destination's slice of the registry contract. Split out because the
-// parent file sits at the length limit, and because the conformance below has
-// to live outside `FakeWorldProviders`'s own declaration for that file to stay
-// there.
+// The World > Quests & Journal slice of the registry contract, split from
+// DestinationRegistryTests for the length limit. The conformance lives here so
+// `FakeWorldProviders` stays under it too.
 
 import AppKit
 @testable import OpenSky

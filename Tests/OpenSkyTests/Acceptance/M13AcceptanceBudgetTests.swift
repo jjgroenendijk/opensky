@@ -1,18 +1,6 @@
-// M13 acceptance, budget half (issue #185): quest script execution and quest
-// condition evaluation are held to the budgets that already exist, and add no
-// mechanism of their own.
-//
-// Two budgets, both already shipping. Stage fragments go through the same
-// per-tick FIFO every other script event uses, so `PapyrusTickBudget` bounds
-// them without anything being taught about quests. Quest conditions are pure
-// reads of `QuestResolution` and execute no bytecode at all, so the per-frame
-// script update budget the fly-path validator enforces cannot be moved by them
-// — which is asserted here rather than assumed, because "it is free" is exactly
-// the kind of claim that stops being true quietly.
-//
-// The timings are synthetic, as they are throughout `CellStreamingFlyPathTests`:
-// these cases pin the gate's behaviour, not this machine's speed. Measured
-// timings against the real install come from `openskycli bench --fly-path`.
+// Quest acceptance, budget half. Stage fragments use the shared per-tick FIFO,
+// so `PapyrusTickBudget` bounds them. Quest conditions run no bytecode; that is
+// checked, not assumed. Timings are synthetic.
 
 import FormatsESMTesting
 import Foundation
@@ -105,8 +93,8 @@ struct M13AcceptanceBudgetTests {
         var evaluator = ConditionEvaluator(context: context)
         let floor = session.world.runtime.tally.instructionsExecuted
 
-        // Every quest condition function issue #182 registered, evaluated over
-        // the quest the fragments just advanced.
+        // Every registered quest condition function, evaluated over the quest
+        // the fragments just advanced.
         for index in [56, 58, 59, 543] {
             let outcome = try evaluator.evaluate(
                 Self.questCondition(functionIndex: UInt16(index))
@@ -120,13 +108,9 @@ struct M13AcceptanceBudgetTests {
 
     // MARK: - Frame budgets
 
-    /// The shipping fly-path update budgets over a frame whose script time is
-    /// the quest work above: the gate passes inside budget and still refuses an
-    /// over-budget run, so it is live rather than vacuous.
-    ///
-    /// The validator and the configuration are the ones
-    /// `openskycli bench --fly-path` uses, so no second set of numbers is kept
-    /// in step — which is what the issue's "extend them" means to avoid.
+    /// The shipping fly-path budgets over a frame whose script time is the
+    /// quest work: it passes in budget and refuses an over-budget run. Same
+    /// validator and config as `openskycli bench --fly-path`.
     @Test
     func questDrivenFramesStayWithinTheShippingUpdateBudgets() throws {
         let inBudget = OffscreenBenchResult(

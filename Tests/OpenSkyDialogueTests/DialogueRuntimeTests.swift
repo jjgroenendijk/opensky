@@ -1,10 +1,6 @@
-// Dialogue selection and choice flow (issue #426, roadmap item 17.2), over the
-// synthetic world in `DialogueRuntimeFixture`.
-//
-// Every property here is one of the documented selection rules rather than a
-// restatement of the implementation: the owning-quest gate, file order as
-// selection order, say-once, priority ordering, and what choosing a response
-// does to said-state and to the follow-up topics.
+// Dialogue selection and choice flow over `DialogueRuntimeFixture`: the quest
+// gate, file order, say-once, priority, and what a choice does to said-state
+// and follow-up topics.
 
 import Foundation
 @testable import OpenSkyConditions

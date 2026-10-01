@@ -1,7 +1,6 @@
-// `FakeWorldProviders`' JournalControlProviding forwarding (issue #184). The fake
-// is shared by both test targets, so every conformance it carries has to be too;
-// the suite that used to hold this lives on in OpenSkyTests. See
-// Tests/TestSupport/AGENTS.md.
+// `FakeWorldProviders`' JournalControlProviding forwarding. Both test targets
+// share the fake, so its conformances are shared too
+// (Tests/TestSupport/AGENTS.md).
 
 import AppKit
 @testable import OpenSkyMenus

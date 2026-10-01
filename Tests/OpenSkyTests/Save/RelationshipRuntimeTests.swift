@@ -1,9 +1,5 @@
-// Runtime relationship ranks (issue #508, roadmap item 21.4): the component's
-// normalization, the two-layer lookup, the both-directions write, and the `RELS`
-// save round trip.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// Runtime relationship ranks: normalization, the two-layer lookup, writes in
+// both directions, and the `RELS` round trip.
 
 import Foundation
 @testable import OpenSkyFactions

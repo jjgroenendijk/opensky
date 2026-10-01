@@ -1,12 +1,6 @@
-// Equip/unequip runtime (issue #178, roadmap item 12.2.1): the slot-conflict
-// matrix, the round-trips, the two typed refusals, and the accounting an equip
-// must leave alone.
-//
-// The catalog is built by `EquipmentCatalog.build(from:)` over
-// `InventoryBaselineFixture`'s synthetic plugin, so these tests exercise the
-// real ARMO/WEAP indexing path rather than a hand-assembled dictionary. The
-// plugin is assembled in code from published record layouts — never extracted
-// game files (AGENTS.md "Legal & IP boundary").
+// Equip and unequip: the slot-conflict matrix, round trips, typed refusals, and
+// the accounting an equip must not change. The catalog is built over
+// `InventoryBaselineFixture`, so the real ARMO/WEAP indexing runs.
 
 import Foundation
 @testable import OpenSkyFormatsCore

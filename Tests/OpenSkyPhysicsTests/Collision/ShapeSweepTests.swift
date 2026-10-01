@@ -1,8 +1,6 @@
-// Sphere and capsule casts against placed collision geometry (issue #193).
-// The properties that matter to 15.4 and 15.5 are the ones asserted: a clear
-// sweep reports nothing, a blocked one reports a distance short of the
-// obstacle, an already-overlapping start says so, and equidistant shapes break
-// the tie the same way `InteractionRaycaster` does.
+// Sphere and capsule casts against collision geometry: a clear sweep reports
+// nothing, a blocked one stops short, an overlapping start says so, and ties
+// break the way `InteractionRaycaster` breaks them.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

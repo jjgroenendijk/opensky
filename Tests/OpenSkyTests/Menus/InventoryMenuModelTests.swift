@@ -1,9 +1,6 @@
-// InventoryMenuModel unit tests (issue #289): the row list the inventory menu
-// presents — naming, sorting, per-row and total arithmetic, the gold split,
-// category filtering, and the navigation rules.
-//
-// Device-free and movie-free. The rows come from `InventoryBaselineFixture`'s
-// synthetic plugin, so nothing here reads a real game file.
+// `InventoryMenuModel` rows: naming, sorting, row and total arithmetic, the
+// gold split, category filters, and navigation. Rows come from
+// `InventoryBaselineFixture`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

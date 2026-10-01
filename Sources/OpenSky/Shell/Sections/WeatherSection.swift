@@ -1,5 +1,5 @@
-// World > Environment > Weather section: force/pause/clock controls + live
-// weather + wind readout (issue #98 decomposition of EnvironmentWeatherControls).
+// World > Environment > Weather: force, pause, and clock controls with a
+// weather and wind readout.
 
 import AppKit
 import OpenSkyGameData

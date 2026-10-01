@@ -129,10 +129,9 @@ struct GameDataLocatorTests {
     }
 
     @Test func hostWithholdsPersistentSources() {
-        // Issue #362: the test host is the app bundle, so consulting the app's
-        // defaults domain or the stock Steam path would point install-independent
-        // unit tests at the developer's real install — where a blocking read once
-        // parked `make test` in `open()` forever.
+        // The test host is the app bundle, so the app's defaults or the Steam
+        // path would point unit tests at the real install, where a blocking
+        // read can hang `make test`.
         #expect(GameDataLocator.isRunningInTestHost)
         #expect(GameDataLocator.persistedRootDefaults == nil)
         #expect(GameDataLocator.defaultInstallCandidate == nil)

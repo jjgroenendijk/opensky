@@ -1,16 +1,6 @@
-// The `Actor` native family (issue #375, roadmap item 15.8), invoked directly
-// against a synthetic actor with a live actor-value runtime and a live ragdoll
-// runtime behind it: one test per registered function plus its failure path,
-// and the death chain the acceptance gate names.
-//
-// The session here is the real one — `PapyrusWorldStateBridge` over a real
-// `WorldStateStore`, `ActorValueRuntime` and `RagdollRuntime` — rather than a
-// fake bridge, because the thing worth testing is that a script's damage and a
-// sword's damage reach the same store and the same death latch. Only the
-// skeleton behind the ragdoll is faked, since decoding one needs game data.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The `Actor` natives against a real `PapyrusWorldStateBridge`,
+// `ActorValueRuntime`, and `RagdollRuntime`, so script damage and sword damage
+// reach one store and one death latch. Only the ragdoll skeleton is faked.
 
 import FormatsESMTesting
 import Foundation
@@ -47,11 +37,11 @@ struct PapyrusNativeActorTests {
         let key: ReferenceKey
         let ragdoll: RagdollRuntime
         let ragdollWorld: FakeRagdollWorld
-        /// The live actor-value runtime behind the natives, so a test can move
-        /// a non-primary value the way a magic effect will (issue #468).
+        /// The live actor-value runtime, so a test can move a non-primary value
+        /// the way a magic effect does.
         let values: ActorValueRuntime
-        /// The live combat loop `StartCombat`, `StopCombat` and `IsInCombat`
-        /// reach through (issue #424), over a recording world.
+        /// The live combat loop behind `StartCombat`, `StopCombat`, and
+        /// `IsInCombat`, over a recording world.
         let combat: CombatLoopRuntime
         let combatWorld: FakeCombatWorld
     }

@@ -1,15 +1,6 @@
-// Coverage for the per-condition report the World > Runtime State Conditions
-// section shows (issue #166, roadmap item 10.2.4).
-//
-// The load-bearing claim is that the runner's verdict is the same answer
-// `ConditionEvaluator.evaluate(_ conditions:)` gives, even though the runner
-// reaches it by evaluating each condition on its own to collect the reasons.
-// Several tests therefore assert the two side by side rather than against a
-// hand-written expectation, so a change to the evaluator's OR grouping fails
-// here instead of drifting silently.
-//
-// Every condition is a real 32-byte CTDA payload from `ConditionEvaluatorFixture`,
-// synthetic and built in code; no game data is read.
+// The per-condition report in World > Runtime State > Conditions. The runner's
+// verdict must equal `ConditionEvaluator.evaluate(_ conditions:)`, so tests
+// compare the two directly and an OR-grouping change cannot drift.
 
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM

@@ -1,12 +1,5 @@
-// CellSceneBuilder tests over synthetic fixtures only: ESMFixture plugin
-// bytes (WRLD/CELL trees + model-base top groups) + NIFFixture
-// meshes in a temp-dir VFS. Never extracted game files (AGENTS.md Legal & IP
-// boundary). Needs a Metal device (RenderModel upload), gated like
-// MeshLibraryTests.
-//
-// The temp-dir VFS and every record and mesh builder come from
-// `CellSceneBuilderFixture` in OpenSkyWorldTesting, because the acceptance suites
-// build the same synthetic cell.
+// CellSceneBuilder over synthetic plugin bytes and NIF meshes in a temp-dir
+// VFS, from `CellSceneBuilderFixture`. Needs a Metal device for model upload.
 
 import Foundation
 import Metal

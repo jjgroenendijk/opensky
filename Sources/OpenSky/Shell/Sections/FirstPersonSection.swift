@@ -1,11 +1,6 @@
-// World > First person section (issue #190): the arms A/B toggle, the
-// first-person field of view, and the readout that says why there are no arms
-// when there are none.
-//
-// It sits under the World destination beside Camera rather than under its own
-// destination because it is a knob set for a camera mode the Camera section
-// already selects (the placement rule in docs/tools/app-ui.md: a new knob for
-// an existing subsystem joins that subsystem's neighbourhood).
+// World > First person: the arms toggle, the first-person field of view, and
+// why there are no arms when there are none. It sits beside Camera because the
+// Camera section selects this mode (docs/tools/app-ui.md).
 
 import AppKit
 import OpenSkyFormatsCore
@@ -113,8 +108,8 @@ final class FirstPersonSection: PanelSectionViewController {
         statsLabel.stringValue = Self.readout(snapshot)
     }
 
-    /// The readout text for one snapshot. Static and pure so a unit test can
-    /// assert the exact lines without an AppKit view (issue #190).
+    /// The readout text for one snapshot. Pure, so a unit test can check it
+    /// without an AppKit view.
     static func readout(_ snapshot: FirstPersonSnapshot) -> String {
         var lines = [
             "Arms: \(snapshot.active ? "drawn" : "not drawn")",

@@ -1,13 +1,6 @@
-// The bow-plus-arrow damage combination and the draw-time curve (issue #196,
-// roadmap item 15.5, scope point 4).
-//
-// The issue's acceptance says the tests verify "the damage combination", so
-// both formulas are written out longhand in the expectations rather than being
-// recomputed from the helper under test. Both are UESP's:
-//
-//   "Skyrim:Archery", Detailed Bow Comparison — (bow damage + arrow damage)
-//   "Skyrim:Weapons", Overview — * (1 + skill/200) * (1 + perk effects) * ...
-//   "Skyrim:Archery", Draw Time and Damage Dealt — the three-branch curve.
+// Bow-plus-arrow damage and the draw-time curve. Expectations are written out
+// by hand from UESP: "Skyrim:Archery" (bow plus arrow damage, draw time) and
+// "Skyrim:Weapons" (skill and perk multipliers).
 
 @testable import OpenSkyCombat
 import Testing

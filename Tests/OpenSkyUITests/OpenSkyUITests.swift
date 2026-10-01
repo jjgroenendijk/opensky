@@ -1,10 +1,6 @@
-// Smoke tests: app launches, shows its main window, and every sidebar
-// destination remains reachable. Real-data screenshots are env-gated; host
-// copies runner temp output into gitignored logs/ for inspection.
-//
-// Launches with OPENSKY_DATA_ROOT pointing at a synthetic install (empty
-// Skyrim.esm marker) so the game-data probe succeeds deterministically on
-// machines without the game — no alert, no dependency on real data.
+// Smoke tests: the app launches, shows its window, and reaches every
+// destination. OPENSKY_DATA_ROOT points at a synthetic install (an empty
+// Skyrim.esm marker), so the data probe passes without the game.
 
 import XCTest
 
@@ -35,10 +31,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.staticTexts["SceneStatsLabel"].exists)
     }
 
-    /// World > Environment sidebar surface (M7.1.2): the sidebar lists the
-    /// Environment destination, selecting it exposes the sun-shadow quality
-    /// control + live stats readout, particle controls, and only implemented LOD values.
-    /// Runs on synthetic data; renderer falls back to DemoScene.
+    /// World > Environment: shadow quality and stats, particle controls, and
+    /// only implemented LOD values. Runs on synthetic data with DemoScene.
     @MainActor
     func testWorldSidebarEnvironmentShadowQuality() throws {
         let app = try launchApp()
@@ -74,7 +68,7 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertEqual(quality.value as? String, "Low")
     }
 
-    /// World > HUD & Interaction acceptance surface (M8.4.3).
+    /// World > HUD & Interaction acceptance surface.
     @MainActor
     func testHUDInteractionControlsAndReadouts() throws {
         let app = try launchApp()
@@ -92,9 +86,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.staticTexts["HUDTargetStatsLabel"].exists)
     }
 
-    /// World > Dialogue & Voice (M17.8): the whole conversation loop on one
-    /// destination — the menu controls, the camera, the voice line and the
-    /// speaker's face.
+    /// World > Dialogue & Voice: menu controls, camera, voice line, and the
+    /// speaker's face on one destination.
     @MainActor
     func testDialogueVoiceControlsAndReadouts() throws {
         let app = try launchApp()
@@ -113,8 +106,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.staticTexts["FaceMorphStatsLabel"].exists)
     }
 
-    /// World > System Menu acceptance surface (M8.5.1): Resume/Settings/Quit
-    /// selector plus the data-root and audio-volume placeholders behind it.
+    /// World > System Menu: the Resume/Settings/Quit selector plus the data-root
+    /// and volume rows behind it.
     @MainActor
     func testSystemMenuControlsAndReadouts() throws {
         let app = try launchApp()
@@ -139,8 +132,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         app.buttons["SystemMenuResumeControl"].click()
     }
 
-    /// World > Dialogue & Voice > Voice lip-sync A/B seam and live
-    /// audio-timeline readout (moved off `Destination-audio` by issue #209).
+    /// World > Dialogue & Voice > Voice: the lip-sync A/B seam and the live
+    /// audio-timeline readout.
     @MainActor
     func testAudioLipSyncControlsAndReadout() throws {
         let app = try launchApp()
@@ -150,10 +143,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.descendants(matching: .any)["LipSyncStatsLabel"].exists)
     }
 
-    /// Developer > UI Lab sidebar surface (M8.1.1 + M8.1.4): the sidebar lists
-    /// the UI Lab destination; selecting it exposes the overlay-enable + sample
-    /// toggles, the scale preset popup, the menu-mode preview buttons, and the
-    /// live UIDrawStats / menu-stack / localized-strings readouts.
+    /// Developer > UI Lab: overlay and sample toggles, scale presets, menu-mode
+    /// buttons, and the draw-stats, menu-stack, and strings readouts.
     @MainActor
     func testWorldSidebarUILabControls() throws {
         let app = try launchApp()
@@ -220,8 +211,8 @@ final class OpenSkyUITests: OpenSkyUITestCase {
         XCTAssertFalse(app.buttons["ScreenshotButton"].isEnabled)
     }
 
-    /// Library > Load Order: the resolved plugin order and the plugins.txt it
-    /// came from, changeable without a CLI flag (issue #73).
+    /// Library > Load Order: the resolved plugin order and its plugins.txt,
+    /// changeable without a CLI flag.
     @MainActor
     func testSidebarShowsLoadOrder() throws {
         let app = try launchApp()

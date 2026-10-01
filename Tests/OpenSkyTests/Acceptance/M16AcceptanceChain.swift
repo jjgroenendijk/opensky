@@ -1,26 +1,7 @@
-// The M16 gate's session (issue #203): one guard, one two-cell navmesh with a
-// door between them, and the four real runtimes the milestone built, wired
-// together in the order the app advances them.
-//
-// The gate statement is a chain, so the harness is one too. The package runtime
-// picks a package off the clock; the procedure it selects names a destination;
-// the navigation graph turns that destination into a corridor; the movement
-// runtime walks the corridor and crosses the door; the perception pass reads
-// where the guard ended up and decides whether it can see the player; the combat
-// loop reads that awareness and fights, breaks off, searches, and hands the
-// guard back to its package. Each link is the shipping type, not a stand-in, so
-// a break anywhere along it fails the gate rather than being papered over by a
-// fake in the middle.
-//
-// The one deliberate simplification against the app: there is no `CellStreamer`
-// and no renderer. Residency, cell building and drawing are M2 and M3 concerns
-// that `CellStreamerTests` and `NavigationRuntimeTests` already cover, and
-// carrying them here would make the gate a streaming test with an AI in it.
-// What is real is every runtime M16 added and every seam between them.
-//
-// Everything is invented. No packfile bytes, no extracted records, no positions
-// from the install (AGENTS.md "Legal & IP boundary"). The vanilla half of the
-// gate is `M16AcceptanceRealDataTests`, which is env-gated.
+// The AI gate's session: one guard, two navmesh cells with a door, and the
+// shipping package, navigation, movement, perception, and combat runtimes,
+// chained in app order. No `CellStreamer` or renderer: streaming has its own
+// tests. Real-data half: `M16AcceptanceRealDataTests`.
 
 import Foundation
 @testable import OpenSkyActorsInterface

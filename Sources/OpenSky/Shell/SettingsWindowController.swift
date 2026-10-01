@@ -1,10 +1,6 @@
-// Settings window (Cmd+,): configure the game data root, plugins.txt load
-// order, and localized string-table language. Validation + persistence live
-// in AppKit-free engine settings; this file only wires the panel UI. Choices
-// persist to the shared defaults domain so the CLI sees them too.
-//
-// The load order itself is not shown here — the Library > Load Order
-// destination lists it, and this window only names the file it comes from.
+// Settings window (Cmd+,): data root, plugins.txt, and string-table language.
+// Validation lives in engine settings. Choices go to the shared defaults
+// domain so the CLI sees them too.
 
 import AppKit
 import OpenSkyGameData

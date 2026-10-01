@@ -1,7 +1,5 @@
-// World > Audio > Footsteps section (issue #352): accessibility-id pins,
-// layout, the enable round trip, the tag picker, and the readout. Satellite of
-// AudioPanelTests.swift, which is at the strict-lint type-body cap. Sidebar
-// path and controls: docs/engine/audio.md.
+// World > Audio > Footsteps: ids, layout, enable, tag picker, and readout.
+// Split from AudioPanelTests.swift for the type-body cap.
 
 import AppKit
 @testable import OpenSky
@@ -122,8 +120,8 @@ struct AudioFootstepsPanelTests {
         #expect(readout.contains("Footstep error: engine not running"))
     }
 
-    /// The material selector (issue #358): ground contact first, then every
-    /// MATT the session carries, and picking one pins it on the provider.
+    /// The material selector: ground contact first, then every MATT the
+    /// session has; picking one pins it on the provider.
     @Test func materialPickerPinsAMaterialAndResetClearsIt() {
         let fake = FakeAudioProvider()
         let panel = Self.panel(provider: fake)

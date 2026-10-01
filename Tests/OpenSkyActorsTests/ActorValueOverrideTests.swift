@@ -1,17 +1,7 @@
-// The base-override store (issue #496, roadmap item 20.3): what an explicit
-// base write means, how it survives re-derivation, and how it interacts with
-// damage, regeneration and the modifier slots.
-//
-// The rule under test, stated once: an override is stored as a *delta* on top
-// of the re-derived baseline. The records stay authoritative for what a value
-// is; the override says only what the session did to it. So a level change or a
-// reordered load order moves every actor value, and no re-derivation can clobber
-// a trained or script-set one.
-//
-// Baselines are synthetic (`ActorValueBaselineResolver`'s fallback) rather than
-// record-derived, because the precedence rule is about the *relationship*
-// between a derived number and a stored one and not about where the derived one
-// came from. Record derivation itself is `ActorValueDerivationTests`.
+// The base-override store. An override is stored as a delta on the re-derived
+// baseline, so a level change still moves the value and no re-derivation
+// clobbers a trained one. Baselines are synthetic; record derivation is in
+// `ActorValueDerivationTests`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -230,12 +220,8 @@ struct ActorValueOverrideTests {
 
     // MARK: - Force
 
-    /// `ForceActorValue`'s worked example, transcribed:
-    /// "If an actor has a base health of 125 and you force their health to 0,
-    /// then the permanent modifier will be set to -125, and their current
-    /// health will become 0. If you then set the base health to 150, they will
-    /// still have a permanent modifier of -125, so their current health will
-    /// instantly become 25 (150 - 125)."
+    /// `ForceActorValue`'s worked example: base 125 forced to 0 gives a -125
+    /// permanent modifier; base set to 150 then gives 25.
     /// (<https://ck.uesp.net/wiki/ForceActorValue_-_Actor>)
     @Test func forcingAPrimaryMovesThePermanentModifierAsDocumented() {
         let (runtime, _) = self.runtime(

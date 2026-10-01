@@ -1,12 +1,6 @@
-// World > Runtime State > Save & Load section (M10.1.5): writes the world-state
-// store to a named slot and reads it back, which is the round trip the milestone
-// acceptance drives.
-//
-// Never overridden: a save on disk is not a panel setting, and "Reset all"
-// clearing the user's saves would be destructive rather than restorative.
-// Failures are shown verbatim — the provider hands back the thrown error's own
-// description, and a paraphrase would make a failed save undiagnosable from a
-// screenshot.
+// World > Runtime State > Save & Load: write the store to a named slot and
+// read it back. Never overridden: "Reset all" must not delete saves. Errors
+// show verbatim so a screenshot of a failed save stays diagnosable.
 
 import AppKit
 import OpenSkyWorld

@@ -1,16 +1,6 @@
-// M12 acceptance (issue #180): the first repeatable gameplay loop, proved end
-// to end in one scripted run with no shortcut anywhere in the middle.
-//
-// Grant, take, transfer, equip, buy, sell, drop, save, load — each step against
-// the real runtimes issues #175 to #179 landed, over one synthetic plugin and
-// one synthetic reference index. Every step asserts the accounting, not just
-// that the call returned: item totals across the owners involved, gold across
-// the pair, the world-state deltas the step wrote, and which cell they were
-// attributed to.
-//
-// The gate's pixel evidence is `M12AcceptanceRenderTests`, which is gated on a
-// Metal device; everything here runs without one, so the loop still stands on a
-// device-less runner.
+// Inventory acceptance: grant, take, transfer, equip, buy, sell, drop, save,
+// and load in one run. Each step checks item totals, gold, world-state deltas,
+// and their cells. Pixels are in `M12AcceptanceRenderTests`.
 
 import Foundation
 @testable import OpenSkyCrimeInterface
@@ -135,14 +125,9 @@ struct M12AcceptanceTests {
 
     // MARK: - Steps
 
-    /// Step 3 — a container session moving items both ways.
-    ///
-    /// The chest's CNTO baseline materializes on the first write, and the
-    /// starting counts are read rather than assumed: the baseline resolves a
-    /// leveled list, so how much it holds is the fixture's answer to give.
-    ///
-    /// - Returns: how many lockpicks the chest started with, which the drop
-    ///   step later takes one of.
+    /// Step 3: a container session moving items both ways. Starting counts are
+    /// read, not assumed, because the baseline resolves a leveled list.
+    /// - Returns: the chest's starting lockpick count, used by the drop step.
     @discardableResult
     private static func transferThroughTheContainer(_ chain: Chain) throws -> Int32 {
         let inventory = chain.runtime.inventory

@@ -1,13 +1,6 @@
-// The `--detection-overlay` half of `render` (issue #202), split out like the
-// reporting tail: a headless perception pass over one built cell, so the view
-// cones can be seen in an offscreen frame without launching the app.
-//
-// The target is a stand-in rather than the player: there is no player in a CLI
-// render. It is placed two hundred units in front of the lowest-keyed actor,
-// walking, so at least one cone is always lit and at least one memory line
-// always points somewhere — a capture where nothing was ever perceived is not
-// evidence that the pass works. Every cone drawn is a real ACHR's real
-// placement and facing.
+// `render --detection-overlay`: a headless perception pass over one cell. A
+// walking stand-in target sits 200 units in front of the lowest-keyed actor,
+// so at least one cone is always lit.
 
 import Foundation
 import OpenSkyFormatsCore

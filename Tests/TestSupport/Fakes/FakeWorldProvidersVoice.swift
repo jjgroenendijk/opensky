@@ -1,11 +1,6 @@
-// Voice bridges of the shared main-app provider fake (item 17.5). Split out of
-// FakeWorldProviders.swift, which is at the lint type-length cap; the state
-// lives there in one `FakeVoiceState` value because an extension cannot hold
-// stored properties.
-//
-// The fake mirrors the live bridge's shape rather than simplifying it: it holds
-// the whole corpus, narrows it by the filter, and lists a bounded prefix of the
-// matches, so a panel test exercises the truncation the real picker does.
+// Voice bridges of the shared provider fake. State lives in `FakeVoiceState`
+// in FakeWorldProviders.swift, because an extension cannot store it. The fake
+// filters the whole corpus and lists a bounded prefix, like the real picker.
 
 import AppKit
 @testable import OpenSky

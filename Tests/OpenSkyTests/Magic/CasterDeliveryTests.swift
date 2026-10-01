@@ -1,14 +1,6 @@
-// Casting at something other than yourself (issue #471, roadmap item 19.8):
-// which delivery does what, what leaves the caster, and the concentration
-// cadence an aimed beam applies on.
-//
-// Records are synthetic and built in code (`SpellbookFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// The world is `FakeCasterWorld`, for the reason the cast-loop suite uses one:
-// what these tests need to know is what the delivery *handed* the world — which
-// payload, aimed at whom, how often — and not what a real session then did with
-// it. `SpellHitTests` asks the second question against a real effect runtime.
+// Casting at something other than yourself: what each delivery does, what
+// leaves the caster, and the aimed-beam cadence. `FakeCasterWorld` records
+// what the delivery handed the world; `SpellHitTests` covers the real runtime.
 
 import Foundation
 @testable import OpenSkyActors
@@ -227,8 +219,8 @@ struct CasterDeliveryTests {
         #expect(!SpellDelivery.isImplemented(.touch, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.targetLocation, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.unknown(raw: 9), castingType: .fireAndForget))
-        // Target-actor concentration needs a tracked target this build has no
-        // AI targeting for (issue 19.10), so only its fire-and-forget half runs.
+        // Target-actor concentration needs a tracked AI target, which this
+        // build lacks, so only the fire-and-forget half runs.
         #expect(SpellDelivery.isImplemented(.targetActor, castingType: .fireAndForget))
         #expect(!SpellDelivery.isImplemented(.targetActor, castingType: .concentration))
         #expect(SpellDelivery.isImplemented(.aimed, castingType: .concentration))

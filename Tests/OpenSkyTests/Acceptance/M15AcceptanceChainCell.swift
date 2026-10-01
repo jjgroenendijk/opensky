@@ -1,11 +1,6 @@
-// The M15 gate's cell and spawn half (issue #198), in a satellite of
-// `M15AcceptanceChain.swift` beside the input half, for the strict-lint
-// type-length cap.
-//
-// The scene here is the arena: a floor, a wall an arrow can stick in, and one
-// crate of movable clutter. It is handed to the real `CellStreamer` through the
-// shared `ManualCellBuildRunner`, so residency, the shove, the solver step and
-// the settled-pose drain are all the engine's own.
+// The combat gate's arena: a floor, a wall an arrow can stick in, and one
+// crate. Split from `M15AcceptanceChain.swift` for the type-length cap. The
+// real `CellStreamer` runs it through `ManualCellBuildRunner`.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

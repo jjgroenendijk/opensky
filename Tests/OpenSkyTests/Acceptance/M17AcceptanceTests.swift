@@ -1,20 +1,7 @@
-// M17 acceptance (issue #209): one conversation, from the use key to the save.
-//
-// The gate statement in one run: pressing the use key on a voiced actor opens
-// the vanilla menu without pausing the world, the list holds the topics whose
-// conditions pass and not the one whose condition does not, choosing a response
-// runs its result script, the result advances an M13 quest stage, the stage
-// makes a new topic appear in the same conversation, the say-once line drops
-// out, goodbye ends it, leaving hands the menu stack back, and everything the
-// conversation wrote survives a save and a load.
-//
-// Every step drives a shipping entry point — the streamer's Talk activation and
-// the `DialogueControlProviding` members the panel buttons and the live keys
-// both call — and asserts an engine model at the far end. The panel half is
-// `M17AcceptancePanelTests`, the budget half is `M17AcceptanceBudgetTests`, the
-// pixel half is `M17AcceptanceRenderTests` and the vanilla half is
-// `M17AcceptanceRealDataTests`; the last two are gated, and everything here runs
-// on a device-less runner with no install.
+// Dialogue acceptance: use key opens the menu without pausing; failing topics
+// are hidden; a result script advances a quest stage that adds a topic;
+// say-once drops out; goodbye ends it; state survives save and load. Each step
+// uses a shipping entry point. Pixel and real-data halves are gated.
 
 import Foundation
 @testable import OpenSkyDialogueInterface

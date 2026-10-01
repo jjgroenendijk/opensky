@@ -1,11 +1,6 @@
-// Synthetic EQUP coverage (issue #467): the decoder, the parent walk that
-// turns an EQUP graph into `HandSlots`, and the load-order store. Every byte
-// is assembled in code from the published record layout — never extracted game
-// files (AGENTS.md "Legal & IP boundary").
-//
-// The graph mirrors the vanilla master's shape: two leaves named by editor ID,
-// a choose-one composite, an all-of composite, and a one-parent composite that
-// is how a shield ends up in the left hand.
+// Synthetic EQUP coverage: the decoder, the parent walk into `HandSlots`, and
+// the store. The graph copies vanilla's shape: two leaves, a choose-one, an
+// all-of, and a one-parent composite that puts a shield in the left hand.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -119,9 +114,8 @@ struct EquipSlotTests {
         #expect(table.hands(of: FormID(Slot.voice))?.isEmpty == true)
     }
 
-    /// The distinction `hands(of:)` collapses, which is what readying a spell
-    /// to a named hand needs (issue #470): `BothHands` takes everything it
-    /// names, `EitherHand` lets the equipper pick.
+    /// The distinction `hands(of:)` collapses, needed to ready a spell to a
+    /// hand: `BothHands` takes all it names, `EitherHand` lets the equipper pick.
     @Test
     func theHandChoiceKeepsAllOfAndOneOfApart() throws {
         let table = try graph()

@@ -1,18 +1,6 @@
-// Always-on frame readout pinned over the live game view: fps, frame time,
-// draw calls, drawn/culled instances, resident cells and process footprint.
-//
-// This is an AppKit overlay inside the shell's game slot, deliberately not a
-// render pass. Two reasons. It needs no shader, pipeline or font-atlas work to
-// draw text over the world, and — the load-bearing one — it must stay out of
-// `Renderer.renderOffscreen`, which feeds `openskycli screenshot`, the bench
-// loop and every offscreen evidence capture. A HUD encoded into the scene pass
-// would burn itself into those captures; an overlay view cannot, because the
-// offscreen path never touches the view hierarchy.
-//
-// It reads the same `FrameStatsProviding` / `SceneStatsProviding` snapshots the
-// World inspector reads, so the two surfaces can never quote different numbers,
-// and it refreshes on the shared 2 Hz `InspectionTicker` rather than a timer of
-// its own.
+// Frame readout over the live game view. It is an AppKit overlay, not a render
+// pass, so it never appears in `Renderer.renderOffscreen` captures. It reads
+// the same snapshots as the World inspector, on the shared `InspectionTicker`.
 
 import AppKit
 import OpenSkyRendering

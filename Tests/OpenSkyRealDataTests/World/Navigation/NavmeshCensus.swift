@@ -1,6 +1,4 @@
-// Tally + report for the NAVM census probe (issue #199). Counts only —
-// nothing game-derived leaves the run (Tests/OpenSkyRealDataTests/AGENTS.md, Legal
-// boundary).
+// Tally and report for the NAVM census probe. Counts only.
 
 import Foundation
 @testable import OpenSkyFormatsESM

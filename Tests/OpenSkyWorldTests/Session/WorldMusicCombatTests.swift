@@ -1,15 +1,6 @@
-// Combat music (issue #374, roadmap item 15.7, scope point 6): the seam
-// `docs/engine/music.md` has been holding open since M9.
-//
-// The precedence chain is untouched — combat does not join it, because combat is
-// a game-system state and not something any record authors. What this suite pins
-// is the three properties the seam promised: entering combat selects a
-// `MUSCombat...` record directly, leaving combat restores the selection it
-// interrupted rather than re-resolving, and a load order with no combat playlist
-// leaves the music where it was instead of going silent mid-fight.
-//
-// Offline manual rendering only, exactly like `WorldMusicDirectorTests`: no
-// output device, no decode-queue timing, explicit frame deltas.
+// Combat music (docs/engine/music.md). Combat is not in the precedence chain.
+// Entering combat picks a `MUSCombat...` record; leaving restores the old
+// selection; no combat playlist leaves music unchanged. Offline rendering only.
 
 @testable import OpenSkyAudio
 @testable import OpenSkyWorld

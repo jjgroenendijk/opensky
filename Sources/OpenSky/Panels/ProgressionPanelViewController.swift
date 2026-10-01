@@ -1,18 +1,6 @@
-// World > Progression destination panel (issue #500, roadmap item 20.7): the
-// sidebar verification surface for the whole M20 character sheet, composed from
-// the three sections items 20.1 through 20.6 built the runtime for.
-//
-// A destination of its own rather than more sections under `World > Combat &
-// Physics`, which is where the actor-value controls live. Three sections, their
-// own sub-navigation — a skill selects a tree and a box selects a record — and
-// fifteen controls are past the promotion threshold in docs/tools/app-ui.md,
-// and the M20 acceptance names this path top-level, which outranks the
-// threshold anyway. Combat is about what an actor is worth right now;
-// progression is about what the player has become, which is a different
-// question about a different subject.
-//
-// Section order follows the order progression happens in: the character the
-// levels land on, the skills that earn them, and the perks they buy.
+// World > Progression: the character sheet. It is its own destination because
+// it is about what the player has become, not what an actor is worth in a
+// fight. Sections follow progression: character, skills, perks.
 
 import AppKit
 import OpenSkyProgression
@@ -43,13 +31,9 @@ final class ProgressionPanelViewController: InspectorPanelViewController {
         progressionSections
     }
 
-    /// Builds the tick's snapshot once and hands the same value to all three
-    /// sections (issue #556).
-    ///
-    /// The hand-down is cleared afterwards rather than left standing: a refresh
-    /// outside this fan-out — what a button press triggers — has to read the
-    /// provider live, because the action it follows just changed what the
-    /// provider would say.
+    /// Builds the tick's snapshot once for all three sections. The hand-down is
+    /// cleared afterwards, because a refresh after a button press must read the
+    /// provider live.
     override func refreshSections() {
         let snapshot = provider?.progressionControlSnapshot
         for section in progressionSections {

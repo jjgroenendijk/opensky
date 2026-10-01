@@ -179,7 +179,7 @@ struct WorldStateJournalTests {
 
     @Test func snapshotSequenceFollowsTheJournalAndIsZeroWhenEmpty() {
         // The sequence marks when a snapshot was taken, so a cell built from
-        // it can be compared against later state (issue #160).
+        // it can be compared against later state.
         #expect(WorldStateSnapshot.empty.sequence == 0)
         let store = WorldStateStore()
         #expect(store.snapshot().sequence == store.nextJournalSequence)

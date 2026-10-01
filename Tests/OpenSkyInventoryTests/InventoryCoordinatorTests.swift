@@ -1,6 +1,6 @@
-// The inventory shell over a fake world and the synthetic M12.1 plugin: it
-// reads the crosshair, the drop spot and the enchantment hooks through
-// `InventoryWorld`. The decisions are tested in `InventoryCoreTests`.
+// The inventory shell over a fake world: it reads the crosshair, the drop spot,
+// and the enchantment hooks through `InventoryWorld`. Decisions are tested in
+// `InventoryCoreTests`.
 
 import Foundation
 @testable import OpenSkyCrimeInterface

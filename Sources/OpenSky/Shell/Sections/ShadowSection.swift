@@ -1,6 +1,5 @@
-// World > Environment > Sun shadows section (issue #98 decomposition of the
-// former monolithic Environment panel). Enable + quality selector bound to the
-// live renderer, plus a 2 Hz shadow-draw readout.
+// World > Environment > Sun shadows: enable and quality controls with a
+// shadow-draw readout.
 
 import AppKit
 import OpenSkyRendering

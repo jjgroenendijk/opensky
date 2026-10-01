@@ -1,8 +1,6 @@
-// Drawing a body where it actually is (issue #193): the rigid transform that
-// carries a reference from the pose its cell build baked to the pose the
-// solver has it at, the map the renderer consults, and what applying one does
-// to a draw instance. No Metal here — the arithmetic is the whole claim, and
-// the pixel evidence that it reaches the screen is RendererDynamicPoseTests.
+// Drawing a body where it is: the transform from the baked pose to the solver
+// pose, the renderer's map, and its effect on a draw instance. Pixel proof is
+// in RendererDynamicPoseTests.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

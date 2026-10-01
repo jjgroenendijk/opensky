@@ -1,5 +1,4 @@
-// The M15 gate's determinism and pause claims (issue #198), in a satellite of
-// `M15AcceptanceTests.swift` beside the route steps.
+// The combat gate's determinism and pause claims.
 
 import Foundation
 @testable import OpenSkyActorsInterface

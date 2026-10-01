@@ -1,12 +1,6 @@
-// Synthetic factions, relationships and actors for the hostility-derivation
-// suites (issue #503). Every layout comes from `FactionFixture` and
-// `RelationshipFixture`, so no bytes from the game install appear here
-// (AGENTS.md "Legal & IP boundary").
-//
-// One plugin carries all three record types, because the derivation joins them:
-// a FACT relation and a RELA record have to resolve to the same
-// `ReferenceKey`s or the suites would be testing the fixture rather than the
-// derivation.
+// Synthetic factions, relationships, and actors for the hostility suites. One
+// plugin holds all three record types so FACT and RELA resolve to the same
+// `ReferenceKey`s.
 
 import FormatsESMTesting
 import Foundation
@@ -139,8 +133,7 @@ public enum HostilityFixture {
         )
     }
 
-    /// A scripted relationship component, as `SetRelationshipRank` writes one
-    /// (issue #508).
+    /// A scripted relationship component, as `SetRelationshipRank` writes it.
     public static func relationshipState(
         _ entries: [(other: ReferenceKey, rank: Int8)]
     ) -> ActorRelationshipState {

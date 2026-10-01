@@ -1,14 +1,6 @@
-// World > Quests & Journal > Page section (issue #184): opening the vanilla
-// journal, driving it, and reading back what its Quests page actually built.
-//
-// This is the section that carries the destination's overridden-ness: an open
-// journal sits on the engine menu stack and pauses world simulation, which is
-// the one thing under this destination away from its default, and the sidebar's
-// reset closes it. The other two sections are quest state rather than settings.
-//
-// The open button is the discoverable half of the journal key: the same
-// `openJournal()` the world-mode key calls, so the key is an accelerator for a
-// listed control rather than an unadvertised keystroke.
+// World > Quests & Journal > Page: open the vanilla journal, drive it, and read
+// what its Quests page built. An open journal pauses the world, so this section
+// carries the override and the sidebar reset closes it.
 
 import AppKit
 import OpenSkyMenus

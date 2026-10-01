@@ -65,8 +65,7 @@ struct LIPFileTests {
     @Test("the alternate header family's extra bytes are located, not guessed")
     func alternateHeaderLayout() throws {
         // One extra byte between the frame count and the tuple width, tuple
-        // width 2, everything else standard: the shape 4,975 vanilla blobs
-        // carry (issue #449).
+        // width 2: the shape 4,975 vanilla blobs have.
         let file = try LIPFile(data: LIPFixture.file(
             tupleWidth: 2, headerPadding: [0]
         ))
@@ -81,7 +80,7 @@ struct LIPFileTests {
     @Test("a curve count past the vocabulary is recorded, not rejected")
     func curveCountPastVocabulary() throws {
         // 952 vanilla creature blobs declare nine curves against a vocabulary
-        // of eight. Nothing indexes by the field (issue #449).
+        // of eight. Nothing indexes by the field.
         let file = try LIPFile(data: LIPFixture.file(activeCurveCount: 17))
 
         #expect(file.header.activeCurveCount == 17)
@@ -152,11 +151,8 @@ struct LIPFileTests {
 
     @Test("a truncated payload never escapes the declared grid", arguments: 1 ... 6)
     func truncatedPayload(cut: Int) {
-        // Marker framing is ambiguous (issue #449), so a payload missing a few
-        // bytes sometimes frames as a shorter track rather than as a failure —
-        // the decoder cannot tell the two apart from the bytes alone. What it
-        // must never do is read past the blob or place a key outside the grid
-        // the header declares.
+        // Marker framing is ambiguous, so a short payload may frame as a short
+        // track. It must never read past the blob or key outside the grid.
         var data = LIPFixture.file()
         data.removeLast(cut)
         guard let file = try? LIPFile(data: data) else { return }

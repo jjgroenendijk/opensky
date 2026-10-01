@@ -150,8 +150,8 @@ struct MatrixMathTests {
         #expect(abs(far.z / far.w - 1) < 1e-4)
     }
 
-    /// A simulated rigid body integrates a quaternion and persists a Bethesda
-    /// euler triple (issue #193), so the two have to name the same rotation.
+    /// A rigid body integrates a quaternion and persists a Bethesda euler
+    /// triple, so the two must name the same rotation.
     @Test func eulerAnglesRoundTripThroughThePlacementRotation() {
         let triples: [SIMD3<Float>] = [
             .zero,

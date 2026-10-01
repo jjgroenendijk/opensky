@@ -1,17 +1,6 @@
-// Shared base for the three `World > Progression` sections (issue #556): the
-// provider they are all written against, and the one snapshot the panel builds
-// per tick for them.
-//
-// ## Why the sections do not read the provider themselves
-//
-// A progression snapshot is expensive to build — it walks the selected skill's
-// perk tree and runs each box's `CTDA` condition run — and all three sections
-// read the same one. Left to their own tickers they built it three times per
-// tick for one identical reading. So the panel turns
-// `sectionsTickIndependently` off, builds the snapshot once, hands it down
-// through `tickSnapshot`, and clears it again afterwards: a refresh that happens
-// outside a panel tick, which is what a button press does, still reads the
-// provider live rather than a value from the last tick.
+// Shared base for the `World > Progression` sections. A snapshot walks the
+// skill's perk tree and runs every `CTDA` condition, so the panel builds it
+// once per tick and hands it down through `tickSnapshot`.
 
 import AppKit
 import OpenSkyProgression

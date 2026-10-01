@@ -1,15 +1,6 @@
-// The M16 gate's synthetic records and geometry (issue #203).
-//
-// Two navmesh sheets and one guard's package stack, built in code from the
-// documented layouts and decoded through the production parsers. No packfile
-// bytes, no extracted records, no positions taken from the install (AGENTS.md
-// "Legal & IP boundary").
-//
-// The stack is two scheduled packages and no fallback, deliberately. A guard
-// with an unscheduled catch-all would always have something selected, and the
-// gate's claim is that the *schedule* decides: at nine in the morning the patrol
-// wins, at nine at night the sleep package does, and the change happens because
-// the clock moved rather than because a test set it.
+// The AI gate's synthetic records and geometry: two navmesh sheets and one
+// guard's packages. Two scheduled packages and no fallback, so the schedule
+// decides: patrol at 09:00, sleep at 21:00, and the clock causes the change.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

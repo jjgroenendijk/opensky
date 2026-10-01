@@ -1,10 +1,6 @@
-// The vanilla actor-value index table (issue #375, roadmap item 15.8).
-//
-// The table is data copied from xEdit's `wbActorValueEnum`, so the tests that
-// matter are the ones that would catch a transcription slip: the three indices
-// the engine actually resolves, the length, and the anchors on either side of
-// each `Unknown NN` run — a dropped placeholder would renumber everything after
-// it and no self-consistent test would notice.
+// The vanilla actor-value index table, copied from xEdit's `wbActorValueEnum`.
+// The tests catch copy slips: the indices the engine uses, the length, and the
+// anchors around each `Unknown NN` run, where one dropped entry shifts the rest.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -37,10 +33,8 @@ struct ActorValueIdentityTests {
         #expect(ActorValueIdentity.name(at: 162) == "Unknown 162")
     }
 
-    /// The eighteen `Skill Advance` slots run in skill order from 114, which is
-    /// what makes accumulated skill experience addressable by index (issue
-    /// #498). A table edit that moved them would break the mapping silently,
-    /// so both directions and every name are pinned here.
+    /// The eighteen `Skill Advance` slots run in skill order from 114, which
+    /// makes skill experience addressable by index.
     @Test func everySkillJoinsItsOwnSkillAdvanceSlot() throws {
         #expect(
             ActorValueIdentity.name(at: ActorValueIdentity.firstSkillAdvanceIndex)

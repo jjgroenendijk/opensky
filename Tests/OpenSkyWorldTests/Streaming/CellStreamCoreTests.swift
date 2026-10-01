@@ -1,4 +1,4 @@
-// CellStreamCore decision logic (todo 3.2 async build): accounted-set makeup,
+// CellStreamCore decision logic: accounted-set makeup,
 // diff application (request dedupe, unload forgetting), and build integration
 // (void/failed no-retry, stale/out-of-order discard). Pure value type -- no
 // Metal, no async, synthetic coordinates (AGENTS.md testing rule).
@@ -124,7 +124,7 @@ struct CellStreamCoreTests {
         #expect(core.resident == Set(cells))
     }
 
-    // MARK: - World-state rebuilds (issue #160)
+    // MARK: - World-state rebuilds
 
     @Test
     func aRebuildKeepsTheCellResidentWhileItIsInFlight() {

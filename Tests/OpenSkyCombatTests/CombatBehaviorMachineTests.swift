@@ -1,15 +1,6 @@
-// One actor's combat mind: entry, approach and the attack cadence (issue #424,
-// roadmap item 16.7).
-//
-// The machine is a pure value over a fixed step, so every case below is a
-// sequence of steps and an assertion on the phase and the commands that came
-// out. What it does *not* touch is the world: `CombatLoopRuntimeTests` owns the
-// half where a decision becomes a hit, a path request or a package resumption,
-// and `CombatBehaviorRetreatTests` owns fleeing, searching and giving up.
-//
-// This is what replaced `DevTargetDriverTests`, which pinned the clock's four
-// phases. The cadence cases are the same assertions against the same numbers;
-// everything else is behaviour the clock could not have.
+// One actor's combat mind: entry, approach, and attack cadence. The world half
+// is in `CombatLoopRuntimeTests`; fleeing and giving up are in
+// `CombatBehaviorRetreatTests`.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

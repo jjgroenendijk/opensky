@@ -145,8 +145,8 @@ struct M21AcceptancePanelTests {
         #expect(controller.factions.runtime?.isMember(.player, of: shopkeepers) == false)
     }
 
-    /// Scope point 5: FACT, RELA and ASTP are browsable from the load-order
-    /// record surface, whose inspector prints the #501/#502 text dumps.
+    /// FACT, RELA, and ASTP are browsable from the load-order record surface,
+    /// whose inspector prints their text dumps.
     @Test
     func theAssetBrowserBrowsesTheThreeFactionRecordTypes() throws {
         let types: [ReferenceRecordType] = [.faction, .relationship, .associationType]

@@ -1,8 +1,6 @@
-// The engine half of the M10.1 gate: a real `WorldStateStore` joined to a real
-// `CellStreamer` by `CellStreamer.bind(to:)`, and an `OpenSkySaveStore` in a
-// temporary folder. `ManualCellBuildRunner` records the snapshot each build ran
-// against, so "the delta is reapplied on reload" is an assertion. The last case
-// builds a cell scene from synthetic bytes and needs a Metal device.
+// The engine half of the runtime-state gate: a real `WorldStateStore` bound to
+// a real `CellStreamer`, and an `OpenSkySaveStore` in a temporary folder.
+// `ManualCellBuildRunner` records each build's snapshot. The last case needs Metal.
 
 import Foundation
 @testable import OpenSkyFormatsCore

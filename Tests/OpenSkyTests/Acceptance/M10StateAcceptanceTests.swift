@@ -1,21 +1,7 @@
-// M10.1 milestone acceptance (issue #162). Drives the whole
-// World > Runtime State gate sentence — inspect the live store, change a
-// reference, reset it, save the world state and read it back — through the real
-// shell types: the destination registry, the sidebar view controller, the
-// registry's own panel factory, and the controls a user clicks. The only
-// stand-in on this side is `FakeWorldProviders`, the same provider surface the
-// game controller implements.
-//
-// The engine half of the gate is in `M10StateAcceptanceEngineTests.swift`, the
-// satellite of this suite, and it uses no fakes at all: a real
-// `WorldStateStore`, a real `CellStreamer` and a real `OpenSkySaveStore` prove
-// that a mutation survives a streaming boundary and a save round trip.
-//
-// `make test-ui` is blocked on the development machine (TCC harness init), so
-// this unit-level test is the deterministic evidence for the gate. Readouts are
-// read back by accessibility identifier out of the built view hierarchy, which
-// also pins those identifiers as the UI-test contract. No game data is involved
-// anywhere: a save is OpenSky's own format and every fixture is built in code.
+// Runtime-state acceptance: inspect, change, reset, save, and load through the
+// real registry, sidebar, panel factory, and controls, over
+// `FakeWorldProviders`. Readouts are found by accessibility id, which also pins
+// those ids. `make test-ui` is TCC-blocked here, so this is the evidence.
 
 import AppKit
 import Foundation
@@ -191,10 +177,8 @@ struct M10StateAcceptanceTests {
 
     // MARK: The gate — one uninterrupted session
 
-    /// The panel half of the M10.1 gate in one session, in the order a user
-    /// performs it, on a single provider set: select World > Runtime State,
-    /// inspect the store, disable and nudge a reference, save the slot, load it
-    /// back, and reset everything to plugin data.
+    /// The panel half of the gate in one session, in user order: select World >
+    /// Runtime State, inspect, disable and nudge, save, load, and reset.
     @Test @MainActor
     func acceptanceFlowRunsEndToEndOnOneProviderSet() throws {
         let harness = M10AcceptanceHarness()

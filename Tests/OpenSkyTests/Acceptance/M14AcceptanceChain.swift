@@ -1,23 +1,7 @@
-// The M14 gate's route, driven step by step (issue #191).
-//
-// One player, driven by key events, over the synthetic world in
-// `M14AcceptanceFixture`. The whole path from a key press to a moved capsule is
-// the shipping one:
-//
-//   NSEvent -> GameMetalView.keyDown -> CameraInputState -> CameraInput
-//   -> LocomotionBridge.acceptFrame -> WalkController.update
-//   -> LocomotionBridge.plan -> BehaviorGraphInstance.update
-//
-// Nothing here is a shortcut around a layer. The route enters at the top, at
-// `GameMetalView`, which is the object the window hands a key press to; what a
-// headless test cannot drive is the `MTKView` draw callback above it, so the
-// frame loop is spelled out here in the same order `Renderer.advanceCamera`
-// spells it. That is the same rule `M13AcceptanceChain` followed one milestone
-// earlier.
-//
-// The streaming and door halves run against the real `CellStreamer` with the
-// shared `ManualCellBuildRunner`, so a cell crossing and a door round trip are
-// the engine's own and not a simulation of one.
+// The locomotion gate's route, driven by key events through the shipping path:
+// `GameMetalView.keyDown` -> `CameraInputState` -> `LocomotionBridge` ->
+// `WalkController` -> `BehaviorGraphInstance`. The frame loop follows
+// `Renderer.advanceCamera`. Streaming and doors use the real `CellStreamer`.
 
 import AppKit
 @testable import OpenSky

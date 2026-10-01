@@ -1,10 +1,5 @@
-// Synthetic xWMA byte builder shared by the `.xwm` framing tests. Fixtures
-// are built in code — never extracted game files (AGENTS.md "Legal & IP
-// boundary"). The payload bytes are counter values, not audio.
-//
-// Layout follows the Microsoft xWMA description on MultimediaWiki
-// (https://wiki.multimedia.cx/index.php/Microsoft_xWMA) and WAVEFORMATEX
-// (Microsoft mmeapi.h); see docs/formats/xwm.md.
+// Synthetic xWMA builder for the `.xwm` framing tests. Payload bytes are
+// counters, not audio. Layout: docs/formats/xwm.md.
 
 import FormatsCoreTesting
 import Foundation

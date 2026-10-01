@@ -1,10 +1,6 @@
-// Derived combat state and the transient caps (issue #374, roadmap item 15.7).
-//
-// Both subjects are pure values, so both suites are arithmetic over literals.
-// What is pinned here is the derivation rule the whole loop rests on — in
-// combat means "some resident actor is hostile and alive", and the target is
-// the nearest of those — because every consumer downstream, the music edge and
-// 15.8's combat-target condition among them, reads exactly that answer.
+// Derived combat state and the transient caps. In combat means some resident
+// actor is hostile and alive; the target is the nearest one. The music edge
+// and the combat-target condition read exactly that.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat

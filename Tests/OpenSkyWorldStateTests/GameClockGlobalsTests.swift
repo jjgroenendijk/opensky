@@ -1,7 +1,6 @@
-// One source of truth between the game clock and the vanilla time globals
-// (issue #164): reads through `GlobalResolution` project from the clock, and a
-// `setGlobal` on a clock-owned editor ID moves the clock instead of storing an
-// override. See docs/engine/game-clock.md.
+// The game clock and the vanilla time globals share one truth: reads project
+// from the clock, and `setGlobal` on a clock-owned ID moves the clock.
+// See docs/engine/game-clock.md.
 
 import FormatsESMTesting
 import Foundation

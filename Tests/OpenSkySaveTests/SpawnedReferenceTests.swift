@@ -1,6 +1,5 @@
-// Spawned-reference component and SPWN save chunk tests (issue #177, roadmap
-// item 12.1.3): identity synthesis, value normalization, and the round trip
-// through the native save container alongside the other chunks.
+// Spawned references and the SPWN chunk: identity synthesis, normalization,
+// and the round trip with the other chunks.
 
 import Foundation
 @testable import OpenSkyFormatsCore

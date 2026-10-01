@@ -1,9 +1,5 @@
-// The Actor Values section's "Other value" field (issue #468, roadmap item
-// 19.5), split out of `CombatPhysicsPanelTests` because that suite is at its
-// size shape.
-//
-// The panel and the fake provider are that suite's: what is under test is which
-// actor-value index the section sends, not how the panel is built.
+// The Actor Values "Other value" field: which actor-value index the section
+// sends. Uses `CombatPhysicsPanelTests`' panel and fake.
 
 import AppKit
 @testable import OpenSky

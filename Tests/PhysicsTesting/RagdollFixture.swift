@@ -1,13 +1,6 @@
-// Synthetic ragdolls for the constraint-solver suites (issue #197, item 15.6).
-//
-// Everything here is built in code: capsule bones, hand-authored joint frames,
-// a floor described by four points. No game asset is read and none could be —
-// the solver's inputs are engine values, not NIF bytes.
-//
-// The chain is deliberately the shape a limb is: three bones in a row, the first
-// pair on a ragdoll cone and the second on a limited hinge, which is exactly the
-// pattern the vanilla census reports for a leg (`NPC L Thigh` on a cone at the
-// hip, `NPC L Calf -> NPC L Thigh` on a limited hinge at the knee).
+// Synthetic ragdolls for the solver suites. The chain is shaped like a leg:
+// three bones, a cone at the hip and a limited hinge at the knee, as the
+// vanilla census shows for `NPC L Thigh` and `NPC L Calf`.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -42,13 +35,9 @@ public enum RagdollFixture {
         )
     }
 
-    /// A joint at the far end of `bodyA` and the near end of `bodyB`, both bones
-    /// lying along their own local x.
-    ///
-    /// The primary axis is local x — the bone's own long axis, which is what a
-    /// twist is about — and the secondary is local z, so a cone's plane normal
-    /// and a hinge's reference direction are both well defined and orthogonal to
-    /// it.
+    /// A joint at the far end of `bodyA` and the near end of `bodyB`. Primary
+    /// axis is local x, the bone's long axis; secondary is local z, so cone and
+    /// hinge directions are well defined.
     public static func joint(
         bodyA: Int,
         bodyB: Int,
@@ -71,13 +60,9 @@ public enum RagdollFixture {
         )
     }
 
-    /// A definition whose bones carry no skeleton mapping, for the solver suites
-    /// that only exercise the physics.
-    ///
-    /// `parts` are the biped part numbers the bones' source filters would have
-    /// carried, index-aligned with the bones. Nil throughout — the default —
-    /// means no bone carries one, which admits no self-collision pair at all and
-    /// is the behaviour every suite written before issue #413 assumes.
+    /// A definition with no skeleton mapping, for physics-only suites. `parts`
+    /// are biped part numbers aligned with the bones; nil admits no
+    /// self-collision pair.
     public static func definition(
         boneCount: Int,
         joints: [RagdollJointDefinition],
@@ -102,18 +87,10 @@ public enum RagdollFixture {
         return RagdollDefinition(bones: bones, joints: joints)
     }
 
-    /// Three bones in a row starting at `origin`, hip on a cone and knee on a
-    /// limited hinge.
-    ///
-    /// `hipLimits` overrides the cone, so a suite can run the identical chain
-    /// with the limit removed and show that the limit is what held it.
-    ///
-    /// `kick` is what makes the chain interesting. A straight chain dropped flat
-    /// onto a floor lands straight: every bone keeps the orientation it started
-    /// with, no joint is ever asked to hold an angle, and a limit assertion over
-    /// that run passes whether or not any limit is enforced. The kick throws
-    /// neighbouring bones in opposite directions along z, so both joints are
-    /// driven hard against their limits from the first step.
+    /// Three bones from `origin`, hip on a cone and knee on a hinge.
+    /// `hipLimits` overrides the cone to show the limit holds the chain. `kick`
+    /// throws neighbours in opposite z directions, so both joints hit their
+    /// limits; a straight drop would pass without any limit.
     public static func limb(
         origin: SIMD3<Float> = SIMD3(0, 0, 100),
         coneMaxAngle: Float = .pi / 6,

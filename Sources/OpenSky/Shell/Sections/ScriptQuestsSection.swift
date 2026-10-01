@@ -1,12 +1,6 @@
-// World > Scripts > Quests section (issue #322): whether the session's quests
-// actually reached the VM, and whether their stage fragments ran.
-//
-// It sits under Scripts rather than under Runtime State because everything it
-// counts is a script fact — instances and dispatched fragments. Quest *state*
-// (which quest is on which stage) is the journal's surface, issue #184.
-//
-// Purely a readout, like the Instances section: nothing here is a setting, so
-// it is never overridden and its reset is a no-op.
+// World > Scripts > Quests: whether quests reached the VM and whether their
+// stage fragments ran. Quest stage state belongs to the journal destination.
+// A readout only.
 
 import AppKit
 import OpenSkyScripting

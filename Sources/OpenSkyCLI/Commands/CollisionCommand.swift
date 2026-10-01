@@ -117,9 +117,8 @@ enum CollisionCommand {
         print("  render bounds: \(bounds(report.renderBounds))")
     }
 
-    /// Each Havok material the model's shapes name, resolved to the MATT it
-    /// hashes to (issue #358). A value no MATT hashes to prints raw, so an
-    /// unresolvable surface is visible rather than silently absent.
+    /// Each Havok material the shapes name, resolved to its MATT. An
+    /// unresolved value prints raw so it stays visible.
     private static func materialSummary(
         _ counts: [UInt32: Int],
         in materials: MaterialTypeIndex

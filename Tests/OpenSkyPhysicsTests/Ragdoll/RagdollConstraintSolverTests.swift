@@ -1,9 +1,6 @@
-// The deterministic half of item 15.6's acceptance (issue #197): limits hold
-// under gravity, the solver converges, energy does not grow, and two identical
-// runs match exactly.
-//
-// Every fixture is built in code by `RagdollFixture`. Nothing here reads the
-// install, so the whole suite runs in `make test`.
+// Ragdoll determinism: limits hold under gravity, the solver converges, energy
+// does not grow, and two runs match exactly. Fixtures come from
+// `RagdollFixture`.
 
 @testable import OpenSkyPhysics
 import PhysicsTesting

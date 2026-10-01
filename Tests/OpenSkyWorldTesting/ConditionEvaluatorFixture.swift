@@ -1,10 +1,6 @@
-// Synthetic inputs for the condition-evaluator tests: CTDA field bytes, a
-// globals resolution, and a reference index. Built in code, never extracted
-// from game data (AGENTS.md "Legal & IP boundary").
-//
-// Conditions are always built as real 32-byte CTDA payloads and decoded through
-// `Condition(ctda:)`, so every evaluator test also exercises the on-disk path
-// rather than a hand-made value that could drift from the layout.
+// Condition-evaluator inputs: CTDA bytes, a globals resolution, and a
+// reference index. Conditions are real 32-byte CTDA decoded through
+// `Condition(ctda:)`, so tests also cover the on-disk path.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

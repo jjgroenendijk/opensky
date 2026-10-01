@@ -1,10 +1,6 @@
-// The guard and arrest natives (issue #505): `Actor.GetCrimeFaction`,
-// `Actor.IsGuard`, `Faction.CanPayCrimeGold`, `Faction.PlayerPayCrimeGold`
-// and `Faction.SendPlayerToJail`, over a stand-in session that runs the real
-// `CrimeArrest` against the fixture store.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// Guard and arrest natives: `Actor.GetCrimeFaction`, `Actor.IsGuard`,
+// `Faction.CanPayCrimeGold`, `Faction.PlayerPayCrimeGold`, and
+// `Faction.SendPlayerToJail`, over a session running the real `CrimeArrest`.
 
 import FormatsESMTesting
 import Foundation

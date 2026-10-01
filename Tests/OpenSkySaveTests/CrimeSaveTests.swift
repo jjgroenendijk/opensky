@@ -1,7 +1,5 @@
-// The `CRIM` and `STOL` chunks (issue #504, roadmap item 21.5): the ledger
-// round trip, the stolen split laid back over `INVN`'s totals, and the
-// absent-chunk cases that keep a law-abiding save byte-identical to what this
-// encoder produced before either chunk existed.
+// The `CRIM` and `STOL` chunks: ledger round trip, the stolen split over
+// `INVN` totals, and absent chunks keeping a law-abiding save byte-identical.
 
 import Foundation
 @testable import OpenSkyCrimeInterface
@@ -109,7 +107,7 @@ struct CrimeSaveTests {
     // MARK: - CRVG
 
     /// Both halves survive: `CRIM` carries the total and `CRVG` the violent
-    /// part of it (issue #563).
+    /// part.
     @Test func bothHalvesSurviveTheRoundTrip() throws {
         let ledger = CrimeLedgerState(entries: [
             CrimeLedgerEntry(faction: hold, nonViolentGold: 45, violentGold: 1040),

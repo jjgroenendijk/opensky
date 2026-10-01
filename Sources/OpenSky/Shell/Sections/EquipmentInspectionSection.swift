@@ -1,16 +1,6 @@
-// World > Inventory & Equipment > Equipment: what an owner is wearing and what
-// its appearance resolution left out (issue #180).
-//
-// The equip and unequip *actions* stay under World > HUD & Interaction > Items
-// where issue #178 put them; this section is the other half of that surface —
-// the one that says whether the equip reached the screen. `ItemsStatsLabel`
-// already lists the equipped set, but nothing anywhere states the reason a
-// piece of it contributed no geometry, and a masked or unrenderable piece is
-// otherwise indistinguishable from an equip that silently did nothing.
-//
-// One control, the owner selector, because the two owners answer different
-// questions: the player exercises the state path and has no rendered body until
-// M14, and the nearest NPC is the only owner an equip is visible on.
+// World > Inventory & Equipment > Equipment: what an owner wears, and why a
+// piece added no geometry. Without this, a masked piece looks like an equip
+// that did nothing. The owner selector picks the player or the nearest NPC.
 
 import AppKit
 import OpenSkyInventory

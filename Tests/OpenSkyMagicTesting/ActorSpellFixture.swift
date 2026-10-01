@@ -1,13 +1,5 @@
-// Synthetic NPC_, RACE and LVSP records for the spell-baseline suite (issue
-// #473, roadmap item 19.10).
-//
-// Its own file rather than private helpers in the suite, because the records
-// here are the smallest ones that carry a `SPLO` run and the suite reads better
-// as a list of resolutions than as a list of byte layouts.
-//
-// Every byte is authored here; nothing comes from the game install (AGENTS.md
-// "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" subpages
-// /NPC_, /RACE and /LVSP.
+// Synthetic NPC_, RACE, and LVSP records for the spell-baseline suite: the
+// smallest records that carry a `SPLO` run.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting

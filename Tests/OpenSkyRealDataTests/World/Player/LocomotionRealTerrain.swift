@@ -1,9 +1,5 @@
-// Loading one real cell's terrain without a Metal device (issue #188).
-//
-// `CellSceneBuilder` needs a device to build a scene; the locomotion drive only
-// needs the LAND heights, so it walks the WRLD tree straight to them. That is
-// what keeps the acceptance test numeric and device-free. The heights come from
-// the user's own install and never leave `logs/` (AGENTS.md "Legal & IP").
+// Loads one real cell's LAND heights without a Metal device. `CellSceneBuilder`
+// needs a device, so this walks the WRLD tree directly.
 
 import Foundation
 @testable import OpenSkyFormatsCore

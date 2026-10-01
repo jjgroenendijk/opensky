@@ -1,7 +1,5 @@
-// World > Audio > Sources section: the file picker + positional trigger and the
-// live source list (position, distance, gain) — the M9.1.3 verification
-// surface. The picker lists the install's `.xwm` files through the provider;
-// playing places the source ahead of the camera so panning is audible at once.
+// World > Audio > Sources: an `.xwm` picker and the live source list. A played
+// source sits ahead of the camera so panning is audible at once.
 
 import AppKit
 import OpenSkyAudio

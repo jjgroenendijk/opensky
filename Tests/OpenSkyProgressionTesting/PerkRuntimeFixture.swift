@@ -1,13 +1,6 @@
-// The perk world a runtime suite runs in (issue #497, roadmap item 20.4):
-// a small load order of PERK, SPEL and MGEF records shaped like the vanilla
-// ones the seams read, plus the runtimes over it.
-//
-// Every byte is authored here; nothing comes from the game install (AGENTS.md
-// "Legal & IP boundary"). The perks are modelled on what the install actually
-// carries — a two-rank damage chain whose first rank switches itself off with
-// `HasPerk <next rank> == 0` and gates on a weapon tab, a blocking perk, a
-// spell-cost perk and an ability perk — so a suite asserts against the shape
-// the real records have rather than against a shape invented to be easy.
+// The perk world for runtime suites: PERK, SPEL, and MGEF records shaped like
+// the install's: a two-rank damage chain whose first rank turns off with
+// `HasPerk <next rank> == 0`, a blocking perk, a spell-cost perk, and an ability.
 
 import FormatsESMTesting
 import Foundation
@@ -31,8 +24,8 @@ public enum PerkRuntimeFixture {
         public static let spellCost: UInt32 = 0x0104
         public static let ability: UInt32 = 0x0105
         public static let actorValueDamage: UInt32 = 0x0106
-        /// A tree box gated on a skill requirement, shaped like `Armsman20`'s
-        /// `GetBaseActorValue One-Handed >= 50` (issue #499).
+        /// A tree box gated on a skill requirement, like `Armsman20`'s
+        /// `GetBaseActorValue One-Handed >= 50`.
         public static let skillGated: UInt32 = 0x0107
     }
 

@@ -1,11 +1,6 @@
-// The eight magic condition functions (issue #474, roadmap item 19.11), driven
-// through the real evaluator against a synthetic spellbook and effect list.
-//
-// Function indices here are the raw on-disk numbers (Creation Kit number minus
-// 4096) — see the ConditionFunctionsMagic.swift header for the sources.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The eight magic condition functions through the real evaluator. Indices are
+// raw on-disk numbers (Creation Kit minus 4096); see the
+// ConditionFunctionsMagic.swift header.
 
 import Foundation
 @testable import OpenSkyConditions

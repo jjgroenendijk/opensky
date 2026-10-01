@@ -1,7 +1,5 @@
-// Where a decoded body lands when a cell is built (issue #193): the movable
-// half of a NIF goes to the dynamic world and out of the immutable set, and
-// the census's discriminator — a positive mass, not the motion byte alone —
-// is what decides. Synthetic ESM + NIF bytes only; no game content.
+// Where a body goes in a cell build: the movable half of a NIF goes to the
+// dynamic world. A positive mass decides, not the motion byte alone.
 
 import FormatsMeshTesting
 import Metal
@@ -62,10 +60,9 @@ extension CellSceneBuilderTests {
         #expect(abs(body.definition.boundingRadius - NIFCollisionModel.havokToEngineScale) < 0.01)
     }
 
-    /// The draw list has to be able to find the reference again, because the
-    /// matrix baked here stops being where the object is the moment the solver
-    /// touches it (issue #193). Every other placement in the world keeps the
-    /// zero, and that zero is what makes the substitution free for them.
+    /// The draw list must find the reference again, because the baked matrix
+    /// is wrong once the solver moves it. Other placements keep zero, so the
+    /// substitution costs them nothing.
     @Test(.enabled(if: Self.hasDevice))
     func asimulatedReferenceTagsTheDrawInstancesItPlaces() throws {
         try writeLooseFile(

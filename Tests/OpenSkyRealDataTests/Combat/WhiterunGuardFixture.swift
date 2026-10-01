@@ -1,14 +1,6 @@
-// One real Whiterun guard, located in the user's own install.
-//
-// Shared by the perception suite, which watches the guard notice an approaching
-// player, and the combat suite, which then fights it. Both want the same three
-// things — the guard's own cell built through the production path, the lowest
-// ACHR in it whose base NPC_ is named like a guard, and a line-of-sight
-// predicate over the cell's real static collision — and having them in one place
-// is what keeps the two suites talking about the same guard.
-//
-// Read-only external input: nothing here is committed, cached into the repo or
-// copied into build output (AGENTS.md "Legal & IP boundary").
+// One real Whiterun guard from the user's install, shared by the perception and
+// combat suites so both use the same guard: its cell, the lowest guard ACHR in
+// it, and line of sight over the cell's real collision.
 
 import Foundation
 import Metal

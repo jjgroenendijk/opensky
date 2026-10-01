@@ -12,11 +12,10 @@ import Foundation
 import Testing
 
 struct M10AcceptanceTests {
-    // MARK: Step 1 — the destination carries the M10.2 sections
+    // MARK: Step 1 — the destination carries the time, globals, and conditions sections
 
     /// Selecting World > Runtime State builds the panel through the registry
-    /// factory and it carries the three sections M10.2 added, each with its
-    /// section-header identifier and its readout on screen.
+    /// and it shows the clock, globals, and conditions sections with readouts.
     @Test @MainActor
     func runtimeStateDestinationCarriesTheTimeGlobalsAndConditionSections() throws {
         let harness = M10AcceptanceHarness()
@@ -80,7 +79,7 @@ struct M10AcceptanceTests {
         try Self.evaluateConditions(harness, panel: panel)
     }
 
-    // MARK: Step 5 — the journal tail carries the M10.2 mutations
+    // MARK: Step 5 — the journal tail carries reference, global, and clock writes
 
     /// The tail readout interleaves reference writes, global writes and clock
     /// scrubs in one sequence-ordered log, which is what makes a clock scrub
@@ -261,8 +260,8 @@ struct M10AcceptanceTests {
 
     // MARK: Synthetic engine state
 
-    /// Section headers and readouts M10.2 added, pinned literally because they
-    /// are the UI-test contract (docs/tools/app-ui.md).
+    /// Section headers and readouts, pinned literally because they are the
+    /// UI-test contract (docs/tools/app-ui.md).
     static let sectionHeaderIdentifiers = [
         "PanelSection-runtimeStateTime",
         "PanelSection-runtimeStateGlobals",

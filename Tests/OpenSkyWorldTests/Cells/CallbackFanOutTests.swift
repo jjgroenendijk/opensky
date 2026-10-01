@@ -1,5 +1,4 @@
-// CallbackFanOut (issue #171): registration order, multiple handlers, and the
-// empty case that every engine seam sits in until something subscribes.
+// CallbackFanOut: registration order, several handlers, and the empty case.
 
 import Foundation
 @testable import OpenSkyWorld

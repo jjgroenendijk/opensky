@@ -1,15 +1,11 @@
-// Engine-owned system menu (M8.5.1): the Resume / Settings / Quit selector the
-// pause stack opens. Toolkit-free and movie-free on purpose — the model owns
-// entry identity, selection, and activation, so the same state drives keyboard
-// input, the verification panel, and (when it comes up) the vanilla
-// `Interface\quest_journal.swf` presentation layer in SystemMenuMovieBridge.swift.
-// See docs/engine/system-menu.md.
+// Engine-owned system menu: Resume, Settings, and Quit (docs/engine/system-menu.md).
+// The model owns entries, selection, and activation, so keyboard input, the
+// panel, and `SystemMenuMovieBridge` share one state.
 
 import Foundation
 
-/// One row of the system menu. Skyrim's own pause menu carries more rows; these
-/// are the three M8.5.1 owns end to end, and the enum is the only place a row is
-/// named so the movie bridge and the panel cannot disagree.
+/// One row of the system menu. Vanilla has more rows. This enum is the only
+/// place a row is named, so the movie bridge and the panel cannot disagree.
 nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     case resume
     case settings
@@ -32,10 +28,8 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     }
 }
 
-/// What activating a row asked the host to do. `settings` deliberately has no
-/// engine effect of its own: M8.5.1 surfaces the data-root and audio-volume
-/// placeholders beside the menu rather than pushing a second menu, and M9 binds
-/// the live audio categories behind them.
+/// What activating a row asks the host to do. `settings` has no engine effect:
+/// the data-root and volume rows sit beside the menu, not in a second menu.
 nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
     /// Close the menu and return to gameplay.
     case resume

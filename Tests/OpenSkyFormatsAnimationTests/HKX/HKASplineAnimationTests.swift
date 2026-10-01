@@ -1,8 +1,5 @@
-// hkaSplineCompressedAnimation decode tests (todo 6.3) over synthetic in-code
-// packfiles only — never extracted game files. Track names/data are invented.
-// The packfile builder lives in HKASplineFixture.swift, because the behavior
-// evaluator tests (issue #187) need the same synthetic clip.
-// Byte map: docs/formats/hka-animation.md.
+// hkaSplineCompressedAnimation decode over synthetic packfiles from
+// HKASplineFixture.swift. Byte map: docs/formats/hka-animation.md.
 
 import FormatsAnimationTesting
 import FormatsCoreTesting
@@ -104,9 +101,7 @@ struct HKASplineAnimationTests {
     }
 
     /// `m_extractedMotion` at 0x20 is read for presence only: null means the
-    /// clip animates in place, a fixup means it carries authored travel. The
-    /// distinction is what decides whether the clip may drive the character
-    /// (issue #370).
+    /// clip animates in place, which decides whether it may drive the character.
     @Test func readsWhetherTheClipCarriesExtractedMotion() throws {
         #expect(try !firstAnimation(HKASplineAnimationFixture()).carriesExtractedMotion)
         var withReferenceFrame = HKASplineAnimationFixture()
@@ -114,10 +109,8 @@ struct HKASplineAnimationTests {
         #expect(try firstAnimation(withReferenceFrame).carriesExtractedMotion)
     }
 
-    /// `m_annotationTracks` at 0x28 is where Skyrim's footstep tags live: the
-    /// locomotion clip generators in `mt_behavior.hkx` carry an empty
-    /// `m_triggers`, so an animation whose annotations are dropped can never
-    /// fire `FootLeft` (issues #385, #394).
+    /// `m_annotationTracks` at 0x28 holds the footstep tags; vanilla locomotion
+    /// clip generators have empty `m_triggers`.
     @Test func readsAnnotationTracksAndTheirMarks() throws {
         var fixture = HKASplineAnimationFixture()
         fixture.annotationTracks = [

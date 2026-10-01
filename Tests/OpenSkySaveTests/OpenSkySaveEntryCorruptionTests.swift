@@ -1,10 +1,5 @@
-// Malformed-input tests for the RDLT entry payload of the OpenSky native save
-// container (issue #161): reference keys, cell locations, component ordering
-// and boolean bytes.
-//
-// Split from OpenSkySaveCorruptionTests to stay inside the type-length limit;
-// the two suites share the same rule that a defect must produce one exact,
-// named `OpenSkySaveError` and never a crash.
+// Malformed RDLT entries: reference keys, cell locations, component order, and
+// boolean bytes. Each defect must give one exact `OpenSkySaveError`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

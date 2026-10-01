@@ -1,9 +1,6 @@
-// Actor-value runtime tests (issue #194): the component's clamping invariants,
-// the damage/restore API, and fixed-step regeneration.
-//
-// Everything here runs over a bare `WorldStateStore` and a fallback baseline
-// resolver, with no plugin data at all — the runtime deliberately knows nothing
-// about records, so its tests need none.
+// Actor-value runtime: clamping, damage and restore, and fixed-step
+// regeneration. The runtime knows nothing about records, so these tests use a
+// bare `WorldStateStore` and the fallback baseline resolver.
 
 import Foundation
 @testable import OpenSkyActors

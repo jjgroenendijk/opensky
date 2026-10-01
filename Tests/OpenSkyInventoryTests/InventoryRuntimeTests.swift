@@ -1,8 +1,5 @@
-// InventoryRuntime unit tests (issue #176): the accounting API above
-// `WorldStateStore` — add, remove, transfer, carry weight, gold — plus the
-// journal entries and snapshot determinism the store gives it for free.
-//
-// The runtime is `@MainActor` because the store is, so the suite is too.
+// `InventoryRuntime`: add, remove, transfer, carry weight, and gold, plus the
+// journal entries and snapshot determinism. `@MainActor` like the store.
 
 import Foundation
 @testable import OpenSkyFormatsCore

@@ -1,11 +1,5 @@
-// Main-app inventory menu seam (M12.2.2, issue #289). Keeps the verification
-// panel independent of GameViewController while exposing the live menu-stack
-// state, the engine-side row list, and the vanilla-movie presentation state
-// behind it.
-//
-// Mirrors SystemMenuControlProviding deliberately: the two menus are the same
-// kind of surface, and a reviewer who knows one should not have to learn a
-// second shape.
+// Inventory menu seam: menu-stack state, engine rows, and movie state, without
+// exposing `GameViewController`. Same shape as `SystemMenuControlProviding`.
 
 import Foundation
 import OpenSkyRendering
@@ -28,13 +22,9 @@ nonisolated public struct InventoryMenuControlSnapshot: Equatable, Sendable {
     public let gold: Int32
     /// What the last equip, unequip or drop did, for the readout.
     public let lastActionText: String?
-    /// One line per equipped item that carries an enchantment: what it is and how
-    /// much charge is left (issue #472). Empty when nothing equipped is enchanted
-    /// and when the session has no ENCH index.
-    ///
-    /// Beside the row list rather than inside it, because charge is a fact about
-    /// the *equipped* item and the rows list everything carried; a stack of five
-    /// unenchanted iron swords has no charge to show.
+    /// One line per equipped enchanted item with its remaining charge. Empty
+    /// without an ENCH index. Outside the rows because charge belongs to the
+    /// equipped item, not the stack.
     public let enchantmentLines: [String]
 
     /// Vanilla presentation layer.
@@ -110,9 +100,8 @@ public protocol InventoryMenuControlProviding: AnyObject {
     /// already equipped unequips instead.
     func activateInventoryMenuSelection()
     func dropInventoryMenuSelection()
-    /// Eats or drinks the selected row, removing one unit and applying its
-    /// effects to the player (issue #469). A row that is not an ALCH or an
-    /// INGR reports that and changes nothing.
+    /// Eats or drinks one unit of the selected row and applies its effects.
+    /// A row that is not ALCH or INGR reports that and changes nothing.
     func consumeInventoryMenuSelection()
     var inventoryMenuSnapshot: InventoryMenuControlSnapshot { get }
 }

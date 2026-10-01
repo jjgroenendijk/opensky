@@ -1,18 +1,7 @@
-// M12 acceptance, budget half (issue #180): a cell carrying a populated
-// inventory and an equipped actor, and a frame run with menus open, are held to
-// the same budgets everything else is.
-//
-// Deliberately no new gate. Both cases run the shipping validators —
-// `validatedActorBuildMetrics` and `validatedFlyUpdateBudgets` — over the
-// shipping `CellStreamingFlyBenchmarkConfiguration`, so the numbers the CLI
-// bench enforces are the numbers asserted here. A second mechanism would be a
-// second set of numbers to keep in step, which is exactly what the issue's
-// "extend them" means to avoid.
-//
-// What is synthetic is the timing, as it is throughout
-// `CellStreamingFlyPathTests`: these cases pin the gate's behaviour, not this
-// machine's speed. Measured timings against the real install come from
-// `openskycli bench --fly-path`, which cannot run in a unit test.
+// Inventory acceptance, budget half: a populated, equipped cell and a frame
+// with menus open meet the shipping budgets, through the same validators and
+// config as the CLI bench. Timings are synthetic; real ones come from
+// `openskycli bench --fly-path`.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -73,9 +62,8 @@ struct M12AcceptanceBudgetTests {
         )
     }
 
-    /// A cell whose actor is dressed from a runtime equipped set, carrying the
-    /// appearance skips issue #180 added. Rendered, not failed: a masked skin
-    /// part is a resolution decision.
+    /// An actor dressed from a runtime equipped set, with appearance skips.
+    /// It renders: a masked skin part is a resolution decision, not a failure.
     private static func equippedSummary(durationMS: Double) -> @Sendable (
         inout CellLoadSummary
     ) -> Void {

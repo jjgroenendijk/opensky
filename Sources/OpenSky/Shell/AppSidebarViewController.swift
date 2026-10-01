@@ -1,8 +1,5 @@
-// Unified app sidebar (issue #98 PR 2): a source-list NSOutlineView grouping
-// every registered destination under its section header (Finder/Xcode style).
-// Selection reports the destination descriptor; group rows are not selectable.
-// Rows come from the shared DestinationRegistry — adding a destination never
-// touches this controller.
+// The app sidebar: a source-list outline grouping every registered
+// destination under its section header. Rows come from `DestinationRegistry`.
 
 import AppKit
 

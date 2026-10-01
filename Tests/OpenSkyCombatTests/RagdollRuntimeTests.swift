@@ -1,9 +1,6 @@
-// Death activation (issue #197, item 15.6): the runtime driven against a fake
-// world, with no renderer, no window and no game data.
-//
-// The fake records which events were raised and answers whether a graph took
-// them, which is the one bit that decides whether a death waits for the graph's
-// hand-off or falls back to an immediate one.
+// Death activation against a fake world. The fake says whether a graph took
+// the raised events, which decides whether death waits for the graph's
+// hand-off or happens at once.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat

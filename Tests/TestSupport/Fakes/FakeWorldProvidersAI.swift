@@ -1,19 +1,13 @@
-// The AI-and-navigation half of the world-provider fake (issues #422, #202 and
-// #203), in its own file so `FakeWorldProviders` stays inside the type-length
-// cap — the same split `FakeWorldProvidersCombat.swift` made.
-//
-// Three seams specified one milestone item at a time and consumed all at once by
-// the `World > AI & Navigation` panel the M16 gate ships. Every answer is a
-// plain stored value and every action is recorded rather than performed, which
-// is what lets a panel test drive the whole destination with no renderer, no
-// window and no game data.
+// The AI and navigation part of the world-provider fake, split for the
+// type-length cap. Answers are stored values and actions are recorded, so a
+// panel test drives the whole destination without renderer or game data.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 
-/// The world-overlay half of the fake's stored state (issue #422).
+/// The world-overlay part of the fake's stored state.
 struct FakeAIOverlayState {
     var navmesh = false
     var path = false
@@ -47,7 +41,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The perception half of the fake's stored state (issue #202).
+/// The perception part of the fake's stored state.
 struct FakePerceptionState {
     var snapshot = PerceptionControlSnapshot.unavailable
     /// Canned per-actor pair lines, keyed by the actor the panel asks about.
@@ -64,7 +58,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The gate panel's selection half of the fake's stored state (issue #203).
+/// The panel selection part of the fake's stored state.
 struct FakeAINavigationState {
     var snapshot = AINavigationSnapshot.unavailable
     var isHostile = false

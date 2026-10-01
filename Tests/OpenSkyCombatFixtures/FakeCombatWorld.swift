@@ -1,14 +1,6 @@
-// The session `CombatLoopRuntime` runs over, as a recording fake (issues #374
-// and #424).
-//
-// Moved out of `CombatLoopRuntimeTests` when 16.7 widened the seam: the fake now
-// answers awareness, health, movement and package resumption as well, and both
-// the unit suite and the real-data suite want to hand the runtime a world with
-// nothing but stored values in it.
-//
-// Every answer is a plain stored value and every action is recorded rather than
-// performed, which is what lets a whole fight — approach, attack, block, flee,
-// search and give-up — run with no renderer, no window and no game data.
+// A recording fake of the session `CombatLoopRuntime` runs over. Answers are
+// stored values and actions are recorded, so a whole fight runs without a
+// renderer, window, or game data.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
@@ -27,7 +19,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
-    /// What each actor could cast, and what it can pay for (issue #473).
+    /// What each actor could cast, and what it can pay for.
     public var casting: [ReferenceKey: CombatCastingProfile] = [:]
     /// Whether a begun cast is accepted. False is the world refusing a cast the
     /// machine chose — magicka that fell between the decision and the call —
@@ -40,10 +32,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
     /// under the point asked for, which the machine has to survive.
     public var movementSucceeds = true
 
-    /// Skill uses the runtime reported (issue #498), recorded rather than
-    /// converted: what a combat suite needs is that the exchange reached
-    /// progression with the right amounts, and `SkillAdvancementRuntimeTests`
-    /// asks what converting one does.
+    /// Skill uses the runtime reported, recorded rather than converted.
+    /// `SkillAdvancementRuntimeTests` covers the conversion.
     public private(set) var skillUses: [SkillUseEvent] = []
 
     public init() {}

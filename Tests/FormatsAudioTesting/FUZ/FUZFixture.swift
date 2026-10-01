@@ -1,10 +1,5 @@
-// Synthetic `.fuz` byte builder for the voice-container framing tests.
-// Fixtures are built in code — never extracted game audio (AGENTS.md "Legal &
-// IP boundary"). The lip bytes are counter values, not lip-sync data, and the
-// audio payload comes from `XWMFixture`.
-//
-// Layout follows xEdit dev-4.1.6 `dfFUZ` in Core/wbDataFormatMisc.pas; see
-// docs/formats/fuz.md.
+// Synthetic `.fuz` builder for the voice-container tests. Lip bytes are
+// counters; the audio comes from `XWMFixture`. Layout: docs/formats/fuz.md.
 
 import FormatsCoreTesting
 import Foundation

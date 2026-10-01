@@ -1,10 +1,6 @@
-// `hkbBehaviorReferenceGenerator` event crossing (issue #189, fixed for issues
-// #385 and #394).
-//
-// Skyrim's player graph is a shell whose locomotion lives in a referenced
-// behavior file, so an event that crosses the seam wrong breaks every feature
-// downstream of it. These run over synthetic graphs built in code — nothing
-// here is extracted from a game file (AGENTS.md "Legal & IP boundary").
+// `hkbBehaviorReferenceGenerator` event crossing. The vanilla player graph
+// keeps locomotion in a referenced file, so a wrong crossing breaks everything
+// after it.
 
 import BehaviorTesting
 import Foundation
@@ -26,19 +22,10 @@ private struct BehaviorReferenceTable: BehaviorReferenceSource {
 }
 
 struct BehaviorReferenceTests {
-    /// Events cross the seam once each way and then stop.
-    ///
-    /// The parent raises `poke`; the child's machine transitions on it and its
-    /// destination state raises `pong` on entry; the parent sees `pong` on a
-    /// later update. Both counts have to be exactly one.
-    ///
-    /// They were not. The parent used to raise the child's *active* set back on
-    /// itself, and that set already held everything the parent had just pushed
-    /// down, so every crossing event bounced between the two graphs once per
-    /// update forever. The vanilla player graph re-fired `moveStart` and
-    /// `IdleStop` on all 120 steps of a second, which is what saturated the
-    /// bounded queue in `LocomotionGraphEventQueue` and pushed the real
-    /// footstep tags out of it (issues #385, #394).
+    /// Events cross the seam once each way and then stop. The parent raises
+    /// `poke`; the child's new state raises `pong`. If the parent echoed the
+    /// child's active set, events would bounce every update and flood
+    /// `LocomotionGraphEventQueue`.
     @Test func anEventCrossesTheReferenceSeamOnceInEachDirection() {
         let child = Self.child()
         let parent = Self.parent(references: BehaviorReferenceTable(

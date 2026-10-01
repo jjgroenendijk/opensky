@@ -73,11 +73,9 @@ extension NIFCollisionFixture {
         return data
     }
 
-    /// The shape of the vanilla `bhkNiTriStripsShape` blocks: every optional
-    /// `NiGeometryData` array present (normals with tangents, vertex colors,
-    /// one UV set) and several strips of differing length. A field width that
-    /// is wrong anywhere in the prefix walks the point array off its vertices
-    /// or misreads the strip table, which is what issue #376 was.
+    /// The shape of vanilla `bhkNiTriStripsShape` blocks: every optional
+    /// `NiGeometryData` array present and strips of different lengths. One wrong
+    /// field width in the prefix misreads the points or the strip table.
     static func niTriStripsDataFullPrefix() -> Data {
         var data = Data()
         data.appendUInt32(0) // Group ID

@@ -1,37 +1,6 @@
-// One synthetic plugin covering every inventory baseline source (issue #176).
-// Built in code from the published record layouts — never extracted game files
-// (AGENTS.md "Legal & IP boundary").
-//
-// The whole plugin is assembled and handed to `InventoryBaselineResolver
-// .build(from:)` rather than the indexes being injected directly, so the tests
-// exercise the same indexing path the engine uses.
-//
-// Form numbering, kept in one place because several suites assert against it:
-//
-//   0x00_000F  MISC Gold001        (vanilla gold's real form, weight 0)
-//   0x00_0100  MISC Lockpick       (weight 0)
-//   0x00_0200  WEAP IronSword      (weight 9, value 25; ETYP EitherHand)
-//   0x00_0210  WEAP IronGreatsword (ETYP BothHands)
-//   0x00_0300  ARMO IronCuirass    (weight 30, value 125; slot 32 body)
-//   0x00_0400  ARMO IronHelmet     (weight 5, value 60; slot 30 head)
-//   0x00_0410  ARMO LeatherCuirass (slot 32 body — contests IronCuirass)
-//   0x00_0420  ARMO IronGauntlets  (slot 33 hands — contests nothing)
-//   0x00_0500  EQUP RightHand      (leaf)
-//   0x00_0510  EQUP LeftHand       (leaf)
-//   0x00_0520  EQUP EitherHand     (parents left + right, use all 0)
-//   0x00_0530  EQUP BothHands      (parents left + right, use all 1)
-//   0x00_1000  LVLI single pick    -> IronSword at level 1, IronCuirass at 5
-//   0x00_1010  LVLI useAll bundle  -> IronCuirass + IronHelmet
-//   0x00_1020  LVLI self-referring -> itself, for the cycle guard
-//   0x00_1030  LVLI empty
-//   0x00_2000  OTFT               -> IronCuirass + the useAll bundle
-//   0x00_2010  OTFT               -> the empty list only
-//   0x00_3000  NPC_ Guard          (DOFT 0x2000)
-//   0x00_3010  NPC_ template child (useInventory, TPLT 0x3000, DOFT 0x2010)
-//   0x00_3020  NPC_ no outfit
-//   0x00_4000  CONT Chest          (3 lockpicks, 1 gold, 1 single-pick LVLI)
-//   0x00_4010  CONT LeveledChest   (the useAll bundle, twice over)
-//   0x00_4020  CONT Empty
+// One synthetic plugin with every inventory baseline source. Tests go through
+// `InventoryBaselineResolver.build(from:)`, the engine's own indexing path.
+// The FormID constants below are what suites assert against.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -95,11 +64,9 @@ public enum InventoryBaselineFixture {
             + item("MISC", formID: lockpick.rawValue, editorID: "Lockpick", value: 5, weight: 0)
     }
 
-    /// Two weapons whose ETYP links straddle the one-hand / two-hand split
-    /// `EquipmentCatalog` reads through the EQUP graph, each with a MODL so
-    /// the hand attachment has a path to load (issue #178). The DNAM animation
-    /// types still match their families, so a suite that asserts against the
-    /// animation graph reads the same weapons the same way.
+    /// Two weapons on either side of the one-hand / two-hand EQUP split, each
+    /// with a MODL so the hand attachment can load. DNAM animation types match
+    /// their families.
     private static func weaponRecord() -> Data {
         weapon(WeaponSpec(
             formID: sword.rawValue, editorID: "IronSword", damage: 7,

@@ -1,10 +1,6 @@
-// The mutable runtime display list (milestone 8.3.2 phase 2): bring-up,
-// instantiation of registered classes, timeline stepping, the goto forms, path
-// resolution, and scene regeneration.
-//
-// Every movie here is assembled in code from `SWFDisplayFixture` tags and
-// `SWFActionFixture` action records — no test reads a real `.swf`
-// (AGENTS.md "Legal & IP boundary").
+// The mutable runtime display list: bring-up, registered classes, timeline
+// steps, goto forms, path resolution, and scene regeneration. Movies are built
+// from `SWFDisplayFixture` tags and `SWFActionFixture` actions.
 
 import FormatsSWFTesting
 import Foundation

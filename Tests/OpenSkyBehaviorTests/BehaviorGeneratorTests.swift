@@ -1,8 +1,5 @@
-// Blend, selection, and state-machine evaluation (issue #187), plus the tally
-// entries a class with no semantics of its own leaves behind. Synthetic graphs
-// built in code (AGENTS.md "Legal & IP boundary").
-//
-// Clip evaluation is in BehaviorClipTests.swift.
+// Blend, selection, and state-machine evaluation, and the tally a class with
+// no semantics leaves. Clip evaluation is in BehaviorClipTests.swift.
 
 import BehaviorTesting
 import Foundation

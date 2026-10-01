@@ -1,10 +1,6 @@
-// World > Environment destination panel: the sidebar verification surface for
-// world environment subsystems. Since issue #98 it is a thin composition of
-// self-contained sections (shadows, animation, weather, particles, precipitation,
-// grass, distant LOD) built on the shared panel framework (Sources/OpenSky/Shell). Each
-// section talks to the live renderer through its own narrow provider protocol,
-// never renderer internals. A section can graduate to its own destination when
-// it outgrows a collapsible group (docs/tools/app-ui.md).
+// World > Environment: a composition of self-contained sections (shadows,
+// animation, weather, particles, precipitation, grass, distant LOD). Each
+// section reaches the renderer through its own narrow provider protocol.
 
 import AppKit
 import OpenSkyWorld

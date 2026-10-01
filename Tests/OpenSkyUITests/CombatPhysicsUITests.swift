@@ -1,19 +1,11 @@
-// World > Combat & Physics UI surface (issue #198, roadmap item 15.9), in its
-// own case rather than in `OpenSkyUITests` for the strict-lint type-length cap.
-//
-// The id contract is pinned in `DestinationRegistryTests` and
-// `CombatPhysicsPanelTests` as well; only a UI test proves the ids are
-// reachable in the built view hierarchy, which is the gap issue #380 recorded.
+// World > Combat & Physics UI test, its own case for the type-length cap. Unit
+// tests pin the ids; only a UI test proves they are reachable.
 
 import XCTest
 
 final class CombatPhysicsUITests: OpenSkyUITestCase {
-    /// World > Combat & Physics acceptance surface (M15, issue #198): the
-    /// sidebar lists the destination the milestone gate names, and selecting it
-    /// exposes every control the gate drives together with the six readouts
-    /// they change. Pinned here as well as in `DestinationRegistryTests`
-    /// because only a UI test proves the ids are reachable in the built view
-    /// hierarchy (issue #380).
+    /// The sidebar lists World > Combat & Physics, and selecting it shows every
+    /// gate control and the six readouts they change.
     @MainActor
     func testCombatPhysicsControlsAndReadouts() throws {
         let app = try launchApp()

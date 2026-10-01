@@ -1,9 +1,5 @@
-// Spawned references and loose items through the real `CellSceneBuilder`
-// (issue #177, roadmap item 12.1.3): an authored item reference resolves a
-// model, a collision shape and a `.take` interaction, and a dropped object
-// synthesized from world state does all three at its placement.
-//
-// Synthetic ESM + NIF bytes only; no game content.
+// Spawned references and loose items in `CellSceneBuilder`: an item resolves a
+// model, a collision shape, and a `.take` interaction, as does a dropped one.
 
 import Foundation
 @testable import OpenSkyFormatsCore

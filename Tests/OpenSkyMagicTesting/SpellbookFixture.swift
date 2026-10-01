@@ -39,8 +39,7 @@ public enum SpellbookFixture {
         /// `SpellStore.vanillaStartSpellEditorIDs` performs finds it.
         public static let flames: UInt32 = 0x0260
         /// Fire and forget, aimed, one hostile fire entry with an area, plus a
-        /// point entry — the shape vanilla `Fireball` is authored in
-        /// (issue #471).
+        /// point entry: the shape of vanilla `Fireball`.
         public static let fireball: UInt32 = 0x0270
         /// Fire and forget, aimed, hostile, with the SPEL "Ignore Resistance"
         /// flag set.
@@ -84,7 +83,7 @@ public enum SpellbookFixture {
     }
 
     /// The MGEF lookup behind every EFID, for a suite that needs a real effect
-    /// runtime rather than a fake world (issue #471).
+    /// runtime.
     public static func effectStore(index: RecordIndex) -> MagicEffectStore {
         MagicEffectStore(index: index)
     }

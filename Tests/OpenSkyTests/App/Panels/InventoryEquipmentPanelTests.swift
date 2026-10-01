@@ -1,6 +1,5 @@
-// World > Inventory & Equipment acceptance-surface coverage (issue #180).
-// Synthetic provider state only; the engine-side loop proof is
-// `M12AcceptanceTests` and the pixel evidence is `M12AcceptanceRenderTests`.
+// World > Inventory & Equipment with synthetic provider state. The loop proof
+// is `M12AcceptanceTests`; pixels are `M12AcceptanceRenderTests`.
 
 import AppKit
 @testable import OpenSky

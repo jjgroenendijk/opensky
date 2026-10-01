@@ -1,7 +1,5 @@
-// Node lifecycle and determinism of the behavior evaluator (issue #187): what
-// activation and deactivation do, and the promise that two instances stepped
-// the same way produce the same poses and the same event log. Synthetic graphs
-// built in code (AGENTS.md "Legal & IP boundary").
+// Behavior node activation and deactivation, and determinism: two instances
+// stepped the same way give the same poses and event log.
 
 import BehaviorTesting
 import Foundation

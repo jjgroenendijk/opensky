@@ -1,10 +1,6 @@
-// The three dialogue condition functions (issue #426): GetIsVoiceType,
-// GetIsAliasRef and IsInDialogueWithPlayer, evaluated against synthetic state
-// through the `ConditionContext` dialogue, alias and reference seams.
-//
-// Indices are the raw on-disk numbers from xEdit's condition-function table;
-// the Creation Kit spells each 4096 higher. Every condition is a real 32-byte
-// CTDA decoded through `Condition(ctda:)`, so nothing here reads game data.
+// GetIsVoiceType, GetIsAliasRef, and IsInDialogueWithPlayer through the
+// `ConditionContext` seams. Indices are raw on-disk numbers (Creation Kit
+// minus 4096); each condition is a real 32-byte CTDA.
 
 import FormatsESMTesting
 import Foundation

@@ -1,11 +1,6 @@
-// `audio sweep`: frame every `.xwm` the install's archives provide through
-// the production `XWMFile` parser, decode each one to PCM through `WMADecoder`
-// (streaming packet by packet), and print a grep-able tally (milestones 9.1.2
-// and 9.1.3, gated in tools/probe.sh alongside the lod/swf sweeps).
-//
-// The sweep streams: one file's bytes are read, framed, decoded chunk by chunk
-// (each chunk's PCM is counted and dropped) and released before the next path
-// is opened, so the walk stays flat in memory over the whole corpus.
+// `audio sweep`: frame every archived `.xwm` with `XWMFile`, decode it with
+// `WMADecoder`, and print a tally. One file is read, decoded chunk by chunk,
+// and released before the next, so memory stays flat.
 
 import Foundation
 import OpenSkyAudio

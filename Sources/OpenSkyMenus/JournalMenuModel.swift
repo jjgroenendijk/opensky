@@ -1,19 +1,6 @@
-// Engine-side model of the journal's Quests page (issue #184, roadmap item
-// 13.5): what the player would see listed, independent of any movie.
-//
-// The same split every other menu in `Sources/OpenSkyMenus/` uses. `JournalMenuModel` is
-// a `nonisolated struct` holding rows, selection and the completed-quests
-// toggle; `QuestJournalMovieBridge` is what pushes those rows through the
-// measured `quest_journal.swf` contract. Keeping the two apart is what lets the
-// panel and the CLI probe assert the same rows with no window, no renderer and
-// no install.
-//
-// Nothing here is derived from memory of Skyrim's journal. The row set is the
-// quest state issue #182 records, the text is what `LocalizedStrings` resolves
-// out of the plugin's own tables, and the objective display flags are the three
-// independent booleans `QuestObjectiveState` already models.
-//
-// Documented in docs/engine/journal.md.
+// Engine-side model of the journal's Quests page (docs/engine/journal.md).
+// `QuestJournalMovieBridge` pushes these rows into `quest_journal.swf`; the
+// split lets panel and CLI check rows without a window or install.
 
 import Foundation
 import OpenSkyFormatsESM

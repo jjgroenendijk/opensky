@@ -1,20 +1,7 @@
-// Developer > UI Lab SWF runtime readout (M8.3.3): the device-free half of the
-// AS2 runtime verification surface.
-//
-// `SWFLabRuntimeSnapshot` is one flat, Equatable copy of everything the panel
-// shows — movie state, the `GameDelegate` invoke log, and the interpreter's op
-// tally — taken from a live `SWFMovieRuntime` on the main thread between
-// frames. The section never reaches into the runtime while it draws, and the
-// snapshot compares equal, so a readout can be asserted as a value.
-//
-// The formatting sits beside it as pure functions for the same reason the
-// M8.2.5 readout does: the exact wording is unit-tested without AppKit, without
-// a GPU, and without a game install.
-//
-// The op tally is not a debug aid. The milestone's stated risk-management
-// mechanism is that an unimplemented opcode or an unknown host API degrades to
-// a logged no-op plus a tally entry, so showing the tally is how a user sees
-// what a menu could not do (docs/decisions/swf-as2-scope.md).
+// Developer > UI Lab SWF runtime readout. `SWFLabRuntimeSnapshot` is an
+// Equatable copy of movie state, the `GameDelegate` invoke log, and the op
+// tally. The op tally shows what a menu could not do, because missing opcodes
+// degrade to logged no-ops (docs/decisions/swf-as2-scope.md).
 
 import Foundation
 import OpenSkyFormatsSWF

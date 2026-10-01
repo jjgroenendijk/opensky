@@ -1,12 +1,6 @@
-// World > Runtime State > Time verification surface (issue #166, roadmap item
-// 10.2.1): the clock scrub, the calendar scrub, the timescale write, and the
-// pause readout.
-//
-// `make test-ui` is TCC-blocked on this machine (docs/tools/environment.md), so
-// these unit tests are the evidence for the accessibility-id contract: every id
-// this section declares is asserted literally, and every readout is read back
-// through `runtimeStateReadout` by id rather than through the section's Swift
-// property, which is what proves the UI-test API exists.
+// World > Runtime State > Time: clock scrub, calendar scrub, timescale, and
+// pause readout. Readouts go through `runtimeStateReadout` by id, not Swift
+// properties, which proves the UI-test API exists.
 
 import AppKit
 @testable import OpenSky

@@ -1,7 +1,5 @@
-// World > Quests & Journal verification-surface coverage (issue #184): the
-// panel the registry factory builds, the literal accessibility-id contract, the
-// readouts each section renders from one snapshot, and the provider round-trip
-// for every control.
+// World > Quests & Journal: the registry-built panel, literal ids, readouts
+// from one snapshot, and the provider round trip for every control.
 
 import AppKit
 @testable import OpenSky
@@ -148,7 +146,7 @@ struct JournalPanelTests {
     }
 
     /// The alias readout is the Scripts panel's, on the quest selected here, so
-    /// the two surfaces cannot describe the same #183 table differently.
+    /// the two cannot describe one alias table differently.
     @Test @MainActor
     func aliasReadoutReusesTheScriptsAliasTable() {
         let panel = JournalPanelViewController()

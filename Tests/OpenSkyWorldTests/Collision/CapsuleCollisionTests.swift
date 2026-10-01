@@ -181,8 +181,8 @@ struct CapsuleCollisionTests {
         let terrain: WalkController.GroundSampler = { position in
             position.x < 40 ? TerrainGroundSample(height: 0, normal: Self.up) : nil
         }
-        // filteredWall exists in source scene but broadphase omits it, matching
-        // M4.3 player-solid filtering before controller consumption.
+        // filteredWall is in the scene, but the broadphase omits it, as the
+        // player-solid filter does.
         let query = DynamicBodyScene.candidateQuery([platform])
         #expect(filteredWall.bounds.min.x == 20)
         for _ in 0 ..< 60 {

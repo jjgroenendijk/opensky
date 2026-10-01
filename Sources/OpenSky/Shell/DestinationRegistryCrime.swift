@@ -1,15 +1,6 @@
-// The M21 crime and faction destination (issue #507, roadmap item 21.8).
-// Satellite of Shell/DestinationRegistry.swift, spliced into `all` right after
-// Progression, for the reason that file gives for splitting descriptors out:
-// the registry enum body is at the strict-lint type-length cap.
-//
-// Placed after Progression and before the menus: it is still the world a
-// session runs, and a bounty, like a level, is something the player earned.
-//
-// The one override it registers is the vendor-faction override, which changes
-// which rules the next barter trades under without changing anybody's
-// memberships. Bounties and memberships are world state the user produced on
-// purpose, and "Reset all overrides" leaves them alone.
+// The crime and faction destination, split out of DestinationRegistry.swift to
+// stay under the type-length cap. Its one override is the vendor faction;
+// bounties and memberships are world state that "Reset all" leaves alone.
 
 import AppKit
 import OpenSkyCrime

@@ -75,9 +75,8 @@ final class M15AcceptanceChain {
     static let weaponDamage: Float = 24
     static let arrowDamage: Float = 40
     static let bowDamage: Float = 6
-    /// What the opponent swings with. The dev target's old profile, kept so the
-    /// gate's arithmetic is unchanged now that a mind rather than a clock
-    /// swings it (issue #424).
+    /// What the opponent swings with. The values keep the gate's arithmetic
+    /// fixed now that a combat mind drives the swing.
     static let opponentDamage: Float = 6
 
     // MARK: - Wiring
@@ -114,8 +113,8 @@ final class M15AcceptanceChain {
     var deathStates: [ReferenceKey: ActorDeathState] = [:]
     /// Stuck arrows the projectile runtime asked the world to spawn.
     var stuckArrows: [(key: ReferenceKey, arrow: StuckProjectile)] = []
-    /// What the opponent's combat machine asked the (absent) mover for, and how
-    /// often it asked to stop or be handed back to a package (issue #424).
+    /// What the opponent's combat machine asked the absent mover for, and how
+    /// often it asked to stop or return to a package.
     var combatMoveRequests: [SIMD3<Float>] = []
     var combatStopRequests = 0
     var combatPackageResumes = 0
@@ -166,9 +165,8 @@ final class M15AcceptanceChain {
         )
         combat = CombatLoopRuntime(settings: .synthetic)
         view.input = input
-        // The acceptance route clicks, and a click captures the pointer. The
-        // capture's cursor side effects are swapped out so driving the gate
-        // cannot freeze the machine's own cursor (issue #198).
+        // A click captures the pointer. The cursor side effects are swapped out
+        // so the gate cannot freeze the machine's own cursor.
         view.pointerCapture = .none
         try wire()
     }

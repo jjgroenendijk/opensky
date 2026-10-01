@@ -1,9 +1,6 @@
-// World > Player & Locomotion verification-surface coverage (issue #191): the
-// panel the registry factory builds, the literal accessibility-id contract, the
-// readouts each section renders from one snapshot, and the provider round trip
-// for every control.
-//
-// Same shape as `JournalPanelTests`, which is the template the gate names.
+// World > Player & Locomotion: the registry-built panel, literal ids, readouts
+// from one snapshot, and the provider round trip for every control. Same shape
+// as `JournalPanelTests`.
 
 import AppKit
 @testable import OpenSky
@@ -166,8 +163,8 @@ struct PlayerLocomotionPanelTests {
         #expect(readout.contains("Travel: root motion 0.0 u"))
         #expect(readout.contains("configured speed 3.0 u"))
         #expect(readout.contains("run via configured speed"))
-        // The rule the split is made by, so a zero root-motion total reads as
-        // the expected answer rather than as a missing feature (issue #370).
+        // The split rule, so a zero root-motion total reads as expected rather
+        // than as a missing feature.
         #expect(readout.contains("only for a clip whose data carries extracted motion"))
     }
 

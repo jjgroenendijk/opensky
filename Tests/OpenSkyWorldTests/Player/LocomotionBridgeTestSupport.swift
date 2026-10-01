@@ -1,6 +1,5 @@
-// Shared setup for the locomotion-bridge suites (issue #188): the synthetic
-// graph, the step state, and the controller driving helpers. Split out of
-// `LocomotionBridgeTests` so both files stay inside the lint type-length cap.
+// Shared setup for the locomotion-bridge suites, split from
+// `LocomotionBridgeTests` for the type-length cap.
 
 import BehaviorTesting
 @testable import OpenSkyBehavior

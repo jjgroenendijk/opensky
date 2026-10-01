@@ -1,10 +1,6 @@
-// World > Audio > Footsteps section (issue #352): the verification surface for
-// the footstep director. An enable toggle, a picker over the tags the current
-// footstep set answers to for the gait the player is in, a picker that pins the
-// surface material (issue #358), a play button that fires one tag without
-// walking, and a readout naming the set, the material, the tag list, and the
-// routed/played counts. Same shape as the other audio sections.
-// Documented in docs/engine/footstep-sounds.md.
+// World > Audio > Footsteps (docs/engine/footstep-sounds.md): enable toggle,
+// tag and material pickers, a play button, and a readout of the set, the
+// material, the tags, and the counts.
 
 import AppKit
 import OpenSkyFormatsESM
@@ -31,8 +27,7 @@ final class AudioFootstepsSection: PanelSectionViewController {
         identifier: "AudioFootstepsStatsLabel"
     )
 
-    /// The material menu's first entry: follow whatever the ground contact
-    /// reports, which is the default and the behaviour issue #358 delivers.
+    /// The material menu's first entry: follow the ground contact. The default.
     private static let groundMaterialTitle = "Ground contact"
 
     /// The materials behind the menu entries after the first, in menu order.

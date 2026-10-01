@@ -1,5 +1,5 @@
-// The convex collider a dynamic body presents (issue #193): what each decoded
-// geometry becomes, and the two queries the solver asks of it.
+// The convex collider of a dynamic body: what each decoded geometry becomes,
+// and the two queries the solver asks of it.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

@@ -1,19 +1,7 @@
-// Main-app journal seam (issue #184). Keeps the `World > Quests & Journal`
-// panel independent of `GameViewController` while exposing quest state, the
-// journal's menu-stack presence, and what the vanilla `quest_journal.swf`
-// Quests page actually built.
-//
-// The seam mirrors `ScriptControlProviding`: the panel reads one snapshot per
-// refresh and calls one mutation entry point per user action. It never sees
-// `QuestRuntime`, `MenuStack` or `SWFMovieRuntime` directly, so the engine keeps
-// ownership of main-actor state.
-//
-// The alias-provenance readout deliberately reuses `ScriptQuestAliasInspection`
-// and `ScriptsReadout.questAliasText` rather than restating the alias table in a
-// second shape: the two panels show the same #183 fill table, and two spellings
-// of it could disagree.
-//
-// Documented in docs/engine/journal.md.
+// Journal seam for `World > Quests & Journal` (docs/engine/journal.md). The
+// panel reads one snapshot and calls one mutation per action, like
+// `ScriptControlProviding`. Alias text reuses `ScriptsReadout.questAliasText`
+// so the two panels cannot disagree.
 
 import Foundation
 import OpenSkyRendering
@@ -235,8 +223,8 @@ public protocol JournalControlProviding: AnyObject {
     /// Switches the page between the active and completed quest lists.
     func setJournalShowsCompleted(_ flag: Bool)
 
-    /// Starts the selected quest, filling its aliases (issue #183). Records the
-    /// outcome, including a refused start, in `lastOutcome`.
+    /// Starts the selected quest, filling its aliases. Records the outcome,
+    /// including a refused start, in `lastOutcome`.
     func startSelectedQuest()
 
     /// Stops the selected quest, clearing its alias table.
@@ -249,7 +237,7 @@ public protocol JournalControlProviding: AnyObject {
     /// line on the page without a script.
     func setSelectedQuestObjective(_ index: Int, displayed: Bool)
 
-    /// The selected quest's #183 alias table, or nil when no loaded plugin
-    /// defines a quest with that editor ID.
+    /// The selected quest's alias table, or nil when no loaded plugin defines
+    /// a quest with that editor ID.
     func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection?
 }

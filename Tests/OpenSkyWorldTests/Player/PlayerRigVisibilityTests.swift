@@ -1,5 +1,4 @@
-// The first-person visibility matrix (issue #190): which rig is drawn and
-// which is cast, per camera mode. Pure value — no device, no install.
+// Which rig is drawn and which casts shadows, per camera mode.
 
 @testable import OpenSkyRendering
 import Testing

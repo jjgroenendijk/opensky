@@ -1,11 +1,6 @@
-// World > Runtime State > Globals verification surface (issue #166, roadmap
-// item 10.2.2): looking a global up by editor ID, seeing the plugin default
-// beside the runtime value and whether it is overridden, writing it, and
-// resetting it.
-//
-// `make test-ui` is TCC-blocked on this machine (docs/tools/environment.md), so
-// every readout here is read back through `runtimeStateReadout` by accessibility
-// id. That is what pins the id contract.
+// World > Runtime State > Globals: look up by editor ID, compare plugin default
+// and runtime value, write, and reset. Readouts go through
+// `runtimeStateReadout` by id, which pins the ids.
 
 import AppKit
 @testable import OpenSky

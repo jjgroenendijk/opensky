@@ -1,9 +1,6 @@
-// State machines, transitions, and crossfades (issue #330), over synthetic
-// graphs built in code — no packfile bytes and nothing from the install.
-//
-// Every graph below is the same shape: two states, each running a static clip
-// that holds bone 1 at a known translation, so the pose says without ambiguity
-// which state is showing and how far a crossfade has run.
+// State machines, transitions, and crossfades. Each graph has two states whose
+// static clips hold bone 1 at a known translation, so the pose shows which
+// state is visible and how far a crossfade has run.
 
 import BehaviorTesting
 import Foundation

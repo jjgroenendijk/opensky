@@ -1,27 +1,7 @@
-// Animation-safe equipment swap (issue #178, roadmap item 12.2.1).
-//
-// The chosen behaviour, stated once here and asserted below: a mid-clip swap
-// **resumes**, it does not restart. Nothing in the swap path holds a clip
-// phase. `Renderer.animationTime` is a renderer-owned monotonic clock that a
-// cell rebuild never touches, and `RenderScene.updateAnimations(at:)` samples
-// every resident actor from it, so the playback object a rebuild produces is
-// sampled at the same world time as the one it replaced. A restart would need
-// something to store a per-actor start time, and deliberately nothing does.
-// The tests below pin the observable consequence: the same pose applied to two
-// independently built model sets produces identical palettes.
-//
-// The second half of the requirement is that no bind-pose frame appears. A
-// fresh `RenderMesh` starts on its bind palette, so the guarantee is one of
-// ordering rather than of state: `Renderer.draw` calls
-// `updateAnimationsFromWallClock()` before it encodes, so the first frame that
-// can show a rebuilt actor has already posed it. What is asserted here is the
-// precondition that makes that work for equipment — an attachment is a skinned
-// mesh, so `ActorAnimationPlayback` collects it alongside the body meshes and
-// poses it in the same pass rather than leaving it behind at bind pose.
-//
-// Synthetic meshes and a synthetic pose. Frame-level animation proof is
-// `ActorAnimationRenderTests`; this suite is about what a swap does to the
-// palettes.
+// A mid-clip equipment swap resumes, not restarts: `Renderer.animationTime`
+// survives a rebuild, so the new playback samples the same time. No bind-pose
+// frame shows: `Renderer.draw` poses before it encodes, and attachments are
+// skinned meshes posed in the same pass by `ActorAnimationPlayback`.
 
 import Metal
 @testable import OpenSkyFormatsCore

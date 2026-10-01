@@ -1,12 +1,7 @@
-// Localized-strings preview content for Developer > UI Lab (M8.1.4). Invented
-// $KEY fixture strings merged through the real TranslationFile ->
-// LocalizedLabels path, and a UIScene that renders them via
-// LocalizedLabels.label(for:): a wrapped long string, an unwrapped long line
-// that clips at the frame edge, and a deliberately unknown key shown verbatim
-// (the vanilla-observable fallback). Every string here is invented in code —
-// never game data (AGENTS.md legal boundary). The vanilla install ships zero
-// translation .txt files, so a synthetic sample is the only way the preview
-// can show resolved text.
+// Localized-strings sample for Developer > UI Lab. Invented $KEY strings go
+// through the real `TranslationFile` -> `LocalizedLabels` path. The install
+// ships no translation .txt files, so a synthetic sample is the only way to
+// show resolved text. An unknown key shows verbatim, as in vanilla.
 
 import OpenSkyFormatsCore
 import OpenSkyGameData
@@ -14,9 +9,8 @@ import OpenSkyRendering
 import simd
 
 nonisolated extension LocalizedLabels {
-    /// Synthetic sample provider for the UI Lab preview. Goes through the real
-    /// merge path so the preview exercises the same provider the SWF menus
-    /// (issue #99) will consume.
+    /// Synthetic sample provider. Uses the real merge path, the same one the
+    /// SWF menus use.
     public static let uiLabSample = LocalizedLabels(
         language: "english",
         files: [TranslationFile(entries: [

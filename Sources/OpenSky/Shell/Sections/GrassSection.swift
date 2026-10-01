@@ -1,6 +1,5 @@
-// World > Environment > Grass section: live density/distance/wind sliders +
-// numeric draw/budget readout (issue #98 decomposition of EnvironmentGrass-
-// Controls). Renderer policy clamps every value again.
+// World > Environment > Grass: density, distance, and wind sliders with a draw
+// readout. The renderer clamps every value again.
 
 import AppKit
 import OpenSkyRendering

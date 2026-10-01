@@ -1,12 +1,6 @@
-// The skill-advancement formulas (issue #498, roadmap item 20.5), asserted
-// against hand-computed values.
-//
-// Every number here is either quoted from UESP "Skyrim:Leveling" or worked out
-// from the formula it states, so a change to the arithmetic fails here before
-// it reaches a session. The parameters are the real ones this machine's
-// `Skyrim.esm` carries — `AVOneHanded` 6.3 / 0 / 2 / 0 and `AVLockpicking`
-// 45 / 10 / 0.25 / 300 — stated in code rather than read from a plugin, which
-// is what `SkillAdvancementRealDataTests` checks the install still says.
+// Skill-advancement formulas from UESP "Skyrim:Leveling", hand-computed. The
+// parameters are the install's (`AVOneHanded` 6.3 / 0 / 2 / 0, `AVLockpicking`
+// 45 / 10 / 0.25 / 300); `SkillAdvancementRealDataTests` checks they still hold.
 
 import Foundation
 @testable import OpenSkyFormatsESM

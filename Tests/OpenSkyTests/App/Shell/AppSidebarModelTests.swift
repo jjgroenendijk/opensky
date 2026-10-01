@@ -1,7 +1,5 @@
-// Sidebar structure for the unified shell (issue #98 PR 2): sections group in
-// declaration order, destinations keep registry order, empty sections drop,
-// and launch selects the World destination. Pinned as unit assertions because make
-// test-ui is blocked on the dev machine (TCC).
+// Sidebar structure: sections in declaration order, destinations in registry
+// order, empty sections dropped, and World selected at launch.
 
 import AppKit
 @testable import OpenSky

@@ -1,13 +1,6 @@
-// World destination panel: the sidebar surface for the live render itself —
-// where the camera is, how fast the frame is, and what the frame drew. The
-// sidebar row used to be a bare "Viewport" that only collapsed the inspector
-// column, which told a first-time user nothing and offered no controls; the
-// bare render is still reachable, now as a View-menu mode rather than a
-// destination (docs/tools/app-ui.md).
-//
-// Same shape as EnvironmentPanelViewController: a thin composition of
-// self-contained sections, each talking to the live renderer through its own
-// narrow provider protocol.
+// World: the live render itself. Where the camera is, how fast the frame is,
+// and what it drew. Each section reaches the renderer through its own narrow
+// provider protocol.
 
 import AppKit
 import OpenSkyPhysics
@@ -28,9 +21,8 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { cameraSection.provider = cameraProvider }
     }
 
-    /// The first-person arms, field of view, and their readout (issue #190).
-    /// Wired here because first person is a camera mode this panel already
-    /// selects.
+    /// First-person arms, field of view, and their readout. Here because this
+    /// panel selects the camera mode.
     weak var firstPersonProvider: (any FirstPersonControlProviding)? {
         didSet { firstPersonSection.provider = firstPersonProvider }
     }
@@ -43,16 +35,14 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { sceneSection.provider = sceneStatsProvider }
     }
 
-    /// Trigger-volume accounting and occupancy (issue #173). It lives here
-    /// because occupancy is a walk-mode behaviour and the fly/walk selector is
-    /// in this panel's Camera section.
+    /// Trigger-volume counts and occupancy. Here because occupancy needs walk
+    /// mode, which this panel's Camera section selects.
     weak var triggerProvider: (any TriggerControlProviding)? {
         didSet { triggerSection.provider = triggerProvider }
     }
 
-    /// The render debug channel and the layer mask (issue #144). They live under
-    /// this destination because both are views of the frame this panel already
-    /// reports on, not a subsystem of their own.
+    /// The render debug channel and the layer mask: both are views of the
+    /// frame this panel reports on.
     weak var renderDebugProvider: (any RenderDebugControlProviding)? {
         didSet { renderDebugSection.provider = renderDebugProvider }
     }

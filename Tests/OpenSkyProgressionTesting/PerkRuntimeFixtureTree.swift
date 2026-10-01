@@ -1,13 +1,5 @@
-// The AVIF perk tree the spend suites climb (issue #499, roadmap item 20.6),
-// plus the two spell-record helpers that go with it.
-//
-// Split out of `PerkRuntimeFixture.swift` because that type is at the
-// strict-lint body-length cap: what stays there is the record *lists* a suite
-// reads, and what moved here is the byte-level authoring under them.
-//
-// Every byte is authored here; nothing comes from the game install (AGENTS.md
-// "Legal & IP boundary"). The shape is this machine's `AVOneHanded`, read
-// 2026-08-20 with `openskycli record AVOneHanded`.
+// The AVIF perk tree the spend suites climb, and two spell-record helpers.
+// Split from `PerkRuntimeFixture.swift` for the body-length cap.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -15,17 +7,9 @@ import Foundation
 
 @MainActor
 extension PerkRuntimeFixture {
-    /// The AVIF record carrying the fixture perk tree.
-    ///
-    /// Shaped like this machine's `AVOneHanded`, read 2026-08-20: an entry node
-    /// granting no perk whose line reaches the first real box, that box's lines
-    /// reaching two more, and every higher rank of a chain absent from the tree
-    /// because vanilla puts only the chain head in a box.
-    ///
-    ///     #0 NULL          -> [1]
-    ///     #1 DamageRank1   -> [2, 3]
-    ///     #2 ShieldWall    -> []
-    ///     #3 SkillGated    -> []
+    /// The AVIF record with the fixture perk tree, shaped like the install's
+    /// `AVOneHanded`: an empty entry node leads to the first box. Only a chain's
+    /// head sits in a box, as in vanilla.
     public static var actorValueInformationRecord: Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("AVOneHanded"))
         fields += ESMFixture.field("FULL", ESMFixture.zstring("One-Handed"))

@@ -1,11 +1,6 @@
-// World > Crime & Factions > Vendor (issue #507): the vendor role the subject's
-// memberships resolve (issue #506) — chest, hours, buy/sell list, fence — and
-// the dev override that trades under another vendor faction instead.
-//
-// The override is the one control on this destination that is a setting rather
-// than world state: it changes which rules the next barter uses without
-// changing what anybody is a member of. So it is the one "Reset all" clears,
-// and the section reports it as an override.
+// World > Crime & Factions > Vendor: the vendor role from the subject's
+// memberships, and an override to trade under another vendor faction. The
+// override is a setting, so "Reset all" clears it.
 
 import AppKit
 import OpenSkyCrime

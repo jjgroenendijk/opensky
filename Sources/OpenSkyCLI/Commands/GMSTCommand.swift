@@ -1,8 +1,5 @@
-// `gmst movement` and `gmst combat`: read-only resolution reports for
-// controller tuning and for melee combat (issue #195). Source names make both
-// winning plugin overrides and explicit fallbacks inspectable, which is how a
-// surprising reach or block number is traced to the plugin that set it rather
-// than guessed at.
+// `gmst movement` and `gmst combat`: resolved settings with their source, so a
+// surprising value traces to the plugin that set it.
 
 import Foundation
 import OpenSkyCombatInterface
@@ -33,8 +30,8 @@ enum GMSTCommand {
         }
     }
 
-    /// The settings `DetectionSettings` resolves (issue #202), with the plugin
-    /// or the documented fallback each came from.
+    /// The settings `DetectionSettings` resolves, with the plugin or the
+    /// documented fallback each came from.
     private static func runDetection(context: CLIContext) throws {
         let file = try context.loadSkyrimESM()
         let store = GameSettingLoader.load(root: context.root, baseFile: file)
@@ -81,8 +78,8 @@ enum GMSTCommand {
         }
     }
 
-    /// The three settings `ArcherySettings` resolves (issue #196), with the
-    /// plugin or the UESP-documented fallback each came from.
+    /// The three settings `ArcherySettings` resolves, with the plugin or the
+    /// UESP-documented fallback each came from.
     private static func runArchery(context: CLIContext) throws {
         let file = try context.loadSkyrimESM()
         let store = GameSettingLoader.load(root: context.root, baseFile: file)

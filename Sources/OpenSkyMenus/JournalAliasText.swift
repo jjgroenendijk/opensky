@@ -1,27 +1,7 @@
-// Alias substitution in journal text (issue #184, on top of the alias fills of
-// issue #183).
-//
-// Quest journal paragraphs and objective lines are authored with placeholders
-// that name one of the quest's own aliases, and the engine replaces each with
-// the display name of whatever filled it. The syntax is measured rather than
-// remembered: `openskycli swf quest-journal --text` prints the resolved CNAM
-// and NNAM strings of a quest straight out of the plugin's `.dlstrings` table,
-// and vanilla `Skyrim.esm` writes them as angle-bracketed tags whose body is
-// `Alias` followed by an optional dotted qualifier, then `=`, then the authored
-// alias name: `<Alias=Prisoner>`, `<Alias.ShortName=Jail>`.
-//
-// The Creation Kit documents the same family under "text replacement":
-// "<Alias=AliasName> - the name of the object filling the alias"
-// (<https://ck.uesp.net/wiki/Text_Replacement>). The qualifier chooses which
-// name of that object is wanted; OpenSky has one name per reference, so every
-// qualifier resolves to the same string and the qualifier is parsed only so a
-// tag carrying one is still recognized as a tag.
-//
-// Policy for a token that cannot be resolved — no such alias, an empty alias,
-// or a reference with no name — is to leave the tag exactly as written. A
-// visible `<Alias=Prisoner>` in the journal says "this fill is missing", which
-// is a truthful readout; silently deleting it would leave a sentence with a
-// hole in it and nothing to point at.
+// Alias substitution in journal text. Vanilla writes `<Alias=Prisoner>` or
+// `<Alias.ShortName=Jail>` (<https://ck.uesp.net/wiki/Text_Replacement>).
+// OpenSky has one name per reference, so every qualifier gives the same name.
+// An unresolvable tag stays as written, so a missing fill stays visible.
 
 import Foundation
 import OpenSkyFormatsESM

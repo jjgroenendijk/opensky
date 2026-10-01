@@ -1,8 +1,6 @@
-// Sun-shadow streaming/budget/quality integration (M7.1.2): per-cascade caster
-// culling evidence via lastShadowDrawStats, the ShadowQuality tiers, and the
-// per-frame CPU timing metric. Offscreen renders + deterministic checks
-// (AGENTS.md testing). Shares the synthetic scene + render helpers with
-// ShadowSceneFixture. Skips without a Metal 4 device (paravirtual CI).
+// Sun-shadow integration: per-cascade caster culling via
+// `lastShadowDrawStats`, the quality tiers, and CPU timing. Uses
+// ShadowSceneFixture. Needs Metal 4.
 
 import Foundation
 import Metal

@@ -1,20 +1,7 @@
-// The bind-pose round trip the actor animation path rests on (issue #354):
-// composing a Havok rig's own reference pose and writing it into a NIF skin
-// must reproduce that skin's bind palette, so a body that is animated but not
-// yet moving stands exactly where the un-animated body stands.
-//
-// Both halves are synthetic and built in code — a NIF assembled byte by byte
-// through `NIFFixture` and a rig assembled from the values a Havok packfile
-// carries — so this is a deterministic test of the two formats' conventions
-// meeting, with no game file anywhere near it (AGENTS.md "Legal & IP").
-//
-// The conventions are what the test is really about. Havok multiplies column
-// vectors and NIF multiplies row vectors, so the two files spell the same bone
-// rotation as transposes of each other, and the NIF side has to be transposed
-// on the way in. Skipping that transpose is what tore skinned actors apart:
-// the bind palette still came out as the identity, because the NIF's own two
-// halves cancel either way, but every pose written over it was composed in the
-// wrong convention.
+// Composing a Havok rig's reference pose into a NIF skin must reproduce the
+// skin's bind palette. Havok uses column vectors and NIF row vectors, so the
+// NIF rotation is transposed on the way in. Without that, the bind palette
+// still looks right but every animated pose is wrong.
 
 import FormatsMeshTesting
 import Foundation

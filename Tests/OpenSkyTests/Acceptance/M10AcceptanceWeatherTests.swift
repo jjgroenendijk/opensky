@@ -1,22 +1,8 @@
-// Satellite of M10AcceptanceTests (issue #166): "weather and time stay
-// synchronized", the first half of the M10 acceptance gate.
-//
-// The claim under test is that with the clock running at an elevated timescale,
-// `WeatherSystem` transitions fire from real elapsed game hours — not from an
-// hour-delta wrap heuristic, and not from wall-clock seconds — and that the sky
-// hour, the World > Runtime State clock readout, and the `GameHour` global
-// projection all describe the same instant.
-//
-// The cadence is asserted structurally rather than by counting rerolls. A reroll
-// that happens to pick the weather that is already showing changes nothing
-// observable, so counting weather changes would be asserting on the pick. What
-// every run must satisfy instead is that no weather ever changes anywhere except
-// on a `WeatherSystem.rerollGameHours` boundary, and that at least one change
-// happened, which together pin both the cadence and the fact that it fires.
-//
-// The real-install half is `M10AcceptanceRealDataTests.swift`. Everything here
-// is synthetic: the weather plugin, the globals and the clock are all built in
-// code, and no game file is opened.
+// Weather and time stay in sync: at a high timescale, weather changes only on a
+// `WeatherSystem.rerollGameHours` boundary and at least one change happens.
+// Counting changes would fail when a reroll picks the same weather. Sky hour,
+// clock readout, and `GameHour` must agree. Real-data half:
+// `M10AcceptanceRealDataTests.swift`.
 
 import AppKit
 @testable import FormatsCoreTesting

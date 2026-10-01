@@ -1,10 +1,6 @@
-// Journal page model coverage (issue #184): which quests are listed, what a
-// row says, and how selection behaves.
-//
-// Every quest is synthetic, built out of `QuestFixture` bytes, so nothing here
-// reads game data. The fixture plugin is not localized, so its lstrings are
-// inline and no string table is needed — which is also the unlocalized-mod
-// path through `JournalMenuModel.text`.
+// Journal page model: which quests are listed, what a row says, and selection.
+// The fixture plugin is not localized, so its text is inline, which also covers
+// the unlocalized-mod path through `JournalMenuModel.text`.
 
 import FormatsESMTesting
 import Foundation

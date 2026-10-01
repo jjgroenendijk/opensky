@@ -1,10 +1,6 @@
-// Render debug views + layer isolation reaching the GPU (issue #144).
-//
-// The state-level rules are pinned in `RenderDebugStateTests`; this suite is the
-// evidence that they change what the passes encode: draw-stat deltas for the
-// scene and shadow passes, and pixel proof that a debug channel changes the
-// frame while an ordinary offscreen render still renders the shipping one.
-// Skips without a Metal 4 device (paravirtual CI).
+// Render debug views reaching the GPU: draw-stat deltas for scene and shadow
+// passes, and pixels proving a debug channel changes the frame but not a plain
+// offscreen render. Rules are in `RenderDebugStateTests`. Needs Metal 4.
 
 import Foundation
 import Metal

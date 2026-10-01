@@ -1,9 +1,6 @@
-// The `openskycli` usage text. Split out of OpenSkyCLI.swift (issue #179): the
-// command list is most of that enum's body and had reached the strict-lint
-// type-length cap, so a new subcommand could not document itself there.
-//
-// A new or changed subcommand updates this text, `docs/tools/cli.md` and probe
-// coverage in the same commit.
+// The `openskycli` usage text, split out of OpenSkyCLI.swift to stay under the
+// type-length cap. A changed subcommand updates this, `docs/tools/cli.md`, and
+// probe coverage in the same commit.
 
 import Foundation
 

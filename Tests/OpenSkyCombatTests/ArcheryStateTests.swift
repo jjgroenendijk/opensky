@@ -1,10 +1,5 @@
-// The shot state machine over the census-named event stream (issue #196,
-// roadmap item 15.5, scope point 2).
-//
-// A list of strings in, a state out — which is what keeping `ArcheryState` free
-// of any clock, world or projectile buys. Every name here comes from the M14
-// behavior census and is spelled the way `0_master.hkx` spells it; see
-// `ArcheryGraphNames`.
+// The shot state machine over graph event names, spelled as in `0_master.hkx`
+// (see `ArcheryGraphNames`). Strings in, a state out.
 
 @testable import OpenSkyCombat
 import Testing

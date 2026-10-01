@@ -1,10 +1,6 @@
-// Archetype dispatch (issue #469, roadmap item 19.6): what each implemented
-// archetype resolves to, and which reason every other entry is counted under.
-//
-// Records are synthetic and built in code (`ActiveEffectFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary"). Layouts: UESP
-// "Skyrim Mod:Mod File Format/MGEF"; semantics: the Creation Kit wiki's Magic
-// Effect page, cited at the planner.
+// Archetype dispatch: what each implemented archetype resolves to, and the
+// reason every other entry is counted under. Semantics: the Creation Kit wiki
+// Magic Effect page, cited at the planner.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -152,8 +148,8 @@ struct MagicEffectPlannerTests {
         #expect(outcome == .skip(.unimplementedArchetype(.paralysis)))
     }
 
-    /// A held modifier on health applies like any other since issue #511: the
-    /// primaries have the base-plus-modifiers storage item 20.3 built.
+    /// A held modifier on health applies like any other: the primaries store a
+    /// base plus modifiers.
     @Test func timedRecoverEffectOnAPrimaryApplies() throws {
         let file = try ActiveEffectFixture.plugin(records: [
             ActiveEffectFixture.magicEffect(

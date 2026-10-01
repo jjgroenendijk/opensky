@@ -1,6 +1,5 @@
-// Talk targeting (issue #205, roadmap item 17.3, scope point 1): which actor a
-// view ray picks up, and which it does not. Pure geometry over the melee
-// narrowphase, so no world, no streamer and no install.
+// Talk targeting: which actor a view ray picks. Pure geometry over the melee
+// narrowphase.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

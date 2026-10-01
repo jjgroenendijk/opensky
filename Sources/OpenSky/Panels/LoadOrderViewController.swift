@@ -1,10 +1,6 @@
-// Load Order destination: what plugins.txt the engine found, and the plugin
-// order it produced (issue #73). The user can point the engine at a different
-// plugins.txt here without knowing a CLI flag, which is the whole reason the
-// setting is not environment-only.
-//
-// Resolution, ordering, and every string in the table live in the engine
-// (`PluginLoadOrder`, `PluginLoadOrderReport`); this file is the AppKit shell.
+// Load Order: the plugins.txt the engine found and the order it produced. The
+// user can pick another plugins.txt here without a CLI flag. The logic lives
+// in `PluginLoadOrder` and `PluginLoadOrderReport`; this is the AppKit shell.
 
 import AppKit
 import OpenSkyGameData

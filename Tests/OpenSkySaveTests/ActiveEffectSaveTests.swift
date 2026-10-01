@@ -1,7 +1,4 @@
-// The AEFF save chunk (issue #469, roadmap item 19.6): round trip, additivity
-// and the tolerance rules the container promises.
-//
-// A save is OpenSky's own format, so nothing here touches game data at all.
+// The AEFF save chunk: round trip, additivity, and the tolerance rules.
 
 import Foundation
 @testable import OpenSkyFormatsESM

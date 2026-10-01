@@ -1,10 +1,6 @@
-// World item take/drop/container tests (issue #177, roadmap item 12.1.3).
-//
-// Everything runs on a real `WorldStateStore` and a real `InventoryRuntime`
-// over the synthetic M12.1 plugin, with `FakeWorldReferences` in
-// place of a `CellStreamer` so no scene, no Metal and no game data are needed.
-// The seam under test is exactly the one the app uses: `wireWorldItems` builds
-// the same object with the same two collaborators.
+// Take, drop, and container tests on a real `WorldStateStore` and
+// `InventoryRuntime`, with `FakeWorldReferences` in place of `CellStreamer`.
+// `wireWorldItems` builds the same object the app uses.
 
 import Foundation
 @testable import OpenSkyFormatsCore

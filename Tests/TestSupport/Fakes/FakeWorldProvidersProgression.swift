@@ -1,10 +1,6 @@
-// The progression half of the world-provider fake (issue #500), in its own file
-// so `FakeWorldProviders` stays inside the type-length cap — the same split
-// `FakeWorldProvidersCombat.swift` made.
-//
-// Every answer is a plain stored value and every action is recorded rather than
-// performed, which is what lets a panel test drive the whole `World >
-// Progression` destination with no renderer, no window and no game data.
+// The progression part of the world-provider fake, split for the type-length
+// cap. Answers are stored and actions recorded, so a panel test drives
+// `World > Progression` without renderer or game data.
 
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
@@ -12,8 +8,8 @@
 /// The progression half of the fake's stored state.
 struct FakeProgressionState {
     var snapshot = ProgressionControlSnapshot.unavailable
-    /// How many times the panel has asked for the snapshot, so a gate can assert
-    /// that one tick builds it once for all three sections (issue #556).
+    /// How often the panel asked for the snapshot, so a test can check one tick
+    /// builds it once for all three sections.
     var snapshotReads = 0
     /// Every skill use the panel granted, in order, so a gate can assert that a
     /// button sent exactly what the field held.

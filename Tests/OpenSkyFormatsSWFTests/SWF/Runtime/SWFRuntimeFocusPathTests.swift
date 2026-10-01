@@ -1,8 +1,5 @@
-// Focus-path filtering for the menu-handler route (issue #229).
-//
-// Split out of `SWFRuntimeInputTests` so that suite stays under the type-body
-// limit. Device-free, synthetic fixtures only — no test reads a real `.swf`
-// (AGENTS.md "Legal & IP boundary").
+// Focus-path filtering for the menu-handler route, split from
+// `SWFRuntimeInputTests` for the type-body limit.
 
 import FormatsSWFTesting
 import Foundation
@@ -36,11 +33,9 @@ struct SWFRuntimeFocusPathTests {
         ]
     }
 
-    /// The focus path handed to the menu handler carries only clips that define
-    /// `handleInput`. Vanilla nests a list under a plain holder clip
-    /// (`startmenu.swf`: `MainListHolder` between `Menu_mc` and `List_mc`); the
-    /// movie's own routing forwards down `pathToFocus[0]`, so an unfiltered path
-    /// hands it a clip that defines none and the key is dropped (issue #229).
+    /// The focus path holds only clips that define `handleInput`. Vanilla nests
+    /// a list under a plain holder (`startmenu.swf`: `MainListHolder`), and the
+    /// movie forwards down `pathToFocus[0]`, so a holder would drop the key.
     @Test func theFocusPathDropsHolderClipsWithoutHandleInput() throws {
         let runtime = try SWFRuntimeFixture.started(tags: Self.nestedHandlerTags())
         let menuRoot = try #require(runtime.root.child(named: "menuRoot"))

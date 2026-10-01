@@ -1,7 +1,5 @@
-// The `PRKS` chunk (issue #497, roadmap item 20.4): the owned-perk round trip,
-// the normalization a load has to survive, and the absent-chunk case that keeps
-// a save with no perks byte-identical to what this encoder produced before the
-// chunk existed.
+// The `PRKS` chunk: owned-perk round trip, load normalization, and an absent
+// chunk keeping a save without perks byte-identical.
 
 import Foundation
 @testable import OpenSkyFormatsESM

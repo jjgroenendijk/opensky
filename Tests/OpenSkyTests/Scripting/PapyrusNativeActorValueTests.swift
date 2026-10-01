@@ -1,14 +1,6 @@
-// The `Actor` natives over the actor-value store: the general reads and writes
-// of issue #468 (item 19.5) and the three base-and-modifier writes of issue
-// #496 (item 20.3). Split out of `PapyrusNativeActorTests` because that suite is
-// at its size shape.
-//
-// The fixture is that suite's, deliberately: the point of these cases is that a
-// script reaching a resistance lands in the same live `ActorValueRuntime` over
-// the same `WorldStateStore` a script reaching health does.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The `Actor` actor-value natives: general reads and writes, and the three
+// base-and-modifier writes. Uses `PapyrusNativeActorTests`' fixture, so a
+// resistance and health land in the same `ActorValueRuntime`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -38,9 +30,8 @@ struct PapyrusNativeActorValueTests {
         ))
     }
 
-    /// Item 19.5 (issue #468): every name the vanilla table carries answers.
-    /// A skill reads its documented floor and a resistance reads zero until
-    /// something moves them.
+    /// Every name in the vanilla table answers. A skill reads its documented
+    /// floor and a resistance reads zero until something moves them.
     @Test func aNonPrimaryActorValueReadsItsBaseline() throws {
         let fixture = try PapyrusNativeActorTests.fixture()
         #expect(call(
@@ -100,7 +91,7 @@ struct PapyrusNativeActorValueTests {
         return false
     }
 
-    // MARK: - The three writes (issue #496, roadmap item 20.3)
+    // MARK: - The three writes
 
     /// `SetActorValue` "sets the base value ... Any modifiers are left intact"
     /// (<https://ck.uesp.net/wiki/SetActorValue_-_Actor>), for a primary as

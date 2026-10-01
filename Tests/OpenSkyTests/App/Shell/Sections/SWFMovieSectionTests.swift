@@ -1,9 +1,6 @@
-// Developer > UI Lab > SWF movie section coverage (M8.2.5): the popup mirrors
-// the provider's movie list, selecting an entry drives selectSWFMovie(path:),
-// the layer toggle round-trips, and the readout renders the movie tally, the
-// draw stats, unresolved fonts, and load failures instead of crashing. The
-// accessibility ids are pinned literally — they are the UI-test API while
-// make test-ui is blocked on this machine (docs/tools/app-ui.md).
+// Developer > UI Lab > SWF movie: the popup mirrors the movie list, selection
+// calls `selectSWFMovie(path:)`, the layer toggle round-trips, and the readout
+// handles fonts and load failures. Ids are pinned (docs/tools/app-ui.md).
 
 import AppKit
 @testable import OpenSky

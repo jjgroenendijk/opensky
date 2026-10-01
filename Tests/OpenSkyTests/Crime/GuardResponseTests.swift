@@ -1,7 +1,5 @@
-// Guard response (issue #505): who counts as a guard, which bounty earns a
-// conversation and which a fight, the crime term of the hostility derivation,
-// and the session state that picks one confrontation at a time. Synthetic
-// records only (CrimeFixture).
+// Guard response: who is a guard, which bounty means talk or fight, the crime
+// term of hostility, and one confrontation at a time.
 
 import FormatsESMTesting
 import Foundation

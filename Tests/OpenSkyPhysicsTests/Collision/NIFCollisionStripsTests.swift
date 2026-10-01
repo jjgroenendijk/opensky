@@ -29,9 +29,8 @@ struct NIFCollisionStripsTests {
         #expect(model.triangleCount == 3)
     }
 
-    /// Issue #376: the vanilla `bhkNiTriStripsShape` meshes carry every
-    /// optional `NiGeometryData` array, so one wrong field width in the prefix
-    /// only shows up here and not on the minimal fixture above.
+    /// Vanilla `bhkNiTriStripsShape` meshes carry every optional
+    /// `NiGeometryData` array, so a wrong field width shows only here.
     @Test func decodesNiTriStripsDataCarryingEveryOptionalArray() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(

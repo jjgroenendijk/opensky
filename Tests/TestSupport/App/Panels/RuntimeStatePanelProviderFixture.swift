@@ -1,15 +1,6 @@
-// Recording double for the World > Runtime State seam, shared by every panel
-// suite and by the destination-registry satellite.
-//
-// It lives in its own file rather than inside `RuntimeStatePanelTests` because
-// the M10.2 surfaces (clock, globals, conditions) roughly doubled its size and
-// the parent suite is near the repo file-length limit. Stored properties cannot
-// live in an extension, so splitting it out was the only way to keep the fake
-// as one type.
-//
-// It records what the panel asked the engine to do so a test can assert on the
-// selector, slot, editor ID or condition source each control carried, rather
-// than on rendered text alone.
+// Recording fake for the World > Runtime State seam, shared by the panel and
+// registry suites. It records the selector, slot, editor ID, or condition each
+// control sent, so tests check more than rendered text.
 
 import AppKit
 @testable import OpenSkyWorld

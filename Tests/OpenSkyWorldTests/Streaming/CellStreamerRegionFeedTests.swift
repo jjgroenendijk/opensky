@@ -1,8 +1,6 @@
-// Live XCLR region feed (M7.2.3): the streamer pushes the current exterior
-// center cell's REGN FormIDs into `onCenterRegionsChanged` (wired to
-// WeatherSystem.setRegions in the app) whenever they change. Extension of
-// CellStreamerTests to reuse its synthetic runner + CellScene helpers without
-// growing that file past the length limit. No Metal, no game data.
+// The streamer pushes the center cell's REGN FormIDs into
+// `onCenterRegionsChanged` when they change. Extends CellStreamerTests within
+// the length limit.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

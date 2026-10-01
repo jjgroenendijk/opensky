@@ -1,4 +1,4 @@
-// FaceMorphControlProviding half of the shared panel fake (issue #207).
+// FaceMorphControlProviding part of the shared panel fake.
 
 import Foundation
 @testable import OpenSkyWorld

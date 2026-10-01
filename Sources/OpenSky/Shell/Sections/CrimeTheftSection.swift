@@ -1,12 +1,6 @@
-// World > Crime & Factions > Theft (issue #507): whether taking what the
-// crosshair is on would be theft, whose it is, and the stolen copies the player
-// already carries.
-//
-// Read-only, as `ItemOwnershipSection` is: ownership is a fact about a placed
-// reference, not a setting. That section shows the raw `XOWN`/`XRNK` fields;
-// this one shows the verdict the crime runtime reaches from them, the cell's
-// owner and the player's memberships (issue #504), which is the question a
-// thief is actually asking.
+// World > Crime & Factions > Theft: whether taking the crosshair target is
+// theft, whose it is, and the stolen items the player carries. Read-only,
+// because ownership is a fact about a placed reference.
 
 import AppKit
 import OpenSkyCrime

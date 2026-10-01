@@ -1,13 +1,6 @@
-// The `Game` skill natives (issue #498, roadmap item 20.5): `AdvanceSkill` and
-// `IncrementSkill` over a live advancement runtime, plus the refusals a script
-// has to be able to tell apart.
-//
-// The bridge closure is the session's shape — the whole read-modify-write, for
-// the reason `GameViewControllerSkills` carries it: `SkillAdvancementRuntime`
-// is a struct, and handing the bridge a copy would drop the write.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// `AdvanceSkill` and `IncrementSkill` over a live advancement runtime, and the
+// refusals. The bridge closure does the whole read-modify-write because
+// `SkillAdvancementRuntime` is a struct; a copy would drop the write.
 
 import Foundation
 @testable import OpenSkyActors

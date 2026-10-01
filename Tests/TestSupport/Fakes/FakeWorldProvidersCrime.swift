@@ -1,9 +1,6 @@
-// The crime and faction half of the world-provider fake (issue #507), in its
-// own file so `FakeWorldProviders` stays inside the type-length cap.
-//
-// Every answer is a stored value and every action is recorded rather than
-// performed, which lets a panel test drive `World > Crime & Factions` with no
-// renderer, no window and no game data.
+// The crime and faction part of the world-provider fake, split for the
+// type-length cap. Answers are stored and actions recorded, so a panel test
+// drives `World > Crime & Factions` without renderer or game data.
 
 @testable import OpenSkyCrime
 @testable import OpenSkyFormatsESM

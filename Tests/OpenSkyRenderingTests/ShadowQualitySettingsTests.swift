@@ -1,6 +1,5 @@
-// World > Environment sun-shadow quality persistence (M7.1.2): rawValue store/
-// load round-trips through an isolated UserDefaults suite, and any missing or
-// corrupt stored value falls back to .high without crashing.
+// Sun-shadow quality persistence: round trips through an isolated defaults
+// suite, and a missing or corrupt value falls back to `.high`.
 
 import Foundation
 @testable import OpenSkyRendering

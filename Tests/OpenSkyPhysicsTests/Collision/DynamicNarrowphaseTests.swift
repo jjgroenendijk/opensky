@@ -1,14 +1,7 @@
-// The four narrowphase and sleep rules issue #392 turned over, each pinned by
-// the case that broke before it.
-//
-// Every one of them was found by the real-data probe against a vanilla
-// farmhouse and none of them was visible from the suites that existed at the
-// time, because all four need geometry that the synthetic fixtures did not
-// have: a body whose collider does not straddle its own centre of mass, a solid
-// slab with a far face, a sample generating the same contact through several
-// placed shapes, and two bodies settling side by side. The fixtures here are
-// still synthetic — boxes and quads described in code — but they are shaped
-// like the real cases now.
+// Four narrowphase and sleep rules, each with the case that broke without it.
+// Real data found them; the synthetic shapes copy those cases: an off-centre
+// collider, a solid slab, one contact through many shapes, and side-by-side
+// bodies.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -62,13 +55,9 @@ struct DynamicNarrowphaseTests {
         #expect(underTheBottom.normal.z < -0.99)
     }
 
-    /// The nearest surface of a shape decides, and a near face saying "outside"
-    /// vetoes a far one saying "deep inside".
-    ///
-    /// Without the veto, a body hovering a few units over a shelf board found
-    /// the board's underside twenty units away, was told it was twenty units
-    /// inside the board, and was driven down through the shelf — measured on
-    /// real data, and reproduced here on a slab.
+    /// The nearest surface decides: a near face saying "outside" vetoes a far
+    /// face saying "deep inside". Without it, a body over a shelf was pushed
+    /// down through the board.
     @Test
     func aSampleClearOfASlabGetsNoContactFromItsFarFace() {
         let slab = StaticCollisionShape(
@@ -85,13 +74,8 @@ struct DynamicNarrowphaseTests {
         #expect(hit == nil, "a sample well clear of a slab is not inside it")
     }
 
-    /// One sample reaching one surface through several placed shapes still moves
-    /// the body by one penetration's worth, not by one per shape.
-    ///
-    /// This is the shape of the real failure: vanilla places overlapping
-    /// collision shapes, a hull corner resting in a shelf generates the same
-    /// contact through each of them, and applying every one of them in turn once
-    /// shot a crate 118 units through a farmhouse floor in a single step.
+    /// One sample touching one surface through several overlapping shapes moves
+    /// the body once, not once per shape. Vanilla overlaps collision shapes.
     @Test
     func redundantContactsCorrectOnceRatherThanOncePerContact() {
         let copies = (0 ..< 6).map { _ in DynamicBodyScene.floor(z: 100) }
@@ -123,13 +107,9 @@ struct DynamicNarrowphaseTests {
         )
     }
 
-    /// Two bodies settled against each other both sleep.
-    ///
-    /// They did not before: a body stays awake for `sleepStepCount` steps after
-    /// it stops moving, and waking a neighbour on mere wakefulness made the pair
-    /// alternate forever — one sleeping on step 61 and woken on step 62, over
-    /// and over. Neither can be persisted while that lasts, because a resting
-    /// transform is only recorded the step a body falls asleep.
+    /// Two bodies resting against each other both sleep. Waking a neighbour
+    /// just for being awake made them alternate forever, and a resting
+    /// transform is recorded only when a body falls asleep.
     @Test
     func neighboursSettledAgainstEachOtherBothSleep() {
         let world = DynamicStepWorld(

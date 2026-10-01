@@ -1,13 +1,6 @@
-// Synthetic behavior-node packfile builder (todo 14.2). Lays out Havok objects
-// at chosen offsets inside one `__data__` payload, registers each one's class
-// through a virtual fixup, and patches pointers through the local and global
-// fixup tables the way a real packfile does — pointers are null on disk and the
-// fixup tables *are* the pointer values.
-//
-// Everything here is invented. No extracted game file is ever committed
-// (AGENTS.md "Legal & IP boundary"); class-name signatures are synthetic
-// hashes, as in HKXFixture, and the only real thing borrowed from Havok is the
-// class *names* and the member offsets the decoders under test declare.
+// Synthetic behavior-node packfile builder. Places objects in one `__data__`
+// payload, registers classes by virtual fixup, and patches pointers through
+// the fixup tables, as a real packfile does. Class signatures are invented.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation

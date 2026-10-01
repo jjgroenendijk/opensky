@@ -1,4 +1,4 @@
-// Free-fly camera math (todo 2.8): orientation vs coordinate conventions,
+// Free-fly camera math: orientation vs coordinate conventions,
 // pitch clamp, movement direction relative to yaw, speed + boost. Pure math,
 // synthetic inputs (AGENTS.md testing rule).
 

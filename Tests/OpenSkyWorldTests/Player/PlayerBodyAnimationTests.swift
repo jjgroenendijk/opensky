@@ -1,6 +1,5 @@
-// The graph-driven player animation (issue #189): a synthetic two-bone rig, a
-// synthetic behavior graph, and the exact bone palettes the conformer writes.
-// No install; the skinned mesh needs a Metal 4 device and skips without one.
+// Graph-driven player animation: a two-bone rig, a behavior graph, and the
+// exact bone palettes. The skinned mesh needs Metal 4 and skips without it.
 
 import Metal
 @testable import OpenSkyBehavior

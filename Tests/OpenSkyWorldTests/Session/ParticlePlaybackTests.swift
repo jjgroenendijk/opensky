@@ -1,5 +1,4 @@
-// M7.3.2 CPU simulation + Metal billboard acceptance. Fixtures are engine
-// values built in code; no extracted game data.
+// Particle CPU simulation and Metal billboard acceptance on engine values.
 
 import FormatsMeshTesting
 import Metal

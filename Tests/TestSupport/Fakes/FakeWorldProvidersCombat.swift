@@ -1,12 +1,6 @@
-// The combat-and-physics half of the world-provider fake (issues #194, #374,
-// #193), in its own file so `FakeWorldProviders` stays inside the type-length
-// cap — the same split `FakeWorldProvidersLocomotion.swift` made.
-//
-// These three seams were specified and conformed one milestone item at a time
-// and consumed all at once by the `World > Combat & Physics` panel the M15 gate
-// ships (issue #198). Every answer is a plain stored value and every action is
-// recorded rather than performed, which is what lets a panel test drive the
-// whole destination with no renderer, no window and no game data.
+// The combat and physics part of the world-provider fake, split for the
+// type-length cap. Answers are stored values and actions are recorded, so a
+// panel test drives the whole destination without renderer or game data.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
@@ -16,7 +10,7 @@
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
 
-/// The actor-value half of the fake's stored state (issue #194).
+/// The actor-value part of the fake's stored state.
 struct FakeActorValueState {
     var snapshot = ActorValueControlSnapshot.unavailable
     var target = ActorValueTargetSelector.player
@@ -26,16 +20,16 @@ struct FakeActorValueState {
     var restores: [(kind: ActorValueKind, amount: Float)] = []
     var refillCount = 0
     var resetCount = 0
-    /// Which actor value the controls last acted on, by vanilla table index
-    /// (issue #468). Health until a panel selects another.
+    /// The actor value the controls last acted on, by vanilla index. Health
+    /// until a panel picks another.
     var selection: Int32 = 24
     /// Every `Set` the panel asked for, newest last.
     var sets: [(index: Int32, value: Float)] = []
-    /// Every `Set base` the panel asked for, newest last (issue #496).
+    /// Every `Set base` the panel asked for, newest last.
     var baseSets: [(index: Int32, value: Float)] = []
 }
 
-/// The active-effect half of the fake's stored state (issue #469).
+/// The active-effect part of the fake's stored state.
 struct FakeMagicEffectState {
     var snapshot = MagicEffectControlSnapshot.unavailable
     /// Every consume the panel asked for, so a gate can assert a button ran the
@@ -44,7 +38,7 @@ struct FakeMagicEffectState {
     var dispelCount = 0
 }
 
-/// The spellcasting half of the fake's stored state (issue #470).
+/// The spellcasting part of the fake's stored state.
 struct FakeCastingState {
     var snapshot = CastingControlSnapshot.unavailable
     var learnCount = 0
@@ -170,12 +164,12 @@ extension FakeWorldProviders {
     }
 }
 
-/// The combat-loop half of the fake's stored state (issue #374).
+/// The combat-loop part of the fake's stored state.
 struct FakeCombatLoopState {
     var snapshot = CombatLoopSnapshot.unavailable
     var isHostile = false
     var traceClearCount = 0
-    /// Whether fighters may cast (issue #473). On, matching the app.
+    /// Whether fighters may cast. On, matching the app.
     var allowsCasting = true
 }
 
@@ -199,7 +193,7 @@ extension FakeWorldProviders {
     }
 }
 
-/// The dynamic-body half of the fake's stored state (issue #193).
+/// The dynamic-body part of the fake's stored state.
 struct FakePhysicsState {
     var snapshot = DynamicBodyStatsSnapshot()
     var resetCount = 0

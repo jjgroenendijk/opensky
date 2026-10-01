@@ -1,10 +1,5 @@
-// Synthetic QUST builder: record fields and the VMAD quest fragment tail,
-// every byte constructed in code from the UESP / xEdit layout. Never extracted
-// game data (AGENTS.md "Legal & IP boundary").
-//
-// Layouts: UESP "Skyrim Mod:Mod File Format/QUST" and the "QUST Records"
-// section of "/VMAD Field"; xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-// `wbRecord(QUST, ...)` line 8759 and `wbVMADFragmentedQUST` line 2929.
+// Synthetic QUST builder: record fields and the VMAD quest fragment tail.
+// Layout: docs/formats/quest-records.md.
 
 import FormatsCoreTesting
 import Foundation

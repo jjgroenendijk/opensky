@@ -1,16 +1,6 @@
-// World > HUD & Interaction: durable M8.4 acceptance surface. The element
-// section owns presentation overrides; the target section reports the exact
-// walk-mode selection and the live prompt sent to the vanilla movie; the items
-// section (M12.1.3) acts on that selection — take, search, drop.
-//
-// Talking to what the crosshair picked up used to live here too. Issue #209
-// moved the conversation, its camera, its voice line and the speaker's face to
-// `World > Dialogue & Voice`, where the whole loop is one destination; this one
-// keeps what the crosshair itself does.
-//
-// The items section takes a provider of its own because it reads the world-item
-// runtime rather than the HUD. Both are the same object in the app; typing them
-// apart keeps each section's dependency honest.
+// World > HUD & Interaction: HUD element overrides, the crosshair target and
+// its prompt, and the item actions on that target. The items section takes its
+// own provider because it reads the world-item runtime, not the HUD.
 
 import AppKit
 import OpenSkyInventory

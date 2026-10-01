@@ -1,17 +1,6 @@
-// The spell natives (issue #474, roadmap item 19.11), invoked through the
-// registry against a synthetic actor with a live spellbook, a live effect
-// runtime and a live cast loop behind them.
-//
-// The session is the real one — `PapyrusWorldStateBridge` over a real
-// `WorldStateStore`, `SpellbookRuntime` and `CasterRuntime` — rather than a
-// fake bridge, for the reason `PapyrusNativeActorTests` uses one: the thing
-// worth testing is that a script's `AddSpell` and the panel's Learn button
-// reach the same component, so a later `HasSpell` and the spellbook readout
-// cannot disagree. Only the world a cast delivers into is faked, since applying
-// effects for real needs no more than a recorder here.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// The spell natives against a real bridge, `SpellbookRuntime`, and
+// `CasterRuntime`, so a script's `AddSpell` and the panel's Learn button reach
+// one component. Only the cast's target world is faked.
 
 import Foundation
 @testable import OpenSkyFormatsESM

@@ -1,12 +1,6 @@
-// A disclosure header above a section's content (issue #98). Collapsing hides
-// the content so long, knob-heavy panels stay scannable as OpenSky's config
-// surface grows. Collapse state persists per section id across launches.
-//
-// This is an NSStackView, not a plain NSView, and that is load-bearing: Auto
-// Layout only reclaims a hidden view's space when it is an *arranged* subview
-// of a stack. Pinned as an ordinary subview, a collapsed section kept its full
-// expanded height and the panel column reserved a blank block for it
-// (docs/tools/app-ui.md, "Layout invariants").
+// A disclosure header above a section's content. Collapse state persists per
+// section id. This must be an NSStackView: Auto Layout reclaims a hidden
+// view's space only for an arranged subview (docs/tools/app-ui.md).
 
 import AppKit
 

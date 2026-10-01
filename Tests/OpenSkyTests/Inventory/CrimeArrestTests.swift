@@ -1,6 +1,5 @@
-// Arrest outcomes (issue #505): paying a fine and serving a sentence, and what
-// both do to the ledger, the player's gold and stolen goods. Synthetic records
-// only (CrimeFixture, InventoryBaselineFixture).
+// Arrest outcomes: paying a fine and serving a sentence, and their effect on
+// the ledger, gold, and stolen goods.
 
 import Foundation
 @testable import OpenSkyCrime

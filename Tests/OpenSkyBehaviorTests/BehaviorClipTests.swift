@@ -1,10 +1,6 @@
-// `hkbClipGenerator` evaluation (issue #187): local time advance, playback
-// modes, triggers, and root-motion extraction.
-//
-// These run over the shared synthetic spline packfile, so time advance is
-// asserted through the same `HKASplineCompressedAnimation` sampling the engine
-// uses rather than through a stand-in. Nothing here is extracted from a game
-// file (AGENTS.md "Legal & IP boundary").
+// `hkbClipGenerator` evaluation: time advance, playback modes, triggers, and
+// root motion. Uses the shared synthetic spline packfile, so time advance goes
+// through the real `HKASplineCompressedAnimation` sampling.
 
 import BehaviorTesting
 import Foundation
@@ -88,13 +84,9 @@ struct BehaviorClipTests {
         #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
     }
 
-    /// `m_relativeToEndOfClip` carries an offset *from* the end, and vanilla
-    /// writes it negative: `0_master.hkx`'s `MT_JumpLand` clip carries its
-    /// `JumpLandEnd` trigger at -0.8, meaning 0.8 seconds before the clip ends.
-    /// So the absolute time is the window length plus the offset. Subtracting
-    /// it instead put the trigger past the end of the clip, where nothing ever
-    /// crossed it, and parked the vanilla player graph in `JumpLandState`
-    /// forever (issue #189).
+    /// `m_relativeToEndOfClip` is an offset from the end, and vanilla writes it
+    /// negative: `MT_JumpLand` has `JumpLandEnd` at -0.8. So the time is the
+    /// window length plus the offset; minus would place it past the end.
     @Test func aTriggerRelativeToTheEndIsOffsetFromIt() throws {
         let (graph, _) = try splineGraph(
             mode: 1,
@@ -155,10 +147,8 @@ struct BehaviorClipTests {
 
     // MARK: - Annotations
 
-    /// The clip's own `hkaAnnotationTrack` marks fire as playback crosses them,
-    /// by the name the annotation spells. This is the whole footstep chain:
-    /// Skyrim's locomotion clip generators carry an empty `m_triggers`, so
-    /// without this a walking player fires no `FootLeft` (issues #385, #394).
+    /// The clip's `hkaAnnotationTrack` marks fire as playback crosses them.
+    /// Vanilla locomotion clips have empty `m_triggers`, so footsteps need this.
     @Test func aClipAnnotationFiresOnTheUpdateThatStepsOverIt() throws {
         let (graph, _) = try annotatedGraph(
             annotations: [(time: 0.5, text: "FootLeft")], events: ["FootLeft"]
@@ -185,11 +175,9 @@ struct BehaviorClipTests {
         #expect(fired == 3)
     }
 
-    /// An annotation authored *at* the clip's first frame fires on the update
-    /// that started the clip, and only that one (issue #403). Vanilla means
-    /// those marks: `1HM_Equip.hkx` carries `BeginWeaponDraw` at 0.0, and with
-    /// a half-open interval on the seeding update it could never fire, which
-    /// left a drawn sword still hanging on the sheathed node.
+    /// An annotation at the first frame fires on the update that started the
+    /// clip, and only then. `1HM_Equip.hkx` has `BeginWeaponDraw` at 0.0; a
+    /// half-open interval would never fire it.
     @Test func anAnnotationAtTheClipsFirstFrameFiresOnceWhenTheClipStarts() throws {
         let (graph, _) = try annotatedGraph(
             annotations: [(time: 0, text: "BeginWeaponDraw")], events: ["BeginWeaponDraw"]
@@ -237,9 +225,8 @@ struct BehaviorClipTests {
         #expect(wrapped.rootMotion.isExtracted)
     }
 
-    /// The same ramp clip with `m_extractedMotion` left null — which is what
-    /// every vanilla animation is — reports no travel at all, however far its
-    /// root bone moves (issue #370).
+    /// The same ramp clip with `m_extractedMotion` null, as in every vanilla
+    /// animation, reports no travel however far its root bone moves.
     @Test func anInPlaceClipReportsNoRootMotion() throws {
         let graph = try rootMotionGraph(carriesExtractedMotion: false)
         let result = graph.update(deltaTime: 0.5)

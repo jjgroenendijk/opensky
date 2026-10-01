@@ -1,8 +1,5 @@
-// Stuck arrows and the streaming lifecycle (issue #196, roadmap item 15.5,
-// scope points 4 and 5), split out of `ProjectileRuntimeTests.swift` for the
-// strict-lint type-body cap. Same runtime, same fake world, same shot helpers;
-// what differs is that these tests ask what is left behind after an impact
-// rather than what the impact did.
+// Stuck arrows and the streaming lifecycle: what is left behind after an
+// impact. Split from `ProjectileRuntimeTests.swift` for the type-body cap.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface

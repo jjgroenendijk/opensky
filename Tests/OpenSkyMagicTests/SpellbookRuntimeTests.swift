@@ -1,8 +1,5 @@
-// The spellbook (issue #470, roadmap item 19.7): knowing spells, reading a
-// tome, and readying one to a hand through the EQUP slot its ETYP names.
-//
-// Records are synthetic and built in code (`SpellbookFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// The spellbook: knowing spells, reading a tome, and readying a spell to the
+// hand its ETYP's EQUP slot names.
 
 import Foundation
 @testable import OpenSkyFormatsESM

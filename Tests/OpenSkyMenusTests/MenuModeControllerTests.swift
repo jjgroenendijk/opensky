@@ -1,9 +1,6 @@
-// Menu-mode controller (todo 8.1.2, extended by issue #205): transitions fire
-// onModeChange exactly when the input route or the world-sim pause gate moves,
-// the routing decision follows the stack, routed menu events reach an attached
-// consumer only in menu mode, and a menu presented under
-// `MenuWorldPolicy.leavesWorldRunning` captures input without stopping the
-// world. Pure reference type, no AppKit or GPU.
+// Menu-mode controller: `onModeChange` fires exactly when the route or the
+// pause moves, routing follows the stack, and a menu with
+// `MenuWorldPolicy.leavesWorldRunning` takes input without stopping the world.
 
 @testable import OpenSkyMenus
 import Testing
@@ -122,7 +119,7 @@ struct MenuModeControllerTests {
         #expect(!fired)
     }
 
-    // MARK: - Per-menu world policy (issue #205)
+    // MARK: - Per-menu world policy
 
     @Test
     func dialogueMenuCapturesInputWithoutPausingTheWorld() {

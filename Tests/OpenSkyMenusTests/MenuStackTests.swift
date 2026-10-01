@@ -1,4 +1,4 @@
-// Menu-stack semantics (todo 8.1.2): push/pop ordering, the empty-stack
+// Menu-stack semantics: push/pop ordering, the empty-stack
 // gameplay-vs-menu boundary, and the decided edge cases (pop on empty is a
 // no-op, a duplicate push is rejected). Pure value type, no AppKit or GPU.
 //

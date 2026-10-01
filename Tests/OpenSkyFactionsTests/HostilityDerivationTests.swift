@@ -1,7 +1,5 @@
-// The hostility derivation (issue #503, roadmap item 21.3): the reaction matrix
-// across the four interfaction relations, a RELA record overriding faction
-// neutrality, the crime seam, and the precedence order the whole thing is
-// documented by. No game-derived bytes.
+// The hostility derivation: the reaction matrix, RELA overriding faction
+// neutrality, the crime seam, and the precedence order.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -248,8 +246,7 @@ struct HostilityDerivationTests {
         #expect(derivation.decide(angered, toward: target).isHostile)
     }
 
-    /// The seam issues #504 and #505 join through answers nothing until it is
-    /// replaced.
+    /// The default crime seam answers nothing until it is replaced.
     @Test
     func theDefaultCrimeSourceHasNoOpinion() throws {
         let derivation = try Fixture.derivation()

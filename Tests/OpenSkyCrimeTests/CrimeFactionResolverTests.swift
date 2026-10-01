@@ -1,9 +1,6 @@
-// Which faction answers for a place (issue #504, roadmap item 21.5).
-//
-// The rule the suite pins is the one the local install demonstrates: a shop
-// names no crime faction, its city names none either, and the hold two steps up
-// names one. `WhiterunBelethorsGeneralGoodsLocation -> WhiterunLocation ->
-// WhiterunHoldLocation (FNAM)`, observed with `openskycli record`.
+// Which faction answers for a place. In the install a shop and its city name
+// no crime faction and the hold does: `WhiterunBelethorsGeneralGoodsLocation
+// -> WhiterunLocation -> WhiterunHoldLocation (FNAM)`.
 
 import FormatsESMTesting
 import Foundation

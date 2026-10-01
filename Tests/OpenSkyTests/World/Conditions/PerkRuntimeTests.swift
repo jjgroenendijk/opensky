@@ -1,9 +1,5 @@
-// Owning perks and evaluating what they do (issue #497, roadmap item 20.4):
-// the component, the rank chain, condition gating through the live `HasPerk`
-// function, seeding from an authored list, and the ability grant.
-//
-// Records are synthetic and built in code (`PerkRuntimeFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// Owning perks and their effects: the component, the rank chain, `HasPerk`
+// gating, seeding from an authored list, and the ability grant.
 
 import Foundation
 @testable import OpenSkyFormatsESM

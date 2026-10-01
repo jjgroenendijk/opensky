@@ -1,10 +1,5 @@
-// Load-order fingerprint tests for the OpenSky native save container
-// (issue #161).
-//
-// Verification is separate from decoding, so these tests build a decoded file
-// directly and check it against a hypothetical installed load order. Every
-// mismatch case asserts the exact reason string, because that text is what the
-// app shows the user when a save refuses to load.
+// Load-order fingerprint verification against a made-up installed order. Each
+// mismatch checks the exact reason string, because the app shows it.
 
 import Foundation
 @testable import OpenSkyFormatsESM

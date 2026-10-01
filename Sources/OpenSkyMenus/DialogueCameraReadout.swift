@@ -1,9 +1,5 @@
-// Dialogue-camera readout text (issue #427): the device-free half of the
-// camera's verification surface.
-//
-// Every line is a pure function of one `DialogueCameraSnapshot`, exactly as
-// `DialogueReadout` is of one `DialogueControlSnapshot`, so the wording is
-// asserted without AppKit, without a Metal device and without a game install.
+// Dialogue-camera readout text. Pure functions of `DialogueCameraSnapshot`,
+// so tests check the wording without AppKit, Metal, or an install.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

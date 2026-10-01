@@ -1,13 +1,7 @@
-// World > Audio destination panel (M9.1.3): the sidebar verification surface
-// for the world audio engine. Thin composition of self-contained sections
-// (output/graph, sources, sfx, music, footsteps) on the shared panel framework,
-// same shape as EnvironmentPanelViewController. Exact sidebar path and control
-// ids: docs/engine/audio.md.
-//
-// The Voice section moved to `World > Dialogue & Voice` with issue #209: a
-// voice line is one step of a conversation, and the destination that owns the
-// conversation is where a user looks for it. Everything routed through the
-// voice submix still reports here, in the Sources section.
+// World > Audio: the sidebar surface for the world audio engine, composed of
+// self-contained sections. Sidebar path and control ids: docs/engine/audio.md.
+// The Voice section lives under `World > Dialogue & Voice`, beside the
+// conversation that plays it.
 
 import AppKit
 import OpenSkyWorld

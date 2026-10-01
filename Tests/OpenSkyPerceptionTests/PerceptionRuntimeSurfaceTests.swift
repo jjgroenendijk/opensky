@@ -1,9 +1,5 @@
-// The perception pass's bounds, readout, condition seam and overlay (issue
-// #202, roadmap item 16.6), split from `PerceptionRuntimeTests` when that type
-// reached the strict-lint body cap.
-//
-// The split is along a real seam: the other half is about what an observer
-// perceives, and this half is about what the pass costs and what it hands out.
+// What the perception pass costs and hands out: bounds, readout, condition
+// seam, and overlay. What an observer perceives is in `PerceptionRuntimeTests`.
 
 @testable import OpenSkyDiagnostics
 @testable import OpenSkyFormatsESM

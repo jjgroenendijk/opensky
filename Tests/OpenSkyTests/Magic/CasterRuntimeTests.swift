@@ -1,14 +1,5 @@
-// The cast loop (issue #470, roadmap item 19.7): the charge, the magicka the
-// cast spends, the effects it applies, and every refusal the loop reports
-// rather than silently swallowing.
-//
-// Records are synthetic and built in code (`SpellbookFixture`) — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
-//
-// The world is a fake for the reason `FakeCombatWorld` is one: the active-effect
-// runtime is a mutating value over a shared store, and what these suites need to
-// know is what the cast *handed* it, entry by entry. `FakeCasterWorld` is its
-// own file, shared with the delivery and panel suites.
+// The cast loop: charge, magicka spent, effects applied, and every refusal it
+// reports. `FakeCasterWorld` records what each cast handed the effect runtime.
 
 import Foundation
 @testable import OpenSkyActors

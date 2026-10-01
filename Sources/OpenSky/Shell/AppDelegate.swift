@@ -116,11 +116,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let language = localizationLanguage.language
             controller.uiLab.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
             controller.swfMovies.factory = { SWFMovieLoader(fileSystem: vfs) }
-            // World > Audio picker + playback source (M9.1.3).
+            // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
-            // Journal quest, objective and log text (issue #184). Skyrim.esm is
-            // the only plugin the session indexes quests from, so its tables
-            // are the ones the journal resolves through.
+            // Journal text. The session indexes quests only from Skyrim.esm,
+            // so its string tables are the ones the journal uses.
             controller.localizedStringsLoader = {
                 LocalizedStrings(
                     vfs: vfs,

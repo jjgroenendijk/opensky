@@ -1,10 +1,6 @@
-// ConditionEvaluator coverage: the comparison matrix, use-global resolution,
-// OR grouping, and one end-to-end run from CTDA field bytes.
-//
-// Every condition here is built as real 32-byte CTDA bytes and decoded, so a
-// layout change breaks these tests too. Documented semantics under test are
-// cited in the ConditionEvaluator.swift header (UESP "CTDA Field", Creation Kit
-// wiki "Conditions").
+// ConditionEvaluator: the comparison matrix, use-global resolution, OR
+// grouping, and one run from CTDA bytes. Conditions are real 32-byte CTDA, so a
+// layout change breaks these too. Sources are in the ConditionEvaluator.swift header.
 
 @testable import FormatsCoreTesting
 import Foundation

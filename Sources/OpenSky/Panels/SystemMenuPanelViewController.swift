@@ -1,6 +1,5 @@
-// World > System Menu: the durable M8.5 verification surface. The menu section
-// drives the engine's menu stack; the settings section surfaces the data-root
-// and audio-volume placeholders behind the menu's Settings row.
+// World > System Menu. The menu section drives the engine menu stack; the
+// settings section shows the data-root and volume rows behind Settings.
 
 import AppKit
 import OpenSkyMenus

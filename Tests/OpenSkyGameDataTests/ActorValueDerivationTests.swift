@@ -1,10 +1,6 @@
-// Actor-value derivation tests (issue #194): the documented formula, the exact
-// apportionment method, and level resolution.
-//
-// Every expected number below is either quoted from the source that documents
-// it or hand-computed from the quoted formula, never taken from an
-// implementation run. The sources are cited in
-// `Sources/OpenSkyGameData/ActorValueDerivation.swift`.
+// Actor-value derivation: the formula, the apportionment, and level
+// resolution. Expected numbers are quoted or hand-computed from the sources
+// cited in `Sources/OpenSkyGameData/ActorValueDerivation.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

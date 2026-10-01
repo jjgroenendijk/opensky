@@ -1,12 +1,7 @@
-// A fighting caster end to end (issue #473, roadmap item 19.10, scope point 6):
-// the decision, the readied hand, the spent magicka, the delivered spell and the
-// health it takes off, over stepped time.
-//
-// The behavior half — when a cast is chosen and what is chosen — is
-// `CombatCastingBehaviorTests`. This suite is about everything downstream of the
-// decision going through the shipping path: `SpellbookRuntime`, `CasterRuntime`,
-// the 19.8 delivery and `ActiveEffectRuntime`, with no second cast loop for
-// actors anywhere in it.
+// A fighting caster end to end: decision, readied hand, spent magicka,
+// delivered spell, and health lost, through `SpellbookRuntime`,
+// `CasterRuntime`, and `ActiveEffectRuntime`. The decision is in
+// `CombatCastingBehaviorTests`.
 
 import Foundation
 @testable import OpenSkyActors

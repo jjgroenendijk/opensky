@@ -1,10 +1,5 @@
-// Synthetic inputs for the perception tests (issue #202): a fake
-// `PerceptionWorld` whose line of sight is a caller-supplied predicate, plus
-// the observer and target literals the pass runs over.
-//
-// Built in code, never extracted from game data (AGENTS.md "Legal & IP
-// boundary"). No renderer, no streamer, no window — the whole point of the
-// `PerceptionWorld` seam.
+// Perception test inputs: a fake `PerceptionWorld` whose line of sight is a
+// caller predicate, plus observer and target literals.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerceptionInterface

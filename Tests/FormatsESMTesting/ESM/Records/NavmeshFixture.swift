@@ -1,10 +1,5 @@
-// Synthetic NVNM / NVMI payload builders for the navmesh decoder tests. Built
-// in code from the published layout — never extracted game files (AGENTS.md
-// "Legal & IP boundary").
-//
-// Layout: UESP "Skyrim Mod:Mod File Format" subpages /NAVM, /NVNM Field,
-// /NAVI, /NVMI Field, cross-checked against xEdit dev-4.1.6
-// Core/wbDefinitionsTES5.pas. See docs/formats/navmesh.md.
+// Synthetic NVNM and NVMI payload builders for the navmesh decoder tests.
+// Layout: docs/formats/navmesh.md.
 
 import FormatsCoreTesting
 import Foundation

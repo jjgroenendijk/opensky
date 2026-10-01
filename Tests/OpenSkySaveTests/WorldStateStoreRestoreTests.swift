@@ -1,9 +1,5 @@
-// WorldStateStore.restore(from:) tests (issue #162, roadmap item 10.1.5): the
-// path a decoded save takes back into a live store.
-//
-// Fixtures come from OpenSkySaveFixture, so the state being restored is the
-// same rich snapshot the container round-trip tests use. Nothing here reads a
-// file or touches game data.
+// `WorldStateStore.restore(from:)`: a decoded save back into a live store,
+// using the rich snapshot from OpenSkySaveFixture.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

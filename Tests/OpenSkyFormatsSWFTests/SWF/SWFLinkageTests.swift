@@ -1,10 +1,6 @@
-// FrameLabel (43) and ExportAssets (56) decode (milestone 8.3.2 phase 2).
-// Both are prerequisites rather than features: without frame labels
-// `gotoAndStop("label")` has no target table, and without the linkage table a
-// class handed to `Object.registerClass` names no character and can never be
-// instantiated.
-//
-// Synthetic in-code fixtures only (AGENTS.md "Legal & IP boundary").
+// FrameLabel (43) and ExportAssets (56) decode. Without labels
+// `gotoAndStop("label")` has no target; without linkage a class passed to
+// `Object.registerClass` names no character.
 
 import FormatsSWFTesting
 import Foundation

@@ -83,8 +83,8 @@ struct ArchiveLoadOrderTests {
         #expect(resolvedNames() == ["Skyrim.bsa", "Dragonborn.bsa", "AAA.bsa"])
     }
 
-    /// Archive priority follows plugin priority: a mod later in the load order
-    /// overrides the archives of everything loaded before it (issue #73).
+    /// Archive priority follows plugin priority: a later mod overrides the
+    /// archives of everything before it.
     @Test func pluginArchivesFollowTheResolvedLoadOrder() throws {
         try writeIni("Skyrim_Default.ini", list1: "", list2: "")
         try touch([

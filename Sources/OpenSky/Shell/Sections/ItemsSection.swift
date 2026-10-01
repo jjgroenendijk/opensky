@@ -1,15 +1,6 @@
-// World > HUD & Interaction > Items: the M12.1.3 acceptance surface.
-//
-// Everything the use key can do to an item is reachable here without knowing a
-// CLI command: take what the crosshair is on, open the container it is on,
-// empty that container, and drop something back into the world. The readout
-// below the buttons is the whole state those operations move — what the player
-// carries, what the open container holds, and how many objects the session has
-// spawned — so a change is visible in the same place it was made.
-//
-// It carries no override state: taking and dropping are world changes recorded
-// in `WorldStateStore`, and World > Runtime State already owns resetting those.
-// Adding a second reset here would give the same deltas two owners.
+// World > HUD & Interaction > Items: take, search, take all, and drop, with a
+// readout of what those moved. No override state: these are world changes,
+// and `World > Runtime State` owns resetting them.
 
 import AppKit
 import OpenSkyFormatsESM
@@ -104,8 +95,7 @@ final class ItemsSection: PanelSectionViewController {
         ] + makeEquipmentViews() + [statsLabel]
     }
 
-    /// The equipment half (issue #178), split out so `makeContentViews` stays
-    /// inside the strict-lint function-body cap.
+    /// The equipment half, split out to stay under the function-body cap.
     private func makeEquipmentViews() -> [NSView] {
         PanelComponents.configureButton(
             equipControl, target: self, action: #selector(equip),
@@ -227,10 +217,8 @@ final class ItemsSection: PanelSectionViewController {
             + equippedLines("Wears", snapshot.nearestActorEquipped)
     }
 
-    /// One indented line per equipped item, with the slots it occupies —
-    /// which is what makes a conflict readable when an equip displaces
-    /// something — and the enchantment and remaining charge where it has one
-    /// (issue #472).
+    /// One line per equipped item with its slots, so a displaced item is
+    /// visible, plus any enchantment and charge.
     private static func equippedLines(
         _ title: String,
         _ items: [EquippedItemReadout]

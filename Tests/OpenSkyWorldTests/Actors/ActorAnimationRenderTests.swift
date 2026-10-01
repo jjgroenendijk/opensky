@@ -1,5 +1,5 @@
-// M6.4 render gate: exact-time frames differ for a skinned actor while an
-// otherwise identical static prop remains byte-identical.
+// Actor animation render gate: frames at different times differ for a skinned
+// actor, while an identical static prop stays byte-identical.
 
 import Metal
 import MetalKit

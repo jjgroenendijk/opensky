@@ -1,11 +1,6 @@
-// Synthetic state machines for the item 14.4 evaluator tests (issue #330).
-//
-// Same rule as `BehaviorFixture.swift`: everything here is invented and built
-// in code, never an extracted file (AGENTS.md "Legal & IP boundary"). The
-// shapes copy what the probe over the local install reports — a machine whose
-// states point at clip generators, transitions keyed on event ids, a wildcard
-// array on the machine, and `hkbBlendingTransitionEffect` crossfades — without
-// carrying any of its data.
+// Synthetic state machines for the evaluator tests, built in code. The shapes
+// copy what the local install shows: states on clip generators, event-keyed
+// transitions, a wildcard array, and `hkbBlendingTransitionEffect` crossfades.
 
 import Foundation
 @testable import OpenSkyBehavior

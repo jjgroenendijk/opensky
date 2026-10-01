@@ -1,8 +1,6 @@
-// Update-timer clock policy (issue #277): family-scoped unregistration,
-// paused frames holding both families, and the game-time sampling rules —
-// backward scrubs contribute nothing and re-anchor, one step's forward
-// contribution caps at 24 game hours, and a capped scrub fires each due
-// timer at most once.
+// Update-timer clock policy: family-scoped unregistration, paused frames, and
+// game-time sampling. A backward scrub re-anchors, one step adds at most 24
+// game hours, and a capped scrub fires each timer at most once.
 
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

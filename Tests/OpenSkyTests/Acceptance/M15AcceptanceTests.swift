@@ -1,20 +1,7 @@
-// M15 acceptance (issue #198): one continuous fight, driven by key and mouse
-// events, through every combat and physics capability the milestone claims.
-//
-// The gate statement in one run: a weapon is drawn, a swing lands and takes
-// health off the live actor values, a blocked blow is reduced by the pinned
-// formula, an arrow flies where it was aimed and lands the killing hit, the
-// death hands the skeleton to the constraint-solved ragdoll, the corpse is
-// looted without losing an item, dropped clutter settles, and a save and load
-// brings the dead actor, its emptied inventory and the settled crate all back.
-//
-// Every step asserts what the engine holds, not just that the call returned:
-// which state each graph entered, what the actor values read, which annotation
-// fired the contact, where the arrow ended, how many bodies the ragdoll spawned,
-// and what the store carried through the save. The pixel half is
-// `M15AcceptanceRenderTests`, the panel half is `M15AcceptancePanelTests` and
-// the vanilla half is `M15AcceptanceRealDataTests`; all three are gated, and
-// everything here runs on a device-less runner with no install.
+// Combat acceptance: one key-and-mouse fight. Draw, hit, block by formula,
+// arrow kill, ragdoll death, loot, settled clutter, then save and load bring
+// it all back. Each step checks engine state. Pixel, panel, and real-data
+// halves are gated; this runs without a device or install.
 
 import Foundation
 import simd

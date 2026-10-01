@@ -1,15 +1,6 @@
-// The flight model (issue #196, roadmap item 15.5, scope point 3).
-//
-// The issue's acceptance asks for "deterministic tests [that] pin a full
-// trajectory (spawn, apex, impact point) for synthetic PROJ values", so the
-// expectations here are written out longhand from the closed form rather than
-// recomputed from the helper under test:
-//
+// The flight model, checked against the closed form written out by hand:
 //     p(t) = p0 + v0 t + 1/2 a t^2      a = -worldGravity * gravityFactor
-//
-// Synthetic numbers throughout, chosen so the arithmetic is exact in binary:
-// speed 1000 units/s and a gravity factor that makes the acceleration 1400
-// units/s^2 — `PhysicsStep.gravity` itself.
+// Numbers are exact in binary: speed 1000 units/s, acceleration 1400 units/s^2.
 
 @testable import OpenSkyCombat
 @testable import OpenSkyGameData

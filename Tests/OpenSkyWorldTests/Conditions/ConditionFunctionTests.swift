@@ -27,16 +27,8 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        // Issue #455 adds the fourteen measured M18 keyword, form-list and
-        // location functions; issue #474 adds the eight measured magic ones;
-        // issue #497 adds `HasPerk`, which is what makes a perk rank chain
-        // switch itself off; issue #499 adds `GetLevel` and
-        // `GetBaseActorValue`, which is what every vanilla perk requirement is
-        // stated with; issue #504 adds `GetCrimeGold`, which is what a guard's
-        // and a jarl's dialogue reads a bounty from; issue #508 adds the six
-        // faction and relationship functions, which are what lets a guard's and
-        // a vendor's dialogue select on who the player sides with; issue #563
-        // adds `GetCrimeGoldViolent` and `GetCrimeGoldNonviolent`.
+        // The measured keyword, form-list, location, magic, perk, level,
+        // base-actor-value, crime-gold, and faction functions.
         #expect(registry.indices == [
             1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 60, 71, 72, 73, 74, 77, 80, 170, 180,
             181, 214, 223, 249, 263, 264, 277, 323, 359, 360, 372, 375, 376, 403, 426, 444, 448,
@@ -122,11 +114,8 @@ struct ConditionFunctionTests {
     // MARK: - Run-on fallbacks
 
     @Test func unsupportedRunOnTypesAreTaggedFalse() throws {
-        // Quest Alias (5) is deliberately absent: issue #183 made it a
-        // supported run-on that resolves through the filled alias table, so an
-        // empty one is `unresolvedReference` and is covered by
-        // `QuestAliasConditionTests`. Combat Target (3) left this list for the
-        // same reason at issue #375, and is covered by
+        // Quest Alias (5) and Combat Target (3) are absent: both resolve now.
+        // They are covered by `QuestAliasConditionTests` and
         // `ConditionActorFunctionTests`.
         let cases: [(raw: UInt32, runOn: Condition.RunOnType)] = [
             (4, .linkedReference),

@@ -1,6 +1,5 @@
-// `interior`: repeatable real-install acceptance probe for M3.6. Finds an
-// exterior teleport door near the requested cell, follows XTEL into an
-// interior, renders the exact arrival pose, then follows the paired door back.
+// `interior`: finds an exterior door near the cell, follows XTEL inside,
+// renders the arrival pose, then follows the paired door back.
 
 import Foundation
 import Metal

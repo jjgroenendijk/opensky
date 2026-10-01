@@ -1,8 +1,5 @@
-// An actor's authored perk list (issue #497, roadmap item 20.4, scope point 1):
-// the NPC_ `PRKR` run, and the template flag it inherits through.
-//
-// Records are synthetic and built in code — never extracted game files
-// (AGENTS.md "Legal & IP boundary").
+// An actor's authored perk list: the NPC_ `PRKR` run and the template flag it
+// inherits through.
 
 import Foundation
 @testable import OpenSkyFormatsESM

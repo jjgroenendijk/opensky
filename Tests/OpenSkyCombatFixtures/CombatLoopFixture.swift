@@ -1,8 +1,5 @@
-// Shared setup for the two combat-loop suites (issue #424).
-//
-// One fight is more behaviour than the strict lint type cap allows in one type,
-// so the runtime's cases live in two files — the entry-and-attack half and the
-// breaking-off half — and the session both build lives here.
+// Shared setup for the two combat-loop suites, split to stay under the type
+// cap.
 
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat

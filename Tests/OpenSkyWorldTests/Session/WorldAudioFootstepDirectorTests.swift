@@ -41,9 +41,8 @@ struct WorldAudioFootstepDirectorTests {
         #expect(director.lastFootstepError == nil)
     }
 
-    /// Issue #358 end to end at this seam: the material the ground contact
-    /// reports picks the impact, so the same tag on two surfaces takes two
-    /// paths through the table.
+    /// The ground contact's material picks the impact, so the same tag on two
+    /// surfaces takes two paths.
     @Test func theGroundMaterialSelectsTheImpact() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = makeDirector(engine: engine)

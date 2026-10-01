@@ -8,8 +8,7 @@ import AppKit
 @testable import OpenSkyWorld
 import Testing
 
-/// Shared with the M9.2.4 mute/solo satellite file
-/// (`AudioPanelMuteSoloTests.swift`), so it is internal rather than private.
+/// Internal, not private, because `AudioPanelMuteSoloTests.swift` uses it too.
 @MainActor
 final class FakeAudioProvider: AudioControlProviding {
     var audioEnabled = false

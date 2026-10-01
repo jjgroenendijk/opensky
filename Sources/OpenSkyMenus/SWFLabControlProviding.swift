@@ -1,13 +1,6 @@
-// Narrow live-renderer seam consumed by the Developer > UI Lab SWF movie
-// selector (M8.2.5). The section picks a vanilla movie from the located
-// install, toggles the SWF layer, and mirrors the movie's frame-1 tag tally
-// plus the last frame's draw stats — only through this bridge, never renderer
-// or loader internals. The readout text is built by `SWFLabReadout` so the
-// formatting is device-free and unit-testable without AppKit.
-//
-// M8.3.3 widens the same seam to the AS2 runtime: start / tick / input / call /
-// stop, plus the `SWFLabRuntimeSnapshot` the runtime section reads (movie
-// state, invoke log, op tally — see SWFLabRuntimeReadout.swift).
+// Live-renderer seam for the Developer > UI Lab SWF sections: pick a movie,
+// toggle the layer, read tag and draw stats, and drive the AS2 runtime. Readout
+// text comes from `SWFLabReadout` and `SWFLabRuntimeReadout`.
 
 // UI Lab SWF readout: what is selected, what decoding produced, and what the
 // last encoded frame drew.
@@ -31,9 +24,8 @@ nonisolated public struct SWFLabControlSnapshot: Equatable, Sendable {
     public let drawStats: SWFDrawStats
     /// True when an install was located and its movies could be enumerated.
     public let installLoaded: Bool
-    /// AS2 runtime state (M8.3.3), or nil while the layer is on the static
-    /// frame-1 path. Read on the main thread between frames, like every other
-    /// renderer seam.
+    /// AS2 runtime state, or nil while the layer shows static frame 1. Read on
+    /// the main thread between frames.
     public let runtime: SWFLabRuntimeSnapshot?
 
     public init(
@@ -72,7 +64,7 @@ public protocol SWFLabControlProviding: AnyObject {
     var swfLayerEnabled: Bool { get set }
     var swfLabSnapshot: SWFLabControlSnapshot { get }
 
-    // MARK: AS2 runtime (M8.3.3)
+    // MARK: AS2 runtime
 
     // Same discipline as `selectSWFMovie(path:)`: none of the calls below
     // throws. A runtime that will not start, a tick that faults, or a callback

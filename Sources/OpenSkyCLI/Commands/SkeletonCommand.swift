@@ -1,10 +1,6 @@
-// `skeleton <hkx-key> [--nif <nif-key>]`: decode every hkaSkeleton in a Havok
-// packfile (todo 6.2) — bone names, parent chain, root count — and, with
-// --nif, name-map the rig onto the NIF skeleton's NiNode names bind-pose
-// skinning keys on, reporting matches + reason-tagged mismatches both
-// directions. Same parsers the engine uses (HKASkeleton, SkeletonBoneMap,
-// NIFSkeleton), so a mismatch here is what animation loading will see. CLI
-// parses args + prints only; the logic is unit-tested in OpenSkyTests.
+// `skeleton <hkx-key> [--nif <nif-key>]`: decode every hkaSkeleton in a
+// packfile and, with --nif, map its bones onto the NIF skeleton's node names.
+// Uses the engine's own parsers, so a mismatch here is what animation sees.
 
 import Foundation
 import OpenSkyFormatsAnimation

@@ -1,7 +1,5 @@
-// Runtime world state applied during a cell build (issue #160): a transform
-// override moves render and collision together, and a runtime-disabled or
-// runtime-deleted reference leaves both. Synthetic ESM + NIF bytes only; no
-// game content.
+// Runtime state in a cell build: a transform override moves render and
+// collision together; a disabled or deleted reference leaves both.
 
 import Foundation
 @testable import OpenSkyFormatsCore

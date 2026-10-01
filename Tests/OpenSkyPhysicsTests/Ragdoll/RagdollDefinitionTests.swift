@@ -1,9 +1,6 @@
-// Building a ragdoll from decoded skeleton data (issue #197, item 15.6).
-//
-// The input is a `NIFCollisionModel` assembled in code rather than decoded from
-// bytes: this suite is about the resolution step — bodies onto bones by name,
-// joints onto body indices, pivots into centre-of-mass-local frames — and
-// `NIFCollisionConstraintTests` already covers the decode that produces one.
+// Building a ragdoll from a `NIFCollisionModel` made in code: bodies onto
+// bones, joints onto bodies, pivots into centre-of-mass frames. The decode is
+// in `NIFCollisionConstraintTests`.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh

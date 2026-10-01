@@ -1,19 +1,6 @@
-// Developer > UI Lab > SWF runtime section (M8.3.3): runs the selected vanilla
-// movie's ActionScript and shows what it did. Start brings the movie up, the
-// tick buttons advance it, keys and pointer events are injected in movie stage
-// pixels, and a named callback can be called across the `GameDelegate` bridge —
-// the whole open / navigate / close sequence, without a CLI command.
-//
-// A sibling of SWFMovieSection under the same destination rather than more
-// controls inside it: the static selector answers "what does frame 1 look
-// like", this answers "what does the movie do", and the two have separate
-// readout cadences. The milestone names `Developer > UI Lab` as the acceptance
-// path, so it stays a hosted section there even though its control count sits
-// at the promotion threshold in docs/tools/app-ui.md.
-//
-// Three readouts because the milestone gate names three things: movie state,
-// invoke log, op tally. Their text is built by the device-free `SWFLabReadout`,
-// and every control talks to the engine only through `SWFLabControlProviding`.
+// Developer > UI Lab > SWF runtime: run a movie's ActionScript, tick it, inject
+// keys and pointer events, and call a `GameDelegate` callback. Readout text
+// comes from `SWFLabReadout`; controls go through `SWFLabControlProviding`.
 
 import AppKit
 import OpenSkyFormatsSWF

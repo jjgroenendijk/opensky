@@ -1,16 +1,6 @@
-// The engine-side inventory list (M12.2.2, issue #289): one owner's items
-// reduced to what a menu row needs, grouped into the categories the vanilla
-// `inventorymenu.swf` filters by.
-//
-// This type is the single source of the list. The vanilla presentation layer
-// (UI/InventoryMenuMovieBridge.swift) pushes it into the movie's `EntriesA` and
-// `_CategoriesList`, and the sidebar panel prints the same rows, so the movie
-// and the verification readout cannot disagree about what the player carries.
-//
-// Device-free, AppKit-free and free of any renderer, so it builds into
-// `openskycli` and is unit-testable against a synthetic `ItemDefinitionStore`.
-//
-// Documented in docs/engine/inventory-menu.md.
+// The engine-side inventory list, grouped by the categories
+// `inventorymenu.swf` filters by (docs/engine/inventory-menu.md). The movie
+// bridge and the sidebar both read it, so they cannot disagree.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -37,11 +27,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     /// filtering, because dropping the row entirely would hide an item the
     /// player is genuinely carrying.
     public let family: ItemDefinition.Family?
-    /// How many of `count` were taken from somebody who owned them (issue
-    /// #504). A row is one *item*, honest and stolen copies together, because
-    /// two rows with the same name and FormID would be two identical-looking
-    /// controls the player could not tell apart; the marker says how many of
-    /// them are hot.
+    /// How many of `count` are stolen. Honest and stolen copies share one row,
+    /// because two identical rows could not be told apart.
     public let stolenCount: Int32
 
     public init(
@@ -80,13 +67,9 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     }
 }
 
-/// One tab of the category list.
-///
-/// The grouping is over `ItemDefinition.Family`, which is OpenSky's own decode
-/// of the record types #175 reads, rather than a guess at Bethesda's internal
-/// category numbering. The vanilla movie's own `InventoryDefines` constants are
-/// read back off the loaded movie where they are needed, never reproduced here
-/// from memory — see `InventoryMenuMovieBridge`.
+/// One tab of the category list, grouped by `ItemDefinition.Family`. The
+/// movie's own `InventoryDefines` constants are read from the loaded movie,
+/// never reproduced here.
 nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
     public let label: String
     public let families: Set<ItemDefinition.Family>
@@ -121,7 +104,7 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     public let categories: [InventoryMenuCategory]
     public private(set) var selectedCategoryIndex: Int
     public private(set) var selectedIndex: Int
-    /// Total carried weight across every row, from #175's per-item weights.
+    /// Total carried weight across every row.
     public let carriedWeight: Float
     /// The owner's gold, which is an ordinary stack rather than a currency
     /// field — see `ItemDefinitionStore.vanillaGoldFormID`.

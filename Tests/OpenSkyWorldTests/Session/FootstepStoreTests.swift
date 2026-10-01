@@ -1,5 +1,5 @@
-// Footstep tag -> sound resolution over synthetic records: the chain the
-// footstep director walks (issue #352). See docs/engine/audio.md.
+// Footstep tag to sound over synthetic records: the chain the footstep
+// director walks. See docs/engine/audio.md.
 
 @testable import FormatsCoreTesting
 import FormatsESMTesting
@@ -46,9 +46,8 @@ struct FootstepStoreTests {
         #expect(store.resolve(tag: "FootLeft", gait: .swimming, in: Self.walkSet) == nil)
     }
 
-    /// The whole point of issue #358: the same tag on two surfaces resolves to
-    /// two impacts, and a surface the table does not list falls back to the
-    /// representative entry rather than to silence.
+    /// The same tag on two surfaces resolves to two impacts, and an unlisted
+    /// surface falls back to the representative entry, not to silence.
     @Test func theMaterialSelectsTheImpact() {
         let store = Self.store()
 

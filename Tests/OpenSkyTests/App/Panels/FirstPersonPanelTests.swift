@@ -1,11 +1,7 @@
-// The `World > First person` verification surface (issue #190): the controls
-// exist, are laid out, drive the provider, and the readout says what the frame
-// alone cannot — whether the graph loaded, how many arm meshes survived the
-// MOD4/MOD5 projection, and which pieces were dropped for declaring none.
-//
-// The accessibility ids asserted here are the UI-test API. `make test-ui` is
-// TCC-blocked on this machine (docs/tools/environment.md), so they are pinned
-// as literal assertions.
+// `World > First person`: controls exist, lay out, and drive the provider; the
+// readout says whether the graph loaded, how many arm meshes survived MOD4/MOD5,
+// and which pieces were dropped. Ids are pinned because `make test-ui` is
+// TCC-blocked (docs/tools/environment.md).
 
 import AppKit
 @testable import OpenSky

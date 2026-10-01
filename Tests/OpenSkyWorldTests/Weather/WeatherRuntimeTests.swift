@@ -215,8 +215,7 @@ struct WeatherRuntimeTests {
     }
 
     @Test func autoRerollAdvancesWithElapsedGameHours() throws {
-        // Real elapsed game hours off the game clock (issue #164) drive the
-        // reroll cadence; the old scrubbed-hour wrap heuristic is gone.
+        // Elapsed game hours from the game clock drive the reroll cadence.
         let system = try WeatherSystem(store: Self.store(), worldspaceFormID: 0x500)
         system.update(deltaTime: 100, hour: 8) // settle the initial pick
         let settled = system.currentWeatherID

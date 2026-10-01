@@ -1,9 +1,5 @@
-// The memoized side of `enchantmentProfile(of:)` (issue #489): an equipped item
-// is resolved out of the records once, every later ask reuses that answer, and a
-// rewire drops the lot.
-//
-// Asserted through the same synthetic plugin the runtime suites use, so what is
-// cached is a real resolution rather than a stand-in.
+// The memoized `enchantmentProfile(of:)`: an item resolves from records once,
+// later asks reuse it, and a rewire drops all. Uses the runtime suites' plugin.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

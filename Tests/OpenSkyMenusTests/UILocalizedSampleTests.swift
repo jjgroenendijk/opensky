@@ -1,9 +1,6 @@
-// Deterministic layout coverage for the UI Lab localized-strings preview
-// (M8.1.4). The sample scene resolves every visible string through
-// LocalizedLabels.label(for:) over invented in-code fixtures: known keys
-// resolve, the deliberately unknown key stays verbatim (the vanilla-observable
-// fallback), the long-string case wraps at its point width, the clip case runs
-// past the frame edge, and resolve stays byte-deterministic. No Metal device.
+// UI Lab localized-strings sample layout: known keys resolve, the unknown key
+// stays verbatim, the long string wraps, the clip case runs past the edge, and
+// resolve is deterministic.
 
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus

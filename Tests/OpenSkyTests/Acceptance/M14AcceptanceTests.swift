@@ -1,19 +1,7 @@
-// M14 acceptance (issue #191): one continuous route, driven by key events,
-// through every locomotion state the milestone claims.
-//
-// The gate statement in one run: idle, walk, run, sprint, jump, land, sneak and
-// swim are all entered; root motion resolves through collision on flat ground,
-// a slope and water; the route crosses a streaming boundary and a door round
-// trip and comes back with its position and its movement state intact; a
-// zero-length frame advances the simulation by nothing; and the first-person
-// graph reaches the same states from the same input as the third-person one.
-//
-// Every step asserts what the engine holds, not just that the call returned:
-// which state the machine entered, which source moved the capsule, which cell
-// the streamer attached, and what the bridge told the graph. The pixel half is
-// `M14AcceptanceRenderTests` and the panel half is `M14AcceptancePanelTests`;
-// both are gated, and everything here runs on a device-less runner with no
-// install.
+// Locomotion acceptance: one key-driven route enters idle, walk, run, sprint,
+// jump, land, sneak, and swim; root motion resolves on flat ground, slope, and
+// water; a cell crossing and a door round trip keep state; a zero frame does
+// nothing; first person matches third. Pixel and panel halves are gated.
 
 import Foundation
 @testable import OpenSkyBehavior

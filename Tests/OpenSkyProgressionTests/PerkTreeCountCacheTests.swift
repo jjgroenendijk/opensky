@@ -1,10 +1,6 @@
-// The memoized side of the Progression panel's skill lines (issue #556): a
-// skill's tree is resolved out of the records once, the counts taken from it
-// stand until the player's owned perks move, and a rewire drops the lot.
-//
-// The trees here are plain key lists rather than real AVIF records: what is
-// under test is when the cache goes back to the records and what it counts, and
-// a synthetic tree states both without a load order.
+// The memoized skill-line counts: a skill's tree resolves from records once,
+// counts hold until owned perks change, and a rewire drops them. Trees are
+// plain key lists, so no load order is needed.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyProgression

@@ -1,12 +1,5 @@
-// `HasPerk` (issue #497, roadmap item 20.4), driven through the real evaluator
-// against a synthetic perk set.
-//
-// The index here is the raw on-disk number 448 — the Creation Kit spells it
-// 4544 — from xEdit's condition-function table; see the
-// ConditionFunctionsPerk.swift header.
-//
-// Fixtures are synthetic — never extracted game files (AGENTS.md "Legal & IP
-// boundary").
+// `HasPerk` through the real evaluator. Raw index 448 (Creation Kit 4544); see
+// the ConditionFunctionsPerk.swift header.
 
 import Foundation
 @testable import OpenSkyConditions

@@ -161,8 +161,8 @@ struct RendererSWFInteractiveAcceptanceTests {
         #expect(changed > 50000, "the key changed only \(changed) pixels")
     }
 
-    /// Issue #300: the system-menu bridge used to mutate the live runtime
-    /// directly, leaving the renderer's planned command stream unchanged.
+    /// The system-menu bridge must update the renderer's planned command
+    /// stream, not only the live runtime.
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func systemMenuBridgeSynchronizesKeyMutationToRenderedFrame() throws {

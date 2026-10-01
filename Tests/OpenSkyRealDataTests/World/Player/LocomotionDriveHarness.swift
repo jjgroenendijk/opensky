@@ -1,12 +1,6 @@
-// The driving half of the env-gated locomotion drive (issue #188): the capsule,
-// the camera, the bridge, the real terrain they run over, and the trace they
-// write. Split out of `LocomotionBridgeRealDataTests` so both files stay inside
-// the lint size caps, and kept free of assertions so the test file owns every
-// expectation.
-//
-// Nothing here reads game data on its own; the test hands it a height field it
-// already loaded from the user's install (never committed — AGENTS.md
-// "Legal & IP").
+// The driving half of the env-gated locomotion drive: capsule, camera, bridge,
+// terrain, and trace. It has no assertions; the test file owns them. The test
+// hands it a height field from the install.
 
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering

@@ -1,24 +1,7 @@
-// Per-class decode tests for every behavior node class in the registry
-// (todo 14.2), over synthetic in-code packfiles — never an extracted game file
-// (AGENTS.md "Legal & IP boundary").
-//
-// Three cases per class, driven from one table so a new decoder cannot land
-// without them:
-//
-// - nominal: a zero-filled object of the class's declared Havok size decodes,
-//   and every miss it records is `noFixup`, which is what a null optional
-//   legitimately produces. An `outOfBounds` here would mean the decoder reads
-//   past the class.
-// - truncated: the object's section ends 16 bytes in, so every member is out of
-//   bounds. Decoding must still return a value and record the misses rather
-//   than trap.
-// - unresolvable pointer: the member at 0x10 — a pointer, a string, or an
-//   hkArray on every class in the set — is patched to a section the file does
-//   not define. The decoder must record `sectionMissing` and carry on.
-//
-// The declared sizes double as the byte-map assertion: they are the sizes the
-// class layouts in docs/formats/hkx-behavior-nodes.md record, so a table entry
-// that disagreed with a decoder's highest offset would fail the nominal case.
+// Three cases per behavior node class, from one table: a zeroed object decodes
+// with only `noFixup` misses; a truncated one records misses without a trap;
+// a bad pointer at 0x10 records `sectionMissing`. The declared sizes match
+// docs/formats/hkx-behavior-nodes.md.
 
 import FormatsAnimationTesting
 import Foundation

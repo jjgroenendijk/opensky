@@ -1,11 +1,6 @@
-// The synthetic spline-animation packfile every clip-sampling test builds on
-// (todo 6.3, reused by issue #187). Invented bytes only: one linear
-// translation track, an identity rotation spline, and static scale, laid out
-// the way hkaSplineCompressedAnimation reads them. Nothing here is extracted
-// from a game file (AGENTS.md "Legal & IP boundary").
-//
-// Shared rather than private because the behavior evaluator's clip tests need a
-// real decoded clip to advance and loop over, not a stand-in.
+// The synthetic spline-animation packfile the clip tests use: one linear
+// translation track, an identity rotation, and static scale. Shared because
+// the behavior clip tests need a real decoded clip.
 // Byte map: docs/formats/hka-animation.md.
 
 import FormatsCoreTesting

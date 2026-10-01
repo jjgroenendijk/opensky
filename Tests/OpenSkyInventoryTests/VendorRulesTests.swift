@@ -1,7 +1,5 @@
-// Faction vendors (issue #506): finding the vendor faction among an actor's
-// memberships, reading its chest, hours and buy/sell list, and gating a trade
-// both ways of the list's negation. Synthetic records only, laid out from
-// docs/formats/factions.md and docs/formats/records.md.
+// Faction vendors: finding the vendor faction, reading its chest, hours, and
+// buy/sell list, and both list negations. Layouts: docs/formats/factions.md.
 
 import FormatsESMTesting
 import Foundation

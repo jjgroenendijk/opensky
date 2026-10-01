@@ -1,14 +1,7 @@
 // `footstep [--set <editorID>] [--armature <formid-or-editorid>]
-//  [--material <editorID-or-formid>]`: walk the footstep chain (issue #352)
-// read-only and print what each gait's tags resolve to. The repeatable probe
-// behind the FSTS/FSTP decode and the footstep director's tag routing — the
-// whole chain, from the tag the behavior graph raises to the audio file the
-// engine would stream.
-//
-// `--material` names the surface under the foot (issue #358), which is what
-// the impact table is keyed by: the same tag on stone and on snow resolves to
-// two different files. Without it the chain resolves as an airborne or
-// material-less surface does, through the table's representative impact.
+//  [--material <editorID-or-formid>]`: print what each gait's footstep tags
+// resolve to, from behavior tag to audio file. `--material` picks the surface;
+// without it the table's representative impact is used.
 
 import Foundation
 import OpenSkyAudio

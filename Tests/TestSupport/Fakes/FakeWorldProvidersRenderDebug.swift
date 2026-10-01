@@ -1,6 +1,5 @@
-// The shared provider fake's render-debug half (issue #144). Split from
-// `FakeWorldProviders.swift` for the same reason its AI half is: that file is
-// at the strict-lint size cap, and only its stored state has to live there.
+// The render-debug part of the shared provider fake, split from
+// `FakeWorldProviders.swift`, which keeps only the stored state.
 
 @testable import OpenSkyRendering
 

@@ -1,8 +1,6 @@
-// Engine-owned menu-mode stack (todo 8.1.2). UI-toolkit-agnostic: identifiers
-// are opaque names, so the future Scaleform SWF menu layer (M8.2) and the HUD
-// drive the same stack without the engine knowing any concrete menu type. An
-// empty stack means gameplay mode; a non-empty stack means menu mode (world sim
-// paused, input routed to the menu layer). See docs/engine/menu-mode.md.
+// Engine-owned menu stack (docs/engine/menu-mode.md). Identifiers are opaque
+// names, so SWF menus and the HUD share it without the engine knowing a menu
+// type. An empty stack is gameplay; a non-empty one pauses and routes input.
 
 /// Opaque menu name. Mirrors Scaleform's string menu identity (for example
 /// "InventoryMenu", "Console", "Dialogue Menu") without hardcoding any list;

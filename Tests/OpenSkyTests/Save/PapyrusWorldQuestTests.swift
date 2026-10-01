@@ -1,8 +1,5 @@
-// Quest script instances and stage fragments (issue #322, roadmap item 13.3):
-// the lifecycle half. `PapyrusNativeQuestTests` covers the natives themselves.
-//
-// Fixtures are synthetic, built in code by `PapyrusQuestFixture` — never
-// extracted game files (AGENTS.md "Legal & IP boundary").
+// Quest script instances and stage fragments: the lifecycle half. The natives
+// are in `PapyrusNativeQuestTests`.
 
 import FormatsESMTesting
 import Foundation
