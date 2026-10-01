@@ -12,6 +12,9 @@ nonisolated public struct ResolvedRecordTable<Value: Sendable>: Sendable {
     public private(set) var orderedIDs: [ResolvedFormID] = []
     public private(set) var skipped = SkippedRecords()
     private var valuesByEditorID: [String: Value] = [:]
+    /// Maps a lowercased-plugin key to the stored identity, so a differently cased query is one
+    /// probe.
+    private var idsByFoldedKey: [ReferenceKey: ResolvedFormID] = [:]
 
     public init() {}
 
@@ -29,6 +32,7 @@ nonisolated public struct ResolvedRecordTable<Value: Sendable>: Sendable {
                 let value = resolve(id, decoded, sourcePlugin)
                 values[id] = value
                 orderedIDs.append(id)
+                idsByFoldedKey[ReferenceKey(resolved: id)] = id
                 if let editorID = editorID(decoded) {
                     valuesByEditorID[editorID.lowercased()] = value
                 }
@@ -52,10 +56,7 @@ nonisolated public struct ResolvedRecordTable<Value: Sendable>: Sendable {
 
     /// Exact identity first, then the same object ID under a differently cased plugin name.
     public func value(_ id: ResolvedFormID) -> Value? {
-        values[id] ?? values.first { key, _ in
-            key.objectID == id.objectID
-                && key.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        }?.value
+        values[id] ?? idsByFoldedKey[ReferenceKey(resolved: id)].flatMap { values[$0] }
     }
 
     public func value(editorID: String) -> Value? {

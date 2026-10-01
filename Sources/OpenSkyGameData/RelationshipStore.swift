@@ -68,7 +68,7 @@ nonisolated public struct RelationshipStore: Sendable {
     /// pair once; the load-order winner is the one kept.
     public private(set) var duplicatePairCount = 0
     private var byPair: [String: ResolvedRelationship] = [:]
-    private var byActor: [ResolvedFormID: [ResolvedRelationship]] = [:]
+    private var byActor: [ReferenceKey: [ResolvedRelationship]] = [:]
 
     public var relationships: [ResolvedFormID: ResolvedRelationship] {
         relationshipTable.values
@@ -169,7 +169,7 @@ nonisolated public struct RelationshipStore: Sendable {
     /// Every relationship one actor base takes part in, on either side,
     /// ordered by identity.
     public func relationships(involving actor: ResolvedFormID) -> [ResolvedRelationship] {
-        byActor[canonicalMatch(actor, in: byActor)] ?? []
+        byActor[ReferenceKey(resolved: actor)] ?? []
     }
 
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
@@ -199,7 +199,7 @@ nonisolated public struct RelationshipStore: Sendable {
         child: ResolvedFormID?
     ) {
         for actor in [parent, child].compactMap(\.self) {
-            let key = canonicalMatch(actor, in: byActor)
+            let key = ReferenceKey(resolved: actor)
             byActor[key, default: []].append(resolved)
             byActor[key]?.sort { Self.precedes($0.id, $1.id) }
         }
@@ -209,22 +209,6 @@ nonisolated public struct RelationshipStore: Sendable {
             duplicatePairCount += 1
         }
         byPair[key] = resolved
-    }
-
-    /// Identity is plugin-plus-object-id compared case-insensitively, matching
-    /// how the other stores match a key built from a differently cased plugin
-    /// name.
-    private func canonicalMatch(
-        _ id: ResolvedFormID,
-        in values: [ResolvedFormID: some Any]
-    ) -> ResolvedFormID {
-        if values[id] != nil {
-            return id
-        }
-        return values.keys.first {
-            $0.objectID == id.objectID
-                && $0.plugin.caseInsensitiveCompare(id.plugin) == .orderedSame
-        } ?? id
     }
 
     private static func precedes(_ left: ResolvedFormID, _ right: ResolvedFormID) -> Bool {

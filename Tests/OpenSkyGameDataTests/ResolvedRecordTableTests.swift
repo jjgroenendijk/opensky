@@ -89,6 +89,18 @@ struct ResolvedRecordTableTests {
     }
 
     @Test
+    func lookupMissesAnUnknownObjectOrPlugin() throws {
+        let file = try KeywordFixture.plugin(keywords: [KeywordFixture.recordBytes(
+            formID: 0x10,
+            editorID: "Readable"
+        )])
+        let store = KeywordStore(plugins: [("Base.esm", file)])
+
+        #expect(store.keyword(ResolvedFormID(plugin: "base.esm", objectID: 0x11)) == nil)
+        #expect(store.keyword(ResolvedFormID(plugin: "Other.esm", objectID: 0x10)) == nil)
+    }
+
+    @Test
     func mergeKeepsTheFirstErrorAndAddsCounts() {
         var left = SkippedRecords()
         left.note("KYWD", error: ESMError.malformed("left"))
