@@ -230,10 +230,11 @@ compile: link-shared ## Compile changed package modules and their dependents [M=
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
 # did not test. Incremental and served from the shared cache.
+# The OpenSky scheme builds openskycli for testing, so the CLI shares the test
+# builds' context. A separate OpenSkyCLI build recompiles the engine (issue #717).
 verify-build: link-shared ## Compile app, CLI, and both unit bundles without running tests
 	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
-	@$(XCB_RUN) verify-cli $(XCB_CLI) build
 
 shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
 

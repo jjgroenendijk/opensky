@@ -111,8 +111,11 @@ What it helps and what it does not:
   a minute instead of thirteen.
 - A branch switch gains nothing: switching in place keeps `DerivedData/Build`, so the build system's
   own incremental state decides.
-- `make cli` does not reuse `make build`: the engine compiles into another module for the CLI, so
-  every key differs.
+- A cache hit leaves the Swift driver's incremental record saying "needs build"
+  ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
+  Each switch between build contexts, such as `make cli` then `make test`, then compiles those
+  modules again and relinks everything above them. So the `OpenSky` scheme builds `openskycli` for
+  testing, and `make verify-build` builds all its targets in one context.
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
   states compiled before.
 
