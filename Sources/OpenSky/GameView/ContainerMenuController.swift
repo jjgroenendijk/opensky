@@ -3,6 +3,7 @@
 // and every transaction is an `InventoryCoordinator` call.
 // See docs/engine/barter.md.
 
+import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -124,7 +125,7 @@ final class ContainerMenuController {
         {
             return nominate(interaction)
         }
-        return game.nominateNearestCorpse()
+        return game.ragdoll.searchNearestCorpse()
     }
 
     /// Re-reads both inventories. Every transaction calls this, so the list and

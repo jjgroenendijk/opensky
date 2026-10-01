@@ -82,7 +82,7 @@ extension GameViewController {
         inventoryWorld.wireWorldItems(provider: provider, streamer: controller)
         // After the item runtime, which owns the equipped set the body is
         // assembled from.
-        wirePlayerBody(provider: provider, renderer: renderer)
+        playerWorld.wirePlayerBody(provider: provider, renderer: renderer)
         // After `wirePapyrus`, whose `onWorldUpdate` closure this chains onto
         // so both systems advance on the same simulated delta.
         wireActorSystems(provider: provider, renderer: renderer)
@@ -92,7 +92,7 @@ extension GameViewController {
         combatWorld.wireArchery(provider: provider, renderer: renderer)
         // After both, for the same reason: a fixed cursor-registration order
         // keeps every runtime's view of the graph event stream reproducible.
-        wireRagdoll(renderer: renderer)
+        ragdollWorld.wireRagdoll(renderer: renderer)
         // Last of the combat systems: the loop reads what melee, archery and
         // the ragdolls did this frame, so it has to advance after all three.
         wireLateWorldSystems(provider: provider, renderer: renderer, streamer: controller)

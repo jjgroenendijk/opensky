@@ -164,8 +164,21 @@ final class GameViewController: NSViewController {
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
     let inventory = InventoryCoordinator()
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
-    /// Player behavior graph + rendered body state.
-    var playerBodyBridge = PlayerBodyBridgeState()
+    /// The player graphs, the body, and the locomotion and first-person panels.
+    lazy var player: PlayerCoordinator = {
+        let player = PlayerCoordinator(input: cameraInput)
+        player.attach(world: playerWorld)
+        return player
+    }()
+
+    lazy var playerWorld = PlayerWorldAdapter(game: self)
+    /// The Face Morphs panel, over the actor in conversation.
+    lazy var faceMorphs: FaceMorphCoordinator = {
+        let faceMorphs = FaceMorphCoordinator()
+        faceMorphs.attach(world: playerWorld)
+        return faceMorphs
+    }()
+
     /// Actor values: damage, restore, regeneration, and the panel controls.
     lazy var actorValues: ActorValueCoordinator = {
         let actorValues = ActorValueCoordinator(store: worldState)
@@ -204,9 +217,14 @@ final class GameViewController: NSViewController {
 
     lazy var progressionWorld = ProgressionWorldAdapter(game: self)
 
-    /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it spawns from, and
-    /// the panel's last outcome line.
-    var ragdoll = RagdollBridgeState()
+    /// Death and ragdoll. Its runtime stays nil without a renderer.
+    lazy var ragdoll: RagdollCoordinator = {
+        let ragdoll = RagdollCoordinator(store: worldState)
+        ragdoll.attach(world: ragdollWorld)
+        return ragdoll
+    }()
+
+    lazy var ragdollWorld = RagdollWorldAdapter(game: self)
 
     /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
     let combat = CombatCoordinator()
@@ -311,6 +329,18 @@ final class GameViewController: NSViewController {
         }
         let texture = try renderer.renderOffscreen(width: width, height: height)
         try FrameScreenshot.write(texture: texture, to: url)
+    }
+
+    /// The playback drawing one resident actor, matched by its ACHR.
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
+        guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
+        return renderer?.scene.actorPlayback(for: actor.formID)
+    }
+
+    /// The pose one actor's clip holds now, keyed by bone name.
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]? {
+        guard let renderer, let playback = actorPlayback(for: key) else { return nil }
+        return playback.clip.namedWorldTransforms(at: renderer.animationTime)
     }
 
     static let logger = Logger(

@@ -13,10 +13,12 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScriptingInterface
+import OpenSkyWorld
 import OpenSkyWorldState
 
 /// The Combat & Physics panel reads the coordinator.
@@ -535,5 +537,87 @@ extension GameViewController: ProgressionControlProviding {
     @discardableResult
     func revokeSelectedPerk() -> String {
         progression.revokeSelectedPerk()
+    }
+}
+
+extension GameViewController: RagdollControlProviding {
+    var ragdollStatsSnapshot: RagdollStatsSnapshot {
+        ragdoll.ragdollStatsSnapshot
+    }
+
+    @discardableResult
+    func triggerRagdoll() -> Bool {
+        ragdoll.triggerRagdoll()
+    }
+
+    func setRagdollFrozen(_ frozen: Bool) {
+        ragdoll.setRagdollFrozen(frozen)
+    }
+
+    func setRagdollSelfCollision(_ enabled: Bool) {
+        ragdoll.setRagdollSelfCollision(enabled)
+    }
+
+    func clearRagdolls() {
+        ragdoll.clearRagdolls()
+    }
+}
+
+extension GameViewController: PlayerLocomotionControlProviding {
+    var playerLocomotionSnapshot: PlayerLocomotionSnapshot {
+        player.playerLocomotionSnapshot
+    }
+
+    var isSneaking: Bool {
+        get { player.isSneaking }
+        set { player.isSneaking = newValue }
+    }
+
+    var forcedLocomotionGait: LocomotionGait? {
+        get { player.forcedLocomotionGait }
+        set { player.forcedLocomotionGait = newValue }
+    }
+
+    func requestJump() {
+        player.requestJump()
+    }
+
+    @discardableResult
+    func raiseLocomotionEvent(named name: String) -> Bool {
+        player.raiseLocomotionEvent(named: name)
+    }
+
+    func clearLocomotionTrace() {
+        player.clearLocomotionTrace()
+    }
+}
+
+extension GameViewController: FirstPersonControlProviding {
+    var firstPersonSnapshot: FirstPersonSnapshot {
+        player.firstPersonSnapshot
+    }
+
+    var firstPersonFOVYDegrees: Float {
+        get { player.firstPersonFOVYDegrees }
+        set { player.firstPersonFOVYDegrees = newValue }
+    }
+
+    var firstPersonArmsEnabled: Bool {
+        get { player.firstPersonArmsEnabled }
+        set { player.firstPersonArmsEnabled = newValue }
+    }
+}
+
+extension GameViewController: FaceMorphControlProviding {
+    var faceMorphSnapshot: FaceMorphControlSnapshot {
+        faceMorphs.faceMorphSnapshot
+    }
+
+    func setFaceMorphWeight(_ weight: Float, target: String) {
+        faceMorphs.setFaceMorphWeight(weight, target: target)
+    }
+
+    func resetFaceMorphWeights() {
+        faceMorphs.resetFaceMorphWeights()
     }
 }
