@@ -19,7 +19,7 @@ permissions:
 
 # Pinned tool versions. Change a pin together with the local Homebrew version.
 env:
-  SWIFTFORMAT_VERSION: 0.63.0
+  SWIFTFORMAT_VERSION: 0.63.1
   SWIFTLINT_VERSION: 0.65.1
   CLANG_FORMAT_VERSION: 21.1.8
   MARKDOWNLINT_VERSION: 0.23.3
