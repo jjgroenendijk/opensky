@@ -3,7 +3,6 @@
 
 import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyPhysics
@@ -11,7 +10,6 @@ import MetalKit
 @testable import OpenSkyWorld
 import simd
 import Testing
-import UniformTypeIdentifiers
 
 extension FirstPersonRenderRealDataTests {
     // MARK: - Driving
@@ -100,27 +98,9 @@ extension FirstPersonRenderRealDataTests {
 
     /// Writes one square capture into gitignored `logs/`; the frame embeds game assets.
     static func writePNG(_ pixels: [UInt8], name: String, size: Int = size) throws {
-        let url = try PlayerBodyFixture.logsDirectory().appending(path: name)
-        guard
-            let provider = CGDataProvider(data: Data(pixels) as CFData),
-            let image = CGImage(
-                width: size,
-                height: size,
-                bitsPerComponent: 8,
-                bitsPerPixel: 32,
-                bytesPerRow: size * 4,
-                space: CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
-                provider: provider,
-                decode: nil,
-                shouldInterpolate: false,
-                intent: .defaultIntent
-            ),
-            let destination = CGImageDestinationCreateWithURL(
-                url as CFURL, UTType.png.identifier as CFString, 1, nil
-            )
-        else { return }
-        CGImageDestinationAddImage(destination, image, nil)
-        CGImageDestinationFinalize(destination)
+        try RenderedPixels.writePNG(
+            pixels, width: size, height: size,
+            to: PlayerBodyFixture.logsDirectory().appending(path: name)
+        )
     }
 }

@@ -4,7 +4,6 @@
 
 import CoreGraphics
 import Foundation
-import ImageIO
 import Metal
 import MetalKit
 @testable import OpenSkyFormatsESM
@@ -12,7 +11,6 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import Testing
-import UniformTypeIdentifiers
 
 struct ParticlePlaybackRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
@@ -128,28 +126,11 @@ struct ParticlePlaybackRealDataTests {
     }
 
     private func writePNG(_ pixels: [UInt8], name: String) throws -> URL {
-        var data = pixels
-        let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))
-        let context = try #require(CGContext(
-            data: &data,
-            width: 512,
-            height: 512,
-            bitsPerComponent: 8,
-            bytesPerRow: 512 * 4,
-            space: colorSpace,
-            bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue
-                | CGBitmapInfo.byteOrder32Little.rawValue
-        ))
-        let image = try #require(context.makeImage())
         try FileManager.default.createDirectory(
             at: logsDirectory, withIntermediateDirectories: true
         )
         let url = try logsDirectory.appending(path: name)
-        let destination = try #require(CGImageDestinationCreateWithURL(
-            url as CFURL, UTType.png.identifier as CFString, 1, nil
-        ))
-        CGImageDestinationAddImage(destination, image, nil)
-        #expect(CGImageDestinationFinalize(destination))
+        try RenderedPixels.writePNG(pixels, width: 512, height: 512, to: url)
         return url
     }
 }
