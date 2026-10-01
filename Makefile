@@ -92,7 +92,7 @@ METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 ##@ Getting started
 
-.PHONY: help bootstrap hooks ffmpeg vendor-link vendor-prune cache-link
+.PHONY: help bootstrap hooks ffmpeg link-shared
 
 help: ## Show this list
 	@awk 'BEGIN { FS = ":.*## "; print "Usage: make <target> [VAR=value]" } \
@@ -111,14 +111,8 @@ hooks: ## Point git at .githooks/hooks (safe to rerun)
 ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
 
-vendor-link: ## Point this worktree's .vendor at the main checkout's copy
-	@./tools/ffmpeg/link-vendor.sh
-
-vendor-prune: ## Replace per-worktree .vendor copies with links (run when idle)
-	@./tools/ffmpeg/prune-vendor.sh
-
-cache-link: ## Point this worktree's compilation cache at the main checkout's
-	@./tools/link-compile-cache.sh
+link-shared: ## Point this worktree's ffmpeg and compile cache at the main checkout's
+	@./tools/link-shared.sh
 
 ##@ Format and lint
 
@@ -208,13 +202,13 @@ comment-apply: ## Write rewritten blocks from a comment-blocks spec back [SPEC=f
 # swift build of the package modules the branch changed, or M='A B', plus their
 # dependents. No Xcode, so it is the quick loop while fixing compile errors;
 # Xcode-only code still needs verify-build.
-compile: vendor-link ## Compile changed package modules and their dependents [M='Module ...']
+compile: link-shared ## Compile changed package modules and their dependents [M='Module ...']
 	@./tools/compile-modules.sh $(M)
 
 # Every target compiled, no test run: OpenSkyTests, the app with
 # OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
 # did not test. Incremental and served from the shared cache.
-verify-build: vendor-link cache-link ## Compile app, CLI, and both unit bundles without running tests
+verify-build: link-shared ## Compile app, CLI, and both unit bundles without running tests
 	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
 	@$(XCB_RUN) verify-cli $(XCB_CLI) build
@@ -229,10 +223,10 @@ $(SHADER_LIBRARY): $(SHADER_SOURCES)
 
 .PHONY: build cli run-cli install app-path cli-path probe icon
 
-build: vendor-link cache-link ## Build the app [CONFIG]
+build: link-shared ## Build the app [CONFIG]
 	@$(XCB_RUN) build $(XCB_APP) build
 
-cli: vendor-link cache-link ## Build the openskycli dev tool [CONFIG]
+cli: link-shared ## Build the openskycli dev tool [CONFIG]
 	@$(XCB_RUN) cli $(XCB_CLI) build
 
 run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
@@ -240,7 +234,7 @@ run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 
 # Release shares the Debug cache directory (xcodebuild keeps the configurations
 # apart inside it), so a repeat install builds incrementally.
-install: vendor-link cache-link ## Build the Release app and copy it to /Applications
+install: link-shared ## Build the Release app and copy it to /Applications
 	@$(XCB_RUN) install $(XCB_RELEASE) ARCHS=arm64 build
 	@rm -rf /Applications/OpenSky.app
 	@ditto $(DERIVED_DATA)/Build/Products/Release/OpenSky.app /Applications/OpenSky.app
@@ -262,7 +256,7 @@ icon: ## Regenerate the AppIcon PNGs from Sources/OpenSky/Resources/Branding/ope
 
 .PHONY: test test-fast test-one test-ui test-report test-sanitize test-perms
 
-test: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
+test: link-shared $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
 		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
 		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
@@ -274,7 +268,7 @@ test: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run the unit tests t
 # default for every unit run, filtered or whole plan. A selector that names a
 # package test target, T='OpenSkyFormatsCoreTests/...', runs that target alone through
 # `swift test`, without the app host (issue #582).
-test-fast: vendor-link cache-link $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
+test-fast: link-shared $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [B=1]
 	@case "$(T)" in \
 		"") ./tools/test-fast.sh $(if $(B),-B,) ;; \
 		OpenSkyTests/* | OpenSkyRealDataTests/* | OpenSkyUITests/*) \
@@ -286,7 +280,7 @@ test-fast: vendor-link cache-link $(SHADER_LIBRARY) ## Rerun tests without rebui
 
 # A selector under OpenSkyUITests switches to the UI plan; anything else runs in
 # the unit plan. Keeping the plans apart avoids the deadlock described above.
-test-one: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run one test: T=Class[/method] or T=Target/Class/method
+test-one: link-shared $(SHADER_LIBRARY) ## Build and run one test: T=Class[/method] or T=Target/Class/method
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
 		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
@@ -299,7 +293,7 @@ test-one: vendor-link cache-link $(SHADER_LIBRARY) ## Build and run one test: T=
 		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
 		$$plan -only-testing:"$$spec" test
 
-test-ui: vendor-link cache-link ## Build and run the UI tests (launches and drives the app)
+test-ui: link-shared ## Build and run the UI tests (launches and drives the app)
 	@./tools/test-ui.sh \
 		$(WORKSPACE) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
 
@@ -309,7 +303,7 @@ test-report: ## Summarize the newest test result bundle, failures included
 # OpenSkyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
 # share a build. Too slow for routine runs, so run it periodically and
 # before a milestone acceptance.
-test-sanitize: vendor-link cache-link $(SHADER_LIBRARY) ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
+test-sanitize: link-shared $(SHADER_LIBRARY) ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
 	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
 
 test-perms: ## Check the one-time macOS permission grants tests need
@@ -326,7 +320,7 @@ test-perms: ## Check the one-time macOS permission grants tests need
 
 # One test through the fast path of test-fast (issue #417): a warm rerun pays
 # only for the test itself.
-realtest: vendor-link cache-link ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
+realtest: link-shared ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
 	@test -n "$(T)" || { \
 		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
 		echo "        selector must resolve to exactly one test (fully qualified)"; \
@@ -338,23 +332,23 @@ realtest: vendor-link cache-link ## Run one real-data test: T='Class/method()' [
 	./tools/test-fast.sh -p RealData -t "$$spec" \
 		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
 
-realtest-all: vendor-link cache-link ## Run the whole real-data plan [CAP=MB]
+realtest-all: link-shared ## Run the whole real-data plan [CAP=MB]
 	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
 
 # `make test` never compiles the real-data suites, so a build break there used to
 # stay hidden (issue #457). Compiling needs no install.
-realdata-build: vendor-link cache-link ## Compile the real-data suites without running them
+realdata-build: link-shared ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
 
 # The perf gates build optimized, because -Onone makes tight simd code an order
 # of magnitude slower (issue #392). They use their own cache directory,
 # DerivedData-optimized/, so the Debug build survives.
-realtest-perf: vendor-link cache-link ## Run the physics perf gate on an optimized build [CAP=MB]
+realtest-perf: link-shared ## Run the physics perf gate on an optimized build [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'OpenSkyRealDataTests/DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()' \
 		$(if $(CAP),-c $(CAP),)
 
-realtest-npc-perf: vendor-link cache-link ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
+realtest-npc-perf: link-shared ## Measure NPC behavior graphs at the mover cap, optimized [CAP=MB]
 	@./tools/realtest.sh -O \
 		-t 'OpenSkyRealDataTests/NPCMovementRealDataTests/measuresVanillaGraphsAtMoverCap()' \
 		$(if $(CAP),-c $(CAP),)

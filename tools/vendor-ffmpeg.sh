@@ -11,7 +11,7 @@
 #
 # The build always lands in the shared `.vendor` of the main checkout, whichever worktree
 # it was started from, because the result is identical for all of them. Linked worktrees
-# reach it through the symlink tools/ffmpeg/link-vendor.sh creates.
+# reach it through the symlink tools/link-shared.sh creates.
 set -eu
 
 FFMPEG_VERSION=8.1.2
@@ -26,7 +26,7 @@ cd "$ROOT"
 
 # Link this worktree at the shared prefix (a no-op in the main checkout) before deciding
 # where to build, so both this script and Xcode see the same directory.
-"$ROOT/tools/ffmpeg/link-vendor.sh"
+"$ROOT/tools/link-shared.sh"
 
 # In the main checkout this is $ROOT; in a linked worktree it is the main checkout.
 SHARED=$(cd "$(dirname "$(git rev-parse --git-common-dir)")" && pwd)

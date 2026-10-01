@@ -136,7 +136,7 @@ hit only SDK module builds. `Config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PRE
 `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
 `CLANG_ENABLE_PROJECT_PREFIX_MAPPING`. Xcode then rewrites the checkout path to `/^src`, derived-data
 temporaries to `/^derived`, and products to `/^built`, so the same source gets the same key in any
-worktree. `make cache-link`, run first by every building target, replaces a linked worktree's store
+worktree. `make link-shared`, run first by every building target, replaces a linked worktree's store
 with a symlink to the main checkout's. A fresh worktree's first unit build then takes seconds
 instead of minutes. In a linked worktree `make clean DEEP=1` removes only the link.
 

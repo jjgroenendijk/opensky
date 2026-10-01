@@ -126,7 +126,7 @@ signing is denied.
 Xcode resolves every phase's declared inputs before it runs any phase, `check` included. So a
 missing `.xcfilelist` fails planning with a raw missing-input error before `check` can print its
 message. A fresh linked worktree has no `.vendor` at all, which is how this showed up. So
-`tools/ffmpeg/link-vendor.sh` writes empty placeholder lists whenever the prefix has no `lib/`
+`tools/link-shared.sh` writes empty placeholder lists whenever the prefix has no `lib/`
 folder, and a real build's lists are never overwritten.
 
 No phase is marked always out of date, because that re-copied and re-signed the dylibs on every
@@ -141,15 +141,14 @@ the list's time, so a removed prefix still re-runs `check` and prints the messag
 ## Linked worktrees
 
 The prefix depends only on the pinned version and flags, so every worktree would build a byte-equal
-copy. Instead, `link-vendor.sh` finds the main checkout with `git rev-parse --git-common-dir` and,
+copy. Instead, `link-shared.sh` finds the main checkout with `git rev-parse --git-common-dir` and,
 when a linked worktree has no `.vendor` of its own, makes `.vendor` a symlink to the main checkout's.
 The project's `$(SRCROOT)/.vendor` then resolves to the shared prefix. An existing `.vendor` is left
 alone, so a worktree built with `OPENSKY_FFMPEG_FORCE=1` keeps its copy.
 
-`make vendor-link` runs the linker, and every building and testing target depends on it.
-`make vendor-prune` replaces a worktree's own `.vendor` with the symlink, but only when the shared
-prefix already has all three dylibs. Do not run it while a worktree is building, because the
-libraries would move mid-build. A checkout opened straight in Xcode, with no `make` target ever run,
+`make link-shared` runs the linker, and every building and testing target depends on it. To move
+a worktree onto the shared prefix, delete its own `.vendor` while nothing builds there, then run
+`make link-shared`. A checkout opened straight in Xcode, with no `make` target ever run,
 still fails on the missing list, because `make` creates both the symlink and the placeholders.
 
 ## Runtime failure, not build failure
