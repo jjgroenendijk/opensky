@@ -1,10 +1,6 @@
-// INFO, one selectable dialogue response set under a DIAL topic. TRDT opens a
-// response run; NAM1/NAM2/NAM3 and the idle-animation links extend that run
-// until the next TRDT. Conditions and record-level links remain outside it.
-//
-// References:
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/INFO
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(INFO, ...)`.
+// INFO dialogue response set under a DIAL topic. TRDT opens a response run;
+// NAM1/NAM2/NAM3 and idle links extend it until the next TRDT.
+// Layout and sources: docs/formats/dialogue.md.
 
 import Foundation
 import OpenSkyFormatsCore

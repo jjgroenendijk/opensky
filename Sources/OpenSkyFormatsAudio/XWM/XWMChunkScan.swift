@@ -1,17 +1,6 @@
-// RIFF chunk walk for `.xwm` (xWMA) files: validates the RIFF/XWMA header,
-// then collects the `fmt `, `dpds` and `data` chunks. Satellite of
-// XWMFile.swift, which owns the codec policy; this type owns the on-disk
-// framing only.
-//
-// References:
-//   Microsoft "Multimedia Programming Interface and Data Specifications 1.0"
-//     — RIFF framing: four-character chunk id, UInt32 little-endian size not
-//     counting the header, chunk bodies padded to an even byte count.
-//   Microsoft xWMA, MultimediaWiki
-//     https://wiki.multimedia.cx/index.php/Microsoft_xWMA
-//   FFmpeg libavformat/xwma.c (read as documentation, not transcribed)
-//     https://github.com/FFmpeg/FFmpeg/blob/master/libavformat/xwma.c
-// Layout documented in docs/formats/xwm.md.
+// RIFF chunk walk for `.xwm` files: checks the RIFF/XWMA header and collects
+// the `fmt `, `dpds`, and `data` chunks. XWMFile.swift owns the codec policy.
+// Layout and sources: docs/formats/xwm.md.
 
 import Foundation
 import OpenSkyFormatsCore

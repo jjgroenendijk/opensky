@@ -1,17 +1,7 @@
-// hkbBehaviorGraphStringData and hkbVariableValueSet decode (todo 14.1). These
-// two carry the behavior graph's naming and its initial state: every variable,
-// event, attribute, and character property the graph exposes is addressed by
-// index, and these objects are what turns an index back into a name and a
-// starting value. Item 14.5 binds engine state to those names, so they are the
-// census currency.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); its class signatures
-// match the local SSE files exactly (hkbBehaviorGraphStringData 0xC713064E,
-// hkbVariableValueSet 0x27812D8D). Both derive from hkReferencedObject, whose
-// 16-byte base (vtable pointer, then m_memSizeAndFlags and m_referenceCount
-// padded to 8) is why the first member sits at 0x10. No Havok SDK or Bethesda
-// code consulted (AGENTS.md Legal & IP). Byte map and citations:
-// docs/formats/hkx-behavior.md.
+// hkbBehaviorGraphStringData and hkbVariableValueSet decode. The graph names
+// every variable, event, and property by index; these objects map an index
+// back to a name and a starting value.
+// Byte map and citations: docs/formats/hkx-behavior.md.
 
 import Foundation
 

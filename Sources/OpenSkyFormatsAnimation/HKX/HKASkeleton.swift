@@ -1,17 +1,6 @@
-// hkaSkeleton object decode (todo 6.2): bone names, parent indices, reference
-// pose. Locates each hkaSkeleton in the packfile via the container's virtual-
-// fixup inventory (6.1), then reads the object's inline members out of the
-// __data__ section payload, resolving hkArray + hkStringPtr pointers through
-// the section's local fixups (pointers are null on disk — the "finish" pass
-// patches them at load, we read the fixup targets instead).
-//
-// No public Havok spec. Object layout reimplemented from independent open
-// parsers — exyorha/hkxparse (MIT), ret2end/HKX2Library (MIT) — plus the
-// ZeldaMods wiki "Havok" hkaSkeleton table, then probe-verified byte-by-byte
-// against the local SSE skeleton.hkx (human + wolf rigs, both rig + ragdoll
-// skeletons; all hk_2010.2.0-r1 64-bit LE). No Havok SDK or Bethesda code
-// consulted (AGENTS.md Legal & IP). Byte map + citations:
-// docs/formats/hka-skeleton.md.
+// hkaSkeleton decode: bone names, parent indices, and reference pose. On disk
+// the pointers are null, so hkArray and hkStringPtr members resolve through the
+// section's local fixups. Byte map and citations: docs/formats/hka-skeleton.md.
 
 import Foundation
 import simd

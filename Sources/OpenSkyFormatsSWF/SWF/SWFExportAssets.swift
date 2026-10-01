@@ -1,17 +1,6 @@
-// ExportAssets (56): the linkage table. A movie exports characters under
-// names, and those names are what `Object.registerClass(linkageName, class)`
-// binds a class to and what `MovieClip.attachMovie(linkageName, ...)` looks up.
-// Without this table a registered class has no character to attach to, so
-// nothing the ActionScript registers can ever be instantiated.
-//
-// The mirror image is ImportAssets/ImportAssets2 (57/71), which name characters
-// borrowed from another movie — see `SWFImportAssets.swift`.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 14
-// "Sharing fonts and other assets" — "ExportAssets", the tag immediately
-// preceding ImportAssets. Layout:
-//   Count UI16, Count x (CharacterId UI16, Name STRING)
-// which is ImportAssets' body without the leading URL.
+// ExportAssets (56): characters exported under linkage names, which
+// `registerClass` and `attachMovie` use. Imports are in SWFImportAssets.swift.
+// Layout and sources: docs/formats/swf-display-list.md.
 
 import Foundation
 import OpenSkyFormatsCore

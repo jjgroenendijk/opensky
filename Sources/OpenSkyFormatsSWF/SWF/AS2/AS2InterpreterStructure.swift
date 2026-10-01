@@ -1,16 +1,6 @@
-// Object-literal, enumeration, and class-relationship opcodes (milestone
-// 8.3.2). These are what vanilla menu code spends its `DoInitAction` blocks on:
-// 455 `ActionExtends`, 456 `ActionInstanceOf`, and 140 `ActionCastOp` across
-// the 53 vanilla movies.
-//
-// The literal opcodes pop their elements in the order the compiler pushed
-// them: an array or object literal is emitted back to front, so the first value
-// popped is element zero.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionInitArray" and "ActionInitObject" (p. 86),
-// "ActionEnumerate2" (p. 106), "ActionTypeOf" (p. 87), "ActionInstanceOf"
-// (p. 106), "ActionCastOp" (p. 113), and "ActionExtends" (p. 114).
+// Object-literal, enumeration, and class-relationship opcodes. A literal is
+// emitted back to front, so the first value popped is element zero.
+// Spec: SWF v19 chapter 5.
 
 import Foundation
 
@@ -121,16 +111,10 @@ nonisolated extension AS2Interpreter {
         subObject.define(.object(bridge), for: "prototype")
     }
 
-    /// The `super` binding a method sees: an empty object whose prototype is
-    /// the superclass prototype and whose calls re-bind `this` to the original
-    /// receiver. Nil when there is no prototype chain to climb.
-    ///
-    /// `base` is the prototype of the class whose method is running, which the
-    /// frame carries. Deriving the binding from the receiver instead would pin
-    /// it to `this.__proto__` for the whole chain, so the base constructor of a
-    /// three-level hierarchy would call itself until the depth cap fired
-    /// (issue #136). Only the class's own `__constructor__` counts: the
-    /// inherited one belongs to the superclass and would name the wrong parent.
+    /// The `super` a method sees: an object whose prototype is the superclass
+    /// prototype and whose calls keep the original `this`. Built from `base`,
+    /// the running class's prototype, not from the receiver: that would make a
+    /// three-level base constructor call itself. Nil without a parent.
     public func superBinding(for thisValue: AS2Value, base: AS2Object? = nil) -> AS2Object? {
         guard let home = base ?? thisValue.objectValue?.prototype else {
             return nil

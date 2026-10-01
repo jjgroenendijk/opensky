@@ -1,14 +1,6 @@
-// The remaining stock Havok generator classes (todo 14.2): the selector and
-// wrapper generators that pick or decorate one child, the behavior reference
-// that names another file, and `hkbBlendingTransitionEffect`, the transition
-// class every state-machine transition in the vanilla player graph uses.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbManualSelectorGenerator 0xD932FAB8, hkbModifierGenerator
-// 0x1F81FAE6, hkbBehaviorReferenceGenerator 0x0FCB5423,
-// hkbBlendingTransitionEffect 0xFD8584FE). No Havok SDK or Bethesda code
-// consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-nodes.md.
+// The selector and wrapper generators, the behavior reference to another file,
+// and `hkbBlendingTransitionEffect`, which every vanilla player transition uses.
+// Byte map: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation
 
@@ -102,7 +94,7 @@ nonisolated public struct HKBModifierGenerator: HKBClass, Equatable, Sendable {
 /// Decoded `hkbBehaviorReferenceGenerator`, size 88: stands in for the root
 /// generator of another behavior file, named rather than pointed at. This is
 /// how `0_Master.hkb` pulls in the per-activity behavior files; resolving the
-/// name to a loaded graph is item 14.5's job, not this decoder's.
+/// name to a loaded graph happens later, not in this decoder.
 nonisolated public struct HKBBehaviorReferenceGenerator: HKBClass, Equatable, Sendable {
     public let node: HKBNodeHeader
     /// Behavior file name as the project's `m_behaviorFilenames` spells it.

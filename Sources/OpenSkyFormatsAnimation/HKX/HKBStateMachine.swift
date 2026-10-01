@@ -1,16 +1,6 @@
-// `hkbStateMachine` and `hkbStateMachineStateInfo` (todo 14.2). Every vanilla
-// player behavior file's root generator is an `hkbStateMachine`, and the census
-// counts 1,963 of them across the 35 behavior files, so this is the class the
-// node tree is mostly made of.
-//
-// A state machine holds a list of states; each state names a generator to run
-// while it is current, the events that enter and exit it, and the transitions
-// out of it. The transition arrays are separate registered objects and live in
+// `hkbStateMachine` and `hkbStateMachineStateInfo`: the class most of the node
+// tree is made of. Transition arrays are separate objects, decoded in
 // HKBStateMachineTransitions.swift.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbStateMachine 0x816C1DCB, hkbStateMachineStateInfo
-// 0x0ED7F9D0). No Havok SDK or Bethesda code consulted (AGENTS.md Legal & IP).
 // Byte map and citations: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation

@@ -1,20 +1,6 @@
-// KSIZ + KWDA, the keyword array carried by nearly every object record.
-// KSIZ is a uint32 count and KWDA is a packed array of that many KYWD FormIDs
-// in the following subrecord. The pair is shared by MISC, BOOK, ALCH, INGR,
-// WEAP, AMMO and ARMO, so it decodes once here rather than seven times.
-//
-// Decode policy: KSIZ is advisory. The real length is `KWDA.count / 4`, so a
-// KSIZ that disagrees with the payload is recorded (`declaredCount`) but never
-// used to size the read — a mod that writes a stale count must not make the
-// engine read past the field or drop keywords that are really there.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/WEAP" (KSIZ keywordCount, KWDA
-//   formID[KSIZ.keywordCount]):
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WEAP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbKeywords`, which models KWDA
-//   as an array sized from KSIZ.
-// Layout documented in docs/formats/item-records.md.
+// KSIZ + KWDA keyword array. KSIZ is advisory: the real length is
+// `KWDA.count / 4`, and a different KSIZ is kept as `declaredCount` only.
+// Layout and sources: docs/formats/keywords.md.
 
 import Foundation
 import OpenSkyFormatsCore

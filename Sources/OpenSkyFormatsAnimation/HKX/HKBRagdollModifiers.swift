@@ -6,9 +6,8 @@
 import Foundation
 
 /// `hkbFootIkGains`, 48 bytes, embedded as `hkbFootIkControlData::m_gains`:
-/// twelve response rates in a fixed order. Kept as a flat array because nothing
-/// in this milestone reads an individual gain, and naming twelve floats that
-/// M15 may re-derive would be twelve chances to be wrong.
+/// twelve response rates in a fixed order. A flat array, because nothing reads
+/// an individual gain yet.
 nonisolated public struct HKBFootIkGains: Equatable, Sendable {
     /// In Havok's declared order: on/off, ground ascending, ground descending,
     /// foot planted, foot raised, foot unlock, world-from-model feedback,
@@ -210,8 +209,8 @@ nonisolated public struct HKBPoweredRagdollControlsModifier: HKBClass, Equatable
 
 /// Decoded `hkbRigidBodyRagdollControlsModifier`, size 160: hands the ragdoll
 /// to the keyframe-hierarchy solver. Its `m_controlData` embeds a 48-byte
-/// `hkaKeyFrameHierarchyUtilityControlData` whose members are M15's business
-/// and are deliberately not decoded here; `m_durationToBlend` sits past it.
+/// `hkaKeyFrameHierarchyUtilityControlData` whose members are physics tuning
+/// and are not decoded here; `m_durationToBlend` sits past it.
 nonisolated public struct HKBRigidBodyRagdollControlsModifier: HKBClass, Equatable, Sendable {
     public let modifier: HKBModifierHeader
     public let durationToBlend: Float

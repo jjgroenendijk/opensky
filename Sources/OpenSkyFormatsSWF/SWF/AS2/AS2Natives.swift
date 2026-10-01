@@ -1,17 +1,7 @@
-// Built-in objects (milestone 8.3.2): only what vanilla class-registration
-// code needs — `Object` (with `registerClass` and `addProperty`), `Function`,
-// `Array`, `String`, `Number`, `Boolean`, `Math`, `ASSetPropFlags`, and the
-// handful of global functions.
-//
-// `MovieClip`, `TextField`, `Stage`, `Selection`, `EventDispatcher`, and the
-// `gfx` framework are deliberately absent. A reference to any of them resolves
-// to `undefined` and lands in the tally as a named missing API, which is
-// exactly the coverage evidence the next milestone needs.
-//
-// These are Flash built-ins, not SWF file-format structures, so they are
-// reimplemented from the public ActionScript 2 behavior and from ECMA-262 3rd
-// edition, section 15 "Native ECMAScript Objects", which ActionScript follows
-// for `Object`, `Array`, `String`, `Number`, `Boolean`, and `Math`.
+// Built-in objects: only what vanilla class registration needs. `MovieClip`,
+// `TextField`, and the other display classes are not here; a reference to one
+// is `undefined` and is tallied as a missing API.
+// Spec: ECMA-262 3rd ed. section 15. See docs/engine/as2-runtime.md.
 
 import Foundation
 

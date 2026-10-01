@@ -1,10 +1,6 @@
-// Plugin (.esm/.esp/.esl) container walk: one TES4 header record followed by
-// top-level GRUPs. Init indexes group extents only — Skyrim.esm is ~250 MB, so
-// the file is memory-mapped and record payloads parse on demand.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
-// Layout documented in docs/formats/esm.md.
+// Plugin container walk: one TES4 header record, then top-level GRUPs. The
+// file is memory-mapped and only group extents are indexed, because
+// Skyrim.esm is about 250 MB. Layout: docs/formats/esm.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,16 +1,6 @@
-// One execution frame (milestone 8.3.2): the operand stack, register file,
-// scope chain, `this`, constant pool, and variable target that an action
-// stream runs against.
-//
-// A frame is a reference type so the opcode handlers can take it directly
-// instead of threading `inout` through every one of them. It stays deliberately
-// dumb — it holds state and enforces the stack bounds, and every decision about
-// what a value means belongs to `AS2Interpreter`.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — the stack model in "SWF 4 Action Model" (p. 64), registers in
-// "ActionStoreRegister" (p. 90), and the constant pool in
-// "ActionConstantPool" (p. 91).
+// One execution frame: operand stack, registers, scope chain, `this`, constant
+// pool, and variable target. A class so opcode handlers can take it directly.
+// It only holds state and checks stack bounds. Spec: SWF v19 chapter 5.
 
 import Foundation
 
@@ -58,11 +48,9 @@ nonisolated public final class AS2Frame {
     /// False for the frame an entry point starts with, true for a frame a call
     /// pushed. Only the latter count against `AS2Limits.callDepth`.
     public var isCall = false
-    /// The prototype the running function was found on — the class whose method
-    /// this frame is executing. `super` resolves from here rather than from
-    /// `thisValue.__proto__`, which is what lets a three-level hierarchy walk up
-    /// one level per call instead of calling itself forever (issue #136). Nil
-    /// when the frame is not running a method of a class.
+    /// The prototype the running method was found on. `super` resolves from
+    /// here, not from `thisValue.__proto__`, so a three-level hierarchy moves
+    /// up one level per call. Nil outside a class method.
     public var basePrototype: AS2Object?
 
     /// `ActionDefineFunction` has no register header; the SWF 5 action model

@@ -1,11 +1,6 @@
-// SSE skin block decode: NiSkinInstance/BSDismemberSkinInstance links one
-// shape to NiSkinData bind transforms + NiSkinPartition hardware geometry.
-// Every count is bounded by its size-sliced block before allocation/read.
-//
-// Reference: NifTools nif.xml (NiSkinInstance, BSDismemberSkinInstance,
-// NiSkinData, BoneData, NiSkinPartition, SkinPartition, BSVertexDataSSE).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-skinning.md.
+// Skin blocks: the skin instance links a shape to NiSkinData bind transforms
+// and NiSkinPartition geometry. Every count is checked against the block size
+// before reading. Layout: docs/formats/nif-skinning.md.
 
 import Foundation
 import OpenSkyFormatsCore

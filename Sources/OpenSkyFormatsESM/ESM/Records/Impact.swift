@@ -1,17 +1,6 @@
-// IPDS impact-data-set and IPCT impact records (issue #352). Between a
-// footstep and a sound sits the impact chain: FSTP.DATA names an IPDS, the
-// IPDS pairs each material type (MATT) with the IPCT to play on it, and the
-// IPCT names the sound descriptors.
-//
-// References: UESP "Skyrim Mod:Mod File Format/IPDS" and ".../IPCT"; xEdit
-// dev-4.1.6 wbDefinitionsTES5.pas:
-//   wbRecord(IPDS, 'Impact Data Set', [
-//     wbEDID, wbRArray('Data', wbRStruct('', [
-//       wbFormIDCk(PNAM, 'Material', [MATT]) ... ]))
-//   ]);
-// with PNAM carrying the material FormID and the impact FormID as one 8-byte
-// pair. Only the members the audio side needs are decoded here: the visual
-// half of an impact (model, decal, texture sets, hazard) waits for a consumer.
+// IPDS impact data set and IPCT impact: the chain from a footstep to a sound.
+// IPDS pairs each MATT material with an IPCT. Only the audio members are
+// decoded. Layout and sources: docs/formats/footstep.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -117,15 +106,9 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
         self.entries = entries
     }
 
-    /// The impact to play on `material`, or the representative one when the
-    /// caller does not know which surface was struck.
-    ///
-    /// OpenSky has no per-triangle collision material yet (issue #358), so
-    /// every footstep asks for the representative impact. That
-    /// is the most frequently paired IPCT in the table, with ties broken by
-    /// record order — a measurement of what the authored table mostly says
-    /// rather than a hardcoded material. A set whose entries all agree, which
-    /// is the common vanilla case, returns that one impact exactly.
+    /// The impact for `material`, or the representative one when the surface is
+    /// unknown: the most frequent IPCT in the table, ties broken by record
+    /// order. Footsteps use it until collision materials exist.
     public func impact(for material: FormID?) -> FormID? {
         if let material, let match = entries.first(where: { $0.material == material }) {
             return match.impact

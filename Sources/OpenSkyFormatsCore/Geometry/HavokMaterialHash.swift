@@ -1,19 +1,6 @@
-// The material a Skyrim NIF stores on a collision shape is not an enumeration
-// the engine assigns numbers to: it is a hash of the material's Creation Kit
-// name. That is what lets a plugin author a new material and have meshes point
-// at it without a NIF format change, and it is the link that turns a Havok
-// material value back into the MATT record an impact table is keyed by.
-//
-// Reference: NifTools nif.xml, enum `SkyrimHavokMaterial` — "Material
-// descriptor for a Havok shape in Skyrim. CRC32 of the lowercase of the
-// Creation Kit Material Name."
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-//
-// The variant is the reflected polynomial 0xEDB88320 with a zero initial
-// register and no final complement: the familiar CRC-32 table without zlib's
-// pre- and post-inversion. nif.xml says "CRC32" and stops there, so the
-// parameters were recovered by search and then confirmed against every named
-// value the enum lists (`HavokMaterialHashTests`).
+// A NIF collision material is the CRC32 of the lowercase Creation Kit material
+// name, so a plugin can add materials without a NIF change. The CRC variant
+// has no pre- or post-inversion. Source: docs/formats/material-type.md.
 
 nonisolated public enum HavokMaterialHash: Sendable {
     /// The Havok material value a NIF stores for `name`, which is `MATT.MNAM`.

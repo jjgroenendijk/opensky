@@ -1,25 +1,6 @@
-// The subrecord set every carryable base record shares, decoded once.
-//
-// MISC, BOOK, ALCH, INGR, WEAP, AMMO and ARMO all open with the same run of
-// fields — editor id, display name, ground model, object bounds, keyword
-// array, inventory/message icon paths, and the pickup/drop sound links — and
-// all but ALCH close with an 8-byte DATA of gold value plus weight. Rather
-// than repeat that switch in seven decoders, each record composes
-// `InventoryItemFields` and adds only its type-specific cases.
-//
-// `ItemValue` is separate from the accumulator because ALCH breaks the
-// pattern: its DATA is a bare float weight and its gold value lives in ENIT,
-// so the ingestible decoder fills the same engine-level value/weight pair from
-// two different fields.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format" subpages /MISC, /BOOK, /ALCH, /INGR,
-//   /WEAP, /AMMO, /ARMO — the shared rows (EDID, FULL, MODL, OBND, KSIZ/KWDA,
-//   ICON, MICO, YNAM, ZNAM, DATA) are identical across all seven, e.g.
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: MISC (line 8303), KEYM (7942)
-//   and INGR (7909) all spell the 8-byte DATA as int32 Value + float Weight.
-// Layout documented in docs/formats/item-records.md.
+// The fields every carryable base record shares, decoded once. `ItemValue` is
+// separate because ALCH stores weight in DATA and gold value in ENIT.
+// Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

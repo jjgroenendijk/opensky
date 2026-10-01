@@ -24,7 +24,8 @@ checked byte by byte against vanilla files:
 
 - ret2end/HKX2Library (MIT): a Skyrim SE packfile reader and writer, and the only one of
   the three with Bethesda's `BS*` classes. Its member offset tables are the main source.
-  Its class signatures match the vanilla class name tables exactly.
+  Its class signatures match the vanilla class name tables exactly
+  ([HKX class signatures](/formats/hkx-class-signatures.md)).
 - soulsmods/DSMapStudio HKX2 (MIT): a separate version of the stock classes, for a
   cross-check.
 - exyorha/hkxparse (MIT): packfile structures.

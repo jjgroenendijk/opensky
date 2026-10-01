@@ -1,11 +1,5 @@
-// MSB-first bit reader for SWF's bit-packed fields (RECT, matrices, colors).
-// SWF packs unsigned/signed bit fields most-significant-bit first within each
-// byte, spanning byte boundaries; the byte-aligned BinaryReader cannot express
-// this, and the repo has no other bit reader, so this is the one place we walk
-// individual bits.
-//
-// Reference: Adobe SWF File Format Specification, version 19, "Bit values" and
-// the UB[n] / SB[n] primitive types.
+// MSB-first bit reader for SWF's bit-packed fields (UB[n], SB[n]), which can
+// cross byte boundaries. Spec: SWF v19, "Bit values".
 
 import Foundation
 

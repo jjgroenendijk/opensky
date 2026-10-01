@@ -1,10 +1,6 @@
-// GMST — typed game setting keyed by EDID. The EDID's first character selects
-// the DATA representation: s=lstring, i=signed int32, f=float32, b=uint32
-// boolean. Unknown prefixes are rejected rather than guessed.
-//
-// Reference: xEdit Skyrim definitions, wbGMSTUnionDecider + GMST record:
-// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsCommon.pas
-// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
+// GMST game setting. The EDID's first letter picks the DATA type: s lstring,
+// i int32, f float32, b uint32 boolean. Other prefixes are rejected.
+// Sources: docs/formats/gmst.md.
 
 import Foundation
 import OpenSkyFormatsCore

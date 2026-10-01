@@ -1,47 +1,7 @@
-// ARMA record decoded into engine types: armature data — how an ARMO piece is
-// displayed on a body. Holds the per-gender biped models, the per-gender
-// first-person models, and the races the armature applies to. Texture-swap
-// lists and MODT hashes are skipped.
-//
-// MOD4 and MOD5 are the male and female first-person models — the geometry the
-// vanilla player sees on its own arms, skinned to the separate first-person rig
-// under `meshes\actors\character\_1stperson\`. Both are optional and most
-// armatures carry neither: only the pieces an arm can show (skin hands, the
-// skin torso, gauntlets, rings) declare one, which is why item 14.7 treats a
-// missing first-person model as "this piece is not on the arms" rather than as
-// a failure. See docs/engine/first-person.md.
-//
-// DNAM (12 bytes) is decoded for equip-slot priority resolution (issue #178):
-//   00 uint8   male draw priority
-//   01 uint8   female draw priority
-//   02 4 bytes weight-slider flags (xEdit) / one unknown uint32 (UESP)
-//   06 uint8   detection sound value
-//   07 1 byte  unused
-//   08 float32 weapon adjust
-// Only the two priorities and the weapon adjust are carried; the detection
-// sound belongs to stealth and the weight sliders to body morphs, neither of
-// which this engine has. UESP and xEdit disagree on how bytes 2-5 are named
-// and agree on every offset that matters here.
-//
-// Priority semantics, from the Creation Kit wiki "ArmorAddon" page: "This is
-// used to determine the order of the ArmorAddons. The base naked body (for all
-// parts) is always 0. The armor for a torso would then be 5 and gloves that you
-// want to draw over the ends of sleeves, for example, would be 10." So a higher
-// priority draws over — and therefore hides — a lower one contesting the same
-// biped slot. An ARMA with no DNAM at all reads as priority 0, which is the
-// naked-body level and loses every contest, matching what the data means.
-//
-// MODL in ARMA is a 4-byte FormID naming an additional applicable RACE,
-// repeated per race (distinct from MOD2/MOD3 which are model paths). Size-guard
-// on 4 bytes.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ARMA"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ARMA
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(ARMA, ...)` line 4180
-//     — the DNAM `wbStruct` member list at 4184.
-//   Creation Kit wiki "ArmorAddon" (priority meaning)
-//     https://ck.uesp.net/wiki/Armor_Addon
+// ARMA record: how an ARMO piece shows on a body, per gender, plus the races
+// it applies to. MOD4/MOD5 first-person models are optional, so a missing one
+// means "not on the arms". A higher DNAM priority draws over a lower one; no
+// DNAM reads as 0. Layout and sources: docs/formats/armor.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -72,12 +32,9 @@ nonisolated public struct ArmorAddon: Sendable {
     /// on an actor wearing this armature. Decoded now because the field is
     /// read here anyway; the hand attachment does not apply it yet.
     public let weaponAdjust: Float
-    /// SNDD — the FSTS footstep set an actor wearing this armature walks with
-    /// (issue #352). xEdit dev-4.1.6 names it `wbFormIDCk(SNDD, 'Footstep
-    /// Sound', [FSTS, NULL])` at line 4216. Only the boot armatures carry one:
-    /// vanilla's `NakedFeet*` armatures point at `FSTBarefootFootstepSet`,
-    /// light boots at `FSTArmorLightFootstepSet`, and heavy boots at
-    /// `FSTArmorHeavyFootstepSet`. Nil when absent or null.
+    /// SNDD: the FSTS footstep set an actor wearing this armature walks with
+    /// (xEdit `wbFormIDCk(SNDD, 'Footstep Sound', [FSTS, NULL])`). Only boot and
+    /// bare-feet armatures carry one. Nil when absent or null.
     public let footstepSound: FormID?
 
     /// The draw priority that applies to one gender.

@@ -1,11 +1,6 @@
-// Skyrim FaceGen TRI expression container. The clean engine type retains the
-// base topology plus named, scaled per-vertex deltas; UVs, chargen modifiers
-// and absolute modifier vertices are validated and skipped because expression
-// playback does not consume them.
-//
-// Reference: NifTools PyFFI `tri.xml` and `pyffi.formats.tri`.
-// https://github.com/niftools/pyffi/blob/master/pyffi/formats/tri/tri.xml
-// Confirmed against the user's install at runtime; see docs/formats/tri.md.
+// FaceGen TRI expression container: base topology plus named, scaled vertex
+// deltas. UVs and chargen modifiers are checked and skipped.
+// Layout and sources: docs/formats/tri.md.
 
 import Foundation
 import OpenSkyFormatsCore

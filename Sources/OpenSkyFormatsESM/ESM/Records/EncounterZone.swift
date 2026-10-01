@@ -1,12 +1,5 @@
-// ECZN encounter-zone data. DATA is the 12-byte post-form-version-34
-// structure; older records can end after its two FormIDs at byte 8.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ECZN"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ECZN
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(ECZN, ...)`
-//     lines 6286-6306.
-// Layout documented in docs/formats/records.md.
+// ECZN encounter zone. DATA is 12 bytes; older records can end after its two
+// FormIDs at byte 8. Layout and sources: docs/formats/records.md.
 
 import Foundation
 import OpenSkyFormatsCore

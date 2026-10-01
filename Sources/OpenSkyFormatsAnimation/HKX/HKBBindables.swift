@@ -1,18 +1,7 @@
-// The `hkbBindable` leaf classes (todo 14.2): the variable binding set every
-// node may carry, and the two bone-list classes generators and modifiers point
-// at. None of them is a node — they have no name and no children — but they are
-// registered objects in the packfile, so they need decoders like any other
-// class.
-//
-// The binding set is the mechanism the whole graph is driven through: it maps a
-// member path on the owning object ("m_blendParameter") to an index into
-// `hkbBehaviorGraphData::m_variableInfos`, so writing a graph variable rewrites
-// a node field. Item 14.3 evaluates that; here it is decoded and no more.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbVariableBindingSet 0x338AD4FF, hkbBoneWeightArray
-// 0xCD902B77, hkbBoneIndexArray 0x00AA8619). Byte map and citations:
-// docs/formats/hkx-behavior-modifiers.md.
+// The `hkbBindable` leaf classes: the variable binding set, and two bone-list
+// classes. A binding maps a member path such as "m_blendParameter" to a graph
+// variable index, so writing a variable rewrites a node field.
+// Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

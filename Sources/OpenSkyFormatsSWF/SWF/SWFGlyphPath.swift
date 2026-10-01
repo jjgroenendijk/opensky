@@ -1,24 +1,13 @@
-// Converts a decoded SWF glyph (a list of absolute-twip shape segments in the
-// font's glyph-coordinate space) into a CoreGraphics CGPath ready to rasterize
-// into the UI glyph atlas. SWF glyph shapes use straight edges and quadratic
-// Bezier curves (spec chapter 6); the path fills even-odd per SWF glyph
-// semantics (spec chapter 10, "The glyph coordinate system").
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// (pp. 176-179). Documented in docs/formats/swf-text.md and docs/rendering/ui.md.
+// Converts a decoded glyph into a CGPath for the UI glyph atlas. Glyphs use
+// straight and quadratic edges and fill even-odd. Spec: SWF v19 chapters 6 and
+// 10. See docs/formats/swf-text.md and docs/rendering/ui.md.
 
 import CoreGraphics
 
 nonisolated public enum SWFGlyphPath: Sendable {
-    /// Builds a CGPath for a glyph's segments, scaled so one EM square spans
-    /// `emPixelSize` pixels, and flipped from SWF's y-down glyph space to
-    /// CoreGraphics y-up with the baseline at y = 0. Returns nil for an empty
-    /// glyph (no segments or a degenerate path), which draws no quad.
-    ///
-    /// - Parameters:
-    ///   - segments: glyph shape edges in absolute glyph-coordinate twips.
-    ///   - unitsPerEM: glyph units per EM (1024 DefineFont2, 20480 DefineFont3).
-    ///   - emPixelSize: target EM size in pixels (the text height in pixels).
+    /// A CGPath for a glyph, scaled so one EM spans `emPixelSize` pixels and
+    /// flipped to y-up with the baseline at 0. `unitsPerEM` is 1024 for
+    /// DefineFont2 and 20480 for DefineFont3. Nil for an empty glyph.
     public static func makePath(
         segments: [SWFShapeSegment],
         unitsPerEM: Int,

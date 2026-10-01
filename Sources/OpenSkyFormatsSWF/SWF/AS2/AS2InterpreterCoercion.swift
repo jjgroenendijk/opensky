@@ -1,10 +1,6 @@
-// Object-aware coercions (milestone 8.3.2). `AS2Coercion` handles primitives;
-// `ToPrimitive` has to call `valueOf` and `toString` on an object, which needs
-// an execution context, so it lives here.
-//
-// Reference: ECMA-262 3rd edition, section 9.1 "ToPrimitive" and section 8.6.2.6
-// "[[DefaultValue]] (hint)" for the valueOf-then-toString order, and section
-// 11.9.3 "The Abstract Equality Comparison Algorithm" for the object case.
+// Object-aware coercions: `ToPrimitive` calls `valueOf`, then `toString`, which
+// needs an execution context. Spec: ECMA-262 3rd ed. sections 8.6.2.6, 9.1,
+// and 11.9.3.
 
 import Foundation
 

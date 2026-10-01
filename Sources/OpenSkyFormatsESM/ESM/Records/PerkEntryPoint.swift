@@ -1,19 +1,7 @@
-// The perk entry-point identifier: the first byte of a PERK entry-point
-// effect's DATA, and the key combat and magic formulas query at runtime.
-//
-// Modelled as a raw byte with a name table rather than a 92-case enum. The id
-// is what the runtime index keys on, an id the table does not name still has
-// to survive decoding (a later game or a mod may author one), and the names
-// exist only for inspection surfaces — so the byte is the value and the name
-// is a lookup, not the other way round.
-//
-// References:
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbEntryPointsEnum` (line
-//     2426), which is the authoritative ordering used here.
-//   UESP "Skyrim Mod:Mod File Format/PERK", "Perk Effect Types", which lists
-//     the same set by hexadecimal id together with the condition-tab count
-//     each entry point expects.
-// Layout documented in docs/formats/perks.md.
+// The perk entry-point ID: the first byte of an entry-point effect's DATA.
+// A raw byte plus a name table, not an enum, because an ID the table does not
+// name must still survive decoding. Order: xEdit `wbEntryPointsEnum`.
+// Layout and sources: docs/formats/perks.md.
 
 import Foundation
 

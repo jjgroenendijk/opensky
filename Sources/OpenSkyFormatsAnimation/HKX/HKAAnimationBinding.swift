@@ -1,12 +1,6 @@
-// hkaAnimationBinding decode for bone-indexed transform samples (todo 6.3).
-// 64-bit member offsets from HKX2Library (MIT), cross-checked against
-// hkxparse (MIT), probe-verified on Skyrim SE male mt_idle.hkx. HavokLib's
-// open reader defines empty transformTrackToBoneIndices as identity mapping.
-// Full citations + byte map: docs/formats/hka-animation.md.
-//
-// Pointer, array, and string resolution goes through the shared object-graph
-// helpers (`HKXObjectGraph`, `HKXObjectCursor`, todo 14.1) rather than a
-// private fixup dictionary; `HKXPointerTarget` lives there too.
+// hkaAnimationBinding decode: bone-indexed transform samples. An empty
+// `transformTrackToBoneIndices` means the identity mapping.
+// Byte map and citations: docs/formats/hka-animation.md.
 
 import Foundation
 

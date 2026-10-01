@@ -1,17 +1,6 @@
-// Arithmetic, comparison, and bitwise opcodes (milestone 8.3.2).
-//
-// Every one of these pops its right operand first, because the compiler pushes
-// left then right. Getting that backwards is invisible for `+` on numbers and
-// wrong for everything else, so the order is spelled out at each site.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionAdd2", "ActionLess2", "ActionEquals2" (pp. 96-99),
-// "ActionSubtract", "ActionMultiply", "ActionDivide" (pp. 71-72),
-// "ActionModulo" (p. 87), the bitwise actions (pp. 100-102), and
-// "ActionIncrement"/"ActionDecrement" (p. 103). Semantics follow ECMA-262 3rd
-// edition sections 11.6 "Additive Operators", 11.7 "Bitwise Shift Operators",
-// 11.8 "Relational Operators", 11.9 "Equality Operators", and 11.10 "Binary
-// Bitwise Operators".
+// Arithmetic, comparison, and bitwise opcodes. Each pops the right operand
+// first, because the compiler pushes left then right.
+// Spec: SWF v19 chapter 5; ECMA-262 3rd ed. sections 11.6 to 11.10.
 
 import Foundation
 

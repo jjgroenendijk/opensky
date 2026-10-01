@@ -1,10 +1,6 @@
-// Skyrim SE BSDynamicTriShape: complete inherited BSTriShape payload plus
-// uint32 byte size + one Vector4 per vertex. FaceGen stores baked current
-// positions here; xyz replaces inherited positions, w stays runtime-only.
-//
-// Reference: NifTools nif.xml at 292bb94 (BSDynamicTriShape, BS stream 100).
-//   https://github.com/niftools/nifxml/blob/292bb9403cbf4052c58d66e80906b6bde1700779/nif.xml
-// Layout documented in docs/formats/nif.md.
+// BSDynamicTriShape: a full BSTriShape payload, then a uint32 byte size and
+// one Vector4 per vertex. FaceGen bakes current positions there: xyz replaces
+// the inherited positions, w is runtime-only. Layout: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore

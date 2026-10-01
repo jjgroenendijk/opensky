@@ -1,10 +1,6 @@
-// Aggregate view over decoded collision models: what motion systems, layers,
-// masses, and joints the shipped data actually uses. Item 15.2 takes its
-// supported motion-system list from this, and item 15.6 its constraint list,
-// rather than from what nif.xml says is representable.
-//
-// Counts, names, and block types only. Nothing here carries geometry or any
-// other extract of the user's install (AGENTS.md Legal & IP).
+// Counts of the motion systems, layers, masses, and joints the shipped data
+// uses, so physics supports what the data needs. Counts, names, and block
+// types only: nothing here extracts the user's install.
 
 import Foundation
 
@@ -44,7 +40,7 @@ nonisolated public struct NIFDynamicsCensus: Sendable {
     public private(set) var modelCount = 0
     public private(set) var collisionBearingModelCount = 0
     public private(set) var bodyCount = 0
-    /// Bodies item 15.2 would integrate: simulated motion system, positive mass.
+    /// Bodies physics would integrate: simulated motion system, positive mass.
     public private(set) var simulatedBodyCount = 0
     /// Bodies whose motion system says simulated but whose mass is zero, which
     /// is the combination a naive integrator divides by.

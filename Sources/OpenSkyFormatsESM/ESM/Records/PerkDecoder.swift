@@ -1,12 +1,6 @@
-// The PERK field-run state machine. See Perk.swift for the ordering rules and
-// the reference block, and PerkEffect.swift for the types this fills.
-//
-// `PerkContents` walks the field run once, keeping at most one open effect and,
-// inside it, one open condition tab. PRKE opens an effect, PRKF closes it, and
-// every field in between belongs to that effect. The EPFD payload is kept as
-// its raw field until the effect closes, because whether it is a float pair or
-// an actor-value pair depends on the function byte in the effect's DATA, and
-// nothing in the format guarantees DATA arrives first.
+// The PERK field-run state machine; ordering rules are in Perk.swift. PRKE
+// opens an effect and PRKF closes it. EPFD stays raw until the effect closes,
+// because its shape depends on the function byte in DATA, which may come later.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -250,14 +244,9 @@ nonisolated public struct PerkContents: Sendable {
                 return try .float(reader.readFloat32())
             case .floatPair where data.count >= 8:
                 if function?.readsActorValuePair == true {
-                    // The actor value is stored as a *float* holding the index,
-                    // not as an integer: xEdit reads the same four bytes back
-                    // through `wbEPFDActorValueToStr`, which reinterprets them
-                    // as a `Single` and rounds
-                    // (Core/wbDefinitionsTES5.pas line 889), and UESP spells the
-                    // payload "float AV, float FACTOR". Reading the raw word as
-                    // an integer produces the bit pattern instead of the index —
-                    // 0x43120000 rather than 146.
+                    // The actor value is a float that holds the index, so an
+                    // integer read gives the bit pattern (0x43120000, not 146).
+                    // Source: docs/formats/perks.md.
                     return try .actorValueMultiplier(
                         actorValue: PerkFunctionData.actorValueIndex(
                             fromFloat: reader.readFloat32()

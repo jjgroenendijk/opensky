@@ -1,33 +1,7 @@
-// CTDA condition entries, the shared "is this true right now?" test attached to
-// dozens of record types (MUST, QUST, PERK, INFO, PACK, ...). Every CTDA payload
-// is exactly 32 bytes, little-endian:
-//   0   uint8   operator (top 3 bits) + flags (low 5 bits)
-//   1   3 bytes unused — may hold nonzero garbage, never validated
-//   4   4 bytes comparison value: float32, or a GLOB FormID when flag 0x04
-//   8   uint16  function index, stored on disk already offset by -4096
-//   10  2 bytes padding — may hold nonzero garbage, never validated
-//   12  4 bytes parameter #1, typed per function (kept raw here)
-//   16  4 bytes parameter #2, typed per function (kept raw here)
-//   20  uint32  run-on type
-//   24  FormID  reference — only meaningful when run-on == 2 (Reference);
-//               xEdit marks it ignored otherwise and it MAY hold garbage
-//   28  int32   parameter #3 / run-on index, -1 when unused
-// Ambiguity policy: the function index decides how the two parameter words and
-// the comparison value should be read, and that registry is not implemented yet
-// (issue #251), so the parameters stay raw with typed accessors. Operator and
-// run-on values outside the documented sets round-trip through `unknown` rather
-// than throwing, and a CTDA payload that is not exactly 32 bytes is skipped —
-// malformed plugin data must never crash the engine (AGENTS.md mod-quirk rule).
-//
-// CITC precedes a condition run and states how many CTDA fields follow. CIS1 and
-// CIS2 are zstrings that override parameter #1 / parameter #2 of the
-// immediately preceding CTDA; when they are present the raw parameter words are
-// arbitrary.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/CTDA Field"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CTDA_Field
-//   xEdit dev Core/wbDefinitionsTES5.pas, `wbCTDA` (line 6889)
+// CTDA condition entries (32 bytes), with CITC counts and CIS1/CIS2 parameter
+// overrides. Parameters stay raw, because their meaning depends on the
+// function. Unknown enum values round-trip through `unknown`, and a CTDA of
+// the wrong size is skipped. Layout and sources: docs/formats/conditions.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -134,7 +108,7 @@ nonisolated public struct Condition: Equatable, Sendable {
     public let flags: Flags
     public let comparisonValue: ComparisonValue
     /// Raw on-disk function index. The Creation Kit numbers these 4096 higher,
-    /// so `GetWantBlocking` (CK 4096) is 0 here. Interpreting it is issue #251.
+    /// so `GetWantBlocking` (CK 4096) is 0 here.
     public let functionIndex: UInt16
     public let parameter1: Parameter
     public let parameter2: Parameter
@@ -150,13 +124,9 @@ nonisolated public struct Condition: Equatable, Sendable {
     /// CIS2 — replaces `parameter2` when the record carries one.
     public var parameter2Name: String?
 
-    /// A condition nothing authored: one function index and its parameters,
-    /// for an evaluation surface that asks a function directly rather than
-    /// reading a condition off a record (issue #474).
-    ///
-    /// The comparison is fixed at `>= 0`, which every documented return value
-    /// satisfies, because such a surface wants the function's *value* and not a
-    /// verdict about a threshold nobody chose. `ConditionProbe` is the caller.
+    /// A condition nothing authored, for callers that want a function's value
+    /// rather than a verdict. The comparison is `>= 0`, which every documented
+    /// return value meets. `ConditionProbe` is the caller.
     public init(
         probingFunction functionIndex: UInt16,
         parameter1: UInt32 = 0,

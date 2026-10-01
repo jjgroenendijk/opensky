@@ -1,10 +1,5 @@
-// Array behavior, enumeration order, and property-flag editing for
-// `AS2Object` (milestone 8.3.2). Split from `AS2Object.swift` to keep both
-// files inside the strict-lint size caps.
-//
-// Reference: ECMA-262 3rd edition, section 15.4 "Array Objects" for the
-// `length` rules (15.4.5.1 "[[Put]] (P, V)") and section 12.6.4 "The for-in
-// Statement" for the enumeration set that `ActionEnumerate2` (0x55) produces.
+// Array behavior, enumeration order, and property flags for `AS2Object`.
+// Spec: ECMA-262 3rd ed. sections 12.6.4 and 15.4.5.1.
 
 import Foundation
 

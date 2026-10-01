@@ -1,10 +1,6 @@
-// Skyrim SE plugin (.esm/.esp/.esl) record: 24-byte header + field payload.
-// Compressed records (flag 0x00040000) store uint32 decompressedSize followed
-// by a zlib stream. Payload bytes are only read when fields are requested.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
-// Layout documented in docs/formats/esm.md.
+// Plugin record: 24-byte header plus fields. A compressed record (flag
+// 0x00040000) stores a UInt32 decompressed size, then a zlib stream. Fields
+// are read on demand. Layout: docs/formats/esm.md.
 
 import Foundation
 import OpenSkyFormatsCore

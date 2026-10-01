@@ -1,10 +1,6 @@
-// Zlib (RFC 1950) stream decoder over Apple's Compression framework.
-// COMPRESSION_ZLIB decodes the raw deflate payload only, so the 2-byte zlib
-// header is validated and stripped here. The trailing adler32 is not verified
-// (deflate self-terminates); output length is validated instead.
-//
-// Used by compressed plugin records (flag 0x00040000, see docs/formats/esm.md).
-// References: RFC 1950 (zlib wrapper), RFC 1951 (deflate).
+// Zlib (RFC 1950) decoder over Apple's Compression framework, which reads raw
+// deflate only, so the 2-byte header is checked and stripped here. The adler32
+// trailer is not checked; the output length is.
 
 import Compression
 import Foundation

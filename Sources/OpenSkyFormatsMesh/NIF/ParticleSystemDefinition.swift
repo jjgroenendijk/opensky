@@ -1,13 +1,6 @@
-// Engine-facing particle-system value types: the clean, on-disk-decoupled
-// result of decoding a NiParticleSystem / BSStripParticleSystem leaf and its
-// modifier chain. Static decode only (milestone 7.3.1): capacity, emitter
-// shapes, modifier identities + a few salient params, and the resolved
-// effect-shader/alpha property blocks (milestone 7.3.2 does playback).
-//
-// Reference: NifTools nif.xml (NiParticleSystem, NiPSysData, NiPSysEmitter and
-// concrete emitter/modifier blocks).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-particles.md.
+// Engine-facing particle-system values, decoupled from disk layout: capacity,
+// emitter shapes, modifiers with key parameters, and the resolved shader and
+// alpha blocks. See docs/formats/nif-particles.md.
 
 import Foundation
 import simd
@@ -19,7 +12,7 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     /// Accumulated parent transform times the system's own local transform.
     public let worldTransform: float4x4
     /// nif.xml World Space: true = particles birth into world space, false =
-    /// object space. Governs how playback (7.3.2) treats worldTransform.
+    /// object space. Governs how playback treats worldTransform.
     public let worldSpace: Bool
     /// NiPSysData "BS Max Vertices" — max simultaneous particles (capacity).
     /// 0 when the data block ref is absent.

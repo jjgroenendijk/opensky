@@ -1,15 +1,7 @@
-// ACTIONRECORD stream framing (milestone 8.3.1). One byte of `ActionCode`; if
-// it is 0x80 or above, a UI16 `Length` and that many operand bytes follow. Code
-// 0 is the `ActionEndFlag` and ends the stream. Nothing here executes bytecode.
-//
-// Malformed bytecode never throws out of `parse(_:)`: a truncated header,
-// payload, or nested body size stops that stream and lands in
-// `SWFActionBlock.warnings`, because one bad handler must not fail a movie
-// (AGENTS.md "Reverse-engineering discipline"). A missing trailing
-// `ActionEndFlag` is not an error either — the stream simply ends with the data.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "DoAction" and "ACTIONRECORD" (p. 63), "DoInitAction" (p. 108).
+// ACTIONRECORD stream framing: a code byte, and for codes 0x80 and above a
+// UI16 length and operands. Code 0 ends the stream. Malformed data stops the
+// stream and lands in `warnings`, so one bad handler cannot fail a movie.
+// Spec: SWF v19 chapter 5. See docs/formats/swf-actions.md.
 
 import Foundation
 import OpenSkyFormatsCore

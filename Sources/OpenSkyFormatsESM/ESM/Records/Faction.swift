@@ -1,18 +1,7 @@
-// FACT factions: interfaction relations, the crime-response block a hold's
-// guards answer to, rank titles, and the vendor block a merchant's shop hangs
-// off. The engine types here are links and raw values only — resolving them
-// into hostility, crime response or trade is milestone M21's later issues.
-//
-// Every variable-size struct is decoded from the payload length rather than a
-// record version, so a plugin that writes an older or longer CRVA loses the
-// fields it does not carry instead of failing the record.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/FACT":
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/FACT
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(FACT, ...)`
-//   and Core/wbDefinitionsCommon.pas `wbFactionRelations`, `wbPLVD`.
-// Layout documented in docs/formats/factions.md.
+// FACT faction: relations, crime response, ranks, and vendor data, as links
+// and raw values. Variable-size structs decode by payload length, so an older
+// or longer struct loses fields instead of failing the record.
+// Layout and sources: docs/formats/factions.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -118,10 +107,9 @@ nonisolated public struct Faction: Equatable, Sendable {
         public let reaction: CombatReaction
     }
 
-    /// CRVA, 12, 16 or 20 bytes. The three trailing fields arrived in later
-    /// record versions, so they are optional rather than defaulted: a caller
-    /// that needs the steal multiplier has to decide what an absent one means
-    /// (issue #504), and a zero would silently answer for it.
+    /// CRVA, 12, 16 or 20 bytes. The three trailing fields came in later record
+    /// versions, so they are optional: the caller decides what an absent one
+    /// means, instead of a silent zero.
     public struct CrimeValues: Equatable, Sendable {
         public static let requiredByteCount = 12
         public static let withStealMultiplierByteCount = 16
@@ -164,9 +152,8 @@ nonisolated public struct Faction: Equatable, Sendable {
         public let notSellBuy: Bool
     }
 
-    /// PLVD, 12 bytes: where the vendor trades. The middle word's meaning is
-    /// decided by `type`, and the type registry is package-location shared
-    /// (issue #506), so the word stays raw here.
+    /// PLVD, 12 bytes: where the vendor trades. The middle word's meaning
+    /// depends on `type`, so it stays raw here.
     public struct VendorLocation: Equatable, Sendable {
         public static let byteCount = 12
 

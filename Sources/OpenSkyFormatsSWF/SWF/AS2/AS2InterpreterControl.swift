@@ -1,17 +1,6 @@
-// Branches, and the opcodes that leave through the host seam (milestone
-// 8.3.2).
-//
-// `ActionStop`, `ActionPlay`, `ActionGotoFrame`, `ActionGoToLabel`,
-// `ActionGetProperty`, `ActionSetProperty`, and `ActionTargetPath` are all
-// display-list operations. The interpreter decodes them fully and hands them to
-// `AS2Host`; the display objects that answer them arrive in a later milestone.
-// A host that declines becomes a tally entry, never an error.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionJump" (p. 84) and "ActionIf" (p. 85) for the branch offset
-// being relative to the end of the branch action, plus "ActionPlay",
-// "ActionStop", "ActionGotoFrame", "ActionGoToLabel", "ActionGetProperty",
-// "ActionSetProperty", "ActionTargetPath", and "ActionTrace".
+// Branches, and the display-list opcodes that go to `AS2Host`. A branch offset
+// is relative to the end of the branch action. A host that declines becomes a
+// tally entry, never an error. Spec: SWF v19 chapter 5.
 
 import Foundation
 

@@ -1,17 +1,6 @@
-// Bethesda's own modifier classes (todo 14.2), part one: the small ones that
-// test node activity, raise events on edges, interpolate a value, and sample
-// speed. `BSSpeedSamplerModifier` in particular is what turns the player's
-// movement input into the `Speed` variable the locomotion blenders weight
-// against, so it is load-bearing for item 14.5 despite being four floats.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (BSIsActiveModifier 0xB0FDE45A, BSEventEveryNEventsModifier
-// 0x6030970C, BSEventOnDeactivateModifier 0x1062D993,
-// BSEventOnFalseToTrueModifier 0x81D0777A, BSInterpValueModifier 0x29ADC802,
-// BSModifyOnceModifier 0x1E20A97A, BSSpeedSamplerModifier 0xD297FDA9,
-// BSRagdollContactListenerModifier 0x8003D8CE). No Havok SDK, Creation Kit, or
-// SKSE internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-modifiers.md.
+// Bethesda's small modifier classes. `BSSpeedSamplerModifier` turns movement
+// input into the `Speed` variable that the locomotion blenders weight against.
+// Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

@@ -1,14 +1,5 @@
-// AVIF perk-tree section: the repeated node group that hangs off a skill's
-// Actor Value Information record. Split out of ActorValueInformation.swift so
-// both files stay inside the strict-lint file-length cap.
-//
-// References: UESP "Skyrim Mod:Mod File Format/AVIF", "Perk Sections"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AVIF
-// Cross-checked against xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas,
-//   `wbRecord(AVIF, ...)` -> `wbRArray('Perk Tree', wbRStruct('Node', [...]))`,
-//   which orders the node as PNAM, FNAM, XNAM, YNAM, HNAM, VNAM, SNAM, then a
-//   `wbRArray('Connections', wbInteger(CNAM, 'Line to Index', itU32))` and INAM.
-// Layout and real-install evidence: docs/formats/actor-value-information.md.
+// AVIF perk-tree section: the repeated node group of a skill's AVIF record.
+// Layout and sources: docs/formats/actor-value-information.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -25,10 +16,8 @@ nonisolated public struct PerkGridPosition: Equatable, Sendable {
     public let vertical: Float
 }
 
-/// One box in a skill's perk tree.
-///
-/// The `perk` link stays a raw plugin-relative `FormID` here: resolving it to
-/// a PERK record needs a load order and a PERK decoder, which is issue 20.2.
+/// One box in a skill's perk tree. `perk` stays a raw plugin-relative `FormID`,
+/// because resolving it needs a load order.
 nonisolated public struct PerkTreeNode: Equatable, Sendable {
     /// PNAM, the PERK this box grants, or nil for the NULL link the first node
     /// of a tree carries.

@@ -1,6 +1,6 @@
 // Engine-side geometry types, decoupled from any on-disk layout (AGENTS.md
 // reverse-engineering discipline). Producer: NIF scene flatten
-// (NIFFile.model()); consumer: the static-mesh render path (todo 2.6).
+// (NIFFile.model()); consumer: the static-mesh render path.
 
 import Foundation
 import simd
@@ -85,12 +85,12 @@ nonisolated public struct MeshSkinning: Sendable {
 
 /// One loaded asset: every drawable mesh plus the materials they index.
 /// Shapes referencing the same shader/alpha property blocks share one
-/// material slot (instancing-ready, todo 2.7).
+/// material slot, ready for instancing.
 nonisolated public struct Model: Sendable {
     public let meshes: [Mesh]
     public let materials: [Material]
     /// Shapes dropped during flatten (unsupported or empty) — surfaced so scene
-    /// build (todo 2.7) can report skips instead of silently thinning
+    /// build can report skips instead of silently thinning
     /// geometry.
     public let skippedShapeCount: Int
 

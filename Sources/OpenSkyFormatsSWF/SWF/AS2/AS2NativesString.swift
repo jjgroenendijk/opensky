@@ -1,12 +1,6 @@
-// The `String` built-in (milestone 8.3.2). ActionScript strings index by UTF-16
-// code unit, so every offset here is a `String.UTF16View` offset rather than a
-// Swift `Character` offset — a menu string with an accented glyph would
-// otherwise report a different `length` than Flash does.
-//
-// Reference: ECMA-262 3rd edition, section 15.5 "String Objects" — 15.5.4.4
-// `charAt`, 15.5.4.5 `charCodeAt`, 15.5.4.7 `indexOf`, 15.5.4.8 `lastIndexOf`,
-// 15.5.4.13 `slice`, 15.5.4.14 `split`, 15.5.4.15 `substring`, and the
-// ActionScript-only `substr`.
+// The `String` built-in. ActionScript indexes strings by UTF-16 code unit, so
+// offsets use `String.UTF16View`; otherwise an accented string would report a
+// different `length`. Spec: ECMA-262 3rd ed. section 15.5.
 
 import Foundation
 

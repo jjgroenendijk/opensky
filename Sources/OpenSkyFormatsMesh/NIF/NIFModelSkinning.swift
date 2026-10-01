@@ -1,14 +1,6 @@
-// Bind-pose skin decode for the NIF flattener: resolve NiSkinInstance +
-// NiSkinData + NiSkinPartition into engine MeshSkinning. Two influence-index
-// spaces coexist in SSE (probed on SabreCat.nif): the top-level
-// BSVertexDataSSE stream stores skin-instance-global bone indices, while the
-// per-partition Bone Indices array stores palette-local indices remapped
-// through the partition bone palette.
-//
-// Reference: NifTools nif.xml (NiSkinInstance, NiSkinData, NiSkinPartition,
-// SkinPartition, BSVertexDataSSE) + public Gamebryo NiSkinInstance help.
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout + observed values in docs/formats/nif-skinning.md.
+// Bind-pose skin decode into `MeshSkinning`. SSE has two bone-index spaces: the
+// top-level vertex stream uses skin-instance indices, and each partition uses
+// indices into its own bone palette. Details: docs/formats/nif-skinning.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -135,15 +127,9 @@ nonisolated extension NIFFile.Flattener {
         }
     }
 
-    /// Normalizes one vertex's four influences.
-    ///
-    /// A vertex whose influences still sum to zero after both index spaces
-    /// have been consulted keeps its zero weights instead of failing the file.
-    /// That is what the hardware does with such a vertex — every influence
-    /// contributes nothing, so the skinned position collapses onto the
-    /// skeleton root and the triangles using it degenerate to a point — and it
-    /// is a far better answer than dropping a mesh that otherwise renders. A
-    /// non-finite sum is a different thing, a corrupt file, and still refuses.
+    /// Normalizes one vertex's four influences. A zero sum keeps zero weights
+    /// (the vertex collapses, as on hardware) instead of failing the mesh; a
+    /// non-finite sum is corrupt and throws.
     private static func normalizedWeights(_ value: SIMD4<Float>) throws -> SIMD4<Float> {
         let sum = value.x + value.y + value.z + value.w
         guard sum.isFinite else {
@@ -252,15 +238,9 @@ nonisolated private struct InfluenceAccumulator {
             let global = Int(globalIndex)
             let mapped: SIMD4<UInt16>
             let vertexWeights: SIMD4<Float>
-            // The two index spaces do not always agree, and where they
-            // disagree the one carrying weight is the one to believe. Six of
-            // the 468 vertices of the vanilla first-person iron cuirass
-            // (`Armor\Iron\Male\1stPersonCuirassLight_1.nif`, block 26) sum
-            // to zero weight in the top-level SSE stream while their partition
-            // entries carry real influences; reading only the global stream
-            // there loses the whole mesh (issue #190). The third-person
-            // `CuirassLight_1.nif` beside it has none, so this is a property of
-            // the individual file rather than of first-person meshes.
+            // The two index spaces can disagree; trust the one that carries
+            // weight. Some vanilla vertices have zero weight in the global
+            // stream only (docs/formats/nif-skinning.md).
             let globalIsEmpty = hasGlobalInfluences
                 && Self.isEmpty(arrays.boneWeights[global])
             if hasGlobalInfluences, !(globalIsEmpty && hasLocalInfluences) {

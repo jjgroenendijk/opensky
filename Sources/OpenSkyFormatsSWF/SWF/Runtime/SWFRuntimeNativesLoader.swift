@@ -1,19 +1,6 @@
-// The remaining `MovieClip` geometry methods and `MovieClipLoader` (milestone
-// 8.3.2 phase 3).
-//
-// `getBounds`, `localToGlobal`, and `globalToLocal` are what a CLIK component
-// uses to place a focus indicator or a tooltip relative to itself, and they are
-// exactly the machinery the phase-3 hit test already needs — a node's
-// accumulated transform and its bounds box — so they cost almost nothing here.
-//
-// `MovieClipLoader` loads an external `.swf` or image into a clip. OpenSky
-// implements the object and the listener protocol but never loads anything:
-// there is no second movie to load, and reaching outside the movie is
-// explicitly out of scope (`ActionGetURL` never appears in vanilla either). A
-// load reports failure through `onLoadError` on the next tick, which is what
-// lets CLIK's icon loader give up cleanly instead of waiting forever. The
-// deferral is a logged no-op plus a tally entry, per the binding rule in the
-// AS2 scope decision.
+// The `MovieClip` geometry methods and `MovieClipLoader`. The loader never
+// loads anything: it reports `onLoadError` on the next tick, so CLIK's icon
+// loader gives up cleanly. Each load is logged and tallied.
 
 import Foundation
 import simd

@@ -1,11 +1,6 @@
-// Havok packfile container (todo 6.1): header + section table + class-name
-// table + fixup-derived object inventory. No public Havok spec; layout from
-// independent open parsers — exyorha/hkxparse (MIT) and ret2end/HKX2Library
-// (MIT, SSE-specific) — plus ZeldaMods wiki "Havok"; every field verified by
-// probe against SSE skeleton.hkx + idle .hkx (hk_2010.2.0-r1, 64-bit).
-// Byte map + citations: docs/formats/hkx-container.md. Object internals
-// (hkaSkeleton members etc.) are later milestone items; the container only
-// locates objects, it cannot size them (needs class reflection).
+// Havok packfile container: header, section table, class-name table, and the
+// object inventory from the fixups. It locates objects but cannot size them;
+// that needs each class's layout. Byte map: docs/formats/hkx-container.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,17 +1,6 @@
-// Collect particle systems from a parsed NIF. Walks the scene graph from the
-// footer roots exactly like NIFModel: accumulate NiNode local transforms down
-// the parent chain, cap depth, detect ref cycles with a path stack, range-check
-// every block ref. NiParticleSystem / BSStripParticleSystem leaves are decoded
-// into ParticleSystemDefinition with the accumulated world transform; their
-// NiPSysData ref supplies capacity + atlas offsets, and each modifier ref is
-// resolved to an emitter or modifier engine value. Unknown modifier types are
-// noted as `.unsupported`; malformed bytes throw NIFError so the caller can
-// skip the asset while the engine keeps running.
-//
-// Reference: NifTools nif.xml scene-graph semantics (NiNode children own the
-// subtree; NiParticleSystem.Modifiers references the modifier chain).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// docs/formats/nif-particles.md "Scene graph -> particle system".
+// Collects particle systems from a parsed NIF, walking the graph like
+// NIFModel. Unknown modifier types become `.unsupported`; malformed bytes
+// throw `NIFError`. See docs/formats/nif-particles.md.
 
 import Foundation
 import simd

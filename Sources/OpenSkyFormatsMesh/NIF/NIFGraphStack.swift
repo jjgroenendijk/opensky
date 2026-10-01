@@ -1,19 +1,7 @@
-// Explicit work stack shared by every NIF graph walk.
-//
-// A NIF is attacker-shaped input: a mod-supplied mesh nests its blocks as
-// deeply as the file format allows. Descending one call frame per level makes
-// the parser's real limit the thread's stack rather than the depth cap it
-// advertises, and the margin between the two is thin. One frame carries a
-// decoded node and a float4x4, the block decoder sits on top of it, and a
-// secondary thread runs on the 512 KB default rather than the main thread's
-// 8 MB — so a file the cap was supposed to reject can hit the guard page
-// first. Under Address Sanitizer, whose redzones widen every frame, it
-// reliably did (issue #388).
-//
-// Holding pending work here spends heap instead, which turns each walk's depth
-// cap back into a plausibility policy on scene graphs rather than a proxy for a
-// stack budget. Callers keep their own range, depth, and cycle diagnostics;
-// this type only owns the traversal order and the root-to-node path.
+// Explicit work stack for every NIF graph walk. A mod mesh can nest deeply,
+// and one call frame per level could overflow a 512 KB secondary-thread stack
+// before the depth cap rejects the file. A heap stack keeps the depth cap a
+// data policy. Callers keep their own range, depth, and cycle checks.
 
 import Foundation
 import simd

@@ -1,12 +1,6 @@
-// NiNode: scene-graph grouping node — child block refs under a local
-// transform. BSFadeNode and friends inherit NiNode in nif.xml and only
-// append fields, so one decoder reads the shared prefix; appended tails and
-// the effects list stay unread inside the size-sliced block payload.
-//
-// Reference: NifTools nif.xml (NiNode; BSFadeNode, BSLeafAnimNode,
-// BSTreeNode, BSOrderedNode, BSMultiBoundNode inherit it).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// NiNode: a grouping node with child refs under a local transform. Subclasses
+// such as BSFadeNode only append fields, so one decoder reads the shared
+// prefix. Layout: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore

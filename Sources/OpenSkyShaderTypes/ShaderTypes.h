@@ -101,8 +101,8 @@ typedef NS_ENUM(EnumBackingType, LightingConstant)
     LightingConstantMaxPointLights = 8,
 };
 
-/// Cascaded sun-shadow-map config (M7.1.1). CascadeCount also sizes the
-/// FrameUniforms cascade arrays; MapResolution is one shadow-array slice edge.
+/// Cascaded sun-shadow-map config. CascadeCount also sizes the FrameUniforms
+/// cascade arrays; MapResolution is one shadow-array slice edge.
 typedef NS_ENUM(EnumBackingType, ShadowConstant)
 {
     ShadowConstantCascadeCount = 3,
@@ -124,17 +124,15 @@ typedef NS_ENUM(EnumBackingType, SamplerIndex)
 typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
 {
     FunctionConstantAlphaTest = 0,
-    /// Gates the whole render-debug branch (issue #144). Left undefined by every
-    /// shipping pipeline, so their fragment functions compile bit-identically to
-    /// the pre-debug engine; the dedicated debug pipelines define it as true and
-    /// then pick a channel per frame from FrameUniforms.debugMode.
+    /// Gates the render-debug branch. Shipping pipelines define it as false, so
+    /// the branch folds away; debug pipelines define it as true and pick a
+    /// channel per frame from FrameUniforms.debugMode.
     FunctionConstantDebugView = 1,
 };
 
-/// Which channel a render-debug pipeline writes instead of the shaded surface
-/// (issue #144). Selected per frame through FrameUniforms.debugMode, so all
-/// seven modes share one pipeline per geometry path. The Swift mirror is
-/// `RenderDebugMode`, whose raw values a unit test pins to these.
+/// Which channel a render-debug pipeline writes instead of the shaded surface.
+/// Chosen per frame through FrameUniforms.debugMode, so all modes share one
+/// pipeline per geometry path. Mirrors Swift `RenderDebugMode`.
 typedef NS_ENUM(EnumBackingType, DebugViewMode)
 {
     /// Shipping shading. Never bound on a debug pipeline; present so the Swift
@@ -154,10 +152,9 @@ typedef NS_ENUM(EnumBackingType, DebugViewMode)
     DebugViewModeLayerCategory = 6,
 };
 
-/// The scene role one draw belongs to (issue #144), matching the Swift
-/// `RenderLayer` OptionSet bit for bit. Geometry paths with a fixed role
-/// (terrain, water, grass) carry it as a shader constant; the shared
-/// static/skinned path carries it per draw in DrawUniforms.layerCategory.
+/// The scene role of a draw, matching Swift `RenderLayer` bit for bit. Fixed
+/// paths (terrain, water, grass) use a shader constant; the shared
+/// static/skinned path uses DrawUniforms.layerCategory.
 typedef NS_ENUM(EnumBackingType, RenderLayerBit)
 {
     RenderLayerBitStatics = 1,
@@ -196,8 +193,8 @@ typedef struct
     float timeOfDayHours;
     /// Deterministic frame time for animated water.
     float animationTime;
-    /// World -> light-clip transform per sun-shadow cascade (M7.1.1). Valid
-    /// only when shadowsEnabled != 0.
+    /// World -> light-clip transform per sun-shadow cascade. Valid only when
+    /// shadowsEnabled != 0.
     matrix_float4x4 shadowViewProjections[ShadowConstantCascadeCount];
     /// Per-cascade far bound (view-space depth along cameraForward), padded
     /// with the last real bound. Mirrors ShadowCascadeMath.cascadeIndex.
@@ -209,12 +206,11 @@ typedef struct
     unsigned int shadowsEnabled;
     /// 1.0 / ShadowConstantMapResolution — PCF tap offset in UV space.
     float shadowInverseResolution;
-    /// PCF kernel radius (M7.1.2 quality): 0 -> one hardware depth-compare tap
-    /// (low quality, cheapest); r>0 -> a (2r+1)^2 tap box (high quality uses 1
-    /// -> the 3x3 kernel from 7.1.1). Read only when shadowsEnabled != 0.
+    /// PCF kernel radius: 0 -> one hardware depth-compare tap; r > 0 -> a
+    /// (2r+1)^2 tap box (1 gives 3x3). Read only when shadowsEnabled != 0.
     unsigned int shadowSampleRadius;
-    /// 0 -> skyFragment uses its procedural time-of-day palette (unchanged);
-    /// 1 -> it uses the blended weather sky palette below (M7.2.2).
+    /// 0 -> skyFragment uses its procedural time-of-day palette;
+    /// 1 -> it uses the blended weather sky palette below.
     unsigned int weatherSkyEnabled;
     /// Weather sky palette, already time-of-day + transition blended on the
     /// CPU (WTHR NAM0 sky-upper/lower/horizon and sun/sun-glare tints).
@@ -230,9 +226,9 @@ typedef struct
     vector_float2 grassWind;
     /// x=fade start, y=hard draw distance in world units.
     vector_float2 grassFadeDistances;
-    /// DebugViewMode for this frame (issue #144). Read only by the pipelines
-    /// that define FunctionConstantDebugView, so a shipping frame never loads
-    /// it; always DebugViewModeOff outside the dev shell's Render Debug section.
+    /// DebugViewMode for this frame. Read only by pipelines that define
+    /// FunctionConstantDebugView; DebugViewModeOff outside the Render Debug
+    /// section.
     unsigned int debugMode;
 } FrameUniforms;
 
@@ -247,9 +243,8 @@ typedef struct
     vector_float4 uvRect;
 } ParticleInstance;
 
-/// Per-GROUP material scalars for one instanced static-mesh draw (todo 3.2
-/// instancing): every instance of the group shares them. Matrices moved to
-/// InstanceTransform. Lives in the 256-byte-aligned per-draw uniform ring.
+/// Per-group material scalars for one instanced static-mesh draw: every
+/// instance of the group shares them. Matrices live in InstanceTransform. Lives in the 256-byte-aligned per-draw uniform ring.
 typedef struct
 {
     vector_float2 uvOffset;
@@ -260,9 +255,8 @@ typedef struct
     float alphaThreshold;
     unsigned int pointLightCount;
     unsigned int receivesShadows;
-    /// RenderLayerBit of the group this draw belongs to (issue #144). The
-    /// static/skinned path draws statics, actors and distant LOD through one
-    /// pair of pipelines, so the role cannot be a shader constant there.
+    /// RenderLayerBit of this draw's group. Statics, actors, and distant LOD
+    /// share one pipeline pair, so the role cannot be a shader constant there.
     unsigned int layerCategory;
 } DrawUniforms;
 
@@ -325,11 +319,10 @@ typedef struct
     vector_float3 reflectionColor;
 } WaterDrawUniforms;
 
-/// Per-draw slot for the sun-shadow depth pre-pass (M7.1.1). Shares the
-/// per-draw uniform ring layout (fits one 256-byte slot). lightViewProjection
-/// is the cascade's world -> light-clip transform; modelMatrix is used by the
-/// terrain caster (static/skinned casters read the instance/bone path). uv +
-/// alphaThreshold drive the alpha-test caster's discard.
+/// Per-draw slot for the sun-shadow depth pre-pass; fits one 256-byte uniform
+/// ring slot. modelMatrix is for the terrain caster; static and skinned
+/// casters use the instance/bone path. uv and alphaThreshold drive the
+/// alpha-test discard.
 typedef struct
 {
     matrix_float4x4 lightViewProjection;
@@ -366,7 +359,7 @@ typedef struct
     vector_float4 color;
 } OverlayVertex;
 
-/// How the SWF fragment shader resolves a draw's color (M8.2.4).
+/// How the SWF fragment shader resolves a draw's color.
 typedef NS_ENUM(EnumBackingType, SWFFillMode)
 {
     /// baseColor as-is (solid fill).

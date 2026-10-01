@@ -1,20 +1,6 @@
-// SPEL record: the container the caster runtime consumes. A spell is the
-// shared magic-item header, the 36-byte SPIT casting struct, and the same
-// EFID/EFIT/CTDA effect run ALCH and INGR already decode.
-//
-// Decode policy follows MGEF: a wrong record type throws, an individual
-// malformed field is tallied and the rest of the record still decodes, and a
-// truncated SPIT leaves `data == nil` rather than losing the effect list — the
-// effects are what a caster needs even when the header is unreadable.
-//
-// Skipped for now: VMAD script attachments, which no spell consumer reads yet.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SPEL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SPEL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(SPEL, 'Spell', ...)`
-//     line 9980.
-// Layout documented in docs/formats/magic-records.md.
+// SPEL spell: the magic-item header, the 36-byte SPIT, and the effect run.
+// A truncated SPIT leaves `data == nil` but keeps the effects, which are what
+// a caster needs. Layout and sources: docs/formats/magic-records.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -126,9 +112,8 @@ nonisolated public enum MagicCastingRecord: Sendable {
         }
     }
 
-    /// ETYP — the EQUP slot the record links to, still raw and still relative to
-    /// the plugin that authored the record. What answers which hands a readied
-    /// spell takes (issue #470).
+    /// ETYP: the EQUP slot the record links to, raw and relative to the
+    /// authoring plugin. It says which hands a readied spell takes.
     public var equipType: FormID? {
         switch self {
         case let .spell(spell): spell.header.equipType

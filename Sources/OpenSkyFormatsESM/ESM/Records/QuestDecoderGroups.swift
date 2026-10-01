@@ -1,10 +1,6 @@
-// The three grouped runs of a QUST record — stages with their log entries,
-// objectives with their targets, and the alias run — split out of
-// QuestDecoder.swift so each type body stays inside the strict-lint cap.
-//
-// Every method here follows the same shape: a marker field flushes the group
-// it supersedes, validates its own payload size, and either opens the next
-// group or records one tally entry. Nothing throws on content.
+// The grouped runs of a QUST record: stages with log entries, objectives with
+// targets, and aliases. A marker field closes the group it replaces, checks its
+// own size, then opens the next group or records a tally entry. Never throws.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,18 +1,6 @@
-// ASTP association types: the vocabulary a RELA record names its pair with.
-// Four titles — what each side is called, by gender — and one flag saying
-// whether the association counts as family. Dialogue conditions reach them
-// through `HasAssociationType` (issue #508); nothing here evaluates one.
-//
-// The four titles are plain zstrings rather than lstrings: xEdit spells them
-// `wbString`, not `wbLString`, so they are editor vocabulary and never go
-// through the localized string tables.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ASTP":
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ASTP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//   `wbRecord(ASTP, 'Association Type', ...)`.
-// Layout documented in docs/formats/relationships.md.
+// ASTP association types: the gendered titles of a RELA pair and a family
+// flag. The titles are plain zstrings, not lstrings.
+// Layout and sources: docs/formats/relationships.md.
 
 import Foundation
 import OpenSkyFormatsCore

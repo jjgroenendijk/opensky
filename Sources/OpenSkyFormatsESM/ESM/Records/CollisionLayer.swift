@@ -1,11 +1,4 @@
-// COLL collision-layer metadata and links.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/COLL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/COLL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(COLL, ...)`
-//     lines 7614-7637.
-// Layout documented in docs/formats/records.md.
+// COLL collision layer. Layout and sources: docs/formats/records.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,17 +1,6 @@
-// `TextField`, `Stage`, and `Selection` (milestone 8.3.2 phase 2). Split from
-// `SWFRuntimeNatives.swift` to stay inside the file-size limit.
-//
-// `SetText` and `SetTextHTML` are Scaleform GFx extensions to `TextField`, not
-// Flash methods — the vanilla install calls `SetText` 595 times across 31
-// movies, which is why they are here rather than deferred. There is no public
-// specification for the GFx object model, so they are reimplemented from
-// observed usage.
-//
-// `Selection` records focus but does not implement focus *behavior*: nothing
-// routes keyboard input to the focused object, nothing draws a focus
-// indicator, and no `onSetFocus` event is dispatched. That is phase 3. Focus is
-// recorded here so `setFocus`/`getFocus` round-trip and stay off the
-// missing-API tally, and so the phase-3 focus manager has state to adopt.
+// `TextField`, `Stage`, and `Selection`. `SetText` and `SetTextHTML` are GFx
+// extensions, built from observed use. `Selection` only records focus, so
+// `setFocus` and `getFocus` round-trip. See docs/engine/as2-display-runtime.md.
 
 import Foundation
 

@@ -1,12 +1,6 @@
-// NIF (NetImmerse/Gamebryo) file header for Skyrim SE meshes: version line,
-// binary version, endianness, Bethesda stream header, block type table,
-// per-block type indices + sizes, string table, groups. The size array (since
-// 20.2.0.5) is what lets the container layer walk blocks it cannot decode.
-//
-// Reference: NifTools nif.xml (structs Header, BSStreamHeader, ExportString,
-// SizedString; condexpr token BSSTREAMHEADER).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif.md.
+// NIF header: version, Bethesda stream header, block type table, per-block
+// types and sizes, strings, and groups. The size array lets the container
+// walk blocks it cannot decode. Layout: docs/formats/nif.md.
 
 import Foundation
 import OpenSkyFormatsCore

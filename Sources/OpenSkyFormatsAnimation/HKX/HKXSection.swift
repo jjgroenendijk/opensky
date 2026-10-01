@@ -1,4 +1,4 @@
-// Havok packfile section header + fixup tables (todo 6.1). Layout verified
+// Havok packfile section header + fixup tables. Layout verified
 // by probe against SSE files; see HKXHeader.swift for sources and
 // docs/formats/hkx-container.md for the byte map.
 

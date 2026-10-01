@@ -1,12 +1,5 @@
-// TXST record decoded into engine types: a texture set naming the individual
-// map files (diffuse, normal, ...) used by a material. OpenSky reads the two
-// maps terrain splatting needs today; the rest of the slots wait for the
-// material pipeline that consumes them.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/TXST"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/TXST
-// Cross-checked against xEdit dev-4.1.6 wbDefinitionsCommon.pas (wbTXST).
-// Layout documented in docs/formats/land.md.
+// TXST texture set. Only the two maps terrain splatting needs are read.
+// Layout and sources: docs/formats/land.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,18 +1,5 @@
-// DUAL record: the art a dual-cast spell swaps in. A magic effect names one
-// through its DUAL link (MGEF DATA), and the record replaces the effect's
-// projectile, explosion, shader, hit art and impact set for the dual-cast
-// variant, plus flags saying which of those inherit the caster's scale.
-//
-// The vanilla masters author two of these — `doomSerpentDualCastData` and
-// `FrostStormDualCastData` — and both were observed with a 24-byte DATA. This
-// milestone decodes the record and stops there; nothing casts yet.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/DUAL"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DUAL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//     `wbRecord(DUAL, 'Dual Cast Data', ...)` line 7543.
-// Layout documented in docs/formats/shouts-equip-slots.md.
+// DUAL record: the art a dual-cast spell uses in place of the effect's own.
+// Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,11 +1,5 @@
-// LTEX record decoded into engine types: a named landscape texture that a
-// LAND quadrant/layer references, pointing at the TXST texture set that holds
-// the actual diffuse/normal paths.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/LTEX"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LTEX
-// Cross-checked against xEdit dev-4.1.6 wbDefinitionsCommon.pas (wbLTEX).
-// Layout documented in docs/formats/land.md.
+// LTEX landscape texture: names the TXST that holds the texture paths.
+// Layout and sources: docs/formats/land.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -15,10 +9,8 @@ nonisolated public struct LandTexture: Sendable {
     public let editorID: String?
     /// TNAM — the TXST texture set this landscape texture draws from.
     public let textureSet: FormID?
-    /// MNAM — the MATT material type ground painted with this texture is made
-    /// of (issue #358). This is the terrain half of the footstep material
-    /// chain: exterior ground is LAND rather than a collision mesh, so it names
-    /// its material here instead of through a Havok material value.
+    /// MNAM: the MATT material of ground painted with this texture. Terrain is
+    /// LAND, not a collision mesh, so it names its footstep material here.
     public let materialType: FormID?
     /// Repeated GNAM fields — GRAS records eligible where this LTEX contributes.
     public let grasses: [FormID]

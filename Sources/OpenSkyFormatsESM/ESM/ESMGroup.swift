@@ -1,11 +1,6 @@
-// Plugin GRUP container: 24-byte header whose stored size INCLUDES the header
-// itself (unlike records/fields). The 4-byte label's meaning depends on the
-// group type: record type for top groups, parent FormID for children groups,
-// grid coordinates for exterior blocks, block number for interior blocks.
-// Labels are unreliable in CK-ignored groups (UESP note) — traversal never
-// depends on them, only on sizes.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format" — Groups.
+// Plugin GRUP container. Its stored size includes the 24-byte header. The
+// label's meaning depends on the group type and is unreliable in some groups,
+// so traversal uses only sizes. Layout: docs/formats/esm.md.
 
 import Foundation
 import OpenSkyFormatsCore

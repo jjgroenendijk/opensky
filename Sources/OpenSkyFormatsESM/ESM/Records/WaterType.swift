@@ -1,10 +1,5 @@
-// WATR visual colors decoded into engine values. OpenSky deliberately reads
-// only the three color fields needed by milestone 3.5; the rest of DNAM's
-// water simulation parameters remain opaque.
-//
-// Reference: xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, WATR DNAM;
-// UESP "Skyrim Mod:Mod File Format/WATR".
-// Layout documented in docs/formats/water.md.
+// WATR water: only the three color fields are read; the rest of DNAM stays
+// opaque. Layout and sources: docs/formats/water.md.
 
 import Foundation
 import OpenSkyFormatsCore

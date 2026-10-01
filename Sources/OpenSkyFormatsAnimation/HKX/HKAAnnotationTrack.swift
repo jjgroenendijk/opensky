@@ -1,24 +1,8 @@
-// `hkaAnimation::m_annotationTracks` decode (issues #385, #394).
-//
-// An annotation is how an animator marks a moment inside a clip: a time and a
-// short piece of text the runtime turns into an event. Skyrim's footstep chain
-// is built on them — `mt_walkforward.hkx` carries `FootLeft` and `FootRight`,
-// which are the tags the `FSTS` footstep sets answer to — and they live in the
-// *animation* file rather than in the behavior file that plays it. Nothing in
-// `mt_behavior.hkx` names them: its locomotion `hkbClipGenerator`s carry an
-// empty `m_triggers` array, so a runtime that reads only `hkbClipTriggerArray`
-// never fires a footstep however long it walks.
-//
-// Object layout is `hkaAnimation`'s, which
-// `HKASplineCompressedAnimation`'s byte map already covers through 0x38:
-// `m_annotationTracks` is the hkArray at 0x28. Element layouts below were
-// probe-verified against Skyrim SE's `meshes\actors\character\animations\male\
-// mt_walkforward.hkx` (hk_2010.2.0-r1, 64-bit LE) on 2026-08-07; member names
-// and order come from the same hkxparse (MIT) and HKX2Library (MIT) class
-// dumps the animation page cites. Full byte map: docs/formats/hka-animation.md.
-//
-// One track per transform track is exported, and vanilla leaves all but the
-// first empty, so a consumer wants the tracks merged rather than indexed.
+// `hkaAnimation::m_annotationTracks` decode: a time plus a text tag that the
+// runtime turns into an event. Footstep tags (`FootLeft`, `FootRight`) live
+// only here, in the animation file; the behavior graph's clip triggers are
+// empty for locomotion. Vanilla fills only the first track, so consumers merge
+// the tracks. Byte map: docs/formats/hka-animation.md.
 
 import Foundation
 
@@ -50,12 +34,8 @@ nonisolated public struct HKAAnnotationTrack: Equatable, Sendable {
     public static let tracksField = HKXField(0x28, "m_annotationTracks")
 
     /// Reads every annotation track of the `hkaAnimation` `cursor` is open on.
-    ///
-    /// Never throws and never fails the animation: an animation whose
-    /// annotations cannot be read still poses bones, and a clip with no
-    /// annotations is the ordinary case. An unreadable element is skipped and
-    /// recorded as a cursor miss, in keeping with "unknown field or variant ->
-    /// skip and note" (AGENTS.md "Code quality").
+    /// Never throws: an unreadable element is skipped and recorded as a cursor
+    /// miss, because a clip without annotations still poses bones.
     public static func tracks(cursor: inout HKXObjectCursor) -> [HKAAnnotationTrack] {
         guard let view = cursor.array(at: tracksField) else { return [] }
         var tracks: [HKAAnnotationTrack] = []

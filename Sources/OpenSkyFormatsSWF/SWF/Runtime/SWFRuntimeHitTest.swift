@@ -1,21 +1,6 @@
-// Pointer hit testing against the runtime display tree (milestone 8.3.2 phase
-// 3). Answers "which display object is under this stage point", which is what
-// rollover, rollout, press, and release routing all start from.
-//
-// The walk is the paint order reversed, because the object drawn last is the
-// object on top. It respects three things the scene generator also respects:
-// `_visible` (an invisible subtree draws nothing and therefore catches
-// nothing), the accumulated matrix chain (the point is carried down into each
-// node's local space rather than the node's box being carried up), and clip
-// layers (a node masked by a `ClipDepth` layer is only hit where the mask is).
-//
-// Resolution is bounding-box, not shape-level: a node is hit when the point
-// falls inside its character bounds. That matches `MovieClip.hitTest`, which is
-// bounding-box in Flash as well, and it matches what vanilla CLIK asks for —
-// every mouse-enabled control in the library is a rectangular button or list
-// row. A rotated or non-rectangular control therefore has a slightly generous
-// hit area. Shape-level testing would need the tessellated outline and is not
-// implemented.
+// Pointer hit testing: walks paint order in reverse, respecting `_visible`,
+// the matrix chain, and clip layers. Hits use bounding boxes, as Flash
+// `hitTest` does; vanilla CLIK controls are rectangles, so this is enough.
 
 import Foundation
 import simd

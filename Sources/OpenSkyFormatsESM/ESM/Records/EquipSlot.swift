@@ -1,33 +1,7 @@
-// EQUP record: one equip slot, the record every ETYP link on a weapon, spell,
-// scroll, potion or piece of armour points at. Skyrim.esm authors seven —
-// RightHand, LeftHand, EitherHand, BothHands, Shield, Voice and Potion — and
-// the whole vocabulary is expressed by two things: which other slots a slot
-// names as parents, and whether it takes all of them or one of them.
-//
-// Observed in the vanilla master (probe against the read-only install):
-//
-//   RightHand   parents []                        use all parents 0
-//   LeftHand    parents []                        use all parents 0
-//   EitherHand  parents [LeftHand, RightHand]     use all parents 0
-//   BothHands   parents [LeftHand, RightHand]     use all parents 1
-//   Shield      parents [LeftHand]                use all parents 1
-//   Voice       parents []                        use all parents 0
-//   Potion      parents []                        use all parents 0
-//
-// So "use all parents" is what separates a two-handed weapon from a
-// hand-of-your-choice weapon, and a parentless slot is a leaf the engine
-// itself names. `EquipSlotHands` turns that graph into `HandSlots`.
-//
-// PNAM is a single subrecord holding a packed FormID array (xEdit
-// `wbArray(PNAM, 'Slot Parents', wbFormID(...))`). A record that spreads its
-// parents over several PNAM fields still decodes, because every PNAM appends.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/EQUP"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/EQUP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//     `wbRecord(EQUP, 'Equip Type', ...)` line 7192.
-// Layout documented in docs/formats/shouts-equip-slots.md.
+// EQUP equip slot, the target of every ETYP link. A slot names parent slots
+// and says whether it takes all of them (BothHands) or one (EitherHand).
+// `EquipSlotHands` turns that graph into `HandSlots`. Every PNAM appends.
+// Layout and vanilla slots: docs/formats/shouts-equip-slots.md.
 
 import Foundation
 import OpenSkyFormatsCore

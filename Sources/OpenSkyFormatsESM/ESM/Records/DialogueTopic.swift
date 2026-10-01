@@ -1,11 +1,6 @@
-// DIAL, a dialogue topic followed by a type-7 child group of INFO records.
-// DATA's legacy numeric subtype is retained, but SNAM is authoritative: the
-// shipped tools write SNAM after DATA because numeric subtype positions moved
-// between game versions.
-//
-// References:
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/DIAL
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(DIAL, ...)`.
+// DIAL dialogue topic, followed by a type-7 child group of INFO records. SNAM
+// is the subtype to trust; DATA's numeric subtype moved between game versions.
+// Layout and sources: docs/formats/dialogue.md.
 
 import Foundation
 import OpenSkyFormatsCore

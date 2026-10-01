@@ -1,17 +1,8 @@
-// The QUST grouping state machine, quest level. See Quest.swift for the
-// ordering rules and the reference block; QuestComponents.swift holds the
-// types this fills, QuestDecoderGroups.swift the stage/objective/alias runs,
-// and QuestAliasDecoder.swift the inside of one alias.
-//
-// `Contents` walks the field run once, keeping at most one open stage, log
-// entry, objective, target and alias. A marker subrecord flushes whatever it
-// supersedes and opens the next group. Everything the walk cannot place is
-// counted in `tally` rather than thrown, because a QUST that loses one alias
-// is still a usable quest while a QUST that throws is not.
-//
-// The type is split across three files to stay inside the strict-lint body
-// cap, so the open-group state and `note(_:_:)` are internal rather than
-// private: the satellite files are the only other readers.
+// The QUST grouping state machine, quest level; ordering rules are in
+// Quest.swift. A marker field closes the group it replaces and opens the next.
+// What the walk cannot place goes to `tally` instead of throwing, because a
+// quest that loses one alias is still usable. Members are internal so the
+// satellite files can read them.
 
 import Foundation
 import OpenSkyFormatsCore

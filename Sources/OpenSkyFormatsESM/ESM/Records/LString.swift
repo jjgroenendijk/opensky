@@ -1,11 +1,6 @@
-// "lstring" display text: plugins with the TES4 localized flag store a uint32
-// string ID (resolved against per-language tables, see
-// docs/formats/strings.md); non-localized plugins store an inline zstring in
-// the same field. Which one a field holds is a property of the whole plugin,
-// so decoding needs the TES4 flag passed in.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format" — Data types (lstring).
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
+// "lstring" text: a localized plugin stores a uint32 string ID, any other
+// plugin an inline zstring. The TES4 localized flag decides, so it is passed
+// in. See docs/formats/strings.md.
 
 import Foundation
 import OpenSkyFormatsCore

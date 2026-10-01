@@ -1,20 +1,6 @@
-// Particle modifier + emitter block parsers. Every NiPSysModifier subclass
-// shares a base run (Name string ref, Order, Target ptr, Active flag); every
-// NiPSysEmitter subclass adds the birth-parameter run (speed/variation,
-// declination, planar angle, initial color/radius, life span). NiPSysVolume
-// emitters (box/cylinder/sphere) then add an emitter-object ptr and their
-// shape params; the mesh emitter adds mesh refs + a velocity type. The Target
-// ptr and the volume emitter object ptr are read past but not kept — static
-// decode only needs identity + shape params. Concrete modifiers are mapped to
-// ParticleModifier.Kind; a type this decoder does not model becomes
-// `.unsupported(typeName:)` (skip + note, never throw) while malformed bytes
-// inside a known block throw NIFError.
-//
-// Reference: NifTools nif.xml (NiPSysModifier, NiPSysEmitter,
-// NiPSysVolumeEmitter and the concrete emitter/modifier blocks; ForceType,
-// VelocityType and NiPSysModifierOrder are 32-bit).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-particles.md.
+// Particle modifier and emitter blocks. A modifier type this decoder does not
+// model becomes `.unsupported(typeName:)` and does not throw; malformed bytes
+// in a known block do throw. Layout: docs/formats/nif-particles.md.
 
 import Foundation
 import OpenSkyFormatsCore

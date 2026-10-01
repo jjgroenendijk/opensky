@@ -1,19 +1,6 @@
-// WOOP record: one word of power. Three of them make a shout, and the SHOU
-// record — not this one — owns the pairing between a word and the spell it
-// casts.
-//
-// FULL is the word written in the dragon alphabet's transliteration ("B4" for
-// Bah, numbers standing in for vowel combinations in Bethesda's dragon font),
-// TNAM the same word translated into the player's language. TNAM is always
-// present in the vanilla masters but is frequently an empty string, so an
-// empty translation is normal data rather than a decode failure.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/WOOP"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/WOOP
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//     `wbRecord(WOOP, 'Word of Power', ...)` line 10639.
-// Layout documented in docs/formats/shouts-equip-slots.md.
+// WOOP word of power. FULL is the dragon-alphabet spelling ("B4"), TNAM the
+// translation. An empty TNAM is normal vanilla data.
+// Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
 import OpenSkyFormatsCore

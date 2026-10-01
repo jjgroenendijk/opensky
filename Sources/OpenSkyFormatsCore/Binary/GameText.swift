@@ -1,10 +1,6 @@
-// Engine-wide lenient text decode for game data strings. No Bethesda format
-// carries an encoding marker and the wild mixes UTF-8 with legacy codepages,
-// so: bytes that form valid UTF-8 decode as UTF-8 (accidental valid UTF-8 is
-// rare), everything else decodes as windows-1252, and the five bytes windows-1252
-// leaves undefined decode as ISO 8859-1. The result is total — a wrong-encoding
-// name yields mojibake, never a thrown error. Policy in
-// docs/decisions/string-decoding.md.
+// Lenient text decode for game strings. Valid UTF-8 decodes as UTF-8, anything
+// else as windows-1252, with its five undefined bytes as ISO 8859-1. It never
+// throws. Policy: docs/decisions/string-decoding.md.
 
 import Foundation
 

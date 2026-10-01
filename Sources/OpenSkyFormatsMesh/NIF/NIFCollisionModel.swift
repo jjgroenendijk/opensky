@@ -1,11 +1,6 @@
-// Engine-facing collision values produced from NIF bhk blocks. Disk refs,
-// padding, MOPP bytecode, and compressed chunk storage do not escape this
-// boundary; milestone 4.3 can consume shapes without knowing NIF layouts.
-//
-// Reference: NifTools nif.xml (bhkNiCollisionObject, HavokFilter,
-// bhkRigidBodyCInfo2010, bhk shape hierarchy).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-collision.md.
+// Engine-facing collision values made from NIF bhk blocks. Disk refs, MOPP
+// code, and compressed chunks stay behind this boundary.
+// Layout and sources: docs/formats/nif-collision.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -38,13 +33,8 @@ nonisolated public struct NIFCollisionFilter: Equatable, Sendable {
         flags & Self.noCollisionFlag != 0
     }
 
-    /// Which `BipedPart` of a character this body is, or nil on a layer where
-    /// those bits mean nothing.
-    ///
-    /// Nil rather than zero for the non-biped case, because zero is itself a
-    /// part — `P_OTHER`, which the vanilla humanoid puts on `NPC Neck` — so a
-    /// consumer that read the bits unconditionally could not tell a neck from a
-    /// crate. Only the layer says whether the bits are a part at all.
+    /// Which `BipedPart` this body is, or nil on a layer where the bits mean
+    /// nothing. Not zero, because zero is `P_OTHER`, the neck.
     public var bipedPart: UInt8? {
         Self.bipedLayers.contains(layer) ? flags & Self.bipedPartMask : nil
     }
@@ -114,13 +104,8 @@ nonisolated public struct NIFCollisionBody: Sendable {
         worldFilter.isTriggerVolume || rigidBodyFilter.isTriggerVolume
     }
 
-    /// Which `BipedPart` of a character this body stands for, from whichever of
-    /// the two duplicate filters names a biped layer, and nil on a body that is
-    /// not part of a character at all.
-    ///
-    /// Either filter for the reason `isTriggerVolume` takes either: the two
-    /// copies are not guaranteed to agree. On the vanilla humanoid skeleton
-    /// they do, on all eighteen bodies, and both name `SKYL_BIPED`.
+    /// Which `BipedPart` this body is, from whichever of the two filters names a
+    /// biped layer; nil outside a character. The two copies may disagree.
     public var bipedPart: UInt8? {
         worldFilter.bipedPart ?? rigidBodyFilter.bipedPart
     }
@@ -135,15 +120,9 @@ nonisolated public struct NIFCollisionShape: Sendable {
     /// Body-local wrapper/chunk transform. Translation is in engine units.
     public let transform: float4x4
     public let geometry: NIFCollisionGeometry
-    /// NifTools `SkyrimHavokMaterial`: the hash of the surface's Creation Kit
-    /// material name (issue #358). Nil where the block carries no material, and
-    /// left raw here because a NIF has no way to resolve it — turning it into a
-    /// MATT record needs the plugin, which is `MaterialTypeIndex`'s job.
-    ///
-    /// One shape carries one material. Where a block stores several — a
-    /// compressed mesh's chunks, a packed strip shape's sub-shapes — the
-    /// decoder emits one shape per material rather than a per-triangle table,
-    /// because those blocks already partition their geometry that way.
+    /// NifTools `SkyrimHavokMaterial`: the hash of the Creation Kit material
+    /// name, left raw because only the plugin can resolve it. A block with
+    /// several materials gives one shape per material.
     public let material: UInt32?
 
     public init(
@@ -254,9 +233,8 @@ nonisolated public struct NIFCollisionModel: Sendable {
         return result
     }
 
-    /// Local-space AABB of one decoded shape. Internal because the dynamic
-    /// body world (issue #193) needs the same box for a shape it re-places
-    /// every step.
+    /// Local-space AABB of one decoded shape. Internal because the dynamic body
+    /// world needs the same box for a shape it moves every step.
     public static func bounds(of geometry: NIFCollisionGeometry) -> ModelBounds? {
         switch geometry {
         case let .triangleSoup(vertices, _), let .convexVertices(vertices, _):

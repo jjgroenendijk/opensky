@@ -1,28 +1,7 @@
-// ARMO record decoded into engine types: the appearance subset for skinning.
-// An ARMO is one equippable piece (armor, jewelry, clothing, shield); its
-// visible parts come from the armatures it references, one ARMA per MODL. The
-// item's own ground/inventory display models (MOD2/MOD4 world-model paths) are
-// skipped.
-//
-// M19.3 adds EITM, the ENCH link that makes a piece enchanted, decoded the way
-// WEAP decodes its own. There is no armor-side charge field to go with it:
-// xEdit builds both records' link from `wbEnchantment`, and only WEAP asks for
-// the capacity variant that adds EAMT (`wbEnchantment(True)`), so an enchanted
-// piece of armor has an effect and no charge.
-//
-// M12.1.1 adds the inventory-facing half so ARMO can join the item definition
-// index alongside the six carryable families: DATA (the shared 8-byte gold
-// value + weight struct, `ItemValue`), the KSIZ/KWDA keyword array, and DNAM,
-// the base armor rating stored as rating * 100.
-//
-// MODL in ARMO is a 4-byte FormID pointing at an ARMA record (NOT a model
-// path — unlike STAT/MODL), repeated once per armature. Size-guard on 4 bytes
-// so any non-armature MODL variant is skipped rather than misread.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/ARMO"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ARMO
-// DATA/DNAM cross-check: xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas
-//   `wbRecord(ARMO, ...)` line 4136.
+// ARMO record: one equippable piece. Its visible parts come from the ARMA
+// records it lists; here MODL is a 4-byte ARMA FormID, not a model path.
+// Armor has an EITM enchantment but no charge field, unlike WEAP.
+// Layout and sources: docs/formats/armor.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,29 +1,12 @@
-// Persistent runtime identity for object references. A `FormID` is
-// file-relative and a `ResolvedFormID` still carries whatever spelling the
-// TES4 MAST field used, so neither is a safe dictionary key across a session.
-// `ReferenceKey` normalizes plugin-defined identity and adds a second case for
-// objects that no plugin defines, such as dropped items and summons.
-//
-// Identity rules follow docs/formats/formid.md; nothing here parses input.
+// Session-stable identity for object references. `FormID` is file-relative and
+// `ResolvedFormID` keeps the MAST spelling, so neither is a safe key. Rules:
+// docs/formats/formid.md and docs/engine/reference-identity.md.
 
 import Foundation
 
-/// Session-stable identity of an object reference.
-///
-/// Two kinds of object exist at runtime. Plugin-defined references come from a
-/// loaded plugin and are identified by defining plugin plus 24-bit object ID,
-/// matching `ResolvedFormID`. Generated references are created while the game
-/// runs and are identified by a sequence number from
-/// `GeneratedReferenceAllocator`. The two cases cannot collide, because they
-/// are distinct cases of the same enum.
-///
-/// Total order (`Comparable`), relied on by downstream milestones that need
-/// deterministic iteration:
-///
-/// 1. Every `plugin` key sorts before every `generated` key.
-/// 2. `plugin` keys order by plugin name first, using `String`'s `<` over the
-///    already-lowercased name, then by `objectID` ascending.
-/// 3. `generated` keys order by sequence number ascending.
+/// Session-stable identity of an object reference: a plugin reference (plugin
+/// plus 24-bit object ID) or a generated one (a sequence number). Every plugin
+/// key sorts first, by lowercased plugin name then object ID.
 nonisolated public enum ReferenceKey: Hashable, Sendable {
     /// Defining plugin plus low 24 bits of the FormID. The associated `name`
     /// is always lowercased — plugin file names are case-insensitive on the
@@ -36,23 +19,9 @@ nonisolated public enum ReferenceKey: Hashable, Sendable {
     /// `GeneratedReferenceAllocator`.
     case generated(UInt64)
 
-    /// The player, which no plugin reference in this engine stands for.
-    ///
-    /// Decided in issue #172, because Papyrus needs a stable activator
-    /// identity long before an actor record backs the player.
-    /// `GeneratedReferenceAllocator` starts at 1 and documents 0 as reserved,
-    /// so `.generated(0)` can never collide with an allocated key, sorts after
-    /// every plugin key, round-trips through the save file's generated-key tag
-    /// unchanged, and needs no plugin to be loaded. The alternative — the
-    /// vanilla `Skyrim.esm:000014` player reference — was rejected because it
-    /// names a record OpenSky does not decode, would be wrong for any session
-    /// whose load order lacks that plugin, and would make the player look like
-    /// an ordinary streamed reference the cell builder could try to draw.
-    ///
-    /// Never write world-state components under this key expecting them to be
-    /// drawn: no `RuntimeReferenceEntry` resolves it, so it is an activator
-    /// identity and an object-handle identity, nothing more.
-    /// Documented in docs/engine/papyrus-activation.md and docs/engine/reference-identity.md.
+    /// The player. `.generated(0)` is reserved by the allocator, so it never
+    /// collides and needs no plugin. It is an identity only: nothing draws it.
+    /// See docs/engine/reference-identity.md.
     public static let player = ReferenceKey.generated(0)
 
     /// Normalizes the resolved plugin name to lowercase.
@@ -94,13 +63,9 @@ nonisolated extension ReferenceKey: CustomStringConvertible {
     }
 }
 
-/// Hands out `ReferenceKey.generated` values in order.
-///
-/// The allocator is deliberately dumb: no timestamps, no randomness, no global
-/// state. Given the same sequence of allocation events it produces the same
-/// keys, which is what makes a saved game reproducible. Its entire state is
-/// `nextSequence`, so saving identity means saving that one number and
-/// restoring means passing it back to `init(nextSequence:)`.
+/// Hands out `ReferenceKey.generated` values in order. No clock and no
+/// randomness, so the same events give the same keys; saving identity means
+/// saving `nextSequence`.
 nonisolated public struct GeneratedReferenceAllocator: Hashable, Sendable {
     /// Sequence number the next `allocate()` will hand out. Starts at 1; 0 is
     /// reserved and never allocated, so it stays usable as a sentinel.

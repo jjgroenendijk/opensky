@@ -1,22 +1,6 @@
-// MATT material-type record (issue #358): the surface vocabulary the rest of
-// the game is keyed by. A collision mesh names a material by hashing this
-// record's name (`HavokMaterialHash`), a landscape texture names one through
-// LTEX.MNAM, and an IPDS impact table pairs each of them with the impact to
-// play there.
-//
-// References: UESP "Skyrim Mod:Mod File Format/MATT"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MATT
-// Cross-checked against xEdit dev-4.1.6 wbDefinitionsTES5.pas:
-//   wbRecord(MATT, 'Material Type', [
-//     wbEDID,
-//     wbFormIDCk(PNAM, 'Material Parent', [MATT, NULL]),
-//     wbString(MNAM, 'Material Name'),
-//     wbFloatColors(CNAM, 'Havok Display Color'),
-//     wbFloat(BNAM, 'Buoyancy'),
-//     wbInteger(FNAM, 'Flags', itU32, ...),
-//     wbFormIDCk(HNAM, 'Havok Impact Data Set', [IPDS, NULL])
-//   ]);
-// Layout documented in docs/formats/material-type.md.
+// MATT material type: the surface names that collision meshes (by name hash),
+// LTEX.MNAM, and IPDS impact tables all key on.
+// Layout and sources: docs/formats/material-type.md.
 
 import Foundation
 import OpenSkyFormatsCore

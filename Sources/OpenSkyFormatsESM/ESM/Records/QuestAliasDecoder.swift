@@ -1,11 +1,6 @@
-// Field decode inside one ALST/ALLS alias group. See Quest.swift for the
-// record's ordering rules and its reference block.
-//
-// An alias carries roughly thirty distinct subrecords, most of which are a
-// single 4-byte word written into one slot. Those go through the four tables
-// below rather than thirty switch cases, which keeps the decode inside the
-// strict-lint complexity cap and makes the layout readable as a table — the
-// same shape the UESP QUST page presents them in.
+// Field decode inside one ALST/ALLS alias group; ordering rules are in
+// Quest.swift. Most alias fields are one 4-byte word in one slot, so they go
+// through the tables below instead of thirty switch cases.
 
 import Foundation
 import OpenSkyFormatsCore

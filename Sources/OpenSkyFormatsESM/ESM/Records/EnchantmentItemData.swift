@@ -1,35 +1,7 @@
-// ENIT, the enchantment header ENCH carries, plus its flag and
-// enchantment-type vocabulary.
-//
-//   0x00 int32   enchantment cost — the magicka the enchantment charges per
-//                use. Authoritative only when the manual-cost flag is set;
-//                otherwise the game derives it from the effects, the same way
-//                a spell derives its cost (see SpellCost.swift).
-//   0x04 uint32  flags
-//   0x08 uint32  cast type
-//   0x0C int32   enchantment amount — the fully charged value of an item
-//                carrying this enchantment
-//   0x10 uint32  delivery
-//   0x14 uint32  enchantment type: 0x06 enchantment, 0x0C staff enchantment
-//   0x18 float32 charge time
-//   0x1C FormID  base enchantment — the ENCH this one derives from
-//   0x20 FormID  worn restrictions — an FLST of enchantable slots, written
-//                only on a base enchantment
-//
-// The last FormID is optional: UESP records a 32-byte form-version-37 variant
-// that omits it, and xEdit marks the same member `SetOptionalFrom(8)`. So the
-// decoder requires 32 bytes and reads the worn-restrictions link only when the
-// payload is long enough to hold it.
-//
-// Cast type and delivery reuse the MGEF vocabulary, because xEdit types both
-// with the same `wbCastEnum` and `wbDeliveryEnum` it uses for MGEF and SPEL.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/ENCH"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/ENCH
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(ENCH, 'Enchantment',
-//     ...)` line 5011 — the ordered ENIT struct and its two enums.
-// Layout documented in docs/formats/enchantments.md.
+// ENIT, the enchantment header, with its flag and type vocabulary. The last
+// FormID (worn restrictions) is optional, so 32 bytes are required and the
+// link is read only when present. Cast type and delivery reuse the MGEF enums.
+// Layout and sources: docs/formats/enchantments.md.
 
 import Foundation
 import OpenSkyFormatsCore

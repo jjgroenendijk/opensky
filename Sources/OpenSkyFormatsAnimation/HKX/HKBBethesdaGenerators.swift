@@ -1,18 +1,6 @@
-// Bethesda's own generator classes (todo 14.2). The census counts twelve `BS*`
-// classes across the vanilla player behavior files, so a decoder set covering
-// only stock Havok classes would miss part of the graph outright — 435
-// `BSSynchronizedClipGenerator` objects alone. They register in the packfile
-// exactly like stock classes and derive from the stock bases, so they decode
-// through the same helpers.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT), which carries the
-// Bethesda extensions alongside the stock classes; signatures match the local
-// SSE files (BSSynchronizedClipGenerator 0xD83BEA64, BSiStateTaggingGenerator
-// 0xF0826FC1, BSBoneSwitchGenerator 0xF33D3EEA, BSBoneSwitchGeneratorBoneData
-// 0xC1215BE6, BSCyclicBlendTransitionGenerator 0x5119EB06,
-// BSOffsetAnimationGenerator 0xB8571122). No Havok SDK, Creation Kit, or SKSE
-// internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-modifiers.md.
+// Bethesda's own generator classes. They register like stock classes and
+// derive from the stock bases, so they decode through the same helpers.
+// Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

@@ -1,13 +1,7 @@
-// Member reads and writes (milestone 8.3.2): the prototype-chain walk, the
-// getter/setter invocation `Object.prototype.addProperty` installs, the
-// `__get__name`/`__set__name` convention the ActionScript 2 compiler emits for
-// class properties, and the fall-through to `AS2Host` for objects the engine
-// owns.
-//
-// Reference: ECMA-262 3rd edition, sections 8.6.2.1 "[[Get]] (P)", 8.6.2.2
-// "[[Put]] (P, V)", and 8.6.2.3 "[[CanPut]] (P)". The `addProperty` built-in
-// and the `__get__`/`__set__` naming are Flash extensions with no
-// specification; both are recorded here as observed.
+// Member reads and writes: the prototype-chain walk, `addProperty` accessors,
+// the compiler's `__get__name`/`__set__name` convention, and the fall-through
+// to `AS2Host`. The Flash extensions are observed, not specified.
+// Spec: ECMA-262 3rd ed. section 8.6.2. See docs/engine/as2-runtime.md.
 
 import Foundation
 
@@ -44,10 +38,9 @@ nonisolated extension AS2Interpreter {
         return .undefined
     }
 
-    /// The prototype a method resolved on, which is the class a `super` inside
-    /// that method walks up from (issue #136). Nil when the receiver owns the
-    /// slot itself — there is no class in between, so the caller falls back to
-    /// the receiver's own prototype.
+    /// The prototype a method resolved on, where a `super` inside it starts.
+    /// Nil when the receiver owns the slot; the caller then uses the
+    /// receiver's own prototype.
     public func memberHome(_ name: String, of value: AS2Value) -> AS2Object? {
         guard
             let object = value.objectValue,

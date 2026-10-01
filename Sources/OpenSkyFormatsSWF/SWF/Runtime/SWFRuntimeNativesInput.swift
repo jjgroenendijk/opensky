@@ -1,20 +1,7 @@
-// The `Key` and `Mouse` globals (milestone 8.3.2 phase 3).
-//
-// These two are why the phase-2 missing-API tally listed `addListener` 28 times
-// across the install. They are broadcasters: a movie calls
-// `Key.addListener(object)` and the player then calls `onKeyDown` and `onKeyUp`
-// on every registered listener. CLIK's `gfx.managers.InputDelegate` registers
-// itself on `Key` in its constructor, reads `Key.getCode()` inside `onKeyDown`,
-// turns the code into a `gfx.ui.NavigationCode` string, and dispatches an
-// `input` event that `gfx.managers.FocusHandler` routes to the focused
-// component's `handleInput`. Implementing the broadcaster is therefore the whole
-// of what the engine owes the framework — every step after it is AS2 that ships
-// inside the movie.
-//
-// `Key` and `Mouse` are Flash built-ins, not SWF file-format structures, so the
-// specification says nothing about them. Behavior and the key-code table come
-// from public ActionScript 2 API documentation and from what the vanilla
-// bytecode reads back.
+// The `Key` and `Mouse` broadcaster globals. CLIK's `InputDelegate` listens on
+// `Key` and does the rest of input routing in the movie's own AS2, so the
+// broadcaster is all the engine owes it. Behavior and key codes come from
+// public ActionScript 2 docs. See docs/engine/as2-input.md.
 
 import Foundation
 

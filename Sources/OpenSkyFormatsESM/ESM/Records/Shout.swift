@@ -1,24 +1,7 @@
-// SHOU record: a dragon shout, or one of the racial and creature powers built
-// on the same machinery. A shout is a name, a description, and an ordered run
-// of SNAM word entries, each pairing a word of power (WOOP) with the spell
-// (SPEL) that word casts and the recovery time it costs.
-//
-// Every vanilla SHOU carries exactly three SNAM entries, including the powers
-// that are not really shouts — those store three zeroed entries rather than
-// none. The decoder does not enforce three: UESP records that an override with
-// fewer leaks the missing entries in from the overridden record and one with
-// more corrupts memory in the original engine, so OpenSky decodes whatever run
-// is present and lets the consumer see the count.
-//
-// Skipped for now: ETYP, which xEdit documents on SHOU but no vanilla master
-// authors; it is tallied as unread until a voice-slot consumer exists.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/SHOU"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SHOU
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(SHOU, 'Shout', ...)`
-//     line 7173.
-// Layout documented in docs/formats/shouts-equip-slots.md.
+// SHOU shout: a name, a description, and SNAM entries that pair a WOOP word
+// with the SPEL it casts and its recovery time. Vanilla always has three
+// entries, but the decoder takes whatever count is present.
+// Layout and sources: docs/formats/shouts-equip-slots.md.
 
 import Foundation
 import OpenSkyFormatsCore

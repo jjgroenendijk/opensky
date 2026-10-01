@@ -87,22 +87,13 @@ nonisolated public enum ActorValueIdentity: Sendable {
     public static let skillIndices: [Int32] = Array(firstSkillIndex ... lastSkillIndex)
 
     /// Actor-value index of `One-Handed Skill Advance`, the first of the
-    /// eighteen "Skill Advance" slots, which run in the same order as the
-    /// skills themselves (issue #498, roadmap item 20.5).
-    ///
-    /// These are where accumulated skill experience lives: the table names one
-    /// per skill, they hold no other quantity, and storing progress there is
-    /// what lets `GetActorValue OneHandedSkillAdvance` answer the same number
-    /// the progression runtime reads. `ActorValueIdentityTests` pins the name
-    /// at this index and the contiguity of the run, so a table edit cannot move
-    /// the mapping silently. See docs/engine/skill-advancement.md.
+    /// eighteen "Skill Advance" slots that hold skill experience, in skill
+    /// order. See docs/engine/actor-value-store.md.
     public static let firstSkillAdvanceIndex: Int32 = 114
 
-    /// Actor-value index of `Carry Weight`, which a stamina level-up pick
-    /// raises alongside the stamina itself (issue #499, roadmap item 20.6):
-    /// "Adding to your base stamina when you level up increases your carry
-    /// weight by 5" (<https://en.uesp.net/wiki/Skyrim:Stamina>).
-    /// `ActorValueIdentityTests` pins the name at this index.
+    /// Actor-value index of `Carry Weight`, which a stamina level-up pick also
+    /// raises: "Adding to your base stamina when you level up increases your
+    /// carry weight by 5" (<https://en.uesp.net/wiki/Skyrim:Stamina>).
     public static let carryWeightIndex: Int32 = 32
 
     /// The `Skill Advance` slot that accumulates experience for the skill at
@@ -134,23 +125,9 @@ nonisolated public enum ActorValueIdentity: Sendable {
         index >= firstSkillIndex && index <= lastSkillIndex
     }
 
-    /// What an actor reads for `index` when neither a record nor the session
-    /// has authored anything, or nil for an index outside the table.
-    ///
-    /// Zero for everything but the skills, and that is a deliberate,
-    /// documented position rather than a placeholder. An actor value is an
-    /// accumulator: a resistance nothing grants is 0% resistance, a bonus
-    /// nothing confers is +0, and an AI attribute the AIDT does not author is
-    /// the bottom of its enumeration. The skills are the one family with a
-    /// sourced non-zero floor, quoted above at `skillFloor`.
-    ///
-    /// Two values vanilla starts away from zero are *not* defaulted here,
-    /// because they are authored per record rather than globally and OpenSky
-    /// reads them from that record instead: `Speed Mult` (30) comes from ACBS
-    /// 0x0E and `Mass` (36) from RACE DATA 0x34, both through
-    /// `ActorValueDerivation.generalBaseValues(inputs:)`. An actor with no
-    /// record behind it — a summon — therefore reads 0 for both, which is a
-    /// stated gap rather than an invented number; see docs/engine/actor-value-names.md.
+    /// What an actor reads for `index` when nothing authored a value, or nil
+    /// outside the table. Zero except for skills: an actor value accumulates
+    /// from zero. See docs/engine/actor-value-names.md.
     public static func defaultValue(at index: Int32) -> Float? {
         guard isVanilla(index: index) else { return nil }
         return isSkill(index: index) ? skillFloor : 0
@@ -170,30 +147,18 @@ nonisolated public enum ActorValueIdentity: Sendable {
         namesByKey[normalized(name)]
     }
 
-    /// Editor-id vocabulary the vanilla AVIF records use for three skills the
-    /// name table above spells differently, kept apart from `vanillaNames` so
-    /// the table stays a verbatim copy of `wbActorValueEnum`.
-    ///
-    /// These are not guesses and not recalled from memory. Each record's own
-    /// FULL string resolves, through Skyrim.esm's string table, to the name on
-    /// the right, and `ActorValueInformationRealDataTests` pins exactly that —
-    /// so the mapping is observed evidence with a standing regression check.
-    /// The words are Oblivion-era skill names Skyrim kept in its editor ids;
-    /// Papyrus uses `Marksman` for `Archery` the same way.
+    /// Older skill names that three vanilla AVIF editor IDs use, kept apart so
+    /// `vanillaNames` stays a verbatim copy of `wbActorValueEnum`. Observed in
+    /// Skyrim.esm; see docs/engine/actor-value-names.md.
     public static let recordNameAliases: [String: String] = [
         "Marksman": "Archery",
         "Speechcraft": "Speech",
         "Mysticism": "Illusion"
     ]
 
-    /// Index of the actor value a *record* spells `name`, which is
-    /// `index(named:)` widened by `recordNameAliases`.
-    ///
-    /// Deliberately a separate entry point rather than a widening of
-    /// `index(named:)`: condition parameters and Papyrus natives carry the
-    /// table's own vocabulary, and their measured miss buckets
-    /// (docs/engine/actor-value-names.md) should not move because AVIF needed three
-    /// extra spellings.
+    /// Index of the actor value a record spells `name`: `index(named:)` plus
+    /// `recordNameAliases`. Separate so condition and Papyrus lookups keep the
+    /// table's own vocabulary.
     public static func index(recordName name: String) -> Int32? {
         if let index = index(named: name) {
             return index

@@ -1,42 +1,7 @@
-// The QUST tail of a VMAD field: the quest-stage fragment table and the
-// per-alias script sections.
-//
-// A quest's stage scripts are not stored as ordinary attached scripts. The
-// Creation Kit compiles every stage fragment into one generated script file
-// named "QF_<editorID>_<formID>" and gives each fragment a function named
-// "Fragment_<n>", numbered in authoring order rather than by stage. The only
-// record of which stage and which log entry a numbered fragment belongs to is
-// this table, which is why the quest runtime cannot run stage scripts without
-// decoding it.
-//
-// Layout of the section, read straight after the primary script list:
-//   int8    extra bind data version — always 2 in shipped data
-//   uint16  fragment count
-//   wstring file name (no extension), the generated QF_ script
-//   fragment[fragment count]:
-//     uint16  quest stage index, the same number the QUST INDX field carries
-//     int16   unused — always 0
-//     int32   log-entry index within that stage
-//     int8    unused — always 1
-//     wstring script name, normally the same as the file name
-//     wstring fragment function name, e.g. "Fragment_5"
-//   uint16  alias count
-//   alias[alias count]:
-//     8 bytes script object reference, read with the *primary* object format
-//     int16   version, int16 object format — both restated for this alias
-//     uint16  script count, then that many ordinary script entries
-//
-// xEdit reads the stage index and log-entry index as two uint32 words where
-// UESP splits each into a value plus an always-constant half. The two agree
-// byte for byte on little-endian; the split spelling is used here because it
-// names the halves the constants sit in.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/VMAD Field", section "QUST Records"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/VMAD_Field
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbVMADFragmentedQUST`
-//     (line 2929) — 'Script Fragments' struct and the 'Aliases' array.
-// Layout documented in docs/formats/vmad.md.
+// The QUST tail of a VMAD field: the stage fragment table and the per-alias
+// script sections. Stage fragments compile into one "QF_<editorID>_<formID>"
+// script, and only this table says which stage and log entry each
+// "Fragment_<n>" belongs to. Layout and sources: docs/formats/vmad.md.
 
 import Foundation
 

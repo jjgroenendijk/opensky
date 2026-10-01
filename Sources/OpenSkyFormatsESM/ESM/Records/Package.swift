@@ -1,15 +1,6 @@
-// PACK record values used by AI schedule selection and the first bounded
-// procedure runtime (issue #201).
-//
-// References:
-// - UESP "Skyrim Mod:Mod File Format/PACK"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/PACK
-// - xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, `wbRecord(PACK)`
-//   https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-//
-// The complete bounded layout and deliberately skipped fields are recorded in
-// docs/formats/packages.md. Unknown enum values remain raw instead of failing;
-// malformed fixed-width values throw through BinaryReader.
+// PACK values used by AI schedule selection and procedures. Unknown enum
+// values stay raw; malformed fixed-width values throw.
+// Layout, sources, and skipped fields: docs/formats/packages.md.
 
 import Foundation
 

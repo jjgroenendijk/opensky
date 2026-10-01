@@ -1,6 +1,6 @@
 // Engine-side material, decoupled from NIF block layout (AGENTS.md
 // reverse-engineering discipline). Producer: NIF scene flatten
-// (NIFFile.model(), todo 2.4); consumer: the static-mesh render path (2.6),
+// (NIFFile.model()); consumer: the static-mesh render path,
 // which picks sRGB for diffuse and linear for normal maps by usage.
 
 import Foundation
@@ -51,8 +51,8 @@ nonisolated public struct Material: Hashable, Sendable {
         self.alphaTestThreshold = alphaTestThreshold
     }
 
-    /// Neutral stand-in for shapes without a lighting shader (effect, water
-    /// and sky shaders are out of M2 scope): untextured, opaque, defaults
+    /// Neutral stand-in for shapes without a lighting shader (effect, water,
+    /// and sky shaders have their own paths): untextured, opaque, defaults
     /// from nif.xml.
     public static let fallback = Material(
         diffuseTexture: nil,

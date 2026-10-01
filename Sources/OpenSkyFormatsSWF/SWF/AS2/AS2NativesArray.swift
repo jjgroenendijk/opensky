@@ -1,4 +1,4 @@
-// The `Array` built-in (milestone 8.3.2).
+// The `Array` built-in.
 //
 // Reference: ECMA-262 3rd edition, section 15.4 "Array Objects" — the
 // constructor's single-numeric-argument form (15.4.2.2) and the prototype

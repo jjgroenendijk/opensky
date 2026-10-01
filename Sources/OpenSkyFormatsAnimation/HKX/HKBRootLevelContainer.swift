@@ -1,15 +1,6 @@
-// hkRootLevelContainer decode (todo 14.1): the packfile's entry point and the
-// only reliable statement of what a file *is*. The container header names the
-// root class, but every behavior, character, and project file names the same
-// root class, so the file's role is decided by the named variants this object
-// carries — a `hkbProjectData` variant makes it a project file, a
-// `hkbCharacterData` variant a character file, a `hkbBehaviorGraph` variant a
-// behavior file.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT), whose class
-// signatures match the local SSE files byte for byte
-// (hkRootLevelContainer 0x2772C11E), cross-checked against exyorha/hkxparse
-// (MIT). No Havok SDK or Bethesda code consulted (AGENTS.md Legal & IP).
+// hkRootLevelContainer decode: the packfile's entry point. Every behavior file
+// names the same root class, so a file's role comes from its named variants:
+// `hkbProjectData`, `hkbCharacterData`, or `hkbBehaviorGraph`.
 // Byte map and citations: docs/formats/hkx-behavior.md.
 
 import Foundation

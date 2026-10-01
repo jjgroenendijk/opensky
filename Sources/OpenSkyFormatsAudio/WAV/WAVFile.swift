@@ -1,28 +1,7 @@
-// RIFF/WAVE framing and PCM sample access for Skyrim SE's `.wav` sound
-// effects (issue #352).
-//
-// Music and voice ship as `.xwm`; every sound effect — footsteps included —
-// ships as a plain RIFF/WAVE file, so the footstep chain resolves to a format
-// the M9 engine could not play until this parser existed. There is no codec
-// here: a WAVE file with `wFormatTag` 1 stores its samples uncompressed, so
-// "decoding" is a widening of integers into the float samples AVFAudio wants.
-//
-// Format policy: 8-bit unsigned and 16-bit signed linear PCM are read, and
-// every other tag and width is declined with `unsupportedFormat` rather than
-// guessed at. A read-only sweep of 62 `.wav` files sampled evenly across the
-// install's archives on 2026-08-04 found `wFormatTag` 1 and 16 bits per sample
-// in every one, mono and stereo, at 8 kHz through 44.1 kHz — so the declined
-// cases are formats vanilla does not use, and a mod that does use one is
-// reported instead of played back as noise.
-//
-// References:
-//   Microsoft "Multimedia Programming Interface and Data Specifications 1.0"
-//     — RIFF framing: four-character chunk id, UInt32 little-endian size not
-//     counting the header, chunk bodies padded to an even byte count; the
-//     WAVE form and its `fmt `/`data` chunks.
-//   Microsoft WAVEFORMATEX (mmeapi.h) for the `fmt ` field order and widths
-//     https://learn.microsoft.com/en-us/windows/win32/api/mmeapi/ns-mmeapi-waveformatex
-// Layout documented in docs/formats/wav.md.
+// RIFF/WAVE framing and PCM sample access for sound effects. Only 8-bit
+// unsigned and 16-bit signed PCM are read; other formats throw
+// `unsupportedFormat` instead of playing as noise. Vanilla uses only 16-bit
+// PCM. Layout and sources: docs/formats/wav.md.
 
 import Foundation
 import OpenSkyFormatsCore

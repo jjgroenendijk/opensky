@@ -1,15 +1,7 @@
-// Bethesda's own modifier classes (todo 14.2), part two: the two aiming
-// modifiers. `BSDirectAtModifier` swings a bone chain towards a target or the
-// camera — the spine bend that makes the player face where they aim — and
-// `BSLookAtModifier` does the same for head and eye bones with per-bone gains.
-// They are split into their own file because between them they declare fifty
-// members, which would put the part-one file past the lint cap.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (BSDirectAtModifier 0x19A005C0, BSLookAtModifier 0xD756FC25,
-// BSLookAtModifierBoneData 0x29EFEE59). No Havok SDK, Creation Kit, or SKSE
-// internals consulted (AGENTS.md Legal & IP). Byte map:
-// docs/formats/hkx-behavior-modifiers.md.
+// Bethesda's aiming modifiers: `BSDirectAtModifier` turns a bone chain towards
+// a target, and `BSLookAtModifier` does the same for head and eye bones. They
+// have their own file because their fifty members would pass the file length
+// limit. Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

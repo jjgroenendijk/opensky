@@ -1,12 +1,6 @@
-// CLIPACTIONS decoding: the per-event ActionScript handlers a PlaceObject2 (26)
-// or PlaceObject3 (70) tag attaches to a placed sprite (`onPress`,
-// `onEnterFrame`, and the rest). Before milestone 8.3.1 the display-list parser
-// only recorded that the block was present and stopped reading; it is now
-// framed and its action streams parsed.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" — the CLIPACTIONS and CLIPACTIONRECORD tables under
-// "PlaceObject2" (pp. 36-37) and "ClipEventFlags" (pp. 48-49).
+// CLIPACTIONS: the per-event handlers a PlaceObject2 or PlaceObject3 tag
+// attaches to a sprite. Spec: SWF v19 chapter 3.
+// See docs/formats/swf-actions.md.
 
 import Foundation
 import OpenSkyFormatsCore

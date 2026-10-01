@@ -1,13 +1,6 @@
-// LAND record decoded into engine terrain types: per-vertex height field,
-// normals, optional vertex colors, and the per-quadrant texture layer stack.
-// LAND lives in a cell's temporary-children group (type 9) and is almost
-// always zlib-compressed (record flag bit 18) — ESMRecord.fields() decompresses
-// transparently, so this decoder just reads subrecords.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/LAND"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LAND
-// Cross-checked against xEdit dev-4.1.6 wbDefinitionsCommon.pas (wbLAND).
-// Layout + VHGT accumulation math documented in docs/formats/land.md.
+// LAND terrain: heights, normals, vertex colors, and texture layers per
+// quadrant. LAND is almost always compressed; `ESMRecord.fields()` handles
+// that. Layout and VHGT math: docs/formats/land.md.
 
 import Foundation
 import OpenSkyFormatsCore

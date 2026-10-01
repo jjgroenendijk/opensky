@@ -1,12 +1,6 @@
-// Value types for decoded SWF fonts: DefineFont2 (48) / DefineFont3 (75) glyph
-// tables plus the minimally-decoded companion tags DefineFontAlignZones (73),
-// CSMTextSettings (74), and DefineFontName (88). The on-disk bit/byte packing
-// lives in SWFFontParser; these types are decoupled from the layout.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// "Fonts and Text" — DefineFont2/DefineFont3 (pp. 176-180),
-// DefineFontAlignZones (pp. 180-181), CSMTextSettings (p. 181),
-// DefineFontName (p. 182). Documented in docs/formats/swf-text.md.
+// Decoded SWF font values: DefineFont2/3 glyph tables plus the companion tags
+// (73, 74, 88). The on-disk packing lives in SWFFontParser.
+// Layout and sources: docs/formats/swf-text.md.
 
 import Foundation
 

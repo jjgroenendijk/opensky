@@ -1,19 +1,7 @@
-// The shape every Havok Behavior node, modifier, and helper class decoder
-// shares (todo 14.2), plus the three inherited headers almost all of them
-// start with. Item 14.1 built the object graph and the graph-level classes;
-// this is the contract the node classes themselves are written against, so the
-// 14.3 evaluator and `openskycli hkx` can walk a decoded graph without a
-// hand-written switch over class names.
-//
-// Nothing here evaluates anything. `references` exists so the walk can follow
-// the tree generically, and `summary` so a dump can show that a class's own
-// fields really decoded rather than that its bytes were merely reachable.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT), whose class signatures
-// match the local SSE files (hkbNode 0x6D26F61D, hkbGenerator 0x0D68AEFC,
-// hkbModifier 0x96EC5CED, hkbEventBase 0x76BDDB31). No Havok SDK or Bethesda
-// code consulted (AGENTS.md Legal & IP). Byte map and citations:
-// docs/formats/hkx-behavior-nodes.md.
+// The contract every Havok Behavior class decoder follows, plus the inherited
+// headers most of them start with. `references` lets a walk follow the tree
+// without a switch over class names; `summary` shows that a class's own fields
+// decoded. Byte map and citations: docs/formats/hkx-behavior-nodes.md.
 
 import Foundation
 

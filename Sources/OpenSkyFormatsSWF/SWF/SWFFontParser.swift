@@ -1,13 +1,6 @@
-// Byte/bit-level decoding of the SWF font tags: DefineFont2 (48),
-// DefineFont3 (75), and the companion tags DefineFontAlignZones (73),
-// CSMTextSettings (74), and DefineFontName (88).
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// "Fonts and Text" (pp. 176-182). The tag body mixes byte-aligned integers
-// (little-endian) with the bit-packed glyph SHAPEs; glyph shapes are located
-// through the OffsetTable rather than parsed sequentially, so any per-glyph
-// padding is irrelevant. Alignment follows the shape parser's observed rule
-// (byte-align each bit run) documented in docs/formats/swf-text.md.
+// Byte and bit decoding of the SWF font tags (48, 75, 73, 74, 88). Glyph shapes
+// are found through the OffsetTable, so per-glyph padding does not matter.
+// Layout and alignment rule: docs/formats/swf-text.md.
 
 import Foundation
 import OpenSkyFormatsCore

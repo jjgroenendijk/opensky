@@ -1,12 +1,6 @@
-// Typed operand decoding for the ACTIONRECORDs milestone 8.3.1 inventories.
-// Opcodes outside `decodableCodes` are still framed and keep their operand
-// bytes verbatim (see `SWFActionParser`); nothing is dropped, and a malformed
-// payload degrades to a recorded warning rather than a thrown movie failure.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — the per-action field tables in the SWF 3 action model (pp. 64-66),
-// SWF 4 action model (pp. 68-88), SWF 5 action model (pp. 89-107), and SWF 7
-// action model (pp. 111-116).
+// Typed operand decoding for action records. Other opcodes keep their operand
+// bytes; a malformed payload becomes a warning, not a thrown error.
+// Spec: SWF v19 chapter 5.
 
 import Foundation
 import OpenSkyFormatsCore

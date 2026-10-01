@@ -1,11 +1,6 @@
-// DefineText (11) / DefineText2 (33): static text blocks — a character id,
-// bounds, a placement MATRIX, and a run of TEXTRECORDs that switch font, color,
-// and pen position and then place glyphs by index with explicit advances.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 10
-// "Fonts and Text" — DefineText/DefineText2 (pp. 173-174), TEXTRECORD and
-// GLYPHENTRY (pp. 174-175). DefineText2 stores RGBA where DefineText stores
-// RGB. Documented in docs/formats/swf-text.md.
+// DefineText (11) and DefineText2 (33): static text with TEXTRECORDs that set
+// font, color, and pen, then place glyphs with explicit advances. DefineText2
+// uses RGBA colors. Layout and sources: docs/formats/swf-text.md.
 
 import Foundation
 

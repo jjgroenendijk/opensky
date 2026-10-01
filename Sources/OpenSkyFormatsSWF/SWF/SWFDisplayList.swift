@@ -1,16 +1,6 @@
-// Display-list control tag decoding: PlaceObject (4), PlaceObject2 (26),
-// PlaceObject3 (70), RemoveObject (5), RemoveObject2 (28), and
-// SetBackgroundColor (9). PlaceObject3's filter list and blend mode are
-// decoded as framing only (counted + retained minimally, not rendered — the
-// deferral is documented in docs/formats/swf-display-list.md). ClipActions are framed and
-// their action streams parsed as of milestone 8.3.1 (see `SWFClipActions`);
-// OpenSky still executes no ActionScript.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 3 "The
-// display list" — PlaceObject (p. 34), PlaceObject2 (pp. 35-37), the CLIPACTIONS
-// tables (pp. 36-37), PlaceObject3 (pp. 38-41), the filter records (pp. 42-47),
-// ClipEventFlags (pp. 48-49), RemoveObject/RemoveObject2 (p. 50), and chapter 4
-// "Control tags" SetBackgroundColor (p. 52).
+// Display-list tags: PlaceObject 1-3, RemoveObject 1-2, SetBackgroundColor.
+// PlaceObject3 filters and blend mode are framed but not rendered.
+// Layout and sources: docs/formats/swf-display-list.md.
 
 import Foundation
 import OpenSkyFormatsCore

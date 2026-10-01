@@ -1,28 +1,8 @@
-// The AS2 bytecode interpreter (milestone 8.3.2): the execution loop, the
-// dispatch fan-out, and the bounds every invocation runs under — an action
-// budget, a call-depth cap, and a re-entry cap.
-//
-// The loop walks `SWFActionBlock.records` by index rather than by byte offset,
-// because the parser already framed the stream; a branch converts its byte
-// target back to an index through `SWFActionBlock.index(atOffset:)`, and a
-// target that starts no record is a recorded fault instead of a crash. Function
-// bodies execute as an index range inside the same block, so a `return` and a
-// branch behave identically at any nesting depth.
-//
-// Calls run on the interpreter's own frame stack (`frames`), not on the Swift
-// stack: calling a bytecode function pushes a frame carrying its own
-// instruction pointer, and the popped frame's value lands wherever its
-// `AS2FrameCompletion` says. That is what makes `AS2Limits.callDepth` a policy
-// limit instead of a stack-safety limit (issue #132) — CLIK component
-// constructors chain deeper than the old Swift-recursive limit of 64 allowed,
-// and every one that was cut short skipped `EventDispatcher.initialize`.
-// Swift recursion remains only where a value is needed synchronously inside a
-// Swift call — a built-in like `Function.prototype.apply`, or a property
-// accessor — and `AS2Limits.reentryDepth` bounds that path.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions" — "ActionJump" and "ActionIf" (pp. 84-85) for the branch offset
-// being relative to the end of the branch record.
+// The AS2 bytecode interpreter: the execution loop, dispatch, and limits. The
+// loop walks parsed records by index; a branch target that starts no record is
+// a recorded fault. Calls push frames on `frames`, not the Swift stack, so
+// `AS2Limits.callDepth` is a policy limit. Swift recursion remains only for
+// built-ins and accessors, bounded by `AS2Limits.reentryDepth`.
 
 import Foundation
 

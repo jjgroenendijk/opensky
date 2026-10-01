@@ -1,22 +1,7 @@
-// The action codes this interpreter implements (milestone 8.3.2), named so the
-// dispatch tables read as bytecode rather than as hexadecimal.
-//
-// The set is closed by measurement, not by guess: `openskycli swf action-sweep`
-// over the 53 vanilla `Interface/*.swf` movies found 533,562 action records
-// using exactly 56 distinct opcodes and no unknown code (docs/formats/swf-actions.md,
-// "Vanilla bytecode"). Those 56 are all here, plus `ActionDefineLocal2`
-// and `ActionStackSwap`, which cost two lines each and are reachable from any
-// compiler.
-//
-// Deliberately absent, because no vanilla movie uses them: `ActionWith`,
-// `ActionTry`/`ActionThrow`, `ActionSetTarget`/`ActionSetTarget2`,
-// `ActionGetURL`/`ActionGetURL2`, `ActionWaitForFrame`/`ActionWaitForFrame2`,
-// and `ActionEnumerate` (only `ActionEnumerate2` occurs). They frame correctly
-// in `SWFActionParser` and execute as a tallied no-op here.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 5
-// "Actions", the per-action tables in the SWF 3 through SWF 7 action-model
-// sections (pp. 63-118). Names match `SWFActionName`.
+// The action codes this interpreter runs. The set comes from a sweep of the
+// vanilla movies (docs/formats/swf-actions.md, "Vanilla bytecode"), plus
+// `ActionDefineLocal2` and `ActionStackSwap`. Unused actions such as
+// `ActionWith` run as a tallied no-op. Spec: SWF v19 chapter 5.
 
 import Foundation
 

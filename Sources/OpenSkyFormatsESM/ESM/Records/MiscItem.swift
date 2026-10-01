@@ -1,16 +1,5 @@
-// MISC record decoded into engine types: the plain carryable object — gems,
-// ingots, tools, gold, clutter. Nothing type-specific beyond the shared
-// carryable-item fields plus the 8-byte value/weight DATA, which is exactly
-// why it is the simplest of the seven inventory families.
-//
-// Skipped: VMAD (no MISC script consumer yet), DEST destruction data.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/MISC"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/MISC
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(MISC, ...)` line 8303
-//     — DATA is int32 Value + float Weight.
-// Layout documented in docs/formats/item-records.md.
+// MISC item: the shared carryable fields plus the 8-byte value/weight DATA.
+// Layout and sources: docs/formats/item-records.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,13 +1,5 @@
-// Standard SWF tag-code -> name table, per the Adobe spec's tag list. Used to
-// report a known/unknown tally when sweeping the game's Interface .swf files.
-//
-// Reference: Adobe SWF File Format Specification, version 19, "Appendix:
-// Reserved and undocumented tags" and the per-chapter tag definitions.
-//
-// Scaleform GFx (the runtime Skyrim's UI actually targets) adds its own
-// extension tags in the ~1000+ code range. Those are deliberately absent from
-// the Adobe specification and therefore stay "unknown" here — decoding them is
-// out of scope for the container milestone.
+// Standard SWF tag code to name table. GFx extension tags are not in the Adobe
+// spec, so they stay "unknown". Spec: SWF v19 tag definitions.
 
 import Foundation
 

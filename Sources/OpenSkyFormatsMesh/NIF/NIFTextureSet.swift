@@ -1,13 +1,6 @@
-// BSShaderTextureSet: the texture paths a shader property points at.
-// Slot 0 = diffuse, slot 1 = normal/gloss; the rest (glow/skin, height,
-// environment, env mask, subsurface, backlight) are recorded but unused for
-// now (todo 2.4). Paths in vanilla files vary wildly — mixed case, `\` or
-// `/`, with or without the `textures\` prefix, sometimes a leading `data\`
-// — so `vfsKey(for:)` canonicalizes them for VFS lookup.
-//
-// Reference: NifTools nif.xml (BSShaderTextureSet, SizedString).
-//   https://github.com/niftools/nifxml/blob/develop/nif.xml
-// Layout documented in docs/formats/nif-materials.md.
+// BSShaderTextureSet: texture paths. Slot 0 is diffuse, slot 1 normal/gloss.
+// Vanilla paths vary in case, slashes, and prefixes, so `vfsKey(for:)`
+// normalizes them. Layout: docs/formats/nif-materials.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -43,14 +36,9 @@ nonisolated public struct NIFShaderTextureSet: Sendable {
         self.paths = paths
     }
 
-    /// Normalizes a stored texture path to a VFS key: lowercase, `\` -> `/`,
-    /// everything before the last `textures/` component dropped, `textures/`
-    /// prefix ensured. Empty -> nil.
-    ///
-    /// The truncation mirrors observed engine behavior (and NifSkope's
-    /// resolver): vanilla meshes ship exporter-absolute paths like
-    /// `textures/skyrimhd/build/pc/data/textures/clutter/…/carrot.dds`, and
-    /// the game still finds `textures/clutter/…/carrot.dds`.
+    /// A stored texture path as a VFS key: lowercase, `/` separators, cut to
+    /// the last `textures/`. Empty gives nil. The cut matches the game, which
+    /// finds exporter-absolute paths (docs/formats/nif-materials.md).
     public static func vfsKey(for raw: String) -> String? {
         var path = raw.lowercased()
             .replacingOccurrences(of: "\\", with: "/")

@@ -1,10 +1,6 @@
-// HDPT head-part association data used by FaceGen expression morphs.
-//
-// Reference: xEdit TES5 definitions, HDPT record on dev-4.1.6. NAM0 names
-// the following NAM1 path as race morph (0), expression TRI (1), or chargen
-// morph (2). OpenSky decodes only the fields needed to pair a baked FaceGen
-// BSDynamicTriShape with its expression container.
-// https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
+// HDPT head part: only what pairs a FaceGen BSDynamicTriShape with its
+// expression TRI. NAM0 marks the next NAM1 path as race morph (0), expression
+// (1), or chargen morph (2). Source: xEdit wbDefinitionsTES5.pas, HDPT.
 
 import Foundation
 import OpenSkyFormatsCore

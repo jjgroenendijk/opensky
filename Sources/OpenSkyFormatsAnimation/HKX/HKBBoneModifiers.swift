@@ -1,21 +1,7 @@
-// The stock Havok modifier classes the vanilla player graph uses (todo 14.2),
-// part two: the ones that edit bones directly rather than variables or events —
-// twist, character rotation, bone keyframing, get-up alignment — and the three
-// ragdoll and foot-IK control modifiers.
-//
-// The ragdoll classes are decoded because the full-graph rule says a census
-// class gets a decoder; what they mean is physics, which the milestone scope
-// puts in M15. Their nested `hkaKeyFrameHierarchyUtilityControlData` block is
-// physics tuning of that kind, so this decoder reads the members the behavior
-// graph itself addresses and records the nested block as reserved rather than
-// guessing at a class it cannot yet verify — flagged in the docs.
-//
-// 64-bit member offsets from ret2end/HKX2Library (MIT); signatures match the
-// local SSE files (hkbTwistModifier 0xB6B76B32, hkbRotateCharacterModifier
-// 0x877EBC0B, hkbKeyframeBonesModifier 0x95F66629, hkbGetUpModifier 0x61CB7AC0,
-// hkbFootIkControlsModifier 0xE5B6F544, hkbPoweredRagdollControlsModifier
-// 0x7CB54065, hkbRigidBodyRagdollControlsModifier 0xAA87D1EB). Byte map:
-// docs/formats/hkx-behavior-modifiers.md.
+// Stock Havok modifiers that edit bones directly, plus the ragdoll and foot IK
+// control modifiers. The nested `hkaKeyFrameHierarchyUtilityControlData` block
+// is physics tuning that is not verified yet, so it is kept as reserved bytes.
+// Byte map: docs/formats/hkx-behavior-modifiers.md.
 
 import Foundation
 

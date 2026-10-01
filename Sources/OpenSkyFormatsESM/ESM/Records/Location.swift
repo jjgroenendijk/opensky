@@ -1,15 +1,6 @@
-// LCTN locations and LCRT location-reference types. LCTN ties named places
-// to parent locations, keywords, persistent references, unique actors and
-// typed special references. Its packed arrays are sized from payload bytes;
-// a partial trailing element is dropped and measured rather than read past.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/LCTN" and "/LCRT":
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LCTN
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LCRT
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(LCTN, ...)`
-//   and `wbRecord(LCRT, ...)`.
-// Layout documented in docs/formats/locations.md.
+// LCTN location and LCRT location reference type. Packed arrays are sized
+// from payload bytes; a partial last element is dropped and counted.
+// Layout and sources: docs/formats/locations.md.
 
 import Foundation
 import OpenSkyFormatsCore

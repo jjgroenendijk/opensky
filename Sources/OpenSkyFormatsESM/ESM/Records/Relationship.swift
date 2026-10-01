@@ -1,14 +1,6 @@
-// RELA relationship records: one directed pair of NPC_ bases, the rank the
-// pair holds, a secret flag and an optional ASTP link naming what the pair is
-// to each other. The engine types here are links and raw values only —
-// reading a rank as hostility is issue #503, and the Papyrus natives that
-// write one are issue #508.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/RELA":
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/RELA
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(RELA, 'Relationship', ...)`.
-// Layout documented in docs/formats/relationships.md.
+// RELA relationship: a directed pair of NPC_ bases, their rank, a secret flag,
+// and an optional ASTP link. Links and raw values only.
+// Layout and sources: docs/formats/relationships.md.
 
 import Foundation
 import OpenSkyFormatsCore

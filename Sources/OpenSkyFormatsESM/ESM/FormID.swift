@@ -1,12 +1,6 @@
-// FormID: 32-bit record identifier. Top byte is a mod index into the OWNING
-// plugin's master list (TES4 MAST order); low 24 bits identify the object
-// inside that plugin. Raw FormIDs are therefore file-relative — the same raw
-// value means different things in different plugins, so cross-plugin work
-// uses `ResolvedFormID` (plugin name + object ID) instead.
-//
-// Reference: UESP "Skyrim Mod:FormIDs"
-//   https://en.uesp.net/wiki/Skyrim_Mod:FormIDs
-// Layout + resolution rules documented in docs/formats/formid.md.
+// FormID: the top byte indexes the owning plugin's master list, the low 24
+// bits name the object. A raw FormID is file-relative, so cross-plugin work
+// uses `ResolvedFormID`. Rules: docs/formats/formid.md.
 
 import Foundation
 
