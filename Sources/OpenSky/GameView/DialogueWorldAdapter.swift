@@ -144,11 +144,11 @@ extension DialogueWorldAdapter: DialogueWorld {
     }
 
     func suspendPackage(for actor: ReferenceKey) {
-        game.packages.runtime?.setSuspended(true, actor: actor)
+        game.packages.suspend(actor)
     }
 
     func resumePackage(for actor: ReferenceKey) {
-        game.resumePackage(for: actor)
+        game.packages.resume(actor)
     }
 
     func stopActor(_ actor: ReferenceKey) {

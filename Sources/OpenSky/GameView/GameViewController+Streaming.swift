@@ -4,6 +4,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyMenus
+import OpenSkyPerception
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -114,9 +115,9 @@ extension GameViewController {
         renderer: Renderer,
         streamer: CellStreamer
     ) {
-        wireAIOverlay(renderer: renderer, streamer: streamer)
+        aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
         wireGlobals(provider: provider, renderer: renderer)
-        wireNPCMovement(renderer: renderer, streamer: streamer)
+        aiWorld.wireNPCMovement(renderer: renderer, streamer: streamer)
     }
 
     /// The two runtimes that own an actor's numbers, in the order they depend
@@ -154,10 +155,8 @@ extension GameViewController {
         streamer: CellStreamer
     ) {
         combatWorld.wireLoop(provider: provider, renderer: renderer)
-        // Package conditions observe the live quest, actor and reference state,
-        // so selection advances after those runtimes in the same world tick.
-        wirePackages(provider: provider, renderer: renderer)
-        wirePerception(provider: provider, renderer: renderer)
+        aiWorld.wirePackages(provider: provider, renderer: renderer)
+        aiWorld.wirePerception(provider: provider, renderer: renderer)
         // Right after the perception pass, which is what answers "did anybody
         // see it" for every crime.
         crimeWorld.attachWitnesses(perception: perception.runtime)

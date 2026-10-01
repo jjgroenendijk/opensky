@@ -166,7 +166,7 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func resumePackage(for key: ReferenceKey) {
-        game.resumePackage(for: key)
+        game.packages.resume(key)
     }
 
     /// True when the graph declared a home for the event, which is the graph's

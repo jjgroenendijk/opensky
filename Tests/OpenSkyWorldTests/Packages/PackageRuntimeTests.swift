@@ -21,7 +21,7 @@ struct PackageRuntimeTests {
     private static let conditionKey = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x700)
 
     @Test func firstScheduledTrueConditionWinsAndEnableFlipReevaluates() throws {
-        let scheduled = try package(
+        let scheduled = try PackageRuntimeFixture.package(
             id: 0x100,
             editorID: "Scheduled",
             schedule: PackageFixture.scheduleValue(hour: 8, duration: 240),
@@ -32,8 +32,8 @@ struct PackageRuntimeTests {
                 reference: 0x700
             )
         )
-        let fallback = try package(id: 0x101, editorID: "Fallback")
-        let actor = try actorBase(id: 0x600, packages: [0x100, 0x101])
+        let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")
+        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let store = PackageStore(
             packages: [scheduled, fallback],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
@@ -65,9 +65,9 @@ struct PackageRuntimeTests {
     }
 
     @Test func boundedAndOnDemandEvaluationDoNotPollEveryAdvance() throws {
-        let actor = try actorBase(id: 0x600, packages: [0x100])
+        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100])
         let store = try PackageStore(
-            packages: [package(id: 0x100, editorID: "Always")],
+            packages: [PackageRuntimeFixture.package(id: 0x100, editorID: "Always")],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         )
         var changes = 0
@@ -88,21 +88,16 @@ struct PackageRuntimeTests {
         #expect(changes == 1)
     }
 
-    /// A conversation holds its speaker out of scheduled selection and hands it
-    /// back re-selected for the world as it now is (issue #427).
-    ///
-    /// Both halves matter. A suspended actor that kept being re-selected would
-    /// walk off mid-sentence, and one that resumed by restoring the package it
-    /// had would go back to a schedule that may have moved on while the player
-    /// was talking.
+    /// A suspended speaker must not walk off mid-sentence, and on release it
+    /// gets the package the schedule names now, not the one it had.
     @Test func suspensionHoldsSelectionAndReleaseReselects() throws {
-        let morning = try package(
+        let morning = try PackageRuntimeFixture.package(
             id: 0x100,
             editorID: "Morning",
             schedule: PackageFixture.scheduleValue(hour: 8, duration: 240)
         )
-        let fallback = try package(id: 0x101, editorID: "Fallback")
-        let actor = try actorBase(id: 0x600, packages: [0x100, 0x101])
+        let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")
+        let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let store = PackageStore(
             packages: [morning, fallback],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
@@ -132,14 +127,18 @@ struct PackageRuntimeTests {
     }
 
     @Test func packageAndActorTemplateChainsResolveOrReportCycles() throws {
-        let procedureTemplate = try package(
+        let procedureTemplate = try PackageRuntimeFixture.package(
             id: 0x200,
             editorID: "Sleep",
             procedureNames: ["Sleep"]
         )
-        let concrete = try package(id: 0x100, editorID: "Bedtime", template: 0x200)
-        let templateActor = try actorBase(id: 0x601, packages: [0x100])
-        let actor = try actorBase(
+        let concrete = try PackageRuntimeFixture.package(
+            id: 0x100,
+            editorID: "Bedtime",
+            template: 0x200
+        )
+        let templateActor = try PackageRuntimeFixture.actorBase(id: 0x601, packages: [0x100])
+        let actor = try PackageRuntimeFixture.actorBase(
             id: 0x600,
             templateFlags: 0x20,
             template: 0x601,
@@ -155,8 +154,8 @@ struct PackageRuntimeTests {
         #expect(resolved.templateChain == [FormID(0x100), FormID(0x200)])
         #expect(resolved.procedure == .sleep)
 
-        let first = try package(id: 0x300, template: 0x301)
-        let second = try package(id: 0x301, template: 0x300)
+        let first = try PackageRuntimeFixture.package(id: 0x300, template: 0x301)
+        let second = try PackageRuntimeFixture.package(id: 0x301, template: 0x300)
         let cyclic = PackageStore(packages: [first, second], actorTemplates: resolver)
         #expect(throws: PackageResolveError.templateCycle([
             FormID(0x300), FormID(0x301), FormID(0x300)
@@ -227,67 +226,6 @@ struct PackageRuntimeTests {
                 (formID: 0x700, base: 0x800)
             ])) ?? .empty
         )
-    }
-
-    private func package(
-        id: UInt32,
-        editorID: String? = nil,
-        schedule: Package.Schedule = .anytime,
-        condition: ESMField? = nil,
-        template: UInt32? = nil,
-        procedureNames: [String] = []
-    ) throws -> Package {
-        var conditions = ConditionList()
-        if let condition {
-            try conditions.decode(field: condition)
-        }
-        return Package(
-            formID: FormID(id),
-            editorID: editorID,
-            general: Package.GeneralData(
-                flags: [],
-                kind: .package,
-                interruptOverride: 0,
-                preferredSpeed: .walk,
-                interruptFlags: 0
-            ),
-            schedule: schedule,
-            conditions: conditions,
-            template: template.map(FormID.init),
-            dataInputs: [],
-            procedureTypes: procedureNames,
-            scriptData: ScriptData(ownerType: "PACK")
-        )
-    }
-
-    private func actorBase(
-        id: UInt32,
-        templateFlags: UInt16 = 0,
-        template: UInt32? = nil,
-        packages: [UInt32]
-    ) throws -> ActorBase {
-        var acbs = Data(count: 18)
-        acbs.appendUInt16(templateFlags)
-        acbs.appendUInt32(0)
-        var fields = ESMFixture.field("ACBS", acbs)
-        if let template {
-            fields += PackageRuntimeFixture.formIDField("TPLT", template)
-        }
-        for package in packages {
-            fields += PackageRuntimeFixture.formIDField("PKID", package)
-        }
-        return try ActorBase(
-            record: PackageFixture.parse(ESMFixture.record("NPC_", formID: id, data: fields)),
-            localized: false
-        )
-    }
-}
-
-private enum PackageRuntimeFixture {
-    static func formIDField(_ type: String, _ value: UInt32) -> Data {
-        var data = Data()
-        data.appendUInt32(value)
-        return ESMFixture.field(type, data)
     }
 }
 

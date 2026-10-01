@@ -216,11 +216,11 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
     }
 
     func suspendPackage(for key: ReferenceKey) {
-        game.packages.runtime?.setSuspended(true, actor: key)
+        game.packages.suspend(key)
     }
 
     func resumePackage(for key: ReferenceKey) {
-        game.resumePackage(for: key)
+        game.packages.resume(key)
     }
 
     var isDialogueOpen: Bool {

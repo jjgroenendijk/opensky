@@ -16,6 +16,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyPerception
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
@@ -213,14 +214,35 @@ final class GameViewController: NSViewController {
     /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
     let combat = CombatCoordinator()
     lazy var combatWorld = CombatWorldAdapter(game: self)
-    /// Kinematic NPC gait clips and failed clip keys.
-    var npcMovementBridge = NPCMovementBridgeState()
     /// Live resident-actor package selection.
-    var packages = PackageBridgeState()
+    lazy var packages: PackageCoordinator = {
+        let packages = PackageCoordinator()
+        packages.attach(world: aiWorld)
+        return packages
+    }()
+
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
-    var perception = PerceptionBridgeState()
+    lazy var perception: PerceptionCoordinator = {
+        let perception = PerceptionCoordinator()
+        perception.attach(world: aiWorld)
+        return perception
+    }()
+
     /// The AI & Navigation panel's shared actor selection and its last outcome line.
-    var aiNavigation = AINavigationBridgeState()
+    lazy var aiNavigation: AINavigationCoordinator = {
+        let aiNavigation = AINavigationCoordinator(packages: packages)
+        aiNavigation.attach(world: aiWorld)
+        return aiNavigation
+    }()
+
+    /// The gait clip each NPC mover plays.
+    lazy var npcAnimation: NPCAnimationCoordinator = {
+        let npcAnimation = NPCAnimationCoordinator()
+        npcAnimation.attach(world: aiWorld)
+        return npcAnimation
+    }()
+
+    lazy var aiWorld = AIWorldAdapter(game: self)
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
