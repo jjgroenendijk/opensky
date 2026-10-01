@@ -6,8 +6,8 @@
 #
 #   . "$root/tools/xcodebuild-lib.sh"
 #
-# Sets OPENSKY_DERIVED_DATA (the Makefile exports it; this is the fallback for a
-# script run directly from a shell) and provides:
+# Sets OPENSKY_DERIVED_DATA and XCODE_XCCONFIG_FILE (the Makefile exports both;
+# this is the fallback for a script run directly from a shell) and provides:
 #
 #   xcodebuild_products_dir CONFIG   built-products directory for a macOS scheme
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
@@ -19,6 +19,8 @@
 
 : "${OPENSKY_DERIVED_DATA:=$(cd "$(dirname "$0")/.." && pwd)/DerivedData}"
 export OPENSKY_DERIVED_DATA
+: "${XCODE_XCCONFIG_FILE:=$(cd "$(dirname "$0")/.." && pwd)/Config/Build/Overrides.xcconfig}"
+export XCODE_XCCONFIG_FILE
 
 # xcodebuild puts a macOS scheme's products at a fixed path under the derived
 # data root, and reading it back with -showBuildSettings costs several seconds.

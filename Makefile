@@ -26,6 +26,9 @@ SWIFT_PATHS      := Sources Tests
 DERIVED_DATA     ?= $(CURDIR)/DerivedData
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
+# Settings that must also reach package targets (Config/Build/Overrides.xcconfig).
+# xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
+export XCODE_XCCONFIG_FILE := $(CURDIR)/Config/Build/Overrides.xcconfig
 # Test result bundles. They live under the build cache rather than build/: xcodebuild
 # watches the package root, and a result bundle growing there during `test` makes it
 # re-resolve the package mid-run, which crashes it once the package is large (#582).

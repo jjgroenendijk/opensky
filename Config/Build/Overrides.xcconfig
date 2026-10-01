@@ -1,0 +1,11 @@
+// Applied above every target, package targets included, through XCODE_XCCONFIG_FILE
+// (Makefile and tools/xcodebuild-lib.sh). Project and target files cannot reach
+// package targets. Keep only settings that have to apply there.
+
+// Xcode builds a package target that both the app and a test bundle link as its
+// dynamic variant, and its missing-dependency check still reads the static graph.
+// So every framework variant warned about each declared dependency. Only the
+// variants are mh_dylib here; tools/lint/module-graph.sh checks their imports.
+// See docs/tools/environment.md.
+OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_mh_dylib = NO
+DIAGNOSE_MISSING_TARGET_DEPENDENCIES = $(OPENSKY_DIAGNOSE_MISSING_TARGET_DEPENDENCIES_$(MACH_O_TYPE):default=YES)

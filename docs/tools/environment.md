@@ -155,3 +155,29 @@ Once, after the delete, the next `make test-fast` ran test bundles built against
 and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". `make test-fast B=1` fixed that.
 
 Retires when an interface change builds through xcodebuild without the delete.
+
+## Package framework variants warn about declared dependencies
+
+Observed 2026-10-01 on Xcode 26 and on Xcode 27.0 (27A266a). A unit build printed hundreds of
+lines like `warning: 'OpenSkyFormatsESM' is missing a dependency on 'OpenSkyFormatsCore' because
+dependency scan of Swift module 'OpenSkyFormatsESM' discovered a dependency on
+'OpenSkyFormatsCore'`, although `Package.swift` declares the dependency. Every package target that
+compiled named its whole dependency closure. The app links each engine target through
+`OpenSkyModules`. A test bundle links the same targets again through the testing and fixture
+libraries. So Xcode builds each of them as its dynamic variant, a framework in
+`Products/Debug/PackageFrameworks/`. The CLI build links them statically and never warned.
+
+The check is Swift Build's `DIAGNOSE_MISSING_TARGET_DEPENDENCIES`. With `EnableDebugActivityLogs=YES`
+in the environment, the warning names target GUIDs: the dependent is
+`PACKAGE-TARGET:OpenSkyFormatsESM-<hash>-dynamic`, and the dependency is the static
+`PACKAGE-TARGET:OpenSkyFormatsCore`. The check walks the target graph from before the switch to
+dynamic variants, so it finds no edge from a variant. Upstream fixed this in
+[swift-build PR 1457](https://github.com/swiftlang/swift-build/pull/1457), "Fix dependency
+diagnostics for dynamic target variants".
+
+`Config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. In this
+workspace only the package variants are dylibs. Their imports are still checked against
+`Package.swift` by `make module-graph` (rule 7).
+
+Retires when the installed Xcode ships that fix: delete the override, and a clean
+`make verify-build` prints no `is missing a dependency on` line.

@@ -252,7 +252,9 @@ link it. Example: `CellSceneBuilderFixture` builds real cell scenes, so it is in
 A testing library changes how Xcode builds the module it uses. The app and the test bundles
 then share that module, so Xcode builds it as a dynamic framework. A framework cannot use a
 system-library target, so `CFFmpeg` is a C target that carries its own link flags
-([ffmpeg audio](/decisions/ffmpeg-audio.md)).
+([ffmpeg audio](/decisions/ffmpeg-audio.md)). Xcode's missing-dependency check is wrong for these
+frameworks, so it is off for them
+([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
 
 The package test targets run in the `UnitTests` and `Sanitizers` plans next to `OpenSkyTests`. A
 test plan names a package test target with `"containerPath" : "container:."`, the package at the

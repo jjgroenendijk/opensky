@@ -55,7 +55,8 @@ Config/
 │   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg link + rpath
 │   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg link + rpath
 │   ├── Tests.xcconfig       the unit bundles: TEST_HOST, BUNDLE_LOADER
-│   └── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
+│   ├── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
+│   └── Overrides.xcconfig   above every target, package targets too
 └── TestPlans/
     └── *.xctestplan         the four test plans (see test runs)
 ```
@@ -64,6 +65,13 @@ The test plans are in `Config/TestPlans/` for the same reason ([test runs](/tool
 `Debug.xcconfig` and `Release.xcconfig` are the project's base configurations for every target. The
 target files sit above them and apply to both configurations of one target. Only a setting that
 differs per configuration inside one target still belongs in the project file.
+
+The project's files never reach a package target, whose settings come from `Package.swift`.
+`Overrides.xcconfig` is the one place for a setting that has to: the `Makefile` and
+`tools/xcodebuild-lib.sh` export `XCODE_XCCONFIG_FILE` pointing at it, and xcodebuild applies that
+file above every target in the build. A build started from the Xcode window does not read it. Today
+it only turns off a missing-dependency check that is wrong for package framework variants
+([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
 
 `tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
