@@ -82,6 +82,20 @@ with `PackageCore` and `PackageWorld`, `AINavigationCoordinator` with `AINavigat
 `Sources/OpenSkyWorld/`. `PerceptionCoordinator` with `PerceptionCore` and
 `PerceptionSessionWorld` lives in `Sources/OpenSkyPerception/`. The perception coordinator is
 the pass's `PerceptionWorld`: it filters the session's actors down to the observers.
+The Runtime State panel has `RuntimeStateCore`, `RuntimeStateCoordinator`, and
+`RuntimeStateWorld` in `Sources/OpenSkyWorld/State/`, answered by `RuntimeStateWorldAdapter`.
+The coordinator owns the `GlobalStore` and the clock scrubs. Save and load go through the port,
+because `OpenSkyWorld` may not import `OpenSkySave`. The adapter also builds the live condition
+context, because it reads every feature's runtime. Papyrus has `ScriptCoordinator` and
+`ScriptWorld` in `Sources/OpenSkyScripting/`, answered by `ScriptWorldAdapter`, which also gives
+the natives their collaborators. `WorldRenderControls` in `Sources/OpenSkyWorld/Session/` holds
+the renderer and streamer controls of the World panels. It has no core, because it only reads
+and writes the renderer. `WorldSessionWiring` in the app builds the streamer and runs every wire
+function in order.
+
+A panel protocol with many members uses a forwarding protocol, such as
+`RuntimeStateControlForwarding` or `WorldRenderControlForwarding`. Its extension forwards every
+member to the coordinator, so the view controller conforms in one line.
 
 A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
 state and its movie code go in a small app class, such as `ContainerMenuController`, and

@@ -1,29 +1,22 @@
-// World > Environment live bridge: the weather, animation, particle,
-// precipitation and grass conformances behind that destination's panel.
-// Satellite of GameViewController.swift, split out to keep both files inside
-// the lint size caps; the five belong together because one sidebar
-// destination drives all of them.
+// The World > Environment controls: weather, animation, particles,
+// precipitation, and grass.
 
-import AppKit
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
-import OpenSkyWorld
-import OpenSkyWorldState
 import simd
 
-extension GameViewController: WeatherControlProviding {
-    var weatherEnabled: Bool {
+extension WorldRenderControls: WeatherControlProviding {
+    public var weatherEnabled: Bool {
         get { renderer?.weatherEnabled ?? true }
         set { renderer?.weatherEnabled = newValue }
     }
 
-    var selectableWeatherNames: [String] {
-        (renderer?.weather?.store.selectableWeathers() ?? [])
-            .compactMap(\.editorID)
+    public var selectableWeatherNames: [String] {
+        (renderer?.weather?.store.selectableWeathers() ?? []).compactMap(\.editorID)
     }
 
-    func forceWeather(named name: String?) {
+    public func forceWeather(named name: String?) {
         guard let weather = renderer?.weather else { return }
         guard let name else {
             weather.forceWeather(nil, transition: .timed)
@@ -33,7 +26,7 @@ extension GameViewController: WeatherControlProviding {
         weather.forceWeather(match?.formID, transition: .timed)
     }
 
-    func forceWeather(_ preset: WeatherPreset) {
+    public func forceWeather(_ preset: WeatherPreset) {
         guard
             let weather = renderer?.weather,
             let match = weather.store.weather(for: preset)
@@ -41,57 +34,41 @@ extension GameViewController: WeatherControlProviding {
         weather.forceWeather(match.formID, transition: .timed)
     }
 
-    var currentWeatherName: String? {
+    public var currentWeatherName: String? {
         renderer?.weather?.currentWeatherEditorID
     }
 
-    var weatherOverrideActive: Bool {
+    public var weatherOverrideActive: Bool {
         renderer?.weather?.forced != nil
     }
 
-    var weatherTransitionFraction: Float {
+    public var weatherTransitionFraction: Float {
         renderer?.weather?.transitionFraction ?? 1
     }
 
-    var weatherTransitionsPaused: Bool {
+    public var weatherTransitionsPaused: Bool {
         get { renderer?.weather?.transitionsPaused ?? false }
         set { renderer?.weather?.transitionsPaused = newValue }
     }
 
-    var windState: WindState {
+    public var windState: WindState {
         renderer?.currentWind ?? .calm
     }
 
-    /// Scrubs the game clock's hour. With game data present the
-    /// write goes through the `GameHour` global so it journals and exercises
-    /// the same redirect any script write will; the redirect moves the clock,
-    /// never a stored override. Without a `GlobalStore` (demo scene) the
-    /// clock is scrubbed directly. The persisted hour seeds the next launch's
-    /// clock, preserving the pre-clock behaviour.
-    var timeOfDay: Float {
+    /// The same scrub as the Runtime State panel's hour control.
+    public var timeOfDay: Float {
         get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
-        set {
-            if
-                let globalStore,
-                let id = globalStore.formID(editorID: GameClock.TimeGlobal.gameHour.editorID),
-                renderer != nil
-            {
-                worldState.setGlobal(newValue, formID: id, defaults: globalStore)
-            } else {
-                renderer?.timeOfDay = newValue
-            }
-            TimeOfDaySettings.store(newValue)
-        }
+        set { runtimeState.setGameClockHour(newValue) }
     }
 }
 
-extension GameViewController: AnimationControlProviding {
-    var actorAnimationsEnabled: Bool {
+extension WorldRenderControls: AnimationControlProviding {
+    public var actorAnimationsEnabled: Bool {
         get { renderer?.actorAnimationsEnabled ?? true }
         set { renderer?.actorAnimationsEnabled = newValue }
     }
 
-    var animationSnapshot: AnimationControlSnapshot {
+    public var animationSnapshot: AnimationControlSnapshot {
         AnimationControlSnapshot(
             playbackCount: renderer?.scene.animations.count ?? 0,
             updatedBoneCount: renderer?.lastAnimationUpdatedBoneCount ?? 0,
@@ -100,23 +77,23 @@ extension GameViewController: AnimationControlProviding {
     }
 }
 
-extension GameViewController: ParticleControlProviding {
-    var particlesEnabled: Bool {
+extension WorldRenderControls: ParticleControlProviding {
+    public var particlesEnabled: Bool {
         get { renderer?.particlesEnabled ?? true }
         set { renderer?.particlesEnabled = newValue }
     }
 
-    var particlesFrozen: Bool {
+    public var particlesFrozen: Bool {
         get { renderer?.particlesFrozen ?? false }
         set { renderer?.particlesFrozen = newValue }
     }
 
-    var particleEmissionScale: Float {
+    public var particleEmissionScale: Float {
         get { renderer?.particleEmissionScale ?? 1 }
         set { renderer?.particleEmissionScale = simd_clamp(newValue, 0, 2) }
     }
 
-    var particleSnapshot: ParticleControlSnapshot {
+    public var particleSnapshot: ParticleControlSnapshot {
         let playbacks = renderer?.scene.particles ?? []
         return ParticleControlSnapshot(
             systemCount: playbacks.count,
@@ -126,13 +103,13 @@ extension GameViewController: ParticleControlProviding {
     }
 }
 
-extension GameViewController: PrecipitationControlProviding {
-    var precipitationEnabled: Bool {
+extension WorldRenderControls: PrecipitationControlProviding {
+    public var precipitationEnabled: Bool {
         get { renderer?.precipitationEnabled ?? true }
         set { renderer?.precipitationEnabled = newValue }
     }
 
-    var precipitationSnapshot: PrecipitationRuntimeSnapshot {
+    public var precipitationSnapshot: PrecipitationRuntimeSnapshot {
         renderer?.precipitation.snapshot ?? PrecipitationRuntimeSnapshot(
             state: .none,
             roofOccluded: false,
@@ -142,18 +119,18 @@ extension GameViewController: PrecipitationControlProviding {
     }
 }
 
-extension GameViewController: GrassControlProviding {
-    var grassEnabled: Bool {
+extension WorldRenderControls: GrassControlProviding {
+    public var grassEnabled: Bool {
         get { renderer?.grassEnabled ?? true }
         set { renderer?.grassEnabled = newValue }
     }
 
-    var grassDensityScale: Float {
+    public var grassDensityScale: Float {
         get { renderer?.grassDensityScale ?? 1 }
         set { renderer?.grassDensityScale = simd_clamp(newValue, 0, 1) }
     }
 
-    var grassDrawDistance: Float {
+    public var grassDrawDistance: Float {
         get { renderer?.grassDrawDistance ?? GrassRenderPolicy.defaultDrawDistance }
         set {
             renderer?.grassDrawDistance = simd_clamp(
@@ -164,16 +141,14 @@ extension GameViewController: GrassControlProviding {
         }
     }
 
-    var grassWindScale: Float {
+    public var grassWindScale: Float {
         get { renderer?.grassWindScale ?? 1 }
         set {
-            renderer?.grassWindScale = simd_clamp(
-                newValue, 0, GrassRenderPolicy.maximumWindScale
-            )
+            renderer?.grassWindScale = simd_clamp(newValue, 0, GrassRenderPolicy.maximumWindScale)
         }
     }
 
-    var grassSnapshot: GrassControlSnapshot {
+    public var grassSnapshot: GrassControlSnapshot {
         let stats = renderer?.lastGrassDrawStats ?? GrassDrawStats()
         return GrassControlSnapshot(
             sceneInstances: stats.sceneInstances,

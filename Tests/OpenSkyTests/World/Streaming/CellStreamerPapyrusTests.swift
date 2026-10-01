@@ -1,12 +1,7 @@
-// Script-instance lifetime across cell streaming (issue #171): instances are
-// created when a cell first integrates, survive a world-state rebuild without
-// re-firing load events, are retired when the cell unloads, stay silent while
-// a coverage transition stages them offscreen, and survive an interior
-// rebuild.
-//
-// The streamer, the world-state store and the Papyrus world runtime are wired
-// together exactly as `GameViewController.wirePapyrus` wires them, over
-// synthetic VMAD references and a synthetic script. No Metal, no game data.
+// Script instances across streaming: created on first integration, kept
+// through a rebuild without new load events, retired on unload, silent while
+// staged offscreen. Wired as `ScriptWorldAdapter.wirePapyrus` wires them, over
+// synthetic references and scripts. No Metal.
 
 import FormatsESMTesting
 import Foundation
@@ -46,10 +41,7 @@ struct CellStreamerPapyrusTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        streamer.stateSource = { store.snapshot() }
-        store.onMutation = { [weak streamer] location, sequence in
-            streamer?.noteStateMutation(in: location, sequence: sequence)
-        }
+        streamer.bind(to: store)
         let resolver = PapyrusWorldFixture.resolver
         streamer.onCellAttached = { scene, firstIntegration in
             guard let location = scene.location else { return }

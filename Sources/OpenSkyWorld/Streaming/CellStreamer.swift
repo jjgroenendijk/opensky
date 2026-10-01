@@ -1,10 +1,7 @@
-// Live cell streaming controller (todo 3.2 async build): the main-thread face
-// of streaming. Owns the grid manager, the resident-cell composition, the
-// bookkeeping core, and a build runner. Driven once per frame with the camera
-// position: diffs the grid, dispatches missing cells to the off-main runner,
-// integrates finished builds under a per-frame budget, and hands the recomposed
-// scene to a sink (Renderer.setScene in the app). Concurrency + void-cell
-// design: docs/engine/cell-streaming.md.
+// The main-thread face of cell streaming. Each frame it diffs the grid around
+// the camera, sends missing cells to the off-main runner, integrates finished
+// builds under a budget, and hands the scene to a sink
+// (docs/engine/cell-streaming.md).
 
 import OpenSkyAudio
 import OpenSkyDiagnostics
@@ -157,8 +154,7 @@ public final class CellStreamer {
     /// against residency once per frame by the CellStreamerPhysics satellite.
     public var dynamicBodies = DynamicBodyWorld()
     /// A body came to rest and its transform should be persisted under the
-    /// reference's `.transform` component. The store is not reachable from
-    /// here, so the app wires this to `WorldStateStore.set`.
+    /// reference's `.transform` component. `bind(to:)` wires it to the store.
     public var onBodySettled: ((
         ReferenceKey, ReferenceTransformOverride, CellSceneLocation
     ) -> Void)?
@@ -193,14 +189,10 @@ public final class CellStreamer {
         installTriggerLogging()
     }
 
-    /// One frame's drive. Collects finished builds, re-grids around the
-    /// camera (dispatching newly-needed cells, dropping cells that left the
-    /// grid), integrates at most one drawable build (a swap is a full
-    /// recompose), and sinks the recomposed scene when anything changed.
-    /// - Parameter playerCapsule: authoritative walk-mode capsule pose for
-    ///   this frame, or nil when the player is not walking. Trigger-volume
-    ///   occupancy is tested here, once per rendered frame, and never in the
-    ///   120 Hz substep loop (issue #173).
+    /// One frame: collects finished builds, re-grids around the camera,
+    /// integrates at most one drawable build, and sinks the scene on a change.
+    /// Trigger occupancy is tested here once per frame, never in the 120 Hz
+    /// substep loop. `playerCapsule` is nil when the player is not walking.
     public func update(
         cameraPosition: SIMD3<Float>,
         interactionRay: InteractionRay? = nil,
@@ -290,14 +282,10 @@ public final class CellStreamer {
         onCenterRegionsChanged?(regions)
     }
 
-    /// Schedules only keys no resident cell owns. With one submitted build,
-    /// this eviction enters the serial runner before the next build starts.
-    /// Submits at most one build per frame. First loads drain before world-
-    /// state rebuilds, so a cell that has never been drawn still arrives
-    /// center-out; a rebuild only ever displaces an already-drawn cell, so
-    /// deferring it costs nothing visible. The world-state snapshot is taken
-    /// here, at dispatch, which is the last main-thread moment before the
-    /// build leaves for the serial runner (issue #160).
+    /// At most one build per frame. First loads go before world-state
+    /// rebuilds, so a new cell still arrives center-out. The world-state
+    /// snapshot is taken here, the last main-thread moment before the build
+    /// leaves for the serial runner.
     private func dispatchNextBuild() {
         guard
             transitionInFlight == nil,

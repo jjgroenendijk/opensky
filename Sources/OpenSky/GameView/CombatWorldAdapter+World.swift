@@ -35,7 +35,7 @@ extension CombatWorldAdapter: CombatWorld {
             wasHostile: hostility(of: hit.target) == .hostile,
             aggressor: hit.aggressor
         )
-        return game.papyrus?.queueOnHit(hit) ?? 0
+        return game.scripts.runtime?.queueOnHit(hit) ?? 0
     }
 
     @discardableResult

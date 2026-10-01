@@ -124,11 +124,11 @@ final class DialogueWorldAdapter {
 
 extension DialogueWorldAdapter: DialogueWorld {
     func questStates() -> QuestResolution? {
-        game.papyrusBridge?.questRuntime?.resolution()
+        game.scripts.bridge?.questRuntime?.resolution()
     }
 
     func conditionContext() -> ConditionContext {
-        game.runtimeStateConditionContext()
+        game.runtimeState.conditionContext()
     }
 
     var conditionRegistry: ConditionFunctionRegistry {
@@ -136,7 +136,7 @@ extension DialogueWorldAdapter: DialogueWorld {
     }
 
     var fragments: (any DialogueFragmentDispatching)? {
-        game.papyrusBridge
+        game.scripts.bridge
     }
 
     func loadStrings() -> LocalizedStrings? {

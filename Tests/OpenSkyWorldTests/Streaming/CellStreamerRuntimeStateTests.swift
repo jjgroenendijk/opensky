@@ -1,12 +1,6 @@
-// Runtime world-state streaming tests (issue #160, roadmap item 10.1.3):
-// snapshot capture at dispatch, rebuild scheduling for resident cells, the
-// stale-build race, rebuild cancellation on unload, and the conservative
-// fan-out for an unattributed mutation.
-//
-// Everything runs through a real `WorldStateStore` wired to the streamer the
-// same way `GameViewController.wireStreaming` wires it, and through
-// `ManualCellBuildRunner` so the test controls exactly when each build
-// completes. No Metal, no game data.
+// World-state streaming: snapshot at dispatch, rebuilds for resident cells,
+// the stale-build race, cancellation on unload, and the fan-out for an
+// unattributed mutation. The store joins through `CellStreamer.bind(to:)`.
 
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -34,8 +28,8 @@ struct CellStreamerRuntimeStateTests {
         CellGridManager.cellCenter(of: coordinate)
     }
 
-    /// A store, a manual runner and a streamer wired together exactly as
-    /// `wireStreaming` wires them in the app.
+    /// A store, a manual runner, and a streamer joined by `bind(to:)`, as in
+    /// the app.
     private struct Harness {
         let store: WorldStateStore
         let runner: ManualCellBuildRunner
@@ -48,10 +42,7 @@ struct CellStreamerRuntimeStateTests {
         let store = WorldStateStore()
         let runner = ManualCellBuildRunner()
         let streamer = CellStreamerFixture.makeStreamer(runner: runner, radius: radius)
-        streamer.stateSource = { store.snapshot() }
-        store.onMutation = { [weak streamer] location, sequence in
-            streamer?.noteStateMutation(in: location, sequence: sequence)
-        }
+        streamer.bind(to: store)
         return Harness(store: store, runner: runner, streamer: streamer)
     }
 

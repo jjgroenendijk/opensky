@@ -200,7 +200,7 @@ final class M15AcceptanceChain {
         )
         // A body that comes to rest writes its resting pose into the world
         // state, which is what makes settled clutter survive a save. Wired the
-        // way `GameViewControllerStreaming` wires it.
+        // way `CellStreamer.bind(to:)` wires it.
         streamer.onBodySettled = { [store] key, transform, placingCell in
             store.set(transform, for: key, in: placingCell)
         }

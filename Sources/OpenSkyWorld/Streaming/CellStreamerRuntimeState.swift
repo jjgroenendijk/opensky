@@ -151,3 +151,18 @@ extension CellStreamer {
         return composition.cells[grid.center] == nil ? nil : .exterior(grid.center)
     }
 }
+
+extension CellStreamer {
+    /// Builds read the store's snapshot, a mutation rebuilds its cell, and a
+    /// settled body persists as a transform override. The store outlives the
+    /// streamer, so only the streamer is held weakly.
+    public func bind(to store: WorldStateStore) {
+        stateSource = { store.snapshot() }
+        store.onMutation = { [weak self] location, sequence in
+            self?.noteStateMutation(in: location, sequence: sequence)
+        }
+        onBodySettled = { key, transform, placingCell in
+            store.set(transform, for: key, in: placingCell)
+        }
+    }
+}

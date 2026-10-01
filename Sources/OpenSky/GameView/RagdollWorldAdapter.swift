@@ -121,7 +121,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
     }
 
     func queueActorDeathEvents(for key: ReferenceKey, killer: ReferenceKey?) -> Int {
-        game.papyrus?.queueActorDeath(actor: key, killer: killer) ?? 0
+        game.scripts.runtime?.queueActorDeath(actor: key, killer: killer) ?? 0
     }
 
     var selectedRagdollActor: ReferenceKey? {

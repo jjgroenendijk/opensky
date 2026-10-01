@@ -1,25 +1,8 @@
-// M10 milestone acceptance (issue #166), panel half. Drives the whole gate
-// sentence for the M10.2 surfaces — scrub the game clock, mutate and reset a
-// global, evaluate a decoded condition list, read the merged journal tail, and
-// round-trip the session through a save slot — through the real shell types:
-// the destination registry, the sidebar view controller, the registry's own
-// panel factory, and the controls a user clicks. The only stand-in on this side
-// is `FakeWorldProviders`, the same provider surface `GameViewController`
-// implements.
-//
-// The suite has three satellites, split for the repo's file-length limit:
-// `M10AcceptanceEngineTests.swift` runs the five-step round trip with no fakes
-// at all (a real `WorldStateStore`, a real `GlobalStore`, a real `GameClock` and
-// a real `OpenSkySaveStore`) and is where journal-independent snapshot equality
-// is asserted; `M10AcceptanceWeatherTests.swift` proves weather and time stay
-// synchronized at an elevated timescale; `M10AcceptanceRealDataTests.swift` is
-// the env-gated check against the user's own install.
-//
-// `make test-ui` is blocked on the development machine (TCC harness init), so
-// this unit-level test is the deterministic evidence for the gate. Readouts are
-// read back by accessibility identifier out of the built view hierarchy, which
-// also pins those identifiers as the UI-test contract. No game data is involved
-// anywhere: every fixture below is invented in code.
+// The panel half of the M10 gate: scrub the clock, change and reset a global,
+// evaluate a condition list, read the journal tail, and round-trip a save,
+// through the real registry, sidebar, and panel controls over
+// `FakeWorldProviders`. Readouts are read by accessibility identifier, which
+// pins the UI-test contract. Every fixture is built in code.
 
 import AppKit
 import Foundation
@@ -121,11 +104,9 @@ struct M10AcceptanceTests {
 
     // MARK: Step 6 — the legacy Time of day slider still agrees with the clock
 
-    /// The `TimeOfDayControl` under World > Environment predates the game clock
-    /// and has to keep working: in the live app it writes
-    /// `GameViewController.timeOfDay`, which is the very function
-    /// `setGameClockHour(_:)` calls. Scrubbing it therefore moves the same clock
-    /// the Runtime State panel reads, and both readouts show the same hour.
+    /// The `TimeOfDayControl` under World > Environment writes
+    /// `WorldRenderControls.timeOfDay`, which calls `setGameClockHour(_:)`. So it
+    /// moves the clock the Runtime State panel reads.
     @Test @MainActor
     func theLegacyTimeOfDaySliderMovesTheSameClockTheRuntimeStatePanelReads() throws {
         let harness = M10AcceptanceHarness()
@@ -134,16 +115,9 @@ struct M10AcceptanceTests {
 
     // MARK: The gate — one uninterrupted session
 
-    /// The panel half of the M10 gate in one session, in the order a user
-    /// performs it, on a single provider set: select World > Runtime State,
-    /// mutate a reference, mutate a global, scrub the clock, evaluate a
-    /// condition list, save the slot and load it back, then check the legacy
-    /// Environment slider still agrees with the clock the session left behind.
-    ///
-    /// "Load into a fresh instance" is the one step a fake cannot prove, so the
-    /// same five steps run against real engine objects in
-    /// `M10AcceptanceEngineTests.swift`, which is where snapshot equality is
-    /// asserted.
+    /// The panel half of the gate in the order a user runs it. Loading into a
+    /// fresh instance needs real engine objects, so
+    /// `M10AcceptanceEngineTests.swift` checks snapshot equality.
     @Test @MainActor
     func acceptanceFlowRunsEndToEndOnOneProviderSet() throws {
         let harness = M10AcceptanceHarness()

@@ -56,12 +56,9 @@ extension FakeWorldProviders {
         runtimeState.runtimeStateClock
     }
 
-    /// The legacy `TimeOfDayControl` under World > Environment writes this
-    /// property, and `GameViewController.timeOfDay` and
-    /// `GameViewController.setGameClockHour(_:)` are literally the same write in
-    /// the live app — the latter calls the former. Forwarding here rather than
-    /// storing a second float is what lets the M10 gate assert that the two
-    /// surfaces agree instead of asserting it about a fake that cannot disagree.
+    /// In the live app `WorldRenderControls.timeOfDay` calls
+    /// `RuntimeStateCoordinator.setGameClockHour(_:)`. Forwarding here keeps the
+    /// two surfaces able to disagree, so the M10 gate can check that they do not.
     var timeOfDay: Float {
         get { runtimeState.runtimeStateClock.hourOfDay }
         set { runtimeState.setGameClockHour(newValue) }

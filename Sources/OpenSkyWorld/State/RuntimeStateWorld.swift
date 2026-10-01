@@ -1,0 +1,37 @@
+import OpenSkyAudio
+import OpenSkyConditions
+import OpenSkyFormatsESM
+import OpenSkyWorldState
+
+/// What `RuntimeStateCoordinator` reads from the live session. Saves go
+/// through here because `OpenSkyWorld` may not import `OpenSkySave`.
+@MainActor
+public protocol RuntimeStateWorld: AnyObject {
+    var residentReferenceCount: Int { get }
+    func referenceEntry(formID: FormID) -> RuntimeReferenceEntry?
+    /// The reference under the crosshair, nil when nothing is targeted.
+    var crosshairReference: FormID? { get }
+
+    /// Nil without a renderer.
+    var gameClock: GameClock? { get set }
+    var timescale: Float? { get }
+    var isWorldSimPaused: Bool { get }
+    /// Moves the renderer's hour directly, for a session with no globals.
+    func setTimeOfDay(_ hour: Float)
+    /// Seeds the next launch's clock.
+    func persistTimeOfDay(_ hour: Float)
+    /// Writes one time global into the clock and returns its previous value.
+    func projectTimeGlobal(_ global: GameClock.TimeGlobal, value: Float) -> Float?
+    /// Hands weather and the clock fresh global values.
+    func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool)
+
+    var musicStore: MusicRecordStore? { get }
+    /// The live condition context, with the crosshair as subject and target.
+    func conditionContext(
+        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
+    ) -> ConditionContext
+
+    func saveSlots() throws -> [String]
+    func saveSession(slot: String) throws
+    func loadSession(slot: String) throws
+}

@@ -304,7 +304,7 @@ final class JournalMenuController {
 
 extension JournalMenuController: JournalWorld {
     var questRuntime: QuestRuntime? {
-        game.papyrusBridge?.questRuntime as? QuestRuntime
+        game.scripts.bridge?.questRuntime as? QuestRuntime
     }
 
     func loadStrings() -> LocalizedStrings? {
