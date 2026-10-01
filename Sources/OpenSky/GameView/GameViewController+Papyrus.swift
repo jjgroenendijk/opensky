@@ -7,6 +7,7 @@ import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyQuests
@@ -198,8 +199,8 @@ extension GameViewController {
         bridge.crimeReporter = { [weak self] in self?.crime.reporter }
         bridge.arrestSession = { [weak self] in self }
         bridge.showBarterMenu = { [weak self] actor in
-            guard let self, vendors != nil else { return nil }
-            let text = openBarter(with: actor)
+            guard let self, inventory.vendors != nil else { return nil }
+            let text = containerMenu.openBarter(with: actor)
             return (containerMenu.isOpen && containerMenu.vendor != nil, text)
         }
         // `wireFactions` runs after this step too, for the same

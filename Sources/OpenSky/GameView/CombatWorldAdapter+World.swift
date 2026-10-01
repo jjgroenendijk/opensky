@@ -125,7 +125,7 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     var equipment: (any EquipmentAccess)? {
-        game.worldItems.equipment
+        game.inventory.equipment
     }
 
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
@@ -137,13 +137,13 @@ extension CombatWorldAdapter: CombatWorld {
     }
 
     func playerCarriedItems() -> [FormID] {
-        guard let runtime = game.worldItems.runtime else { return [] }
+        guard let runtime = game.inventory.runtime else { return [] }
         return runtime.inventory.inventory(of: runtime.player).stacks.map(\.item)
     }
 
     @discardableResult
     func removeOneFromPlayer(_ item: FormID) -> Bool {
-        guard let runtime = game.worldItems.runtime else { return false }
+        guard let runtime = game.inventory.runtime else { return false }
         return (try? runtime.inventory.remove(item, count: 1, from: runtime.player)) != nil
     }
 

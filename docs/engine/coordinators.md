@@ -34,9 +34,9 @@ coordinator in a package module is tested with `make test-fast` in seconds.
 | Coordinator: the shell around the core | The feature module | `VendorCoordinator` |
 | Port: what the coordinator reads from the world | The same file, as a protocol | `VendorWorld` |
 | Result and refusal values | The same file, as value types | `BarterCounterparty`, `BarterOpenRefusal` |
-| Adapter: the app's answers to the port | The app, beside the wire function | `extension GameViewController: VendorWorld` |
-| Wire function: builds the coordinator | The app | `wireVendors(provider:)` |
-| Effects: menus, camera, sound | The app | `openBarter(with:vendorFaction:)` |
+| Adapter: the app's answers to the port | The app, beside the wire function | `InventoryWorldAdapter: VendorWorld` |
+| Wire function: builds the coordinator | The app | `InventoryWorldAdapter.wireVendors(provider:)` |
+| Effects: menus, camera, sound | The app | `ContainerMenuController.openBarter(with:vendorFaction:)` |
 
 When a domain's last `GameViewController+X` file goes, the adapter and the wire functions move
 into a small app class that holds the view controller, such as `CombatWorldAdapter`. The view
@@ -45,7 +45,13 @@ works this way: `CombatCore`, `CombatCoordinator`, and its port `CombatWorld` li
 `Sources/OpenSkyCombat/`, and the coordinator is also the world of the melee, archery, and
 combat-loop runtimes it owns. The magic domain has the same shape: `MagicCore`,
 `MagicCoordinator`, and `MagicWorld` in `Sources/OpenSkyMagic/`, answered by
-`MagicWorldAdapter`. The coordinator is the cast loop's `CasterWorld`.
+`MagicWorldAdapter`. The coordinator is the cast loop's `CasterWorld`. The inventory domain has
+`InventoryCore`, `InventoryCoordinator`, and `InventoryWorld` in `Sources/OpenSkyInventory/`,
+answered by `InventoryWorldAdapter`. The coordinator also holds the `VendorCoordinator`.
+
+A menu whose model lives in `OpenSkyMenus` cannot move into a feature module below it. Its
+state and its movie code go in a small app class, such as `ContainerMenuController`, and
+every transaction it runs is a coordinator call.
 
 A port is a protocol that names what the coordinator needs from outside, such as the streamed
 references or the game hour. A test passes a fake that returns plain values. The app passes

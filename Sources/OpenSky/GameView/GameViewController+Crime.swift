@@ -78,7 +78,7 @@ extension GameViewController {
                 factions: factionStore
             )
         }
-        worldItems.runtime?.crime = reporter
+        inventory.runtime?.crime = reporter
     }
 
     /// Hands the perception pass to the crime runtime once it exists, so a
@@ -233,7 +233,7 @@ extension GameViewController: CrimeWorld {
 
     func crimeItemValue(of item: FormID) -> Int64 {
         Int64(
-            worldItems.runtime?.inventory.baselines.items.definition(item)?.value ?? 0
+            inventory.runtime?.inventory.baselines.items.definition(item)?.value ?? 0
         )
     }
 

@@ -150,10 +150,10 @@ extension GameViewController: MenuInputConsumer {
     /// open, so an event that arrives while none is does nothing.
     func handleMenuInput(_ event: MenuInputEvent) {
         switch menuMode.topMenu {
-        case Self.inventoryMenuIdentifier:
-            routeInventoryMenuInput(event)
-        case Self.containerMenuIdentifier, Self.barterMenuIdentifier:
-            routeContainerMenuInput(event)
+        case InventoryMenuController.identifier:
+            inventoryMenu.route(event)
+        case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
+            containerMenu.route(event)
         case Self.journalIdentifier:
             routeJournalInput(event)
         case Self.dialogueIdentifier:

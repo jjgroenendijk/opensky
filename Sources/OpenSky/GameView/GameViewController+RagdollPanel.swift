@@ -12,6 +12,7 @@
 import Foundation
 import OpenSkyCombat
 import OpenSkyFormatsESM
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -92,7 +93,7 @@ extension GameViewController: RagdollControlProviding {
             let runtime = ragdoll.runtime,
             let streamer,
             let renderer,
-            worldItems.runtime != nil
+            inventory.runtime != nil
         else { return false }
         let feet = renderer.walkController.feetPosition
         let corpses = streamer.residentActorEntries()
@@ -103,14 +104,15 @@ extension GameViewController: RagdollControlProviding {
             }),
             let actor = entry.placedActor
         else { return false }
-        containerMenu.container = InventoryHolder(
-            key: entry.key,
-            owner: .actor(base: actor.base),
-            cell: streamer.cellLocation(of: entry.key)
+        containerMenu.target(
+            InventoryHolder(
+                key: entry.key,
+                owner: .actor(base: actor.base),
+                cell: streamer.cellLocation(of: entry.key)
+            ),
+            name: "Corpse \(entry.key.description)",
+            reference: actor.formID
         )
-        containerMenu.containerName = "Corpse \(entry.key.description)"
-        containerMenu.containerReference = actor.formID
-        containerMenu.vendor = nil
         runtime.noteLooted(entry.key)
         return true
     }

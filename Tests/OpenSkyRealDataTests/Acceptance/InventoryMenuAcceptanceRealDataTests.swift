@@ -48,7 +48,7 @@ struct InventoryMenuAcceptanceRealDataTests {
         try renderer.updateSWFRuntime { runtime in
             InventoryMenuMovieBridge.activate(runtime: runtime) { _ in }
         }
-        for _ in 0 ..< GameViewController.inventoryMenuActivationTicks {
+        for _ in 0 ..< InventoryMenuController.activationTicks {
             try renderer.advanceSWFRuntime()
         }
         let broughtUp = try render(renderer)
