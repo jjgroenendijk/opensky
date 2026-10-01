@@ -5,10 +5,10 @@ set -eu
 # shellcheck source=/dev/null
 . "$(git rev-parse --show-toplevel)/.githooks/lib.sh"
 
-touched="$(git diff --cached --name-only | grep -E '^(docs/|tools/lint/docs-length)' || true)"
+touched="$(git diff --cached --name-only | grep -E '^(docs/|Makefile)' || true)"
 [ -n "$touched" ] || exit 0
 
-if ! "$ROOT/tools/lint/docs-length.sh"; then
+if ! (cd "$ROOT" && make --no-print-directory docs-length); then
   hook_fail "Docs page length check failed. Split or cut the page, then re-commit."
   exit 1
 fi

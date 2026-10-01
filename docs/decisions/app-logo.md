@@ -24,7 +24,7 @@ Safe to redistribute with our code.
 * Source of truth: `Sources/OpenSky/Resources/Branding/opensky-logo.svg`. 1024 canvas, 824-pt
   rounded tile centered (Apple macOS icon template proportions), mark authored
   in 512 space under a scale transform.
-* `make icon` -> `tools/gen-appicon.sh` renders PNGs (16..1024) via
+* `make icon` renders PNGs (16..1024) via
   `rsvg-convert` into `Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset/`. Generated
   PNGs committed — build needs no SVG toolchain.
 * `Contents.json` rewritten from iOS-universal template to `mac` idiom slots

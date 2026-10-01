@@ -8,7 +8,7 @@ set -eu
 files="$(staged_matching '^(Sources/.*\.swift|OpenSky\.xcodeproj/project\.pbxproj)$')"
 [ -n "$files" ] || exit 0
 
-if ! "$ROOT/tools/lint/cli-boundary.sh"; then
+if ! (cd "$ROOT" && make --no-print-directory cli-boundary); then
   hook_fail "CLI target boundary broken. Move the file under Sources/OpenSky, re-commit."
   exit 1
 fi
