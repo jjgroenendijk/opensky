@@ -60,7 +60,7 @@ final class DialogueWorldAdapter {
     /// still opens an empty menu, so the condition trace can explain why.
     func talkCandidates() -> [TalkCandidate] {
         guard let streamer = game.streamer else { return [] }
-        return game.combatActors().compactMap { observation in
+        return game.actorWorld.combatActors().compactMap { observation in
             guard
                 !observation.isDead,
                 game.factions.hostility(of: observation.key) != .hostile,

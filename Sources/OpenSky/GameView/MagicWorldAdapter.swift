@@ -13,6 +13,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyWorld
@@ -106,27 +107,27 @@ extension MagicWorldAdapter: MagicWorld {
 
     @discardableResult
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        game.reportSkillUse(use)
+        game.progression.reportSkillUse(use)
     }
 
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {
-        game.actorValueHolder(for: key)
+        game.actorWorld.actorValueHolder(for: key)
     }
 
     func regeneratingHolders() -> [ActorValueHolder] {
-        game.regeneratingHolders()
+        game.actorWorld.regeneratingHolders()
     }
 
     func nearestActorValueHolder() -> ActorValueHolder? {
-        game.nearestActorValueHolder()
+        game.actorWorld.nearestActorValueHolder()
     }
 
     func residentActorKeys() -> [ReferenceKey] {
-        game.combatActors().map(\.key)
+        game.actorWorld.combatActors().map(\.key)
     }
 
     func actorName(_ holder: ActorValueHolder) -> String {
-        game.name(ofActorValueHolder: holder)
+        ActorValueCoordinator.name(of: holder)
     }
 
     func itemName(_ item: FormID) -> String {

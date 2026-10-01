@@ -122,7 +122,7 @@ extension GameViewController {
     /// on each other: magic effects write through the actor-value surface, so
     /// the surface has to exist first.
     private func wireActorSystems(provider: any WorldDataProviding, renderer: Renderer) {
-        wireActorValues(provider: provider, renderer: renderer)
+        actorWorld.wireActorValues(provider: provider, renderer: renderer)
         magicWorld.wireEffects(provider: provider, renderer: renderer)
         // A cast spends an actor value and applies effects through the effect
         // runtime, so both exist first.
@@ -132,16 +132,16 @@ extension GameViewController {
         magicWorld.wireEnchantments(provider: provider)
         // After the cast loop, which takes the perk runtime by value so a spell
         // cost folds through the `Mod Spell Cost` entry point.
-        wirePerks(provider: provider)
+        progressionWorld.wirePerks(provider: provider)
         // Memberships resolve through the template chain the actor-value
         // baselines already indexed.
         factionWorld.wireFactions(provider: provider)
         inventoryWorld.wireVendors(provider: provider)
         // Writes through the actor-value runtime and reads the equipment runtime.
-        wireSkills(provider: provider)
+        progressionWorld.wireSkills(provider: provider)
         // Hands itself to the skill runtime and checks a perk spend against the
         // perk runtime and the AVIF trees.
-        wireProgression(provider: provider)
+        progressionWorld.wireProgression(provider: provider)
         // Ownership resolves against the FACT store the hostility derivation
         // uses, and the reporter joins the take path the world items built.
         crimeWorld.wireCrime(provider: provider)

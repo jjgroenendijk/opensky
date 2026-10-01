@@ -163,7 +163,7 @@ extension GameViewController: AINavigationControlProviding {
     private func aiActorOptions() -> [AIActorOption] {
         guard let renderer else { return [] }
         let eye = renderer.freeFlyCamera.position
-        return combatActors()
+        return actorWorld.combatActors()
             .map { actor in
                 AIActorOption(
                     key: actor.key,

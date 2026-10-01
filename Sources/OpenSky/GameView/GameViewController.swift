@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyActors
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCrime
@@ -16,6 +17,7 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
@@ -177,18 +179,26 @@ final class GameViewController: NSViewController {
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     /// Player behavior graph + rendered body state.
     var playerBodyBridge = PlayerBodyBridgeState()
-    /// Actor values: the damage/restore/regeneration runtime, the HUD meter gate and the
-    /// panel's last outcome line.
-    var actorValues = ActorValueBridgeState()
+    /// Actor values: damage, restore, regeneration, and the panel controls.
+    lazy var actorValues: ActorValueCoordinator = {
+        let actorValues = ActorValueCoordinator(store: worldState)
+        actorValues.attach(world: actorWorld)
+        return actorValues
+    }()
+
+    lazy var actorWorld = ActorWorldAdapter(game: self)
 
     /// Active effects, spellcasting and item enchantments. Its runtimes stay nil without game
     /// data.
     let magic = MagicCoordinator()
     lazy var magicWorld = MagicWorldAdapter(game: self)
 
-    /// Perks: the ownership runtime, the entry-point evaluator behind every wired combat and
-    /// magic seam, and the authored `PRKR` baselines.
-    var perks = PerkBridgeState()
+    /// Perk ownership and the entry points every combat and magic seam folds in.
+    lazy var perks: PerkCoordinator = {
+        let perks = PerkCoordinator()
+        perks.attach(world: progressionWorld)
+        return perks
+    }()
 
     /// Memberships, relationship ranks and derived hostility. Its runtimes stay nil without
     /// game data.
@@ -198,13 +208,14 @@ final class GameViewController: NSViewController {
     let crime = CrimeCoordinator()
     lazy var crimeWorld = CrimeWorldAdapter(game: self)
 
-    /// Skill advancement: the use-to-experience-to-level runtime every combat and magic seam
-    /// reports into, and the last advance the readouts show.
-    var skills = SkillBridgeState()
+    /// Skill advancement, character leveling, and the Progression panel.
+    lazy var progression: ProgressionCoordinator = {
+        let progression = ProgressionCoordinator(perks: perks)
+        progression.attach(world: progressionWorld)
+        return progression
+    }()
 
-    /// Character leveling: the level runtime skill advancement banks into, the AVIF perk-tree
-    /// index a perk-point spend is validated against, and the last outcome line.
-    var progression = ProgressionBridgeState()
+    lazy var progressionWorld = ProgressionWorldAdapter(game: self)
 
     /// Death and ragdoll: the runtime, the per-skeleton ragdoll definitions it spawns from, and
     /// the panel's last outcome line.

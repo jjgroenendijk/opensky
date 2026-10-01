@@ -3,6 +3,7 @@
 // binds script instance lifetime to cell streaming, and ticks it from the
 // renderer's world-simulation hook.
 
+import OpenSkyActors
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyFormatsESM
@@ -11,6 +12,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
@@ -168,31 +170,32 @@ extension GameViewController {
     }
 
     /// The perk natives' collaborators. Closures, because `wirePerks` runs
-    /// after this step. The mutation closure does the whole write, because
-    /// `PerkRuntime` is a value this controller owns and granting a perk must
-    /// reconcile its abilities in the same call.
+    /// after this step. Granting a perk reconciles its abilities in the same call.
     private func wirePerkNatives(bridge: PapyrusWorldStateBridge) {
         bridge.mutatePerks = { [weak self] mutation, perk, actor in
-            guard let self, let holder = actorValueHolder(for: actor) else { return false }
+            guard let self, let holder = actorWorld.actorValueHolder(for: actor) else {
+                return false
+            }
             return switch mutation {
-            case .add: addPerk(perk, to: holder)
-            case .remove: removePerk(perk, from: holder)
+            case .add: perks.add(perk, to: holder)
+            case .remove: perks.remove(perk, from: holder)
             }
         }
         bridge.perkOwnership = { [weak self] key in
-            self?.perkOwnership(of: key)
+            self?.perks.ownership(of: key)
         }
-        // `wireSkills` runs after this step too, and the closure carries the
-        // whole write because `SkillAdvancementRuntime` is a struct this
-        // controller owns by value.
+        // `wireSkills` and `wireProgression` run after this step too.
         bridge.advanceSkill = { [weak self] advance, index, magnitude in
-            self?.advancePlayerSkill(advance, at: index, by: magnitude) ?? false
+            guard let progression = self?.progression else { return false }
+            return switch advance {
+            case .advance: progression.advanceSkill(index, byUse: magnitude)
+            case .increment: progression.incrementSkill(index)
+            }
         }
-        // `wireProgression` runs after this step as well. A zero
-        // delta is the read `Game.GetPerkPoints` makes, which is why one
-        // closure answers both natives.
+        // A zero delta is the read `Game.GetPerkPoints` makes, so one closure
+        // answers both natives.
         bridge.modifyPerkPoints = { [weak self] delta in
-            self?.modifyPlayerPerkPoints(by: delta)
+            self?.progression.modifyPerkPoints(by: delta)
         }
         // `wireCrime` runs after this step too, so the reporter is
         // reached through a getter rather than captured — the same reason every

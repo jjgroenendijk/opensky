@@ -18,7 +18,7 @@ extension CombatWorldAdapter {
         guard
             let runtime = game.magic.caster,
             let values = game.actorValues.runtime,
-            let holder = game.actorValueHolder(for: key)
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return nil }
         game.magic.grantAuthoredSpells(to: holder)
         return CombatCastingFacts(
@@ -32,7 +32,7 @@ extension CombatWorldAdapter {
     func beginCast(_ spell: ReferenceKey, by key: ReferenceKey) -> Bool {
         guard
             let runtime = game.magic.caster,
-            let holder = game.actorValueHolder(for: key),
+            let holder = game.actorWorld.actorValueHolder(for: key),
             (try? runtime.spellbook.equip(spell, in: Self.castHand, on: holder)) != nil
         else { return false }
         return runtime.begin(Self.castHand, on: holder).failure == nil
@@ -42,7 +42,9 @@ extension CombatWorldAdapter {
     /// An NPC has no button still held, so that cast is dropped instead.
     @discardableResult
     func releaseCast(by key: ReferenceKey) -> Bool {
-        guard let runtime = game.magic.caster, let holder = game.actorValueHolder(for: key)
+        guard
+            let runtime = game.magic.caster,
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return false }
         let outcome = runtime.release(Self.castHand, on: holder)
         if runtime.phase(of: Self.castHand, on: key).isCasting {
@@ -52,7 +54,9 @@ extension CombatWorldAdapter {
     }
 
     func cancelCast(by key: ReferenceKey) {
-        guard let runtime = game.magic.caster, let holder = game.actorValueHolder(for: key)
+        guard
+            let runtime = game.magic.caster,
+            let holder = game.actorWorld.actorValueHolder(for: key)
         else { return }
         runtime.cancel(Self.castHand, on: holder)
     }

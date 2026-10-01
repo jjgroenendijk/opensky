@@ -95,7 +95,7 @@ extension InventoryWorldAdapter: InventoryWorld {
     }
 
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String? {
-        game.magic.enchantmentLine(of: item, on: game.actorValueHolder(for: owner))
+        game.magic.enchantmentLine(of: item, on: game.actorWorld.actorValueHolder(for: owner))
     }
 
     var enchantmentCacheReadout: EnchantmentCacheReadout {
