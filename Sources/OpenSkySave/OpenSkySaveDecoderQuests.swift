@@ -105,16 +105,14 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
         into entries: [WorldStateSnapshotEntry]
     ) -> [WorldStateSnapshotEntry] {
         guard !aliases.isEmpty else { return entries }
-        var deltasByKey = Dictionary(uniqueKeysWithValues: entries.map { ($0.key, $0.delta) })
+        var deltasByKey = OpenSkySaveDeltaMerge.index(entries)
         for entry in aliases {
             var delta = deltasByKey[entry.key] ?? ReferenceStateDelta()
             let existing = delta.component(QuestAliasState.self) ?? .empty
             delta.set(QuestAliasState(fills: existing.fills, locationFills: entry.fills).erased)
             deltasByKey[entry.key] = delta
         }
-        return deltasByKey.keys.sorted().compactMap { key in
-            deltasByKey[key].map { WorldStateSnapshotEntry(key: key, delta: $0) }
-        }
+        return OpenSkySaveDeltaMerge.sorted(deltasByKey)
     }
 
     // MARK: - Private
