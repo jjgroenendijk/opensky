@@ -27,7 +27,8 @@ All integers and floats are little-endian.
 ## ACHR
 
 A placed NPC. It has the same shape as REFR and lives in the same CELL child groups. An
-ACHR that is persistent in a worldspace is stored under the persistent cell at (0,0).
+ACHR that is persistent in a worldspace is stored under the worldspace persistent cell
+([ESM groups](/formats/esm.md#worldspace-persistent-cell)).
 
 | field | type | meaning |
 | --- | --- | --- |

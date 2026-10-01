@@ -28,7 +28,7 @@ When a scene is built, each drawable `DOOR` reference with an `XTEL` is kept wit
 and target. So the main thread can pick a door without reading plugin bytes.
 
 Exterior teleport doors are persistent. `Skyrim.esm` stores them under the worldspace's
-persistent cell at (0, 0), not in the grid cell where they stand. The builder takes each such
+persistent cell, not in the grid cell where they stand. The builder takes each such
 door's position, finds its real cell by dividing by 4096 and rounding down, and adds the door to
 that cell. The same rule picks the exterior cell to return to.
 

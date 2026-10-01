@@ -99,8 +99,8 @@ nonisolated public final class CellSceneBuilder {
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
-    public var exteriorPersistentTeleportRefs: [UInt32: [PlacedReference]] = [:]
-    /// Keyed by WRLD FormID, with the same ownership rule as the teleport refs.
+    public var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
+    /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
     public var actorVisualResolver: ActorVisualResolver?
@@ -318,6 +318,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// Depth-first; matches the decoded XCLC grid, never the unreliable block labels.
+    /// Skips the persistent CELL, which also carries XCLC (0,0) (`persistentCell(in:)`).
     nonisolated public func findCell(
         in group: ESMGroup,
         gridX: Int32,
@@ -328,7 +329,7 @@ nonisolated extension CellSceneBuilder {
         guard let children = childrenOrSkip(group) else { return nil }
         for (index, child) in children.enumerated() {
             switch child {
-            case let .record(record) where record.type == "CELL":
+            case let .record(record) where record.type == "CELL" && group.kind != .worldChildren:
                 guard
                     let cell = decodeOrSkip(record, using: {
                         try Cell(record: $0, localized: localized)
@@ -351,6 +352,31 @@ nonisolated extension CellSceneBuilder {
             default:
                 break
             }
+        }
+        return nil
+    }
+
+    /// The worldspace persistent CELL: the one CELL stored directly in the world
+    /// children group, not in a block (xEdit names it "<Persistent Worldspace Cell>").
+    nonisolated public func persistentCell(
+        in worldChildren: ESMGroup,
+        localized: Bool
+    ) -> FoundCell? {
+        guard let children = childrenOrSkip(worldChildren) else { return nil }
+        for (index, child) in children.enumerated() {
+            guard
+                case let .record(record) = child, record.type == "CELL",
+                let cell = decodeOrSkip(record, using: {
+                    try Cell(record: $0, localized: localized)
+                })
+            else { continue }
+            return FoundCell(
+                cell: cell,
+                formID: record.formID,
+                children: cellChildrenGroup(
+                    following: index, in: children, cellFormID: record.formID
+                )
+            )
         }
         return nil
     }

@@ -95,8 +95,9 @@ extension CellSceneBuilderFixture {
         return ESMFixture.field(type, data)
     }
 
-    /// Worldspace persistent CELL at grid (0,0) holding cross-cell `refs` in
-    /// its persistent children group (door-handling storage pattern).
+    /// Worldspace persistent CELL holding cross-cell `refs` in its persistent
+    /// children group. Like Skyrim.esm, it sits directly in the world children
+    /// (pass as `extraWorldChildren`) and carries XCLC (0,0) plus flag 0x400.
     public func persistentActorCell(
         refs: Data,
         cellID: UInt32 = 0x41,
@@ -105,6 +106,7 @@ extension CellSceneBuilderFixture {
         let cell = ESMFixture.record(
             "CELL",
             formID: cellID,
+            flags: 0x400,
             data: cellFields(
                 editorID: editorID,
                 grid: (0, 0),
@@ -118,12 +120,7 @@ extension CellSceneBuilderFixture {
             groupType: 6,
             contents: ESMFixture.childGroup(parent: cellID, groupType: 8, contents: refs)
         )
-        let subBlock = ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 5, contents: cell + children
-        )
-        return ESMFixture.exteriorBlock(
-            x: 0, y: 0, groupType: 4, contents: subBlock
-        )
+        return cell + children
     }
 
     /// The NPC chain of `actorChainRecords`, plus an OTFT outfit (cuirass), a

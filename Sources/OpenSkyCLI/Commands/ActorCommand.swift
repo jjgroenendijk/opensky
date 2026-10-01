@@ -246,7 +246,7 @@ extension ActorCommand {
     }
 
     /// ACHRs from every cell in the radius plus the worldspace persistent
-    /// cell at (0,0), persistent placements mapped to cells by position and
+    /// CELL, persistent placements mapped to cells by position and
     /// deduplicated by FormID (door-handling pattern).
     private static func collectActors(
         world: ESMGroup,
@@ -278,9 +278,9 @@ extension ActorCommand {
                 }
             }
         }
-        // Worldspace persistent refs are stored at grid (0,0); physical
-        // position decides which streamed cell owns them.
-        if let persistent = CLIWorldTreeWalk.findCell(in: world, x: 0, y: 0, localized: localized) {
+        // Worldspace persistent refs are stored in the persistent CELL;
+        // physical position decides which streamed cell owns them.
+        if let persistent = CLIWorldTreeWalk.persistentCell(in: world, localized: localized) {
             forEachActor(in: persistent.children, counting: &collection) { actor in
                 let coordinate = CellGridManager.cellCoordinate(for: actor.placement.position)
                 guard

@@ -77,6 +77,23 @@ For types 4 and 5, Y comes before X. UESP warns that the Creation Kit "ignore" f
 damage label bytes. So OpenSky walks groups by size only and never trusts a label to steer
 the walk.
 
+### Worldspace persistent cell
+
+A world children group (type 1) holds one `CELL` directly, before the exterior blocks. This
+is the persistent cell of the worldspace. Its children group holds the persistent `REFR` and
+`ACHR` records of the whole worldspace. Each one belongs to the grid cell its position falls
+in, so OpenSky places it there.
+
+The persistent cell also has an `XCLC` grid of (0, 0). So a grid lookup must skip it, or it
+finds the persistent cell instead of the real (0, 0) cell in the blocks. OpenSky tells the two
+apart by where the `CELL` sits: directly in the type 1 group. xEdit uses the same rule: it names
+a `CELL` whose container is a type 1 group `<Persistent Worldspace Cell>`
+(`Core/wbImplementation.pas`, branch `dev-4.1.6`). UESP lists record header flag `0x400` on
+`CELL` as "Persistent Cell?", with a question mark, so OpenSky does not rely on the flag.
+
+Confirmed on `Skyrim.esm`: all 36 worldspaces have exactly one such `CELL`. Each has `XCLC`
+(0, 0) and header flag `0x400`. Tamriel also has a separate block cell at (0, 0).
+
 ## Field: 6-byte header, then data
 
 A field is a char4 type, a uint16 `dataSize`, and the data. The fields fill the record's
