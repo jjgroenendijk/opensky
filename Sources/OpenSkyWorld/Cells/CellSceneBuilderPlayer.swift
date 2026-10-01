@@ -97,12 +97,8 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
             }
     }
 
-    /// Resolves the player's appearance and assembles it, once for each rig.
-    ///
-    /// One resolve, two projections: the first-person arms are the
-    /// third-person answer put through `firstPersonProjection`, so the equipped
-    /// set, the slot mask, and the M12 attachment path cannot disagree between
-    /// the two rigs (`ActorVisualResolutionFirstPerson.swift`).
+    /// Resolves the player's appearance once and assembles both rigs. The arms are the
+    /// third-person answer through `firstPersonProjection`, so the rigs cannot disagree.
     private func assemblePlayer(
         equipped: [FormID]?,
         firstPerson: Bool,

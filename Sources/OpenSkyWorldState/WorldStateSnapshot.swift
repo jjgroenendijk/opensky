@@ -1,15 +1,7 @@
-// Deterministic world-state snapshot (issue #159, roadmap item 10.1.2): the
-// immutable value `WorldStateStore` hands to anything that is not the main
-// thread.
-//
-// `WorldStateStore` is main-actor owned and holds dictionaries, whose iteration
-// order is not deterministic. A snapshot flattens those dictionaries into an
-// array ordered by `ReferenceKey`'s documented total order, so two stores that
-// reached the same end state through different mutation orders produce equal
-// snapshots. That property is what makes the snapshot usable as save input
-// (10.1.4) and as a diffable UI readout (10.1.5).
-//
-// Documented in docs/engine/runtime-state.md.
+// The immutable value `WorldStateStore` hands off the main actor. Entries are in
+// `ReferenceKey` order, so equal end states give equal snapshots whatever the
+// mutation order. That makes it save input and a diffable readout.
+// See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -26,9 +18,8 @@ nonisolated public struct WorldStateSnapshotEntry: Equatable, Sendable {
     }
 }
 
-/// One global variable whose runtime value deviates from its plugin default
-/// (issue #165). Globals with no override never appear, for the same reason
-/// clean references do not: the default is re-derived from `GlobalStore`.
+/// One global whose runtime value differs from its plugin default. Others never
+/// appear: `GlobalStore` re-derives them.
 nonisolated public struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
     /// The GLOB record's session-stable key.
     public let key: ReferenceKey
@@ -40,35 +31,21 @@ nonisolated public struct WorldStateGlobalSnapshotEntry: Equatable, Sendable {
     }
 }
 
-/// Immutable, order-independent view of every runtime deviation in a store.
-///
-/// Only dirty references appear: a reference with no delta is, by definition,
-/// exactly what the plugin says it is, and the snapshot's consumer re-derives
-/// that from the record index rather than from a copy here.
-///
-/// Equality is value equality over the ordered entries plus the allocator
-/// position, so it is a genuine "same end state" test rather than a same-object
-/// test. Mutation history is deliberately absent — the journal is a separate,
-/// bounded, order-dependent product of the same store. `sequence` is excluded
-/// from equality for the same reason: it says when the snapshot was taken, not
-/// what state it describes, and two stores that reached the same end state
-/// through different numbers of mutations are still equal.
+/// Every runtime deviation in a store, independent of mutation order. Only dirty
+/// references appear. Equality covers the entries and the allocator position, not
+/// `sequence`, so it tests "same end state". The journal is separate.
 nonisolated public struct WorldStateSnapshot: Equatable, Sendable {
     /// Dirty references in `ReferenceKey` total order.
     public let entries: [WorldStateSnapshotEntry]
-    /// Overridden global variables, also in `ReferenceKey` total order
-    /// (issue #165). Part of equality: two sessions whose globals differ are
-    /// not in the same end state.
+    /// Overridden globals, in `ReferenceKey` order. Part of equality.
     public let globals: [WorldStateGlobalSnapshotEntry]
     /// The store's generated-key allocator position at snapshot time. Included
     /// because a restored session must resume allocating where this one left
     /// off, and because two stores that allocated different numbers of
     /// generated keys are not in the same end state.
     public let nextGeneratedSequence: UInt64
-    /// The store's journal sequence at snapshot time, which is monotonic across
-    /// the session (issue #160). A cell built from this snapshot records the
-    /// value on its `CellScene`, so a later comparison against the store's
-    /// current sequence tells the streamer whether the built scene is stale.
+    /// The store's journal sequence at snapshot time, monotonic per session. A cell
+    /// built from this snapshot keeps it, so the streamer can tell when it is stale.
     public let sequence: UInt64
 
     public static let empty = WorldStateSnapshot(entries: [], nextGeneratedSequence: 1, sequence: 0)

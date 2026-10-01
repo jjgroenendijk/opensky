@@ -25,16 +25,9 @@ extension Renderer {
         updateAudio(deltaTime: delta)
     }
 
-    /// Pushes the camera pose as the listener, advances in-flight gain ramps by
-    /// `deltaTime` seconds, and retires finished or streamed-away sources.
-    /// AVFAudio advances playback itself on its own render thread; `deltaTime`
-    /// drives only the engine-side fades, which is why a paused frame (which
-    /// never reaches here) freezes a crossfade instead of skipping through it.
-    ///
-    /// The whole update is timed into `lastAudioUpdateMS`, which the offscreen
-    /// benchmark samples per frame the same way it samples the animation and
-    /// shadow updates. With no engine attached the guard below returns before
-    /// the clock is read, so the instrumentation costs one optional test.
+    /// Pushes the listener pose, advances gain ramps by `deltaTime` and retires finished
+    /// sources. A paused frame never gets here, so a crossfade freezes. Timed into
+    /// `lastAudioUpdateMS` for the offscreen benchmark.
     public func updateAudio(deltaTime: Float) {
         guard let worldAudio else {
             lastAudioUpdateMS = 0
@@ -62,14 +55,8 @@ extension Renderer {
         )
     }
 
-    /// Drains the locomotion bridge's fired graph events into the footstep
-    /// director (issue #352).
-    ///
-    /// Draining unconditionally — even with no director and outside walk
-    /// mode — is deliberate: the queue must not accumulate events from a mode
-    /// where nothing is listening and then flush them all at once the moment
-    /// audio is switched on. Footsteps are heard at the capsule's feet rather
-    /// than at the listener, which is what makes third person sound right.
+    /// Drains the bridge's graph events into the footstep director. Always drains, so no
+    /// backlog plays at once when audio turns on. Steps sound at the capsule's feet.
     private func routeFootstepEvents() {
         let events = locomotion.graphEvents.drain(locomotion.footstepEventConsumer)
         guard movementMode.isPlayerControlled else { return }

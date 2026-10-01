@@ -1,39 +1,9 @@
-// Magic condition functions (issue #474, roadmap item 19.11), split out of
-// `ConditionFunctions` the way the actor and M18 data families are.
-//
-// Every function here reads the `magic` seam and nothing else, so each answers
-// without a world, a clock or a store behind it — which is what lets the whole
-// family be driven from a literal in a test.
-//
-// Indices below are the raw stored numbers; the Creation Kit spells each 4096
-// higher. They come from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas, whose
-// condition-function table lists:
-//
-//   (Index: 214; Name: 'HasMagicEffect'; ParamType1: ptMagicEffect)
-//   (Index: 223; Name: 'IsSpellTarget'; ParamType1: ptEffectItem)
-//   (Index: 264; Name: 'HasSpell'; ParamType1: ptEffectItem)
-//   (Index: 570; Name: 'HasEquippedSpell'; ParamType1: ptCastingSource)
-//   (Index: 571; Name: 'GetCurrentCastingType'; ParamType1: ptCastingSource)
-//   (Index: 572; Name: 'GetCurrentDeliveryType'; ParamType1: ptCastingSource)
-//   (Index: 632; Name: 'IsCasting')
-//   (Index: 699; Name: 'HasMagicEffectKeyword'; ParamType1: ptKeyword)
-//
-// The eight were chosen by measuring the active load order rather than by
-// taste; the per-function counts are in docs/engine/condition-functions.md.
-//
-// ## The one place OpenSky answers a narrower question than the engine did
-//
-// The Creation Kit wiki states that `HasMagicEffect` and
-// `HasMagicEffectKeyword` are about *carrying* an effect rather than being
-// affected by it: "a magic effect will cause this function to return 1 if the
-// effect-side conditions are met, even if the spell-side conditions aren't met
-// and the effect isn't actually active. In other words, 'having a magic effect'
-// is distinct from 'being affected by a magic effect', and this function tests
-// for the former." (<https://ck.uesp.net/wiki/HasMagicEffect>) OpenSky stores
-// only effects that were actually applied, so it answers the *latter*: an
-// effect whose spell-side condition failed was never applied and is invisible
-// here. The difference is recorded in docs/engine/condition-functions.md rather than
-// papered over; every effect that is running answers identically.
+// Magic condition functions, reading only the `magic` seam. Raw indices from xEdit
+// wbDefinitionsTES5.pas: 214 HasMagicEffect, 223 IsSpellTarget, 264 HasSpell, 570
+// HasEquippedSpell, 571 GetCurrentCastingType, 572 GetCurrentDeliveryType, 632
+// IsCasting, 699 HasMagicEffectKeyword. Only applied effects are stored, so
+// `HasMagicEffect` means "affected by", narrower than the wiki's "having".
+// See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
@@ -120,14 +90,9 @@ nonisolated extension ConditionFunctions {
     // MARK: - What a hand is doing
 
     private static func installCastingState(_ registry: inout ConditionFunctionRegistry) {
-        // "HasEquippedSpell or HasSpell will indicate whether or not the
-        // reference actor has a spell equipped at a particular Casting Source."
-        // (<https://ck.uesp.net/wiki/HasEquippedSpell>) The same page records
-        // that the spell parameter is unreachable in the editor —
-        // "HasEquippedSpell is currently broken as a condition function. There
-        // is no selectable parameter for the Spell ID" — which is why xEdit
-        // types the one parameter as a casting source and this asks only
-        // whether the source holds anything.
+        // Whether the casting source holds a spell
+        // (<https://ck.uesp.net/wiki/HasEquippedSpell>). The spell parameter is
+        // unselectable in the editor, so xEdit types it as a casting source.
         registry.register(ConditionFunction(
             index: 570,
             name: "HasEquippedSpell",
@@ -152,13 +117,8 @@ nonisolated extension ConditionFunctions {
             }
         })
 
-        // "GetCurrentDeliveryType or GetDelivery will return the DeliveryType
-        // for the spell currently equipped on the reference actor's Casting
-        // Source ... 0 - Self, 1 - Contact, 2 - Aimed, 3 - Target Actor,
-        // 4 - Target Location"
-        // (<https://ck.uesp.net/wiki/GetCurrentDeliveryType>) The record's own
-        // vocabulary names 1 "Touch"; the wiki page's "Contact" is the same
-        // value.
+        // "0 - Self, 1 - Contact, 2 - Aimed, 3 - Target Actor, 4 - Target Location"
+        // (<https://ck.uesp.net/wiki/GetCurrentDeliveryType>). The record calls 1 "Touch".
         registry.register(ConditionFunction(
             index: 572,
             name: "GetCurrentDeliveryType",

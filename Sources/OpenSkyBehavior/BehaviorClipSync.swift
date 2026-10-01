@@ -1,27 +1,8 @@
-// Clip synchronization (issue #330): keeping two looping clips of different
-// lengths in step, and the Bethesda generator that pairs two characters on one
-// animation.
-//
-// Two mechanisms feed the same seam. A `hkbBlenderGenerator` whose
-// `m_indexOfSyncMasterChild` names a child publishes that child's playback
-// phase onto every other child, which is what stops a walk clip and a run clip
-// of different lengths from drifting out of phase as their blend weight moves.
-// A `hkbBlendingTransitionEffect` with the sync bit set publishes the outgoing
-// state's phase onto the incoming one, so a crossfade between two locomotion
-// cycles does not restart the foot pattern.
-//
-// Both write `BehaviorGraphInstance.pendingClipPhase`, which
-// `BehaviorClipEvaluation` reads. The blender's is continuous, applied every
-// update so the children stay locked; the transition's is seed-only, applied
-// when the incoming clip activates and never again, because a destination
-// clip permanently welded to the state it came from would never advance on its
-// own.
-//
-// `m_indexOfSyncMasterChild` is used by 28 blenders in the vanilla player
-// graph. It is preferred here over the blender flag bits precisely because it
-// is unambiguous: an index into a child array cannot mean anything else, while
-// the flag bit map is still unconfirmed (see the flagged assumptions in
-// `docs/engine/behavior-clips.md`).
+// Clip synchronization. A blender's `m_indexOfSyncMasterChild` publishes the
+// master's phase to its siblings every update, so walk and run clips stay in step. A
+// synced `hkbBlendingTransitionEffect` seeds the incoming clip's phase once. Both write
+// `BehaviorGraphInstance.pendingClipPhase`. The index is used over the unconfirmed
+// flag bits (docs/engine/behavior-clips.md).
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -50,16 +31,9 @@ nonisolated extension BehaviorGraphInstance {
         return nil
     }
 
-    /// `BSSynchronizedClipGenerator`: runs the clip it wraps, and takes part in
-    /// phase synchronization like any other clip because the wrapped generator
-    /// is an ordinary `hkbClipGenerator`.
-    ///
-    /// What is still owed is the part that needs a second character:
-    /// `m_SyncAnimPrefix` names the partner's half of a paired animation and
-    /// `m_fGetToMarkTime` says how long this character has to reach the shared
-    /// marker. Neither means anything until item 14.5 has two actors to align,
-    /// so every evaluation costs one tally entry rather than an invented
-    /// alignment.
+    /// `BSSynchronizedClipGenerator`: runs and syncs its wrapped clip. The paired part
+    /// (`m_SyncAnimPrefix`, `m_fGetToMarkTime`) needs a second actor, so each evaluation
+    /// adds a tally entry instead of an invented alignment.
     public func evaluateSynchronizedClip(
         _ generator: BSSynchronizedClipGenerator,
         depth: Int,

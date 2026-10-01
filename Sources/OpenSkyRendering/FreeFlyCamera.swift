@@ -1,9 +1,6 @@
-// Free-fly camera (todo 2.8): a pose in Skyrim's Z-up world (position + yaw +
-// pitch) that produces a view matrix and integrates per-frame input. Pure math
-// — no AppKit — so orientation, pitch clamp, movement direction and speed are
-// unit-testable. The AppKit input capture lives in the view layer
-// (`CameraInputState` + the MTKView responder); it hands this type a
-// `CameraInput` snapshot each frame. See docs/engine/free-fly-camera.md.
+// Free-fly camera: a Z-up pose (position, yaw, pitch) that gives a view matrix and
+// integrates input. Pure math, so it is unit-testable; the view layer hands it a
+// `CameraInput` each frame. See docs/engine/free-fly-camera.md.
 
 import OpenSkyFormatsCore
 import simd
@@ -25,22 +22,19 @@ nonisolated public struct CameraInput: Sendable {
     public var lookUp: Float = 0
     /// Shift held -> speed boost. In walk mode this is run rather than walk.
     public var boost = false
-    /// Sprint key held (issue #188). Walk mode only; fly mode ignores it.
+    /// Sprint key held. Walk mode only; fly mode ignores it.
     public var sprint = false
     /// Sneak mode, a toggle rather than a held key, so the value is the state
     /// the toggle currently sits in and not an edge.
     public var sneak = false
     /// One-shot jump request, latched by the input state until a frame drains it.
     public var jump = false
-    /// One-shot request to advance the camera mode one step around the
-    /// fly -> walk -> third-person cycle (issue #189).
+    /// One-shot request to advance one step around fly -> walk -> third person.
     public var cycleCameraMode = false
-    /// One-shot attack request, latched like jump (issue #195). Walk mode
-    /// only; fly mode ignores it.
+    /// One-shot attack request, latched like jump. Walk mode only; fly mode ignores it.
     public var attack = false
-    /// The same button as a *level* rather than an edge (issue #196). A melee
-    /// swing is a press and a bow draw is a hold, so the same binding has to
-    /// report both: melee reads `attack`, archery reads this.
+    /// The attack button as a level, not an edge: melee reads `attack` (a press), archery
+    /// reads this (a hold).
     public var attackHeld = false
     /// Block key held, a level rather than an edge — the melee runtime raises
     /// `blockStart` and `blockStop` on the changes.
@@ -186,11 +180,8 @@ nonisolated public struct FreeFlyCamera: Sendable {
         )
     }
 
-    /// Keeps a pitch shy of straight up and straight down, where `lookAt`
-    /// degenerates. Internal rather than private because the dialogue camera
-    /// aims itself at a point instead of integrating input (issue #427) and has
-    /// to land inside the same bound this camera integrates within, or the two
-    /// would disagree about what a legal view direction is.
+    /// Keeps pitch short of straight up and down, where `lookAt` degenerates. Internal,
+    /// so the dialogue camera stays inside the same bound.
     public static func clampPitch(_ pitch: Float) -> Float {
         max(-maxPitch, min(maxPitch, pitch))
     }

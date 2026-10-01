@@ -1,10 +1,8 @@
-// Process memory reading for streaming safeguards (M3.2 memory budget). Reads
-// task_vm_info.phys_footprint via task_info(TASK_VM_INFO) -- Apple's
-// ledger-based physical-footprint accounting, the same number Activity
-// Monitor's Memory column and jetsam use. Ref: Darwin <mach/task_info.h>
-// (TASK_VM_INFO / task_vm_info_data_t.phys_footprint). Used to log footprint
-// per integrated cell and to fail the streaming test before a runaway can lock
-// the machine. See docs/engine/cell-streaming.md (memory budget).
+// Process memory for the streaming memory budget. Reads
+// `task_vm_info.phys_footprint` through `task_info(TASK_VM_INFO)`, the same
+// number Activity Monitor's Memory column and jetsam use (<mach/task_info.h>).
+// It fails the streaming test before a runaway can lock the machine.
+// See docs/engine/cell-streaming.md (memory budget).
 
 import Darwin
 import Foundation

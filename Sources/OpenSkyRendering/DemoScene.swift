@@ -1,15 +1,7 @@
-// Synthetic proving scene for the static-mesh path (todo 2.6): geometry,
-// textures and placements built entirely in code — never game data (AGENTS.md
-// legal rule). Cell scene build (todo 2.7) replaces this with real content;
-// until then it exercises every pipeline feature the cell scene needs:
-// opaque + alpha-tested materials, double-sided draws, UV tiling, REFR-style
-// placement transforms, Skyrim-scale units.
-//
-// Authoring conventions (docs/decisions/coordinates.md): Z-up right-handed
-// world, 1 unit = 1.428 cm. Triangles wind counter-clockwise seen from
-// outside — that lands clockwise in Metal's y-down window coords, the
-// pipeline's front-face winding. The asymmetric layout doubles as the visual
-// check for the provisional winding + REFR yaw-sign decisions.
+// Synthetic proving scene for the static-mesh path, built entirely in code, never game
+// data (AGENTS.md). It covers opaque and alpha-tested materials, double-sided draws, UV
+// tiling and REFR-style placement. Z-up, 1 unit = 1.428 cm; triangles wind
+// counter-clockwise from outside (docs/decisions/coordinates.md).
 
 import Foundation
 import Metal

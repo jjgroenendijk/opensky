@@ -1,28 +1,14 @@
-// Value types the M10.2 half of the World > Runtime State panel reads (issue
-// #166): one game-clock sample, one global-variable sample, and one condition
-// evaluation report.
-//
-// They live beside `RuntimeStateControlProviding` and carry no AppKit, so this
-// file compiles into the app and the CLI target alike. Each type is a single
-// sample rather than a bag of protocol properties for the same reason
-// `RuntimeStateSnapshot` is: the readout must be a pure function of one engine
-// observation instead of several taken microseconds apart.
-//
-// Documented in docs/engine/runtime-state.md.
+// Value types the Runtime State panel reads: a game-clock sample, a global sample, and a
+// condition report. Each is one sample, so the readout comes from one observation.
+// See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyWorldState
 
-/// Number spelling shared by every M10.2 runtime-state readout, so a timescale,
-/// a global value and a condition's right-hand side all read the same way.
+/// Number spelling shared by runtime-state readouts, so every value reads the same way.
 nonisolated public enum RuntimeStateNumberText: Sendable {
-    /// A whole number in its integer spelling, anything else through `%g`.
-    /// The Creation Kit spells an integer-valued global and an integer CTDA
-    /// comparison without a fraction, and "1.0" beside "1" in the same readout
-    /// reads as two different values.
-    ///
-    /// A value outside the range `Int` can hold — a typo, not a game value —
-    /// falls through to `%g` rather than trapping on the conversion.
+    /// A whole number without a fraction, like the Creation Kit; anything else, or a value
+    /// outside `Int`, through `%g`.
     public static func text(_ value: Float) -> String {
         guard value.isFinite, abs(value) < 1e9, value == value.rounded() else {
             return String(format: "%g", value)
@@ -31,13 +17,8 @@ nonisolated public enum RuntimeStateNumberText: Sendable {
     }
 }
 
-/// One sample of game time: the calendar the clock projects, the timescale the
-/// advancement runs at, and whether the world simulation is paused.
-///
-/// The timescale is deliberately part of this sample even though it is not a
-/// `GameClock` property — it is the `TimeScale` GLOB — because a reader asking
-/// "what time is it and how fast is it moving?" must not see the two answers
-/// from different moments.
+/// One game-time sample: calendar, timescale and pause. The timescale is the `TimeScale`
+/// GLOB, not a clock property, but it belongs in the same sample.
 nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     /// Fractional hour of day in [0, 24).
     public let hourOfDay: Float
@@ -92,14 +73,9 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     }
 }
 
-/// One global variable as the panel shows it: what the plugin authored, what
-/// the session currently resolves, and whether those differ because a runtime
-/// override was written.
-///
-/// `isOverridden` is not `defaultValue != currentValue`. Writing a global the
-/// value it already had still records an override, and the five clock-projected
-/// time globals resolve away from their plugin default without one, so the two
-/// questions have genuinely different answers and both are shown.
+/// One global: authored value, current value, and whether an override was written. Not
+/// `defaultValue != currentValue`: writing the same value records an override, and the
+/// clock-projected time globals differ without one.
 nonisolated public struct RuntimeStateGlobalSnapshot: Equatable, Sendable {
     public let editorID: String
     /// Eight-digit hexadecimal FormID, as `FormID.description` spells it.

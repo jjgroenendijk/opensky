@@ -1,18 +1,7 @@
-// The factions an actor is authored into and the AI attributes it fights by
-// (issue #503, roadmap item 21.3): the NPC_ `SNAM` run and the `AIDT` struct,
-// both resolved through the template chain.
-//
-// Record-side and immutable, sitting beside `FactionRuntime` exactly as
-// `ActorPerkBaselineResolver` sits beside `PerkRuntime`: this half reads
-// records and knows nothing about the store, the runtime half writes the store
-// and knows nothing about records.
-//
-// One walk answers both questions because `ActorTemplateResolver`
-// `resolveFactions(base:)` resolves them together — the memberships on
-// `useFactions`, the AI data on `useAIData` — and the hostility derivation
-// needs both at once.
-//
-// Documented in docs/engine/hostility.md.
+// The factions an actor is authored into (NPC_ `SNAM`) and its AI attributes
+// (`AIDT`), through the template chain. Record-side; `FactionRuntime` is the store
+// side. One `resolveFactions(base:)` walk answers both, as hostility needs both.
+// See docs/engine/hostility.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -21,8 +10,8 @@ import OpenSkyFormatsESM
 nonisolated public struct ActorFactionBaseline: Equatable, Sendable {
     public let memberships: [ActorBase.FactionMembership]
     public let aiData: ActorAIData
-    /// The authored `CRIF`, as a raw link in the resolver's plugin (issue
-    /// #505). Nil for an actor that reports crimes to nobody.
+    /// The authored `CRIF`, as a raw link in the resolver's plugin. Nil for an actor
+    /// that reports crimes to nobody.
     public var crimeFaction: FormID?
 
     /// An actor no record describes: the player, and any generated actor.
@@ -44,13 +33,8 @@ nonisolated public struct ActorFactionBaselineResolver: Sendable {
         templates = actorValues.templates
     }
 
-    /// What plugin data authors for `base`.
-    ///
-    /// A broken template chain — a dangling TPLT, a cycle, an empty LVLN —
-    /// resolves to `ActorFactionBaseline.none` rather than propagating, the
-    /// rule every baseline resolver here states. An actor whose chain cannot be
-    /// walked then belongs to nothing and starts no fights, which is the safe
-    /// direction for a failure to fall.
+    /// What plugin data authors for `base`. A broken template chain resolves to
+    /// `ActorFactionBaseline.none`: no factions and no fights, the safe failure.
     public func baseline(for base: FormID) -> ActorFactionBaseline {
         guard let resolved = try? templates.resolveFactions(base: base) else { return .none }
         return ActorFactionBaseline(

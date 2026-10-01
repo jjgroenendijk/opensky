@@ -1,6 +1,5 @@
-// M4.5 production acceptance: fixed-step walk controller + live streaming +
-// door transitions over one observed real-install route. CLI owns printing;
-// this shared driver owns behavior and gates.
+// Walk benchmark: fixed-step walk, live streaming and door transitions over one recorded
+// route. The CLI prints; this driver owns behavior and gates.
 
 import Foundation
 import OpenSkyFormatsESM

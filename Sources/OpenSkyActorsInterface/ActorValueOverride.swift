@@ -1,44 +1,9 @@
-// What one actor value's *stored* deviation looks like (issue #496, roadmap
-// item 20.3): a base offset plus the three modifier slots, for every one of the
-// 164 vanilla actor values including the three primaries.
-//
-// ## Why an offset rather than a base
-//
-// `ActorValueEntry` is the resolved view — an absolute base plus its modifiers,
-// which is the vocabulary the Papyrus surface speaks. This is the stored view,
-// and the two differ in exactly one field, deliberately.
-//
-// The derived baseline stays authoritative. A base write records *what the
-// session did to the value*, never what the value is, so a level change, a race
-// change or a reordered load order moves every actor value with the records it
-// came from, and the session's own contribution rides on top unchanged. That is
-// the same "re-derive, never persist" rule the primaries' maximums, the
-// inventory baseline and the quest baseline already follow — stated once here
-// because item 20.5's skill advancement and item 20.6's attribute picks both
-// depend on it: a skill trained by five points is five points above whatever the
-// records now author, so it survives re-derivation *and* still gains from a
-// level-up, and neither can silently clobber the other.
-//
-// ## Which slot means what
-//
-// * `baseOffset` — what `SetActorValue` moves, as a delta from the derived
-//   baseline. Zero for an actor nothing has explicitly written.
-// * `permanent` — `ModActorValue`'s and `ForceActorValue`'s slot: an adjustment
-//   with nothing keeping it alive.
-// * `temporary` — an active magic effect's slot, which is why it is the one slot
-//   the save deliberately does not carry (`ActiveEffectRuntime` re-establishes
-//   it).
-// * `damage` — never positive, and never written for a primary: a primary's
-//   damage is the drop in its stored current value instead. See
-//   docs/engine/actor-value-store.md.
-//
-// A modifier write states itself against `ActorValueEntry` and arrives here
-// through `storing(_:baseline:)`, so there is one place an absolute base becomes
-// an offset rather than two. Only the base *increment* is stated directly
-// against the stored form, because adding to an offset needs no baseline and so
-// cannot drift through one.
-//
-// Documented in docs/engine/actor-value-store.md.
+// One actor value's stored deviation: a base offset plus three modifier slots.
+// An offset and not a base, so the records stay authoritative: a level-up or a new
+// load order still moves the value, and the session's change rides on top. The save
+// skips `temporary`, and a primary's damage lives in its current value instead.
+// `storing(_:baseline:)` is the one place an absolute base becomes an offset.
+// See docs/engine/actor-value-store.md.
 
 import Foundation
 

@@ -79,10 +79,8 @@ extension CellStreamer {
         return (Self.talkTarget(actor), actor.candidate.key)
     }
 
-    /// One picked actor as an ordinary crosshair target, so the HUD prompt, the
-    /// compass marker and the panel readout all read it through the path they
-    /// already had. The placement carries no sounds: an actor's greeting is
-    /// voice, which item 17.5 owns, not the base record's activation sound.
+    /// One picked actor as a crosshair target, so HUD prompt, compass and panel read it the
+    /// usual way. No sounds: a greeting is voice, not the base record's activation sound.
     private static func talkTarget(_ hit: TalkHit) -> InteractionTarget {
         InteractionTarget(
             interaction: PlacedInteraction(

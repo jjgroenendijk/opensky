@@ -28,14 +28,9 @@ nonisolated extension ConditionFunctions {
             }
         })
 
-        // "Returns the actor's rank in the faction. If the actor isn't in the
-        // faction, or if the run-on reference isn't actually an actor, then this
-        // returns -1." (<https://ck.uesp.net/wiki/GetFactionRank>)
-        //
-        // Only the first half of that sentence is answered with -1 here. A run-on
-        // that names no actor this session tracks has no profile, and reporting
-        // it as "in no faction" would hide a streaming gap behind a real answer,
-        // so it stays `.unavailableFactions`.
+        // "If the actor isn't in the faction ... this returns -1."
+        // (<https://ck.uesp.net/wiki/GetFactionRank>) An untracked run-on stays
+        // `.unavailableFactions`, so a streaming gap is not hidden as a real answer.
         registry.register(ConditionFunction(
             index: 73,
             name: "GetFactionRank",
@@ -47,17 +42,10 @@ nonisolated extension ConditionFunctions {
             }
         })
 
-        // "Returns the difference in rank between the current actor and target
-        // actor in the specified faction."
-        // (<https://ck.uesp.net/wiki/GetFactionRankDifference>) Parameter 1 is
-        // the faction and parameter 2 is the other actor, in that order.
-        //
-        // A non-member counts as the same -1 `GetFactionRank` reports, so the
-        // difference between a rank-2 member and an outsider is 3. The wiki
-        // states neither the non-member value nor the subtraction order for this
-        // function; the order is the sentence's own ("the current actor and
-        // target actor") and the value is its sibling's, which is the closest
-        // documented thing to a rule.
+        // <https://ck.uesp.net/wiki/GetFactionRankDifference>: parameter 1 is the
+        // faction, parameter 2 the other actor. A non-member counts as -1, as in
+        // `GetFactionRank`; the wiki states neither that nor the order, so both
+        // follow the sibling function and the sentence's own wording.
         registry.register(ConditionFunction(
             index: 60,
             name: "GetFactionRankDifference",
@@ -96,14 +84,9 @@ nonisolated extension ConditionFunctions {
             }
         })
 
-        // "Returns the actor's relationship rank with the player", over the table
-        // "4 Lover ... -4 Archnemesis"
-        // (<https://ck.uesp.net/wiki/GetRelationshipRank>). The parameter names
-        // the other side, so the player is only the usual argument rather than
-        // the only one.
-        //
-        // A pair no `RELA` record and no script names is `.unavailableFactions`
-        // rather than 0: 0 is Acquaintance, a rank vanilla authors deliberately.
+        // "4 Lover ... -4 Archnemesis" (<https://ck.uesp.net/wiki/GetRelationshipRank>).
+        // The parameter names the other side, usually the player. An unnamed pair is
+        // `.unavailableFactions`, not 0, because 0 is the authored Acquaintance.
         registry.register(ConditionFunction(
             index: 403,
             name: "GetRelationshipRank",
@@ -165,13 +148,8 @@ nonisolated extension ConditionFunctions {
         }
     }
 
-    /// One pair query: resolve parameter 1 onto a second reference, resolve the
-    /// run-on, then let `read` answer about the two of them.
-    ///
-    /// The direction is the run-on's, as it is for the detection family:
-    /// `[Observer].IsHostileToActor Target` asks what the observer makes of the
-    /// target, and reversing it would answer about the wrong actor everywhere a
-    /// relationship is not symmetric.
+    /// One pair query: resolve parameter 1 and the run-on, then `read` the two.
+    /// The run-on is the observer, because a relationship need not be symmetric.
     private static func actorPair(
         _ call: ConditionCall,
         index: UInt16,

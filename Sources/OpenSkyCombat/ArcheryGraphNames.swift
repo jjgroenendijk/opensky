@@ -1,37 +1,8 @@
-// The graph variable and event names archery binds to (issue #196, roadmap
-// item 15.5).
-//
-// Same rule as `CombatGraphNames`, and it matters more here rather than less:
-// every name below was read out of the M14 behavior census over the user's own
-// install (`logs/hkx-behavior-census.log`, produced by
-// `HKBBehaviorCensusRealDataTests`), never from memory. Each one is quoted
-// exactly as third-person `meshes\actors\character\behaviors\0_master.hkx`
-// spells it, and the census confirms all of them are declared by that file —
-// which is the graph OpenSky attaches — as well as by `1hm_behavior.hkx`,
-// `horsebehavior.hkx`, and the `_1stperson` copies of both.
-//
-// Vanilla's capitalization is not consistent and is reproduced rather than
-// tidied: `arrowRelease` and `bowDrawn` are lower-camel while `BowDraw` and
-// `BowRelease` are upper-camel, in the same file.
-//
-// The raised/observed split is the direction of travel this engine uses a name
-// in, not a property of the data — Havok events have no direction. Two of them
-// appear on both sides on purpose:
-//
-// * `bowReset` is raised when the engine cancels a draw (the bow is put away
-//   mid-pull) and is also fired by the graph when the draw collapses on its
-//   own, and `ArcheryState` acts on the fired one either way.
-// * `attackRelease` is shared with melee, where 15.4 already names it as the
-//   release that ends a held power attack. Loosing an arrow is the same
-//   release, on the same button, so the name is reused rather than duplicated.
-//
-// `arrowRelease` is the important one: it is the frame the arrow leaves the
-// string, and it is the frame `ProjectileRuntime` spawns a projectile on. The
-// engine does not time a shot beside the animation for exactly the reason
-// 15.4's contact frame is not timed either — a release invented from a clock
-// fires at a moment the bow is not at.
-//
-// Documented in docs/engine/archery.md.
+// Graph names archery binds to, quoted from the behavior census of this install
+// (`HKBBehaviorCensusRealDataTests`), never memory, with vanilla's mixed case. Raised
+// vs observed is our direction of use. `bowReset` and `attackRelease` appear on both
+// sides. `arrowRelease` is the frame the projectile spawns; no clock times it.
+// See docs/engine/archery.md.
 
 import Foundation
 
@@ -78,14 +49,8 @@ nonisolated public enum ArcheryGraphNames: Sendable {
     /// Whether the bow is at full draw. Bool, `0_master.hkx`.
     public static let isBowDrawn = "bBowDrawn"
 
-    /// Every variable the archery runtime writes.
-    ///
-    /// `iState_NPCBow`, `iState_NPCBowDrawn` and `iState_NPCBowDrawnQuickShot`
-    /// are deliberately absent, for the reason `CombatGraphNames` leaves
-    /// `iRightHandType` absent: the census gives their names and their `int32`
-    /// type and nothing states the encoding, so a guessed integer would select
-    /// an animation set silently rather than visibly. `bowZoom`, `bowZoomAmt`
-    /// and `bAimActive` are absent because Eagle Eye zoom is a perk effect and
-    /// perks are M18's.
+    /// Every variable the archery runtime writes. The `iState_NPCBow*` integers are left
+    /// out, because their encoding is unknown and a guess would silently pick the wrong
+    /// set. Eagle Eye zoom variables are a perk effect and are not written.
     public static let variables = [isBowDrawn]
 }

@@ -1,25 +1,7 @@
-// The perks an actor is authored with (issue #497, roadmap item 20.4): the NPC_
-// `PRKR` run resolved through the template chain.
-//
-// Record-side and immutable, sitting beside `PerkRuntime` exactly as
-// `ActorSpellBaselineResolver` sits beside `SpellbookRuntime`: this half reads
-// records and knows nothing about the store, the runtime half writes the store
-// and knows nothing about records.
-//
-// ## One list, one flag
-//
-// There is no race half. A RACE record carries an `SPLO` run and no perk run,
-// so an actor's authored perks are the NPC_ list alone. That list inherits
-// through the ACBS `Use Spell List` flag, which UESP names "Use spelllist (both
-// spells and perks)" — the same flag and the same chain the spell baseline
-// walks, which is why both are read out of one `resolveSpells` call rather than
-// two walks of the same templates.
-//
-// Nothing is expanded. A `PRKR` entry names a PERK directly; there is no
-// leveled-perk record for it to route through, which is the one way this
-// differs from the spell baseline.
-//
-// Documented in docs/engine/perks.md.
+// The perks an actor is authored with: the NPC_ `PRKR` run through the template
+// chain. Record-side; `PerkRuntime` is the store side. A RACE has no perk run, and
+// the ACBS "Use spelllist (both spells and perks)" flag (UESP) drives inheritance,
+// so one `resolveSpells` walk serves both. See docs/engine/perks.md.
 
 import Foundation
 import OpenSkyFormatsESM

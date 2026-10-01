@@ -1,8 +1,5 @@
-// The static half of a movie's GPU package, split out of RendererSWFMovie.swift
-// (M8.3.2) so the mutable half stays inside the file-size limit. Everything
-// here is built once per assigned movie and survives every runtime update:
-// tessellated shape geometry with its per-fill run table, bitmap textures, and
-// the gradient ramp atlas.
+// The static half of a movie's GPU package, built once per movie: tessellated shapes
+// with their fill-run table, bitmap textures, and the gradient ramp atlas.
 
 import Metal
 import OpenSkyFormatsSWF

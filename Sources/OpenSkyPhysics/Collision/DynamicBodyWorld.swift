@@ -34,8 +34,7 @@ nonisolated public struct DynamicBodyPlacement: Sendable {
     }
 }
 
-/// Counts one refresh of the physics panel shows (item 15.9 ships the panel;
-/// this is the value it reads).
+/// Counts for one refresh of the physics panel.
 nonisolated public struct DynamicBodyStatsSnapshot: Equatable, Sendable {
     public var bodyCount = 0
     public var activeBodyCount = 0

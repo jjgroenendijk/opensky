@@ -1,27 +1,7 @@
-// Active-effect accounting (issue #469, roadmap item 19.6): applying a magic
-// item's effect list to an actor, holding the timed ones as a component, and
-// ticking them on the same fixed step regeneration runs on.
-//
-// A thin layer beside `WorldStateStore`, following the `InventoryRuntime`,
-// `QuestRuntime` and `ActorValueRuntime` precedent. The store is the generic
-// substrate that knows about keys, components, journalling and snapshots and
-// deliberately knows nothing about records; effects need `MagicEffectStore` to
-// resolve an EFID and `ActorValueRuntime` to move a value, neither of which
-// belongs inside it. Every mutation writes through `WorldStateStore.set`, so it
-// lands in the journal, in the dirty counts and in the save.
-//
-// Headless and AppKit-free: this compiles into `openskycli` and is testable
-// without a window. `@MainActor` only because the store it writes to is.
-//
-// Failure model: nothing here throws. An EFID that resolves to no MGEF, an
-// archetype with no implementation, a condition list that evaluates false —
-// each is a tally bucket and an entry that applied nothing, never an error. A
-// potion with one unimplemented effect still applies its other ones.
-//
-// Mutating rather than pure because the tally advances as it works, the same
-// reason `ConditionEvaluator` is mutating.
-//
-// Documented in docs/engine/magic.md.
+// Active-effect accounting: applies a magic item's effects, stores the timed ones, and
+// ticks them on the regeneration step, writing through `WorldStateStore.set`. Nothing
+// throws: an unresolved EFID, an unimplemented archetype or a false condition is a tally
+// entry, and the other effects still apply. See docs/engine/magic.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -85,26 +65,16 @@ public struct ActiveEffectRuntime {
         state(of: holder).effects
     }
 
-    /// Whether `holder` carries an application of `effect` — the shape
-    /// `HasMagicEffect` needs (issue 19.11 registers the function itself).
+    /// Whether `holder` carries an application of `effect`, as `HasMagicEffect` needs.
     public func hasMagicEffect(_ effect: ReferenceKey, on holder: ActorValueHolder) -> Bool {
         state(of: holder).hasEffect(effect)
     }
 
     // MARK: - Applying
 
-    /// Applies one magic item's effect list to `target`.
-    ///
-    /// Every entry is planned and applied independently: an entry the engine
-    /// cannot carry out is counted and skipped, and the rest still land. Instant
-    /// entries move the actor value immediately and are stored nowhere; timed
-    /// ones become components.
-    ///
-    /// - Parameter isConstant: whether the record handing over the list is a
-    ///   constant effect — a worn item's enchantment (issue #472). Every entry
-    ///   then becomes a `constant` effect that persists until it is dispelled,
-    ///   rather than an instant application of its zero duration.
-    /// - Returns: the timed effects that were stored, in application order.
+    /// Applies one magic item's effects to `target`, each on its own: instant ones move
+    /// the value now, timed ones are stored. `isConstant` (a worn enchantment) makes each a
+    /// `constant` effect. Returns the stored timed effects, in order.
     @discardableResult
     public mutating func apply(
         _ entries: [MagicItemEffect],
@@ -182,14 +152,8 @@ public struct ActiveEffectRuntime {
 
     // MARK: - Reload
 
-    /// Re-establishes the temporary modifier slot every stored effect owns.
-    ///
-    /// The save deliberately does not persist the temporary modifier (see
-    /// `OpenSkySaveFormat.ChunkTag.actorValueOverrides`), because the effect that
-    /// established it is what re-establishes it. This is that step, and a loaded
-    /// session calls it once per actor carrying effects.
-    ///
-    /// - Returns: how many actor values were re-established.
+    /// Rebuilds each stored effect's temporary modifier after a load, because the save
+    /// skips that slot (`ChunkTag.actorValueOverrides`). Returns the values rebuilt.
     @discardableResult
     public func reestablishModifiers(on holder: ActorValueHolder) -> Int {
         let owned = state(of: holder).ownedModifiers
@@ -297,20 +261,9 @@ public struct ActiveEffectRuntime {
         return owned
     }
 
-    /// Hands back every modifier slot `doomed` owns, so an expired or dispelled
-    /// effect leaves the value exactly where it found it. Internal because the
-    /// tick half calls it on expiry.
-    ///
-    /// A primary loses what the effect lent its maximum, and its current value
-    /// drops with it — but never to zero. UESP's Fortify Health page states
-    /// the rule: "When the effect expires, the target loses <mag> points of
-    /// health unless that would reduce the target's health to 0 or less (the
-    /// target is left with at least 1 health point when the effect expires)"
-    /// (<https://en.uesp.net/wiki/Skyrim:Fortify_Health>). Without the floor a
-    /// wounded actor whose fortify ran out would trip the death latch with no
-    /// blow struck. The same floor is applied to magicka and stamina, which
-    /// share the storage and the expiry path; a living actor left at zero
-    /// magicka by a timer is the same invented loss.
+    /// Returns every slot `doomed` holds, so the value goes back where it was. A
+    /// primary's current value drops with its maximum but stays at least 1
+    /// (<https://en.uesp.net/wiki/Skyrim:Fortify_Health>), so expiry never kills.
     public func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
         for effect in doomed {
             for value in effect.values where value.applied != 0 {

@@ -1,19 +1,7 @@
-// AEFF chunk writing for the OpenSky native save container (issue #469).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the AVAL and DETH
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Per effect, in order: the sequence, the source kind, the source record key,
-// the MGEF key, an optional caster key, the mode, the detrimental byte, the
-// duration, the elapsed seconds, the seconds already paid out, an optional
-// stacking keyword, and then one record per actor value the effect acts on.
-//
-// The layout deliberately stores `elapsed` rather than "remaining": the same
-// two numbers describe the effect either way, and keeping duration and elapsed
-// separate means a reloaded effect reports the same total duration a readout
-// showed before the save.
+// AEFF chunk writing. Per effect: sequence, source kind and key, MGEF key, optional
+// caster, mode, detrimental byte, duration, elapsed, seconds paid, optional stacking
+// keyword, then one record per actor value. `elapsed` is stored, not "remaining", so a
+// reload reports the same total duration.
 
 import Foundation
 import OpenSkyFormatsCore

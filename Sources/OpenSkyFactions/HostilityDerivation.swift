@@ -1,49 +1,9 @@
-// Deriving one actor's hostility toward another from what the records say
-// (issue #503, roadmap item 21.3).
-//
-// Through M16 hostility was a switch: an actor was angry because the player hit
-// it, because a script said so, or because somebody ticked a box in the dev
-// panel. This is what replaced the box as the *first* answer. A bandit is
-// hostile to the player because a bandit is Very Aggressive and the player is a
-// stranger; a Whiterun guard standing beside them is not, because a guard is
-// only Aggressive and a stranger is not an enemy.
-//
-// ## The precedence order
-//
-// Asked what `observer` makes of `target`, the derivation takes the first of
-// these that answers and stops:
-//
-// 1. **The explicit runtime override** — `ActorCombatState`, written by the dev
-//    panel, by `StartCombat`, and by the player's own blow. Last resort in the
-//    sense that matters: it is consulted first and beats everything, because it
-//    is the record of something that already happened in this session. An actor
-//    the player stabbed does not calm down because the records say the two are
-//    friends.
-// 2. **The crime term** — `CrimeHostilitySource`, the seam issues #504 and #505
-//    join through. Empty here, and deliberately named rather than left implicit
-//    so crime work does not have to reopen this precedence list. It sits above
-//    the record terms because a bounty is a thing the player did, like a blow,
-//    and below the override for the same reason a blow is.
-// 3. **The RELA relationship between the two base records** — the Creation Kit
-//    wiki states flatly that "relationships override factions"
-//    (<https://ck.uesp.net/wiki/Relationship>), which is the one precedence rule
-//    in this list that comes from a source rather than from us.
-// 4. **The FACT interfaction relations** between the two actors' memberships.
-// 5. **Neutral**, which the Creation Kit calls the default two factions relate
-//    by "even if you don't specify it".
-//
-// Only step 3's position is documented upstream. Steps 1, 2 and 4-over-5 are
-// this engine's ordering, stated here so a later reader can disagree with a
-// decision rather than reverse-engineer one.
-//
-// ## Turning a reaction into a hostility
-//
-// The reaction alone does not say whether a weapon comes out; the actor's own
-// Aggression does, "in conjunction with Faction Relationships"
-// (<https://ck.uesp.net/wiki/AI_Data_Tab>). `ActorReaction.provokesAttack(at:)`
-// carries that table, so this file only has to pick the reaction.
-//
-// Documented in docs/engine/hostility.md.
+// One actor's hostility toward another, derived from the records. The first
+// answer wins: the runtime override (`ActorCombatState`), the crime term, the
+// RELA relationship, the FACT relations, then neutral. Only "relationships
+// override factions" is documented (<https://ck.uesp.net/wiki/Relationship>);
+// the rest of the order is ours. `ActorReaction.provokesAttack(at:)` turns the
+// reaction into hostility. See docs/engine/hostility.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -56,9 +16,8 @@ import OpenSkyGameData
 nonisolated public struct HostilityDerivation: HostilityDeriving {
     public let relations: FactionRelationIndex
     public let relationships: RelationshipStore
-    /// The crime seam. Assignable rather than injected at init so the session
-    /// can hand the derivation a real bounty source once #504 exists, without
-    /// rebuilding the relation index behind it.
+    /// The crime seam. Assignable rather than injected at init, so the session can
+    /// swap the bounty source without rebuilding the relation index.
     public var crime: any CrimeHostilitySource = NoCrimeHostility()
 
     /// The whole answer for one ordered pair.
@@ -93,20 +52,9 @@ nonisolated public struct HostilityDerivation: HostilityDeriving {
         resolveReaction(observer, toward: target).reaction
     }
 
-    /// The most hostile reaction any pair of the two actors' memberships
-    /// declares, in either direction, or nil when no membership pair names the
-    /// other.
-    ///
-    /// Most hostile wins, and that is our rule rather than a documented one:
-    /// neither UESP nor the Creation Kit wiki says what an actor in both an
-    /// allied and an enemy faction makes of a target. Erring toward the enemy
-    /// reading keeps a quest faction that marks somebody an enemy from being
-    /// silently cancelled by an unrelated friendly membership, which is the
-    /// failure that would be invisible in play.
-    ///
-    /// Both directions are consulted because an XNAM is authored on one side
-    /// and vanilla does not always author the mirror; a relation naming the
-    /// pair at all is an opinion about the pair.
+    /// The most hostile reaction any membership pair declares, in either direction.
+    /// Most hostile wins (our rule; no source states one), so a friendly membership
+    /// cannot silently cancel an enemy one. Vanilla does not always mirror an XNAM.
     public func factionReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile
@@ -121,15 +69,9 @@ nonisolated public struct HostilityDerivation: HostilityDeriving {
         return worst
     }
 
-    /// The reaction between the two actors' relationship rank, or nil when
-    /// neither layer names the pair and when the rank named is one the spec does
-    /// not name.
-    ///
-    /// A scripted rank wins over the record, in either actor's component, for
-    /// the reason `RelationshipRuntime` states: setting a rank is a deliberate
-    /// change to what the record started the pair at. It is also what lets a
-    /// relationship with the player count at all, since the player has no `NPC_`
-    /// base for a `RELA` record to name.
+    /// The reaction for the pair's relationship rank, or nil when nothing names it.
+    /// A scripted rank beats the record, and it is the only layer that can name
+    /// the player, who has no `NPC_` base for a `RELA` record.
     public func relationshipReaction(
         of observer: ActorSocialProfile,
         toward target: ActorSocialProfile

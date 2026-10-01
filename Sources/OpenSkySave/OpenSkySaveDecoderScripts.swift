@@ -1,12 +1,6 @@
-// PSCR chunk decoding for the OpenSky native save container (issue #171):
-// Papyrus script instance identity, active state, and variable values.
-//
-// The payload arrives as its own `Data`, exactly like `RDLT`, so the chunk's
-// declared length bounds every read in here and a corrupt count inside the
-// chunk can never walk into the next chunk's bytes. Both declared counts — the
-// instance count and each instance's variable count — go through
-// `OpenSkySaveDecoder.validate(count:minimumElementSize:remaining:chunk:)`
-// before anything reserves storage.
+// PSCR chunk decoding: Papyrus script instances, active state and variables. The
+// payload is its own `Data`, and both counts pass `OpenSkySaveDecoder.validate` before
+// anything reserves storage.
 
 import Foundation
 import OpenSkyScriptingInterface
@@ -70,16 +64,9 @@ nonisolated public enum OpenSkySaveScriptDecoder: Sendable {
         return variables
     }
 
-    /// A tag byte plus the value's payload.
-    ///
-    /// Non-finite float policy, chosen here rather than in the encoder: a
-    /// NaN or infinite float is **normalized to zero**, not rejected. Papyrus
-    /// arithmetic can legitimately produce one (a division by zero in a mod
-    /// script is not corruption), and refusing to load a whole world because
-    /// one script variable drifted out of range would be the worse failure.
-    /// The value is therefore clamped on the way in and the rest of the save
-    /// loads. An unknown tag byte is still an error: that is a shape this
-    /// build cannot interpret at all.
+    /// A tag byte plus the value's payload. A NaN or infinite float becomes zero, because
+    /// Papyrus can make one legitimately and one variable must not block a load. An
+    /// unknown tag byte is still an error.
     private static func decodeValue(_ reader: inout SaveReader) throws -> PapyrusValue {
         let tag = try reader.uint8("PSCR value tag")
         switch tag {

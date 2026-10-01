@@ -1,9 +1,6 @@
-// Static GPU objects for the SWF display-list layer (M8.2.4), built once at
-// renderer init: the content + mask pipelines, the counting-stencil states
-// for clip layers, the repeat sampler for tiled bitmap fills, and the 1x1
-// fallback textures that keep every argument bound on non-bitmap/non-gradient
-// draws. Per-movie resources (vertex data, bitmap textures, ramp, rings) live
-// in SWFMovieResources (RendererSWFMovie.swift); encode in RendererSWFPass.
+// Static GPU objects for the SWF layer, built at init: content and mask pipelines,
+// stencil states for clip layers, a repeat sampler, and 1x1 fallback textures. Per-movie
+// resources live in RendererSWFMovie.swift.
 
 import Metal
 import MetalKit

@@ -1,6 +1,5 @@
-// Immutable reference enable-state seam for condition evaluation (issue
-// #201). A package selector can pass a WorldState snapshot's answers without
-// letting the condition registry reach into the main-actor store.
+// Immutable reference enable-state seam for condition evaluation. A package selector
+// passes snapshot answers without reaching into the main-actor store.
 
 import OpenSkyFormatsESM
 

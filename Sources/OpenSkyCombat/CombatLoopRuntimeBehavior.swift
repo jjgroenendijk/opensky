@@ -1,28 +1,7 @@
-// The opponents' half of one fixed step (issue #424, roadmap item 16.7): every
-// engaged actor's machine advanced, its movement handed to 16.4, its clip asked
-// for, and the blow it lands resolved through the player's own combat path.
-//
-// This file is what replaced `CombatLoopRuntimeTarget.swift`, which drove one
-// designated dev target from a clock and said at length that it was a stand-in.
-// A satellite for the same reason that one was: the parent is at its
-// type-length limit, and the crowd loop reads better beside the single blow it
-// resolves than inside the runtime's frame bookkeeping.
-//
-// Everything it calls to land a hit — `MeleeSwing.volume`,
-// `MeleeHitDetector.hits`, `MeleeDamage.resolve`,
-// `CombatLoopWorld.applyCombatDamage` — is the same path the player's own swing
-// takes, unchanged from 15.7. What is new above it is who swings, when, from
-// where, and whether they were still there to swing at all.
-//
-// ## Who gets a machine
-//
-// Living, not the player, and either hostile or shoved into the fight by a
-// script or a blow. Sorted nearest-first and cut at
-// `CombatLoopRuntime.maximumEngagedActors`, because every engaged actor asks the
-// mover for a path and the mover's own crowd cap is the same number. What the
-// cut refused is counted rather than dropped silently.
-//
-// Documented in docs/engine/combat-behavior.md.
+// The opponents' half of one fixed step: each engaged actor's machine, movement, clip,
+// and blow, landed through the player's own hit path. Engaged means living, not the
+// player, and hostile or pushed in. Nearest first, cut at `maximumEngagedActors` (the
+// mover's crowd cap); the cut is counted. See docs/engine/combat-behavior.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -104,16 +83,9 @@ extension CombatLoopRuntime {
         }
     }
 
-    /// The casting half of one step (issue #473, roadmap item 19.10).
-    ///
-    /// Begin, release and cancel all land here rather than beside the melee
-    /// contact, because a cast is not resolved by this layer at all: the caster
-    /// runtime spends the magicka and the 19.8 delivery decides what the spell
-    /// reaches. What this layer owns is only *when*.
-    ///
-    /// A refused begin drops the machine's charge in the same step, so an actor
-    /// whose magicka fell between the decision and the call is back to swinging
-    /// on the next one instead of holding a cast the runtime never started.
+    /// The casting half of one step: only when to begin, release or cancel. The caster
+    /// runtime spends magicka and delivery decides the target. A refused begin drops the
+    /// charge, so the actor swings again next step.
     private func resolveCast(
         _ step: CombatBehaviorStep,
         actor: ReferenceKey,
@@ -186,9 +158,8 @@ extension CombatLoopRuntime {
         )
         let landed = world.applyCombatDamage(damage.applied, to: player)
         noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)
-        // The other direction of the same dispatch the player's own swing
-        // makes (issue #375): a script attached to the player takes `OnHit`
-        // with the attacking actor as `akAggressor`.
+        // The reverse of the player's own swing dispatch: the player's scripts get
+        // `OnHit` with this actor as `akAggressor`.
         world.reportScriptHit(ScriptHitEvent(
             target: player,
             aggressor: actor.key,
@@ -207,12 +178,8 @@ extension CombatLoopRuntime {
         ))
     }
 
-    /// The other direction of the exchange the player's own swing reports
-    /// (issue #498): the attacker's weapon skill, the player's Block for what
-    /// the block absorbed, and the player's armour for the strike's raw rating.
-    ///
-    /// The attacker's use is reported rather than skipped because only
-    /// progression decides who advances, and it advances the player alone.
+    /// The reverse of the player's own swing report: attacker weapon skill, player Block,
+    /// player armor. Progression decides who advances (the player only).
     private func noteSkillUse(
         from actor: CombatActorObservation,
         weapon: MeleeWeaponProfile,

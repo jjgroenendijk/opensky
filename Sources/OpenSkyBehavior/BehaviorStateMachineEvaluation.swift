@@ -1,20 +1,8 @@
-// `hkbStateMachine` evaluation (issue #330): entering a start state, running
-// the current state's generator, and choosing the transition an event fires.
-//
-// The model is one current state plus at most one transition in flight. When a
-// transition starts, the state change happens immediately — `currentStateId`
-// becomes the destination and the destination's enter events are raised — and
-// the `hkbBlendingTransitionEffect` only fades the outgoing pose away. That is
-// why `FLAG_DELAY_STATE_CHANGE` exists as a separate authored flag: the default
-// is not delayed. It is set on 14 of the 3,769 transitions in the vanilla
-// player graph, and this evaluator tallies rather than honours it.
-//
-// Selection order is total, so two instances stepped with the same events pick
-// the same transition: highest `m_priority` first, a state's own transitions
-// ahead of the machine's wildcards at equal priority, and array order ahead of
-// everything at equal priority and kind. Havok's own tie-break is not documented
-// in any source consulted here, so this is a decision, recorded in
-// `docs/engine/behavior-state-machines.md`.
+// `hkbStateMachine` evaluation: one current state and at most one transition in
+// flight. The state changes at once; the blend only fades the old pose.
+// `FLAG_DELAY_STATE_CHANGE` (14 of 3,769 vanilla transitions) is tallied. Order:
+// highest `m_priority`, state transitions before wildcards, then array order. That
+// tie-break is ours (docs/engine/behavior-state-machines.md).
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -67,14 +55,9 @@ nonisolated extension BehaviorGraphInstance {
 
     // MARK: - Entering
 
-    /// Places a freshly activated machine on its start state.
-    ///
-    /// `m_startStateMode` 0 uses `m_startStateId`, honouring a binding on it —
-    /// which the vanilla data leans on heavily. Mode 1 reads the id out of
-    /// `m_syncVariableIndex`. Mode 2 re-enters whatever was current when the
-    /// machine was last deactivated, which is why `BehaviorMachineState`
-    /// outlives node state. A transition into a nested state overrides all
-    /// three.
+    /// Places a newly active machine on its start state. Mode 0 uses `m_startStateId`
+    /// (with bindings), mode 1 `m_syncVariableIndex`, mode 2 the last current state.
+    /// A transition into a nested state overrides all three.
     private func enterStartState(
         _ state: inout BehaviorMachineState,
         machine: HKBStateMachine,

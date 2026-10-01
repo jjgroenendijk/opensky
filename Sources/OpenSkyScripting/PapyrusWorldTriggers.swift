@@ -1,16 +1,6 @@
-// `OnTriggerEnter` / `OnTriggerLeave` dispatch (issue #173).
-//
-// Structurally this is `queueOnActivate` from PapyrusWorldActivation.swift
-// minus the activation-depth machinery. A trigger edge is not an activation
-// chain: nothing in it can queue another trigger edge, because occupancy comes
-// from the streamer's per-frame capsule test and not from script code. So the
-// events are queued at depth 0 and never consume the recursion cap, which
-// would otherwise be spent by a player standing in a volume that activates
-// something.
-//
-// A script attached to a volume that does not implement the handler is a
-// counted no-op (`undefinedEventFunction`), not a fault, so queuing on every
-// script of the authoring reference is both free and correct.
+// `OnTriggerEnter` / `OnTriggerLeave` dispatch, like `queueOnActivate` without depth: a
+// trigger edge comes from the streamer's capsule test, not script code, so events queue
+// at depth 0. Handlers a script lacks are counted no-ops.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -56,14 +46,8 @@ extension PapyrusWorldRuntime {
 }
 
 extension PapyrusWorldStateBridge {
-    /// `CellStreamer.onTriggerTransition` subscriber: one occupancy edge
-    /// becomes one queued event per script attached to the volume's authoring
-    /// reference, with the player as `akActionRef`.
-    ///
-    /// The event already carries a `ReferenceKey`, so unlike
-    /// `handleInteraction(_:)` there is no FormID to resolve — the trigger
-    /// build took the key from the cell's runtime index and skipped any volume
-    /// it could not name.
+    /// `CellStreamer.onTriggerTransition` subscriber: one event per script of the volume's
+    /// reference, with the player as `akActionRef`. The event already has a `ReferenceKey`.
     @discardableResult
     public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
         guard let world else { return 0 }

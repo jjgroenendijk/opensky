@@ -1,9 +1,4 @@
-// SPWN chunk writing for the OpenSky native save container (issue #177).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the `INVN` writer is
-// one: the encoder body is already at the type-length limit, and the three
-// shared writers this needs — `writeChunk`, `writeKey`, `writeCell` — are
-// internal on the parent precisely so a chunk can live in its own file.
+// SPWN chunk writing, in its own file because the encoder body is at its length limit.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -17,15 +12,8 @@ nonisolated extension OpenSkySaveEncoder {
         let spawn: ReferenceSpawnState
     }
 
-    /// The `SPWN` chunk: every snapshot entry carrying a spawn component, in
-    /// the snapshot's `ReferenceKey` order.
-    ///
-    /// The entry repeats its key rather than referring back to an `RDLT` entry,
-    /// because an object whose only delta is its spawn has no `RDLT` entry at
-    /// all — the same reasoning `INVN` follows. The cell written here is the
-    /// component's own `location`, not the delta's attribution cell: the former
-    /// says where the object is and the latter says where it was last touched,
-    /// and only the first belongs in the world.
+    /// The `SPWN` chunk: every spawn component, in key order, with its key repeated. The
+    /// cell is the component's `location` (where it is), not the delta's attribution cell.
     public static func writeSpawnedReferences(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter

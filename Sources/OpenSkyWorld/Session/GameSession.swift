@@ -1,10 +1,7 @@
-// The simulation half of a frame: the player, the cameras' policy, the game
-// clock, weather, audio, and the per-frame hooks the world runs on. It drives
-// its renderer through `RenderFrameDriver`, at the points in the frame that
-// protocol names, and holds the renderer unowned: the renderer owns it.
-//
-// The work itself lives in the `Renderer+*.swift` extensions beside this file,
-// which read and write this state through `Renderer+Session.swift`.
+// The simulation half of a frame: player, camera policy, game clock, weather, audio and
+// per-frame hooks. It drives the renderer through `RenderFrameDriver` and holds it
+// unowned, because the renderer owns it. The work lives in the `Renderer+*.swift`
+// extensions, through `Renderer+Session.swift`.
 
 import OpenSkyAudio
 import OpenSkyRendering
@@ -20,12 +17,10 @@ public final class GameSession: RenderFrameDriver {
     public var terrainSampler: WalkController.GroundSampler?
     /// Behavior-graph locomotion bridge (docs/engine/walk-mode.md).
     public var locomotion: LocomotionBridge
-    /// Orbit/shoulder framing and collision zoom for `.thirdPerson`
-    /// (issue #189). Pure math over the capsule pose; holds no pose of its own.
+    /// Orbit framing and collision zoom for `.thirdPerson`. Pure math; holds no pose.
     public var thirdPersonCamera = ThirdPersonCamera()
-    /// The conversation camera's focus, framing math and saved player pose
-    /// (issue #427, Renderer+DialogueCamera.swift). An override on top of
-    /// whatever `movementMode` is, never a mode of its own.
+    /// The conversation camera's focus, framing and saved player pose. An override on top
+    /// of `movementMode`, never a mode (Renderer+DialogueCamera.swift).
     public var dialogueCameraState = RendererDialogueCameraState()
     /// The player's rendered body, attached once the app has assembled it and
     /// deliberately not part of the scene: it survives every cell swap
@@ -34,19 +29,15 @@ public final class GameSession: RenderFrameDriver {
     /// rings and manages residency; assigning it directly would draw from
     /// buffers the GPU has not been told about.
     public var playerBody: PlayerBody?
-    /// The player's rendered first-person arms, held for the same reason and
-    /// on the same terms as `playerBody` (issue #190). Set through
+    /// The player's first-person arms, held like `playerBody`. Set through
     /// `setPlayerFirstPersonRig`.
     public var playerFirstPersonRig: PlayerFirstPersonRig?
-    /// First-person field of view and the depth policy the arms are drawn
-    /// under. Pure settings; holds no pose (issue #190).
+    /// First-person field of view and the arms' depth policy. Holds no pose.
     public var firstPersonCamera = FirstPersonCamera()
-    /// A/B toggle for the arms, so a capture can separate "the arms are wrong"
-    /// from "the world behind them is wrong" (issue #190).
+    /// Toggle for the arms, so a capture can tell an arm fault from a world fault.
     public var firstPersonArmsEnabled = true
-    /// Game clock + its pause-aware wall-delta source + the seam TimeScale is
-    /// read through (issue #164). `timeOfDay` is a projection of this clock;
-    /// see Renderer+GameClock.swift.
+    /// Game clock, its pause-aware delta source and the TimeScale seam. `timeOfDay` is a
+    /// projection of it (Renderer+GameClock.swift).
     public var gameTime: RendererGameTime
     /// Data-driven weather runtime; nil -> procedural sky + camera lighting.
     public var weather: WeatherSystem?
@@ -57,13 +48,10 @@ public final class GameSession: RenderFrameDriver {
     /// World audio playback graph; nil until the app wires one (offscreen and
     /// CLI paths stay silent). Ticked by Renderer+Audio.swift.
     public var worldAudio: WorldAudioEngine?
-    /// Music director (M9.2.3), ticked from the same paused-aware audio hook so
-    /// a playlist advance freezes with the world sim. nil until audio is on.
+    /// Music director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var musicDirector: WorldMusicDirector?
-    /// Footstep director (issue #352), fed from the same paused-aware audio
-    /// hook: it drains the locomotion bridge's fired graph events, so a paused
-    /// frame — which plans no step and fires nothing — leaves the queue alone.
-    /// nil until audio is on.
+    /// Footstep director, fed from the pause-aware audio hook with the bridge's graph
+    /// events. A paused frame fires nothing. Nil until audio is on.
     public var footstepDirector: WorldAudioFootstepDirector?
     /// Wall-clock delta source for the audio tick, paused in menu mode.
     public var audioClock = FrameSimClock()
@@ -88,11 +76,8 @@ public final class GameSession: RenderFrameDriver {
     public var worldSimClock = FrameSimClock()
     /// Wall-clock delta source for camera movement, paused in menu mode.
     public var cameraClock = FrameSimClock()
-    /// The delta `advanceCamera` last ran with, clamped exactly as the walk
-    /// controller clamps it. The dynamic-body world steps on the same clock as
-    /// the player capsule (issue #193), and reading the value the capsule
-    /// actually used is what keeps the two from drifting apart in menu mode or
-    /// after a stall.
+    /// The clamped delta `advanceCamera` last ran with. Dynamic bodies step on it, so they
+    /// cannot drift from the player capsule in menu mode or after a stall.
     public var lastCameraDelta: Float = 0
     /// CPU wall time of the last per-frame audio update (listener pose + engine
     /// tick + music director). Exactly zero on a frame that did no audio work,
@@ -154,8 +139,7 @@ public final class GameSession: RenderFrameDriver {
         set { gameTime.clock.setHour(newValue) }
     }
 
-    /// Published wind for precipitation/grass/particles/audio (M7.3-7.5). Calm
-    /// when no weather is active.
+    /// Published wind for precipitation, grass, particles and audio. Calm with no weather.
     public var wind: WindState {
         weatherEnabled ? weather?.currentWind ?? .calm : .calm
     }
@@ -164,8 +148,7 @@ public final class GameSession: RenderFrameDriver {
         renderer.sessionFOVYRadians
     }
 
-    /// What this frame draws and casts, from the one policy value that owns
-    /// the whole matrix (`PlayerRigVisibility`, issue #190).
+    /// What this frame draws and casts, from `PlayerRigVisibility`.
     public var rigVisibility: PlayerRigVisibility {
         PlayerRigVisibility.resolve(
             mode: renderer.movementMode,

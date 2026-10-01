@@ -160,9 +160,8 @@ nonisolated public struct CellSceneComposition {
         return nil
     }
 
-    /// Runtime reference lookup across resident cells (issue #158). Linear
-    /// like `interaction(reference:)`: the scan is over a handful of resident
-    /// cells and each per-cell lookup is a dictionary hit.
+    /// Runtime reference lookup across resident cells. Linear over a few cells, with a
+    /// dictionary hit per cell.
     public func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
         for scene in cells.values {
             if let entry = scene.references[key] {
@@ -181,9 +180,8 @@ nonisolated public struct CellSceneComposition {
         return nil
     }
 
-    /// Which resident cell holds `key`, so a runtime-state write can be
-    /// attributed to one cell instead of rebuilding every resident one
-    /// (issue #172). Nil when no resident cell knows the reference.
+    /// Which resident cell holds `key`, so a write rebuilds one cell, not all. Nil when no
+    /// resident cell knows it.
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
         for scene in cells.values where scene.references[key] != nil {
             return scene.location
@@ -208,22 +206,14 @@ nonisolated public struct CellSceneComposition {
             .flatMap { $0.value.references.sortedEntries() }
     }
 
-    /// Every resident cell's load summary, in the same grid order
-    /// `actorEntries()` uses, so a per-actor lookup across the composition is
-    /// deterministic (issue #180).
+    /// Every resident cell's load summary, in `actorEntries()` grid order.
     public func actorSummaries() -> [CellLoadSummary] {
         cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
             .map(\.value.summary)
     }
 
-    /// Every resident container interaction, ordered by FormID.
-    ///
-    /// Exists for the same reason `actorEntries()` does: the merchant menu
-    /// (issue #179) has to let a developer nominate a container without knowing
-    /// its FormID, and "every chest currently loaded" is the list to pick from.
-    /// Ordering is by reference rather than by cell because that list is a menu,
-    /// and a menu whose rows reshuffle when a neighbouring cell streams in is
-    /// one a user cannot click twice.
+    /// Every resident container, by FormID, for picking a merchant without knowing one.
+    /// Ordered by reference, so menu rows do not reshuffle when a cell streams in.
     public func containerInteractions() -> [PlacedInteraction] {
         cells.values
             .flatMap { $0.interactions.values.filter { $0.action == .search } }
@@ -246,9 +236,8 @@ nonisolated public struct CellSceneComposition {
         return cells[coordinate]?.terrainHeightField?.sample(at: position)
     }
 
-    /// Water-surface height over resident full cells, by the same ownership
-    /// rule as `sampleTerrain(at:)` (issue #188). nil where the owning cell is
-    /// not resident or authors no water.
+    /// Water height over resident full cells, by the `sampleTerrain(at:)` ownership rule.
+    /// Nil where the owner is not resident or has no water.
     public func sampleWaterHeight(at position: SIMD2<Float>) -> Float? {
         let coordinate = CellGridManager.cellCoordinate(
             for: SIMD3<Float>(position.x, position.y, 0)
@@ -262,12 +251,8 @@ nonisolated public struct CellSceneComposition {
         cells.values.flatMap { $0.staticCollision.candidates(overlapping: bounds) }
     }
 
-    /// Trigger broadphase over the same resident cells, so a volume straddling
-    /// a streamed seam is found from either side (issue #173).
-    ///
-    /// Cells are visited in (x, y) coordinate order, unlike
-    /// `collisionCandidates` above: a trigger query drives script events, whose
-    /// dispatch order must not depend on dictionary iteration order.
+    /// Trigger broadphase over resident cells, so a volume on a seam is found from either
+    /// side. Cells go in (x, y) order, because script event order must be stable.
     public func triggerCandidates(overlapping bounds: ModelBounds) -> [TriggerVolume] {
         orderedCells().flatMap { $0.triggerVolumes.candidates(overlapping: bounds) }
     }

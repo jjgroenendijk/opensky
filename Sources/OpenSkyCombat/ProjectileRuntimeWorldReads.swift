@@ -11,12 +11,9 @@ extension ProjectileRuntime {
     /// main file calls it.
     public func playImpact(at position: SIMD3<Float>) -> FormID? {
         guard let world, let impacts else { return nil }
-        // An arrow resolves its impact through the *ammunition's* chain rather
-        // than a bow's: item 15.4 built the resolver around a
-        // `MeleeWeaponProfile`, and an arrow has no INAM of its own, so the
-        // unarmed profile's nil data set is what an arrow honestly carries
-        // until AMMO grows an impact link. The lookup is left in place so that
-        // adding one is a one-line change rather than a new chain.
+        // An arrow resolves impact through the ammunition's chain. AMMO has no INAM, so
+        // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
+        // so an AMMO impact link is a one-line change.
         guard
             let resolved = impacts.resolve(
                 weapon: .unarmed, material: world.projectileMaterial()

@@ -1,6 +1,5 @@
-// Renderer-source bridge for issue #422. It is deliberately a CellStreamer
-// satellite: residency and the latest path already live here, while the
-// renderer only owns the generic source registry and toggles.
+// Navigation overlay source. Here, because residency and the latest path live in the
+// streamer; the renderer owns only the source registry and toggles.
 
 import OpenSkyDiagnostics
 

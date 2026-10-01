@@ -1,22 +1,7 @@
-// The one door every crime hook goes through (issue #504, roadmap item 21.5).
-//
-// `CrimeRuntime` decides what a described crime costs; this decides what the
-// crime *was*. Between them sits `CrimeWorld`, which is everything about the
-// running session a crime needs and neither of those two can reach: which
-// reference stands in which cell, what that cell's `XOWN` says, which crime
-// faction answers for it, and what an item is worth.
-//
-// The split is the shape `MeleeCombatWorld` and `PerceptionWorld` already take,
-// and for the same reason: the hooks — a take in `WorldItemRuntime`, a blow in
-// the melee world, a death — must be able to say "this happened" in one call
-// without assembling a `CrimeEvent` each, and the assembly must be testable
-// against a fake world rather than a streamed cell.
-//
-// A class rather than a struct because the session hands the same reporter to
-// several hooks and then attaches the perception pass to it afterwards; a
-// struct would give each hook its own copy of the witness source.
-//
-// Documented in docs/engine/crime.md.
+// The one door every crime hook goes through. `CrimeRuntime` decides what a crime
+// costs; this decides what the crime was, using `CrimeWorld` for cells, owners and
+// values. A hook reports in one call and tests use a fake world. A class, because
+// several hooks share one reporter and its witness source. See docs/engine/crime.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -101,14 +86,9 @@ public final class CrimeReporter: CrimeReporting {
         )
     }
 
-    /// Reports the first blow against an actor that was not already hostile.
-    ///
-    /// "Initiating combat or using a hostile spell effect on an NPC will incur
-    /// a bounty ... Self-defense against an unprovoked assault is legal and not
-    /// considered a crime" (<https://en.uesp.net/wiki/Skyrim:Crime>). Which
-    /// blow is the first and whether the victim was already hostile is the
-    /// caller's to know — the combat runtime holds both — so this records what
-    /// it is told.
+    /// Reports the first blow against an actor that was not already hostile
+    /// (<https://en.uesp.net/wiki/Skyrim:Crime>). The combat runtime knows both
+    /// facts, so this records what it is told.
     @discardableResult
     public func reportAssault(
         on victim: ReferenceKey,

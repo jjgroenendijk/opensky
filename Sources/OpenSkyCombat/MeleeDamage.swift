@@ -53,27 +53,13 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
 }
 
 nonisolated public enum MeleeDamage: Sendable {
-    /// The Block skill a character with no skill table is assumed to have.
-    /// UESP "Skyrim:Block" gives 15 as the starting value for every race with
-    /// no Block bonus; the real per-actor number arrives with the rest of the
-    /// actor-value table in M18.
+    /// The Block skill assumed for a character with no skill table: 15, the starting value
+    /// for a race with no Block bonus (UESP "Skyrim:Block").
     public static let defaultBlockSkill: Float = 15
 
-    /// What one landed swing takes off the target's health.
-    ///
-    /// - Parameters:
-    ///   - weapon: the attacker's swing profile; `damage` is the base.
-    ///   - block: what the target was blocking with, or nil when it was not
-    ///     blocking.
-    ///   - settings: the resolved GMSTs.
-    ///   - blockSkill: the target's Block skill.
-    ///   - isPowerAttack: whether the incoming attack was a power attack.
-    ///   - bonusMultiplier: the *blocker's* perk, enchantment and potion terms,
-    ///     folded into one, which is where the quoted formula puts them. 1 for a
-    ///     character with none. `CombatFortifyBonus.block` supplies it.
-    ///   - attackMultiplier: the *attacker's* perk, enchantment and potion terms
-    ///     (issue #472). 1 for a character with none.
-    ///     `CombatFortifyBonus.melee(handType:)` supplies it.
+    /// What one landed swing takes off the target's health. `block` is nil when the
+    /// target was not blocking. `bonusMultiplier` is the blocker's
+    /// `CombatFortifyBonus.block`; `attackMultiplier` the attacker's `melee(handType:)`.
     public static func resolve(
         weapon: MeleeWeaponProfile,
         block: MeleeBlockKind?,

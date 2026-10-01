@@ -1,12 +1,6 @@
-// The graph variable and event names the locomotion bridge binds to
-// (issue #188), and the status snapshot that reports what those bindings did.
-//
-// Every name here is one the vanilla data declares, taken from the census of
-// the install's own behavior files (issue #186, docs/formats/hkx-behavior.md)
-// rather than from memory: `0_master.hkx` declares 230 variables and 1,217
-// events, and a name that is merely plausible resolves to nothing at all. The
-// bridge reports a name that does not resolve instead of dropping the write,
-// which is how a graph that spells something differently becomes visible.
+// Graph names the locomotion bridge binds to, from the census of this install
+// (docs/formats/hkx-behavior.md), never memory, and the status of those bindings. An
+// unresolved name is reported, not dropped.
 
 import Foundation
 import OpenSkyBehavior
@@ -35,12 +29,8 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     public static let isInSneak = "iIsInSneak"
     /// True while off the ground. Bool.
     public static let inJumpState = "bInJumpState"
-    /// Which perspective the instance is running as (issue #190). Declared as
-    /// a bool initialised to false by both vanilla `0_master.hkx` files, the
-    /// third-person one and the `_1stperson` one, and read by their own
-    /// transition conditions. Not in `variables` below: it is seeded once per
-    /// instance rather than written every step, and its value differs between
-    /// the two graphs where every other input is identical.
+    /// Which perspective the instance runs as: a bool both vanilla `0_master.hkx` files
+    /// declare. Not in `variables`: it is seeded once and differs between the two graphs.
     public static let isFirstPerson = "IsFirstPerson"
 
     /// Every variable the bridge writes, in write order.
@@ -73,14 +63,8 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     ]
 }
 
-/// One entry of the root-motion trace: the step at which the resolved gait or
-/// the motion source last changed, and where the capsule was when it did
-/// (issue #191).
-///
-/// The trace records changes rather than steps. A step is 1/120 s, so keeping
-/// one sample per step would be twelve hundredths of a second of history and
-/// would allocate on every fixed step; keeping one sample per change covers a
-/// whole route and costs nothing while the player keeps walking.
+/// One root-motion trace entry: the step where gait or motion source changed, and the
+/// capsule position then. Changes only, so a whole route costs little.
 nonisolated public struct LocomotionMotionSample: Equatable, Sendable {
     public let gait: LocomotionGait
     public let source: LocomotionMotionSource
@@ -97,7 +81,7 @@ nonisolated public struct LocomotionMotionSample: Equatable, Sendable {
 nonisolated public struct LocomotionStatus: Equatable, Sendable {
     /// Whether a behavior graph is attached at all.
     public var graphAvailable = false
-    /// Whether the first-person graph is attached beside it (issue #190).
+    /// Whether the first-person graph is attached beside it.
     public var firstPersonGraphAvailable = false
     public var gait: LocomotionGait = .walk
     public var lastPlan: LocomotionStepPlan = .still
@@ -117,9 +101,8 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
     public var missingEvents: [String] = []
     /// Names the graph reported back on the most recent update, newest last.
     public var recentGraphEvents: [String] = []
-    /// The same four tallies for the first-person graph, kept apart so a name
-    /// the `_1stperson` set spells differently is visible as a first-person
-    /// miss rather than blending into the third-person one (issue #190).
+    /// The same four tallies for the first-person graph, kept apart so a first-person
+    /// miss stays visible.
     public var firstPersonGraphUpdates = 0
     public var firstPersonBoundVariables: [String] = []
     public var firstPersonMissingVariables: [String] = []

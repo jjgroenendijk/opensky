@@ -39,8 +39,8 @@ public protocol ActorValueAccess {
     /// shape the HUD meters take.
     func fractions(of holder: ActorValueHolder) -> ActorValues
 
-    /// Whether `holder` is at zero health. The flag item 15.6 consumes; this
-    /// layer does not act on it.
+    /// Whether `holder` is at zero health. Ragdoll and death consume the flag; this layer
+    /// does not act on it.
     func hasZeroHealth(_ holder: ActorValueHolder) -> Bool
 
     /// Takes `amount` off one of `holder`'s values, floored at zero. The first write

@@ -32,24 +32,18 @@ public final class CellStreamer {
     public var core = CellStreamCore()
     public let runner: any CellBuildRunning
     public let sink: SceneSink
-    /// Live XCLR region feed (M7.2.3): fires with the current exterior center
-    /// cell's REGN FormIDs whenever they change, so region-weighted weather
-    /// selection runs live. GameViewController wires it to
-    /// `Renderer.weather.setRegions`. nil in tests that ignore weather.
+    /// Fires with the center cell's REGN FormIDs when they change, for region weather.
+    /// The app wires it to `Renderer.weather.setRegions`.
     public var onCenterRegionsChanged: (([FormID]) -> Void)?
     /// Last region set pushed through `onCenterRegionsChanged`; nil = never
     /// emitted. Guards against re-firing an unchanged set every frame.
     private var lastEmittedRegions: [FormID]?
-    /// World SFX director subscription (M9.2.2): fires with the current cell's
-    /// ambience identity whenever it changes (exterior recenter, interior
-    /// enter/exit). The director resolves the bed and starts/stops loops.
+    /// Fires with the current cell's ambience identity when it changes.
     public var onAmbienceContextChanged: ((AmbienceContext) -> Void)?
     /// Last ambience key pushed; nil = never emitted. Guards against re-firing.
     /// Internal for the CellStreamerAmbience satellite to read/write.
     public var lastEmittedAmbienceKey: AmbienceKey?
-    /// Music director subscription (M9.2.3): fires with the current cell's
-    /// music-selection identity whenever it changes. The director resolves the
-    /// playlist and crossfades.
+    /// Fires with the current cell's music identity when it changes.
     public var onMusicContextChanged: ((MusicContext) -> Void)?
     /// Last music key pushed; nil = never emitted. Internal for the
     /// CellStreamerMusic satellite to read/write.
@@ -58,11 +52,8 @@ public final class CellStreamer {
     /// Production use-key activation is view-ray based.
     public static let doorActivationRadius = InteractionRay.defaultMaximumDistance
 
-    /// Supplies the runtime world state each dispatched build runs against
-    /// (issue #160). Called on the main thread at dispatch time, so the build
-    /// sees the store exactly as it was when the work left the main thread.
-    /// The default keeps every build on the plugin baseline, which is what
-    /// tests and any caller with no store want.
+    /// The world state each build runs against, read on the main thread at dispatch. The
+    /// default is the plugin baseline.
     public var stateSource: () -> WorldStateSnapshot = { .empty }
 
     /// Desired requests not yet submitted. Only one build reaches the runner
@@ -110,12 +101,10 @@ public final class CellStreamer {
     public var interactionTarget: InteractionTarget?
     /// Fires when view-ray target identity, text, or hit details change.
     public var onInteractionTargetChanged: ((InteractionTarget?) -> Void)?
-    /// Engine-owned use-key event, multicast since issue #172: world audio and
-    /// the Papyrus activation bridge both subscribe, in registration order,
-    /// and neither takes ownership of the raycast or of door behavior.
+    /// Use-key event, multicast to world audio and the Papyrus bridge in registration
+    /// order. Neither owns the raycast or door behavior.
     public let onInteraction = CallbackFanOut<InteractionEvent>()
-    /// Everything Talk activation needs from the streamer (issue #205), in one
-    /// value so the three parts of one seam stay together.
+    /// Everything Talk activation needs from the streamer.
     public var talk = TalkTargetingSeam()
     /// Player-driven door motion boundaries. World audio consumes these to
     /// start the authored movement loop, retire it, and play the close sound.
@@ -123,20 +112,13 @@ public final class CellStreamer {
     /// Source placement retained across an asynchronous door build. Runtime
     /// state rebuilds have no player interaction and leave this nil.
     public var doorMotionInteraction: PlacedInteraction?
-    /// A cell became part of the live world (issue #171). The flag is true for
-    /// a first integration and false for a re-integration of a cell that never
-    /// left — a world-state rebuild or an interior refresh — so a subscriber
-    /// can attach scripts once without re-firing load events. A cell built
-    /// offscreen during a coverage transition fires only when it is committed.
-    /// Emission lives in the CellStreamerPapyrus satellite.
+    /// A cell joined the live world. True for a first integration, false for a rebuild or
+    /// interior refresh, so scripts attach once. Emitted in CellStreamerPapyrus.
     public var onCellAttached: ((CellScene, Bool) -> Void)?
     /// A cell left the live world: unloaded off the grid, dropped by a
     /// coverage transition, or replaced by a door transition.
     public var onCellDetached: ((CellSceneLocation) -> Void)?
-    /// The player entered or left an authored trigger volume (issue #173).
-    /// Multicast because the Papyrus bridge and a later occupancy readout are
-    /// both plausible subscribers. Emission lives in the CellStreamerTriggers
-    /// satellite.
+    /// The player entered or left a trigger volume. Emitted in CellStreamerTriggers.
     public let onTriggerTransition = CallbackFanOut<TriggerTransitionEvent>()
     /// Trigger volumes the player capsule was inside as of the last walk-mode
     /// frame, keyed by the authoring REFR. The per-frame diff against this set
@@ -146,26 +128,22 @@ public final class CellStreamer {
     /// moved further than a capsule radius can be swept rather than sampled
     /// only at its destination. Nil outside walk mode.
     public var lastTriggerFeetPosition: SIMD3<Float>?
-    /// Recent trigger edges for the `World > World > Triggers` readout
-    /// (issue #173). Filled by an ordinary `onTriggerTransition` subscriber
-    /// registered in `init`, so the dispatch path stays unaware of it.
+    /// Recent trigger edges for `World > World > Triggers`, filled by a subscriber
+    /// registered in `init`.
     public let triggerLog = TriggerEventLog()
-    /// Simulated rigid bodies of the resident world (issue #193). Reconciled
-    /// against residency once per frame by the CellStreamerPhysics satellite.
+    /// Simulated rigid bodies, reconciled against residency each frame.
     public var dynamicBodies = DynamicBodyWorld()
     /// A body came to rest and its transform should be persisted under the
     /// reference's `.transform` component. `bind(to:)` wires it to the store.
     public var onBodySettled: ((
         ReferenceKey, ReferenceTransformOverride, CellSceneLocation
     ) -> Void)?
-    /// Where the simulated bodies have moved since their cells were built,
-    /// published once per physics tick so the draw that follows places them
-    /// live (issue #193). The renderer is not reachable from here either, so
-    /// the app wires this to `Renderer.dynamicInstanceDeltas`.
+    /// Where simulated bodies have moved, published each physics tick. The app wires it to
+    /// `Renderer.dynamicInstanceDeltas`.
     public var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
-    /// Resident graph, repath backlog and completion sink (issue #200).
+    /// Resident graph, repath backlog and completion sink.
     public var navigationState = CellStreamerNavigationState()
-    /// Active NPC capsules, their drive, and app callbacks (issue #423).
+    /// Active NPC capsules, their drive, and app callbacks.
     public var npcMovementState = CellStreamerNPCMovementState()
 
     /// - Parameters:
@@ -331,9 +309,8 @@ public final class CellStreamer {
             requests.removeAll { $0 == entry.coordinate }
             switch entry.result {
             case let .success(scene):
-                // A world-state rebuild re-integrates a cell that never left,
-                // so it must not read as a fresh attach (issue #171). The core
-                // clears `rebuilding` inside `integrate`, hence the read here.
+                // A rebuild must not read as a fresh attach. `integrate` clears
+                // `rebuilding`, so read it first.
                 let isRebuild = core.rebuilding.contains(entry.coordinate)
                 let decision = core.integrate(coordinate: entry.coordinate, kind: .success)
                 if decision == .integrated {

@@ -1,12 +1,5 @@
-// PCM `.wav` playback for WorldAudioEngine (issue #352). Satellite of
-// WorldAudioEngineSources.swift, which owns the streamed `.xwm` path.
-//
-// The two formats are played differently on purpose. An `.xwm` music track is
-// minutes long and tens of megabytes of PCM, so it streams: decode a chunk,
-// schedule it, repeat. A `.wav` sound effect is a fraction of a second — the
-// vanilla footstep files are around 26 KB — so it is read whole into one
-// buffer and scheduled once. Streaming it would add a decode-queue hop and a
-// three-buffer lookahead to something that fits in a single scheduling call.
+// PCM `.wav` playback. A `.wav` effect is tiny (a footstep is about 26 KB), so it
+// is read into one buffer and scheduled once; long `.xwm` tracks stream instead.
 
 import AVFAudio
 import Foundation

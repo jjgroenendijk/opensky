@@ -1,16 +1,7 @@
-// The CRVG chunk for the OpenSky native save container (issue #563): the
-// violent part of each `CRIM` row's bounty.
-//
-// `CRIM` writes the combined total per faction and keeps doing so, which is
-// what lets a build that predates the split restore the right bounty. This
-// chunk says how much of that total is violent; the rest is non-violent by
-// subtraction, so the two halves cannot disagree with the total a reader sees.
-//
-// Only rows with a violent part are written, and only actors with such a row,
-// so a session whose bounties are all theft and trespass writes no chunk and
-// its bytes match what the encoder produced before the chunk existed.
-//
-// Documented in docs/formats/opensky-save-actor-chunks.md.
+// The CRVG chunk: the violent part of each `CRIM` row's bounty. `CRIM` still writes the
+// total, so an older build restores the right bounty; non-violent gold is the
+// remainder. Only rows with a violent part are written, so a theft-only session
+// writes no chunk. See docs/formats/opensky-save-actor-chunks.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -88,13 +79,9 @@ nonisolated extension OpenSkySaveCrimeDecoder {
         return entries
     }
 
-    /// The `CRIM` ledgers with each named row's violent part moved out of its
-    /// non-violent total.
-    ///
-    /// A violent part larger than the total is clamped to the total rather than
-    /// rejected, and a row naming a faction `CRIM` has no row for is dropped:
-    /// `CRIM` says what is owed and this chunk only says how it divides, the
-    /// rule `STOL` follows over `INVN`.
+    /// The `CRIM` ledgers with each row's violent part split out. A violent part over
+    /// the total is clamped, and a row with no `CRIM` row is dropped: `CRIM` says what
+    /// is owed, as `INVN` does for `STOL`.
     public static func splittingViolent(
         _ values: [SaveViolentCrimeGoldEntry],
         in ledgers: [SaveCrimeLedgerEntry]

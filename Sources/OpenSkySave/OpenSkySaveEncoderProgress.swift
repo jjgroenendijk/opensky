@@ -1,14 +1,5 @@
-// PLVL chunk writing for the OpenSky native save container (issue #499).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the PRKS and SPLB
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// One entry at most, because one character levels. It is still written as a
-// counted, keyed list rather than as a bare struct so the chunk reads like
-// every other component chunk and so a later milestone that levels a follower
-// needs no format change.
+// PLVL chunk writing. At most one entry, but still a counted, keyed list like every
+// component chunk, so a levelling follower needs no format change.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,10 +1,6 @@
-// Sampling satellite for `PapyrusWorldRuntime` (issue #278): folds the VM's
-// instance table, event ring, scheduler counters, and coverage tally into the
-// single `ScriptsSnapshot` the World > Scripts sidebar reads.
-//
-// It lives beside the runtime rather than in the panel so the sampling rules
-// — which counters mean what, and how an unimplemented native is ranked — are
-// unit-testable without AppKit, exactly like `SWFLabReadout`.
+// Folds the VM's instance table, event ring, scheduler counters and tally into the
+// `ScriptsSnapshot` the World > Scripts sidebar reads. Here, so the sampling rules are
+// testable without AppKit.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -14,20 +10,9 @@ import OpenSkyWorldState
 
 @MainActor
 extension PapyrusWorldRuntime {
-    /// One sample of the VM for the Scripts readout.
-    ///
-    /// - Parameters:
-    ///   - target: reference the player is currently interacting with, whose
-    ///     attached scripts the snapshot names. Nil when nothing is targeted.
-    ///   - targetDescription: display text for `target`; defaults to the
-    ///     key's own description. Callers that resolved a FormID the streamer
-    ///     could not attribute pass their own text instead.
-    ///   - runningQuestCount: quests the session's `QuestRuntime` reports as
-    ///     running. Passed in rather than read here because quest *state* is
-    ///     the world store's, not the VM's; the VM only knows which quests it
-    ///     holds instances for.
-    ///   - questAliasFillFailures: quests whose alias fill failed at wire-up,
-    ///     which the bridge counts rather than the VM (issue #183).
+    /// One VM sample for the Scripts readout. `target` is the interacted reference, or
+    /// nil. `runningQuestCount` comes from `QuestRuntime`, because quest state is the
+    /// store's. `questAliasFillFailures` comes from the bridge.
     public func scriptsSnapshot(
         target: ReferenceKey? = nil,
         targetDescription: String? = nil,

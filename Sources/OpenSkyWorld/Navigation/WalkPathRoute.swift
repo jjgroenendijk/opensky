@@ -1,6 +1,5 @@
-// Clean engine values for M4's repeatable real-install acceptance route.
-// Coordinates/FormIDs identify observed records only; no game payload lives
-// in the repository.
+// Engine values for the repeatable real-install walk route. Coordinates and FormIDs only
+// identify observed records; no game payload is stored.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -14,7 +13,7 @@ nonisolated public enum WalkPathRoute: Sendable {
     public static let farmInterior = FormID(0x0001_6204)
     public static let exteriorReturn = SIMD2<Float>(31233.666, -9784.47)
 
-    /// Road-biased route from M2 target cell to farm's exterior stair approach.
+    /// Road-biased route from the first-render cell to the farm's exterior stair approach.
     public static let exteriorWaypoints: [SIMD2<Float>] = [
         SIMD2(28600, -7600),
         SIMD2(29400, -7600),

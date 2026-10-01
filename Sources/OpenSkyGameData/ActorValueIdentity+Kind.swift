@@ -20,13 +20,8 @@ nonisolated extension ActorValueIdentity {
         kindsByIndex[index]
     }
 
-    /// Vanilla index of one of the three primaries, which is the inverse of
-    /// `kind(at:)` and is what lets a primary be addressed through the same
-    /// index-keyed override table as every other actor value (issue #496).
-    ///
-    /// `storedIndices` names all three, so the fallback is unreachable; it is
-    /// `noneIndex` rather than a force-unwrap because an index outside the
-    /// table is already the documented miss everything here answers with.
+    /// Table index of a primary: the inverse of `kind(at:)`, so primaries share the
+    /// index-keyed override table. The `noneIndex` fallback is unreachable.
     public static func index(of kind: ActorValueKind) -> Int32 {
         storedIndices[kind] ?? noneIndex
     }

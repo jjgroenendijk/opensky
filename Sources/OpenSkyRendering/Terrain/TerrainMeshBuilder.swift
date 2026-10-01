@@ -1,14 +1,7 @@
-// Build engine terrain patches from a decoded LAND record (todo 3.1 terrain).
-// Pure geometry + splat data: one Patch per painted quadrant carrying the
-// 17x17 sub-mesh, the BTXT base texture FormID, and the ATXT layers with
-// their VTXT opacities baked dense onto the quadrant grid. Texture
-// resolution (LTEX -> TXST) and GPU upload live in CellSceneBuilder; the
-// splat draw path is documented in docs/rendering/scene-drawing.md.
-//
-// Authoring conventions (docs/decisions/coordinates.md): Skyrim Z-up world at
-// native units, +X east, +Y north, +Z up. Triangles wind counter-clockwise
-// seen from above (+Z) — the pipeline's front-face winding, matching the demo
-// ground plane. Layout + placement math: docs/engine/terrain.md.
+// Terrain patches from a decoded LAND: per painted quadrant, a 17x17 mesh, the BTXT
+// base, and ATXT layers with VTXT opacity baked dense. Z-up native units; triangles
+// wind counter-clockwise from above. See docs/engine/terrain.md and
+// docs/rendering/scene-drawing.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -58,13 +51,8 @@ nonisolated public enum TerrainMeshBuilder: Sendable {
         public let layers: [Layer]
     }
 
-    /// Builds the terrain patches for a decoded LAND: one per painted,
-    /// non-hidden quadrant. Quadrants whose force-hide bit is set in
-    /// `hiddenQuadrants` are skipped (XCLC land-quad flags, UESP CELL) and so
-    /// is a LAND with no height data.
-    ///
-    /// - Parameter hiddenQuadrants: XCLC quad-flags; bit `1 << q` hides
-    ///   quadrant q.
+    /// Builds one patch per painted quadrant. A quadrant with bit `1 << q` set in
+    /// `hiddenQuadrants` (XCLC, UESP CELL) is skipped, as is a LAND without heights.
     public static func patches(land: Land, hiddenQuadrants: UInt32) -> [Patch] {
         guard let heights = land.heightField?.heights, heights.count == Land.vertexCount else {
             return []

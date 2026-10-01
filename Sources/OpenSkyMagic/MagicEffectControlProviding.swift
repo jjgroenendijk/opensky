@@ -1,13 +1,5 @@
-// Main-app active-effect inspection seam (issue #469, roadmap item 19.6). The
-// provider keeps the panel independent of `GameViewController` while exposing
-// the engine-owned consume, dispel and coverage observations.
-//
-// One snapshot value rather than a bag of protocol properties, for the same
-// reason `ActorValueControlSnapshot` is one: the readout has to be a pure
-// function of a single engine observation, not of several taken microseconds
-// apart while the simulation is mutating between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The active-effect panel's seam: consume, dispel and coverage, without
+// `GameViewController`. One snapshot value, so the readout comes from a single observation.
 
 import Foundation
 import OpenSkyMagicInterface
@@ -68,10 +60,8 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     public let isAvailable: Bool
     /// Every effect currently acting on the player, in application order.
     public let playerEffects: [ActiveEffectReadout]
-    /// The nearest resident actor the panel can name, or nil when no actor is
-    /// resident. The same actor `ActorValueControlSnapshot.nearestActor`
-    /// describes, so the effects list and the resistance values below it are
-    /// read about the same body (issue #475, roadmap item 19.12).
+    /// The nearest resident actor, or nil. The same actor as
+    /// `ActorValueControlSnapshot.nearestActor`, so effects and resistances match.
     public let nearestActorName: String?
     /// Every effect currently acting on that actor, in application order.
     /// Empty both when the actor carries none and when there is no actor; the
@@ -145,13 +135,8 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
 public protocol MagicEffectControlProviding: AnyObject {
     var magicEffectControlSnapshot: MagicEffectControlSnapshot { get }
 
-    /// Drinks or eats the first ALCH or INGR the player carries.
-    ///
-    /// Exists beside the inventory menu's own consume action so the behaviour
-    /// is reachable without opening a menu, which is what makes it verifiable
-    /// from the panel alone.
-    ///
-    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    /// Consumes the first ALCH or INGR the player carries, without opening a menu.
+    /// Returns a readable outcome the panel shows verbatim.
     @discardableResult
     func consumeFirstCarriedMagicItem() -> String
 

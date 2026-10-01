@@ -1,40 +1,8 @@
-// One use of a skill as the systems that simulate it report it (issue #498,
-// roadmap item 20.5), and the seam they report it through.
-//
-// The value carries what the emitting site knows — who acted, which kind of
-// action it was, and the action's *base* experience in the vocabulary its own
-// source states it in — and nothing about skills, thresholds or actor values.
-// That split is the point: a combat runtime that had to know which actor value
-// Light Armor lives at would be a combat runtime that has to change whenever
-// progression does, and the skill an armoured hit credits is not even knowable
-// from the hit (it depends on what the target is wearing).
-//
-// ## The base experience each action is worth
-//
-// UESP "Skyrim:Leveling" gives one line per skill, and its footnote defines the
-// unit: "'Raw damage' refers to the damage before armor is taken into account."
-//
-// * One-Handed and Two-Handed: "Base Weapon Damage". The weapon's own WEAP
-//   number, which is why perks, enchantments and tempering do not raise it —
-//   "Boosting weapon damage via skill perks or equipment enchantments does not
-//   result in more XP per strike, nor does improving your weapons at a
-//   grindstone" (<https://en.uesp.net/wiki/Skyrim:One-handed>).
-// * Archery: "Base Weapon Damage of the Bow".
-// * Block: "1 base XP per raw damage blocked."
-// * Heavy Armor and Light Armor: "1 base XP per raw damage received", scaled by
-//   how much of that armour is worn (see `WornArmorProfile`).
-// * The five magic schools: "Base Magicka Cost of the Spell", times the
-//   effect's own `Skill Usage Mult` — "For Spells, a multiplier to the Skill
-//   Uses (which feed into advancing the effect's Magic Skill, above) that
-//   casting this effect will give the player"
-//   (<https://ck.uesp.net/wiki/Magic_Effect>).
-//
-// Actions the engine does not simulate yet — lockpicking, pickpocketing,
-// speech, the three crafting skills, sneaking — emit nothing at all rather than
-// an event with a guessed amount. They are listed in
-// docs/engine/skill-advancement.md as the wiring that is still open.
-//
-// Documented in docs/engine/skill-advancement.md.
+// One skill use as a simulating system reports it: who acted, the action kind and
+// its base experience. The emitter knows nothing about skills, so combat need not
+// change when progression does. Amounts follow UESP Skyrim:Leveling (raw damage,
+// before armor, or base magicka cost times `Skill Usage Mult`). Unsimulated
+// actions emit nothing. See docs/engine/skill-advancement.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -62,14 +30,9 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// effect's `Skill Usage Mult`.
     case spellEffect(skill: Int32)
 
-    /// The skill this action always credits, or nil when the action needs the
-    /// target's equipment to answer — which is `armorHit` alone.
-    ///
-    /// Unarmed strikes credit nothing: "Unarmed combat does not have its own
-    /// skill tree and cannot be developed like other skills"
-    /// (<https://en.uesp.net/wiki/Skyrim:Unarmed_Combat>). Neither does a staff,
-    /// a torch, a shield swing or a readied spell reported as a weapon hit,
-    /// because none of those is a weapon strike the weapon skills claim.
+    /// The skill this action always credits, or nil for `armorHit`, which depends
+    /// on the target's armor. Unarmed, staff, torch and shield strikes credit
+    /// nothing (<https://en.uesp.net/wiki/Skyrim:Unarmed_Combat>).
     public var skillIndex: Int32? {
         switch self {
         case let .weaponHit(handType):
@@ -112,25 +75,9 @@ nonisolated public struct SkillUseEvent: Equatable, Sendable {
     }
 }
 
-/// What one actor is wearing, as the armour skills count it.
-///
-/// Pieces rather than an armour rating, because the rating is explicitly not
-/// what the experience scales on: "a character with an armor rating of 400 will
-/// receive the same XP as a character with an armor rating of 100 for the same
-/// enemy strike. The number of heavy armor items simultaneously worn by the
-/// player does increase XP gained ... If the player is wearing a mixed set of
-/// heavy and light armor, XP will only be awarded to one skill"
-/// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>).
-///
-/// Two readings of that paragraph are left open by it, and both are decided
-/// here rather than left to a call site:
-///
-/// * *Which* skill a mixed set credits is not stated. The larger half takes it,
-///   and heavy armour takes a tie — a reading, flagged as one, not a quotation.
-/// * *How* the piece count raises the experience is not stated either, only
-///   that it does. This scales it proportionally, which is the simplest
-///   monotone reading and the one that makes a full four-piece set worth four
-///   times a single bracer. The factor is unverified against the shipped game.
+/// What one actor wears, as the armor skills count it: pieces, not rating
+/// (<https://en.uesp.net/wiki/Skyrim:Heavy_Armor>). Our readings: a mixed set
+/// credits the larger half (heavy wins a tie), and experience scales with the piece count.
 nonisolated public struct WornArmorProfile: Equatable, Sendable {
     public let heavyPieces: Int
     public let lightPieces: Int
@@ -153,14 +100,8 @@ nonisolated public struct WornArmorProfile: Equatable, Sendable {
     }
 }
 
-/// How a simulating system tells progression that a skill was used.
-///
-/// One method with a do-nothing default, exactly as `ScriptHitReporting`
-/// carries one: `MeleeCombatWorld`, `ProjectileWorld`, `CombatLoopWorld` and
-/// `CasterWorld` are the seams the acceptance tests drive against fakes with no
-/// game data, and such a fake should not have to write an empty method to keep
-/// compiling. Answering with the experience awarded rather than with nothing is
-/// what lets a test assert that a blow reached progression at all.
+/// How a simulating system reports a skill use. The default does nothing, so test
+/// fakes need no empty method; the returned experience lets a test check delivery.
 @MainActor
 public protocol SkillUseReporting: AnyObject {
     /// Converts one use into skill experience on the acting character.

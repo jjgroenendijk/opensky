@@ -1,12 +1,6 @@
-// Narrow provider seam for the M16 acceptance panel (issue #202, roadmap item
-// 16.6, scope point 7). This issue supplies the readout and the settings
-// provenance; issue #203 adds the controls that show them, without the shell
-// ever seeing `PerceptionRuntime` or `CellStreamer`.
-//
-// The same shape as `AIOverlayControlProviding` next door, and for the same
-// reason: a panel that could reach the runtime could also drive it, and a panel
-// driving a fixed-step simulation is how a readout stops matching the world it
-// describes.
+// The provider seam for the perception panel. The shell never sees
+// `PerceptionRuntime` or `CellStreamer`: a panel that could reach the runtime
+// could also drive the fixed-step simulation it describes.
 
 // One resolved detection setting as a panel shows it: the name it is addressed
 // by, its value, and where that value came from.

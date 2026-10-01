@@ -1,8 +1,6 @@
-// Shared free-fly input state (todo 2.8): the AppKit view layer records key
-// presses and pointer deltas here; the renderer drains it once per frame into
-// a `CameraInput`. Kept AppKit-free (logical keys, not NSEvent) so the
-// press/release -> axis logic is unit-testable. Reference type: the view
-// writes, the renderer reads, both on the main thread.
+// Shared free-fly input state: the view records keys and pointer deltas, the renderer
+// drains them once per frame into a `CameraInput`. Logical keys, not NSEvent, so the axis
+// logic is unit-testable. Both sides run on the main thread.
 
 import simd
 

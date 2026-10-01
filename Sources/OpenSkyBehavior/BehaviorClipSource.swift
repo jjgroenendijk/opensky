@@ -1,17 +1,6 @@
-// The seam between `hkbClipGenerator` and a loaded animation (issue #187).
-//
-// A clip generator names its clip twice — as a string the character file's
-// `m_animationNames` spells, and as an index into that same list — and says
-// nothing about where the bytes are. Turning either into a sampled pose is
-// somebody else's job: item 14.5 wires the character file, item 14.6 replaces
-// the hardcoded `loadAnimationClip` path. So the evaluator asks for a clip
-// through this protocol and does not care who answers.
-//
-// The engine-side answer wraps the sampling that already exists,
-// `HKASplineCompressedAnimation.boneLocalTransforms(at:binding:)` resolved
-// through `hkaAnimationBinding`. The test-side answer is a clip built in code.
-// Neither is privileged, which is what lets the evaluator be unit-tested with
-// no packfile and no install.
+// The seam between `hkbClipGenerator` and a loaded animation. The engine answer
+// samples `HKASplineCompressedAnimation` through `hkaAnimationBinding`; the test
+// answer is a clip built in code, so the evaluator runs without a packfile.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -98,10 +87,8 @@ nonisolated public struct SplineBehaviorClip: BehaviorClip, Sendable {
     }
 }
 
-/// A source backed by an in-memory table, keyed by the animation name the
-/// generator spells and by binding index. Callers that already resolved their
-/// clips — the real-data probe, and eventually item 14.6's loader — hand one of
-/// these to the instance.
+/// A source backed by an in-memory table, keyed by the generator's animation name and by
+/// binding index. A caller that already resolved its clips hands one to the instance.
 nonisolated public struct BehaviorClipTable: BehaviorClipSource {
     private let byName: [String: any BehaviorClip]
     private let byIndex: [Int: any BehaviorClip]

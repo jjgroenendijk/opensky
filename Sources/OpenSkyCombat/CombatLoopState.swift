@@ -1,26 +1,7 @@
-// What "the player is in combat" means in this engine (issues #374 and #424,
-// roadmap items 15.7 and 16.7), and the record of one blow landing on the
-// player.
-//
-// Combat state is **derived, not stored**. The question is "is any resident
-// actor engaged", and deriving it every step from the same actor list the fight
-// runs over is what keeps it from going stale: a target that died, a cell that
-// unloaded, an actor that gave up the search, or a hostility cleared from the
-// panel all change the answer on the next step with nothing to invalidate. A
-// stored flag would have to be cleared from each of those places, and the one
-// that was forgotten would leave the player permanently "in combat" with a
-// corpse.
-//
-// The current target is the nearest hostile living actor. Nearest rather than
-// most-recently-hit, because 15.8's combat-target condition run-on and the
-// music hook both want "who am I fighting" and a player who turned to face a
-// second attacker has answered that question by turning.
-//
-// Pure value types over a list of observations: no world, no clock, no store.
-// That is what makes the combat-state half of the acceptance chain a plain
-// arithmetic assertion.
-//
-// Documented in docs/engine/combat.md.
+// What "the player is in combat" means, and one blow on the player. Derived every step,
+// never stored, so a death, unload or calm ends it with nothing to clear. The target is
+// the nearest hostile living actor. Pure values, so the acceptance chain is arithmetic.
+// See docs/engine/combat.md.
 
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
@@ -28,16 +9,9 @@ import simd
 
 /// The player's combat situation as of one step.
 nonisolated public struct CombatLoopState: Equatable, Sendable {
-    /// True while at least one resident actor is *engaged* — fighting the
-    /// player or searching for them.
-    ///
-    /// Hostile-and-alive was the answer while the opponent was a clock, because
-    /// a hostile actor had nothing else it could be doing. With 16.7 it does: a
-    /// bandit that has not perceived the player yet, and one that searched and
-    /// gave up and walked back to its schedule, are both hostile and both out of
-    /// the fight. Deriving from engagement rather than from hostility is what
-    /// makes the combat music stop when the fight actually ends instead of when
-    /// the actor is finally killed or calmed from the panel.
+    /// True while a resident actor is engaged: fighting or searching for the player. A
+    /// hostile actor that has not noticed the player, or gave up, is not, so combat
+    /// music stops when the fight ends.
     public var isPlayerInCombat = false
     /// The nearest hostile living actor, or nil when there is none.
     ///
@@ -61,15 +35,8 @@ nonisolated public struct CombatLoopState: Equatable, Sendable {
 
     public static let calm = CombatLoopState()
 
-    /// Derives the state from one observation of the resident actors.
-    ///
-    /// - Parameters:
-    ///   - actors: every resident actor.
-    ///   - hostility: each one's stored regard for the player.
-    ///   - phase: each one's combat behavior phase, or nil for an actor with no
-    ///     machine running.
-    ///   - playerFeet: where the player is standing, for the nearest-target
-    ///     comparison.
+    /// Derives the state from one observation of resident actors. `phase` is nil for an
+    /// actor with no machine; `playerFeet` picks the nearest target.
     public static func derive(
         actors: [CombatActorObservation],
         hostility: (ReferenceKey) -> ActorHostility,

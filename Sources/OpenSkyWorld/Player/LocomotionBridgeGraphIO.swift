@@ -1,14 +1,6 @@
-// The two writes that reach every attached graph (issues #190 and #191).
-//
-// One call site per variable and one per event, both fanning out here. That is
-// what makes "both graphs see identical input state" a property of the code
-// shape rather than a promise: nothing can reach one graph without reaching the
-// other, because there is only one place that reaches either.
-//
-// A satellite of `LocomotionBridge.swift` for the type-length cap. The status
-// mutations go through `updateStatus` because `status` is settable only inside
-// the class's own file, which is the narrow lending the bridge already does for
-// its first-person half.
+// The writes that reach every attached graph: one place per variable and per event, so
+// both graphs always see the same input. Status changes go through `updateStatus`,
+// because `status` is settable only in the class's own file.
 
 import Foundation
 import OpenSkyBehavior
@@ -59,12 +51,8 @@ nonisolated extension LocomotionBridge {
         return intent.sneak ? -rate : 0
     }
 
-    /// The blend the graph's `hkbRigidBodyRagdollControlsModifier` asks for, or
-    /// nil where no evaluated graph has run one (issue #197, roadmap item 15.6).
-    ///
-    /// Read straight off the instance rather than mirrored, so it is the graph's
-    /// number and not a copy of it that can go stale. In an extension because
-    /// the class body is at the strict-lint length cap.
+    /// The blend `hkbRigidBodyRagdollControlsModifier` asks for, or nil when no graph has
+    /// run one. Read off the instance, so it cannot go stale.
     public var ragdollBlendDuration: Float? {
         graph?.ragdollBlendDuration
     }

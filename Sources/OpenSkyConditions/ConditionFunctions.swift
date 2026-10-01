@@ -1,14 +1,7 @@
-// The implemented CTDA condition functions (issue #251).
-//
-// Every function here is one the engine can answer honestly from state it owns:
-// the game clock, the globals seam, the runtime reference index, and — since
-// issue #182 — the quest seam. Anything else stays unregistered and is counted
-// by `ConditionTally` rather than guessed at.
-//
-// Indices below are the raw stored numbers; the Creation Kit spells each 4096
-// higher. Sources: UESP "Skyrim Mod:Mod File Format/CTDA Field" for the
-// encoding, the Creation Kit wiki condition-function list for names and return
-// values, and xEdit dev Core/wbDefinitionsTES5.pas for the index table.
+// The implemented CTDA condition functions: only those answerable from owned state.
+// The rest stay unregistered and `ConditionTally` counts them. Indices are raw (the
+// Creation Kit adds 4096). Sources: UESP "CTDA Field", the Creation Kit wiki
+// function list, and xEdit wbDefinitionsTES5.pas.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -73,13 +66,9 @@ nonisolated public enum ConditionFunctions: Sendable {
             return call.global(parameter.asFormID)
         })
 
-        // Index 77 per xEdit's TES5 condition-function table. gib.me's older
-        // Fallout-era list numbers GetRandomPercent 4172 (stored 76), so the
-        // two open sources disagree by one. The vanilla sweep settles it for
-        // xEdit: stored index 76 never appears in Skyrim.esm, while 77 carries
-        // 1203 conditions that all leave both parameter words zero and compare
-        // against values spanning 0 to 100 — the no-parameter percentage
-        // signature. Evidence recorded in docs/formats/conditions.md.
+        // Index 77 per xEdit; gib.me's list says 76. In Skyrim.esm 76 never appears and
+        // 77 carries 1203 parameterless conditions compared against 0-100.
+        // See docs/formats/conditions.md.
         registry.register(ConditionFunction(
             index: 77,
             name: "GetRandomPercent"

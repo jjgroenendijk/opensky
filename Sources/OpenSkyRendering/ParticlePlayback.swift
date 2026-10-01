@@ -1,10 +1,6 @@
-// CPU particle playback + GPU billboard instance upload (M7.3.2). Immutable
-// NIF definitions stay decoupled from this runtime; one playback belongs to
-// one placed particle system and is retained by its resident RenderScene.
-//
-// Emitter/modifier semantics + alpha-function values:
-// NifTools nif.xml (NiPSysEmitter, NiPSysModifier, AlphaFunction).
-// https://github.com/niftools/nifxml/blob/develop/nif.xml
+// CPU particle playback and GPU billboard upload. One playback per placed particle
+// system, held by its `RenderScene`. Emitter, modifier and alpha-function semantics:
+// NifTools nif.xml (https://github.com/niftools/nifxml/blob/develop/nif.xml).
 
 @preconcurrency import Metal
 import OpenSkyFormatsMesh
@@ -71,10 +67,8 @@ nonisolated private struct ParticleRandom {
     }
 }
 
-/// Pure simulation. Birth-rate controller blocks are not decoded in M7.3.1;
-/// until they land, a bounded runtime policy fills roughly one quarter of the
-/// system capacity per average lifetime. This is an OpenSky fallback, not a
-/// claimed Creation Engine constant.
+/// Pure simulation. Birth-rate controllers are not decoded, so an OpenSky fallback
+/// fills about a quarter of capacity per average lifetime; not an engine constant.
 nonisolated public struct ParticleSimulator: Sendable {
     public static let maximumCapacity = 2048
 
@@ -223,8 +217,8 @@ nonisolated public struct ParticleSimulator: Sendable {
             let xy = sqrt(max(1 - z * z, 0))
             return SIMD3(xy * cos(angle), xy * sin(angle), z) * radial
         case .mesh:
-            // M7.3.1 retains mesh refs, not mesh vertices. Emit from origin
-            // until mesh-surface sampling gains an engine-side geometry link.
+            // Mesh emitters keep refs, not vertices, so they emit from the origin
+            // until surface sampling exists.
             return .zero
         }
     }

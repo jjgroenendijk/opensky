@@ -65,8 +65,7 @@ extension CellStreamer {
         guard transitionInFlight == nil, let door else { return false }
         transitionInFlight = door.reference
         interiorRebuildInFlight = false
-        // Issue #160: the destination is built against the live store, so an
-        // interior the player has already changed comes back changed.
+        // Built against the live store, so a changed interior comes back changed.
         runner.enqueueDoorTransition(from: door.reference, state: stateSource())
         return true
     }
@@ -83,14 +82,9 @@ extension CellStreamer {
     }
 
     /// Swaps in a built door destination.
-    ///
     /// - Parameters:
-    ///   - sourceDoor: the door whose transition produced this scene, retained
-    ///     for an interior so a later world-state change can be made visible by
-    ///     re-running the same transition (issue #160).
-    ///   - isRebuild: true when this transition is such a rebuild rather than a
-    ///     player-driven move. A rebuild passes no camera to the sink, so the
-    ///     scene swaps underneath a player who stays where they were standing.
+    ///   - sourceDoor: kept for an interior, so a world-state change can rerun it.
+    ///   - isRebuild: true for such a rerun; no camera is passed, so the player stays put.
     public func apply(
         transition: DoorTransition,
         sourceDoor: FormID? = nil,

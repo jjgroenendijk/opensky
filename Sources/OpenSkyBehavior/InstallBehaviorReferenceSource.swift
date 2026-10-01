@@ -1,18 +1,6 @@
-// The install-backed `BehaviorReferenceSource` (issue #189): resolves the
-// behavior-file names `0_master.hkx` references to the archived files beside
-// it, and builds one graph instance per name on demand.
-//
-// The names a reference carries are the ones the behavior project spells —
-// `mt_behavior.hkx`, `1hm_behavior.hkx`, sometimes with a folder in front and
-// mixed separators — so lookup is on the file name alone, case-insensitively,
-// against the folder the root behavior was loaded from. That keeps the
-// first-person set (`_1stperson\behaviors\`) and the third-person set apart
-// without either one having to be named: whichever folder the root came from is
-// the folder its references resolve in, which is what item 14.7 needs when it
-// runs both at once.
-//
-// Read-only external input: nothing it touches enters the repository
-// (AGENTS.md "Legal & IP boundary").
+// The install-backed `BehaviorReferenceSource`. A reference resolves by file name,
+// case-insensitively, in the root behavior's own folder, so first- and third-person
+// sets stay apart. Read-only external input (AGENTS.md "Legal & IP boundary").
 
 import Foundation
 import OpenSkyFormatsAnimation

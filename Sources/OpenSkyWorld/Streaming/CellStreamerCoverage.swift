@@ -8,15 +8,9 @@ import OpenSkyFormatsCore
 import OSLog
 
 extension CellStreamer {
-    /// Drops unloaded cells from the composition and schedules eviction of the
-    /// assets they used that no remaining resident cell needs. Drop-set (the
-    /// departed cells' keys minus the resident union) so in-flight builds for
-    /// the new grid keep their freshly-loaded assets (docs/engine/cell-streaming.md
-    /// eviction). Eviction runs on the build queue -- confinement holds.
-    ///
-    /// Lives beside the coverage transition rather than in CellStreamer.swift
-    /// because both answer the same question — what happens to a cell that has
-    /// stopped being resident — and because the class is at its length limit.
+    /// Drops unloaded cells and schedules eviction of assets no resident cell needs. Only
+    /// the departed keys minus the resident union go, so in-flight builds keep theirs.
+    /// Eviction runs on the build queue (docs/engine/cell-streaming.md).
     public func unload(_ coordinates: [CellCoordinate]) {
         var departed = CellAssets()
         for coordinate in coordinates {
@@ -110,15 +104,8 @@ extension CellStreamer {
 }
 
 extension CellStreamer {
-    /// Drops the mesh and texture keys `candidates` held that nothing resident
-    /// still needs.
-    ///
-    /// Lives here rather than in CellStreamer.swift because every caller is a
-    /// residency change — a coverage transition, an unload, a door swap — and
-    /// the set it protects is exactly the composition plus whatever is staged
-    /// offscreen. An interior scene and the staged cells are unioned in because
-    /// neither is part of the composition while it owns the view, and evicting
-    /// what they are drawing would drop a live asset.
+    /// Drops `candidates` keys nothing resident needs. An interior scene and staged cells
+    /// count as resident, because they are drawing outside the composition.
     public func evictUnused(_ candidates: CellAssets) {
         var resident = composition.residentAssets()
         if let interiorScene {

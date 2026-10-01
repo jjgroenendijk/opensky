@@ -14,10 +14,8 @@ nonisolated public struct StaticCollisionShape: Sendable {
     public let transform: float4x4
     public let geometry: NIFCollisionGeometry
     public let bounds: ModelBounds
-    /// The MATT material type this surface is made of (issue #358), already
-    /// resolved from the NIF's Havok material value at build time so that
-    /// nothing downstream has to know a mesh names its surface by hash. Nil
-    /// where the mesh carries no material or names one no MATT hashes to.
+    /// The MATT material type of this surface, resolved from the Havok material at
+    /// build time. Nil when the mesh names none or no MATT matches.
     public let material: FormID?
 
     public init(

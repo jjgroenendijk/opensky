@@ -1,22 +1,7 @@
-// The player's rendered third-person body (issue #189).
-//
-// Two facts shape this type.
-//
-// The body is streaming-independent. Everything a cell build produces —
-// placements, animations, residency — is evicted when that cell is evicted, and
-// the player is never in one cell in that sense: it is the thing the cells move
-// around. So the body is not a `CellScene` product and not a member of
-// `RenderScene.animations`. The renderer holds it directly and it survives every
-// scene swap (`RendererPlayerBody.swift`).
-//
-// The body moves every frame, and skinned geometry is placed twice: once by the
-// draw's model matrix and once by the bone palette. The palette is
-// pose-in-rig-space (`RenderMesh.updateSkinningPose`), so the world placement
-// has to ride the model matrix, which means the draw groups are rebuilt when
-// the transform changes rather than baked once. That rebuild is group
-// accumulation over the handful of meshes one actor carries — no allocation, no
-// upload — and it runs through `RenderScene(instances:)` so the player is
-// grouped by exactly the rule every other placement is grouped by.
+// The player's third-person body. It does not stream: the renderer holds it directly and
+// it survives every scene swap (`RendererPlayerBody.swift`). The palette is pose in rig
+// space, so the world placement rides the model matrix, and draw groups are rebuilt
+// through `RenderScene(instances:)` when the transform changes.
 
 import Metal
 import OpenSkyFormatsCore
@@ -52,16 +37,9 @@ nonisolated public final class PlayerBody {
         render = RenderScene(instances: assembly.renderPlacements(at: matrix_identity_float4x4))
     }
 
-    /// The world transform of a body standing at `feetPosition` and facing
-    /// `yaw`.
-    ///
-    /// The quarter turn is the actor convention, not a fudge. A Skyrim ACHR's
-    /// `angleZ` is measured clockwise from north, and `MatrixMath.placement`
-    /// applies it as `rotationZ(-angleZ)`, so an actor placed at `angleZ` 0
-    /// stands unrotated and faces +Y — the character meshes are authored facing
-    /// +Y. Walk-mode yaw is measured the other way, counterclockwise from +X
-    /// (`docs/decisions/coordinates.md`), so turning the mesh's +Y onto the
-    /// camera's `(cos yaw, sin yaw)` is a rotation of `yaw - pi/2`.
+    /// The world transform of a body at `feetPosition` facing `yaw`. Meshes face +Y and
+    /// walk-mode yaw counts from +X (docs/decisions/coordinates.md), so the rotation is
+    /// `yaw - pi/2`.
     public static func transform(feetPosition: SIMD3<Float>, yaw: Float) -> float4x4 {
         MatrixMath.translation(feetPosition) * MatrixMath.rotationZ(radians: yaw - .pi / 2)
     }

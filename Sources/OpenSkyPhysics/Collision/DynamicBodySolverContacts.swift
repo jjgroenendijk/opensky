@@ -1,14 +1,6 @@
-// Contact resolution for the dynamic solver, split from DynamicBodySolver for
-// the type-length limit (issue #193).
-//
-// Accumulated sequential impulses: each contact is visited a fixed number of
-// times per substep, its normal impulse is kept non-negative across those
-// visits, and friction is clamped against whatever normal impulse has
-// accumulated so far. Leftover penetration is then pushed out of the positions
-// rather than out of the velocities, which is what lets a resting body reach
-// the sleep thresholds instead of standing on a permanent upward bias.
-//
-// Documented in docs/engine/dynamic-narrowphase.md.
+// Contact resolution for the dynamic solver: accumulated sequential impulses, normal
+// impulse kept non-negative, friction clamped to it. Penetration leaves through the
+// positions, so a resting body can sleep. See docs/engine/dynamic-narrowphase.md.
 
 import simd
 
@@ -75,24 +67,9 @@ nonisolated extension DynamicBodySolver {
         in contacts: [DynamicContact],
         bodies: inout [DynamicBody]
     ) {
-        // A sleeping body touched by a *moving* one rejoins the simulation,
-        // which is what makes a shoved crate knock over the one beside it.
-        //
-        // "Moving" rather than "awake" is load-bearing. A body that has come to
-        // rest stays awake for `sleepStepCount` steps before it is allowed to
-        // sleep, so waking on mere wakefulness makes a touching pair alternate
-        // forever: one falls asleep, its still-awake neighbour wakes it a step
-        // later, and neither ever stays down. The real-data probe measured
-        // exactly that, a body sleeping on step 61 and woken on step 62, over
-        // and over for the whole run.
-        //
-        // The test is the toucher's resting tally rather than its velocity here
-        // and now. A step begins by adding gravity to every awake body, so at
-        // the moment contacts are resolved *every* awake body is moving at a
-        // twelfth of gravity whatever it is really doing — reading velocity
-        // directly makes the whole scene look busy. The tally is the same
-        // measurement taken at the end of the previous step, after contacts had
-        // cancelled that gravity, which is the honest moment to take it.
+        // A sleeping body touched by a moving one wakes. "Moving" uses the toucher's
+        // resting tally from the last step, not "awake" (a pair would wake each other
+        // forever) and not its velocity now (gravity was just added to every body).
         for contact in contacts {
             guard let other = contact.other, bodies[other].isSleeping else { continue }
             if bodies[contact.body].restingSteps == 0 {
@@ -116,24 +93,9 @@ nonisolated extension DynamicBodySolver {
         }
     }
 
-    /// Pushes leftover penetration out of the positions, split between two
-    /// dynamic bodies by inverse mass so the heavier of a pair moves less.
-    ///
-    /// The corrections are accumulated per body rather than applied one contact
-    /// at a time, and each contact is measured against what its body has already
-    /// been moved. A sample generates one contact *per placed shape it is inside
-    /// and per triangle soup it is near*, so a hull corner resting in a shelf
-    /// routinely produces a dozen contacts carrying the same normal and the same
-    /// depth. Applying each of them in turn moved the body a dozen times the
-    /// penetration it actually had: the real-data probe caught a crate leaving a
-    /// shelf at six units a substep and a second one shot 118 units through the
-    /// farmhouse floor in a single step, after which both fell out of the world.
-    /// Subtracting the accumulated move makes redundant contacts converge on the
-    /// one correction they describe instead of summing.
-    ///
-    /// `maximumCorrectionDistance` then bounds what one substep may recover, so
-    /// clutter vanilla authored deep inside its shelf climbs out over several
-    /// steps rather than being launched. Recovery is not lost, only paced.
+    /// Pushes penetration out of positions, split by inverse mass. Moves add up per body
+    /// and each contact subtracts what is done, so a dozen duplicate contacts give one
+    /// move. `maximumCorrectionDistance` paces recovery over several substeps.
     private static func correctPositions(
         contacts: [DynamicContact],
         bodies: inout [DynamicBody]

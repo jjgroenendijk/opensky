@@ -1,14 +1,6 @@
-// Optional capability seams a `CellSceneProvider` can also conform to.
-//
-// A satellite of `CellBuildRunner.swift`, which sits at the strict file-length
-// cap. These belong together rather than beside their own subsystems: every one
-// of them answers the same question — what a provider built from real plugin
-// data can hand the main thread that a synthetic scene cannot — and
-// `GameViewController` reaches for them in one place, at session wire-up.
-//
-// Every value behind these is immutable after `init`, which is what makes
-// reading one from the main thread safe while the builder itself stays confined
-// to its serial queue.
+// Optional capability seams a `CellSceneProvider` can adopt: what a real-data provider
+// can hand the main thread that a synthetic scene cannot. Every value is immutable after
+// `init`, so main-thread reads are safe while the builder stays on its queue.
 
 import Foundation
 import OpenSkyAudio
@@ -20,25 +12,19 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyWorldState
 
-/// Optional weather runtime a provider can expose (M7.2.2). GameViewController
-/// pulls it off the provider to hand the renderer. Built once at setup from the
-/// same ESM data, then read-only value types — safe to share to the main thread.
+/// Optional weather runtime for the renderer, built once from the same ESM data.
 nonisolated public protocol WeatherProviding {
     var weatherSystem: WeatherSystem? { get }
 }
 
-/// Optional GLOB index a provider can expose (issue #165). GameViewController
-/// pairs it with the session's `WorldStateStore` to build the
-/// `GlobalResolution` conditions, the clock and weather-chance selection read
-/// global values through.
+/// Optional GLOB index. With the session's `WorldStateStore` it builds the
+/// `GlobalResolution` that conditions, the clock and weather read.
 nonisolated public protocol GlobalDataProviding {
     var globalStore: GlobalStore? { get }
 }
 
-/// Optional QUST index a provider can expose (issue #322). `GameViewController`
-/// pairs it with the session's `WorldStateStore` to build the `QuestRuntime`
-/// the `Quest` natives mutate and the quest script instances are started from.
-/// Immutable after `init` like every other `*Store` here.
+/// Optional QUST index. With the session's `WorldStateStore` it builds the `QuestRuntime`
+/// that the `Quest` natives mutate and quest scripts start from.
 nonisolated public protocol QuestDataProviding {
     var questStore: QuestStore? { get }
 }
@@ -49,117 +35,80 @@ nonisolated public protocol LocationDataProviding {
     var locationStore: LocationStore? { get }
 }
 
-/// Optional DIAL/INFO/VTYP index a provider can expose (issue #204). The
-/// dialogue runtime consumes this in 17.2; synthetic scenes leave it nil.
+/// Optional DIAL/INFO/VTYP index for the dialogue runtime; nil on synthetic scenes.
 nonisolated public protocol DialogueDataProviding {
     var dialogueStore: DialogueStore? { get }
 }
 
-/// Optional PACK/NPC_ schedule index (issue #201). The M16 gate panel pulls
-/// this seam from the real provider; synthetic scenes leave it nil.
+/// Optional PACK/NPC_ schedule index for the AI panel; nil on synthetic scenes.
 nonisolated public protocol PackageDataProviding {
     var packageStore: PackageStore? { get }
 }
 
-/// Optional item + container indexes a provider can expose (issue #177).
-/// `GameViewController` pairs the resolver with the session's
-/// `WorldStateStore` to build the `InventoryRuntime` that take, drop and
-/// container sessions run on. Immutable after `init` like every other `*Store`
-/// here, so reading it from the main thread does not break the builder's queue
-/// confinement.
+/// Optional item and container indexes. With the session's `WorldStateStore` they build
+/// the `InventoryRuntime` behind take, drop and container sessions.
 nonisolated public protocol ItemDataProviding {
     var inventoryBaselines: InventoryBaselineResolver? { get }
-    /// Slot and model data for equippable items (issue #178), paired with the
-    /// baselines above to build the session's `EquipmentRuntime`. Separate
-    /// from the baseline resolver because equipping needs body templates the
-    /// inventory view deliberately does not carry.
+    /// Slot and model data for equippable items, for the `EquipmentRuntime`. Separate,
+    /// because equipping needs body templates the inventory view does not.
     var equipmentCatalog: EquipmentCatalog? { get }
 }
 
-/// Optional RACE/CLAS/NPC_ stat indexes a provider can expose (issue #194).
-/// `GameViewController` pairs the resolver with the session's `WorldStateStore`
-/// to build the `ActorValueRuntime` that damage, restore and regeneration run
-/// on. Immutable after `init` like every other `*Resolver` here, so reading it
-/// from the main thread does not break the builder's queue confinement.
+/// Optional RACE/CLAS/NPC_ stat indexes. With the session's `WorldStateStore` they build
+/// the `ActorValueRuntime` behind damage, restore and regeneration.
 nonisolated public protocol ActorValueDataProviding {
     var actorValueBaselines: ActorValueBaselineResolver? { get }
 }
 
-/// Optional MGEF index a provider can expose (issue #469). The active-effect
-/// runtime resolves every EFID through it, and the plugin name beside it is
-/// what those links are relative to — the base plugin the item indexes were
-/// built from. Both nil on a synthetic scene, and then the magic panel reports
-/// itself unavailable rather than showing a convincing nothing.
+/// Optional MGEF index, plus the base plugin its EFID links are relative to. Both nil on a
+/// synthetic scene, and the magic panel then says it is unavailable.
 nonisolated public protocol MagicDataProviding {
     var magicEffectStore: MagicEffectStore? { get }
     var magicItemPluginName: String? { get }
-    /// Load-order SPEL and SCRL index (issue #470), which the spellbook keys
-    /// its known spells against.
+    /// Load-order SPEL and SCRL index, which the spellbook keys its spells against.
     var spellStore: SpellStore? { get }
     /// Load-order EQUP index, which answers which hands a readied spell takes.
     /// The load-order view rather than `EquipmentCatalog`'s single-plugin table,
     /// because a spell's ETYP is relative to whichever plugin authored the
     /// spell, and that need not be the one the item indexes were built from.
     var equipSlotStore: EquipSlotStore? { get }
-    /// Load-order ENCH index (issue #472), which resolves the `EITM` an equipped
-    /// weapon or worn armour carries into an effect list, a cost and a charge.
+    /// Load-order ENCH index: resolves an item's `EITM` to effects, cost and charge.
     var enchantmentStore: EnchantmentStore? { get }
 }
 
-/// Optional progression seam a provider can expose (issue #497): the PERK index
-/// the perk runtime owns perks out of and evaluates entry points against.
-///
-/// Its own protocol rather than another member of `MagicDataProviding`, because
-/// progression is its own subsystem — perks reach combat, magic, prices and
-/// detection alike — and a session that wants perks should not have to claim it
-/// carries spells.
+/// Optional progression seam: the PERK index. Separate from `MagicDataProviding`, because
+/// perks reach combat, prices and detection too.
 nonisolated public protocol ProgressionDataProviding {
     /// Load-order PERK index, or nil on a synthetic scene, where the perk
     /// runtime reports itself unavailable rather than showing an actor who owns
     /// nothing.
     var perkStore: PerkStore? { get }
 
-    /// Load-order AVIF index (issue #498), which skill advancement reads each
-    /// skill's `AVSK` use and improve parameters out of. Nil on a synthetic
-    /// scene, and then a use is counted and dropped rather than converted with
-    /// invented multipliers.
+    /// Load-order AVIF index with each skill's `AVSK` parameters. Nil on a synthetic
+    /// scene, where a use is counted and dropped instead of using invented numbers.
     var actorValueInformation: ActorValueInformationStore? { get }
 
-    /// `fSkillUseCurve` and `fXPPerSkillRank` as this load order resolves them
-    /// (issue #498), defaulting to the documented numbers on a synthetic scene.
+    /// `fSkillUseCurve` and `fXPPerSkillRank` for this load order, or the documented
+    /// defaults on a synthetic scene.
     var skillAdvancementSettings: SkillAdvancementSettings { get }
 
-    /// The character-level curve and the level-up rewards as this load order
-    /// resolves them (issue #499), defaulting to the documented numbers on a
-    /// synthetic scene.
-    ///
-    /// The player level itself is *not* here: it is published on
-    /// `ActorValueBaselineResolver.playerLevel`, because that is the one value
-    /// every `PC Level Mult` derivation already reads and a second copy would
-    /// be a second answer.
+    /// The level curve and level-up rewards for this load order, or documented defaults.
+    /// The player level lives on `ActorValueBaselineResolver.playerLevel`, the one value
+    /// every `PC Level Mult` derivation reads.
     var characterLevelSettings: CharacterLevelSettings { get }
 }
 
-/// Optional social seam a provider can expose (issue #503): the FACT and RELA
-/// indexes the hostility derivation reads.
-///
-/// Its own protocol rather than more members of `ProgressionDataProviding`,
-/// because who an actor sides with reaches crime, dialogue and services as well
-/// as combat, and a session that wants factions should not have to claim it
-/// carries perks. Both nil on a synthetic scene, and then every actor derives
-/// as neutral and the panel toggle is the only hostility there is.
+/// Optional social seam: the FACT and RELA indexes hostility reads. Separate, because
+/// factions reach crime, dialogue and services. Nil on a synthetic scene, where every
+/// actor is neutral.
 nonisolated public protocol FactionDataProviding {
-    /// Load-order FACT index (issue #501), which every stored membership is
-    /// looked up through and which the interfaction relation index is built
-    /// from.
+    /// Load-order FACT index: membership lookups and the interfaction relation index.
     var factionStore: FactionStore? { get }
 
-    /// Load-order RELA and ASTP index (issue #502), which answers what one
-    /// specific pair of actors is to each other.
+    /// Load-order RELA and ASTP index: what one pair of actors is to each other.
     var relationshipStore: RelationshipStore? { get }
 
-    /// Load-order FLST index (issue #506), which a vendor faction's buy/sell
-    /// keyword list is flattened through.
+    /// Load-order FLST index, which flattens a vendor faction's buy/sell keyword list.
     var formListStore: FormListStore? { get }
 }
 
@@ -167,15 +116,9 @@ nonisolated public protocol FactionDataProviding {
 /// `XDataProviding` protocols say which stores a conformer carries.
 nonisolated public protocol WorldDataProviding {}
 
-/// Optional script-loading seam a provider can expose (issue #171). The
-/// Papyrus world runtime resolves a script name to compiled bytecode lazily
-/// through the file system, and resolves the FormIDs a VMAD property names
-/// with the same master table the cell build used, so a script and the cell
-/// it is attached to agree on reference identity.
-///
-/// Both values are immutable and thread-safe (`GameFileSource` is
-/// `Sendable`; `FormIDResolver` is a value), so reading them from the main
-/// thread does not break the builder's queue confinement.
+/// Optional script-loading seam: compiled scripts come lazily from the file system, and
+/// VMAD FormIDs resolve with the cell build's master table, so both agree on identity.
+/// Both values are `Sendable`.
 nonisolated public protocol ScriptDataProviding {
     var scriptFileSystem: (any GameFileSource)? { get }
     var scriptFormIDResolver: FormIDResolver { get }
@@ -186,47 +129,32 @@ nonisolated public protocol MovementConfigurationProviding {
     var movementConfiguration: PlayerMovementConfiguration { get }
 }
 
-/// Optional barter price factors resolved from active GMST data (issue #179).
-/// Separate from `MovementConfigurationProviding` for the same reason the item
-/// indexes are separate from the audio ones: a synthetic scene has no load
-/// order to read `fBarterMin` and `fBarterMax` out of, and the merchant menu
-/// then falls back to the documented vanilla defaults rather than to nothing.
+/// Optional barter factors (`fBarterMin`, `fBarterMax`) from GMST data. A synthetic scene
+/// has none, and the merchant menu uses the documented vanilla defaults.
 nonisolated public protocol BarterDataProviding {
     var barterPricing: BarterPricing { get }
 }
 
-/// Optional combat GMSTs resolved from active game data (issue #195).
-///
-/// Separate from `MovementConfigurationProviding` for the same reason
-/// `BarterDataProviding` is: a synthetic scene has no load order to read
-/// `fCombatDistance` and the block settings out of, and melee then falls back
-/// to the UESP-documented numbers rather than to nothing.
+/// Optional combat GMSTs (`fCombatDistance`, block settings). A synthetic scene falls back
+/// to the UESP-documented numbers.
 nonisolated public protocol CombatDataProviding {
     var combatSettings: CombatSettings { get }
-    /// The archery GMSTs (issue #196), on the same terms. Same protocol rather
-    /// than a second one because both are resolved from one GMST load and both
-    /// are read at the same moment in session wire-up; splitting them would
-    /// only let a provider supply one and not the other.
+    /// The archery GMSTs, on the same terms. Same protocol, because one GMST load at one
+    /// moment resolves both.
     var archerySettings: ArcherySettings { get }
-    /// The detection GMSTs (issue #202), on the same terms again. All three
-    /// families come out of one GMST load at one moment in session wire-up, and
-    /// splitting them would only let a provider supply some and not others.
+    /// The detection GMSTs, on the same terms, from the same GMST load.
     var detectionSettings: DetectionSettings { get }
 }
 
-/// Optional decoded audio-record stores a provider can expose (M9.2.2).
-/// GameViewController pulls these off the provider to construct the world
-/// sound director alongside the audio engine. WeatherStore arrives via
+/// Optional audio-record stores for the world sound director. `WeatherStore` comes via
 /// `WeatherProviding.weatherSystem?.store`.
 nonisolated public protocol AudioDataProviding {
     var soundStore: SoundRecordStore? { get }
     var aspcStore: AcousticSpaceStore? { get }
-    /// Footstep record index (FSTS/FSTP/IPDS/IPCT), added in issue #352 for
-    /// the footstep director.
+    /// Footstep record index (FSTS/FSTP/IPDS/IPCT) for the footstep director.
     var footstepStore: FootstepStore? { get }
-    /// Music record index (MUSC/MUST), added in M9.2.3 for the music director.
+    /// Music record index (MUSC/MUST) for the music director.
     var musicStore: MusicRecordStore? { get }
-    /// MATT index (issue #358), so the footstep readout can name the surface
-    /// the ground contact reported rather than print a bare FormID.
+    /// MATT index, so the footstep readout names the surface instead of a FormID.
     var materialTypes: MaterialTypeIndex? { get }
 }

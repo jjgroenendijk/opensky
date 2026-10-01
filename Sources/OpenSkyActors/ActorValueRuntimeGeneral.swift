@@ -1,33 +1,8 @@
-// The index-addressed actor-value mutation surface (issue #468, roadmap item
-// 19.5; base overrides for the primaries added by issue #496, item 20.3):
-// reading and writing any of the 164 vanilla actor values by index.
-//
-// A satellite of `ActorValueRuntime.swift` rather than more of it, following
-// the same split rule the renderer passes do: that file holds the primary
-// surface and regeneration, and is at its size shape.
-//
-// ## One rule decides everything here
-//
-// Every vanilla index is stored the same way — a base *offset* on top of the
-// re-derived baseline, plus three modifier slots — and the three primaries are
-// no longer an exception to it. What is still special about a primary is only
-// where its *current* value lives: in `ActorValueState.current`, as a number,
-// rather than in a damage modifier. So:
-//
-// * a read of a primary's current value answers that number;
-// * a read of a primary's base answers the re-derived maximum plus its offset;
-// * a write that moves a primary's maximum moves the current value with it,
-//   which is what "ModActorValue ... adjusts the maximum value for the AV,
-//   while DamageActorValue or RestoreActorValue only adjust the current value"
-//   requires (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>): an actor at
-//   100 health that is modified by -10 ends at 90/90, not at 100/90;
-// * the damage *slot* stays unwritten for a primary, because its damage is
-//   already the gap between the current value and the maximum.
-//
-// An index outside the table is the one answer that is still a miss, and nil is
-// what the condition and Papyrus tallies count.
-//
-// Documented in docs/engine/actor-value-store.md.
+// Read and write any of the 164 actor values by index. Every value stores a base
+// offset plus three modifiers; a primary keeps its current value in
+// `ActorValueState.current`, so its damage slot stays unwritten. A maximum change
+// moves the current value too: 100/100 modified by -10 is 90/90
+// (<https://ck.uesp.net/wiki/ModActorValue_-_Actor>). See docs/engine/actor-value-store.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -57,16 +32,9 @@ extension ActorValueRuntime {
         entry(at: index, on: holder)?.base
     }
 
-    /// What `GetActorValuePercentage` reports: the current value over the
-    /// maximum, clamped to 0 ... 1.
-    ///
-    /// A primary divides by its effective maximum rather than by its base,
-    /// because that is the number its bar is drawn against and a fortified
-    /// actor at full health is at full health. Every other value has no
-    /// separate maximum, so its base is the ceiling.
-    ///
-    /// A zero or negative denominator reads as 0 rather than dividing, which is
-    /// the rule `ActorValues.fractions(of:)` already applies to the HUD meters.
+    /// `GetActorValuePercentage`: current over maximum, clamped to 0...1. A primary uses
+    /// its effective maximum (its bar); others use their base. A zero or negative
+    /// denominator reads 0.
     public func fraction(at index: Int32, on holder: ActorValueHolder) -> Float? {
         guard let value = value(at: index, on: holder) else { return nil }
         let ceiling: Float? = if let kind = ActorValueIdentity.kind(at: index) {
@@ -99,13 +67,8 @@ extension ActorValueRuntime {
 
     // MARK: - Mutating
 
-    /// Takes `amount` off `index`, floored at zero.
-    ///
-    /// A primary takes it off its current value; every other actor value takes
-    /// it through the damage modifier, so its base survives the blow and a
-    /// later restore can undo exactly what was done.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Takes `amount` off `index`, floored at zero: off the current value for a primary,
+    /// through the damage modifier otherwise. Returns false only for a bad index.
     @discardableResult
     public func damage(at index: Int32, by amount: Float, on holder: ActorValueHolder) -> Bool {
         if let kind = ActorValueIdentity.kind(at: index) {
@@ -128,14 +91,8 @@ extension ActorValueRuntime {
         return update(index, on: holder) { $0.restoring(by: amount) }
     }
 
-    /// Sets `index` outright: the current value for a primary, and the base
-    /// value for everything else.
-    ///
-    /// The dev-control and console path, which is why a primary lands on the
-    /// current value here: a gate that asks for exactly 40 health means the
-    /// bar, not the ceiling. `setBase(at:to:on:)` is the scripting path.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Sets `index` outright: current value for a primary, base otherwise. The dev and
+    /// console path; scripts use `setBase(at:to:on:)`. Returns false only for a bad index.
     @discardableResult
     public func setValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         if let kind = ActorValueIdentity.kind(at: index) {
@@ -145,30 +102,16 @@ extension ActorValueRuntime {
         return update(index, on: holder) { $0.settingBase(value) }
     }
 
-    /// Sets `index`'s base value outright, leaving every modifier intact —
-    /// `SetActorValue`'s effect: "Sets the base value specified actor value on
-    /// the actor to the passed-in value. Any modifiers are left intact."
-    /// (<https://ck.uesp.net/wiki/SetActorValue_-_Actor>)
-    ///
-    /// Stored as the distance from the re-derived baseline rather than as the
-    /// number itself, so a later level change or load-order change moves the
-    /// value and this write still says exactly what it said.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Sets the base and keeps modifiers, as `SetActorValue` does
+    /// (<https://ck.uesp.net/wiki/SetActorValue_-_Actor>). Stored as an offset from the
+    /// baseline. Returns false only for a bad index.
     @discardableResult
     public func setBase(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         update(index, on: holder) { $0.settingBase(value) }
     }
 
-    /// Raises `index`'s base by `delta`, which is what a skill advance and an
-    /// attribute pick both do (items 20.5 and 20.6).
-    ///
-    /// The increment survives re-derivation and composes with it: a skill
-    /// trained by five points is five points above whatever the records now
-    /// author, so a level-up that raises the derived skill still lands on top
-    /// of the training instead of replacing it.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Raises the base by `delta`, as skill advances and attribute picks do. It rides on
+    /// top of the derived value, so a level-up still adds. Returns false for a bad index.
     @discardableResult
     public func incrementBase(
         at index: Int32,
@@ -182,15 +125,8 @@ extension ActorValueRuntime {
         return updateOverride(index, on: holder) { $0.addingBaseOffset(delta) }
     }
 
-    /// Raises one of the eighteen skills' base by `delta` — the entry point
-    /// item 20.5's skill advancement writes through.
-    ///
-    /// A separate name rather than a comment on `incrementBase` because the
-    /// guard is the point: a skill advance that lands on `Aggression` because a
-    /// caller had an off-by-one index is a bug that should fail loudly at the
-    /// one call site that only ever means a skill.
-    ///
-    /// - Returns: false for every index that is not one of the eighteen skills.
+    /// Raises one of the eighteen skills' base by `delta`. Separate from `incrementBase`,
+    /// so an off-by-one index fails loudly. Returns false for a non-skill index.
     @discardableResult
     public func advanceSkill(
         at index: Int32,
@@ -201,13 +137,8 @@ extension ActorValueRuntime {
         return incrementBase(at: index, by: delta, on: holder)
     }
 
-    /// Adds `delta` to one of `index`'s modifier slots, which is how an effect
-    /// applies and removes itself (issue 19.6) and how `ModActorValue` writes.
-    ///
-    /// Answers for a primary too since item 20.3, so a Fortify Health effect
-    /// raises the bar's ceiling instead of being dropped.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Adds `delta` to a modifier slot, as effects and `ModActorValue` do. Primaries too,
+    /// so Fortify Health raises the ceiling. Returns false only for a bad index.
     @discardableResult
     public func addModifier(
         _ delta: Float,
@@ -231,23 +162,9 @@ extension ActorValueRuntime {
         update(index, on: holder) { $0.setting(modifier, to: value) }
     }
 
-    /// Forces `index`'s current value to `value` by moving its permanent
-    /// modifier, which is what `ForceActorValue` documents:
-    ///
-    /// "this function modifies the 'permanent modifier' described in the Actor
-    /// Value documentation, and that affects how the current value is computed.
-    /// If an actor has a base health of 125 and you force their health to 0,
-    /// then the permanent modifier will be set to -125, and their current
-    /// health will become 0. If you then set the base health to 150, they will
-    /// still have a permanent modifier of -125, so their current health will
-    /// instantly become 25 (150 - 125)."
-    /// (<https://ck.uesp.net/wiki/ForceActorValue_-_Actor>)
-    ///
-    /// The permanent modifier is therefore whatever makes the current value
-    /// come out at `value` against everything that is not permanent — which is
-    /// the wiki's own `-125` in an actor carrying nothing else.
-    ///
-    /// - Returns: false only for an index outside the table.
+    /// Forces the current value to `value` through the permanent modifier, as
+    /// `ForceActorValue` does: base 125 forced to 0 gives -125
+    /// (<https://ck.uesp.net/wiki/ForceActorValue_-_Actor>). Returns false for a bad index.
     @discardableResult
     public func forceValue(at index: Int32, to value: Float, on holder: ActorValueHolder) -> Bool {
         // A non-finite target changes nothing, by the rule `incrementBase`
@@ -263,13 +180,8 @@ extension ActorValueRuntime {
 
     // MARK: - Private
 
-    /// Applies `change` to `index`'s resolved entry and stores the result.
-    ///
-    /// Writes through `store.set` exactly as the primary path does, so a
-    /// script's resistance change lands in the journal, the dirty counts and
-    /// the save like a sword's damage does. A change that leaves the state
-    /// equal writes nothing, which is what stops a rejected mutation from
-    /// materializing a baseline and marking a clean reference dirty.
+    /// Applies `change` to `index`'s entry and stores it through `store.set`. An unchanged
+    /// state writes nothing, so a rejected mutation does not mark a clean actor dirty.
     private func update(
         _ index: Int32,
         on holder: ActorValueHolder,
@@ -324,13 +236,8 @@ extension ActorValueRuntime {
         return true
     }
 
-    /// `updated` with one primary's current value moved by the same amount its
-    /// maximum moved, then pulled inside the new maximum.
-    ///
-    /// This is the whole of the documented "adjusts the maximum value for the
-    /// AV" behaviour: an actor at 100/100 modified by -10 reads 90/90, and one
-    /// at 90/100 reads 80/90 — the damage it was carrying survives the change
-    /// rather than being healed or doubled by it.
+    /// `updated` with a primary's current value moved by its maximum's change, then
+    /// clamped: 100/100 at -10 is 90/90, and 90/100 is 80/90, so damage survives.
     private static func carryingCurrent(
         _ kind: ActorValueKind,
         from state: ActorValueState,

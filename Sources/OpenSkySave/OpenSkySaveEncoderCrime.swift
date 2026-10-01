@@ -1,16 +1,6 @@
-// CRIM and STOL chunk writing for the OpenSky native save container (issue
-// #504).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the FCTN and PRKS
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Two chunks rather than one, because they describe two different owners of two
-// different things. `CRIM` is the bounty ledger, keyed by the perpetrator.
-// `STOL` is the stolen half of an inventory, keyed by whoever holds the goods —
-// and those are not the same reference the moment the player hands a hot ring
-// to a fence.
+// CRIM and STOL chunk writing. Two chunks, because they key different owners: `CRIM` is
+// the bounty ledger by perpetrator, `STOL` the stolen goods by holder, which differ once
+// the player sells to a fence.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -32,13 +22,9 @@ nonisolated extension OpenSkySaveEncoder {
         let stacks: [InventoryStack]
     }
 
-    /// The `CRIM` chunk: every snapshot entry carrying a crime ledger, in the
-    /// snapshot's `ReferenceKey` order. A law-abiding session writes no chunk.
-    ///
-    /// Per row: the faction, the gold owed, then the four crime counts in
-    /// `CrimeKind.allCases` order. The counts travel beside the gold because
-    /// they are not derivable from it — an unwitnessed crime moves one and not
-    /// the other, which is the whole difference the ledger records.
+    /// The `CRIM` chunk, in key order: per row the faction, the gold, then the four
+    /// counts in `CrimeKind.allCases` order. Counts travel because an unwitnessed crime
+    /// moves a count and not the gold.
     public static func writeCrimeLedgers(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
@@ -68,13 +54,8 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    /// The `STOL` chunk: for every owner holding stolen goods, one row per item
-    /// with how many of its copies are stolen.
-    ///
-    /// The counterpart of the totals `INVN` writes. An owner holding nothing
-    /// stolen writes no row and a session in which nothing was stolen writes no
-    /// chunk, so its bytes match what this encoder produced before the chunk
-    /// existed.
+    /// The `STOL` chunk: per owner, one row per item with its stolen count. The partner
+    /// of `INVN`'s totals. Nothing stolen writes no chunk.
     public static func writeStolenGoods(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter

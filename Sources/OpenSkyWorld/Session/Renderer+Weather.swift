@@ -1,15 +1,10 @@
-// The per-frame weather advance (M7.2.2), run by the game session between the
-// world simulation and the renderer's own animation step.
+// The per-frame weather advance, between the world simulation and the animation step.
 
 import OpenSkyRendering
 
 extension Renderer {
-    /// Advances the weather runtime (transition + reroll accumulation) and
-    /// caches this frame's resolved weather. No weather system -> the cache
-    /// stays nil and the renderer behaves exactly as before (procedural sky,
-    /// camera lighting). Cheap: two resolves + one blend. Reroll cadence is
-    /// fed real elapsed game hours off the game clock (issue #164); a fixed
-    /// clock — offscreen renders, CLI — therefore elapses none.
+    /// Advances weather and caches this frame's resolve; nil without a weather system.
+    /// Rerolls count real game hours, so a fixed clock (offscreen, CLI) never rerolls.
     public func updateWeather(deltaTime: Float) {
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil

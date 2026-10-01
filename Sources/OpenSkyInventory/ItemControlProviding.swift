@@ -65,9 +65,7 @@ nonisolated public struct ItemControlSnapshot: Equatable, Sendable {
     /// Human-readable result of the last panel action.
     public let lastActionText: String
 
-    /// Written out rather than left to the memberwise initializer so the
-    /// equipment members can trail the list with defaults, keeping the M12.1.3
-    /// call sites compiling unchanged.
+    /// Written out so the equipment members can trail the list with defaults.
     public init(
         isAvailable: Bool,
         targetName: String?,

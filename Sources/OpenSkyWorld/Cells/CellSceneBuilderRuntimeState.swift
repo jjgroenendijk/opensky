@@ -1,18 +1,7 @@
-// Runtime-state application during a cell build (issue #160, roadmap item
-// 10.1.3), split from CellSceneBuilder.swift for file-length limits.
-//
-// The builder decodes what the plugin authored; the `WorldStateStore` above it
-// holds every deviation the running game has recorded since. This file is the
-// single point where the two meet: a build takes a `WorldStateSnapshot`,
-// resolves each keyed reference against it, and hands the *effective* set of
-// placements onward. Render instancing and collision both consume that same
-// set, which is what keeps a moved object's mesh and its collision shape in
-// the same place.
-//
-// Deltas are looked up through a dictionary materialized once per build rather
-// than through `WorldStateSnapshot.subscript(key:)`, which is a linear scan.
-//
-// Documented in docs/engine/runtime-state.md.
+// Applies runtime state during a cell build: the single point where plugin data meets
+// the `WorldStateSnapshot`. Rendering and collision use the same effective placements,
+// so a moved object's mesh and collider agree. Deltas come from a dictionary built once
+// per build. See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -47,15 +36,9 @@ nonisolated extension CellSceneBuilder {
         return result
     }
 
-    /// Indexes `refs`, adds whatever the running game spawned into `location`,
-    /// resolves the union against `state`, and returns both halves. Exterior
-    /// and interior builds share this so runtime state applies at exactly one
-    /// point in either path.
-    ///
-    /// Spawned objects join *before* `applyRuntimeState` rather than being
-    /// appended to its output, so a dropped item that was later moved, disabled
-    /// or picked back up goes through the same resolution an authored
-    /// placement does instead of needing a second set of rules (issue #177).
+    /// Indexes `refs`, adds spawned objects for `location`, and resolves them against
+    /// `state`, shared by exterior and interior builds. Spawns join before
+    /// `applyRuntimeState`, so a moved or hidden drop follows the same rules.
     nonisolated public func effectiveReferences(
         refs: [PlacedReference],
         collected: [CollectedReference],
@@ -78,22 +61,9 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    /// The references a build should actually place, with runtime deltas
-    /// applied.
-    ///
-    /// A reference whose resolved state is not visible — disabled or deleted at
-    /// runtime — is dropped and counted, exactly as an initially-disabled
-    /// record is. A reference carrying a transform override is placed at the
-    /// override's position, rotation and scale instead of the record's DATA and
-    /// XSCL values.
-    ///
-    /// - Parameters:
-    ///   - refs: the post-merge reference set for this cell.
-    ///   - entries: the runtime index entries for `refs`, which carry the
-    ///     `ReferenceKey` a delta is addressed by. References with no entry
-    ///     (an unresolvable FormID) have no runtime identity and pass through
-    ///     untouched.
-    ///   - deltas: this build's snapshot, flattened by `deltasByKey()`.
+    /// The references a build places, with runtime deltas. Disabled or deleted ones are
+    /// dropped and counted; a transform override replaces DATA and XSCL. References with
+    /// no entry in `entries` (unresolvable FormID) pass through.
     nonisolated public func applyRuntimeState(
         refs: [PlacedReference],
         entries: [RuntimeReferenceEntry],

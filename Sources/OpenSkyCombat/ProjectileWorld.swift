@@ -168,11 +168,9 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     /// Plays one resolved impact at the contact point.
     func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
 
-    /// Removes one arrow of `ammunition` from the player through the M12
-    /// inventory runtime.
-    ///
-    /// - Returns: true when one was actually removed. A false answer stops the
-    ///   shot: an empty quiver must not fire.
+    /// Removes one arrow of `ammunition` from the player's inventory.
+    /// - Returns: true when one was removed. False stops the shot: an empty quiver must
+    ///   not fire.
     @discardableResult
     func consumeArrow(_ ammunition: FormID) -> Bool
 

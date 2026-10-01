@@ -1,15 +1,7 @@
-// CPU shelf-packed single-channel glyph atlas (M8.1.1). Rasterizes glyphs via
-// CoreGraphics into an r8 coverage bitmap the renderer uploads to an r8Unorm
-// texture. A reserved solid-white texel backs untextured quads so one pipeline
-// draws fills + text. Font smoothing is disabled -> same-process renders are
-// byte-deterministic. Glyph cache keyed by font + glyph id + pixel size.
-//
-// The atlas is fixed-size, so a host that swaps content (the UI Lab movie
-// selector, later real menus) has to hand cells back or the shelf runs out and
-// later text silently disappears (issue #127). Every packed cell therefore
-// keeps its coverage bytes, and `releaseSWFGlyphs(where:)` drops a released
-// movie's glyphs and repacks the survivors. The packing + eviction half of the
-// class lives in UIGlyphAtlasPacking.swift.
+// Shelf-packed r8 glyph atlas, rasterized with CoreGraphics; a white texel backs
+// untextured quads. Smoothing is off, so renders are byte-deterministic. Cells keep
+// their bytes so `releaseSWFGlyphs(where:)` can drop a movie and repack; that half lives
+// in UIGlyphAtlasPacking.swift.
 
 import CoreGraphics
 import CoreText

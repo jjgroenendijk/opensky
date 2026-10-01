@@ -1,24 +1,9 @@
-// Where a dialogue response's recorded line lives in the archives.
-//
-// A voice file is addressed entirely by name — nothing in an INFO record
-// points at one — so playing a line means rebuilding the path the Creation Kit
-// wrote when it exported the recording:
-//
-//   sound\voice\<plugin file name>\<voice type editor ID>\<name>.fuz
-//   <name> = <quest editor ID>_<topic editor ID>_<8 hex FormID>_<response number>
-//
-// The directory half is stated by the CreationKit wiki ("How to generate voice
-// files by batch", https://ck.uesp.net/wiki/How_to_generate_voice_files_by_batch)
-// and by the UESP dialogue pages. The file-name half is not: the community
-// descriptions disagree about how a long quest or topic editor ID is shortened,
-// and none of them mention that the two names share one budget. So the rule
-// below was derived from the install's own archive listing — 75,408 `.fuz`
-// entries walked by `openskycli audio voice-sweep`, which re-derives every name
-// from the records and reports any that does not match. The derivation and its
-// evidence are written up in docs/formats/fuz.md.
-//
-// Everything here is pure: no VFS, no records, no engine state. The caller
-// supplies the strings, which is what lets the rule be pinned by table tests.
+// Where a dialogue response's recorded line lives in the archives:
+//   sound\voice\<plugin>\<voice type editor ID>\<quest>_<topic>_<8 hex FormID>_<n>.fuz
+// No record points at a voice file, so the path is rebuilt from names. The
+// shortening rule for the name was derived from the install's own archive listing
+// (`openskycli audio voice-sweep`); docs/formats/fuz.md holds the evidence.
+// Pure: the caller supplies the strings, so table tests can pin the rule.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -37,20 +22,9 @@ nonisolated public enum VoiceFilePath: Sendable {
     /// before either is shortened at all.
     public static let combinedNameBudget = questNameLimit + topicNameLimit
 
-    /// The `<quest>_<topic>` stem, lowercased because every path here is a
-    /// canonical VFS key.
-    ///
-    /// The two names share a 25-character budget, and the quest is served
-    /// first against a topic that has reserved at most its own 15. A quest
-    /// that fits what is left is spelled out in full — which is how an
-    /// eleven-character quest survives beside a fourteen-character topic, and
-    /// how a seventeen-character quest survives beside no topic at all. A
-    /// quest that does not fit drops to ten flat rather than being clipped to
-    /// the remainder. The topic then takes whatever the quest left, so a
-    /// four-character quest is followed by twenty-one characters of topic.
-    ///
-    /// Either name may be empty — many vanilla topics carry no editor ID,
-    /// which is why so many voice files have a doubled underscore.
+    /// The lowercased `<quest>_<topic>` stem. The two names share 25 characters:
+    /// a quest that fits beside the topic's reserved 15 stays whole, otherwise it
+    /// drops to 10, and the topic takes the rest. Either name may be empty.
     public static func stem(quest: String?, topic: String?) -> String {
         let quest = (quest ?? "").lowercased()
         let topic = (topic ?? "").lowercased()
@@ -62,15 +36,9 @@ nonisolated public enum VoiceFilePath: Sendable {
         return "\(quest.prefix(questLength))_\(topic.prefix(topicLength))"
     }
 
-    /// Everything a voice file's name is built from, as one value: the four
-    /// pieces travel together everywhere and a parameter list of them is past
-    /// the lint cap.
-    ///
-    /// - Parameters:
-    ///   - objectID: the INFO's FormID as the exporting plugin numbered it —
-    ///     see `exportedFormID(_:masterCount:)`.
-    ///   - responseNumber: TRDT's response number, one-based, which is the
-    ///     trailing `_1`, `_2` of a multi-part line.
+    /// The four pieces a voice file's name is built from. `objectID` is the
+    /// FormID as the exporting plugin numbered it (`exportedFormID`), and
+    /// `responseNumber` is TRDT's one-based response number.
     nonisolated public struct Name: Equatable, Sendable {
         public let quest: String?
         public let topic: String?
@@ -95,15 +63,9 @@ nonisolated public enum VoiceFilePath: Sendable {
         "\(root)\\\(plugin.lowercased())\\\(voiceType.lowercased())"
     }
 
-    /// The FormID as it appears in a voice file name.
-    ///
-    /// The Creation Kit exports names before it knows where the plugin it is
-    /// editing will sit in a load order, so the record's own plugin index is
-    /// written as zero and a master's index is written as its position in the
-    /// master list. Records the plugin defines carry index `masterCount`, so
-    /// that index — and only that index — is cleared. This is why every
-    /// Dawnguard line is `00xxxxxx` while the handful that override an
-    /// Update.esm record keep their `01`.
+    /// The FormID as it appears in a voice file name. The Creation Kit writes the
+    /// plugin's own index as zero, so index `masterCount` is cleared and a master's
+    /// index stays. Dawnguard lines read `00xxxxxx`; its Update.esm overrides keep `01`.
     public static func exportedFormID(_ id: FormID, masterCount: Int) -> UInt32 {
         id.masterIndex >= masterCount ? id.objectID : id.rawValue
     }

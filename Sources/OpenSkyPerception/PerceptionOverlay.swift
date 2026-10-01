@@ -1,27 +1,8 @@
-// The perception pass as world-space evidence (issue #202, roadmap item 16.6),
-// drawn through the overlay registry item 16.3 built (issue #422).
-//
-// A pure builder over values, like the navigation source next to it: it takes a
-// roster and a set of pair states and appends primitives. It owns no renderer
-// state, so a test asserts on the primitive list rather than on pixels, and the
-// same function draws in the app and in an offscreen capture.
-//
-// ## What is drawn, and why that is the useful picture
-//
-// Two things per observer. The **view cone** is a flat fan on the ground at the
-// observer's feet, spanning the cone's full angle out to the range that
-// observer's senses actually reach — so a user can see both where an actor is
-// looking and how far. It is coloured by the strongest state that observer
-// holds about anything, which is the one number a person watching a stealth
-// approach cares about. The **memory line** runs from the observer to its
-// investigate position, so "it heard something over there" is visible as a
-// thing pointing somewhere rather than as a state name.
-//
-// The fan is drawn slightly above the feet so it does not z-fight with the
-// ground it sits on, and the pass is depth-tested, so a cone genuinely
-// disappears behind the wall that blocks it.
-//
-// Documented in docs/engine/detection.md.
+// The perception pass as overlay primitives: a pure builder, so a test checks
+// the primitive list and not pixels. Per observer it draws a view cone on the
+// ground, coloured by its strongest state, and a memory line to its investigate
+// position. The cone sits slightly above the feet to avoid z-fighting, and the
+// pass is depth-tested so a wall hides it. See docs/engine/detection.md.
 
 import Foundation
 import OpenSkyDiagnostics
@@ -52,13 +33,8 @@ nonisolated public enum PerceptionOverlay: Sendable {
         }
     }
 
-    /// Appends one observer's cone and memory line.
-    ///
-    /// - Parameters:
-    ///   - observer: whose cone to draw.
-    ///   - state: the strongest regard this observer holds about anything.
-    ///   - investigatePosition: where it would go and look, or nil.
-    ///   - settings: supplies the cone's half-angle and range.
+    /// Appends one observer's cone and memory line. `state` is the strongest regard
+    /// the observer holds about anything; `settings` gives the cone's angle and range.
     public static func append(
         observer: PerceptionObserver,
         state: DetectionState,

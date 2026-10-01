@@ -1,43 +1,8 @@
-// Faction vendors (issue #506, roadmap item 21.7): which faction makes an actor
-// a merchant, which chest it sells from, when it trades, and what it will buy
-// and sell.
-//
-// ## Sources
-//
-// The Creation Kit wiki's Faction page, Vendor tab
-// (<https://ck.uesp.net/wiki/Faction>), is the source for every rule here:
-//
-// - "Start Hour/End Hour: These allow you to set what hours of the day the
-//   faction members will offer goods."
-// - "Vendor Buy/Sell List: ... This is usually a FormList with a set of
-//   keywords. The merchant will buy and sell any items which are tagged with
-//   keywords contained in this list."
-// - "Not Buy/Sell This negates the vendor buy/sell list ... the merchant will
-//   buy and sell items that DO NOT match the buy/sell list. ... The pawnbroker
-//   Belethor in Whiterun uses VendorItemsMisc as the buy/sell list, and has
-//   this checked".
-// - "Merchant Container: Sets what container the merchant will sell goods
-//   from. Note that a vendor will not sell items in this container unless they
-//   also match the vendor's buy/sell list".
-// - "Only Buys Stolen Goods: Sets this vendor up to only pay for stolen items
-//   the player wants to fence."
-//
-// The fence reading needs care. Despite the flag's name, UESP's Merchants page
-// lists fences as merchants that "are the only merchants who will purchase
-// stolen goods" (<https://en.uesp.net/wiki/Skyrim:Merchants>), and on the local
-// install every fence faction — `ServicesThievesGuildTonilia` among them — also
-// authors Belethor's negated `VendorItemsMisc` list, which would be pointless
-// on a vendor that bought nothing honest. So the flag here means "also buys
-// stolen goods", and the keyword list still gates everything else. Recorded
-// in docs/engine/vendor-factions.md.
-//
-// Observed on the local install (`Skyrim.esm`): 145 vendor factions; hours
-// `0-24` on 81 of them and `8-20` on 41; one authors `0-0`, which this engine
-// reads as always open because an empty window would make a vendor nobody can
-// trade with; one (`WhiterunBanneredMareFaction`) authors no list, which this
-// engine reads as no keyword gate.
-//
-// Documented in docs/engine/vendor-factions.md.
+// Faction vendors: which faction makes a merchant, its chest, hours, and what it
+// trades, all per the Vendor tab (<https://ck.uesp.net/wiki/Faction>). "Only Buys
+// Stolen Goods" means "also buys stolen goods" here: every fence faction on this
+// install also authors a keyword list. Hours `0-0` read as always open, and no list
+// means no keyword gate. See docs/engine/vendor-factions.md.
 
 import Foundation
 import OpenSkyFactionsInterface
@@ -50,14 +15,8 @@ nonisolated public struct VendorResolver: Sendable {
     public let factions: FactionStore
     public let formLists: FormListStore
 
-    /// The first vendor faction among `memberships`, in membership order, or
-    /// nil when the actor is no merchant.
-    ///
-    /// Membership order rather than a search for the "best" one: an actor
-    /// with two vendor factions — UESP names Adrianne Avenicci, who "is unique
-    /// in having access to two merchant chests" — switches between them by
-    /// the vendor conditions this engine does not evaluate yet, so the first
-    /// authored one is the honest default.
+    /// The first vendor faction in membership order, or nil. Vendor conditions that
+    /// switch between two factions are not evaluated, so the first is the default.
     public func vendor(memberships: ActorFactionState) -> Vendor? {
         for membership in memberships.memberships {
             guard

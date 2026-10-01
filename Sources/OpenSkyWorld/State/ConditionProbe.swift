@@ -1,17 +1,6 @@
-// Asking one condition function directly (issue #474, roadmap item 19.11).
-//
-// Every other caller of the evaluator has a condition to evaluate: a record
-// carried it, and the comparison and the run-on came with it. An inspection
-// surface has the opposite problem — it knows which *function* it wants to show
-// and has to invent the rest — and inventing it at each call site would let two
-// panels disagree about what "the current value" of a function means.
-//
-// So the invented parts live here, once: the comparison is `>= 0`, which every
-// documented return satisfies, and the run-on is the subject. What comes back
-// is the function's own value or the reason it has none, which is what a
-// readout wants and what `ConditionOutcome` deliberately flattens away.
-//
-// Documented in docs/engine/conditions.md.
+// Asks one condition function directly, for inspection panels. The comparison is `>= 0`
+// and the run-on is the subject, set once here so two panels agree on "current value".
+// Returns the value or why there is none. See docs/engine/conditions.md.
 
 import Foundation
 import OpenSkyConditions

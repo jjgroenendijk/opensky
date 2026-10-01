@@ -1,12 +1,6 @@
-// Text planning for the SWF layer, split out of the movie build (M8.3.2) so a
-// dynamic command stream can be re-planned per update without rebuilding
-// tessellation, textures, or the glyph atlas.
-//
-// The planner is stateful on purpose: glyph-atlas font keys must stay stable
-// across updates, or every re-plan would re-rasterize the same glyphs under new
-// keys and the shared atlas would fill with duplicates. Keeping the
-// external-font key table on the planner keys a font to the same slot for the
-// whole life of the movie package.
+// Text planning for the SWF layer, re-run per update without rebuilding the package.
+// Stateful, so a font keeps the same atlas key across updates and glyphs are not
+// rasterized twice.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -97,8 +91,8 @@ nonisolated public final class SWFTextPlanner {
     /// Bit position of the movie generation inside an atlas font key.
     public static let generationShift = 18
 
-    /// The movie generation an atlas font key belongs to. Lets the renderer
-    /// evict one released movie's glyphs from the shared atlas (issue #127).
+    /// The movie generation an atlas font key belongs to, so a released movie's glyphs
+    /// can be evicted.
     public static func generation(forFontKey key: Int) -> Int {
         key >> generationShift
     }

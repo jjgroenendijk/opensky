@@ -1,13 +1,5 @@
-// PRKS chunk writing for the OpenSky native save container (issue #497).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the SPLB and ECHG
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// Per actor, in order: the key, the cell, then the owned perk list. The list is
-// written in the component's own ascending key order, which `PerkState.init`
-// establishes, so re-encoding an unchanged perk set produces identical bytes.
+// PRKS chunk writing. Per actor: key, cell, then owned perks in the ascending order
+// `PerkState.init` sets, so an unchanged set re-encodes identically.
 
 import Foundation
 import OpenSkyFormatsCore

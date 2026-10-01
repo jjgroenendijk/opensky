@@ -1,30 +1,7 @@
-// The renderer's half of the first-person arms (issue #190).
-//
-// Held here rather than in the scene for the same reason the body is
-// (`RendererPlayerBody.swift`): the arms are streaming-independent, so a scene
-// swap must not take them with it.
-//
-// **Why they are encoded apart from every other draw group.** The arms sit
-// 15 to 45 units in front of the eye, and the capsule's own radius is 24, so a
-// player standing against a wall has world geometry closer to the camera than
-// their own hands. Depth-tested like ordinary geometry, the arms would push
-// through that wall. Vanilla's own answer to this is in its renderer and is
-// not observable from the install, so what OpenSky does is a deliberate
-// deviation, recorded as one in docs/engine/first-person.md:
-//
-// The arms are encoded last, with the same projection and the same pipelines
-// as everything else, into a viewport whose depth range is compressed to
-// `[0, FirstPersonCamera.depthSlice]`. The viewport transform is linear and
-// monotonic, so within the arms depth ordering is untouched and a hand behind
-// a forearm is still behind it. Against the world, every arm fragment lands
-// nearer than any world fragment further than `nearPlane / (1 - depthSlice)`
-// — about 10.2 units with the 10-unit near plane — which is well inside the
-// capsule and therefore unreachable by world geometry.
-//
-// The alternative, a second render pass with a cleared depth attachment, costs
-// an encoder and a full-target depth clear per frame for the same result.
-// The alternative of simply disabling the depth test costs correct
-// self-occlusion, which is the one thing the arms genuinely need.
+// The renderer's half of the first-person arms, held outside the scene so a swap keeps
+// them. The arms sit closer than the capsule radius, so they are drawn last into a
+// compressed depth range `[0, FirstPersonCamera.depthSlice]`. That keeps
+// self-occlusion without a second pass or depth clear (docs/engine/first-person.md).
 
 import Metal
 import OpenSkyFormatsCore

@@ -1,33 +1,8 @@
-// Which faction answers for a crime committed in a given place (issue #504,
-// roadmap item 21.5).
-//
-// ## The chain
-//
-// A cell names its location with `XLCN`, a location names its crime faction
-// with `FNAM`, and almost no location names one. The link is authored at the
-// hold, and everything inside the hold inherits it by walking `PNAM` upwards.
-// Observed on this install, which is what fixed the rule rather than memory:
-//
-//   WhiterunBelethorsGeneralGoodsLocation  PNAM -> WhiterunLocation   (no FNAM)
-//   WhiterunLocation                       PNAM -> WhiterunHoldLocation
-//   WhiterunHoldLocation                   FNAM  (the crime faction)
-//
-// So the resolution is: the cell's own location, then its parents in order, and
-// the first `FNAM` found wins. UESP describes the same shape from the player's
-// side — "Bounties are tracked separately for each of Skyrim's nine holds and
-// you will only incur a bounty in the hold in which you commit a crime"
-// (<https://en.uesp.net/wiki/Skyrim:Crime>).
-//
-// A chain that ends without an `FNAM` has no crime faction, and that is a real
-// answer rather than a gap: a dungeon and a stretch of road belong to nobody,
-// which is why killing a bandit on the road costs nothing. Nothing here
-// substitutes a default faction, because substituting one would put a bounty
-// where the data says there is none.
-//
-// The walk itself is `LocationStore.parentChain(of:)`, which already bounds a
-// malformed `PNAM` cycle with a visited set, so nothing here re-implements it.
-//
-// Documented in docs/engine/crime.md.
+// Which faction answers for a crime in a given place. The cell's `XLCN` location
+// and then its `PNAM` parents are walked, and the first `FNAM` wins. On this
+// install the link sits at the hold (WhiterunHoldLocation), never the shop.
+// No `FNAM` means no crime faction: a road or a dungeon belongs to nobody, so no
+// default is substituted. See docs/engine/crime.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -53,13 +28,8 @@ nonisolated public struct CrimeFactionResolver: Sendable {
         return crimeFaction(of: location)
     }
 
-    /// The same answer for a location already in hand, walking its parents.
-    ///
-    /// The first location in the chain that authors an `FNAM` decides it, even
-    /// when that `FNAM` names a record this load order no longer carries: an
-    /// authored-but-dangling link is a place that *has* an owner the engine
-    /// cannot name, and skipping past it to a grandparent would charge the
-    /// bounty to the wrong hold.
+    /// The same answer for a location already in hand. The first `FNAM` decides,
+    /// even a dangling one, because skipping it would charge the wrong hold.
     public func crimeFaction(of location: ResolvedLocation) -> ResolvedFaction? {
         for step in locations.parentChain(of: location.id) {
             guard let link = step.location.crimeFaction, !link.isNull else { continue }

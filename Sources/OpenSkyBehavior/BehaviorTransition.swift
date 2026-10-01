@@ -35,9 +35,8 @@ nonisolated public enum BehaviorTransitionFlag: Sendable {
     public static let toNestedStateIsValid = 0x2000
 }
 
-/// `hkbBlendingTransitionEffect::FlagBits`. Only the sync bit is acted on; the
-/// others describe how root motion crosses the blend, which item 14.5 owns once
-/// a character controller exists to disagree with it.
+/// `hkbBlendingTransitionEffect::FlagBits`. Only the sync bit is acted on; the others
+/// describe root motion across the blend, which the locomotion bridge owns.
 nonisolated public enum BehaviorTransitionEffectFlag: Sendable {
     public static let ignoreFromGenerator = 0x1
     /// Align the incoming generator's clip time with the outgoing one's.
@@ -123,9 +122,8 @@ nonisolated public struct BehaviorMachineState: Equatable, Sendable {
     public var transition: BehaviorTransition?
 }
 
-/// What one machine is doing right now, in names rather than ids. Published per
-/// update so a test — and item 14.6's sidebar readout — can assert a state path
-/// without reaching into the evaluator.
+/// What one machine is doing now, in names rather than ids. Published per update, so a
+/// test or the sidebar can check a state path without reaching into the evaluator.
 nonisolated public struct BehaviorActiveState: Equatable, Sendable {
     public let machineName: String?
     public let stateId: Int

@@ -1,7 +1,5 @@
-// Renderer setup factories: pipelines, depth state, sampler, uniform
-// buffers, residency set. Static + self-contained (device passed in) so they
-// live apart from the render loop (file-length limits, docs/rendering/
-// metal4-renderer.md). Split from Renderer.swift, todo 2.6.
+// Renderer setup factories: pipelines, depth state, sampler, uniform buffers, residency
+// set. Static, with the device passed in (docs/rendering/metal4-renderer.md).
 
 import Metal
 import MetalKit
@@ -23,9 +21,8 @@ nonisolated public struct RenderPipelines: Sendable {
     public let terrain: MTLRenderPipelineState
     public let water: MTLRenderPipelineState
     public let particles: ParticlePipelines
-    /// Render-debug twins of the five geometry paths (issue #144). Built
-    /// alongside the shipping set so a mode change binds a state rather than
-    /// compiling one mid-session.
+    /// Render-debug twins of the five geometry paths, built up front so a mode change
+    /// binds a state instead of compiling one.
     public let debug: DebugRenderPipelines
 }
 
@@ -45,10 +42,8 @@ nonisolated public struct ParticlePipelines: Sendable {
     }
 }
 
-/// Sun-shadow depth pre-pass pipelines (M7.1.1): depth-only, no color
-/// attachment. `alphaTest` carries a discard fragment; the rest run
-/// depth-only. `skinned` handles both opaque and alpha-tested skinned casters
-/// (skinned cutouts cast a conservative solid shadow in 7.1.1).
+/// Sun-shadow depth pipelines, no color attachment. `alphaTest` discards; `skinned`
+/// covers opaque and alpha-tested skinned casters, which cast a solid shadow.
 nonisolated public struct ShadowPipelines: Sendable {
     public let staticCaster: MTLRenderPipelineState
     public let alphaTest: MTLRenderPipelineState
@@ -159,7 +154,7 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the world-overlay vertex stream (#422).
+        // Highest buffer index is the world-overlay vertex stream.
         descriptor.maxBufferBindCount = BufferIndex.morphDeltas.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
         // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots.

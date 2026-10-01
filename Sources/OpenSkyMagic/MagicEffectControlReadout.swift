@@ -1,9 +1,5 @@
-// Active-effect readout lines (issue #469, roadmap item 19.6), formatted here
-// rather than in the panel section for the reason `ActorValueControlReadout` is:
-// a string a milestone gate asserts on belongs in the engine target, where a
-// unit test can reach it without a window.
-//
-// Documented in docs/engine/magic.md.
+// Active-effect readout lines, formatted in the engine target so a unit test can check
+// them without a window. See docs/engine/magic.md.
 
 import Foundation
 
@@ -19,13 +15,8 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
         return "Player effects (\(snapshot.playerEffects.count)):\n\(lines)"
     }
 
-    /// The nearest resident actor's effect list, which is the actor the
-    /// resistance values in the Actor Values section above are read about
-    /// (issue #475, roadmap item 19.12).
-    ///
-    /// "no actor resident" and "an actor with nothing running" are different
-    /// states and are spelled differently: an NPC that just took a hostile
-    /// spell and an empty cell must not read the same.
+    /// The nearest actor's effect list, the actor the resistances above describe. "no
+    /// actor resident" and "nothing running" read differently.
     public static func nearestActorEffectsText(for snapshot: MagicEffectControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Nearest actor effects: unavailable" }
         guard let name = snapshot.nearestActorName else {

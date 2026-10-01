@@ -1,18 +1,7 @@
-// The one place anything asks "what is in this quest alias right now?" (issue
-// #183), mirroring `QuestResolution` and `GlobalResolution`.
-//
-// A value type carrying the plugin index plus this session's filled tables, so
-// a consumer running off the main actor — a condition evaluated on a cell build
-// queue — reads alias fills from a snapshot exactly as the main actor reads
-// them from the live store. Nothing downstream reaches past this into
-// `WorldStateStore`.
-//
-// Two lookups, because two different callers name an alias two different ways:
-// a VMAD property and a `questAlias` run-on carry an alias *number*, while a
-// CIS1/CIS2 condition override carries the authored alias *name*. Both end at
-// the same table; only the way in differs.
-//
-// Documented in docs/engine/quest-state.md.
+// The one place that answers "what is in this quest alias now?". A value type,
+// so a condition on a cell build queue reads a snapshot. A VMAD property names an
+// alias by number and a CIS1/CIS2 override by name, so there are two lookups.
+// See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyConditions

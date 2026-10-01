@@ -1,33 +1,8 @@
-// The immutable description of one actor's ragdoll (issue #197, roadmap item
-// 15.6): one rigid body per skeleton bone, the joints between them, and the
-// bind-pose frames that carry an animated pose onto the bodies and back.
-//
-// A skeleton NIF carries no ragdoll container class. What it carries is a set of
-// `bhkRigidBody` blocks each hanging off a `bhkBlendCollisionObject` that targets
-// a named `NiNode`, plus `bhkRagdollConstraint` and `bhkLimitedHingeConstraint`
-// blocks binding pairs of those bodies (docs/formats/nif-collision.md). This type
-// is the step from that decode to something the solver can advance: bodies
-// resolved onto animation-skeleton bones by name, joints resolved onto body
-// indices, and every pivot and axis re-expressed in the frame the solver works
-// in.
-//
-// Two coordinate rules do all the work here and are worth stating once.
-//
-//  * A body's own frame is centre-of-mass local, because that is the frame
-//    `DynamicBodyDefinition` re-centres its shapes into and the point every
-//    impulse is measured against. A constraint pivot arrives in the *entity's*
-//    local space — the space the `bhkRigidBody`'s shapes are authored in, before
-//    `NIFCollisionBody.transform` places it — so it is carried into model space
-//    by that transform and then offset by the body's centre of mass. Axes take
-//    the rotation half of the same transform and nothing else.
-//  * A bone's own frame is the bind pose. `bindBoneMatrix` is where the
-//    animation skeleton draws the bone when nothing has moved, in the same model
-//    space the bodies were built in, so `animatedBoneMatrix * bindInverse` is the
-//    rigid transform that carries a body from its bind placement to wherever the
-//    animation has taken the bone. Handing a ragdoll off from an animated pose is
-//    that product, and writing a simulated bone back is its inverse.
-//
-// Documented in docs/engine/ragdoll-solver.md.
+// One actor's ragdoll: a body per skeleton bone, the joints between them, and bind-pose
+// frames. Built from `bhkRigidBody` and constraint blocks (docs/formats/nif-collision.md).
+// Pivots move from entity space to centre-of-mass space; axes take only the rotation.
+// `animatedBoneMatrix * bindInverse` carries a body from bind pose to the animation.
+// See docs/engine/ragdoll-solver.md.
 
 import simd
 
@@ -68,13 +43,8 @@ nonisolated public struct RagdollBoneDefinition: Sendable {
     }
 }
 
-/// One body's end of a joint, in that body's centre-of-mass-local frame.
-///
-/// Three axes rather than a named set, because every constraint class this
-/// engine solves describes its end with at most three: a ragdoll cone names
-/// twist, plane and motor, a hinge names its rotation axis and two
-/// perpendiculars, and a ball-and-socket names none at all and leaves them at
-/// the identity basis.
+/// One body's end of a joint, in its centre-of-mass frame. Three axes cover every
+/// class solved here; a ball-and-socket leaves the identity basis.
 nonisolated public struct RagdollJointFrame: Sendable {
     public let pivot: SIMD3<Float>
     /// The cone's central axis on a ragdoll joint, the rotation axis on a hinge.
@@ -90,13 +60,8 @@ nonisolated public struct RagdollJointFrame: Sendable {
     )
 }
 
-/// What a joint constrains beyond holding its two pivots together.
-///
-/// Only the three shapes the vanilla census actually produces carry limits:
-/// 624 ragdoll cones and 512 limited hinges over 751 bone pairs, plus three
-/// plain hinges on clutter (docs/formats/nif-collision.md). Everything else
-/// decodes to `.point` and is tallied, because a joint held at its pivot with
-/// its rotation free is a visibly loose limb rather than an invented limit.
+/// What a joint constrains besides its pivots. Only ragdoll cones, limited hinges and
+/// hinges carry limits (docs/formats/nif-collision.md); others are `.point` and tallied.
 nonisolated public enum RagdollJointLimits: Sendable {
     /// Pivots held together, rotation free.
     case point
@@ -126,18 +91,9 @@ nonisolated public struct RagdollJointDefinition: Sendable {
     public let frameA: RagdollJointFrame
     public let frameB: RagdollJointFrame
     public let limits: RagdollJointLimits
-    /// `bhkRagdollConstraint`/`bhkLimitedHingeConstraint` `maxFriction`, raw as
-    /// the file stores it.
-    ///
-    /// Havok does not publish the unit, and the vanilla humanoid authors only
-    /// two values across its seventeen joints — 10.0 on every cone and 0.01 on
-    /// every limited hinge — so there is no distribution to infer one from. This
-    /// engine therefore reads it as a *rate*: the fraction of the joint's
-    /// relative angular velocity that the joint's own resistance removes per
-    /// second. That reading is a modelling choice, recorded as such in
-    /// docs/engine/ragdoll-solver.md, and it is bounded in the only way that matters —
-    /// friction can only ever take energy out, so a wrong scale makes a corpse
-    /// stiff or floppy and can never make one unstable.
+    /// Raw `maxFriction`. The unit is unpublished, so it is read as the fraction of
+    /// relative spin removed per second (docs/engine/ragdoll-solver.md). A wrong scale
+    /// changes stiffness, never stability.
     public let maxFriction: Float
 
     public init(
@@ -180,10 +136,8 @@ nonisolated public struct RagdollDefinition: Sendable {
     public let joints: [RagdollJointDefinition]
     /// Everything the build dropped, in the order it was dropped.
     public let skipped: [RagdollBuildSkip]
-    /// Which of this ragdoll's own bones may touch each other, from the biped
-    /// part numbers the bodies carry and the joint graph they form (issue #413).
-    /// Derived once here rather than per step, because it depends on nothing
-    /// that moves.
+    /// Which of this ragdoll's bones may touch, from biped part numbers and the joint
+    /// graph. Derived once, because none of it moves.
     public let selfCollision: RagdollSelfCollision
 
     public var boneCount: Int {

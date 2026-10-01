@@ -1,17 +1,6 @@
-// What exterior ground is made of, per terrain vertex (issue #358).
-//
-// Terrain is the case the Havok material chain cannot answer. Exterior ground
-// is a LAND record rather than a collision mesh, so it carries no Havok
-// material at all: it names its surface through the landscape textures painted
-// on it, each LTEX pointing at a MATT with its MNAM. A cell's ground is
-// therefore as many materials as it has textures, varying inside one quadrant
-// wherever a layer is painted.
-//
-// This resolves that at build time into one MATT per terrain vertex, the same
-// 33x33 grid the height field uses. It is the splat blend the terrain shader
-// runs, kept as per-texture weights instead of a colour, with the heaviest
-// texture at each vertex winning — the material under the foot is the one the
-// player sees most of there.
+// What exterior ground is made of, per terrain vertex. LAND has no Havok material, so
+// each painted LTEX names a MATT. The splat weights are resolved on the 33x33 height
+// grid, and the heaviest texture at a vertex wins.
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics

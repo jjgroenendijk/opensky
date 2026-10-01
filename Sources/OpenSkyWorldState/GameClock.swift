@@ -1,39 +1,13 @@
-// Game clock + Tamriel calendar (issue #164, roadmap item 10.2.3).
-//
-// Replaces the scrubbed time-of-day float with real game time: total game
-// seconds advanced as wall delta x timescale, with hour/day/month/year derived
-// from the Tamriel calendar. Deterministic by construction — the same starting
-// state plus the same sequence of deltas always yields the same clock, and
-// nothing in here reads a wall clock (wall deltas arrive from `FrameSimClock`).
-//
-// Spec sources (fetched 2026-07-28; UESP requires a browser User-Agent):
-// - Month names and lengths, 12 months, 24-hour days:
-//   https://en.uesp.net/wiki/Lore:Calendar
-// - Vanilla start moment ("The game begins on the 17th of Last Seed in the
-//   year 4E 201") and the game-time factor 20:
-//   https://en.uesp.net/wiki/Skyrim:Time
-// - The vanilla time-global set and semantics (`set gamehour to` takes a
-//   24-hour float, `set gameday to` a 1-based day of month, `set gamemonth to`
-//   1-12 where 10 is Frostfall, `set gameyear to` the 4th-era year number,
-//   `set gamedayspassed to` the running day count, `set timescale to` defaults
-//   to 20 and accepts values down to 0):
-//   https://en.uesp.net/wiki/Skyrim:Console
-//
-// The vanilla GameHour GLOB default is not documented on the UESP pages
-// consulted, so OpenSky keeps its pre-clock 13:00 default hour
-// (`TimeOfDaySettings.fallback`) rather than inventing one.
-//
-// Documented in docs/engine/game-clock.md.
+// Game clock and Tamriel calendar: game seconds advance as wall delta x timescale.
+// Deterministic; wall deltas come from `FrameSimClock`. Sources:
+// <https://en.uesp.net/wiki/Lore:Calendar>, <https://en.uesp.net/wiki/Skyrim:Time>
+// (start 17th of Last Seed 4E 201, timescale 20), <https://en.uesp.net/wiki/Skyrim:Console>.
+// No source gives the GameHour default, so 13:00 stays. See docs/engine/game-clock.md.
 
 import Foundation
 
-/// Deterministic game clock over the Tamriel calendar.
-///
-/// The whole state is one number: `totalGameSeconds` since the clock epoch
-/// (4E 0, 1st of Morning Star, 00:00). Stored as `Double` on purpose: the
-/// vanilla start moment alone is about 6.3e9 seconds past that epoch, where a
-/// `Float`'s granularity is already ~512 seconds; a `Double` keeps
-/// sub-microsecond resolution for the life of any session.
+/// Deterministic game clock: `totalGameSeconds` since 4E 0, 1st of Morning Star.
+/// A `Double`, because the start is about 6.3e9 seconds in, where a `Float` step is ~512 s.
 nonisolated public struct GameClock: Equatable, Sendable {
     /// Month names, 1-based order per UESP `Lore:Calendar`.
     public static let monthNames = [

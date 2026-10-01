@@ -1,42 +1,9 @@
-// Base health / magicka / stamina for one actor (issue #194, roadmap item
-// 15.3): race starting attributes, the ACBS offsets, and — for an auto-calc
-// actor — the per-level points its class spreads across the three.
-//
-// Every rule here is quoted from an open source rather than inferred:
-//
-//   "Calculated Health: The Actor's adjusted health (Base + Offset)", where
-//   "Base Health: The Actor's calculated base health, as determined by their
-//   Race, Class, and Level." (<https://ck.uesp.net/wiki/Stats_Tab>)
-//
-//   "If the auto-calc flag for an NPC isn't set, all attributes are calculated
-//   just as: Attribute = [Racial bonus] + [NPC offset]."
-//   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>)
-//
-//   "Attribute = [Racial bonus] + [NPC offset] + 10*(Level-1)/(Sum of class'
-//   attribute weights)*[Attribute weight]", and "The only difference for health
-//   is that health always receives an additional 5 points per level, regardless
-//   of the class weights". (Same page.) The two constants are the
-//   `iAVDhmsLevelUp` and `fNPCHealthLevelBonus` game settings, named as such by
-//   the Creation Kit: "all Actors gain 10 points to distribute per level (this
-//   value comes from the iAVDhmsLevelUp game setting) ... NPC's get a bonus
-//   amount of health per level as set by the fNPCHealthLevelBonus game setting;
-//   by default this is 5." (<https://ck.uesp.net/wiki/Class>)
-//
-//   The apportionment is not a plain multiply-and-round. "The exact method used
-//   to assign values" is to hand out every complete set of points first —
-//   `floor(points / sum of weights) * weight` each — and then give the leftover
-//   out one at a time, looping over the attributes "ordered first in decreasing
-//   order of weight" with ties broken "in reverse actor value index order
-//   (stamina, magicka, then health)", never taking an attribute past its own
-//   weight in a single leftover pass. (UESP CLAS, "Attributes" and "Skills".)
-//
-// The Creation Kit's own worked example uses the opposite tie order (health
-// first) but reaches the same numbers on every case documented on either page,
-// because ties only matter when the leftover runs out mid-pass. Where they
-// diverge OpenSky follows UESP, which states its rule as the exact method
-// rather than as a procedure for hand-calculation.
-//
-// Documented in docs/engine/actor-values.md.
+// Base health, magicka and stamina: race bonus + ACBS offset, plus for auto-calc
+// actors 10 points per level (`iAVDhmsLevelUp`) spread by class weight, and health
+// +5 per level (`fNPCHealthLevelBonus`). Leftover points go one at a time by weight,
+// ties in reverse index order, per UESP's exact method
+// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>,
+// <https://ck.uesp.net/wiki/Class>). See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -53,10 +20,8 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
     /// `fNPCHealthLevelBonus` — extra health per level above 1, outside the
     /// weighted spread.
     public var healthBonusPerLevel: Float
-    /// `iAVDSkillsLevelUp` — points spread across the eighteen skills per level
-    /// above 1, which UESP states as "the fixed 8 skill points per level"
-    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>) and
-    /// `Skyrim.esm` authors at exactly that (issue #468).
+    /// `iAVDSkillsLevelUp`: skill points per level above 1, "the fixed 8"
+    /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
     public var skillPointsPerLevel = 8
 
     /// The values the Creation Kit documents as the defaults, used when no
@@ -102,7 +67,7 @@ nonisolated public struct ActorValueInputs: Equatable, Sendable {
     public var usesPlayerLevelMultiplier: Bool
     /// CLAS attribute weights, zero when the actor names no class.
     public var attributeWeights: CharacterClass.AttributeWeights
-    /// CLAS skill weights, empty when the actor names no class (issue #468).
+    /// CLAS skill weights, empty when the actor names no class.
     public var skillWeights: CharacterClass.SkillWeights
 
     public init(
@@ -123,19 +88,9 @@ nonisolated public struct ActorValueInputs: Equatable, Sendable {
 }
 
 nonisolated public enum ActorValueDerivation: Sendable {
-    /// The actor's effective level.
-    ///
-    /// A fixed-level actor uses the ACBS level word directly. A `PC Level Mult`
-    /// actor multiplies the player's level by the word over 1000 and clamps the
-    /// result to Calc Min / Calc Max: "Level Mult: The level of the player is
-    /// multiplied by this field to determine the level of the NPC. Calc Min:
-    /// The NPC's minimum level. Calc Max: The NPC's maximum level."
-    /// (<https://ck.uesp.net/wiki/Stats_Tab>)
-    ///
-    /// A zero bound means unbounded rather than "level 0": the Creation Kit
-    /// leaves both fields at zero when the designer sets no clamp, and vanilla
-    /// records rely on that. Every level floors at 1, which is the level the
-    /// race's starting attributes are defined for.
+    /// The actor's effective level. `PC Level Mult` scales the player's level by the
+    /// word / 1000, clamped to Calc Min / Max (<https://ck.uesp.net/wiki/Stats_Tab>).
+    /// A zero bound means no bound. The level floors at 1.
     public static func level(inputs: ActorValueInputs, playerLevel: Int) -> Int {
         guard inputs.usesPlayerLevelMultiplier else {
             return max(1, Int(inputs.stats.levelWord))
@@ -152,13 +107,8 @@ nonisolated public enum ActorValueDerivation: Sendable {
         return max(1, level)
     }
 
-    /// Base health, magicka and stamina for one actor.
-    ///
-    /// - Parameters:
-    ///   - playerLevel: only read when the actor uses `PC Level Mult`. There is
-    ///     no player level system before M18, so callers pass 1 and get the
-    ///     bottom of every scaled actor's range — deliberately the low end
-    ///     rather than a guess at the middle.
+    /// Base health, magicka and stamina for one actor. `playerLevel` is read only
+    /// for `PC Level Mult` actors.
     public static func baseValues(
         inputs: ActorValueInputs,
         settings: ActorValueLevelSettings = .documentedDefaults,
@@ -187,15 +137,9 @@ nonisolated public enum ActorValueDerivation: Sendable {
         return sum(sum(racial, offsets), perLevel).clampedToNonNegative()
     }
 
-    /// Spreads `points` across the three attributes by their class weights,
-    /// following UESP's exact method (see the file header).
-    ///
-    /// Returns whole points as an `ActorValues` triple — every value is an
-    /// integer, and they always sum to `points` when the weights are not all
-    /// zero, so no point is silently lost to rounding. A class with no
-    /// weights spreads nothing, which is what a record with a zero-weight DATA
-    /// or no class at all should do — the alternative, dividing by zero, would
-    /// put a NaN into an actor's maximum health.
+    /// Spreads `points` across the three attributes by class weight (file header).
+    /// The whole points always sum to `points`. Zero weights spread nothing, which
+    /// avoids a divide by zero and a NaN maximum.
     public static func distribute(
         points: Int,
         weights: CharacterClass.AttributeWeights

@@ -6,8 +6,8 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import simd
 
-/// A surface the capsule can step up onto: the height it sits at, and what it
-/// is made of (issue #358) so a step onto a wooden stair sounds like one.
+/// A surface the capsule can step up onto: its height and its material, so a step onto
+/// a wooden stair sounds like one.
 nonisolated public struct CapsuleStepSupport: Equatable, Sendable {
     public let height: Float
     public let material: FormID?

@@ -1,24 +1,7 @@
-// Sphere and capsule casts against placed collision geometry (issue #193,
-// roadmap item 15.2, scope point 4).
-//
-// `InteractionRaycaster` answers "what does this infinitely thin line hit".
-// A sweep answers the same question for a shape with volume, which is what a
-// hit volume (15.4) and a projectile (15.5) need, and what the dynamic solver's
-// tunneling guard is checked against.
-//
-// The implementation is deliberately the ray caster's, not a new narrowphase:
-// sweeping a sphere of radius `r` along a segment is the same query as casting
-// a ray against the same geometry grown by `r`, and for the shapes this engine
-// places that growth is exact for spheres and capsules and conservative for
-// triangles and hulls. Conservative means a sweep may report a hit marginally
-// early, never late, which is the safe direction for both a tunneling guard and
-// a hit volume.
-//
-// Ties break exactly as `InteractionRaycaster` breaks them — nearest first,
-// then the lower reference FormID — so a sweep and a ray disagreeing about
-// which of two coincident shapes was hit is not a thing that can happen.
-//
-// Documented in docs/engine/dynamic-narrowphase.md.
+// Sphere and capsule casts against placed geometry: a ray against the geometry grown
+// by the radius. Exact for spheres and capsules, early (never late) for triangles and
+// hulls, which is safe for hit volumes and tunneling. Ties break as in
+// `InteractionRaycaster`. See docs/engine/dynamic-narrowphase.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

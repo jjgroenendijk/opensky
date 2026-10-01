@@ -1,4 +1,4 @@
-// Exterior half of M4.5 walk benchmark driver.
+// Exterior half of the walk benchmark driver.
 
 import OpenSkyPhysics
 import OpenSkyRendering

@@ -1,30 +1,8 @@
-// Loading one animation clip for one character skeleton (split out of
-// `ActorAnimationPlayback.swift` for issue #374).
-//
-// The loader used to be a private method that hard-coded `mt_idle.hkx`, because
-// an NPC played exactly one clip and that was it. The dev target has to play
-// three more — an attack, a stagger, a hit reaction — so the animation path
-// became a parameter, and the loader moved here where a second caller can reach
-// it without the cell builder's own state.
-//
-// Every path below is quoted from the behavior census over the user's own
-// install (`logs/hkx-behavior-census.log`, `HKBBehaviorCensusRealDataTests`),
-// never from memory: these are file names the vanilla behavior graphs
-// themselves reference. Two things about that listing are worth stating because
-// they look inconsistent and are not:
-//
-// * The idle locomotion clips are gendered (`animations\male\mt_idle.hkx`,
-//   `animations\female\mt_idle.hkx`) while the combat clips are not
-//   (`animations\h2h_attackright.hkx`). That is how the install is laid out.
-// * There is no unarmed stagger clip. The census carries `h2h_attackleft`,
-//   `h2h_attackright`, `h2h_recoilleft`, `h2h_recoilright` and
-//   `h2h_recoiltimed`, but every `staggerback` variant is prefixed by a weapon
-//   class (`1hm_`, `2hm_`, `2hw_`). The one-handed small stagger is therefore
-//   what an unarmed stand-in plays; all of these ride the same character rig,
-//   so the clip binds. It is a substitution, and it is written down rather than
-//   silently made.
-//
-// Documented in docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
+// Loads one animation clip for one character skeleton. Paths come from the behavior
+// census of this install, never memory. Idle clips are gendered
+// (`animations\male\mt_idle.hkx`), combat clips are not. There is no unarmed stagger,
+// so `1hm_` small stagger stands in; the same rig binds it.
+// See docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
 import Foundation
 import OpenSkyCombatInterface
@@ -61,14 +39,9 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         characterRoot + "animations\\" + fileName(for: clip)
     }
 
-    /// How long a reaction clip holds the actor before it returns to idle.
-    ///
-    /// OpenSky numbers: the clip's own duration is readable only after it has
-    /// been decoded, and an NPC in this milestone has no behavior graph to end
-    /// the state for it. Each is taken from the phase it accompanies in
-    /// `CombatBehaviorSettings.standard`, so the animation and the hit land
-    /// together. The shipping settings rather than a live machine's, because a
-    /// clip is decoded once per skeleton and held for every actor that plays it.
+    /// How long a reaction clip holds the actor before idle. Ours, taken from the matching
+    /// phase in `CombatBehaviorSettings.standard`, so clip and hit line up. Fixed, because
+    /// a clip is decoded once per skeleton and shared.
     public static func holdSeconds(for clip: CombatActorClip) -> Float {
         let combat = CombatBehaviorSettings.standard
         switch clip {
@@ -86,16 +59,9 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         }
     }
 
-    /// Decodes one clip: the skeleton beside the `.nif`, the animation at
-    /// `animationPath`, and the binding that ties them together.
-    ///
-    /// - Parameters:
-    ///   - skeletonMeshPath: the actor's skeleton `.nif`, whose `.hkx` sibling
-    ///     carries the rig.
-    ///   - animationPath: canonical VFS path of the animation to load.
-    ///   - readHKX: how the caller reads a file. Injected rather than taken
-    ///     from a stored file system so the cell builder and the combat wiring
-    ///     can each supply their own.
+    /// Decodes one clip: the rig `.hkx` beside `skeletonMeshPath`, the animation at
+    /// `animationPath`, and their binding. `readHKX` is injected, so the cell builder and
+    /// combat wiring each supply their own reader.
     public static func clip(
         skeletonMeshPath: String,
         animationPath: String,

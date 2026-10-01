@@ -1,9 +1,5 @@
-// Progression readout lines (issue #500, roadmap item 20.7), formatted in the
-// engine target rather than in the panel section for the reason
-// `ActorValueControlReadout` is: a string a milestone gate asserts on belongs
-// where a unit test can reach it without a window.
-//
-// Documented in docs/engine/character-leveling.md.
+// Progression readout lines, formatted in the engine target so a unit test can
+// check them without a window. See docs/engine/character-leveling.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -44,10 +40,8 @@ nonisolated public enum ProgressionControlReadout: Sendable {
             + ", \(snapshot.ownedPerkCount) perk(s) owned"
     }
 
-    /// The eighteen skills, one line each: what the skill reads, what it was
-    /// trained to, and how far the next point is, closed by what the per-skill
-    /// count cache behind those numbers is doing (issue #556) — the reading that
-    /// makes the reuse visible from the panel rather than from a profiler.
+    /// The eighteen skills, one line each: level, trained points and next-point
+    /// progress, closed by the count cache's reuse figures.
     public static func skillsText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Skills: unavailable" }
         guard !snapshot.skills.isEmpty else {

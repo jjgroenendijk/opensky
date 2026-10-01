@@ -1,20 +1,8 @@
-// World audio playback graph (milestone 9.1.3): one AVAudioEngine with an
-// AVAudioEnvironmentNode for 3D mixing, one submix per vanilla menu category, and
-// the main mixer as master volume. Source lifecycle lives in
-// WorldAudioEngineSources.swift; the full graph, threading model and coordinate
-// conversion are documented in docs/engine/audio.md.
-//
-// Graph:
-//   positional AVAudioPlayerNode (mono) --> environment node --> main mixer
-//   category submix mixers (music and ambience beds) ------>--/
-// Positional inputs must be mono — the environment node passes stereo through
-// without spatializing — so streamers downmix. Category volume for a positional
-// source is applied at its player node (effective gain = master x category x
-// source); the submix mixers carry the same category volumes for music and
-// ambience beds, so the two paths cannot disagree.
-//
-// Threading: this class is main-actor only. Decode work runs on `decodeQueue`
-// (see AudioSourceStreamer); the audio render thread runs no OpenSky code.
+// World audio graph: positional mono players -> environment node -> main mixer, and
+// one submix per menu category for music and ambience beds. Stereo is not
+// spatialized, so streamers downmix. A positional source takes its category gain at
+// its node. Main actor only; decoding runs on `decodeQueue`.
+// See docs/engine/audio.md; sources live in WorldAudioEngineSources.swift.
 
 import AVFAudio
 import Foundation
@@ -51,10 +39,8 @@ nonisolated public final class VoicePlaybackClock: Sendable, Equatable {
     }
 }
 
-/// Provisional distance-attenuation defaults, in meters (the listener-space
-/// unit AudioSpace fixes). Game-authored values arrive in M9.2 from sound
-/// descriptor records; until then these are tuned only to make the World >
-/// Audio verification audible and obviously direction/distance dependent.
+/// Provisional distance-attenuation defaults, in meters. Tuned only so World > Audio
+/// is audibly direction- and distance-dependent until sound descriptors supply values.
 nonisolated public enum ProvisionalAttenuation: Sendable {
     /// Distance at which a source plays at full gain (~2 m).
     public static let referenceDistanceMeters: Float = 2

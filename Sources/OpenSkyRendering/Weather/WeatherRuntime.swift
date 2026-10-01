@@ -1,11 +1,6 @@
-// Weather runtime value types (M7.2.2): the time-of-day keyframe blend, the
-// resolved sky/fog/ambient snapshot the renderer consumes, published wind, the
-// decoded WTHR/CLMT/REGN index, and the region/climate selection rules. All
-// pure value logic — the stateful transition machine lives in WeatherSystem.
-//
-// Selection follows xEdit REGN semantics (RDAT weather area priority + override
-// flag) with the worldspace CLMT (WRLD CNAM) as fallback; see
-// docs/engine/weather.md. Time-of-day windows come from CLMT TNAM timing.
+// Weather value types: time-of-day blends, the resolved sky/fog/ambient snapshot,
+// wind, the WTHR/CLMT/REGN index, and selection. Selection follows xEdit REGN rules
+// with the WRLD CNAM climate as fallback (docs/engine/weather.md). `WeatherSystem` holds state.
 
 import Foundation
 import OpenSkyFormatsESM

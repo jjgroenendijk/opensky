@@ -1,25 +1,8 @@
-// One landed blow as script code sees it (issue #375, roadmap item 15.8), and
-// the seam the three combat runtimes report it through.
-//
-// The value carries exactly the seven `OnHit` parameters the Creation Kit wiki
-// documents, in its vocabulary rather than in the melee runtime's, because that
-// is what the world runtime turns straight into event arguments. Filling it is
-// the job of whichever runtime resolved the hit — only that runtime knows
-// whether the swing was a bash, and only it knows which weapon record was in
-// hand.
-//
-// ## Why the reporting method has a default implementation
-//
-// `MeleeCombatWorld`, `ProjectileWorld` and `CombatLoopWorld` are the seams the
-// acceptance tests drive against fakes with no renderer and no game data. A
-// fake that does not care about scripts should not have to write an empty
-// method to keep compiling, and — more importantly — a fake that *does* care
-// should opt in explicitly rather than inherit a behaviour. So the protocol
-// carries one method with a do-nothing default, and the session overrides it.
-// Returning the queued-event count rather than nothing is what lets a test
-// assert that a hit reached the scripts it was supposed to reach.
-//
-// Documented in docs/engine/combat.md.
+// One landed blow as script code sees it: the seven `OnHit` parameters from the
+// Creation Kit wiki. The runtime that resolved the hit fills it, because only it
+// knows the bash flag and the weapon. The reporting method has a do-nothing
+// default, so test fakes opt in; it returns the queued-event count so a test can
+// check delivery. See docs/engine/combat.md.
 
 import Foundation
 import OpenSkyFormatsESM

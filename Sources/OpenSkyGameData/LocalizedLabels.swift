@@ -1,13 +1,7 @@
-// Localized-label provider for Scaleform UI menus and the HUD (M8.1.3). Menus
-// carry `$KEY` tokens; this merges every Interface/Translations/<name>_<language>.txt
-// the VFS resolves into one lookup and answers a token with its display text.
-// An unknown key returns the token unchanged, matching Scaleform leaving an
-// unresolved `$KEY` visible on screen. Localization backbone for the HUD (M8.2)
-// and vanilla SWF menus (issue #99).
-//
-// Distinct from LocalizedStrings, which resolves plugin lstring IDs against the
-// per-plugin .strings/.dlstrings/.ilstrings tables. This provider handles the
-// UI translation-token files. Format and decisions: docs/formats/translation-strings.md.
+// Localized labels for Scaleform menus and the HUD: merges every
+// Interface/Translations/<name>_<language>.txt into one `$KEY` lookup. An unknown key
+// stays as written, as Scaleform shows it. `LocalizedStrings` handles plugin lstrings.
+// See docs/formats/translation-strings.md.
 
 import Foundation
 import OpenSkyFormatsCore

@@ -1,13 +1,5 @@
-// AVAL chunk writing for the OpenSky native save container (issue #194).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the INVN and QSTS
-// writers are: the encoder is at its type-length limit. The three shared
-// writers it uses — `writeChunk`, `writeKey`, `writeCell` — are internal on the
-// parent for exactly this reason.
-//
-// The cell travels with each entry, unlike a quest entry: an actor is a placed
-// reference, and its cell is what the store's per-cell dirty counts are keyed
-// by.
+// AVAL chunk writing. Each entry carries its cell, because an actor is a placed reference
+// and the store's dirty counts are per cell.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -22,14 +14,8 @@ nonisolated extension OpenSkySaveEncoder {
         let state: ActorValueState
     }
 
-    /// The `AVAL` chunk: every snapshot entry carrying an actor-value
-    /// component, in the snapshot's `ReferenceKey` order. A session in which
-    /// nothing took damage writes no chunk, so its bytes match what this
-    /// encoder produced before the chunk existed.
-    ///
-    /// Each entry repeats its key and cell rather than referring back to an
-    /// `RDLT` entry by index, because an actor whose only delta is its values
-    /// has no `RDLT` entry at all.
+    /// The `AVAL` chunk: every entry with an actor-value component, in key order. Each
+    /// repeats its key and cell, because a values-only actor has no `RDLT` entry.
     public static func writeActorValues(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter
@@ -53,16 +39,9 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    /// The `AVOV` chunk (issue #496): every actor holding an actor value away
-    /// from the baseline its records author, and the overrides it holds.
-    ///
-    /// Written beside `AVAL` and never instead of it: an actor with an override
-    /// has an `ActorValueState` component, so `AVAL` always carries its
-    /// primaries' current values, and the decoder relies on that to know what
-    /// an actor's health was rather than inventing a zero for it.
-    ///
-    /// Offsets, not values — see `ChunkTag.actorValueOverrides` for what that
-    /// buys and why the temporary modifier is not written.
+    /// The `AVOV` chunk: every actor with values off its record baseline. Always beside
+    /// `AVAL`, which the decoder needs for current health. Offsets, not values; the
+    /// temporary modifier is skipped (`ChunkTag.actorValueOverrides`).
     public static func writeActorValueOverrides(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter

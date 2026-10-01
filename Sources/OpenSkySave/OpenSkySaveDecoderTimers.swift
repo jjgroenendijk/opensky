@@ -1,12 +1,5 @@
-// PTMR chunk decoding for the OpenSky native save container (issue #277):
-// pending Papyrus update-timer slots.
-//
-// Shaped exactly like the `PSCR` decoder next door. The payload arrives as its
-// own `Data`, so the chunk's declared length bounds every read and a corrupt
-// count inside the chunk can never walk into the next chunk's bytes, and the
-// declared entry count goes through
-// `OpenSkySaveDecoder.validate(count:minimumElementSize:remaining:chunk:)`
-// before anything reserves storage.
+// PTMR chunk decoding: pending Papyrus update-timer slots. Shaped like the PSCR decoder:
+// the payload is its own `Data`, and the count passes `OpenSkySaveDecoder.validate`.
 
 import Foundation
 import OpenSkyScriptingInterface
@@ -49,16 +42,9 @@ nonisolated public enum OpenSkySaveTimerDecoder: Sendable {
         )
     }
 
-    /// A timer duration in the slot's unit, read as a `Float64` bit pattern.
-    ///
-    /// Non-finite and negative policy, matching the `PSCR` float rule rather
-    /// than the `CLOK` one: the value is **normalized to zero**, not rejected.
-    /// A script can hand the registry any float it likes, and refusing to load
-    /// a whole world because one timer drifted out of range would be the worse
-    /// failure. Zero is also what the registry itself clamps such an interval
-    /// to, so a normalized timer simply fires on the next fixed step. The
-    /// registry re-clamps on restore anyway; normalizing here keeps the decoded
-    /// value honest for anything that only inspects the file.
+    /// A timer duration as a `Float64` bit pattern. Non-finite or negative becomes zero,
+    /// as for `PSCR` floats and as the registry itself clamps, so the timer fires on the
+    /// next step.
     private static func duration(_ bits: UInt64) -> Double {
         let value = Double(bitPattern: bits)
         return value.isFinite && value > 0 ? value : 0

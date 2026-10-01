@@ -1,11 +1,5 @@
-// Actor-value readout lines (issue #194, roadmap item 15.3), written for the
-// M15 gate panel (issue #198) and formatted here rather than in the panel
-// section for the reason `CombatLoopReadout`, `RagdollReadout`,
-// `ArcheryReadout` and `MeleeCombatReadout` are: a string a milestone gate
-// asserts on belongs in the engine target, where a unit test can reach it
-// without a window.
-//
-// Documented in docs/engine/actor-value-store.md.
+// Actor-value readout lines, formatted in the engine target so a unit test can
+// check them without a window. See docs/engine/actor-value-store.md.
 
 import Foundation
 import OpenSkyGameData
@@ -61,14 +55,9 @@ nonisolated public enum ActorValueControlReadout: Sendable {
             )
     }
 
-    /// The selected actor value: what it reads, what its base and modifiers
-    /// say, and — for a percentage resistance — the capped fraction of damage
-    /// it removes (issue #468, roadmap item 19.5).
-    ///
-    /// The modifier slots are shown even when they are all zero, because a
-    /// value at 40 with a base of 40 and a value at 40 with a base of 100 and
-    /// 60 points of damage are different states the bar alone cannot tell
-    /// apart.
+    /// The selected actor value: its reading, base, modifiers, and the capped
+    /// fraction a resistance removes. Zero modifiers still show, because the bar
+    /// alone cannot tell a lowered base from damage.
     public static func selectionText(for snapshot: ActorValueControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Selected value: unavailable" }
         let selection = snapshot.selection

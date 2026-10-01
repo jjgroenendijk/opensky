@@ -1,6 +1,5 @@
-// Frame-fog resolution (M7.2.2): active exterior weather overrides the fog
-// uniforms without touching interior lighting. The weather advance itself runs
-// in the game session (`Renderer+Weather.swift`).
+// Frame-fog resolution: active exterior weather overrides the fog uniforms, not
+// interior lighting. The weather advance runs in the session (`Renderer+Weather.swift`).
 
 import simd
 

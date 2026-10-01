@@ -7,9 +7,8 @@ import simd
 nonisolated public struct CapsuleCollisionContact: Sendable {
     public let normal: SIMD3<Float>
     public let depth: Float
-    /// The MATT material of the shape that produced this contact (issue #358),
-    /// so the surface the player is standing on can be named. Nil where the
-    /// shape carries none.
+    /// The MATT material of the shape that produced this contact, so the surface
+    /// underfoot can be named. Nil where the shape carries none.
     public let material: FormID?
 
     public init(normal: SIMD3<Float>, depth: Float, material: FormID? = nil) {
@@ -42,9 +41,8 @@ nonisolated public struct CapsuleMoveResult: Sendable {
     }
 }
 
-/// Three world-space points. Shared with the dynamic-body narrowphase
-/// (issue #193), which runs the same closest-point query against the same
-/// placed static geometry.
+/// Three world-space points. The dynamic-body narrowphase runs the same closest-point
+/// query against the same static geometry.
 nonisolated public struct CollisionTriangle: Sendable {
     public let first: SIMD3<Float>
     public let second: SIMD3<Float>

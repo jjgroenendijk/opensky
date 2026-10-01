@@ -1,12 +1,5 @@
-// Music-context emission (M9.2.3): builds a `MusicContext` value from the
-// streamer's current state and fires `onMusicContextChanged` when it differs
-// from the previous emission. Mirrors CellStreamerAmbience exactly — same two
-// call sites, same key-diff discipline, split into its own satellite for the
-// same file-size reason.
-//
-// Sources of context:
-//   - Interior enter/exit: `apply(transition:)` clears/sets `interiorScene`.
-//   - Exterior recenter: the per-frame `update()` walk in CellStreamer.swift.
+// Music-context emission: fires `onMusicContextChanged` when the context differs from the
+// last one. Called on interior enter/exit and exterior recenter, like CellStreamerAmbience.
 
 import Foundation
 import OpenSkyAudio

@@ -1,29 +1,8 @@
-// Update-timer registry for `Form.RegisterForUpdate` and friends (issue
-// #277): per-instance timers that fire `OnUpdate` / `OnUpdateGameTime`
-// through the world event queue.
-//
-// The registry is a peer of `PapyrusScheduler`, not part of it: a scheduler
-// entry carries a suspended continuation, while a timer carries nothing but
-// an interval and a slot. Both share the same fixed-step policy — real time
-// counts whole ticks so `Double(n) * fixedStepSeconds` is one rounding step,
-// and game time accumulates capped, never-negative hour deltas from the
-// sampled `GameClock`.
-//
-// Slot semantics, resolving what the Creation Kit wiki leaves unstated:
-//
-// * Four independent slots per instance: {real, game-time} x {repeating,
-//   single-shot}. Registering into a slot replaces that slot only; the wiki
-//   states this for the real-time family and the game-time family follows by
-//   symmetry.
-// * `UnregisterForUpdate()` clears both real-time slots and
-//   `UnregisterForUpdateGameTime()` clears both game-time slots; the families
-//   never affect each other.
-// * A non-finite, zero, or negative interval clamps to zero: a single-shot
-//   fires on the next fixed step and a repeating timer fires once per step.
-// * Scrub avalanche rule: a due timer fires at most once per step. A
-//   repeating timer re-anchors to "now" after firing rather than queueing
-//   per-elapsed-interval catch-ups, so a capped 24-game-hour jump cannot
-//   burst-fire one timer.
+// Timers for `RegisterForUpdate` and friends, firing `OnUpdate` / `OnUpdateGameTime`. A
+// peer of `PapyrusScheduler` on the same fixed step. Four slots per instance (real or game
+// time, repeating or single); each unregister clears its family. Bad intervals clamp to
+// zero. A due timer fires at most once per step and a repeating one re-anchors to now,
+// so a 24-hour jump cannot burst-fire. The wiki leaves these rules unstated.
 
 import Foundation
 import OpenSkyScriptingInterface

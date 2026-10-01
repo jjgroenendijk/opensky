@@ -1,15 +1,5 @@
-// Per-frame trigger-volume occupancy and edge events for CellStreamer
-// (issue #173). Split from CellStreamer.swift for the same file-size reason as
-// CellStreamerAmbience, and shaped like it: the streamer keeps the previous
-// answer, diffs against the current one, and emits only the difference.
-//
-// Rate: once per rendered frame, from the streamer update path — never per
-// 120 Hz physics substep. Triggers are gameplay-rate events, the substep loop
-// is a hot path, and firing a script event 120 times a second for a player
-// standing still would be both wrong and expensive.
-//
-// Gate: walk mode only, matching the interaction ray. Fly mode is a developer
-// camera with no body, so it has no occupancy and emits nothing.
+// Trigger-volume occupancy and edge events, diffed against the last frame. Once per
+// rendered frame, not per physics substep, and in walk mode only: fly mode has no body.
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
@@ -80,13 +70,8 @@ extension CellStreamer {
         return composition.triggerStats()
     }
 
-    /// One frame's occupancy test and edge diff.
-    ///
-    /// A nil state (fly mode, or a frame with no walk controller) tests
-    /// nothing and diffs nothing: occupancy is *frozen*, not cleared, so
-    /// toggling to fly mode inside a volume does not fabricate a leave the
-    /// player never performed. The leave fires on the first walk-mode frame
-    /// that finds the capsule outside.
+    /// One frame's occupancy test and diff. A nil state (fly mode) freezes occupancy, so
+    /// switching modes inside a volume fakes no leave.
     public func updateTriggerOccupancy(_ state: PlayerCapsuleState?) {
         guard let state else {
             lastTriggerFeetPosition = nil
@@ -123,14 +108,9 @@ extension CellStreamer {
         }
     }
 
-    /// Enters first, then leaves, both in ascending `ReferenceKey` order so
-    /// dispatch is deterministic — the same ordering rule `queueOnActivate`
-    /// follows. A volume visited and left inside one frame appears in
-    /// `touched` but not in `occupied`, which is what makes a teleport across
-    /// a volume emit enter followed by leave instead of nothing at all.
-    ///
-    /// Occupancy is committed before any handler runs, so a script that moves
-    /// the player from inside its own handler sees a consistent set.
+    /// Enters, then leaves, each by `ReferenceKey`, like `queueOnActivate`. A volume
+    /// crossed within one frame is touched, not occupied, so it emits enter then leave.
+    /// Occupancy commits before handlers run.
     private func dispatchTriggerEdges(
         occupied: Set<ReferenceKey>,
         touched: Set<ReferenceKey>
@@ -150,13 +130,8 @@ extension CellStreamer {
         Set(volumes.map(\.reference))
     }
 
-    /// Intermediate capsule poses between two frames' feet positions, spaced
-    /// about one capsule radius apart so a volume at least that thick cannot
-    /// be stepped over. Both endpoints are excluded: the destination is
-    /// sampled as the frame's occupancy, and the origin was last frame's.
-    ///
-    /// A normal walking frame moves far less than a radius and produces no
-    /// samples at all, so this costs nothing until something teleports.
+    /// Capsule poses between two frames' feet, about one radius apart, so a teleport
+    /// cannot skip a volume. Endpoints excluded. A normal step gives no samples.
     public static func sweepSamples(
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>,

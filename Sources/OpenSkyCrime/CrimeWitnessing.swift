@@ -1,29 +1,8 @@
-// Who saw it (issue #504, roadmap item 21.5): the seam between the perception
-// pass and the bounty ledger.
-//
-// "If you are caught doing an illegal action by a witness you will incur a
-// bounty and they will report your crime to local guards ... Successfully
-// sneaking while committing a crime will prevent you from being detected"
-// (<https://en.uesp.net/wiki/Skyrim:Crime>). That is exactly the question
-// `PerceptionRuntime` already answers every fixed step, so nothing here
-// recomputes detection: it reads the pairs the pass has already converged and
-// keeps the ones that reached `.detected`.
-//
-// A protocol rather than a direct dependency for the reason
-// `CrimeHostilitySource` is one: the crime runtime has to be testable without a
-// perception pass, a synthetic scene has no observers at all, and a session
-// that runs the real pass hands over the adapter below.
-//
-// ## What this deliberately does not model
-//
-// Reporting. In the original a witness walks to a guard and tells them, which
-// is a package, a travel path and a conversation; this engine credits the
-// bounty the moment a live witness sees the act. Follower-committed crimes,
-// animal witnesses and the child-tells-an-adult chain are the same
-// simplification from the other side. All of it is recorded as a v1 limitation
-// in docs/engine/crime.md rather than pretended away.
-//
-// Documented in docs/engine/crime.md and docs/engine/detection.md.
+// Who saw a crime: the pairs `PerceptionRuntime` has already converged to
+// `.detected`, so detection is not recomputed. A protocol, so crime tests run
+// without a perception pass. A seen crime costs a bounty at once: no walk to a
+// guard, no follower, animal or child witnesses (<https://en.uesp.net/wiki/Skyrim:Crime>).
+// See docs/engine/crime.md and docs/engine/detection.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -83,13 +62,9 @@ public struct FixedCrimeWitnesses: CrimeWitnessSource {
     }
 }
 
-/// The real seam: the perception pass, filtered to live observers.
-///
-/// `isAlive` is supplied rather than read here because the runtime holds no
-/// actor-value surface — the same reason `MeleeCombatWorld` asks the session
-/// for a block multiplier instead of computing one. A session that cannot tell
-/// the dead from the living passes nothing and every detected observer counts,
-/// which is the pre-death behaviour rather than a new wrong answer.
+/// The real seam: the perception pass, filtered to live observers. The session
+/// supplies `isAlive`, because the runtime holds no actor values. Without it every
+/// detected observer counts.
 @MainActor
 public struct PerceptionCrimeWitnesses: CrimeWitnessSource {
     /// The pass whose converged pairs are read. Weak because the controller

@@ -1,18 +1,8 @@
-// The seam between the locomotion bridge and the character controller
-// (issue #188).
-//
-// One fixed step of walk mode is a question and an answer. `LocomotionStepState`
-// is the question: where the capsule is, how fast it is falling, whether it is
-// on the ground, and which way the camera faces. `LocomotionStepPlan` is the
-// answer: how far to move horizontally, whether to take off, and whether the
-// step happens in water.
-//
-// Keeping the two as plain values is what makes the movement-authority rule
-// checkable rather than aspirational. The plan carries a horizontal
-// displacement and no horizontal velocity, so nothing downstream of it can
-// integrate horizontal motion a second time; the controller carries vertical
-// velocity and the plan cannot write it except through the one-shot jump
-// impulse. See docs/engine/walk-mode.md.
+// The seam between the locomotion bridge and the character controller. The state is the
+// question (capsule, fall speed, ground, camera facing); the plan is the answer (horizontal
+// move, takeoff, water). The plan carries displacement, not velocity, so nothing after it
+// can integrate horizontal motion twice. Only the jump impulse writes vertical velocity.
+// See docs/engine/walk-mode.md.
 
 import simd
 

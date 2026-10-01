@@ -1,7 +1,5 @@
-// Live-renderer seam for the World > World > Triggers section (issue #173).
-// Same shape as the other panel bridges: one Equatable snapshot crosses from
-// the engine to the readout, polled at 2 Hz, plus one action the section can
-// invoke. Nothing here reaches into the streamer directly.
+// The seam for World > World > Triggers: one Equatable snapshot polled at 2 Hz and one
+// action. Nothing here reaches into the streamer.
 
 /// What the trigger readout shows for one refresh.
 nonisolated public struct TriggerStatsSnapshot: Equatable, Sendable {

@@ -1,25 +1,7 @@
-// Every number the combat mind runs on (issue #424, roadmap item 16.7), in one
-// place and stated as OpenSky's own.
-//
-// ## Why these are not read from records
-//
-// `DevTargetDriver` — the clock this item deletes — carried the same statement
-// for its four cadence constants, and it is still true for all fifteen here:
-// no record in the load order states an attack cadence, a block probability, a
-// flee threshold, a search duration or how often a caster prefers a spell to a
-// sword. Vanilla's live in the combat-AI binary
-// and in `GameSettings` this engine has no decoded consumer for, and inventing a
-// citation for a number that was chosen would be worse than choosing it in the
-// open. So every value below is OpenSky's, chosen for a reason written beside
-// it, and `docs/engine/combat-behavior.md` repeats the list so a reader who never opens
-// this file still sees which numbers are ours.
-//
-// A struct rather than static constants on the machine, for one reason: a test
-// that wants a fight to resolve in a hundred fixed steps rather than in a
-// thousand shortens the durations here instead of running for sixteen simulated
-// seconds per assertion. The shipping values are `standard`.
-//
-// Documented in docs/engine/combat-behavior.md.
+// Every number the combat mind runs on. No record states an attack cadence, block
+// chance, flee threshold or search time, so each value is ours, with its reason
+// beside it. A struct, so a test can shorten the durations instead of simulating
+// many seconds. The shipping values are `standard`. See docs/engine/combat-behavior.md.
 
 import Foundation
 
@@ -45,24 +27,14 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// How long a stagger holds the attack away.
     public var staggerSeconds: Float = 0.7
 
-    /// The chance, 0 through 1, that an actor spends the gap before its next
-    /// attack with its guard up rather than waiting.
-    ///
-    /// Rolled once per attack cycle from the actor's own seeded generator, so a
-    /// fight is reproducible and two actors in the same room do not block in
-    /// lockstep. Roughly one gap in three: often enough that a player learns to
-    /// wait a guard out, rare enough that attacking is still the way a fight
-    /// ends.
+    /// The chance, 0 through 1, that an actor guards in the gap before its next
+    /// attack. Rolled per cycle from the actor's seeded generator, so fights repeat
+    /// and two actors do not block in step. About one gap in three.
     public var blockChance: Float = 0.35
 
-    /// How long a raised guard is held.
-    ///
-    /// Deliberately equal to `attackIntervalSeconds`: blocking *replaces* the
-    /// wait rather than being added to it, so an actor that blocks does not
-    /// thereby attack sooner or later than one that did not. Two constants
-    /// rather than one because the relationship is a choice, not an identity —
-    /// a longer guard is a legitimate future tuning and would not silently
-    /// change the attack cadence with it.
+    /// How long a raised guard is held. Equal to `attackIntervalSeconds`, so a block
+    /// replaces the wait and does not change the attack cadence. Kept separate so
+    /// either can be tuned alone.
     public var blockSeconds: Float = 1.6
 
     /// How far inside its own weapon reach an actor closes before it stops
@@ -73,14 +45,8 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// otherwise alternate between approaching and spacing every step.
     public var reachSlack: Float = 24
 
-    /// Seconds between one movement command and the next while an actor is
-    /// approaching or fleeing.
-    ///
-    /// The mover paths once per command, so this is how often a chase notices
-    /// that the player moved. An eighth of a second would path eight times a
-    /// second per actor for a target that moved a few units; half a second at
-    /// the eight-actor cap is sixteen path queries a second, which the 16.4
-    /// budget already covers.
+    /// Seconds between movement commands while approaching or fleeing. Each command
+    /// paths once; half a second at the eight-actor cap is sixteen queries a second.
     public var commandIntervalSeconds: Float = 0.5
 
     /// The health fraction, 0 through 1, at or below which an actor breaks off
@@ -103,27 +69,14 @@ nonisolated public struct CombatBehaviorSettings: Equatable, Sendable {
     /// started.
     public var fleeBreakDistance: Float = 1800
 
-    /// The chance, 0 through 1, that an actor standing inside its own weapon
-    /// reach casts rather than swings (issue #473).
-    ///
-    /// Only inside weapon reach: an actor that cannot reach its target with a
-    /// weapon casts whenever it can afford to, because the alternative is
-    /// walking toward somebody while holding a spell it could have thrown.
-    /// Even odds in the one case where both are available — a caster that never
-    /// swings is pinned in place by an opponent who closes on it, and one that
-    /// always swings is a mage the player never sees cast.
+    /// The chance, 0 through 1, that an actor within weapon reach casts rather than
+    /// swings. Out of reach it always casts when it can pay. Even odds, so a caster
+    /// neither freezes when closed on nor never casts.
     public var castChance: Float = 0.5
 
-    /// How long a maintained cast is held before the actor lets go, seconds.
-    ///
-    /// OpenSky's number and unavoidably so: a concentration spell has no
-    /// duration of its own — UESP states the rule as "the duration is
-    /// determined by how long you hold the casting trigger"
-    /// (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>) — so an NPC needs one
-    /// stated somewhere. A second and a half is two applications of a
-    /// once-a-second effect, which is long enough for a player to see a beam
-    /// and short enough that the caster re-decides while the fight is still
-    /// moving.
+    /// How long an NPC holds a concentration cast, in seconds. Ours: the player's
+    /// trigger sets the duration (<https://en.uesp.net/wiki/Skyrim:Magic_Overview>).
+    /// 1.5 s shows the beam and lets the caster re-decide soon.
     public var concentrationSeconds: Float = 1.5
 
     /// How long an actor that lost its target searches the last place it saw it

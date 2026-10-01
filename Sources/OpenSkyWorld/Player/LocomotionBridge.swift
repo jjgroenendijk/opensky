@@ -1,36 +1,8 @@
-// The character-controller bridge (issue #188): the one place where player
-// input, the behavior graph, and the capsule controller meet.
-//
-// Movement authority, stated once and enforced by the shape of the types:
-//
-// * Horizontal motion has exactly one source per fixed step. The bridge picks
-//   it — the graph's own root travel when the data carries any, the resolved
-//   gait speed otherwise — and hands `WalkController` a displacement. The
-//   controller never derives horizontal motion of its own while a planner is
-//   attached, so nothing can integrate the same axis twice.
-// * Vertical motion belongs to the controller: gravity, ground snap, step
-//   support, and the slope rule. The bridge can inject one takeoff impulse and
-//   can say "this step happens in water"; it cannot integrate height.
-// * The controller's resolved position and grounded flag come back in on the
-//   next step and become graph variables, which closes the loop.
-//
-// Vanilla data never takes the root-motion branch, and that is a measurement
-// rather than an assumption: not one of the 2,654 HKX files under
-// `meshes\actors\character\` carries an `hkaAnimatedReferenceFrame`, and every
-// `hkaSplineCompressedAnimation` in the locomotion clips leaves
-// `m_extractedMotion` null. Skyrim's locomotion clips animate in place and the
-// engine supplies the travel; the graph is a consumer of `Speed` and
-// `Direction`, not the source of movement. The root-motion branch stays because
-// a data set that does carry extracted motion has to drive the capsule from it
-// rather than be silently ignored.
-//
-// Which branch a step takes is read off that measurement directly:
-// `BehaviorRootMotion.isExtracted` says the clip's file carries travel, and the
-// evaluator reports no travel at all for a clip that does not. The branch used
-// to be a speed threshold over the differenced root bone instead, which an
-// in-place clip's own jitter could cross on a single 1/120 s step and push the
-// capsule a fraction of a unit the wrong way (issue #370).
-// See docs/engine/walk-mode.md.
+// Where input, the behavior graph and the capsule controller meet. Each step has one
+// horizontal source (graph root travel if extracted, else gait speed); the controller
+// owns vertical motion. No vanilla locomotion clip has extracted motion, so vanilla
+// uses gait speed; the branch keys on `BehaviorRootMotion.isExtracted`, not a speed
+// threshold. See docs/engine/walk-mode.md.
 
 import OpenSkyBehavior
 import OpenSkyCombatInterface
@@ -59,13 +31,9 @@ nonisolated public struct LocomotionIntent: Equatable, Sendable {
 }
 
 nonisolated public final class LocomotionBridge {
-    /// How far the capsule bottom must sit below the water surface before
-    /// swimming starts, and how far it must rise before it stops. The enter
-    /// depth is most of the capsule (128 units tall, eye at 112): the player
-    /// swims once the water is about chest deep, and wading stays walking. The
-    /// two differ so a capsule bobbing on the threshold cannot flip modes every
-    /// step. Both are OpenSky measurements against the capsule dimensions; no
-    /// GMST in the install states either.
+    /// Swim enter and exit depths of the capsule bottom below water: swim at about chest
+    /// deep, so wading stays walking. They differ so the mode cannot flicker. Ours; no
+    /// GMST states them.
     public static let swimEnterDepth: Float = 90
     public static let swimExitDepth: Float = 70
 
@@ -75,18 +43,13 @@ nonisolated public final class LocomotionBridge {
     /// every write and event is dropped rather than queued, which is why item
     /// 14.6 can attach a real graph mid-session with nothing to replay.
     public private(set) var graph: BehaviorGraphInstance?
-    /// The first-person graph, run beside the third-person one over the
-    /// install's `_1stperson` behavior set (issue #190). Nil until the app
-    /// attaches it, and nil forever on an install that ships no first-person
-    /// files, both of which are supported rather than degraded: the arms are
-    /// then simply not drawn. See LocomotionBridgeFirstPerson.swift.
+    /// The first-person graph, run beside the third-person one. Nil until attached, or on
+    /// an install with no first-person files; then no arms are drawn.
     public private(set) var firstPersonGraph: BehaviorGraphInstance?
     /// Water surface height at a world XY, or nil where the cell has no water.
     public var sampleWater: ((SIMD2<Float>) -> Float?)?
-    /// The pose the last graph update produced, for whoever is drawing the
-    /// body (issue #189). Published here rather than sampled elsewhere because
-    /// this is the only place the graph is stepped, and the graph steps on the
-    /// simulation clock: see PlayerAnimationPlayback.swift.
+    /// The pose the last graph update produced, published here because only this steps
+    /// the graph, on the simulation clock (PlayerAnimationPlayback.swift).
     public let pose = PlayerPoseBuffer()
     /// The same, for the first-person rig. A separate buffer because the two
     /// graphs pose two different skeletons and a shared one would hand the
@@ -97,62 +60,31 @@ nonisolated public final class LocomotionBridge {
     /// step in that frame reads the same value.
     public var intent: LocomotionIntent = .still
 
-    /// This frame's melee intent, split out of `intent` because nothing in the
-    /// fixed step reads it (issue #195). Attacking does not move the capsule —
-    /// the graph does that, if its attack clips carry travel — so the melee
-    /// runtime consumes this at frame rate and the locomotion step never sees
-    /// it. Published here rather than routed separately so there is still one
-    /// input path from `CameraInputState` to the world.
+    /// This frame's melee intent, kept out of `intent` because the fixed step never reads
+    /// it; the melee runtime does at frame rate. One input path still feeds both.
     public private(set) var meleeIntent: MeleeIntent = .still
 
-    /// This frame's archery intent, published beside `meleeIntent` and for the
-    /// same reason (issue #196): drawing a bow does not move the capsule, so
-    /// the archery runtime consumes this at frame rate and the locomotion step
-    /// never sees it. `hasBowEquipped` is left false here — the bridge does not
-    /// know what is in the player's hands — and the app fills it in from the
-    /// equipped set before handing the value on.
+    /// This frame's archery intent, like `meleeIntent`. `hasBowEquipped` stays false here;
+    /// the app fills it from the equipped set.
     public private(set) var archeryIntent: ArcheryIntent = .still
 
-    /// A gait held regardless of what the player is pressing, or nil for the
-    /// ordinary resolution (issue #191). This is the dev control behind
-    /// `World > Player & Locomotion > Dev Controls`, and it exists so a state
-    /// the route is awkward to reach — sprinting up a slope, swimming clips on
-    /// dry land — can be inspected without staging the world for it.
-    ///
-    /// It forces the graph's inputs and the resolved gait speed, and nothing
-    /// else: it does not put the capsule in water, and the controller's own
-    /// gravity, grounding and collision are untouched. Forcing `swim` therefore
-    /// shows the swim clips and the swim speed while the player still walks on
-    /// the floor, which is what a dev control should do rather than pretending
-    /// the world changed.
+    /// A forced gait, or nil (`World > Player & Locomotion > Dev Controls`). It forces the
+    /// graph inputs and gait speed only; water, gravity and collision are untouched, so a
+    /// forced `swim` swims on dry floor.
     public var forcedGait: LocomotionGait?
 
     public private(set) var status: LocomotionStatus
-    /// Third-person graph events awaiting a consumer (issue #352). Only the
-    /// third-person graph feeds it: both graphs run the same locomotion clips
-    /// and therefore fire the same triggers, so draining both would play every
-    /// footstep twice. See LocomotionGraphEventQueue.swift.
+    /// Third-person graph events awaiting consumers. Only that graph feeds it, or every
+    /// footstep would play twice. See LocomotionGraphEventQueue.swift.
     public let graphEvents: LocomotionGraphEventQueue
-    /// The footstep director's cursor into `graphEvents`, and the melee
-    /// runtime's (issue #195). Named cursors rather than one shared drain,
-    /// because both consumers act on the same stream and a drain-once queue
-    /// would give whichever ran first the whole batch.
-    ///
-    /// Registered in `init` rather than lazily, and owned by the bridge rather
-    /// than by the consumers. Eagerly, because the queue drops what no
-    /// registered cursor can ever read, so a cursor created on first drain
-    /// would find the queue already empty. Owned here, because the renderer
-    /// holds the bridge as a settable property and a cursor stored beside it
-    /// would silently point into the previous bridge's queue after a
-    /// reassignment.
+    /// The footstep director's and melee runtime's cursors into `graphEvents`, so both see
+    /// every event. Registered in `init` (the queue drops what no cursor can read) and
+    /// owned here, so a replaced bridge cannot leave a stale cursor.
     public let footstepEventConsumer: LocomotionGraphEventQueue.Consumer
     public let meleeEventConsumer: LocomotionGraphEventQueue.Consumer
-    /// The archery runtime's cursor (issue #196), the third. Nothing about the
-    /// queue changed to add it, which is what item 15.4's promotion from
-    /// drain-once bought.
+    /// The archery runtime's cursor.
     public let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
-    /// The ragdoll runtime's cursor (issue #197), the fourth. Nothing about the
-    /// queue changed to add it either.
+    /// The ragdoll runtime's cursor.
     public let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
@@ -166,17 +98,9 @@ nonisolated public final class LocomotionBridge {
     /// capsule is already in water and may leave at the shallower threshold.
     private var wasGraphSwimming = false
     private var wasGrounded = true
-    /// False until a step has seen the capsule standing on something.
-    ///
-    /// A ground transition is an edge between two samples, and a reset throws
-    /// the earlier one away: `WalkController.reset(cameraPosition:)` leaves
-    /// `isGrounded` false and the next step decides whether the capsule is
-    /// standing. Reporting that first change would tell the graph the player
-    /// had fallen and landed on every teleport — and a door transition is a
-    /// teleport — so ground events start once the capsule is standing rather
-    /// than at the reset. A player reseated in mid-air therefore gets no
-    /// landing event for the drop the teleport caused, which is the intended
-    /// reading: the drop is the reset's, not the player's (issue #191).
+    /// False until a step sees the capsule standing. A reset leaves `isGrounded` false,
+    /// and reporting that change would fake a landing on every teleport, so ground events
+    /// start once standing.
     private var hasGroundSample = false
     private var isAirborneFromJump = false
     private var pendingJump = false
@@ -271,10 +195,8 @@ nonisolated public final class LocomotionBridge {
         return plan
     }
 
-    /// Attaches (or detaches) the graph this bridge feeds, resetting the edge
-    /// state so the newly attached graph is not told about transitions that
-    /// happened before it existed (issue #189). The app calls this once, when
-    /// the install's own `0_master.hkx` has loaded.
+    /// Attaches or detaches the graph and resets edge state, so a new graph hears no old
+    /// transitions. Called once `0_master.hkx` has loaded.
     public func attach(graph: BehaviorGraphInstance?) {
         self.graph = graph
         reset()
@@ -375,9 +297,8 @@ nonisolated public final class LocomotionBridge {
         gait: LocomotionGait,
         state: LocomotionStepState
     ) -> (displacement: SIMD2<Float>, source: LocomotionMotionSource) {
-        // `isExtracted`, not a speed threshold: the question is whether the
-        // clip's own data carries travel, and that is a property of the file
-        // rather than of how far the root bone moved this step (issue #370).
+        // `isExtracted`, not a speed threshold: whether the clip carries travel is a
+        // property of the file, not of this step's root movement.
         if let rootMotion, rootMotion.isExtracted {
             let local = SIMD2<Float>(rootMotion.translation.x, rootMotion.translation.y)
             // Root travel is in the character's own frame; the character faces
@@ -393,15 +314,8 @@ nonisolated public final class LocomotionBridge {
 
     // MARK: - Graph
 
-    /// Steps every attached graph and answers with the third-person one's root
-    /// travel.
-    ///
-    /// Only the third-person graph can move the character. The first-person
-    /// graph is stepped with the same inputs and publishes its own pose, but
-    /// its root motion is deliberately dropped: two graphs both allowed to
-    /// drive the capsule would integrate the same axis twice, and the arms are
-    /// a view of the movement rather than a source of it (see the file
-    /// comment's movement-authority rule).
+    /// Steps every attached graph and returns the third-person root travel. The
+    /// first-person graph's root motion is dropped, so the capsule is driven once.
     private func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
         advanceFirstPersonGraph(deltaTime: deltaTime)
         guard let graph else { return nil }

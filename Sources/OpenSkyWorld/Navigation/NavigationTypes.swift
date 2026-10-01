@@ -1,6 +1,5 @@
-// Value types shared by the streamed navmesh graph, path query API and the
-// future actor path follower (issue #200). Navigation coordinates are world
-// engine units and path endpoints are feet positions.
+// Value types shared by the navmesh graph, the path query API and the path follower.
+// Coordinates are world units; path endpoints are feet positions.
 
 import OpenSkyFormatsESM
 import OpenSkyGameData

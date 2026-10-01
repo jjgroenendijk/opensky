@@ -1,9 +1,5 @@
-// Spellcasting readout lines (issue #470, roadmap item 19.7), formatted here
-// rather than in the panel section for the reason `MagicEffectControlReadout` is:
-// a string a milestone gate asserts on belongs in the engine target, where a
-// unit test can reach it without a window.
-//
-// Documented in docs/engine/spellcasting.md.
+// Spellcasting readout lines, formatted in the engine target so a unit test can check
+// them without a window. See docs/engine/spellcasting.md.
 
 import Foundation
 
@@ -65,12 +61,8 @@ nonisolated public enum CastingControlReadout: Sendable {
         return text
     }
 
-    /// Aimed delivery: what left the caster, and what the last landed spell's
-    /// resistances did to it (issue #471).
-    ///
-    /// The adjustment lines are the readout the resistance rule is verified
-    /// through, in the app and in the panel test alike — a health bar moving is
-    /// not evidence that the multiplier was the documented one.
+    /// Aimed delivery: what left the caster, and how resistances changed the last landed
+    /// spell. These lines verify the resistance rule; a moving bar does not.
     public static func deliveryText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Delivery: unavailable" }
         let deliveries = snapshot.deliveryLines.isEmpty
@@ -88,9 +80,8 @@ nonisolated public enum CastingControlReadout: Sendable {
         return text + "\n\(lines)"
     }
 
-    /// What the magic condition functions say about the player right now
-    /// (issue #474), which is what makes the registrations verifiable from the
-    /// app rather than only from a test.
+    /// What the magic condition functions say about the player now, so the app can
+    /// verify them.
     public static func conditionsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Conditions: unavailable" }
         guard !snapshot.conditionLines.isEmpty else {

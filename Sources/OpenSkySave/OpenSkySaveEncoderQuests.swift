@@ -1,12 +1,5 @@
-// QSTS chunk writing for the OpenSky native save container (issue #182).
-//
-// A satellite of `OpenSkySaveEncoder` for the same reason the INVN writer is
-// one: the encoder is at its type-length limit, and this chunk has two nested
-// counts inside each entry.
-//
-// No cell travels with a quest entry, unlike an inventory entry. A quest is a
-// base record that belongs to no cell, so its delta's cell is always absent and
-// writing the tag would be a byte that can only ever hold one value.
+// QSTS chunk writing, with two nested counts per entry. No cell: a quest is a base
+// record, so the cell is always absent.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -68,14 +61,8 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    /// The `QALS` chunk (issue #183): every snapshot entry carrying a non-empty
-    /// alias table, in the snapshot's `ReferenceKey` order. A session whose
-    /// quests filled nothing writes no chunk, so its bytes match what this
-    /// encoder produced before the chunk existed.
-    ///
-    /// An empty table is deliberately not written. It is the state a quest has
-    /// before a start and after a stop, and the decoder restores exactly that
-    /// for a quest the chunk does not mention.
+    /// The `QALS` chunk: every non-empty alias table, in key order. An empty table is
+    /// skipped, because the decoder restores it for any quest the chunk does not name.
     public static func writeQuestAliases(
         _ entries: [WorldStateSnapshotEntry],
         into writer: inout BinaryWriter

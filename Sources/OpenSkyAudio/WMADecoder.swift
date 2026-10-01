@@ -1,16 +1,8 @@
-// WMAv2 packet decoder: compressed packets in, interleaved 32-bit float PCM out.
-//
-// This is OpenSky's only C-interop boundary onto ffmpeg. No AVCodecContext, AVPacket or
-// AVFrame pointer escapes this file; callers see Data in and [Float] out.
-//
-// Lifetime discipline: every ffmpeg object lives in FFmpegDecodeResources, whose deinit is
-// the single place anything is freed. The initializer builds that holder as a local, so a
-// throw at any point releases it and frees whatever had been allocated so far — which
-// matters because Swift does not run a class deinit when its initializer throws.
-//
-// Codec parameters come from the container, not from a bitstream probe, because xWMA
-// carries a WAVEFORMATEX header and no in-band codec configuration.
-// See docs/decisions/ffmpeg-audio.md.
+// WMAv2 packet decoder: packets in, interleaved Float PCM out. The only C-interop
+// boundary onto ffmpeg; no ffmpeg pointer escapes this file. `FFmpegDecodeResources`
+// frees everything in its deinit; the initializer builds it as a local because Swift
+// skips a class deinit when its initializer throws. Codec parameters come from the
+// xWMA header. See docs/decisions/ffmpeg-audio.md.
 
 import CFFmpeg
 import Foundation
@@ -103,11 +95,8 @@ nonisolated public final class WMADecoder {
         avcodec_flush_buffers(context)
     }
 
-    /// Decodes a whole packet sequence, the shape a file-at-a-time caller wants.
-    /// Hands the full PCM back in one array, which is fine for short clips and the
-    /// one-file inspection paths but materializes the whole track: a vanilla music
-    /// file decodes to roughly 37 MB. Whole-corpus sweeps and playback should use the
-    /// streaming overload below instead (issue #218).
+    /// Decodes a whole packet sequence into one array. A music file is about 37 MB of
+    /// PCM, so sweeps and playback use the streaming overload.
     public static func decode(
         packets: [Data],
         parameters: AudioCodecParameters
@@ -123,16 +112,8 @@ nonisolated public final class WMADecoder {
         )
     }
 
-    /// Decodes `packets` and hands each non-empty PCM chunk to `onChunk` instead of
-    /// accumulating the whole file. The decoder buffers input, so a packet often
-    /// yields no PCM until enough have arrived; those empty results are not passed
-    /// to `onChunk`. The final flush is delivered the same way when it produces PCM.
-    ///
-    /// Use this over the accumulating overload whenever the caller does not need the
-    /// full PCM at once: a streaming consumer discards each chunk as it goes and
-    /// stays flat in memory across a whole-corpus sweep or a long playback session
-    /// (issue #218). The callback receives interleaved float at the source sample
-    /// rate and channel count, matching the accumulating overload's output.
+    /// Decodes `packets` and hands each non-empty PCM chunk to `onChunk`, so memory
+    /// stays flat. Output is interleaved Float at the source rate and channel count.
     public static func decode(
         packets: [Data],
         parameters: AudioCodecParameters,

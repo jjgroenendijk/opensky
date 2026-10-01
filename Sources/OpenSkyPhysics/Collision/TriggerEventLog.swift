@@ -1,13 +1,6 @@
-// Rolling record of the most recent trigger-volume transitions (issue #173),
-// so `World > World > Triggers` can show what fired without a CLI command.
-//
-// The log is a *subscriber* to `CellStreamer.onTriggerTransition`, registered
-// through the same `CallbackFanOut` the Papyrus bridge uses, and never part of
-// the per-frame dispatch path: adding it costs one more closure call on an edge
-// event and cannot displace or reorder a script event. It lives on the streamer
-// rather than on the panel because a panel is built lazily on first reveal and
-// rebuilt on a Settings reload, and a log that restarted empty every time the
-// user opened the destination would be useless for verification.
+// A rolling record of recent trigger transitions for World > World > Triggers. It
+// subscribes to `CellStreamer.onTriggerTransition`, so it cannot reorder script
+// events. It lives on the streamer, so it survives the panel being rebuilt.
 
 import Foundation
 import OpenSkyFormatsESM

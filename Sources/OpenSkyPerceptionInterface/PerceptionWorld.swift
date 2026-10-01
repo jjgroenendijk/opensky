@@ -1,25 +1,8 @@
-// The world seam perception runs over (issue #202, roadmap item 16.6), and the
-// values on either side of it.
-//
-// `CombatLoopWorld`'s shape, for the same reason: every question below is
-// something the session already knows how to answer — which resident actors the
-// AI is driving, where the player is standing and how it is moving, whether one
-// point can see another — and naming them together is what lets the whole pass
-// run against a fake world with no renderer, no window and no game data.
-//
-// ## Why an observer and a target are different types
-//
-// A vanilla detection pair is not symmetric. The observer contributes a facing,
-// a view cone and a perception skill; the target contributes a gait, a crouch
-// and an equipped weight. Modelling both as "an actor" would mean carrying six
-// fields that mean nothing on one side of the pair and reading them anyway.
-//
-// The split also states the milestone's scope in the type system. 16.6 is the
-// perception half: observers perceive, targets are perceived, and nothing here
-// acts on the result. What an alerted actor *does* is 16.7's, and it reads
-// `DetectionPairState.lastKnownPosition` to do it.
-//
-// Documented in docs/engine/detection.md.
+// The world seam perception runs over, shaped like `CombatLoopWorld`, so the
+// pass runs against a fake world with no renderer or game data. Observer and
+// target are different types because a detection pair is not symmetric: one
+// side has a facing and a perception skill, the other a gait and a crouch.
+// See docs/engine/detection.md.
 
 import OpenSkyFormatsESM
 import OpenSkyPhysics
@@ -119,15 +102,9 @@ public protocol PerceptionWorld: AnyObject {
     /// Every actor that may be perceived, in `ReferenceKey` order.
     func perceptionTargets() -> [PerceptionTarget]
 
-    /// Whether the straight segment from `origin` to `destination` is clear of
-    /// static collision.
-    ///
-    /// An exact ray rather than the projectile sweep: a sight line has no
-    /// thickness, so `collisionRadius` would have nothing to put in it, and
-    /// `InteractionRaycaster` answers exactly over the same broadphase the
-    /// sweep uses. Actors are deliberately not obstacles — a guard behind a
-    /// guard can still see you — which is the same choice the interaction ray
-    /// makes and is stated on the docs page rather than assumed.
+    /// Whether the segment from `origin` to `destination` is clear of static
+    /// collision. An exact ray, because a sight line has no thickness. Actors are
+    /// not obstacles: a guard behind a guard can still see you.
     func perceptionHasLineOfSight(
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>

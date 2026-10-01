@@ -3,15 +3,9 @@ import OpenSkyPhysics
 import simd
 
 extension DetectionPairState {
-    /// One step of accumulation or decay.
-    ///
-    /// - Parameters:
-    ///   - inputs: the pair's geometry and the target's movement this instant.
-    ///   - targetPosition: where the target is, recorded as the investigate
-    ///     position whenever anything is perceived.
-    ///   - seconds: elapsed simulated time since this pair was last advanced.
-    ///     Zero or non-finite leaves the state alone rather than dividing by it.
-    ///   - settings: rates and thresholds.
+    /// One step of accumulation or decay. `targetPosition` becomes the investigate
+    /// position whenever anything is perceived. Zero or non-finite `seconds`
+    /// leaves the state alone.
     public func advanced(
         inputs: DetectionInputs,
         targetPosition: SIMD3<Float>,

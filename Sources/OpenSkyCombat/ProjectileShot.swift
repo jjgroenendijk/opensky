@@ -1,25 +1,6 @@
-// One shot, whatever fired it (issue #471, roadmap item 19.8, scope point 1).
-//
-// Item 15.5 built the projectile pipeline arrow-shaped: the value handed to
-// `ProjectileRuntime.fire` was an `ArcheryShot` carrying a bow's damage and the
-// AMMO to take out of the quiver, and the runtime consumed ammunition and stuck
-// what landed. A spell projectile flies through the same integrator, the same
-// impact query and the same range and lifetime bounds, and differs only in what
-// it carries and what happens when it lands.
-//
-// So there is one shot model and one payload enumeration rather than a second
-// flight engine. Everything arrow-only — consuming ammunition, sticking in the
-// surface, the bow's draw-scaled launch speed, the archery tilt-up angle — is
-// conditional on the payload being an arrow, and stated as such at each site
-// instead of being inferred from a nil field.
-//
-// The tilt is worth calling out because it is a behaviour change nobody would
-// otherwise notice: `fBowAimAngle`/`fBowAimAngleThirdPerson` are archery
-// settings that lift a bow shot above the reticle to compensate for arrow
-// drop, and a spell is not fired from a bow. A spell projectile launches
-// straight down the aim ray.
-//
-// Documented in docs/engine/projectiles.md and docs/engine/spell-delivery.md.
+// One shot, arrow or spell, through one flight engine. Ammo use, sticking, draw-scaled
+// speed and the bow aim tilt (`fBowAimAngle`) apply only to arrow payloads; a spell flies
+// straight down the aim ray. See docs/engine/projectiles.md and docs/engine/spell-delivery.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -67,11 +48,7 @@ nonisolated public struct ArrowPayload: Equatable, Sendable {
     /// spawn control fires with so that a developer inspecting a trajectory
     /// does not have to keep a quiver stocked.
     public let ammunition: FormID?
-    /// The bow's resolved enchantment, or nil when it carries none (issue #472).
-    ///
-    /// Fixed at launch for the same reason `damage` is: an arrow in the air must
-    /// apply the enchantment the bow that fired it was carrying, not whatever the
-    /// shooter has equipped by the time it lands.
+    /// The bow's resolved enchantment, or nil. Fixed at launch like `damage`.
     public let enchantment: ItemEnchantmentProfile?
 
     public init(
@@ -87,13 +64,8 @@ nonisolated public struct ArrowPayload: Equatable, Sendable {
     }
 }
 
-/// One shot, assembled by whichever runtime fired it and handed to
-/// `ProjectileRuntime`.
-///
-/// A value rather than separate arguments, because every member is resolved at
-/// the same moment — the frame the graph fired `arrowRelease`, or the frame a
-/// cast was released — and splitting them would let a caller mix one shot's
-/// damage with another shot's profile.
+/// One shot, assembled by whichever runtime fired it. A value, because every member is
+/// resolved at one moment and must not be mixed with another shot's.
 nonisolated public struct ProjectileShot: Equatable, Sendable {
     public let profile: ProjectileProfile
     public let payload: ProjectilePayload

@@ -1,14 +1,6 @@
-// The one place anything asks "what is this quest's state right now?" (issue
-// #182), mirroring `GlobalResolution`.
-//
-// Resolution order is fixed and total: a runtime state recorded in this session
-// wins, the plugin baseline is the answer otherwise, and nil means the FormID
-// names no quest the store knows. Consumers never reach past this into
-// `WorldStateStore`, which is what lets a condition evaluated on a build thread
-// read quest state from a snapshot just as easily as the main actor reads it
-// from the live store.
-//
-// Documented in docs/engine/quest-state.md.
+// The one place that answers "what is this quest's state now?". A runtime state
+// wins, then the plugin baseline; nil means no such quest. A build thread can
+// read it from a snapshot. See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyConditions

@@ -1,30 +1,16 @@
-// Mutable world-state components (issue #159, roadmap item 10.1.2): the typed
-// per-reference deltas that `WorldStateStore` keeps when runtime state deviates
-// from what a plugin authored.
-//
-// Each component is its own value type rather than one wide "reference state"
-// blob, so a module adds a component by declaring a type and its
-// `WorldStateComponentKind` without reshaping the store: every store operation
-// is written against `WorldStateComponent` and the erased
-// `WorldStateComponentValue`, never against a fixed field list.
-//
-// Documented in docs/engine/runtime-state.md.
+// Typed per-reference deltas `WorldStateStore` keeps where runtime state differs from
+// the plugin. A module adds a component by declaring a type and its
+// `WorldStateComponentKind`; the store is written against the erased value.
+// See docs/engine/runtime-state.md.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
 
-/// Identity of one component slot on a reference.
-///
-/// A reference holds at most one value per kind, so this doubles as the
-/// dictionary key inside `ReferenceStateDelta` and as the addressing token for
-/// per-component reset and journal entries.
-///
-/// The set is open: the module that owns a component declares its kind in an
-/// extension, for example `static let spellbook`. `order` fixes where the kind
-/// sorts, so iteration, the change journal and a reset never depend on
-/// dictionary ordering. Two kinds never share an order.
+/// One component slot on a reference, and the key for reset and journal entries.
+/// Modules declare kinds in extensions, such as `static let spellbook`. `order` sets
+/// the sort, so nothing depends on dictionary order; no two kinds share one.
 nonisolated public struct WorldStateComponentKind: Hashable, Comparable, Sendable {
     /// Stable name, printed by inspection surfaces.
     public let rawValue: String
@@ -132,9 +118,8 @@ nonisolated public struct WorldStateComponentValue: Equatable, Sendable {
 
 // MARK: - Components
 
-/// Whether a reference is currently enabled, overriding the record header's
-/// `initiallyDisabled` flag. Papyrus `Enable()` / `Disable()` (M11) writes
-/// exactly this component.
+/// Whether a reference is enabled, overriding the record's `initiallyDisabled` flag.
+/// Papyrus `Enable()` and `Disable()` write this component.
 nonisolated public struct ReferenceEnableState: WorldStateComponent, Hashable, Sendable {
     public var isEnabled: Bool
 
@@ -183,13 +168,8 @@ nonisolated public struct ReferenceTransformOverride: WorldStateComponent, Senda
     }
 }
 
-/// Activation bookkeeping for one reference.
-///
-/// `activationCount` is the raw number of successful activations, which is what
-/// a "has the player ever opened this container" check needs. `isOpen` is the
-/// typed open/closed marker doors and containers read. `lastActivator` is the
-/// reference that most recently activated this one, which M11's `OnActivate`
-/// hands to script code as its `akActionRef` argument.
+/// Activation bookkeeping for one reference: the activation count, the open/closed
+/// marker, and `lastActivator`, which `OnActivate` passes as `akActionRef`.
 nonisolated public struct ReferenceActivationState: WorldStateComponent, Hashable, Sendable {
     public var activationCount: UInt32
     public var isOpen: Bool
@@ -249,15 +229,9 @@ nonisolated public struct ReferenceDeletionState: WorldStateComponent, Hashable,
 
 // MARK: - Delta
 
-/// Every runtime deviation recorded for one reference.
-///
-/// A delta holds at most one value per `WorldStateComponentKind`, plus the cell
-/// the most recent mutation was made under. The store outlives cell eviction,
-/// so the cell is remembered here rather than looked up: by the time a sidebar
-/// asks "how many dirty references does Whiterun have", the cell may not be
-/// resident any more. It is optional because a caller that has no meaningful
-/// cell — a persistent reference mutated by a script with no scene loaded —
-/// must still be able to record a delta.
+/// Every runtime deviation for one reference, plus the cell of its last mutation.
+/// The cell is stored because the store outlives eviction. Optional, because a script
+/// may change a persistent reference with no scene loaded.
 nonisolated public struct ReferenceStateDelta: Equatable, Sendable {
     /// Component values by slot. Never contains an entry the store considers
     /// clean: clearing the last component removes the whole delta.

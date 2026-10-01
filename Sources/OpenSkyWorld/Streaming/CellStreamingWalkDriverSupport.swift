@@ -1,4 +1,4 @@
-// State labels, movement helpers, and failure gates for M4.5 walk driver.
+// State labels, movement helpers, and failure gates for the walk driver.
 
 import OpenSkyPhysics
 import OpenSkyRendering

@@ -14,9 +14,8 @@ nonisolated extension ConditionFunctions {
         parameterReference(call, call.parameter1)
     }
 
-    /// The same resolution for either parameter word, which is what
-    /// `GetFactionRankDifference` needs: its actor is parameter #2 and its
-    /// faction is parameter #1 (issue #508).
+    /// The same resolution for either parameter word. `GetFactionRankDifference`
+    /// takes its faction from #1 and its actor from #2.
     public static func parameterReference(
         _ call: ConditionCall,
         _ parameter: Condition.Parameter?

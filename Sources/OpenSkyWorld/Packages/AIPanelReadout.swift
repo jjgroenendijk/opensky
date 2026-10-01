@@ -1,16 +1,7 @@
-// The lines the M16 gate panel prints (issue #203, roadmap item 16.8), built
-// here rather than in the sections for the reason `CombatLoopReadout`,
-// `PhysicsReadout` and `ActorValueControlReadout` are: a string a milestone
-// gate asserts on belongs in the engine target, where a unit test can reach it
-// without a window and without AppKit.
-//
-// Four namespaces rather than one, matching the four provider seams the panel
-// consumes. `AIDetectionReadout` deliberately owns only the *pass* half of the
-// detection lines; the per-pair line is `DetectionPairReadout.summaryLine`,
-// which 16.6 already published for exactly this label.
-//
-// Documented in docs/engine/navigation.md, docs/engine/package-schedules.md and
-// docs/engine/detection.md.
+// The AI panel's lines, formatted in the engine target so a unit test can check them
+// without a window. One namespace per provider seam; per-pair detection lines are
+// `DetectionPairReadout.summaryLine`. See docs/engine/navigation.md,
+// docs/engine/package-schedules.md and docs/engine/detection.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -165,9 +156,8 @@ nonisolated public enum AIPackageReadout: Sendable {
     }
 }
 
-/// The `DetectionStatsLabel` header lines. The pair lines under it are
-/// `DetectionPairReadout.summaryLine`, which issue #202 published for this
-/// label.
+/// The `DetectionStatsLabel` header lines; the pair lines are
+/// `DetectionPairReadout.summaryLine`.
 nonisolated public enum AIDetectionReadout: Sendable {
     public static func passText(for snapshot: PerceptionControlSnapshot) -> String {
         guard !snapshot.isUnavailable else { return "Detection: unavailable" }

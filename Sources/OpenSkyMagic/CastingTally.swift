@@ -1,11 +1,5 @@
-// What a cast loop declined to do (issue #470, roadmap item 19.7), counted
-// rather than swallowed.
-//
-// Its own file beside `CasterRuntime.swift` for the reason `ActiveEffectTally`
-// is one: the runtime is at the strict-lint length cap, and a tally is a value
-// with no behaviour of its own that a panel and a test both read.
-//
-// Documented in docs/engine/spellcasting.md.
+// What a cast loop declined to do, counted rather than swallowed. A plain value the
+// panel and tests read. See docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -19,7 +13,7 @@ nonisolated public struct CastingTally: Equatable, Sendable {
     /// Ability effect entries that carry no duration and so could not be held.
     /// See `applyAbilities(on:)` for why they are counted rather than applied.
     public private(set) var unheldAbilityEntries = 0
-    /// Spell projectiles launched (issue #471).
+    /// Spell projectiles launched.
     public private(set) var projectileCount = 0
     /// Casts per delivery kind, so the ground each delivery covers is measured
     /// rather than assumed from the refusal counts alone.

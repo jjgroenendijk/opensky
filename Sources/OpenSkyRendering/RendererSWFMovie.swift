@@ -1,18 +1,7 @@
-// Per-movie GPU package for the SWF layer: every dictionary shape tessellated
-// into one static twip-space vertex buffer (with per-fill run table), bitmap
-// characters uploaded as rgba8 textures, gradient fills baked into a ramp
-// atlas (one 256-texel row per gradient), and the triple-buffered per-draw
-// uniform + glyph vertex rings. Swapped as a unit by `Renderer.setSWFMovie`;
-// encode lives in RendererSWFPass.swift; the static build pass lives in
-// RendererSWFBuild.swift.
-//
-// M8.3.2 makes the per-frame half mutable. The command stream and its text
-// plans are replaced by `update(scene:device:)` whenever the AS2 runtime
-// changes the display list, while the shapes, textures, ramp, and glyph atlas
-// are retained — rebuilding those per frame is what made `setSWFMovie` far too
-// heavy to call from a frame loop. The rings are sized with headroom and grow
-// (never shrink) rather than overflowing when a movie places more than frame 1
-// held.
+// Per-movie GPU package for the SWF layer. Static parts (shapes, bitmaps, gradient ramp,
+// glyph atlas) are built once in RendererSWFBuild.swift. `update(scene:device:)`
+// replaces only the command stream and text plans when AS2 changes the display list.
+// Rings grow, never shrink. Swapped by `Renderer.setSWFMovie`; encode in RendererSWFPass.swift.
 
 import Metal
 import OpenSkyFormatsSWF

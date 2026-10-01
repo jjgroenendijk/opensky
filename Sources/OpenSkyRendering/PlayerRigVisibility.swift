@@ -1,20 +1,7 @@
-// Which of the player's two rigs is drawn, and which is cast (issue #190).
-//
-// The matrix is a value rather than four scattered `movementMode ==` checks in
-// the renderer, because the four answers are one policy and reading them apart
-// is how a mode ends up drawing both rigs or neither. Being a plain value also
-// makes the policy testable without a Metal device, which the renderer's own
-// draw lists are not.
-//
-// **Shadows.** The body casts in every mode a player exists in, including the
-// first-person mode that hides it from the camera, so a first-person player has
-// a shadow on the ground in front of them. Vanilla's renderer is not observable
-// from the install, so this is a stated policy and not a measurement: what
-// decides it is that a shadow which appeared and vanished with a camera key
-// would be an artefact of the camera, and nothing else in this world is. The
-// arms never cast. They hang off the camera rather than standing in the world,
-// so their shadow would be a disembodied pair of arms sliding over the terrain.
-// Recorded in docs/engine/first-person.md.
+// Which of the player's two rigs is drawn and which casts a shadow, as one testable
+// value. The body casts in every mode, so a first-person player has a shadow; the arms
+// never cast, because they hang off the camera. A stated policy, not a measurement
+// (docs/engine/first-person.md).
 
 nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// The third-person body is drawn to the camera.
@@ -27,18 +14,8 @@ nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// carried as a field so the matrix is complete and the test can pin it.
     public let castsArmShadow: Bool
 
-    /// - Parameters:
-    ///   - mode: the active camera.
-    ///   - hasBody: a third-person body is assembled and attached.
-    ///   - hasArms: a first-person rig is assembled and attached.
-    ///   - armsEnabled: the panel's arms A/B toggle.
-    ///   - dialogueCamera: a conversation has taken the view (issue #427).
-    ///
-    /// The dialogue camera outranks the mode, because it moves the eye out of
-    /// the player's head whatever mode it interrupted. A first-person player
-    /// who starts a conversation therefore sees their own body, and does not
-    /// see a pair of arms hanging in front of a camera that is no longer
-    /// theirs.
+    /// The rig policy for `mode`. `armsEnabled` is the panel toggle. `dialogueCamera`
+    /// outranks the mode: the eye has left the head, so the body shows and the arms do not.
     public static func resolve(
         mode: CameraMovementMode,
         hasBody: Bool,

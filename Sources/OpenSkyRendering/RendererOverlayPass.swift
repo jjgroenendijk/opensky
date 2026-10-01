@@ -1,6 +1,5 @@
-// Depth-tested world-space debug-overlay pass (issue #422). Sources build a
-// pure CPU primitive list each frame, one bounded buffer upload feeds the GPU,
-// and triangles plus line segments share one blended pipeline.
+// Depth-tested world-space debug overlay. Sources build a CPU primitive list per frame;
+// one bounded upload feeds one blended pipeline for triangles and lines.
 
 import Metal
 import MetalKit

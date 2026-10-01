@@ -1,23 +1,7 @@
-// Turns a decoded condition list plus a live context into the per-condition
-// report the World > Runtime State panel shows (issue #166, roadmap item
-// 10.2.4).
-//
-// Why this exists rather than a direct call to `ConditionEvaluator`: the list
-// entry point returns one verdict and a flattened `failures` array, which
-// cannot say which condition produced which failure. The single-condition entry
-// point does, so this runner evaluates each condition once and recombines the
-// booleans with the same OR grouping `ConditionEvaluator.evaluate(_:)` applies.
-// Evaluating both ways instead would count every condition twice in the tally
-// and draw twice from the `ConditionRandom` stream, so `GetRandomPercent` would
-// disagree with itself between the verdict and the reasons.
-//
-// The grouping rule is restated here from the evaluator's own implementation,
-// not from memory: the OR flag on condition N joins it to condition N+1, blocks
-// combine with AND, and a trailing OR flag closes its block with the list.
-//
-// No AppKit: this compiles into the app and the CLI target.
-//
-// Documented in docs/engine/global-variables.md.
+// A condition list plus a live context becomes a per-condition report. Each condition
+// runs once and the results combine with `ConditionEvaluator.evaluate(_:)`'s OR rule:
+// the OR flag joins N to N+1, blocks combine with AND. Running both ways would draw twice
+// from `ConditionRandom`. See docs/engine/global-variables.md.
 
 import Foundation
 import OpenSkyConditions

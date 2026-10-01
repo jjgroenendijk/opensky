@@ -1,7 +1,5 @@
-/// Which camera the world is viewed through. `fly` is the developer's
-/// unconstrained view; `walk` and `thirdPerson` are the same simulated player —
-/// one capsule, one locomotion bridge, one behavior graph — seen from the eye
-/// and from behind (issue #189).
+/// Which camera the world is viewed through. `fly` is the developer's free view;
+/// `walk` and `thirdPerson` show the same simulated player from the eye and from behind.
 nonisolated public enum CameraMovementMode: Equatable, CaseIterable, Sendable {
     case fly
     case walk

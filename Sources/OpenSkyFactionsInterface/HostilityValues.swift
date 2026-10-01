@@ -18,9 +18,8 @@ nonisolated public struct ActorSocialProfile: Equatable, Sendable {
     /// generated actor no plugin describes.
     public let base: ResolvedFormID?
     public let memberships: ActorFactionState
-    /// Relationship ranks a script has set on this actor (issue #508). Consulted
-    /// ahead of the `RELA` records, because that is what setting one means, and
-    /// because it is the only layer that can name the player.
+    /// Relationship ranks a script has set on this actor. Consulted ahead of the
+    /// `RELA` records, and the only layer that can name the player.
     public let relationshipOverrides: ActorRelationshipState
     /// The AI attributes behind the aggression check. `ActorAIData.absent` for
     /// an actor whose record authors no AIDT, which never attacks unprovoked.
@@ -28,8 +27,8 @@ nonisolated public struct ActorSocialProfile: Equatable, Sendable {
     /// The session's explicit answer for this actor, when something already
     /// wrote one.
     public let hostilityOverride: ActorHostility?
-    /// The crime faction this actor reports crimes to — its authored `CRIF`
-    /// (issue #505). Nil for the player and for an actor that authors none.
+    /// The crime faction this actor reports crimes to: its authored `CRIF`.
+    /// Nil for the player and for an actor that authors none.
     public var crimeFaction: ReferenceKey?
 
     public init(

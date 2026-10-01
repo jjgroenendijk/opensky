@@ -1,9 +1,6 @@
-// Streaming bookkeeping core (todo 3.2 async build): the pure decision half of
-// CellStreamer. Tracks which grid slots are resident, in flight, void (no CELL
-// record) or failed (build threw), so the grid manager never re-requests a
-// slot it already handled. No Metal, no async, no I/O -- a value type driven
-// by CellGridDiffs and build completions, unit-tested without game data or a
-// GPU. See docs/engine/cell-streaming.md.
+// The pure decision half of CellStreamer: which slots are resident, in flight, void (no
+// CELL) or failed, so no slot is requested twice. A value type, tested without game data
+// or a GPU. See docs/engine/cell-streaming.md.
 
 import OpenSkyFormatsCore
 import simd
@@ -51,11 +48,8 @@ nonisolated public struct CellStreamCore: Sendable {
     public private(set) var void: Set<CellCoordinate> = []
     /// Slots whose build threw -- same no-retry treatment as void.
     public private(set) var failed: Set<CellCoordinate> = []
-    /// Resident cells whose scene is being rebuilt against newer world state
-    /// (issue #160). A rebuilding cell stays in `resident` throughout, so it
-    /// keeps rendering its old scene until the replacement arrives; this set
-    /// only records that a completion for an already-resident coordinate is
-    /// expected and must not be discarded as stale.
+    /// Resident cells being rebuilt against newer world state. They stay in `resident`
+    /// and keep rendering; this marks a completion for them as expected, not stale.
     public private(set) var rebuilding: Set<CellCoordinate> = []
 
     /// Everything the grid manager must treat as already handled, so
@@ -77,23 +71,16 @@ nonisolated public struct CellStreamCore: Sendable {
         resident.insert(coordinate)
     }
 
-    /// Records that a rebuild is being dispatched for an already-resident
-    /// cell (issue #160). Returns false when the coordinate is not resident,
-    /// which is how the streamer declines to dispatch a rebuild for a cell
-    /// whose first build has not landed yet or that has since been unloaded.
+    /// Marks a rebuild for a resident cell. False when the cell is not resident, so no
+    /// rebuild is dispatched for an unbuilt or unloaded cell.
     public mutating func beginRebuild(_ coordinate: CellCoordinate) -> Bool {
         guard resident.contains(coordinate) else { return false }
         rebuilding.insert(coordinate)
         return true
     }
 
-    /// Folds one grid diff into the bookkeeping. `loads` (already excluding
-    /// accounted cells, by construction of `accountedCells`) become fresh
-    /// in-flight requests. `unloads` forget the slot from every set -- a
-    /// resident cell is dropped from the composition, a void/failed/in-flight
-    /// slot is simply forgotten so a return visit rebuilds it fresh (an
-    /// in-flight build still running is left to complete and then be
-    /// discarded as stale, since it is no longer in `inFlight`).
+    /// Folds one grid diff in. `loads` become in-flight requests; `unloads` are forgotten
+    /// everywhere, so a return visit rebuilds. A build still running is discarded as stale.
     public mutating func apply(diff: CellGridDiff) -> StreamActions {
         for coordinate in diff.loads {
             inFlight.insert(coordinate)
@@ -111,15 +98,9 @@ nonisolated public struct CellStreamCore: Sendable {
         return StreamActions(requests: Array(diff.loads), removals: removals)
     }
 
-    /// Records a completed build. A coordinate no longer in `inFlight` was
-    /// unloaded mid-flight (recenter) -> `.discardedStale`; this is also how
-    /// a duplicate late completion for an already-integrated slot is ignored.
-    /// Otherwise the slot leaves `inFlight` and lands in the matching set.
-    ///
-    /// A completion for a coordinate in `rebuilding` is a world-state rebuild
-    /// (issue #160): a drawable result replaces the resident scene, while a
-    /// void or failed result is discarded so the cell keeps the scene it is
-    /// already rendering rather than vanishing because of a transient error.
+    /// Records a completed build. Not in `inFlight` -> `.discardedStale`. A rebuild that
+    /// is drawable replaces the resident scene; a void or failed one is discarded, so the
+    /// cell keeps its current scene.
     public mutating func integrate(
         coordinate: CellCoordinate,
         kind: BuildKind

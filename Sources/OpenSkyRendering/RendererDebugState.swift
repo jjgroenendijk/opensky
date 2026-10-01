@@ -1,25 +1,13 @@
-// Render debug views and layer isolation (issue #144): the two dev-shell view
-// filters that let a visual bug be bisected instead of stared at.
-//
-// Both are deliberately transient. Unlike `ShadowQuality`, neither persists
-// across launches: a session that starts in wireframe, or with the terrain
-// switched off, reads as a rendering bug rather than as a control someone left
-// on, and the whole point of the pair is to tell those two apart.
-//
-// The composition rule between a layer mask and the subsystem enables the
-// renderer already carries is stated once, on `RenderLayerPolicy`, and folded
-// exactly once per frame.
+// Render debug views and layer isolation, to bisect a visual bug. Both are transient:
+// a session that starts in wireframe would look like a rendering bug. The rule that
+// combines the layer mask with subsystem switches is `RenderLayerPolicy`.
 
 import Foundation
 import OpenSkyShaderTypes
 
-/// One scene role a draw can belong to. The renderer's filter is a mask over
-/// these rather than one more boolean per subsystem, because `Renderer` already
-/// carries `grassEnabled`, `particlesEnabled` and friends and a parallel set of
-/// switches would be two competing controls for the same pixels.
-///
-/// Raw values are the shader contract: they match `RenderLayerBit` in
-/// `ShaderTypes.h` bit for bit, and `RenderDebugStateTests` pins them.
+/// One scene role a draw belongs to. A mask over these, not more booleans beside
+/// `grassEnabled` and friends. Raw values match `RenderLayerBit` in `ShaderTypes.h`,
+/// pinned by `RenderDebugStateTests`.
 nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
     public let rawValue: UInt32
 
@@ -144,14 +132,8 @@ nonisolated public struct RenderDebugState: Equatable, Sendable {
     }
 }
 
-/// The composition rule between the two kinds of switch that reach the same
-/// pixels, folded exactly once per frame and doing no GPU work.
-///
-/// A subsystem enable (`grassEnabled`, `particlesEnabled`,
-/// `precipitationEnabled`) is the *feature* switch: semantic, persisted, owned
-/// by its own panel section. The layer mask is the *view* filter: transient,
-/// never persisted, dev-only. Effective visibility is the AND of the two, so
-/// neither control can silently override the other.
+/// Visibility is the AND of a subsystem switch (`grassEnabled`, persisted) and the
+/// layer mask (transient, dev-only), folded once per frame, so neither overrides the other.
 nonisolated public enum RenderLayerPolicy: Sendable {
     public static func effective(
         mask: RenderLayer,

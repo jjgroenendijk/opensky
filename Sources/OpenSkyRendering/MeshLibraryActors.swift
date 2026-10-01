@@ -57,9 +57,8 @@ nonisolated extension MeshLibrary {
         }
     }
 
-    /// A rigid model rewritten to ride `bone`, cached separately from the same
-    /// path loaded as ordinary static geometry: the same sword is a different
-    /// mesh in a hand than it is lying on a table (issue #178).
+    /// A rigid model rewritten to ride `bone`, cached apart from the static version:
+    /// a sword in a hand is a different mesh from one on a table.
     public func loadActorAttachment(
         path: String,
         bone: String,

@@ -1,4 +1,4 @@
-// Shared location lookup and same-location functions for issue #455.
+// Shared location lookup and same-location condition functions.
 
 import Foundation
 import OpenSkyFormatsESM

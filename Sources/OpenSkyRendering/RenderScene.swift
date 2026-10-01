@@ -35,8 +35,8 @@ nonisolated public struct RenderMaterial: Sendable {
     }
 }
 
-/// One engine Model uploaded: GPU meshes + resolved materials, shareable
-/// across many instances (todo 2.7 mesh library keys these by VFS path).
+/// One uploaded engine Model: GPU meshes and materials, shared across instances. The mesh
+/// library keys these by VFS path.
 nonisolated public final class RenderModel: Sendable {
     public let meshes: [RenderMesh]
     public let materials: [RenderMaterial]
@@ -118,12 +118,8 @@ nonisolated public struct DrawInstance: Sendable {
     public var layer: RenderLayer = .statics
 }
 
-/// One instanced draw call (todo 3.2): every instance shares the mesh +
-/// material, drawn as a single drawIndexedPrimitives with instanceCount.
-/// Grouping key is (mesh identity, diffuse identity): a RenderMesh belongs
-/// to exactly one RenderModel whose materials array pins one material per
-/// slot, so identical meshes imply identical material scalars — the diffuse
-/// ObjectIdentifier rides along defensively.
+/// One instanced draw call. Grouped by mesh and diffuse identity: a mesh belongs to one
+/// model with one material per slot, so equal meshes mean equal material scalars.
 nonisolated public struct DrawGroup: Sendable {
     public let mesh: RenderMesh
     public let material: RenderMaterial
@@ -268,12 +264,8 @@ nonisolated public struct WaterDrawItem: Sendable {
     }
 }
 
-/// Draw lists for one frame's scene. Each placement's meshes become
-/// DrawInstances (modelMatrix = instance * meshLocal) grouped by mesh +
-/// material into instanced DrawGroups (todo 3.2), opaque groups before
-/// alpha-tested ones. Terrain items carry their own layer
-/// textures + weight streams and draw through the terrain splat pipeline,
-/// one non-instanced draw each.
+/// Draw lists for one frame. Placements become instances grouped by mesh and material,
+/// opaque before alpha-tested. Terrain draws once per patch through the splat pipeline.
 nonisolated public struct RenderScene: Sendable {
     public let opaque: [DrawGroup]
     public let alphaTested: [DrawGroup]
@@ -458,8 +450,7 @@ nonisolated public struct RenderScene: Sendable {
             + grass.reduce(0) { $0 + $1.instances.count }
     }
 
-    /// Every GPU allocation the scene touches, deduplicated — feeds the
-    /// renderer's residency set (todo 2.6 residency rule).
+    /// Every GPU allocation the scene touches, deduplicated, for the residency set.
     public var residencyAllocations: [MTLAllocation] {
         var seen = Set<ObjectIdentifier>()
         var allocations: [MTLAllocation] = []

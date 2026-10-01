@@ -1,11 +1,6 @@
-// Failure modes of the OpenSky native save container (issue #161).
-//
-// The decoder never lets a `BinaryReaderError` escape: a reader failure means
-// the file ran out of bytes somewhere the format required more, which is
-// exactly `truncated(context:)`, and the context string names the structure
-// that was being read. Callers therefore only ever have to switch over this
-// one enum, and every case is `Equatable` so tests can assert the precise
-// failure a given corruption produces.
+// Failure modes of the OpenSky save container. No `BinaryReaderError` escapes: running
+// out of bytes is `truncated(context:)`, naming the structure being read. Every case is
+// `Equatable`, so tests can assert the exact failure.
 
 import Foundation
 

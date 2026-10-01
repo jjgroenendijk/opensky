@@ -77,8 +77,7 @@ extension Renderer {
         let wasPlayerControlled = movementMode.isPlayerControlled
         movementMode = mode
         thirdPersonCamera.reset()
-        // The field of view is per mode (issue #190), so the projection has to
-        // follow the mode rather than wait for the next resize.
+        // The field of view is per mode, so the projection follows the mode now.
         rebuildProjection()
         guard mode.isPlayerControlled else { return }
         // Coming from fly, the eye is wherever the developer left it and the

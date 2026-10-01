@@ -1,22 +1,7 @@
-// The M12 gate seam (issue #180): what `World > Inventory & Equipment` reads
-// and the one mutation it makes.
-//
-// The destination is the milestone's own verification surface, and it deals in
-// the three things the rest of M12 left without one: putting an item into an
-// inventory without a console command, saying who owns the reference under the
-// crosshair, and saying what an actor is actually wearing and which pieces of
-// it contributed no geometry. Taking, dropping, transferring, buying and
-// selling already have surfaces — `World > HUD & Interaction > Items` and
-// `World > Container Menu` — and are deliberately not duplicated here.
-//
-// One snapshot value rather than a bag of protocol properties, for the reason
-// every other panel seam is one: the readout has to be a pure function of a
-// single engine observation, not of several taken while the streamer mutates
-// between them.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
-//
-// Documented in docs/engine/inventory-equipment.md.
+// The seam `World > Inventory & Equipment` reads: grant an item, show who owns the
+// reference under the crosshair, and show what an actor wears. Taking, trading
+// and dropping have their own panels. One snapshot value, so the readout comes
+// from a single observation. See docs/engine/inventory-equipment.md.
 
 import Foundation
 import OpenSkyCrimeInterface
@@ -24,13 +9,8 @@ import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 
-/// Which inventory a grant lands in.
-///
-/// Only two, and both are reachable without knowing a FormID: the player is
-/// where the loop starts, and the open container is what a transfer and a
-/// barter session both act on. A merchant is a container, so nominating one
-/// under `World > Container Menu > Merchant` and opening it makes this the
-/// merchant's stock too.
+/// Which inventory a grant lands in: the player or the open container. A merchant
+/// is a container, so an opened merchant receives the grant as stock.
 nonisolated public enum InventoryGrantTarget: String, Equatable, Sendable, CaseIterable {
     case player
     case openContainer
@@ -51,9 +31,8 @@ nonisolated public struct EquipInspectReadout: Equatable, Sendable {
     public let name: String?
     /// The equipped set, with the slots and hands each piece occupies.
     public let equipped: [EquippedItemReadout]
-    /// `AppearanceSkip` lines for this actor from the last build of its cell,
-    /// already stripped of the "ACHR <id>: " prefix. Always empty for the
-    /// player, who has no rendered body until M14.
+    /// `AppearanceSkip` lines for this actor from its cell's last build, without the
+    /// "ACHR <id>: " prefix. Always empty for the player.
     public let appearanceSkips: [String]
     /// True when the actor's cell rendered it from its runtime equipped set
     /// rather than from the plugin default outfit. False for the player.
@@ -109,13 +88,8 @@ nonisolated public struct InventoryEquipmentSnapshot: Equatable, Sendable {
     /// Which owner the equipment inspection is reading.
     public let equipTarget: EquipmentTargetSelector
     public let equipInspection: EquipInspectReadout
-    /// What the session's resolved-enchantment cache holds and how much of it
-    /// has been reused (issue #489).
-    ///
-    /// A session-wide reading on an owner-scoped section, because this is where
-    /// the enchantment lines it feeds are read: the equipped set above names
-    /// what each piece carries, and this says how many times that answer was
-    /// reused rather than re-walked out of the records.
+    /// What the session's resolved-enchantment cache holds and how often it was
+    /// reused instead of re-walked from the records.
     public let enchantmentCache: EnchantmentCacheReadout
 
     /// Human-readable result of the last grant, shown verbatim.
@@ -182,18 +156,9 @@ public protocol InventoryEquipmentControlProviding: AnyObject {
 
     var inventoryEquipmentSnapshot: InventoryEquipmentSnapshot { get }
 
-    /// Puts `count` of `item` into `target`'s inventory.
-    ///
-    /// A dev control with no analogue in the shipping game, which is the point:
-    /// the gate's loop needs a known item in a known inventory before it can
-    /// take, transfer, equip, buy, sell and drop it, and a synthetic starting
-    /// state beats hunting the world for one. Nothing is validated against
-    /// plausibility — granting a container a sword it would never stock is a
-    /// legitimate thing to want — but an unknown form and a non-positive count
-    /// are refused, because both would put a stack nothing can price or weigh
-    /// into the accounting.
-    ///
-    /// - Returns: a human-readable outcome, including the reason for a refusal.
+    /// Puts `count` of `item` into `target`'s inventory: a dev control. Plausibility
+    /// is not checked, but an unknown form or a non-positive count is refused.
+    /// - Returns: a readable outcome, with the reason for a refusal.
     @discardableResult
     func grantItem(_ item: FormID, count: Int32, to target: InventoryGrantTarget) -> String
 }

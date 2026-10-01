@@ -1,16 +1,6 @@
-// Dynamic rigid bodies inside the streaming controller (issue #193, roadmap
-// item 15.2). Split from CellStreamer for the file cap, like the trigger and
-// ambience satellites.
-//
-// The registry follows residency rather than being pushed at from the build
-// path: once per frame the resident cells are compared against what the body
-// world already holds, a cell whose scene is new or has been rebuilt hands over
-// its placements, and a cell that is gone has its bodies dropped. Doing it as a
-// reconciliation rather than as a pair of load/unload callbacks means a
-// coverage transition, a door transition, and a world-state rebuild all get the
-// right answer without any of them knowing physics exists.
-//
-// Documented in docs/engine/dynamic-bodies.md.
+// Dynamic rigid bodies follow residency: each frame a new or rebuilt cell hands over its
+// placements and a gone cell drops its bodies. Reconciling means coverage, door and
+// rebuild changes all work without knowing physics. See docs/engine/dynamic-bodies.md.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM

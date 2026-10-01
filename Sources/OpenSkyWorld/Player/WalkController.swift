@@ -180,10 +180,8 @@ nonisolated public struct WalkController: Sendable {
         )
     }
 
-    /// The displacement walk mode produces on its own, with no planner
-    /// attached: level input direction at the walk or run gait. Unchanged from
-    /// what the controller did before item 14.5, and the reason attaching a
-    /// bridge cannot double the movement — one of the two runs, never both.
+    /// Walk mode's own displacement with no planner: level input at walk or run speed.
+    /// Only one of this and the bridge runs, so movement cannot double.
     private static func plan(
         input: CameraInput,
         yaw: Float,

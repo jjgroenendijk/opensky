@@ -1,48 +1,8 @@
-// The spells an actor is authored with (issue #473, roadmap item 19.10): the
-// NPC_ `SPLO` run resolved through the template chain, plus the `SPLO` run on
-// the RACE it is a member of.
-//
-// Record-side and immutable, sitting beside `SpellbookRuntime` exactly as
-// `InventoryBaselineResolver` sits beside `InventoryRuntime`: this half reads
-// records and knows nothing about the store, the runtime half writes the store
-// and knows nothing about records. Nothing here mutates after `init`, so it is
-// freely readable from the cell-build queue.
-//
-// ## Where the two lists come from
-//
-// Both are `SPLO` runs and both were already decoded: `ActorBase.spells` for the
-// NPC_ and `Race.spells` for the RACE, each documented against UESP's
-// "Skyrim Mod:Mod File Format/NPC_" and "/RACE". What 19.10 adds is only the
-// resolution around them — which record in a template chain actually supplies
-// the actor's list, and which race's list rides along with it.
-//
-// The NPC_ list inherits through the ACBS `Use Spell List` flag, which is its
-// own template-data bit (UESP NPC_ ACBS template flags name it beside Use Stats
-// and Use Inventory), so it resolves exactly as the stats and the outfit do:
-// a record delegates its list upward only while that one flag stays set.
-//
-// The race list rides `useTraits`, because the race an actor *is* is the traits
-// race — the same field the renderer skins it with — and a race's spells are
-// the abilities every member of it carries.
-//
-// ## An entry may name a leveled spell list
-//
-// Observed against `Skyrim.esm` rather than assumed: `LvlBanditWizard` carries
-// seven `SPLO` entries and every one that resolves to a SPEL is a self buff or
-// a heal. Its attack spells are behind two `LVSP` records
-// (`LSpellBandit03FireFrostShock` and `LSpellBandit05FireFrostShock`), each
-// holding three alternatives at level 1 — a bolt, an ice spike and a lightning
-// bolt in the first, their master-level counterparts in the second. Without
-// expanding those, a vanilla caster knows nothing it could ever throw at
-// anybody, which is why 19.10 expands them.
-//
-// The entry chosen is `LeveledList.deterministicEntry` — highest level, first
-// among ties — the same policy the TPLT chain applies to an LVLN hop and the
-// outfit chain applies to an LVLI hop. Rolling against player level and chance
-// none is the same open question there and is answered in one place when it is
-// answered at all.
-//
-// Documented in docs/engine/ai-spell-use.md.
+// The spells an actor is authored with: the NPC_ `SPLO` run through the template chain
+// (ACBS `Use Spell List`) plus its traits race's `SPLO`. Record-side and immutable.
+// LVSP entries are expanded with `LeveledList.deterministicEntry`, because vanilla
+// casters keep their attack spells there (`LvlBanditWizard`). See
+// docs/engine/ai-spell-use.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -94,13 +54,8 @@ nonisolated public struct ActorSpellBaselineResolver: Sendable {
         self.races = races
     }
 
-    /// The spell list plugin data authors for `base`.
-    ///
-    /// A broken template chain — a dangling TPLT, a cycle, an empty LVLN —
-    /// resolves to an empty baseline rather than propagating, which is the rule
-    /// `InventoryBaselineResolver.actorBaseline` states: an actor whose chain
-    /// does not resolve has no appearance either, and that path already reports
-    /// the failure.
+    /// The spell list plugin data authors for `base`. A broken template chain gives an
+    /// empty baseline, as in `InventoryBaselineResolver.actorBaseline`.
     public func baseline(for base: FormID) -> ActorSpellBaseline {
         guard let resolved = try? templates.resolveSpells(base: base) else { return .none }
         let race = resolved.race.value.flatMap { races[$0.rawValue] }

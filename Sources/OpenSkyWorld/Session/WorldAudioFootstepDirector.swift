@@ -1,16 +1,6 @@
-// Footstep director (issue #352): the seam between the locomotion bridge's
-// fired graph events and the M9 audio engine.
-//
-// There is no step timer here, and there must not be one. The vanilla
-// locomotion clips carry their own footstep triggers — `0_master.hkx` declares
-// `FootLeft` and `FootRight` as its first two of 1,217 events — so the graph
-// already says when a foot lands, at the phase the animation actually plants
-// it. Inventing a cadence from speed would drift against the animation the
-// player is watching. This type therefore only listens.
-//
-// Main-actor only, like the other two directors; it is driven from the
-// renderer's per-frame audio tick, which already runs on the main thread and
-// is skipped entirely while the world sim is paused.
+// Routes the bridge's graph events to footstep audio. No step timer: vanilla clips carry
+// `FootLeft` and `FootRight` events at the frame a foot lands, and a speed cadence would
+// drift from the animation. Driven by the per-frame audio tick, skipped while paused.
 
 import Foundation
 import OpenSkyAudio
@@ -39,8 +29,7 @@ public final class WorldAudioFootstepDirector {
     /// World > Audio panel writes back here.
     public var footstepsEnabled = true
 
-    /// The MATT the last routed frame reported under the player's feet
-    /// (issue #358), nil while airborne or on a surface that names none.
+    /// The MATT under the player's feet in the last routed frame. Nil while airborne.
     public private(set) var groundMaterial: FormID?
 
     /// A material the panel pins in place of the ground contact's, for
@@ -100,14 +89,9 @@ public final class WorldAudioFootstepDirector {
         footstepSet = footstepStore?.set(forArmatures: feetArmatures)
     }
 
-    /// Routes one frame's worth of drained graph events.
-    ///
-    /// Every event is offered to the current gait's footstep list; the ones the
-    /// list has no tag for — the graph fires plenty, from combat to magic — are
-    /// dropped without a lookup past the tag comparison. `position` is the
-    /// player's feet, so the step is heard where it is made rather than at the
-    /// listener, and `material` is the MATT the ground contact reported there,
-    /// which is what makes snow and wood sound different (issue #358).
+    /// Routes one frame's graph events. Events with no tag in the gait's footstep list are
+    /// dropped. Steps play at the player's feet with the ground contact's MATT, so snow and
+    /// wood sound different.
     public func handleGraphEvents(
         _ names: [String],
         gait: LocomotionGait,

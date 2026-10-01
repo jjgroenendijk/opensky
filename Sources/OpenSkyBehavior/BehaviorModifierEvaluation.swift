@@ -1,18 +1,7 @@
-// Modifier evaluation (issue #187): what runs after a generator has produced a
-// pose.
-//
-// The milestone rule from #329 is full-graph *decode*, not full semantics for
-// every modifier on day one. So this file implements the modifiers whose
-// behavior is honestly computable from what the evaluator already holds —
-// lists, event-driven wrapping, timers, deactivation events, and event
-// counting — and passes every other modifier's input through unmodified with
-// one `BehaviorTally.passthroughModifiers` entry. That tally is the worklist:
-// the real-data probe ranks it, and the milestone gate (#191) reports it.
-//
-// A pass-through is not a silent approximation. A modifier that would have
-// edited the pose leaves it alone and says so, which is visibly wrong in the
-// right way — a missing foot-IK correction reads as a foot that does not plant,
-// not as a foot in a plausible but invented position.
+// Modifier evaluation. Only modifiers computable from evaluator state are run: lists,
+// event wrapping, timers, deactivation events and event counting. Others pass the pose
+// through with a `BehaviorTally.passthroughModifiers` entry, which is the worklist. A
+// missing foot-IK reads as a foot that does not plant, not an invented one.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -170,34 +159,17 @@ nonisolated extension BehaviorGraphInstance {
         nodeStates[target] = state
     }
 
-    /// `hkbRigidBodyRagdollControlsModifier`: hands the skeleton to the physics
-    /// (issue #197, roadmap item 15.6).
-    ///
-    /// The modifier does not edit the pose, so this is not a pass-through that
-    /// happens to be silent — it is the whole of what the class does at this
-    /// layer. What it *carries* is the hand-off's terms: how long the
-    /// animated-to-simulated blend takes. Publishing that on the instance is
-    /// what lets `RagdollRuntime` blend over the duration vanilla authored
-    /// rather than over a constant this engine picked. The bone list at
-    /// `m_bones` is deliberately not read: the ragdoll this engine spawns is
-    /// every bone the skeleton NIF carries a body for, which is the same set on
-    /// every vanilla character and is resolved from the physics data rather than
-    /// from the graph's index array.
-    ///
-    /// `hkbPoweredRagdollControlsModifier` stays a pass-through. It drives a
-    /// ragdoll toward the animated pose with motors, which is a live actor's
-    /// behaviour rather than a corpse's, and item 15.6 scopes non-death ragdolls
-    /// out. `BSRagdollContactListenerModifier` likewise: activation needs no
-    /// contact events from it.
+    /// `hkbRigidBodyRagdollControlsModifier`: publishes the authored blend duration so
+    /// `RagdollRuntime` uses it. `m_bones` is not read; the ragdoll uses every body in
+    /// the skeleton NIF. The powered and contact-listener ragdoll modifiers pass through.
     private func applyRagdollControls(_ controls: HKBRigidBodyRagdollControlsModifier) {
         ragdollBlendDuration = controls.durationToBlend
     }
 
     // MARK: - Deactivation
 
-    /// Runs the deactivation half of a node's lifecycle. Two classes have one:
-    /// `BSEventOnDeactivateModifier` raises its event, and `hkbStateMachine`
-    /// leaves the state it was in (issue #330).
+    /// Runs a node's deactivation: `BSEventOnDeactivateModifier` raises its event, and
+    /// `hkbStateMachine` leaves its state.
     public func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
         if let machine = object as? HKBStateMachine {
             noteMachineDeactivation(of: machine, at: target)

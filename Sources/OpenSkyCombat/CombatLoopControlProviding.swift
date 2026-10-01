@@ -1,23 +1,6 @@
-// Main-app combat-loop inspection seam (issues #374 and #424, roadmap items
-// 15.7 and 16.7): the hostility toggle, the combat-state and target readouts,
-// the per-actor combat readout, and the transient-object counts.
-//
-// Item 16.7 deleted the dev-target spawn and reset controls along with the clock
-// they drove. What a user does instead is make an actor hostile and let it
-// notice them, which is the shipping path rather than a developer shortcut into
-// it, and what the panel shows instead is one line per fighting actor.
-//
-// One snapshot value rather than a bag of protocol properties, for the reason
-// `MeleeCombatSnapshot` and `ArcherySnapshot` are one: the readout has to be a
-// pure function of a single engine observation, not of several taken
-// microseconds apart while a fight is running between them.
-//
-// Specified and conformed here; the section that reads it ships with the M15
-// gate panel (item 15.9), which is where a `World > Combat & Physics`
-// destination belongs. Defining the protocol now means the runtime below it is
-// built to answer the questions a panel asks rather than being retrofitted to.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The combat panel's seam: the hostility toggle, combat state and target, one line per
+// fighting actor, and transient counts. One snapshot value, so the readout comes from a
+// single observation while a fight runs.
 
 import Foundation
 
@@ -56,8 +39,7 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
     public let transients: CombatTransientCounts
     public let limits: CombatTransientLimits
     public let trimmedTransients: CombatTransientCounts
-    /// Whether fighters are allowed to cast at all, which is the panel's own
-    /// switch rather than anything the world holds (issue #473).
+    /// Whether fighters may cast at all: the panel's own switch.
     public let isActorCastingEnabled: Bool
     /// Spells NPCs have finished casting this session.
     public let actorCastCount: Int
@@ -145,13 +127,8 @@ public protocol CombatLoopControlProviding: AnyObject {
     /// hostility toggle scope point 7 asks for.
     var selectedActorIsHostile: Bool { get set }
 
-    /// Whether fighting actors may cast the spells they know (issue #473).
-    ///
-    /// A switch rather than a tuning number, and the one control this item adds:
-    /// turning it off is how a user tells "the caster is not casting because the
-    /// decision layer chose a swing" apart from "the caster is not casting
-    /// because nothing it knows is deliverable". On by default, because casting
-    /// is the shipping behaviour.
+    /// Whether fighting actors may cast. Turning it off separates "chose a swing" from
+    /// "nothing deliverable". On by default.
     var isActorCastingEnabled: Bool { get set }
 
     /// Empties the incoming-hit trace and its count, without disturbing the

@@ -4,14 +4,9 @@ import Metal
 import MetalKit
 import OpenSkyShaderTypes
 
-/// The render-debug pipeline set (issue #144): one per geometry path, not one
-/// per (mode, path) pair. The channel is a `FrameUniforms` field, so all seven
-/// debug modes share these five states and switching modes rebuilds nothing.
-///
-/// There is no separate cutout variant: `updateDrawUniforms` writes
-/// `alphaThreshold: material.alphaTestThreshold ?? 0`, and a threshold of zero
-/// discards nothing, so the alpha-testing static variant serves the opaque
-/// groups too.
+/// The render-debug pipeline set: one per geometry path. The channel is a
+/// `FrameUniforms` field, so mode changes rebuild nothing. A zero alpha threshold
+/// discards nothing, so the alpha-test variant also serves opaque groups.
 nonisolated public struct DebugRenderPipelines: Sendable {
     public let staticMesh: MTLRenderPipelineState
     public let skinned: MTLRenderPipelineState
@@ -34,17 +29,9 @@ nonisolated public struct DebugPipelineRecipe {
 }
 
 extension Renderer {
-    /// A fragment function specialized on the constants it declares.
-    ///
-    /// Every pipeline built from a fragment that can carry a debug channel has
-    /// to define `FunctionConstantDebugView`, shipping pipelines included: Metal
-    /// requires a referenced function constant to be defined at specialization,
-    /// and an undefined one aborts pipeline validation rather than returning an
-    /// error. Defining it as false still folds the debug branch away, so the
-    /// shipping fragments generate the code they did before issue #144.
-    ///
-    /// `alphaTest` is nil for the fragments that declare no alpha-test constant
-    /// (terrain, grass, water); setting one there would fail specialization.
+    /// A fragment function specialized on its constants. `FunctionConstantDebugView` must
+    /// be defined even in shipping pipelines (Metal aborts otherwise); false folds it away.
+    /// `alphaTest` is nil for terrain, grass and water, which declare no such constant.
     public static func specializedFragment(
         _ name: String,
         library: MTLLibrary,

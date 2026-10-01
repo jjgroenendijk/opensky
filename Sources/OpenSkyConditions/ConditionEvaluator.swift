@@ -1,40 +1,9 @@
-// CTDA condition evaluator (issue #251): the one place the engine asks "is this
-// condition list true right now?".
-//
-// Nothing in here throws and nothing crashes. A condition the engine cannot yet
-// answer — an unimplemented function, a global nothing defines, a run-on type
-// with no live resolution — evaluates to false carrying a machine-readable
-// `ConditionFailure`, and the same reason lands in `ConditionTally`. That makes
-// missing coverage a measurable result rather than a silent wrong answer.
-//
-// Documented semantics, all from open sources rather than from memory:
-//
-//   Per-condition result is `functionReturn <operator> comparisonValue`, a
-//   float comparison. No epsilon is applied to `==` / `!=`: neither UESP nor
-//   the Creation Kit wiki documents a tolerance, so OpenSky compares exactly
-//   and says so rather than inventing a fudge factor.
-//
-//   OR grouping (Creation Kit wiki "Conditions"): the OR flag on condition N
-//   replaces the operator between N and N+1 with OR. Consecutive OR-joined
-//   conditions form one disjunction block and blocks combine with AND, so OR
-//   binds tighter than AND: the documented example `A AND B(or) C AND D`
-//   evaluates as `A AND (B OR C) AND D`. An OR flag on the final condition has
-//   no following operator to replace; the documented rule covers only that
-//   operator, so OpenSky takes the conservative reading and simply ends the
-//   block there. An empty condition list is true.
-//
-//   Run-on (UESP "CTDA Field", offset 20) selects the object the function runs
-//   against. Subject, Target, Reference, Combat Target and Quest Alias resolve
-//   live through `ConditionContext` — Combat Target through the actor seam
-//   issue #375 added, Quest Alias through the filled alias table issue #183
-//   added; every other type is a reason-tagged false with its own tally
-//   bucket, never an error.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/CTDA Field"
-//     https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CTDA_Field
-//   Creation Kit wiki "Conditions" (OR-flag grouping)
-//   xEdit dev Core/wbDefinitionsTES5.pas, `wbCTDA`
+// The CTDA condition evaluator. It never throws: an unanswerable condition is false
+// with a `ConditionFailure`, counted in `ConditionTally`. `==` is exact; no source
+// gives a tolerance. An OR flag binds condition N to N+1, so `A AND B(or) C AND D` is
+// `A AND (B OR C) AND D`; an empty list is true. Sources: UESP "Skyrim Mod:Mod File
+// Format/CTDA Field", Creation Kit wiki "Conditions", xEdit wbDefinitionsTES5.pas
+// (`wbCTDA`).
 
 import Foundation
 import OpenSkyFormatsESM
@@ -46,10 +15,8 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case location
 }
 
-/// Which half of the magic seam could not answer (issue #474). Grouped rather
-/// than counted as one number because the four say different things about what
-/// is missing: no state for the actor, no record behind a parameter, a casting
-/// source OpenSky readies nothing into, and a hand holding no spell.
+/// Which half of the magic seam could not answer. Four cases, because each names a
+/// different gap: actor state, a parameter's record, an unreadied source, an empty hand.
 nonisolated public enum ConditionMagicDomain: String, Equatable, Sendable {
     /// The run-on named a reference the magic seam carries no state for.
     case actor
@@ -77,10 +44,8 @@ nonisolated public enum ConditionFailure: Equatable, Error, Sendable {
     /// A `use global` comparison value, or a GLOB parameter, that resolves to
     /// no global. Deliberately not treated as zero.
     case unresolvedGlobal(FormID)
-    /// A QUST parameter that resolves to no quest (issue #182). Deliberately
-    /// not treated as a stopped quest at stage zero: "this quest does not
-    /// exist" and "this quest has not started" are different answers, and only
-    /// one of them is a real one.
+    /// A QUST parameter that resolves to no quest. Not a stopped quest at stage zero:
+    /// "does not exist" and "has not started" are different answers.
     case unresolvedQuest(FormID)
     /// A run-on type OpenSky does not resolve live yet.
     case unsupportedRunOn(Condition.RunOnType)
@@ -88,59 +53,34 @@ nonisolated public enum ConditionFailure: Equatable, Error, Sendable {
     case unresolvedReference(Condition.RunOnType)
     /// Operator bits 6 or 7, which are undefined on disk.
     case unknownOperator(UInt8)
-    /// The named function needs a parameter it cannot read. Two things reach
-    /// this today: a CIS1/CIS2 alias-name override that named no alias of the
-    /// context's quest, or named one nothing has filled (issue #183), and an
-    /// actor-value parameter naming a value this engine has no store for
-    /// (issue #375). Carries the raw function index.
+    /// The function needs a parameter it cannot read: a CIS1/CIS2 alias name that
+    /// matches no filled alias, or an unknown actor value. Carries the raw index.
     case unresolvedParameter(UInt16)
     /// The function needs game time and the context carries no clock.
     case unavailableClock
-    /// The function needs actor state the context carries none of (issue
-    /// #375): no `ActorStateResolution` entry for the run-on reference, or one
-    /// that observes no weapon draw state. Deliberately not treated as a
-    /// neutral, living, sheathed actor — that is a different answer from "this
-    /// engine does not know", and only one of them is a real one.
+    /// The function needs actor state the context lacks: no `ActorStateResolution`
+    /// entry, or no observed draw state. Not a neutral, sheathed actor.
     case unavailableActorState
-    /// The function needs perception the context carries none of (issue #202):
-    /// no `DetectionResolution` entry for the pair the run-on and the parameter
-    /// name, or no position for one of them. Deliberately not treated as an
-    /// undetected actor with a clear line of sight — that is a different answer
-    /// from "this engine is not watching that pair", and only one of them is a
-    /// real one.
+    /// The function needs perception the context lacks: no `DetectionResolution`
+    /// entry for the pair, or no position. Not an undetected actor in clear sight.
     case unavailableDetection
-    /// The function needs a dialogue fact the context carries none of (issue
-    /// #426): no `DialogueResolution` voice type for the run-on reference.
-    /// Deliberately not treated as an actor whose voice fails to match — that
-    /// is a different answer from "this engine does not know this actor's
-    /// voice", and only one of them is a real one.
+    /// The function needs a dialogue fact the context lacks: no `DialogueResolution`
+    /// voice type for the run-on. Not a voice mismatch.
     case unavailableDialogue
-    /// An M18 record-data function had no store, subject fact, or resolvable
-    /// FormID for the named domain. This is not a negative query result.
+    /// A record-data function had no store, subject fact, or resolvable FormID for the
+    /// named domain. This is not a negative query result.
     case unavailableData(ConditionDataDomain)
-    /// `HasPerk` ran in a session with no PERK data, or against a parameter
-    /// this load order resolves no perk for (issue #497). Deliberately not
-    /// treated as an actor who has not taken the perk — that is a different
-    /// answer from "this engine has no perks loaded", and only one of them is a
-    /// real one.
+    /// `HasPerk` without PERK data, or with an unresolved parameter. Not an actor
+    /// who lacks the perk.
     case unavailablePerks
-    /// `GetCrimeGold` ran in a session with no FACT data, or against a
-    /// parameter this load order resolves no faction for, or with a null
-    /// parameter outside any hold (issue #504). Deliberately not treated as an
-    /// actor who owes nothing — that is a different answer from "this engine
-    /// has no crime factions loaded", and only one of them is a real one.
+    /// `GetCrimeGold` without FACT data, with an unresolved parameter, or with a null
+    /// parameter outside any hold. Not an actor who owes nothing.
     case unavailableCrime
-    /// A faction or relationship function ran in a session with no FACT data,
-    /// against a parameter this load order resolves no faction for, or about an
-    /// actor this session carries no social profile for (issue #508).
-    /// Deliberately not treated as an actor who belongs to nothing and is
-    /// friendly with everybody — that is a different answer from "this engine is
-    /// not tracking that actor", and only one of them is a real one.
+    /// A faction or relationship function without FACT data, with an unresolved
+    /// parameter, or about an actor with no social profile. Not a factionless actor.
     case unavailableFactions
-    /// A magic function had no state, record or slot for the named domain
-    /// (issue #474). Deliberately not treated as an actor who knows no spells
-    /// and carries no effects — that is a different answer from "this engine
-    /// does not know", and only one of them is a real one.
+    /// A magic function had no state, record or slot for the named domain. Not an
+    /// actor with no spells or effects.
     case unavailableMagic(ConditionMagicDomain)
 }
 
@@ -170,13 +110,8 @@ nonisolated public struct ConditionOutcome: Equatable, Sendable {
     }
 }
 
-/// Deterministic 0-99 source for `GetRandomPercent`.
-///
-/// A value type carrying its own state, so a caller injects a seed and gets a
-/// reproducible sequence — the engine's live evaluator seeds it once per
-/// session, and tests seed it per test. SplitMix64 (Steele, Lea and Flood,
-/// "Fast splittable pseudorandom number generators", OOPSLA 2014) is used
-/// because it is one multiply-free mixing step with no warm-up and no table.
+/// Deterministic 0-99 source for `GetRandomPercent`, seeded per session or per test.
+/// SplitMix64 (Steele, Lea and Flood, OOPSLA 2014): one mixing step, no warm-up, no table.
 nonisolated public struct ConditionRandom: Equatable, Sendable {
     /// SplitMix64's golden-ratio increment, also this generator's default seed.
     public static let defaultSeed: UInt64 = 0x9E37_79B9_7F4A_7C15
@@ -204,13 +139,9 @@ nonisolated public struct ConditionRandom: Equatable, Sendable {
     }
 }
 
-/// Evaluates CTDA conditions and condition lists against a `ConditionContext`.
-///
-/// Mutating rather than pure because two things advance as it works: the tally,
-/// and the random stream inside the context. Evaluation never short-circuits —
-/// every condition in a list is evaluated even once the result is decided — so
-/// the tally reports the full coverage picture of the list rather than only of
-/// its prefix.
+/// Evaluates CTDA conditions against a `ConditionContext`. Mutating, because the
+/// tally and the random stream advance. It never short-circuits, so the tally covers
+/// the whole list.
 nonisolated public struct ConditionEvaluator: Sendable {
     public var context: ConditionContext
     public let registry: ConditionFunctionRegistry

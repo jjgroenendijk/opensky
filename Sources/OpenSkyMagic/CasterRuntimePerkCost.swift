@@ -1,40 +1,8 @@
-// What a spell actually costs the caster (issue #497, roadmap item 20.4): the
-// `Mod Spell Cost` entry point and the SPIT half-cost perk, folded over the
-// record's own cost.
-//
-// A satellite of `CasterRuntime` so that type stays under the strict-lint file
-// cap, and along a real seam: everything there is a cast in flight, and this is
-// one number the cast asks for at three points — the refusal check, the
-// fire-and-forget charge and the concentration drain — which is exactly why it
-// is one function rather than three expressions.
-//
-// ## Two mechanisms for one discount, and why only one of them may fire
-//
-// The SPIT header names a perk that halves the cost
-// (`SpellItemData.halfCostPerk`, decoded since 19.1 and until now consumed by
-// nobody), and the `Mod Spell Cost` entry point (38) is a general reduction
-// vanilla hooks 43 times — the fourth most-hooked entry point in the game
-// (docs/formats/perks.md).
-//
-// On real records these are usually *the same discount authored twice*.
-// `Flames` costs 24 and names `DestructionNovice00` in SPIT, and that perk's
-// only effect is `Mod Spell Cost` × 0.5 — measured on this machine's install
-// on 2026-08-19. Applying both would charge 6 where the game charges 12, so
-// this file applies the header halving only when the perk it names does not
-// hook `Mod Spell Cost` itself. Which of the two the original engine reads is
-// not documented anywhere OpenSky can cite; what *is* observable is the number
-// it charges, and this rule reproduces it under either reading while still
-// honouring a mod that authors the header field alone.
-//
-// Both are gated on ownership, which is the check this item adds: before it,
-// the header link was read and the halving applied to everybody.
-//
-// The spell is the condition tab's `spell` subject, which this engine cannot
-// bind to a world reference — a SPEL is not a placed reference — so a spell tab
-// is skipped and counted like every other unbound subject
-// (`PerkRuntimeEvaluation`).
-//
-// Documented in docs/engine/perks.md and docs/engine/spellcasting.md.
+// A spell's real cost: `Mod Spell Cost` and the SPIT half-cost perk, both only if owned.
+// Vanilla often authors one discount twice (`Flames` 24 with `DestructionNovice00`
+// charges 12), so the SPIT halving applies only when that perk has no `Mod Spell Cost`.
+// A spell condition tab is skipped and counted (`PerkRuntimeEvaluation`).
+// See docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
 import OpenSkyActorsInterface

@@ -1,15 +1,6 @@
-// Main-app crime and faction inspection seam (issue #507, roadmap item 21.8):
-// what the `World > Crime & Factions` panel is written against, so the panel
-// stays independent of `GameViewController` while reaching the same engine
-// calls the runtime uses — `CrimeRuntime.modifyCrimeGold`, `FactionRuntime.join`,
-// `HostilityDerivation.decide`, `VendorResolver`.
-//
-// One snapshot value, for the reason `ProgressionControlSnapshot` is one: a
-// readout has to be a pure function of a single engine observation, and a
-// bounty, the guard reaction it provokes and the membership that reaction is
-// measured against move together.
-//
-// AppKit-free, so it compiles into `openskycli` alongside the app.
+// The seam the `World > Crime & Factions` panel is written against, so it reaches
+// the same engine calls as the runtime without `GameViewController`. One snapshot
+// value, because a bounty, the guard reaction and the membership move together.
 
 import Foundation
 import OpenSkyActorsInterface

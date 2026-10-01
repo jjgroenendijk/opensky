@@ -1,17 +1,6 @@
-// What the behavior evaluator could not evaluate (issue #187).
-//
-// The evaluator never throws and never crashes: a node class it has no
-// semantics for still returns a pose — its child's, or the skeleton reference
-// pose — and costs one tally entry. That makes the tally a first-class result
-// rather than a debug aid. It is the coverage evidence for "which Havok
-// Behavior classes does OpenSky still owe Skyrim?", the same role
-// `ConditionTally` plays for CTDA conditions and `AS2Tally` for ActionScript,
-// and it is what the real-data probe reads and what the milestone gate (#191)
-// reports.
-//
-// Every name table is capped so a pathological modded graph cannot grow the
-// tally without bound, and every total keeps counting past its cap: a truncated
-// table still reports how much it stopped naming.
+// What the behavior evaluator could not evaluate. An unknown class still returns a
+// pose and adds one entry, so the tally is the coverage evidence the real-data probe
+// reads. Name tables are capped; totals keep counting past the cap.
 
 import Foundation
 
@@ -110,8 +99,8 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         case transitionTimeIntervalIgnored
         /// `m_toGeneratorStartTimeFraction` was non-zero and ignored.
         case transitionStartFractionIgnored
-        /// A `BSSynchronizedClipGenerator` ran its wrapped clip without the
-        /// marker alignment, which needs the partner character item 14.5 adds.
+        /// A `BSSynchronizedClipGenerator` ran its clip without marker alignment, which
+        /// needs a partner character.
         case synchronizedClipMarkerIgnored
         /// `hkbClipGenerator` ping-pong playback was run as a plain loop.
         case clipPingPongAsLoop
