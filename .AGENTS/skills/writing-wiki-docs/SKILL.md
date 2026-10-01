@@ -83,7 +83,7 @@ Byte layout table, then what was confirmed on the real install.
 
 ## Checks
 
-`make check` runs these, and the pre-commit hook runs them on staged pages:
+`make check` and CI run these:
 
 - `make md-lint`: Markdown style.
 - `make docs-links`: every link inside `docs/` points at a file that exists.

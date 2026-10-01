@@ -22,7 +22,7 @@ Pick the first place that fits. Check that the rule is not already written somew
 (`grep -rn` over `AGENTS.md`, `*/AGENTS.md`, `.AGENTS/skills/`, `docs/`) and update that
 copy instead of adding a second one.
 
-1. **A lint rule, hook, or `make` target**, when a machine can check it. A check cannot be
+1. **A lint rule or `make` target**, when a machine can check it. A check cannot be
    forgotten; prose can. Mirror a new gate in `ci.yml` (root `AGENTS.md`, Code quality).
 2. **A better name, type, or signature**, when the code can make the wrong use hard.
 3. **A nested `AGENTS.md`**, when the rule applies only in one folder, such as `Sources/`

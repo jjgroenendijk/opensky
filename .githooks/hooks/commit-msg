@@ -1,3 +1,0 @@
-#!/bin/sh
-# Tiny wrapper -> runs .githooks/commit-msg/*.sh in order (committing-and-landing-work skill).
-exec "$(git rev-parse --show-toplevel)/.githooks/run-hook.sh" commit-msg "$@"

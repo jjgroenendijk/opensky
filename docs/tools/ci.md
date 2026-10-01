@@ -2,7 +2,7 @@
 type: Tool
 title: Continuous integration
 description: What the GitHub Actions workflow runs on Linux and on macOS, how each job shares its
-  make target with the git hooks, where the tool versions are pinned, why SwiftFormat runs on
+  make target with `make check`, where the tool versions are pinned, why SwiftFormat runs on
   macOS, and why the Metal format check can run on Linux.
 tags: [tool, ci, lint, github-actions]
 ---
@@ -20,7 +20,7 @@ parts:
 
 ## One job per check
 
-Each lint job runs one `make` target, the same target the git hooks and `make check` run. So
+Each lint job runs one `make` target, the same target `make check` runs. So
 the rules live in one place, the `Makefile` and the scripts under `tools/`. The workflow only
 installs the tools and calls `make`.
 
@@ -37,7 +37,7 @@ installs the tools and calls `make`.
 The jobs run in parallel, so the slowest one sets the total time. The checks in "Repository
 rules" each take under a second, so they share one job.
 
-A new check gets a `make` target, a pre-commit hook, and a job, or a line in an existing job, in
+A new check gets a `make` target and a job, or a line in an existing job, in
 the same commit. A new job also goes into the `needs` list of the `Lint` job. Branch protection
 names only `Lint`, so it does not change.
 
@@ -78,7 +78,7 @@ passes `CLANG_FORMAT=clang-format` and installs upstream clang-format 21.1.8.
 
 Apple clang-format 21 (clang-2100) and upstream 21.1.8 gave byte-identical output on
 `Shaders.metal` after its indentation and spacing were scrambled. If a later Xcode changes the
-output, the Metal format job and the local hook disagree. Then move the pin to the upstream
+output, the Metal format job and local `make check` disagree. Then move the pin to the upstream
 version that matches, or run the job on macOS.
 
 ## Not in CI

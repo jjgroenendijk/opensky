@@ -1,5 +1,5 @@
 # OpenSky SwiftFormat config — autoformatting mandatory (AGENTS.md "Code quality").
-# Run: `make format` (pre-commit hook does it automatically).
+# Run: `make format` (`make fix` runs it too).
 
 --swiftversion 6.0
 

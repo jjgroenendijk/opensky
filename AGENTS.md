@@ -28,8 +28,8 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
   into the repo, or copied into build output.
 - About to add a binary blob -> stop, ask.
 
-`make no-game-content` and the pre-commit hook enforce the first and third rules over both
-staged files and the whole tracked tree. Nothing enforces the second one; that is on you.
+`make no-game-content` (part of `make check` and CI) enforces the first and third rules over
+the whole tracked tree. Nothing enforces the second one; that is on you.
 
 A task that seems to require committing or embedding game data -> do not. Surface the
 conflict.
@@ -60,8 +60,8 @@ conflict.
   `make`, so a worktree needs no `make bootstrap`. The cache's prefix mapping makes
   `#filePath` read `/^src/...`; find the checkout at runtime instead
   (`docs/tools/build-system.md`).
-- The git hooks are the only gate before code lands, so do not bypass them with
-  `--no-verify`.
+- No git hook runs on commit or push. Run `make check` before committing. The CI lint jobs
+  on each pull request are the gate before code lands.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
   date observed. Check it before fighting an odd failure, and record new ones there.
@@ -116,7 +116,7 @@ with an example. When you add code:
 `/Applications/OpenSky.app` after landing rendering work, because the user checks progress
 there.
 
-No hook runs the tests. What to test is the author's judgment, guided by the
+No automatic step runs the tests. What to test is the author's judgment, guided by the
 `testing-and-verifying` skill, and recorded in the commit's `Tests:` section. A green build
 does not prove a triangle appeared. Unit-test every format parser and math routine with
 synthetic fixtures built in code. The real-data suites need the user's install, so only
@@ -146,9 +146,9 @@ data to fall back to.
 
 If a machine can check a rule, a machine checks it; do not rely on people remembering it.
 Every language has a linter and an auto-formatter, configured under `tools/`; do not
-hand-format. Anything repeatable becomes a `make` target or a git hook, not a documented
-manual procedure. Local hooks and `ci.yml` mirror each other, so a change to one gate
-changes both, whether or not CI is currently running.
+hand-format. Anything repeatable becomes a `make` target, not a documented manual
+procedure. `make check` and `ci.yml` mirror each other, so a change to one gate changes
+both.
 
 Linting is strict and warnings are errors. Fix the issue rather than disabling or
 downgrading a rule. Inline suppression is a last resort and needs a specific rule code plus

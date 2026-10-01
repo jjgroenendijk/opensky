@@ -1,7 +1,7 @@
 # OpenSky - the one entry point for everything scripted (AGENTS.md).
 #
 #   make help        list every target, grouped by task
-#   make bootstrap   once per checkout: install tools and wire the git hooks
+#   make bootstrap   once per checkout: install tools
 #   make fix         autoformat, then run every linter
 #   make test        build and run the unit tests
 #
@@ -103,7 +103,7 @@ METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 ##@ Getting started
 
-.PHONY: help bootstrap hooks ffmpeg link-shared
+.PHONY: help bootstrap ffmpeg link-shared
 
 help: ## Show this list
 	@awk 'BEGIN { FS = ":.*## "; print "Usage: make <target> [VAR=value]" } \
@@ -111,13 +111,8 @@ help: ## Show this list
 		/^[a-z-]+:.*## / { printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' \
 		$(MAKEFILE_LIST)
 
-bootstrap: ## Install the toolchain with Homebrew and wire the git hooks
+bootstrap: ## Install the toolchain with Homebrew
 	@./tools/bootstrap.sh
-
-hooks: ## Point git at .githooks/hooks (safe to rerun)
-	@git config core.hooksPath .githooks/hooks
-	@find .githooks -type f \( -name '*.sh' -o -path '*/hooks/*' \) -exec chmod +x {} +
-	@echo "[ OK ] core.hooksPath = .githooks/hooks"
 
 ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
@@ -169,8 +164,8 @@ md-format: ## Autofix Markdown
 md-lint: ## Lint Markdown strictly
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-sh-lint: ## Shellcheck the hooks and tools/ scripts
-	@shellcheck -s sh $$(find .githooks tools -type f -name '*.sh') .githooks/hooks/*
+sh-lint: ## Shellcheck the tools/ scripts
+	@shellcheck -s sh $$(find tools -type f -name '*.sh')
 
 # Every Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
 # app-only import there breaks the CLI build. This catches it without building.

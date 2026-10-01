@@ -2,7 +2,7 @@ name: CI
 
 # The lint jobs run the checks that only read files, one job per check, so the
 # slowest one sets the wall-clock time. All but SwiftFormat run on Linux. Each
-# job runs the same make target as the git hooks (docs/tools/ci.md). The macOS
+# job runs the same make target as `make check` (docs/tools/ci.md). The macOS
 # build-and-test job runs only on manual dispatch.
 on:
   pull_request:

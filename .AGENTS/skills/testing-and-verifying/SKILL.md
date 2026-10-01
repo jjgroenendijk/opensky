@@ -8,9 +8,9 @@ description: Decides what to test and verify for a change in OpenSky and how to 
 
 # Testing and verifying
 
-No hook runs the tests or builds. What gets tested and scanned before a push is your call,
-and the commit's `Tests:` section records it. Aim for
-evidence proportional to risk: enough that you would bet the change works, no more.
+No automatic step runs the tests or builds. What gets tested and scanned before a push is
+your call, and the commit's `Tests:` section records it. Aim for evidence proportional to
+risk: enough that you would bet the change works, no more.
 The mechanics behind every command below are in `docs/testing.md`.
 
 ## Pick what to run from the diff
@@ -21,7 +21,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Change | Evidence |
 | --- | --- |
 | Docs, skills, Markdown only | `make check` |
-| Hook, Makefile, or `tools/` script | `make check`, then run the changed target or script once |
+| Makefile or `tools/` script | `make check`, then run the changed target or script once |
 | Parser or math routine | New or updated synthetic-fixture tests, `make test-fast T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-fast T='Suite'` for its suites, then `make test-fast` (whole unit plan) once before pushing |
 | Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, then `make test-fast` |

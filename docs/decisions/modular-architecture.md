@@ -40,8 +40,7 @@ are no `Example` targets.
 
 `make module-graph` runs `tools/lint/module-graph.sh`. It reads the graph from
 `swift package dump-package` and the `import` lines of each target, so it needs no build and
-runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI run it too. The
-pre-commit hook runs it when `Package.swift`, the script, or an `import` line changes.
+runs in about a second. `make lint` runs it, so `make check`, `make fix`, and CI run it too.
 
 | Rule | What it says | Status |
 | --- | --- | --- |

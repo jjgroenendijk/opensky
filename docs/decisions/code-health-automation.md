@@ -18,38 +18,37 @@ baseline files, and updating the baselines after each refactor cost too much.
   findings on `main`. Until then it runs in report mode: it prints findings and exits 0.
   There are no baseline files and no "known findings" lists. This is the ratchet-to-zero
   practice that SwiftLint, ESLint, and Go teams use when they add a rule to old code.
-- **The cheapest place that works.** A check runs in the pre-commit hook if it reads
-  files only and takes about a second or less. A check that needs a build runs in the
-  pre-push hook or in a `make` target. A check that needs GitHub runs there.
-- **Hooks and CI mirror each other.** Every hook check has the same step in `ci.yml`,
-  as AGENTS.md requires. The Linux jobs are required checks on `main`
+- **The cheapest place that works.** A check runs in `make lint` if it reads files
+  only and takes about a second or less. A check that needs a build runs in its own
+  `make` target. A check that needs GitHub runs there.
+- **`make check` and CI mirror each other.** Every lint check has the same step in
+  `ci.yml`, as AGENTS.md requires. The Linux jobs are required checks on `main`
   ([continuous integration](/tools/ci.md)).
 - **No new suppression comments.** No `periphery:ignore` and no new `swiftlint:disable`.
   Fix the finding instead.
 
 ## The checks
 
-"Pre-commit" means the pre-commit hook, `make lint`, and a Linux CI job (30.6). "Pre-push"
-means the pre-push hook and `make health`. The last column names the issue that turns
-the check on as a gate.
+"Lint" means `make lint` and a Linux CI job (30.6). "Health" means `make health`. The
+last column names the issue that turns the check on as a gate.
 
 | Check | Tool | Where | Cost | Gate in |
 | --- | --- | --- | --- | --- |
-| Duplicated code | jscpd | Pre-commit | Under a second, whole tree | 30.39, after 30.20, 30.21, 30.23 |
-| Unused code | Periphery | Pre-push | Index build plus about 1.5 min scan | 30.39, after 30.8 to 30.10 |
-| Module graph (TMA) | `tools/lint/module-graph.sh` | Pre-commit | Seconds, no build | 30.5 (rules 4, 5: 30.22) |
-| Comment length | `tools/lint/comment-length.sh` | Pre-commit | Under a second | 30.39, after 30.35 to 30.37 |
-| No lint suppressions | `grep` in `make lint` | Pre-commit | Instant | 30.39, after 30.11 |
-| New SwiftLint rules | SwiftLint | Pre-commit | Part of the current lint | 30.39 |
-| No new `GameViewController` extensions | SwiftLint `custom_rules` | Pre-commit | Part of the current lint | 30.39, after 30.34 |
+| Duplicated code | jscpd | Lint | Under a second, whole tree | 30.39, after 30.20, 30.21, 30.23 |
+| Unused code | Periphery | Health | Index build plus about 1.5 min scan | 30.39, after 30.8 to 30.10 |
+| Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build | 30.5 (rules 4, 5: 30.22) |
+| Comment length | `tools/lint/comment-length.sh` | Lint | Under a second | 30.39, after 30.35 to 30.37 |
+| No lint suppressions | `grep` in `make lint` | Lint | Instant | 30.39, after 30.11 |
+| New SwiftLint rules | SwiftLint | Lint | Part of the current lint | 30.39 |
+| No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint | 30.39, after 30.34 |
 | Test coverage floor | `xccov`, `llvm-cov` | `make test-report`, Linux CI | Part of the test run | Report 30.38, floor 30.39 |
 
 ## Duplicated code: jscpd
 
 jscpd finds copied blocks of tokens. The settings stay as before: a clone counts at 100
 tokens and 10 lines, exact matches only. It scans `Sources` and `Tests` together in well
-under a second, so it runs on the whole tree in the pre-commit hook whenever a Swift file
-is staged. A scan of only the staged files would miss a copy of code that is not staged.
+under a second, so `make lint` runs it on the whole tree. A scan of only the changed files
+would miss a copy of code that did not change.
 
 PMD CPD was rejected because it needs a Java runtime. jscpd is one Homebrew binary.
 
@@ -71,8 +70,6 @@ The index build is uncached and goes into its own tree, `DerivedData-index/`, be
 build served from the compilation cache writes almost no index data. A separate tree also
 means the build does not deadlock with a normal `xcodebuild` run. The scan covers the
 app, the CLI, and every unit test target.
-
-The pre-push hook runs Periphery only when the pushed commits change a Swift file.
 
 Settings:
 

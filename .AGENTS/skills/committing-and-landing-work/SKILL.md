@@ -7,14 +7,14 @@ description: Commits and lands work in OpenSky - Conventional Commit format, req
 
 # Committing and landing work
 
-Root `AGENTS.md` is the contract; this is the how. Hooks enforce most of it, and the skill
-exists so it is done right the first time.
+Root `AGENTS.md` is the contract; this is the how. No git hook checks a commit, so this
+skill is how it is done right.
 
 ## Before committing
 
 1. One logical change per commit — no mixed refactor, behavior, and formatting.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
-   describes. No hook runs the tests, so this step is the only one that does.
+   describes. Nothing else runs the tests before a push.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format
@@ -37,14 +37,14 @@ Breaking change -> `type(scope)!:` or `BREAKING CHANGE:` footer with migration s
 Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.
 
 Commits carry no AI or co-author attribution. This overrides any default habit of adding
-one. The hook `.githooks/commit-msg/20-no-ai-trailers.sh` rejects `Co-authored-by:`,
-`Generated-by:`, `AI-Generated-by:`, `Assisted-by:`, and `Model:`. Allowed trailers:
+one. Do not add `Co-authored-by:`, `Generated-by:`, `AI-Generated-by:`, `Assisted-by:`,
+or `Model:`. Allowed trailers:
 `Fixes`, `Refs`, `BREAKING CHANGE`, and a human `Signed-off-by:`.
 
 ## Landing (push and PR)
 
-1. Work lands on `main` only through a reviewed PR. The branch is protected, and the
-   pre-push hook blocks a direct push.
+1. Work lands on `main` only through a reviewed PR. The branch is protected, so never
+   push to it directly.
 2. Branch from up-to-date `main`: `feat/<slug>` / `fix/<slug>`.
 3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
    local, and rebase or squash them before the PR.
@@ -65,10 +65,3 @@ one. The hook `.githooks/commit-msg/20-no-ai-trailers.sh` rejects `Co-authored-b
 - Waiting on CI or PR checks: `sleep N && gh pr checks` is hard-blocked by the harness. Use
   `gh pr checks <n> --watch` (blocking) or a `run_in_background` poll, not chained sleeps.
   Whether CI runs at all is environment state — see `docs/tools/environment.md`.
-
-## Hooks
-
-`.githooks/`, wired by `make bootstrap`: pre-commit guards, formats, and lints; commit-msg
-runs the Conventional Commit check; pre-push blocks pushes to `main`. No hook builds or
-tests; the `testing-and-verifying` skill covers what to run. The root `AGENTS.md` covers
-`--no-verify`.

@@ -52,7 +52,7 @@ a test there would run in both bundles. It holds only fixtures that need the app
 Prefer `make test-fast T=...` while iterating. `make test-one` pays a whole build system pass for
 the same selection.
 
-No hook runs the tests. What to test for a change is the author's judgment, guided by the
+No automatic step runs the tests. What to test for a change is the author's judgment, guided by the
 `testing-and-verifying` skill, and the commit's `Tests:` section records what ran. CI runs the lint
 checks, not the tests ([continuous integration](/tools/ci.md)).
 
