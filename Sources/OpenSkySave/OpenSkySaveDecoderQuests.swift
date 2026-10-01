@@ -1,16 +1,9 @@
-// QSTS chunk decoding for the OpenSky native save container (issue #182).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `INVN`: a quest has no placement, so its key normally appears in no
-// other chunk, and merging by `ReferenceKey` is what lets the encoder omit an
-// `RDLT` entry that would otherwise hold nothing.
-//
-// Bounds, as everywhere else in this decoder: every declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
+// QSTS, QALS and location-alias chunks: quest state and alias fills, merged into
+// the `RDLT` deltas by `ReferenceKey`.
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyWorldState
 
@@ -20,7 +13,7 @@ nonisolated public struct SaveQuestEntry: Equatable, Sendable {
     public let state: QuestRuntimeState
 }
 
-/// One quest's saved alias table (issue #183), likewise pre-merge.
+/// One quest's saved alias table, before the merge.
 nonisolated public struct SaveQuestAliasEntry: Equatable, Sendable {
     public let key: ReferenceKey
     public let state: QuestAliasState
@@ -49,33 +42,7 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
         return entries
     }
 
-    /// Lays each saved quest state over the matching `RDLT` delta, adding an
-    /// entry for a quest that had no other component, and re-sorts the result
-    /// into `ReferenceKey` total order — the order `WorldStateSnapshot`
-    /// promises, which a chunk-order insertion would otherwise break.
-    public static func merge(
-        _ quests: [SaveQuestEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !quests.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + quests.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in quests {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta()
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
-    }
-
-    /// `QALS` (issue #183): the filled alias tables, decoded on their own and
-    /// merged the same way the quest states are.
+    /// `QALS`: the filled alias tables.
     public static func decodeQuestAliases(_ payload: Data) throws -> [SaveQuestAliasEntry] {
         var reader = SaveReader(payload)
         let count = try reader.uint32("QALS entry count")
@@ -91,29 +58,6 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
             try entries.append(decodeAliasEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved alias table over the matching delta, exactly as
-    /// `merge(_:into:)` does for quest state.
-    public static func mergeAliases(
-        _ aliases: [SaveQuestAliasEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !aliases.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + aliases.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in aliases {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta()
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     public static func decodeQuestLocationAliases(
@@ -261,5 +205,25 @@ nonisolated public enum OpenSkySaveQuestDecoder: Sendable {
             ))
         }
         return objectives
+    }
+}
+
+nonisolated extension SaveQuestEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        nil
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.erased
+    }
+}
+
+nonisolated extension SaveQuestAliasEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        nil
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.erased
     }
 }

@@ -1,18 +1,5 @@
-// FCTN chunk decoding for the OpenSky native save container (issue #503).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `PRKS`, `SPLB` and `AVAL`: an actor whose only delta is its membership
-// list has no `RDLT` entry, so merging by `ReferenceKey` is what lets the
-// encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// Nothing here rejects a membership on content. A repeated faction collapses in
-// `ActorFactionState.init`, and a faction this load order no longer carries is
-// kept — the same rule an owned perk follows, because removing a plugin must
-// not destroy progress.
+// FCTN chunk: faction memberships, merged into the `RDLT` deltas by `ReferenceKey`.
+// A faction the load order lost is kept, so removing a plugin keeps progress.
 
 import Foundation
 import OpenSkyFactionsInterface
@@ -45,30 +32,6 @@ nonisolated public enum OpenSkySaveFactionDecoder: Sendable {
         return entries
     }
 
-    /// Lays each saved membership list over the matching `RDLT` delta, adding
-    /// an entry for an actor that had no other component, and re-sorts the
-    /// result into `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveFactionEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
-    }
-
     // MARK: - Private
 
     private static func decodeEntry(_ reader: inout SaveReader) throws -> SaveFactionEntry {
@@ -93,5 +56,15 @@ nonisolated public enum OpenSkySaveFactionDecoder: Sendable {
             cell: cell,
             state: ActorFactionState(memberships: memberships)
         )
+    }
+}
+
+nonisolated extension SaveFactionEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }

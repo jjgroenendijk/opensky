@@ -1,13 +1,6 @@
-// Reader for the OpenSky native save container (issue #161): header,
-// load-order fingerprint and the chunk loop. Entry payload decoding lives in
-// OpenSkySaveDecoderEntries.swift.
-//
-// Two tolerance rules are implemented here and they point in opposite
-// directions on purpose. An unknown *chunk* is skipped using its declared
-// length, so a save written by a newer build still loads its world state in an
-// older one. An unknown *component kind* inside a known chunk is an error
-// (see the entry decoder), because a delta that lost components is a world
-// that is quietly wrong rather than one that is merely missing a feature.
+// Reader for the OpenSky save container: header, load-order fingerprint, chunks.
+// An unknown chunk is skipped, so a newer save still loads. An unknown component
+// kind inside a known chunk throws, because losing a component corrupts the world.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -44,18 +37,13 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         )
     }
 
-    /// The `RDLT` entries with every side-chunk laid back over them.
-    ///
-    /// One statement per chunk rather than one nested expression: each of these
-    /// merges is independent of the others — they touch different component
-    /// slots and each re-sorts into `ReferenceKey` order — so the order below is
-    /// the order the chunks were added, and a seventh chunk adds a line rather
-    /// than a level of nesting.
+    /// The `RDLT` entries with every side-chunk laid back over them. Each merge
+    /// fills its own component slot, so only the commented steps depend on order.
     private static func mergedEntries(of body: Body) -> [WorldStateSnapshotEntry] {
-        var entries = OpenSkySaveInventoryDecoder.merge(body.inventories, into: body.entries)
-        entries = OpenSkySaveSpawnDecoder.merge(body.spawns, into: entries)
-        entries = OpenSkySaveQuestDecoder.merge(body.quests, into: entries)
-        entries = OpenSkySaveQuestDecoder.mergeAliases(body.questAliases, into: entries)
+        var entries = OpenSkySaveDeltaMerge.merge(body.inventories, into: body.entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.spawns, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.quests, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.questAliases, into: entries)
         entries = OpenSkySaveQuestDecoder.mergeLocationAliases(
             body.questLocationAliases,
             into: entries
@@ -66,24 +54,24 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.actorValueOverrides,
             into: body.actorValues
         )
-        entries = OpenSkySaveActorValueDecoder.merge(actorValues, into: entries)
-        entries = OpenSkySaveDeathDecoder.merge(body.deaths, into: entries)
-        entries = OpenSkySaveCombatDecoder.merge(body.combatStates, into: entries)
-        entries = OpenSkySaveDialogueDecoder.merge(body.dialogue, into: entries)
-        entries = OpenSkySaveActiveEffectDecoder.merge(body.activeEffects, into: entries)
-        entries = OpenSkySaveSpellbookDecoder.merge(body.spellbooks, into: entries)
-        entries = OpenSkySaveEnchantedItemDecoder.merge(body.enchantedItems, into: entries)
-        entries = OpenSkySavePerkDecoder.merge(body.perks, into: entries)
-        entries = OpenSkySaveFactionDecoder.merge(body.factions, into: entries)
-        entries = OpenSkySaveRelationshipDecoder.merge(body.relationships, into: entries)
-        entries = OpenSkySaveProgressDecoder.merge(body.playerProgress, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(actorValues, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.deaths, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.combatStates, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.dialogue, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.activeEffects, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.spellbooks, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.relationships, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.playerProgress, into: entries)
         // `CRVG` splits the `CRIM` totals before those reach the deltas, the
         // way `AVOV` lays onto `AVAL`.
         let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
             body.violentCrimeGold,
             in: body.crimeLedgers
         )
-        entries = OpenSkySaveCrimeDecoder.merge(ledgers, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(ledgers, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)

@@ -1,16 +1,7 @@
-// Vanilla presentation layer for the inventory menu (M12.2.2, issue #289): the
-// measured AS2 contract of `Interface\inventorymenu.swf`. Device-free and
-// AppKit-free so it builds into the CLI target and can be unit-tested against
-// synthetic AS2 fixtures; it owns no renderer and no movie lifetime. The
-// engine-side row list it presents is UI/InventoryMenuModel.swift.
-//
-// This is the phase-4 data contract `docs/decisions/swf-as2-scope.md` deferred
-// to the milestone that owns inventory data: `_CategoriesList`, `EntriesA` and
-// `iSelectedIndex`, filled from the player's stored inventory.
-//
-// Every path and name below was read back off the user's own installed movie
-// through `openskycli swf action-run`, never reproduced from memory. See
-// docs/engine/inventory-menu.md for the measurement.
+// The measured AS2 contract of `Interface\inventorymenu.swf`. It has no AppKit
+// and no renderer, so the CLI builds it and tests drive it with synthetic AS2.
+// The row list it shows is InventoryMenuModel.swift. Every path below was read
+// back with `openskycli swf action-run`; see docs/engine/inventory-menu.md.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -35,16 +26,9 @@ nonisolated public struct InventoryMenuDiagnostics: Equatable, Sendable {
 nonisolated public enum InventoryMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\inventorymenu.swf"
 
-    /// The `InventoryMenuObj` instance, and the two `Shared.BSScrollingList`
-    /// instances underneath it.
-    ///
-    /// `InventoryLists_mc`, `ItemCard_mc` and `BottomBar_mc` are **imported**
-    /// characters — the movie places them but defines none of them, taking each
-    /// from a sibling movie under `interface\inventory components\` through
-    /// `ImportAssets2`. Without cross-movie import resolution
-    /// (`SWFMovieImportMerger`) the whole subtree is absent and the menu comes
-    /// up as eleven display nodes with no list at all. Measured paths, read
-    /// back with `openskycli swf action-run --movie inventorymenu`.
+    /// The `InventoryMenuObj` instance and its two `Shared.BSScrollingList`s.
+    /// The lists are imported from sibling movies, so they exist only after
+    /// `SWFMovieImportMerger` resolves the imports.
     public static let menuPath = "/Menu_mc"
     public static let listsPath = "\(menuPath)/InventoryLists_mc"
     public static let categoryListPath = "\(listsPath)/CategoriesListHolder/List_mc"
@@ -62,7 +46,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// `Shared.BSScrollingList`'s backing array of row objects, and the index it
     /// keeps its selection in — the phase-4 contract the scope decision named,
     /// confirmed present on both list objects after bring-up.
-    public static let entryArrayName = "EntriesA"
+    public static let entryArrayName = MenuMovieEntryList.arrayName
     public static let selectedIndexName = "iSelectedIndex"
 
     /// The engine-to-movie callback the lists register with `GameDelegate`.
@@ -70,17 +54,9 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// its rows from it.
     public static let invalidateCallback = "InvalidateListData"
 
-    /// Movie-to-engine calls that do not mutate OpenSky state. The boolean
-    /// queries answer false; the rest are notifications whose consumers are
-    /// outside the row-list surface.
-    ///
-    /// `myLog` is measured, not guessed: bring-up alone makes 20 unanswered
-    /// `myLog` calls from `Components.CrossPlatformButtons`, which is why this
-    /// list is installed by `prepare` rather than by `activate`.
-    ///
-    /// `UpdateItem3D` is the rotating item preview pane, deferred out of this
-    /// milestone. Answering it as a no-op is what keeps the deferral visible as
-    /// a named decision rather than as an unhandled call in the tally.
+    /// Movie-to-engine calls that change no OpenSky state. Boolean queries answer
+    /// false. Installed in `prepare`, because bring-up already makes `myLog` calls.
+    /// `UpdateItem3D` (the item preview) is deferred and answered as a no-op.
     public static let sinkHostFunctions = [
         "myLog", "PlaySound", "PlayOKSound", "RequestPlayerInfo",
         "RequestItemCardInfo", "SetSelectedItem", "ShowShoutFistHelp",
@@ -88,17 +64,9 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     ]
     public static let falseHostFunctions = ["ShouldShowMod", "GetIsRemoteDevice"]
 
-    /// The outbound calls that reach an engine action. Registered in `activate`
-    /// rather than `prepare`, because each needs the callback the caller
-    /// supplies.
-    ///
-    /// Only `CloseMenu` is confirmed: driving the movie through bring-up,
-    /// publication and navigation produced 46 outbound calls and none of them
-    /// was an equip or a drop. `ItemSelect` and `DropItem` are registered on
-    /// the same evidence a name gets anywhere else here — they appear in the
-    /// movie's own bytecode — but no measured run has invoked either, so the
-    /// engine drives equip and drop from the selection rather than waiting for
-    /// them. Treat both as unconfirmed until a run logs one.
+    /// The outbound calls that reach an engine action, registered in `activate`
+    /// because each needs the caller's callback. Only `CloseMenu` has been seen
+    /// in a run; `ItemSelect` and `DropItem` come from the movie's bytecode.
     public static let actionHostFunctions = ["CloseMenu", "ItemSelect", "DropItem"]
 
     /// Scaleform's UI-sound hook, reached as a plain `_global` function rather
@@ -151,29 +119,16 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
         focusItemList(runtime: runtime)
     }
 
-    /// Points the movie's focus at the item list, which is the list up and down
-    /// move.
-    ///
-    /// Focusing the *category* list instead was measured and does not work: the
-    /// movie routes left and right through `InventoryLists_mc`'s own
-    /// `strHideItemsCode` / `strShowItemsCode` panel states rather than through
-    /// the focus path, and with no `InputDelegate` alive nothing drives that
-    /// transition, so an up or down key delivered to the category list moves
-    /// nothing. Category changes are therefore engine-driven and republished;
-    /// see docs/engine/inventory-menu.md.
+    /// Focuses the item list, which up and down move. Focusing the category list
+    /// moves nothing (measured), so the engine changes category and republishes.
     public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
     }
 
     // MARK: - Publishing
 
-    /// Fills the movie's category and item lists from the engine's row list.
-    ///
-    /// Each list is written the way the movie writes it itself: replace
-    /// `EntriesA` with one plain object per row, set `iSelectedIndex`, then ask
-    /// the list to rebuild. A list the movie has not built yet is skipped
-    /// rather than fabricated — a menu with no lists is a measurement result,
-    /// not something to paper over.
+    /// Fills the category and item lists the way the movie does: replace
+    /// `EntriesA`, set `iSelectedIndex`, rebuild. A list not built yet is skipped.
     public static func publish(_ model: InventoryMenuModel, runtime: SWFMovieRuntime) {
         let categories = model.categoryLabels
         let entries = model.entries

@@ -4,6 +4,7 @@
 import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import Testing
 

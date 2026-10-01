@@ -4,6 +4,7 @@
 
 @testable import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

@@ -156,31 +156,18 @@ nonisolated public struct SpellStore: Sendable {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
     }
 
-    /// Joins one record's effect list against the effect store. Exposed so a
-    /// caller holding an already-decoded record — the text dump, which decodes
-    /// the record in front of it — gets the same numbers the store holds.
+    /// Joins one record's effect list against the effect store. A caller that
+    /// already decoded the record, such as the text dump, gets the store's numbers.
     public static func resolvedEffects(
         of record: MagicCastingRecord,
         fromPlugin pluginName: String,
         effects store: MagicEffectStore
     ) -> [ResolvedSpellEffect] {
-        let castingType = record.data?.castingType ?? .fireAndForget
-        return record.effects.map { item in
-            let resolved = store.resolve(item, fromPlugin: pluginName)
-            let baseCost = resolved?.effect.data?.baseCost
-            return ResolvedSpellEffect(
-                item: item,
-                effect: resolved,
-                cost: baseCost.map {
-                    SpellCost.effectCost(
-                        baseCost: $0,
-                        magnitude: item.magnitude,
-                        duration: item.duration,
-                        castingType: castingType
-                    )
-                } ?? 0
-            )
-        }
+        store.resolvedEffects(
+            record.effects,
+            fromPlugin: pluginName,
+            castingType: record.data?.castingType ?? .fireAndForget
+        )
     }
 
     /// Totals joined effects into the cost the game charges.
@@ -223,6 +210,32 @@ nonisolated public struct SpellStore: Sendable {
             return try .scroll(Scroll(record: indexed.record, localized: indexed.localized))
         default:
             throw ESMError.malformed("expected SPEL or SCRL, got \(indexed.record.type)")
+        }
+    }
+}
+
+nonisolated extension MagicEffectStore {
+    /// Joins effect items against this store and prices each one.
+    public func resolvedEffects(
+        _ items: [MagicItemEffect],
+        fromPlugin pluginName: String,
+        castingType: MagicEffectCastingType
+    ) -> [ResolvedSpellEffect] {
+        items.map { item in
+            let resolved = resolve(item, fromPlugin: pluginName)
+            let baseCost = resolved?.effect.data?.baseCost
+            return ResolvedSpellEffect(
+                item: item,
+                effect: resolved,
+                cost: baseCost.map {
+                    SpellCost.effectCost(
+                        baseCost: $0,
+                        magnitude: item.magnitude,
+                        duration: item.duration,
+                        castingType: castingType
+                    )
+                } ?? 0
+            )
         }
     }
 }

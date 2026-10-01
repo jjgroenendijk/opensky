@@ -7,14 +7,8 @@ import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct Region: Sendable {
-    /// One RDWT entry under a weather (type 3) data area.
-    public struct WeatherChance: Equatable, Sendable {
-        public let weather: FormID
-        /// Chance in percent (entries sum to 100 across the area).
-        public let chance: Int
-        /// Optional GLOB (unused by the game); nil when the FormID is null.
-        public let global: FormID?
-    }
+    /// One RDWT entry. Same 12-byte layout as a CLMT WLST entry.
+    public typealias WeatherChance = Climate.WeatherChance
 
     /// One RDSA entry under a sound (type 7) data area. Source of per-region
     /// ambient sound: xEdit wbRegionSounds (wbDefinitionsCommon.pas:8729-8747).
@@ -137,7 +131,7 @@ nonisolated public struct Region: Sendable {
                 // Array of 12-byte structs: weather formid, uint32 chance,
                 // global formid. Reject non-multiples rather than guess.
                 guard currentArea == .weather, field.data.count % 12 == 0 else { return }
-                weatherList = try Region.readWeatherList(
+                weatherList = try Climate.readWeatherList(
                     &reader, count: field.data.count / 12
                 )
             case "RDSA":
@@ -182,25 +176,6 @@ nonisolated public struct Region: Sendable {
                 soundOverride = flags & 0x01 != 0
             }
         }
-    }
-
-    private static func readWeatherList(
-        _ reader: inout BinaryReader,
-        count: Int
-    ) throws -> [WeatherChance] {
-        var entries: [WeatherChance] = []
-        entries.reserveCapacity(count)
-        for _ in 0 ..< count {
-            let weather = try FormID(reader.readUInt32())
-            let chance = try Int(reader.readUInt32())
-            let global = try FormID(reader.readUInt32())
-            entries.append(WeatherChance(
-                weather: weather,
-                chance: chance,
-                global: global.isNull ? nil : global
-            ))
-        }
-        return entries
     }
 
     private static func readSoundList(

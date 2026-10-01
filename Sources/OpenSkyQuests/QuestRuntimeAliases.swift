@@ -4,6 +4,7 @@
 // (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface

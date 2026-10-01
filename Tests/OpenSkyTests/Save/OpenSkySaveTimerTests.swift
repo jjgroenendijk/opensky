@@ -5,6 +5,7 @@
 
 @testable import FormatsCoreTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 import OpenSkySaveFixtures

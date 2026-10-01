@@ -1,11 +1,6 @@
-// CLMT record decoded into engine types: a climate binds a weather list (with
-// per-weather chances), day/night timing, and sky textures the sky renderer
-// draws. OpenSky reads the milestone-7.2 scope only: weather chances + timing;
-// sun/glare/night-sky paths come along since they are trivial zstrings.
-//
-// Reference: UESP "Skyrim Mod:Mod File Format/CLMT"
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLMT
-// Layout documented in docs/formats/weather.md.
+// CLMT: a climate's weather list with chances, its day and night timing, and
+// its sky textures. Source: UESP "Skyrim Mod:Mod File Format/CLMT".
+// Layout: docs/formats/weather.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -14,9 +9,10 @@ nonisolated public struct Climate: Sendable {
     /// One WLST entry: weather that can occur under this climate + its chance.
     public struct WeatherChance: Equatable, Sendable {
         public let weather: FormID
-        /// Chance in percent (WLST chances sum to 100 across the list).
+        /// Chance in percent; the chances in one list sum to 100.
         public let chance: Int
         /// Optional GLOB that scales the chance; nil when the FormID is null.
+        /// The game ignores it in a REGN RDWT entry.
         public let global: FormID?
     }
 
@@ -105,7 +101,8 @@ nonisolated public struct Climate: Sendable {
         self.nightSkyModel = nightSkyModel
     }
 
-    private static func readWeatherList(
+    /// Reads `count` 12-byte entries: weather FormID, uint32 chance, global FormID.
+    static func readWeatherList(
         _ reader: inout BinaryReader,
         count: Int
     ) throws -> [WeatherChance] {

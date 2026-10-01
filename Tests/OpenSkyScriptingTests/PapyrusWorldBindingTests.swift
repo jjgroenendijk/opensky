@@ -1,9 +1,8 @@
-// VMAD property binding and attach-skip accounting for
-// `PapyrusWorldRuntime` (issue #171), split from the lifecycle suite for the
-// type-body lint cap.
+// VMAD property binding and attach-skip counting for `PapyrusWorldRuntime`.
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

@@ -4,6 +4,7 @@
 // The rules and the fill types not done yet are in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface

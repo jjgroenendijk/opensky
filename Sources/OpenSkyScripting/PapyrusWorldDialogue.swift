@@ -5,6 +5,7 @@
 // See docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 

@@ -5,6 +5,7 @@
 // entry per ID. See docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
@@ -38,7 +39,7 @@ nonisolated public struct QuestLocationAliasFill: Equatable, Sendable {
 /// Why one alias was left unfilled. Every case is a recorded, tallied skip
 /// rather than a failure: the quest may still start, and an empty optional
 /// alias is a legitimate outcome the Creation Kit documents.
-nonisolated public enum QuestAliasSkipKind: Hashable, Sendable {
+nonisolated public enum QuestAliasSkipKind: SkipTallyKind {
     /// A fill type OpenSky does not implement yet. Carries the type so the
     /// tally names which ones a corpus actually needs.
     case unsupportedFillType(Quest.Alias.FillType)
@@ -68,45 +69,9 @@ nonisolated public enum QuestAliasSkipKind: Hashable, Sendable {
     }
 }
 
-/// Reason-tagged count of every alias a fill pass left empty, shaped like
-/// `QuestTally` and `ScriptBindingTally`. A census asserts against it; one
-/// quest's copy explains why its filled count came out lower than its alias
-/// count.
-nonisolated public struct QuestAliasTally: Equatable, Sendable {
-    public private(set) var counts: [QuestAliasSkipKind: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public var isEmpty: Bool {
-        counts.isEmpty
-    }
-
-    public var ranked: [(name: String, count: Int)] {
-        counts
-            .sorted {
-                $0.value == $1.value
-                    ? $0.key.name < $1.key.name
-                    : $0.value > $1.value
-            }
-            .map { ($0.key.name, $0.value) }
-    }
-
-    public mutating func note(_ kind: QuestAliasSkipKind, count: Int = 1) {
-        counts[kind, default: 0] += count
-    }
-
-    public mutating func merge(_ other: QuestAliasTally) {
-        for (kind, count) in other.counts {
-            note(kind, count: count)
-        }
-    }
-
-    public init(counts: [QuestAliasSkipKind: Int] = [:]) {
-        self.counts = counts
-    }
-}
+/// Why a fill pass left each alias empty. One quest's copy explains why its
+/// filled count is lower than its alias count.
+public typealias QuestAliasTally = SkipTally<QuestAliasSkipKind>
 
 /// The filled alias table of one quest.
 nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {

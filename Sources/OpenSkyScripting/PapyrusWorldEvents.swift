@@ -1,22 +1,14 @@
-// Fixed-step tick and event dispatch for `PapyrusWorldRuntime`.
-//
-// Semantics (issue #171): one main-actor FIFO with global order preserved;
-// per-instance serial delivery, so events for an instance suspended in a
-// latent call stay queued in order while other instances proceed; a
-// budget-bounded drain per tick with carry-over to the next frame.
+// Fixed-step tick and event dispatch for `PapyrusWorldRuntime`: one FIFO in
+// global order, serial delivery per instance, and a budget per tick.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusWorldRuntime {
-    /// Advances exactly one fixed step: resumes due latent calls, then drains
-    /// queued events up to the budget. Deterministic; offscreen renders and
-    /// tests drive this directly.
-    ///
-    /// Runs whether or not `isPaused` is set: this is the primitive the
-    /// sidebar's step-one-tick control drives, and stepping a paused VM is
-    /// the whole point of pausing it.
+    /// Runs one fixed step: resumes due latent calls, then drains events up to
+    /// the budget. It ignores `isPaused`, so the sidebar can step a paused VM.
     @discardableResult
     public func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
         _ = scheduler.tick(gameClock: gameClock)
@@ -39,17 +31,9 @@ extension PapyrusWorldRuntime {
         return report
     }
 
-    /// Accumulates a wall delta and runs whole fixed steps only, capped at
-    /// `maximumStepsPerAdvance` per call; the remainder carries in the
-    /// accumulator. A zero delta — the paused case per `FrameSimClock`'s
-    /// contract — advances zero steps, dispatches nothing, and resumes
-    /// nothing, but is safe to call every frame. The engine's own pause —
-    /// menu mode — arrives that way, as delta 0.
-    ///
-    /// `isPaused` is the VM's separate, sidebar-driven pause (issue #278) and
-    /// is handled here rather than by the caller: a paused call returns the
-    /// same zero report and, crucially, accumulates nothing, so however long
-    /// the VM stays paused, unpausing never runs a burst of catch-up steps.
+    /// Runs whole fixed steps from a wall delta, at most `maximumStepsPerAdvance`.
+    /// A zero delta (menu mode) runs nothing. While `isPaused` it also stores no
+    /// time, so unpausing never runs catch-up steps.
     @discardableResult
     public func advance(delta: Float, gameClock: GameClock? = nil) -> PapyrusTickReport {
         var report = PapyrusTickReport(

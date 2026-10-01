@@ -102,7 +102,7 @@ nonisolated public struct AttachedScript: Equatable, Sendable {
     }
 }
 
-nonisolated public enum ScriptDataSkipKind: Hashable, Sendable {
+nonisolated public enum ScriptDataSkipKind: SkipTallyKind {
     case aliasObject
     case removedProperty
     case fragments(FourCC)
@@ -119,33 +119,7 @@ nonisolated public enum ScriptDataSkipKind: Hashable, Sendable {
     }
 }
 
-nonisolated public struct ScriptDataTally: Equatable, Sendable {
-    public private(set) var counts: [ScriptDataSkipKind: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public var ranked: [(name: String, count: Int)] {
-        counts
-            .sorted {
-                $0.value == $1.value
-                    ? $0.key.name < $1.key.name
-                    : $0.value > $1.value
-            }
-            .map { ($0.key.name, $0.value) }
-    }
-
-    public mutating func note(_ kind: ScriptDataSkipKind, count: Int = 1) {
-        counts[kind, default: 0] += count
-    }
-
-    public mutating func merge(_ other: ScriptDataTally) {
-        for (kind, count) in other.counts {
-            note(kind, count: count)
-        }
-    }
-}
+public typealias ScriptDataTally = SkipTally<ScriptDataSkipKind>
 
 /// Accumulator for a VMAD field inside one record's field loop.
 nonisolated public struct ScriptData: Equatable, Sendable {

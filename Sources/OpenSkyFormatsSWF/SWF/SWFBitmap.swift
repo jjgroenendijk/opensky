@@ -1,12 +1,6 @@
-// SWF bitmap character decoding, shared output type, and the
-// DefineBitsLossless / DefineBitsLossless2 (zlib) formats. The JPEG-family
-// tags live in SWFBitmapJPEG.swift.
-//
-// Reference: Adobe SWF File Format Specification, version 19, chapter 8
-// "Bitmaps" — DefineBitsLossless (pp. 139-141: COLORMAPDATA, BITMAPDATA,
-// PIX15, PIX24) and DefineBitsLossless2 (pp. 142-143: ALPHACOLORMAPDATA,
-// ALPHABITMAPDATA). Row widths in colormapped and PIX15 pixel data are padded
-// to 32-bit boundaries; PIX24 and ARGB are 4 bytes per pixel already.
+// SWF bitmap output type and the DefineBitsLossless / DefineBitsLossless2 (zlib)
+// formats. The JPEG tags live in SWFBitmapJPEG.swift.
+// Source: Adobe SWF File Format Specification v19, chapter 8 "Bitmaps", pp. 139-143.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -100,9 +94,7 @@ nonisolated public enum SWFBitmapDecoder: Sendable {
         case 4 where !hasAlpha:
             return try decodePix15(&reader, header: header)
         case 5:
-            return hasAlpha
-                ? try decodeARGB(&reader, header: header)
-                : try decodePix24(&reader, header: header)
+            return try decodeFourBytePixels(&reader, header: header, hasAlpha: hasAlpha)
         default:
             throw SWFBitmapError.invalidLosslessFormat(tagCode: tag.code, format: format)
         }
@@ -188,11 +180,13 @@ nonisolated public enum SWFBitmapDecoder: Sendable {
         )
     }
 
-    /// PIX24: reserved byte + RGB, four bytes per pixel (inherently 32-bit
-    /// aligned).
-    private static func decodePix24(
+    /// Four bytes per pixel, so rows are already 32-bit aligned. PIX24 is a
+    /// reserved byte + RGB. ALPHABITMAPDATA is ARGB with "the RGB data
+    /// already multiplied by the alpha channel value" (spec p. 143).
+    private static func decodeFourBytePixels(
         _ reader: inout BinaryReader,
-        header: LosslessHeader
+        header: LosslessHeader,
+        hasAlpha: Bool
     ) throws -> SWFBitmap {
         let count = header.width * header.height
         let payload = try decompressRest(&reader, decompressedSize: count * 4)
@@ -201,41 +195,15 @@ nonisolated public enum SWFBitmapDecoder: Sendable {
             pixels[pixel * 4] = payload[pixel * 4 + 1]
             pixels[pixel * 4 + 1] = payload[pixel * 4 + 2]
             pixels[pixel * 4 + 2] = payload[pixel * 4 + 3]
-            pixels[pixel * 4 + 3] = 255
+            pixels[pixel * 4 + 3] = hasAlpha ? payload[pixel * 4] : 255
         }
         return SWFBitmap(
             characterId: header.characterId,
             width: header.width,
             height: header.height,
             pixels: Data(pixels),
-            premultipliedAlpha: false,
-            sourceFormat: .lossless24,
-            jpegDeblockParam: nil
-        )
-    }
-
-    /// ALPHABITMAPDATA: ARGB per pixel; "the RGB data must already be
-    /// multiplied by the alpha channel value" (spec p. 143).
-    private static func decodeARGB(
-        _ reader: inout BinaryReader,
-        header: LosslessHeader
-    ) throws -> SWFBitmap {
-        let count = header.width * header.height
-        let payload = try decompressRest(&reader, decompressedSize: count * 4)
-        var pixels = [UInt8](repeating: 0, count: count * 4)
-        for pixel in 0 ..< count {
-            pixels[pixel * 4] = payload[pixel * 4 + 1]
-            pixels[pixel * 4 + 1] = payload[pixel * 4 + 2]
-            pixels[pixel * 4 + 2] = payload[pixel * 4 + 3]
-            pixels[pixel * 4 + 3] = payload[pixel * 4]
-        }
-        return SWFBitmap(
-            characterId: header.characterId,
-            width: header.width,
-            height: header.height,
-            pixels: Data(pixels),
-            premultipliedAlpha: true,
-            sourceFormat: .lossless32,
+            premultipliedAlpha: hasAlpha,
+            sourceFormat: hasAlpha ? .lossless32 : .lossless24,
             jpegDeblockParam: nil
         )
     }

@@ -31,7 +31,7 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
 
     /// The list base's backing array and selection, shared with every other
     /// CLIK list in the game.
-    public static let entryArrayName = "EntriesA"
+    public static let entryArrayName = MenuMovieEntryList.arrayName
     public static let selectedIndexName = "iSelectedIndex"
     public static let invalidateMethod = "InvalidateData"
     public static let clearMethod = "ClearList"

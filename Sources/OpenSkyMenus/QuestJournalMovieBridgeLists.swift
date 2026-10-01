@@ -67,19 +67,7 @@ nonisolated extension QuestJournalMovieBridge {
         atPath path: String,
         runtime: SWFMovieRuntime
     ) {
-        guard let list = runtime.node(atPath: path, from: runtime.root) else { return }
-        let entries = runtime.runtime.makeArray(
-            rows.map { fields in
-                let row = runtime.runtime.makeObject()
-                // Sorted so two publishes of equal rows build identical
-                // objects, which is what makes a published list comparable.
-                for name in fields.keys.sorted() {
-                    row.assign(fields[name] ?? .undefined, for: name)
-                }
-                return .object(row)
-            }
-        )
-        list.object.assign(.object(entries), for: entryArrayName)
+        MenuMovieEntryList.publish(rows, atPath: path, runtime: runtime)
     }
 
     /// Rebuilds one list's entry clips from the array just written.
@@ -169,28 +157,8 @@ nonisolated extension QuestJournalMovieBridge {
     // MARK: - Reading
 
     /// Row `text` values of one list in numeric row order.
-    ///
-    /// `EntriesA` is an AS2 array, so its rows are numeric property names and
-    /// have to be sorted numerically — lexical order puts row 10 before row 2.
     public static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
-        guard
-            let list = runtime.node(atPath: path, from: runtime.root),
-            let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
-        else {
-            return []
-        }
-        return entries.ownPropertyNames
-            .compactMap { name in Int(name).map { ($0, name) } }
-            .sorted { $0.0 < $1.0 }
-            .compactMap { _, name in
-                guard
-                    let row = entries.lookup(name)?.property.value.objectValue,
-                    case let .string(text) = row.lookup("text")?.property.value
-                else {
-                    return nil
-                }
-                return text
-            }
+        MenuMovieEntryList.labels(atPath: path, runtime: runtime)
     }
 
     public static func questLabels(runtime: SWFMovieRuntime) -> [String] {

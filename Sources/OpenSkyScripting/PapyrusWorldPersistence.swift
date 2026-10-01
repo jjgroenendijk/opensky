@@ -1,8 +1,7 @@
-// Save-state seam for `PapyrusWorldRuntime` (issue #171 stage A). Stage B
-// serializes `PapyrusInstanceState` into the `PSCR` chunk; this file only
-// snapshots and restores it.
+// Snapshot and restore of `PapyrusInstanceState`, which the save writes as `PSCR`.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldRuntime {

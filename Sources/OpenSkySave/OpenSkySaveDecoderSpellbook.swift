@@ -1,21 +1,6 @@
-// SPLB chunk decoding for the OpenSky native save container (issue #470).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `AEFF`, `AVAL` and `DETH`: an actor whose only delta is its spellbook has
-// no `RDLT` entry, so merging by `ReferenceKey` is what lets the encoder omit
-// one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// Nothing here rejects a spellbook on content. A duplicate key, a hand naming a
-// spell the known list does not carry, and a spent-power entry for a spell that
-// was forgotten are all normalized away by `SpellbookState.init` rather than
-// failing a load — the invariant belongs to the type, and one stale key is not a
-// reason to refuse a whole save. There is no hard stop of the kind `AEFF` has,
-// because this chunk carries no closed enumeration: every field is a key, a
-// count or a signed day.
+// SPLB chunk: spellbooks, merged into the `RDLT` deltas by `ReferenceKey`.
+// `SpellbookState.init` normalizes duplicate and stale keys, so no content error
+// fails a load.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -46,30 +31,6 @@ nonisolated public enum OpenSkySaveSpellbookDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved spellbook over the matching `RDLT` delta, adding an entry
-    /// for an actor that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SaveSpellbookEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -136,5 +97,15 @@ nonisolated public enum OpenSkySaveSpellbookDecoder: Sendable {
         let present = try reader.uint8("SPLB readied hand tag")
         guard present != 0 else { return nil }
         return try OpenSkySaveEntryDecoder.decodeKey(&reader)
+    }
+}
+
+nonisolated extension SaveSpellbookEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }

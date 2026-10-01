@@ -1,9 +1,9 @@
-// Save-state seam and identity ordering for `PapyrusWorldRuntime`
-// (issue #171): deterministic `instanceStates()`, tolerant restore, and the
-// `PapyrusInstanceKey` total order later stages serialize under.
+// `PapyrusWorldRuntime` save seam: deterministic `instanceStates()`, tolerant
+// restore, and the `PapyrusInstanceKey` order.
 
 @testable import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

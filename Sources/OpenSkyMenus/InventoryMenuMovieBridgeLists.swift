@@ -1,12 +1,5 @@
-// List plumbing for the inventory menu bridge (M12.2.2, issue #289). Satellite
-// of UI/InventoryMenuMovieBridge.swift, which holds the measured contract; this
-// file holds the AS2 object work that reads and writes `EntriesA` and
-// `iSelectedIndex` through it.
-//
-// Everything here degrades: a list the movie has not built, a row that is not
-// an object, a selection index that is not a number — each answers nil or does
-// nothing rather than throwing. A vanilla movie whose shape moved must leave a
-// tally entry and an empty readout, never take the app down.
+// `EntriesA` and `iSelectedIndex` plumbing for InventoryMenuMovieBridge.swift.
+// A missing list, row, or index answers nil or does nothing, never throws.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -14,25 +7,14 @@ import OpenSkyFormatsSWF
 nonisolated extension InventoryMenuMovieBridge {
     // MARK: - Writing
 
-    /// Replaces one list's `EntriesA` with `rows`.
-    ///
-    /// The selection is *not* written here. `InvalidateListData` rebuilds the
-    /// list from the new data and resets `iSelectedIndex` to its own
-    /// nothing-selected sentinel of -1 as it goes, so a selection written
-    /// before the rebuild is discarded — measured, not assumed. `select` runs
-    /// afterwards instead.
+    /// Replaces one list's `EntriesA` with `rows`. The selection is written
+    /// later by `select`, because `InvalidateListData` resets it to -1.
     public static func publish(
         rows: [[String: AS2Value]],
         atPath path: String,
         runtime: SWFMovieRuntime
     ) {
-        guard let list = runtime.node(atPath: path, from: runtime.root) else {
-            return
-        }
-        let entries = runtime.runtime.makeArray(
-            rows.map { .object(makeRow($0, runtime: runtime)) }
-        )
-        list.object.assign(.object(entries), for: entryArrayName)
+        MenuMovieEntryList.publish(rows, atPath: path, runtime: runtime)
     }
 
     /// Points one list at `index`, after the rebuild. An empty list keeps the
@@ -48,20 +30,6 @@ nonisolated extension InventoryMenuMovieBridge {
         }
         let clamped = count > 0 ? min(max(index, 0), count - 1) : -1
         list.object.assign(.integer(clamped), for: selectedIndexName)
-    }
-
-    /// One plain AS2 object per row. Field order follows the dictionary's own
-    /// sorted keys so two publishes of equal rows build identical objects,
-    /// which is what makes a published list comparable in a test.
-    private static func makeRow(
-        _ fields: [String: AS2Value],
-        runtime: SWFMovieRuntime
-    ) -> AS2Object {
-        let row = runtime.runtime.makeObject()
-        for name in fields.keys.sorted() {
-            row.assign(fields[name] ?? .undefined, for: name)
-        }
-        return row
     }
 
     /// Publishes the two totals the vanilla menu keeps on screen.
@@ -98,29 +66,9 @@ nonisolated extension InventoryMenuMovieBridge {
 
     // MARK: - Reading
 
-    /// Row `text` values in numeric row order.
-    ///
-    /// `EntriesA` is an AS2 array, so its rows are numeric property names and
-    /// have to be sorted numerically — lexical order puts row 10 before row 2.
+    /// Row `text` values of one list in numeric row order.
     public static func entryLabels(runtime: SWFMovieRuntime, atPath path: String) -> [String] {
-        guard
-            let list = runtime.node(atPath: path, from: runtime.root),
-            let entries = list.object.lookup(entryArrayName)?.property.value.objectValue
-        else {
-            return []
-        }
-        return entries.ownPropertyNames
-            .compactMap { name in Int(name).map { ($0, name) } }
-            .sorted { $0.0 < $1.0 }
-            .compactMap { _, name in
-                guard
-                    let row = entries.lookup(name)?.property.value.objectValue,
-                    case let .string(text) = row.lookup("text")?.property.value
-                else {
-                    return nil
-                }
-                return text
-            }
+        MenuMovieEntryList.labels(atPath: path, runtime: runtime)
     }
 
     public static func selectedIndex(runtime: SWFMovieRuntime, atPath path: String) -> Int? {
@@ -155,18 +103,9 @@ nonisolated extension InventoryMenuMovieBridge {
         }
     }
 
-    /// Key equivalents for the four navigation directions plus accept and
-    /// cancel. Left and right switch category in a vanilla inventory, which is
-    /// why they are navigation rather than unmapped.
+    /// Left and right switch category in a vanilla inventory, so they are
+    /// navigation rather than unmapped.
     public static func key(for event: MenuInputEvent) -> (code: Int, ascii: Int)? {
-        switch event {
-        case .move(.up): (SWFKeyCode.up, 0)
-        case .move(.down): (SWFKeyCode.down, 0)
-        case .move(.left): (SWFKeyCode.left, 0)
-        case .move(.right): (SWFKeyCode.right, 0)
-        case .button(.accept): (SWFKeyCode.enter, 13)
-        case .button(.cancel): (SWFKeyCode.escape, 0)
-        case .pointer: nil
-        }
+        event.swfKey
     }
 }

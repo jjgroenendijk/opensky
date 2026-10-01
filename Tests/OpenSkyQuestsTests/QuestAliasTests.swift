@@ -1,12 +1,10 @@
-// Quest alias resolution (issue #183, roadmap item 13.4): the fill pass, the
-// documented rules it implements, and the table's lifetime on the store.
-//
-// Every quest is synthetic, built out of `QuestFixture` bytes, so nothing here
-// reads game data. The store is @MainActor, so the suite is too.
+// Quest alias fill rules and the alias table's lifetime on the store, over
+// synthetic `QuestFixture` bytes.
 
 import FormatsESMTesting
 import Foundation
 import GameDataTesting
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests

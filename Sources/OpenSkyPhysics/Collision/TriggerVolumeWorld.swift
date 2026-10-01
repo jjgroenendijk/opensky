@@ -1,11 +1,6 @@
-// Immutable per-cell trigger-volume world (issue #173). A REFR whose NIF
-// carries SkyrimLayer 12 (trigger) bodies contributes no solid collision, so
-// the static collision build drops it; those bodies land here instead, placed
-// in world space and indexed by the same `BoundsSpatialIndex` broadphase the
-// static set uses. Overlap tests answer "is the player capsule inside this
-// volume", which is a boolean question — no contact normal or depth is
-// produced, so the narrowphase below is deliberately simpler than
-// `CapsuleWorldCollider`.
+// Per-cell trigger volumes: SkyrimLayer 12 bodies, which add no solid collision.
+// They share the `BoundsSpatialIndex` broadphase of the static set. An overlap
+// test only answers "is the capsule inside", so there is no normal or depth.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -101,13 +96,8 @@ nonisolated public struct TriggerVolumeSet: Sendable {
 }
 
 nonisolated extension TriggerVolume {
-    /// Volumes for every shape of a trigger-layer body, placed by `transform`.
-    ///
-    /// The world AABB is the union of the geometry's broadphase partitions
-    /// (`StaticCollisionShape.partitions(for:)`, which already knows every
-    /// geometry case's local bounds) pushed through `transform` by 8-corner
-    /// reboxing. Nil when the geometry yields no finite bounds — a degenerate
-    /// soup with no in-range indices, or a non-finite transform.
+    /// Volumes for every shape of a trigger body, placed by `transform`. The world
+    /// AABB reboxes the shape's partition bounds; nil when no bounds are finite.
     public static func placed(
         reference: ReferenceKey,
         formID: FormID,
@@ -180,27 +170,23 @@ nonisolated public struct TriggerCapsuleQuery: Sendable {
         case let .box(halfExtents):
             return intersectsBox(halfExtents: halfExtents, transform: volume.transform)
         case let .sphere(radius):
-            let center = TriggerVolumeMath.transform(.zero, by: volume.transform)
-            let scaled = radius * TriggerVolumeMath.maximumScale(of: volume.transform)
+            let center = DynamicCollisionMath.transform(.zero, by: volume.transform)
+            let scaled = radius * DynamicCollisionMath.maximumScale(of: volume.transform)
             let point = TriggerVolumeMath.closestPoint(on: segment, to: center)
             return simd_distance(point, center) <= capsule.radius + scaled + Self.tolerance
         case let .capsule(first, second, radius):
             let obstacle = (
-                TriggerVolumeMath.transform(first, by: volume.transform),
-                TriggerVolumeMath.transform(second, by: volume.transform)
+                DynamicCollisionMath.transform(first, by: volume.transform),
+                DynamicCollisionMath.transform(second, by: volume.transform)
             )
-            let scaled = radius * TriggerVolumeMath.maximumScale(of: volume.transform)
+            let scaled = radius * DynamicCollisionMath.maximumScale(of: volume.transform)
             let closest = TriggerVolumeMath.closestSegments(segment, obstacle)
             return simd_distance(closest.first, closest.second)
                 <= capsule.radius + scaled + Self.tolerance
         case .convexVertices, .triangleSoup:
-            // [INFO] Conservative approximation: a convex hull and a triangle
-            // soup are tested against their world AABB only, so a capsule in a
-            // corner the mesh does not fill still reports as inside. Trigger
-            // volumes authored in the Creation Kit are box, sphere, or capsule
-            // primitives in practice; a mesh trigger is rare and erring toward
-            // firing is the safer failure for OnTriggerEnter. Documented in
-            // docs/engine/trigger-volumes.md.
+            // [INFO] A hull or a soup is tested by its world AABB only, so a
+            // corner the mesh does not fill still counts as inside. Mesh triggers
+            // are rare; see docs/engine/trigger-volumes.md.
             return volume.bounds.overlaps(bounds)
         }
     }
@@ -214,8 +200,8 @@ nonisolated public struct TriggerCapsuleQuery: Sendable {
     private func intersectsBox(halfExtents: SIMD3<Float>, transform: float4x4) -> Bool {
         let inverse = transform.inverse
         let local = (
-            TriggerVolumeMath.transform(segment.first, by: inverse),
-            TriggerVolumeMath.transform(segment.second, by: inverse)
+            DynamicCollisionMath.transform(segment.first, by: inverse),
+            DynamicCollisionMath.transform(segment.second, by: inverse)
         )
         let half = simd_abs(halfExtents)
         var onSegment = (local.0 + local.1) * 0.5
@@ -224,8 +210,8 @@ nonisolated public struct TriggerCapsuleQuery: Sendable {
             onSegment = TriggerVolumeMath.closestPoint(on: local, to: onBox)
             onBox = simd_clamp(onSegment, -half, half)
         }
-        let worldSegment = TriggerVolumeMath.transform(onSegment, by: transform)
-        let worldBox = TriggerVolumeMath.transform(onBox, by: transform)
+        let worldSegment = DynamicCollisionMath.transform(onSegment, by: transform)
+        let worldBox = DynamicCollisionMath.transform(onBox, by: transform)
         return simd_distance(worldSegment, worldBox) <= capsule.radius + Self.tolerance
     }
 }
@@ -234,19 +220,6 @@ nonisolated public struct TriggerCapsuleQuery: Sendable {
 /// contact-producing routines for solid collision; these stay separate because
 /// they answer a distance question and never build a normal or a depth.
 nonisolated public enum TriggerVolumeMath: Sendable {
-    public static func transform(_ point: SIMD3<Float>, by matrix: float4x4) -> SIMD3<Float> {
-        let transformed = matrix * SIMD4<Float>(point, 1)
-        return SIMD3(transformed.x, transformed.y, transformed.z)
-    }
-
-    public static func maximumScale(of matrix: float4x4) -> Float {
-        max(
-            simd_length(SIMD3(matrix.columns.0.x, matrix.columns.0.y, matrix.columns.0.z)),
-            simd_length(SIMD3(matrix.columns.1.x, matrix.columns.1.y, matrix.columns.1.z)),
-            simd_length(SIMD3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z))
-        )
-    }
-
     public static func closestPoint(
         on segment: (SIMD3<Float>, SIMD3<Float>),
         to point: SIMD3<Float>

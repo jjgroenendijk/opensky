@@ -1,13 +1,7 @@
-// KYWD and AACT are editor-id tags with an editor-only colour. KYWD labels
-// object records through KSIZ/KWDA; AACT labels IDLE roots.
-//
-// References:
-//   UESP "Skyrim Mod:Mod File Format/KYWD" and "/AACT":
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/KYWD
-//   https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/AACT
-//   xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas `wbRecord(KYWD, ...)`
-//   and `wbRecord(AACT, ...)`, both EDID + byte-RGBA CNAM.
-// Layout documented in docs/formats/keywords.md.
+// KYWD and AACT: editor-ID tags with an editor-only colour. KYWD labels object
+// records through KSIZ/KWDA; AACT labels IDLE roots. Both are EDID + RGBA CNAM.
+// Sources: UESP KYWD and AACT pages, xEdit wbDefinitionsTES5.pas.
+// Layout: docs/formats/keywords.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -18,17 +12,7 @@ nonisolated public enum ReferenceRecordSkipKind: Hashable, Sendable {
     case unknownDefaultObjectTag(FourCC)
 }
 
-nonisolated public struct ReferenceRecordTally: Equatable, Sendable {
-    public private(set) var counts: [ReferenceRecordSkipKind: Int] = [:]
-
-    public var total: Int {
-        counts.values.reduce(0, +)
-    }
-
-    public mutating func note(_ kind: ReferenceRecordSkipKind) {
-        counts[kind, default: 0] += 1
-    }
-}
+public typealias ReferenceRecordTally = SkipTally<ReferenceRecordSkipKind>
 
 /// CNAM byte RGBA used only to distinguish records in editor tooling.
 nonisolated public struct ReferenceRecordColor: Equatable, Sendable {

@@ -1,13 +1,9 @@
-// The INFO VMAD fragment tail (issue #426), over synthetic bytes built from the
-// UESP and xEdit layout in `DialogueFixture`.
-//
-// The layout's unusual property is that the fragment count is not stored: it is
-// the population of the flag byte, and the entries arrive in bit order. Most of
-// what is worth testing follows from that, which is why the cases below are
-// about which flag bits are set rather than about string parsing.
+// The INFO VMAD fragment tail, over synthetic `DialogueFixture` bytes. The count
+// is not stored: it is the number of set flag bits, so the cases vary the flags.
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import Testing
 

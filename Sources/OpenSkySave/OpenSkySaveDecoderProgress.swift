@@ -1,18 +1,6 @@
-// PLVL chunk decoding for the OpenSky native save container (issue #499).
-//
-// Decoded on its own and merged into the `RDLT` entries afterwards, exactly
-// like `PRKS`, `SPLB` and `AVAL`: the player's only delta may be its progress,
-// in which case there is no `RDLT` entry to hang it on, so merging by
-// `ReferenceKey` is what lets the encoder omit one.
-//
-// Bounds, as everywhere else in this decoder: a declared count is checked
-// against the bytes actually left before an array is reserved, so a corrupt
-// length is a thrown error rather than a multi-gigabyte allocation.
-//
-// Nothing here rejects a record on content. `PlayerProgressState.init` clamps
-// every field, and a pick naming an actor value that is not one of the three
-// primaries is dropped rather than failing the file — a save written by a build
-// that stored something else there must still load.
+// PLVL chunk: player level progress, merged into the `RDLT` deltas by
+// `ReferenceKey`. `PlayerProgressState.init` clamps every field, and a pick that
+// is not one of the three primaries is dropped.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -44,30 +32,6 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
             try entries.append(decodeEntry(&reader))
         }
         return entries
-    }
-
-    /// Lays each saved record over the matching `RDLT` delta, adding an entry
-    /// for a key that had no other component, and re-sorts the result into
-    /// `ReferenceKey` total order.
-    public static func merge(
-        _ values: [SavePlayerProgressEntry],
-        into entries: [WorldStateSnapshotEntry]
-    ) -> [WorldStateSnapshotEntry] {
-        guard !values.isEmpty else { return entries }
-        var deltasByKey: [ReferenceKey: ReferenceStateDelta] = [:]
-        deltasByKey.reserveCapacity(entries.count + values.count)
-        for entry in entries {
-            deltasByKey[entry.key] = entry.delta
-        }
-        for entry in values where !entry.state.isEmpty {
-            var delta = deltasByKey[entry.key] ?? ReferenceStateDelta(cell: entry.cell)
-            delta.set(entry.state.erased)
-            deltasByKey[entry.key] = delta
-        }
-        return deltasByKey.keys.sorted().compactMap { key in
-            guard let delta = deltasByKey[key] else { return nil }
-            return WorldStateSnapshotEntry(key: key, delta: delta)
-        }
     }
 
     // MARK: - Private
@@ -108,5 +72,15 @@ nonisolated public enum OpenSkySaveProgressDecoder: Sendable {
                 skillIncreases: Int(increases)
             )
         )
+    }
+}
+
+nonisolated extension SavePlayerProgressEntry: SaveDeltaComponentEntry {
+    public var deltaCell: CellSceneLocation? {
+        cell
+    }
+
+    public var deltaComponent: WorldStateComponentValue? {
+        state.isEmpty ? nil : state.erased
     }
 }
