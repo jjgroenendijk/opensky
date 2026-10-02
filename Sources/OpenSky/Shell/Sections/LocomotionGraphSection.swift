@@ -26,13 +26,9 @@ final class LocomotionGraphSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "The player's own graph from the install, stepped on the simulation clock. "
-                    + "A variable listed as not declared is a name OpenSky writes that this "
-                    + "graph spells differently, which is a binding failure rather than a "
-                    + "silent no-op."
-            ),
+        statsLabel.toolTip =
+            "A variable marked not declared is a bug: the name does not match the game's."
+        return [
             statsLabel
         ]
     }

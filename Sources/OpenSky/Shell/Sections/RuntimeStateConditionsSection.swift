@@ -43,6 +43,7 @@ final class RuntimeStateConditionsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        conditionEvaluateControl.toolTip = "Uses live globals, the clock, and the crosshair target."
         PanelComponents.configureComboBox(
             conditionSourceControl, target: self, action: #selector(sourceSelected),
             identifier: "RuntimeStateConditionSourceControl", width: 200
@@ -53,11 +54,6 @@ final class RuntimeStateConditionsSection: PanelSectionViewController {
         )
         return [
             PanelComponents.group([
-                PanelComponents.note(
-                    "Condition lists come from the music tracks that author CTDA conditions, "
-                        + "the engine's decoded carrier for them. Evaluation runs against the "
-                        + "live globals, the live clock, and the reference the crosshair is on."
-                ),
                 conditionSourceControl
             ]),
             PanelComponents.buttonRow([conditionEvaluateControl]),

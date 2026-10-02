@@ -8,7 +8,7 @@ nonisolated public enum JournalReadout: Sendable {
     /// What the session's quests are doing, plus the rows the panel lists.
     public static func questsText(for snapshot: JournalControlSnapshot) -> String {
         guard snapshot.hasQuestIndex else {
-            return "Quests: unavailable (no plugin loaded)"
+            return "Quests: no game loaded"
         }
         let header = "Journal quests: \(snapshot.questCount)"
             + "  Running: \(snapshot.runningCount)"

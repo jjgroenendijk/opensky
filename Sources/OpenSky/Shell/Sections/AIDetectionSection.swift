@@ -36,15 +36,8 @@ final class AIDetectionSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Each observer accumulates awareness of each target from distance, the "
-                    + "target's light level, the noise its gait makes, and whether anything "
-                    + "solid is in the way. The line below is one per tracked pair the "
-                    + "selected actor is part of. Switch on the detection overlay above to "
-                    + "see the cones the same numbers come from. Every constant is resolved "
-                    + "from a game setting, and the second block says which plugin won."
-            ),
+        statsLabel.toolTip = "One line per observer and target pair of the selected actor."
+        return [
             statsLabel,
             settingsLabel
         ]

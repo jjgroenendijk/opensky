@@ -32,20 +32,10 @@ final class CombatMagicEffectsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        consumeControl.toolTip = "Uses the first potion or ingredient the player carries."
+        dispelControl.toolTip = "Removes every effect on the player."
         configureControls()
         return [
-            PanelComponents.note(
-                "Every effect currently acting on the player, then every effect acting on "
-                    + "the nearest resident actor — the same actor the Actor Values section "
-                    + "above reads its resistances from — with how much of each duration is "
-                    + "left. Consume carried item drinks or eats the first potion or "
-                    + "ingredient the player carries, which is the same action the inventory "
-                    + "menu's Consume button runs; a restore-health potion is instant, so it "
-                    + "moves the health bar and never appears in the list below. Dispel all "
-                    + "acts on the player only. The coverage line counts what the runtime "
-                    + "declined to do, including every archetype this milestone does not "
-                    + "implement."
-            ),
             PanelComponents.group([
                 PanelComponents.buttonRow([consumeControl, dispelControl])
             ]),

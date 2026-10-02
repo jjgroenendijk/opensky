@@ -46,19 +46,12 @@ final class ProgressionCharacterSection: ProgressionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        awardExperienceControl.toolTip =
+            "Adds experience and levels up when the threshold is reached."
+        chooseAttributeControl.toolTip =
+            "Spends one level-up on the attribute and refills the bars."
         configureControls()
         return [
-            PanelComponents.note(
-                "Level, banked character experience and unspent perk points come from the "
-                    + "player's own progress component; nothing here invents a number. "
-                    + "Award XP banks the typed amount against the level curve, which is "
-                    + "the same call a skill point makes, and raises the level the moment "
-                    + "the threshold is crossed. Each level gained owes one attribute "
-                    + "pick: Choose spends it on health, magicka or stamina, adding the "
-                    + "level-up points as a base offset and refilling all three bars — a "
-                    + "stamina pick also raises carry weight. Add point and Remove point "
-                    + "are Game.ModPerkPoints, for reaching a tree without leveling first."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "XP", captionWidth: 70, field: experienceControl

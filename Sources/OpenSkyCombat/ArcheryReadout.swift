@@ -8,7 +8,7 @@ nonisolated public enum ArcheryReadout: Sendable {
     /// the draw has been held, and the hold behind the last shot.
     public static func stateText(for snapshot: ArcherySnapshot) -> String {
         guard snapshot.isAvailable else {
-            return "Archery: unavailable (no game data loaded)"
+            return "Archery: no game loaded"
         }
         var parts = ["shot \(snapshot.phase.rawValue)"]
         if snapshot.hasArrowAttached {

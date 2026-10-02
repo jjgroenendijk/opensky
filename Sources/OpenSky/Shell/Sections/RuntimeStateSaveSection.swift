@@ -42,6 +42,7 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        saveControl.toolTip = "Saves runtime changes only."
         PanelComponents.configureTextField(
             slotControl, identifier: "RuntimeStateSlotControl", width: 150,
             placeholder: Self.defaultSlotName
@@ -56,11 +57,6 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
         )
         return [
             PanelComponents.group([
-                PanelComponents.note(
-                    "Saves the runtime deltas only, checked against the loaded plugins when "
-                        + "read back. Loading rebuilds the resident cells from the stored "
-                        + "state."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "Slot", captionWidth: 60, field: slotControl
                 )

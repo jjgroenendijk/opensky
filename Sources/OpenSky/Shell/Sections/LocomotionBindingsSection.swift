@@ -31,6 +31,7 @@ final class LocomotionBindingsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        jumpControl.toolTip = "One jump on solid ground. Hold run or sprint keys to see them here."
         PanelComponents.configureCheckbox(
             sneakControl, target: self, action: #selector(sneakChanged),
             identifier: "LocomotionSneakControl"
@@ -40,11 +41,6 @@ final class LocomotionBindingsSection: PanelSectionViewController {
             identifier: "LocomotionJumpControl"
         )
         return [
-            PanelComponents.note(
-                "Run and sprint are held modifiers with no state to set from here; hold the "
-                    + "key and watch the row below turn active. Jump requests exactly one "
-                    + "jump, which a step on solid ground consumes."
-            ),
             PanelComponents.group([sneakControl, PanelComponents.buttonRow([jumpControl])]),
             statsLabel
         ]

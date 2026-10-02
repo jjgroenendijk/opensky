@@ -50,6 +50,7 @@ final class InventoryGrantsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        grantControl.toolTip = "Creates the items in the inventory."
         PanelComponents.configureTextField(
             formIDField, identifier: "InventoryGrantFormIDField", width: 150,
             placeholder: "hex FormID"
@@ -64,14 +65,6 @@ final class InventoryGrantsSection: PanelSectionViewController {
             identifier: "InventoryGrantControl"
         )
         return [
-            PanelComponents.note(
-                "Grant puts items into an inventory outright, so the milestone loop can "
-                    + "start from a known state without hunting the world for one. It is a "
-                    + "developer action: unlike every other operation here it creates items "
-                    + "rather than moving them. Open container needs a session from "
-                    + "World > HUD & Interaction > Items, and is the same inventory a "
-                    + "nominated merchant barters from."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "FormID", captionWidth: 60, field: formIDField
@@ -104,7 +97,7 @@ final class InventoryGrantsSection: PanelSectionViewController {
 
     @objc private func grant() {
         guard let item = ItemsSection.parseFormID(formIDField.stringValue) else {
-            statsLabel.stringValue = "Grant refused: type the item's FormID in hexadecimal."
+            statsLabel.stringValue = "Grant refused: FormID must be hexadecimal."
             return
         }
         provider?.grantItem(item, count: count, to: grantTarget)

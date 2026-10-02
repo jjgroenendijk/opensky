@@ -136,7 +136,7 @@ struct WalkModeAcceptanceTests {
         let harness = SidebarAcceptanceHarness()
         let panel = try #require(harness.select("systemMenu") as? SystemMenuPanelViewController)
         let closed = try #require(harness.readout("SystemMenuStatsLabel", in: panel))
-        #expect(closed.contains("world sim running"))
+        #expect(closed.contains("world running"))
 
         send(panel.menuSection.openControl)
         harness.refresh(panel)
@@ -148,7 +148,7 @@ struct WalkModeAcceptanceTests {
         harness.refresh(panel)
         #expect(!harness.providers.systemMenuIsOpen)
         let resumed = try #require(harness.readout("SystemMenuStatsLabel", in: panel))
-        #expect(resumed.contains("world sim running"))
+        #expect(resumed.contains("world running"))
     }
 
     // MARK: The gate — one uninterrupted session

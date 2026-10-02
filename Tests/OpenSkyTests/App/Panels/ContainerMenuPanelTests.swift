@@ -156,7 +156,7 @@ struct ContainerMenuPanelTests {
     func closedReadoutNamesTheMode() {
         let provider = FakeWorldProviders()
         let readout = ContainerMenuSection.readout(for: provider.containerMenuSnapshot)
-        #expect(readout == "Container menu: closed · container mode · world sim running")
+        #expect(readout == "Container menu: closed · container mode · world running")
     }
 
     /// An open menu, barter mode and a live movie are all states a user must be
@@ -196,7 +196,7 @@ struct ContainerMenuPanelTests {
             movieDrawStats: SWFDrawStats(), movieFaults: 0, movieMissingNames: 0,
             movieUnhandledInvokes: 0, movieEntryTitles: [], movieVendorGold: nil
         )
-        #expect(ContainerMerchantSection.readout(for: snapshot).contains("no resident containers"))
+        #expect(ContainerMerchantSection.readout(for: snapshot).contains("no containers loaded"))
         #expect(ContainerMenuSection.rows(for: snapshot) == "  (this side is empty)")
     }
 }

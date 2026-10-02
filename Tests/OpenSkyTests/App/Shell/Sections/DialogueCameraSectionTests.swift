@@ -136,14 +136,14 @@ struct DialogueCameraSectionTests {
     @Test
     func noRendererIsStatedRatherThanShownAsReleased() {
         let text = DialogueCameraReadout.cameraText(for: .empty)
-        #expect(text == "Dialogue camera: unavailable (no renderer)")
+        #expect(text == "Dialogue camera: no renderer")
         #expect(
             DialogueCameraReadout.speakerText(for: .empty)
-                == "Speaker focus: unavailable (no renderer)"
+                == "Speaker focus: no renderer"
         )
         #expect(
             DialogueCameraReadout.outcomeText(for: .empty)
-                == "Open a conversation, or force the camera onto the selected actor."
+                == "Last action: none"
         )
     }
 }

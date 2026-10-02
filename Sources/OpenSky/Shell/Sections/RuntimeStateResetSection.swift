@@ -63,6 +63,8 @@ final class RuntimeStateResetSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        resetTargetControl.toolTip = "Uses the FormID from the Change section."
+        resetAllControl.toolTip = "Restores every reference, global, and the timescale."
         PanelComponents.configureButton(
             resetTargetControl, target: self, action: #selector(resetTarget),
             identifier: "RuntimeStateResetTargetControl"
@@ -72,12 +74,6 @@ final class RuntimeStateResetSection: PanelSectionViewController {
             identifier: "RuntimeStateResetAllControl"
         )
         return [
-            PanelComponents.note(
-                "Reset target uses the FormID from the Change section. Reset all restores "
-                    + "every reference and every global to plugin data and puts the "
-                    + "timescale back to its vanilla value; it is what the sidebar's Reset "
-                    + "control runs."
-            ),
             PanelComponents.buttonRow([resetTargetControl, resetAllControl]),
             statsLabel
         ]

@@ -17,7 +17,7 @@ nonisolated public enum DialogueCameraReadout: Sendable {
     /// leaving a conversation restore the previous camera" is answered from.
     public static func cameraText(for snapshot: DialogueCameraSnapshot) -> String {
         guard snapshot.isAvailable else {
-            return "Dialogue camera: unavailable (no renderer)"
+            return "Dialogue camera: no renderer"
         }
         let subject = snapshot.speakerName.map { name in
             name + (snapshot.speakerKey.map { " (\($0))" } ?? "")
@@ -52,7 +52,7 @@ nonisolated public enum DialogueCameraReadout: Sendable {
     /// What the speaker focus did: the turn, and the package it is holding.
     public static func speakerText(for snapshot: DialogueCameraSnapshot) -> String {
         guard snapshot.isAvailable else {
-            return "Speaker focus: unavailable (no renderer)"
+            return "Speaker focus: no renderer"
         }
         guard let focus = snapshot.speakerFocus else {
             return "Speaker focus: nobody held"
@@ -70,11 +70,10 @@ nonisolated public enum DialogueCameraReadout: Sendable {
         """
     }
 
-    /// Result of the last control, or the standing instruction when none has
-    /// run.
+    /// Result of the last control, if any.
     public static func outcomeText(for snapshot: DialogueCameraSnapshot) -> String {
         snapshot.lastOutcome
-            ?? "Open a conversation, or force the camera onto the selected actor."
+            ?? "Last action: none"
     }
 
     /// One world-space point, rounded to whole units: the readout is for

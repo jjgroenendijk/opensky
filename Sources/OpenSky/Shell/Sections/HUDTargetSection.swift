@@ -28,11 +28,8 @@ final class HUDTargetSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Walk mode targets the nearest solid object under the crosshair. "
-                    + "The prompt below is the exact text sent to hudmenu.swf."
-            ),
+        statsLabel.toolTip = "The prompt text sent to the HUD for the crosshair target."
+        return [
             statsLabel
         ]
     }

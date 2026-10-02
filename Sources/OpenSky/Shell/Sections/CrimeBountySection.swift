@@ -39,18 +39,13 @@ final class CrimeBountySection: CrimeFactionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        addControl.toolTip =
+            "Adds the typed gold to the chosen half. A negative amount pays it down."
+        guardCheckControl.toolTip =
+            "Asks the picked actor what it would do, then runs one guard tick."
+        resistControl.toolTip = "Makes the faction's guards hostile."
         configureControls()
         return [
-            PanelComponents.note(
-                "Crime gold the player owes each crime faction, split into the "
-                    + "non-violent and violent halves Faction.ModCrimeGold writes, and "
-                    + "what that faction's guards do about it. Add moves the chosen half "
-                    + "by the typed gold (negative pays it down); Clear drops both. "
-                    + "Guard check asks the actor picked under Memberships what it would "
-                    + "do, then runs one tick of the guard pass. Resist arrest turns the "
-                    + "chosen faction's guards hostile, as walking out of the arrest "
-                    + "conversation does."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Faction", captionWidth: 60, field: factionControl

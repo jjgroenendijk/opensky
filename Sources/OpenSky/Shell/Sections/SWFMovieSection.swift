@@ -60,6 +60,7 @@ final class SWFMovieSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        layerEnabledControl.toolTip = "Draws frame 1 only. Many menus stay blank until scripts run."
         PanelComponents.configurePopUp(
             movieControl,
             target: self,
@@ -72,11 +73,6 @@ final class SWFMovieSection: PanelSectionViewController {
         layerEnabledControl.setAccessibilityIdentifier("SWFLayerEnabledControl")
         reloadMovies()
         return [
-            PanelComponents.note(
-                "Renders a vanilla movie's frame-1 display list over the world "
-                    + "frame. Most menus hide frame-1 content behind a zero-alpha "
-                    + "CXFORM and stay blank until ActionScript runs."
-            ),
             movieControl,
             layerEnabledControl,
             statsLabel

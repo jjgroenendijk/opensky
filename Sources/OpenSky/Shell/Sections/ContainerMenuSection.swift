@@ -112,7 +112,7 @@ final class ContainerMenuSection: PanelSectionViewController {
     /// Pure so the readout is unit-testable without AppKit state.
     nonisolated static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
-            return "Container menu: closed · \(snapshot.mode.rawValue) mode · world sim running"
+            return "Container menu: closed · \(snapshot.mode.rawValue) mode · world running"
         }
         let sim = snapshot.worldSimPaused ? "paused" : "running"
         let stack = snapshot.openMenus.isEmpty ? "none" : snapshot.openMenus.joined(separator: ", ")

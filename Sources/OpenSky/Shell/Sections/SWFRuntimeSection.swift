@@ -82,14 +82,10 @@ final class SWFRuntimeSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        startControl.toolTip = "Runs the movie's scripts from the first frame."
+        pointerXControl.toolTip = "In movie pixels."
         configureControls()
         return [
-            PanelComponents.note(
-                "Runs the selected movie's ActionScript: Start executes every "
-                    + "DoInitAction, then frame 1 and its DoAction. Ticks, keys, and "
-                    + "pointer events are explicit — the layer reads no clock. Pointer "
-                    + "coordinates are movie stage pixels."
-            ),
             PanelComponents.buttonRow([startControl, tickControl, burstControl, stopControl]),
             PanelComponents.caption("Input"),
             PanelComponents.buttonRow([keyControl, sendKeyControl]),

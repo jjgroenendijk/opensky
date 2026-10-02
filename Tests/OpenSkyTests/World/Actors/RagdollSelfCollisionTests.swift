@@ -195,9 +195,9 @@ struct RagdollSelfCollisionTests {
         snapshot.selfCollisionPairCount = 63
         snapshot.selfContactCount = 4
         #expect(RagdollReadout.selfCollisionText(for: snapshot)
-            == "Self-collision: 63 bone pairs admitted, 4 touching")
+            == "Bone collision: 63 pairs allowed, 4 touching")
         snapshot.isSelfCollisionEnabled = false
-        #expect(RagdollReadout.selfCollisionText(for: snapshot) == "Self-collision: off")
+        #expect(RagdollReadout.selfCollisionText(for: snapshot) == "Bone collision: off")
     }
 
     // MARK: - Fixture

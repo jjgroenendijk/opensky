@@ -51,30 +51,19 @@ final class JournalQuestsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        questControl.toolTip = "Quests the journal lists, with stage and objectives."
+        aliasLabel.toolTip = "Aliases fill when the quest starts and clear when it stops."
         PanelComponents.configureComboBox(
             questControl, target: self, action: #selector(questSelected),
             identifier: "JournalQuestControl", width: 220
         )
         return [
-            PanelComponents.note(
-                "Every quest the journal would list, with the highest stage it has reached "
-                    + "and the display state of each objective it declares. A quest whose "
-                    + "type keeps it out of the journal is not listed at all."
-            ),
             statsLabel,
             PanelComponents.group([
-                PanelComponents.note(
-                    "Pick a quest to see it as the page would show it, drive it with the "
-                        + "controls below, and read the alias table it filled when it started."
-                ),
                 questControl
             ]),
             selectionLabel,
             PanelComponents.separator(),
-            PanelComponents.note(
-                "Aliases fill when a quest starts and clear when it stops. This is the same "
-                    + "table World > Scripts > Quests shows, for the quest selected here."
-            ),
             aliasLabel
         ]
     }

@@ -35,6 +35,8 @@ final class CombatLoopSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        hostilityControl.toolTip = "The actor fights only after it detects the player."
+        castingControl.toolTip = "Off keeps every fighter on weapons only."
         PanelComponents.configureCheckbox(
             hostilityControl, target: self, action: #selector(hostilityChanged),
             identifier: "CombatHostilityControl"
@@ -48,23 +50,6 @@ final class CombatLoopSection: PanelSectionViewController {
             identifier: "CombatClearTraceControl"
         )
         return [
-            PanelComponents.note(
-                "The selected actor is the nearest resident one, which is also what the "
-                    + "Actor Values controls act on. Making it hostile does not by itself "
-                    + "start a fight: the actor has to notice the player first, which is "
-                    + "the detection pass under World > AI & Navigation. Once it does, it walks "
-                    + "over, swings, blocks, breaks off at low health, hunts for a player "
-                    + "who broke line of sight and eventually gives up and goes back to its "
-                    + "schedule. The Fighters lines below say which of those each actor is "
-                    + "doing right now."
-            ),
-            PanelComponents.note(
-                "A fighter that knows a hostile spell it can pay for and reach with casts "
-                    + "it instead of closing, and casts about half the time when it is "
-                    + "already in weapon reach. Clearing \"Fighters cast spells\" keeps "
-                    + "every fighter on its fists, which is how a swing that was chosen "
-                    + "over a cast is told apart from an actor that had nothing castable."
-            ),
             PanelComponents.group([
                 hostilityControl,
                 castingControl,

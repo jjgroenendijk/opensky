@@ -70,10 +70,10 @@ struct CombatRagdollPanelTests {
         let readout = try #require(scriptsReadout("CombatRagdollStatsLabel", in: panel.view))
         #expect(readout.contains("Ragdolls: 3 (1 active, 2 settled)"))
         #expect(readout.contains("Bone bodies: 54 over 51 joints"))
-        #expect(readout.contains("\(RagdollConstraintSolver.iterationCount) iterations/substep"))
-        #expect(readout.contains("2 limits still violated"))
-        #expect(readout.contains("Self-collision: 96 bone pairs admitted, 3 touching"))
-        #expect(readout.contains("no pose recovery needed"))
+        #expect(readout.contains("\(RagdollConstraintSolver.iterationCount) passes per step"))
+        #expect(readout.contains("2 joints past their limit"))
+        #expect(readout.contains("Bone collision: 96 pairs allowed, 3 touching"))
+        #expect(readout.contains("Stability: ok"))
     }
 
     /// A settled world reads as converged rather than as a bare zero.
@@ -86,7 +86,7 @@ struct CombatRagdollPanelTests {
         defer { panel.stopInspecting() }
 
         let readout = try #require(scriptsReadout("CombatRagdollStatsLabel", in: panel.view))
-        #expect(readout.contains("converged"))
+        #expect(readout.contains("settled"))
         #expect(!readout.contains("still violated"))
     }
 

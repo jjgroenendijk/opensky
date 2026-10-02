@@ -125,7 +125,7 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("readied in right hand"))
         #expect(text.contains("Hands: left idle, right charging"))
         #expect(text.contains("magicka 60 / 100"))
-        #expect(text.contains("Tomes: Spell Tome: Healing — 1 book(s) already read"))
+        #expect(text.contains("Tomes: Spell Tome: Healing · 1 read"))
         #expect(text.contains("Casts: 2 completed, 4 second(s) maintained"))
     }
 
@@ -139,9 +139,9 @@ struct CombatSpellcastingPanelTests {
             )
         )
 
-        #expect(text.contains("1 refusal(s)"))
+        #expect(text.contains("Refused casts: 1"))
         #expect(text.contains("aimed delivery is not implemented yet x 3"))
-        #expect(text.contains("2 ability entr(ies) carry no duration"))
+        #expect(text.contains("2 permanent ability effect(s) skipped"))
     }
 
     /// The resistance line proves the documented multiplier was used; a moving
@@ -166,7 +166,7 @@ struct CombatSpellcastingPanelTests {
     @Test func theDeliveryLineSaysWhenNothingHasLandedYet() {
         #expect(
             CastingControlReadout.deliveryText(for: snapshot())
-                .contains("nothing cast yet; no spell has landed on anybody yet")
+                .contains("nothing cast yet; no hits yet")
         )
         #expect(
             CastingControlReadout.deliveryText(for: .unavailable) == "Delivery: unavailable"
@@ -181,10 +181,10 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("Spellcasting unavailable: no game data loaded."))
     }
 
-    @Test func anEmptySpellbookNamesTheControlThatFillsIt() {
+    @Test func anEmptySpellbookReadsNone() {
         let text = CastingControlReadout.spellsText(for: snapshot())
 
-        #expect(text.contains("Learn start spells"))
+        #expect(text == "Known spells: none")
     }
 
     /// The magic condition probe: the eight registrations are readable, and an
@@ -199,7 +199,7 @@ struct CombatSpellcastingPanelTests {
         #expect(text.contains("HasSpell(Healing) -> 1"))
         #expect(text.contains("no equippedSpell magic state"))
         #expect(CastingControlReadout.conditionsText(for: snapshot())
-            == "Conditions: no magic condition function could be evaluated")
+            == "Conditions: none")
         #expect(CastingControlReadout.conditionsText(for: .unavailable)
             == "Conditions: unavailable")
     }

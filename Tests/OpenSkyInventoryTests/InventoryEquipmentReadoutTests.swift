@@ -62,13 +62,12 @@ struct InventoryEquipmentReadoutTests {
         #expect(text.hasSuffix("No grant yet."))
     }
 
-    /// A closed container is a stated condition with the way to open one, not a
-    /// blank line that reads like an empty chest.
+    /// A closed container is a stated condition, not a blank line that reads
+    /// like an empty chest.
     @Test
     func grantsTextStatesAClosedContainer() {
         let text = InventoryEquipmentReadout.grantsText(for: Self.snapshot())
-        #expect(text.contains("Container: none open."))
-        #expect(text.contains("World > HUD & Interaction > Items"))
+        #expect(text.contains("Container: none open"))
         #expect(text.contains("  empty"))
     }
 
@@ -95,7 +94,7 @@ struct InventoryEquipmentReadoutTests {
                 name: "Iron Sword", reference: FormID(0x700), owner: nil, factionRank: nil
             ))
         )
-        #expect(unowned.contains("Owner: none — taking this is not theft."))
+        #expect(unowned.contains("Owner: none · not theft"))
     }
 
     @Test
@@ -161,7 +160,7 @@ struct InventoryEquipmentReadoutTests {
         let text = InventoryEquipmentReadout.ownershipText(
             for: Self.snapshot(ownership: permitted)
         )
-        #expect(text.contains("Owner: 00003000 — taking this is not theft."))
+        #expect(text.contains("Owner: 00003000 · not theft"))
         #expect(!text.contains("Bounty if witnessed"))
     }
 
@@ -171,7 +170,7 @@ struct InventoryEquipmentReadoutTests {
             for: Self.snapshot(equipTarget: .player)
         )
         #expect(
-            text == "Inspecting: Player\nNothing resolves that owner right now."
+            text == "Inspecting: Player\nNot found"
                 + "\nEnchantment cache: 0 item(s), 0 resolved, 0 reused"
         )
     }

@@ -67,7 +67,7 @@ struct CrimeFactionsAcceptancePanelTests {
             .contains("Bounty: 0 gold with 0 faction(s)"))
         let theft = readout("CrimeTheftStatsLabel", in: panel)
         #expect(theft.contains("Target: none"))
-        #expect(theft.contains("Stolen in the player's inventory: 0 item(s)"))
+        #expect(theft.contains("Stolen items carried: 0"))
         #expect(readout("FactionMembershipStatsLabel", in: panel)
             .contains("Player — 0 membership(s)"))
         #expect(readout("FactionVendorStatsLabel", in: panel)

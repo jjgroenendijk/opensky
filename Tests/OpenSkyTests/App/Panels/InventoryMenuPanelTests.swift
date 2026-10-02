@@ -107,7 +107,7 @@ struct InventoryMenuPanelTests {
         let provider = FakeWorldProviders()
         #expect(
             InventoryMenuSection.readout(for: provider.inventoryMenuSnapshot)
-                == "Inventory menu: closed · world sim running"
+                == "Inventory menu: closed · world running"
         )
     }
 

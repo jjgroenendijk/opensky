@@ -67,16 +67,9 @@ final class DialogueSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        openControl.toolTip = "Opens dialogue with the crosshair target. Key: F."
         configureControls()
         return [
-            PanelComponents.note(
-                "Opens the vanilla dialoguemenu.swf on the actor under the crosshair and "
-                    + "fills it from the dialogue runtime. F does the same thing in world "
-                    + "mode, on a living, non-hostile actor within reach. Unlike every "
-                    + "other menu this one leaves the world simulating, which the menu "
-                    + "stack line below reports. Up, Down, Choose and Leave go through the "
-                    + "same input path as the live keys."
-            ),
             PanelComponents.buttonRow([openControl, leaveControl]),
             PanelComponents.buttonRow([upControl, downControl, chooseControl]),
             topicsLabel,

@@ -60,6 +60,7 @@ final class RuntimeStateGlobalsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        globalControl.toolTip = "The name of a global value. Clock values move the clock."
         PanelComponents.configureComboBox(
             globalControl, target: self, action: #selector(globalSelected),
             identifier: "RuntimeStateGlobalControl", width: 200
@@ -78,11 +79,6 @@ final class RuntimeStateGlobalsSection: PanelSectionViewController {
         )
         return [
             PanelComponents.group([
-                PanelComponents.note(
-                    "Type or pick a GLOB editor ID. Short and long globals round the value "
-                        + "onto their declared type. GameHour and the other clock-owned "
-                        + "globals move the clock instead of storing an override."
-                ),
                 globalControl,
                 PanelComponents.labeledFieldRow(
                     caption: "Value", captionWidth: 60, field: globalValueControl

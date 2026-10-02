@@ -97,7 +97,7 @@ struct ProgressionReadoutTests {
         )
         #expect(
             ProgressionControlReadout.description(of: .unmetCondition)
-                == "its own conditions do not hold"
+                == "conditions not met"
         )
         #expect(
             ProgressionControlReadout.description(of: .previousRankMissing(perk))
@@ -105,7 +105,7 @@ struct ProgressionReadoutTests {
         )
         #expect(
             ProgressionControlReadout.description(of: .unresolvedPerk)
-                == "no PERK record in this load order"
+                == "perk not found"
         )
     }
 
@@ -169,7 +169,7 @@ struct ProgressionReadoutTests {
     @Test
     func anEntryNodeSaysItGrantsNothing() {
         let text = ProgressionControlReadout.perkText(for: makeProgressionSnapshot())
-        #expect(text == "Selected perk: none — this box grants no perk.")
+        #expect(text == "Selected perk: none")
     }
 
     /// With no runtime attached every line reports the absence rather than a

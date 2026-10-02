@@ -35,6 +35,7 @@ final class TriggerVolumeSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        statsLabel.toolTip = "Checked in walk mode only."
         PanelComponents.configureButton(
             clearLogControl,
             target: self,
@@ -42,11 +43,6 @@ final class TriggerVolumeSection: PanelSectionViewController {
             identifier: "TriggerLogClearControl"
         )
         return [
-            PanelComponents.note(
-                "Trigger volumes come from SkyrimLayer 12 bodies inside a placed NIF and "
-                    + "from XPRM primitives. Occupancy is tested once per frame in walk "
-                    + "mode only, and freezes rather than clearing when you switch to fly."
-            ),
             statsLabel,
             PanelComponents.caption("Transitions (most recent last)"),
             PanelComponents.group([eventsLabel, PanelComponents.buttonRow([clearLogControl])])

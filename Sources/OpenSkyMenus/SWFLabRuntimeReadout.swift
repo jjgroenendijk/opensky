@@ -80,7 +80,7 @@ nonisolated extension SWFLabReadout {
         guard let runtime = snapshot.runtime else {
             return snapshot.selectedPath == nil
                 ? "Runtime: no movie selected"
-                : "Runtime: stopped · Start runs the movie's ActionScript"
+                : "Runtime: stopped"
         }
         let lines = [
             "Runtime: \(runtime.isStarted ? "running" : "loaded") · "

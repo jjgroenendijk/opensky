@@ -83,7 +83,7 @@ struct InventoryEquipmentPanelTests {
         section.formIDField.stringValue = "  "
         tap(section.grantControl)
         #expect(provider.inventoryEquipment.playerCount == 1)
-        #expect(section.readout == "Grant refused: type the item's FormID in hexadecimal.")
+        #expect(section.readout == "Grant refused: FormID must be hexadecimal.")
 
         section.formIDField.stringValue = "not-hex"
         tap(section.grantControl)
@@ -139,7 +139,7 @@ struct InventoryEquipmentPanelTests {
         let section = panel.ownershipSection
 
         section.refreshReadout()
-        #expect(section.readout.contains("Owner: none — taking this is not theft."))
+        #expect(section.readout.contains("Owner: none · not theft"))
 
         provider.inventoryEquipment.ownership = ReferenceOwnershipReadout(
             name: "Chest",

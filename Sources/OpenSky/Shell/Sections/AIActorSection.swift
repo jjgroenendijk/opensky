@@ -33,6 +33,8 @@ final class AIActorSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        actorControl.toolTip =
+            "Actors in the streamed cells, nearest first. The sections below act on this one."
         PanelComponents.configurePopUp(
             actorControl, target: self, action: #selector(actorChanged),
             identifier: "AIActorSelectControl", width: PanelMetrics.contentWidth
@@ -42,14 +44,6 @@ final class AIActorSection: PanelSectionViewController {
             identifier: "AIActorCrosshairControl"
         )
         return [
-            PanelComponents.note(
-                "Every section below acts on this actor: its mover, its package, what it "
-                    + "perceives and where it is in a fight. The list is every actor in the "
-                    + "streamed cells, nearest the camera first, named as the Combat & "
-                    + "Physics readouts name them. Corpses stay in the list, because "
-                    + "selecting one and reading why nothing moves is the answer to a real "
-                    + "question."
-            ),
             PanelComponents.group([actorControl, crosshairControl]),
             statsLabel
         ]

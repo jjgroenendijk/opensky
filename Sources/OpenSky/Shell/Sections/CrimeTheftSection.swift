@@ -21,14 +21,9 @@ final class CrimeTheftSection: CrimeFactionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "The ownership verdict for the reference under the walk-mode crosshair: "
-                    + "its own XOWN, else its cell's, judged against the player's "
-                    + "memberships and ranks — the same verdict a take is charged by. "
-                    + "Below it, every stolen stack the player carries; merchants other "
-                    + "than fences refuse these."
-            ),
+        statsLabel.toolTip =
+            "Ownership of the crosshair target, then the stolen items the player carries."
+        return [
             statsLabel
         ]
     }

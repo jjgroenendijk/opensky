@@ -28,7 +28,6 @@ enum PanelMetrics {
     static let rowGap: CGFloat = 8
 
     static let captionFont = NSFont.systemFont(ofSize: 12)
-    static let noteFont = NSFont.systemFont(ofSize: 11)
     static let monoFont = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
     static let monoDigitFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
 }
@@ -41,15 +40,6 @@ enum PanelComponents {
         let label = NSTextField(labelWithString: text)
         label.font = PanelMetrics.captionFont
         label.textColor = Theme.parchment
-        return label
-    }
-
-    /// Wrapping tertiary hint sized to the content width.
-    static func note(_ text: String) -> NSTextField {
-        let label = NSTextField(wrappingLabelWithString: text)
-        label.font = PanelMetrics.noteFont
-        label.textColor = .tertiaryLabelColor
-        label.widthAnchor.constraint(equalToConstant: PanelMetrics.contentWidth).isActive = true
         return label
     }
 

@@ -32,13 +32,8 @@ final class ScriptNativeTallySection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Implemented names counts the distinct natives this session called that "
-                    + "never reported unimplemented. An unimplemented native degrades to a "
-                    + "logged no-op, so the ranked list is how a user sees what a script "
-                    + "could not do."
-            ),
+        statsLabel.toolTip = "Engine functions that scripts called but OpenSky does not have yet."
+        return [
             statsLabel
         ]
     }

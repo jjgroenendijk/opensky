@@ -49,6 +49,7 @@ final class SystemMenuSettingsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        dataRootLabel.toolTip = "Change the data root in Settings (Cmd+,)."
         PanelComponents.configureSlider(
             volumeControl, target: self, action: #selector(volumeChanged),
             identifier: "SystemMenuMasterVolumeControl", width: 200
@@ -64,9 +65,6 @@ final class SystemMenuSettingsSection: PanelSectionViewController {
                     slider: volumeControl, valueLabel: volumeValueLabel
                 )
             ]),
-            PanelComponents.note(
-                "Change the data root in Settings (Cmd+,). Per-category volumes land in M9."
-            ),
             statsLabel
         ]
     }

@@ -33,6 +33,7 @@ final class CombatArcherySection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        spawnControl.toolTip = "Fires one arrow without using one from the quiver."
         PanelComponents.configureButton(
             spawnControl, target: self, action: #selector(spawn),
             identifier: "ArcherySpawnControl"
@@ -50,13 +51,6 @@ final class CombatArcherySection: PanelSectionViewController {
             identifier: "ArcheryClearTraceControl"
         )
         return [
-            PanelComponents.note(
-                "With a bow equipped, holding the left mouse button draws and releasing "
-                    + "it looses; the graph decides when the arrow actually leaves the "
-                    + "string. Fire one arrow takes the same shot from here without "
-                    + "spending one from the quiver, so a trajectory can be watched "
-                    + "without keeping arrows stocked."
-            ),
             PanelComponents.group([
                 PanelComponents.buttonRow([spawnControl, despawnControl]),
                 PanelComponents.buttonRow([clearStuckControl, clearTraceControl])

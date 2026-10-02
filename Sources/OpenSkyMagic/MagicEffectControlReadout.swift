@@ -41,15 +41,14 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
     /// What it declined to do, which is the point of the tally: unimplemented
     /// ground is measured rather than silent.
     public static func coverageText(for snapshot: MagicEffectControlSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Coverage: unavailable" }
+        guard snapshot.isAvailable else { return "Not supported: unavailable" }
         guard snapshot.skippedCount > 0 else {
-            return "Coverage: every effect entry applied"
+            return "Not supported: none"
         }
         let unimplemented = snapshot.unimplementedLines.isEmpty
             ? "none named"
             : snapshot.unimplementedLines.joined(separator: ", ")
-        return "Coverage: \(snapshot.skippedCount) entr(ies) skipped — "
-            + "unimplemented archetypes: \(unimplemented)"
+        return "Not supported: \(snapshot.skippedCount) effect(s) skipped — \(unimplemented)"
     }
 
     public static func lastActionText(for snapshot: MagicEffectControlSnapshot) -> String {

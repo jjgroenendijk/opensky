@@ -182,7 +182,7 @@ struct FirstPersonPanelTests {
         #expect(readout.contains("Graph: none"))
         #expect(readout.contains("Rig: none"))
         #expect(readout.contains("No arms: behavior asset missing"))
-        #expect(readout.contains("Camera bone: absent"))
+        #expect(readout.contains("Camera bone: missing"))
     }
 
     /// A name the `_1stperson` set spells differently is a named miss rather

@@ -45,7 +45,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
     public static func skillsText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Skills: unavailable" }
         guard !snapshot.skills.isEmpty else {
-            return "Skills: this load order carries no AVIF skill records."
+            return "Skills: none in the loaded plugins"
         }
         let lines = snapshot.skills.map { skill in
             let marker = skill.index == snapshot.selectedSkill ? ">" : " "
@@ -78,7 +78,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
         let skillName = snapshot.selectedSkillReadout?.name
             ?? ActorValueIdentity.description(of: snapshot.selectedSkill)
         guard !snapshot.treeNodes.isEmpty else {
-            return "Perk tree: \(skillName) has no tree in this load order."
+            return "Perk tree: \(skillName) has none"
         }
         let lines = snapshot.treeNodes.map { node in
             let marker = node.node == snapshot.selectedNode ? ">" : " "
@@ -98,7 +98,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
     public static func perkText(for snapshot: ProgressionControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Selected perk: unavailable" }
         guard let perk = snapshot.perk else {
-            return "Selected perk: none — this box grants no perk."
+            return "Selected perk: none"
         }
         var lines = [
             "Selected perk: \(perk.name) [\(perk.editorID)] \(perk.formID)"
@@ -168,13 +168,13 @@ nonisolated public enum ProgressionControlReadout: Sendable {
 
     public static func description(of refusal: PerkSpendRefusal) -> String {
         switch refusal {
-        case .unresolvedPerk: "no PERK record in this load order"
+        case .unresolvedPerk: "perk not found"
         case .notPlayable: "not playable"
         case .alreadyOwned: "owned"
         case .notInPerkTree: "in no perk tree"
         case let .previousRankMissing(perk): "needs the rank below (\(perk))"
         case .parentMissing: "needs an owned parent"
-        case .unmetCondition: "its own conditions do not hold"
+        case .unmetCondition: "conditions not met"
         }
     }
 

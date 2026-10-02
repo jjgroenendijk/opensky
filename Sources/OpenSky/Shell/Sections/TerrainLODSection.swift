@@ -78,7 +78,7 @@ final class TerrainLODSection: PanelSectionViewController {
         maximumField.stringValue = Self.distanceString(configuration.maximumDistance)
         treeField.stringValue = Self.distanceString(configuration.treeLoadDistance)
         statusLabel.textColor = .secondaryLabelColor
-        statusLabel.stringValue = "Source: \(snapshot.source). Apply rebuilds LOD live."
+        statusLabel.stringValue = "Source: \(snapshot.source)"
     }
 
     @objc private func apply() {

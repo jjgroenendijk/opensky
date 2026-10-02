@@ -127,8 +127,8 @@ struct DialogueSectionTests {
         provider.dialogue.snapshot = .empty
         let panel = makePanel(provider)
         panel.dialogueSection.refreshReadout()
-        #expect(panel.dialogueSection.topicsReadout.contains("no plugin loaded"))
-        #expect(panel.dialogueSection.conditionsReadout.contains("no plugin loaded"))
+        #expect(panel.dialogueSection.topicsReadout.contains("no game loaded"))
+        #expect(panel.dialogueSection.conditionsReadout.contains("no game loaded"))
     }
 
     @Test

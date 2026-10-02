@@ -98,7 +98,7 @@ struct CombatMagicEffectsPanelTests {
     @Test func noRunningEffectIsStated() {
         let text = MagicEffectControlReadout.text(for: snapshot())
         #expect(text.contains("Player effects: none running"))
-        #expect(text.contains("Coverage: every effect entry applied"))
+        #expect(text.contains("Not supported: none"))
     }
 
     /// The nearest resident actor's effect list, beside the resistances that
@@ -138,7 +138,7 @@ struct CombatMagicEffectsPanelTests {
         let text = MagicEffectControlReadout.text(
             for: snapshot(skipped: 4, unimplemented: ["paralysis x3", "calm x1"])
         )
-        #expect(text.contains("Coverage: 4 entr(ies) skipped"))
+        #expect(text.contains("Not supported: 4 effect(s) skipped"))
         #expect(text.contains("paralysis x3, calm x1"))
     }
 }

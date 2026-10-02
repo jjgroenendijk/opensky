@@ -82,22 +82,13 @@ final class CombatActorValuesSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        valueNameControl.toolTip = "Any actor value by name or index. Overrides the popup."
+        setBaseControl.toolTip =
+            "Sets the base value. For health, magicka, or stamina this moves the maximum."
+        refillControl.toolTip = "Fills every bar to its maximum."
+        resetControl.toolTip = "Drops runtime changes so the actor reads its records again."
         configureControls()
         return [
-            PanelComponents.note(
-                "Health, magicka and stamina come from the actor's own record and race "
-                    + "derivation; nothing here invents a number. Any of the other 161 actor "
-                    + "values — a resistance, a skill, carry weight — is reachable by typing "
-                    + "its name or index into Other value, which then wins over the popup. "
-                    + "Damage and Restore apply the typed amount to the selected value and "
-                    + "Set writes it outright. Set base writes the value's base instead, "
-                    + "which for health, magicka or stamina moves the maximum the bar is "
-                    + "drawn against — stored as a distance from what the records derive, "
-                    + "so Reset to records is still the way back. Refill returns every bar "
-                    + "to that maximum, and Reset to records drops the runtime state so the "
-                    + "actor derives from its records again. An actor whose health reaches "
-                    + "zero dies, which is what the Death & Ragdoll section then shows."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Target", captionWidth: 70, field: targetControl

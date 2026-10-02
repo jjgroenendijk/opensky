@@ -109,7 +109,7 @@ struct SystemMenuPanelTests {
     func closedReadoutNamesTheWorldSimState() {
         let snapshot = Self.snapshot(isOpen: false)
         #expect(SystemMenuSection
-            .readout(for: snapshot) == "System menu: closed · world sim running")
+            .readout(for: snapshot) == "System menu: closed · world running")
     }
 
     @Test

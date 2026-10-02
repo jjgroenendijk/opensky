@@ -55,6 +55,8 @@ final class RenderDebugSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        modeControl.toolTip = "Replaces the shading for the whole scene. Not saved."
+        soloControl.toolTip = "Hides other layers, shadows included. Not saved."
         for mode in modes {
             modeControl.addItem(withTitle: mode.title)
         }
@@ -79,16 +81,6 @@ final class RenderDebugSection: PanelSectionViewController {
             return checkbox
         }
         return [
-            PanelComponents.note(
-                "The view channel replaces the shaded surface for the whole scene: "
-                    + "wireframe rasterises edges only, world normals, texture coordinates "
-                    + "and mip level show what a surface believes about itself, shadow "
-                    + "cascade colours which cascade shades it, and layer category colours "
-                    + "which subsystem drew it. Layer isolation hides whole subsystems, "
-                    + "shadow casting included, so a hidden layer leaves no shadow behind. "
-                    + "Neither survives a relaunch, and neither reaches a screenshot or a "
-                    + "bench run."
-            ),
             PanelComponents.group([PanelComponents.caption("View channel"), modeControl]),
             PanelComponents.group(
                 [PanelComponents.caption("Layers")] + layerControls

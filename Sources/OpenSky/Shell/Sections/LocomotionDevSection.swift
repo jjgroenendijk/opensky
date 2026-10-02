@@ -56,23 +56,16 @@ final class LocomotionDevSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        forcedGaitControl.toolTip =
+            "Forces walk, run, or sprint. Gravity and collision still apply."
+        eventControl.toolTip = "Sends an animation event. An unknown name is reported."
         configureControls()
         return [
-            PanelComponents.note(
-                "A forced gait holds the graph's movement inputs and the resolved speed. It "
-                    + "does not move the capsule into water or off the ground, so the "
-                    + "controller's own gravity and collision still decide where the player "
-                    + "ends up."
-            ),
             PanelComponents.group([
                 forcedGaitControl,
                 PanelComponents.buttonRow([clearForcedGaitControl])
             ]),
             PanelComponents.group([
-                PanelComponents.note(
-                    "The event names are the ones the bridge raises on its own edges. A name "
-                        + "the graph does not declare is reported as such rather than dropped."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "Event", captionWidth: 70, field: eventControl
                 ),

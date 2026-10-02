@@ -29,6 +29,7 @@ final class AIMovementSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        moveControl.toolTip = "Walks the selected actor to the point under the crosshair."
         PanelComponents.configureButton(
             moveControl, target: self, action: #selector(moveToCrosshair),
             identifier: "AIMoveToCrosshairControl"
@@ -38,14 +39,6 @@ final class AIMovementSection: PanelSectionViewController {
             identifier: "AIMoveStopControl"
         )
         return [
-            PanelComponents.note(
-                "Move paths the selected actor to whatever the crosshair is pointing at, "
-                    + "through the navmesh: the point is projected onto the nearest walkable "
-                    + "triangle, so aiming at a wall a little above the floor still works. "
-                    + "The actor walks or runs by distance, opens the doors on its route, "
-                    + "and repaths when a cell it was crossing unloads. Stop leaves it "
-                    + "standing where it is. Both act on the actor selected above."
-            ),
             PanelComponents.buttonRow([moveControl, stopControl]),
             statsLabel
         ]

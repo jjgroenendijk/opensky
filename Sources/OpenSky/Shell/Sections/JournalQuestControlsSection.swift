@@ -48,15 +48,10 @@ final class JournalQuestControlsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        startControl.toolTip = "Fails if a required alias cannot be filled."
+        showObjectiveControl.toolTip = "Only shown objectives appear on the page."
         configureControls()
         return [
-            PanelComponents.note(
-                "These act on the quest picked in the Quests section. Start fills the "
-                    + "quest's aliases first and refuses the start if a non-optional one "
-                    + "stays empty; Stop clears the table again. A stage the quest does not "
-                    + "declare, and a stage set on a quest that is not running, are both "
-                    + "refused rather than recorded."
-            ),
             PanelComponents.buttonRow([startControl, stopControl]),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
@@ -65,10 +60,6 @@ final class JournalQuestControlsSection: PanelSectionViewController {
                 PanelComponents.buttonRow([setStageControl])
             ]),
             PanelComponents.group([
-                PanelComponents.note(
-                    "An objective appears on the page only while it is displayed, which is "
-                        + "what the quest's own scripts would set."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "Objective", captionWidth: 70, field: objectiveControl
                 ),

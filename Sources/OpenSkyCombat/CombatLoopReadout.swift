@@ -88,7 +88,7 @@ nonisolated public enum CombatLoopReadout: Sendable {
         let situation = String(
             format: "%.0f u, health %.0f%%", actor.distance, actor.healthFraction * 100
         )
-        let counts = "\(actor.attackCount) attacks, \(actor.contactCount) contact frames,"
+        let counts = "\(actor.attackCount) attacks, \(actor.contactCount) swings,"
             + " \(actor.blockCount) blocks, \(actor.searchCount) searches,"
             + " \(actor.castCount) casts (\(actor.spellOptionCount) castable)"
         return "\(actor.name): \(actor.phase.rawValue), \(actor.awareness.rawValue), "

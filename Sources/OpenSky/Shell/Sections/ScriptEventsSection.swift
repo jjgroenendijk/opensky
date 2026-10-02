@@ -29,12 +29,8 @@ final class ScriptEventsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Events the VM dispatched, most recent last. Pending events are queued for "
-                    + "the next tick; dropped events left the ring to make room for newer "
-                    + "ones and are counted rather than hidden."
-            ),
+        statsLabel.toolTip = "Newest last. Dropped events are counted."
+        return [
             statsLabel
         ]
     }
