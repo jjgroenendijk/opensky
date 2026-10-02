@@ -43,8 +43,10 @@ fi
 derived="${OPENSKY_DERIVED_DATA:-$root/DerivedData}"
 link="$derived/CompilationCache.noindex"
 target="$shared/DerivedData/CompilationCache.noindex"
-[ "$(readlink "$link" 2>/dev/null || true)" != "$target" ] || exit 0
 mkdir -p "$target" "$derived"
+# `-ef` compares the files, not the spelling, so a DERIVED_DATA that names the main
+# checkout's tree stops here instead of deleting the store it would link to.
+[ ! "$link" -ef "$target" ] || exit 0
 rm -rf "$link"
 ln -s "$target" "$link"
 echo "  [ OK ] linked $link -> $target"
