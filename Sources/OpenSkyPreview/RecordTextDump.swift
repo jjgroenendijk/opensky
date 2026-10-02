@@ -132,6 +132,7 @@ nonisolated public enum RecordTextDump: Sendable {
                 ?? progressionSummary(record, localized, magicContext)
                 ?? factionSummary(record, localized)
                 ?? relationshipSummary(record)
+                ?? craftingSummary(record, localized, keywordContext)
         }
     }
 

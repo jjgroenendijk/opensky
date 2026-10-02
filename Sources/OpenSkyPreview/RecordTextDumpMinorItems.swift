@@ -36,7 +36,7 @@ nonisolated extension RecordTextDump {
         level.map { "\($0)" } ?? "-"
     }
 
-    private static func skippedText(_ tally: ItemFieldTally) -> String {
+    static func skippedText(_ tally: ItemFieldTally) -> String {
         guard !tally.isEmpty else { return "" }
         let names = tally.ranked.map { "\($0.name) x\($0.count)" }
         return ", unread [\(names.joined(separator: ", "))]"

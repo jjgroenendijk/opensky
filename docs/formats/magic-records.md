@@ -75,13 +75,13 @@ For example, 24 is `Health` and 44 is `Resist Magic`. The value `-1` means "no a
 | `0x50` | uint32 | casting type |
 | `0x54` | uint32 | delivery |
 | `0x58` | int32 | second actor value |
-| `0x5C` | FormID | casting art |
-| `0x60` | FormID | hit-effect art |
+| `0x5C` | FormID | casting art ([`ARTO`](/formats/art-objects.md)) |
+| `0x60` | FormID | hit-effect art (`ARTO`) |
 | `0x64` | FormID | impact data set |
 | `0x68` | float32 | skill-usage multiplier |
 | `0x6C` | FormID | dual-cast data (`DUAL`) |
 | `0x70` | float32 | dual-cast scale |
-| `0x74` | FormID | enchant art |
+| `0x74` | FormID | enchant art (`ARTO`) |
 | `0x78` | FormID | hit visuals |
 | `0x7C` | FormID | enchant visuals |
 | `0x80` | FormID | equip ability |

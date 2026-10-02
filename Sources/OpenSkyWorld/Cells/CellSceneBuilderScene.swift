@@ -110,7 +110,8 @@ nonisolated extension CellSceneBuilder {
                 name: name ?? base.editorID ?? base.formID.description,
                 action: action,
                 actionLabel: override ?? action.defaultLabel,
-                sounds: base.sounds
+                sounds: base.sounds,
+                voiceType: base.voiceType
             )
             interactions[ref.formID] = interaction
         }
@@ -127,8 +128,10 @@ nonisolated extension CellSceneBuilder {
             .activate
         case "CONT":
             .search
-        case "TREE":
+        case "TREE", "FLOR":
             .harvest
+        case "TACT":
+            .talk
         case "FURN":
             .use
         default:

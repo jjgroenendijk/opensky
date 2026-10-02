@@ -93,8 +93,8 @@ nonisolated extension RecordTextDump {
         return ([line + "\n  entries (\(rows.count)):"] + rows).joined(separator: "\n")
     }
 
-    /// DUAL: the five art links stay raw. Nothing indexes PROJ, EXPL, EFSH,
-    /// ARTO or IPDS yet, and printing a FormID honestly beats inventing a name.
+    /// DUAL: the five art links stay raw. The dump has no store for PROJ, EXPL,
+    /// EFSH, ARTO, or IPDS, and a FormID beats an invented name.
     private static func dualCastSummary(_ record: ESMRecord) throws -> String? {
         let dual = try DualCastData(record: record)
         var line = "decoded DUAL: editorID \(dual.editorID ?? "-")"
@@ -157,7 +157,7 @@ nonisolated extension RecordTextDump {
         }
     }
 
-    private static func displayText(_ value: LString?) -> String {
+    static func displayText(_ value: LString?) -> String {
         switch value {
         case let .inline(text): "\"\(text)\""
         case let .tableID(id): "string #\(id)"

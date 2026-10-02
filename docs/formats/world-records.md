@@ -1,6 +1,6 @@
 ---
 type: File Format
-title: World records (WRLD, CELL, STAT, placeable objects)
+title: World records (WRLD, CELL, STAT, placeable objects, flora, workbenches)
 description: Layouts of worldspaces, cells, statics, and placeable base objects with their
   sounds.
 tags: [format, plugin, records, worldspace, cell, reference]
@@ -14,7 +14,7 @@ rules are on [record decoders](/formats/records.md).
 How a cell becomes a scene is on [cell scene](/engine/cell-scene.md).
 
 Sources: UESP "Skyrim Mod:Mod File Format" pages `/WRLD`, `/CELL`, `/STAT`,
-`/MSTT`, `/TREE`, `/FURN`, `/ACTI`, `/CONT`, and `/DOOR`
+`/MSTT`, `/TREE`, `/FLOR`, `/FURN`, `/ACTI`, `/TACT`, `/CONT`, and `/DOOR`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), and xEdit `dev-4.1.6`
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/fd1e36020b2b5b6217e553dc0038983146a2e2dd/Core/wbDefinitionsTES5.pas).
 Water fields are on [water](/formats/water.md) and lighting fields on
@@ -87,7 +87,7 @@ and the `0x01` flag decide what the cell is.
 Not read: `MODT`, `DNAM` (maximum angle and material), `MNAM` (LOD models). `Skyrim.esm`
 has 9,720 STAT records; 9,712 have a model.
 
-## MSTT, TREE, FURN, ACTI, CONT, DOOR
+## MSTT, TREE, FLOR, FURN, ACTI, TACT, CONT, DOOR
 
 These placeable base objects share the fields that matter here:
 
@@ -96,13 +96,15 @@ These placeable base objects share the fields that matter here:
 | `EDID` | zstring | editor ID |
 | `FULL` | lstring | name |
 | `MODL` | zstring | model path |
-| `RNAM` | lstring | ACTI only: activation text |
+| `RNAM` | lstring | ACTI and FLOR: activation text |
+| `KSIZ` + `KWDA` | uint32 + FormID array | keywords |
+| `KNAM` | FormID | ACTI and FURN: interaction keyword |
 | `FNAM` | uint8 | DOOR flags; bit 1 means automatic |
 | `MNAM` | uint32 | FURN marker flags; bit 25 turns off activation |
 | `SNAM` | FormID | sound; meaning depends on the type (below) |
 | `ANAM` | FormID | DOOR close sound |
 | `BNAM` | FormID | DOOR loop sound |
-| `VNAM` | FormID | ACTI activation sound |
+| `VNAM` | FormID | ACTI activation sound; TACT voice type (`VTYP`) |
 | `QNAM` | FormID | CONT close sound (not `ANAM`, unlike DOOR) |
 | `VMAD` | struct | scripts |
 
@@ -119,6 +121,56 @@ Sound fields by meaning:
 | close (once) | `ANAM` | none | `QNAM` |
 | loop (continuous) | `BNAM` | `SNAM` | none |
 
+TACT uses `SNAM` as its loop sound, like ACTI.
+
 A sound FormID can name an `SNDR`, or a legacy `SOUN` whose `SDSC` points to an `SNDR`. In
 `Skyrim.esm`, all 497 of these links name an `SNDR` directly. Bases with each slot: DOOR
 open 92, close 86, loop 0; ACTI activation 33, loop 18; CONT open 135, close 133.
+
+## Flora, trees, and talking activators
+
+xEdit lines (commit `9fb0168`): TACT 3243, TREE 10152, FLOR 10186.
+
+FLOR and TREE carry what a harvest gives:
+
+| field | type | meaning |
+| --- | --- | --- |
+| `PFIG` | FormID | the item a harvest gives: an `INGR`, `ALCH`, `MISC`, or `LVLI` |
+| `SNAM` | FormID | harvest sound (`SNDR`) |
+| `PFPC` | 4 x uint8 | percent chance in spring, summer, fall, and winter |
+
+A FLOR reference offers the Harvest action, like a tree. A TACT reference offers Talk. Its use
+key raises the talk event with the reference as speaker and the TACT `VNAM` voice type.
+The dialogue runtime decides what happens next.
+
+The five masters carry 108 FLOR and 30 TACT records, and all decode. Every TACT has a voice
+type; for example `TG05TalkingRock01` names `VTYP` `0001B080`. Across FLOR and TREE, 178
+produce links are set: 112 INGR, 34 MISC, 25 ALCH, and 7 LVLI. All of them resolve to a record
+OpenSky decodes. `FloraSwampFungalPod01` gives `SwampFungalPod01`, and the tree stump
+`TreePineForestStump02AMoraTapinella` gives `MoraTapinellaBits`.
+
+## Workbench data
+
+FURN `WBDT` is 2 bytes (xEdit FURN line 5129, `wbSkillEnum` line 3473):
+
+| offset | type | meaning |
+| --- | --- | --- |
+| `0x00` | uint8 | bench type |
+| `0x01` | int8 | skill, as an actor-value index; -1 means none |
+
+Bench types: 0 none, 1 create object, 2 smithing weapon, 3 enchanting, 4 enchanting
+experiment, 5 alchemy, 6 alchemy experiment, 7 smithing armor. The skill range in xEdit is 6
+(One-Handed) to 23 (Enchanting). An unknown bench type or skill keeps its raw value.
+
+Which recipes a station offers comes from its keywords, not from the bench type. A recipe's
+`BNAM` names a keyword ([recipes](/formats/recipes.md)), and the station carries it in
+`KWDA`. A forge is a create-object bench with `CraftingSmithingForge`.
+
+In the five masters, 47 FURN bases have a bench type other than none: 39 create object, 4
+enchanting, 2 alchemy, 1 smithing weapon (`CraftingBlacksmithSharpeningWheel`, skill
+Smithing), and 1 smithing armor (`CraftingBlacksmithArmorWorkbench`). The enchanting count
+includes `DisenchantmentFont01` and `DLC2ApocryphaFountain`, which train no skill. Many
+Hearthfire furnishings are create-object benches, each with its own
+`BYOHBuildingInteriorPart...` keyword.
+
+A field that is too short is counted as malformed, and the rest of the record still decodes.

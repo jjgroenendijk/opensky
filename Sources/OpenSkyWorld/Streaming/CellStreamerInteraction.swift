@@ -211,10 +211,14 @@ extension CellStreamer {
         // After the plain event, so an activated actor reaches the audio and
         // Papyrus subscribers in the same order an activated door does before
         // anything opens a menu on top of the world.
-        if interactionTarget.interaction.action == .talk, let speaker = talk.speaker {
-            talk.activations(
-                TalkActivationEvent(speaker: speaker)
+        if
+            let event = TalkActivationEvent(
+                interaction: interactionTarget.interaction,
+                pickedSpeaker: talk.speaker,
+                placedKey: { referenceEntry(formID: interactionTarget.interaction.reference)?.key }
             )
+        {
+            talk.activations(event)
         }
         guard interactionTarget.interaction.action == .open else { return }
         guard

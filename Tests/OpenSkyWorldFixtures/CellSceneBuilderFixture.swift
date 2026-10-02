@@ -136,9 +136,10 @@ extension CellSceneBuilderFixture {
         formID: UInt32,
         modelPath: String?,
         displayName: String? = nil,
-        activateTextOverride: String? = nil
+        activateTextOverride: String? = nil,
+        extraFields: Data = Data()
     ) -> Data {
-        var fields = Data()
+        var fields = extraFields
         if let displayName {
             fields += ESMFixture.field("FULL", ESMFixture.zstring(displayName))
         }

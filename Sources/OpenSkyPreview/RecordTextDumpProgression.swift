@@ -195,7 +195,7 @@ nonisolated extension RecordTextDump {
 
     /// One line per CTDA, in the same `<function> <operator> <value>` shape the
     /// runtime-state condition readout prints.
-    private static func conditionLines(
+    static func conditionLines(
         _ list: ConditionList,
         title: String,
         indent: String
