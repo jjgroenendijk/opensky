@@ -1,103 +1,127 @@
 ---
 name: building-app-ui
 description: Adds or changes OpenSky main-app UI - sidebar destinations, control panels, and
-  inspectors, covering the destination registry, panel base classes, shared components,
-  placement rules, and the accessibility-id contract. Use before any app-shell UI work.
+  inspectors, covering where a control goes, the destination registry, how a panel reads a
+  coordinator through a ControlProviding seam, the panel base classes and shared components,
+  and the accessibility-id contract. Use before any app-shell UI work.
 ---
 
-# Main-app UI framework
+# Main-app UI
 
-The OpenSky app's own dev and verification UI: sidebar destinations and the control panels
-under them. Not the in-game Scaleform UI. The framework lives in
-`Sources/OpenSky/Shell/`, destination view controllers in `Sources/OpenSky/Panels/`, and the
-`GameViewController` extensions that feed them in `Sources/OpenSky/GameView/`. A new feature
-gets no new `GameViewController+` file: its logic goes in a coordinator in the feature module
-(`docs/engine/coordinators.md`). The panel seam the view controller reads,
-`XControlProviding.swift`, lives in the engine domain folder it inspects.
+This is the app's own dev and verification UI: sidebar destinations and the control panels
+under them. It is not the in-game Scaleform UI.
 
-Full reference: `docs/tools/app-ui.md`. This skill carries the decisions you must make before
-touching a file and points at the section of that doc holding each detail.
+| Part | Where it lives |
+| --- | --- |
+| Shell, registry, panel base classes, components | `Sources/OpenSky/Shell/` |
+| One section (one control group) | `Sources/OpenSky/Shell/Sections/` |
+| One view controller per destination | `Sources/OpenSky/Panels/` |
+| The game view and its one-line panel forwards | `Sources/OpenSky/GameView/` |
+| The logic a panel drives | A coordinator in the feature module (`docs/engine/coordinators.md`) |
 
-## Where a new surface goes
+The full reference is `docs/tools/app-ui.md`. This skill holds the decisions and points at
+the section of that page with each detail.
 
-Decide before building, because the configuration surface grows without bound:
+## Workflow
 
-1. A new knob for an existing subsystem -> add it to that subsystem's existing section. No
-   new section.
-2. A new distinct subsystem -> a new section under the owning destination.
-3. A new destination only for full-height or full-content space, a distinct milestone surface
-   named as a top-level path, or a section that has outgrown its destination.
+1. Decide where the surface goes.
+2. Give the panel a seam to read: the feature's `XControlProviding` protocol.
+3. Build the section from the shared components.
+4. Register a new destination, if step 1 asked for one.
+5. Pin the accessibility ids and test the panel.
+
+## 1. Where a new surface goes
+
+Decide before building, because the number of settings grows without end:
+
+1. A new knob for an existing subsystem -> add it to that subsystem's section.
+2. A new, separate subsystem -> a new section under the destination that owns it.
+3. A new destination only for full-height or full-content space, a separate surface named
+   as a top-level path, or a section that has outgrown its destination (about 8 controls,
+   or it needs its own navigation). Details: "Placement" in `docs/tools/app-ui.md`.
 
 Parser, math, and infrastructure-only work may wait for its first visible consumer. If its
 output is useful alone, expose it in the Asset Browser or an inspector.
 
-A section is promoted to its own destination at roughly 8 controls, when it needs
-sub-navigation, or when a milestone acceptance names it top-level. Sections are standalone
-(each owns its sync, readout, and ticker), so promotion is free and control ids do not
-change. A milestone-named path outranks the threshold — see "Sectioned UI Lab and
-direct-content panels" in `docs/tools/app-ui.md`.
+## 2. The seam a panel reads
 
-## How to register
+A panel never holds game logic, and it never reads `GameViewController` directly. The data
+flows like this, with the crime panel as the example:
 
-- Add one `DestinationDescriptor` to `DestinationRegistry.all`
-  (`Shell/DestinationRegistry.swift`). Never edit the shell view controllers to add a
-  destination — the registry is the single registration point. Sidebar sections are `world`,
-  `developer`, and `library` (`SidebarSection` order is sidebar order).
-- A `worldInspector` factory wires the panel's providers from `context.providers`; a
-  `fullContent` factory receives a `FullContentContext`, and its controller conforms to
-  `FullContentReloadable` so a Settings reload reaches the shell-cached instance in place.
-- Register provider-backed `DestinationOverrideActions` beside each mutable
-  `DestinationDescriptor`. Sidebar aggregation and Reset all use those actions and never
-  construct an unopened panel. Details in "Override provenance and reset" in
-  `docs/tools/app-ui.md`.
-- Put app-only AppKit code under `Sources/OpenSky/`, which only the app target builds. No
-  project file edit is needed. `make cli-boundary` fails if it lands in a package module.
+1. The logic lives in a coordinator in the feature module: `CrimeCoordinator` in
+   `Sources/OpenSkyCrime/`. Test it there with `make test-fast`.
+2. The panel's seam is a protocol in the same module: `CrimeFactionControlProviding`, with
+   snapshot value types for the readout. A seam that another feature also reads goes in the
+   feature's `Interface` module. A seam that names several features goes in
+   `OpenSkyMenus/` (`Sources/AGENTS.md`, Folder layout).
+3. `GameViewController` conforms with one-line forwards to the coordinator, in
+   `GameView/GameViewControllerPanels.swift`. A seam with many members gets a
+   `...ControlForwarding` protocol beside it whose extension does the forwarding, such as
+   `AudioControlForwarding`; the view controller then conforms in one line.
+4. Add the protocol to `WorldControlProviders` in `Shell/DestinationRegistry.swift`.
+5. The destination's factory assigns `context.providers` to the section's provider
+   property.
 
-## Invariants you cannot break
+Do not add a `GameViewController+X.swift` file, and do not put rules in a section or a
+panel. A rule there can only be tested by building the app.
 
-Each is pinned by a unit test. Break one -> fix the code, not the test. The reasoning behind
-each lives in "Layout invariants" and "Interaction rules" in `docs/tools/app-ui.md`.
+## 3. Build the section
 
-- A collapsed section occupies its header height and nothing more: `CollapsibleSectionView`
-  keeps header and content as *arranged* subviews of an `NSStackView`, because Auto Layout
-  reclaims a hidden view's space only when it is arranged.
-- Never pin `heightAnchor` constants on section controls; a hard height defeats intrinsic
-  sizing and survives hiding.
-- No dev behaviour is reachable only by an unadvertised keystroke. Every toggle is a control
-  in a panel; a shortcut is allowed only as an accelerator for an existing control,
-  registered in the main menu so it is listed. Camera and gameplay input is input, not
-  configuration.
+Subclass `PanelSectionViewController` for one control group and
+`InspectorPanelViewController` for a destination panel. Model files:
+
+- `Shell/Sections/AudioFootstepsSection.swift`: one section with a provider, controls, and
+  a readout.
+- `Panels/ScriptsPanelViewController.swift`: a thin panel that composes sections.
+- `Tests/OpenSkyTests/App/Panels/AudioFootstepsPanelTests.swift`: its tests.
+
+Build controls only from `PanelComponents` and `PanelMetrics`. If a widget is missing, add
+it there instead of hand-rolling one in a section. `InspectionTicker` owns the 2 Hz
+readout; do not add a timer. The base-class hooks, the component table, and the spacing
+scale are in "Building panels" in `docs/tools/app-ui.md`.
+
+These invariants are each pinned by a unit test. Break one -> fix the code, not the test.
+The reasons are in "Layout invariants" and "Interaction rules" in `docs/tools/app-ui.md`.
+
+- A collapsed section takes only its header height. `CollapsibleSectionView` keeps header
+  and content as arranged subviews of an `NSStackView`, because Auto Layout reclaims a
+  hidden view's space only when it is arranged.
+- Never pin a `heightAnchor` constant on a section control. A fixed height defeats
+  intrinsic sizing and survives hiding.
+- No dev behavior is reachable only by an unadvertised keystroke. Every toggle is a panel
+  control. A shortcut is allowed only as an accelerator for an existing control, registered
+  in the main menu so it is listed. Camera and gameplay input is input, not configuration.
 - Panels are built on first reveal and cached by destination id, never all at launch.
 
-## How to build a panel
+## 4. Register a destination
 
-Subclass `InspectorPanelViewController` for a destination panel and
-`PanelSectionViewController` for one control group. Model files:
-`Panels/ScriptsPanelViewController.swift` is a thin panel that composes sections,
-`Shell/Sections/AudioFootstepsSection.swift` is one section, and
-`Tests/OpenSkyTests/App/Panels/AudioFootstepsPanelTests.swift` tests it. Build controls only from
-`PanelComponents` and `PanelMetrics` — if the widget you need is missing, add it there rather
-than hand-rolling it in a section, and do not hand-roll fonts, widths, or timers
-(`InspectionTicker` owns the 2 Hz readout). The base-class hooks, the component inventory
-table, and the three-step spacing scale are in "Building panels" in `docs/tools/app-ui.md`.
+- Add one `DestinationDescriptor` to `DestinationRegistry.all`. Never edit the shell view
+  controllers to add a destination; the registry is the only registration point. The
+  sidebar sections are `world`, `developer`, and `library`, in that order.
+- A `worldInspector` factory wires the panel's providers from `context.providers`. A
+  `fullContent` factory gets a `FullContentContext`, and its controller conforms to
+  `FullContentReloadable` so a Settings reload reaches the cached instance.
+- A mutable destination registers `DestinationOverrideActions` beside its descriptor. The
+  sidebar indicator and Reset all use them and never build an unopened panel. Details:
+  "Override provenance and reset" in `docs/tools/app-ui.md`.
+- AppKit code goes under `Sources/OpenSky/`, which only the app builds. `make cli-boundary`
+  fails if it lands in a package module.
 
-## Accessibility-id contract
+## 5. Accessibility ids and verification
 
-Ids are the UI-test API — never change one silently. `AppSidebar` outline, `Destination-<id>`
-rows, `PanelSection-<id>` headers, `<Thing>Control` and `<Thing>StatsLabel`, section state
-`PanelSection-<id>-OverrideIndicator` and `PanelSection-<id>-ResetControl`, destination state
-`Destination-<id>-OverrideIndicator`, menu item `ResetAllOverridesCommand`, toolbar
-`ScreenshotButton`.
+Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar` outline,
+`Destination-<id>` rows, `PanelSection-<id>` headers, `<Thing>Control` and
+`<Thing>StatsLabel`, `PanelSection-<id>-OverrideIndicator` and
+`PanelSection-<id>-ResetControl`, `Destination-<id>-OverrideIndicator`, the menu item
+`ResetAllOverridesCommand`, and the toolbar `ScreenshotButton`.
 
-Pin the ids as literal assertions in `DestinationRegistryTests` and update those literals in
-the same change that renames an id. Keep `OpenSkyUITests` correct even where the UI-test
-harness cannot run locally (`docs/tools/environment.md`).
-
-## Verify
-
-`make fix && make check && make build && make cli && make test`, plus a new or extended panel
-geometry unit test. At milestone acceptance, write the record defined by
-`docs/tools/sidebar-acceptance.md` — sidebar path, `Destination-<id>`, control ids, readout
-id, covering tests — into the PR or issue that closes the milestone, not into `docs/`. Those
-tests are the evidence; A/B captures are optional, stay in gitignored `logs/`, and are never
-committed. Update `docs/tools/app-ui.md` in the same commit when the framework changes.
+- Pin new ids as literals in the panel test, and destination ids in
+  `DestinationRegistryTests`. Update the literals in the same change that renames an id.
+- Keep `OpenSkyUITests` correct even where the UI-test harness cannot run locally
+  (`docs/tools/environment.md`).
+- Run the panel tests and the coordinator tests with `make test-fast T='...'`, then
+  `make verify-build`, because only it compiles the app (`testing-and-verifying` skill).
+- Update `docs/tools/app-ui.md` in the same commit when the framework changes.
+- At milestone acceptance, write the record from `docs/tools/sidebar-acceptance.md` into
+  the PR that closes the milestone, not into `docs/`. The tests are the evidence; any A/B
+  capture stays in gitignored `logs/`.

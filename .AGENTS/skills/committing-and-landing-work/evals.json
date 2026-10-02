@@ -34,5 +34,16 @@
       "Explains that the failed local branch delete is cosmetic",
       "Syncs with git switch --detach origin/main rather than git checkout main"
     ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "Make a branch for issue 812, the BTXT terrain layer parser.",
+    "files": [],
+    "expected_behavior": [
+      "Branches from origin/main, not a stale local main",
+      "Names the branch <type>/<issue>-<slug>, such as feat/812-btxt-terrain-layers"
+    ]
   }
 ]
