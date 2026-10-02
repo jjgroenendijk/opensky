@@ -22,8 +22,10 @@ The main sources are the UESP "Skyrim Mod:Mod File Format" pages, one per record
 
 ## Decode rules
 
-- A decoder reads the fields it knows and skips the rest. A field a mod adds is never an
-  error.
+- A decoder reads every field the spec names. A field it does not read, such as one a
+  mod adds, is never an error: it is counted in the decoder's `skipped` tally, so a
+  real-data sweep can report it. A field whose decode fails is counted as malformed and
+  reads as absent.
 - A decoder throws only when a record cannot be used at all: the wrong record type, a
   missing required field, or a field too short for its required members. The caller logs
   the record and skips it.
@@ -197,3 +199,35 @@ because zeros would mean "this actor cannot move".
 | `NPC_Sneaking_MT` | `NPCSneaking` | 47.2 | 222.0 |
 | `NPC_Sprinting_MT` | `NPCSprinting` | 0.0 | 500.0 |
 | `NPC_Swimming_MT` | `NPCSwimming` | 80.1 | 370.0 |
+
+## Shared field groups
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`). Several groups repeat across record types. Each group
+member belongs to the opener just before it, so these groups are read in file order.
+
+| Group | Fields | Used by |
+| --- | --- | --- |
+| Model | `MODL` path, then `MODT` texture hashes and `MODS` alternate textures | Most base records; other slots use `MOD2`/`MO2T`/`MO2S` and so on |
+| Destruction | `DEST` header (int32 health, uint8 stage count, uint8 VATS targetable, 2 bytes), then per stage `DSTD` (20 bytes), `DMDL`/`DMDT`/`DMDS` model, `DSTF` end marker | `NPC_` and many base objects |
+| Attack | `ATKD` (44 bytes: damage multiplier, chance, spell, flags, attack angle, strike angle, stagger, attack type, knockdown, recovery time, stamina multiplier), then `ATKE` event name | `RACE`, `NPC_` |
+| Inventory | `COCT` count, `CNTO` (FormID, int32 count), optional `COED` (owner, uint32 rank or global, float health) | `CONT`, `NPC_` |
+
+`MODT` and `MODS` belong to a model only when they follow its path directly. `MODS` is a
+uint32 count, then per entry a uint32-length shape name, a `TXST` FormID, and an int32
+shape index. `MODT` changes layout with the form version, so it stays raw.
+
+## Coverage
+
+Every record type in the five masters and the Creation Club plugins has a decoder: 120
+types, `TES4` included. The decoder registry maps each type to its decoder. The
+real-data coverage sweep walks every group of every plugin, decodes every live record
+through the registry, and fails on a type with no decoder or a decode that throws. The
+CLI `record` command and the app's record inspector print the decoded fields of any record,
+with links shown as editor IDs.
+
+A second sweep, the field census, checks that each decoded field is set by at least one
+record of the install. A field that no record sets would point at a decoder that never
+reaches its bytes. 45 fields are never set, and each was checked against the raw bytes:
+the field is absent, empty, or zero on every record. Examples are `WRLD MNAM` usable
+dimensions, which are 0 on all 11 worldspaces, and the explodable and severable parts of
+`BPTD BPND`, which no vanilla body part uses.

@@ -15,7 +15,7 @@ struct ArtObjectRealDataTests {
         let plugins = try VanillaMasters.load(root: root)
         var failures: [String] = []
         var types: [String: Int] = [:]
-        var skipped = ItemFieldTally()
+        var skipped = FieldTally()
         let records = VanillaMasters.liveRecords(of: "ARTO", in: plugins)
         for entry in records {
             do {

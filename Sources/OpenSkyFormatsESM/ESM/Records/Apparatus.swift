@@ -44,7 +44,7 @@ nonisolated public struct Apparatus: Sendable {
     public let quality: ApparatusQuality?
     /// DESC; localized plugins store a `.dlstrings` ID.
     public let description: LString?
-    public let skipped: ItemFieldTally
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "APPA" else {

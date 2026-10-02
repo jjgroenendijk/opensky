@@ -30,7 +30,7 @@ nonisolated public struct ConstructibleObject: Equatable, Sendable {
     public let workbenchKeyword: FormID?
     /// NAM1. Nil when absent; the game then makes one.
     public let createdCount: UInt16?
-    public let skipped: ItemFieldTally
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "COBJ" else {
@@ -70,7 +70,7 @@ nonisolated public struct ConstructibleObject: Equatable, Sendable {
         var createdObject: FormID?
         var workbenchKeyword: FormID?
         var createdCount: UInt16?
-        var skipped = ItemFieldTally()
+        var skipped = FieldTally()
 
         mutating func decode(_ field: ESMField) throws -> Bool {
             var reader = BinaryReader(field.data)

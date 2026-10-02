@@ -131,3 +131,20 @@ All five vanilla masters decode with no record errors.
 
 `Skyrim.esm` also has old script fields that OpenSky counts but does not read: `NEXT`,
 `QNAM`, and `SCHR`.
+
+## DLBR and DLVW
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`). A dialogue branch groups the topics of a conversation.
+A dialogue view is the Creation Kit's layout of branches; the game does not need it.
+
+| Record | Field | Type | Meaning |
+| --- | --- | --- | --- |
+| `DLBR` | `QNAM` | FormID | Owner `QUST` |
+| `DLBR` | `TNAM` | uint32 | Category: 0 player, 1 command |
+| `DLBR` | `DNAM` | uint32 | Flags: 0x01 top level, 0x02 blocking, 0x04 exclusive |
+| `DLBR` | `SNAM` | FormID | Starting `DIAL` |
+| `DLVW` | `QNAM` | FormID | Owner `QUST` |
+| `DLVW` | `BNAM` | FormID | A `DLBR`; repeated |
+| `DLVW` | `TNAM` | FormID | A `DIAL`; repeated |
+| `DLVW` | `ENAM` | uint32 | Topic type |
+| `DLVW` | `DNAM` | uint8 | Nonzero: show all text |

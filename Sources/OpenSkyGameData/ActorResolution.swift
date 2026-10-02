@@ -258,6 +258,15 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         )
     }
 
+    /// ZNAM after template inheritance. xEdit ties ZNAM to no template flag; the Creation
+    /// Kit shows it on the AI Data tab, so it follows `useAIData`.
+    public func resolveCombatStyle(base: FormID) throws -> ActorSourcedField<FormID?> {
+        let (npcs, _) = try resolveChain(base: base)
+        return resolveField(in: npcs, flag: .useAIData) {
+            ActorSourcedField(value: $0.details.combatStyle, source: $0.formID)
+        }
+    }
+
     /// Walks TPLT links from `base`, expanding LVLN hops via the
     /// deterministic entry policy, until a record without a template.
     private func resolveChain(

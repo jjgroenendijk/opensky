@@ -182,7 +182,9 @@ nonisolated public struct ActorVisualResolver: Sendable {
             leveledItems: index(file, "LVLI", &skipped, LeveledList.init(record:)),
             formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters),
             equipment: EquipmentCatalog.build(from: file),
-            headParts: index(file, "HDPT", &skipped, HeadPart.init(record:))
+            headParts: index(file, "HDPT", &skipped) {
+                try HeadPart(record: $0, localized: localized)
+            }
         )
         resolver.skippedRecords = skipped
         return resolver

@@ -54,18 +54,10 @@ struct ScriptDataRealDataTests {
         #expect(stats.propertyTypes == [
             1: 42885, 2: 179, 3: 3820, 4: 634, 5: 3625, 15: 2
         ])
-        // No QUST or INFO fragment entries: those tails are decoded, not
-        // skipped. Alias scripts count their object properties.
-        #expect(stats.skipped.ranked.map(\.count) == [
-            12896, 557, 313, 7, 5
-        ])
-        #expect(stats.skipped.ranked.map(\.name) == [
-            "alias object",
-            "SCEN fragments",
-            "PACK fragments",
-            "removed property",
-            "PERK fragments"
-        ])
+        // No fragment entries: every fragment tail is decoded, not skipped.
+        // Alias scripts count their object properties.
+        #expect(stats.skipped.ranked.map(\.count) == [12896, 7])
+        #expect(stats.skipped.ranked.map(\.name) == ["alias object", "removed property"])
         #expect(stats.questFragmentSections == 856)
         #expect(stats.questFragments == 5108)
         #expect(stats.questAliasScriptSections == 2149)

@@ -144,17 +144,25 @@ A `COED` owner subrecord may follow an `LVLO`. `OBND`, `LLCT`, and `MODL` are no
 | `NAM0` | 0 bytes | opens the head-data blocks |
 | `HEAD` | FormID | default head part (`HDPT`); repeated |
 
-`DATA`, the parts OpenSky reads:
+`DATA` (source: xEdit `dev-4.1.6`, commit `9fb0168`, `wbRecord(RACE, ...)`):
 
 | offset | type | meaning |
 | --- | --- | --- |
-| `0x00` | 7 x (uint8, uint8) + uint16 | skill bonuses: actor value, then bonus |
-| `0x10` | float32 x 4 | male and female height and weight (not read) |
+| `0x00` | 7 x (int8, int8) + uint16 | skill bonuses: actor value, then bonus |
+| `0x10` | float32 x 4 | male and female height, then male and female weight |
 | `0x20` | uint32 | flags: `0x1` playable, `0x2` FaceGen head |
 | `0x24` | float32 x 3 | starting health, magicka, stamina |
-| `0x30` | float32 x 2 | base carry weight, base mass |
+| `0x30` | float32 x 4 | base carry weight, base mass, acceleration, deceleration |
+| `0x40` | uint32 | size: 0 small, 1 medium, 2 large, 3 extra large |
+| `0x44` | int32 x 2 | head and hair biped object; -1 is none |
+| `0x4C` | float32 | injured health percent |
+| `0x50` | int32 | shield biped object |
 | `0x54` | float32 x 3 | health, magicka, stamina regen |
-| `0x60` | float32 | unarmed damage |
+| `0x60` | float32 x 2 | unarmed damage and reach |
+| `0x68` | int32 | body biped object |
+| `0x6C` | float32 x 4 | aim angle tolerance, flight radius, angular acceleration, angular tolerance |
+| `0x7C` | uint32 | flags 2, form version 43 only |
+| `0x80` | float32 x 9 | mount, dismount, and mount camera offsets, form version 43 only |
 
 A skill pair with a bonus of zero is an empty slot. `NordRace` gives Two-Handed +10 and
 One-Handed, Block, Smithing, Light Armor, and Speech +5, which matches UESP. Every playable
@@ -170,6 +178,48 @@ For head data, `NAM0` opens a block, `MNAM` or `FNAM` picks the gender, and each
 names a default head part. An `HDPT` pairs each `NAM0` kind with the next `NAM1` path: 0 is
 the race morph, 1 is the expression TRI, 2 is the chargen morph. The `HDPT` `EDID` is the
 name of the baked `BSDynamicTriShape`. See [TRI](/formats/tri.md).
+
+### RACE sections
+
+The same signature means different things in different parts of a `RACE`. OpenSky walks
+the fields in order and tracks the current section and sex:
+
+| Opener | Section | Fields in it |
+| --- | --- | --- |
+| start | skeleton | `ANAM` + `MODT` per sex, `ATKD`/`ATKE` attacks |
+| `NAM1` | body | `INDX` + `MODL`/`MODT` per body part, per sex |
+| `NAM3` | behavior | `MODL`/`MODT` behavior graph per sex, then `NAME` biped names, `MTYP`/`SPED` movement types, `VTCK`, `DNAM`, `HCLF`, `TINL`, `PNAM`, `UNAM`, `ATKR`, `NAM4`, `NAM5`, `NAM7`, `ONAM`, `LNAM`, `NAME`, `QNAM`, `UNES`, `WKMV`, `RNMV`, `SWMV`, `FLMV`, `SNMV`, `SPMV` |
+| `NAM0` | head | `HEAD` parts, `MPAI`/`MPAV` morph groups, `RPRM`/`RPRF` presets, `AHCM`/`AHCF` hair colors, `FTSM`/`FTSF` face textures, `DFTM`/`DFTF`, `TINI` tint masks with `TINT`, `TINP`, `TIND`, `TINC`/`TINV`/`TIRS` presets |
+
+`MNAM` and `FNAM` switch the sex inside a section. `SPED` holds 11 floats: left, right,
+forward, back walk and run speeds, then rotation speeds.
+
+`TINL` is named "Total Number of Tints in List", and xEdit marks it "Needs Count Updated".
+On the install it equals the mask count plus the preset count on only 9 of 66 races; on
+the rest it is larger, for example 1139 on `NordRace` against 67 masks and 1065 presets.
+OpenSky keeps it as a number and does not check it.
+
+### NPC_ details
+
+Fields beyond the ones above, read into the actor's details:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `SHRT` | lstring | Short name |
+| `KWDA` | FormID array | Keywords |
+| `NAM6`, `NAM7` | float | Height and weight |
+| `NAM8` | uint32 | Sound level |
+| `QNAM` | 3 floats | Texture lighting color |
+| `NAM9` | 19 floats | Face morph values |
+| `NAMA` | 4 int32 | Face parts: nose, unknown, eyes, mouth |
+| `TINI`, `TINC`, `TINV`, `TIAS` | struct | One tint layer: index, RGBA color, interpolation, preset (int16) |
+| `CSDT`, `CSDI`, `CSDC` | struct | Sound type, then sound and chance pairs |
+| `INAM`, `ANAM`, `ATKR`, `ZNAM`, `GNAM`, `HCLF` | FormID | Death item, far-away model, attack race, combat style, gift filter, hair color |
+| `SPOR`, `OCOR`, `GWOR`, `ECOR` | FormID | Spectator, observe dead, guard warn, and combat package lists |
+| `DPLT`, `SOFT`, `CSCR`, `FTST` | FormID | Default package list, sleeping outfit, sound parent, head texture |
+
+The actor also reads the destruction, attack, and inventory groups; see
+[records](/formats/records.md).
 
 ## CLAS
 

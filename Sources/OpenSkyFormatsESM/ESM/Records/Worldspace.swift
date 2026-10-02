@@ -63,6 +63,9 @@ nonisolated public struct Worldspace: Sendable {
     public let musicType: FormID?
     /// XEZN — default encounter zone for the worldspace.
     public let encounterZone: FormID?
+    /// Map data, bounds, LOD water, large references, and the raw tables.
+    public let details: WorldspaceDetails
+    public let skipped: FieldTally
 
     /// - Parameter localized: TES4 localized flag of the owning plugin
     ///   (`PluginHeader.isLocalized`) — decides lstring decoding.
@@ -87,6 +90,7 @@ nonisolated public struct Worldspace: Sendable {
         climate = fields.climate
         musicType = fields.musicType
         encounterZone = fields.encounterZone
+        (details, skipped) = try WorldspaceDetails.decode(record: record)
     }
 
     /// Mutable accumulator for the field loop, matching `Cell`/`Region`. Split

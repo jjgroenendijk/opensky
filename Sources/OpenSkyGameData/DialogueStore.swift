@@ -18,6 +18,7 @@ nonisolated public final class DialogueStore: Sendable {
     /// plugin's master list so said-state and saves never key off a
     /// load-order-relative number.
     private let keysByInfoFormID: [UInt32: ReferenceKey]
+    private let branchIndex: DialogueBranchIndex
     /// Master-list resolver of the plugin these records came from, retained so
     /// a caller can resolve the FormIDs the records *point at*.
     public let resolver: FormIDResolver
@@ -69,6 +70,7 @@ nonisolated public final class DialogueStore: Sendable {
             }
         }
 
+        let branches = DialogueBranchIndex.decode(file: file, skipped: &skipped)
         if let top = file.topGroup(of: "VTYP") {
             for case let .record(record) in skipped.children(of: top)
                 where record.type == "VTYP" && !record.isDeleted
@@ -82,7 +84,9 @@ nonisolated public final class DialogueStore: Sendable {
             infosByTopic: infosByTopic,
             voiceTypes: voiceTypes,
             resolver: FormIDResolver(pluginName: pluginName, masters: masters),
-            skippedRecords: skipped
+            skippedRecords: skipped,
+            branches: branches.branches,
+            views: branches.views
         )
     }
 
@@ -91,7 +95,9 @@ nonisolated public final class DialogueStore: Sendable {
         infosByTopic: [UInt32: [TopicInfo]],
         voiceTypes: [VoiceType],
         resolver: FormIDResolver,
-        skippedRecords: SkippedRecords = SkippedRecords()
+        skippedRecords: SkippedRecords = SkippedRecords(),
+        branches: [DialogueBranch] = [],
+        views: [DialogueView] = []
     ) {
         var topicsByFormID: [UInt32: DialogueTopic] = [:]
         var topicIDs: [String: UInt32] = [:]
@@ -129,6 +135,7 @@ nonisolated public final class DialogueStore: Sendable {
         self.voicesByFormID = voicesByFormID
         voiceFormIDsByEditorID = voiceIDs
         keysByInfoFormID = infoKeys
+        branchIndex = DialogueBranchIndex(branches: branches, views: views, topics: topics)
         self.resolver = resolver
         self.skippedRecords = skippedRecords
     }
@@ -181,6 +188,35 @@ nonisolated public final class DialogueStore: Sendable {
     /// walks them in when two topics share a priority.
     public func sortedTopics() -> [DialogueTopic] {
         topicsByFormID.keys.sorted().compactMap { topicsByFormID[$0] }
+    }
+
+    public func branch(_ id: FormID) -> DialogueBranch? {
+        branchIndex.branchesByFormID[id.rawValue]
+    }
+
+    /// DLBR records of one quest, in file order.
+    public func branches(forQuest quest: FormID) -> [DialogueBranch] {
+        branchIndex.branchIDsByQuest[quest.rawValue, default: []]
+            .compactMap { branchIndex.branchesByFormID[$0] }
+    }
+
+    /// The DLBR a topic's BNAM names.
+    public func branch(ofTopic topic: FormID) -> DialogueBranch? {
+        self.topic(topic)?.owningBranch.flatMap { branch($0) }
+    }
+
+    /// The DIAL records whose BNAM names this branch, in file order.
+    public func topics(inBranch branch: FormID) -> [DialogueTopic] {
+        branchIndex.topicIDsByBranch[branch.rawValue, default: []]
+            .compactMap { topicsByFormID[$0] }
+    }
+
+    public func views(forQuest quest: FormID) -> [DialogueView] {
+        branchIndex.viewsByQuest[quest.rawValue] ?? []
+    }
+
+    public var branchCount: Int {
+        branchIndex.branchesByFormID.count
     }
 
     public func voiceType(editorID: String) -> VoiceType? {

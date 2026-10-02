@@ -41,7 +41,8 @@ struct WorldObjectRecordTests {
             seasonalChance: [100, 90, 80, 0]
         ))
         #expect(flora.sounds == nil)
-        #expect(flora.skipped.counts == [.unknownField("FNAM"): 1])
+        #expect(flora.details.flags == 0)
+        #expect(flora.skipped.isEmpty)
     }
 
     @Test func decodesTreeProduce() throws {

@@ -63,8 +63,9 @@ nonisolated public struct ModelBase: Sendable {
     public let produce: HarvestProduce?
     /// TACT VNAM, a VTYP.
     public let voiceType: FormID?
+    public let details: ModelBaseDetails
     /// Fields this decoder does not read, and fields too short to read.
-    public let skipped: ItemFieldTally
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool = false) throws {
         guard Self.supportedTypes.contains(record.type) else {
@@ -77,16 +78,22 @@ nonisolated public struct ModelBase: Sendable {
         recordType = record.type
 
         var fields = ModelBaseFields(ownerType: record.type)
-        var skipped = ItemFieldTally()
-        for field in try record.fields() {
+        var rest = try RecordFields(
+            record: record,
+            types: Self.supportedTypes,
+            localized: localized
+        )
+        for (index, field) in rest.fields.enumerated() {
             do {
-                if try !fields.decode(field: field, recordType: record.type, localized: localized) {
-                    skipped.note(.unknownField(field.type))
+                if try fields.decode(field: field, recordType: record.type, localized: localized) {
+                    rest.markUsed(at: index)
                 }
             } catch {
-                skipped.note(.malformedField(field.type))
+                rest.markUsed(at: index)
+                rest.note(.malformedField(field.type))
             }
         }
+        details = ModelBaseDetails.decode(&rest)
         editorID = fields.editorID
         name = fields.name
         activateTextOverride = fields.activateTextOverride
@@ -97,7 +104,7 @@ nonisolated public struct ModelBase: Sendable {
             && record.flags.rawValue & (1 << 20) != 0)
             && !(record.type == "DOOR" && fields.doorFlags & 0x02 != 0)
             && !(record.type == "FURN" && fields.furnitureMarkers & 0x0200_0000 != 0)
-        modelPath = fields.modelPath
+        modelPath = details.model?.path
         sounds = Self.buildSounds(
             activation: fields.activationSound,
             close: fields.closeSound,
@@ -109,7 +116,7 @@ nonisolated public struct ModelBase: Sendable {
         workbench = fields.world.workbench
         produce = fields.world.produce
         voiceType = fields.world.voiceType
-        self.skipped = skipped
+        skipped = rest.finish()
     }
 
     /// Mutable accumulator for the field loop; keeps the switch out of init so
@@ -118,7 +125,6 @@ nonisolated public struct ModelBase: Sendable {
         var editorID: String?
         var name: LString?
         var activateTextOverride: LString?
-        var modelPath: String?
         var doorFlags: UInt8 = 0
         var furnitureMarkers: UInt32 = 0
         var activationSound: FormID?
@@ -143,8 +149,6 @@ nonisolated public struct ModelBase: Sendable {
                 editorID = try reader.readZString()
             case "FULL":
                 name = try LString(field: field, localized: localized)
-            case "MODL":
-                modelPath = try reader.readZString()
             case "RNAM" where recordType == "ACTI" || recordType == "FLOR":
                 activateTextOverride = try LString(field: field, localized: localized)
             case "FNAM" where recordType == "DOOR":
@@ -174,7 +178,7 @@ nonisolated public struct ModelBase: Sendable {
                 closeSound = try Self.readOptionalFormID(&reader, size: field.data.count)
             case ("BNAM", "DOOR"):
                 loopSound = try Self.readOptionalFormID(&reader, size: field.data.count)
-            case ("SNAM", "ACTI"), ("SNAM", "TACT"):
+            case ("SNAM", "ACTI"), ("SNAM", "TACT"), ("SNAM", "MSTT"):
                 loopSound = try Self.readOptionalFormID(&reader, size: field.data.count)
             case ("VNAM", "ACTI"):
                 activationSound = try Self.readOptionalFormID(&reader, size: field.data.count)

@@ -38,7 +38,9 @@ nonisolated public struct ArtObject: Equatable, Sendable {
     public let modelPath: String?
     /// Nil when the record has no readable DNAM.
     public let artType: ArtType?
-    public let skipped: ItemFieldTally
+    /// MODT, kept raw.
+    public let modelTextureHashes: Data?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "ARTO" else {
@@ -49,7 +51,8 @@ nonisolated public struct ArtObject: Equatable, Sendable {
         var bounds: ObjectBounds?
         var modelPath: String?
         var artType: ArtType?
-        var tally = ItemFieldTally()
+        var hashes: Data?
+        var tally = FieldTally()
         for field in try record.fields() {
             do {
                 var reader = BinaryReader(field.data)
@@ -57,6 +60,7 @@ nonisolated public struct ArtObject: Equatable, Sendable {
                 case "EDID": editorID = try reader.readZString()
                 case "OBND": bounds = try ObjectBounds(field: field)
                 case "MODL": modelPath = try reader.readZString()
+                case "MODT": hashes = field.data
                 case "DNAM": artType = try ArtType(rawValue: reader.readUInt32())
                 default: tally.note(.unknownField(field.type))
                 }
@@ -68,6 +72,7 @@ nonisolated public struct ArtObject: Equatable, Sendable {
         self.bounds = bounds
         self.modelPath = modelPath
         self.artType = artType
+        modelTextureHashes = hashes
         skipped = tally
     }
 }

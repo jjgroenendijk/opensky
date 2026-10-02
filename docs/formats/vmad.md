@@ -90,11 +90,10 @@ the compiled script.
 
 ## Fragments
 
-`INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` add a record-specific fragment table after the
-scripts. A fragment is a small script function that the Creation Kit generates. OpenSky
-reads the `QUST` and `INFO` tables. For `PACK`, `PERK`, and `SCEN` it skips the rest of the
-field and counts the skip. Extra bytes after the scripts on any other record type are an
-error.
+`INFO`, `PACK`, `PERK`, `QUST`, and `SCEN` add a record-specific fragment table after the scripts. A
+fragment is a small script function that the Creation Kit generates. OpenSky reads all five. A tail
+that does not decode to the end of the field is skipped and counted. Extra bytes after the scripts
+on any other record type are an error.
 
 ### The QUST tail
 
@@ -185,3 +184,16 @@ A `VMAD` larger than 64 KB comes through the `XXXX` size field (see
 are 856 `QUST` fragment tables with 5,108 stage fragments and 2,149 alias sections. None
 fails. Across the five masters, 7,661 `INFO` tails hold 8,009 fragments, and none has extra
 bytes.
+
+## The PERK, PACK, and SCEN tails
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbVMADFragmentedPERK`, `wbVMADFragmentedPACK`, and
+`wbVMADFragmentedSCEN`. Strings are uint16-length strings, like the script names.
+
+| Record | Layout |
+| --- | --- |
+| `PERK` | int8 version, file name, uint16 count; per fragment: uint32 index, 1 unused byte, script name, function name |
+| `PACK` | int8 version, uint8 flags, file name; per set flag bit (0x01 begin, 0x02 end, 0x04 change): 1 unused byte, script name, function name |
+| `SCEN` | int8 version, uint8 flags, file name; per set flag bit (0x01 begin, 0x02 end): 1 unused byte, script name, function name; then uint16 count of phase fragments, each: uint8 phase flag (0x01 start, 0x02 completion), uint32 phase index, 1 unused byte, script name, function name |
+
+A flag bit outside the listed ones fails the tail, so it is skipped and counted.

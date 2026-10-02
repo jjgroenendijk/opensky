@@ -174,3 +174,67 @@ Hearthfire furnishings are create-object benches, each with its own
 `BYOHBuildingInteriorPart...` keyword.
 
 A field that is too short is counted as malformed, and the rest of the record still decodes.
+
+## CELL extras
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRecord(CELL, ...)`.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `XCIM` | FormID | `IMGS` image space |
+| `XILL` | FormID | Lock list: a `FLST` or `NPC_` that may use the locks |
+| `XCCM` | FormID | `REGN` whose sky and weather an interior shows |
+| `XNAM` | zstring | Water noise texture |
+| `XWEM` | zstring | Water environment map |
+| `XWCN`, `XWCS` | uint32 | Water velocity count |
+| `XWCU` | 16 bytes each | Water velocity: a vector and one unnamed float |
+| `MHDT` | 1028 bytes | Max height data: a float offset, then 32 x 32 uint8 heights; kept raw |
+| `TVDT` | bytes | Occlusion data, not named by xEdit; kept raw |
+| `LNAM` | bytes | Leftover flags that now live in `XCLC` |
+
+## WRLD extras
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `RNAM` | struct | Large references of one cell: int16 Y, int16 X, uint32 count, then per reference a `REFR` FormID, int16 Y, int16 X; repeated |
+| `MHDT` | bytes | Max height data: min and max cell, then 4 uint8 heights per cell; kept raw |
+| `WCTR` | 2 int16 | Fixed center cell |
+| `LTMP` | FormID | Interior lighting `LGTM` |
+| `XLCN` | FormID | `LCTN` |
+| `NAM3`, `NAM4` | FormID, float | LOD water and its height |
+| `ICON` | zstring | Map image |
+| `MODL` | model group | Cloud model |
+| `MNAM` | 28 bytes | Map: usable size (2 int32), NW cell and SE cell (2 int16 each), camera min height, max height, initial pitch |
+| `ONAM` | 16 bytes | Map offset: scale, then X, Y, Z offset |
+| `NAMA` | float | Distant LOD multiplier |
+| `NAM0`, `NAM9` | 2 floats | Bounds min and max, in game units |
+| `NNAM` | zstring | Canopy shadow, unused |
+| `TNAM`, `UNAM` | zstring | HD LOD diffuse and normal textures |
+| `OFST` | bytes | One uint32 offset per cell; kept raw |
+
+A child worldspace that sets the `PNAM` "use map data" bit (0x04) shows its parent's map
+data, not its own.
+
+## Activator, door, furniture, flora, tree, and movable static details
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRecord(ACTI, ...)` and the records named below.
+
+| Record | Field | Type | Meaning |
+| --- | --- | --- | --- |
+| all | `OBND` | 12 bytes | Object bounds |
+| all | `MODL`, `MODT`, `MODS` | model group | See [records](/formats/records.md) |
+| all | `DEST` group | destruction | See [records](/formats/records.md) |
+| `ACTI`, `FURN`, `FLOR` | `PNAM` | 4 bytes | Marker color, RGBA |
+| `TACT` | `PNAM` | 4 bytes | Unnamed by xEdit; read like the marker color |
+| `ACTI`, `FURN`, `FLOR`, `TACT` | `FNAM` | uint16 | Flags |
+| `ACTI` | `WNAM` | FormID | Water type `WATR` |
+| `DOOR` | `TNAM` | FormID | Random teleport destination, a `CELL` or `WRLD`; repeated |
+| `FURN` | `NAM1` | FormID | Associated spell |
+| `FURN` | `ENAM`, `NAM0`, `FNMK` | uint32, 4 bytes, FormID | One marker: index, disabled entry points (2 unknown bytes, then uint16 flags), keyword |
+| `FURN` | `FNPR` | 2 uint16 | Marker entry: type (0 none, 1 sit, 2 lay, 4 lean), entry point flags |
+| `FURN` | `XMRK` | zstring | Marker model |
+| `TREE` | `CNAM` | 12 floats | Trunk and branch flexibility, trunk, front, back, and side amplitude, front, back, and side frequency, leaf flexibility, amplitude, and frequency |
+| `MSTT` | `DATA` | uint8 | Flags: 0x01 on local map, 0x02 unknown, 0x04 static |
+| `MSTT` | `SNAM` | FormID | Looping sound |
+
+Entry point flags: 0x01 front, 0x02 behind, 0x04 right, 0x08 left, 0x10 up.

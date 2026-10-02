@@ -32,7 +32,7 @@ struct RecipeRealDataTests {
         let plugins = try VanillaMasters.load(root: root)
         let records = VanillaMasters.liveRecords(of: "COBJ", in: plugins)
         var failures: [String] = []
-        var skipped = ItemFieldTally()
+        var skipped = FieldTally()
         for entry in records {
             do {
                 try skipped.merge(ConstructibleObject(record: entry.record).skipped)

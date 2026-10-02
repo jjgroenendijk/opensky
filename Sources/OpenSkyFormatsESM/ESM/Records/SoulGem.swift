@@ -53,7 +53,7 @@ nonisolated public struct SoulGem: Sendable {
     public let linkedGem: FormID?
     /// Record-header flag `0x20000`, "Can Hold NPC Soul": the black soul gems.
     public let canHoldNPCSoul: Bool
-    public let skipped: ItemFieldTally
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SLGM" else {

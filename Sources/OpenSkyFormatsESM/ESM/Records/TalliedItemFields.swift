@@ -5,26 +5,12 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public enum ItemFieldSkipKind: SkipTallyKind {
-    case unknownField(FourCC)
-    case malformedField(FourCC)
-
-    public var name: String {
-        switch self {
-        case let .unknownField(type): "unknown \(type)"
-        case let .malformedField(type): "malformed \(type)"
-        }
-    }
-}
-
-public typealias ItemFieldTally = SkipTally<ItemFieldSkipKind>
-
 /// The shared carryable fields, the 8-byte value/weight DATA, and the tally,
 /// after one pass over a record.
 nonisolated struct TalliedItemFields {
     private(set) var fields = InventoryItemFields()
     private(set) var itemValue = ItemValue.zero
-    private(set) var skipped = ItemFieldTally()
+    private(set) var skipped = FieldTally()
 
     /// Decodes every field of `record`. `own` handles the record's own fields
     /// and returns false for a field it does not know, which is then tallied.

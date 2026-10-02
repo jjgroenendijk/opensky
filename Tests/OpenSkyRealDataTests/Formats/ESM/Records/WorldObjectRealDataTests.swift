@@ -25,7 +25,7 @@ struct WorldObjectRealDataTests {
     private struct Sweep {
         var records: [String: Int] = [:]
         var failures: [String] = []
-        var skipped = ItemFieldTally()
+        var skipped = FieldTally()
     }
 
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))

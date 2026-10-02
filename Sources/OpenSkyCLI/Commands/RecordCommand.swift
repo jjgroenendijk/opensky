@@ -5,6 +5,7 @@
 // by full-file EDID scan.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPreview
@@ -21,6 +22,7 @@ enum RecordCommand {
             plugins: plugins,
             recordTypes: RecordIndex.referenceRecordTypes
                 .union(ReferenceRecordCatalog.inspectedItemTypes)
+                .union(RecordDecoders.decodedTypes.subtracting(Self.unindexedTypes))
         )
         let inspector = ReferenceRecordInspector(index: index)
         print(
@@ -32,6 +34,16 @@ enum RecordCommand {
             ))
         )
     }
+
+    /// Placed and geometry records: too many to index for one dump, and rarely a link target.
+    private static let unindexedTypes: Set<FourCC> = [
+        "REFR",
+        "ACHR",
+        "PGRE",
+        "PHZD",
+        "NAVM",
+        "LAND"
+    ]
 
     private static func find(token: String, in file: ESMFile) throws -> ESMRecord {
         if let formID = parseFormID(token) {

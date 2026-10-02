@@ -17,6 +17,7 @@ nonisolated extension ScriptData {
             scripts.append(contentsOf: payload.scripts)
             questFragments = payload.questFragments ?? questFragments
             infoFragments = payload.infoFragments ?? infoFragments
+            recordFragments = payload.recordFragments ?? recordFragments
             skipped.merge(payload.skipped)
             return true
         } catch let error as ScriptDataError {
@@ -33,6 +34,7 @@ nonisolated public struct ScriptDataPayload: Sendable {
     public let scripts: [AttachedScript]
     public let questFragments: QuestFragmentSection?
     public let infoFragments: TopicInfoFragmentSection?
+    public let recordFragments: RecordFragmentSection?
     public let skipped: ScriptDataTally
 }
 
@@ -40,10 +42,7 @@ nonisolated public struct ScriptDataPayload: Sendable {
 /// ScriptDataQuestFragmentDecoder.swift, which needs the reader and the
 /// primary script, property and object readers this type owns.
 nonisolated public struct ScriptDataDecoder: Sendable {
-    /// Carriers whose VMAD may end in a record-specific fragment tail. QUST
-    /// (`ScriptDataQuestFragments.swift`) and INFO
-    /// (`ScriptDataInfoFragments.swift`) are decoded; the other three are still
-    /// recorded and skipped, so they stay in the set.
+    /// Carriers whose VMAD may end in a record-specific fragment tail.
     private static let fragmentRecordTypes: Set<FourCC> = [
         "INFO", "PACK", "PERK", "QUST", "SCEN"
     ]
@@ -54,6 +53,7 @@ nonisolated public struct ScriptDataDecoder: Sendable {
     public var objectFormat: ScriptObjectFormat = .formIDLast
     public var questFragments: QuestFragmentSection?
     public var infoFragments: TopicInfoFragmentSection?
+    public var recordFragments: RecordFragmentSection?
     public var skipped = ScriptDataTally()
 
     public init(data: Data, ownerType: FourCC?) {
@@ -89,6 +89,7 @@ nonisolated public struct ScriptDataDecoder: Sendable {
             scripts: scripts,
             questFragments: questFragments,
             infoFragments: infoFragments,
+            recordFragments: recordFragments,
             skipped: skipped
         )
     }
@@ -239,6 +240,10 @@ nonisolated public struct ScriptDataDecoder: Sendable {
             return
         }
         if ownerType == "INFO", decodeInfoFragmentTail() {
+            return
+        }
+        if let section = decodeRecordFragmentTail(ownerType: ownerType) {
+            recordFragments = section
             return
         }
         skipped.note(.fragments(ownerType))
