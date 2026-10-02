@@ -40,7 +40,7 @@ struct ScriptingAcceptanceRealDataTests {
         )
         try drainEvents(setup.world)
         #expect(setup.sweptCellCount == 25)
-        #expect(setup.world.instancesByKey.count == 28)
+        #expect(setup.world.instancesByKey.count == 30)
         let gridTally = setup.world.runtime.tally
         #expect(gridTally.faultTotal == 5)
         #expect(gridTally.unimplementedNativeTotal == 9)
