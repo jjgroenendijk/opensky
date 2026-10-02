@@ -11,8 +11,9 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 1
 fi
 
-# Formatters + linters are mandatory (AGENTS.md "Code quality").
-for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint; do
+# Formatters + linters are mandatory (AGENTS.md "Code quality"). jscpd and
+# periphery are the code-health gates (docs/decisions/code-health-automation.md).
+for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint jscpd periphery; do
   if command -v "$tool" >/dev/null 2>&1; then
     echo "  [ OK ] $tool"
   else

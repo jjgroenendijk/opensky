@@ -30,7 +30,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Behavior that only shows on the real install | `make realtest T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make realtest-all`, `make test-sanitize`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
+| Milestone acceptance | `make health`, `make realtest-all`, `make test-sanitize`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`.
 A tag runs one kind of suite across every unit target: `TAG=parser`, `gpu`, `acceptance`, or
@@ -57,6 +57,11 @@ test first, watch it fail, then fix.
 - `make verify-build` compiles the app, `OpenSkyCLI`, and both unit bundles without running
   a test. It is the only routine command that compiles `OpenSkyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
+- `make health` fails on unused code (Periphery). Run it when a change adds, moves, or
+  stops using declarations or imports. It builds uncached into its own tree, so its first
+  run in a worktree is a full build.
+- `make coverage-floor` after `make test` fails when a parser module's coverage drops
+  under the floor. Run it when a parser change deletes tests or adds untested branches.
 - After a failure, `make test-report` names the failing tests and messages, and shows
   time per tag. Do not hand-parse `.xcresult` JSON.
 - Every plan sets a time allowance. A test that fails on it is a hang to fix, not a
@@ -66,7 +71,7 @@ test first, watch it fail, then fix.
 
 These commands build, so the background-shell and one-`xcodebuild` rules in the root
 `AGENTS.md` apply to them: `make test-fast` after an edit, `make test`, `make verify-build`,
-`make cli`, `make realtest`, `make install`, and `git push`.
+`make cli`, `make realtest`, `make health`, `make install`, and `git push`.
 
 - Start the command itself in the background, not with `> file` redirection, and wait for
   the completion notification. Do not `cat` the task output, `sleep`, or loop on a log

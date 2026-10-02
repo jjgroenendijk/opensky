@@ -14,7 +14,9 @@ skill is how it is done right.
 
 1. One logical change per commit — no mixed refactor, behavior, and formatting.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
-   describes. Nothing else runs the tests before a push.
+   describes. `make check` includes the duplicate, comment-length, and suppression gates;
+   `make health` (unused code) runs only when you start it. Nothing else runs the tests
+   before a push.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format

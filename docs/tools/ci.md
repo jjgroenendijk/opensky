@@ -15,8 +15,8 @@ on a `macos-26` runner, so CI uses the same platform, Xcode, and tools as a deve
 | Job | Make targets |
 | --- | --- |
 | Format | `swift-format-check`, `metal-format-check`, `md-lint` |
-| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `test-plans`, `test-tags`, `no-game-content`, `docs-links`, `docs-length`, `agent-files` |
-| Build & test | `swift-baseline`, `ffmpeg`, `test`, `realdata-build` |
+| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `test-plans`, `test-tags`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `duplicates`, `no-suppressions` |
+| Build & test | `swift-baseline`, `ffmpeg`, `test`, `coverage-floor`, `realdata-build` |
 | Lint | None. It passes only when the three jobs above pass |
 
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a
@@ -49,8 +49,8 @@ the pin to match it, or the two can disagree on a file. For example, SwiftFormat
 
 The jobs download the macOS release binaries of SwiftFormat, SwiftLint, shellcheck, and
 actionlint, and cache them by version. They do not run `brew install`, because Homebrew installs
-only its newest version, not the pin. markdownlint-cli2 comes from `npm`. clang-format for the
-shaders is Xcode's, through `xcrun`, the same as locally.
+only its newest version, not the pin. markdownlint-cli2 and jscpd come from `npm`. clang-format
+for the shaders is Xcode's, through `xcrun`, the same as locally.
 
 actionlint also runs shellcheck on each `run:` script, so the two share a job and a pin.
 

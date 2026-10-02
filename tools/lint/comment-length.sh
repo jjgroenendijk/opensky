@@ -1,8 +1,7 @@
 #!/bin/sh
 # Comment-length check. A comment block is a run of lines that start with `//`
 # (so `///` too). A block over the limit usually restates the code, repeats a
-# docs/formats page, or tells history. Report mode: it lists each long block and
-# the count, and exits 0. Issue 30.39 turns it into a gate.
+# docs/formats page, or tells history. It lists each long block and fails.
 set -eu
 
 limit=6
@@ -29,4 +28,5 @@ if [ -z "$report" ]; then
 fi
 printf '%s\n' "$report"
 count="$(printf '%s\n' "$report" | wc -l | tr -d ' ')"
-printf '[WARNING] %s comment blocks over %s lines (report only)\n' "$count" "$limit"
+printf '[FAIL] %s comment blocks over %s lines. Cut each one to the why.\n' "$count" "$limit" >&2
+exit 1

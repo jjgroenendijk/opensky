@@ -9,6 +9,7 @@ excluded:
   - build
   - DerivedData
   - DerivedData-optimized
+  - DerivedData-index
   - Pods
   - "**/*.generated.swift"
 
@@ -32,6 +33,7 @@ opt_in_rules:
   - literal_expression_end_indentation
   - lower_acl_than_parent
   - modifier_order
+  - no_extension_access_modifier
   - operator_usage_whitespace
   - overridden_super_call
   - prefer_self_type_over_type_of_self
@@ -39,6 +41,7 @@ opt_in_rules:
   - redundant_type_annotation
   - sorted_imports
   - toggle_bool
+  - unavailable_function
   - unneeded_parentheses_in_closure_argument
   - vertical_whitespace_closing_braces
   - yoda_condition
@@ -94,5 +97,16 @@ opening_brace:
   ignore_multiline_statement_conditions: true
   ignore_multiline_function_signatures: true
   ignore_multiline_type_headers: true
+
+# GameViewController keeps the view, input, the render loop, and the panel wiring,
+# in these two files. Game logic goes in a coordinator in its feature module
+# (Sources/AGENTS.md), so no other file may extend it.
+custom_rules:
+  game_view_controller_extension:
+    name: "GameViewController extension"
+    regex: '\bextension\s+GameViewController\b'
+    excluded: 'Sources/OpenSky/GameView/GameViewController(Panels)?\.swift$'
+    message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
+    severity: error
 
 reporter: "xcode"
