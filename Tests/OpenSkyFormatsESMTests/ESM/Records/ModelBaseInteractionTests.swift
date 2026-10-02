@@ -61,14 +61,17 @@ extension RecordDecoderTests {
         #expect(base.activateTextOverride == nil)
     }
 
-    @Test func rejectsTruncatedLocalizedModelBaseText() throws {
+    /// A truncated FULL costs only the name; the record still decodes.
+    @Test func talliesTruncatedLocalizedModelBaseText() throws {
         let fields = ESMFixture.field("FULL", Data([1, 2, 3]))
-        #expect(throws: (any Error).self) {
-            _ = try ModelBase(
-                record: record(ESMFixture.record("ACTI", data: fields)),
-                localized: true
-            )
-        }
+            + ESMFixture.field("EDID", ESMFixture.zstring("ShortName"))
+        let base = try ModelBase(
+            record: record(ESMFixture.record("ACTI", data: fields)),
+            localized: true
+        )
+        #expect(base.name == nil)
+        #expect(base.editorID == "ShortName")
+        #expect(base.skipped.counts == [.malformedField("FULL"): 1])
     }
 
     @Test func recordFlagsSuppressManualInteraction() throws {

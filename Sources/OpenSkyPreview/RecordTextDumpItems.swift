@@ -224,7 +224,7 @@ nonisolated extension RecordTextDump {
         )
     }
 
-    private static func keywordText(
+    static func keywordText(
         _ keywords: KeywordList,
         context: KeywordContext?
     ) -> String {

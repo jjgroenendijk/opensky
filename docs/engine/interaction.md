@@ -23,8 +23,10 @@ FormIDs, the position, a name (base `FULL`, then `EDID`, then the FormID), and a
 | `CONT` | Search |
 | `ACTI` | Activate. `RNAM` replaces the word |
 | `TREE` | Harvest |
+| `FLOR` | Harvest. `RNAM` replaces the word |
+| `TACT` | Talk |
 | `FURN` | Activate |
-| `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK` | Take |
+| `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK`, `KEYM`, `SLGM`, `APPA` | Take |
 
 `FULL` and `RNAM` are lstrings, so a localized plugin reads them from its string table. The
 action words are English for now. Localized words from game settings come later.
@@ -76,7 +78,9 @@ activation](/engine/papyrus-activation.md) and [runtime state](/engine/runtime-s
 
 Activating an actor also sends a talk event with the speaker's `ReferenceKey`, because dialogue and
 saves name a speaker that way. It fires after the normal event. So sound and scripts see an actor
-activation exactly like a door activation, before any menu opens.
+activation exactly like a door activation, before any menu opens. A `TACT` talking activator
+sends the same talk event, with its own reference as the speaker and the base's `VNAM` voice
+type ([world records](/formats/world-records.md)).
 
 A door with the "Open" action asks for a transition for that exact reference. With an `XTEL` it
 follows the [interior](/engine/interiors.md) path. Without one, it still sends the event, but has

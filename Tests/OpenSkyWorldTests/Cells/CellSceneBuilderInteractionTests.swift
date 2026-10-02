@@ -1,6 +1,7 @@
 // Scene-owned interaction metadata built from synthetic REFR/model-base
 // records. No game data is embedded in these fixtures.
 
+import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
@@ -16,8 +17,11 @@ extension CellSceneBuilderTests {
             ("CONT", .search),
             ("TREE", .harvest),
             ("FURN", .use),
-            ("DOOR", .open)
+            ("DOOR", .open),
+            ("FLOR", .harvest),
+            ("TACT", .talk)
         ]
+        let voiceTypeField = ESMFixture.field("VNAM", Data([0xD5, 0x3A, 0x01, 0x00]))
         var refs = Data()
         var records: [String: Data] = [:]
         for (index, entry) in cases.enumerated() {
@@ -28,7 +32,8 @@ extension CellSceneBuilderTests {
                 formID: base,
                 modelPath: nil,
                 displayName: "\(entry.0) Name",
-                activateTextOverride: entry.0 == "ACTI" ? "Mine" : nil
+                activateTextOverride: entry.0 == "ACTI" ? "Mine" : nil,
+                extraFields: entry.0 == "TACT" ? voiceTypeField : Data()
             )
         }
         let scene = try build(pluginData: plugin(
@@ -44,5 +49,8 @@ extension CellSceneBuilderTests {
         }
         #expect(scene.interactions[FormID(0x400)]?.actionLabel == "Mine")
         #expect(scene.interactions[FormID(0x404)]?.actionLabel == "Open")
+        #expect(scene.interactions[FormID(0x405)]?.actionLabel == "Harvest")
+        #expect(scene.interactions[FormID(0x406)]?.voiceType == FormID(0x0001_3AD5))
+        #expect(scene.interactions[FormID(0x404)]?.voiceType == nil)
     }
 }

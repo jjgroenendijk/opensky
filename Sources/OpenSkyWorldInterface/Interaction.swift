@@ -57,6 +57,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     /// interaction-animation boundaries. They ride together so the cell build
     /// remains the single resolution point.
     public let sounds: ModelBase.Sounds?
+    /// TACT VNAM, carried to the talk event. Nil for every other base.
+    public let voiceType: FormID?
 
     public init(
         reference: FormID,
@@ -65,7 +67,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         name: String,
         action: InteractionAction,
         actionLabel: String,
-        sounds: ModelBase.Sounds?
+        sounds: ModelBase.Sounds?,
+        voiceType: FormID? = nil
     ) {
         self.reference = reference
         self.base = base
@@ -74,6 +77,7 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         self.action = action
         self.actionLabel = actionLabel
         self.sounds = sounds
+        self.voiceType = voiceType
     }
 }
 
@@ -100,15 +104,36 @@ nonisolated public struct InteractionEvent: Equatable, Sendable {
     }
 }
 
-/// One use-key activation of an actor: the event the dialogue menu opens on.
-/// It carries the speaker's session-stable `ReferenceKey`, which dialogue and
-/// saves key off. The plain `InteractionEvent` is still published beside it.
+/// One use-key activation of an actor or a talking activator: the event the
+/// dialogue menu opens on. It carries the speaker's session-stable
+/// `ReferenceKey`, which dialogue and saves key off. The plain
+/// `InteractionEvent` is still published beside it.
 nonisolated public struct TalkActivationEvent: Equatable, Sendable {
-    /// The actor being spoken to.
+    /// The actor or TACT reference being spoken to.
     public let speaker: ReferenceKey
+    /// The TACT base's VNAM. Nil for an actor, whose voice comes from its NPC_.
+    public let voiceType: FormID?
 
-    public init(speaker: ReferenceKey) {
+    public init(speaker: ReferenceKey, voiceType: FormID? = nil) {
         self.speaker = speaker
+        self.voiceType = voiceType
+    }
+
+    /// The event a use-key press on `interaction` raises, or nil when it is not a talk.
+    /// A picked actor names itself. A TACT is a placed object, so its key comes from
+    /// the resident reference, and its voice type rides along.
+    public init?(
+        interaction: PlacedInteraction,
+        pickedSpeaker: ReferenceKey?,
+        placedKey: () -> ReferenceKey?
+    ) {
+        guard interaction.action == .talk else { return nil }
+        if let pickedSpeaker {
+            self.init(speaker: pickedSpeaker)
+            return
+        }
+        guard let key = placedKey() else { return nil }
+        self.init(speaker: key, voiceType: interaction.voiceType)
     }
 }
 

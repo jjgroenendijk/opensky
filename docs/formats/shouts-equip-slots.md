@@ -76,7 +76,7 @@ offset `0x6C`). The fields are `EDID`, `OBND`, and a 24-byte `DATA`:
 | `0x00` | FormID | projectile (`PROJ`) |
 | `0x04` | FormID | explosion (`EXPL`) |
 | `0x08` | FormID | effect shader (`EFSH`) |
-| `0x0C` | FormID | hit effect art (`ARTO`) |
+| `0x0C` | FormID | hit effect art ([`ARTO`](/formats/art-objects.md)) |
 | `0x10` | FormID | impact data set (`IPDS`) |
 | `0x14` | uint32 | inherit-scale flags: `0x01` hit effect art, `0x02` projectile, `0x04` explosion |
 
