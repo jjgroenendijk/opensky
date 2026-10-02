@@ -92,7 +92,7 @@ final class WorldSessionWiring {
             renderer?.weather?.setRegions(regions)
         }
         streamer.onInteractionTargetChanged = { [weak game] target in
-            game?.hud.updateTarget(target)
+            game?.hud.updateTarget(game?.inventoryWorld.labelled(target))
         }
     }
 

@@ -112,6 +112,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Violent crime gold: per faction, the violent part of the `CRIM` row. A sibling,
         /// because `CRIM` rows have a fixed layout; `CRIM` keeps the total.
         public static let violentCrimeGold = "CRVG"
+
+        /// Harvested flora and trees. Presence means harvested.
+        public static let harvests = "HRVS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

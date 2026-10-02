@@ -190,6 +190,32 @@ extension GameViewController: InventoryEquipmentControlProviding {
     }
 }
 
+extension GameViewController: CraftingControlProviding {
+    var craftingSnapshot: CraftingControlSnapshot {
+        inventory.craftingSnapshot
+    }
+
+    func openCraftingStation(_ editorID: String) -> String {
+        inventory.openCraftingStation(editorID)
+    }
+
+    func craftRecipe(_ id: ResolvedFormID) -> String {
+        inventory.craftRecipe(id)
+    }
+
+    func closeCraftingStation() -> String {
+        inventory.closeCraftingStation()
+    }
+
+    func forceHarvest() -> String {
+        inventory.forceHarvest()
+    }
+
+    func resetHarvest() -> String {
+        inventory.resetHarvest()
+    }
+}
+
 extension GameViewController: InventoryMenuControlProviding {
     var inventoryMenuIsOpen: Bool {
         inventoryMenu.isOpen

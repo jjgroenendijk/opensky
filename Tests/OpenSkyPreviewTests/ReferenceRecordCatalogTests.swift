@@ -11,7 +11,7 @@ import Testing
 
 struct ReferenceRecordCatalogTests {
     @Test
-    func allElevenTypesListByEditorIDAndNameTheWinningPlugin() throws {
+    func everyTypeListsByEditorIDAndNamesTheWinningPlugin() throws {
         let base = try ESMFixture.plugin(records: ReferenceRecordType.allCases.enumerated().map {
             record($0.element.rawValue, formID: UInt32($0.offset + 1), editorID: "Base\($0.offset)")
         })
@@ -22,6 +22,7 @@ struct ReferenceRecordCatalogTests {
         let index = RecordIndex(
             plugins: [("Base.esm", base), ("Patch.esp", patch)],
             recordTypes: RecordIndex.referenceRecordTypes
+                .union(ReferenceRecordCatalog.browsedTypes)
         )
         let catalog = ReferenceRecordCatalog(
             index: index,

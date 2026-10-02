@@ -102,6 +102,28 @@ public struct InventoryRuntime: InventoryAccess {
         return updated
     }
 
+    /// Removes `consumed` and adds `produced` on one holder in one write, so a
+    /// craft or a harvest is all or nothing.
+    /// - Throws: the inventory arithmetic errors; nothing is written then.
+    @discardableResult
+    public func apply(
+        removing consumed: [InventoryStack],
+        adding produced: [InventoryStack],
+        on holder: InventoryHolder
+    ) throws -> ReferenceInventoryState {
+        var updated = inventory(of: holder)
+        for stack in consumed {
+            updated = try updated.removing(stack.item, count: stack.count, owner: holder.key)
+        }
+        for stack in produced {
+            updated = try updated.adding(
+                stack.item, count: stack.count, owner: holder.key, stolen: stack.stolen
+            )
+        }
+        store.set(updated, for: holder.key, in: holder.cell)
+        return updated
+    }
+
     /// Takes `count` of `item` away from `holder`. Removing more than held is
     /// `InventoryError.insufficientCount` and writes nothing; it is not clamped.
     /// - Returns: the inventory as stored afterwards.

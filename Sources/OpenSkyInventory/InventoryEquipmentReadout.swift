@@ -100,7 +100,7 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
     private static func stackLines(_ stacks: [ItemStackReadout]) -> String {
         guard !stacks.isEmpty else { return "  empty" }
         var lines = stacks.prefix(listedStackLimit).map {
-            "  \($0.count) × \($0.name)\($0.stolen ? " (stolen)" : "")"
+            "  \($0.line)"
         }
         if stacks.count > listedStackLimit {
             lines.append("  … \(stacks.count - listedStackLimit) more")

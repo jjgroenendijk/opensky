@@ -59,6 +59,10 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public let sounds: ModelBase.Sounds?
     /// TACT VNAM, carried to the talk event. Nil for every other base.
     public let voiceType: FormID?
+    /// FURN workbench data. Nil for every other base and for a FURN without `WBDT`.
+    public let station: CraftingStation?
+    /// FLOR and TREE produce. Nil for every other base.
+    public let produce: HarvestProduce?
 
     public init(
         reference: FormID,
@@ -68,7 +72,9 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         action: InteractionAction,
         actionLabel: String,
         sounds: ModelBase.Sounds?,
-        voiceType: FormID? = nil
+        voiceType: FormID? = nil,
+        station: CraftingStation? = nil,
+        produce: HarvestProduce? = nil
     ) {
         self.reference = reference
         self.base = base
@@ -78,6 +84,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         self.actionLabel = actionLabel
         self.sounds = sounds
         self.voiceType = voiceType
+        self.station = station
+        self.produce = produce
     }
 }
 

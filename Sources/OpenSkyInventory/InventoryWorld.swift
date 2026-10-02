@@ -31,6 +31,8 @@ public protocol InventoryWorld: AnyObject {
     /// The enchantment `item` carries, as worn by `owner`.
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String?
     var enchantmentCacheReadout: EnchantmentCacheReadout { get }
+    /// Republishes the crosshair target, so a changed prompt label shows at once.
+    func refreshInteractionTarget()
 }
 
 /// One container-menu transaction, named by its direction.

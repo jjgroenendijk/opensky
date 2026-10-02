@@ -97,6 +97,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writeCrimeLedgers(entries, into: &writer)
         writeStolenGoods(entries, into: &writer)
         writeViolentCrimeGold(entries, into: &writer)
+        writeHarvests(entries, into: &writer)
     }
 
     // MARK: - Header

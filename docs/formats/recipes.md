@@ -88,7 +88,7 @@ them:
 
 | function | index | uses | evaluator |
 | --- | --- | --- | --- |
-| `GetItemCount` | 47 | 1,005 | no |
+| `GetItemCount` | 47 | 1,005 | yes |
 | `HasPerk` | 448 | 728 | yes |
 | `EPTemperingItemIsEnchanted` | 659 | 523 | no |
 | `GetGlobalValue` | 74 | 67 | yes |
@@ -99,4 +99,5 @@ them:
 | `GetInCurrentLoc` | 359 | 3 | yes |
 | `HasKeyword` | 560 | 1 | yes |
 
-The function names come from the xEdit condition table in the same file.
+The function names come from the xEdit condition table in the same file. How a session
+evaluates them is on [crafting](/engine/crafting.md).

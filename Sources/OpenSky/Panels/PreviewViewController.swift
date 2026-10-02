@@ -300,6 +300,7 @@ extension PreviewViewController {
             plugins: plugins,
             recordTypes: RecordIndex.referenceRecordTypes
                 .union(ReferenceRecordCatalog.inspectedItemTypes)
+                .union(ReferenceRecordCatalog.browsedTypes)
         )
         return LoadedCatalog(
             catalog: loaded.catalog,

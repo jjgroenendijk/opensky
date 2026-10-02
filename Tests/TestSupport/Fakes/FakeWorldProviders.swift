@@ -143,6 +143,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// behaviour and the type itself are in
     /// `FakeWorldProvidersInventoryEquipment.swift`.
     var inventoryEquipment = FakeInventoryEquipmentState()
+    var crafting = FakeCraftingState()
 
     // UILabControlProviding
     var uiOverlayEnabled = true

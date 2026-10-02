@@ -3,6 +3,7 @@
 // `VendorWorld` from the session systems. The rules live in the coordinators
 // (docs/engine/coordinators.md).
 
+import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyFactions
 import OpenSkyFactionsInterface
@@ -38,6 +39,9 @@ final class InventoryWorldAdapter {
             references: streamer,
             catalog: items.equipmentCatalog,
             pricing: (provider as? BarterDataProviding)?.barterPricing
+        )
+        coordinator.wireCrafting(
+            catalog: items.craftingCatalog, conditions: self, skills: game.progression
         )
         streamer.onInteraction.add { [weak coordinator] event in
             coordinator?.handleInteraction(event.target.interaction.action)
@@ -101,6 +105,37 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     var enchantmentCacheReadout: EnchantmentCacheReadout {
         game.magic.enchantmentCacheReadout
+    }
+
+    func refreshInteractionTarget() {
+        game.hud.updateTarget(labelled(game.hud.interactionTarget))
+    }
+
+    /// The streamer's target with the runtime label, such as a harvested plant's.
+    func labelled(_ target: InteractionTarget?) -> InteractionTarget? {
+        target.map {
+            InteractionTarget(
+                interaction: game.inventory.labelled($0.interaction),
+                hitPosition: $0.hitPosition,
+                distance: $0.distance
+            )
+        }
+    }
+}
+
+extension InventoryWorldAdapter: RecipeConditionChecking {
+    /// Recipes run on the player, who also answers `GetItemCount`.
+    func failingFunction(in conditions: ConditionList, sourcePlugin _: String) -> String? {
+        var context = game.runtimeState.conditionContext()
+        context.subject = .player
+        if let runtime = game.inventory.runtime {
+            let stacks = runtime.inventory.inventory(of: runtime.player).stacks
+            context.inventory = InventoryConditionResolution(counts: [
+                .player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
+            ])
+        }
+        var evaluator = ConditionEvaluator(context: context)
+        return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
     }
 }
 

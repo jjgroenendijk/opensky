@@ -95,3 +95,9 @@ nonisolated public struct RecipeStore: Sendable {
         idsByCreatedObject[object, default: []].compactMap { table.value($0) }
     }
 }
+
+nonisolated public enum RecipeStoreLoader: Sendable {
+    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> RecipeStore {
+        RecipeStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
+    }
+}

@@ -11,11 +11,25 @@ nonisolated public struct ItemStackReadout: Equatable, Sendable {
     /// Whether these copies were stolen. A stack is keyed by (form, stolen), so the
     /// marker tells apart honest and stolen rows of one form.
     public let stolen: Bool
+    /// Family fields such as a soul gem's capacity. Nil for most items.
+    public let detail: String?
 
-    public init(item: FormID, count: Int32, name: String, stolen: Bool = false) {
+    public init(
+        item: FormID,
+        count: Int32,
+        name: String,
+        stolen: Bool = false,
+        detail: String? = nil
+    ) {
         self.item = item
         self.count = count
         self.name = name
         self.stolen = stolen
+        self.detail = detail
+    }
+
+    /// For example `1 × Petty Soul Gem (soul empty, capacity petty) (stolen)`.
+    public var line: String {
+        "\(count) × \(name)" + (detail.map { " (\($0))" } ?? "") + (stolen ? " (stolen)" : "")
     }
 }

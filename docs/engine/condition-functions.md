@@ -30,6 +30,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 35 | `GetDisabled` | none | 1 when the reference is disabled |
 | 45 | `GetDetected` | actor | 1 when the run-on actor has detected the parameter |
 | 46 | `GetDead` | none | 1 when the actor is dead |
+| 47 | `GetItemCount` | item | how many the run-on holds |
 | 56 | `GetQuestRunning` | `QUST` | 1 when the quest runs |
 | 58 | `GetStage` | `QUST` | highest stage reached, 0 for none |
 | 59 | `GetStageDone` | `QUST`, stage | 1 when that stage was visited |

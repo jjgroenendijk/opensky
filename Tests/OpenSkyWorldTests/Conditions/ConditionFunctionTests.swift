@@ -28,17 +28,17 @@ struct ConditionFunctionTests {
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
         // The measured keyword, form-list, location, magic, perk, level,
-        // base-actor-value, crime-gold, and faction functions.
+        // base-actor-value, crime-gold, faction, and item-count functions.
         #expect(registry.indices == [
-            1, 14, 18, 27, 35, 45, 46, 56, 58, 59, 60, 71, 72, 73, 74, 77, 80, 170, 180,
+            1, 14, 18, 27, 35, 45, 46, 47, 56, 58, 59, 60, 71, 72, 73, 74, 77, 80, 170, 180,
             181, 214, 223, 249, 263, 264, 277, 323, 359, 360, 372, 375, 376, 403, 426, 444, 448,
             449, 459, 543, 560, 562,
             565, 566, 567, 570, 571, 572, 603, 604, 605, 610, 632, 640, 699, 719
         ])
-        #expect(registry.count == 55)
+        #expect(registry.count == 56)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
-            "GetDisabled", "GetDetected", "GetDead", "GetQuestRunning",
+            "GetDisabled", "GetDetected", "GetDead", "GetItemCount", "GetQuestRunning",
             "GetStage", "GetStageDone", "GetFactionRankDifference", "GetInFaction",
             "GetIsID", "GetFactionRank", "GetGlobalValue", "GetRandomPercent",
             "GetLevel",
@@ -62,7 +62,7 @@ struct ConditionFunctionTests {
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
-            4097, 4110, 4114, 4123, 4131, 4141, 4142, 4152, 4154, 4155, 4156, 4167,
+            4097, 4110, 4114, 4123, 4131, 4141, 4142, 4143, 4152, 4154, 4155, 4156, 4167,
             4168, 4169, 4170,
             4173, 4176, 4266, 4276, 4277, 4310, 4319, 4345, 4359, 4360, 4373, 4419, 4455,
             4456, 4468, 4471, 4472, 4499, 4522, 4540, 4544, 4545, 4555, 4639, 4656, 4658, 4661,

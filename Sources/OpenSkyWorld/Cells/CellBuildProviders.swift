@@ -52,6 +52,14 @@ nonisolated public protocol ItemDataProviding {
     /// Slot and model data for equippable items, for the `EquipmentRuntime`. Separate,
     /// because equipping needs body templates the inventory view does not.
     var equipmentCatalog: EquipmentCatalog? { get }
+    /// Recipes and stations for crafting sessions. Nil on a synthetic scene.
+    var craftingCatalog: CraftingCatalog? { get }
+}
+
+nonisolated extension ItemDataProviding {
+    public var craftingCatalog: CraftingCatalog? {
+        nil
+    }
 }
 
 /// Optional RACE/CLAS/NPC_ stat indexes. With the session's `WorldStateStore` they build

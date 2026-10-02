@@ -53,6 +53,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     /// Equippable-item slot index; nil on the same synthetic
     /// scenes, and then equipping reports itself unavailable.
     public var equipmentCatalog: EquipmentCatalog?
+    /// Load-order recipes and the item plugin's stations; nil on a synthetic scene.
+    public var craftingCatalog: CraftingCatalog?
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic
     /// scenes, and then actor values report themselves unavailable.
     public var actorValueBaselines: ActorValueBaselineResolver?

@@ -173,3 +173,6 @@ public final class ProgressionCoordinator {
         }
     }
 }
+
+/// Crafting reports through the same method combat's adapters call.
+extension ProgressionCoordinator: SkillUseReporting {}

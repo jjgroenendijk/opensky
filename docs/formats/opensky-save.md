@@ -114,6 +114,10 @@ chunk cannot read into the next.
 | `CRIM` | crime gold and crime counts | actors |
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |
+| `HRVS` | harvested flora and trees | world |
+
+`HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
+means harvested, so it has no other field.
 
 The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkySave/`).
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.

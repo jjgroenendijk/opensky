@@ -2,10 +2,8 @@
 // bases resolve a model, and that the item index describes each one.
 
 import Foundation
-import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-@testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import TagsTesting
@@ -31,28 +29,12 @@ struct WorldItemRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func realCellsPlaceTakeableItemsThatTheItemIndexDescribes() throws {
-        let device = try #require(RealDataEnvironment.device)
-        let root = try #require(RealDataEnvironment.dataRoot)
-        let vfs = VirtualFileSystem(root: root)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let textures = try TextureLibrary(fileSystem: vfs, device: device)
-        let meshes = MeshLibrary(fileSystem: vfs, device: device, textures: textures)
-        let builder = CellSceneBuilder(
-            file: file, meshes: meshes, textures: textures, fileSystem: vfs
-        )
-        let items = ItemDefinitionStore(file: file)
+        let cells = try WhiterunCellSweep()
+        let items = ItemDefinitionStore(file: cells.file)
 
         var sweep = Sweep()
-        for x in -Self.sweptRadius ... Self.sweptRadius {
-            for y in -Self.sweptRadius ... Self.sweptRadius {
-                let scene = try? builder.buildScene(
-                    worldspaceEditorID: FirstRenderCell.worldspaceEditorID,
-                    gridX: FirstRenderCell.gridX + x,
-                    gridY: FirstRenderCell.gridY + y
-                )
-                guard let scene else { continue }
-                Self.accumulate(scene, items: items, into: &sweep)
-            }
+        for scene in cells.scenes(radius: Self.sweptRadius) {
+            Self.accumulate(scene, items: items, into: &sweep)
         }
 
         // A cell that places no item at all is ordinary; a whole neighbourhood
@@ -62,10 +44,8 @@ struct WorldItemRealDataTests {
         // Every takeable base is one the item index describes, so the take path
         // can weigh it, value it and stack it.
         #expect(sweep.describedByItemIndex == sweep.takeables)
-        // Item bases stopped being unsupported, which is what the widening was
-        // for. The absolute skip count stays non-zero on real data — NPC_,
-        // FLOR, SCOL and the rest are still unsupported here — so the check is
-        // that every takeable resolved rather than that nothing was skipped.
+        // Item bases stopped being unsupported. FLOR, SCOL and others still skip,
+        // so the check is that every takeable resolved, not that nothing skipped.
         #expect(sweep.drawn > 0)
 
         try Self.writeReport(sweep)

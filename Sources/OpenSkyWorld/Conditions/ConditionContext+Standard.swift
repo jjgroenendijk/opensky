@@ -8,6 +8,7 @@ import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import OpenSkyProgressionInterface
@@ -72,6 +73,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installPerk(&registry)
         ConditionFunctions.installCrime(&registry)
         ConditionFunctions.installFaction(&registry)
+        ConditionFunctions.installInventory(&registry)
         return registry
     }()
 }

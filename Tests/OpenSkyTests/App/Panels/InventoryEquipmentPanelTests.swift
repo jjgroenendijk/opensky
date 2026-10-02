@@ -44,16 +44,18 @@ struct InventoryEquipmentPanelTests {
         }
     }
 
-    /// The three sections appear in the order the gate's loop reaches for them,
+    /// The sections appear in the order the gate's loop reaches for them,
     /// and each has a header title a record can name.
     @Test @MainActor
     func sectionOrderAndTitlesArePinned() {
         let panel = makePanel(FakeWorldProviders())
         let sections = panel.makeSections()
         #expect(sections.map(\.sectionIdentifier) == [
-            "inventoryGrants", "itemOwnership", "equipmentInspection"
+            "inventoryGrants", "itemOwnership", "equipmentInspection", "crafting", "harvest"
         ])
-        #expect(sections.map(\.sectionTitle) == ["Grants", "Ownership", "Equipment"])
+        #expect(sections.map(\.sectionTitle) == [
+            "Grants", "Ownership", "Equipment", "Crafting", "Harvest"
+        ])
     }
 
     @Test @MainActor
