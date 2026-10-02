@@ -32,8 +32,9 @@ struct WorldAudioDirectorAmbienceTests {
         #expect(destinations.contains { $0.node === mixer })
     }
 
-    /// Ambience has no world position, so moving the listener to a distant
-    /// cell must not attenuate or retire the bed through positional cleanup.
+    /// Ambience has no world position, so a distant listener cell must not retire
+    /// or attenuate the bed. Calls the purge, not `tick`: the fixture stream cannot
+    /// decode, so `tick` may also retire it as finished, depending on queue timing.
     @Test func ambienceSurvivesListenerCellMovement() throws {
         let engine = try Fixture.makeRunningEngine()
         let director = Fixture.makeAmbienceDirector(engine: engine)
@@ -44,7 +45,10 @@ struct WorldAudioDirectorAmbienceTests {
         engine.updateListener(
             worldPosition: SIMD3<Float>(1_000_000, 1_000_000, 0), yaw: 0, pitch: 0
         )
-        engine.tick(listenerCell: CellCoordinate(x: 250, y: 250), deltaTime: 1 / 60)
+        engine.purgeSources(
+            fartherThan: WorldAudioEngine.cellPurgeRadius,
+            fromCell: CellCoordinate(x: 250, y: 250)
+        )
 
         let source = try #require(engine.sources.first { $0.id == sourceID })
         #expect(source.routing == .nonPositional)
