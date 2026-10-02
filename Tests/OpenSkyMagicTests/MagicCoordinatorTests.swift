@@ -3,6 +3,7 @@
 // synthetic and built in code, never extracted game files.
 
 import OpenSkyActorsInterface
+import OpenSkyActorsTesting
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
