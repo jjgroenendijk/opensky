@@ -40,6 +40,8 @@ struct ScriptingAcceptanceRealDataTests {
         )
         try drainEvents(setup.world)
         #expect(setup.sweptCellCount == 25)
+        // Persistent references merge into the exterior cell they stand in,
+        // so two scripted persistent references in the grid attach too.
         #expect(setup.world.instancesByKey.count == 30)
         let gridTally = setup.world.runtime.tally
         #expect(gridTally.faultTotal == 5)
