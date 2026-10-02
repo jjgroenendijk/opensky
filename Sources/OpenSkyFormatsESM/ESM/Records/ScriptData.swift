@@ -135,6 +135,8 @@ nonisolated public struct ScriptData: Equatable, Sendable {
     /// for an INFO whose tail failed to decode — that case keeps the primary
     /// scripts and records one `.fragments("INFO")` tally entry instead.
     public var infoFragments: TopicInfoFragmentSection?
+    /// Decoded SCEN, PACK, or PERK tail. Nil when absent or malformed.
+    public var recordFragments: RecordFragmentSection?
     public var skipped = ScriptDataTally()
 
     public init(ownerType: FourCC? = nil) {

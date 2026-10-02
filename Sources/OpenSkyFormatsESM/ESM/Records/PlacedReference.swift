@@ -84,6 +84,15 @@ nonisolated public struct PlacedReference: Sendable {
     public let itemCount: Int32?
     /// VMAD — Papyrus scripts attached directly to this placed reference.
     public let scriptData: ScriptData
+    /// XLOC. Nil when the reference is not locked.
+    public let lock: LockData?
+    /// XESP.
+    public let enableParent: EnableParent?
+    /// The XMRK group. Nil when the reference is not a map marker.
+    public let mapMarker: MapMarker?
+    public let details: PlacedReferenceDetails
+    /// Fields this decode does not read, and malformed shared subrecords.
+    public let skipped: FieldTally
 
     /// The link `GetLinkedRef(akKeyword)` resolves to: the first entry tagged
     /// with `keyword`, or for `nil` the first untagged entry. Nil when none
@@ -103,6 +112,8 @@ nonisolated public struct PlacedReference: Sendable {
         var placement: Placement?
         var optionals = Optionals()
         var scriptData = ScriptData(ownerType: record.type)
+        var extras = PlacedReferenceExtras()
+        var unread: [ESMField] = []
         for field in try record.fields() {
             switch field.type {
             case "NAME":
@@ -111,8 +122,12 @@ nonisolated public struct PlacedReference: Sendable {
             case "DATA":
                 placement = try Self.decodePlacement(field.data)
             default:
-                if try !optionals.decode(field: field, reference: formID) {
-                    _ = try scriptData.decode(field: field)
+                if
+                    try !optionals.decode(field: field, reference: formID),
+                    !extras.decode(field),
+                    try !scriptData.decode(field: field)
+                {
+                    unread.append(field)
                 }
             }
         }
@@ -134,6 +149,14 @@ nonisolated public struct PlacedReference: Sendable {
         ownerFactionRank = optionals.ownerFactionRank
         itemCount = optionals.itemCount
         self.scriptData = scriptData
+        lock = extras.lock
+        enableParent = extras.enableParent
+        mapMarker = extras.mapMarker
+        let (details, detailTally) = PlacedReferenceDetails.decode(unread)
+        self.details = details
+        var tally = extras.tally
+        tally.merge(detailTally)
+        skipped = tally
     }
 
     /// A reference the running game created. No record backs it, so all file
@@ -160,6 +183,11 @@ nonisolated public struct PlacedReference: Sendable {
         ownerFactionRank = nil
         itemCount = count
         scriptData = ScriptData(ownerType: "REFR")
+        lock = nil
+        enableParent = nil
+        mapMarker = nil
+        details = PlacedReferenceDetails()
+        skipped = FieldTally()
     }
 
     /// Accumulator for the optional REFR subrecords. It exists so the field
@@ -249,7 +277,7 @@ nonisolated public struct PlacedReference: Sendable {
     /// Decodes one XLKR payload (8 bytes: keyword, then ref; 4 bytes: ref) and
     /// appends it. Never throws: a bad payload costs one link, while a bad XTEL
     /// would move a door. Other lengths are skipped; extra bytes are ignored.
-    private static func appendLinkedReference(
+    static func appendLinkedReference(
         _ data: Data,
         to links: inout [LinkedReference]
     ) {

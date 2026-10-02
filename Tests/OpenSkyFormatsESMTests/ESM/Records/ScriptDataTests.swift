@@ -75,15 +75,50 @@ struct ScriptDataTests {
         #expect(data.scripts.first?.properties.first?.flags == .edited)
     }
 
-    /// QUST tails are decoded instead (QuestFragmentTests); the other four
-    /// carriers still record one reason-tagged skip and consume the remainder.
-    @Test("fragment carriers skip and rank their bounded tail")
+    /// A tail that does not decode records one reason-tagged skip and
+    /// consumes the remainder.
+    @Test("fragment carriers skip and rank a tail that does not decode")
     func skipsFragmentTail() throws {
         var data = ScriptData(ownerType: "SCEN")
         let payload = VMADFixture.payload(scripts: [], tail: Data([2, 0, 0, 0]))
         #expect(try data.decode(field: ESMField(type: "VMAD", data: payload)))
         #expect(data.skipped.ranked.first?.name == "SCEN fragments")
         #expect(data.skipped.total == 1)
+    }
+
+    @Test("PERK, PACK and SCEN fragment tails decode")
+    func decodesRecordFragmentTails() throws {
+        func text(_ value: String) -> Data {
+            var data = Data()
+            data.appendUInt16(UInt16(value.utf8.count))
+            return data + Data(value.utf8)
+        }
+        var perkTail = Data([2]) + text("PRKF") + Data([1, 0]) + Data([4, 0, 0, 0, 0])
+        perkTail += text("PRKF") + text("Fragment_4")
+        var packTail = Data([2, 0x05]) + text("PF")
+        packTail += Data([0]) + text("PF") + text("Begin") + Data([0]) + text("PF") + text("Change")
+        var sceneTail = Data([2, 0x01]) + text("SF") + Data([0]) + text("SF") + text("Begin")
+        sceneTail += Data([1, 0]) + Data([1, 3, 0, 0, 0, 0]) + text("SF") + text("Phase_3")
+        let cases = [
+            TailCase(carrier: "PERK", tail: perkTail, slots: [4], phases: 0),
+            TailCase(carrier: "PACK", tail: packTail, slots: [0x01, 0x04], phases: 0),
+            TailCase(carrier: "SCEN", tail: sceneTail, slots: [0x01], phases: 1)
+        ]
+        for item in cases {
+            var data = ScriptData(ownerType: item.carrier)
+            let payload = VMADFixture.payload(scripts: [], tail: item.tail)
+            #expect(try data.decode(field: ESMField(type: "VMAD", data: payload)))
+            #expect(data.recordFragments?.fragments.map(\.slot) == item.slots, "\(item.carrier)")
+            #expect(data.recordFragments?.phaseFragments.count == item.phases, "\(item.carrier)")
+            #expect(data.skipped.total == 0, "\(item.carrier)")
+        }
+    }
+
+    private struct TailCase {
+        let carrier: FourCC
+        let tail: Data
+        let slots: [UInt32]
+        let phases: Int
     }
 
     @Test("rejects malformed payloads with ScriptDataError")

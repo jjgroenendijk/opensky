@@ -1,5 +1,5 @@
 // NPC_ record decoded into engine types: appearance, ACBS and CNAM stat inputs,
-// the SPLO spells, PRKR perks, and SNAM factions. Inventory is skipped. ACBS
+// the SPLO spells, PRKR perks, and SNAM factions; `ActorBaseDetails` has the rest. ACBS
 // carries the gender flag and the template flags that drive inheritance.
 // Layout: docs/formats/actors.md.
 
@@ -127,6 +127,9 @@ nonisolated public struct ActorBase: Sendable {
     public let crimeFaction: FormID?
     /// VMAD — Papyrus scripts attached to the NPC_ base.
     public let scriptData: ScriptData
+    /// Inventory, attacks, overrides, sounds, destruction, and face data.
+    public let details: ActorBaseDetails
+    public let skipped: FieldTally
 
     public var isFemale: Bool {
         flags.contains(.female)
@@ -206,6 +209,7 @@ nonisolated public struct ActorBase: Sendable {
         self.stats = stats
         self.aiData = aiData
         self.scriptData = scriptData
+        (details, skipped) = try ActorBaseDetails.decode(record: record, localized: localized)
     }
 
     /// The FormID-valued fields, gathered so the decode pass that fills them

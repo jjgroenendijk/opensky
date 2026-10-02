@@ -32,7 +32,8 @@ struct ArtObjectRecordTests {
         #expect(art.bounds?.isEmpty == false)
         #expect(art.modelPath == "magic\\firecloak.nif")
         #expect(art.artType == .magicHitEffect)
-        #expect(art.skipped.counts == [.unknownField("MODT"): 1])
+        #expect(art.modelTextureHashes?.count == 12)
+        #expect(art.skipped.isEmpty)
     }
 
     @Test func rejectsOtherRecordTypes() throws {

@@ -83,11 +83,32 @@ Four `DALC` fields, in the order sunrise, day, sunset, night. Each is 32 bytes (
 float32 scale. Some community notes call the scale a Fresnel or specular power. With fewer
 than four full `DALC` fields, OpenSky has no time-of-day mapping and ignores them all.
 
-### Not read
+### Clouds, sounds, and links
 
-Cloud textures (`00TX` to `L0TX`), cloud layer speeds, colors, and alphas (`LNAM`, `MNAM`,
-`NNAM`, `RNAM`, `QNAM`, `PNAM`, `JNAM`), `NAM1` disabled layers, sounds (`SNAM`, `TNAM`),
-image spaces (`IMSP`), and statics and spells (`NAM2`, `NAM3`, `MODL`).
+Source: xEdit `dev-4.1.6` (commit `9fb0168`) `wbRecord(WTHR, ...)` and the `wbWeather*` helpers. A
+weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` (layers 0 to 16) and
+`A0TX` to `O0TX` (layers 17 to 31): the first byte counts, the rest spell `0TX`.
+
+| Field | Size | Meaning |
+| --- | --- | --- |
+| `LNAM` | 4 | Max cloud layers |
+| `MNAM` | 4 | Precipitation, an `SPGD` ([environment shading](/formats/environment-shading.md)) |
+| `NNAM` | 4 | Visual effect, an `RFCT` ([visual effects](/formats/visual-effects.md)) |
+| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement |
+| `PNAM` | 512 | Color per layer: 4 times of day, RGBA bytes |
+| `JNAM` | 512 | Alpha per layer: 4 floats |
+| `NAM1` | 4 | Disabled layers, one bit per layer |
+| `SNAM` | 8 | A sound and its type (0 default, 1 precipitation, 2 wind, 3 thunder); repeated |
+| `TNAM` | 4 | A sky `STAT`; repeated |
+| `IMSP` | 16 | 4 `IMGS`, one per time of day ([image spaces](/formats/image-spaces.md)) |
+| `HNAM` | 16 | 4 `VOLI`, one per time of day |
+| `NAM2`, `NAM3` | 16 | Sun and moon glare: 4 RGBA colors |
+| `MODL` | model group | Aurora mesh |
+| `DNAM`, `CNAM`, `ANAM`, `BNAM` | zstring | Older 4-layer cloud textures |
+| `ONAM` | 4 | Older cloud speeds, unused |
+
+One `PNAM` on the install is 64 bytes (4 layers), from an older form version. A `NAM0`,
+`FNAM`, or `DATA` of an unknown size is tallied.
 
 ## CLMT
 

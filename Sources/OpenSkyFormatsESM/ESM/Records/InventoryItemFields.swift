@@ -45,6 +45,9 @@ nonisolated public struct InventoryItemFields: Sendable {
     public var name: LString?
     /// MODL — ground/world model path relative to Data/.
     public var modelPath: String?
+    /// MODT and MODS of the world model.
+    public var modelTextureHashes: Data?
+    public var modelAlternateTextures: [ModelData.AlternateTexture] = []
     public var bounds: ObjectBounds?
     public var keywords = KeywordList()
     /// ICON — inventory image path relative to Data/.
@@ -74,6 +77,10 @@ nonisolated public struct InventoryItemFields: Sendable {
             name = try LString(field: field, localized: localized)
         case "MODL":
             modelPath = try reader.readZString()
+        case "MODT":
+            modelTextureHashes = field.data
+        case "MODS":
+            modelAlternateTextures = try ModelData.alternateTextures(&reader)
         case "OBND":
             bounds = try ObjectBounds(field: field)
         case "ICON":

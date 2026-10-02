@@ -18,7 +18,7 @@ struct MinorItemRealDataTests {
     private struct Sweep {
         var records: [String: Int] = [:]
         var failures: [String] = []
-        var skipped = ItemFieldTally()
+        var skipped = FieldTally()
         /// Editor ID to record type plus its decoded enum, such as "APPA expert".
         var editorIDs: [String: String] = [:]
     }
@@ -92,7 +92,7 @@ struct MinorItemRealDataTests {
     private struct Decoded {
         let editorID: String?
         let detail: String?
-        let skipped: ItemFieldTally
+        let skipped: FieldTally
     }
 
     private static func decode(_ record: ESMRecord, localized: Bool) throws -> Decoded {

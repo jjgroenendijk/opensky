@@ -77,6 +77,9 @@ nonisolated public struct Cell: Sendable {
     /// theirs to use. Meaningful only when `owner` names a FACT; nil when the
     /// field is absent, which is every vanilla cell observed on this install.
     public let ownerFactionRank: Int32?
+    /// The fields that rarely matter to the engine: water extras, occlusion, height data.
+    public let extras: CellExtras
+    public let skipped: FieldTally
 
     public var isInterior: Bool {
         flags.contains(.interior)
@@ -108,6 +111,8 @@ nonisolated public struct Cell: Sendable {
         encounterZone = fields.encounterZone
         owner = fields.owner
         ownerFactionRank = fields.ownerFactionRank
+        extras = fields.extras
+        skipped = fields.skipped
     }
 
     /// Mutable accumulator for the field loop. Split out so the field switch
@@ -129,6 +134,8 @@ nonisolated public struct Cell: Sendable {
         var encounterZone: FormID?
         var owner: FormID?
         var ownerFactionRank: Int32?
+        var extras = CellExtras()
+        var skipped = FieldTally()
 
         mutating func decode(field: ESMField, localized: Bool) throws {
             var reader = BinaryReader(field.data)
@@ -194,7 +201,9 @@ nonisolated public struct Cell: Sendable {
                 // no vanilla CELL was observed carrying one.
                 ownerFactionRank = try Cell.decodeInt32(field.data)
             default:
-                break
+                if try !extras.decode(field: field) {
+                    skipped.note(.unknownField(field.type))
+                }
             }
         }
     }

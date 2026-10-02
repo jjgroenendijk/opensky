@@ -73,6 +73,10 @@ nonisolated public struct ReferenceRecordInspector: Sendable {
         if let resolved = resolvedDetail(preview) {
             sections.insert(resolved, at: 2)
         }
+        let decoded = DecodedValueDump.lines(record: preview.record, localized: preview.localized) {
+            link($0, fromPlugin: preview.sourcePlugin)
+        }
+        sections.append(decoded.joined(separator: "\n"))
         return sections.joined(separator: "\n\n")
     }
 

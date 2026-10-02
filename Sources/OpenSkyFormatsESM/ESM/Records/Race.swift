@@ -1,5 +1,5 @@
 // RACE record: the appearance fields that skin an actor and the DATA fields
-// that author its actor values. Spells, keywords, tints and morphs are skipped.
+// that author its actor values. `RaceDetails` holds every other field.
 // The skeleton ANAM sits in the block after the first MNAM/FNAM marker, so ANAM
 // is keyed off the most recent marker (docs/formats/actors.md).
 // Reference: UESP "Skyrim Mod:Mod File Format/RACE"; slot bits: nif.xml.
@@ -180,6 +180,9 @@ nonisolated public struct Race: Sendable {
     public let maleHeadParts: [FormID]
     /// HEAD references under the female FaceGen head-data marker.
     public let femaleHeadParts: [FormID]
+    /// Every other field: DATA in full, attacks, body models, movement, chargen head data.
+    public let details: RaceDetails
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "RACE" else {
@@ -205,6 +208,8 @@ nonisolated public struct Race: Sendable {
         femaleSkeletonPath = state.femaleSkeletonPath
         maleHeadParts = state.maleHeadParts
         femaleHeadParts = state.femaleHeadParts
+        var walk = try RaceFieldWalk(record: record, localized: localized)
+        (details, skipped) = walk.run()
     }
 
     /// DATA: skill bonuses (14 bytes + 2 pad) then male/female height +

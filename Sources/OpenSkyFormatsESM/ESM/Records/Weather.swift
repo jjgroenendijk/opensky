@@ -1,6 +1,6 @@
 // WTHR decoded into what the sky needs: NAM0 color layers, FNAM fog, DATA
 // wind, precipitation and lightning, and the four DALC ambient keyframes
-// (Sunrise, Day, Sunset, Night). Clouds, sounds and image spaces are skipped.
+// (Sunrise, Day, Sunset, Night). `WeatherSky` holds clouds, sounds and links.
 // Layout: docs/formats/weather.md.
 
 import Foundation
@@ -130,43 +130,38 @@ nonisolated public struct Weather: Sendable {
     /// than four 32-byte DALC subrecords (skipped rather than guessed).
     public let directionalAmbient: DirectionalAmbientKeyframes?
 
-    public init(record: ESMRecord) throws {
-        guard record.type == "WTHR" else {
-            throw ESMError.malformed("expected WTHR record, got \(record.type)")
-        }
-        formID = FormID(record.formID)
+    /// Clouds, sounds, sky statics and the linked forms.
+    public let sky: WeatherSky
+    public let skipped: FieldTally
 
-        var editorID: String?
-        var colors: [Colors]?
-        var fog: FogDistances?
-        var data: WeatherData?
-        // DALC subrecords stream in Sunrise/Day/Sunset/Night order; collect
-        // them positionally and map the first four (see keyframes(from:)).
-        var ambientFrames: [DirectionalAmbient] = []
-        for field in try record.fields() {
-            var reader = BinaryReader(field.data)
-            switch field.type {
-            case "EDID":
-                editorID = try reader.readZString()
-            case "NAM0":
-                colors = try Self.readColorLayers(&reader)
-            case "FNAM":
-                fog = try Self.readFog(&reader)
-            case "DATA":
-                data = try Self.readData(&reader)
-            case "DALC":
-                if let frame = try Self.readDirectionalAmbient(&reader) {
-                    ambientFrames.append(frame)
-                }
-            default:
-                break // cloud/sound/ref fields skipped (see header)
-            }
+    public init(record: ESMRecord) throws {
+        var fields = try RecordFields(record: record, type: "WTHR")
+        formID = fields.formID
+        editorID = fields.editorID()
+        colors = Self.sized(&fields, "NAM0", Self.readColorLayers)
+        fog = Self.sized(&fields, "FNAM", Self.readFog)
+        data = Self.sized(&fields, "DATA", Self.readData)
+        // DALC fields stream in Sunrise/Day/Sunset/Night order.
+        let frames = fields.readAll("DALC") { try Self.readDirectionalAmbient(&$0) }
+        if frames.contains(where: { $0 == nil }) {
+            fields.note(.mismatch("WTHR DALC shorter than 32 bytes"))
         }
-        self.editorID = editorID
-        self.colors = colors
-        self.fog = fog
-        self.data = data
-        directionalAmbient = Self.keyframes(from: ambientFrames)
+        directionalAmbient = Self.keyframes(from: frames.compactMap(\.self))
+        sky = WeatherSky(&fields)
+        skipped = fields.finish()
+    }
+
+    /// Reads a field whose decoder returns nil for an unknown size, and tallies that size.
+    private static func sized<Value>(
+        _ fields: inout RecordFields,
+        _ type: FourCC,
+        _ decode: (inout BinaryReader) throws -> Value?
+    ) -> Value? {
+        guard let decoded = fields.read(type, decode) else { return nil }
+        if decoded == nil {
+            fields.note(.mismatch("WTHR \(type) has an unknown size"))
+        }
+        return decoded
     }
 
     // NAM0: array of 16-byte structs, each = sunrise/day/sunset/night RGBX.

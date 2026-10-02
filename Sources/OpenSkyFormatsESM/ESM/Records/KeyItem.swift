@@ -11,7 +11,7 @@ nonisolated public struct KeyItem: Sendable {
     /// Record-header flag `0x04`, "Non-Playable".
     public let isPlayable: Bool
     /// Fields the decoder does not read, such as VMAD and the destruction data.
-    public let skipped: ItemFieldTally
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "KEYM" else {

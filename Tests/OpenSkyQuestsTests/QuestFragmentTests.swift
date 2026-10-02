@@ -113,8 +113,8 @@ struct QuestFragmentTests {
         #expect(data.skipped.total == 1)
     }
 
-    @Test("only QUST graduates from the recorded skip")
-    func otherCarriersStillSkipTheirTail() throws {
+    @Test("a quest-shaped tail on another carrier is skipped")
+    func otherCarriersSkipAQuestShapedTail() throws {
         for carrier: FourCC in ["INFO", "PACK", "PERK", "SCEN"] {
             var data = ScriptData(ownerType: carrier)
             let payload = VMADFixture.payload(

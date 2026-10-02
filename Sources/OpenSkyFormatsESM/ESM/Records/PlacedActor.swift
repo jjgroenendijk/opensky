@@ -17,6 +17,11 @@ nonisolated public struct PlacedActor: Sendable {
     public let isInitiallyDisabled: Bool
     /// VMAD — Papyrus scripts attached directly to this placed actor.
     public let scriptData: ScriptData
+    /// XESP.
+    public let enableParent: EnableParent?
+    public let details: PlacedReferenceDetails
+    /// Fields this decode does not read.
+    public let skipped: FieldTally
 
     public init(
         copying actor: PlacedActor,
@@ -29,6 +34,9 @@ nonisolated public struct PlacedActor: Sendable {
         self.scale = scale
         isInitiallyDisabled = actor.isInitiallyDisabled
         scriptData = actor.scriptData
+        enableParent = actor.enableParent
+        details = actor.details
+        skipped = actor.skipped
     }
 
     public init(record: ESMRecord) throws {
@@ -42,6 +50,8 @@ nonisolated public struct PlacedActor: Sendable {
         var placement: PlacedReference.Placement?
         var scale: Float = 1
         var scriptData = ScriptData(ownerType: record.type)
+        var extras = PlacedReferenceExtras()
+        var unread: [ESMField] = []
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -63,7 +73,9 @@ nonisolated public struct PlacedActor: Sendable {
             case "XSCL":
                 scale = try Float(bitPattern: reader.readUInt32())
             default:
-                _ = try scriptData.decode(field: field)
+                if !extras.decode(field), try !scriptData.decode(field: field) {
+                    unread.append(field)
+                }
             }
         }
         guard let base else {
@@ -76,5 +88,11 @@ nonisolated public struct PlacedActor: Sendable {
         self.placement = placement
         self.scale = scale
         self.scriptData = scriptData
+        enableParent = extras.enableParent
+        let (details, detailTally) = PlacedReferenceDetails.decode(unread)
+        self.details = details
+        var tally = extras.tally
+        tally.merge(detailTally)
+        skipped = tally
     }
 }

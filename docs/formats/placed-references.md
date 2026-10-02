@@ -104,3 +104,79 @@ the Creation Kit shows it. The unknown float has exactly four values, 0.15, 0.2,
 
 Uncertain: the four values of the unknown float look like an editor drawing hint, not
 something the game uses. How a line volume uses three sizes is also not known.
+
+## Locks, enable parents, and map markers
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbXLOC`, `wbXESP`, and `wbMapMarkerEnum`.
+
+`XLOC` is 20 bytes on every one of the 1,505 vanilla locks: uint8 level, 3 unused bytes,
+a `KEYM` FormID, uint8 flags (0x04 leveled), and 11 more bytes. Levels are 1 novice,
+25 apprentice, 50 adept, 75 expert, 100 master, and 255 requires key; another value keeps
+its number. Shorter fields from 4 bytes up decode what they hold.
+
+`XESP` is a parent reference and uint8 flags (0x01 opposite of parent, 0x02 pop in), then
+3 unused bytes. `REFR`, `ACHR`, and `PHZD` carry it.
+
+A map marker is an empty `XMRK` followed by `FNAM` (uint8 flags: 0x01 visible, 0x02 can
+travel to, 0x04 hidden from show-all), `FULL` (the marker name), and `TNAM` (uint8 marker
+type, then 1 unused byte). The marker type names follow xEdit's `wbMapMarkerEnum`.
+
+## PHZD and PGRE
+
+Placed hazards and projectiles share the reference layout above. See
+[hazards](/formats/hazards.md).
+
+## Other REFR and ACHR fields
+
+Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbRefRecord(ACHR, ...)`, `wbRagdoll`,
+`wbActionFlag`, `wbXLOD`, and `wbSizePosRot`. No runtime reads these yet. OpenSky decodes
+them so the record dump shows them and the coverage sweep can account for every field.
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `XMBO` | 3 floats | Bound half extents |
+| `XOCP` | 9 floats | Occlusion plane: width, height, position, rotation quaternion |
+| `XPOD` | FormID pairs | Portals: origin and destination `REFR` |
+| `XRMR` | 4 bytes | Room bound header: linked room count, flags, 2 unknown bytes |
+| `LNAM`, `INAM` | FormID | Room lighting template and image space |
+| `XLRM` | FormID | A linked room; repeated |
+| `XMBP` | 0 bytes | Multibound primitive marker |
+| `XRGD` | 28 bytes each | Ragdoll bone: uint8 bone ID, 3 unused bytes, position, rotation |
+| `XRGB` | 3 floats | Ragdoll biped rotation |
+| `XPWR` | FormID, uint32 | Water that reflects (0x01) or refracts (0x02) this reference; repeated |
+| `XLTW` | FormID | A water this light lights; repeated |
+| `XLIG` | 16 or 20 bytes | Light data: FOV offset, fade offset, end distance cap, shadow depth bias, optional unknown uint32 |
+| `XALP` | 2 bytes | Alpha cutoff and base |
+| `XWCN`, `XWCS`, `XWCU` | as in `CELL` | Water current velocities |
+| `XCVL`, `XCVR` | 3 floats | Water current linear and rotational velocity |
+| `XCZR` or `XCZC`, `XCZA` | FormID, bytes | Water current reference or cell, then unknown data |
+| `XAPD` | uint8 | Parent activate only |
+| `XAPR` | FormID, float | Activate parent and delay; repeated |
+| `XLCM` | int32 | Level modifier: 0 easy, 1 medium, 2 hard, 3 very hard |
+| `XTRI` | uint32 | Collision layer index |
+| `XNDP` | FormID, int16, 2 bytes | Navmesh door link: navmesh and triangle |
+| `XLRT` | FormID array | Location reference types |
+| `XIS2`, `XIBS` | 0 bytes | Ignored by sandbox |
+| `XCHG` | float | Charge |
+| `XACT` | uint32 | Action flags: 0x01 use default, 0x02 activate, 0x04 open, 0x08 open by default |
+| `XHTW`, `XFVC`, `XHLP` | float | Head-tracking weight, favor cost, health |
+| `ONAM` | 0 bytes | Open by default |
+| `XLOD` | 3 floats | Distant LOD data, unnamed by xEdit |
+| `XCLP` | 8 bytes | Linked reference start and end colors |
+| `XTNM`, `XMBR`, `XSPC`, `XLIB`, `XLCN`, `XEZN`, `XLRL`, `XATR`, `XHOR`, `XMRC` | FormID | Teleport message, multibound, spawn container, leveled item base, persist location, encounter zone, location reference, attach reference, horse, merchant container |
+
+A patrol stop opens with `XPRD` (idle time). `XPPA`, `INAM` (an `IDLE`), `PDTO` topics,
+and on `ACHR` `TNAM` (a `DIAL`) belong to the last stop. So `INAM` is a patrol idle after
+`XPRD` and a room image space before it. `PDTO` is a uint32 type, then a `DIAL` (type 0)
+or a 4-character subtype. `SCHR`, `SCTX`, `SCDA`, `QNAM`, and `SCRO` are leftovers of an
+older script format; xEdit marks them unused, and OpenSky reads past them.
+
+`ACHR` also carries `XLKR`, `XOWN`, `XRNK`, `XCNT`, `XRDS`, and `XEMI`, which the `REFR`
+decode reads itself. On an `ACHR` they go into the same details.
+
+## Map marker index
+
+The map marker index walks the persistent children of each worldspace and keeps every
+`REFR` with `XMRK`. A later plugin's copy of a marker replaces the earlier one.
+
+On the five masters the persistent references hold 436 map markers.
