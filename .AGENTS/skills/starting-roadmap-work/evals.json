@@ -37,6 +37,18 @@
     ]
   },
   {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "File an issue: the frustum cull test in Frustum.swift line 40 is slow, it iterates an Array.",
+    "files": [],
+    "expected_behavior": [
+      "Writes the body as intent: the goal, the measured cost, and an acceptance gate in observable terms",
+      "Leaves the file path, line number, and pasted code out of the body",
+      "Runs the grep check from the skill on the body before gh issue create"
+    ]
+  },
+  {
     "skills": [],
     "query": "Rename the local variable `idx` to `index` in BSAArchive.swift.",
     "files": [],

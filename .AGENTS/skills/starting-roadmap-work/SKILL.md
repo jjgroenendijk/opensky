@@ -1,8 +1,9 @@
 ---
 name: starting-roadmap-work
 description: Picks up and finishes OpenSky roadmap work on GitHub - how milestones map to
-  Mn, choosing the next issue, one branch and one PR per issue, labels, and closing a
-  milestone. Use when choosing what to work on, starting an issue, or finishing a milestone.
+  Mn, choosing the next issue, writing an issue body, one branch and one PR per issue,
+  labels, and closing a milestone. Use when choosing what to work on, filing or editing an
+  issue, starting an issue, or finishing a milestone.
 ---
 
 # Starting roadmap work
@@ -29,6 +30,28 @@ fresh session starts from `gh`, not from a doc.
    Skip an item that already has an open PR (`gh pr list --state open`): another session
    is working on it.
 3. Read the issue body. Its acceptance gate is what "done" means.
+
+## Writing an issue body
+
+An issue states intent: what must be true afterwards, why, and how to know it is done. Code
+changes faster than issues are worked, and a refactor makes a named file or line wrong. A
+wrong location misleads the agent that picks the issue up, so that agent finds the current
+code itself.
+
+- Keep: the goal and its reason; an acceptance gate written as observable behavior; spec
+  and format references (`docs/formats/` pages, UESP, xEdit); game behavior; legal notes;
+  links to other issues and milestones; measurements, with their `logs/` run directory.
+- Leave out: file paths, line numbers, type or function names used to say where a change
+  goes, pasted code of the current implementation, and step-by-step plans tied to the
+  current code structure.
+- A record, format, or feature named as the subject is fine, such as "the `.xwm` framing
+  parser" or "`XLOC` lock data".
+
+Check a body before you post it. This search must print nothing:
+
+```sh
+grep -nE 'Sources/|Tests/|\.swift|^```' body.md
+```
 
 ## Working an item
 
