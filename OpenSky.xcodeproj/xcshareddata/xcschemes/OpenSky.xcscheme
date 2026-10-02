@@ -58,6 +58,9 @@
          <TestPlanReference
             reference = "container:Config/TestPlans/Perf.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/VerifyBuild.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction
