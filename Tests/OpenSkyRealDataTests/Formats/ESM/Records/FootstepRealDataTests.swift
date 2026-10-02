@@ -1,7 +1,7 @@
 // Env-gated footstep chain over the user's install: the vanilla player graph
 // fires tags the vanilla footstep sets answer, and those tags reach real audio
 // files. Run with
-// `make realtest T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
+// `make test-real T='FootstepRealDataTests/vanillaGraphFiresTagsTheVanillaSetAnswers()'`.
 
 import Foundation
 @testable import OpenSkyAudio

@@ -43,7 +43,7 @@
     "expected_behavior": [
       "Declines the GameViewController+ file and puts the logic in a coordinator in OpenSkyCrime",
       "Adds the members to a ControlProviding protocol in the feature module and forwards them in GameViewControllerPanels.swift",
-      "Tests the coordinator with make test-fast and the section in Tests/OpenSkyTests/App/Panels/"
+      "Tests the coordinator with make test-unit and the section in Tests/OpenSkyTests/App/Panels/"
     ]
   }
 ]

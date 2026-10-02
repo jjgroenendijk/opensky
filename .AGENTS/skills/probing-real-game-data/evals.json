@@ -42,7 +42,7 @@
     "files": [],
     "expected_behavior": [
       "Uses make run-cli ARGS=\"record --type LAND ...\" instead of a script",
-      "Falls back to a scratch suite in Tests/OpenSkyRealDataTests/ run by make realtest, and deletes it before committing"
+      "Falls back to a scratch suite in Tests/OpenSkyRealDataTests/ run by make test-real, and deletes it before committing"
     ]
   }
 ]

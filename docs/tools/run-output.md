@@ -48,8 +48,8 @@ Two rules follow from this and matter when adding a script:
   whole evidence of one run travels together. Captures embed the user's game assets and
   stay gitignored (AGENTS.md "Legal and IP boundary"); the link is a local path.
 * **A script that calls another script exports `OPENSKY_RUN_DIR`.** `tools/xcodebuild-run.sh`
-  writes into that directory instead of opening its own, so `make realtest` keeps its
-  build transcript, its test transcript, and its selector enumeration in one place. A
+  writes into that directory instead of opening its own, so a script keeps every
+  transcript it starts in one place. A
   wrapper that does not export it gets a separate run directory per inner script, which is
   the thing this convention exists to avoid.
 
@@ -66,10 +66,8 @@ reads like a stale file rather than contention.
 
 | Producer | Run directory | Contents |
 | --- | --- | --- |
-| `make build`, `cli`, `test`, `test-one`, `install` | `logs/<target>/` | xcodebuild transcript |
-| `make test`, `make test-one` | `DerivedData/TestResults/unit`, `.../one` | `.xcresult` bundle |
-| `tools/test-ui.sh` | `logs/test-ui/`, `DerivedData/TestResults/test-ui/` | transcript, `.xcresult` |
-| `tools/realtest.sh` | `logs/realtest/`, `DerivedData/TestResults/realtest/` | two transcripts, `enumeration.json`, `.xcresult` |
+| `make build`, `cli`, `install` | `logs/<target>/` | xcodebuild transcript |
+| `make test-<kind>` | `logs/test-<kind>/`, `DerivedData/TestResults/<kind>/` | xcodebuild transcript, `.xcresult` |
 | `tools/probe.sh` | `logs/probe/` | `probe.log` and every PNG the probe renders |
 | `tools/check-docs-links.sh` | `logs/docs-links/` | link report |
 | `tools/vendor-ffmpeg.sh` | `logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |

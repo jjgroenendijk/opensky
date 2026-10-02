@@ -108,7 +108,7 @@ Movers are capped at eight, with a 2 ms CPU budget for all of them in a 16.67 ms
 use in-place clips instead of full behavior graphs was measured, not guessed: eight vanilla
 behavior graphs cost more than the whole 2 ms budget even in an optimized build, before
 collision, paths, triggers, or drawing. The clip drive uses a small part of the budget.
-`make realtest-perf` measures both ([testing](/testing.md)).
+`make test-perf` measures both ([testing](/testing.md)).
 
 ## Debug overlay
 

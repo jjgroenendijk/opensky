@@ -2,7 +2,7 @@
 
 Every env-gated suite that runs against the user's own Skyrim SE install, and nothing else.
 This is the whole `RealData` test plan: the plan selects this target and does not narrow it
-further, so a file here runs under `make realtest-all` by virtue of being here (issue #418).
+further, so a file here runs under `make test-real` by virtue of being here (issue #418).
 General test rules live in `Tests/OpenSkyTests/AGENTS.md`; only what differs is below. Running
 engine code against the install to check a hypothesis is a different job — load the
 `probing-real-game-data` skill for that.
@@ -24,7 +24,7 @@ and `HeimskrFace` frames an actor's head.
 Keep one gated suite per file, named after the file. `make realdata-plan` (part of
 `make lint`) fails when a file that reads `RealDataEnvironment` or declares
 `dataRoot: GameDataRoot?` has a `@Test` outside this folder, because such a suite would
-never run: `make realtest-all` would not reach it, and a plain `xcodebuild test` does not
+never run: `make test-real` would not reach it, and a plain `xcodebuild test` does not
 forward `OPENSKY_DATA_ROOT` into the host.
 
 Support code only these suites use — a probe harness, a report writer, a real-terrain
@@ -34,14 +34,14 @@ driver — belongs here too. Support shared with the synthetic suites goes in
 ## Running them
 
 ```sh
-make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
-make realtest-all
-make realtest-perf
+make test-real T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
+make test-real
+make test-perf
 ```
 
 A bare selector resolves under `OpenSkyRealDataTests/`. All three run under the RSS
 watchdog, which is mandatory: a heavy real-data test once reached ~30 GB resident and locked
-the machine. Never run one through a raw `xcodebuild` that bypasses it. `make test` never
+the machine. Never run one through a raw `xcodebuild` that bypasses it. `make test-unit` never
 runs anything here, and this bundle is not compiled at all under the `UnitTests` plan.
 
 ## Legal boundary

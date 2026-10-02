@@ -3,7 +3,7 @@
 // set through `QuestRuntime.setStage`, the call `SetStage` lands on; running
 // vanilla result scripts is covered elsewhere. Assertions are counts, editor
 // IDs, and FormIDs; the report goes to gitignored `logs/`.
-// Run: make realtest T='DialogueAcceptanceRealDataTests'
+// Run: make test-real T='DialogueAcceptanceRealDataTests'
 
 import Foundation
 @testable import OpenSkyConditions

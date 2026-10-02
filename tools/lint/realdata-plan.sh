@@ -1,13 +1,13 @@
 #!/bin/sh
-# RealData test-target lint (issues #381, #418). `make realtest-all` runs whatever
+# RealData test-target lint (issues #381, #418). `make test-real` runs whatever
 # Config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
 # OpenSkyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
 #
 #   * Every env-gated suite lives in Tests/OpenSkyRealDataTests/. One in Tests/OpenSkyTests/,
-#     a package test folder, or a support folder is a suite `make realtest-all` never runs, and it
-#     would silently skip inside `make test` instead, because a plain
+#     a package test folder, or a support folder is a suite `make test-real` never runs, and it
+#     would silently skip inside `make test-unit` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
 #   * The plan selects that target, with no selectedTests narrowing it -- a
 #     plan's own selectedTests does not match Swift Testing tests at all
@@ -68,7 +68,7 @@ for folder in ELSEWHERE:
     for suite in gated_suites(folder):
         problems.append(
             f"env-gated suite outside {TARGET}/: {suite}"
-            f" (move the file into {TARGET}/, or `make realtest-all` never runs it)"
+            f" (move the file into {TARGET}/, or `make test-real` never runs it)"
         )
 
 if not gated_suites(HOME):

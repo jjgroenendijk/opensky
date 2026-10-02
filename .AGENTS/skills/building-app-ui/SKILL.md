@@ -49,7 +49,7 @@ A panel never holds game logic, and it never reads `GameViewController` directly
 flows like this, with the crime panel as the example:
 
 1. The logic lives in a coordinator in the feature module: `CrimeCoordinator` in
-   `Sources/OpenSkyCrime/`. Test it there with `make test-fast`.
+   `Sources/OpenSkyCrime/`. Test it there with `make test-unit`.
 2. The panel's seam is a protocol in the same module: `CrimeFactionControlProviding`, with
    snapshot value types for the readout. A seam that another feature also reads goes in the
    feature's `Interface` module. A seam that names several features goes in
@@ -119,7 +119,7 @@ Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar
   `DestinationRegistryTests`. Update the literals in the same change that renames an id.
 - Keep `OpenSkyUITests` correct even where the UI-test harness cannot run locally
   (`docs/tools/environment.md`).
-- Run the panel tests and the coordinator tests with `make test-fast T='...'`, then
+- Run the panel tests and the coordinator tests with `make test-unit T='...'`, then
   `make verify-build`, because only it compiles the app (`testing-and-verifying` skill).
 - Update `docs/tools/app-ui.md` in the same commit when the framework changes.
 - At milestone acceptance, write the record from `docs/tools/sidebar-acceptance.md` into

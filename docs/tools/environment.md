@@ -97,8 +97,8 @@ Retires when `testCapturesRenderedFrame` passes on this machine.
 
 Observed 2026-08-06. A days-old XCTest daemon can stall a fresh run at 0% CPU. The signs are
 `The test runner hung before establishing connection` and
-`Timed out after 120.0s while initiating control session with daemon`, in `make test` and
-`make realtest` alike. `killall testmanagerd` is not always enough, because a stuck daemon ignores
+`Timed out after 120.0s while initiating control session with daemon`, in `make test-unit` and
+`make test-real` alike. `killall testmanagerd` is not always enough, because a stuck daemon ignores
 SIGTERM. Check its start date with `ps -eo pid,lstart,command | grep testmanagerd` and `kill -9` it
 if it survived. `launchd` starts a new one on the next run.
 
@@ -152,8 +152,7 @@ Observed 2026-08-08 on Xcode 26.6 and macOS 26.6.1:
 - Command-line `-only-testing` overrides any `OnlyTestIdentifiers` in the `.xctestrun`. A misspelled
   Swift Testing selector still runs zero tests and exits 0.
 - `-enumerate-tests` rejects `-derivedDataPath` with a usage error (exit 64) in any position, so it
-  drops a small session log folder under Xcode's default DerivedData, and
-  `tools/test-fast-suggest.sh` removes exactly the folders a run makes. It also refuses an existing
+  drops a small session log folder under Xcode's default DerivedData. It also refuses an existing
   `-test-enumeration-output-path` file with exit 64, so a file made by `mktemp` trips it.
 - Plain `test-without-building` does accept `-derivedDataPath`, and without it the session logs land
   on the boot volume, so the flag stays.
@@ -167,13 +166,13 @@ to the public interface of a package module, the build wrote the new module unde
 `DerivedData/Build/Intermediates.noindex/`. The copy in
 `DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, or had no
 `.swiftmodule` file at all. The next module up failed with "extra argument", "has no member", or
-"cannot find type in scope", on repeated builds and with `B=1`. It happened with the "Emitting
+"cannot find type in scope", on repeated builds and with a forced rebuild. It happened with the "Emitting
 module" step both a compilation cache hit and a miss. Deleting the Products copy fixed the next
 build. `tools/xcodebuild-run.sh` does that delete itself
 ([build system](/tools/build-system.md#stale-module-copies)).
 
-Once, after the delete, the next `make test-fast` ran test bundles built against the old struct layout
-and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". `make test-fast B=1` fixed that.
+Once, after the delete, the next `make test-unit` ran test bundles built against the old struct layout
+and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". A forced rebuild fixed that.
 
 Retires when an interface change builds through xcodebuild without the delete.
 
@@ -225,7 +224,7 @@ before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirt
 `Scheduling noncascading build` for every file.
 
 Retires when swift-build reports a replayed job to the driver: then `make cli` followed by
-`make test` compiles no Swift file.
+`make test-unit` compiles no Swift file.
 
 ## The CI runner builds with an older Xcode than this machine
 

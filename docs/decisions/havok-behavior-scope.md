@@ -53,7 +53,7 @@ Evaluation is the goal. Ragdoll and physics classes next to behavior data are se
 
 The numbers come from a real-data census of every `.hkx` under `meshes\actors\character\`. The full
 report is derived from game content, so it stays in `logs/`. Run it with
-`make realtest T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`, or inspect one
+`make test-real T='HKBBehaviorCensusRealDataTests/censusesCharacterBehaviorFiles()'`, or inspect one
 file with `openskycli hkx <key>`. The layouts are on the
 [HKX behavior graph objects](/formats/hkx-behavior.md) page.
 

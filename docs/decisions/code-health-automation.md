@@ -39,7 +39,7 @@ baseline files, and updating the baselines after each refactor cost too much.
 | No lint suppressions | `make no-suppressions` | Lint | Instant |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint |
-| Parser coverage floor | `xccov`, `make coverage-floor` | After `make test`, CI | Seconds |
+| Parser coverage floor | `xccov`, `make coverage-floor` | After `make test-unit`, CI | Seconds |
 
 ## Duplicated code: jscpd
 
@@ -144,11 +144,11 @@ under `Sources` or `Tests`.
 ## Test coverage
 
 The unit plan measures the `OpenSky` app target and the package modules. `make
-coverage-floor`, run after `make test`, fails when an `OpenSkyFormats*` module is under
+coverage-floor`, run after `make test-unit`, fails when an `OpenSkyFormats*` module is under
 `COVERAGE_FLOOR` in the `Makefile`. The floor is the lowest module's value when it was
 set, rounded down to a multiple of 5 percent: 83.07 % for `OpenSkyFormatsSWF` gave 80.
 One floor for all, not one per module, leaves room for the GPU tests that skip on a CI
-runner without Metal 4. CI runs the check after `make test`.
+runner without Metal 4. CI runs the check after `make test-unit`.
 
 The floor is only for the parsers. They read untrusted files, and a gap there can crash
 the app. A floor for the whole codebase is not used. It pushes people to write tests that

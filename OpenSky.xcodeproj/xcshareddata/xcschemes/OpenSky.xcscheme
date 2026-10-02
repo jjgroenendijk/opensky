@@ -58,6 +58,12 @@
          <TestPlanReference
             reference = "container:Config/TestPlans/Perf.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/Parser.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/GPU.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction

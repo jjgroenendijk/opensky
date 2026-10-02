@@ -18,8 +18,8 @@ check a hypothesis is a different job: load the `probe` skill for that.
 ## Real-data tests live in another target
 
 A suite that reads the user's own install belongs in `Tests/OpenSkyRealDataTests/`, not here, and
-`make lint` fails when one is written here instead: it would never run. `make realtest-all`
-runs that bundle and only that bundle, and inside `make test` an env-gated suite silently
+`make lint` fails when one is written here instead: it would never run. `make test-real`
+runs that bundle and only that bundle, and inside `make test-unit` an env-gated suite silently
 skips, because a plain `xcodebuild test` does not forward `OPENSKY_DATA_ROOT` into the host.
 `Tests/OpenSkyRealDataTests/AGENTS.md` has the shape to copy.
 
@@ -47,7 +47,7 @@ ones only this bundle uses. Other fixtures are in the `Tests/<Name>Testing/` and
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.
-- `make test-fast T='Suite'` or `T='Suite/method()'` runs one suite or test in
+- `make test-unit T='Suite'` or `T='Suite/method()'` runs one suite or test in
   `OpenSkyTests` without paying the build system when nothing changed; the
   `testing-and-verifying` skill covers what to run. `make test-report` extracts failure
   names and messages from the newest result bundle.

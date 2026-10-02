@@ -63,7 +63,7 @@ stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 # `mkdir -p` looks equivalent and is not — both callers can see the name free
 # before either creates it, both then succeed, and the two runs share a
 # directory. That is invisible until they write the same file into it, which is
-# how this last surfaced: two overlapping `make test-one` runs collided on
+# how this last surfaced: two overlapping test runs collided on
 # one.xcresult and xcodebuild reported "Existing file at -resultBundlePath",
 # reading like a stale-file problem rather than contention.
 mkdir -p "$parent"

@@ -3,7 +3,7 @@
 // the cheapest journal-visible quest and the same target as the other quest
 // gates. Stages are set from outside, as the Quest Controls do, because it
 // advances through dialogue. The report goes to gitignored `logs/` and holds
-// counts and editor IDs only. Run with `make realtest T='QuestAcceptanceRealDataTests/...'`.
+// counts and editor IDs only. Run with `make test-real T='QuestAcceptanceRealDataTests/...'`.
 
 import Foundation
 @testable import OpenSkyConditions

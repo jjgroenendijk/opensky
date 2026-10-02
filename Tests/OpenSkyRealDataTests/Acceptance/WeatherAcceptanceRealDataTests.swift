@@ -1,7 +1,6 @@
 // Weather acceptance on the real install, over the `FirstRenderCell` scene:
 // clear, cloudy, and fog draw different frames, a clear-to-cloudy transition
-// moves steadily, and 04:00 differs from 13:00. One `@Test`, because
-// `tools/realtest.sh` runs exactly one test. Numbers go to `logs/`.
+// moves steadily, and 04:00 differs from 13:00. Numbers go to `logs/`.
 
 import Foundation
 import Metal

@@ -1,6 +1,6 @@
 import Testing
 
-/// The tags every test target shares. A plan or `make test-fast TAG=...` selects by
+/// The tags every test target shares. A test plan selects by
 /// them, so the list is in `docs/tools/test-runs.md` too.
 extension Tag {
     /// Needs a Metal device.

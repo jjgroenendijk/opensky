@@ -6,7 +6,7 @@
     "query": "I changed BSAArchive's header parsing. Is it safe to push?",
     "files": [],
     "expected_behavior": [
-      "Runs make test-fast T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
+      "Runs make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
       "Runs only one xcodebuild at a time",
       "Lists the exact commands and results in the commit's Tests: section"
     ]
@@ -18,7 +18,7 @@
     "query": "Run the full real-data suite.",
     "files": [],
     "expected_behavior": [
-      "Uses make realtest-all under the memory watchdog, never a raw xcodebuild against the install",
+      "Uses make test-real under the memory watchdog, never a raw xcodebuild against the install",
       "Runs it in a background shell and waits for the notification"
     ]
   },
@@ -26,7 +26,7 @@
     "skills": [
       "testing-and-verifying"
     ],
-    "query": "make test-fast failed. What broke?",
+    "query": "make test-unit failed. What broke?",
     "files": [],
     "expected_behavior": [
       "Runs make test-report instead of hand-parsing .xcresult JSON",
@@ -72,9 +72,9 @@
     "query": "I changed how the NIF parser reads block sizes. What should I run before pushing?",
     "files": [],
     "expected_behavior": [
-      "Runs the covering suite first with make test-fast T='...'",
-      "Then runs make test-fast TAG=parser to cover every parser suite across targets",
-      "Does not run make realtest-all, because no real-data path changed"
+      "Runs the covering suite first with make test-unit T='...'",
+      "Then runs make test-parser to cover every parser suite across targets",
+      "Does not run make test-real, because no real-data path changed"
     ]
   },
   {

@@ -15,7 +15,7 @@ on a `macos-26` runner, so CI uses the same platform, Xcode, and tools as a deve
 | Job | Make targets |
 | --- | --- |
 | Format | `swift-format-check`, `metal-format-check`, `md-lint` |
-| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `test-plans`, `test-tags`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `duplicates`, `no-suppressions` |
+| Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `duplicates`, `no-suppressions` |
 | Build & test | `swift-baseline`, `ffmpeg`, `test`, `coverage-floor`, `realdata-build` |
 | Lint | None. It passes only when the three jobs above pass |
 
@@ -25,7 +25,7 @@ protection does not change.
 
 ## One make target per step
 
-Each step runs a `make` target that `make check` or `make test` also runs. So the rules live in
+Each step runs a `make` target that `make check` or `make test-unit` also runs. So the rules live in
 one place, the `Makefile` and the scripts under `tools/`. The workflow only installs the tools and
 calls `make`. A step after the first one in a job runs even when an earlier step failed, so one
 run shows every finding.
@@ -80,5 +80,5 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 ## Not in CI
 
 - `make test-ui`. It needs the Accessibility grant, which a runner cannot give.
-- `make test-sanitize` and the real-data perf gates.
+- `make test-sanitize-thread`, `make test-sanitize-address`, and the real-data perf gates.
 - The real-data suites. A runner has no game install.

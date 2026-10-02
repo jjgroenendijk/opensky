@@ -2,7 +2,7 @@
 // that the vanilla player graph declares the census names, that the input
 // path reaches an attack state, and that the graph fires the events the melee
 // runtime reads. Skips when OPENSKY_DATA_ROOT is unset. Run with
-// `make realtest T='MeleeCombatRealDataTests/vanillaGraphAcceptsTheCensusNamedCombatEvents()'`.
+// `make test-real T='MeleeCombatRealDataTests/vanillaGraphAcceptsTheCensusNamedCombatEvents()'`.
 
 import Foundation
 @testable import OpenSkyActorsInterface

@@ -113,7 +113,7 @@ What it helps and what it does not:
   own incremental state decides.
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
   ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
-  Each switch between build contexts, such as `make cli` then `make test`, then compiles those
+  Each switch between build contexts, such as `make cli` then `make test-unit`, then compiles those
   modules again and relinks everything above them. So the `OpenSky` scheme builds `openskycli` for
   testing, and `make verify-build` builds all its targets in one context.
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
@@ -173,7 +173,7 @@ comes up empty, and it depends on machine state the repository cannot check.
 A machine without the certificate, and CI, override on the command line, which beats every xcconfig:
 
 ```sh
-make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+make test-unit XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
 ```
 
 A hand-written, gitignored `Config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
@@ -197,10 +197,10 @@ out is on the [run output](/tools/run-output.md) page.
 xcodebuild sometimes keeps an old copy of a package module in `Build/Products/<config>/` after an
 interface change, while the compiler has emitted the new one under `Build/Intermediates.noindex/`.
 Every module above it then fails with "cannot find in scope", "has no member", or "extra argument",
-and `B=1` does not help ([environment](/tools/environment.md)). After a healthy build the two files
-are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the copy.
-`tools/xcodebuild-run.sh` runs it before every build. When a build fails and leaves new stale copies,
-it deletes them and builds again. It repeats this while each failed build finds new stale copies,
+and a clean rebuild does not help ([environment](/tools/environment.md)). After a healthy build the
+two files are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the
+copy. `tools/xcodebuild-run.sh` runs it before every build. When a build fails and leaves new stale
+copies, it deletes them and builds again. It repeats this while each failed build finds new stale copies,
 up to `OPENSKY_STALE_RETRIES` times (default 8). One pass is often not enough: a failed build stops
 at one module layer, so the modules above it are not emitted again, and their stale copies show
 only after the next pass. Moving `SkippedRecords` from `OpenSkyGameData` down to
@@ -222,8 +222,8 @@ For a macOS scheme built with `-derivedDataPath`, the products are always in
 `xcodebuild -showBuildSettings`. This holds because every target builds for macOS only.
 
 `tools/xcodebuild-lib.sh` is sourced, never run. It sets `OPENSKY_DERIVED_DATA` for a script run
-outside `make`, and provides the products path and the output filter. `tools/realtest.sh` shares the
-normal cache, except its optimized mode, which changes a build setting and so builds into
+outside `make`, and provides the products path and the output filter. The test targets share the
+normal cache, except `make test-perf`, which changes a build setting and so builds into
 `$OPENSKY_DERIVED_DATA-optimized`. Both stay on the external volume, and `make prune` removes both
 from a removed worktree.
 

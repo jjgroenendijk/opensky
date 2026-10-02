@@ -23,8 +23,8 @@ A module boundary makes the architecture visible and lets the compiler enforce i
 `Package.swift` lists what each module depends on, and the compiler rejects an `import` of a
 module that is not listed. So an upward dependency fails the build instead of slipping in.
 
-A module can also be built and tested alone: `make test-fast T='OpenSkyFormatsESMTests'` builds
-only the package and runs one test target, without the app.
+A module can also be tested alone: `make test-unit T='OpenSkyFormatsESMTests'` runs one test
+target.
 
 ## The layout: The Modular Architecture
 
@@ -265,8 +265,7 @@ repository root. Only a workspace shows a scheme the test targets of a local pac
 `-project OpenSky.xcodeproj`, xcodebuild reports that the target "isn't a member of the specified
 test plan or scheme".
 
-`make test-fast T='<Target>Tests/...'` runs one package test target through `swift test`
-(`tools/test-package.sh`). It builds only the package, into `.build/`, and needs no app host.
+`make test-unit T='<Target>Tests/...'` runs one package test target inside the unit plan.
 
 A suite goes in the test target of the highest module it imports, in `Package.swift` order. A
 suite that builds a `Renderer` passes `ShaderLibraryFixture.library(device:)` as its
