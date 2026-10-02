@@ -26,6 +26,8 @@ fresh session starts from `gh`, not from a doc.
 1. List the milestone: `gh issue list --milestone "M9 - audio"`.
 2. Take the lowest open item by its roadmap number (`9.1.2` before `9.1.3`), not by issue
    number. Issues inserted later get higher numbers than the items around them.
+   Skip an item that already has an open PR (`gh pr list --state open`): another session
+   is working on it.
 3. Read the issue body. Its acceptance gate is what "done" means.
 
 ## Working an item

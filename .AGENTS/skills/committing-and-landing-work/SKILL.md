@@ -45,7 +45,8 @@ or `Model:`. Allowed trailers:
 
 1. Work lands on `main` only through a reviewed PR. The branch is protected, so never
    push to it directly.
-2. Branch from up-to-date `main`: `feat/<slug>` / `fix/<slug>`.
+2. Branch from up-to-date `origin/main`, named `<type>/<issue>-<slug>` with the commit
+   type, for example `feat/716-test-plans-and-tags` or `docs/707-rework-skills`.
 3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
    local, and rebase or squash them before the PR.
 4. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in

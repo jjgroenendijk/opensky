@@ -33,5 +33,16 @@
       "Treats it as the known environment failure in docs/tools/environment.md",
       "Moves the check into openskycli and runs it with make run-cli instead of retrying the test host"
     ]
+  },
+  {
+    "skills": [
+      "probing-real-game-data"
+    ],
+    "query": "Write a quick swift script that imports OpenSkyFormatsESM and counts the LAND records in Skyrim.esm.",
+    "files": [],
+    "expected_behavior": [
+      "Uses make run-cli ARGS=\"record --type LAND ...\" instead of a script",
+      "Falls back to a scratch suite in Tests/OpenSkyRealDataTests/ run by make realtest, and deletes it before committing"
+    ]
   }
 ]

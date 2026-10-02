@@ -25,8 +25,8 @@ across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/O
 Otherwise probe from a scratch test class in `Tests/OpenSkyRealDataTests/`, copying the shape of
 `CellRenderRealDataTests.swift`. That folder is the whole `RealData` plan, so a class there
 runs under `make realtest` with the data root in the host. Never
-`swift path/to/script.swift` against engine sources — the engine is not a package, so a
-script cannot import `OpenSky` and dies on top-level statement rules.
+`swift path/to/script.swift` against engine sources: a script cannot import the package
+modules, and it does not get the data root or the memory watchdog.
 
 ## Rendering verification
 
@@ -49,7 +49,7 @@ Screenshot and UI-test automation are not usable on every machine; check
 
 ## When the test host hangs
 
-A real-data XCTest host that hangs at 0% CPU before running is a known environment failure,
+A real-data test host that hangs at 0% CPU before running is a known environment failure,
 not a bug in your probe (`docs/tools/environment.md`). Do not keep killing and retrying it:
 move that one check into `openskycli` and drive it with `make run-cli`. That promotes the CLI
 above step 1 for that check only — the ranked list above still governs everything else.
