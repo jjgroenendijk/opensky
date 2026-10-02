@@ -169,43 +169,53 @@ if rows:
         print(f"  {tag:<12} {count:>6} {failed:>7} {seconds:>9.1f}")
 PY
 
-# Coverage (issue #382). The UnitTests and AllTests plans gather it for the
-# `OpenSky` target, so every bundle from `make test-unit` carries it and the
-# percentage arrives through the same command as the pass/fail counts rather
-# than out of a hand-parsed .xcresult. A bundle from a run that gathered none
-# still has to report as a missing number rather than a failure, so a non-zero
-# xccov exit prints one line and moves on.
+# Coverage. It reads the profile with llvm-cov, as coverage-floor.sh does:
+# `xccov` sees only the app, because each package module is its own framework
+# under PackageFrameworks and the result bundle lists none of them. The profile
+# is from the last test run, which a filtered run makes read low.
+build="${OPENSKY_DERIVED_DATA:-$PWD/DerivedData}/Build"
+# shellcheck disable=SC2012  # newest-by-mtime of a few fixed-name files
+profile="$(ls -t "$build"/ProfileData/*/Coverage.profdata 2>/dev/null | head -1)"
+if [ -z "$profile" ]; then
+    printf '\n[INFO] no coverage profile under %s/ProfileData\n' "$build"
+    exit 0
+fi
+set -- "$build/Products/Debug/OpenSky.app/Contents/MacOS/OpenSky.debug.dylib"
+for framework in "$build"/Products/Debug/PackageFrameworks/*.framework; do
+    set -- "$@" -object "$framework/$(basename "$framework" .framework)"
+done
 coverage_json="$(mktemp -t opensky-coverage-report)"
 trap 'rm -f "$tests_json" "$coverage_json"' EXIT INT TERM
-if xcrun xccov view --report --json "$bundle" >"$coverage_json" 2>/dev/null; then
-    python3 - "$coverage_json" <<'PY'
+if ! xcrun llvm-cov export -summary-only -instr-profile "$profile" "$@" \
+    >"$coverage_json" 2>/dev/null; then
+    printf '\n[INFO] llvm-cov could not read %s\n' "$profile"
+    exit 0
+fi
+python3 - "$coverage_json" "$profile" <<'PY'
+import collections
 import json
 import sys
 
-try:
-    with open(sys.argv[1], encoding="utf-8") as stream:
-        report = json.load(stream)
-except (OSError, json.JSONDecodeError, ValueError):
-    sys.exit(0)
+with open(sys.argv[1], encoding="utf-8") as stream:
+    files = json.load(stream)["data"][0]["files"]
+
+modules = collections.defaultdict(lambda: [0, 0])
+for entry in files:
+    if "/Sources/" not in entry["filename"]:
+        continue
+    module = entry["filename"].split("/Sources/", 1)[1].split("/", 1)[0]
+    lines = entry["summary"]["lines"]
+    modules[module][0] += lines["covered"]
+    modules[module][1] += lines["count"]
 
 
-def line(label, node):
-    covered = node.get("coveredLines", 0)
-    executable = node.get("executableLines", 0)
-    percent = 100.0 * node.get("lineCoverage", 0.0)
-    print(f"{label} {percent:6.2f}%  ({covered}/{executable} lines)")
+def line(label, covered, count):
+    percent = 100.0 * covered / count if count else 0.0
+    print(f"  {label:<28} {percent:6.2f}%  ({covered}/{count} lines)")
 
 
-targets = report.get("targets", [])
-print("\n[INFO] code coverage:")
-line("  overall            ", report)
-# The plans scope coverage to the one app target, so the per-target breakdown
-# repeats the overall line verbatim and is only worth printing once a second
-# target is in scope.
-if len(targets) > 1:
-    for target in targets:
-        line(f"  {target.get('name', '<unknown>'):<19}", target)
+print(f"\n[INFO] code coverage from {sys.argv[2]}:")
+line("overall", sum(c for c, _ in modules.values()), sum(n for _, n in modules.values()))
+for name, (covered, count) in sorted(modules.items()):
+    line(name, covered, count)
 PY
-else
-    printf '\n[INFO] no coverage data in this bundle\n'
-fi

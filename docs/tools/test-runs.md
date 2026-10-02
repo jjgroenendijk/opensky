@@ -159,10 +159,15 @@ sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcco
 reach the compiler. A Release build stays without coverage. An instrumented program writes
 `default.profraw` into its working directory when it exits; `.gitignore` covers it.
 
+`make test-report` and `make coverage-floor` read `DerivedData/Build/ProfileData/*/Coverage.profdata`
+with `llvm-cov`, not the result bundle with `xccov`. Each package module builds into its own
+framework under `PackageFrameworks/`, and the bundle lists none of them as a coverage product. So
+`xccov` reports only the app, with no files, and a plan's package targets change nothing. Each test
+run rewrites that profile, so read it right after `make test-unit`. A filtered run covers less and
+reads too low.
+
 `make coverage-floor` fails when an `OpenSkyFormats*` module is under the floor, `COVERAGE_FLOOR` in
-the `Makefile`. It reads `DerivedData/Build/ProfileData/*/Coverage.profdata` with `llvm-cov`,
-because `xccov` finds no package files in the result bundle. Each test run rewrites that profile, so
-run the check right after `make test-unit`; CI does. A filtered run covers less and reads too low.
+the `Makefile`. CI runs it after the unit tests.
 Only the parsers have a floor: they read untrusted files, and the value is finding defensive
 branches that no test takes, the malformed-input paths behind "malformed input must not crash"
 ([code-health automation](/decisions/code-health-automation.md)).
