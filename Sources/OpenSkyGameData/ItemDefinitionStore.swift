@@ -123,6 +123,10 @@ nonisolated public final class ItemDefinitionStore {
     /// ARMO decodes, keyed by raw FormID, for the BOD2 armor type the armor skills
     /// level on.
     public let armor: [UInt32: Armor]
+    /// SLGM decodes, keyed by raw FormID, for soul level and capacity.
+    public let soulGems: [UInt32: SoulGem]
+    /// APPA decodes, keyed by raw FormID, for quality.
+    public let apparatus: [UInt32: Apparatus]
     /// PROJ decodes, keyed by raw FormID. Not carryable, but an arrow's shot needs
     /// its PROJ, so it is indexed here.
     public let projectiles: [UInt32: Projectile]
@@ -187,6 +191,12 @@ nonisolated public final class ItemDefinitionStore {
         }
         books = Self.decodeAll("BOOK", in: file, skipped: &repeated) {
             try Book(record: $0, localized: localized)
+        }
+        soulGems = Self.decodeAll("SLGM", in: file, skipped: &repeated) {
+            try SoulGem(record: $0, localized: localized)
+        }
+        apparatus = Self.decodeAll("APPA", in: file, skipped: &repeated) {
+            try Apparatus(record: $0, localized: localized)
         }
     }
 

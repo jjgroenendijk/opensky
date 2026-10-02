@@ -101,6 +101,13 @@ nonisolated public struct InventoryBaselineResolver {
 
     // MARK: - Leveled expansion
 
+    /// `id` as stacks: itself, or its deterministic leveled pick when it names an LVLI.
+    public func expanded(_ id: FormID, count: Int32) -> [InventoryStack] {
+        var stacks: [InventoryStack] = []
+        expand(id, count: count, into: &stacks)
+        return ReferenceInventoryState(stacks: stacks).stacks
+    }
+
     /// Appends `id` to `stacks`, expanding it first when it names a leveled
     /// list. `ReferenceInventoryState.init` merges the duplicates this can
     /// produce, so an entry reached twice through different lists stacks

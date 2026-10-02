@@ -25,7 +25,7 @@ FormIDs, the position, a name (base `FULL`, then `EDID`, then the FormID), and a
 | `TREE` | Harvest |
 | `FLOR` | Harvest. `RNAM` replaces the word |
 | `TACT` | Talk |
-| `FURN` | Activate |
+| `FURN` | Activate. A bench with `WBDT` also opens a [crafting](/engine/crafting.md) session |
 | `MISC`, `WEAP`, `AMMO`, `ALCH`, `INGR`, `BOOK`, `KEYM`, `SLGM`, `APPA` | Take |
 
 `FULL` and `RNAM` are lstrings, so a localized plugin reads them from its string table. The
@@ -119,6 +119,22 @@ empty the chest.
 The session sets the container's "open" state when it starts and clears it when it ends. The Papyrus
 bridge toggles "open" for doors, because one activation is one swing. A container is open for as
 long as its session lasts, and only the session knows that.
+
+## Harvesting
+
+Activating a `FLOR` or `TREE` reference adds its `PFIG` produce to the player inventory and sets
+a harvested component on the reference. A produce that names an `LVLI` gives the list's
+deterministic pick, as container baselines do. A harvested reference shows `Harvested` in place
+of the action word, and activating it does nothing. The component is saved in the `HRVS` chunk
+([OpenSky save](/formats/opensky-save.md)).
+
+OpenSky gives one produce item per harvest. The seasonal chances in `PFPC` show in the readout
+but do not change the yield yet. In the game a harvest can fail outside the right season, so a
+later change to the yield is deliberate, not a bug fix.
+
+Plants do not grow back. No cell-reset system exists yet. When one exists, clearing the
+harvested component is how a plant regrows. World > Inventory & Equipment > Harvest can clear
+it by hand.
 
 ## Where a drop lands
 

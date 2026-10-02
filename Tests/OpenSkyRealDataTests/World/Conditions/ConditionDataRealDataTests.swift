@@ -14,11 +14,11 @@ struct ConditionDataRealDataTests {
     ]
 
     /// Indices added after the M18 functions: magic, `HasPerk`, `GetLevel`,
-    /// `GetBaseActorValue`, faction, and crime-gold. They are subtracted, so the
+    /// `GetBaseActorValue`, faction, crime-gold, and `GetItemCount`. They are subtracted, so the
     /// two pinned numbers stay the registry before and after M18.
     private static let laterIndices: Set<UInt16> = [
         80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699,
-        60, 71, 73, 403, 449, 719, 375, 376, 459
+        60, 71, 73, 403, 449, 719, 375, 376, 459, 47
     ]
 
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))

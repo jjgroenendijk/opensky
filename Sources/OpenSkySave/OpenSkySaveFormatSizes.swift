@@ -83,6 +83,9 @@ nonisolated extension OpenSkySaveFormat {
     /// key, a named cell or a recorded transform is longer, so this is a lower
     /// bound.
     public static let minimumDeathEntrySize = 11
+    /// Smallest `HRVS` entry: a plugin key with an empty name (1 + 2 + 4) and the
+    /// "no cell" tag (1).
+    public static let minimumHarvestEntrySize = 8
     /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
     /// byte (1). A generated key or a named cell is longer, so this is a lower

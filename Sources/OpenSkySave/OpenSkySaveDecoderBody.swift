@@ -64,5 +64,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var stolenGoods: [SaveStolenGoodsEntry] = []
         /// Absent `CRVG`: every `CRIM` row is non-violent gold.
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
+        /// Absent `HRVS`: every plant is unharvested.
+        public var harvests: [SaveHarvestEntry] = []
     }
 }

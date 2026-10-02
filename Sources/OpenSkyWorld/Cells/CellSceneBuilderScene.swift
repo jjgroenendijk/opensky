@@ -111,7 +111,11 @@ nonisolated extension CellSceneBuilder {
                 action: action,
                 actionLabel: override ?? action.defaultLabel,
                 sounds: base.sounds,
-                voiceType: base.voiceType
+                voiceType: base.voiceType,
+                station: base.workbench.map {
+                    CraftingStation(workbench: $0, keywords: base.keywords.keywords)
+                },
+                produce: base.produce
             )
             interactions[ref.formID] = interaction
         }

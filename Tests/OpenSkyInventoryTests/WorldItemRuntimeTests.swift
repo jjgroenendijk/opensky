@@ -53,7 +53,7 @@ struct WorldItemRuntimeTests {
         )
     }
 
-    private static func entry(
+    static func entry(
         formID: FormID,
         base: FormID,
         count: Int32 = 1

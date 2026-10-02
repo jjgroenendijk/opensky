@@ -97,6 +97,7 @@ nonisolated public struct CellProviderIndexes {
     public let packageStore: PackageStore
     public let inventoryBaselines: InventoryBaselineResolver
     public let equipmentCatalog: EquipmentCatalog
+    public let craftingCatalog: CraftingCatalog
     public let actorValueBaselines: ActorValueBaselineResolver
     /// Load-order MGEF index, behind every EFID an applied effect
     /// resolves.
@@ -199,6 +200,11 @@ nonisolated public struct CellProviderIndexes {
             )
         )
         equipmentCatalog = EquipmentCatalog.build(from: file)
+        craftingCatalog = CraftingCatalog(
+            recipes: RecipeStoreLoader.load(root: root, baseFile: file),
+            itemPlugin: scriptFormIDResolver,
+            file: file
+        )
         actorValueBaselines = Self.actorValueBaselines(
             root: root, file: file, pluginName: esmURL.lastPathComponent, tuning: tuning
         )
@@ -260,7 +266,7 @@ nonisolated public struct CellProviderIndexes {
     }
 
     private func makeDataStores() -> WorldDataStores {
-        WorldDataStores(
+        var stores = WorldDataStores(
             scriptFormIDResolver: scriptFormIDResolver,
             scriptFileSystem: scriptFileSystem,
             weatherSystem: weatherSystem,
@@ -295,5 +301,7 @@ nonisolated public struct CellProviderIndexes {
             archerySettings: archerySettings,
             detectionSettings: detectionSettings
         )
+        stores.craftingCatalog = craftingCatalog
+        return stores
     }
 }

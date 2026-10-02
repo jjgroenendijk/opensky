@@ -75,4 +75,15 @@ nonisolated public struct FormIDResolver: Sendable {
         let plugin = id.masterIndex < masters.count ? masters[id.masterIndex] : pluginName
         return ResolvedFormID(plugin: plugin, objectID: id.objectID)
     }
+
+    /// The raw FormID this plugin writes for `id`, or nil when `id` lives in a
+    /// plugin this one does not list. Plugin names compare without case.
+    public func localFormID(of id: ResolvedFormID) -> FormID? {
+        let name = id.plugin.lowercased()
+        let index = name == pluginName.lowercased()
+            ? masters.count
+            : masters.firstIndex { $0.lowercased() == name }
+        guard let index, index < 0xFF, id.objectID <= 0xFFFFFF else { return nil }
+        return FormID(UInt32(index) << 24 | id.objectID)
+    }
 }

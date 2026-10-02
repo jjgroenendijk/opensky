@@ -43,11 +43,12 @@ typealias WorldControlProviders = AINavigationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CastingControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
-    & CrimeFactionControlProviding
-    & DialogueCameraControlProviding & DialogueControlProviding
+    & CraftingControlProviding
+    & CrimeFactionControlProviding & DialogueCameraControlProviding
+    & DialogueControlProviding
     & FaceMorphControlProviding
-    & FirstPersonControlProviding
-    & FrameStatsProviding & GrassControlProviding
+    & FirstPersonControlProviding & FrameStatsProviding
+    & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
     & JournalControlProviding
@@ -303,6 +304,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = InventoryEquipmentPanelViewController()
                 panel.provider = context.providers
+                panel.craftingProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

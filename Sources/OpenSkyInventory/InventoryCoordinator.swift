@@ -5,6 +5,7 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
@@ -30,6 +31,13 @@ public final class InventoryCoordinator {
     public var inspectionTarget = EquipmentTargetSelector.nearestActor
     /// Nil without a FACT and FLST index.
     public var vendors: VendorCoordinator?
+    /// Nil without recipe data.
+    public internal(set) var craftingCatalog: CraftingCatalog?
+    /// At most one station is in use at a time.
+    public internal(set) var crafting: CraftingSession?
+    public internal(set) var lastCraftText = "No crafting action yet."
+    weak var recipeConditions: (any RecipeConditionChecking)?
+    weak var skillUses: (any SkillUseReporting)?
 
     weak var world: (any InventoryWorld)?
 
@@ -54,14 +62,20 @@ public final class InventoryCoordinator {
         }
     }
 
-    /// The use key: take a loose item, search a container. Other actions
-    /// belong to other domains and pass through.
+    /// The use key: take a loose item, search a container, harvest a plant, or
+    /// use a crafting station. Other actions belong to other domains and pass through.
     public func handleInteraction(_ action: InteractionAction) {
         switch action {
         case .take:
             lastActionText = takeInteractionTarget()
         case .search:
             lastActionText = openInteractionTargetContainer()
+        case .harvest:
+            lastActionText = harvestInteractionTarget()
+        case .use:
+            if let station = world?.crosshairInteraction.flatMap(CraftingActivationEvent.init) {
+                openCraftingSession(station)
+            }
         default:
             break
         }
@@ -154,7 +168,11 @@ public final class InventoryCoordinator {
     public func readout(_ stacks: [InventoryStack]) -> [ItemStackReadout] {
         stacks.map {
             ItemStackReadout(
-                item: $0.item, count: $0.count, name: name(of: $0.item), stolen: $0.stolen
+                item: $0.item,
+                count: $0.count,
+                name: name(of: $0.item),
+                stolen: $0.stolen,
+                detail: runtime?.inventory.baselines.items.familyDetail($0.item)
             )
         }
     }

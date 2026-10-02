@@ -25,6 +25,7 @@ struct InventoryCoordinatorTests {
         var placement: DropPlacement?
         var bounty: Int32 = 0
         var refreshed: [InventoryHolder] = []
+        var refreshCount = 0
 
         func dropPlacement() -> DropPlacement? {
             placement
@@ -56,6 +57,10 @@ struct InventoryCoordinatorTests {
 
         var enchantmentCacheReadout: EnchantmentCacheReadout {
             .empty
+        }
+
+        func refreshInteractionTarget() {
+            refreshCount += 1
         }
     }
 

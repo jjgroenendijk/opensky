@@ -30,6 +30,13 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
     case faction = "FACT"
     case relationship = "RELA"
     case associationType = "ASTP"
+    case constructibleObject = "COBJ"
+    case key = "KEYM"
+    case soulGem = "SLGM"
+    case apparatus = "APPA"
+    case flora = "FLOR"
+    case talkingActivator = "TACT"
+    case artObject = "ARTO"
 
     public var fourCC: FourCC {
         switch self {
@@ -55,6 +62,13 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
         case .faction: "FACT"
         case .relationship: "RELA"
         case .associationType: "ASTP"
+        case .constructibleObject: "COBJ"
+        case .key: "KEYM"
+        case .soulGem: "SLGM"
+        case .apparatus: "APPA"
+        case .flora: "FLOR"
+        case .talkingActivator: "TACT"
+        case .artObject: "ARTO"
         }
     }
 
@@ -82,6 +96,13 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
         case .faction: "FACT — Factions"
         case .relationship: "RELA — Relationships"
         case .associationType: "ASTP — Association types"
+        case .constructibleObject: "COBJ — Recipes"
+        case .key: "KEYM — Keys"
+        case .soulGem: "SLGM — Soul gems"
+        case .apparatus: "APPA — Alchemy apparatus"
+        case .flora: "FLOR — Flora"
+        case .talkingActivator: "TACT — Talking activators"
+        case .artObject: "ARTO — Art objects"
         }
     }
 }
@@ -90,6 +111,9 @@ nonisolated public struct ReferenceRecordCatalog: Sendable {
     public static let inspectedItemTypes: Set<FourCC> = [
         "MISC", "BOOK", "ALCH", "INGR", "WEAP", "AMMO", "ARMO"
     ]
+
+    /// Every type the browse list offers, for the index the app builds.
+    public static let browsedTypes = Set(ReferenceRecordType.allCases.map(\.fourCC))
 
     public let pluginNames: [String]
     private let itemsByType: [ReferenceRecordType: [PreviewItem]]

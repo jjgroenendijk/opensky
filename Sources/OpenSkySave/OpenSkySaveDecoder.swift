@@ -74,6 +74,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             in: body.crimeLedgers
         )
         entries = OpenSkySaveDeltaMerge.merge(ledgers, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.harvests, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
@@ -259,6 +260,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.stolenGoods = try OpenSkySaveCrimeDecoder.decodeStolenGoods(payload)
         case OpenSkySaveFormat.ChunkTag.violentCrimeGold:
             body.violentCrimeGold = try OpenSkySaveCrimeDecoder.decodeViolentGold(payload)
+        case OpenSkySaveFormat.ChunkTag.harvests:
+            body.harvests = try OpenSkySaveHarvestDecoder.decodeHarvests(payload)
         default:
             break // Unknown chunk: skipped by its declared length.
         }
