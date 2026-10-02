@@ -90,7 +90,7 @@ nonisolated public enum GameDataLocator: Sendable {
     /// applies. A test host withholds it: the host shares the app's defaults
     /// domain, so a machine where the app has been pointed at a real install
     /// would feed that install to unit tests meant to be install-independent —
-    /// which is how `make test` came to block in `open()` on an external
+    /// which is how the unit tests came to block in `open()` on an external
     /// volume. Real-data suites gate on the environment variable instead.
     public static var persistedRootDefaults: UserDefaults? {
         isRunningInTestHost ? nil : settingsDefaults

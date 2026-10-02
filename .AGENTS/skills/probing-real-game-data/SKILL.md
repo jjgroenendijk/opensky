@@ -12,7 +12,7 @@ probe is throwaway and never lands in a commit.
 
 Two things this skill deliberately does not repeat: how to write a test in this repo
 (`Tests/OpenSkyTests/AGENTS.md` and `Tests/OpenSkyRealDataTests/AGENTS.md` load automatically when you
-touch those directories, and cover `@MainActor`, env gating, `make realtest`, and fixtures),
+touch those directories, and cover `@MainActor`, env gating, `make test-real`, and fixtures),
 and the CLI subcommand reference (`docs/tools/cli.md`).
 
 ## Prefer openskycli when it already covers the question
@@ -24,7 +24,7 @@ across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/O
 
 Otherwise probe from a scratch test class in `Tests/OpenSkyRealDataTests/`, copying the shape of
 `CellRenderRealDataTests.swift`. That folder is the whole `RealData` plan, so a class there
-runs under `make realtest` with the data root in the host. Never
+runs under `make test-real` with the data root in the host. Never
 `swift path/to/script.swift` against engine sources: a script cannot import the package
 modules, and it does not get the data root or the memory watchdog.
 

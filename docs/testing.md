@@ -11,7 +11,7 @@ tags: [testing, tooling, process]
 Tests run through `make`. Fixture rules are in `Tests/OpenSkyTests/AGENTS.md`,
 `Tests/OpenSkyRealDataTests/AGENTS.md`, `Tests/TestSupport/AGENTS.md`, and the legal section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
-the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
+the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
 
 ## Targets
 
@@ -21,8 +21,8 @@ the fast loop, coverage, and sanitizers work is on the [test runs](/tools/test-r
 - `OpenSkyTests`: unit tests with Swift Testing for what a package test target cannot hold: the
   app module and the acceptance chains. None of it needs game data.
 - `OpenSkyRealDataTests`: the suites that read the user's install and skip without a data root. They
-  are a separate bundle so `make test` does not compile them and the `RealData` plan can select them
-  by target.
+  are a separate bundle so `make test-unit` does not compile them and the `RealData` plan can select
+  them by target.
 - `OpenSkyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
 
@@ -36,23 +36,21 @@ a test there would run in both bundles. It holds only fixtures that need the app
 
 | Command | What it does |
 | --- | --- |
-| `make test` | The unit plan through the build system |
-| `make test-fast [T='Suite/test()'] [TAG=parser] [B=1]` | The fast loop: build once, then run against the cached products. `TAG` runs one shared tag across every unit target. `B=1` forces a build |
-| `make test-repeat T='Suite/test()' [N=100]` | Reruns until the first failure, at most `N` times, to show a test is flaky |
+| `make test-unit [T='Suite/test()'] [N=100]` | The unit plan. `T` picks a suite or test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky |
 | `make test-locale [T='Suite/test()']` | The unit plan in Dutch language and region, where the decimal separator is a comma |
-| `make test-one T=Class[/test]` | One class or method through the build system. A bare name resolves under `OpenSkyTests/`. Name the target for a package suite, for example `OpenSkyGameDataTests/Class` |
+| `make test-parser`, `make test-gpu` | The unit tests tagged `.parser` or `.gpu`, through the `Parser` or `GPU` plan |
 | `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
-| `make verify-build` | Compiles the app, the CLI, and both unit bundles without running a test. The only routine command that compiles the real-data suites |
+| `make verify-build` | Compiles the app, the CLI, and the unit bundles without running a test |
+| `make realdata-build` | Compiles the real-data suites without running them. Needs no install |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
-| `make realtest T='Class/method()' [CAP=MB]` | One real-data test under the memory watchdog |
-| `make realtest-all [CAP=MB]` | The whole real-data set under the watchdog |
-| `make realtest-perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
-| `make test-sanitize [SAN=Thread\|Address] [CAP=MB]` | The unit bundle under runtime sanitizers |
-| `make test-ui` | The UI smoke tests. Needs the Accessibility grant |
+| `make test-real [T='Class/method()'] [CAP=MB]` | The real-data plan under the memory watchdog, narrowed by `T` |
+| `make test-perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
+| `make test-sanitize-thread`, `make test-sanitize-address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
+| `make test-ui [T='Suite/test()']` | The UI smoke tests. Needs the Accessibility grant; a time-out in "enabling automation mode" means it is missing |
 | `make test-perms` | Checks the one-time permission grants |
 
-Prefer `make test-fast T=...` while iterating. `make test-one` pays a whole build system pass for
-the same selection.
+Each kind of test has one target named `test-<kind>`. Each is one plain `xcodebuild test` call on
+one test plan ([test runs](/tools/test-runs.md)).
 
 No automatic step runs the tests. What to test for a change is the author's judgment, guided by the
 `testing-and-verifying` skill, and the commit's `Tests:` section records what ran. CI runs the lint
@@ -69,27 +67,24 @@ the host sees nil. So exporting it in a shell does nothing, and the gated tests 
 `RealData` test plan carries the root instead:
 
 ```sh
-make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
-make realtest-all
+make test-real T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
+make test-real
 ```
 
-A single-selector run then checks that the result bundle says exactly one test passed.
-`-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing, so the
-count after the run is the guard. On a zero-test run, near matches are printed from a cached list of
-tests. `make realtest-all` has no selector to misspell, so it checks that at least one test ran and
-none failed. Skips are allowed, because some suites also need a Metal 4 device.
+`-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing. Nothing
+checks this, so read the test count in the output.
 
-`make realtest-perf` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
+`make test-perf` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
 perf gate joins by its tag alone. It builds with optimization, because a physics step is a few
 hundred microseconds of tight `simd` math, which `-Onone` slows by more than an order of magnitude.
 It keeps the Debug configuration, because `@testable import` needs `ENABLE_TESTABILITY`, which
 Release turns off. It changes only the optimization level and sets the `OPENSKY_OPTIMIZED`
 condition, so a test knows which budget applies. Its products go in `DerivedData-optimized/`, so
-switching between it and `make test` does not rebuild the engine each time ([dynamic
+switching between it and `make test-unit` does not rebuild the engine each time ([dynamic
 bodies](/engine/dynamic-bodies.md)).
 
 A gated suite written outside `Tests/OpenSkyRealDataTests/` fails `make lint`, because nothing would
-ever run it: `make realtest-all` would not reach it, and `make test` would skip it.
+ever run it: `make test-real` would not reach it, and `make test-unit` would skip it.
 
 ## Memory watchdog
 
@@ -99,13 +94,12 @@ watches the process tree of every real-data run and kills it past a cap in MB.
 
 | Run | Cap | Time limit |
 | --- | --- | --- |
-| One real-data test | 4,096 MB | 15 minutes |
-| The whole real-data set | 6,144 MB | 2 hours |
-| Sanitizers | 12,288 MB | 3 hours |
+| `make test-real`, `make test-perf` | 6,144 MB | 3 hours |
+| `make test-sanitize-thread`, `make test-sanitize-address` | 12,288 MB | 3 hours |
 
-The whole set gets more, because one host process runs every suite in turn and keeps their caches.
-Sanitizers get more for their shadow memory. Never run a heavy real-data test with a raw
-`xcodebuild` that skips the watchdog.
+The real-data cap fits the whole set, because one host process runs every suite in turn and keeps
+their caches. `CAP=MB` lowers it for one test. Sanitizers get more for their shadow memory. Never
+run a heavy real-data test with a raw `xcodebuild` that skips the watchdog.
 
 ## Results and perf gates
 
@@ -149,7 +143,7 @@ So nothing that needs the app lifecycle runs in unit tests: no delegate, no wind
 The host reads the app's own defaults and home folder. So the data root locator ignores both saved
 data root sources under the same signal, and a unit test reaches the install only through
 `OPENSKY_DATA_ROOT` ([game data locator](/engine/game-data-locator.md)). Before this, a machine where
-the app pointed at an install on an external volume blocked `make test` forever inside `open()`.
+the app pointed at an install on an external volume blocked the unit tests forever inside `open()`.
 `TEST_RUNNER_OPENSKY_DATA_ROOT=""` did not help, because it clears only the environment variable.
 
 ## Fixtures

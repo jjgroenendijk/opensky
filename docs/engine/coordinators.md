@@ -24,7 +24,7 @@ The reference example is the vendor domain in `Sources/OpenSkyInventory/`: `Vend
 
 Logic in a `GameViewController+X` file runs only inside the app. A test must build the app
 host, and the CLI cannot call it. The view controller also grows with every milestone. A
-coordinator in a package module is tested with `make test-fast` in seconds.
+coordinator in a package module is tested with `make test-unit` in seconds.
 
 ## Parts
 
@@ -177,7 +177,7 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 4. Test the core with values. Test the shell with a fake port.
 5. In the app, add the stored property, the wire function, and the port adapter. Point every
    caller at the coordinator, and delete the old functions.
-6. Run `make check` and `make test-fast T='<Feature>Tests'`, then `make verify-build`.
+6. Run `make check` and `make test-unit T='<Feature>Tests'`, then `make verify-build`.
 
 Do not add a new `GameViewController+X` file for new logic. A SwiftLint rule will enforce this
 once every domain has moved ([code-health automation](/decisions/code-health-automation.md)).

@@ -3,7 +3,7 @@
 // `WalkController` over real terrain through idle, walk, run, sprint, sneak,
 // jump, land and swim. Each state must be reached, pose distinctly, and move
 // the bone palettes. Needs Metal 4. Run with
-// `make realtest T='PlayerBodyRealDataTests/drivesEveryLocomotionStateWithABody()'`.
+// `make test-real T='PlayerBodyRealDataTests/drivesEveryLocomotionStateWithABody()'`.
 
 import Foundation
 import Metal

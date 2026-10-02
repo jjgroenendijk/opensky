@@ -3,7 +3,8 @@
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
-# target or tag, never by test name. The Perf plan selects the `perf` tag.
+# target or tag, never by test name. The Perf plan selects the `perf` tag, and
+# each tag plan is the unit plan narrowed to one tag.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -22,8 +23,9 @@ TIMEOUT_KEYS = (
     "defaultTestExecutionTimeAllowance",
     "maximumTestExecutionTimeAllowance",
 )
-# Repetition hides a flaky test, so only `make test-repeat` asks for it.
+# Repetition hides a flaky test, so only `make test-unit N=...` asks for it.
 REPEAT_KEYS = ("testRepetitionMode", "maximumTestRepetitions")
+TAG_PLANS = {"Parser": "parser", "GPU": "gpu"}
 problems = []
 
 
@@ -52,7 +54,7 @@ for name, plan in plans.items():
     for options in [defaults] + [config.get("options", {}) for config in plan["configurations"]]:
         for key in REPEAT_KEYS:
             if key in options:
-                problems.append(f"{name}: sets {key}; repeat with `make test-repeat` instead")
+                problems.append(f"{name}: sets {key}; repeat with `make test-unit N=...` instead")
     for entry in plan.get("testTargets", []):
         target = entry.get("target", {}).get("name")
         for key in ("selectedTests", "skippedTests"):
@@ -90,6 +92,17 @@ unit_env = plans.get("UnitTests", {}).get("defaultOptions", {}).get("environment
 sanitized_env = plans.get("Sanitizers", {}).get("defaultOptions", {}).get("environmentVariableEntries")
 if unit_env != sanitized_env:
     problems.append("Sanitizers: must set the same environment as UnitTests")
+
+# A tag plan is the unit plan narrowed to one tag, so `make test-<tag>` sees every target.
+for name, tag in TAG_PLANS.items():
+    plan = plans.get(name, {})
+    entries = plan.get("testTargets", [])
+    if [entry["target"]["name"] for entry in entries] != unit:
+        problems.append(f"{name}: must list the same test targets as UnitTests, in the same order")
+    if any(entry.get("selectedTags", {}).get("tags") != [tag] for entry in entries):
+        problems.append(f"{name}: every target must select only the `{tag}` tag")
+    if plan.get("defaultOptions", {}).get("environmentVariableEntries") != unit_env:
+        problems.append(f"{name}: must set the same environment as UnitTests")
 
 if problems:
     print("[FAIL] test plans:", file=sys.stderr)

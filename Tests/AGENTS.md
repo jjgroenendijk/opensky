@@ -54,7 +54,7 @@ number.
 
 A suite that builds a `Renderer` goes in a package test target too. It passes
 `shaderLibrary: ShaderLibraryFixture.library(device: device)` from `RenderingTesting`, because a
-package test has no app bundle to load `default.metallib` from. `make test-fast` compiles the
+package test has no app bundle to load `default.metallib` from. `make test-unit` compiles the
 shaders first (`make shader-library`).
 
 ## Test plans
@@ -81,10 +81,10 @@ test needs it.
 | `.gpu` | A suite that reaches a Metal device |
 | `.parser` | A suite in an `OpenSkyFormats*Tests` target |
 | `.slow` | A test that takes seconds on a warm build |
-| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make realtest-perf`) |
+| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test-perf`) |
 
-`make test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, and
-`make test-tags FIX=1` adds them. A tag selects a run (`make test-fast TAG=parser`) but
+`make lint-test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, and
+`make lint-test-tags FIX=1` adds them. A tag selects a run (`make test-parser`) but
 never a real-data test into a unit run: a plan picks bundles, a tag picks tests inside them.
 
 ## Flaky tests
@@ -95,5 +95,5 @@ A flaky test fails sometimes and passes sometimes on the same code. When you fin
 2. Open a `bug` issue with the run directory of the failing run.
 3. Never add a retry. A retry hides the failure, and the bug stays.
 
-`make test-repeat T='Suite/test()'` reruns a test until it fails, to show it is flaky.
-`make test-tags` fails a `.disabled` trait that names no issue.
+`make test-unit T='Suite/test()' N=100` reruns a test until it fails, to show it is flaky.
+`make lint-test-tags` fails a `.disabled` trait that names no issue.

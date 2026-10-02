@@ -53,7 +53,7 @@ path are skipped. The test host is detected by the `XCTestConfigurationFilePath`
 The reason: the test host is the app, and the app reads the app's settings. On a machine where
 the app pointed at a real install, unit tests that must not depend on an install read that
 install anyway. Clearing the environment variable does not help, because the saved setting is
-still there. This once made `make test` hang, opening a real INI file.
+still there. This once made `make test-unit` hang, opening a real INI file.
 
 Real-data suites check the environment variable, so this does not affect them. UI tests pass a
 made-up install through `OPENSKY_DATA_ROOT`.

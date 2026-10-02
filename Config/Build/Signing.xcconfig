@@ -12,7 +12,7 @@
 // A machine without this certificate installed, and CI, override on the command line,
 // which wins over every xcconfig layer:
 //
-//   make test XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
+//   make test-unit XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
 //
 // `Apple Development` resolves against whichever development certificate the keychain
 // holds for the team; the team is the certificate's OU field.

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Print a deterministic pass/fail summary + per-failure detail from the newest
-# test result bundle. Prefers the fixed bundle written by `make test`/`test-one`
+# test result bundle. Prefers the bundles the make test-* targets write
 # (DerivedData/TestResults/*.xcresult) so it never races a parallel run's DerivedData
 # bundle; falls back to the DerivedData glob when no fixed bundle exists.
 #
@@ -32,7 +32,7 @@ if [ -z "$bundle" ]; then
 fi
 if [ -z "$bundle" ]; then
     echo "[ERROR] no .xcresult found (looked in $results_dir, then DerivedData)" >&2
-    echo "        run 'make test' or 'make test-one T=...' first" >&2
+    echo "        run 'make test-unit' first" >&2
     exit 1
 fi
 
@@ -170,7 +170,7 @@ if rows:
 PY
 
 # Coverage (issue #382). The UnitTests and AllTests plans gather it for the
-# `OpenSky` target, so every bundle from `make test` carries it and the
+# `OpenSky` target, so every bundle from `make test-unit` carries it and the
 # percentage arrives through the same command as the pass/fail counts rather
 # than out of a hand-parsed .xcresult. A bundle from a run that gathered none
 # still has to report as a missing number rather than a failure, so a non-zero

@@ -76,13 +76,13 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
   An extracted game file is never a fixture, not even a tiny one, and not a cut-down copy
   of a mod file.
 - Put the suite in `Tests/OpenSkyFormats<Family>Tests/<Format>/` with
-  `@Suite(.tags(.parser))`. `make test-tags` checks the tag. A suite that also builds
+  `@Suite(.tags(.parser))`. `make lint-test-tags` checks the tag. A suite that also builds
   engine state goes in the test target of the highest module it imports (`Tests/AGENTS.md`).
 - A bug fix starts with a fixture that reproduces it and a test that fails.
-- Run `make test-fast T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
-  `make test-fast TAG=parser` before pushing.
+- Run `make test-unit T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
+  `make test-parser` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
-  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make realtest`. A throwaway probe
+  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A throwaway probe
   never lands in a commit.
 
 ## 5. The docs page

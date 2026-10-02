@@ -226,7 +226,7 @@ def main():
     for error in errors:
         print(f"[ERROR] {error}", file=sys.stderr)
     if errors:
-        print("[ERROR] fix: make test-tags FIX=1 (tags only); see Tests/AGENTS.md",
+        print("[ERROR] fix: make lint-test-tags FIX=1 (tags only); see Tests/AGENTS.md",
               file=sys.stderr)
         return 1
     return 0

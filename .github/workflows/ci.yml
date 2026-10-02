@@ -97,7 +97,7 @@ jobs:
         run: make module-graph
       - if: success() || failure()
         run: >-
-          make cli-boundary realdata-plan test-plans test-tags no-game-content docs-links
+          make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
           docs-length agent-files comment-length duplicates no-suppressions
 
   # Only tests that need no game data: a runner has no install, and the job sets no
@@ -150,7 +150,7 @@ jobs:
           path: DerivedData/CompilationCache.noindex
           key: cas-${{ runner.arch }}-${{ steps.month.outputs.month }}-${{ github.run_id }}
           restore-keys: cas-${{ runner.arch }}-${{ steps.month.outputs.month }}-
-      - run: make test XCODEBUILD_FLAGS="$SIGNING"
+      - run: make test-unit XCODEBUILD_FLAGS="$SIGNING"
       - run: make coverage-floor
       - name: "Compile real-data suites (never run: no install on a runner)"
         run: make realdata-build XCODEBUILD_FLAGS="$SIGNING"

@@ -89,7 +89,7 @@ Each skill folder has `evals.json`, a list of scenarios:
 ```json
 {
   "skills": ["testing-and-verifying"],
-  "query": "make test-fast failed. What broke?",
+  "query": "make test-unit failed. What broke?",
   "files": [],
   "expected_behavior": ["Runs make test-report instead of hand-parsing .xcresult JSON"]
 }

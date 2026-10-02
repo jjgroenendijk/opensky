@@ -47,7 +47,7 @@ conflict.
   (AppKit, Cocoa, SwiftUI) outside `OpenSky/` breaks the CLI build; `make cli-boundary`
   catches it.
 - A folder that builds a target has the target's name, in PascalCase. A test selector names
-  the target: `make test-fast T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
+  the target: `make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
   lowercase on purpose: the CLI binary `openskycli`, and the bundle IDs, because macOS
   stores permission grants against them.
 - The build cache is `DerivedData/` inside the checkout. The boot volume is too small for
@@ -120,7 +120,7 @@ No automatic step runs the tests. What to test is the author's judgment, guided 
 `testing-and-verifying` skill, and recorded in the commit's `Tests:` section. A green build
 does not prove a triangle appeared. Unit-test every format parser and math routine with
 synthetic fixtures built in code. The real-data suites need the user's install, so only
-`make realtest` and `make realtest-all` run them, and never in CI.
+`make test-real` and `make test-perf` run them, and never in CI.
 
 ## Loading game data (runtime, never repo)
 

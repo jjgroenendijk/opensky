@@ -2,7 +2,7 @@
 // install. Forces decoded clear/rain/snow presets through the live weather +
 // renderer path, freezes a mid-rain cross-fade while particles keep playing,
 // then resumes and transitions back to clear. Numeric evidence + local PNGs
-// land only in gitignored logs/. One @Test keeps tools/realtest.sh's gate.
+// land only in gitignored logs/.
 
 import CoreGraphics
 import Foundation

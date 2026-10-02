@@ -1,7 +1,7 @@
 // GRAS render acceptance against the user's read-only Skyrim SE
 // install. Renders cell-owned Whiterun grass through production batches,
 // proves live density/distance policy + weather wind motion numerically, and
-// writes only gitignored PNG/report evidence. One @Test keeps realtest exact.
+// writes only gitignored PNG/report evidence.
 
 import CoreGraphics
 import Foundation

@@ -2,8 +2,8 @@
 // synthetic suites cannot: a vanilla interior yields bodies from its own Havok
 // data, they settle, a shove moves them, and a step fits the frame budget. The
 // report holds counts and timings and goes to gitignored `logs/`. Run with
-// `make realtest T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
-// or `make realtest-perf` for the optimized budget.
+// `make test-real T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
+// or `make test-perf` for the optimized budget.
 
 import Foundation
 import Metal
@@ -19,8 +19,8 @@ import Testing
 @Suite(.tags(.gpu))
 struct DynamicBodyRealDataTests {
     /// Wall-clock budget for one 1/120 s physics step, in milliseconds. An
-    /// optimized build (`make realtest-perf`) is held to 2 ms; measured 0.37.
-    /// `-Onone` runs about 24x slower, so a plain `make realtest` gets 20 ms.
+    /// optimized build (`make test-perf`) is held to 2 ms; measured 0.37.
+    /// `-Onone` runs about 24x slower, so a plain `make test-real` gets 20 ms.
     private static var budgetMS: Double {
         #if OPENSKY_OPTIMIZED
             2.0
@@ -335,7 +335,7 @@ extension DynamicBodyRealDataTests {
     private static func write(name: String, report: String) throws {
         let environment = ProcessInfo.processInfo.environment
         let directory = try environment["OPENSKY_RUN_DIR"].map(URL.init(fileURLWithPath:))
-            ?? RepositoryLogs.directory("realtest/latest").resolvingSymlinksInPath()
+            ?? RepositoryLogs.directory("test-real/latest").resolvingSymlinksInPath()
         try FileManager.default.createDirectory(
             at: directory, withIntermediateDirectories: true
         )

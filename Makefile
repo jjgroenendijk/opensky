@@ -106,7 +106,6 @@ ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 # and deadlock (issue #380). The unit plan's Locale configuration runs only through
 # `make test-locale`, so every other run names the Unit configuration.
 UNIT_PLAN        := -testPlan UnitTests -only-test-configuration Unit
-UI_PLAN          := -testPlan UITests
 
 # Formatter and linter configuration.
 SWIFTFORMAT_CFG  := tools/format/.swiftformat
@@ -146,7 +145,7 @@ link-shared: ## Point this worktree's ffmpeg and compile cache at the main check
 
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
-        cli-boundary module-graph realdata-plan test-plans test-tags no-game-content \
+        cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length comment-blocks comment-apply \
         duplicates no-suppressions
 
@@ -165,7 +164,7 @@ metal-format-check: ## Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan test-plans test-tags no-game-content docs-length agent-files workflow-lint comment-length duplicates no-suppressions ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length duplicates no-suppressions ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
@@ -209,10 +208,13 @@ realdata-plan: ## Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \
 		&& echo "[ OK ] real-data suites and the RealData plan line up"
 
-test-plans: ## Check every test plan sets timeouts and selects by target or tag
+lint-test-plans: ## Check every test plan sets timeouts and selects by target or tag
 	@./tools/lint/test-plans.sh && echo "[ OK ] test plans follow the rules"
 
-test-tags: ## Check suites carry the shared tags and .disabled names an issue [FIX=1]
+lint-test-targets: ## Check every Makefile target that runs tests is named test-<kind>
+	@./tools/lint/test-targets.sh && echo "[ OK ] test targets are named test-<kind>"
+
+lint-test-tags: ## Check suites carry the shared tags and .disabled names an issue [FIX=1]
 	@./tools/lint/test-tags.sh $(if $(FIX),--fix,) && echo "[ OK ] suites carry their tags"
 
 no-game-content: ## Check no game assets or rendered captures are tracked
@@ -266,14 +268,13 @@ comment-apply: ## Write rewritten blocks from a comment-blocks spec back [SPEC=f
 compile: link-shared ## Compile changed package modules and their dependents [M='Module ...']
 	@./tools/compile-modules.sh $(M)
 
-# Every target compiled, no test run: OpenSkyTests, the app with
-# OpenSkyRealDataTests, and openskycli. Catches a change that breaks a target it
-# did not test. Incremental and served from the shared cache.
-# The OpenSky scheme builds openskycli for testing, so the CLI shares the test
-# builds' context. A separate OpenSkyCLI build recompiles the engine (issue #717).
-verify-build: link-shared ## Compile app, CLI, and both unit bundles without running tests
-	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
-	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
+# The app, openskycli, and the unit bundles compiled, no test run. Catches a change
+# that breaks a target it did not test; realdata-build does the same for the
+# real-data suites. The OpenSky scheme builds openskycli for testing, so the CLI
+# shares the test builds' context. A separate OpenSkyCLI build recompiles the
+# engine (issue #717).
+verify-build: link-shared ## Compile the app, the CLI, and the unit bundles without running tests
+	@$(XCB_RUN) verify-build $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 
 shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
 
@@ -340,115 +341,101 @@ icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 
 ##@ Test
 
-.PHONY: test test-fast test-one test-repeat test-locale test-ui test-report test-sanitize \
-        test-perms coverage-floor
+# Each kind of test has one target named test-<kind> (tools/lint/test-targets.sh).
+# Each is one plain `xcodebuild test` call on one test plan, so Xcode decides what
+# runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
-test: link-shared $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
-	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
-		TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test $(XCB_TEST) -resultBundlePath "$$bundle" \
-		$(UNIT_PLAN) test
+.PHONY: test-unit test-locale test-parser test-gpu test-ui test-sanitize-thread \
+        test-sanitize-address test-real test-perf test-report test-perms coverage-floor \
+        realdata-build sanitizer-shaders profile
 
-# Build once, then rerun against the cached .xctestrun without touching the build
-# system: seconds instead of the ~80 of `make test` (issue #417). It rebuilds on
-# its own when a source, Config/, or project file is newer; B=1 forces that. The
-# default for every unit run, filtered or whole plan. A selector that names a
-# package test target, T='OpenSkyFormatsCoreTests/...', runs that target alone through
-# `swift test`, without the app host (issue #582). TAG runs one shared tag across
-# every target of the unit plan.
-test-fast: link-shared $(SHADER_LIBRARY) ## Rerun tests without rebuilding [T='Suite/test()'] [TAG=parser] [B=1]
-	@case "$(T)" in \
-		"") ./tools/test-fast.sh $(if $(B),-B,) $(if $(TAG),-g $(TAG),) ;; \
-		OpenSkyTests/* | OpenSkyRealDataTests/* | OpenSkyUITests/*) \
-			./tools/test-fast.sh $(if $(B),-B,) -t "$(T)" ;; \
-		*) target="$$(printf '%s' "$(T)" | cut -d/ -f1)"; \
-			if [ -d "Tests/$$target" ]; then ./tools/test-package.sh "$(T)"; \
-			else ./tools/test-fast.sh $(if $(B),-B,) -t "OpenSkyTests/$(T)"; fi ;; \
-	esac
+# The result bundle of one run, in its own run directory (issue #347).
+test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
+# -only-testing for T. A T that does not start with an OpenSky*Tests target
+# resolves under the bundle in $(1).
+only_testing = $(if $(T),-only-testing:'$(if $(filter OpenSky%Tests,$(firstword \
+	$(subst /, ,$(T)))),,$(1)/)$(T)')
+# One test host, watched by the memory watchdog: a real-data run once reached
+# 30 GB and locked the machine. $(1) is the default cap in MB, CAP overrides it.
+guarded = sh tools/memguard.sh $(or $(CAP),$(1)) 10800 & guard=$$!; \
+	trap 'kill $$guard 2>/dev/null' EXIT INT TERM; \
+	$(2) -parallel-testing-enabled NO -maximum-parallel-testing-workers 1 test
+# The perf gates measure the engine, not -Onone, so they build optimized in their
+# own cache, which keeps the Debug build (issue #392).
+XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
+	-configuration Debug -derivedDataPath $(DERIVED_DATA)-optimized \
+	-destination '$(DESTINATION)' $(XCODEBUILD_FLAGS) \
+	SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
+	SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
 
-# A selector under OpenSkyUITests switches to the UI plan; anything else runs in
-# the unit plan. Keeping the plans apart avoids the deadlock described above.
-test-one: link-shared $(SHADER_LIBRARY) ## Build and run one test: T=Class[/method] or T=Target/Class/method
-	@test -n "$(T)" || { \
-		echo "[ERROR] usage: make test-one T=ClassName[/methodName]"; \
-		echo "        or: make test-one T=TargetName/ClassName/methodName"; \
-		echo "        ClassName[/methodName] resolves under OpenSkyTests"; \
-		exit 2; }
-	@case "$(T)" in */*/* | OpenSky*Tests/*) spec="$(T)";; *) spec="OpenSkyTests/$(T)";; esac; \
-	case "$$spec" in OpenSkyUITests/*) plan="$(UI_PLAN)";; *) plan="$(UNIT_PLAN)";; esac; \
-	bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) one)/one.xcresult"; \
-	TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test-one $(XCB_TEST) -resultBundlePath "$$bundle" \
-		$$plan -only-testing:"$$spec" test
+# N hunts a flaky test: it reruns until the first failure, at most N times.
+test-unit: link-shared $(SHADER_LIBRARY) ## Run the unit plan [T='Suite/test()'] [N=100]
+	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
+		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit) $(UNIT_PLAN) \
+		$(call only_testing,OpenSkyTests) \
+		$(if $(N),-run-tests-until-failure -test-iterations $(N)) test
 
-# Hunts a flaky test: reruns until the first failure, at most N times. Never a
-# default, because a retry would hide the failure it is looking for.
-test-repeat: link-shared $(SHADER_LIBRARY) ## Rerun tests until one fails [T='Suite/test()'] [N=100]
-	@case "$(T)" in "" | OpenSkyTests/* | OpenSky*Tests/*) spec="$(T)";; \
-		*) spec="OpenSkyTests/$(T)";; esac; \
-	./tools/test-fast.sh -r $(or $(N),100) $${spec:+-t "$$spec"}
+# Dutch language and region, where the decimal separator is a comma, to catch text
+# parsing that depends on the locale.
+test-locale: link-shared $(SHADER_LIBRARY) ## Run the unit plan in the nl_NL locale [T='Suite/test()']
+	@$(XCB_RUN) test-locale $(XCB_TEST) $(call test_bundle,locale) \
+		-testPlan UnitTests -only-test-configuration Locale \
+		$(call only_testing,OpenSkyTests) test
 
-# The unit plan with Dutch language and region, where the decimal separator is a
-# comma, to catch text parsing that depends on the locale.
-test-locale: link-shared $(SHADER_LIBRARY) ## Run the unit tests in the nl_NL locale [T='Suite/test()']
-	@./tools/test-fast.sh -C Locale $(if $(T),-t "$(T)",)
+test-parser: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .parser (Parser plan)
+	@$(XCB_RUN) test-parser $(XCB_TEST) $(call test_bundle,parser) -testPlan Parser test
 
-test-ui: link-shared ## Build and run the UI tests (launches and drives the app)
-	@./tools/test-ui.sh \
-		$(WORKSPACE) $(SCHEME) '$(DESTINATION)' $(XCODEBUILD_FLAGS)
+test-gpu: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .gpu (GPU plan)
+	@$(XCB_RUN) test-gpu $(XCB_TEST) $(call test_bundle,gpu) -testPlan GPU test
+
+# A timeout in "enabling automation mode" means the Accessibility grant is
+# missing: run make test-perms.
+test-ui: link-shared ## Run the UI tests (launches and drives the app) [T='Suite/test()']
+	@$(XCB_RUN) test-ui $(XCB_TEST) $(call test_bundle,ui) -testPlan UITests \
+		$(call only_testing,OpenSkyUITests) test
+
+# The sanitized builds have their own BUILD_DIR, and the plan finds the shaders
+# through $(BUILD_DIR). The shaders are not sanitized, so each gets a copy.
+sanitizer-shaders: $(SHADER_LIBRARY)
+	@for variant in Variant-TSan Variant-ASan-UBSan; do \
+		mkdir -p "$(DERIVED_DATA)/Build/Products/$$variant" && \
+		cp "$(SHADER_LIBRARY)" "$(DERIVED_DATA)/Build/Products/$$variant/" || exit 1; \
+	done
+
+# TSan and ASan with UBSan cannot share a build (issue #383). Too slow for routine
+# runs, so run them periodically and before a milestone acceptance.
+test-sanitize-thread: link-shared sanitizer-shaders ## Run the unit tests under the Thread Sanitizer [CAP=MB]
+	@$(call guarded,12288,$(XCB_RUN) test-sanitize-thread $(XCB_TEST) \
+		$(call test_bundle,sanitize-thread) -testPlan Sanitizers -only-test-configuration Thread)
+
+test-sanitize-address: link-shared sanitizer-shaders ## Run the unit tests under ASan and UBSan [CAP=MB]
+	@$(call guarded,12288,$(XCB_RUN) test-sanitize-address $(XCB_TEST) \
+		$(call test_bundle,sanitize-address) -testPlan Sanitizers -only-test-configuration Address)
+
+# Real-data tests read the user's install, so they run on demand and before a
+# milestone acceptance, never in CI. The plan holds the install path.
+test-real: link-shared ## Run the real-data plan [T='Suite/test()'] [CAP=MB]
+	@$(call guarded,6144,$(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) \
+		-testPlan RealData $(call only_testing,OpenSkyRealDataTests))
+
+# The Perf plan selects the real-data tests tagged `.perf`.
+test-perf: link-shared ## Run every perf gate on an optimized build [CAP=MB]
+	@$(call guarded,6144,$(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) \
+		-testPlan Perf)
 
 test-report: ## Summarize the newest test result bundle, failures included
 	@./tools/test-report.sh $(TEST_RESULTS)
 
-# OpenSkyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
-# share a build. Too slow for routine runs, so run it periodically and
-# before a milestone acceptance.
-coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last test run
-	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
-
-test-sanitize: link-shared $(SHADER_LIBRARY) ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
-	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
-
 test-perms: ## Check the one-time macOS permission grants tests need
 	@./tools/test-perms.sh
 
-##@ Real-data tests (read the local Skyrim install)
+coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last test run
+	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
 
-# Running these suites needs the user's install, so it happens on demand and
-# before a milestone acceptance, never on push or in CI, and always under the
-# memory watchdog (CAP=MB sets its limit). realdata-build compiles them without
-# running, and verify-build includes that.
-
-.PHONY: realtest realtest-all realdata-build realtest-perf profile
-
-# One test through the fast path of test-fast (issue #417): a warm rerun pays
-# only for the test itself.
-realtest: link-shared ## Run one real-data test: T='Class/method()' [CAP=MB] [B=1]
-	@test -n "$(T)" || { \
-		echo "[ERROR] usage: make realtest T='Class/method()' [CAP=MB]"; \
-		echo "        selector must resolve to exactly one test (fully qualified)"; \
-		echo "        e.g. make realtest T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'"; \
-		echo "        whole set: make realtest-all"; \
-		exit 2; }
-	@case "$(T)" in OpenSkyRealDataTests/*) spec="$(T)";; \
-		*) spec="OpenSkyRealDataTests/$(T)";; esac; \
-	./tools/test-fast.sh -p RealData -t "$$spec" \
-		$(if $(CAP),-c $(CAP),) $(if $(B),-B,)
-
-realtest-all: link-shared ## Run the whole real-data plan [CAP=MB]
-	@./tools/realtest.sh $(if $(CAP),-c $(CAP),)
-
-# `make test` never compiles the real-data suites, so a build break there used to
-# stay hidden (issue #457). Compiling needs no install.
+# test-unit never compiles the real-data suites, so a build break there used to
+# stay hidden (issue #457). Compiling needs no install, so CI runs it.
 realdata-build: link-shared ## Compile the real-data suites without running them
 	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
-
-# The perf gates are the real-data tests tagged `.perf`; the Perf plan selects
-# them. They build optimized, because -Onone makes tight simd code an order of
-# magnitude slower (issue #392). They use their own cache directory,
-# DerivedData-optimized/, so the Debug build survives.
-realtest-perf: link-shared ## Run every perf gate on an optimized build [CAP=MB]
-	@./tools/realtest.sh -O -p Perf $(if $(CAP),-c $(CAP),)
 
 profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
 	@$(MAKE) --no-print-directory cli CONFIG=Release

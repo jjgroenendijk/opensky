@@ -2,7 +2,7 @@
 // (read-only external input, never committed — AGENTS.md Legal & IP).
 // Skips automatically when OPENSKY_DATA_ROOT is unset or unresolvable.
 // Summaries print and are written to gitignored logs/. Run with
-// `make realtest T=InventoryRecordRealDataTests/sweepsEveryInventoryRecord()`.
+// `make test-real T=InventoryRecordRealDataTests/sweepsEveryInventoryRecord()`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

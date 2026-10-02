@@ -3,7 +3,7 @@
 # coverage in the last test run drops below FLOOR percent. Parsers read
 # untrusted files, so an untested branch there can crash the app
 # (docs/decisions/code-health-automation.md). Each test run rewrites the
-# profile, so run this right after `make test`: a filtered run reads too low.
+# profile, so run this right after `make test-unit`: a filtered run reads too low.
 #
 # It reads the profile with llvm-cov, because `xccov` reports no package files
 # from a bundle built with the compilation cache's prefix mapping.
@@ -18,14 +18,14 @@ build="$2/Build"
 # shellcheck disable=SC2012  # newest-by-mtime of a few fixed-name files
 profile="$(ls -t "$build"/ProfileData/*/Coverage.profdata 2>/dev/null | head -1)"
 if [ -z "$profile" ]; then
-  printf '[FAIL] no coverage profile under %s/ProfileData. Run: make test\n' "$build" >&2
+  printf '[FAIL] no coverage profile under %s/ProfileData. Run: make test-unit\n' "$build" >&2
   exit 1
 fi
 
 frameworks="$(find "$build/Products/Debug/PackageFrameworks" -maxdepth 1 \
   -name 'OpenSkyFormats*.framework' 2>/dev/null | sort)"
 if [ -z "$frameworks" ]; then
-  printf '[FAIL] no OpenSkyFormats frameworks under %s. Run: make test\n' "$build" >&2
+  printf '[FAIL] no OpenSkyFormats frameworks under %s. Run: make test-unit\n' "$build" >&2
   exit 1
 fi
 
