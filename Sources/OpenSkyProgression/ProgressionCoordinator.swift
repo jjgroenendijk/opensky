@@ -8,7 +8,6 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 /// Owns skill advancement and leveling, and reads the world through
 /// `ProgressionWorld`. Without game data both runtimes stay nil: every skill

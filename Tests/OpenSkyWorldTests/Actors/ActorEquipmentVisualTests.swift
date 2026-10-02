@@ -7,7 +7,6 @@ import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import Testing
 

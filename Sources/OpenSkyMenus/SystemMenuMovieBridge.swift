@@ -185,7 +185,5 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         return true
     }
 
-    /// `SystemCategoriesList`'s backing array of row objects.
-    public static let entryArrayName = MenuMovieEntryList.arrayName
     public static let settingsCategoryIndex = 4
 }

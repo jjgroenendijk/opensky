@@ -263,10 +263,6 @@ nonisolated public final class ParticlePlayback: Sendable {
         state.withLock { $0.simulator }
     }
 
-    public var simulationTime: Float {
-        state.withLock { $0.simulationTime }
-    }
-
     public var liveCount: Int {
         state.withLock { $0.simulator.particles.count }
     }

@@ -43,10 +43,8 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// keyboard and mouse. Same constant the system menu passes.
     public static let pcPlatform = 0.0
 
-    /// `Shared.BSScrollingList`'s backing array of row objects, and the index it
-    /// keeps its selection in — the phase-4 contract the scope decision named,
-    /// confirmed present on both list objects after bring-up.
-    public static let entryArrayName = MenuMovieEntryList.arrayName
+    /// The index `Shared.BSScrollingList` keeps its selection in, present on both
+    /// list objects.
     public static let selectedIndexName = "iSelectedIndex"
 
     /// The engine-to-movie callback the lists register with `GameDelegate`.

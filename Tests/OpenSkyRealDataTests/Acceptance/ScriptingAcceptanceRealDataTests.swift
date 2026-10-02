@@ -19,7 +19,6 @@ import OpenSkyScriptingFixtures
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import simd
 import TagsTesting
 import Testing

@@ -2,11 +2,28 @@
 
 import FormatsESMTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 import Testing
 
 struct MaterialTypeTests {
+    @Test func indexCountsMalformedMaterialsAndLandTextures() throws {
+        let plugin = ESMFixture.tes4()
+            + ESMFixture.topGroup(
+                "MATT",
+                contents: ESMFixture.malformedRecord("MATT", formID: 0x100)
+            )
+            + ESMFixture.topGroup(
+                "LTEX",
+                contents: ESMFixture.malformedRecord("LTEX", formID: 0x200)
+            )
+        let index = try MaterialTypeIndex(file: ESMFile(data: plugin))
+        #expect(index.materials.isEmpty)
+        #expect(index.skippedRecords.count(of: "MATT") == 1)
+        #expect(index.skippedRecords.count(of: "LTEX") == 1)
+    }
+
     @Test func decodesEveryFieldTheChainReads() throws {
         let record = try Self.record(
             formID: 0x100,

@@ -4,13 +4,11 @@ import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
-import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
-import OpenSkyWorldState
 import OSLog
 
 extension DialogueMenuController {

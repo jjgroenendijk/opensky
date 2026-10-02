@@ -2,7 +2,6 @@
 // charge, and worn constant effects going on and coming off. Melee and arrows
 // share `applyWeaponEnchantment(_:)`. The worn reconcile is idempotent.
 
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

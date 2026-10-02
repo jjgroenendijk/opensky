@@ -14,7 +14,6 @@ import AppKit
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
-import OpenSkyWorldTesting
 import simd
 import Testing
 

@@ -6,7 +6,6 @@ import Foundation
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
-import OpenSkyWorldTesting
 import Testing
 
 extension CellSceneBuilderTests {

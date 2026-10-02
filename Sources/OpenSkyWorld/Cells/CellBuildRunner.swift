@@ -3,13 +3,8 @@
 // thread and buffers results for the streamer to poll once per frame.
 
 import Foundation
-import OpenSkyAudio
-import OpenSkyCombatInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
-import OpenSkyInventoryInterface
-import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState

@@ -14,7 +14,6 @@ import MetalKit
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import RenderingTesting
 import simd
 import TagsTesting

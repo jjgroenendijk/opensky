@@ -7,7 +7,6 @@
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
 import simd
 
 extension CrimeCoordinator {

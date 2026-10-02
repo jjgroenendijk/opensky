@@ -8,15 +8,12 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyAudio
-@testable import OpenSkyFormatsAnimation
-@testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import simd
 import TagsTesting
 import Testing

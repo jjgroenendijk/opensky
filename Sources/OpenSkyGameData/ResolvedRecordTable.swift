@@ -45,10 +45,6 @@ nonisolated public struct ResolvedRecordTable<Value: Sendable>: Sendable {
         }
     }
 
-    public var isEmpty: Bool {
-        values.isEmpty
-    }
-
     /// Values in load order, lowest plugin priority first.
     public var orderedValues: [Value] {
         orderedIDs.compactMap { values[$0] }

@@ -6,7 +6,6 @@
 @testable import OpenSkyAudio
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

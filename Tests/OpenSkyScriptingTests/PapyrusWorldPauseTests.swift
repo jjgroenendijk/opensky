@@ -2,7 +2,6 @@
 // the World > Scripts sidebar reads. Every fixture is built in
 // code by `PapyrusWorldFixture`; no game data is involved.
 
-@testable import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting

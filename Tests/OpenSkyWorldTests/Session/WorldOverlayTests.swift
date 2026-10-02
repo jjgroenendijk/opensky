@@ -9,7 +9,6 @@ import MetalKit
 import OpenSkyShaderTypes
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import RenderingTesting
 import simd
 import TagsTesting

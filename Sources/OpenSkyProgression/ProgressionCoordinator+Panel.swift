@@ -5,7 +5,6 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 extension ProgressionCoordinator {
     public var snapshot: ProgressionControlSnapshot {

@@ -9,7 +9,6 @@ import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
@@ -22,7 +21,6 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
-import OpenSkyWorldState
 
 /// The Combat & Physics panel reads the coordinator.
 extension GameViewController: MeleeCombatControlProviding {

@@ -16,10 +16,6 @@ nonisolated public struct KeywordStore: Sendable {
     private let index: RecordIndex
     private let table: ResolvedRecordTable<ResolvedKeyword>
 
-    public var keywords: [ResolvedFormID: ResolvedKeyword] {
-        table.values
-    }
-
     public var skippedRecords: SkippedRecords {
         table.skipped
     }

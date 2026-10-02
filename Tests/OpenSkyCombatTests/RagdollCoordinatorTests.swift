@@ -5,7 +5,6 @@
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import PhysicsTesting

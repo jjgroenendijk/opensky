@@ -1,7 +1,6 @@
 // The Scripts panel over a fake world: crosshair targeting, pause and step,
 // and the no-VM readout. Every fixture is built in code.
 
-@testable import FormatsESMTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

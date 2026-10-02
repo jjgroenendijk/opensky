@@ -12,9 +12,7 @@ import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyInventoryInterface
 import OpenSkyMagic
-import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyProgression

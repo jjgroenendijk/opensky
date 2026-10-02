@@ -3,7 +3,6 @@
 // See docs/engine/coordinators.md.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyWorldInterface

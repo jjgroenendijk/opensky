@@ -6,7 +6,6 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 /// Owns the perk runtime and reads the world through `PerkWorld`. Without
 /// game data the runtime stays nil, and every entry point returns the value

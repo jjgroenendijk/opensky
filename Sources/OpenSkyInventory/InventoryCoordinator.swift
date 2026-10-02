@@ -6,7 +6,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
-import OpenSkyWorldState
 
 /// Owns the inventory runtimes and reads the world through `InventoryWorld`.
 /// Every runtime stays nil without game data, and each action then says so.

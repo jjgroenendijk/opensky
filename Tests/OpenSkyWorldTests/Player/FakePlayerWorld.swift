@@ -5,7 +5,6 @@ import BehaviorTesting
 import GameDataTesting
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

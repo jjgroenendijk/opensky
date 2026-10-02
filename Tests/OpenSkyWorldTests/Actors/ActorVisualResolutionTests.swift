@@ -10,7 +10,6 @@ import OpenSkyFormatsCore
 import OpenSkyGameData
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 struct ActorVisualResolutionTests {

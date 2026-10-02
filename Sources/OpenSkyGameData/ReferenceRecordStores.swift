@@ -148,10 +148,6 @@ nonisolated public struct DefaultObjectStore: Sendable {
     /// Counts every DOBJ definition that failed, because overrides merge by tag.
     public private(set) var skippedRecords = SkippedRecords()
 
-    public var records: [ResolvedFormID: ResolvedDefaultObjects] {
-        table.values
-    }
-
     public init(index: RecordIndex) {
         self.index = index
         table = ResolvedRecordTable(

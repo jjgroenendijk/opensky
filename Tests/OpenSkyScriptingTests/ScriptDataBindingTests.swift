@@ -8,7 +8,6 @@ import Foundation
 import OpenSkyQuestsTesting
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
-@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

@@ -8,7 +8,6 @@ import AppKit
 @testable import OpenSky
 import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 @testable import OpenSkyQuestsInterface
@@ -20,7 +19,6 @@ import OpenSkyScriptingFixtures
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import simd
 import Testing
 

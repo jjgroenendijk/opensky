@@ -6,7 +6,6 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 /// What `PerkCoordinator` reads from, and tells, the running world.
 @MainActor

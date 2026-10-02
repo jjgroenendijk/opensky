@@ -4,7 +4,6 @@
 
 import Foundation
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
@@ -66,7 +65,6 @@ struct InventoryCoordinatorTests {
         let coordinator: InventoryCoordinator
         let world: FakeWorld
         let references: FakeWorldReferences
-        let store: WorldStateStore
     }
 
     private static func harness() throws -> Harness {
@@ -80,9 +78,7 @@ struct InventoryCoordinatorTests {
             catalog: EquipmentCatalog.build(from: ESMFile(data: Fixture.pluginBytes())),
             pricing: nil
         )
-        return Harness(
-            coordinator: coordinator, world: world, references: items.references, store: items.store
-        )
+        return Harness(coordinator: coordinator, world: world, references: items.references)
     }
 
     private static var looseItem: PlacedInteraction {

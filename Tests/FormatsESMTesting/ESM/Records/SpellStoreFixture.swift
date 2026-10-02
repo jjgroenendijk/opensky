@@ -3,7 +3,6 @@
 
 import FormatsCoreTesting
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import Testing
 

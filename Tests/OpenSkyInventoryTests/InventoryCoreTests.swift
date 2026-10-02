@@ -6,7 +6,6 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-@testable import OpenSkyWorldState
 import Testing
 
 struct InventoryCoreTests {
