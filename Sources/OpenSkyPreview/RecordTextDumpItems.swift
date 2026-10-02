@@ -7,8 +7,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated extension RecordTextDump {
-    /// Decoded view for CONT, MISC, BOOK, ALCH, INGR, WEAP, AMMO, ARMO and
-    /// ARMA. Nil for anything else, so the caller falls through to the raw
+    /// Decoded view for CONT, the carryable item records, ARMA, and PROJ. Nil for anything else, so
+    /// the caller falls through to the raw
     /// field list.
     public static func itemSummary(
         record: ESMRecord,
@@ -19,6 +19,7 @@ nonisolated extension RecordTextDump {
         switch record.type {
         case "CONT": try containerSummary(record: record, localized: localized)
         case "MISC": try miscSummary(record, localized, keywordContext)
+        case "KEYM", "SLGM", "APPA": try minorItemSummary(record, localized, keywordContext)
         case "BOOK": try bookSummary(record, localized, keywordContext, magicContext)
         case "ALCH": try ingestibleSummary(record, localized, keywordContext, magicContext)
         case "INGR": try ingredientSummary(record, localized, keywordContext, magicContext)
@@ -115,7 +116,7 @@ nonisolated extension RecordTextDump {
         _ context: KeywordContext?
     ) throws -> String? {
         let item = try MiscItem(record: record, localized: localized)
-        return "decoded MISC: " + shared(item.fields, item.itemValue, context)
+        return "decoded MISC: " + sharedItemText(item.fields, item.itemValue, context)
     }
 
     private static func bookSummary(
@@ -130,7 +131,7 @@ nonisolated extension RecordTextDump {
         case let .skill(index): "skill \(ActorValueIdentity.description(of: index))"
         case let .spell(spell): "spell \(spellText(spell, context: magicContext))"
         }
-        return "decoded BOOK: " + shared(book.fields, book.itemValue, context)
+        return "decoded BOOK: " + sharedItemText(book.fields, book.itemValue, context)
             + ", teaches \(teaches), text \(book.text == nil ? "absent" : "present")"
     }
 
@@ -141,7 +142,7 @@ nonisolated extension RecordTextDump {
         _ magicContext: MagicContext?
     ) throws -> String? {
         let item = try Ingestible(record: record, localized: localized)
-        return "decoded ALCH: " + shared(item.fields, item.itemValue, context)
+        return "decoded ALCH: " + sharedItemText(item.fields, item.itemValue, context)
             + ", " + effectText(item.effects, context: magicContext) + ", "
             + "flags 0x\(String(item.flags.rawValue, radix: 16))"
     }
@@ -153,7 +154,7 @@ nonisolated extension RecordTextDump {
         _ magicContext: MagicContext?
     ) throws -> String? {
         let item = try Ingredient(record: record, localized: localized)
-        return "decoded INGR: " + shared(item.fields, item.itemValue, context)
+        return "decoded INGR: " + sharedItemText(item.fields, item.itemValue, context)
             + ", " + effectText(item.effects, context: magicContext)
             + ", auto-calc value \(item.autoCalcValue)"
     }
@@ -170,7 +171,7 @@ nonisolated extension RecordTextDump {
         let criticalEffect = weapon.criticalData?.effect.map {
             ", critical effect " + spellText($0, context: magicContext)
         } ?? ""
-        return "decoded WEAP: " + shared(weapon.fields, weapon.itemValue, context)
+        return "decoded WEAP: " + sharedItemText(weapon.fields, weapon.itemValue, context)
             + String(
                 format: ", damage %d, %@, speed %.2f, reach %.2f, critical %@",
                 Int(weapon.damage), animation, weapon.speed, weapon.reach, critical
@@ -197,14 +198,13 @@ nonisolated extension RecordTextDump {
     ) throws -> String? {
         let ammo = try Ammunition(record: record, localized: localized)
         let projectile = ammo.projectile.map(\.description) ?? "-"
-        return "decoded AMMO: " + shared(ammo.fields, ammo.itemValue, context)
+        return "decoded AMMO: " + sharedItemText(ammo.fields, ammo.itemValue, context)
             + String(format: ", damage %.1f, projectile %@", ammo.damage, projectile)
     }
 
     /// The editor id / name / value / weight / keyword prefix every carryable
-    /// family shares, so the seven summaries above differ only where the
-    /// records do.
-    private static func shared(
+    /// family shares, so the summaries differ only where the records do.
+    static func sharedItemText(
         _ fields: InventoryItemFields,
         _ itemValue: ItemValue,
         _ context: KeywordContext?

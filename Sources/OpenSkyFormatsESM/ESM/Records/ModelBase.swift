@@ -12,7 +12,7 @@ nonisolated public struct ModelBase: Sendable {
     /// is not drawn yet, and the take path reports that.
     public static let supportedTypes: Set<FourCC> = [
         "MSTT", "TREE", "FURN", "ACTI", "CONT", "DOOR",
-        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
+        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK", "KEYM", "SLGM", "APPA"
     ]
 
     /// The subset of `supportedTypes` whose references are loose world items:
@@ -20,7 +20,7 @@ nonisolated public struct ModelBase: Sendable {
     /// `CellSceneBuilder.interactionAction(for:)` and by the take path, so both
     /// answer from one list.
     public static let itemTypes: Set<FourCC> = [
-        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK"
+        "MISC", "WEAP", "AMMO", "ALCH", "INGR", "BOOK", "KEYM", "SLGM", "APPA"
     ]
 
     /// Sound links of an activator, door, or container, grouped by meaning.

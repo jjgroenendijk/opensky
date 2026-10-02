@@ -35,8 +35,8 @@ struct InventoryRecordRealDataTests {
         }
 
         // Every CNTO target has a type xEdit allows in the slot (`wbCNTO`), which
-        // pins the item-then-count order. APPA, KEYM, LIGH, SLGM, SCRL, and LVLI
-        // are legal contents that the item index does not decode.
+        // pins the item-then-count order. LIGH, SCRL, and LVLI are legal contents
+        // that the item index does not decode.
         let contents = store.containers.values.flatMap(\.entries)
         let types = ESMWalk.recordTypeIndex(in: file)
         var unexpected: Set<String> = []
@@ -76,7 +76,7 @@ struct InventoryRecordRealDataTests {
         (\(perFamily)); skips \(store.skippedCounts.values.reduce(0, +))
         [INFO] containers: \(store.containers.count) CONT, \(contents.count) CNTO entries \
         (\(contents.count { store.definition($0.item) != nil }) resolve into the item index, \
-        the rest are LVLI/KEYM/LIGH/SLGM/APPA/SCRL); \
+        the rest are LVLI/LIGH/SCRL); \
         COCT mismatches \(store.containers.values.count(where: \.entryCountMismatch))
         [INFO] value range: \(values.min() ?? 0)...\(values.max() ?? 0); \
         weight range: \(weights.min() ?? 0)...\(weights.max() ?? 0)

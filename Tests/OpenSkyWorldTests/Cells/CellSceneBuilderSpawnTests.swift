@@ -20,13 +20,14 @@ extension CellSceneBuilderTests {
     /// why `modelBaseRecord` builds them unchanged.
     func itemPlugin(
         placedItem: Data = Data(),
-        displayName: String? = "Iron Sword"
+        displayName: String? = "Iron Sword",
+        type: String = "MISC"
     ) -> Data {
         plugin(
             temporaryRefs: placedItem,
             modelBaseRecords: [
-                "MISC": modelBaseRecord(
-                    type: "MISC",
+                type: modelBaseRecord(
+                    type: type,
                     formID: 0x100,
                     modelPath: "arch\\solid.nif",
                     displayName: displayName
@@ -56,6 +57,17 @@ extension CellSceneBuilderTests {
         #expect(interaction.actionLabel == "Take")
         #expect(interaction.name == "Iron Sword")
         #expect(scene.staticCollision.shapes.contains { $0.reference == FormID(0x200) })
+    }
+
+    @Test(.enabled(if: Self.hasDevice), arguments: ["KEYM", "SLGM", "APPA"])
+    func minorItemFamiliesOfferTake(type: String) throws {
+        try writeLooseFile("meshes/arch/solid.nif", collisionRenderNIF())
+        let scene = try build(pluginData: itemPlugin(
+            placedItem: refrRecord(formID: 0x200, base: 0x100, position: .zero),
+            type: type
+        ))
+        #expect(scene.summary.drawnRefCount == 1)
+        #expect(scene.interactions[FormID(0x200)]?.action == .take)
     }
 
     // MARK: - Spawned references

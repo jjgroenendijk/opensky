@@ -1,6 +1,6 @@
 ---
 type: File Format
-title: Item records (MISC, BOOK, ALCH, INGR, WEAP, AMMO, CONT, ARMO)
+title: Item records (MISC, KEYM, SLGM, APPA, BOOK, ALCH, INGR, WEAP, AMMO, CONT, ARMO)
 description: Layouts of carried items, their shared fields, effect lists, and container
   contents.
 tags: [format, plugin, records, inventory, items]
@@ -13,8 +13,8 @@ arrow launches is on [projectiles](/formats/projectiles.md). Shared decode rules
 [record decoders](/formats/records.md). The runtime is on
 [inventory and equipment](/engine/inventory-equipment.md).
 
-Sources: UESP "Skyrim Mod:Mod File Format" pages `/MISC`, `/BOOK`, `/ALCH`, `/INGR`,
-`/WEAP`, `/AMMO`, `/CONT`, and `/ARMO`
+Sources: UESP "Skyrim Mod:Mod File Format" pages `/MISC`, `/KEYM`, `/SLGM`, `/APPA`,
+`/BOOK`, `/ALCH`, `/INGR`, `/WEAP`, `/AMMO`, `/CONT`, and `/ARMO`
 (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format>), and xEdit `dev-4.1.6`
 `wbDefinitionsTES5.pas` and `wbDefinitionsCommon.pas`. Line numbers below are in those
 files.
@@ -33,13 +33,50 @@ Every carried item repeats the same fields:
 | `ICON`, `MICO` | zstring | inventory icons |
 | `YNAM`, `ZNAM` | FormID | pickup and drop sounds |
 
-`DATA` is different for each type: 8 bytes on MISC, INGR, and ARMO (int32 value, float32
-weight), 4 on ALCH, 10 on WEAP, 16 on BOOK, and 16 or 20 on AMMO.
+`DATA` is different for each type: 8 bytes on MISC, KEYM, SLGM, APPA, INGR, and ARMO
+(int32 value, float32 weight), 4 on ALCH, 10 on WEAP, 16 on BOOK, and 16 or 20 on AMMO.
 
 ## MISC
 
 Gems, ingots, tools, gold, and clutter. Only the shared fields and the 8-byte `DATA`
 (line 8303).
+
+## KEYM, SLGM, and APPA
+
+Keys, soul gems, and alchemy apparatus. Each has the shared fields and the 8-byte `DATA`.
+xEdit types the value int32 on KEYM and uint32 on SLGM and APPA. The decoders read every
+other field by name and count the rest (`VMAD`, `MODT`, the `DEST` destruction fields) in an
+unread-field tally. A malformed field is counted too, and the rest of the record still loads.
+
+KEYM (line 7868) adds nothing. Record-header flag `0x04` marks it non-playable.
+
+SLGM (line 5460):
+
+| field | type | meaning |
+| --- | --- | --- |
+| `SOUL` | uint8 | contained soul: 0 none, 1 petty, 2 lesser, 3 common, 4 greater, 5 grand |
+| `SLCP` | uint8 | maximum capacity, same values |
+| `NAM0` | FormID | linked SLGM |
+
+The enum is `wbSoulGemEnum` (`wbDefinitionsCommon.pas` line 8185). Record-header flag
+`0x20000` is "Can Hold NPC Soul", set on the black soul gems. OpenSky decodes the soul data
+only; filling and using a gem are not modeled.
+
+APPA (line 8251):
+
+| field | type | meaning |
+| --- | --- | --- |
+| `QUAL` | int32 | quality: 0 novice, 1 apprentice, 2 journeyman, 3 expert, 4 master |
+| `DESC` | lstring | description |
+
+xEdit lists no keyword fields on APPA. An unknown soul or quality value keeps its number.
+
+Observed in the five masters (`Skyrim.esm`, `Update.esm`, `Dawnguard.esm`,
+`HearthFires.esm`, `Dragonborn.esm`): 377 KEYM, 17 SLGM, and 45 APPA, all decoded. The
+unread fields are `MODT` (391) and `VMAD` (5); no field was malformed. Examples:
+`SoulGemBlack` holds no soul and has grand capacity, `SoulGemPettyFilled` holds a petty
+soul, and `Alembic04Expert` has expert quality. In `Skyrim.esm`, 359 `CNTO` entries name
+one of the three types, and every one resolves to an item.
 
 ## BOOK
 
@@ -162,9 +199,10 @@ In `Skyrim.esm`:
 
 | measure | value |
 | --- | --- |
-| items | 6,930 (ARMO 2,762, WEAP 2,484, BOOK 821, ALCH 363, MISC 371, INGR 94, AMMO 35) |
+| items | 7,326 (ARMO 2,762, WEAP 2,484, BOOK 821, MISC 371, ALCH 363, KEYM 334, INGR 94, APPA 45, AMMO 35, SLGM 17) |
 | containers | 436 CONT with 9,597 `CNTO` entries |
-| `CNTO` naming an item | 6,753; the rest are LVLI, KEYM, LIGH, SLGM, APPA, and SCRL |
+| `CNTO` naming an item | 7,112, of which 359 name a KEYM, SLGM, or APPA |
+| other `CNTO` | LVLI, LIGH, and SCRL |
 | `CNTO` naming a type xEdit does not allow | 0 |
 | `COCT` that disagree with `CNTO` | 0 |
 | value / weight | 0 to 5,000 gold, 0.0 to 50.0 |

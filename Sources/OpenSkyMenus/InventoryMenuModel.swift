@@ -92,7 +92,10 @@ nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
         InventoryMenuCategory(label: "Potions", families: [.ingestible]),
         InventoryMenuCategory(label: "Ingredients", families: [.ingredient]),
         InventoryMenuCategory(label: "Books", families: [.book]),
-        InventoryMenuCategory(label: "Misc", families: [.miscellaneous])
+        InventoryMenuCategory(
+            label: "Misc",
+            families: [.miscellaneous, .key, .soulGem, .apparatus]
+        )
     ]
 }
 
