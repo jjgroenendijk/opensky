@@ -45,5 +45,17 @@
       "Adds the members to a ControlProviding protocol in the feature module and forwards them in GameViewControllerPanels.swift",
       "Tests the coordinator with make test-unit and the section in Tests/OpenSkyTests/App/Panels/"
     ]
+  },
+  {
+    "skills": [
+      "building-app-ui"
+    ],
+    "query": "Add a section for the new lockpicking feature. Explain how lockpicking works at the top so users understand it.",
+    "files": [],
+    "expected_behavior": [
+      "Does not add a paragraph to the panel; puts a one-sentence explanation in a control's toolTip",
+      "Writes readout lines as short label and value pairs in plain words",
+      "Runs make panel-text (or make lint) before committing"
+    ]
   }
 ]

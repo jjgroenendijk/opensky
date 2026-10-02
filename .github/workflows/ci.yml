@@ -98,7 +98,7 @@ jobs:
       - if: success() || failure()
         run: >-
           make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
-          docs-length agent-files comment-length duplicates no-suppressions
+          docs-length agent-files comment-length panel-text duplicates no-suppressions
 
   # Only tests that need no game data: a runner has no install, and the job sets no
   # OPENSKY_DATA_ROOT, so a gated test skips. The real-data suites only compile.

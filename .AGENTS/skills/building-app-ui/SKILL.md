@@ -80,6 +80,18 @@ it there instead of hand-rolling one in a section. `InspectionTicker` owns the 2
 readout; do not add a timer. The base-class hooks, the component table, and the spacing
 scale are in "Building panels" in `docs/tools/app-ui.md`.
 
+Panels exist to check that a feature works, so a user should try it without reading first:
+
+- No paragraphs in a panel. Explain a control in one plain sentence as its `toolTip`. A
+  design reason goes in a code comment or `docs/`, not in the UI.
+- A readout line is a label and a value, such as `Hits: 1 of 2 swings`. Not a sentence, not
+  an instruction, not a record code such as `CRIF` or `AVIF`. An empty state is short:
+  `Target: none`.
+- Use the words a player knows: "swings", not "contact frames".
+
+`make panel-text` fails on a wrapping label built from text and on a tooltip over 100
+characters. Details: "Panel text" in `docs/tools/app-ui.md`.
+
 These invariants are each pinned by a unit test. Break one -> fix the code, not the test.
 The reasons are in "Layout invariants" and "Interaction rules" in `docs/tools/app-ui.md`.
 
