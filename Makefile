@@ -146,7 +146,7 @@ link-shared: ## Point this worktree's ffmpeg and compile cache at the main check
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
-        docs-links docs-length agent-files workflow-lint comment-length comment-blocks comment-apply \
+        docs-links docs-length agent-files workflow-lint comment-length panel-text comment-blocks comment-apply \
         duplicates no-suppressions
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
@@ -164,7 +164,7 @@ metal-format-check: ## Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length duplicates no-suppressions ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
@@ -236,6 +236,9 @@ workflow-lint: ## Lint the GitHub Actions workflows with actionlint
 
 comment-length: ## Check no comment block is over the line limit
 	@./tools/lint/comment-length.sh
+
+panel-text: ## Check app panels hold no prose paragraphs or long tooltips
+	@./tools/lint/panel-text.sh
 
 # The whole tree in under a second. A scan of changed files only would miss a new
 # copy of code that did not change.

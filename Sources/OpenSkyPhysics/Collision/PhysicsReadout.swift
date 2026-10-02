@@ -26,7 +26,7 @@ nonisolated public enum PhysicsReadout: Sendable {
     /// the healthy case rather than printing a bare zero.
     public static func recoveryText(for snapshot: DynamicBodyStatsSnapshot) -> String {
         snapshot.recoveredBodyCount == 0
-            ? "Stability: no pose recovery needed"
-            : "Stability: \(snapshot.recoveredBodyCount) bodies recovered — this is a bug"
+            ? "Stability: ok"
+            : "[ERROR] Stability: \(snapshot.recoveredBodyCount) bodies reset after invalid values"
     }
 }

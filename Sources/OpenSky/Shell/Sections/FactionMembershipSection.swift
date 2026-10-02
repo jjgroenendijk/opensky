@@ -39,16 +39,9 @@ final class FactionMembershipSection: CrimeFactionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        joinControl.toolTip = "Puts the subject in the faction at the typed rank."
         configureControls()
         return [
-            PanelComponents.note(
-                "Faction memberships and ranks for the player and for the subject — the "
-                    + "actor last picked with the crosshair. The reaction line is the "
-                    + "derivation the combat loop asks, with each term of its precedence "
-                    + "list beneath it: the stored override, crime, the relationship rank, "
-                    + "then the interfaction relation. Join puts the subject in the chosen "
-                    + "faction at the typed rank, or moves it there; Leave takes it out."
-            ),
             PanelComponents.group([
                 PanelComponents.buttonRow([crosshairControl, playerControl]),
                 PanelComponents.labeledFieldRow(

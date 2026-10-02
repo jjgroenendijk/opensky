@@ -37,6 +37,9 @@ final class CombatRagdollSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        triggerControl.toolTip = "Kills the crosshair target so it falls as a ragdoll."
+        freezeControl.toolTip = "Stops the bodies where they are."
+        selfCollisionControl.toolTip = "Stops limbs from passing through the body."
         PanelComponents.configureButton(
             triggerControl, target: self, action: #selector(trigger),
             identifier: "RagdollTriggerControl"
@@ -54,26 +57,11 @@ final class CombatRagdollSection: PanelSectionViewController {
             identifier: "RagdollSelfCollisionControl"
         )
         return [
-            PanelComponents.note(
-                "An actor whose health reaches zero raises the death events its behavior "
-                    + "graph declares, and the graph decides which frame the physics takes "
-                    + "the skeleton over on. Ragdoll selected actor takes the crosshair "
-                    + "target down the same route without waiting for the fight, so a "
-                    + "collapse can be watched on demand. Freeze suspends the joint solver "
-                    + "with the corpses where they are, for inspecting a pose mid-fall."
-            ),
             PanelComponents.group([
                 PanelComponents.buttonRow([triggerControl, clearControl]),
                 freezeControl,
                 selfCollisionControl
             ]),
-            PanelComponents.note(
-                "Bones collide with each other only in the pairs the skeleton's own Havok "
-                    + "biped part numbers admit, which is what stops an arm passing through "
-                    + "the torso. Switching it off reverts to every bone ignoring every "
-                    + "other, and wakes the corpses so the difference is visible on the "
-                    + "ones already lying down."
-            ),
             statsLabel
         ]
     }

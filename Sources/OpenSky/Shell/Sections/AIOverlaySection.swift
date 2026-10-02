@@ -60,6 +60,9 @@ final class AIOverlaySection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        navmeshControl.toolTip = "Colors the ground actors can walk on."
+        pathControl.toolTip = "Draws the last path the actor planned."
+        detectionControl.toolTip = "Draws each observer's view cone and a line to what it sees."
         PanelComponents.configureCheckbox(
             navmeshControl, target: self, action: #selector(navmeshChanged),
             identifier: "AINavmeshOverlayControl"
@@ -73,14 +76,6 @@ final class AIOverlaySection: PanelSectionViewController {
             identifier: "AIDetectionOverlayControl"
         )
         return [
-            PanelComponents.note(
-                "The navmesh overlay fills every walkable triangle in the streamed cells, "
-                    + "one colour per cell. The path overlay highlights the corridor of the "
-                    + "most recent successful query and draws its waypoints. The detection "
-                    + "overlay draws each observer's view cone and a line to whatever it "
-                    + "currently perceives. All three are drawn after the scene with "
-                    + "read-only depth, so they sit on the world rather than through it."
-            ),
             PanelComponents.group([navmeshControl, pathControl, detectionControl]),
             statsLabel
         ]

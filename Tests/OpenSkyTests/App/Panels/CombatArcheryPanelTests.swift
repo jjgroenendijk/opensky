@@ -81,7 +81,7 @@ struct CombatArcheryPanelTests {
         defer { panel.stopInspecting() }
 
         let readout = try #require(scriptsReadout("CombatArcheryStatsLabel", in: panel.view))
-        #expect(readout.contains("Archery: unavailable"))
+        #expect(readout.contains("Archery: no game loaded"))
     }
 
     @Test @MainActor

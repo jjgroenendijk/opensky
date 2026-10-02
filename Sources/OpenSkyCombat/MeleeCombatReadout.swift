@@ -9,7 +9,7 @@ nonisolated public enum MeleeCombatReadout: Sendable {
     /// the guard is up.
     public static func stateText(for snapshot: MeleeCombatSnapshot) -> String {
         guard snapshot.isAvailable else {
-            return "Melee: unavailable (no game data loaded)"
+            return "Melee: no game loaded"
         }
         var parts = [
             "weapon \(snapshot.drawState.rawValue)",
@@ -54,9 +54,9 @@ nonisolated public enum MeleeCombatReadout: Sendable {
     /// the one a user has just made and wants to read.
     public static func traceText(for snapshot: MeleeCombatSnapshot) -> String {
         guard snapshot.isAvailable else { return "Hits: unavailable" }
-        let header = "Hits: \(snapshot.hitCount) from \(snapshot.swingCount) contact frames"
+        let header = "Hits: \(snapshot.hitCount) of \(snapshot.swingCount) swings"
         guard let last = snapshot.trace.last else {
-            return header + " — no hit yet"
+            return header
         }
         return header + "\n" + describe(last)
     }

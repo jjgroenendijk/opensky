@@ -55,7 +55,7 @@ struct CombatMeleePanelTests {
         #expect(readout.contains("blocking"))
         #expect(readout.contains("IronSword"))
         #expect(readout.contains("99 units"))
-        #expect(readout.contains("Hits: 1 from 2 contact frames"))
+        #expect(readout.contains("Hits: 1 of 2 swings"))
         #expect(readout.contains("blocked 33%"))
         #expect(readout.contains("staggered"))
     }
@@ -70,7 +70,7 @@ struct CombatMeleePanelTests {
         defer { panel.stopInspecting() }
 
         let readout = try #require(scriptsReadout("CombatMeleeStatsLabel", in: panel.view))
-        #expect(readout.contains("Melee: unavailable"))
+        #expect(readout.contains("Melee: no game loaded"))
     }
 
     /// Both melee controls reach the provider, and the checkbox reflects it.

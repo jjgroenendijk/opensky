@@ -48,6 +48,7 @@ final class RuntimeStateChangeSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        targetControl.toolTip = "Blank uses the crosshair target."
         PanelComponents.configureTextField(
             targetControl, identifier: "RuntimeStateTargetControl", width: 150,
             placeholder: "current target"
@@ -65,14 +66,10 @@ final class RuntimeStateChangeSection: PanelSectionViewController {
             identifier: "RuntimeStateNudgeControl"
         )
         let nudge = RuntimeStateTuning.transformNudge
+        nudgeControl.toolTip = "Moves the target by (\(Self.axisText(nudge.x)), "
+            + "\(Self.axisText(nudge.y)), \(Self.axisText(nudge.z))) units."
         return [
             PanelComponents.group([
-                PanelComponents.note(
-                    "Leave the FormID blank to act on the reference the crosshair targets. "
-                        + "Nudge offsets the reference by "
-                        + "(\(Self.axisText(nudge.x)), \(Self.axisText(nudge.y)), "
-                        + "\(Self.axisText(nudge.z))) world units and accumulates."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "FormID", captionWidth: 60, field: targetControl
                 )

@@ -125,7 +125,7 @@ final class InventoryMenuSection: PanelSectionViewController {
     /// Pure so the readout is unit-testable without AppKit state.
     nonisolated static func readout(for snapshot: InventoryMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
-            return "Inventory menu: closed · world sim running"
+            return "Inventory menu: closed · world running"
         }
         let sim = snapshot.worldSimPaused ? "paused" : "running"
         let stack = snapshot.openMenus.isEmpty ? "none" : snapshot.openMenus.joined(separator: ", ")

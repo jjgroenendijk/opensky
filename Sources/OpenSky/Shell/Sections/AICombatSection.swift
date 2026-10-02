@@ -39,19 +39,12 @@ final class AICombatSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        hostilityControl.toolTip = "The actor fights only after it detects the player."
         PanelComponents.configureCheckbox(
             hostilityControl, target: self, action: #selector(hostilityChanged),
             identifier: "AIHostilityControl"
         )
         return [
-            PanelComponents.note(
-                "Making the selected actor hostile does not start a fight on its own: it has "
-                    + "to perceive the player first, which is the Detection section below. "
-                    + "Once it does it closes, spaces itself, swings, blocks, breaks off at "
-                    + "low health, hunts for a player who broke line of sight and eventually "
-                    + "gives up and returns to its package. The phase line says which of "
-                    + "those it is doing right now."
-            ),
             PanelComponents.group([hostilityControl]),
             statsLabel
         ]

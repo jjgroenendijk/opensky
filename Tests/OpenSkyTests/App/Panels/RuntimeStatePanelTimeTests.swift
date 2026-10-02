@@ -168,7 +168,7 @@ struct RuntimeStatePanelTimeTests {
         let readout = try #require(
             runtimeStateReadout("RuntimeStateTimeStatsLabel", in: panel.view)
         )
-        #expect(readout.contains("No TimeScale global is loaded"))
+        #expect(readout.contains("no TimeScale global loaded"))
     }
 
     @Test @MainActor

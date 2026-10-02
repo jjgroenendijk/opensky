@@ -31,6 +31,7 @@ final class FactionVendorSection: CrimeFactionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        barterControl.toolTip = "Opens the barter menu with the subject."
         PanelComponents.configurePopUp(
             overrideControl, target: self, action: #selector(overrideChanged),
             identifier: "FactionVendorOverrideControl", width: PanelMetrics.contentWidth
@@ -40,13 +41,6 @@ final class FactionVendorSection: CrimeFactionPanelSection {
             identifier: "FactionBarterControl"
         )
         return [
-            PanelComponents.note(
-                "The subject's vendor faction: the merchant chest it sells from, the "
-                    + "hours it trades, its buy/sell keyword list and whether it fences "
-                    + "stolen goods. Pick a vendor faction to trade under its rules "
-                    + "instead; Barter opens the barter menu with the subject under "
-                    + "whichever applies, as Actor.ShowBarterMenu does."
-            ),
             PanelComponents.group([overrideControl, barterControl]),
             statsLabel
         ]

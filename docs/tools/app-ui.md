@@ -60,7 +60,7 @@ Each rule is checked by a unit test. A change that breaks one fixes the code, no
 
 - No developer behavior is reachable only by an unlisted keystroke. Every toggle is a control in a
   panel. A shortcut is allowed only as an accelerator for an existing control, registered in the main
-  menu so it is listed. A hint note beside one section does not scale past a few knobs. Camera and
+  menu so it is listed. A hint beside one section does not scale past a few knobs. Camera and
   gameplay input (movement, mouse look, activate) is input, not configuration, and stays on the
   keyboard. The fly and walk key is the edge case: it moves the camera like input but picks a mode
   like configuration, so the World panel has the selector and the key accelerates it.
@@ -139,8 +139,8 @@ declare controls as stored properties, where `self` does not exist yet, so widge
 target come as `configure*` calls rather than factories: `configureCheckbox`, `configureButton`,
 `configureSlider`, `configurePopUp` (with an optional width pin, so a long list cannot stretch the
 column), and `configureComboBox` (a free-form name with suggestions, such as a movie's callbacks).
-The layout helpers are `heading`, `caption`, `note`, `statsLabel`, `group`, `separator`, `sliderRow`,
-`labeledFieldRow`, `buttonRow`, and `valueLabel`.
+The layout helpers are `caption`, `statsLabel`, `group`, `separator`, `sliderRow`, `labeledFieldRow`,
+`buttonRow`, and `valueLabel`. There is no helper for a paragraph on purpose (see Panel text).
 
 ### Spacing
 
@@ -160,6 +160,22 @@ A path an acceptance names outranks the promotion threshold: UI Lab's SWF runtim
 `Developer > UI Lab` though it has more than 8 controls. A section class near the type body limit moves
 its wiring and `@objc` actions into a `<Name>SectionInput.swift` extension instead of dropping
 controls.
+
+## Panel text
+
+The panels exist to check that a feature works. For example, the Melee section lets a user draw a
+weapon, swing, and read `Hits: 1 of 2 swings`. Paragraphs of help pushed the controls off screen and
+had to be read before anything could be tried, so the panels hold no prose:
+
+- A control's explanation is one plain sentence in its `toolTip`. The user sees it only on hover.
+- A readout line is a label and a value. An empty state is short, such as `Target: none`, not an
+  instruction.
+- Words a player knows beat engine terms and record codes: "swings", not "contact frames"; "Crime
+  faction", not "Crime faction (CRIF)".
+- Why a feature works the way it does goes in a code comment or in `docs/`.
+
+`make panel-text`, part of `make lint`, fails on a wrapping label built from text in panel code
+and on a tooltip literal over 100 characters.
 
 ## Theme
 

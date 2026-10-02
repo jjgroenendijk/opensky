@@ -30,12 +30,8 @@ final class ScriptInstancesSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Counts live script instances across every attached cell. The target is the "
-                    + "reference under the crosshair, and its script list is what the VM "
-                    + "would send an event to."
-            ),
+        statsLabel.toolTip = "The target is the crosshair reference."
+        return [
             statsLabel
         ]
     }

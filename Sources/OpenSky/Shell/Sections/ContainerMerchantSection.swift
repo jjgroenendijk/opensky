@@ -102,8 +102,7 @@ final class ContainerMerchantSection: PanelSectionViewController {
 
     nonisolated static func readout(for snapshot: ContainerMenuControlSnapshot) -> String {
         guard !snapshot.merchantOptions.isEmpty else {
-            return "Merchant: no resident containers.\n"
-                + "Load a cell holding one, or look at a chest and use the button."
+            return "Merchant: no containers loaded"
         }
         let selected = snapshot.selectedMerchant
             .flatMap { reference in

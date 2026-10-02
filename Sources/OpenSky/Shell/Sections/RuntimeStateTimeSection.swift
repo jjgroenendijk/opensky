@@ -59,6 +59,9 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        applyDateControl.toolTip = "Writes the clock globals."
+        timescaleControl.toolTip =
+            "Game seconds per real second. Vanilla is \(Int(GameClock.defaultTimescale))."
         configureControls()
         return [
             PanelComponents.group([
@@ -66,10 +69,6 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
                 PanelComponents.sliderRow(slider: hourControl, valueLabel: hourValueLabel)
             ]),
             PanelComponents.group([
-                PanelComponents.note(
-                    "Scrubbing writes the GameHour, GameDay, GameMonth and GameYear globals, "
-                        + "which the clock owns, so every scrub appears in the journal."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "Day", captionWidth: 60, field: dayControl
                 ),
@@ -81,10 +80,6 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
                 PanelComponents.buttonRow([applyDateControl])
             ]),
             PanelComponents.group([
-                PanelComponents.note(
-                    "Timescale is the TimeScale global: game seconds per real second. "
-                        + "Vanilla is \(Int(GameClock.defaultTimescale))."
-                ),
                 PanelComponents.labeledFieldRow(
                     caption: "Timescale", captionWidth: 70, field: timescaleControl
                 ),
@@ -157,7 +152,7 @@ final class RuntimeStateTimeSection: PanelSectionViewController {
         }
         lastActionText = provider?.setGameTimescale(value) == true
             ? "Timescale set to \(RuntimeStateNumberText.text(value))."
-            : "No TimeScale global is loaded, so the timescale is unchanged."
+            : "Timescale unchanged: no TimeScale global loaded."
         syncControls()
         finishInteraction()
     }

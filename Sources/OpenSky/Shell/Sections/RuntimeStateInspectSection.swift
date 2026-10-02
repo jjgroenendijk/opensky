@@ -36,11 +36,8 @@ final class RuntimeStateInspectSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "Counts come from the live world-state store. A reference is dirty when it "
-                    + "carries a runtime delta the loaded plugins do not describe."
-            ),
+        statsLabel.toolTip = "Dirty: changed in play, so it differs from the game files."
+        return [
             statsLabel,
             PanelComponents.caption("Journal (most recent last)"),
             journalLabel

@@ -30,16 +30,12 @@ final class LocomotionMotionSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        statsLabel.toolTip = "Vanilla clips move in place, so root motion stays at zero."
         PanelComponents.configureButton(
             clearTraceControl, target: self, action: #selector(clearTrace),
             identifier: "LocomotionTraceClearControl"
         )
         return [
-            PanelComponents.note(
-                "One step has one motion source. Vanilla locomotion clips animate in place, "
-                    + "so the root-motion total stays at zero and the configured-speed total "
-                    + "grows; a clip set carrying extracted motion reverses that."
-            ),
             PanelComponents.buttonRow([clearTraceControl]),
             statsLabel
         ]

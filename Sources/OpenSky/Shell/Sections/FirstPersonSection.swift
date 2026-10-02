@@ -56,6 +56,7 @@ final class FirstPersonSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        fovControl.toolTip = "An OpenSky setting. The game data has no first-person value."
         PanelComponents.configureCheckbox(
             armsEnabledControl, target: self, action: #selector(armsEnabledChanged),
             identifier: "FirstPersonArmsEnabledControl"
@@ -76,12 +77,6 @@ final class FirstPersonSection: PanelSectionViewController {
                 PanelComponents.caption("Vertical field of view"),
                 PanelComponents.sliderRow(slider: fovControl, valueLabel: fovValueLabel)
             ]),
-            PanelComponents.note(
-                "No readable game data names a first-person field of view: "
-                    + "Skyrim.esm declares no FOV setting and the shipped "
-                    + "Skyrim_Default.ini carries no FOV key, so this is an "
-                    + "OpenSky setting defaulting to the world value."
-            ),
             statsLabel
         ]
     }
@@ -124,7 +119,7 @@ final class FirstPersonSection: PanelSectionViewController {
                     FirstPersonCamera.cameraBoneName,
                     snapshot.cameraBoneHeight ?? FirstPersonCamera.fallbackCameraBoneHeight
                 )
-                : "Camera bone: absent (arms hang off the reference height)",
+                : "Camera bone: missing",
             String(format: "Field of view: %.0f deg", snapshot.fovYDegrees)
         ]
         if let reason = snapshot.failureReason {

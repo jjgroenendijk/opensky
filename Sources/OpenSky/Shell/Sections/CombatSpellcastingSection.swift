@@ -37,21 +37,12 @@ final class CombatSpellcastingSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        learnControl.toolTip = "Teaches Flames, Healing, and the race spells."
+        readTomeControl.toolTip = "Reads the first spell tome the player carries."
+        castRightControl.toolTip = "Casts one spell. Only self spells cast."
+        castLeftControl.toolTip = "Casts one spell. Only self spells cast."
         configureControls()
         return [
-            PanelComponents.note(
-                "Learn start spells grants Flames and Healing — the two UESP documents the "
-                    + "player as always knowing — plus the spell list the player's race "
-                    + "authors, once character generation names one. Read carried tome opens "
-                    + "the first spell tome in the inventory, which teaches its spell and "
-                    + "marks the book read; the tome is not consumed. Next "
-                    + "spell moves the selection the two Ready buttons act on; readying a "
-                    + "spell takes the hands its EQUP slot names and unequips whatever held "
-                    + "them. Cast runs one whole cast without holding a button — in walk mode "
-                    + "the attack button casts with the right hand and the block button with "
-                    + "the left, whenever that hand holds a spell. Only self-delivery spells "
-                    + "cast; anything aimed is counted on the coverage line."
-            ),
             PanelComponents.group([
                 PanelComponents.buttonRow([learnControl, readTomeControl, selectControl]),
                 PanelComponents.buttonRow([readyRightControl, readyLeftControl]),

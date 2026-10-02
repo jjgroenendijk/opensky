@@ -41,6 +41,7 @@ final class LocomotionStateSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        cameraModeControl.toolTip = "Walk modes simulate the body; fly modes do not. Key: G."
         for mode in modes {
             cameraModeControl.addItem(withTitle: Self.title(for: mode))
         }
@@ -49,11 +50,6 @@ final class LocomotionStateSection: PanelSectionViewController {
             identifier: "LocomotionCameraModeControl"
         )
         return [
-            PanelComponents.note(
-                "The capsule, the behavior graph and the body are simulated in both walk "
-                    + "modes and in neither fly mode. The G key cycles the same three modes "
-                    + "this popup lists."
-            ),
             cameraModeControl,
             statsLabel
         ]

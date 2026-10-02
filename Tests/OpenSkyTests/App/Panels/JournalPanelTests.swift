@@ -117,7 +117,7 @@ struct JournalPanelTests {
         panel.loadViewIfNeeded()
         panel.questsSection.refreshReadout()
 
-        #expect(panel.questsSection.readout.contains("unavailable"))
+        #expect(panel.questsSection.readout.contains("no game loaded"))
     }
 
     @Test @MainActor

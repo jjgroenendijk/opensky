@@ -91,6 +91,7 @@ final class UILabControlsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        menuPushControl.toolTip = "Opening a menu pauses the world; the frame keeps rendering."
         configureControls()
         return [
             PanelComponents.caption("Screen-space overlay"),
@@ -101,9 +102,6 @@ final class UILabControlsSection: PanelSectionViewController {
             scaleControl,
             statsLabel,
             PanelComponents.caption("Menu mode"),
-            PanelComponents.note(
-                "Opening a menu pauses world sim; the frame keeps rendering."
-            ),
             PanelComponents.buttonRow([menuPushControl, menuPopControl, menuClearControl]),
             menuStatsLabel,
             PanelComponents.caption("Localized strings"),

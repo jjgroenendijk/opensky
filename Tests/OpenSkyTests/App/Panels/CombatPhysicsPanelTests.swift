@@ -129,7 +129,7 @@ struct CombatPhysicsPanelTests {
         #expect(readout.contains("Combat: in combat with Bandit"))
         #expect(readout.contains("Fighters: 1"))
         #expect(readout.contains("Bandit: windup, detected"))
-        #expect(readout.contains("2 contact frames"))
+        #expect(readout.contains("2 swings"))
         // Item 19.10: the per-fighter cast counts and the
         // casting line above the hostility one.
         #expect(readout.contains("2 casts (1 castable)"))
@@ -178,7 +178,7 @@ struct CombatPhysicsPanelTests {
         let readout = try #require(scriptsReadout("CombatPhysicsStatsLabel", in: panel.view))
         #expect(readout.contains("Bodies: 12 (3 awake, 9 asleep)"))
         #expect(readout.contains("Last step: 7 contacts over 2 substeps"))
-        #expect(readout.contains("Stability: no pose recovery needed"))
+        #expect(readout.contains("Stability: ok"))
     }
 
     /// The freeze is the destination's one override, and the sidebar's own

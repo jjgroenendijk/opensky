@@ -32,19 +32,11 @@ final class ProgressionPerkTreeSection: ProgressionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        spendControl.toolTip = "Spends a perk point. Follows every rule."
+        grantControl.toolTip = "Gives the perk. Ignores the rules."
+        removeControl.toolTip = "Removes the perk. Ignores the rules."
         configureControls()
         return [
-            PanelComponents.note(
-                "The tree is the selected skill's own AVIF perk grid: one row per box, "
-                    + "with the perk it grants, how far along its rank chain the player "
-                    + "has come, whether the box wants an owned parent, and the boxes it "
-                    + "draws lines to. Each row also says whether a point can be spent on "
-                    + "it right now, or which rule refuses it. Selecting a box shows that "
-                    + "PERK record below — its flags, its own conditions, and every "
-                    + "effect with the entry point, ability or quest stage it carries. "
-                    + "Spend point takes a perk point and obeys every rule; Grant and "
-                    + "Remove ignore the rules, for reading what a perk does."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Skill", captionWidth: 70, field: skillControl

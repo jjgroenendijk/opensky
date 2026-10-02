@@ -30,13 +30,8 @@ final class ItemOwnershipSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
-        [
-            PanelComponents.note(
-                "The owning NPC_ or FACT of the reference under the walk-mode crosshair, "
-                    + "straight off its XOWN field, with the XRNK faction rank when one is "
-                    + "authored. Reported only: taking an owned item is theft in the data "
-                    + "and nothing in the engine stops it yet."
-            ),
+        statsLabel.toolTip = "The owner of the crosshair target. Taking it is not stopped yet."
+        return [
             statsLabel
         ]
     }

@@ -65,14 +65,9 @@ final class ScriptSchedulerSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        pauseControl.toolTip = "Pauses scripts only. The world keeps running."
         configureControls()
         return [
-            PanelComponents.note(
-                "Pause freezes the Papyrus VM only; the world keeps simulating and the "
-                    + "menu-mode pause stays separate. A paused VM accumulates no time, so "
-                    + "resuming never replays the pause as catch-up steps. Step runs fixed "
-                    + "steps immediately, whether or not the VM is paused."
-            ),
             PanelComponents.group([pauseControl]),
             PanelComponents.buttonRow([stepControl, burstControl]),
             statsLabel

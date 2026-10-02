@@ -49,6 +49,11 @@ final class ItemsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        takeControl.toolTip = "Acts on the crosshair target, like the use key."
+        dropControl.toolTip = "Drops the item in front of the player."
+        equipFormIDField.toolTip = "Blank equips the first item the owner can equip."
+        equipTargetControl.toolTip =
+            "The player has no body yet. Pick Nearest NPC to see the change."
         PanelComponents.configureButton(
             takeControl, target: self, action: #selector(take), identifier: "ItemsTakeControl"
         )
@@ -75,12 +80,6 @@ final class ItemsSection: PanelSectionViewController {
             dropCountField, identifier: "ItemsDropCountField", width: 60
         )
         return [
-            PanelComponents.note(
-                "Take and Search act on whatever the walk-mode crosshair is on, exactly as "
-                    + "the use key does. Drop places the item in front of the player in the "
-                    + "cell they are standing in; it renders, collides and can be taken again. "
-                    + "A dropped object survives cell eviction and a save/load cycle."
-            ),
             PanelComponents.buttonRow([takeControl, searchControl]),
             PanelComponents.buttonRow([takeAllControl, closeControl]),
             PanelComponents.group([
@@ -112,14 +111,6 @@ final class ItemsSection: PanelSectionViewController {
         equipTargetControl.setAccessibilityIdentifier("ItemsEquipTargetControl")
         equipTargetControl.selectedSegment = 1
         return [
-            PanelComponents.note(
-                "Equip takes the owner's item into its equipped set, unequipping whatever "
-                    + "claims the same body slot or hand. Leave the FormID blank to equip the "
-                    + "first equippable thing the owner is carrying. The player has no "
-                    + "rendered body yet, so equipping on the player changes state only — "
-                    + "pick Nearest NPC to see an equip on screen, which rebuilds that "
-                    + "actor's cell."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "FormID", captionWidth: 60, field: equipFormIDField

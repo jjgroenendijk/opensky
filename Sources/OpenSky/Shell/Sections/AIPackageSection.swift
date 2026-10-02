@@ -29,19 +29,13 @@ final class AIPackageSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        reevaluateControl.toolTip =
+            "Picks the package again now. Change the clock under Runtime State > Time first."
         PanelComponents.configureButton(
             reevaluateControl, target: self, action: #selector(reevaluate),
             identifier: "AIPackageReevaluateControl"
         )
         return [
-            PanelComponents.note(
-                "An actor's packages come from its own record and the factions and templates "
-                    + "behind it, highest priority first; the first one whose schedule matches "
-                    + "the game clock and whose conditions pass is the one it runs. Selection "
-                    + "is re-checked on schedule boundaries and at most every fifteen game "
-                    + "minutes, so scrub the clock under World > Runtime State > Time and "
-                    + "press Reevaluate to see the choice change without waiting."
-            ),
             PanelComponents.buttonRow([reevaluateControl]),
             statsLabel
         ]

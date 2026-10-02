@@ -49,23 +49,14 @@ final class ScriptQuestsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        questAliasControl.toolTip = "Aliases fill when the quest starts and clear when it stops."
         PanelComponents.configureComboBox(
             questAliasControl, target: self, action: #selector(questSelected),
             identifier: "ScriptQuestAliasControl", width: 220
         )
         return [
-            PanelComponents.note(
-                "Quest scripts are instantiated for every running quest and never attach or "
-                    + "detach with a cell. Setting a stage queues that stage's fragment on the "
-                    + "same event queue every other script event uses."
-            ),
             statsLabel,
             PanelComponents.group([
-                PanelComponents.note(
-                    "Aliases fill when a quest starts and clear when it stops. Pick a quest "
-                        + "to see every alias it declares, how it is meant to fill, and what "
-                        + "the session put in it."
-                ),
                 questAliasControl
             ]),
             aliasLabel

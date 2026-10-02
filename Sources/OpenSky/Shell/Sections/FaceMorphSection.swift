@@ -44,6 +44,7 @@ final class FaceMorphSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        targetControl.toolTip = "The dialogue speaker, or else the crosshair target."
         PanelComponents.configurePopUp(
             targetControl,
             target: self,
@@ -65,10 +66,6 @@ final class FaceMorphSection: PanelSectionViewController {
             identifier: "FaceMorphResetControl"
         )
         return [
-            PanelComponents.note(
-                "Uses the open dialogue speaker, or the actor under the crosshair. "
-                    + "Weights compose per actor and never change the cached face mesh."
-            ),
             PanelComponents.group([
                 targetControl,
                 PanelComponents.sliderRow(slider: weightControl, valueLabel: weightLabel),

@@ -49,6 +49,8 @@ final class CombatPhysicsSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        freezeControl.toolTip = "Stops every body where it is."
+        resetControl.toolTip = "Puts every body back at its placed pose."
         PanelComponents.configureCheckbox(
             freezeControl, target: self, action: #selector(toggleFreeze),
             identifier: "PhysicsFreezeControl"
@@ -58,14 +60,6 @@ final class CombatPhysicsSection: PanelSectionViewController {
             identifier: "PhysicsResetControl"
         )
         return [
-            PanelComponents.note(
-                "Movable clutter is simulated where its NIF carries a dynamic Havok body. "
-                    + "Walking into one shoves it, and a body that stops moving falls asleep "
-                    + "and stops costing anything until something wakes it. Freeze suspends "
-                    + "integration with everything where it is, for inspecting a scene "
-                    + "mid-fall; Reset puts every body back at the pose its cell placed it "
-                    + "at and clears its velocity."
-            ),
             PanelComponents.group([
                 freezeControl,
                 PanelComponents.buttonRow([resetControl])

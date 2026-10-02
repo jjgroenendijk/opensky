@@ -10,7 +10,7 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
     /// Where the player is and what is moving them.
     public static func stateText(for snapshot: PlayerLocomotionSnapshot) -> String {
         guard snapshot.rendererAvailable else {
-            return "Locomotion: unavailable (no renderer)"
+            return "Locomotion: no renderer"
         }
         guard snapshot.walkModeActive else {
             return "Camera: fly\nThe player is not simulated in fly mode; "

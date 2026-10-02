@@ -26,17 +26,17 @@ nonisolated public enum RagdollReadout: Sendable {
     /// are what it had left when it stopped spending.
     public static func solverText(for snapshot: RagdollStatsSnapshot) -> String {
         let violations = snapshot.jointViolationCount
-        let converged = violations == 0 ? "converged" : "\(violations) limits still violated"
-        return "Solver: \(snapshot.solverIterationCount) iterations/substep, \(converged)"
+        let converged = violations == 0 ? "settled" : "\(violations) joints past their limit"
+        return "Joint solver: \(snapshot.solverIterationCount) passes per step, \(converged)"
     }
 
     /// What the biped filter admitted and what touches now, so "nothing touching" differs
     /// from "nothing allowed".
     public static func selfCollisionText(for snapshot: RagdollStatsSnapshot) -> String {
         guard snapshot.isSelfCollisionEnabled else {
-            return "Self-collision: off"
+            return "Bone collision: off"
         }
-        return "Self-collision: \(snapshot.selfCollisionPairCount) bone pairs admitted, "
+        return "Bone collision: \(snapshot.selfCollisionPairCount) pairs allowed, "
             + "\(snapshot.selfContactCount) touching"
     }
 
@@ -44,7 +44,7 @@ nonisolated public enum RagdollReadout: Sendable {
     /// the healthy case rather than printing a bare zero.
     public static func recoveryText(for snapshot: RagdollStatsSnapshot) -> String {
         snapshot.recoveredBodyCount == 0
-            ? "Stability: no pose recovery needed"
-            : "Stability: \(snapshot.recoveredBodyCount) bodies recovered — this is a bug"
+            ? "Stability: ok"
+            : "[ERROR] Stability: \(snapshot.recoveredBodyCount) bodies reset after invalid values"
     }
 }

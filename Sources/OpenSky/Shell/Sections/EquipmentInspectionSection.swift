@@ -47,18 +47,12 @@ final class EquipmentInspectionSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        statsLabel.toolTip = "A skipped part, such as skin under armor, is normal."
         targetControl.setAccessibilityIdentifier("EquipmentInspectionTargetControl")
         targetControl.target = self
         targetControl.action = #selector(targetChanged)
         targetControl.selectedSegment = 1
         return [
-            PanelComponents.note(
-                "The owner's equipped set with the body slots and hands each piece claims, "
-                    + "plus the reason-tagged appearance skips its cell's last build "
-                    + "reported. A skip is not a failure: a skin part masked by an equipped "
-                    + "cuirass is the outfit working. Equip and unequip themselves live "
-                    + "under World > HUD & Interaction > Items."
-            ),
             PanelComponents.labeledFieldRow(
                 caption: "Owner", captionWidth: 60, field: targetControl
             ),

@@ -58,6 +58,7 @@ final class AudioVoiceSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        playControl.toolTip = "Plays the line as a positional source ahead of the camera."
         PanelComponents.configureTextField(
             filterControl,
             identifier: "AudioVoiceFilterControl",
@@ -83,13 +84,6 @@ final class AudioVoiceSection: PanelSectionViewController {
             identifier: "LipSyncEnabledControl"
         )
         return [
-            PanelComponents.note(
-                "Plays one dialogue recording — a .fuz container, lip data plus an xWMA "
-                    + "stream — as a positional source on the voice submix, placed ahead of "
-                    + "the camera. The archives hold tens of thousands of lines, so the "
-                    + "picker lists the first matches of the filter and the readout states "
-                    + "how many matched in total."
-            ),
             PanelComponents.group([
                 filterControl,
                 PanelComponents.buttonRow([applyFilterControl, playControl]),

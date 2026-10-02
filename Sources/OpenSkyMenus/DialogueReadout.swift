@@ -10,13 +10,13 @@ nonisolated public enum DialogueReadout: Sendable {
     /// condition-filtered list" is answered from.
     public static func topicsText(for snapshot: DialogueControlSnapshot) -> String {
         guard snapshot.hasDialogueIndex else {
-            return "Dialogue: unavailable (no plugin loaded)"
+            return "Dialogue: no game loaded"
         }
         let header = "Dialogue index: \(snapshot.topicCount) topics, "
             + "\(snapshot.infoCount) responses"
         let target = "Talk target: " + (snapshot.targetName.map {
             "\($0)" + (snapshot.targetKey.map { key in " (\(key))" } ?? "")
-        } ?? "none under the crosshair")
+        } ?? "none")
         return ([header, target] + conversationLines(snapshot)).joined(separator: "\n")
     }
 
@@ -53,14 +53,14 @@ nonisolated public enum DialogueReadout: Sendable {
     /// which check rejected it.
     public static func conditionsText(for snapshot: DialogueControlSnapshot) -> String {
         guard snapshot.hasDialogueIndex else {
-            return "Condition trace: unavailable (no plugin loaded)"
+            return "Condition trace: no game loaded"
         }
         guard snapshot.isOpen else {
             return "Condition trace: no conversation open"
         }
         let unresolved = "Unresolved condition calls: \(snapshot.unresolvedConditionCount)"
         guard !snapshot.rejections.isEmpty else {
-            return "\(unresolved)\nEvery considered topic was offered."
+            return "\(unresolved)\nRejected topics: 0"
         }
         let lines = snapshot.rejections.map { row in
             "  \(row.topic): " + (row.reasons.isEmpty
@@ -93,10 +93,9 @@ nonisolated public enum DialogueReadout: Sendable {
         """
     }
 
-    /// Result of the last panel control, or the standing instruction when none
-    /// has run.
+    /// Result of the last control, if any.
     public static func outcomeText(for snapshot: DialogueControlSnapshot) -> String {
-        snapshot.lastOutcome ?? "Point the crosshair at an actor and press F, or Open."
+        snapshot.lastOutcome ?? "Last action: none"
     }
 
     /// One rejection reason worded for a readout.

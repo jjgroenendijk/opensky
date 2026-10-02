@@ -58,14 +58,9 @@ final class JournalPageSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        openControl.toolTip = "Opens the journal on the Quests page. Key: J."
         configureControls()
         return [
-            PanelComponents.note(
-                "Opens the vanilla quest_journal.swf on its Quests page and fills it from "
-                    + "the quest state above. The J key does the same thing in world mode. "
-                    + "Up, Down and Activate go through the same input path as the live "
-                    + "keys, so the tabs across the top still switch to Stats and System."
-            ),
             PanelComponents.buttonRow([openControl, closeControl]),
             PanelComponents.buttonRow([upControl, downControl, activateControl]),
             PanelComponents.group([completedControl]),

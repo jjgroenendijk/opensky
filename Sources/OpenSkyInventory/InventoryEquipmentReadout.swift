@@ -32,8 +32,7 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
 
     private static func containerHeading(_ snapshot: InventoryEquipmentSnapshot) -> String {
         guard let name = snapshot.openContainerName, snapshot.hasOpenContainer else {
-            return "Container: none open. Search one under "
-                + "World > HUD & Interaction > Items."
+            return "Container: none open"
         }
         return "Container: \(name) · gold \(snapshot.containerGold)"
     }
@@ -47,14 +46,14 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
             return InventoryEquipmentSnapshot.unavailable.lastActionText
         }
         guard let ownership = snapshot.targetOwnership else {
-            return "Target: none\nPoint the walk-mode crosshair at a reference."
+            return "Target: none"
         }
         let header = "Target: \(ownership.name) · \(ownership.reference)"
         let owner = ownership.owner.map { "Owner: \($0)" }
             ?? (ownership.isTheft ? "Owner: inherited from this cell" : "Owner: none")
         let rank = ownership.factionRank.map { "\nFaction rank required: \($0)" } ?? ""
         guard ownership.isTheft else {
-            return "\(header)\n\(owner) — taking this is not theft.\(rank)"
+            return "\(header)\n\(owner) · not theft\(rank)"
         }
         return """
         \(header)
@@ -75,7 +74,7 @@ nonisolated public enum InventoryEquipmentReadout: Sendable {
         let cache = snapshot.enchantmentCache.describedLine
         guard let name = inspection.name else {
             return "Inspecting: \(label(snapshot.equipTarget))\n"
-                + "Nothing resolves that owner right now.\n\(cache)"
+                + "Not found\n\(cache)"
         }
         return [
             "Inspecting: \(label(snapshot.equipTarget)) · \(name)",

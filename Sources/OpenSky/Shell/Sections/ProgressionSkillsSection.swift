@@ -40,19 +40,10 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
     }
 
     override func makeContentViews() -> [NSView] {
+        advanceControl.toolTip = "Adds skill use, like a swing or a cast."
+        incrementControl.toolTip = "Raises the skill by one point, like a trainer."
         configureControls()
         return [
-            PanelComponents.note(
-                "Every skill line reads its live value, the trained base advancement "
-                    + "compares against, the experience banked in its Skill Advance slot, "
-                    + "and what the next point costs from there. Grant use reports the "
-                    + "typed amount of use on the selected skill, exactly as a swing, a "
-                    + "shot or a cast does, and the skill's own AVIF parameters convert "
-                    + "it. Grant point raises the skill by a whole point instead, which "
-                    + "is what a trainer does, and leaves the banked experience alone. "
-                    + "Either way the point banks character experience, so a few grants "
-                    + "level the character above."
-            ),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Skill", captionWidth: 70, field: skillControl

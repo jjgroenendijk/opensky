@@ -9,7 +9,7 @@ nonisolated public enum CastingControlReadout: Sendable {
     public static func spellsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Known spells: unavailable" }
         guard !snapshot.knownSpells.isEmpty else {
-            return "Known spells: none — Learn start spells grants the flagged ones"
+            return "Known spells: none"
         }
         let lines = snapshot.knownSpells.map { "  \($0.line)" }.joined(separator: "\n")
         return "Known spells (\(snapshot.knownSpells.count)):\n\(lines)"
@@ -34,7 +34,7 @@ nonisolated public enum CastingControlReadout: Sendable {
         let carried = snapshot.carriedTomeNames.isEmpty
             ? "none carried"
             : snapshot.carriedTomeNames.joined(separator: ", ")
-        return "Tomes: \(carried) — \(snapshot.readBookCount) book(s) already read"
+        return "Tomes: \(carried) · \(snapshot.readBookCount) read"
     }
 
     /// What the cast loop has done this session.
@@ -47,16 +47,15 @@ nonisolated public enum CastingControlReadout: Sendable {
     /// What it declined to do, which is the point of the tally: unimplemented
     /// ground is measured rather than silent.
     public static func coverageText(for snapshot: CastingControlSnapshot) -> String {
-        guard snapshot.isAvailable else { return "Coverage: unavailable" }
+        guard snapshot.isAvailable else { return "Refused casts: unavailable" }
         var text = if snapshot.failureCount > 0 {
-            "Coverage: \(snapshot.failureCount) refusal(s) — "
+            "Refused casts: \(snapshot.failureCount) — "
                 + snapshot.failureLines.joined(separator: ", ")
         } else {
-            "Coverage: no cast was refused"
+            "Refused casts: none"
         }
         if snapshot.unheldAbilityEntries > 0 {
-            text += "; \(snapshot.unheldAbilityEntries) ability entr(ies) carry no duration "
-                + "and are counted rather than held"
+            text += "; \(snapshot.unheldAbilityEntries) permanent ability effect(s) skipped"
         }
         return text
     }
@@ -70,11 +69,11 @@ nonisolated public enum CastingControlReadout: Sendable {
             : snapshot.deliveryLines.joined(separator: ", ")
         var text = "Delivery: \(snapshot.projectileCount) projectile(s) — \(deliveries)"
         guard snapshot.lastHitTargets > 0 else {
-            return text + "; no spell has landed on anybody yet"
+            return text + "; no hits yet"
         }
         text += "; last hit reached \(snapshot.lastHitTargets) actor(s)"
         guard !snapshot.lastHitAdjustments.isEmpty else {
-            return text + " with nothing hostile to resist"
+            return text + ", nothing resisted"
         }
         let lines = snapshot.lastHitAdjustments.map { "  \($0)" }.joined(separator: "\n")
         return text + "\n\(lines)"
@@ -85,7 +84,7 @@ nonisolated public enum CastingControlReadout: Sendable {
     public static func conditionsText(for snapshot: CastingControlSnapshot) -> String {
         guard snapshot.isAvailable else { return "Conditions: unavailable" }
         guard !snapshot.conditionLines.isEmpty else {
-            return "Conditions: no magic condition function could be evaluated"
+            return "Conditions: none"
         }
         let lines = snapshot.conditionLines.map { "  \($0)" }.joined(separator: "\n")
         return "Conditions (player):\n\(lines)"

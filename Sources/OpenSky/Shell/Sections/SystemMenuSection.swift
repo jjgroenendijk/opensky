@@ -97,7 +97,7 @@ final class SystemMenuSection: PanelSectionViewController {
     /// Pure so the readout is unit-testable without AppKit state.
     nonisolated static func readout(for snapshot: SystemMenuControlSnapshot) -> String {
         guard snapshot.isOpen else {
-            return "System menu: closed · world sim running"
+            return "System menu: closed · world running"
         }
         let rows = snapshot.entryTitles.enumerated().map { index, title in
             (index == snapshot.selectedIndex ? "> " : "  ") + title

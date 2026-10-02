@@ -34,6 +34,9 @@ final class CombatMeleeSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        weaponDrawnControl.toolTip = "Key: R."
+        attackControl.toolTip =
+            "One swing. Needs a drawn weapon. Key: left mouse button. Block: hold right."
         PanelComponents.configureCheckbox(
             weaponDrawnControl, target: self, action: #selector(weaponDrawnChanged),
             identifier: "MeleeWeaponDrawnControl"
@@ -47,13 +50,6 @@ final class CombatMeleeSection: PanelSectionViewController {
             identifier: "MeleeClearTraceControl"
         )
         return [
-            PanelComponents.note(
-                "R draws and sheathes, the left mouse button attacks, and the right mouse "
-                    + "button holds a block. Block is a held modifier with no state to set "
-                    + "from here; hold the button and watch the row below say so. Attack "
-                    + "requests exactly one swing, which the graph runs only with the "
-                    + "weapon drawn."
-            ),
             PanelComponents.group([
                 weaponDrawnControl,
                 PanelComponents.buttonRow([attackControl, clearTraceControl])

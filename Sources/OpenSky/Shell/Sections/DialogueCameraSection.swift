@@ -62,17 +62,10 @@ final class DialogueCameraSection: PanelSectionViewController {
     }
 
     override func makeContentViews() -> [NSView] {
+        forceControl.toolTip =
+            "Uses the dialogue camera on the selected actor without a conversation."
         configureControls()
         return [
-            PanelComponents.note(
-                "A conversation takes the view without changing the camera mode: it frames "
-                    + "the speaker's head from the side the player is standing on, and the "
-                    + "mode underneath is what the view goes back to on Leave. The speaker "
-                    + "stops walking, turns to face the player and has its package "
-                    + "suspended for the duration. Force engages the same camera on the "
-                    + "selected actor with no conversation open, so the framing and the "
-                    + "turn can be checked against any actor in the cell."
-            ),
             PanelComponents.group([
                 forceControl,
                 PanelComponents.labeledFieldRow(

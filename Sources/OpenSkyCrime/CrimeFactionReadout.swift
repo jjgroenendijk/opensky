@@ -58,10 +58,10 @@ nonisolated public enum CrimeFactionReadout: Sendable {
                 ? "Taking it is theft · bounty if witnessed \(ownership.bounty) gold"
                 : "Taking it is not theft")
         } else {
-            lines.append("Target: none — point the walk-mode crosshair at a reference.")
+            lines.append("Target: none")
         }
         let stolen = snapshot.stolenStacks.reduce(Int64(0)) { $0 + Int64($1.count) }
-        lines.append("Stolen in the player's inventory: \(stolen) item(s)")
+        lines.append("Stolen items carried: \(stolen)")
         for stack in snapshot.stolenStacks {
             lines.append("  \(stack.name) × \(stack.count) · \(stack.item)")
         }
@@ -82,7 +82,7 @@ nonisolated public enum CrimeFactionReadout: Sendable {
         if let terms = subject.towardPlayer {
             lines += reactionLines(terms)
         }
-        lines.append("Crime faction (CRIF): \(subject.crimeFaction?.name ?? "none")")
+        lines.append("Crime faction: \(subject.crimeFaction?.name ?? "none")")
         lines.append("Guard: " + (subject.policedFaction.map { "polices \($0.name)" } ?? "no"))
         return lines.joined(separator: "\n")
     }
