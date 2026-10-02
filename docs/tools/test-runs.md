@@ -15,7 +15,7 @@ behaviors they depend on, with the dates they were seen, are on the
 
 ## Test plans
 
-Which bundles a run touches is a checked-in test plan, not a flag. The `OpenSky` scheme has five,
+Which bundles a run touches is a checked-in test plan, not a flag. The `OpenSky` scheme has six,
 under `Config/TestPlans/`:
 
 | Plan | Test targets | Used by |
@@ -25,6 +25,15 @@ under `Config/TestPlans/`:
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
 | `Perf.xctestplan` | `OpenSkyRealDataTests`, only the tests tagged `perf`, plus the data root | `make realtest-perf` |
 | `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize` |
+| `VerifyBuild.xctestplan` | the unit plan's targets, then `OpenSkyRealDataTests` | `make verify-build`, build only |
+
+`VerifyBuild` exists for speed. Each `xcodebuild` call pays about 19 s of start-up, package
+resolution, and planning before any task runs, so one call for both bundles halves a no-change
+`make verify-build` (38 s to 18 s, 2026-10-02). A later `make test` compiles nothing. The cost:
+`make test-fast` and `make realtest` reuse the `.xctestrun` their own plan writes, so after an
+edit the first of them pays one `build-for-testing` that compiles nothing. Nothing ever runs
+`test` on this plan, because its two app-hosted bundles would share one app host. `make
+test-plans` checks that it lists exactly the `UnitTests` targets, then the `RealData` targets.
 
 The unit plan has two configurations. `Unit` is the normal run, and every command but one names it
 with `-only-test-configuration`, because xcodebuild runs every configuration of a plan when none is

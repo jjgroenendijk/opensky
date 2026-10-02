@@ -1,0 +1,486 @@
+{
+  "configurations" : [
+    {
+      "id" : "4E9F1C20-0001-4A00-9B00-0000000B0001",
+      "name" : "Build",
+      "options" : {}
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:OpenSky.xcodeproj",
+          "identifier" : "5A3BAE003000109100177F95",
+          "name" : "OpenSky"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsCore",
+          "name" : "OpenSkyFormatsCore"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsESM",
+          "name" : "OpenSkyFormatsESM"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsMesh",
+          "name" : "OpenSkyFormatsMesh"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsAnimation",
+          "name" : "OpenSkyFormatsAnimation"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsAudio",
+          "name" : "OpenSkyFormatsAudio"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsPEX",
+          "name" : "OpenSkyFormatsPEX"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsSWF",
+          "name" : "OpenSkyFormatsSWF"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyGameData",
+          "name" : "OpenSkyGameData"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyBehavior",
+          "name" : "OpenSkyBehavior"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPhysics",
+          "name" : "OpenSkyPhysics"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyDiagnostics",
+          "name" : "OpenSkyDiagnostics"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyRendering",
+          "name" : "OpenSkyRendering"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyAudio",
+          "name" : "OpenSkyAudio"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyWorldState",
+          "name" : "OpenSkyWorldState"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyConditions",
+          "name" : "OpenSkyConditions"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPerception",
+          "name" : "OpenSkyPerception"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPerceptionInterface",
+          "name" : "OpenSkyPerceptionInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyActors",
+          "name" : "OpenSkyActors"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyActorsInterface",
+          "name" : "OpenSkyActorsInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFactions",
+          "name" : "OpenSkyFactions"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyFactionsInterface",
+          "name" : "OpenSkyFactionsInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyProgression",
+          "name" : "OpenSkyProgression"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyProgressionInterface",
+          "name" : "OpenSkyProgressionInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCrime",
+          "name" : "OpenSkyCrime"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCrimeInterface",
+          "name" : "OpenSkyCrimeInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyInventoryInterface",
+          "name" : "OpenSkyInventoryInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyWorldInterface",
+          "name" : "OpenSkyWorldInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyInventory",
+          "name" : "OpenSkyInventory"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMagicInterface",
+          "name" : "OpenSkyMagicInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMagic",
+          "name" : "OpenSkyMagic"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCombat",
+          "name" : "OpenSkyCombat"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyCombatInterface",
+          "name" : "OpenSkyCombatInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyQuests",
+          "name" : "OpenSkyQuests"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyQuestsInterface",
+          "name" : "OpenSkyQuestsInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyDialogue",
+          "name" : "OpenSkyDialogue"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyDialogueInterface",
+          "name" : "OpenSkyDialogueInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyScripting",
+          "name" : "OpenSkyScripting"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyScriptingInterface",
+          "name" : "OpenSkyScriptingInterface"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyPreview",
+          "name" : "OpenSkyPreview"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyWorld",
+          "name" : "OpenSkyWorld"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkySave",
+          "name" : "OpenSkySave"
+        },
+        {
+          "containerPath" : "container:.",
+          "identifier" : "OpenSkyMenus",
+          "name" : "OpenSkyMenus"
+        }
+      ]
+    },
+    "defaultTestExecutionTimeAllowance" : 120,
+    "environmentVariableEntries" : [
+      {
+        "key" : "OPENSKY_SHADER_LIBRARY",
+        "value" : "$(BUILD_DIR)/OpenSkyShaders.metallib"
+      }
+    ],
+    "maximumTestExecutionTimeAllowance" : 300,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:OpenSky.xcodeproj",
+      "identifier" : "5A3BAE003000109100177F95",
+      "name" : "OpenSky"
+    },
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:OpenSky.xcodeproj",
+        "identifier" : "5A3BAE183000109300177F95",
+        "name" : "OpenSkyTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsCoreTests",
+        "name" : "OpenSkyFormatsCoreTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsESMTests",
+        "name" : "OpenSkyFormatsESMTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsMeshTests",
+        "name" : "OpenSkyFormatsMeshTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsAnimationTests",
+        "name" : "OpenSkyFormatsAnimationTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsAudioTests",
+        "name" : "OpenSkyFormatsAudioTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsPEXTests",
+        "name" : "OpenSkyFormatsPEXTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsSWFTests",
+        "name" : "OpenSkyFormatsSWFTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyGameDataTests",
+        "name" : "OpenSkyGameDataTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyBehaviorTests",
+        "name" : "OpenSkyBehaviorTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyPhysicsTests",
+        "name" : "OpenSkyPhysicsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyRenderingTests",
+        "name" : "OpenSkyRenderingTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyAudioTests",
+        "name" : "OpenSkyAudioTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyWorldStateTests",
+        "name" : "OpenSkyWorldStateTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyPerceptionTests",
+        "name" : "OpenSkyPerceptionTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyActorsTests",
+        "name" : "OpenSkyActorsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFactionsTests",
+        "name" : "OpenSkyFactionsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyProgressionTests",
+        "name" : "OpenSkyProgressionTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyCrimeTests",
+        "name" : "OpenSkyCrimeTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyInventoryTests",
+        "name" : "OpenSkyInventoryTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyMagicTests",
+        "name" : "OpenSkyMagicTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyCombatTests",
+        "name" : "OpenSkyCombatTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyQuestsTests",
+        "name" : "OpenSkyQuestsTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyDialogueTests",
+        "name" : "OpenSkyDialogueTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyScriptingTests",
+        "name" : "OpenSkyScriptingTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyPreviewTests",
+        "name" : "OpenSkyPreviewTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyWorldTests",
+        "name" : "OpenSkyWorldTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkySaveTests",
+        "name" : "OpenSkySaveTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyMenusTests",
+        "name" : "OpenSkyMenusTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:OpenSky.xcodeproj",
+        "identifier" : "5AD1000130001093001700A1",
+        "name" : "OpenSkyRealDataTests"
+      }
+    }
+  ],
+  "version" : 1
+}
