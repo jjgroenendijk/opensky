@@ -76,9 +76,6 @@ nonisolated public final class FaceMorphBuffer: Sendable {
     public let targets: [FaceMorphTarget]
     /// Written on the main actor after the build queue hands the buffer over.
     private let deltas: Mutex<[MorphVertexDelta]>
-    public var currentDeltas: [MorphVertexDelta] {
-        deltas.withLock { $0 }
-    }
 
     public init(device: MTLDevice, tri: TRIFile, mesh: RenderMesh) throws {
         guard tri.baseVertices.count == mesh.vertexCount else {

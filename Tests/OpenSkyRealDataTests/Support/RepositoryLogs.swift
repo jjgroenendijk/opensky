@@ -29,5 +29,13 @@ enum RepositoryLogs {
         throw CheckoutNotFound(bundle: bundle)
     }
 
+    /// `<checkout>/logs/<subpath>`, created when missing, so a capture never
+    /// depends on another run having made the folder.
+    static func createdDirectory(_ subpath: String) throws -> URL {
+        let url = try directory(subpath)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
     private final class BundleToken {}
 }

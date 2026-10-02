@@ -26,6 +26,8 @@ SWIFT_PATHS      := Sources Tests
 DERIVED_DATA     ?= $(CURDIR)/DerivedData
 XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
+# The unused-code scan's own build tree: uncached, so its index store is complete.
+INDEX_DATA       ?= $(DERIVED_DATA)-index
 # Settings that must also reach package targets (Config/Build/Overrides.xcconfig).
 # xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
 export XCODE_XCCONFIG_FILE := $(CURDIR)/Config/Build/Overrides.xcconfig
@@ -62,6 +64,11 @@ COVERAGE_Debug   := CLANG_COVERAGE_MAPPING=YES
 # Apple Silicon only. Release would also compile x86_64, where Float16 does not
 # exist. ARCHS in Overrides.xcconfig still left package targets on x86_64.
 ARCHS_Release    := ARCHS=arm64
+# The same for the index tree: Debug, its own derived data, no compilation cache,
+# because a task replayed from the cache writes no index data.
+xcb_index = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration Debug \
+	-derivedDataPath $(INDEX_DATA) COMPILATION_CACHE_ENABLE_CACHING=NO \
+	$(COVERAGE_Debug) $(XCODEBUILD_FLAGS)
 XCB_APP          := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI          := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE      := $(call xcb,$(SCHEME),Release)
@@ -84,6 +91,11 @@ METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 # twenty minutes of reading. Split or cut a page over it; do not raise it.
 DOCS_MAX_LINES   := 400
 
+# Line coverage each OpenSkyFormats* module keeps in a `make test` run: the value
+# measured when the floor was set, rounded down to a multiple of 5. Raise it when
+# coverage grows; lower it only with a reason in the commit.
+COVERAGE_FLOOR   := 80
+
 ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
@@ -99,6 +111,8 @@ UI_PLAN          := -testPlan UITests
 # Formatter and linter configuration.
 SWIFTFORMAT_CFG  := tools/format/.swiftformat
 SWIFTLINT_CFG    := tools/lint/.swiftlint.yml
+JSCPD_CFG        := tools/lint/.jscpd.json
+PERIPHERY_CFG    := tools/lint/.periphery.yml
 CLANGFORMAT_CFG  := tools/format/.clang-format
 MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
 MD_GLOB          := **/*.md
@@ -133,7 +147,8 @@ link-shared: ## Point this worktree's ffmpeg and compile cache at the main check
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan test-plans test-tags no-game-content \
-        docs-links docs-length agent-files workflow-lint comment-length comment-blocks comment-apply
+        docs-links docs-length agent-files workflow-lint comment-length comment-blocks comment-apply \
+        duplicates no-suppressions
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -150,7 +165,7 @@ metal-format-check: ## Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan test-plans test-tags no-game-content docs-length agent-files workflow-lint ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan test-plans test-tags no-game-content docs-length agent-files workflow-lint comment-length duplicates no-suppressions ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
@@ -217,8 +232,23 @@ agent-files: ## Check AGENTS.md symlinks and the skill format limits
 workflow-lint: ## Lint the GitHub Actions workflows with actionlint
 	@actionlint && echo "[ OK ] workflows clean"
 
-comment-length: ## Report comment blocks over the line limit (report only for now)
+comment-length: ## Check no comment block is over the line limit
 	@./tools/lint/comment-length.sh
+
+# The whole tree in under a second. A scan of changed files only would miss a new
+# copy of code that did not change.
+duplicates: ## Check for duplicated Swift blocks (jscpd)
+	@./tools/lint/duplicates.sh $(JSCPD_CFG) $(SWIFT_PATHS)
+
+# Fix the finding instead (docs/decisions/code-health-automation.md).
+no-suppressions: ## Check no Swift file disables a SwiftLint rule
+	@offenders=$$(grep -rn 'swiftlint:disable' --include='*.swift' $(SWIFT_PATHS)); \
+	if [ -n "$$offenders" ]; then \
+		printf '[FAIL] SwiftLint suppressions:\n%s\n' "$$offenders" >&2; \
+		echo 'Fix: change the code so the rule passes, then drop the comment.' >&2; \
+		exit 1; \
+	fi; \
+	echo "[ OK ] no SwiftLint suppressions"
 
 comment-blocks: ## Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
 	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
@@ -254,6 +284,23 @@ $(SHADER_LIBRARY): $(SHADER_SOURCES)
 	@mkdir -p $(@D)
 	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp Sources/Shaders/Shaders.metal
 	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
+
+##@ Code health
+
+.PHONY: health health-index
+
+# Periphery reads the index store the compiler writes. The index tree is built
+# uncached, so its first run in a checkout is a full build; later runs are
+# incremental. The OpenSky scheme builds openskycli for testing, so the two plans
+# cover the app, the CLI, and every test bundle.
+health: health-index ## Build the index, then fail on any unused code (Periphery)
+	@./tools/lint/unused-code.sh $(PERIPHERY_CFG) "$(INDEX_DATA)/Index.noindex/DataStore"
+
+health-index: link-shared
+	@$(XCB_RUN) health-unit $(call xcb_index,$(SCHEME)) \
+		-destination '$(DESTINATION)' $(UNIT_PLAN) build-for-testing
+	@$(XCB_RUN) health-realdata $(call xcb_index,$(SCHEME)) \
+		-destination '$(DESTINATION)' -testPlan RealData build-for-testing
 
 ##@ Build and run
 
@@ -294,7 +341,7 @@ icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 ##@ Test
 
 .PHONY: test test-fast test-one test-repeat test-locale test-ui test-report test-sanitize \
-        test-perms
+        test-perms coverage-floor
 
 test: link-shared $(SHADER_LIBRARY) ## Build and run the unit tests through the build system
 	@bundle="$$($(RUN_DIR) -b $(TEST_RESULTS) unit)/unit.xcresult"; \
@@ -356,6 +403,9 @@ test-report: ## Summarize the newest test result bundle, failures included
 # OpenSkyTests under TSan, then under ASan with UBSan (issue #383); the two cannot
 # share a build. Too slow for routine runs, so run it periodically and
 # before a milestone acceptance.
+coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last test run
+	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
+
 test-sanitize: link-shared $(SHADER_LIBRARY) ## Run the unit tests under sanitizers [SAN=Thread|Address] [CAP=MB]
 	@./tools/test-sanitize.sh $(if $(SAN),-o $(SAN),) $(if $(CAP),-c $(CAP),)
 
@@ -420,7 +470,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_R
 # to the main checkout's shared store, and DEEP=1 removes only the link.
 clean: ## Remove build output and caches [DEEP=1 also drops the compile cache]
 	@rm -rf build
-	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized"; do \
+	@for dd in "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"; do \
 		[ -d "$$dd" ] || continue; \
 		if [ -n "$(DEEP)" ]; then \
 			rm -rf "$$dd"; \

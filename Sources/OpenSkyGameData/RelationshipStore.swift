@@ -139,10 +139,6 @@ nonisolated public struct RelationshipStore: Sendable {
         relationshipTable.value(editorID: editorID)
     }
 
-    public func associationType(_ id: ResolvedFormID) -> ResolvedAssociationType? {
-        associationTypeTable.value(id)
-    }
-
     public func associationType(editorID: String) -> ResolvedAssociationType? {
         associationTypeTable.value(editorID: editorID)
     }

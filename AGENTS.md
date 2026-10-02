@@ -151,9 +151,14 @@ procedure. `make check` and `ci.yml` mirror each other, so a change to one gate 
 both.
 
 Linting is strict and warnings are errors. Fix the issue rather than disabling or
-downgrading a rule. Inline suppression is a last resort and needs a specific rule code plus
-a why-comment. Parse and load failures use `throws` with typed errors, and malformed input
+downgrading a rule. `make lint` fails on any `swiftlint:disable` comment, and there is no
+`periphery:ignore`. Parse and load failures use `throws` with typed errors, and malformed input
 must not crash: no force-unwrap, force-try, or force-cast on data from external files.
+
+Code-health gates start at zero findings and keep no baseline file
+(`docs/decisions/code-health-automation.md`). `make lint` fails on duplicated Swift
+(jscpd) and on a comment block over 6 lines. `make health` fails on unused code
+(Periphery); run it when a change adds, moves, or stops using declarations or imports.
 
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
@@ -180,7 +185,7 @@ better name instead.
 - A format fact gets one line plus a link to its `docs/formats/` page, which holds the detail.
 - No history ("was", "used to", issue numbers) and no restating of the type or parameter
   names; git and the signature already hold them.
-- `make comment-length` lists every comment block over 6 lines.
+- `make comment-length`, part of `make lint`, fails on a comment block over 6 lines.
 
 ```swift
 // Bad: restates the code and tells history.

@@ -2,7 +2,6 @@
 // it words an objective. Values in, values out. See docs/engine/journal.md.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyQuestsInterface
 
 /// One journal quest with its effective state.

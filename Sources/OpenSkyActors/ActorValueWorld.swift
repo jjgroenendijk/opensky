@@ -4,7 +4,6 @@
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyWorldState
 
 /// What `ActorValueCoordinator` reads from the running world.
 @MainActor

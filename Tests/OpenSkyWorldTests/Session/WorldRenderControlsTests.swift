@@ -2,7 +2,6 @@
 // state a machine without Metal 4 ends up in. Every read must fall back to its
 // stated default without a GPU.
 
-import FormatsESMTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

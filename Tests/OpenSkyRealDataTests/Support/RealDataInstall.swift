@@ -9,7 +9,6 @@ import Testing
 /// loading every render suite starts with.
 struct RealDataInstall {
     let device: any MTLDevice
-    let root: GameDataRoot
     let fileSystem: VirtualFileSystem
     let file: ESMFile
     let textures: TextureLibrary
@@ -22,7 +21,6 @@ struct RealDataInstall {
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         return try Self(
             device: device,
-            root: root,
             fileSystem: fileSystem,
             file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm")),
             textures: textures,

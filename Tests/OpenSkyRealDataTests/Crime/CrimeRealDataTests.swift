@@ -8,7 +8,6 @@ import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorld

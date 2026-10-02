@@ -7,7 +7,6 @@ import FormatsPEXTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-@testable import OpenSkyFormatsMesh
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
@@ -18,7 +17,6 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import simd
 import Testing
 

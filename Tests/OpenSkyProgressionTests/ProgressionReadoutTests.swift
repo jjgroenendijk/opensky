@@ -6,7 +6,6 @@
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 import OpenSkyProgressionFixtures
-import OpenSkyProgressionTesting
 import Testing
 
 struct ProgressionReadoutTests {

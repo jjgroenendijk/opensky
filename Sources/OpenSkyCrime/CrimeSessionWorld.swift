@@ -8,7 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
-import OpenSkyWorldState
 import simd
 
 /// What `CrimeCoordinator` reads from and asks of the running world.

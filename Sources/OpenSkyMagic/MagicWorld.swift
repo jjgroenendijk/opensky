@@ -9,7 +9,6 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 /// What `MagicCoordinator` reads from the running world. Skill uses pass
 /// through to the session's skill runtime.

@@ -6,8 +6,6 @@ import Foundation
 import Metal
 @testable import OpenSkyRendering
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
-import RenderingTesting
 import TagsTesting
 import Testing
 

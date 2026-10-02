@@ -123,19 +123,6 @@ nonisolated public struct ShoutStore: Sendable {
         shoutTable.value(editorID: editorID)
     }
 
-    public func word(_ id: ResolvedFormID) -> ResolvedWordOfPower? {
-        wordTable.value(id)
-    }
-
-    public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
-        index.resolvedID(id, fromPlugin: pluginName)
-    }
-
-    public func resolveWord(_ id: FormID, fromPlugin pluginName: String) -> ResolvedWordOfPower? {
-        guard let resolvedID = resolvedID(id, fromPlugin: pluginName) else { return nil }
-        return word(resolvedID)
-    }
-
     /// Joins one shout's SNAM run against the word index and the spell store.
     /// Public so the text dump gets the same names the store holds.
     public func join(

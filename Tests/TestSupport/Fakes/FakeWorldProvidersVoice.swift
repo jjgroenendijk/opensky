@@ -3,7 +3,6 @@
 // filters the whole corpus and lists a bounded prefix, like the real picker.
 
 import AppKit
-@testable import OpenSky
 import OpenSkyAudio
 @testable import OpenSkyWorld
 

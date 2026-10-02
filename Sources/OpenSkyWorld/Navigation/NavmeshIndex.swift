@@ -4,7 +4,6 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OSLog
 
 nonisolated public struct NavmeshIndex: Sendable {

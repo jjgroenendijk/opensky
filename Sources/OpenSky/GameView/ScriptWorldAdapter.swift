@@ -6,7 +6,6 @@ import OpenSkyActors
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyFormatsESM
-import OpenSkyFormatsPEX
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
@@ -16,7 +15,6 @@ import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
-import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState

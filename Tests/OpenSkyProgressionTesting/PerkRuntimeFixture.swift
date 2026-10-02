@@ -9,7 +9,6 @@ import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import OpenSkyMagicTesting
-@testable import OpenSkyWorldState
 
 @MainActor
 public enum PerkRuntimeFixture {

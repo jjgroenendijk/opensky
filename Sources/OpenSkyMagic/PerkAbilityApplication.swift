@@ -22,10 +22,6 @@ nonisolated public struct PerkAbilityReport: Equatable, Sendable {
     /// Effects dispelled across every revoked ability.
     public let dispelledCount: Int
 
-    public static let none = PerkAbilityReport(
-        granted: [], revoked: [], storedCount: 0, dispelledCount: 0
-    )
-
     /// Whether anything moved, which is what tells a caller to refresh a
     /// readout.
     public var didChange: Bool {

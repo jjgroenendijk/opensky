@@ -2,6 +2,7 @@
 // perk-point spend and its refusals, and the world reads it makes.
 
 import OpenSkyActorsInterface
+import OpenSkyActorsTesting
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -31,7 +32,7 @@ struct ProgressionCoordinatorTests {
         )
         let coordinator = ProgressionCoordinator(perks: perks)
         coordinator.attach(world: world)
-        let values = FixedActorValues(store: store)
+        let values = FixedActorValues(store: store, indexedValue: 15)
         coordinator.wireSkills(values: values, information: information)
         coordinator.wireLeveling(values: values, perkStore: perkStore, information: information)
         return coordinator

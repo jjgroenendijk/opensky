@@ -10,7 +10,6 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 
 @MainActor

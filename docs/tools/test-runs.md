@@ -167,9 +167,13 @@ sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcco
 reach the compiler. A Release build stays without coverage. An instrumented program writes
 `default.profraw` into its working directory when it exits; `.gitignore` covers it.
 
-There is no coverage threshold and no coverage number in CI. The value is finding defensive branches
-in the parsers that no test takes, the malformed-input paths behind "malformed input must not
-crash". A floor would need a baseline argument, like a perf budget.
+`make coverage-floor` fails when an `OpenSkyFormats*` module is under the floor, `COVERAGE_FLOOR`
+in the `Makefile`. It reads `DerivedData/Build/ProfileData/*/Coverage.profdata` with `llvm-cov`,
+because `xccov` finds no package files in the result bundle. Each test run rewrites that profile,
+so run the check right after `make test`; CI does. A filtered run covers less and reads too low. Only
+the parsers have a floor: they read untrusted files, and the value is finding defensive branches
+that no test takes, the malformed-input paths behind "malformed input must not crash"
+([code-health automation](/decisions/code-health-automation.md)).
 
 ## Sanitizers
 

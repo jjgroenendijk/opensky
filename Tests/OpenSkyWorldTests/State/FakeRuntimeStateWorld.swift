@@ -6,7 +6,6 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyConditions
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

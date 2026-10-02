@@ -8,7 +8,6 @@ import MetalKit
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import OpenSkyWorldState
-import OpenSkyWorldTesting
 import RenderingTesting
 import TagsTesting
 import Testing

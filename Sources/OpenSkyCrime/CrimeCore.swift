@@ -7,7 +7,6 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
 import simd
 
 /// The three faction lists the panel's popups offer, sorted by name.

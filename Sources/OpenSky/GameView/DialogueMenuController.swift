@@ -3,7 +3,6 @@
 // running while the player reads the list. A spoken line goes into the HUD's
 // subtitle field once the HUD movie is back. See docs/engine/dialogue-menu.md.
 
-import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
@@ -12,8 +11,6 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
-import OpenSkyWorldInterface
-import OpenSkyWorldState
 import OSLog
 
 /// Holds the conversation's menu model and movie state for `game`.

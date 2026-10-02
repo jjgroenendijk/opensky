@@ -7,7 +7,6 @@ import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 extension ProgressionCoordinator {
     public func skillInformation(_ index: Int32) -> ResolvedActorValueInformation? {

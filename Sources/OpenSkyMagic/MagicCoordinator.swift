@@ -9,7 +9,6 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
-import OpenSkyWorldState
 
 /// Owns the magic runtimes and reads the world through `MagicWorld`.
 @MainActor

@@ -83,6 +83,9 @@ the same dialog on its first unit run.
 Observed 2026-10-01 in a linked worktree: `make test-ui` stops again at "Timed out while enabling
 automation mode", so the UI plan's slowest test could not be measured for its time allowance
 ([test runs](/tools/test-runs.md#timeouts)).
+Observed again 2026-10-02 in a linked worktree under `.claude/worktrees/`: the same time-out at
+harness init. A worktree builds its own runner under its own `DerivedData/`, so the grant given to
+the main checkout's runner likely does not cover it. Not confirmed.
 
 Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
 `testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation

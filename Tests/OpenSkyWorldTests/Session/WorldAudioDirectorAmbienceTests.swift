@@ -9,7 +9,6 @@ import AVFAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor
