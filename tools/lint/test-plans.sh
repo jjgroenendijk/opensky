@@ -3,8 +3,7 @@
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
-# target or tag, never by test name. The Perf plan selects the `perf` tag, and
-# VerifyBuild builds what UnitTests and RealData build.
+# target or tag, never by test name. The Perf plan selects the `perf` tag.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -84,10 +83,6 @@ if data_root(perf) != data_root(plans.get("RealData", {})):
     problems.append("Perf: OPENSKY_DATA_ROOT must match the RealData plan")
 
 unit = [entry["target"]["name"] for entry in plans.get("UnitTests", {}).get("testTargets", [])]
-real = [entry["target"]["name"] for entry in plans.get("RealData", {}).get("testTargets", [])]
-verify = [entry["target"]["name"] for entry in plans.get("VerifyBuild", {}).get("testTargets", [])]
-if verify != unit + real:
-    problems.append("VerifyBuild: must list the UnitTests targets, then the RealData targets")
 sanitized = [entry["target"]["name"] for entry in plans.get("Sanitizers", {}).get("testTargets", [])]
 if unit != sanitized:
     problems.append("Sanitizers: must list the same test targets as UnitTests, in the same order")

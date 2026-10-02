@@ -100,15 +100,13 @@ ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
 # Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds and
-# runs, instead of -only-testing flags (issue #346). The UI bundle must never share a plan with an app-hosted bundle
+# runs, instead of -only-testing flags (issue #346). Each plan holds exactly one
+# bundle. The UI bundle must never share a plan with an app-hosted bundle
 # (OpenSkyTests, OpenSkyRealDataTests): both would drive OpenSky.app at once
 # and deadlock (issue #380). The unit plan's Locale configuration runs only through
 # `make test-locale`, so every other run names the Unit configuration.
 UNIT_PLAN        := -testPlan UnitTests -only-test-configuration Unit
 UI_PLAN          := -testPlan UITests
-# Both unit bundles in one plan, so verify-build pays xcodebuild's start-up and
-# planning once. Build only: never `test` it, the two bundles share one app host.
-VERIFY_PLAN      := -testPlan VerifyBuild
 
 # Formatter and linter configuration.
 SWIFTFORMAT_CFG  := tools/format/.swiftformat
@@ -273,9 +271,9 @@ compile: link-shared ## Compile changed package modules and their dependents [M=
 # did not test. Incremental and served from the shared cache.
 # The OpenSky scheme builds openskycli for testing, so the CLI shares the test
 # builds' context. A separate OpenSkyCLI build recompiles the engine (issue #717).
-# One call: a second plan would pay start-up and planning again, about 19 s.
 verify-build: link-shared ## Compile app, CLI, and both unit bundles without running tests
-	@$(XCB_RUN) verify-build $(XCB_TEST) $(VERIFY_PLAN) build-for-testing
+	@$(XCB_RUN) verify-unit $(XCB_TEST) $(UNIT_PLAN) build-for-testing
+	@$(XCB_RUN) verify-realdata $(XCB_TEST) -testPlan RealData build-for-testing
 
 shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
 
