@@ -16,8 +16,10 @@ import Foundation
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 struct EnchantmentAcceptanceRealDataTests {
     /// The weapon UESP prints as 1000 charge at 18 per use — 55 uses.
     private static let publishedWeaponID: UInt32 = 0x000A_CC70

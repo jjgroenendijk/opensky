@@ -13,8 +13,10 @@ import MetalKit
 @testable import OpenSkyQuests
 @testable import OpenSkyRendering
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct JournalAcceptanceRealDataTests {
     /// The cheapest journal-visible quest in vanilla `Skyrim.esm`: two stages,
     /// one objective, one forced-reference alias, and no conditions.

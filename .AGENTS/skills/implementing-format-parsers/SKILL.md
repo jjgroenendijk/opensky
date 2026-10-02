@@ -1,66 +1,92 @@
 ---
 name: implementing-format-parsers
 description: Reverse-engineers and implements a Skyrim SE file format - spec citation rules,
-  probe discipline, synthetic fixtures, the documentation template, and defensive parsing.
-  Use when adding or changing any parser for ESM records, BSA, NIF, DDS, or LOD data.
+  probe discipline, the module a parser goes in, pure parsing with typed errors, synthetic
+  fixtures, and the docs/formats page. Use when adding or changing any parser for ESM
+  records, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD data.
 ---
 
 # Implementing a file format
 
-Root `AGENTS.md` "Legal & IP boundary" is the contract; this is the how. Reverse-engineering
-discipline lives here, not there.
+The root `AGENTS.md` section "Legal & IP boundary" is the contract. This skill is the how.
 
-## Before writing the parser
+## Workflow
 
-1. Find the open spec: UESP wiki, xEdit (SSEEdit) source (`wbDefinitionsTES5.pas` et al.),
-   NifTools `nif.xml`, libbsa and BSArch notes, Papyrus docs. No spec -> write a small
-   documented probe (load the `probing-real-game-data` skill), record findings, and flag the
-   uncertainty in code and doc.
-2. Reimplement from the spec and observed behavior only. A guessed byte layout is wrong
-   more often than not, and Bethesda code or decompiles are off limits (root `AGENTS.md`,
-   Legal & IP boundary).
-3. A format already documented in `docs/formats/<name>.md` with its citation is the primary
-   source — trust it, and re-pull upstream only to extend past it.
-4. Fetching upstream specs has known access quirks (blocked hosts, non-default branches) that
-   cost time every session — check `docs/tools/environment.md` before fighting a 403 or a 404.
+1. Find the source of the layout.
+2. Pick the module and copy a model file.
+3. Write a pure parser.
+4. Test it with synthetic fixtures, then check it on the real install.
+5. Write the `docs/formats/` page in the same commit.
 
-## Model files
+## 1. Find the source
 
-Copy the shape of an existing format rather than inventing one:
+- A format with a page in `docs/formats/` is already cited and confirmed. Trust the page,
+  and go upstream only to extend past it.
+- Otherwise use an open spec: the UESP wiki, xEdit (SSEEdit) `wbDefinitionsTES5.pas`,
+  NifTools `nif.xml`, BSArch notes, the Papyrus docs. Note the exact version or commit
+  you read, because the page cites it.
+- No spec covers it -> do not guess. A guessed byte layout is wrong more often than not.
+  Write a probe (`probing-real-game-data` skill), and flag the uncertainty in the page.
+- Bethesda code, decompiles, and SKSE internals are off limits.
+- Upstream hosts have access quirks (blocked hosts, non-default branches). Check
+  `docs/tools/environment.md` before fighting a 403 or a 404.
 
-- Binary container: `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift`, its fixture
-  `Tests/FormatsCoreTesting/BSA/BSAFixture.swift`, its tests
-  `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift`, and `docs/formats/bsa.md`.
-- ESM record: `Sources/OpenSkyFormatsESM/ESM/Records/Footstep.swift`, its tests
-  `Tests/OpenSkyFormatsESMTests/ESM/Records/FootstepRecordTests.swift`, its real-data check
-  `Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`, and
-  `docs/formats/footstep.md`.
+## 2. Pick the module and a model
 
-## Writing it
+Each format family is one module, and it imports only `OpenSkyFormatsCore`
+(`docs/tools/modules.md` lists the families; `make module-graph` fails on another import).
+The parser goes in `Sources/OpenSkyFormats<Family>/<Format>/`.
 
-- Cite the spec in a comment at the parse site and in the commit body.
-- Clean Swift types decoupled from on-disk layout; `throws` plus typed errors; no
-  force-unwrap, force-try, or force-cast on external data (hard lint errors).
-- Validate defensively — real files carry mod quirks, and malformed input must not crash the
-  engine. Unknown field or variant -> skip and note, not trap.
-- Comment the why and the spec reference for non-obvious byte math, not the what.
+Copy the shape of an existing format:
 
-## Testing
+| Kind | Parser | Fixture | Unit tests | Page |
+| --- | --- | --- | --- | --- |
+| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/FormatsCoreTesting/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
+| ESM record | `Sources/OpenSkyFormatsESM/ESM/Records/Footstep.swift` | `ESMFixture` in `Tests/FormatsESMTesting/` | `Tests/OpenSkyFormatsESMTests/ESM/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
 
-- The parser goes in `Sources/OpenSkyFormats<Family>/<Format>/`, in the family module the format
-  belongs to (`docs/tools/modules.md` lists them). It imports only `OpenSkyFormatsCore`, never
-  another family or engine code; see the same page for `public` access, explicit
-  `public init(...)`, and `Sendable`.
-- Unit-test in the matching `Tests/OpenSkyFormats<Family>Tests/<Format>/` folder with synthetic
-  fixtures built in code (existing patterns: `BSAFixture`, `ESMFixture`, `NIFFixture`,
-  `StringTableFixture`, in the `Tests/Formats<Family>Testing/` libraries). A test that also
-  builds engine state goes in the test target of the highest module it imports
-  (`Tests/AGENTS.md`). An extracted game file is never a fixture, not even a tiny one.
-- Verify against the real install via an env-gated probe (load the `probing-real-game-data`
-  skill) or `make run-cli ARGS=...`; probes never land in commits.
+The real-data check of the record model is
+`Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`.
 
-## Same-commit obligations
+## 3. Write a pure parser
 
-- `docs/formats/<name>.md` — byte layout, the spec used, and how the layout was confirmed
-  on the real install (load the `writing-wiki-docs` skill first).
-- Item came from a roadmap issue -> close it from the PR body (`Closes #NNN`).
+Parsers are pure: bytes or a record in, values out. The model files show each rule.
+
+- The parse entry point takes `Data` or an `ESMRecord`: `BSAArchive.init(data:)`,
+  `Footstep.init(record:)`. A file-reading `init(url:)` only loads the bytes and calls it.
+  No clocks, Metal, audio, or engine state.
+- Read bytes with `BinaryReader` from `OpenSkyFormatsCore/Binary/`. Do not hand-roll
+  offset math on `Data`.
+- Return clean Swift types, not a copy of the on-disk struct.
+- Fail with `throws` and the family's typed error (`BSAError`, `ESMError`). A force-unwrap,
+  force-try, or force-cast is a SwiftLint error, so `make check` catches it.
+- Real files carry mod quirks, and malformed input must not crash the engine. An unknown
+  field, block, or variant is skipped and counted, not trapped. A record with many skip
+  reasons counts them in a `SkipTally` (`PerkSkipKind` in `Perk.swift` is the model), so a
+  test can assert on what was skipped.
+- Types are `nonisolated public` and `Sendable`, with an explicit `public init(...)` where
+  another module builds them (`Sources/AGENTS.md`, Swift conventions).
+
+Comments stay short (root `AGENTS.md`, Writing style). The file header says what the format
+is in a line or two and links its page, like `Footstep.swift`. A non-obvious byte step gets
+a one-line why. The spec links and the evidence go in the page, not in the code.
+
+## 4. Test it
+
+- Build fixtures in code in the family's testing library, `Tests/Formats<Family>Testing/`.
+  An extracted game file is never a fixture, not even a tiny one, and not a cut-down copy
+  of a mod file.
+- Put the suite in `Tests/OpenSkyFormats<Family>Tests/<Format>/` with
+  `@Suite(.tags(.parser))`. `make test-tags` checks the tag. A suite that also builds
+  engine state goes in the test target of the highest module it imports (`Tests/AGENTS.md`).
+- A bug fix starts with a fixture that reproduces it and a test that fails.
+- Run `make test-fast T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
+  `make test-fast TAG=parser` before pushing.
+- Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
+  under `Tests/OpenSkyRealDataTests/Formats/`, run by `make realtest`. A throwaway probe
+  never lands in a commit.
+
+## 5. The docs page
+
+Write or extend `docs/formats/<name>.md` in the same commit (`writing-wiki-docs` skill):
+the spec and version used, the byte layout, and how the layout was confirmed on the real
+install. Cite the spec in the commit body too.

@@ -11,8 +11,10 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererCullingTests {
     private static let device = OffscreenRendererFixture.device
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device

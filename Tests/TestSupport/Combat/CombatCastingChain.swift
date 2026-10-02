@@ -17,6 +17,7 @@ import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
 import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
+@testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd

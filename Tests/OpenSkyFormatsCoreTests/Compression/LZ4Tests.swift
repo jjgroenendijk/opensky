@@ -3,8 +3,10 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct LZ4Tests {
     /// token 0x44: 4 literals, match length 4+4=8; offset 4 -> repeats "abcd";
     /// final sequence is literals-only "XYZQW".

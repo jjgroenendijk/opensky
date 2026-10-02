@@ -8,8 +8,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct RecordDecoderTests {
     /// Parses one synthetic record through the container walk.
     func record(_ bytes: Data) throws -> ESMRecord {

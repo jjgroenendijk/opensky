@@ -6,6 +6,7 @@ import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import simd
+import TagsTesting
 import Testing
 
 private struct HKAAnimationBindingFixture {
@@ -58,6 +59,7 @@ private struct HKAAnimationBindingFixture {
     }
 }
 
+@Suite(.tags(.parser))
 struct HKASplineAnimationTests {
     private func firstAnimation(
         _ fixture: HKASplineAnimationFixture

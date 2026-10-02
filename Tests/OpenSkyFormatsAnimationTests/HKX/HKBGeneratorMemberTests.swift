@@ -5,8 +5,10 @@
 import FormatsAnimationTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct HKBGeneratorMemberTests {
     @Test func bethesdaGeneratorsReadTheirDocumentedMembers() throws {
         let sync = try decodeHKBObject(

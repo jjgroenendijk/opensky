@@ -5,8 +5,10 @@ import FormatsESMTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct TopicInfoFragmentTests {
     private func info(_ tail: Data, scripts: [VMADFixture.Script] = []) throws -> TopicInfo {
         try DialogueFixture.info(

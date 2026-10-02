@@ -18,8 +18,10 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct CombatLoopRealDataTests {
     /// Actors the budget measurement runs over. More than a room holds, so the
     /// number is a ceiling rather than a typical case.

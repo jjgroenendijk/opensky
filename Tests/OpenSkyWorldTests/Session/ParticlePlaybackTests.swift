@@ -9,8 +9,10 @@ import MetalKit
 @testable import OpenSkyWorld
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct ParticlePlaybackTests {
     @Test func deterministicSimulationUsesCapacityLifetimeAndWeatherWind() {
         let definition = makeDefinition(windStrength: 80)

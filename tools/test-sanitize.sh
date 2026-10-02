@@ -62,6 +62,15 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=/dev/null
 . "$root/tools/xcodebuild-lib.sh"
 
+# The plan sets OPENSKY_SHADER_LIBRARY to $(BUILD_DIR)/OpenSkyShaders.metallib, and
+# a sanitized build has its own BUILD_DIR. The shaders are not sanitized, so each
+# variant gets a copy of the one `make shader-library` compiled.
+for variant in Variant-TSan Variant-ASan-UBSan; do
+    mkdir -p "$OPENSKY_DERIVED_DATA/Build/Products/$variant"
+    cp "$OPENSKY_DERIVED_DATA/Build/Products/OpenSkyShaders.metallib" \
+        "$OPENSKY_DERIVED_DATA/Build/Products/$variant/"
+done
+
 guard_pid=""
 cleanup() {
     kill "${guard_pid:-}" 2>/dev/null || true

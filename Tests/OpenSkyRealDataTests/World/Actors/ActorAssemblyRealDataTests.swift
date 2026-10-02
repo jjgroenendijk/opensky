@@ -14,8 +14,10 @@ import MetalKit
 @testable import OpenSkyWorld
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct ActorAssemblyRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor

@@ -4,6 +4,14 @@
       "id" : "4E9F1C20-0001-4A00-9B00-000000000001",
       "name" : "Unit",
       "options" : {}
+    },
+    {
+      "id" : "7B2C4D10-0000-4000-A000-00000000E001",
+      "name" : "Locale",
+      "options" : {
+        "language" : "nl",
+        "region" : "NL"
+      }
     }
   ],
   "defaultOptions" : {
@@ -226,17 +234,20 @@
         }
       ]
     },
+    "defaultTestExecutionTimeAllowance" : 120,
     "environmentVariableEntries" : [
       {
         "key" : "OPENSKY_SHADER_LIBRARY",
         "value" : "$(BUILD_DIR)/OpenSkyShaders.metallib"
       }
     ],
+    "maximumTestExecutionTimeAllowance" : 300,
     "targetForVariableExpansion" : {
       "containerPath" : "container:OpenSky.xcodeproj",
       "identifier" : "5A3BAE003000109100177F95",
       "name" : "OpenSky"
-    }
+    },
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {

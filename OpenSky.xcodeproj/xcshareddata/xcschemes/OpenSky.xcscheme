@@ -55,6 +55,9 @@
          <TestPlanReference
             reference = "container:Config/TestPlans/Sanitizers.xctestplan">
          </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/Perf.xctestplan">
+         </TestPlanReference>
       </TestPlans>
    </TestAction>
    <LaunchAction

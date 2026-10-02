@@ -80,6 +80,10 @@ with "timed out while preparing". Clicking Allow once let the run continue. The 
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
 
+Observed 2026-10-01 in a linked worktree: `make test-ui` stops again at "Timed out while enabling
+automation mode", so the UI plan's slowest test could not be measured for its time allowance
+([test runs](/tools/test-runs.md#timeouts)).
+
 Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
 `testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation
 failed." The likely cause is a missing Screen Recording grant for `OpenSkyUITests-Runner.app`.
@@ -219,3 +223,19 @@ before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirt
 
 Retires when swift-build reports a replayed job to the driver: then `make cli` followed by
 `make test` compiles no Swift file.
+
+## The CI runner builds with an older Xcode than this machine
+
+Observed 2026-10-01. The `macos-26` runner image uses Xcode 26.6 with Swift 6.3.3, the floor
+that `make swift-baseline` checks. This machine uses Xcode 27.0 with Swift 6.4. So code that only
+Swift 6.4 or the macOS 27 SDK accepts builds here and fails in the CI `Build & test` job.
+Examples seen: the macOS 26 SDK does not mark `AVAudioPlayerNode` as `Sendable`, and Swift 6.3
+rejects some conformances that Swift 6.4 infers as main-actor. Fix the code so both accept it.
+
+The runner's GPU is "Apple Paravirtual device", and `supportsFamily(.metal4)` is false. So every
+test that needs Metal 4 skips in CI and runs only on a developer machine.
+
+An `xcode-27` image exists as a public preview
+([runner-images #14404](https://github.com/actions/runner-images/issues/14404)).
+
+Retires when CI moves to an image whose Xcode matches this machine.

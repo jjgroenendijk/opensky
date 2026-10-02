@@ -7,8 +7,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFActionInventoryTests {
     @Test func opcodeFrequencyAndUnknownOpcodesAreTallied() throws {
         let movie = try SWFDisplayFixture.movie(tags: [

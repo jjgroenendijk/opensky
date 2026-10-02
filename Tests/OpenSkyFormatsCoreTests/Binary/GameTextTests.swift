@@ -4,8 +4,10 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct GameTextTests {
     @Test func prefersUTF8WhenTheBytesAreValidUTF8() {
         // "Brûlé" as UTF-8: the accented letters are two-byte sequences.

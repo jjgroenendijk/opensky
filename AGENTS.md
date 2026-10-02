@@ -216,7 +216,7 @@ the skill.
 | --- | --- |
 | `starting-roadmap-work` | Choosing the next item, starting an issue, or closing a milestone |
 | `committing-and-landing-work` | Committing, pushing, or opening and merging a pull request |
-| `implementing-format-parsers` | Adding or changing any parser for ESM records, BSA, NIF, DDS, or LOD data |
+| `implementing-format-parsers` | Adding or changing any file format parser: ESM, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |

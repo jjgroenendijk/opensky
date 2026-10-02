@@ -12,8 +12,10 @@ import OpenSkyPerceptionTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 @MainActor
 struct PerceptionRealDataTests {
     /// How far out the approach starts and how far each stride carries it,

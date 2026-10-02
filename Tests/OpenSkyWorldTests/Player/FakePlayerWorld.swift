@@ -11,6 +11,7 @@ import GameDataTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 
+@MainActor
 final class FakePlayerWorld: PlayerWorld {
     var playerLocomotion: LocomotionBridge? = LocomotionBridge(configuration: .synthetic)
     var isWalkModeActive = true

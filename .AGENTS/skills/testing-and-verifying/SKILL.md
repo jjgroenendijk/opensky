@@ -22,16 +22,20 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | --- | --- |
 | Docs, skills, Markdown only | `make check` |
 | Makefile or `tools/` script | `make check`, then run the changed target or script once |
-| Parser or math routine | New or updated synthetic-fixture tests, `make test-fast T='Suite'` for the suites that cover it |
+| Parser | New or updated synthetic-fixture tests, `make test-fast T='Suite'`, then `make test-fast TAG=parser` before pushing |
+| Math routine | New or updated tests, `make test-fast T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-fast T='Suite'` for its suites, then `make test-fast` (whole unit plan) once before pushing |
 | Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, then `make test-fast` |
-| Rendering or shaders | Unit tests plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
+| Rendering or shaders | `make test-fast TAG=gpu`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make realtest T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
 | Milestone acceptance | `make realtest-all`, `make test-sanitize`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`.
+A tag runs one kind of suite across every unit target: `TAG=parser`, `gpu`, `acceptance`, or
+`slow`. The tags and the rule for which a new suite must carry are in `Tests/AGENTS.md`;
+`make test-tags` checks them.
 Suite names follow the type under test (`BSAArchive` is covered by `BSAArchiveTests`).
 
 A behavior change without a test that would have failed before it is unverified: write the
@@ -53,8 +57,10 @@ test first, watch it fail, then fix.
 - `make verify-build` compiles the app, `OpenSkyCLI`, and both unit bundles without running
   a test. It is the only routine command that compiles `OpenSkyRealDataTests`, and the
   cheapest way to catch a type change that breaks a target you did not test.
-- After a failure, `make test-report` names the failing tests and messages. Do not
-  hand-parse `.xcresult` JSON.
+- After a failure, `make test-report` names the failing tests and messages, and shows
+  time per tag. Do not hand-parse `.xcresult` JSON.
+- Every plan sets a time allowance. A test that fails on it is a hang to fix, not a
+  limit to raise: a raised limit hides the next hang too.
 
 ## Long runs
 
@@ -78,8 +84,16 @@ These guard the machine and are not optional:
   memory watchdog; a raw `xcodebuild` against the install once ran to 30 GB and locked the
   machine.
 - Iterate with `make realtest T=...` on one test. Rerun it only after a change that could
-  alter the result; a flaky result needs its cause found, not a second run.
+  alter the result.
+- A perf gate carries the `.perf` tag; `make realtest-perf` runs every one, built optimized.
 - Captures and probe output go under `logs/` (root `AGENTS.md`, Legal & IP boundary).
+
+## Flaky tests
+
+A test that fails, then passes on the same code, is flaky. Do not rerun it until it passes,
+and never add a retry: both hide a real bug. `make test-repeat T='Suite/test()'` shows it
+fails sometimes. Then follow the rule in `Tests/AGENTS.md`: disable it with
+`.disabled("flaky: #NNN")` and open a `bug` issue with the run directory.
 
 ## Report it
 

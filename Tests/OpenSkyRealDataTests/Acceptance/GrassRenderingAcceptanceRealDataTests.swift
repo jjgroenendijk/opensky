@@ -12,8 +12,10 @@ import MetalKit
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance, .gpu))
 struct GrassRenderingAcceptanceRealDataTests {
     private static let width = 640
     private static let height = 360

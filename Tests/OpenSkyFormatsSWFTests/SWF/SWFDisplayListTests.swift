@@ -7,8 +7,10 @@ import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct SWFColorTransformTests {
     @Test func multiplyOnlyCxformDecodes() throws {
         var writer = SWFBitWriter()
@@ -77,6 +79,7 @@ struct SWFColorTransformTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct SWFPlacementDecodeTests {
     @Test func placeObjectDecodesMatrixAndOptionalCxform() throws {
         let tag = SWFDisplayFixture.placeObjectTag(
@@ -194,6 +197,7 @@ struct SWFPlacementDecodeTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct SWFTransformTests {
     @Test func matrixLiftMatchesSpecSemantics() {
         var matrix = SWFMatrix.identity

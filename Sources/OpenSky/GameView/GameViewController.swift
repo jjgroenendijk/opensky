@@ -380,7 +380,7 @@ final class GameViewController: NSViewController {
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding {}
 
-extension GameViewController: SystemMenuWorld {
+extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
         NSApplication.shared.terminate(nil)
     }

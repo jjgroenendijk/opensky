@@ -5,8 +5,10 @@
 import FormatsSWFTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct AS2InterpreterTests {
     @Test func addsNumbers() {
         let value = AS2Fixture.evaluate([

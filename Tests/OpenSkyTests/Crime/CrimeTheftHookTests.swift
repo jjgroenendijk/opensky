@@ -15,7 +15,7 @@ import Testing
 
 @MainActor
 struct CrimeTheftHookTests {
-    private typealias Chain = M12AcceptanceChain
+    private typealias Chain = InventoryAcceptanceChain
 
     private let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
 
@@ -37,7 +37,7 @@ struct CrimeTheftHookTests {
         }
 
         func crimeCell(of key: ReferenceKey) -> CellSceneLocation? {
-            M12AcceptanceChain.cell
+            InventoryAcceptanceChain.cell
         }
 
         func crimeItemValue(of item: FormID) -> Int64 {

@@ -14,6 +14,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
+@testable import OpenSkyProgressionInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd

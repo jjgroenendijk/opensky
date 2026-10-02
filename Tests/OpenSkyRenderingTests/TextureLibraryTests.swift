@@ -9,8 +9,10 @@ import Metal
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct TextureLibraryTests {
     /// nil when this machine cannot run BCn upload tests.
     private static let bcDevice: MTLDevice? = {

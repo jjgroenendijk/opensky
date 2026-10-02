@@ -5,8 +5,10 @@ import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFRigidBodyDynamicsTests {
     private let scale = NIFCollisionModel.havokToEngineScale
 

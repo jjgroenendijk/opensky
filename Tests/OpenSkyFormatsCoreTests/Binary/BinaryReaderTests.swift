@@ -3,8 +3,10 @@
 @testable import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct BinaryReaderTests {
     @Test func readsLittleEndianIntegers() throws {
         var reader = BinaryReader(Data([0x01, 0x02, 0x03, 0x04, 0xFF, 0x00, 0x00, 0x00]))

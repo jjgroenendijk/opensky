@@ -8,6 +8,7 @@ import MetalKit
 @testable import OpenSkyWorld
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
 private final class SyntheticBoneAnimation: RenderAnimation {
@@ -28,6 +29,7 @@ private final class SyntheticBoneAnimation: RenderAnimation {
     }
 }
 
+@Suite(.tags(.gpu))
 struct ActorAnimationRenderTests {
     private static let device: MTLDevice? = {
         guard

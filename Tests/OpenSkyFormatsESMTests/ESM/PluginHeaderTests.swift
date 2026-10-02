@@ -5,8 +5,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct PluginHeaderTests {
     @Test func decodesMinimalTES4() throws {
         let file = try ESMFile(data: ESMFixture.tes4())

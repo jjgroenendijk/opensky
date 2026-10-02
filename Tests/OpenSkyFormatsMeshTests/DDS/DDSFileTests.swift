@@ -3,8 +3,10 @@
 import FormatsMeshTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct DDSFileTests {
     @Test func decodesBC1WithFullMipChain() throws {
         let file = try DDSFile(data: DDSFixture.file(
@@ -227,6 +229,7 @@ struct DDSFileTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct DDSUncompressedFileTests {
     @Test func decodesRGBA8888ObjectAtlasLayout() throws {
         let file = try DDSFile(data: DDSFixture.rgba8888File(

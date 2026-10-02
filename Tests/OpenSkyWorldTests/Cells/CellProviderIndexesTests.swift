@@ -5,8 +5,10 @@ import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct CellProviderIndexesTests {
     @Test
     @MainActor

@@ -6,8 +6,10 @@ import Foundation
 import Metal
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyRendering
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct TextureLoaderTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

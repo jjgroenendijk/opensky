@@ -14,6 +14,7 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
 /// A movie whose `highlight` clip is hidden by an alpha-zero CXFORM and whose
@@ -103,6 +104,7 @@ private enum SWFInteractiveFixture {
     static let elsewhere = (x: 20.0, y: 20.0)
 }
 
+@Suite(.tags(.acceptance, .gpu))
 struct RendererSWFInteractiveAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

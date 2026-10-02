@@ -7,9 +7,11 @@ import FormatsCoreTesting
 import Foundation
 import ImageIO
 @testable import OpenSkyFormatsSWF
+import TagsTesting
 import Testing
 import UniformTypeIdentifiers
 
+@Suite(.tags(.parser))
 struct SWFBitmapTests {
     // MARK: - Fixture helpers
 

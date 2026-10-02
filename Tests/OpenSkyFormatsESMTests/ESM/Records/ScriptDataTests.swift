@@ -3,9 +3,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
-@Suite("VMAD script data")
+@Suite("VMAD script data", .tags(.parser))
 struct ScriptDataTests {
     @Test("decodes every scalar and array property type")
     func decodesPropertyMatrix() throws {

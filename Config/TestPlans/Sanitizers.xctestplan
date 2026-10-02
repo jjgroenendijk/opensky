@@ -237,7 +237,21 @@
           "name" : "OpenSkyMenus"
         }
       ]
-    }
+    },
+    "defaultTestExecutionTimeAllowance" : 600,
+    "environmentVariableEntries" : [
+      {
+        "key" : "OPENSKY_SHADER_LIBRARY",
+        "value" : "$(BUILD_DIR)/OpenSkyShaders.metallib"
+      }
+    ],
+    "maximumTestExecutionTimeAllowance" : 1800,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:OpenSky.xcodeproj",
+      "identifier" : "5A3BAE003000109100177F95",
+      "name" : "OpenSky"
+    },
+    "testTimeoutsEnabled" : true
   },
   "testTargets" : [
     {

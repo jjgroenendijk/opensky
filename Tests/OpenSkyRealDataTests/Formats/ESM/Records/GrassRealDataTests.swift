@@ -10,8 +10,10 @@ import Metal
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct GrassRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sweepsEveryGrassAndLandTexture() throws {

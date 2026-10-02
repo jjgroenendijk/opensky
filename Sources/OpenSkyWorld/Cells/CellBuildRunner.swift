@@ -282,9 +282,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     }
 
     public func drainCompleted() -> [CellBuildResult] {
-        let out = results.withLock {
-            defer { $0.cells.removeAll(keepingCapacity: true) }
-            return $0.cells
+        let out = results.withLock { state in
+            defer { state.cells.removeAll(keepingCapacity: true) }
+            return state.cells
         }
         bookkeeping.withLock { $0.pending.subtract(out.map(\.coordinate)) }
         return out
@@ -320,9 +320,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     }
 
     public func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
-        let out = results.withLock {
-            defer { $0.distantLOD.removeAll(keepingCapacity: true) }
-            return $0.distantLOD
+        let out = results.withLock { state in
+            defer { state.distantLOD.removeAll(keepingCapacity: true) }
+            return state.distantLOD
         }
         bookkeeping.withLock { $0.pendingLOD.subtract(out.map(\.center)) }
         return out
@@ -341,9 +341,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     }
 
     public func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
-        let out = results.withLock {
-            defer { $0.doorTransitions.removeAll(keepingCapacity: true) }
-            return $0.doorTransitions
+        let out = results.withLock { state in
+            defer { state.doorTransitions.removeAll(keepingCapacity: true) }
+            return state.doorTransitions
         }
         bookkeeping.withLock { $0.pendingDoorTransitions.subtract(out.map(\.sourceDoor)) }
         return out

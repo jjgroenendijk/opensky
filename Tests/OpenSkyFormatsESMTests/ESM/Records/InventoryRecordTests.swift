@@ -7,8 +7,10 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct InventorySubrecordTests {
     @Test func objectBoundsDecodesSignedCorners() throws {
         var data = Data()
@@ -66,6 +68,7 @@ struct InventorySubrecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct MiscItemRecordTests {
     @Test func decodesMiscellaneousItem() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("Gold001"))
@@ -132,6 +135,7 @@ struct MiscItemRecordTests {
     }
 }
 
+@Suite(.tags(.parser))
 struct BookRecordTests {
     @Test func decodesSkillBook() throws {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("SkillBook"))

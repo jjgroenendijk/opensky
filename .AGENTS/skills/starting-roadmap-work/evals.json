@@ -56,5 +56,16 @@
       "Does not load starting-roadmap-work or query GitHub milestones",
       "Makes the rename directly"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Start the next issue in M30. The lowest open item already has a draft PR.",
+    "files": [],
+    "expected_behavior": [
+      "Checks gh pr list --state open before picking",
+      "Skips the item with the open PR and takes the next lowest roadmap number"
+    ]
   }
 ]

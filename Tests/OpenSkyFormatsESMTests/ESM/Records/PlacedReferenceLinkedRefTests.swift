@@ -6,8 +6,10 @@ import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct PlacedReferenceLinkedRefTests {
     private static let keyword = FormID(0x0006_5EBB)
     private static let target = FormID(0x0001_2345)

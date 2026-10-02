@@ -6,9 +6,10 @@ import FormatsESMTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import TagsTesting
 import Testing
 
-@Suite("QUST aliases")
+@Suite("QUST aliases", .tags(.parser))
 struct QuestAliasRecordTests {
     /// One row of the fill-type matrix: the subrecords an alias carries and
     /// the fill type they should add up to.

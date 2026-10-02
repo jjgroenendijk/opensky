@@ -3,12 +3,12 @@
     "skills": [
       "building-app-ui"
     ],
-    "query": "Add a toggle to force rain in the weather panel.",
+    "query": "Add a slider to override the wind speed in the weather panel.",
     "files": [],
     "expected_behavior": [
       "Adds the control to the existing weather section rather than a new destination",
       "Builds it from PanelComponents and PanelMetrics",
-      "Gives it a <Thing>Control accessibility id and pins it in DestinationRegistryTests"
+      "Gives it a <Thing>Control accessibility id and pins it as a literal in the panel test"
     ]
   },
   {
@@ -19,8 +19,8 @@
     "files": [],
     "expected_behavior": [
       "Registers one DestinationDescriptor in DestinationRegistry.all without editing shell view controllers",
-      "Follows the shape of ScriptsPanelViewController",
-      "Keeps the AppKit code under Sources/OpenSky/"
+      "Follows the shape of ScriptsPanelViewController and AudioFootstepsSection",
+      "Keeps the AppKit code under Sources/OpenSky/ and pins Destination-<id> in DestinationRegistryTests"
     ]
   },
   {
@@ -32,6 +32,18 @@
     "expected_behavior": [
       "Refuses a keystroke-only toggle",
       "Adds a panel control first, and registers the shortcut in the main menu only as an accelerator for it"
+    ]
+  },
+  {
+    "skills": [
+      "building-app-ui"
+    ],
+    "query": "Add a panel section that shows each guard's alarm state and lets me clear it. Put the logic in a GameViewController+Guards.swift file.",
+    "files": [],
+    "expected_behavior": [
+      "Declines the GameViewController+ file and puts the logic in a coordinator in OpenSkyCrime",
+      "Adds the members to a ControlProviding protocol in the feature module and forwards them in GameViewControllerPanels.swift",
+      "Tests the coordinator with make test-fast and the section in Tests/OpenSkyTests/App/Panels/"
     ]
   }
 ]

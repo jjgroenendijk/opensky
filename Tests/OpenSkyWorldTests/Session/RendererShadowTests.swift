@@ -12,8 +12,10 @@ import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import RenderingTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.gpu))
 struct RendererShadowTests {
     @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device))
     @MainActor

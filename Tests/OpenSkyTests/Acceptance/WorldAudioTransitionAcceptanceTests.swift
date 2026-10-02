@@ -14,8 +14,10 @@ import Foundation
 import OpenSkyWorldFixtures
 import OpenSkyWorldTesting
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct WorldAudioTransitionAcceptanceTests {
     /// The full sequence: an exterior cell arrives with a region bed and an

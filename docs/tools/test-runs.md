@@ -15,15 +15,81 @@ behaviors they depend on, with the dates they were seen, are on the
 
 ## Test plans
 
-Which bundles a run touches is a checked-in test plan, not a flag. The `OpenSky` scheme has four,
-under `Config/`:
+Which bundles a run touches is a checked-in test plan, not a flag. The `OpenSky` scheme has five,
+under `Config/TestPlans/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test`, `make test-fast`, `make test-one`. The scheme default |
+| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test`, `make test-fast`, `make test-one`, `make test-repeat`. The scheme default |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make realtest`, `make realtest-all` |
+| `Perf.xctestplan` | `OpenSkyRealDataTests`, only the tests tagged `perf`, plus the data root | `make realtest-perf` |
 | `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize` |
+
+The unit plan has two configurations. `Unit` is the normal run, and every command but one names it
+with `-only-test-configuration`, because xcodebuild runs every configuration of a plan when none is
+named. `Locale` sets the language to `nl` and the region to `NL`, where the decimal separator is a
+comma, and `make test-locale` runs it. It catches text parsing that reads the user's locale. Both
+configurations share one build, because neither changes a build setting.
+
+`make test-plans`, part of `make lint`, checks the rules below that a machine can check: every plan
+is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It also checks
+that the Perf plan selects only the `perf` tag with the RealData data root, and that the sanitizer
+plan lists the unit plan's targets and sets its environment, such as the shader library path.
+
+## Timeouts
+
+Every plan sets `testTimeoutsEnabled`, `defaultTestExecutionTimeAllowance`, and
+`maximumTestExecutionTimeAllowance`. A test that runs past its allowance fails with its name and
+"Test exceeded execution time allowance", and the test host is stopped. Without it, a hung test
+blocks `xcodebuild` until someone kills it, as the `AVAudioPlayerNode.playerTime` hang did
+([environment](/tools/environment.md)). This works for Swift Testing tests, both a test blocked on a
+thread and one awaiting forever. Other tests in the same host stop with it and are not named.
+
+An allowance has a minimum of 60 seconds. Each value sits well above the slowest test of the plan,
+measured serially with `-parallel-testing-enabled NO`:
+
+| Plan | Slowest test | Default | Maximum |
+| --- | --- | --- | --- |
+| `UnitTests` | 10 s | 120 s | 300 s |
+| `UITests` | not measured ([permission grants](/tools/environment.md#permission-grants)) | 300 s | 600 s |
+| `RealData`, `Perf` | 152 s | 600 s | 1800 s |
+| `Sanitizers` | 25 s | 600 s | 1800 s |
+
+A parallel run reports a test's time including its wait for the main actor, up to 20 s for a unit
+test that alone takes milliseconds, so the unit allowance leaves room for that. A test that fails on
+its allowance is a hang to find, not a limit to raise.
+
+## Tags
+
+Swift Testing tags label suites and tests: `.gpu`, `.slow`, `.acceptance`, `.perf`, and `.parser`,
+from `Tests/TagsTesting/Tags.swift`. `Tests/AGENTS.md` says which suite carries which, and
+`make test-tags` checks the ones a machine can find.
+
+A plan's `selectedTests` matches no Swift Testing test, but its `selectedTags` does. Each test
+target entry takes `"selectedTags" : { "tags" : [ "perf" ] }`, which xcodebuild writes into the
+`.xctestrun` as `OnlyTestingTags`. The Perf plan ran exactly the two tagged tests of
+`OpenSkyRealDataTests` this way. xcodebuild has no flag for it, so `make test-fast TAG=parser` writes
+`OnlyTestingTags` into a copy of the cached `.xctestrun` for every target of the unit plan.
+
+A tag cannot replace a plan. A plan chooses the bundles that are built and the environment of the
+host; a tag only chooses tests inside them. So the real-data suites stay in their own bundle.
+
+`make test-report` prints passed, failed, and time per tag. A result bundle does not carry the tags,
+so the report reads them from the sources and matches each test by suite and name.
+
+## Repeat and locale runs
+
+`make test-repeat T='Suite/test()' N=100` passes `-run-tests-until-failure -test-iterations N` and
+stops at the first failure. It is a make target and not a plan configuration on purpose. A plan with
+`testRepetitionMode` would repeat every run that uses the plan, and a retry on failure hides the
+failure a flaky hunt is looking for. `make test-plans` fails a plan that sets either.
+
+## Attachments
+
+A green unit run writes a result bundle of about 113 MB with no attachments at all. The largest part
+is the coverage archive. So the plans leave `userAttachmentLifetime` and `systemAttachmentLifetime`
+at their defaults: deleting attachments on success would save nothing.
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
@@ -65,10 +131,10 @@ cached `.xctestrun`.
 ## The RealData plan
 
 `Config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
-macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters, and this entry is the
-one place the root is set. `tools/realtest.sh` reads it back and refuses to run when a different
-`OPENSKY_DATA_ROOT` is exported, instead of testing an install the plan does not name. To use
-another install, edit the plan.
+macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The Perf plan holds the
+same path, and `make test-plans` fails when the two differ. `tools/realtest.sh` reads the root back
+and refuses to run when a different `OPENSKY_DATA_ROOT` is exported, instead of testing an install
+the plan does not name. To use another install, edit both plans.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
 plan selects the whole target, which does work. That is why the real-data suites are their own

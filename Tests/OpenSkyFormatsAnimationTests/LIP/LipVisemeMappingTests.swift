@@ -1,7 +1,8 @@
 @testable import OpenSkyFormatsAnimation
+import TagsTesting
 import Testing
 
-@Suite("LIP slot to TRI target mapping")
+@Suite("LIP slot to TRI target mapping", .tags(.parser))
 struct LipVisemeMappingTests {
     @Test("the inferred speech table is complete, unique and stable")
     func table() {

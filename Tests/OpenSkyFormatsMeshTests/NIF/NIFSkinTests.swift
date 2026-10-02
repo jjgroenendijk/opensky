@@ -5,8 +5,10 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import simd
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct NIFSkinTests {
     private static let attributes: UInt16 = 0x43 // vertex|uvs|skinned
     private static let positions = [

@@ -5,8 +5,10 @@
 import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct BSAArchiveTests {
     // Same hand-assembled LZ4 vector as LZ4Tests: "abcdabcdabcdXYZQW".
     private static let lz4Plain = Data("abcdabcdabcdXYZQW".utf8)

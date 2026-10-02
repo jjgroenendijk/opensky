@@ -6,8 +6,10 @@ import Foundation
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
+import TagsTesting
 import Testing
 
+@Suite(.tags(.acceptance))
 @MainActor
 struct PapyrusAcceptanceRealDataTests {
     private struct RunEvidence {

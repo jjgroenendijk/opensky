@@ -6,9 +6,10 @@ import FormatsAudioTesting
 import FormatsCoreTesting
 import Foundation
 @testable import OpenSkyFormatsAudio
+import TagsTesting
 import Testing
 
-@Suite("XWM framing")
+@Suite("XWM framing", .tags(.parser))
 struct XWMFileTests {
     @Test("well-formed file exposes codec parameters, packet table and payload")
     func happyPath() throws {
@@ -95,7 +96,7 @@ struct XWMFileTests {
     }
 }
 
-@Suite("XWM malformed input")
+@Suite("XWM malformed input", .tags(.parser))
 struct XWMFileMalformedTests {
     @Test("a buffer shorter than the RIFF header throws")
     func truncatedHeader() {
