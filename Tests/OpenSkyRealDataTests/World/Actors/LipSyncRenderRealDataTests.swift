@@ -59,6 +59,6 @@ struct LipSyncRenderRealDataTests {
     }
 
     private var runDirectory: URL {
-        get throws { try RepositoryLogs.directory("test-fast/latest") }
+        get throws { try RepositoryLogs.createdDirectory("lip-sync-render") }
     }
 }
