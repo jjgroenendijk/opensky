@@ -50,10 +50,13 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     public enum Family: String, Equatable, CaseIterable, Sendable {
         case armor = "ARMO"
         case ammunition = "AMMO"
+        case apparatus = "APPA"
         case book = "BOOK"
         case ingestible = "ALCH"
         case ingredient = "INGR"
+        case key = "KEYM"
         case miscellaneous = "MISC"
+        case soulGem = "SLGM"
         case weapon = "WEAP"
 
         /// The top group this family lives in. `FourCC` only builds from a
@@ -63,10 +66,13 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
             switch self {
             case .armor: "ARMO"
             case .ammunition: "AMMO"
+            case .apparatus: "APPA"
             case .book: "BOOK"
             case .ingestible: "ALCH"
             case .ingredient: "INGR"
+            case .key: "KEYM"
             case .miscellaneous: "MISC"
+            case .soulGem: "SLGM"
             case .weapon: "WEAP"
             }
         }
@@ -262,14 +268,20 @@ nonisolated public final class ItemDefinitionStore {
             try view(Armor(record: record, localized: localized), enchantments)
         case .ammunition:
             try view(Ammunition(record: record, localized: localized))
+        case .apparatus:
+            try view(Apparatus(record: record, localized: localized))
         case .book:
             try view(Book(record: record, localized: localized))
         case .ingestible:
             try view(Ingestible(record: record, localized: localized))
         case .ingredient:
             try view(Ingredient(record: record, localized: localized))
+        case .key:
+            try view(KeyItem(record: record, localized: localized))
         case .miscellaneous:
             try view(MiscItem(record: record, localized: localized))
+        case .soulGem:
+            try view(SoulGem(record: record, localized: localized))
         case .weapon:
             try view(Weapon(record: record, localized: localized), enchantments)
         }
@@ -346,6 +358,18 @@ nonisolated extension ItemDefinitionStore {
         view(item.formID, .miscellaneous, item.fields, item.itemValue)
     }
 
+    fileprivate static func view(_ key: KeyItem) -> ItemDefinition {
+        view(key.formID, .key, key.fields, key.itemValue)
+    }
+
+    fileprivate static func view(_ gem: SoulGem) -> ItemDefinition {
+        view(gem.formID, .soulGem, gem.fields, gem.itemValue)
+    }
+
+    fileprivate static func view(_ apparatus: Apparatus) -> ItemDefinition {
+        view(apparatus.formID, .apparatus, apparatus.fields, apparatus.itemValue)
+    }
+
     fileprivate static func view(
         _ weapon: Weapon,
         _ enchantments: ItemEnchantmentResolver?
@@ -363,7 +387,7 @@ nonisolated extension ItemDefinitionStore {
         )
     }
 
-    /// Shared projection for the six families that compose
+    /// Shared projection for the families that compose
     /// `InventoryItemFields`. ARMO has its own because its decoder predates
     /// that helper and keeps its fields flat.
     fileprivate static func view(

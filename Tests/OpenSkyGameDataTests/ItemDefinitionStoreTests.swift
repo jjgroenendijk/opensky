@@ -1,4 +1,4 @@
-// ItemDefinitionStore indexing across the seven carryable families plus the
+// ItemDefinitionStore indexing across the carryable families plus the
 // separate container index. Fixtures are synthetic plugins built in code —
 // never extracted game files (AGENTS.md "Legal & IP boundary").
 
@@ -12,7 +12,7 @@ import Testing
 struct ItemDefinitionStoreTests {
     @Test func indexesEveryCarryableFamilyUnderOneView() throws {
         let store = try makeStore()
-        #expect(store.definitions.count == 7)
+        #expect(store.definitions.count == 10)
         #expect(store.definition(FormID(0x100))?.family == .miscellaneous)
         #expect(store.definition(FormID(0x200))?.family == .book)
         #expect(store.definition(FormID(0x300))?.family == .ingestible)
@@ -20,6 +20,9 @@ struct ItemDefinitionStoreTests {
         #expect(store.definition(FormID(0x500))?.family == .weapon)
         #expect(store.definition(FormID(0x600))?.family == .ammunition)
         #expect(store.definition(FormID(0x700))?.family == .armor)
+        #expect(store.definition(FormID(0x900))?.family == .key)
+        #expect(store.definition(FormID(0xA00))?.family == .soulGem)
+        #expect(store.definition(FormID(0xB00))?.family == .apparatus)
         #expect(store.definition(FormID(0x999)) == nil)
     }
 
@@ -70,8 +73,11 @@ struct ItemDefinitionStoreTests {
         #expect(store.definition(FormID(0x800)) == nil)
         let container = try #require(store.container(FormID(0x800)))
         #expect(container.base.editorID == "ChestSmall")
-        #expect(container.entries.map(\.item) == [FormID(0x100), FormID(0x200)])
-        #expect(container.entries.map(\.count) == [3, 1])
+        #expect(
+            container.entries.map(\.item) == [FormID(0x100), FormID(0x200), FormID(0x900)]
+        )
+        #expect(container.entries.map(\.count) == [3, 1, 1])
+        #expect(container.entries.allSatisfy { store.definition($0.item) != nil })
     }
 
     @Test func definitionsOfFamilyAreSortedByFormID() throws {
@@ -110,6 +116,9 @@ struct ItemDefinitionStoreTests {
         contents += ESMFixture.topGroup("WEAP", contents: weaponRecord())
         contents += ESMFixture.topGroup("AMMO", contents: ammunitionRecord())
         contents += ESMFixture.topGroup("ARMO", contents: armorRecord())
+        contents += ESMFixture.topGroup("KEYM", contents: valueRecord("KEYM", 0x900, value: 0))
+        contents += ESMFixture.topGroup("SLGM", contents: valueRecord("SLGM", 0xA00, value: 10))
+        contents += ESMFixture.topGroup("APPA", contents: valueRecord("APPA", 0xB00, value: 15))
         contents += ESMFixture.topGroup("CONT", contents: containerRecord())
         return try ItemDefinitionStore(file: ESMFile(data: contents))
     }
@@ -182,10 +191,18 @@ struct ItemDefinitionStoreTests {
         return ESMFixture.record("ARMO", formID: 0x700, data: fields)
     }
 
+    private func valueRecord(_ type: String, _ formID: UInt32, value: Int32) -> Data {
+        let fields = ESMFixture.field(
+            "DATA", InventoryFixture.valueWeightData(value: value, weight: 0.5)
+        )
+        return ESMFixture.record(type, formID: formID, data: fields)
+    }
+
     private func containerRecord() -> Data {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring("ChestSmall"))
         fields += ESMFixture.field("CNTO", InventoryFixture.cntoData(item: 0x100, count: 3))
         fields += ESMFixture.field("CNTO", InventoryFixture.cntoData(item: 0x200, count: 1))
+        fields += ESMFixture.field("CNTO", InventoryFixture.cntoData(item: 0x900, count: 1))
         return ESMFixture.record("CONT", formID: 0x800, data: fields)
     }
 }

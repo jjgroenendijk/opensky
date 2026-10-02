@@ -34,7 +34,8 @@ Three rules are choices, not results:
 - Rows sort by name, then FormID. So two items with the same name always have the same order.
 
 Categories group items by record type: All, Weapons (`WEAP` and `AMMO`), Armor, Potions,
-Ingredients, Books, and Misc. This is OpenSky's own grouping of the [item records](/formats/item-records.md)
+Ingredients, Books, and Misc. Misc also holds keys (`KEYM`), soul gems (`SLGM`), and alchemy
+apparatus (`APPA`). This is OpenSky's own grouping of the [item records](/formats/item-records.md)
 it decodes, not Bethesda's category numbers. An item of unknown type shows under Misc, so All is not
 the only way to find it.
 
