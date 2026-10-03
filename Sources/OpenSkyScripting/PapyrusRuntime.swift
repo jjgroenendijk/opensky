@@ -66,7 +66,8 @@ public final class PapyrusRuntime {
         let instance = PapyrusInstance(
             handle: handle,
             rootScriptName: root.name,
-            activeState: root.automaticStateName,
+            // A child with no auto state starts in its parent's (CK wiki, "States (Papyrus)").
+            activeState: chain.lazy.map(\.automaticStateName).first { !$0.isEmpty } ?? "",
             variablesByScript: storage
         )
         for (name, value) in initialValues {

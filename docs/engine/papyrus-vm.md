@@ -49,14 +49,19 @@ Number conversion accepts booleans and numeric strings, including the `0x` integ
 ## Instances
 
 The runtime finds scripts by name, ignoring case. A new instance gets storage for its script and
-every parent, and starts in the root script's automatic state.
+every parent. It starts in the automatic state of the first script, from child to parent, that names
+one. So a child with an empty automatic state starts in its parent's, as
+[States (Papyrus)](https://ck.uesp.net/wiki/States_(Papyrus)) says. The shipped `Tripwire` relies on
+this: it names no state, and `TrapTriggerBase` names `Inactive`.
 
 A handle does not need an instance. `VMAD` may inject a world object whose scripts are not loaded.
 A method call on that handle goes straight to native dispatch, and the script name is the declared
 Papyrus type of the receiver.
 
 Variables are stored under the script that declared them. So a child and a parent can each own a
-private variable with the same name, and a function reads the scope of its own script. The
+private variable with the same name, and a function reads the scope of its own script first. When
+its own script declares no such name, lookup walks up the parent chain. The install needs this: the
+shipped `PressurePlate` writes `::Type_var`, which only its parent `TrapTriggerBase` declares. The
 initial-values table replaces the first match from child to parent after checking the type. This is
 the seam [VMAD binding](/formats/vmad.md) uses: it resolves direct object form IDs and uses the
 automatic backing variable name stored in the PEX.
@@ -67,9 +72,10 @@ A frame holds the function, its script, the instance handle if any, parameters a
 instruction pointer, and what to do on completion: return the result, assign it into the caller, or
 drop a setter's result.
 
-The loop moves the instruction pointer forward before it runs the instruction. So a relative branch
-adds its offset to the next index. A target equal to the instruction count ends the function with
-its declared default. Any other out-of-range target is a fault.
+A branch offset is relative to the branch instruction itself, so `jmp 1` goes to the next
+instruction. The install confirms it: compiled functions end in `jmp 1` as their last instruction,
+which only makes sense as a jump to the end. A target equal to the instruction count ends the
+function with its declared default. Any other out-of-range target is a fault.
 
 All 36 PEX opcodes run: scalar (`nop`, assign, cast, return, not, negate), integer and float math,
 comparisons, jumps, method, parent, and static calls, property get and set, string concatenation,
@@ -159,8 +165,11 @@ order:
 3. the derived script in the empty state;
 4. each parent script in the empty state.
 
-`GotoState` and `GetState` are built into the VM when called on an instance. `GotoState` switches at
-once and the current function goes on. Later calls see the new state.
+`GotoState` and `GetState` are built into the VM when called on an instance. `GotoState` runs
+`OnEndState` in the old state, switches, then runs `OnBeginState` in the new state, all before the
+calling function goes on. Both hooks resolve like any other function, so a state without one uses the
+empty state's. Trap scripts fire from these hooks: a pressure plate activates itself in
+`active.onBeginState`.
 
 ## Bounds and faults
 
@@ -197,7 +206,7 @@ The public references do not fully describe the VM. These are OpenSky's choices:
 - Running off the end of a function returns the declared default.
 - An unknown or failed native returns its declared default after logging, because aborting would
   hide what the script does next.
-- `GotoState` sends no `OnEndState` or `OnBeginState`. The event queue belongs to the main-actor
-  world runtime, and `GotoState` runs inside the nonisolated interpreter, which cannot reach it.
+- `GetState` inside `OnEndState` already returns the new state. Both hooks run as frames that
+  `GotoState` pushes, and the switch happens before either frame starts.
 - Array find start clamping and the 100,000 element cap are defensive policy. The opcode table does
   not give either.

@@ -152,13 +152,13 @@ struct PapyrusScalarOpcodeTests {
 
     @Test func relativeJumpAndConditionalJumps() {
         let unconditional = branchOutcome(
-            op(.jump, .integer(1))
+            op(.jump, .integer(2))
         )
         let whenTrue = branchOutcome(
-            op(.jumpTrue, .boolean(true), .integer(1))
+            op(.jumpTrue, .boolean(true), .integer(2))
         )
         let whenFalse = branchOutcome(
-            op(.jumpFalse, .boolean(false), .integer(1))
+            op(.jumpFalse, .boolean(false), .integer(2))
         )
         #expect(Support.value(unconditional) == .integer(2))
         #expect(Support.value(whenTrue) == .integer(2))

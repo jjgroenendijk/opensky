@@ -48,13 +48,11 @@ extension PapyrusInterpreter {
         }
         if
             let instance = frame.instanceHandle.flatMap(runtime.instance(for:)),
-            let variable = frame.ownerScript.variables.first(where: {
-                PapyrusRuntime.matches($0.name, name)
-            })
+            let declared = try declaredVariable(name, frame: frame)
         {
-            let converted = try cast(value, to: PapyrusType(name: variable.typeName))
+            let converted = try cast(value, to: PapyrusType(name: declared.variable.typeName))
             _ = instance.setValue(
-                converted, named: variable.name, declaredBy: frame.ownerScript.name
+                converted, named: declared.variable.name, declaredBy: declared.owner.name
             )
             return
         }
@@ -77,12 +75,8 @@ extension PapyrusInterpreter {
         if let type = frame.localType(named: name) {
             return type
         }
-        if
-            let variable = frame.ownerScript.variables.first(where: {
-                PapyrusRuntime.matches($0.name, name)
-            })
-        {
-            return PapyrusType(name: variable.typeName)
+        if let declared = try declaredVariable(name, frame: frame) {
+            return PapyrusType(name: declared.variable.typeName)
         }
         throw .invalidOperand(
             instruction: instructionIndex,
@@ -217,16 +211,36 @@ extension PapyrusInterpreter {
         if let value = frame.localValue(named: name) {
             return value
         }
-        if
-            let instance = frame.instanceHandle.flatMap(runtime.instance(for:)),
-            let value = instance.value(named: name, declaredBy: frame.ownerScript.name)
-        {
-            return value
+        if let instance = frame.instanceHandle.flatMap(runtime.instance(for:)) {
+            let owner = try declaredVariable(name, frame: frame)?.owner.name ?? frame.ownerScript
+                .name
+            if let value = instance.value(named: name, declaredBy: owner) {
+                return value
+            }
         }
         throw .invalidOperand(
             instruction: instructionIndex,
             detail: "unknown identifier \(name)"
         )
+    }
+
+    /// Shipped child scripts name variables their parent declares (`PressurePlate`
+    /// writes `TrapTriggerBase`'s `::Type_var`), so lookup walks up the chain.
+    private func declaredVariable(
+        _ name: String,
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> (owner: PexObject, variable: PexVariable)? {
+        let chain = try [frame.ownerScript] + runtime
+            .scriptChain(from: frame.ownerScript.parentClassName)
+        for script in chain {
+            if
+                let variable = script.variables
+                    .first(where: { PapyrusRuntime.matches($0.name, name) })
+            {
+                return (script, variable)
+            }
+        }
+        return nil
     }
 
     private static func isDiscard(_ name: String) -> Bool {
