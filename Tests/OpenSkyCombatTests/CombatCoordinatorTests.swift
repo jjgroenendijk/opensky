@@ -33,6 +33,18 @@ struct CombatCoordinatorTests {
         #expect(coordinator.spawnDevProjectile() == "Archery unavailable: no game data loaded.")
     }
 
+    @Test func theLoopReadsTheStyleTheWorldResolves() {
+        let world = FakeCoordinatorWorld()
+        let style = CombatStyleTuning(
+            offensiveMultiplier: 1, defensiveMultiplier: 0.5, meleeScoreMultiplier: 1,
+            magicScoreMultiplier: 1, name: "csTestBrute"
+        )
+        world.styles[Self.guardKey] = style
+        let coordinator = Self.coordinator(world)
+        #expect(coordinator.combatStyle(of: Self.guardKey) == style)
+        #expect(coordinator.combatStyle(of: .player) == nil)
+    }
+
     @Test func meleeTargetsAreTheResidentActors() {
         let world = FakeCoordinatorWorld()
         world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0))]

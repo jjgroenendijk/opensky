@@ -115,6 +115,19 @@ extension CombatWorldAdapter: CombatWorld {
         game.perks.multiplier(at: entryPoint, on: key)
     }
 
+    /// ZNAM after template inheritance, read through the load-order CSTY store.
+    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        guard
+            case let .actor(base)? = game.actorWorld.actorValueHolder(for: key)?.subject,
+            let resolver = (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?
+                .resolver,
+            let link = try? resolver.templates.resolveCombatStyle(base: base).value,
+            let style = (game.worldData as? PresentationDataProviding)?.presentationRecords?
+                .combatStyles.resolve(link, fromPlugin: resolver.pluginName)
+        else { return nil }
+        return CombatStyleTuning(style: style.record)
+    }
+
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {
         guard
             let runtime = game.actorValues.runtime,

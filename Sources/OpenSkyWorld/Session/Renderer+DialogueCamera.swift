@@ -91,8 +91,20 @@ extension Renderer {
     /// live one is.
     public func applyDialogueCamera() {
         restorePlayerCameraPose()
+        let playerPose = freeFlyCamera
+        let shake = cinematicCameraState.shakeOffset
+        defer {
+            if dialogueCameraState.restorePose != nil || shake != .zero {
+                freeFlyCamera.position += shake
+                dialogueCameraState.restorePose = playerPose
+            }
+        }
+        if applyCinematicPose() {
+            dialogueCameraState.restorePose = playerPose
+            return
+        }
         guard let focus = dialogueCameraState.focus else { return }
-        dialogueCameraState.restorePose = freeFlyCamera
+        dialogueCameraState.restorePose = playerPose
         let pose = dialogueCameraState.camera.resolve(
             subject: DialogueCameraSubject(
                 headPosition: focus.headPosition,

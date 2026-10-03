@@ -38,9 +38,9 @@ struct ConditionMagicRealDataTests {
         let before = after - added
 
         #expect(coverage.total == 118_494)
-        #expect(before == 76579)
+        #expect(before == 76772)
         #expect(added == 618)
-        #expect(after == 77197)
+        #expect(after == 77390)
         // Every index registered is one vanilla data actually uses, which is
         // the measurement that chose them.
         for index in Self.magicIndices.sorted() {

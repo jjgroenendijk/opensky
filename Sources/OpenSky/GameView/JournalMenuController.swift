@@ -104,7 +104,7 @@ final class JournalMenuController {
 
     /// Names an alias by its fill, but only while that reference is in a loaded
     /// cell. Otherwise the page shows the tag as written.
-    private func aliasNaming(runtime: QuestRuntime) -> QuestAliasNaming {
+    func aliasNaming(runtime: QuestRuntime) -> QuestAliasNaming {
         let aliases = runtime.aliasResolution()
         return QuestAliasNaming { [weak self] quest, aliasID in
             // Only the page build calls this, on the main actor beside the

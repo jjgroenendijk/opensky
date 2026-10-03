@@ -1,5 +1,5 @@
 // World > HUD & Interaction: HUD element overrides, the crosshair target and
-// its prompt, and the item actions on that target. The items section takes its
+// its prompt, the item actions on that target, and the message tools. The items section takes its
 // own provider because it reads the world-item runtime, not the HUD.
 
 import AppKit
@@ -10,6 +10,7 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
     let elementsSection = HUDElementsSection()
     let targetSection = HUDTargetSection()
     let itemsSection = ItemsSection()
+    let messagesSection = MessagesSection()
 
     weak var provider: (any HUDControlProviding)? {
         didSet {
@@ -24,7 +25,11 @@ final class HUDInteractionPanelViewController: InspectorPanelViewController {
         didSet { itemsSection.provider = itemProvider }
     }
 
+    weak var messageProvider: (any MessageControlProviding)? {
+        didSet { messagesSection.provider = messageProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [elementsSection, targetSection, itemsSection]
+        [elementsSection, targetSection, itemsSection, messagesSection]
     }
 }

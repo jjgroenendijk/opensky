@@ -121,6 +121,8 @@ nonisolated public struct CombatLoopSnapshot: Equatable, Sendable {
 @MainActor
 public protocol CombatLoopControlProviding: AnyObject {
     var combatLoopSnapshot: CombatLoopSnapshot { get }
+    /// The selected actor's resolved CSTY and the settings it fights with.
+    var selectedCombatStyle: CombatStyleReadout? { get }
 
     /// Whether the selected actor — the crosshair target, else the nearest
     /// resident one — regards the player as an enemy. Settable, which is the

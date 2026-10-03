@@ -15,9 +15,10 @@ public final class PapyrusScheduler {
     /// accumulated seconds: `Double(n) * fixedStepSeconds` is computed in one
     /// rounding step, so `Utility.Wait(1.0)` at a 1/30 step wakes after exactly
     /// 30 ticks, where an accumulated `realSeconds` drifts past 31.
-    private enum Wake {
+    private enum Wake: Equatable {
         case realSteps(startTick: Int, duration: Double)
         case gameHours(Double)
+        case external(UInt64)
     }
 
     public let runtime: PapyrusRuntime
@@ -37,6 +38,7 @@ public final class PapyrusScheduler {
     private var nextOrder: UInt64 = 0
     private var entries: [Entry] = []
     private var terminal: [PapyrusRunOutcome] = []
+    private var answers: [UInt64: PapyrusValue] = [:]
 
     public init(
         runtime: PapyrusRuntime,
@@ -50,6 +52,26 @@ public final class PapyrusScheduler {
 
     public func schedule(_ outcome: PapyrusRunOutcome) {
         route(outcome)
+    }
+
+    /// Wakes the call waiting on `token` with `value` on the next tick. False
+    /// when no call waits on it.
+    @discardableResult
+    public func answer(_ token: UInt64, returning value: PapyrusValue) -> Bool {
+        guard entries.contains(where: { $0.wake == .external(token) }) else { return false }
+        answers[token] = value
+        return true
+    }
+
+    /// The tokens calls wait on, oldest first.
+    public var waitingTokens: [UInt64] {
+        entries.compactMap { entry in
+            if case let .external(token) = entry.wake {
+                token
+            } else {
+                nil
+            }
+        }
     }
 
     public func tick(gameClock: GameClock? = nil) -> [PapyrusRunOutcome] {
@@ -76,6 +98,8 @@ public final class PapyrusScheduler {
             .realSteps(startTick: tickCount, duration: max(0, seconds))
         case let .gameHours(hours):
             .gameHours(elapsedGameHours + max(0, hours))
+        case let .external(token):
+            .external(token)
         }
         entries.append(Entry(order: nextOrder, wake: wake, call: call))
         nextOrder &+= 1
@@ -102,15 +126,22 @@ public final class PapyrusScheduler {
             let dueOrders = Set(due.map(\.order))
             entries.removeAll { dueOrders.contains($0.order) }
             for entry in due {
-                let outcome = runtime.resume(entry.call)
+                let outcome = runtime.resume(entry.call, returning: answer(for: entry.wake))
                 onResume?(entry.call, outcome)
                 route(outcome)
             }
         }
     }
 
+    private func answer(for wake: Wake) -> PapyrusValue? {
+        guard case let .external(token) = wake else { return nil }
+        return answers.removeValue(forKey: token)
+    }
+
     private func isDue(_ wake: Wake) -> Bool {
         switch wake {
+        case let .external(token):
+            answers[token] != nil
         case let .realSteps(startTick, duration):
             Double(tickCount - startTick) * fixedStepSeconds >= duration
         case let .gameHours(value):

@@ -39,9 +39,9 @@ struct ConditionDataRealDataTests {
             "ccBGSSSE037-Curios.esl", "ccBGSSSE025-AdvDSGS.esm", "_ResourcePack.esl"
         ])
         #expect(coverage.total == 118_494)
-        #expect(beforeM18 == 69225)
+        #expect(beforeM18 == 69418)
         #expect(added == 7354)
-        #expect(afterM18 == 76579)
+        #expect(afterM18 == 76772)
         #expect(afterM18 > beforeM18)
         print(
             "[INFO] M18 condition coverage \(beforeM18)/\(coverage.total) -> "

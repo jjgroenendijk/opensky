@@ -41,11 +41,13 @@ extension Renderer {
     var rigDrawCount: Int {
         (frameDriver?.playerBodyRig?.render.drawCount ?? 0)
             + (frameDriver?.firstPersonRig?.render.drawCount ?? 0)
+            + (effects.loadingCover?.drawCount ?? 0)
     }
 
     var rigInstanceCount: Int {
         (frameDriver?.playerBodyRig?.render.instanceCount ?? 0)
             + (frameDriver?.firstPersonRig?.render.instanceCount ?? 0)
+            + (effects.loadingCover?.instanceCount ?? 0)
     }
 
     /// Encodes every membrane over the meshes of its target. Skipped in a debug view,

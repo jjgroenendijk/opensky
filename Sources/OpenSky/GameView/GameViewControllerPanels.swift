@@ -72,6 +72,10 @@ extension GameViewController: CombatLoopControlProviding {
         combat.combatLoopSnapshot
     }
 
+    var selectedCombatStyle: CombatStyleReadout? {
+        combat.selectedCombatStyle
+    }
+
     var selectedActorIsHostile: Bool {
         get { combat.selectedActorIsHostile }
         set { combat.selectedActorIsHostile = newValue }

@@ -75,8 +75,9 @@ started.
 ## Settings
 
 Every value here is OpenSky's. No record states an attack rhythm, a block chance, a flee threshold,
-a search time, or how often a caster prefers a spell. Vanilla keeps these in the combat AI code and
-in `CSTY` records OpenSky does not decode. So they are chosen in the open, with a reason each.
+a search time, or how often a caster prefers a spell. Vanilla keeps these in the combat AI code.
+So they are chosen in the open, with a reason each. An actor's
+[combat style](#combat-style) then scales some of them.
 
 | Setting | Value | Why this value |
 | --- | --- | --- |
@@ -94,6 +95,26 @@ in `CSTY` records OpenSky does not decode. So they are chosen in the open, with 
 | Search time | 8 s | Long enough to hear it end, short enough not to pin a hidden player |
 | Cast chance | 0.5 | Even odds in weapon reach. A caster that never swings is pinned by an opponent who closes in. One that always swings never looks like a mage |
 | Held spell time | 1.5 s | Two applications of a once-a-second effect: long enough to see a beam, short enough to decide again |
+
+## Combat style
+
+An actor's `CSTY` [combat style](/formats/combat-style.md) scales the settings above for that
+actor. No source says how the game turns a style multiplier into behavior, so each mapping is
+OpenSky's. Each one is monotonic, is clamped, and leaves the settings unchanged at 0.5, the
+middle of the 0 to 1 range that vanilla styles use. Vanilla `DefaultCombatstyle` sets both
+multipliers to 0.24, so an actor on it attacks less often and blocks less than the base.
+
+| Setting | Scaled by | Rule | Clamp |
+| --- | --- | --- | --- |
+| Attack interval | Offensive multiplier | Base times 0.5 / offensive: twice the offense, half the wait | 0.5 to 2 times the base |
+| Block time | Offensive multiplier | The same scale as the attack interval, so a block still replaces one gap | 0.5 to 2 times the base |
+| Block chance | Defensive multiplier | Base times defensive / 0.5 | 0 to 0.9 |
+| Cast chance | Melee and magic equipment score multipliers | Base times 2 times magic / (magic + melee); equal scores give the base | 0 to 0.9 |
+
+A chance never reaches 1, so the other choice stays possible. A member a record leaves out,
+or a value that is not finite or not positive, counts as the neutral value. An actor with no
+style uses the settings unchanged. The `World > Combat Loop` readout shows the selected
+actor's style and the derived numbers.
 
 ## Blocking
 

@@ -37,6 +37,11 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
     case flora = "FLOR"
     case talkingActivator = "TACT"
     case artObject = "ARTO"
+    case cameraShot = "CAMS"
+    case cameraPath = "CPTH"
+    case combatStyle = "CSTY"
+    case message = "MESG"
+    case loadScreen = "LSCR"
 
     public var fourCC: FourCC {
         switch self {
@@ -69,6 +74,11 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
         case .flora: "FLOR"
         case .talkingActivator: "TACT"
         case .artObject: "ARTO"
+        case .cameraShot: "CAMS"
+        case .cameraPath: "CPTH"
+        case .combatStyle: "CSTY"
+        case .message: "MESG"
+        case .loadScreen: "LSCR"
         }
     }
 
@@ -103,6 +113,11 @@ nonisolated public enum ReferenceRecordType: String, CaseIterable, Sendable {
         case .flora: "FLOR — Flora"
         case .talkingActivator: "TACT — Talking activators"
         case .artObject: "ARTO — Art objects"
+        case .cameraShot: "CAMS — Camera shots"
+        case .cameraPath: "CPTH — Camera paths"
+        case .combatStyle: "CSTY — Combat styles"
+        case .message: "MESG — Messages"
+        case .loadScreen: "LSCR — Loading screens"
         }
     }
 }

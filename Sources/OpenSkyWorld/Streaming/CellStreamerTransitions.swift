@@ -24,10 +24,16 @@ extension CellStreamer {
         case let .success(transition):
             emitDoorMotion(.closed, interaction: motionInteraction)
             apply(transition: transition, sourceDoor: entry.sourceDoor, isRebuild: isRebuild)
+            if !isRebuild {
+                onDoorTransitionFinished?(transition.scene)
+            }
             return true
         case let .failure(error):
             emitDoorMotion(.cancelled, interaction: motionInteraction)
             noteDoorTransitionFailure()
+            if !isRebuild {
+                onDoorTransitionFinished?(nil)
+            }
             let reason = String(describing: error)
             Self.logger.warning(
                 "[WARNING] door transition failed: \(reason, privacy: .public)"
@@ -78,6 +84,7 @@ extension CellStreamer {
         interiorRebuildInFlight = false
         // Built against the live store, so a changed interior comes back changed.
         runner.enqueueDoorTransition(from: sourceDoor, state: stateSource())
+        onDoorTransitionStarted?()
         return true
     }
 

@@ -1,5 +1,5 @@
 // Traced stubs for the trap census natives the engine cannot run yet: Havok motion
-// and impulses, destruction, camera and controller shakes, sounds, and animation
+// and impulses, destruction, controller shakes, sounds, and animation
 // variables. Each answers the type's empty value and counts as `.stubbed`.
 
 import Foundation
@@ -43,14 +43,12 @@ extension PapyrusNativeFunctions {
         TrapStub("Weapon", "Fire", .none),
         TrapStub("Sound", "Play", .integer(0)),
         TrapStub("EffectShader", "Play", .none),
-        TrapStub("Game", "ShakeCamera", .none),
         TrapStub("Game", "ShakeController", .none),
         TrapStub("Form", "HasKeyword", .boolean(false)),
         TrapStub("Form", "RegisterForAnimationEvent", .boolean(true)),
         TrapStub("Form", "UnregisterForAnimationEvent", .none),
         TrapStub("FormList", "HasForm", .boolean(false)),
         TrapStub("Actor", "GetEquippedItemType", .integer(0)),
-        TrapStub("Message", "Show", .integer(0)),
         TrapStub("Cell", "IsAttached", .boolean(true))
     ]
 

@@ -79,6 +79,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.scenes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)

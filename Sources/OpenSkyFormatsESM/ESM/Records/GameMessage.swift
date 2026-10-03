@@ -1,5 +1,6 @@
 // MESG messages (notifications and message boxes with buttons) and LSCR
-// loading screens. Layout and sources: docs/formats/messages.md.
+// loading screens. Layout and sources: docs/formats/messages.md and
+// docs/formats/loading-screens.md.
 
 import Foundation
 import OpenSkyFormatsCore

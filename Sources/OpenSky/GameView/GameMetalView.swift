@@ -23,6 +23,9 @@ final class GameMetalView: MTKView {
     /// against unadvertised keystrokes holds.
     var onJournalKey: (() -> Void)?
 
+    /// The input event name of a world key, such as "Jump", for help messages.
+    var onInputEvent: ((String) -> Void)?
+
     /// The cursor side effects of pointer capture. A headless route swaps in
     /// `.none` so its clicks take the `mouseDown` path without freezing the
     /// machine's own cursor.
@@ -110,8 +113,16 @@ final class GameMetalView: MTKView {
             }
             return
         }
+        if menuMode?.isMenuMode != true, let name = Self.helpEvents[action] {
+            onInputEvent?(name)
+        }
         dispatcher.apply(action, .press)
     }
+
+    /// The input event names a help message can wait for.
+    private static let helpEvents: [GameInputAction: String] = [
+        .activate: "Activate", .jump: "Jump", .sneak: "Sneak"
+    ]
 
     override func keyUp(with event: NSEvent) {
         // Menus act on key-down; a held direction's key-up reaches a menu that

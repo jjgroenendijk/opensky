@@ -117,9 +117,9 @@ struct ConditionFactionRealDataTests {
         // 9,028 of the 10,020, which is why the faction model was the largest
         // single block of unanswered dialogue conditions left.
         #expect(coverage.total == 118_494)
-        #expect(before == 79630)
+        #expect(before == 79823)
         #expect(added == 10020)
-        #expect(after == 89650)
+        #expect(after == 89843)
         // `GetFactionRankDifference` is registered and this load order never
         // asks it — the only one of the six with no vanilla caller. It stays
         // installed because its backing is the same membership lookup its two

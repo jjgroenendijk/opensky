@@ -76,5 +76,6 @@ nonisolated extension OpenSkySaveDecoder {
         public var storyManagerQuests: [SaveStoryEntry<StoryManagerQuestState>] = []
         /// Absent `DLBS`: no speaker is in an exclusive branch.
         public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
+        public var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
     }
 }

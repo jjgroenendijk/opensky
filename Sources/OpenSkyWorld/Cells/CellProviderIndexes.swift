@@ -143,9 +143,7 @@ nonisolated public struct CellProviderIndexes {
     public let detectionSettings: DetectionSettings
     public let lockTrapData: LockTrapData
     public let storyData: StoryData
-    /// Load-order idle records and markers.
-    public let idleStore: IdleStore
-    public let effectRecords: EffectRecordStore
+    let loadOrder: LoadOrderStores
 
     public init(
         root: GameDataRoot,
@@ -214,7 +212,7 @@ nonisolated public struct CellProviderIndexes {
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
         (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
-        (idleStore, effectRecords) = Self.loadOrderStores(root: root, file: file)
+        loadOrder = Self.loadOrderStores(root: root, file: file)
     }
 
     /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
@@ -326,17 +324,39 @@ nonisolated public struct CellProviderIndexes {
         stores.storyData = storyData
         stores.idleStore = idleStore
         stores.effectRecords = effectRecords
+        stores.presentationRecords = presentationRecords
         return stores
     }
 }
 
 nonisolated extension CellProviderIndexes {
+    /// Load-order idle records and markers.
+    public var idleStore: IdleStore {
+        loadOrder.idles
+    }
+
+    public var effectRecords: EffectRecordStore {
+        loadOrder.effects
+    }
+
+    /// Load-order cameras, combat styles, messages, and loading screens.
+    public var presentationRecords: PresentationRecordStore {
+        loadOrder.presentation
+    }
+
     /// Stores built over the whole active load order.
-    static func loadOrderStores(
-        root: GameDataRoot,
-        file: ESMFile
-    ) -> (IdleStore, EffectRecordStore) {
+    static func loadOrderStores(root: GameDataRoot, file: ESMFile) -> LoadOrderStores {
         let plugins = ActivePluginFiles.load(root: root, baseFile: file)
-        return (IdleStore(plugins: plugins), EffectRecordStore(plugins: plugins))
+        return LoadOrderStores(
+            idles: IdleStore(plugins: plugins),
+            effects: EffectRecordStore(plugins: plugins),
+            presentation: PresentationRecordStore(plugins: plugins)
+        )
+    }
+
+    struct LoadOrderStores {
+        let idles: IdleStore
+        let effects: EffectRecordStore
+        let presentation: PresentationRecordStore
     }
 }

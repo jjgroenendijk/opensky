@@ -128,9 +128,7 @@ public final class CombatLoopRuntime: CombatControlling {
     /// takes a swing away takes a cast away, which is why `isAttacking` counts
     /// the casting phase.
     public func noteStagger(of key: ReferenceKey) {
-        var machine = behaviors[key] ?? CombatBehaviorMachine(
-            settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
-        )
+        var machine = behaviors[key] ?? makeMachine(for: key)
         if machine.pendingCast != nil {
             world?.cancelCombatCast(by: key)
         }
@@ -269,15 +267,26 @@ public final class CombatLoopRuntime: CombatControlling {
     public func stepBehavior(
         of key: ReferenceKey, inputs: CombatBehaviorInputs
     ) -> CombatBehaviorStep {
-        var machine = behaviors[key] ?? CombatBehaviorMachine(
-            settings: behaviorSettings, seed: CombatBehaviorMachine.seed(for: key)
-        )
+        var machine = behaviors[key] ?? makeMachine(for: key)
         let step = machine.step(seconds: Self.fixedStepSeconds, inputs: inputs)
         behaviors[key] = machine
         if machine.isEngaged {
             provoked.remove(key)
         }
         return step
+    }
+
+    /// A new machine for `key`, with its combat style folded into the settings.
+    public func makeMachine(for key: ReferenceKey) -> CombatBehaviorMachine {
+        CombatBehaviorMachine(
+            settings: behaviorSettings.tuned(by: styleTuning(of: key)),
+            seed: CombatBehaviorMachine.seed(for: key)
+        )
+    }
+
+    /// `key`'s resolved combat style, or nil when it has none.
+    public func styleTuning(of key: ReferenceKey) -> CombatStyleTuning? {
+        world?.combatStyle(of: key)
     }
 
     /// Parks one machine without losing its counts, for an actor that died or

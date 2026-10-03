@@ -24,7 +24,8 @@ extension Renderer {
     public func updateAnimationsFromWallClock() -> Float {
         // Returned delta also drives particles + precipitation this frame, so a
         // paused (zero) delta freezes all three together.
-        let delta = animationClock.advance(to: wallClock.now, paused: worldSimPaused)
+        let delta = animationClock
+            .advance(to: wallClock.now, paused: worldSimPaused) * worldTimeScale
         updateAnimations(deltaTime: delta)
         return delta
     }

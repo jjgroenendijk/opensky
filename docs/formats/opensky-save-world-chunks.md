@@ -187,5 +187,12 @@ speaker's key, the cell, and the uint32 FormID of the `DLBR`. The FormID is in t
 base plugin the dialogue store reads, which does not depend on the load order. Minimum size: 12
 bytes per entry.
 
-`SCNS`, `SMQS`, and `DLBS` merge into the `RDLT` deltas by key, like the other component
-chunks.
+## HELP: help messages
+
+One entry for the player: the player's key, the cell, a uint32 record count, then one record
+per input event, sorted by event name. A record is the event name as a string, a uint32
+count of times the [help message](/engine/messages.md#help-messages) showed, and a done
+byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per record.
+
+`SCNS`, `SMQS`, `DLBS`, and `HELP` merge into the `RDLT` deltas by key, like the other
+component chunks.

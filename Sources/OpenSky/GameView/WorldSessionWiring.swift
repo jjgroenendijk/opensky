@@ -45,6 +45,7 @@ final class WorldSessionWiring {
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order.
         game.scriptWorld.wirePapyrus(provider: provider, renderer: renderer, streamer: streamer)
+        game.messageWorld.wire(renderer: renderer)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
@@ -137,6 +138,8 @@ final class WorldSessionWiring {
         game.dialogueWorld.wireDialogueCamera(renderer: renderer)
         // Scenes speak through the dialogue index, so they come after it.
         game.storyWorld.wireStory(provider: provider, renderer: renderer)
+        game.cinematicWorld.wire(renderer: renderer)
+        game.loadingWorld.wire(streamer: streamer, renderer: renderer)
     }
 
     /// Player-controlled modes only: the fly camera never picks up a target.

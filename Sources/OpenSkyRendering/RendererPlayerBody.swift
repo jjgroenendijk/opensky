@@ -12,16 +12,19 @@ extension Renderer {
     /// are drawn separately (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
         guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
-            return scene.opaque + effects.scene.opaque
+            return scene.opaque + effects.scene.opaque + (effects.loadingCover?.opaque ?? [])
         }
         return scene.opaque + playerBody.render.opaque + effects.scene.opaque
+            + (effects.loadingCover?.opaque ?? [])
     }
 
     public var alphaTestedDrawGroups: [DrawGroup] {
         guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
             return scene.alphaTested + effects.scene.alphaTested
+                + (effects.loadingCover?.alphaTested ?? [])
         }
         return scene.alphaTested + playerBody.render.alphaTested + effects.scene.alphaTested
+            + (effects.loadingCover?.alphaTested ?? [])
     }
 
     /// What the shadow pass rasterizes: the scene plus the player's body in

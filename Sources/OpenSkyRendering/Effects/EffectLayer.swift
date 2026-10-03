@@ -46,6 +46,8 @@ public final class EffectLayer {
     /// The effect models of the current frame. Set through `Renderer.setEffectPlacements`.
     public internal(set) var scene = RenderScene(instances: [])
     public var membranes: [MembraneDraw] = []
+    /// The loading screen's object. While set, the world does not draw.
+    public internal(set) var loadingCover: RenderScene?
     /// Membranes the last frame drew, for the readout.
     public internal(set) var lastMembraneDraws = 0
 

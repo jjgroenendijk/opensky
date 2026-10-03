@@ -59,7 +59,7 @@ extension Renderer {
         let delta = worldSimClock.advance(
             to: wallClock.now, paused: worldSimPaused
         )
-        updateWorldSim(deltaTime: delta)
+        updateWorldSim(deltaTime: delta * worldTimeScale)
     }
 
     /// Times only the world callback, excluding the renderer clock advance.
