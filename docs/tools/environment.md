@@ -96,11 +96,9 @@ with "timed out while preparing". Clicking Allow once let the run continue. The 
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
 
-Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
-`testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation
-failed." The likely cause is a missing Screen Recording grant for `OpenSkyUITests-Runner.app`.
-
-Retires when `testCapturesRenderedFrame` passes on this machine.
+Observed 2026-10-04: `make test-ui` passes all 27 cases, `testCapturesRenderedFrame` included.
+The saved window is 1280 x 752 on a 1440 x 870 screen, so the sidebar's Library rows sit below
+the window edge. XCUI still calls such a row hittable, so the UI tests scroll by frame first.
 
 ## Stale testmanagerd
 

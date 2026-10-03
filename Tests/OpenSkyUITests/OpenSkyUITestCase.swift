@@ -51,6 +51,14 @@ class OpenSkyUITestCase: XCTestCase {
             row.waitForExistence(timeout: 5),
             "sidebar row \(identifier) is registered but not reachable"
         )
+        // A short window hides the lower rows, and a click there misses. XCUI
+        // still calls such a row hittable, so compare frames instead.
+        let window = app.windows.firstMatch
+        for deltaY: CGFloat in [-200, 200] {
+            for _ in 0 ..< 10 where !window.frame.contains(row.frame) {
+                sidebar.scroll(byDeltaX: 0, deltaY: deltaY)
+            }
+        }
         row.click()
     }
 }
