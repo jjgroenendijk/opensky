@@ -28,7 +28,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, `make realdata-build`, then `make test-unit` |
 | Rendering or shaders | `make test-gpu`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
-| App UI | `building-app-ui` skill; `make test-ui` when a smoke-test path changed |
+| App UI | `building-app-ui` skill and `make verify-build`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
 | Milestone acceptance | `make health`, `make test-real`, `make test-sanitize-thread`, `make test-sanitize-address`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
 
@@ -80,6 +80,20 @@ These commands build, so the background-shell and one-`xcodebuild` rules in the 
   notification. Open the transcript only when the output says errors were not shown.
 - The build removes stale module copies itself and retries while it finds new ones
   (`docs/tools/build-system.md`). Do not delete `.swiftmodule` folders by hand.
+
+## UI tests
+
+`make test-ui` is the slowest run here. Each UI test launches and drives the app for about
+15 to 25 s, so the whole plan takes many minutes after the build. It also takes over the
+screen while the user may be working.
+
+- Run it only when the change can break what a UI test checks: a new or changed UI test, or
+  a changed sidebar control or accessibility id that a UI test uses. Then run only those
+  tests with `T='Suite/test()'`.
+- Do not run it as a routine check for engine, parser, rendering, tooling, or docs changes.
+  The unit tests and `make verify-build` cover those. Write `test-ui not run: no UI test
+  path changed` in the `Tests:` section.
+- Milestone acceptance is the one place where the whole plan runs.
 
 ## Real-data runs
 
