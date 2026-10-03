@@ -42,8 +42,8 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/ci-tools
@@ -72,8 +72,8 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         with:
           path: |
             ~/ci-tools
@@ -162,7 +162,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The download overlaps the steps up to "Wait for the Metal Toolchain".
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
@@ -177,7 +177,7 @@ jobs:
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
       # Restore and save apart, so a failing test does not throw away the build.
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         id: ffmpeg
         with:
           path: .vendor/ffmpeg
@@ -185,7 +185,7 @@ jobs:
       # The app and CLI link the vendored ffmpeg, and a fresh checkout has none.
       - run: make ffmpeg
       - if: steps.ffmpeg.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: .vendor/ffmpeg
           key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
@@ -199,14 +199,14 @@ jobs:
           if [ -n "$PR" ]; then scope="pr-$PR"; else scope="$(echo "$GITHUB_REF_NAME" | tr '/' '-')"; fi
           echo "cas=cas-$RUNNER_ARCH-$scope-" >>"$GITHUB_OUTPUT"
       # The SDK's precompiled modules and stat cache change only with Xcode.
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         id: sdk
         with:
           path: |
             DerivedData/ModuleCache.noindex
             DerivedData/SDKStatCaches.noindex
           key: sdk-${{ runner.arch }}-${{ steps.keys.outputs.xcode }}
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         id: cas
         with:
           path: DerivedData/CompilationCache.noindex
@@ -227,7 +227,7 @@ jobs:
       - run: make test-unit XCODEBUILD_FLAGS="$BUILD_FLAGS"
       - run: make coverage-floor
       - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: |
             DerivedData/ModuleCache.noindex
@@ -235,7 +235,7 @@ jobs:
           key: ${{ steps.sdk.outputs.cache-primary-key }}
       # Saved after a failed test too, because the compiled tasks are still valid.
       - if: ${{ !cancelled() && steps.cas.outcome == 'success' }}
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: DerivedData/CompilationCache.noindex
           key: ${{ steps.cas.outputs.cache-primary-key }}
@@ -250,7 +250,7 @@ jobs:
         run: tools/ci/build-timing.sh >>"$GITHUB_STEP_SUMMARY"
       - name: Upload build and test logs
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-test-logs
           path: logs/
