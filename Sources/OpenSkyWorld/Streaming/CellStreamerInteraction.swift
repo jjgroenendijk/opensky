@@ -107,6 +107,31 @@ extension CellStreamer {
         activeInteraction(reference: reference)?.name
     }
 
+    /// Every activatable reference in the loaded cells. An interior replaces the exterior.
+    public var residentInteractions: [PlacedInteraction] {
+        if let interiorScene {
+            return Array(interiorScene.interactions.values)
+        }
+        return composition.cells.values.flatMap(\.interactions.values)
+    }
+
+    /// Every runtime reference in the loaded cells, in no fixed order.
+    public var residentReferences: [RuntimeReferenceEntry] {
+        if let interiorScene {
+            return interiorScene.references.sortedEntries()
+        }
+        return composition.cells.values.flatMap { $0.references.sortedEntries() }
+    }
+
+    public func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
+        guard let parent = referenceEntry(key: key) else { return [] }
+        return residentReferences.activateChildren(of: parent.formID)
+    }
+
+    public func residentInteraction(reference: FormID) -> PlacedInteraction? {
+        activeInteraction(reference: reference)
+    }
+
     private func activeInteraction(reference: FormID) -> PlacedInteraction? {
         if let interiorScene {
             return interiorScene.interactions[reference]
@@ -207,26 +232,35 @@ extension CellStreamer {
 
     public func activateInteractionTarget() {
         guard let interactionTarget else { return }
-        onInteraction(InteractionEvent(target: interactionTarget))
+        activate(interactionTarget)
+    }
+
+    /// One activation of `target`: the gate first, then the event, talk, and door.
+    /// The lockpicking menu calls this again after a lock opens.
+    public func activate(_ target: InteractionTarget) {
+        if let refusal = activationGate.gate?(target) {
+            activationGate.refusals(ActivationRefusalEvent(target: target, refusal: refusal))
+            return
+        }
+        onInteraction(InteractionEvent(target: target))
         // After the plain event, so an activated actor reaches the audio and
         // Papyrus subscribers in the same order an activated door does before
         // anything opens a menu on top of the world.
         if
             let event = TalkActivationEvent(
-                interaction: interactionTarget.interaction,
+                interaction: target.interaction,
                 pickedSpeaker: talk.speaker,
-                placedKey: { referenceEntry(formID: interactionTarget.interaction.reference)?.key }
+                placedKey: { referenceEntry(formID: target.interaction.reference)?.key }
             )
         {
             talk.activations(event)
         }
-        guard interactionTarget.interaction.action == .open else { return }
-        guard
-            requestDoorTransition(activeDoor(reference: interactionTarget.interaction.reference))
+        guard target.interaction.action == .open else { return }
+        guard requestDoorTransition(activeDoor(reference: target.interaction.reference))
         else { return }
-        doorMotionInteraction = interactionTarget.interaction
+        doorMotionInteraction = target.interaction
         onInteractionAnimation?(InteractionAnimationEvent(
-            interaction: interactionTarget.interaction,
+            interaction: target.interaction,
             phase: .motionStarted
         ))
     }

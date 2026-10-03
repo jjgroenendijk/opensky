@@ -14,7 +14,7 @@ struct PapyrusFaultTests {
         var limits = PapyrusLimits.standard
         limits.instructionBudget = 25
         let (runtime, handle) = runtime(
-            instructions: [op(.jump, .integer(-1))],
+            instructions: [op(.jump, .integer(0))],
             limits: limits
         )
         let outcome = runtime.invoke("Run", on: handle)

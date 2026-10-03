@@ -216,6 +216,46 @@ extension GameViewController: CraftingControlProviding {
     }
 }
 
+extension GameViewController: LockControlProviding {
+    var lockSnapshot: LockControlSnapshot {
+        inventory.locks.lockSnapshot
+    }
+
+    func selectLock(_ reference: FormID?) {
+        inventory.locks.selectLock(reference)
+    }
+
+    func setSelectedLockLocked(_ locked: Bool) -> String {
+        inventory.locks.setSelectedLockLocked(locked)
+    }
+
+    func setPlayerCarriesEveryKey(_ enabled: Bool) {
+        inventory.locks.setPlayerCarriesEveryKey(enabled)
+    }
+
+    func pickSelectedLock() -> String {
+        lockpickingMenu.openSelected()
+    }
+}
+
+extension GameViewController: TrapControlProviding {
+    var trapSnapshot: TrapControlSnapshot {
+        trapControl.snapshot
+    }
+
+    func selectTrap(_ key: ReferenceKey?) {
+        trapControl.select(key)
+    }
+
+    func fireSelectedTrap() -> String {
+        trapControl.fire()
+    }
+
+    func disarmSelectedTrap() -> String {
+        trapControl.disarm()
+    }
+}
+
 extension GameViewController: InventoryMenuControlProviding {
     var inventoryMenuIsOpen: Bool {
         inventoryMenu.isOpen

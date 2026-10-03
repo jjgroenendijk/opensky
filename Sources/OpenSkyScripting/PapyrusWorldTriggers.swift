@@ -50,13 +50,17 @@ extension PapyrusWorldStateBridge {
     /// reference, with the player as `akActionRef`. The event already has a `ReferenceKey`.
     @discardableResult
     public func handleTriggerTransition(_ event: TriggerTransitionEvent) -> Int {
-        guard let world else { return 0 }
         let actor = event.actor ?? playerKey
         switch event.phase {
         case .enter:
-            return world.queueOnTriggerEnter(volume: event.reference, actor: actor)
+            triggerOccupants[event.reference, default: []].insert(actor)
+            return world?.queueOnTriggerEnter(volume: event.reference, actor: actor) ?? 0
         case .leave:
-            return world.queueOnTriggerLeave(volume: event.reference, actor: actor)
+            triggerOccupants[event.reference]?.remove(actor)
+            if triggerOccupants[event.reference]?.isEmpty == true {
+                triggerOccupants[event.reference] = nil
+            }
+            return world?.queueOnTriggerLeave(volume: event.reference, actor: actor) ?? 0
         }
     }
 }

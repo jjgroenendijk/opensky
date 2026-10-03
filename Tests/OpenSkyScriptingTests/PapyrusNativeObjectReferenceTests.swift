@@ -20,6 +20,7 @@ struct PapyrusNativeObjectReferenceTests {
             ReferenceEnableState.self, for: fixture.key
         ) == .disabled)
         #expect(fixture.call("IsEnabled", returnType: .boolean) == .returned(.boolean(false)))
+        #expect(fixture.call("IsDisabled", returnType: .boolean) == .returned(.boolean(true)))
         // The write carried the reference's resident cell, so the rebuild
         // fan-out is that one cell rather than every resident one.
         #expect(fixture.session.worldState.dirtyCount(in: PapyrusWorldFixture.cell) == 1)

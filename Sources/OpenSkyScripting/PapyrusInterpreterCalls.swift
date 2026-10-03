@@ -213,8 +213,8 @@ extension PapyrusInterpreter {
                     actual: arguments.first?.typeName ?? "missing"
                 )
             }
-            instance.activeState = stateName
             try write(.none, to: destination, frame: frame)
+            try gotoState(stateName, instance: instance, receiver: receiver)
             return .next
         }
         if PapyrusRuntime.matches(functionName, "GetState") {
@@ -225,6 +225,30 @@ extension PapyrusInterpreter {
             return .next
         }
         return nil
+    }
+
+    /// Runs `OnEndState` of the old state, then `OnBeginState` of the new one, as the
+    /// game's `GotoState` does (CK wiki, "States (Papyrus)"). The end frame goes on
+    /// top so it runs first; `GetState` already reads the new state inside it.
+    private func gotoState(
+        _ stateName: String,
+        instance: PapyrusInstance,
+        receiver: PapyrusObjectHandle
+    ) throws(PapyrusFault) {
+        let end = try stateHook("OnEndState", instance: instance)
+        instance.activeState = stateName
+        let begin = try stateHook("OnBeginState", instance: instance)
+        for hook in [begin, end].compactMap(\.self) {
+            try pushFrame(hook, instanceHandle: receiver, arguments: [], completion: .discard)
+        }
+    }
+
+    private func stateHook(
+        _ name: String,
+        instance: PapyrusInstance
+    ) throws(PapyrusFault) -> PapyrusResolvedFunction? {
+        guard let hook = try resolveMethod(name, instance: instance) else { return nil }
+        return hook.function.flags.contains(.native) ? nil : hook
     }
 
     private func name(from operand: PexValue) throws(PapyrusFault) -> String {

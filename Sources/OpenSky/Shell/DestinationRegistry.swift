@@ -51,7 +51,7 @@ typealias WorldControlProviders = AINavigationControlProviding
     & GrassControlProviding
     & HUDControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding & ItemControlProviding
-    & JournalControlProviding
+    & JournalControlProviding & LockControlProviding
     & MagicEffectControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
@@ -62,7 +62,8 @@ typealias WorldControlProviders = AINavigationControlProviding
     & RagdollControlProviding & RenderDebugControlProviding
     & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
-    & SystemMenuControlProviding & TerrainLODControlProviding & TriggerControlProviding
+    & SystemMenuControlProviding & TerrainLODControlProviding & TrapControlProviding
+    & TriggerControlProviding
     & UILabControlProviding
     & WeatherControlProviding
 
@@ -182,6 +183,7 @@ enum DestinationRegistry {
                 panel.frameStatsProvider = context.providers
                 panel.sceneStatsProvider = context.providers
                 panel.triggerProvider = context.providers
+                panel.trapProvider = context.providers
                 panel.renderDebugProvider = context.providers
                 // None of the panel's own provider seams carry refocus, so the
                 // factory supplies it from the full provider set.
@@ -305,6 +307,7 @@ enum DestinationRegistry {
                 let panel = InventoryEquipmentPanelViewController()
                 panel.provider = context.providers
                 panel.craftingProvider = context.providers
+                panel.lockProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

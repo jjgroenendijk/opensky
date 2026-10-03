@@ -155,4 +155,8 @@ final class FakeCrimeReferences: PapyrusWorldReferenceSource {
     func cellLocation(of _: ReferenceKey) -> CellSceneLocation? {
         cell
     }
+
+    func activateChildren(of _: ReferenceKey) -> [ReferenceKey] {
+        []
+    }
 }

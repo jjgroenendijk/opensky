@@ -3,6 +3,7 @@
 // magic formulas ask. The rules live in `PerkRuntime`.
 // See docs/engine/coordinators.md.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyProgressionInterface
@@ -111,6 +112,31 @@ public final class PerkCoordinator {
             subjects: PerkEvaluationSubjects(owner: holder.key, target: target, attacker: attacker),
             actorValue: { [weak world] index in world?.actorValue(at: index, on: holder) }
         )
+        store(runtime)
+        return outcome.value
+    }
+
+    /// `modified` at a lockpicking entry point: `lock` is the locked reference, and
+    /// `GetLockLevel` on it answers `level`, which the Novice to Master Locks perks read.
+    public func modified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on holder: ActorValueHolder,
+        lock: ReferenceKey,
+        level: UInt8
+    ) -> Float {
+        guard runtime != nil else { return value }
+        seed(holder)
+        guard var runtime else { return value }
+        runtime.conditions.locks = LockConditionResolution(levels: [lock: level])
+        let outcome = runtime.modify(
+            value,
+            at: entryPoint,
+            on: holder,
+            subjects: PerkEvaluationSubjects(owner: holder.key, lockedReference: lock),
+            actorValue: { [weak world] index in world?.actorValue(at: index, on: holder) }
+        )
+        runtime.conditions.locks = .empty
         store(runtime)
         return outcome.value
     }

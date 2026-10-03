@@ -115,6 +115,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
 
         /// Harvested flora and trees. Presence means harvested.
         public static let harvests = "HRVS"
+        /// Runtime lock state of doors and containers.
+        public static let locks = "LOCK"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

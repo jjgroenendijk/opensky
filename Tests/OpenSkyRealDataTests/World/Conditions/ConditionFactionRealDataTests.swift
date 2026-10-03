@@ -25,7 +25,7 @@ struct ConditionFactionRealDataTests {
     /// `GetCrimeGoldViolent`, `GetCrimeGoldNonviolent` and `GetItemCount`, subtracted so the
     /// delta measures the faction functions alone. `GetCrimeGold` is already
     /// inside the numbers below.
-    private static let laterIndices: Set<UInt16> = [375, 376, 47]
+    private static let laterIndices: Set<UInt16> = [375, 376, 47, 65]
 
     private static let guardEditorIDPrefix = "GuardWhiterun"
 

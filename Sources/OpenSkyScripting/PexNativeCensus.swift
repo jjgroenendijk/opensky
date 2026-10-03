@@ -32,14 +32,16 @@ nonisolated public struct PexNativeCensus: Equatable, Sendable {
     public private(set) var declarations: [PapyrusNativeKey: PexNativeTarget] = [:]
     public private(set) var referenceCounts: [PexNativeTarget: Int] = [:]
 
-    public init(files: [PexFile]) {
+    /// - Parameter callers: script names whose calls count, lowercased; nil counts
+    ///   every script. Declarations always come from all `files`.
+    public init(files: [PexFile], callers: Set<String>? = nil) {
         let objects = files.flatMap(\.objects)
         let scripts = Dictionary(
             objects.map { (PapyrusRuntime.key($0.name), $0) },
             uniquingKeysWith: { _, last in last }
         )
         recordDeclarations(objects)
-        for object in objects {
+        for object in objects where callers?.contains(object.name.lowercased()) ?? true {
             recordReferences(in: object, scripts: scripts)
         }
     }

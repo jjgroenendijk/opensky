@@ -106,6 +106,8 @@ public final class CellStreamer {
     public let onInteraction = CallbackFanOut<InteractionEvent>()
     /// Everything Talk activation needs from the streamer.
     public var talk = TalkTargetingSeam()
+    /// The lock check in front of every use-key activation.
+    public var activationGate = ActivationGateSeam()
     /// Player-driven door motion boundaries. World audio consumes these to
     /// start the authored movement loop, retire it, and play the close sound.
     public var onInteractionAnimation: ((InteractionAnimationEvent) -> Void)?
@@ -118,6 +120,8 @@ public final class CellStreamer {
     /// A cell left the live world: unloaded off the grid, dropped by a
     /// coverage transition, or replaced by a door transition.
     public var onCellDetached: ((CellSceneLocation) -> Void)?
+    /// A live cell's placed hazards changed: attached, rebuilt, or detached.
+    public let cellHazards = CallbackFanOut<CellHazardEvent>()
     /// The player entered or left a trigger volume. Emitted in CellStreamerTriggers.
     public let onTriggerTransition = CallbackFanOut<TriggerTransitionEvent>()
     /// Trigger volumes the player capsule was inside as of the last walk-mode

@@ -53,6 +53,25 @@ extension CellStreamer {
         }
     }
 
+    /// An enable change reaches every child of the reference. A resident cell whose
+    /// references name it as `XESP` parent rebuilds. Matching by object ID may
+    /// rebuild a cell too many, never one too few.
+    public func noteEnableParentMutation(_ key: ReferenceKey, sequence: UInt64) {
+        guard case let .plugin(_, objectID) = key else { return }
+        func dependsOnKey(_ scene: CellScene) -> Bool {
+            scene.references.sortedEntries()
+                .contains { $0.enableParent?.parent.objectID == objectID }
+                || scene.hazards.contains { $0.enableParent?.parent.objectID == objectID }
+        }
+        for (coordinate, scene) in composition.cells where dependsOnKey(scene) {
+            recordMutationSequence(coordinate, sequence: sequence)
+            requestRebuild(coordinate)
+        }
+        if let interiorScene, dependsOnKey(interiorScene) {
+            interiorMutationSequence = max(interiorMutationSequence, sequence)
+        }
+    }
+
     private func recordMutationSequence(_ coordinate: CellCoordinate, sequence: UInt64) {
         cellMutationSequence[coordinate] = max(
             cellMutationSequence[coordinate] ?? 0,
@@ -160,6 +179,10 @@ extension CellStreamer {
         stateSource = { store.snapshot() }
         store.onMutation = { [weak self] location, sequence in
             self?.noteStateMutation(in: location, sequence: sequence)
+        }
+        store.onReferenceMutation = { [weak self] key, kind, sequence in
+            guard kind == .enableState else { return }
+            self?.noteEnableParentMutation(key, sequence: sequence)
         }
         onBodySettled = { key, transform, placingCell in
             store.set(transform, for: key, in: placingCell)

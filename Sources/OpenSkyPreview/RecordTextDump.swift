@@ -133,6 +133,7 @@ nonisolated public enum RecordTextDump: Sendable {
                 ?? factionSummary(record, localized)
                 ?? relationshipSummary(record)
                 ?? craftingSummary(record, localized, keywordContext)
+                ?? trapSummary(record, localized)
         }
     }
 
@@ -166,10 +167,10 @@ nonisolated public enum RecordTextDump: Sendable {
         return "decoded REFR: base \(ref.base), position "
             + "\(vector(ref.placement.position)), rotation "
             + "\(vector(ref.placement.rotation)), scale \(ref.scale)"
-            + teleport
+            + teleport + lockText(ref.lock) + enableParentText(ref.enableParent)
     }
 
-    private static func vector(_ value: SIMD3<Float>) -> String {
+    static func vector(_ value: SIMD3<Float>) -> String {
         "(\(value.x), \(value.y), \(value.z))"
     }
 

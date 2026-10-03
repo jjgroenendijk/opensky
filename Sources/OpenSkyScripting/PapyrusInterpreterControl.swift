@@ -36,7 +36,8 @@ extension PapyrusInterpreter {
                 actual: runtime.runtimeValue(operand).typeName
             )
         }
-        let target = frame.instructionIndex + Int(offset)
+        // Relative to the jump itself; the run loop has already moved past it.
+        let target = frame.instructionIndex - 1 + Int(offset)
         guard (0 ... frame.function.instructions.count).contains(target) else {
             throw .invalidJump(instruction: instructionIndex, target: target)
         }

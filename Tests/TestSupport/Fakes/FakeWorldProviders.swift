@@ -144,6 +144,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// `FakeWorldProvidersInventoryEquipment.swift`.
     var inventoryEquipment = FakeInventoryEquipmentState()
     var crafting = FakeCraftingState()
+    var locksTraps = FakeLockTrapState()
 
     // UILabControlProviding
     var uiOverlayEnabled = true
@@ -411,7 +412,7 @@ extension FakeWorldProviders {
         case .move(.right): inventoryMenuModel.moveCategory(by: 1)
         case .button(.accept): activateInventoryMenuSelection()
         case .button(.cancel): closeInventoryMenu()
-        case .pointer: break
+        case .pointer, .release: break
         }
     }
 

@@ -13,6 +13,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let frameSection = FrameStatsSection()
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
+    let trapSection = TrapSection()
     let renderDebugSection = RenderDebugSection()
 
     /// Weak: the game controller owns this panel's parent and the renderer, so
@@ -41,6 +42,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { triggerSection.provider = triggerProvider }
     }
 
+    /// Trap triggers, their enable chains, and live hazards, beside the volumes they use.
+    weak var trapProvider: (any TrapControlProviding)? {
+        didSet { trapSection.provider = trapProvider }
+    }
+
     /// The render debug channel and the layer mask: both are views of the
     /// frame this panel reports on.
     weak var renderDebugProvider: (any RenderDebugControlProviding)? {
@@ -50,7 +56,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             cameraSection, firstPersonSection, frameSection, sceneSection,
-            renderDebugSection, triggerSection
+            renderDebugSection, triggerSection, trapSection
         ]
     }
 

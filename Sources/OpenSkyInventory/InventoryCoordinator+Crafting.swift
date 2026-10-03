@@ -20,9 +20,9 @@ extension InventoryCoordinator {
 
     // MARK: - Harvest
 
-    /// `interaction` with the harvested label when its plant was harvested.
+    /// `interaction` with its runtime label: a harvested plant, or a locked target.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
-        runtime?.labelled(interaction) ?? interaction
+        locks.labelled(runtime?.labelled(interaction) ?? interaction)
     }
 
     @discardableResult

@@ -115,9 +115,14 @@ chunk cannot read into the next.
 | `STOL` | stolen item counts | actors |
 | `CRVG` | violent part of crime gold | actors |
 | `HRVS` | harvested flora and trees | world |
+| `LOCK` | changed locks | world |
 
 `HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
 means harvested, so it has no other field.
+
+`LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or
+1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that
+still matches its `XLOC` writes no entry. See [locks](/engine/locks.md).
 
 The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkySave/`).
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.

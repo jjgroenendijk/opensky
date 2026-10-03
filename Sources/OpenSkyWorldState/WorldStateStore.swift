@@ -27,6 +27,10 @@ public final class WorldStateStore {
     /// sequence. `CellStreamer` uses it to rebuild stale cells; it needs no payload.
     public var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
 
+    /// Fires per journalled reference mutation with its key, kind, and the next
+    /// sequence, for a reader that rebuilds other cells, such as an enable child's.
+    public var onReferenceMutation: ((ReferenceKey, WorldStateComponentKind, UInt64) -> Void)?
+
     /// Fires per journalled global mutation with the next snapshot's sequence.
     /// Separate from `onMutation`, so a clock ticking a global each frame does not
     /// rebuild every cell. Global readers refresh `GlobalResolution` here.
@@ -104,6 +108,7 @@ public final class WorldStateStore {
             cell: delta.cell
         )
         onMutation?(delta.cell, changeJournal.nextSequence)
+        onReferenceMutation?(key, value.kind, changeJournal.nextSequence)
         return true
     }
 
@@ -128,6 +133,7 @@ public final class WorldStateStore {
             cell: cell
         )
         onMutation?(cell, changeJournal.nextSequence)
+        onReferenceMutation?(key, kind, changeJournal.nextSequence)
         return true
     }
 

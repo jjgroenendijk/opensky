@@ -1,6 +1,6 @@
 // World > Inventory & Equipment. Sections follow the loop: place an item, ask
 // who owns the target, see what an equip did to an actor, then make and gather
-// items at a station or a plant. Take, drop, and
+// items at a station or a plant, and open locks. Take, drop, and
 // equip live under `World > HUD & Interaction > Items`; barter lives under
 // `World > Container Menu`. One control has one sidebar path.
 
@@ -13,6 +13,7 @@ final class InventoryEquipmentPanelViewController: InspectorPanelViewController 
     let equipmentSection = EquipmentInspectionSection()
     let craftingSection = CraftingSection()
     let harvestSection = HarvestSection()
+    let lockSection = LockSection()
 
     /// Live bridge. Weak: the game controller owns this panel's parent and the
     /// item runtime, so the panel must not retain back.
@@ -31,7 +32,14 @@ final class InventoryEquipmentPanelViewController: InspectorPanelViewController 
         }
     }
 
+    weak var lockProvider: (any LockControlProviding)? {
+        didSet { lockSection.provider = lockProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [grantsSection, ownershipSection, equipmentSection, craftingSection, harvestSection]
+        [
+            grantsSection, ownershipSection, equipmentSection, craftingSection, harvestSection,
+            lockSection
+        ]
     }
 }

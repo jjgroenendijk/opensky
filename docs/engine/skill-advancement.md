@@ -111,6 +111,8 @@ into account."
 | Blow taken in armor | Heavy or Light Armor | Raw damage of the blow, times pieces worn |
 | Spell cast | The effect's `MGEF` magic skill | Spell base cost times the effect's skill usage multiplier |
 | Held spell, per step | The same | Magicka spent, times the same multiplier |
+| Lock picked | Lockpicking | `fSkillUsageLockPick<band>`: 2, 3, 5, 8, 13 from Novice to Master |
+| Lockpick broken | Lockpicking | `fSkillUsageLockPickBroken`, 0.25 |
 
 - A weapon skill counts only when the blow hits something that has health ("against valid
   targets"), and always at base damage: "Boosting weapon damage via skill perks or equipment
@@ -175,8 +177,6 @@ the names).
 These actions have a skill and a known base experience, but the engine does not perform them yet.
 Each needs one reporting call when its system arrives:
 
-- Lockpicking. `fSkillUsageLockPickBroken` (0.25) and the five difficulty values (2, 3, 5, 8, 13) are
-  in the install.
 - Pickpocket and Speech: one base experience per gold moved.
 - Smithing, Alchemy, and Enchanting, which need crafting menus.
 - Sneak: `fSkillUsageSneakPerSecond` (0.625) while hidden, and sneak attacks.

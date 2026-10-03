@@ -80,6 +80,7 @@ nonisolated public final class PapyrusTally {
     public private(set) var nativeFailureCounts: [String: Int] = [:]
     public private(set) var nativeFailureTotal = 0
     public private(set) var deferredAnimationTotal = 0
+    public private(set) var stubbedNativeTotal = 0
     /// Activations refused because the chain reached
     /// `PapyrusWorldRuntime.maximumActivationDepth`.
     public private(set) var activationRecursionCappedTotal = 0
@@ -164,6 +165,8 @@ nonisolated public final class PapyrusTally {
         switch deviation {
         case .deferredAnimation:
             deferredAnimationTotal += 1
+        case .stubbed:
+            stubbedNativeTotal += 1
         }
     }
 

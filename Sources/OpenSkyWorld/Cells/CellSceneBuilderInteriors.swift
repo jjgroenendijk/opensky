@@ -64,6 +64,24 @@ nonisolated extension CellSceneBuilder {
         return CellGridManager.cellCoordinate(for: reference.placement.position) == coordinate
     }
 
+    /// The worldspace's persistent references by FormID, where an exterior `XESP`
+    /// parent usually lives. Built once per worldspace.
+    nonisolated func persistentParentPool(
+        in world: ESMGroup,
+        localized: Bool
+    ) -> [FormID: PlacedReference] {
+        let key = world.parentFormID ?? 0
+        if let cached = exteriorPersistentPools[key] {
+            return cached
+        }
+        var pool: [FormID: PlacedReference] = [:]
+        for ref in persistentReferences(in: world, localized: localized) {
+            pool[ref.formID] = ref
+        }
+        exteriorPersistentPools[key] = pool
+        return pool
+    }
+
     nonisolated private func persistentReferences(
         in world: ESMGroup,
         localized: Bool
@@ -129,6 +147,7 @@ nonisolated extension CellSceneBuilder {
             ),
             counts: counts
         )
+        scene.hazards = collectHazards(in: found.children, resolved: resolved)
         scene.assets = drainTouchedAssets()
         return scene
     }

@@ -32,6 +32,9 @@ Activation queues `OnActivate(ObjectReference akActionRef)` on every script on t
 instance key order, with the activator as argument 0. A target with no scripts queues nothing, and
 the activation is still recorded.
 
+Every activation, from the use key or from a script, then activates the target's resident `XAPR`
+activate children, with the target as their activator. [Traps](/engine/traps.md) has the details.
+
 The use key goes through [interaction](/engine/interaction.md). The handler maps the event's form ID
 to a `ReferenceKey`, records the activation with the player as activator, and queues `OnActivate`.
 The open flag is set only for a door-style open action.

@@ -45,7 +45,7 @@ struct ScriptingAcceptanceRealDataTests {
         #expect(setup.world.instancesByKey.count == 30)
         let gridTally = setup.world.runtime.tally
         #expect(gridTally.faultTotal == 5)
-        #expect(gridTally.unimplementedNativeTotal == 9)
+        #expect(gridTally.unimplementedNativeTotal == 4)
         #expect(gridTally.deferredAnimationTotal == 0)
 
         let candidate = try candidate(in: setup.initialScene, file: setup.file)

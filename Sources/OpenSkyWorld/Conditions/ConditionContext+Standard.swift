@@ -74,6 +74,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installCrime(&registry)
         ConditionFunctions.installFaction(&registry)
         ConditionFunctions.installInventory(&registry)
+        ConditionFunctions.installLock(&registry)
         return registry
     }()
 }

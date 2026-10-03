@@ -32,6 +32,9 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// An item made at a crafting station, credited to the station's `WBDT` skill.
     /// The amount is the made stack's base value.
     case craft(skill: Int32)
+    /// A lock picked open or a pick broken, credited to Lockpicking. The amount is the
+    /// `fSkillUsageLockPick*` setting for the event.
+    case lockpick
 
     /// The skill this action always credits, or nil for `armorHit`, which depends
     /// on the target's armor. Unarmed, staff, torch and shield strikes credit
@@ -53,6 +56,8 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
             ActorValueIdentity.index(named: "Block")
         case .armorHit:
             nil
+        case .lockpick:
+            ActorValueIdentity.index(named: "Lockpicking")
         case let .spellEffect(skill), let .craft(skill):
             ActorValueIdentity.isSkill(index: skill) ? skill : nil
         }

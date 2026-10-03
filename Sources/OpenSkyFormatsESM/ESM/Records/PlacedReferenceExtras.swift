@@ -26,6 +26,19 @@ nonisolated public enum LockLevel: Equatable, Sendable {
         default: .unknown(rawValue)
         }
     }
+
+    /// The XLOC byte as written.
+    public var rawValue: UInt8 {
+        switch self {
+        case .novice: 1
+        case .apprentice: 25
+        case .adept: 50
+        case .expert: 75
+        case .master: 100
+        case .requiresKey: 255
+        case let .unknown(value): value
+        }
+    }
 }
 
 /// XLOC: level, key, and flags. Vanilla writes 20 bytes; xEdit allows any size from 4.
@@ -36,6 +49,13 @@ nonisolated public struct LockData: Equatable, Sendable {
     public let flags: UInt8
     /// The XLOC size, for the size histogram.
     public let size: Int
+
+    public init(level: LockLevel, key: FormID?, flags: UInt8 = 0, size: Int = 20) {
+        self.level = level
+        self.key = key
+        self.flags = flags
+        self.size = size
+    }
 
     /// Flag bit 0x04: the level scales with the player.
     public var isLeveled: Bool {

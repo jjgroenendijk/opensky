@@ -97,6 +97,22 @@ struct PapyrusRuntimeTests {
         #expect(Support.value(fourthRuntime.invoke("Pick", on: fourthHandle)) == .integer(4))
     }
 
+    @Test func aChildWithoutAnAutoStateStartsInItsParents() throws {
+        let parent = object(
+            "Parent",
+            automaticState: "Inactive",
+            states: [
+                Support.state("Inactive", functions: [("Pick", returning(2))]),
+                Support.state(functions: [("Pick", returning(4))])
+            ]
+        )
+        let child = object("Child", parent: "Parent", states: [Support.state(functions: [])])
+        let runtime = PapyrusRuntime(files: [PexFixture.runtimeFile(objects: [child, parent])])
+        let handle = try runtime.makeInstance(scriptName: "Child")
+        #expect(runtime.instances[handle]?.activeState == "Inactive")
+        #expect(Support.value(runtime.invoke("Pick", on: handle)) == .integer(2))
+    }
+
     @Test func gotoStateChangesSubsequentMethodLookup() {
         let run = function(
             returnType: "Int",
