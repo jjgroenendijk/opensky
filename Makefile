@@ -1,9 +1,9 @@
 # OpenSky - the one entry point for everything scripted (AGENTS.md).
 #
-#   make help        list every target, grouped by task
+#   make help        list the main targets, grouped by task (ALL=1 lists every one)
 #   make bootstrap   once per checkout: install tools
 #   make fix         autoformat, then run every linter
-#   make test        build and run the unit tests
+#   make test-unit   build and run the unit tests
 #
 # Common knobs: CONFIG=Debug|Release, DERIVED_DATA=<dir>, XCODEBUILD_FLAGS='...'.
 
@@ -126,19 +126,21 @@ METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 .PHONY: help bootstrap ffmpeg link-shared
 
-help: ## Show this list
-	@awk 'BEGIN { FS = ":.*## "; print "Usage: make <target> [VAR=value]" } \
+# A `#|` target is a part of a listed one, such as each check inside `lint`.
+help: ## Show the main targets [ALL=1 also lists the parts]
+	@awk -v all="$(ALL)" 'BEGIN { FS = ":.*#[#|] "; print "Usage: make <target> [VAR=value]" } \
 		/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } \
-		/^[a-z-]+:.*## / { printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' \
+		/^[a-z-]+:.*## / || (all != "" && /^[a-z-]+:.*#\| /) \
+			{ printf "  \033[36m%-19s\033[0m %s\n", $$1, $$2 }' \
 		$(MAKEFILE_LIST)
 
 bootstrap: ## Install the toolchain with Homebrew
 	@./tools/bootstrap.sh
 
-ffmpeg: ## Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
+ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
 
-link-shared: ## Point this worktree's ffmpeg and compile cache at the main checkout's
+link-shared: #| Point this worktree's ffmpeg and compile cache at the main checkout's
 	@./tools/link-shared.sh
 
 ##@ Format and lint
@@ -155,43 +157,43 @@ check: swift-baseline format-check lint docs-links ## The same gate without writ
 
 format: swift-format metal-format md-format ## Autoformat Swift, Metal, and Markdown
 
-format-check: swift-format-check metal-format-check md-lint ## Fail if anything is unformatted, without writing
+format-check: swift-format-check metal-format-check md-lint #| Fail if anything is unformatted, without writing
 
-swift-format-check: ## Fail if any Swift is unformatted
+swift-format-check: #| Fail if any Swift is unformatted
 	@swiftformat --lint --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 
-metal-format-check: ## Fail if any Metal shader is unformatted
+metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
 lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
-swift-baseline: ## Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
+swift-baseline: #| Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
 
-swift-format: ## Autoformat Swift
+swift-format: #| Autoformat Swift
 	@swiftformat --config $(SWIFTFORMAT_CFG) $(SWIFT_PATHS)
 
-swift-lint: ## Lint Swift strictly
+swift-lint: #| Lint Swift strictly
 	@$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $(SWIFT_PATHS)
 
-metal-format: ## Autoformat Metal shaders
+metal-format: #| Autoformat Metal shaders
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		-i $(METAL_FILES)
 
-md-format: ## Autofix Markdown
+md-format: #| Autofix Markdown
 	@markdownlint-cli2 --fix --config $(MD_CFG) "$(MD_GLOB)" || true
 
-md-lint: ## Lint Markdown strictly
+md-lint: #| Lint Markdown strictly
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
-sh-lint: ## Shellcheck the tools/ scripts
+sh-lint: #| Shellcheck the tools/ scripts
 	@shellcheck -s sh $$(find tools -type f -name '*.sh')
 
 # Every Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
 # app-only import there breaks the CLI build. This catches it without building.
-cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also builds
+cli-boundary: #| Keep AppKit out of the engine and format sources the CLI also builds
 	@offenders=$$(grep -rlE '^[[:space:]]*import (AppKit|Cocoa|SwiftUI)' --include='*.swift' \
 		$$(find Sources -mindepth 1 -maxdepth 1 -type d ! -name OpenSky) | sort); \
 	if [ -n "$$offenders" ]; then \
@@ -201,52 +203,52 @@ cli-boundary: ## Keep AppKit out of the engine and format sources the CLI also b
 	fi; \
 	echo "[ OK ] CLI target boundary clean"
 
-module-graph: ## Check the package graph follows The Modular Architecture
+module-graph: #| Check the package graph follows The Modular Architecture
 	@./tools/lint/module-graph.sh
 
-realdata-plan: ## Check every env-gated suite is in the RealData plan
+realdata-plan: #| Check every env-gated suite is in the RealData plan
 	@./tools/lint/realdata-plan.sh \
 		&& echo "[ OK ] real-data suites and the RealData plan line up"
 
-lint-test-plans: ## Check every test plan sets timeouts and selects by target or tag
+lint-test-plans: #| Check every test plan sets timeouts and selects by target or tag
 	@./tools/lint/test-plans.sh && echo "[ OK ] test plans follow the rules"
 
-lint-test-targets: ## Check every Makefile target that runs tests is named test-<kind>
+lint-test-targets: #| Check every Makefile target that runs tests is named test-<kind>
 	@./tools/lint/test-targets.sh && echo "[ OK ] test targets are named test-<kind>"
 
-lint-test-tags: ## Check suites carry the shared tags and .disabled names an issue [FIX=1]
+lint-test-tags: #| Check suites carry the shared tags and .disabled names an issue [FIX=1]
 	@./tools/lint/test-tags.sh $(if $(FIX),--fix,) && echo "[ OK ] suites carry their tags"
 
-no-game-content: ## Check no game assets or rendered captures are tracked
+no-game-content: #| Check no game assets or rendered captures are tracked
 	@./tools/lint/no-game-content.sh && echo "[ OK ] no tracked game content"
 
-docs-links: ## Check links inside docs/ resolve
+docs-links: #| Check links inside docs/ resolve
 	@./tools/check-docs-links.sh
 
-docs-length: ## Check no docs page is longer than DOCS_MAX_LINES
+docs-length: #| Check no docs page is longer than DOCS_MAX_LINES
 	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \
 		'$$2 != "total" && $$1 > max { printf "[FAIL] %s has %s lines; the limit is %s. Split or cut it.\n", $$2, $$1, max; bad = 1 } \
 		END { if (!bad) printf "[ OK ] docs pages within %s lines\n", max; exit bad }'
 
-agent-files: ## Check AGENTS.md symlinks and the skill format limits
+agent-files: #| Check AGENTS.md symlinks and the skill format limits
 	@./tools/lint/agent-files.sh
 
-workflow-lint: ## Lint the GitHub Actions workflows with actionlint
+workflow-lint: #| Lint the GitHub Actions workflows with actionlint
 	@actionlint && echo "[ OK ] workflows clean"
 
-comment-length: ## Check no comment block is over the line limit
+comment-length: #| Check no comment block is over the line limit
 	@./tools/lint/comment-length.sh
 
-panel-text: ## Check app panels hold no prose paragraphs or long tooltips
+panel-text: #| Check app panels hold no prose paragraphs or long tooltips
 	@./tools/lint/panel-text.sh
 
 # The whole tree in under a second. A scan of changed files only would miss a new
 # copy of code that did not change.
-duplicates: ## Check for duplicated Swift blocks (jscpd)
+duplicates: #| Check for duplicated Swift blocks (jscpd)
 	@./tools/lint/duplicates.sh $(JSCPD_CFG) $(SWIFT_PATHS)
 
 # Fix the finding instead (docs/decisions/code-health-automation.md).
-no-suppressions: ## Check no Swift file disables a SwiftLint rule
+no-suppressions: #| Check no Swift file disables a SwiftLint rule
 	@offenders=$$(grep -rn 'swiftlint:disable' --include='*.swift' $(SWIFT_PATHS)); \
 	if [ -n "$$offenders" ]; then \
 		printf '[FAIL] SwiftLint suppressions:\n%s\n' "$$offenders" >&2; \
@@ -255,10 +257,10 @@ no-suppressions: ## Check no Swift file disables a SwiftLint rule
 	fi; \
 	echo "[ OK ] no SwiftLint suppressions"
 
-comment-blocks: ## Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
+comment-blocks: #| Print long comment blocks to rewrite in bulk [PATHS='Sources/X'] [REFS=1]
 	@./tools/comment-blocks.sh dump $(if $(REFS),-r,) $(PATHS)
 
-comment-apply: ## Write rewritten blocks from a comment-blocks spec back [SPEC=file]
+comment-apply: #| Write rewritten blocks from a comment-blocks spec back [SPEC=file]
 	@./tools/comment-blocks.sh apply "$(SPEC)"
 
 ##@ Build checks
@@ -279,7 +281,7 @@ compile: link-shared ## Compile changed package modules and their dependents [M=
 verify-build: link-shared ## Compile the app, the CLI, and the unit bundles without running tests
 	@$(XCB_RUN) verify-build $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 
-shader-library: $(SHADER_LIBRARY) ## Compile the shaders the package tests load
+shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
 
 # Rebuilt only when a shader source is newer, so a warm test run pays nothing.
 # Written to a temporary name first, so a failed compile never leaves a file that
@@ -327,16 +329,16 @@ install: link-shared ## Build the Release app and copy it to /Applications
 	@ditto $(DERIVED_DATA)/Build/Products/Release/OpenSky.app /Applications/OpenSky.app
 	@echo "[ OK ] /Applications/OpenSky.app updated"
 
-app-path: ## Print the built OpenSky.app path [CONFIG]
+app-path: #| Print the built OpenSky.app path [CONFIG]
 	@echo "$(PRODUCTS)/OpenSky.app"
 
-cli-path: ## Print the built openskycli path [CONFIG]
+cli-path: #| Print the built openskycli path [CONFIG]
 	@echo "$(PRODUCTS)/openskycli"
 
 probe: ## Smoke-test the CLI against the local install (skips if absent)
 	@./tools/probe.sh
 
-icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
+icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 	@command -v rsvg-convert >/dev/null || { echo "[ERROR] rsvg-convert not found: brew install librsvg" >&2; exit 1; }
 	@for size in 16 32 64 128 256 512 1024; do \
 		rsvg-convert -w $$size -h $$size $(ICON_SVG) -o $(ICON_DIR)/icon_$$size.png || exit 1; \
@@ -348,8 +350,7 @@ icon: ## Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # Each is one plain `xcodebuild test` call on one test plan, so Xcode decides what
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
-.PHONY: test-unit test-locale test-parser test-gpu test-ui test-sanitize-thread \
-        test-sanitize-address test-real test-perf test-report test-perms coverage-floor \
+.PHONY: test-unit test-ui test-sanitize test-real test-report test-perms coverage-floor \
         realdata-build sanitizer-shaders profile
 
 # The result bundle of one run, in its own run directory (issue #347).
@@ -371,25 +372,20 @@ XCB_PERF         := xcodebuild -workspace $(WORKSPACE) -scheme $(SCHEME) \
 	SWIFT_OPTIMIZATION_LEVEL=-O GCC_OPTIMIZATION_LEVEL=s \
 	SWIFT_ACTIVE_COMPILATION_CONDITIONS="DEBUG OPENSKY_OPTIMIZED"
 
+# The unit plan by default. TAG runs one tag plan across every unit target, and
+# LOCALE=nl the unit plan in Dutch, where the decimal separator is a comma.
 # N hunts a flaky test: it reruns until the first failure, at most N times.
-test-unit: link-shared $(SHADER_LIBRARY) ## Run the unit plan [T='Suite/test()'] [N=100]
+unit_plan = $(if $(TAG),-testPlan $(or $(UNIT_TAG_PLAN_$(TAG)),$(error TAG must be parser or gpu)), \
+	-testPlan UnitTests -only-test-configuration $(if $(LOCALE),$(or $(UNIT_LOCALE_$(LOCALE)), \
+	$(error LOCALE must be nl)),Unit))
+UNIT_TAG_PLAN_parser := Parser
+UNIT_TAG_PLAN_gpu    := GPU
+UNIT_LOCALE_nl       := Locale
+test-unit: link-shared $(SHADER_LIBRARY) ## Run the unit plan [T='Suite/test()'] [N=100] [TAG=parser|gpu] [LOCALE=nl]
 	@TEST_RUNNER_OPENSKY_DATA_ROOT="$(OPENSKY_DATA_ROOT)" \
-		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit) $(UNIT_PLAN) \
-		$(call only_testing,OpenSkyTests) \
+		$(XCB_RUN) test-unit $(XCB_TEST) $(call test_bundle,unit$(if $(TAG),-$(TAG))$(if $(LOCALE),-$(LOCALE))) \
+		$(unit_plan) $(call only_testing,OpenSkyTests) \
 		$(if $(N),-run-tests-until-failure -test-iterations $(N)) test
-
-# Dutch language and region, where the decimal separator is a comma, to catch text
-# parsing that depends on the locale.
-test-locale: link-shared $(SHADER_LIBRARY) ## Run the unit plan in the nl_NL locale [T='Suite/test()']
-	@$(XCB_RUN) test-locale $(XCB_TEST) $(call test_bundle,locale) \
-		-testPlan UnitTests -only-test-configuration Locale \
-		$(call only_testing,OpenSkyTests) test
-
-test-parser: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .parser (Parser plan)
-	@$(XCB_RUN) test-parser $(XCB_TEST) $(call test_bundle,parser) -testPlan Parser test
-
-test-gpu: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .gpu (GPU plan)
-	@$(XCB_RUN) test-gpu $(XCB_TEST) $(call test_bundle,gpu) -testPlan GPU test
 
 # A timeout in "enabling automation mode" means Automation Mode asks for a
 # password: run make test-perms.
@@ -405,26 +401,25 @@ sanitizer-shaders: $(SHADER_LIBRARY)
 		cp "$(SHADER_LIBRARY)" "$(DERIVED_DATA)/Build/Products/$$variant/" || exit 1; \
 	done
 
-# TSan and ASan with UBSan cannot share a build (issue #383). Too slow for routine
-# runs, so run them periodically and before a milestone acceptance.
-test-sanitize-thread: link-shared sanitizer-shaders ## Run the unit tests under the Thread Sanitizer [CAP=MB]
-	@$(call guarded,12288,$(XCB_RUN) test-sanitize-thread $(XCB_TEST) \
-		$(call test_bundle,sanitize-thread) -testPlan Sanitizers -only-test-configuration Thread)
-
-test-sanitize-address: link-shared sanitizer-shaders ## Run the unit tests under ASan and UBSan [CAP=MB]
-	@$(call guarded,12288,$(XCB_RUN) test-sanitize-address $(XCB_TEST) \
-		$(call test_bundle,sanitize-address) -testPlan Sanitizers -only-test-configuration Address)
+# TSan and ASan with UBSan cannot share a build (issue #383), so SAN picks one. Too
+# slow for routine runs, so run them periodically and before a milestone acceptance.
+SANITIZER_CONFIG_thread  := Thread
+SANITIZER_CONFIG_address := Address
+test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanitizer SAN=thread|address [CAP=MB]
+	@$(call guarded,12288,$(XCB_RUN) test-sanitize-$(SAN) $(XCB_TEST) \
+		$(call test_bundle,sanitize-$(SAN)) -testPlan Sanitizers -only-test-configuration \
+		$(or $(SANITIZER_CONFIG_$(SAN)),$(error SAN must be thread or address)))
 
 # Real-data tests read the user's install, so they run on demand and before a
-# milestone acceptance, never in CI. The plan holds the install path.
-test-real: link-shared ## Run the real-data plan [T='Suite/test()'] [CAP=MB]
-	@$(call guarded,6144,$(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) \
-		-testPlan RealData $(call only_testing,OpenSkyRealDataTests))
+# milestone acceptance, never in CI. The plan holds the install path. PERF=1 runs
+# the Perf plan, which selects the real-data tests tagged `.perf`, built optimized.
+test-real: link-shared ## Run the real-data plan [T='Suite/test()'] [CAP=MB] [PERF=1]
+	@$(call guarded,6144,$(if $(PERF), \
+		$(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
+		$(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan RealData) \
+		$(call only_testing,OpenSkyRealDataTests))
 
-# The Perf plan selects the real-data tests tagged `.perf`.
-test-perf: link-shared ## Run every perf gate on an optimized build [CAP=MB]
-	@$(call guarded,6144,$(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) \
-		-testPlan Perf)
+##@ Test tools
 
 test-report: ## Summarize the newest test result bundle, failures included
 	@./tools/test-report.sh $(TEST_RESULTS)

@@ -80,5 +80,5 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 ## Not in CI
 
 - `make test-ui`. It needs the Accessibility grant, which a runner cannot give.
-- `make test-sanitize-thread`, `make test-sanitize-address`, and the real-data perf gates.
+- `make test-sanitize` and the real-data perf gates.
 - The real-data suites. A runner has no game install.

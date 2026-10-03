@@ -22,19 +22,19 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | --- | --- |
 | Docs, skills, Markdown only | `make check` |
 | Makefile or `tools/` script | `make check`, then run the changed target or script once |
-| Parser | New or updated synthetic-fixture tests, `make test-unit T='Suite'`, then `make test-parser` before pushing |
+| Parser | New or updated synthetic-fixture tests, `make test-unit T='Suite'`, then `make test-unit TAG=parser` before pushing |
 | Math routine | New or updated tests, `make test-unit T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-unit T='Suite'` for its suites, then `make test-unit` (whole unit plan) once before pushing |
 | Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, `make realdata-build`, then `make test-unit` |
-| Rendering or shaders | `make test-gpu`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
+| Rendering or shaders | `make test-unit TAG=gpu`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill and `make verify-build`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make health`, `make test-real`, `make test-sanitize-thread`, `make test-sanitize-address`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
+| Milestone acceptance | `make health`, `make test-real`, `make test-sanitize SAN=thread` and `SAN=address`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`.
-A tag plan runs one kind of suite across every unit target: `make test-parser` or
-`make test-gpu`. The tags and the rule for which a new suite must carry are in `Tests/AGENTS.md`;
+A tag plan runs one kind of suite across every unit target: `make test-unit TAG=parser` or
+`TAG=gpu`. The tags and the rule for which a new suite must carry are in `Tests/AGENTS.md`;
 `make lint-test-tags` checks them.
 Suite names follow the type under test (`BSAArchive` is covered by `BSAArchiveTests`).
 
@@ -99,12 +99,12 @@ screen while the user may be working.
 
 These guard the machine and are not optional:
 
-- Real-data tests go through `make test-real` or `make test-perf` only. Both run under the
-  memory watchdog; a raw `xcodebuild` against the install once ran to 30 GB and locked the
+- Real-data tests go through `make test-real` only, with `PERF=1` for the perf gates. It runs
+  under the memory watchdog; a raw `xcodebuild` against the install once ran to 30 GB and locked the
   machine.
 - Iterate with `make test-real T=...` on one test. Rerun it only after a change that could
   alter the result.
-- A perf gate carries the `.perf` tag; `make test-perf` runs every one, built optimized.
+- A perf gate carries the `.perf` tag; `make test-real PERF=1` runs every one, built optimized.
 - Captures and probe output go under `logs/` (root `AGENTS.md`, Legal & IP boundary).
 
 ## Flaky tests

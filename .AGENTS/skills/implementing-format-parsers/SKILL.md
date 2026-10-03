@@ -80,7 +80,7 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
   engine state goes in the test target of the highest module it imports (`Tests/AGENTS.md`).
 - A bug fix starts with a fixture that reproduces it and a test that fails.
 - Run `make test-unit T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
-  `make test-parser` before pushing.
+  `make test-unit TAG=parser` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
   under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A throwaway probe
   never lands in a commit.

@@ -36,7 +36,7 @@ driver — belongs here too. Support shared with the synthetic suites goes in
 ```sh
 make test-real T='CellRenderRealDataTests/streamsFiveByFiveGridToCompletion()'
 make test-real
-make test-perf
+make test-real PERF=1
 ```
 
 A bare selector resolves under `OpenSkyRealDataTests/`. All three run under the RSS
