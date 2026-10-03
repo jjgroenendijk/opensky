@@ -17,6 +17,7 @@ extension CellStreamer {
     /// A nil `location` rebuilds every resident cell, because the streamer cannot
     /// tell which one holds the reference.
     public func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
+        guard !isRecordingSettledBody else { return }
         switch location {
         case let .exterior(coordinate):
             noteExteriorMutation(coordinate, sequence: sequence)
@@ -184,8 +185,10 @@ extension CellStreamer {
             guard kind == .enableState else { return }
             self?.noteEnableParentMutation(key, sequence: sequence)
         }
-        onBodySettled = { key, transform, placingCell in
+        onBodySettled = { [weak self] key, transform, placingCell in
+            self?.isRecordingSettledBody = true
             store.set(transform, for: key, in: placingCell)
+            self?.isRecordingSettledBody = false
         }
     }
 }

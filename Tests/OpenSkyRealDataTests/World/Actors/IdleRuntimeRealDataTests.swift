@@ -62,6 +62,13 @@ struct IdleRuntimeRealDataTests {
         let actor: RuntimeReferenceEntry
         let plan: IdlePlaybackPlan
         let idle: String
+
+        var hasProp: Bool {
+            if case .attached = plan.prop {
+                return true
+            }
+            return false
+        }
     }
 
     /// Inns with many idle markers. The first one is the selection gate.
@@ -81,7 +88,9 @@ struct IdleRuntimeRealDataTests {
             files: install.fileSystem, animatedObjects: store.animatedObjects
         )
         var lines: [String] = []
+        // An idle with a prop is preferred, so the capture shows it riding its bone.
         var pick: Pick?
+        var fallback: Pick?
         for (index, inn) in Self.inns.enumerated() where pick == nil || index == 0 {
             let cell = try #require(ESMWalk.record(withEditorID: inn, in: install.file))
             let scene = try builder.buildInteriorScene(cellFormID: FormID(cell.formID))
@@ -92,13 +101,14 @@ struct IdleRuntimeRealDataTests {
             if index == 0 {
                 try #require(picks.selected >= 3, "selections: \(picks.selected)")
             }
-            pick = pick ?? picks.playable.first
+            pick = pick ?? picks.playable.first(where: \.hasProp)
+            fallback = fallback ?? picks.playable.first
         }
         let logs = try RepositoryLogs.createdDirectory("idle-runtime")
         try lines.joined(separator: "\n").write(
             to: logs.appending(path: "inns.log"), atomically: true, encoding: .utf8
         )
-        let found = try #require(pick, "no marker chose a playable idle")
+        let found = try #require(pick ?? fallback, "no marker chose a playable idle")
         try capture(found, builder: builder, install: install, logs: logs)
     }
 
@@ -190,28 +200,35 @@ struct IdleRuntimeRealDataTests {
     ) throws {
         let placed = try #require(pick.actor.placedActor)
         let resolvers = builder.actorResolversBuildingIfNeeded(localized: true)
-        var presentation = ActorPresentationState()
-        if case let .attached(_, modelPath, bone) = pick.plan.prop {
-            presentation.prop = ActorPropAttachment(modelPath: modelPath, bone: bone)
-        }
         let visual = try resolvers.visual.resolve(
             appearance: resolvers.template.resolve(base: placed.base)
-        ).presenting(presentation)
+        )
         let assembly = ActorAssembler(provider: install.meshes).assemble(
             placed: placed,
             visual: visual
         )
         let playback = try builder.makeAnimationPlayback(assembly: assembly).get()
+        var scenes = [RenderScene(
+            instances: assembly.renderPlacements(at: assembly.transform),
+            animations: [playback]
+        )]
+        // The prop goes through the same overlay the streamer draws it with.
+        if case let .attached(_, modelPath, bone) = pick.plan.prop {
+            let skeleton = try install.meshes.loadActorSkeleton(
+                path: playback.clip.skeletonMeshPath
+            ).get()
+            let prop = try install.meshes.loadActorAttachment(
+                path: modelPath, bone: bone, skeleton: skeleton
+            ).get()
+            scenes.append(.actorProp(prop.model, on: playback))
+        }
         let clip = try ActorAnimationClipLoader.clip(
             skeletonMeshPath: playback.clip.skeletonMeshPath,
             animationPath: #require(pick.plan.clipPath),
             readHKX: { try HKXFile(data: install.fileSystem.contents(forPath: $0)) }
         )
         let renderer = try Self.renderer(
-            RenderScene(
-                instances: assembly.renderPlacements(at: assembly.transform),
-                animations: [playback]
-            ),
+            RenderScene(merging: scenes),
             transform: assembly.transform,
             device: install.device
         )

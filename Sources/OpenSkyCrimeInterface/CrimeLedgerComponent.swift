@@ -255,5 +255,7 @@ nonisolated extension WorldStateComponentKind {
     /// What one actor owes each crime faction, and how many crimes it committed.
     /// Keyed by the perpetrator, `ReferenceKey.player` in practice. Its own slot,
     /// because bounties change rarely and actor values change every step.
-    public static let crimeLedger = Self(rawValue: "crimeLedger", order: 19)
+    public static let crimeLedger = Self(
+        rawValue: "crimeLedger", order: 19, affectsCellBuild: false
+    )
 }

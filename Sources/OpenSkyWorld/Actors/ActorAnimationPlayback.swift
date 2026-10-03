@@ -111,6 +111,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
 
     public let actor: FormID
     public let female: Bool
+    /// Where the cell build drew the actor, so a prop drawn later lands on it.
+    public let transform: float4x4
     /// The clip this actor returns to when an override ends.
     private let idleClip: ActorAnimationClip
     /// Changed on the main actor after the build queue hands the scene over.
@@ -126,10 +128,12 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         actor: FormID,
         clip: ActorAnimationClip,
         models: [RenderModel],
-        female: Bool = false
+        female: Bool = false,
+        transform: float4x4 = matrix_identity_float4x4
     ) {
         self.actor = actor
         self.female = female
+        self.transform = transform
         idleClip = clip
         state = Mutex(State(clip: clip, locomotionClip: clip))
         var seen = Set<ObjectIdentifier>()
@@ -203,15 +207,12 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         _ transforms: [String: float4x4],
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        meshes.reduce(0) { count, mesh in
-            guard updatedMeshes.insert(ObjectIdentifier(mesh)).inserted else { return count }
-            return count + mesh.updateSkinningPose(transforms)
-        }
+        meshes.applySkinningPose(transforms, updating: &updatedMeshes)
     }
 
     @discardableResult
     public func resetToBindPose() -> Int {
-        meshes.reduce(0) { $0 + $1.resetSkinningPose() }
+        meshes.resetSkinningPoses()
     }
 }
 
@@ -256,7 +257,8 @@ nonisolated extension CellSceneBuilder {
             actor: assembly.actor,
             clip: clip,
             models: assembly.models.map(\.asset.model),
-            female: assembly.visual.appearance.isFemale.value
+            female: assembly.visual.appearance.isFemale.value,
+            transform: assembly.transform
         ))
     }
 

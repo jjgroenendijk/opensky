@@ -54,6 +54,13 @@ activation](/engine/papyrus-activation.md#the-world-bridge)). Each write passes 
 loaded cell. An attributed change rebuilds one cell. An unattributed one rebuilds every loaded cell.
 A reference no loaded cell knows stays unattributed. That is the correct fallback, not a guess.
 
+A kind declares whether a cell build reads it. Quest, alias, story manager, dialogue, scene, actor
+value, combat, magic, perk, faction, relationship, progress, and crime state do not: no placed
+reference looks different or stands elsewhere because of them. A write of such a kind is journaled
+and saved like any other, but rebuilds no cell. Without this, a quest start, a said line, or a scene
+phase change had no cell and so rebuilt every loaded cell. A kind defaults to rebuilding, so a new
+kind is safe until its author decides otherwise.
+
 ## No operation throws
 
 Writing to an unknown key is not a failure. A reference does not need to be loaded, or even defined
@@ -152,7 +159,10 @@ Three results follow from state living only in the store:
 - Unloading a cell changes no state, and a pending rebuild for an unloaded cell is dropped. A
   returning cell rebuilds from plugin bytes and the current snapshot, which applies its delta again.
 - An unattributed change rebuilds every loaded cell. That is correct first. The way to narrow it is
-  to attribute the write.
+  to attribute the write, or to mark its kind as one no cell build reads.
+- A settled physics body saves its resting pose without a rebuild, because it already draws there
+  ([dynamic bodies](/engine/dynamic-bodies.md#saving)). An idle prop is not world state at all
+  ([idle runtime](/engine/idle-runtime.md#prop)).
 - An interior has no way to build alone. It only arrives as a door destination. So its rebuild runs
   the same door transition again with a fresh snapshot and no camera, so the player stays where they
   stand ([interiors](/engine/interiors.md)).

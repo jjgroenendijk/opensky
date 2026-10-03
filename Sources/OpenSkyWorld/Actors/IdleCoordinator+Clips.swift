@@ -28,7 +28,7 @@ extension IdleCoordinator {
     /// Drops the prop of the idle that ends; the clip retires on its own.
     func endIdle(of actor: ReferenceKey) {
         guard sessions[actor]?.playing?.hasProp == true else { return }
-        world?.updatePresentation(of: actor) { $0.prop = nil }
+        world?.setProp(nil, on: actor)
     }
 
     func clip(_ path: String, skeleton: String) -> ActorAnimationClip? {

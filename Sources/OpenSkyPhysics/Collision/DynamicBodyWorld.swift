@@ -289,7 +289,8 @@ nonisolated public struct DynamicBodyWorld: Sendable {
     }
 
     /// Records the resting transform of every body that fell asleep since the
-    /// last step, and forgets bodies that woke back up.
+    /// last step, and forgets bodies that woke back up. A body asleep where its
+    /// build drew it records nothing, because that write would only rebuild its cell.
     private mutating func recordSettled() {
         for body in bodies {
             guard body.isSleeping else {
@@ -297,6 +298,14 @@ nonisolated public struct DynamicBodyWorld: Sendable {
                 continue
             }
             guard wasSleeping.insert(body.key).inserted else { continue }
+            if
+                let placed = placedPoses[body.key],
+                body.instanceDelta(
+                    fromPlacedPosition: placed.position, orientation: placed.orientation
+                ) == nil
+            {
+                continue
+            }
             settled[body.key] = PlacedReference.Placement(
                 position: body.originPosition,
                 rotation: MatrixMath.eulerAngles(of: body.orientation)

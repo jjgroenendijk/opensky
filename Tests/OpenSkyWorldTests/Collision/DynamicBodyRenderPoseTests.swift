@@ -100,9 +100,9 @@ struct DynamicBodyRenderPoseTests {
         #expect(fallen < -1)
     }
 
-    /// A settled body's pose reaches the scene through a cell rebuild, and the
-    /// rebuild bakes it into the instance matrix. The delta has to collapse at
-    /// the same moment or the object would be drawn displaced twice over.
+    /// A later cell rebuild bakes a settled body's pose into the instance
+    /// matrix. The delta has to collapse at the same moment or the object
+    /// would be drawn displaced twice over.
     @Test
     func arebuildThatBakesTheRestingPoseClearsTheDelta() {
         var world = DynamicBodyWorld()

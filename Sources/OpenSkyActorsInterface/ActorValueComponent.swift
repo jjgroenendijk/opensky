@@ -139,5 +139,5 @@ nonisolated extension WorldStateComponentKind {
     /// maximums re-derive from the RACE, CLAS and NPC_ records through
     /// `ActorValueResolver`, exactly as an inventory baseline re-derives from its
     /// CNTO list.
-    public static let actorValues = Self(rawValue: "actorValues", order: 8)
+    public static let actorValues = Self(rawValue: "actorValues", order: 8, affectsCellBuild: false)
 }

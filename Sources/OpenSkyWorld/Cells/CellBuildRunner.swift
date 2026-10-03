@@ -36,6 +36,9 @@ nonisolated public protocol CellSceneProvider {
         from sourceDoor: FormID,
         state: WorldStateSnapshot
     ) throws -> DoorTransition
+
+    /// Loads an idle prop bound to its bone of the rig at `request.skeletonPath`.
+    func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel
 }
 
 nonisolated extension CellSceneProvider {
@@ -51,6 +54,10 @@ nonisolated extension CellSceneProvider {
         state _: WorldStateSnapshot
     ) throws -> DoorTransition {
         throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
+    }
+
+    public func loadActorProp(_: ActorPropRequest) throws -> RenderModel {
+        throw ActorAssetFailure.missing
     }
 }
 
@@ -108,6 +115,13 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
             worldspaceEditorID: worldspaceEditorID,
             state: state
         )
+    }
+
+    public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {
+        let skeleton = try builder.meshes.loadActorSkeleton(path: request.skeletonPath).get()
+        return try builder.meshes.loadActorAttachment(
+            path: request.prop.modelPath, bone: request.prop.bone, skeleton: skeleton
+        ).get().model
     }
 }
 
@@ -171,6 +185,24 @@ nonisolated public struct DoorTransitionBuildResult: Sendable {
     public let result: Result<DoorTransition, any Error>
 }
 
+/// One idle prop to load for one actor, on the actor's own rig.
+nonisolated public struct ActorPropRequest: Equatable, Sendable {
+    public let actor: FormID
+    public let prop: ActorPropAttachment
+    public let skeletonPath: String
+
+    public init(actor: FormID, prop: ActorPropAttachment, skeletonPath: String) {
+        self.actor = actor
+        self.prop = prop
+        self.skeletonPath = skeletonPath
+    }
+}
+
+nonisolated public struct ActorPropLoadResult: Sendable {
+    public let request: ActorPropRequest
+    public let result: Result<RenderModel, any Error>
+}
+
 /// Runs cell builds off the main thread and buffers the results for a
 /// main-thread poll. The streamer enqueues coordinates and drains completions
 /// once per frame; ordering of completions is the executor's business.
@@ -188,6 +220,8 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
     func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot)
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
+    func enqueueActorProp(_ request: ActorPropRequest)
+    func drainCompletedActorProps() -> [ActorPropLoadResult]
 }
 
 nonisolated extension CellBuildRunning {
@@ -205,6 +239,11 @@ nonisolated extension CellBuildRunning {
 
     public func enqueueDoorTransition(from _: FormID, state _: WorldStateSnapshot) {}
     public func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
+        []
+    }
+
+    public func enqueueActorProp(_: ActorPropRequest) {}
+    public func drainCompletedActorProps() -> [ActorPropLoadResult] {
         []
     }
 }
@@ -228,6 +267,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         var cells: [CellBuildResult] = []
         var distantLOD: [DistantLODBuildResult] = []
         var doorTransitions: [DoorTransitionBuildResult] = []
+        var actorProps: [ActorPropLoadResult] = []
     }
 
     private let provider: Mutex<any CellSceneProvider>
@@ -342,6 +382,24 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         }
         bookkeeping.withLock { $0.pendingDoorTransitions.subtract(out.map(\.sourceDoor)) }
         return out
+    }
+
+    /// Queued behind any cell build, so a prop never waits on more than one.
+    public func enqueueActorProp(_ request: ActorPropRequest) {
+        queue.async { [self] in
+            let result = provider.withLock { provider in
+                Result { try provider.loadActorProp(request) }
+            }
+            let entry = ActorPropLoadResult(request: request, result: result)
+            results.withLock { $0.actorProps.append(entry) }
+        }
+    }
+
+    public func drainCompletedActorProps() -> [ActorPropLoadResult] {
+        results.withLock { state in
+            defer { state.actorProps.removeAll(keepingCapacity: true) }
+            return state.actorProps
+        }
     }
 
     /// Thread-safe snapshot for tests and scripted streaming checks.

@@ -114,25 +114,10 @@ nonisolated public struct ResolvedActorVisual: Equatable {
 }
 
 nonisolated extension ResolvedActorVisual {
-    /// The visual with a runtime presentation applied: the head source, and
-    /// the idle prop as one more attachment.
+    /// The visual with a runtime presentation applied: the head source.
     public func presenting(_ state: ActorPresentationState?) -> ResolvedActorVisual {
         guard let state else { return self }
-        var copy = ResolvedActorVisual(
-            appearance: appearance,
-            skeletonPath: skeletonPath,
-            skin: skin,
-            equippedSlots: equippedSlots,
-            parts: parts,
-            attachments: attachments + (state.prop.map {
-                [ResolvedAttachment(modelPath: $0.modelPath, bone: $0.bone)]
-            } ?? []),
-            usesRuntimeEquipment: usesRuntimeEquipment,
-            faceGenMeshPath: faceGenMeshPath,
-            faceGenTintPath: faceGenTintPath,
-            skips: skips
-        )
-        copy.headParts = headParts
+        var copy = self
         copy.headSource = state.headSource
         return copy
     }

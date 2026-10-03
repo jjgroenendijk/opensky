@@ -34,7 +34,7 @@ extension CellStreamer {
             // Draw ownership changes only at a cell boundary. Recompose once
             // there so the occupied cell can outlive the placing cell without
             // rebuilding either cell's baked scene.
-            sink(composition.composedScene(), nil)
+            sink(viewScene(), nil)
         }
         // Published every tick rather than only when something moved: a body
         // that has settled away from where its cell drew it keeps a delta until

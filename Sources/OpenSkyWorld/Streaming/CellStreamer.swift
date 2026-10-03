@@ -137,11 +137,16 @@ public final class CellStreamer {
     public let triggerLog = TriggerEventLog()
     /// Simulated rigid bodies, reconciled against residency each frame.
     public var dynamicBodies = DynamicBodyWorld()
+    /// Idle props by actor, drawn outside the cell scenes (CellStreamerActorProps).
+    public var actorProps: [FormID: ActorPropDraw] = [:]
     /// A body came to rest and its transform should be persisted under the
     /// reference's `.transform` component. `bind(to:)` wires it to the store.
     public var onBodySettled: ((
         ReferenceKey, ReferenceTransformOverride, CellSceneLocation
     ) -> Void)?
+    /// True while a settled body's transform is written. The body already draws
+    /// at that pose, so the write rebuilds no cell; a later build bakes it in.
+    public var isRecordingSettledBody = false
     /// Where simulated bodies have moved, published each physics tick. The app wires it to
     /// `Renderer.dynamicInstanceDeltas`.
     public var onDynamicPosesChanged: (([UInt32: float4x4]) -> Void)?
@@ -206,7 +211,7 @@ public final class CellStreamer {
             return
         }
 
-        var sceneChanged = false
+        var sceneChanged = integrateActorProps()
         // Renderer starts on its demo pose. Keep the configured launch grid
         // fixed until the first drawable cell supplies the framing camera.
         let effectivePosition = hasSeededCamera
@@ -381,7 +386,7 @@ public final class CellStreamer {
     /// first recompose that has drawable bounds frames the camera; all later
     /// ones pass nil.
     private func recomposeAndSink() {
-        let scene = composition.composedScene()
+        let scene = viewScene()
         var camera: SceneCamera?
         if !hasSeededCamera, let bounds = composition.composedBounds() {
             camera = SceneCamera.framing(bounds: bounds)

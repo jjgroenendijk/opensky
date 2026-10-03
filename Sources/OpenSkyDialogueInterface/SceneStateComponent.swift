@@ -59,5 +59,5 @@ nonisolated public struct SceneActionProgress: Equatable, Sendable {
 
 nonisolated extension WorldStateComponentKind {
     /// A playing scene. Keyed by the SCEN base record, which is in no cell.
-    public static let scene = Self(rawValue: "scene", order: 22)
+    public static let scene = Self(rawValue: "scene", order: 22, affectsCellBuild: false)
 }

@@ -80,5 +80,7 @@ nonisolated extension WorldStateComponentKind {
     /// Creation Kit says outright that "relationships override factions"
     /// (<https://ck.uesp.net/wiki/Relationship>), so they cannot share a slot and
     /// still be resolved in that order.
-    public static let relationships = Self(rawValue: "relationships", order: 17)
+    public static let relationships = Self(
+        rawValue: "relationships", order: 17, affectsCellBuild: false
+    )
 }

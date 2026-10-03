@@ -16,10 +16,14 @@ nonisolated public struct WorldStateComponentKind: Hashable, Comparable, Sendabl
     public let rawValue: String
     /// Position in the deterministic iteration order.
     public let order: Int
+    /// False for a kind no cell build reads, such as quest or scene state. A
+    /// write of it then rebuilds no cell through `WorldStateStore.onMutation`.
+    public let affectsCellBuild: Bool
 
-    public init(rawValue: String, order: Int) {
+    public init(rawValue: String, order: Int, affectsCellBuild: Bool = true) {
         self.rawValue = rawValue
         self.order = order
+        self.affectsCellBuild = affectsCellBuild
     }
 
     public static func < (lhs: Self, rhs: Self) -> Bool {

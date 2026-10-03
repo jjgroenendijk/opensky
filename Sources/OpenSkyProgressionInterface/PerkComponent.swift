@@ -55,5 +55,5 @@ nonisolated extension WorldStateComponentKind {
     /// one: owning a perk changes on a level-up, a script call or an actor's first
     /// appearance, never per frame, while the actor values a perk goes on to modify
     /// are rewritten sixty times a second.
-    public static let perks = Self(rawValue: "perks", order: 15)
+    public static let perks = Self(rawValue: "perks", order: 15, affectsCellBuild: false)
 }

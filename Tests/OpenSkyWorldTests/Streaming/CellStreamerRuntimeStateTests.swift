@@ -339,3 +339,51 @@ struct CellStreamerRuntimeStateTests {
         #expect(harness.runner.enqueued.count == loadCount)
     }
 }
+
+// MARK: - Writes that rebuild nothing
+
+extension CellStreamerRuntimeStateTests {
+    @Test
+    func aWriteOfAKindNoCellBuildReadsRebuildsNothing() {
+        var harness = Self.makeHarness(radius: 1)
+        let camera = Self.position(of: Self.coordinate(0, 0))
+        Self.settle(&harness, at: camera)
+        let loadCount = harness.runner.enqueued.count
+
+        harness.store.set(OffScreenState(phase: 1), for: Self.key(0x91))
+        harness.store.set(OffScreenState(phase: 2), for: Self.key(0x91))
+        #expect(harness.store.component(OffScreenState.self, for: Self.key(0x91))?.phase == 2)
+        harness.store.reset(OffScreenState.componentKind, for: Self.key(0x91))
+
+        #expect(harness.streamer.queuedRebuildCount == 0)
+        Self.settle(&harness, at: camera)
+        #expect(harness.runner.enqueued.count == loadCount)
+    }
+
+    /// A settled body already draws at its resting pose, so saving that pose
+    /// must not rebuild the cell that holds it.
+    @Test
+    func aSettledBodyIsSavedWithoutARebuild() {
+        var harness = Self.makeHarness()
+        let cell = Self.coordinate(0, 0)
+        Self.settle(&harness, at: Self.position(of: cell))
+        let resting = ReferenceTransformOverride(position: SIMD3(1, 2, 3))
+
+        harness.streamer.onBodySettled?(Self.key(0x92), resting, .exterior(cell))
+
+        #expect(harness.store.component(ReferenceTransformOverride.self, for: Self.key(0x92))
+            != nil)
+        #expect(harness.streamer.queuedRebuildCount == 0)
+        harness.store.set(ReferenceEnableState.disabled, for: Self.key(0x93), in: .exterior(cell))
+        #expect(harness.streamer.queuedRebuildCount == 1)
+    }
+}
+
+/// Stands in for quest, dialogue, or scene state, which have no cell.
+private struct OffScreenState: WorldStateComponent {
+    static let componentKind = WorldStateComponentKind(
+        rawValue: "offScreenState", order: 901, affectsCellBuild: false
+    )
+
+    var phase: Int
+}

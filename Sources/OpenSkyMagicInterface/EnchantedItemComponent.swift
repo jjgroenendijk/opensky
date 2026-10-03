@@ -100,5 +100,7 @@ nonisolated extension WorldStateComponentKind {
     /// `actorValues`: the inventory component is rewritten by every take, drop and
     /// equip, while charge moves only when an enchanted weapon actually lands a
     /// hit.
-    public static let enchantedItems = Self(rawValue: "enchantedItems", order: 14)
+    public static let enchantedItems = Self(
+        rawValue: "enchantedItems", order: 14, affectsCellBuild: false
+    )
 }

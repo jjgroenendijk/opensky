@@ -97,5 +97,5 @@ nonisolated extension WorldStateComponentKind {
     /// sixty times a second. It is also the input to the hostility derivation,
     /// which is why it must be a component and not a re-read of the NPC_ record: an
     /// actor the player has joined to a faction has to stay joined across a reload.
-    public static let factions = Self(rawValue: "factions", order: 16)
+    public static let factions = Self(rawValue: "factions", order: 16, affectsCellBuild: false)
 }

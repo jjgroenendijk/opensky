@@ -23,8 +23,8 @@ public final class WorldStateStore {
     private var changeJournal: WorldStateJournal
     private var allocator: GeneratedReferenceAllocator
 
-    /// Fires per journalled mutation with its cell (or nil) and the next snapshot's
-    /// sequence. `CellStreamer` uses it to rebuild stale cells; it needs no payload.
+    /// Fires per journalled mutation of a kind that `affectsCellBuild`, with its cell
+    /// (or nil) and the next snapshot's sequence. `CellStreamer` rebuilds stale cells.
     public var onMutation: ((CellSceneLocation?, UInt64) -> Void)?
 
     /// Fires per journalled reference mutation with its key, kind, and the next
@@ -107,7 +107,9 @@ public final class WorldStateStore {
             newValue: value,
             cell: delta.cell
         )
-        onMutation?(delta.cell, changeJournal.nextSequence)
+        if value.kind.affectsCellBuild {
+            onMutation?(delta.cell, changeJournal.nextSequence)
+        }
         onReferenceMutation?(key, value.kind, changeJournal.nextSequence)
         return true
     }
@@ -132,7 +134,9 @@ public final class WorldStateStore {
             newValue: nil,
             cell: cell
         )
-        onMutation?(cell, changeJournal.nextSequence)
+        if kind.affectsCellBuild {
+            onMutation?(cell, changeJournal.nextSequence)
+        }
         onReferenceMutation?(key, kind, changeJournal.nextSequence)
         return true
     }
