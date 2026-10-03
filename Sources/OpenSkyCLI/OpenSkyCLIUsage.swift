@@ -73,6 +73,8 @@ extension OpenSkyCLI {
       dds <key>                   Inspect a texture: header + mip chain
       hkx <key>                   Inspect a Havok packfile: header, section table,
                                   class-name + object inventory
+      hkt <key> | hkt sweep       Decode a Havok binary tagfile: classes with
+                                  versions, objects, cloth classes, bones
       skeleton <hkx-key> [--nif <nif-key>]
                                   Decode each hkaSkeleton (bone names, parent
                                   chain, roots); --nif name-maps the rig onto

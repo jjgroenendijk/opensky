@@ -166,6 +166,10 @@ enum OpenSkyCLI {
             try AudioCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "hkt":
+            try HKTCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         default:
             return false
         }
