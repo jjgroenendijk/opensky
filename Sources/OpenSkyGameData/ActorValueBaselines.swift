@@ -55,17 +55,21 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     /// The level the derivation used: the ACBS level or its `PC Level Mult` scaling
     /// for an NPC, and the character level for the player. `GetLevel` reports it.
     public let level: Int
+    /// The race's `DATA` child flag, which `IsChild` reports.
+    public let isChild: Bool
 
     public init(
         maximums: ActorValues,
         regenPercentPerSecond: ActorValues,
         general: [Int32: Float] = [:],
-        level: Int = PlayerLevelSource.startingLevel
+        level: Int = PlayerLevelSource.startingLevel,
+        isChild: Bool = false
     ) {
         self.maximums = maximums
         self.regenPercentPerSecond = regenPercentPerSecond
         self.general = general
         self.level = max(PlayerLevelSource.startingLevel, level)
+        self.isChild = isChild
     }
 
     /// The base value `index` starts from: what the records author, or the vanilla
@@ -198,7 +202,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             // nothing in the records describes the player, and the number a
             // `PC Level Mult` actor scales against has to be the same number
             // `GetLevel` reports for them.
-            level: playerLevel.level
+            level: playerLevel.level,
+            isChild: race.flags.contains(.child)
         )
     }
 
@@ -213,7 +218,9 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             maximums: resolved.maximums,
             regenPercentPerSecond: resolved.regenPercentPerSecond,
             general: resolved.generalBaseValues,
-            level: resolved.level
+            level: resolved.level,
+            isChild: resolved.race
+                .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false
         )
     }
 }

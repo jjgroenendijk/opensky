@@ -41,6 +41,8 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 74 | `GetGlobalValue` | `GLOB` | the global's value |
 | 77 | `GetRandomPercent` | none | integer 0 to 99 |
 | 80 | `GetLevel` | none | level; for the player, the character level |
+| 102 | `IsTorchOut` | none | 1 when the actor holds a torch out |
+| 103 | `IsShieldOut` | none | 1 when the actor holds a shield out |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
 | 214 | `HasMagicEffect` | `MGEF` | 1 when that effect acts on the actor |
 | 223 | `IsSpellTarget` | `SPEL`, `ALCH`, `INGR`, or `ENCH` | 1 when an effect from it acts on the actor |
@@ -49,6 +51,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 264 | `HasSpell` | `SPEL` | 1 when the actor knows the spell |
 | 277 | `GetBaseActorValue` | actor-value index | base value, without modifiers |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
+| 365 | `IsChild` | none | 1 when the actor's race has the child flag |
 | 375 | `GetCrimeGoldViolent` | `FACT` or null | violent part of the bounty |
 | 376 | `GetCrimeGoldNonviolent` | `FACT` or null | non-violent part of the bounty |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
@@ -108,6 +111,12 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 - `GetCombatState` reads the combat phase: 0 when the actor has not noticed the player or
   gave up searching, 1 when fighting, 2 when searching. A dead actor is never in combat
   ([combat](/engine/combat.md)).
+- `IsTorchOut` and `IsShieldOut` read what the left hand holds out. OpenSky draws no
+  torch, and a shield comes out only with a drawn weapon. So an actor whose weapon is
+  sheathed, or an NPC that is not fighting, holds nothing out and both return 0. An NPC
+  in a fight has no tracked draw state, so both fail as unavailable. Vanilla idle markers
+  test these two, for example the sweeping and warm-hands idles.
+- `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetDead` reads the death flag, not health. The Creation Kit says: "This is more accurate
   than checking the actor's health because there are circumstances when the actor can die
   without losing all of their health."

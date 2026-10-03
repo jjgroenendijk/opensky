@@ -22,10 +22,10 @@ struct ConditionFactionRealDataTests {
     /// `GetRelationshipRank`, `GetFactionRelation` and `IsHostileToActor`.
     private static let factionIndices: Set<UInt16> = [60, 71, 73, 403, 449, 719]
 
-    /// `GetCrimeGoldViolent`, `GetCrimeGoldNonviolent`, `GetItemCount`, and `GetEventData`,
-    /// subtracted so the delta measures the faction functions alone. `GetCrimeGold` is
-    /// already inside the numbers below.
-    private static let laterIndices: Set<UInt16> = [375, 376, 47, 65, 576]
+    /// `GetCrimeGoldViolent`, `GetCrimeGoldNonviolent`, `GetItemCount`, `GetEventData`, and
+    /// the hand and child checks, subtracted so the delta measures the faction functions
+    /// alone. `GetCrimeGold` is already inside the numbers below.
+    private static let laterIndices: Set<UInt16> = [375, 376, 47, 65, 576, 102, 103, 365]
 
     private static let guardEditorIDPrefix = "GuardWhiterun"
 
