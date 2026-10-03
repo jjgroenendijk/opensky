@@ -2,7 +2,8 @@
 type: Tool
 title: Continuous integration
 description: What the GitHub Actions workflow runs on macOS, how each step shares its make target
-  with `make check`, how the jobs fit the macOS runner limit, how the caches work, and why the build-and-test job runs no real-data test.
+  with `make check`, how the jobs fit the macOS runner limit, how the caches and dependency bots
+  work, and why the build-and-test job runs no real-data test.
 tags: [tool, ci, lint, github-actions]
 ---
 
@@ -48,8 +49,8 @@ waiting for a free runner.
 ## Tool versions
 
 The workflow `env` block pins every tool version. Local tools are always the latest Homebrew
-version, installed through `make bootstrap`. When Homebrew moves a tool to a new version, change
-the pin to match it, or the two can disagree on a file. For example, SwiftFormat 0.63.0 wants
+version, installed through `make bootstrap`. The pins must follow, or the two can disagree on a
+file. For example, SwiftFormat 0.63.0 wants
 `///` above a function declared inside another function, and 0.63.1 wants `//`.
 
 The jobs download the macOS release binaries of SwiftFormat, SwiftLint, shellcheck, and
@@ -58,6 +59,20 @@ only its newest version, not the pin. markdownlint-cli2 and jscpd come from `npm
 for the shaders is Xcode's, through `xcrun`, the same as locally.
 
 actionlint also runs shellcheck on each `run:` script, so the two share a job and a pin.
+
+## Dependency updates
+
+Two bots open one update pull request each Monday. Each one runs CI like any other pull request.
+
+- **Dependabot** (`.github/dependabot.yml`) updates the GitHub Actions and the Swift packages. One
+  multi-ecosystem group puts every update in a single pull request.
+- **Renovate** (`.github/renovate.json`) updates the tool pins in the workflow `env`, which
+  Dependabot cannot read. A `# renovate:` comment above each pin names its release source. Renovate
+  runs only after the Renovate GitHub app is installed on the repository. After a pin moves,
+  `brew upgrade` brings the local tool to the same release.
+- **Neither** updates `DEVELOPER_DIR`, which follows the local Xcode, or ffmpeg.
+  `tools/vendor-ffmpeg.sh` pins the tarball checksum next to the version, and no bot can check a
+  new checksum against Homebrew's, as that script requires.
 
 ## Build & test
 

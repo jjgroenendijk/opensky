@@ -1,0 +1,21 @@
+# Weekly dependency updates in one pull request (docs/tools/ci.md). Renovate updates
+# the version pins that Dependabot cannot read (.github/renovate.json).
+version: 2
+
+multi-ecosystem-groups:
+  weekly:
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Amsterdam
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    multi-ecosystem-group: weekly
+    patterns: ["*"]
+  - package-ecosystem: swift
+    directory: /
+    multi-ecosystem-group: weekly
+    patterns: ["*"]

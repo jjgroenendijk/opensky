@@ -17,13 +17,20 @@ concurrency:
 permissions:
   contents: read
 
-# Pinned tool versions. Change a pin together with the local Homebrew version.
+# Pinned tool versions. Renovate bumps them to the newest release, as Homebrew does
+# locally. Each `renovate:` comment names where the version comes from.
 env:
+  # renovate: datasource=github-releases depName=nicklockwood/SwiftFormat
   SWIFTFORMAT_VERSION: 0.63.1
+  # renovate: datasource=github-releases depName=realm/SwiftLint
   SWIFTLINT_VERSION: 0.65.1
+  # renovate: datasource=npm depName=markdownlint-cli2
   MARKDOWNLINT_VERSION: 0.23.3
+  # renovate: datasource=github-releases depName=koalaman/shellcheck
   SHELLCHECK_VERSION: v0.11.0
+  # renovate: datasource=github-releases depName=rhysd/actionlint extractVersion=^v(?<version>.+)$
   ACTIONLINT_VERSION: 1.7.12
+  # renovate: datasource=npm depName=jscpd
   JSCPD_VERSION: 5.4.0
   # The image holds several Xcodes and its default moves. Name the one that matches the
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
