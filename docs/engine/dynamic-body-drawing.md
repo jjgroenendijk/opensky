@@ -11,8 +11,8 @@ tags: [engine, rendering, physics, streaming]
 A cell build bakes one world matrix per draw instance. A cell is rebuilt only when its world state
 changes. That is right for geometry placed once, but a [dynamic body](/engine/dynamic-bodies.md)
 moves every frame. Without extra work, a pushed barrel would collide, roll, and settle while its
-mesh stayed where the plugin put it, and then jump to its resting pose when the settle caused a
-rebuild.
+mesh stayed where the plugin put it. A settle writes the resting pose to the world state but
+rebuilds no cell, so the delta below draws the body until some other change rebuilds the cell.
 
 ## The delta
 

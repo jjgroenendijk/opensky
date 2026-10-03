@@ -140,5 +140,7 @@ nonisolated extension WorldStateComponentKind {
     /// in this engine. A slot of its own beside `perks` because the two answer
     /// different questions — how many points are left to spend, and which perks
     /// those points already bought.
-    public static let playerProgress = Self(rawValue: "playerProgress", order: 18)
+    public static let playerProgress = Self(
+        rawValue: "playerProgress", order: 18, affectsCellBuild: false
+    )
 }

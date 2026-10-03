@@ -31,5 +31,7 @@ nonisolated public struct StoryManagerQuestState: WorldStateComponent, Sendable 
 
 nonisolated extension WorldStateComponentKind {
     /// A story-manager start record. Keyed by the QUST base record, which is in no cell.
-    public static let storyManager = Self(rawValue: "storyManager", order: 23)
+    public static let storyManager = Self(
+        rawValue: "storyManager", order: 23, affectsCellBuild: false
+    )
 }

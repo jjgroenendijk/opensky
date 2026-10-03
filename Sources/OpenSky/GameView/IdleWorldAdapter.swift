@@ -37,15 +37,6 @@ final class IdleWorldAdapter {
             idles?.advance()
         }
     }
-
-    private func updatePresentationState(
-        of actor: ReferenceKey,
-        _ change: (inout ActorPresentationState) -> Void
-    ) {
-        game.worldState.updatePresentation(
-            of: actor, in: game.streamer?.cellLocation(of: actor), change
-        )
-    }
 }
 
 extension IdleWorldAdapter: IdleWorld {
@@ -99,15 +90,25 @@ extension IdleWorldAdapter: IdleWorld {
         game.aiWorld.moveActor(actor, to: point)
     }
 
-    func updatePresentation(
-        of actor: ReferenceKey,
-        _ change: (inout ActorPresentationState) -> Void
-    ) {
-        updatePresentationState(of: actor, change)
+    func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey) {
+        guard
+            let streamer = game.streamer,
+            let placed = streamer.referenceEntry(key: actor)?.placedActor
+        else { return }
+        streamer.setActorProp(prop, on: placed.formID)
     }
 }
 
 extension IdleWorldAdapter: HeadAssemblyWorld {
+    func updatePresentation(
+        of actor: ReferenceKey,
+        _ change: (inout ActorPresentationState) -> Void
+    ) {
+        game.worldState.updatePresentation(
+            of: actor, in: game.streamer?.cellLocation(of: actor), change
+        )
+    }
+
     func actorHead(for actor: ReferenceKey) -> ActorHeadReadout? {
         guard
             let streamer = game.streamer,

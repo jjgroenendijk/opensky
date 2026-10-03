@@ -22,5 +22,7 @@ nonisolated public struct DialogueBranchState: WorldStateComponent, Sendable {
 
 nonisolated extension WorldStateComponentKind {
     /// A speaker's exclusive branch. Keyed by the speaker's placement.
-    public static let dialogueBranch = Self(rawValue: "dialogueBranch", order: 24)
+    public static let dialogueBranch = Self(
+        rawValue: "dialogueBranch", order: 24, affectsCellBuild: false
+    )
 }

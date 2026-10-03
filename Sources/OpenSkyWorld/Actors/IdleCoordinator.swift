@@ -20,10 +20,8 @@ public protocol IdleWorld: AnyObject {
     /// The clock actor clips play on; nil without a renderer.
     var idleAnimationTime: Float? { get }
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
-    func updatePresentation(
-        of actor: ReferenceKey,
-        _ change: (inout ActorPresentationState) -> Void
-    )
+    /// Shows a prop on the actor, or removes it with nil. It rebuilds no cell.
+    func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey)
 }
 
 @MainActor
@@ -242,7 +240,7 @@ public final class IdleCoordinator {
             playback.play(clip, startingAt: now, forSeconds: seconds)
             let prop = Self.attachment(plan.prop)
             if prop != nil || sessions[actor]?.playing?.hasProp == true {
-                world?.updatePresentation(of: actor) { $0.prop = prop }
+                world?.setProp(prop, on: actor)
             }
             sessions[actor, default: Session()].playing = Playing(
                 clip: clip, end: now + seconds, hasProp: prop != nil,

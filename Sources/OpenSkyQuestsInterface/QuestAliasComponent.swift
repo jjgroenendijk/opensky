@@ -161,5 +161,7 @@ nonisolated extension WorldStateComponentKind {
     /// QUST `ReferenceKey` the `quest` slot uses. It is a slot of its own because
     /// the two have different lifetimes: stage and objective state survives a stop,
     /// while the alias table is cleared by one.
-    public static let questAliases = Self(rawValue: "questAliases", order: 7)
+    public static let questAliases = Self(
+        rawValue: "questAliases", order: 7, affectsCellBuild: false
+    )
 }

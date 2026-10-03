@@ -172,6 +172,11 @@ at its resting pose without changing its plugin cell. A body still moving when i
 keeps its last resting pose, not a pose in the air. A crate should not be found in mid-air after a
 reload.
 
+This write rebuilds no cell. The body already draws at its resting pose through its
+[draw delta](/engine/dynamic-body-drawing.md), so a rebuild would draw the same frame. A body that
+falls asleep exactly where its build placed it writes nothing, because there is nothing to save. A
+loaded room full of clutter at rest therefore causes no rebuild at all.
+
 ## Performance
 
 A step is a few hundred microseconds of tight `simd` math, which is exactly what Swift's `-Onone`

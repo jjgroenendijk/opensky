@@ -67,5 +67,5 @@ nonisolated extension WorldStateComponentKind {
     /// One dialogue response's said-state. Like `quest` it modifies no placement:
     /// it is keyed by an INFO base record's `ReferenceKey`, because a response is
     /// not placed anywhere and belongs to no cell.
-    public static let dialogue = Self(rawValue: "dialogue", order: 11)
+    public static let dialogue = Self(rawValue: "dialogue", order: 11, affectsCellBuild: false)
 }

@@ -207,5 +207,5 @@ nonisolated extension WorldStateComponentKind {
     /// not modify a placement: it is keyed by a QUST base record's `ReferenceKey`,
     /// the same way `GlobalStore` keys a GLOB override, because a quest is not
     /// placed anywhere and belongs to no cell.
-    public static let quest = Self(rawValue: "quest", order: 6)
+    public static let quest = Self(rawValue: "quest", order: 6, affectsCellBuild: false)
 }

@@ -1,6 +1,6 @@
-// How one actor is drawn beyond its records: which head it shows and the idle
-// prop in its hand. A change rebuilds the cell, as equipment does. The slot
-// has no save tag, so it lasts for the session only.
+// How one actor is drawn beyond its records: which head it shows. A change
+// rebuilds the cell, as equipment does. The slot has no save tag, so it lasts
+// for the session only. An idle prop is not here: `ActorPropPlayback` draws it.
 
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -29,11 +29,9 @@ nonisolated public struct ActorPresentationState: WorldStateComponent {
     public static let componentKind = WorldStateComponentKind.actorPresentation
 
     public var headSource: ActorHeadSource
-    public var prop: ActorPropAttachment?
 
-    public init(headSource: ActorHeadSource = .baked, prop: ActorPropAttachment? = nil) {
+    public init(headSource: ActorHeadSource = .baked) {
         self.headSource = headSource
-        self.prop = prop
     }
 
     public var isDefault: Bool {

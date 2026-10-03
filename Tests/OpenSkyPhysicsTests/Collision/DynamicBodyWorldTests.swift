@@ -145,6 +145,21 @@ struct DynamicBodyWorldTests {
         #expect(world.drainSettledTransforms().isEmpty)
     }
 
+    /// A body put to sleep where its build drew it did not move, so a transform
+    /// write would only rebuild its cell to draw the same thing.
+    @Test
+    func aBodySleptInPlaceIsNotHandedOverForPersistence() {
+        var world = DynamicBodyWorld()
+        world.setCell(Self.cell, placements: [
+            Self.placement(key: .generated(1), at: SIMD3(0, 0, 200))
+        ])
+
+        #expect(world.sleepExcessBodies(over: 0) == 1)
+        world.advance(by: 0, world: Self.floorWorld)
+
+        #expect(world.drainSettledTransforms().isEmpty)
+    }
+
     @Test
     func freezingSuspendsIntegrationWithoutLosingTheBodies() {
         var world = DynamicBodyWorld()

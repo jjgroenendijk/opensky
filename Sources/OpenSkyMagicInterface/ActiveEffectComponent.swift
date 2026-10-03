@@ -103,5 +103,7 @@ nonisolated extension WorldStateComponentKind {
     /// `actorValues` for the lifetime reason `death` and `combat` are separate
     /// slots: the values beside it are rewritten sixty times a second, while an
     /// effect list changes only when something is applied, expires or is dispelled.
-    public static let activeEffects = Self(rawValue: "activeEffects", order: 12)
+    public static let activeEffects = Self(
+        rawValue: "activeEffects", order: 12, affectsCellBuild: false
+    )
 }

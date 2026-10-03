@@ -191,5 +191,5 @@ nonisolated extension WorldStateComponentKind {
     /// in it changes on a player action, never per frame. The four fields share the
     /// slot rather than splitting further because a readied hand must name a known
     /// spell, and only one component can enforce that in a single write.
-    public static let spellbook = Self(rawValue: "spellbook", order: 13)
+    public static let spellbook = Self(rawValue: "spellbook", order: 13, affectsCellBuild: false)
 }

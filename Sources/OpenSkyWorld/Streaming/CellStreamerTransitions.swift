@@ -42,6 +42,9 @@ extension CellStreamer {
         completedLOD: [DistantLODBuildResult]
     ) -> Bool {
         guard interiorScene != nil else { return false }
+        if integrateActorProps() {
+            sink(viewScene(), nil)
+        }
         for entry in completedLOD {
             if case let .success(scene) = entry.result, let scene {
                 evictUnused(scene.assets)
@@ -88,7 +91,7 @@ extension CellStreamer {
         updateInteractionTarget(ray: nil)
         emitCellDetached(previous)
         evictUnused(previous.assets)
-        sink(composition.composedScene(), camera)
+        sink(viewScene(), camera)
         invalidateAmbienceContext()
         invalidateMusicContext()
     }
@@ -131,7 +134,7 @@ extension CellStreamer {
                 evictUnused(previous.assets)
             }
             emitCellAttached(transition.scene, firstIntegration: !isRebuild)
-            sink(transition.scene.renderScene, camera)
+            sink(viewScene(), camera)
         case let .exterior(coordinate):
             let previousInterior = interiorScene
             interiorScene = nil
@@ -150,7 +153,7 @@ extension CellStreamer {
                 evictUnused(replaced.assets)
             }
             emitCellAttached(transition.scene, firstIntegration: !isRebuild)
-            sink(composition.composedScene(), camera)
+            sink(viewScene(), camera)
         case nil:
             Self.logger.warning("[WARNING] door destination scene has no CELL identity")
         }

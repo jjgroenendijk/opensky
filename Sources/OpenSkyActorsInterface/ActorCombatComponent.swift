@@ -47,5 +47,5 @@ nonisolated extension WorldStateComponentKind {
     /// `actorValues` and `death` for the same lifetime reason those two are
     /// separate: hostility changes on a handful of events, while the values beside
     /// it are rewritten sixty times a second.
-    public static let combat = Self(rawValue: "combat", order: 10)
+    public static let combat = Self(rawValue: "combat", order: 10, affectsCellBuild: false)
 }

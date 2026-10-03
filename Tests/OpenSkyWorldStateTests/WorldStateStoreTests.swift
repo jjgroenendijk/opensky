@@ -269,4 +269,31 @@ struct WorldStateStoreTests {
         #expect(observed == [4, 5])
         #expect(store.dirtyCount == 0)
     }
+
+    /// Quest or scene state is in no cell build, so its writes must not rebuild
+    /// cells. The journal and the reference hook still see them.
+    @Test func mutationHookSkipsAKindNoCellBuildReads() {
+        let store = WorldStateStore()
+        var cellRebuilds = 0
+        var referenceChanges = 0
+        store.onMutation = { _, _ in cellRebuilds += 1 }
+        store.onReferenceMutation = { _, _, _ in referenceChanges += 1 }
+
+        store.set(OffScreenProbe(value: 1), for: key(0x300))
+        #expect(store.component(OffScreenProbe.self, for: key(0x300))?.value == 1)
+        store.reset(OffScreenProbe.componentKind, for: key(0x300))
+
+        #expect(cellRebuilds == 0)
+        #expect(referenceChanges == 2)
+        #expect(store.journalEntries.count == 2)
+    }
+}
+
+/// A component kind that no cell build reads.
+private struct OffScreenProbe: WorldStateComponent {
+    static let componentKind = WorldStateComponentKind(
+        rawValue: "offScreenProbe", order: 900, affectsCellBuild: false
+    )
+
+    var value: Int
 }

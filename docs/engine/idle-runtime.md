@@ -98,12 +98,17 @@ A prop is a held object, such as a broom or a tankard. It is an `ANIO` record.
 On the install, 48 idles of `0_Master.hkx` show a prop. The lute does not: its prop event is
 outside its target state, so OpenSky shows no lute.
 
+A prop is not part of the cell build. The model loads once on the build queue, because the mesh
+library may only run there, and stays cached. The streamer then draws it beside the cell scene,
+at the actor's build position, posed by the actor's own animation. So starting or ending an idle
+changes only that actor's draw list and rebuilds no cell. When the actor's cell is rebuilt for
+another reason, the actor gets a new animation object, and the next drawn scene binds the prop to
+it.
+
 ## Differences from the game
 
 - No behavior graph runs for NPCs. The clip and the prop are found statically through the
   graph, so a graph that picks a clip at random or by a variable always plays the first
   clip.
-- The prop is part of the actor's presentation state. A change rebuilds the actor's cell,
-  as an equipment change does. The clip replays on the new actor after the rebuild.
 - The actor does not turn to the marker's facing.
-- The presentation state is not saved. A loaded game starts with no idle playing.
+- Props and idles are not saved. A loaded game starts with no idle playing.
