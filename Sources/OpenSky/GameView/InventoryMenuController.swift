@@ -151,7 +151,7 @@ final class InventoryMenuController {
             activateSelection()
         case .button(.cancel):
             close()
-        case .pointer:
+        case .pointer, .release:
             return
         case let .move(direction):
             move(direction)

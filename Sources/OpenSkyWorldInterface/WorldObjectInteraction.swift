@@ -36,19 +36,20 @@ nonisolated extension InteractionAction {
 }
 
 nonisolated extension PlacedInteraction {
-    /// This interaction with its prompt label replaced.
-    public func relabelled(_ label: String) -> PlacedInteraction {
+    /// This interaction with its prompt label, and optionally its name, replaced.
+    public func relabelled(_ label: String, name newName: String? = nil) -> PlacedInteraction {
         PlacedInteraction(
             reference: reference,
             base: base,
             position: position,
-            name: name,
+            name: newName ?? name,
             action: action,
             actionLabel: label,
             sounds: sounds,
             voiceType: voiceType,
             station: station,
-            produce: produce
+            produce: produce,
+            lock: lock
         )
     }
 }

@@ -160,6 +160,12 @@ extension CrimeRealDataTests {
         func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
             scene.references[key] == nil ? nil : scene.location
         }
+
+        func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
+            scene.references[key].map {
+                scene.references.sortedEntries().activateChildren(of: $0.formID)
+            } ?? []
+        }
     }
 
     @MainActor

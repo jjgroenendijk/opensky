@@ -132,7 +132,7 @@ nonisolated public enum DialogueMenuMovieBridge: Sendable {
         case .move(.left), .move(.right): nil
         case .button(.accept): (SWFKeyCode.enter, 13)
         case .button(.cancel): (SWFKeyCode.escape, 0)
-        case .pointer: nil
+        case .pointer, .release: nil
         }
     }
 

@@ -18,7 +18,7 @@ struct ConditionDataRealDataTests {
     /// two pinned numbers stay the registry before and after M18.
     private static let laterIndices: Set<UInt16> = [
         80, 214, 223, 264, 277, 448, 570, 571, 572, 632, 699,
-        60, 71, 73, 403, 449, 719, 375, 376, 459, 47
+        60, 71, 73, 403, 449, 719, 375, 376, 459, 47, 65
     ]
 
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))

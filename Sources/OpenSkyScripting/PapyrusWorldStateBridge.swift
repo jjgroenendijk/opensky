@@ -34,6 +34,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Quests whose alias fill failed while scripts were attached at wire-up. Counted,
     /// not thrown: a quest running from its DNAM flag has no `Start` call to refuse.
     public var questAliasFillFailures = 0
+    /// Who stands in each trigger volume, kept from the enter and leave events.
+    public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?
@@ -140,9 +142,18 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Reading
 
+    /// The enabled flag follows a resident `XESP` parent, as the cell build does.
     public func referenceState(for key: ReferenceKey) -> ReferenceState? {
         guard let entry = references?.referenceEntry(key: key) else { return nil }
-        return worldState.resolvedState(for: entry)
+        var state = worldState.resolvedState(for: entry)
+        guard entry.enableParent != nil else { return state }
+        let store = worldState
+        let resolver = EnableParentResolver(
+            delta: { store.delta(for: $0) },
+            parent: { [references] in references?.referenceEntry(formID: $0) }
+        )
+        state.enableState = ReferenceEnableState(isEnabled: resolver.isEnabled(entry))
+        return state
     }
 
     /// Resolves through the session's master-list resolver, then the reference index for
@@ -157,6 +168,17 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     public func placedReference(for key: ReferenceKey) -> PlacedReference? {
         references?.referenceEntry(key: key)?.placedReference
+    }
+
+    public func triggerObjectCount(for key: ReferenceKey) -> Int {
+        triggerOccupants[key]?.count ?? 0
+    }
+
+    public func lockState(for key: ReferenceKey) -> ReferenceLockState? {
+        ReferenceLockState.resolve(
+            baseline: placedReference(for: key)?.lock,
+            delta: worldState.component(ReferenceLockState.self, for: key)
+        )
     }
 
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
@@ -180,7 +202,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         case .quest, .questAliases, .dialogue:
             return worldState.set(component.base, for: key)
         case .enableState, .transform, .activation, .deletion, .inventory,
-             .actorValues, .death, .combat, .activeEffects:
+             .actorValues, .death, .combat, .activeEffects, .lock:
             return worldState.set(component.base, for: key, in: cellLocation(of: key))
         default:
             return false
@@ -226,13 +248,37 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Activation
 
-    /// Records one activation and queues `OnActivate` on the target's scripts.
-    ///
+    /// Records one activation, queues `OnActivate` on the target's scripts, and
+    /// passes it to the target's `XAPR` activate children, each activated by its
+    /// parent. Each reference is activated at most once per call, so a cycle ends.
+    @discardableResult
+    public func activate(
+        _ target: ReferenceKey,
+        by activator: ReferenceKey,
+        togglesOpen: Bool
+    ) -> PapyrusActivationOutcome {
+        let outcome = activateOne(target, by: activator, togglesOpen: togglesOpen)
+        guard !outcome.cappedByRecursion else { return outcome }
+        var queuedEvents = outcome.queuedEvents
+        var visited: Set = [target]
+        var parents = [target]
+        while let parent = parents.popLast() {
+            for child in references?.activateChildren(of: parent) ?? []
+                where visited.insert(child).inserted
+            {
+                queuedEvents += activateOne(child, by: parent, togglesOpen: false).queuedEvents
+                parents.append(child)
+            }
+        }
+        return PapyrusActivationOutcome(
+            recorded: outcome.recorded, queuedEvents: queuedEvents, cappedByRecursion: false
+        )
+    }
+
     /// The recursion cap is consulted first: a refused activation writes no
     /// state either, so a script pair activating each other cannot keep
     /// incrementing `activationCount` forever.
-    @discardableResult
-    public func activate(
+    private func activateOne(
         _ target: ReferenceKey,
         by activator: ReferenceKey,
         togglesOpen: Bool

@@ -86,6 +86,8 @@ nonisolated public struct CellScene: Sendable {
     public let stateSequence: UInt64
     /// Mesh + texture cache keys this cell uses, for unload eviction.
     public var assets = CellAssets()
+    /// Enabled `PHZD` placed hazards, for the hazard runtime.
+    public var hazards: [CellHazard] = []
 
     public init(
         renderScene: RenderScene,
@@ -180,6 +182,10 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     public var runtimeDisabledSkipCount = 0
     /// Deleted at runtime. The header `deleted` flag is filtered before counting.
     public var runtimeDeletedSkipCount = 0
+    /// Initially disabled, or held off by a disabled enable parent.
+    public var disabledSkipCount = 0
+    /// `XESP` links whose parent was outside the build. Not a skip bucket.
+    public var unresolvedEnableParentCount = 0
     /// Objects the game placed here. Outside `totalRefCount`, inside `drawnRefCount`:
     /// `totalRefCount + spawnedRefCount == drawnRefCount + skippedRefCount`.
     public var spawnedRefCount = 0
@@ -209,7 +215,7 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     public var skippedRefCount: Int {
         unsupportedBaseSkipCount + markerSkipCount + modelFailureSkipCount
             + malformedRefSkipCount + runtimeDisabledSkipCount + runtimeDeletedSkipCount
-            + spawnedUnaddressableSkipCount
+            + disabledSkipCount + spawnedUnaddressableSkipCount
     }
 
     /// Every reference the build saw — authored or spawned — landed in exactly
@@ -257,6 +263,9 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
         }
         if runtimeDeletedSkipCount > 0 {
             reasons.append("\(runtimeDeletedSkipCount) runtime-deleted")
+        }
+        if disabledSkipCount > 0 {
+            reasons.append("\(disabledSkipCount) disabled")
         }
         if spawnedUnaddressableSkipCount > 0 {
             reasons.append("\(spawnedUnaddressableSkipCount) spawn-unaddressable")

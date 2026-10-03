@@ -15,11 +15,13 @@ nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
     public init(
         owner: ReferenceKey,
         target: ReferenceKey? = nil,
-        attacker: ReferenceKey? = nil
+        attacker: ReferenceKey? = nil,
+        lockedReference: ReferenceKey? = nil
     ) {
         references = [.perkOwner: owner]
         references[.target] = target
         references[.attacker] = attacker
+        references[.lockedReference] = lockedReference
     }
 
     public subscript(subject: PerkConditionSubject) -> ReferenceKey? {

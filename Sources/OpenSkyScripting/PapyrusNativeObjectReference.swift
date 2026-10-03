@@ -75,18 +75,20 @@ extension PapyrusNativeFunctions {
                 return .returned(.none)
             })
         }
-        registry.register(PapyrusNativeFunction(
-            scriptName: "ObjectReference",
-            functionName: "IsEnabled"
-        ) { call, context in
-            guard let target = worldTarget(call, context) else {
-                return needsWorld(call)
-            }
-            guard let state = target.world.referenceState(for: target.key) else {
-                return needsResidentReference(call)
-            }
-            return .returned(.boolean(state.enableState.isEnabled))
-        })
+        for (name, enabledAnswer) in [("IsEnabled", true), ("IsDisabled", false)] {
+            registry.register(PapyrusNativeFunction(
+                scriptName: "ObjectReference",
+                functionName: name
+            ) { call, context in
+                guard let target = worldTarget(call, context) else {
+                    return needsWorld(call)
+                }
+                guard let state = target.world.referenceState(for: target.key) else {
+                    return needsResidentReference(call)
+                }
+                return .returned(.boolean(state.enableState.isEnabled == enabledAnswer))
+            })
+        }
     }
 
     /// `Delete()`. Writes a `ReferenceDeletionState` delta at once, which the save

@@ -61,6 +61,8 @@ nonisolated public enum PapyrusNativeSuspension: Equatable, Sendable {
 
 nonisolated public enum PapyrusNativeDeviation: Equatable, Sendable {
     case deferredAnimation
+    /// A registered stub: physics, camera shake, or sound the engine does not run.
+    case stubbed
 }
 
 nonisolated public enum PapyrusNativeResult: Equatable, Sendable {

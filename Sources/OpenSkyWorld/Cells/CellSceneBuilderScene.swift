@@ -115,7 +115,8 @@ nonisolated extension CellSceneBuilder {
                 station: base.workbench.map {
                     CraftingStation(workbench: $0, keywords: base.keywords.keywords)
                 },
-                produce: base.produce
+                produce: base.produce,
+                lock: action == .open || action == .search ? ref.lock : nil
             )
             interactions[ref.formID] = interaction
         }
@@ -299,6 +300,8 @@ nonisolated extension CellSceneBuilder {
         )
         summary.runtimeDisabledSkipCount = counts.runtimeDisabled
         summary.runtimeDeletedSkipCount = counts.runtimeDeleted
+        summary.disabledSkipCount = counts.baselineDisabled
+        summary.unresolvedEnableParentCount = counts.unresolvedEnableParents
         summary.spawnedRefCount = counts.spawnedRefs
         summary.spawnedUnaddressableSkipCount = counts.unaddressableSpawns
         summary.actorCount = actors.counts.discovered

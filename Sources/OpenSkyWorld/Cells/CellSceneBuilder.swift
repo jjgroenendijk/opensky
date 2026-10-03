@@ -37,6 +37,10 @@ nonisolated public struct BuildCounts: Sendable {
     public var runtimeDisabled = 0
     /// Not the header `deleted` flag, which never reaches a build.
     public var runtimeDeleted = 0
+    /// Dropped by the initially-disabled flag or a disabled enable parent.
+    public var baselineDisabled = 0
+    /// `XESP` links whose parent is outside this build's references.
+    public var unresolvedEnableParents = 0
     /// Kept apart from `totalRefs`, the plugin's own count.
     public var spawnedRefs = 0
     /// Spawns past the 24-bit object ID space. Zero in practice.
@@ -100,6 +104,7 @@ nonisolated public final class CellSceneBuilder {
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
     public var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
+    var exteriorPersistentPools: [UInt32: [FormID: PlacedReference]] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
@@ -170,9 +175,7 @@ nonisolated public final class CellSceneBuilder {
         // The touched keys drive unload eviction (docs/engine/cell-streaming.md).
         resetTouchedAssets()
         let source = try exteriorBuildSource(
-            worldspaceEditorID: worldspaceEditorID,
-            gridX: gridX,
-            gridY: gridY
+            worldspaceEditorID: worldspaceEditorID, gridX: gridX, gridY: gridY
         )
         let world = source.world
         let found = source.cell
@@ -180,15 +183,15 @@ nonisolated public final class CellSceneBuilder {
         let collected = collectTaggedReferences(in: found.children, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
-            local: collected.map(\.reference),
-            world: world.children,
-            coordinate: coordinate,
-            localized: pluginLocalized
+            local: collected.map(\.reference), world: world.children,
+            coordinate: coordinate, localized: pluginLocalized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
+        let parents = persistentParentPool(in: world.children, localized: pluginLocalized)
         let resolved = effectiveReferences(
-            refs: refs, collected: collected, state: state, location: location, counts: &counts
+            refs: refs, collected: collected, state: state, location: location,
+            parentPool: parents, counts: &counts
         )
         let effective = resolved.references
         let collision = buildCollision(resolved: resolved, location: location)
@@ -226,6 +229,7 @@ nonisolated public final class CellSceneBuilder {
             ),
             counts: counts
         )
+        scene.hazards = collectHazards(in: found.children, resolved: resolved, parentPool: parents)
         scene.assets = drainTouchedAssets()
         return scene
     }

@@ -14,4 +14,17 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     /// resident holds it. A write attributed to a cell rebuilds that cell
     /// alone; nil rebuilds every resident cell.
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
+    /// Resident references whose `XAPR` names `key`: activating `key` activates them too.
+    func activateChildren(of key: ReferenceKey) -> [ReferenceKey]
+}
+
+nonisolated extension Sequence<RuntimeReferenceEntry> {
+    /// The entries whose `XAPR` activate parents include `parent`, in sequence order.
+    public func activateChildren(of parent: FormID) -> [ReferenceKey] {
+        compactMap { entry in
+            let details = entry.placedReference?.details ?? entry.placedActor?.details
+            let linked = details?.activateParents.contains { $0.reference == parent } ?? false
+            return linked ? entry.key : nil
+        }
+    }
 }

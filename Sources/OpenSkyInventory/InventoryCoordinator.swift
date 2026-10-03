@@ -31,6 +31,8 @@ public final class InventoryCoordinator {
     public var inspectionTarget = EquipmentTargetSelector.nearestActor
     /// Nil without a FACT and FLST index.
     public var vendors: VendorCoordinator?
+    /// Lock state, keys, and lockpicking, over the same world-item runtime.
+    public let locks = LockCoordinator()
     /// Nil without recipe data.
     public internal(set) var craftingCatalog: CraftingCatalog?
     /// At most one station is in use at a time.
@@ -53,7 +55,9 @@ public final class InventoryCoordinator {
         catalog: EquipmentCatalog?,
         pricing: BarterPricing?
     ) {
-        runtime = WorldItemRuntime(inventory: inventory, references: references)
+        let items = WorldItemRuntime(inventory: inventory, references: references)
+        runtime = items
+        locks.wire(items: items)
         if let catalog {
             equipment = EquipmentRuntime(inventory: inventory, catalog: catalog)
         }

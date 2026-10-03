@@ -61,6 +61,8 @@ nonisolated public struct CellProviderIndexes {
         let skillAdvancement: SkillAdvancementSettings
         let characterLevel: CharacterLevelSettings
         let level: ActorValueLevelSettings
+        /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
+        let store: GameSettingStore
 
         init(root: GameDataRoot, baseFile: ESMFile) {
             // One GMST load for every consumer: resolving the load order twice
@@ -77,6 +79,7 @@ nonisolated public struct CellProviderIndexes {
             skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
             characterLevel = CharacterLevelSettings.resolve(store: settings)
             level = ActorValueLevelSettings.resolve(store: settings)
+            store = settings
         }
     }
 
@@ -138,6 +141,7 @@ nonisolated public struct CellProviderIndexes {
     public let combatSettings: CombatSettings
     public let archerySettings: ArcherySettings
     public let detectionSettings: DetectionSettings
+    public let lockTrapData: LockTrapData
 
     public init(
         root: GameDataRoot,
@@ -148,6 +152,7 @@ nonisolated public struct CellProviderIndexes {
     ) throws {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
+        let pluginName = esmURL.lastPathComponent
         let tuning = SettingIndexes(root: root, baseFile: file)
         movementConfiguration = tuning.movement
         barterPricing = tuning.barter
@@ -173,10 +178,10 @@ nonisolated public struct CellProviderIndexes {
         materialTypes = MaterialTypeIndex(file: file)
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
-        globalStore = GlobalStore(file: file, pluginName: esmURL.lastPathComponent)
-        questStore = QuestStore(file: file, pluginName: esmURL.lastPathComponent)
+        globalStore = GlobalStore(file: file, pluginName: pluginName)
+        questStore = QuestStore(file: file, pluginName: pluginName)
         locationStore = LocationStoreLoader.load(root: root, baseFile: file)
-        dialogueStore = DialogueStore(file: file, pluginName: esmURL.lastPathComponent)
+        dialogueStore = DialogueStore(file: file, pluginName: pluginName)
         packageStore = PackageStore(file: file)
         factionStore = FactionStoreLoader.load(root: root, baseFile: file)
         relationshipStore = RelationshipStoreLoader.load(root: root, baseFile: file)
@@ -188,16 +193,13 @@ nonisolated public struct CellProviderIndexes {
         enchantmentStore = magic.enchantments
         perkStore = magic.perks
         actorValueInformation = magic.actorValues
-        magicItemPluginName = esmURL.lastPathComponent
+        magicItemPluginName = pluginName
         // Built after the ENCH store so every enchanted item's `EITM` arrives
         // already load-order resolved: without the resolver an
         // equipped enchanted weapon would look unenchanted at runtime.
         inventoryBaselines = InventoryBaselineResolver.build(
             from: file,
-            enchantments: ItemEnchantmentResolver(
-                store: magic.enchantments,
-                pluginName: esmURL.lastPathComponent
-            )
+            enchantments: ItemEnchantmentResolver(store: magic.enchantments, pluginName: pluginName)
         )
         equipmentCatalog = EquipmentCatalog.build(from: file)
         craftingCatalog = CraftingCatalog(
@@ -206,7 +208,10 @@ nonisolated public struct CellProviderIndexes {
             file: file
         )
         actorValueBaselines = Self.actorValueBaselines(
-            root: root, file: file, pluginName: esmURL.lastPathComponent, tuning: tuning
+            root: root, file: file, pluginName: pluginName, tuning: tuning
+        )
+        lockTrapData = LockTrapData.load(
+            root: root, baseFile: file, baseName: pluginName, settings: tuning.store
         )
     }
 
@@ -302,6 +307,7 @@ nonisolated public struct CellProviderIndexes {
             detectionSettings: detectionSettings
         )
         stores.craftingCatalog = craftingCatalog
+        stores.lockTrapData = lockTrapData
         return stores
     }
 }

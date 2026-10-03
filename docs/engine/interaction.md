@@ -86,6 +86,13 @@ A door with the "Open" action asks for a transition for that exact reference. Wi
 follows the [interior](/engine/interiors.md) path. Without one, it still sends the event, but has
 no open animation yet.
 
+## Locks
+
+A door or container with `XLOC` lock data passes through the lock gate before any listener
+hears the press. A carried key unlocks it and the press goes on. A pickable lock opens the
+lockpicking menu instead; a "requires key" lock refuses. The prompt reads "Unlock" and the
+name gains the difficulty, such as "Chest (Adept)". See [locks](/engine/locks.md).
+
 ## Taking and dropping
 
 World items need no menu. Taking an object is a world change. The panel buttons and the menus call

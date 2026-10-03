@@ -14,6 +14,7 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case formList
     case location
     case inventory
+    case lock
 }
 
 /// Which half of the magic seam could not answer. Four cases, because each names a

@@ -3,6 +3,7 @@
 // `CellSceneLocation` is not announced, because the location is the subscriber's key.
 
 import Foundation
+import OpenSkyGameData
 
 extension CellStreamer {
     /// Announces a cell that is now part of the live world.
@@ -11,8 +12,9 @@ extension CellStreamer {
     ///   scene was merely rebuilt, which is the signal not to re-fire load
     ///   events.
     public func emitCellAttached(_ scene: CellScene, firstIntegration: Bool) {
-        guard scene.location != nil else { return }
+        guard let location = scene.location else { return }
         onCellAttached?(scene, firstIntegration)
+        cellHazards(CellHazardEvent(location: location, hazards: scene.hazards))
     }
 
     /// Announces a cell that left the world; a nil or unlocated scene is a no-op. Occupied
@@ -23,5 +25,12 @@ extension CellStreamer {
         releaseTriggers(in: scene)
         guard let location = scene.location else { return }
         onCellDetached?(location)
+        cellHazards(CellHazardEvent(location: location, hazards: []))
     }
+}
+
+/// The enabled hazards of one live cell. An empty list on detach drops them all.
+nonisolated public struct CellHazardEvent: Sendable {
+    public let location: CellSceneLocation
+    public let hazards: [CellHazard]
 }

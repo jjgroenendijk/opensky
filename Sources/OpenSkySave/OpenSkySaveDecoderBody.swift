@@ -66,5 +66,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
         /// Absent `HRVS`: every plant is unharvested.
         public var harvests: [SaveHarvestEntry] = []
+        /// Absent `LOCK`: every lock is as its plugin placed it.
+        public var locks: [SaveLockEntry] = []
     }
 }

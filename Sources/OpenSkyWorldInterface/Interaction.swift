@@ -63,6 +63,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public let station: CraftingStation?
     /// FLOR and TREE produce. Nil for every other base.
     public let produce: HarvestProduce?
+    /// XLOC of a DOOR or CONT reference. The plugin baseline; the runtime may have unlocked it.
+    public let lock: LockData?
 
     public init(
         reference: FormID,
@@ -74,7 +76,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         sounds: ModelBase.Sounds?,
         voiceType: FormID? = nil,
         station: CraftingStation? = nil,
-        produce: HarvestProduce? = nil
+        produce: HarvestProduce? = nil,
+        lock: LockData? = nil
     ) {
         self.reference = reference
         self.base = base
@@ -86,6 +89,7 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         self.voiceType = voiceType
         self.station = station
         self.produce = produce
+        self.lock = lock
     }
 }
 
@@ -109,6 +113,23 @@ nonisolated public struct InteractionEvent: Equatable, Sendable {
 
     public init(target: InteractionTarget) {
         self.target = target
+    }
+}
+
+/// Why a use-key activation did not go through.
+nonisolated public enum ActivationRefusal: Equatable, Sendable {
+    /// The target is locked and the player has no key. `level` is the XLOC byte.
+    case locked(level: UInt8, key: FormID?)
+}
+
+/// A use-key press the activation gate refused. No `InteractionEvent` follows it.
+nonisolated public struct ActivationRefusalEvent: Equatable, Sendable {
+    public let target: InteractionTarget
+    public let refusal: ActivationRefusal
+
+    public init(target: InteractionTarget, refusal: ActivationRefusal) {
+        self.target = target
+        self.refusal = refusal
     }
 }
 

@@ -16,7 +16,7 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     ScriptDataProviding, ItemDataProviding, BarterDataProviding, QuestDataProviding,
     LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
     PackageDataProviding, MagicDataProviding, ProgressionDataProviding,
-    FactionDataProviding
+    FactionDataProviding, LockTrapDataProviding
 {
     /// Compiled-script source for the Papyrus world runtime; nil on synthetic scenes.
     public var scriptFileSystem: (any GameFileSource)?
@@ -55,6 +55,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var equipmentCatalog: EquipmentCatalog?
     /// Load-order recipes and the item plugin's stations; nil on a synthetic scene.
     public var craftingCatalog: CraftingCatalog?
+    /// Lockpicking tuning, the lockpick item, and hazards; defaults on a synthetic scene.
+    public var lockTrapData = LockTrapData()
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic
     /// scenes, and then actor values report themselves unavailable.
     public var actorValueBaselines: ActorValueBaselineResolver?

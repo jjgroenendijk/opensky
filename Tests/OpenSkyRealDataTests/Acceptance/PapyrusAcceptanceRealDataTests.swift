@@ -40,25 +40,24 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.distinctReferencedTotal == 508)
         // Pinned so a new native shows up here. The SKSE perk-point functions add
         // nothing, because the vanilla corpus never calls them.
-        #expect(coverage == PexNativeCoverage(implemented: 97, referenced: 508))
+        #expect(coverage == PexNativeCoverage(implemented: 141, referenced: 508))
         #expect(run.entryPoints == 577)
-        #expect(run.pending == 0)
-        #expect(run.terminalOutcomes == 577)
-        #expect(run.completed == 240)
-        #expect(runtime.tally.faultTotal == 337)
-        #expect(runtime.tally.nativeCallTotal == 536)
-        #expect(runtime.tally.unimplementedNativeTotal == 320)
+        // Two entry points still sit in `Utility.Wait` when the tick cap ends the run.
+        #expect(run.pending == 2)
+        #expect(run.terminalOutcomes == 575)
+        #expect(run.completed == 342)
+        #expect(runtime.tally.faultTotal == 233)
+        #expect(runtime.tally.nativeCallTotal == 1578)
+        #expect(runtime.tally.unimplementedNativeTotal == 746)
         // World natives refuse in this headless run, so their calls count as
         // failures rather than unimplemented natives.
-        #expect(runtime.tally.nativeFailureTotal == 137)
-        #expect(runtime.tally.deferredAnimationTotal == 18)
-        #expect(runtime.tally.rankedFaultKinds.map(\.name) == [
-            "typeMismatch", "invalidJump", "invalidOperand"
-        ])
-        #expect(runtime.tally.rankedFaultKinds.map(\.count) == [231, 93, 13])
+        #expect(runtime.tally.nativeFailureTotal == 156)
+        #expect(runtime.tally.deferredAnimationTotal == 22)
+        #expect(runtime.tally.rankedFaultKinds.map(\.name) == ["typeMismatch"])
+        #expect(runtime.tally.rankedFaultKinds.map(\.count) == [233])
         #expect(runtime.tally.rankedUnimplementedNatives.first?.name
-            == "ReferenceAlias.AddInventoryEventFilter")
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 41)
+            == "ObjectReference.is3Dloaded")
+        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 259)
 
         let report = Self.report(
             paths: paths,

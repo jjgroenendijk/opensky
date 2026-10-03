@@ -108,6 +108,13 @@ nonisolated public struct WorldOverlayDrawList: Sendable {
         }
     }
 
+    /// Three crossed lines, one per axis, so the marker reads from any view.
+    public mutating func addMarker(at center: SIMD3<Float>, size: Float, color: SIMD4<Float>) {
+        for axis in [SIMD3<Float>(size, 0, 0), SIMD3(0, size, 0), SIMD3(0, 0, size)] {
+            addLineSegment(center - axis, center + axis, color: color)
+        }
+    }
+
     /// Keeps the first `maxPrimitives` in submission order, then groups their
     /// vertices by topology for the two GPU draws. Negative caps keep none.
     public func budgeted(maxPrimitives: Int) -> WorldOverlayBudgetResult {

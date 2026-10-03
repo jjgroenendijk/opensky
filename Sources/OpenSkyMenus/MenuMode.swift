@@ -21,6 +21,9 @@ nonisolated public enum MenuInputEvent: Equatable, Sendable {
     case move(Direction)
     case button(Button)
     case pointer(deltaX: Float, deltaY: Float)
+    /// A direction key came up. Only a menu that reads held keys, such as
+    /// lockpicking, acts on it.
+    case release(Direction)
 }
 
 /// Implemented by the menu layer (none yet) to receive routed input.

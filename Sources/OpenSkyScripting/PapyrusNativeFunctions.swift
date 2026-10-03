@@ -23,6 +23,8 @@ public enum PapyrusNativeFunctions {
         installGuard(into: &registry)
         installBarter(into: &registry)
         installFaction(into: &registry)
+        installLock(into: &registry)
+        installTrap(into: &registry)
     }
 
     public static func failure(

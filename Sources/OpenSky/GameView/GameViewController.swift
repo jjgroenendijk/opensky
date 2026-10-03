@@ -158,9 +158,14 @@ final class GameViewController: NSViewController {
     lazy var dialogueCamera = DialogueCameraController(game: self)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
     lazy var containerMenu = ContainerMenuController(game: self)
+    lazy var lockpickingMenu = LockpickingMenuController(game: self)
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
     let inventory = InventoryCoordinator()
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
+    lazy var lockWorld = LockWorldAdapter(game: self)
+    lazy var hazards = HazardCoordinator()
+    lazy var hazardWorld = HazardWorldAdapter(game: self)
+    lazy var trapControl = TrapControlAdapter(game: self)
     /// The player graphs, the body, and the locomotion and first-person panels.
     lazy var player: PlayerCoordinator = {
         let player = PlayerCoordinator(input: cameraInput)
@@ -395,6 +400,8 @@ extension GameViewController: @MainActor SystemMenuWorld {
             journalMenu.route(event)
         case DialogueMenuController.identifier:
             dialogueMenu.route(event)
+        case LockpickingMenuController.identifier:
+            lockpickingMenu.route(event)
         default:
             systemMenu.route(event)
         }

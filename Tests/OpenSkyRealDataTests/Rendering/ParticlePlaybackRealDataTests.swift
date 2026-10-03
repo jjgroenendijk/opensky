@@ -1,6 +1,6 @@
 // Env-gated acceptance over user's read-only Skyrim SE install.
-// Builds WhiterunWorld cell (4,-2), isolates its paired flame/smoke system,
-// renders two exact simulation times, records numeric delta + PNG evidence.
+// Builds WhiterunWorld cell (4,-2) with its siege fires lit, isolates its paired
+// flame/smoke system, renders two exact simulation times, records numeric delta + PNG evidence.
 
 import CoreGraphics
 import Foundation
@@ -10,11 +10,24 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
+import OpenSkyWorldState
 import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))
 struct ParticlePlaybackRealDataTests {
+    /// The cell's flame and smoke belong to the Whiterun siege, whose enable marker
+    /// `CWSiegeWhiterunFireEnablerMrk` starts disabled. Enabling it shows them.
+    static let siegeFiresLit = WorldStateSnapshot(
+        entries: [WorldStateSnapshotEntry(
+            key: .plugin(name: "skyrim.esm", objectID: 0x0003_76E0),
+            delta: ReferenceStateDelta(components: [.enableState: ReferenceEnableState.enabled
+                    .erased])
+        )],
+        nextGeneratedSequence: 1,
+        sequence: 1
+    )
+
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
     func flameAndSmokeAnimateInWhiterunOffscreenFrames() throws {
@@ -26,7 +39,7 @@ struct ParticlePlaybackRealDataTests {
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
         let builder = CellSceneBuilder(file: file, meshes: meshes, textures: textures)
         let cell = try builder.buildScene(
-            worldspaceEditorID: "WhiterunWorld", gridX: 4, gridY: -2
+            worldspaceEditorID: "WhiterunWorld", gridX: 4, gridY: -2, state: Self.siegeFiresLit
         )
         let paired = cell.renderScene.particles.filter {
             $0.sourcePath.hasSuffix("effects\\ambient\\fxsmokelargeclose01.nif")

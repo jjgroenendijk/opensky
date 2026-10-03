@@ -48,10 +48,13 @@ final class WorldSessionWiring {
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
+        game.lockWorld.wireLocks(provider: provider, streamer: streamer, renderer: renderer)
         // After the item runtime, which owns the equipped set of the body.
         game.playerWorld.wirePlayerBody(provider: provider, renderer: renderer)
         // After `wirePapyrus`, whose `onWorldUpdate` closure these chain onto.
         wireActorSystems(provider: provider, renderer: renderer)
+        game.hazardWorld.wireHazards(provider: provider, streamer: streamer, renderer: renderer)
+        game.trapControl.wire(renderer: renderer)
         // Melee, archery, then ragdolls: a fixed graph-event cursor order keeps
         // every runtime's trace reproducible.
         game.combatWorld.wireMelee(provider: provider, renderer: renderer)

@@ -86,6 +86,9 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `HRVS` entry: a plugin key with an empty name (1 + 2 + 4) and the
     /// "no cell" tag (1).
     public static let minimumHarvestEntrySize = 8
+    /// Smallest `LOCK` entry: the smallest key and cell (8), the locked byte, the
+    /// level byte, and the key FormID (4).
+    public static let minimumLockEntrySize = 14
     /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
     /// byte (1). A generated key or a named cell is longer, so this is a lower

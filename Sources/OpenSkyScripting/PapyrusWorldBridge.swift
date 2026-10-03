@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
@@ -60,6 +61,13 @@ public protocol PapyrusWorldBridge:
 
     /// The decoded REFR behind `key`, which is where linked references live.
     func placedReference(for key: ReferenceKey) -> PlacedReference?
+
+    /// The reference's XLOC with this session's lock delta on top, or nil when it has
+    /// neither.
+    func lockState(for key: ReferenceKey) -> ReferenceLockState?
+
+    /// How many actors stand in the trigger volume of `key`.
+    func triggerObjectCount(for key: ReferenceKey) -> Int
 
     /// Writes one component through `WorldStateStore.set(_:for:in:)`,
     /// attributing it to the reference's resident cell when there is one.

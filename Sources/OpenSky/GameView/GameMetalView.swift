@@ -138,8 +138,12 @@ final class GameMetalView: MTKView {
     }
 
     override func keyUp(with event: NSEvent) {
-        // Menus act on key-down; swallow key-up so it never reaches world input.
+        // Menus act on key-down. A direction key-up goes to the menu as a release,
+        // for menus that read held keys; no key-up reaches world input.
         if menuMode?.isMenuMode == true {
+            if let direction = Self.menuDirection(for: event.keyCode) {
+                menuMode?.routeMenuInput(.release(direction))
+            }
             return
         }
         guard let key = Self.moveKey(for: event.keyCode) else {
@@ -154,16 +158,22 @@ final class GameMetalView: MTKView {
     /// world) rather than passed on.
     private func routeMenuKey(_ event: NSEvent) {
         let menuEvent: MenuInputEvent? = switch event.keyCode {
-        case KeyCode.keyW, KeyCode.arrowUp: .move(.up)
-        case KeyCode.keyS, KeyCode.arrowDown: .move(.down)
-        case KeyCode.keyA, KeyCode.arrowLeft: .move(.left)
-        case KeyCode.keyD, KeyCode.arrowRight: .move(.right)
         case KeyCode.returnKey, KeyCode.keypadEnter: .button(.accept)
         case KeyCode.escape: .button(.cancel)
-        default: nil
+        default: Self.menuDirection(for: event.keyCode).map { .move($0) }
         }
         if let menuEvent {
             menuMode?.routeMenuInput(menuEvent)
+        }
+    }
+
+    private static func menuDirection(for keyCode: UInt16) -> MenuInputEvent.Direction? {
+        switch keyCode {
+        case KeyCode.keyW, KeyCode.arrowUp: .up
+        case KeyCode.keyS, KeyCode.arrowDown: .down
+        case KeyCode.keyA, KeyCode.arrowLeft: .left
+        case KeyCode.keyD, KeyCode.arrowRight: .right
+        default: nil
         }
     }
 

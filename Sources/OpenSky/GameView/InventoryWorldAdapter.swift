@@ -107,8 +107,10 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.magic.enchantmentCacheReadout
     }
 
+    /// Relabels the streamer's raw target. The HUD's copy is already labelled, and a
+    /// lock label appends to the name, so labelling it twice would repeat the band.
     func refreshInteractionTarget() {
-        game.hud.updateTarget(labelled(game.hud.interactionTarget))
+        game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
     }
 
     /// The streamer's target with the runtime label, such as a harvested plant's.

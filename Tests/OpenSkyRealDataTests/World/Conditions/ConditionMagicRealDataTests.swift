@@ -16,7 +16,7 @@ struct ConditionMagicRealDataTests {
     /// `GetBaseActorValue`, faction, crime-gold, and `GetItemCount`. They are subtracted, so the
     /// pinned number stays the M19 step.
     private static let laterIndices: Set<UInt16> = [
-        80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459, 47
+        80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459, 47, 65
     ]
 
     /// Magic-adjacent indices the sweep measured and this milestone leaves
