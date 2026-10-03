@@ -15,6 +15,33 @@ framework is in `Sources/OpenSky/Shell/`. `AGENTS.md` requires that every user-v
 can be selected, forced, toggled, or inspected from the sidebar without a CLI command. This page
 says where that surface goes and how to build it.
 
+## Launcher and launch modes
+
+The app opens on the launcher, not on the developer shell. The launcher holds:
+
+- The game folder: the path, where it came from, and Choose and Use Default buttons. It shares
+  `GameFolderPicker` with Settings, so both validate a folder the same way.
+- One button per launch mode. Play opens the game alone in its own window, with no sidebar,
+  inspector, or frame HUD. Developer Mode opens the shell this page describes. Play needs a
+  valid game folder; Developer Mode does not, because the shell shows a demo scene without one.
+  Return chooses the mode the user picked last.
+- A page list on the left. Launch and Settings are the pages today. Settings is the same view as
+  the Cmd+, window.
+
+The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
+`LaunchMode`, the remembered mode, and `GameFolderStatus`. The app only draws them.
+
+To add a launch mode, add a case to `LaunchMode` and a descriptor to `LauncherRegistry.modes`.
+To add a page, such as a mods list or an asset cache, add one descriptor to
+`LauncherRegistry.pages`. Put the page's rules in its own package module, not in the view
+controller.
+
+Closing a mode's window, or `Game > Return to Launcher`, ends the mode and shows the launcher
+again. Closing the launcher quits the app.
+
+Set `OPENSKY_LAUNCH_MODE` to `play` or `developer` to skip the launcher. The UI tests set it to
+`developer`, because most of them test the shell.
+
 ## Shell anatomy
 
 - One split view: a source list sidebar and a content area. Sidebar sections come from
@@ -36,7 +63,8 @@ says where that surface goes and how to build it.
   `.sidebarTrackingSeparator`: that item pinned the toggle inside the sidebar region, so the button
   moved every time it was clicked. The toggle is a custom item so it can carry an accessibility id.
   Settings is the Cmd+, window, not a sidebar row.
-- The View menu has Hide Sidebar, Show Frame HUD, Hide Inspector, and Reset all overrides.
+- The View menu has Hide Sidebar, Show Frame HUD, Hide Inspector, and Reset all overrides. The
+  Game menu has Return to Launcher.
 - The frame HUD is a small AppKit overlay in the corner of the game view: fps, frame time, GPU time,
   draw calls, instances, resident cells, and memory. It reads the same snapshots as the World panel,
   so the two cannot disagree. It is not a render pass, so it stays out of offscreen renders.
@@ -199,6 +227,7 @@ Accessibility ids are the UI test API and never change silently.
 | Destination and section override dots | `Destination-<id>-OverrideIndicator`, `PanelSection-<sectionIdentifier>-OverrideIndicator` |
 | Section reset | `PanelSection-<sectionIdentifier>-ResetControl` |
 | Reset all menu item | `ResetAllOverridesCommand` |
+| Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
 | Toolbar | `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
 | Frame HUD | `FrameHUDStatsLabel` |
 

@@ -9,9 +9,10 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   `OpenSkyWorld/`; each goes in a domain folder. `OpenSkyGameData/` and the feature modules
   are small enough to stay flat. `OpenSkyRendering/` keeps the renderer at its root and puts
   `UI/`, `Terrain/`, `Weather/`, `ImageSpace/`, and `Effects/` in folders.
-- `OpenSky/` (app only): `Shell/` (app lifecycle, sidebar, panel framework), `Panels/` (one
-  view controller per destination), `GameView/` (`GameViewController`, its panel forwards,
-  the world adapters, and the menu controllers), and `Resources/`.
+- `OpenSky/` (app only): `Shell/` (app lifecycle, sidebar, panel framework), `Launcher/`
+  (the start window and its pages), `Panels/` (one view controller per destination),
+  `GameView/` (`GameViewController`, its panel forwards, the world adapters, and the menu
+  controllers), and `Resources/`.
 - `OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus `Binary/`,
   `Compression/`, and `Geometry/`.
 - `OpenSkyWorld/`: `Actors/`, `Cells/`, `Conditions/`, `Effects/`, `Navigation/`,

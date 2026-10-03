@@ -229,6 +229,7 @@ final class OpenSkyUITests: OpenSkyUITestCase {
     func testMissingDataStaysInWindowAndSettingsOpens() {
         let app = XCUIApplication()
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = "/invalid/opensky-uitest-root"
+        app.launchEnvironment["OPENSKY_LAUNCH_MODE"] = "developer"
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
         XCTAssertEqual(app.dialogs.count, 0)
