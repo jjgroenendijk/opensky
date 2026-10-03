@@ -209,6 +209,8 @@ nonisolated public struct CellLoadSummary: Equatable, Sendable {
     /// "ACHR <id>: <reason> (<subject>)". Not failures, so outside the identities;
     /// read by the `World > Inventory & Equipment` inspection.
     public var actorAppearanceSkipReasons: [String] = []
+    /// What each drawn humanoid's head is built from, by ACHR.
+    public var actorHeads: [FormID: ActorHeadReadout] = [:]
     /// Records the builder could not decode so far, outside the reference buckets.
     public var skippedRecords = SkippedRecords()
 

@@ -41,6 +41,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable {
     public let voiceType: ActorSourcedField<FormID?>
     public let wornArmor: ActorSourcedField<FormID?>
     public let headParts: ActorSourcedField<[FormID]>
+    /// HCLF, a CLFM. A Traits-tab field, like the head parts it tints.
+    public let hairColor: ActorSourcedField<FormID?>
     public let defaultOutfit: ActorSourcedField<FormID?>
 }
 
@@ -182,6 +184,9 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             },
             headParts: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.headParts, source: $0.formID)
+            },
+            hairColor: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.hairColor, source: $0.formID)
             },
             defaultOutfit: resolveField(in: npcs, flag: .useInventory) {
                 ActorSourcedField(value: $0.defaultOutfit, source: $0.formID)

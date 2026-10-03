@@ -5,6 +5,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import simd
@@ -77,6 +78,42 @@ nonisolated extension MeshLibrary {
                 terrainLODClipMask: nil,
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
                 attachmentBone: bone
+            )
+            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
+        } catch MeshLibraryError.fileNotFound {
+            return .failure(.missing)
+        } catch {
+            return .failure(.invalid)
+        }
+    }
+
+    /// A head part with its TNAM textures and tint laid over the mesh. Texture
+    /// paths are spelled as a TXST spells them.
+    public func loadActorHeadPart(
+        path: String,
+        diffuseTexture: String?,
+        normalTexture: String?,
+        tint: SIMD3<Float>?,
+        skeleton: ActorSkeletonAsset?
+    ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        let surface = ModelSurfaceOverride(
+            diffuseTexture: diffuseTexture.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+            normalTexture: normalTexture.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+            tint: tint
+        )
+        do {
+            let model = try loadModel(
+                path: path,
+                terrainLODClipMask: nil,
+                actorSkeleton: skeleton,
+                explicitActorSkeleton: true,
+                surface: surface
+            )
+            let key = try cacheKey(
+                path: meshKey(for: path),
+                terrainLODClipMask: nil,
+                actorSkeletonKey: skeleton?.pathKey ?? "none",
+                surface: surface
             )
             return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
         } catch MeshLibraryError.fileNotFound {

@@ -108,6 +108,34 @@ nonisolated public struct ResolvedActorVisual: Equatable {
     public let faceGenMeshPath: String?
     public let faceGenTintPath: String?
     public let skips: [AppearanceSkip]
+    /// The parts an assembled head would show. Empty for a race without FaceGen.
+    public var headParts = HeadPartSet(parts: [], misses: [])
+    public var headSource = ActorHeadSource.baked
+}
+
+nonisolated extension ResolvedActorVisual {
+    /// The visual with a runtime presentation applied: the head source, and
+    /// the idle prop as one more attachment.
+    public func presenting(_ state: ActorPresentationState?) -> ResolvedActorVisual {
+        guard let state else { return self }
+        var copy = ResolvedActorVisual(
+            appearance: appearance,
+            skeletonPath: skeletonPath,
+            skin: skin,
+            equippedSlots: equippedSlots,
+            parts: parts,
+            attachments: attachments + (state.prop.map {
+                [ResolvedAttachment(modelPath: $0.modelPath, bone: $0.bone)]
+            } ?? []),
+            usesRuntimeEquipment: usesRuntimeEquipment,
+            faceGenMeshPath: faceGenMeshPath,
+            faceGenTintPath: faceGenTintPath,
+            skips: skips
+        )
+        copy.headParts = headParts
+        copy.headSource = state.headSource
+        return copy
+    }
 }
 
 /// FaceGen paths: the defining plugin's lowercased name, then the 8-hex object ID
@@ -143,6 +171,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
     /// HDPT records named by NPC_ and RACE head-part lists. Only the expression TRI
     /// fields are decoded.
     public let headParts: [UInt32: HeadPart]
+    /// FLST, TXST, and CLFM records the assembled head reads.
+    public let formLists: [UInt32: FormList]
+    public let textureSets: [UInt32: TextureSet]
+    public let colors: [UInt32: ColorForm]
     /// Records `build` could not decode; they resolve as dangling.
     public private(set) var skippedRecords = SkippedRecords()
 
@@ -154,7 +186,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
         leveledItems: [UInt32: LeveledList],
         formIDResolver: FormIDResolver,
         equipment: EquipmentCatalog = EquipmentCatalog(items: [:]),
-        headParts: [UInt32: HeadPart] = [:]
+        headParts: [UInt32: HeadPart] = [:],
+        formLists: [UInt32: FormList] = [:],
+        textureSets: [UInt32: TextureSet] = [:],
+        colors: [UInt32: ColorForm] = [:]
     ) {
         self.races = races
         self.armors = armors
@@ -164,6 +199,9 @@ nonisolated public struct ActorVisualResolver: Sendable {
         self.formIDResolver = formIDResolver
         self.equipment = equipment
         self.headParts = headParts
+        self.formLists = formLists
+        self.textureSets = textureSets
+        self.colors = colors
     }
 
     /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT top-group record.
@@ -184,6 +222,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
             equipment: EquipmentCatalog.build(from: file),
             headParts: index(file, "HDPT", &skipped) {
                 try HeadPart(record: $0, localized: localized)
+            },
+            formLists: index(file, "FLST", &skipped, FormList.init(record:)),
+            textureSets: index(file, "TXST", &skipped, TextureSet.init(record:)),
+            colors: index(file, "CLFM", &skipped) { try ColorForm(record: $0, localized: localized)
             }
         )
         resolver.skippedRecords = skipped
@@ -260,7 +302,7 @@ nonisolated public struct ActorVisualResolver: Sendable {
         let face = race.flags.contains(.faceGenHead)
             ? formIDResolver.resolve(appearance.headParts.source)
             : nil
-        return ResolvedActorVisual(
+        var visual = ResolvedActorVisual(
             appearance: appearance,
             skeletonPath: skeletonPath,
             skin: skinID,
@@ -272,6 +314,15 @@ nonisolated public struct ActorVisualResolver: Sendable {
             faceGenTintPath: face.map(FaceGenPaths.tint(for:)),
             skips: skips
         )
+        if race.flags.contains(.faceGenHead) {
+            visual.headParts = headPartResolver.resolve(
+                raceDefaults: female ? race.femaleHeadParts : race.maleHeadParts,
+                npcParts: appearance.headParts.value,
+                race: raceID,
+                hairColor: appearance.hairColor.value
+            )
+        }
+        return visual
     }
 
     /// Expression-bearing HDPT records for one resolved actor. RACE supplies
@@ -401,5 +452,13 @@ nonisolated public struct ActorVisualResolver: Sendable {
             skips.append(AppearanceSkip(subject: armor.formID, reason: .noCompatibleArmature))
         }
         return parts
+    }
+}
+
+nonisolated extension ActorVisualResolver {
+    public var headPartResolver: HeadPartResolver {
+        HeadPartResolver(
+            headParts: headParts, formLists: formLists, textureSets: textureSets, colors: colors
+        )
     }
 }

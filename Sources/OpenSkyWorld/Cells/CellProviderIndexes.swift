@@ -143,6 +143,8 @@ nonisolated public struct CellProviderIndexes {
     public let detectionSettings: DetectionSettings
     public let lockTrapData: LockTrapData
     public let storyData: StoryData
+    /// Load-order idle records and markers.
+    public let idleStore: IdleStore
 
     public init(
         root: GameDataRoot,
@@ -171,8 +173,7 @@ nonisolated public struct CellProviderIndexes {
         )
         scriptFileSystem = fileSystem
         weatherSystem = WeatherSystem(
-            file: file,
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+            file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID
         )
         soundStore = SoundRecordStore(file: file)
         footstepStore = FootstepStore(file: file)
@@ -212,6 +213,7 @@ nonisolated public struct CellProviderIndexes {
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
         (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
+        idleStore = IdleStore(plugins: ActivePluginFiles.load(root: root, baseFile: file))
     }
 
     /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
@@ -321,6 +323,7 @@ nonisolated public struct CellProviderIndexes {
         stores.craftingCatalog = craftingCatalog
         stores.lockTrapData = lockTrapData
         stores.storyData = storyData
+        stores.idleStore = idleStore
         return stores
     }
 }

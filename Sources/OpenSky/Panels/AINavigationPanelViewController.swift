@@ -15,6 +15,8 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
     let packageSection = AIPackageSection()
     let detectionSection = AIDetectionSection()
     let combatSection = AICombatSection()
+    let headSection = AIHeadAssemblySection()
+    let idleSection = AIIdleSection()
 
     /// Weak throughout, for the reason every other panel holds its providers
     /// weakly: the game controller owns this panel's parent and the renderer,
@@ -32,7 +34,17 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
             packageSection.provider = navigationProvider
             detectionSection.selectionProvider = navigationProvider
             combatSection.selectionProvider = navigationProvider
+            headSection.selectionProvider = navigationProvider
+            idleSection.selectionProvider = navigationProvider
         }
+    }
+
+    weak var headProvider: (any HeadAssemblyControlProviding)? {
+        didSet { headSection.provider = headProvider }
+    }
+
+    weak var idleProvider: (any IdleControlProviding)? {
+        didSet { idleSection.provider = idleProvider }
     }
 
     weak var perceptionProvider: (any PerceptionControlProviding)? {
@@ -46,7 +58,7 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             overlaySection, actorSection, movementSection,
-            packageSection, detectionSection, combatSection
+            packageSection, detectionSection, combatSection, headSection, idleSection
         ]
     }
 
@@ -86,5 +98,25 @@ final class AINavigationPanelViewController: InspectorPanelViewController {
 
     var hostilityControl: NSButton {
         combatSection.hostilityControl
+    }
+
+    var headSourceControl: NSPopUpButton {
+        headSection.sourceControl
+    }
+
+    var idleMarkersControl: NSButton {
+        idleSection.markersControl
+    }
+
+    var idleMarkerControl: NSPopUpButton {
+        idleSection.markerControl
+    }
+
+    var idleFireControl: NSButton {
+        idleSection.fireControl
+    }
+
+    var idlePickControl: NSButton {
+        idleSection.pickControl
     }
 }

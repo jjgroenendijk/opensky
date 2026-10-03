@@ -68,26 +68,35 @@ struct HeimskrFace {
     /// A paused offscreen renderer looking at the head from in front and slightly above.
     @MainActor
     func renderer(animations: [any RenderAnimation]) throws -> Renderer {
-        let scene = RenderScene(
-            instances: assembly.renderPlacements(
+        try Self.renderer(
+            placements: assembly.renderPlacements(
                 at: assembly.transform, faceMorphs: playback.bindings
             ),
-            animations: animations
+            animations: animations,
+            transform: assembly.transform,
+            device: device
         )
+    }
+
+    /// The same view of any placements around an actor at `transform`.
+    @MainActor
+    static func renderer(
+        placements: [RenderPlacement],
+        animations: [any RenderAnimation],
+        transform: float4x4,
+        device: any MTLDevice
+    ) throws -> Renderer {
+        let scene = RenderScene(instances: placements, animations: animations)
         let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size), device: device
+            frame: CGRect(x: 0, y: 0, width: size, height: size), device: device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, scene: scene, camera: camera())
+        return try Renderer(view: view, scene: scene, camera: camera(transform: transform))
     }
 
-    private func camera() -> SceneCamera {
-        let origin = SIMD3(
-            assembly.transform.columns.3.x,
-            assembly.transform.columns.3.y,
-            assembly.transform.columns.3.z
-        )
+    private static func camera(transform: float4x4) -> SceneCamera {
+        let origin = SIMD3(transform.columns.3.x, transform.columns.3.y, transform.columns.3.z)
         let head = origin + SIMD3<Float>(0, 0, 112)
         let direction = simd_normalize(SIMD3<Float>(-1, -1, 0.25))
         return SceneCamera(
