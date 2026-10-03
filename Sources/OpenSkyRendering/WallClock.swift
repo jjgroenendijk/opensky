@@ -6,6 +6,12 @@ import QuartzCore
 /// Current wall time in seconds, on a monotonic scale with an arbitrary origin.
 public protocol WallClock: AnyObject {
     var now: CFTimeInterval { get }
+    /// Called once at the start of each live frame, before any clock reads.
+    func beginFrame()
+}
+
+extension WallClock {
+    public func beginFrame() {}
 }
 
 /// The live clock: `CACurrentMediaTime()`, the same host time Core Animation uses.

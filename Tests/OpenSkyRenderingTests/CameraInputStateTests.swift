@@ -131,4 +131,19 @@ struct CameraInputStateTests {
         state.toggleSneak()
         #expect(!state.makeInput(dt: 0.016).sneak)
     }
+
+    @Test
+    func aFrameWithNoTimeKeepsOneShotPressesForTheNextStep() {
+        let state = CameraInputState()
+        state.requestJump()
+        state.addLook(right: 4, up: 0)
+        state.press(.forward)
+        let paused = state.makeInput(dt: 0)
+        #expect(!paused.jump)
+        #expect(paused.lookRight == 0)
+        let stepped = state.makeInput(dt: 1.0 / 60)
+        #expect(stepped.jump)
+        #expect(stepped.lookRight == 4)
+        #expect(stepped.moveForward == 1)
+    }
 }

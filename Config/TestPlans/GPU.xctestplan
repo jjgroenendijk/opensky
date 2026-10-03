@@ -386,6 +386,19 @@
       },
       "target" : {
         "containerPath" : "container:.",
+        "identifier" : "OpenSkyAgentControlTests",
+        "name" : "OpenSkyAgentControlTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {
+        "tags" : [
+          "gpu"
+        ]
+      },
+      "target" : {
+        "containerPath" : "container:.",
         "identifier" : "OpenSkyLaunchTests",
         "name" : "OpenSkyLaunchTests"
       }

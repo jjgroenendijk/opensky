@@ -134,8 +134,19 @@ public final class CameraInputState {
     }
 
     /// Snapshots the frame's input and drains accumulated pointer deltas.
-    /// Opposing keys cancel (forward+back -> 0).
+    /// Opposing keys cancel (forward+back -> 0). A frame with no time (paused,
+    /// or between stepped frames) drains nothing, so a press waits for a step.
     public func makeInput(dt: Float) -> CameraInput {
+        guard dt > 0 else {
+            return CameraInput(
+                boost: boost,
+                sprint: sprinting,
+                sneak: sneaking,
+                attackHeld: attackHeld,
+                block: blocking,
+                dt: dt
+            )
+        }
         let input = CameraInput(
             moveForward: axis(.forward, .back),
             moveRight: axis(.right, .left),

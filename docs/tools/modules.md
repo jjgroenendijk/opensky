@@ -106,6 +106,8 @@ OpenSkyLaunch             launch modes, the remembered mode, game folder status
   ^
 OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls, melee hit sweeps
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes
+OpenSkyAgentControl       agent control protocol, socket server and client, command router;
+                          needs nothing, the app adapts the game to its port
   ^
 OpenSkyRendering          Metal renderer, scenes, cameras, terrain meshes, weather values
 OpenSkyAudio              audio graph, decoders, sound and music record stores

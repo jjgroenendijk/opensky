@@ -1,0 +1,58 @@
+[
+  {
+    "skills": ["driving-the-running-game"],
+    "query": "Walk the player forward for one second in the running game and show me what they see.",
+    "files": [],
+    "expected_behavior": [
+      "Tells the user a game window will open before running openskycli game launch",
+      "Pauses with game time pause, then holds forward with input hold forward --frames 60 rather than sleeping in the shell",
+      "Takes the picture with openskycli game screenshot into logs/ and does not commit it"
+    ]
+  },
+  {
+    "skills": ["driving-the-running-game"],
+    "query": "Check that activating the door in front of the player loads the interior.",
+    "files": [],
+    "expected_behavior": [
+      "Reads state target before pressing activate",
+      "Waits with events --until cell.loaded --timeout instead of a fixed sleep",
+      "Reads state player afterwards to confirm the interior cell"
+    ]
+  },
+  {
+    "skills": ["driving-the-running-game"],
+    "query": "openskycli game status says notRunning. Fix it.",
+    "files": [],
+    "expected_behavior": [
+      "Explains the server is off by default and starts it with openskycli game launch or the Agent Control sidebar toggle",
+      "Does not try to connect to a network port or edit the socket permissions"
+    ]
+  },
+  {
+    "skills": ["driving-the-running-game"],
+    "query": "Write a repeatable check that setting Health to 50 on the player sticks.",
+    "files": [],
+    "expected_behavior": [
+      "Writes a JSONL script with expect objects and runs it with openskycli game run",
+      "Uses debug av Health --value 50 and state av Health"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Add a parser for the LGTM record.",
+    "files": [],
+    "expected_behavior": [
+      "Does not load driving-the-running-game",
+      "Loads implementing-format-parsers instead"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Render an offscreen frame of Whiterun to check the new shadow pass.",
+    "files": [],
+    "expected_behavior": [
+      "Uses the offscreen openskycli screenshot path from probing-real-game-data, not the live game",
+      "Does not launch the app"
+    ]
+  }
+]

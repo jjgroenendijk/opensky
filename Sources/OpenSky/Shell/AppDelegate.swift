@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var modeWindow: NSWindow?
     private var shellViewController: AppShellViewController?
     private var settingsController: SettingsWindowController?
+    private var agentControl: AgentControlHost?
 
     /// The running mode, or nil while the launcher is up.
     private(set) var activeMode: LaunchMode?
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // appearance keeps every system control on the charcoal palette.
         NSApplication.shared.appearance = NSAppearance(named: .darkAqua)
         NSApplication.shared.mainMenu = MainMenu.make(target: self)
+        agentControl = AgentControlHost()
 
         if let mode = LaunchPreferences.forcedMode() {
             start(mode)
@@ -28,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showLauncher()
         }
         NSApplication.shared.activate()
+    }
+
+    func applicationWillTerminate(_: Notification) {
+        agentControl?.shutdown()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
@@ -52,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Modes
 
     private func makeModeWindow(for mode: LaunchMode) -> NSWindow {
-        let game = gameContext.makeGameViewController()
+        let game = makeGame(for: mode)
         switch mode {
         case .play:
             shellViewController = nil
@@ -65,6 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             shellViewController = shell
             return AppWindows.makeDeveloper(shell: shell)
         }
+    }
+
+    private func makeGame(for mode: LaunchMode) -> GameViewController {
+        let game = gameContext.makeGameViewController()
+        agentControl?.attach(game: game, mode: mode, root: gameContext.gameDataRoot)
+        return game
     }
 
     /// Ends the running mode. The window is already closing, so this only
@@ -99,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func reloadRunningMode() {
         guard let activeMode else { return }
         gameContext.resolve()
-        let game = gameContext.makeGameViewController()
+        let game = makeGame(for: activeMode)
         switch activeMode {
         case .developer:
             shellViewController?.reload(

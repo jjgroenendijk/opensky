@@ -193,6 +193,24 @@ extension OpenSkyCLI {
                                   Fixed-step M4 route: terrain + farm stairs,
                                   paired interior crossing, exterior return;
                                   fail route/collision/stream/physics/audio gates
+      game <command> [--text] [--socket <path>] [--reply-timeout <s>]
+           [--record <file>]
+                                  Drive the running app over its agent control
+                                  socket; prints one JSON object per call.
+                                  Commands: launch [--mode play|developer]
+                                  [--app <path>] [--wait <s>], attach, status,
+                                  quit, screenshot [--out <png>] [--size WxH]
+                                  [--world-only], input press|release|hold
+                                  <action> [--frames <n>|--seconds <s>],
+                                  input look --dx <deg> --dy <deg>, input
+                                  select <label>, time pause|resume|step [n]
+                                  |scale <x>, state player|target|actors|menu|
+                                  quest <id>|av <name>|global <id>|time|frame,
+                                  debug teleport|time|weather|av|item|quest|
+                                  kill|resurrect|overlay, events [--follow]
+                                  [--filter <kinds>] [--until <kind>]
+                                  [--timeout <s>], run <script.jsonl>.
+                                  See docs/tools/agent-control.md
       help                        Show this text
 
     defaults: cell/screenshot/render target the first-render cell (Tamriel (6,-2)).

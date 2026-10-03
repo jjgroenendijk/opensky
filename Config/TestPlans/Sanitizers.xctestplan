@@ -343,6 +343,14 @@
       "parallelizable" : true,
       "target" : {
         "containerPath" : "container:.",
+        "identifier" : "OpenSkyAgentControlTests",
+        "name" : "OpenSkyAgentControlTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
         "identifier" : "OpenSkyLaunchTests",
         "name" : "OpenSkyLaunchTests"
       }

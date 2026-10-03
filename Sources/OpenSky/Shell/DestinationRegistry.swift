@@ -6,6 +6,7 @@
 
 import AppKit
 import OpenSkyActorsInterface
+import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
@@ -40,8 +41,8 @@ enum SidebarSection: String, CaseIterable {
 
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
-typealias WorldControlProviders = AINavigationControlProviding
-    & AIOverlayControlProviding & ActorValueControlProviding & AnimationControlProviding
+typealias WorldControlProviders = AINavigationControlProviding & AIOverlayControlProviding
+    & ActorValueControlProviding & AgentControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
     & CameraControlProviding & CastingControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
@@ -174,7 +175,7 @@ enum DestinationRegistry {
     /// which exist only for the type-length cap.
     static let all: [DestinationDescriptor] = simulationDestinations + effectsDestinations
         + progressionDestinations + crimeDestinations + menuDestinations
-        + sessionDestinations
+        + sessionDestinations + agentDestinations
 
     private static let simulationDestinations: [DestinationDescriptor] = [
         DestinationDescriptor(

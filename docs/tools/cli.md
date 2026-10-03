@@ -75,6 +75,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
 | `bench [...]` | A sustained offscreen render with a frame time budget |
 | `bench --fly-path [...]` | A scripted flight across cells through the real streamer, with memory, build, and update budgets |
+| `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |
 | `bench --walk-path [...]` | A fixed walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, up stairs, through an interior, and back |
 
 ## Notes on the probes
@@ -126,6 +127,8 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
 - `--walk-path` rejects `--frames`, `--footprint-cap-mb`, and `--collision-build-budget-ms` with exit
   status 2, checked before touching game data.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.
+- `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.
+  Both run without the app or an install.
 
 Captures and the full `probe.log` go to `logs/probe/<UTC timestamp>/`
 ([run output](/tools/run-output.md)).

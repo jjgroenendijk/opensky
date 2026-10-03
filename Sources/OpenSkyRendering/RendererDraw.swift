@@ -19,6 +19,7 @@ extension Renderer: MTKViewDelegate {
         else { return }
 
         let cpuStart = frameStats.beginFrame()
+        wallClock.beginFrame()
         // Camera, the per-frame hook (streaming may setScene synchronously
         // before this frame encodes), game clock, world simulation, weather.
         frameDriver?.prepareLiveFrame()
