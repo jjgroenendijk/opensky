@@ -73,7 +73,7 @@
     "files": [],
     "expected_behavior": [
       "Runs the covering suite first with make test-unit T='...'",
-      "Then runs make test-parser to cover every parser suite across targets",
+      "Then runs make test-unit TAG=parser to cover every parser suite across targets",
       "Does not run make test-real, because no real-data path changed"
     ]
   },

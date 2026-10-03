@@ -81,10 +81,10 @@ test needs it.
 | `.gpu` | A suite that reaches a Metal device |
 | `.parser` | A suite in an `OpenSkyFormats*Tests` target |
 | `.slow` | A test that takes seconds on a warm build |
-| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test-perf`) |
+| `.perf` | A timing gate. The Perf plan runs it, built optimized (`make test-real PERF=1`) |
 
 `make lint-test-tags` fails a suite that misses `.acceptance`, `.gpu`, or `.parser`, and
-`make lint-test-tags FIX=1` adds them. A tag selects a run (`make test-parser`) but
+`make lint-test-tags FIX=1` adds them. A tag selects a run (`make test-unit TAG=parser`) but
 never a real-data test into a unit run: a plan picks bundles, a tag picks tests inside them.
 
 ## Flaky tests

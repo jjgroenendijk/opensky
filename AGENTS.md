@@ -111,8 +111,8 @@ with an example. When you add code:
 
 ## Build, run, test
 
-`make help` lists every target. `make fix` (autoformat plus strict lint) before committing;
-`make check` is the same gate without writes. `make install` refreshes
+`make help` lists the main targets; `make help ALL=1` lists every one. `make fix` (autoformat
+plus strict lint) before committing; `make check` is the same gate without writes. `make install` refreshes
 `/Applications/OpenSky.app` after landing rendering work, because the user checks progress
 there.
 
@@ -120,7 +120,7 @@ No automatic step runs the tests. What to test is the author's judgment, guided 
 `testing-and-verifying` skill, and recorded in the commit's `Tests:` section. A green build
 does not prove a triangle appeared. Unit-test every format parser and math routine with
 synthetic fixtures built in code. The real-data suites need the user's install, so only
-`make test-real` and `make test-perf` run them, and never in CI.
+`make test-real` runs them, and never in CI.
 
 ## Loading game data (runtime, never repo)
 

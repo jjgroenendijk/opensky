@@ -37,20 +37,21 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | Command | What it does |
 | --- | --- |
 | `make test-unit [T='Suite/test()'] [N=100]` | The unit plan. `T` picks a suite or test; a name that does not start with an `OpenSky*Tests` target resolves under `OpenSkyTests/`. `N` reruns until the first failure, to show a test is flaky |
-| `make test-locale [T='Suite/test()']` | The unit plan in Dutch language and region, where the decimal separator is a comma |
-| `make test-parser`, `make test-gpu` | The unit tests tagged `.parser` or `.gpu`, through the `Parser` or `GPU` plan |
+| `make test-unit LOCALE=nl [T='Suite/test()']` | The unit plan in Dutch language and region, where the decimal separator is a comma |
+| `make test-unit TAG=parser`, `TAG=gpu` | The unit tests tagged `.parser` or `.gpu`, through the `Parser` or `GPU` plan |
 | `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
 | `make verify-build` | Compiles the app, the CLI, and the unit bundles without running a test |
 | `make realdata-build` | Compiles the real-data suites without running them. Needs no install |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make test-real [T='Class/method()'] [CAP=MB]` | The real-data plan under the memory watchdog, narrowed by `T` |
-| `make test-perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
-| `make test-sanitize-thread`, `make test-sanitize-address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
+| `make test-real PERF=1` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
+| `make test-sanitize SAN=thread`, `SAN=address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
 | `make test-ui [T='Suite/test()']` | The UI smoke tests. A time-out in "enabling automation mode" means Automation Mode asks for a password; `make test-perms` names the fix |
 | `make test-perms` | Checks the one-time permission grants |
 
-Each kind of test has one target named `test-<kind>`. Each is one plain `xcodebuild test` call on
-one test plan ([test runs](/tools/test-runs.md)).
+There are four kinds of test, each with one target named `test-<kind>`: unit, UI, sanitizer, and
+real-data. An option picks the plan inside a kind (`TAG`, `LOCALE`, `SAN`, `PERF`), so each run is
+still one plain `xcodebuild test` call on one test plan ([test runs](/tools/test-runs.md)).
 
 No automatic step runs the tests. What to test for a change is the author's judgment, guided by the
 `testing-and-verifying` skill, and the commit's `Tests:` section records what ran. CI runs the lint
@@ -74,7 +75,7 @@ make test-real
 `-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing. Nothing
 checks this, so read the test count in the output.
 
-`make test-perf` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
+`make test-real PERF=1` runs the Perf plan, which selects the real-data tests tagged `.perf`, so a new
 perf gate joins by its tag alone. It builds with optimization, because a physics step is a few
 hundred microseconds of tight `simd` math, which `-Onone` slows by more than an order of magnitude.
 It keeps the Debug configuration, because `@testable import` needs `ENABLE_TESTABILITY`, which
@@ -94,8 +95,8 @@ watches the process tree of every real-data run and kills it past a cap in MB.
 
 | Run | Cap | Time limit |
 | --- | --- | --- |
-| `make test-real`, `make test-perf` | 6,144 MB | 3 hours |
-| `make test-sanitize-thread`, `make test-sanitize-address` | 12,288 MB | 3 hours |
+| `make test-real`, with or without `PERF=1` | 6,144 MB | 3 hours |
+| `make test-sanitize` | 12,288 MB | 3 hours |
 
 The real-data cap fits the whole set, because one host process runs every suite in turn and keeps
 their caches. `CAP=MB` lowers it for one test. Sanitizers get more for their shadow memory. Never

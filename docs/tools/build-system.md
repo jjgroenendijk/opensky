@@ -223,7 +223,7 @@ For a macOS scheme built with `-derivedDataPath`, the products are always in
 
 `tools/xcodebuild-lib.sh` is sourced, never run. It sets `OPENSKY_DERIVED_DATA` for a script run
 outside `make`, and provides the products path and the output filter. The test targets share the
-normal cache, except `make test-perf`, which changes a build setting and so builds into
+normal cache, except `make test-real PERF=1`, which changes a build setting and so builds into
 `$OPENSKY_DERIVED_DATA-optimized`. Both stay on the external volume, and `make prune` removes both
 from a removed worktree.
 

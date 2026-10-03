@@ -3,7 +3,7 @@
 // data, they settle, a shove moves them, and a step fits the frame budget. The
 // report holds counts and timings and goes to gitignored `logs/`. Run with
 // `make test-real T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
-// or `make test-perf` for the optimized budget.
+// or `make test-real PERF=1` for the optimized budget.
 
 import Foundation
 import Metal
@@ -19,7 +19,7 @@ import Testing
 @Suite(.tags(.gpu))
 struct DynamicBodyRealDataTests {
     /// Wall-clock budget for one 1/120 s physics step, in milliseconds. An
-    /// optimized build (`make test-perf`) is held to 2 ms; measured 0.37.
+    /// optimized build (`make test-real PERF=1`) is held to 2 ms; measured 0.37.
     /// `-Onone` runs about 24x slower, so a plain `make test-real` gets 20 ms.
     private static var budgetMS: Double {
         #if OPENSKY_OPTIMIZED

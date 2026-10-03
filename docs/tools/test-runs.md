@@ -22,19 +22,19 @@ The `OpenSky` scheme has seven plans, under `Config/TestPlans/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test-unit`, `make test-locale`. The scheme default |
-| `Parser.xctestplan` | the unit plan's targets, only the tests tagged `parser` | `make test-parser` |
-| `GPU.xctestplan` | the unit plan's targets, only the tests tagged `gpu` | `make test-gpu` |
+| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test-unit`, `make test-unit LOCALE=nl`. The scheme default |
+| `Parser.xctestplan` | the unit plan's targets, only the tests tagged `parser` | `make test-unit TAG=parser` |
+| `GPU.xctestplan` | the unit plan's targets, only the tests tagged `gpu` | `make test-unit TAG=gpu` |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
 | `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make test-real` |
-| `Perf.xctestplan` | `OpenSkyRealDataTests`, only the tests tagged `perf`, plus the data root | `make test-perf` |
-| `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize-thread`, `make test-sanitize-address` |
+| `Perf.xctestplan` | `OpenSkyRealDataTests`, only the tests tagged `perf`, plus the data root | `make test-real PERF=1` |
+| `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize SAN=thread`, `SAN=address` |
 
 The unit plan has two configurations. `Unit` is the normal run, and every command but one names it
 with `-only-test-configuration`, because xcodebuild runs every configuration of a plan when none is
 named. `Locale` sets the language to `nl` and the region to `NL`, where the decimal separator is a
-comma, and `make test-locale` runs it. It catches text parsing that reads the user's locale. Both
-configurations share one build, because neither changes a build setting.
+comma, and `make test-unit LOCALE=nl` runs it. It catches text parsing that reads the user's
+locale. Both configurations share one build, because neither changes a build setting.
 
 `make lint-test-plans`, part of `make lint`, checks the rules below that a machine can check: every
 plan is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It also
@@ -117,7 +117,7 @@ and plan, and checking the whole graph, not on the tests. Measured on 2026-10-02
 compile: one unit suite took 15 to 21 s, one real-data test 25 s, the `Parser` plan 47 s, and the
 whole unit plan 56 s. Each run pays the start-up, so batch edits into one run.
 
-`make test-real`, `make test-perf`, and the sanitizer targets start `tools/memguard.sh` beside the
+`make test-real` and `make test-sanitize` start `tools/memguard.sh` beside the
 call and turn parallel testing off, so one test host runs and the watchdog's cap is per run. `CAP=MB`
 changes the cap.
 
@@ -174,7 +174,7 @@ branches that no test takes, the malformed-input paths behind "malformed input m
 
 ## Sanitizers
 
-`make test-sanitize-thread` and `make test-sanitize-address` run the unit bundles under runtime
+`make test-sanitize SAN=thread` and `SAN=address` run the unit bundles under runtime
 sanitizers. Three things make this worth the
 time: ffmpeg is reached across a C boundary where Swift's safety stops, the parsers slice
 `UnsafeRawBufferPointer` over memory-mapped archives, where a bad read lands in mapped memory instead
