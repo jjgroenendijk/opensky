@@ -152,11 +152,11 @@ jobs:
       contents: read
       actions: write
     env:
-      # Signing, then CI-only speed settings: no index data, which nothing in CI reads; no
-      # plugin or macro trust prompt; and a per-task timing table at the end of the build.
+      # Signing, then CI-only speed settings: no index data, which nothing in CI reads,
+      # and no plugin or macro trust prompt.
       BUILD_FLAGS: >-
         CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
-        -skipPackagePluginValidation -skipMacroValidation -showBuildTimingSummary
+        -skipPackagePluginValidation -skipMacroValidation
       # A restored compilation cache only grows. Main starts over above this size.
       CAS_MAX_MB: 1024
       GH_TOKEN: ${{ github.token }}
@@ -247,16 +247,7 @@ jobs:
         run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
       - name: Build timing summary
         if: ${{ !cancelled() }}
-        run: |
-          log=logs/test-unit/latest/test-unit.log
-          [ -f "$log" ] || exit 0
-          {
-            echo '### Build timing'
-            echo '```text'
-            grep -A1 '^CompilationCacheMetrics' "$log" | grep 'note:' || true
-            grep -E '^[A-Za-z]+ \([0-9]+ tasks?\) \| [0-9.]+ seconds' "$log" | sort -t'|' -k2 -rn | head -25 || true
-            echo '```'
-          } >>"$GITHUB_STEP_SUMMARY"
+        run: tools/ci/build-timing.sh >>"$GITHUB_STEP_SUMMARY"
       - name: Upload build and test logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

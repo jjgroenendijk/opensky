@@ -100,9 +100,10 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 - **Metal Toolchain.** `tools/ci/metal-toolchain.sh start` downloads it in the background while
   the caches restore, and `wait` joins it before the build. It is not cached: it is 1.5 GB on disk,
   so a restore takes as long as the download and uses space the compilation cache needs.
-- **Timing.** `-showBuildTimingSummary` adds a time per task kind to the transcript. The job writes
-  that table and the compilation cache hit rate to the run summary, and uploads `logs/` on every
-  run, not only on failure.
+- **Timing.** `tools/ci/build-timing.sh` writes the build and test time, the compilation cache hit
+  rate, the time per task kind, and the slowest tasks to the run summary. It reads the build log in
+  the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`. The job uploads
+  `logs/` on every run, not only on failure.
 
 ## Caches
 
