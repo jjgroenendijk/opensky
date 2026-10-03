@@ -1,0 +1,27 @@
+name: Cache cleanup
+
+# A closed pull request cannot use its caches any more, so they go at once and leave
+# room for main's (docs/tools/ci.md). pull_request_target gives a token that may delete
+# them for a fork's pull request too. The job checks out nothing, so no fork code runs.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  actions: write
+
+jobs:
+  delete:
+    name: Delete pull request caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REF: refs/pull/${{ github.event.pull_request.number }}/merge
+        run: |
+          gh cache list --ref "$REF" --limit 100 --json id,key --jq '.[] | "\(.id) \(.key)"' |
+            while read -r id key; do
+              gh cache delete "$id" >/dev/null && echo "[INFO] deleted cache $key"
+            done

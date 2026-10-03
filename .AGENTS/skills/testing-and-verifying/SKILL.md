@@ -25,7 +25,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Parser | New or updated synthetic-fixture tests, `make test-unit T='Suite'`, then `make test-unit TAG=parser` before pushing |
 | Math routine | New or updated tests, `make test-unit T='Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-unit T='Suite'` for its suites, then `make test-unit` (whole unit plan) once before pushing |
-| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, `make realdata-build`, then `make test-unit` |
+| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make verify-build`, then `make test-unit` |
 | Rendering or shaders | `make test-unit TAG=gpu`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill and `make verify-build`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
@@ -54,9 +54,9 @@ test first, watch it fail, then fix.
   `make compile M='OpenSkyWorld'`). It runs `swift build` on the changed modules and their
   dependents, without Xcode. Run `make verify-build` once at the end, because only it
   compiles the app, `OpenSkyCLI`, and the Xcode test bundles.
-- `make verify-build` compiles the app, `OpenSkyCLI`, and the unit bundles without running
-  a test; `make realdata-build` compiles `OpenSkyRealDataTests`. Together they are the
-  cheapest way to catch a type change that breaks a target you did not test.
+- `make verify-build` compiles the app, `OpenSkyCLI`, and every test bundle, including
+  `OpenSkyRealDataTests`, without running a test. It is the cheapest way to catch a type
+  change that breaks a target you did not test.
 - `make health` fails on unused code (Periphery). Run it when a change adds, moves, or
   stops using declarations or imports. It builds uncached into its own tree, so its first
   run in a worktree is a full build.

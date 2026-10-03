@@ -1,8 +1,9 @@
 name: CI
 
-# Every job runs on macOS, like a developer machine (docs/tools/ci.md). Each step
+# The checks run on macOS, like a developer machine (docs/tools/ci.md). Each step
 # runs the same make target as `make check`. The lint checks share two jobs, so one
 # run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
+# The Changes and Lint jobs only read results, so they run on Linux.
 on:
   pull_request:
   push:
@@ -16,13 +17,20 @@ concurrency:
 permissions:
   contents: read
 
-# Pinned tool versions. Change a pin together with the local Homebrew version.
+# Pinned tool versions. Renovate bumps them to the newest release, as Homebrew does
+# locally. Each `renovate:` comment names where the version comes from.
 env:
+  # renovate: datasource=github-releases depName=nicklockwood/SwiftFormat
   SWIFTFORMAT_VERSION: 0.63.1
+  # renovate: datasource=github-releases depName=realm/SwiftLint
   SWIFTLINT_VERSION: 0.65.1
+  # renovate: datasource=npm depName=markdownlint-cli2
   MARKDOWNLINT_VERSION: 0.23.3
+  # renovate: datasource=github-releases depName=koalaman/shellcheck
   SHELLCHECK_VERSION: v0.11.0
+  # renovate: datasource=github-releases depName=rhysd/actionlint extractVersion=^v(?<version>.+)$
   ACTIONLINT_VERSION: 1.7.12
+  # renovate: datasource=npm depName=jscpd
   JSCPD_VERSION: 5.4.0
   # The image holds several Xcodes and its default moves. Name the one that matches the
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
@@ -103,31 +111,71 @@ jobs:
           make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
           docs-length agent-files comment-length panel-text duplicates no-suppressions
 
+  # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
+  # skills, or the Renovate config skips it. Any other event always builds.
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      build: ${{ steps.filter.outputs.build }}
+    steps:
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          build=true
+          if [ -n "$PR" ] && files="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
+            build=false
+            for file in $files; do
+              case "$file" in
+                *.md | docs/* | .AGENTS/* | .claude/* | .github/renovate.json) ;;
+                *) build=true ;;
+              esac
+            done
+          fi
+          echo "build=$build" | tee -a "$GITHUB_OUTPUT"
+
   # Only tests that need no game data: a runner has no install, and the job sets no
-  # OPENSKY_DATA_ROOT, so a gated test skips. The real-data suites only compile.
+  # OPENSKY_DATA_ROOT, so a gated test skips. The scheme also compiles the real-data suites.
   build-test:
     name: Build & test
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     runs-on: xcode-27
     timeout-minutes: 60
+    permissions:
+      contents: read
+      actions: write
     env:
-      SIGNING: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
+      # Signing, then CI-only speed settings: no index data, which nothing in CI reads,
+      # and no plugin or macro trust prompt.
+      BUILD_FLAGS: >-
+        CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
+        -skipPackagePluginValidation -skipMacroValidation
+      # A restored compilation cache only grows. Main starts over above this size.
+      CAS_MAX_MB: 1024
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
-      # Tests that need a Metal 4 GPU skip when this prints false.
+      # The download overlaps the steps up to "Wait for the Metal Toolchain".
+      - name: Start Metal Toolchain download
+        run: tools/ci/metal-toolchain.sh start
+      # Tests that need a Metal 4 GPU skip unless this shows Metal 4. The runner's
+      # virtual GPU may list no Metal line at all.
       - name: Show Xcode and GPU
         run: |
           xcodebuild -version
-          printf '%s\n' 'import Metal' \
-            'let d = MTLCreateSystemDefaultDevice()' \
-            'print(d?.name ?? "no device", "metal4:", d?.supportsFamily(.metal4) ?? false)' \
-            >"$RUNNER_TEMP/gpu.swift"
-          swift "$RUNNER_TEMP/gpu.swift"
+          system_profiler SPDisplaysDataType
       - run: make swift-baseline
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
         run: defaults write com.apple.dt.Xcode IDEBuildingContinueBuildingAfterErrors -bool YES
-      - name: Install Metal Toolchain
-        run: xcodebuild -downloadComponent MetalToolchain
       # Restore and save apart, so a failing test does not throw away the build.
       - uses: actions/cache/restore@v4
         id: ffmpeg
@@ -141,29 +189,67 @@ jobs:
         with:
           path: .vendor/ffmpeg
           key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
-      # The compilation cache roughly halves the build. Only main saves it, because
-      # one entry is about 430 MB and the repository keeps 10 GB of caches. A
-      # restored cache only grows, so the key starts over each month.
-      - name: Cache key month
-        id: month
-        run: echo "month=$(date -u +%Y-%m)" >>"$GITHUB_OUTPUT"
+      # A pull request keeps its own compilation cache and falls back to main's.
+      - name: Cache keys
+        id: keys
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          echo "xcode=$(xcodebuild -version | awk '/Build version/ { print $3 }')" >>"$GITHUB_OUTPUT"
+          if [ -n "$PR" ]; then scope="pr-$PR"; else scope="$(echo "$GITHUB_REF_NAME" | tr '/' '-')"; fi
+          echo "cas=cas-$RUNNER_ARCH-$scope-" >>"$GITHUB_OUTPUT"
+      # The SDK's precompiled modules and stat cache change only with Xcode.
+      - uses: actions/cache/restore@v4
+        id: sdk
+        with:
+          path: |
+            DerivedData/ModuleCache.noindex
+            DerivedData/SDKStatCaches.noindex
+          key: sdk-${{ runner.arch }}-${{ steps.keys.outputs.xcode }}
       - uses: actions/cache/restore@v4
         id: cas
         with:
           path: DerivedData/CompilationCache.noindex
-          key: cas-${{ runner.arch }}-${{ steps.month.outputs.month }}-${{ github.run_id }}
-          restore-keys: cas-${{ runner.arch }}-${{ steps.month.outputs.month }}-
-      - run: make test-unit XCODEBUILD_FLAGS="$SIGNING"
+          key: ${{ steps.keys.outputs.cas }}${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ steps.keys.outputs.cas }}
+            cas-${{ runner.arch }}-main-
+      # COMPILATION_CACHE_LIMIT_SIZE does not shrink the store, so main drops it when too big.
+      - name: Start the compilation cache over when too big
+        if: github.event_name == 'push'
+        run: |
+          store=DerivedData/CompilationCache.noindex
+          size="$(du -sm "$store" 2>/dev/null | cut -f1)"
+          echo "[INFO] compilation cache: ${size:-0} MB, limit $CAS_MAX_MB MB"
+          if [ "${size:-0}" -gt "$CAS_MAX_MB" ]; then rm -rf "$store"; fi
+      - name: Wait for the Metal Toolchain
+        run: tools/ci/metal-toolchain.sh wait
+      - run: make test-unit XCODEBUILD_FLAGS="$BUILD_FLAGS"
       - run: make coverage-floor
-      - name: "Compile real-data suites (never run: no install on a runner)"
-        run: make realdata-build XCODEBUILD_FLAGS="$SIGNING"
-      - if: github.event_name == 'push'
+      - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            DerivedData/ModuleCache.noindex
+            DerivedData/SDKStatCaches.noindex
+          key: ${{ steps.sdk.outputs.cache-primary-key }}
+      # Saved after a failed test too, because the compiled tasks are still valid.
+      - if: ${{ !cancelled() && steps.cas.outcome == 'success' }}
         uses: actions/cache/save@v4
         with:
           path: DerivedData/CompilationCache.noindex
           key: ${{ steps.cas.outputs.cache-primary-key }}
-      - name: Upload test logs
-        if: failure()
+      - name: Delete superseded compilation caches
+        if: ${{ !cancelled() && steps.cas.outcome == 'success' }}
+        env:
+          PREFIX: ${{ steps.keys.outputs.cas }}
+          KEEP: ${{ steps.cas.outputs.cache-primary-key }}
+        run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
+      - name: Build timing summary
+        if: ${{ !cancelled() }}
+        run: tools/ci/build-timing.sh >>"$GITHUB_STEP_SUMMARY"
+      - name: Upload build and test logs
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: build-test-logs
@@ -171,19 +257,22 @@ jobs:
           retention-days: 7
 
   # The one required status check on main. A new job goes into `needs`, and branch
-  # protection needs no change.
+  # protection needs no change. Build & test may skip only when Changes said so.
   lint:
     name: Lint
     if: always()
-    needs: [format, static-checks, build-test]
-    runs-on: xcode-27
+    needs: [changes, format, static-checks, build-test]
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Fail unless every job passed
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
+          BUILD_NEEDED: ${{ needs.changes.outputs.build }}
+          BUILD_RESULT: ${{ needs.build-test.result }}
         run: |
           echo "$RESULTS"
           for result in $RESULTS; do
-            [ "$result" = success ] || exit 1
+            [ "$result" = success ] || [ "$result" = skipped ] || exit 1
           done
+          [ "$BUILD_NEEDED" = false ] || [ "$BUILD_RESULT" = success ]

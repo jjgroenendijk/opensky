@@ -158,5 +158,6 @@ execute code without checking anything.
 
 - **Security scanning and fuzzing** (CodeQL, gitleaks, libFuzzer). Out of scope for this
   project.
-- **Dependabot.** There are no SwiftPM package dependencies. The vendored ffmpeg is
-  pinned in `tools/vendor-ffmpeg.sh`, which Dependabot cannot read.
+- **Dependabot.** Renovate covers the GitHub Actions, the Swift packages, and the CI tool
+  pins in one weekly pull request, and Dependabot cannot read the tool pins
+  ([CI](/tools/ci.md#dependency-updates)).

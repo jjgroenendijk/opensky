@@ -114,8 +114,8 @@ What it helps and what it does not:
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
   ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
   Each switch between build contexts, such as `make cli` then `make test-unit`, then compiles those
-  modules again and relinks everything above them. So the `OpenSky` scheme builds `openskycli` for
-  testing, and `make verify-build` builds all its targets in one context.
+  modules again and relinks everything above them. So the `OpenSky` scheme builds `openskycli` and
+  `OpenSkyRealDataTests` for testing, and every test build compiles all of them in one context.
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
   states compiled before.
 
@@ -128,9 +128,8 @@ grep -c 'Cache hit' logs/build/latest/build.log
 ```
 
 The store grows to gigabytes and is not visibly bounded: `COMPILATION_CACHE_LIMIT_SIZE` set below
-the store's size shrank nothing. `make clean DEEP=1` and `make prune` reclaim it. CI gets the setting
-from the xcconfig and gains nothing, but a CI-only override would be one more way for CI and the
-local gate to drift.
+the store's size shrank nothing. `make clean DEEP=1` and `make prune` reclaim it. CI starts its
+store over by size instead ([CI](/tools/ci.md#caches)).
 
 ### One store for every worktree
 

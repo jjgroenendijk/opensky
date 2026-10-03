@@ -274,12 +274,11 @@ comment-apply: #| Write rewritten blocks from a comment-blocks spec back [SPEC=f
 compile: link-shared ## Compile changed package modules and their dependents [M='Module ...']
 	@./tools/compile-modules.sh $(M)
 
-# The app, openskycli, and the unit bundles compiled, no test run. Catches a change
-# that breaks a target it did not test; realdata-build does the same for the
-# real-data suites. The OpenSky scheme builds openskycli for testing, so the CLI
-# shares the test builds' context. A separate OpenSkyCLI build recompiles the
-# engine (issue #717).
-verify-build: link-shared ## Compile the app, the CLI, and the unit bundles without running tests
+# The app, openskycli, and every test bundle compiled, no test run. Catches a
+# change that breaks a target it did not test. The OpenSky scheme builds
+# openskycli and the real-data suites for testing, so every test build compiles
+# them in one context. A separate OpenSkyCLI build recompiles the engine.
+verify-build: link-shared ## Compile the app, the CLI, and every test bundle without running tests
 	@$(XCB_RUN) verify-build $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 
 shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
@@ -352,7 +351,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-ui test-sanitize test-real test-report test-perms coverage-floor \
-        realdata-build sanitizer-shaders profile
+        sanitizer-shaders profile
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -430,11 +429,6 @@ test-perms: ## Check the one-time macOS permission grants tests need
 
 coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last test run
 	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)
-
-# test-unit never compiles the real-data suites, so a build break there used to
-# stay hidden (issue #457). Compiling needs no install, so CI runs it.
-realdata-build: link-shared ## Compile the real-data suites without running them
-	@$(XCB_RUN) realdata-build $(XCB_TEST) -testPlan RealData build-for-testing
 
 profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
 	@$(MAKE) --no-print-directory cli CONFIG=Release
