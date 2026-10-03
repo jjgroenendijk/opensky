@@ -93,6 +93,14 @@ The interval-per-target and lifetime readings are OpenSky's: no open source stat
 goes through the same path as a landed spell, so resistances, death, and the actor's health
 work as for any spell. Hazards step on world time and stop while a menu pauses the world.
 
+## Spawned hazards
+
+An explosion whose placed object is a `HAZD` spawns that hazard at the blast point, and the
+Effects panel can spawn one in front of the camera. A spawned hazard expires after its
+lifetime and respects the record's limit. It draws its `MODL` model where it sits. The panel
+lists each live hazard with its position, remaining lifetime, and tick count: the number of
+steps on which it hit someone.
+
 ## Activate parents
 
 A trap does not listen to its plate through a linked reference. The trap's `XAPR` field names

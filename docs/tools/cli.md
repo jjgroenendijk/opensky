@@ -71,6 +71,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `audio info <key>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |
 | `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](/formats/fuz.md)) |
+| `effects census`, `effects imad <edid> [--at seconds]` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions. `imad` samples one modifier ([image space](/rendering/image-space.md)) |
 | `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
 | `bench [...]` | A sustained offscreen render with a frame time budget |
 | `bench --fly-path [...]` | A scripted flight across cells through the real streamer, with memory, build, and update budgets |
@@ -89,6 +90,11 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
   only. Distant LOD is hidden only in cells actually built: hiding the whole block while building one
   cell left a ring with neither terrain nor LOD. `--ui-sample` draws the UI sample and
   `--navmesh-overlay` draws navmesh triangles ([navigation](/engine/navigation.md)).
+- `screenshot` effect flags make the image-space and effect A/B captures.
+  `--image-space-off` skips the composite pass. `--imgs` forces a baseline, and `--imad` starts
+  a modifier sampled at `--imad-at` seconds. `--membrane` puts an `EFSH` membrane on the first
+  actor and frames it. `--weather` forces a weather, so its `SPGD` rain falls. Rain needs a few
+  frames to fill the volume, so add `--frames 60`.
 - `bench` waits for the GPU each frame, so its times are an upper bound. The default budget is
   33.33 ms, which is 30 frames per second.
 - `bench --fly-path` moves one cell east, then north. The two 5 by 5 blocks overlap, so exactly 35

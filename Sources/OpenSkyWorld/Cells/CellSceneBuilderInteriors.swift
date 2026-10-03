@@ -148,6 +148,7 @@ nonisolated extension CellSceneBuilder {
             counts: counts
         )
         scene.hazards = collectHazards(in: found.children, resolved: resolved)
+        scene.imageSpace = found.cell.extras.imageSpace
         scene.assets = drainTouchedAssets()
         return scene
     }

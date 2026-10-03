@@ -43,6 +43,8 @@ public final class ProjectileRuntime {
     /// Resolves the IPCT chain for a landed arrow. Nil in a synthetic session,
     /// and then impacts are silent rather than absent.
     public var impacts: MeleeImpactResolver?
+    /// Detonates a PROJ explosion link. Nil in a synthetic session, and then nothing explodes.
+    public var explosions: ExplosionRuntime?
 
     /// `private(set)` rather than `private` so the satellite files can read it
     /// while only `attach(world:)` in this file can write it.
@@ -189,6 +191,10 @@ public final class ProjectileRuntime {
                 finished.append(resolve(projectile, impact: impact))
                 continue
             }
+            if let detonation = alternateDetonation(of: projectile) {
+                finished.append(resolve(projectile, impact: detonation, detonated: true))
+                continue
+            }
             if let outcome = expiry(of: projectile) {
                 finished.append(
                     record(projectile, outcome: outcome, at: projectile.position, impact: nil)
@@ -238,16 +244,18 @@ public final class ProjectileRuntime {
     /// Damage or effects, impact sound and stick for one landed projectile.
     private func resolve(
         _ projectile: LiveProjectile,
-        impact: ProjectileImpact
+        impact: ProjectileImpact,
+        detonated: Bool = false
     ) -> ProjectileTrace {
         impactCount += 1
         let applied = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
         let sound = playImpact(at: impact.position)
-        let didStick = stick(projectile, at: impact)
+        detonateExplosion(of: projectile, at: impact.position)
+        let didStick = !detonated && stick(projectile, at: impact)
         return record(
             projectile,
-            outcome: impact.isActor ? .hitActor : .hitStatic,
+            outcome: detonated ? .detonated : (impact.isActor ? .hitActor : .hitStatic),
             at: impact.position,
             impact: impact,
             appliedDamage: applied,

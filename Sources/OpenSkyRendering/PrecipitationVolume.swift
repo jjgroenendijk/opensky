@@ -35,7 +35,18 @@ nonisolated public struct PrecipitationUpdate {
     public let collisionQuery: CapsuleWorldCollider.CandidateQuery?
 }
 
+/// The hand-tuned values a precipitation scale of 1 keeps.
+nonisolated public struct PrecipitationBase: Equatable, Sendable {
+    public let speed: Float
+    public let radius: Float
+    /// Multiplies the shared particle birth rate.
+    public let emission: Float
+}
+
 nonisolated public final class PrecipitationVolume {
+    public static let rainBase = PrecipitationBase(speed: 1900, radius: 12, emission: 6)
+    public static let snowBase = PrecipitationBase(speed: 360, radius: 18, emission: 4)
+
     private let rain: ParticlePlayback
     private let snow: ParticlePlayback
     public private(set) var anchor: SIMD3<Float>?
@@ -43,6 +54,13 @@ nonisolated public final class PrecipitationVolume {
         state: .none, roofOccluded: false, rainLiveCount: 0, snowLiveCount: 0
     )
     public private(set) var drawItems: [ParticlePlayback] = []
+    /// The active weather's `SPGD` scales; the hand-tuned look when it names none.
+    public var tuning = PrecipitationTuning.fallback {
+        didSet {
+            rain.setSpawnScale(tuning.rain)
+            snow.setSpawnScale(tuning.snow)
+        }
+    }
 
     public var residencyAllocations: [MTLAllocation] {
         [rain.instanceBuffer, rain.texture, snow.instanceBuffer, snow.texture]
@@ -92,12 +110,14 @@ nonisolated public final class PrecipitationVolume {
             wind: update.wind,
             // Shared NIF fallback caps base birth rate at 60/s; weather
             // volumes need denser coverage across their much larger box.
-            emissionScale: update.state.rainIntensity * 6
+            emissionScale: update.state.rainIntensity * Self.rainBase.emission
+                * tuning.rain.density
         )
         snow.advance(
             deltaTime: update.deltaTime,
             wind: update.wind,
-            emissionScale: update.state.snowIntensity * 4
+            emissionScale: update.state.snowIntensity * Self.snowBase.emission
+                * tuning.snow.density
         )
         drawItems = [rain, snow]
         snapshot = PrecipitationRuntimeSnapshot(
@@ -145,11 +165,11 @@ nonisolated extension PrecipitationVolume {
     fileprivate static let rainDefinition = definition(DefinitionConfig(
         name: "Rain volume",
         capacity: 1024,
-        speed: 1900,
+        speed: rainBase.speed,
         speedVariation: 180,
         declinationVariation: 0.05,
         color: SIMD4(0.68, 0.78, 0.9, 0.72),
-        radius: 12,
+        radius: rainBase.radius,
         radiusVariation: 3,
         lifeSpan: 0.8,
         lifeVariation: 0.1,
@@ -160,11 +180,11 @@ nonisolated extension PrecipitationVolume {
     fileprivate static let snowDefinition = definition(DefinitionConfig(
         name: "Snow volume",
         capacity: 768,
-        speed: 360,
+        speed: snowBase.speed,
         speedVariation: 90,
         declinationVariation: 0.22,
         color: SIMD4(1, 1, 1, 0.88),
-        radius: 18,
+        radius: snowBase.radius,
         radiusVariation: 6,
         lifeSpan: 3.2,
         lifeVariation: 0.5,

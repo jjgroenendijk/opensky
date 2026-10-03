@@ -398,7 +398,7 @@ extension Renderer {
     /// The frame-wide bindings every draw in the pass shares: this frame's
     /// uniform slot, the world sampler, and the shadow cascade array with its
     /// compare sampler (bound even with shadows off so validation stays clean).
-    private func bindScenePassFrameArguments(
+    func bindScenePassFrameArguments(
         encoder: MTL4RenderCommandEncoder,
         frameOffset: Int
     ) {
@@ -431,6 +431,7 @@ extension Renderer {
         let viewProjection = projection * freeFlyCamera.viewMatrix()
         let frustum = Frustum(viewProjection: viewProjection)
         let frameOffset = updateFrameUniforms(slot: slot, viewProjection: viewProjection)
+        let grading = prepareImageSpacePass(descriptor: descriptor)
         guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
@@ -464,6 +465,7 @@ extension Renderer {
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state
         )
+        encodeMembranes(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
         encodeWater(items: scene.water, state: &state)
         encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
@@ -477,6 +479,15 @@ extension Renderer {
         // and `encodeSWF`/`encodeUI` reuse this encoder: a leaked `.lines` here
         // would wireframe the HUD.
         encoder.setTriangleFillMode(.fill)
+        if let grading {
+            guard
+                let graded = encodeImageSpacePass(
+                    grading, descriptor: descriptor, state: state, frameOffset: frameOffset
+                )
+            else { return false }
+            state = graded
+            state.encoder.setDepthStencilState(depthState)
+        }
         // World-space diagnostics remain depth-tested and sit below every
         // screen-space layer.
         encodeWorldOverlay(state: &state)
@@ -484,7 +495,7 @@ extension Renderer {
         encodeSWF(descriptor: descriptor, state: &state)
         encodeUI(descriptor: descriptor, state: &state)
         lastDrawStats = state.stats
-        encoder.endEncoding()
+        state.encoder.endEncoding()
         return true
     }
 }

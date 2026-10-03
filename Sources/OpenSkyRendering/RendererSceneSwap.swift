@@ -16,12 +16,10 @@ extension Renderer {
         // Allocate every fallible buffer first, so a failure keeps the old scene. The new
         // rings must also cover the player body.
         let newDraw = try regrownDrawRing(
-            for: newScene.drawCount + (frameDriver?.playerBodyRig?.render.drawCount ?? 0)
-                + (frameDriver?.firstPersonRig?.render.drawCount ?? 0)
+            for: newScene.drawCount + rigDrawCount + effects.scene.drawCount
         )
         let newInstance = try regrownInstanceRing(
-            for: newScene.instanceCount + (frameDriver?.playerBodyRig?.render.instanceCount ?? 0)
-                + (frameDriver?.firstPersonRig?.render.instanceCount ?? 0)
+            for: newScene.instanceCount + rigInstanceCount + effects.scene.instanceCount
         )
         // Old scene allocations retire as a whole; anything the new scene
         // shares is filtered out at purge time (live-set check), not here.
@@ -173,6 +171,7 @@ extension Renderer {
         }
         guard !ready.isEmpty else { return }
         var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
+        live.formUnion(effects.scene.residencyAllocations.map(ObjectIdentifier.init))
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
         live.insert(ObjectIdentifier(pointLightBuffer))

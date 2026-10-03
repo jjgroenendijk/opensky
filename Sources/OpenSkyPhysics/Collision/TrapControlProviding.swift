@@ -43,12 +43,24 @@ nonisolated public struct TrapHazardRow: Equatable, Sendable {
     public let remainingLifetime: Float?
     public let lastHitTargets: Int
     public let lastHitEffects: Int
+    public let position: SIMD3<Float>
+    /// Steps on which the hazard hit someone.
+    public let tickCount: Int
 
-    public init(name: String, remainingLifetime: Float?, lastHitTargets: Int, lastHitEffects: Int) {
+    public init(
+        name: String,
+        remainingLifetime: Float?,
+        lastHitTargets: Int,
+        lastHitEffects: Int,
+        position: SIMD3<Float> = .zero,
+        tickCount: Int = 0
+    ) {
         self.name = name
         self.remainingLifetime = remainingLifetime
         self.lastHitTargets = lastHitTargets
         self.lastHitEffects = lastHitEffects
+        self.position = position
+        self.tickCount = tickCount
     }
 }
 
@@ -128,7 +140,8 @@ nonisolated public enum TrapReadout {
             ?? "stays with cell"
         let hit = row.lastHitTargets == 0 ? "no hit yet"
             : "last hit \(row.lastHitTargets) actors, \(row.lastHitEffects) effects"
-        return "\(row.name): \(lifetime), \(hit)"
+        let ticks = row.tickCount == 0 ? "" : ", \(row.tickCount) ticks"
+        return "\(row.name): \(lifetime), \(hit)\(ticks)"
     }
 
     static func link(_ link: TrapChainLink) -> String {

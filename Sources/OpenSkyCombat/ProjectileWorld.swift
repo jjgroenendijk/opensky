@@ -78,6 +78,8 @@ nonisolated public enum ProjectileOutcome: String, Equatable, Sendable, CaseIter
     case expired
     /// Removed by a reset — a teleport, a world-state reload, the panel's clear.
     case cancelled
+    /// Set off in the air by its PROJ explosion timer or proximity.
+    case detonated
 
     /// Whether the projectile ended by touching something.
     public var isImpact: Bool {

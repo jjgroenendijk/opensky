@@ -24,6 +24,10 @@ nonisolated public struct AudioSourceStatsSnapshot: Equatable, Sendable {
     /// How far into its material the source has played, in seconds; nil before its player
     /// node renders. The panel uses it to show a voice line advancing.
     public let positionSeconds: Double?
+    /// The output model that routed the source, nil when its channel count did.
+    public var outputModel: String?
+    /// The model's distance-curve gain, 1 without a curve.
+    public var distanceGain: Float = 1
 }
 
 /// Published state of the world audio graph, read at 2 Hz by the panel. Only
@@ -35,6 +39,7 @@ nonisolated public struct AudioStatsSnapshot: Equatable, Sendable {
     public let outputDescription: String
     public let sources: [AudioSourceStatsSnapshot]
     public let sourceCap: Int
+    public var reverb = ReverbRamp()
 
     /// Reported by providers with no live audio engine.
     public static let empty = AudioStatsSnapshot(

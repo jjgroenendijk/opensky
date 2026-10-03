@@ -37,6 +37,12 @@ public final class ActiveAudioSource {
     public let gain: Float
     /// Continuous source: it restarts at the beginning instead of ending.
     public let loops: Bool
+    /// The output model's distance curve, nil when the environment node attenuates.
+    public let attenuation: AttenuationCurve?
+    /// The `SOPM` editor ID, nil when the channel count chose the routing.
+    public let outputModelName: String?
+    /// The curve's gain at the listener's distance, updated each tick.
+    public var distanceGain: Float = 1
     public let node: AVAudioPlayerNode
     /// nil for buffer-backed sources; streamed sources own their decoder
     /// through this.
@@ -75,7 +81,10 @@ public final class ActiveAudioSource {
         name = request.name
         category = request.category
         self.routing = routing
-        let position = routing == .positional ? request.worldPosition : .zero
+        attenuation = request.outputModel?.attenuation
+        outputModelName = request.outputModel?.name
+        let located = routing == .positional || attenuation != nil
+        let position = located ? request.worldPosition : .zero
         worldPosition = position
         cell = CellCoordinate(containing: position)
         gain = request.gain
@@ -97,6 +106,8 @@ nonisolated public struct AudioPlayRequest: Sendable {
     /// ending. Ambience beds and music tracks set this; one-shot effects do
     /// not.
     public var loops = false
+    /// The SNDR's output model, nil for the engine defaults.
+    public var outputModel: OutputModelProfile?
 
     /// Request for a source with no world position — music, ambience and other
     /// 2D material routed straight into a category submix.
@@ -346,7 +357,7 @@ extension WorldAudioEngine {
     /// `audibleVolume(for:)` applies mute and solo on both paths.
     public func applyVolume(to source: ActiveAudioSource) {
         let categoryFactor = source.isPositional ? audibleVolume(for: source.category) : 1
-        source.node.volume = categoryFactor * source.gain * source.fadeGain
+        source.node.volume = categoryFactor * source.gain * source.fadeGain * source.distanceGain
     }
 
     /// Effective gain of one source as the listener hears it before distance
@@ -369,6 +380,7 @@ extension WorldAudioEngine {
         // Equal-power panning is deterministic and cheap; HRTF waits for the
         // authored attenuation data.
         node.renderingAlgorithm = .equalPowerPanning
+        node.reverbBlend = request.outputModel?.reverbSend ?? 0
         let position = AudioSpace.listenerPosition(fromWorld: request.worldPosition)
         node.position = AVAudio3DPoint(x: position.x, y: position.y, z: position.z)
         node.volume = audibleVolume(for: request.category) * request.gain
@@ -409,6 +421,7 @@ extension WorldAudioEngine {
     private func adoptSource(_ source: ActiveAudioSource) {
         source.startClockSeconds = playbackClockSeconds
         sources.append(source)
+        updateDistanceGain(of: source)
     }
 
     private func takeSourceID() -> Int {

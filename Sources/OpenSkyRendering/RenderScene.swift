@@ -73,6 +73,9 @@ nonisolated public struct RenderPlacement: Sendable {
     /// on the shared `RenderMesh`, because one mesh can play different roles.
     /// `.statics` is the default.
     public let layer: RenderLayer
+    /// The actor reference this placement draws, or zero. A membrane overlay finds its
+    /// target's meshes by it.
+    public let owner: UInt32
 
     public init(
         model: RenderModel,
@@ -83,7 +86,8 @@ nonisolated public struct RenderPlacement: Sendable {
         receivesShadows: Bool = true,
         referenceFormID: UInt32 = 0,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
-        layer: RenderLayer = .statics
+        layer: RenderLayer = .statics,
+        owner: UInt32 = 0
     ) {
         self.model = model
         self.transform = transform
@@ -94,6 +98,7 @@ nonisolated public struct RenderPlacement: Sendable {
         self.referenceFormID = referenceFormID
         self.faceMorphs = faceMorphs
         self.layer = layer
+        self.owner = owner
     }
 }
 
@@ -116,6 +121,8 @@ nonisolated public struct DrawInstance: Sendable {
     /// The placement's scene role, so the layer filter and the `layerCategory` debug
     /// channel agree.
     public var layer: RenderLayer = .statics
+    /// See `RenderPlacement.owner`.
+    public var owner: UInt32 = 0
 }
 
 /// One instanced draw call. Grouped by mesh and diffuse identity: a mesh belongs to one
@@ -315,7 +322,8 @@ nonisolated public struct RenderScene: Sendable {
                     receivesPointLights: placement.receivesPointLights,
                     receivesShadows: placement.receivesShadows,
                     referenceFormID: placement.referenceFormID,
-                    layer: placement.layer
+                    layer: placement.layer,
+                    owner: placement.owner
                 )
                 if material.alphaTestThreshold == nil {
                     opaque.add(

@@ -1,4 +1,5 @@
-// World > Environment > Precipitation: enable toggle and runtime readout.
+// World > Environment > Precipitation: enable toggle and runtime readout, with
+// the weather's particle record next to the hand-tuned values.
 
 import AppKit
 import OpenSkyRendering
@@ -75,8 +76,11 @@ final class PrecipitationSection: PanelSectionViewController {
         let percent = Int((state.intensity * 100).rounded())
         let rain = snapshot.rainLiveCount
         let snow = snapshot.snowLiveCount
-        statsLabel.stringValue =
-            "Precipitation: \(kind) \(percent)% · rain \(rain), snow \(snow)\(roof)"
+        let lighting = "Volumetric lighting: \(provider.weatherVolumetricLighting ?? "none")"
+        statsLabel.stringValue = (
+            ["Precipitation: \(kind) \(percent)% · rain \(rain), snow \(snow)\(roof)"]
+                + provider.precipitationTuning.readoutLines + [lighting]
+        ).joined(separator: "\n")
     }
 
     @objc private func enabledChanged() {

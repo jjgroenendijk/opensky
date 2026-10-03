@@ -15,6 +15,7 @@ private struct ResolvedAudioFile {
     let data: Data
     let name: String
     let category: AudioCategory
+    let outputModel: FormID?
 }
 
 @MainActor
@@ -61,6 +62,16 @@ public final class WorldAudioSoundDirector {
     /// Most recent SFX outcome, surfaced through the World > Audio readout.
     public private(set) var lastSFXDescription: String?
     public private(set) var lastSFXError: String?
+    /// The routing the last one-shot took, and why, for the readout.
+    public private(set) var lastRouting: String?
+    /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.
+    public var outputModels: ((FormID) -> OutputModelProfile?)?
+    /// Resolves an ASPC's raw `BNAM` link to its `REVB` record.
+    public var reverbs: ((FormID) -> ReverbParameters?)?
+    /// The reverb the current acoustic space asked for.
+    public private(set) var currentReverb = ReverbSetting.off
+    /// The `REVB` record behind `currentReverb`, nil outdoors.
+    public private(set) var currentReverbRecord: ReverbParameters?
 
     public init(
         engine: WorldAudioEngine,
@@ -161,9 +172,22 @@ public final class WorldAudioSoundDirector {
             weatherStore: weatherStore,
             aspcStore: aspcStore
         )
+        applyReverb(context)
         guard bed != desiredBed else { return }
         desiredBed = bed
         applyAmbienceState()
+    }
+
+    /// The acoustic space's reverb, or off outdoors and in a space without one.
+    private func applyReverb(_ context: AmbienceContext) {
+        let reverb = context.acousticSpace
+            .flatMap { aspcStore?.acousticSpace($0)?.reverbModel }
+            .flatMap { reverbs?($0) }
+        let setting = ReverbSetting(record: reverb)
+        currentReverbRecord = reverb
+        guard setting != currentReverb else { return }
+        currentReverb = setting
+        engine.applyReverb(setting)
     }
 
     /// Single path from wanted state to playing state, shared by the context
@@ -215,15 +239,23 @@ public final class WorldAudioSoundDirector {
             return nil
         }
         do {
-            let sourceID = try engine.playPositional(
-                fileData: resolved.data,
-                request: AudioPlayRequest(
-                    name: resolved.name,
-                    category: resolved.category,
-                    worldPosition: position,
-                    loops: loops
-                )
+            let profile = resolved.outputModel.flatMap { outputModels?($0) }
+            var request = AudioPlayRequest(
+                name: resolved.name,
+                category: resolved.category,
+                worldPosition: position,
+                loops: loops
             )
+            request.outputModel = profile
+            let routing = AudioRoutingDecision.routing(
+                profile: profile,
+                channelCount: profile == nil ? WorldAudioEngine
+                    .channelCount(of: resolved.data) : nil
+            )
+            lastRouting = "\(routing.rawValue) (\(profile?.name ?? "channel count"))"
+            let sourceID = try routing == .positional
+                ? engine.playPositional(fileData: resolved.data, request: request)
+                : engine.playNonPositional(fileData: resolved.data, request: request)
             lastSFXDescription = resolved.name
             lastSFXError = nil
             return sourceID
@@ -295,7 +327,8 @@ public final class WorldAudioSoundDirector {
         return ResolvedAudioFile(
             data: data,
             name: path,
-            category: resolved.audioCategory ?? .effects
+            category: resolved.audioCategory ?? .effects,
+            outputModel: resolved.descriptor.outputModel
         )
     }
 }

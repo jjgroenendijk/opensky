@@ -94,7 +94,9 @@ extension HazardCoordinator {
                     name: hazard.spec.name,
                     remainingLifetime: hazard.remainingLifetime,
                     lastHitTargets: hit?.targets.count ?? 0,
-                    lastHitEffects: hit?.applied ?? 0
+                    lastHitEffects: hit?.applied ?? 0,
+                    position: hazard.position,
+                    tickCount: hazard.tickCount
                 )
             }
     }

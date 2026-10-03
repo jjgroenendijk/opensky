@@ -76,6 +76,9 @@ nonisolated public struct ParticleSimulator: Sendable {
     public private(set) var placementTransform: float4x4
     public let capacity: Int
     public private(set) var particles: [SimulatedParticle] = []
+    /// Scales new particles' speed and size. A faster particle lives shorter, so it
+    /// still crosses the same distance. Existing particles keep their values.
+    public var spawnScale = PrecipitationScale.identity
     private var random: ParticleRandom
     private var birthAccumulator: Float = 0
     private var nextEmitter = 0
@@ -182,8 +185,11 @@ nonisolated public struct ParticleSimulator: Sendable {
         let direction = directionLength > .ulpOfOne
             ? transformedDirection / directionLength : SIMD3<Float>(0, 0, 1)
         let speed = max(emitter.speed + random.signed() * emitter.speedVariation, 0)
+            * spawnScale.speed
         let lifetime = max(emitter.lifeSpan + random.signed() * emitter.lifeSpanVariation, 0.01)
+            / spawnScale.speed
         let radius = max(emitter.initialRadius + random.signed() * emitter.radiusVariation, 0.01)
+            * spawnScale.size
         let atlasCount = max(definition.subtextureOffsets.count, 1)
         return SimulatedParticle(
             position: SIMD3(worldPosition4.x, worldPosition4.y, worldPosition4.z),
@@ -307,6 +313,10 @@ nonisolated public final class ParticlePlayback: Sendable {
 
     public func translate(by delta: SIMD3<Float>) {
         state.withLock { $0.simulator.translate(by: delta) }
+    }
+
+    public func setSpawnScale(_ scale: PrecipitationScale) {
+        state.withLock { $0.simulator.spawnScale = scale }
     }
 
     public func reset() {

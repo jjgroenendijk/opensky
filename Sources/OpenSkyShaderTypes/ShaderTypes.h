@@ -52,6 +52,10 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     /// cached RenderMesh geometry immutable while actors sharing it use
     /// independent expression weights.
     BufferIndexMorphDeltas = 14,
+    /// Per-frame image-space composite uniforms (ImageSpaceUniforms).
+    BufferIndexImageSpaceUniforms = 15,
+    /// One membrane overlay's colors (MembraneUniforms).
+    BufferIndexMembraneUniforms = 16,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -86,6 +90,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// SWF gradient ramp atlas: one 256-texel row per gradient fill in the
     /// active movie (rgba8Unorm, straight alpha).
     TextureIndexSWFGradient = 12,
+    /// The scene color copied before the image-space composite reads it.
+    TextureIndexSceneColor = 13,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -421,5 +427,28 @@ typedef struct
     /// 1 -> tiled bitmap fill (repeat sampler), 0 -> clipped (clamp).
     unsigned int bitmapTiled;
 } SWFDrawUniforms;
+
+/// The image-space composite (docs/rendering/image-space.md). Colors are linear.
+typedef struct
+{
+    /// rgb tint color, a tint amount.
+    vector_float4 tint;
+    /// rgb fade color, a fade amount.
+    vector_float4 fade;
+    /// saturation, brightness, contrast, blur radius in target pixels.
+    vector_float4 grading;
+    /// x double-vision strength; yzw unused.
+    vector_float4 extra;
+} ImageSpaceUniforms;
+
+/// One effect-shader membrane drawn additively over its target's meshes
+/// (docs/rendering/visual-effects.md). Colors are linear and premultiplied by alpha.
+typedef struct
+{
+    /// rgb fill color times the fill alpha; a unused.
+    vector_float4 fill;
+    /// rgb edge color times the edge alpha; a the edge falloff exponent.
+    vector_float4 edge;
+} MembraneUniforms;
 
 #endif /* ShaderTypes_h */

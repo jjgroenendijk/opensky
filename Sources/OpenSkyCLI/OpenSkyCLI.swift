@@ -170,6 +170,10 @@ enum OpenSkyCLI {
             try HKTCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "effects":
+            try EffectsCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         default:
             return false
         }

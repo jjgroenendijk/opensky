@@ -153,6 +153,13 @@ stone_step="$(printf '%s\n' "$footstep" | grep -m1 '^  FootLeft: ')"
 [ -n "$snow_step" ] && [ "$snow_step" != "$stone_step" ] \
   || fail "footstep probe resolved the same sound with and without a material"
 
+# Effect records: the image-space modifiers and spaces decode, and so do the
+# explosions the runtime detonates.
+run "effects census" effects census
+grep -q '^IMAD [0-9]*: animatable' "$log" || fail "effects census found no image-space modifiers"
+grep -q '^IMGS [0-9]' "$log" || fail "effects census found no image spaces"
+grep -q '^EXPL [0-9]*: damage' "$log" || fail "effects census found no explosions"
+
 run "cell summary (first-render cell)" cell
 run "collision grid (5x5 around first-render cell)" collision --radius 2
 
@@ -391,6 +398,18 @@ printf '%s\n' "$ui_line" | grep -q '[1-9][0-9]* quads, [1-9][0-9]* glyphs' \
 printf '%s\n' "$ui_line" | grep -q ' 0 dropped' \
   || fail "UI overlay exceeded quad budget"
 echo "[ OK ] UI sample overlay: $ui_png"
+
+# Effect capture flags: a forced image space and a forced rain weather must
+# reach the frame, and the rain volume must hold live drops fed by its SPGD.
+fx_png="$log_dir/probe-effects-rain.png"
+run "offscreen screenshot (effects)" screenshot --out "$fx_png" \
+  --imgs BleakFallsTEST01 --weather SkyrimOvercastRain --frames 30
+[ -s "$fx_png" ] || fail "effects screenshot wrote no PNG"
+grep -q 'image space: pass on, baseline BleakFallsTEST01' "$log" \
+  || fail "forced image space did not reach the frame"
+grep -E 'rain live [1-9][0-9]*, .*spgd RainParticles' "$log" >/dev/null \
+  || fail "forced rain drew no SPGD-fed drops"
+echo "[ OK ] effects capture: $fx_png"
 
 # M3.6 interior gate: find one teleport door near Whiterun, follow XTEL in,
 # render exact arrival pose, follow paired door back to exterior.

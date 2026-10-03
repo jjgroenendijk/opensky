@@ -56,6 +56,19 @@ extension AudioControlForwarding {
         audio.audioStatsSnapshot
     }
 
+    public var reverbWetOverride: Float? {
+        get { audio.reverbWetOverride }
+        set { audio.reverbWetOverride = newValue }
+    }
+
+    public var reverbRecord: ReverbParameters? {
+        audio.reverbRecord
+    }
+
+    public var lastAudioRouting: String? {
+        audio.lastAudioRouting
+    }
+
     public var voiceFileFilter: String {
         get { audio.voiceFileFilter }
         set { audio.voiceFileFilter = newValue }

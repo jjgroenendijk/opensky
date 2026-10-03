@@ -145,6 +145,7 @@ nonisolated public struct CellProviderIndexes {
     public let storyData: StoryData
     /// Load-order idle records and markers.
     public let idleStore: IdleStore
+    public let effectRecords: EffectRecordStore
 
     public init(
         root: GameDataRoot,
@@ -213,7 +214,7 @@ nonisolated public struct CellProviderIndexes {
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
         (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
-        idleStore = IdleStore(plugins: ActivePluginFiles.load(root: root, baseFile: file))
+        (idleStore, effectRecords) = Self.loadOrderStores(root: root, file: file)
     }
 
     /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
@@ -324,6 +325,18 @@ nonisolated public struct CellProviderIndexes {
         stores.lockTrapData = lockTrapData
         stores.storyData = storyData
         stores.idleStore = idleStore
+        stores.effectRecords = effectRecords
         return stores
+    }
+}
+
+nonisolated extension CellProviderIndexes {
+    /// Stores built over the whole active load order.
+    static func loadOrderStores(
+        root: GameDataRoot,
+        file: ESMFile
+    ) -> (IdleStore, EffectRecordStore) {
+        let plugins = ActivePluginFiles.load(root: root, baseFile: file)
+        return (IdleStore(plugins: plugins), EffectRecordStore(plugins: plugins))
     }
 }

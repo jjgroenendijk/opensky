@@ -24,6 +24,9 @@ public final class MagicCoordinator {
     public private(set) var spellPluginName: String?
     /// What the most recent landed spell applied. Nil until one lands.
     public private(set) var lastHit: SpellHitReport?
+    /// Called after every spell hit that reached someone, for the visual and
+    /// image-space hooks. One observer: the effects adapter.
+    public var onSpellHit: ((SpellHitEvent) -> Void)?
     /// The ENCH index. Setting it drops the cached profiles derived from it.
     public private(set) var enchantmentStore: EnchantmentStore? {
         didSet { profiles.invalidate() }
@@ -225,6 +228,9 @@ extension MagicCoordinator: CasterWorld {
             })
         else { return .none }
         lastHit = report
+        if !hit.targets.isEmpty, let onSpellHit, let store = effects?.effects {
+            onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
+        }
         return report
     }
 }

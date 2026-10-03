@@ -5,6 +5,7 @@
 
 import AppKit
 @testable import OpenSkyAudio
+import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import Testing
 
@@ -20,6 +21,9 @@ final class FakeAudioProvider: AudioControlProviding {
     var playedFiles: [String] = []
     var stopAllCount = 0
     var audioStatsSnapshot = AudioStatsSnapshot.empty
+    var reverbWetOverride: Float?
+    var reverbRecord: ReverbParameters?
+    var lastAudioRouting: String?
 
     /// Voice picker + playback bridges. `selectableVoiceFileNames`
     /// is what the fake offers; `voiceFileMatchCount` defaults to that count so

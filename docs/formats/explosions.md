@@ -53,3 +53,33 @@ ignore line of sight, 0x20 push source only, 0x40 ignore image-space swap, 0x80 
 
 Each `DATA` field is one model: a uint8 percentage, a zstring path, and a uint8 flag
 (0x01 has collision). A `MODT` right after it holds that model's texture hashes.
+
+## Runtime
+
+An explosion is set off by a projectile with an `EXPL` link, by an area spell at the struck
+actor, or by the Effects panel. On detonation OpenSky:
+
+1. Damages every actor whose capsule axis is within the radius. Damage falls linearly from
+   the full `DATA` damage at the center to zero at the radius.
+2. Plays sound 1 and sound 2 at the center.
+3. Shows the `MODL` model at the center for 2 s.
+4. Starts the `MNAM` image-space modifier. Its strength falls linearly from 1 at the center
+   to 0 at the image-space radius, measured to the camera.
+5. Places the placed object: a `HAZD` spawns a hazard, a `DEBR` throws debris.
+
+A projectile with the alternate-trigger flag also detonates in the air: when its flight time
+reaches the `PROJ` explosion timer, or when an actor other than the shooter comes within the
+proximity distance. Such a projectile leaves no stuck arrow.
+
+Simplifications:
+
+- Force does not push actors or loose objects. It only sets the debris launch speed.
+- The light, the impact data set, the spawn projectile, and the vertical offset are not used.
+- Damage has no line-of-sight check and ignores the "ignore line of sight" flag.
+- On the install, an `EXPL` placed object is a `HAZD` 4 times, an `ACTI` 11 times, an `EXPL`
+  once, and another type 23 times. None is a `DEBR`. Placed objects of other types are
+  counted and skipped.
+
+Debris: each detonation or panel throw launches 6 pieces, picked from the `DEBR` models by
+their percentage with a seeded random draw. Pieces fly outward and up, fall under gravity
+(686 units/s²), spin, and are removed after 6 s. They have no collision.

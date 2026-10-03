@@ -127,6 +127,18 @@ extension Renderer {
         }
     }
 
+    /// The image-space composite pass and the effect layer.
+    static func makeEffectResources(
+        device: MTLDevice, view: MTKView, library: MTLLibrary
+    ) throws -> (ImageSpacePassResources, EffectLayer) {
+        try (
+            ImageSpacePassResources(
+                device: device, library: library, pixelFormat: view.colorPixelFormat
+            ),
+            EffectLayer(device: device, library: library, view: view)
+        )
+    }
+
     /// Long-lived resources for passes outside the base scene pipelines.
     /// Grouping their factories keeps Renderer.init below the strict body cap.
     public static func makeAuxiliaryResources(
@@ -154,11 +166,11 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the world-overlay vertex stream.
-        descriptor.maxBufferBindCount = BufferIndex.morphDeltas.rawValue + 1
+        // Highest buffer index is the membrane overlay uniforms.
+        descriptor.maxBufferBindCount = BufferIndex.membraneUniforms.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
-        // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots.
-        descriptor.maxTextureBindCount = TextureIndex.swfGradient.rawValue + 1
+        // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots + scene color.
+        descriptor.maxTextureBindCount = TextureIndex.sceneColor.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4
         return try device.makeArgumentTable(descriptor: descriptor)

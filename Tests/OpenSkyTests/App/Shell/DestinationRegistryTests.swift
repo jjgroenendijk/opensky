@@ -21,7 +21,7 @@ struct DestinationRegistryTests {
     func registryOrderAndIdentifiers() {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "progression", "crimeFactions",
+            "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder"
@@ -31,7 +31,7 @@ struct DestinationRegistryTests {
             "Destination-world", "Destination-playerLocomotion",
             "Destination-combatPhysics", "Destination-aiNavigation",
             "Destination-environment",
-            "Destination-hudInteraction", "Destination-dialogueVoice",
+            "Destination-hudInteraction", "Destination-dialogueVoice", "Destination-effects",
             "Destination-progression", "Destination-crimeFactions",
             "Destination-systemMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
@@ -42,7 +42,7 @@ struct DestinationRegistryTests {
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
-            "hudInteraction", "dialogueVoice", "progression", "crimeFactions",
+            "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab"

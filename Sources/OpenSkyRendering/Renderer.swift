@@ -72,6 +72,10 @@ public final class Renderer: NSObject {
     /// SWF display-list layer: content and mask pipelines and counting stencil states.
     /// `setSWFMovie` swaps the movie; encode lives in RendererSWFPass.swift.
     public let swf: SWFPassResources
+    /// The image-space composite pipeline, uniforms, and scene copy (RendererImageSpacePass.swift).
+    public let imageSpacePass: ImageSpacePassResources
+    /// Effect models and membrane overlays (`Effects/EffectLayer.swift`).
+    public let effects: EffectLayer
     /// Sun-shadow pipelines + compare sampler + the shared cascade array
     /// (depth32Float, ShadowConstantCascadeCount slices). The array is created
     /// once, always resident, and bound at TextureIndexShadowMap every scene
@@ -117,6 +121,8 @@ public final class Renderer: NSObject {
     public var npcInstanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public var currentResolvedWeather: ResolvedWeather?
+    /// The post-process values and running modifiers the composite pass applies.
+    public var imageSpace = ImageSpaceState()
     public let precipitation: PrecipitationVolume
     public var precipitationEnabled = true
     public var particlesEnabled = true
@@ -235,11 +241,10 @@ public final class Renderer: NSObject {
         self.device = device
         self.wallClock = wallClock
 
-        commandQueue = try Self.makeCommandQueue(device: device)
-        commandBuffer = try Self.makeCommandBuffer(device: device)
-
+        (commandQueue, commandBuffer) = try (
+            Self.makeCommandQueue(device: device), Self.makeCommandBuffer(device: device)
+        )
         commandAllocators = try Self.makeCommandAllocators(device: device)
-
         argumentTable = try Self.makeArgumentTable(device: device)
 
         guard let event = device.makeSharedEvent() else {
@@ -268,15 +273,14 @@ public final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
             try Self.makeAuxiliaryResources(device: device, view: view, library: library)
+        (imageSpacePass, effects) =
+            try Self.makeEffectResources(device: device, view: view, library: library)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
-        let resolvedCamera = camera ?? .demo
-        self.camera = resolvedCamera
-        freeFlyCamera = FreeFlyCamera(framing: resolvedCamera)
+        (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))
         frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
-        drawUniformBuffer = rings.drawBuffer
-        pointLightBuffer = rings.pointLightBuffer
+        (drawUniformBuffer, pointLightBuffer) = (rings.drawBuffer, rings.pointLightBuffer)
         drawUniformSlotCapacity = rings.drawCapacity
         instanceTransformBuffer = rings.instanceBuffer
         instanceSlotCapacity = rings.instanceCapacity
@@ -290,7 +294,8 @@ public final class Renderer: NSObject {
                 instanceTransformBuffer, shadowDrawUniformBuffer, shadowInstanceBuffer,
                 shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
                 uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
-                swf.whiteTexture, swf.fallbackRamp
+                swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
+                effects.uniformBuffer
             ]
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )

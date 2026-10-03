@@ -80,6 +80,10 @@ nonisolated public struct Projectile: Equatable, Sendable {
     /// DATA — EXPL detonated on impact; nil on an ordinary arrow. The link is
     /// decoded so nothing has to guess whether a projectile explodes.
     public let explosion: FormID?
+    /// DATA +0x1C — with `alternateTrigger`, the distance to an actor that detonates it.
+    public let explosionProximity: Float
+    /// DATA +0x20 — with `alternateTrigger`, the seconds of flight that detonate it.
+    public let explosionTimer: Float
     /// DATA +0x58 — COLL collision layer. The owning plugin is needed to
     /// resolve it; `CollisionLayerStore.collisionLayer(for:fromPlugin:)`
     /// exposes the resolved record.
@@ -144,6 +148,8 @@ nonisolated public struct Projectile: Equatable, Sendable {
         sound = data.sound
         disableSound = data.disableSound
         explosion = data.explosion
+        explosionProximity = data.explosionProximity
+        explosionTimer = data.explosionTimer
         collisionLayer = data.collisionLayer
     }
 
@@ -161,7 +167,8 @@ nonisolated public struct Projectile: Equatable, Sendable {
         lifetime: Float = 0,
         sound: FormID? = nil,
         collisionLayer: FormID? = nil,
-        modelPath: String? = nil
+        modelPath: String? = nil,
+        explosion: FormID? = nil
     ) {
         self.formID = formID
         self.editorID = editorID
@@ -177,7 +184,9 @@ nonisolated public struct Projectile: Equatable, Sendable {
         self.lifetime = lifetime
         self.sound = sound
         disableSound = nil
-        explosion = nil
+        self.explosion = explosion
+        explosionProximity = 0
+        explosionTimer = 0
         self.collisionLayer = collisionLayer
         soundLevel = nil
     }
@@ -205,6 +214,8 @@ nonisolated public struct Projectile: Equatable, Sendable {
         var sound: FormID?
         var disableSound: FormID?
         var explosion: FormID?
+        var explosionProximity: Float = 0
+        var explosionTimer: Float = 0
         var collisionLayer: FormID?
 
         init() {}
@@ -224,11 +235,12 @@ nonisolated public struct Projectile: Equatable, Sendable {
             speed = try reader.readFloat32()
             range = try reader.readFloat32()
             guard size >= 0x50 else { return }
-            // 0x10 light, 0x14 muzzle-flash light, 0x18 tracer chance,
-            // 0x1C/0x20 the explosion timings: all skipped, and skipped by
-            // seeking rather than by reading, so a member this decoder does
-            // not want cannot be misread on the way past.
-            reader.seek(to: 0x24)
+            // 0x10 light, 0x14 muzzle-flash light, 0x18 tracer chance: skipped
+            // by seeking, so a member this decoder does not want cannot be
+            // misread on the way past.
+            reader.seek(to: 0x1C)
+            explosionProximity = try reader.readFloat32()
+            explosionTimer = try reader.readFloat32()
             explosion = try Self.link(&reader)
             sound = try Self.link(&reader)
             // 0x2C muzzle-flash duration, 0x30 fade duration.

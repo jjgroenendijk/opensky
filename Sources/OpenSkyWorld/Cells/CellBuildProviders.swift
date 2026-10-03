@@ -50,6 +50,11 @@ nonisolated public protocol IdleDataProviding {
     var idleStore: IdleStore? { get }
 }
 
+/// Load-order effect records: image spaces, effect shaders, explosions, output models.
+nonisolated public protocol EffectDataProviding {
+    var effectRecords: EffectRecordStore? { get }
+}
+
 /// Optional item and container indexes. With the session's `WorldStateStore` they build
 /// the `InventoryRuntime` behind take, drop and container sessions.
 nonisolated public protocol ItemDataProviding {

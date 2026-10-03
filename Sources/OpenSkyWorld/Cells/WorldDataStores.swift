@@ -17,7 +17,7 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     LocationDataProviding, DialogueDataProviding, ActorValueDataProviding, CombatDataProviding,
     PackageDataProviding, MagicDataProviding, ProgressionDataProviding,
     FactionDataProviding, LockTrapDataProviding, StoryDataProviding,
-    IdleDataProviding
+    IdleDataProviding, EffectDataProviding
 {
     /// Compiled-script source for the Papyrus world runtime; nil on synthetic scenes.
     public var scriptFileSystem: (any GameFileSource)?
@@ -61,6 +61,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var storyData = StoryData()
     /// Load-order idle records; nil on a synthetic scene, and then no actor idles.
     public var idleStore: IdleStore?
+    /// Load-order effect records; nil on a synthetic scene, and then no effect plays.
+    public var effectRecords: EffectRecordStore?
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic
     /// scenes, and then actor values report themselves unavailable.
     public var actorValueBaselines: ActorValueBaselineResolver?

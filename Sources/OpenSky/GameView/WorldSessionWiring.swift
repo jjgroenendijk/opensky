@@ -54,6 +54,7 @@ final class WorldSessionWiring {
         // After `wirePapyrus`, whose `onWorldUpdate` closure these chain onto.
         wireActorSystems(provider: provider, renderer: renderer)
         game.hazardWorld.wireHazards(provider: provider, streamer: streamer, renderer: renderer)
+        game.effectsWorld.wireEffects(provider: provider, streamer: streamer, renderer: renderer)
         game.trapControl.wire(renderer: renderer)
         // Melee, archery, then ragdolls: a fixed graph-event cursor order keeps
         // every runtime's trace reproducible.

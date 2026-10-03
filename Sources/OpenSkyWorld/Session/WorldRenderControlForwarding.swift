@@ -118,6 +118,14 @@ extension WorldRenderControlForwarding {
         renderControls.precipitationSnapshot
     }
 
+    public var precipitationTuning: PrecipitationTuning {
+        renderControls.precipitationTuning
+    }
+
+    public var weatherVolumetricLighting: String? {
+        renderControls.weatherVolumetricLighting
+    }
+
     public var grassEnabled: Bool {
         get { renderControls.grassEnabled }
         set { renderControls.grassEnabled = newValue }
