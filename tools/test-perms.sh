@@ -11,11 +11,9 @@
 # Two grants matter here, and they are grants to the built products, not to the
 # terminal that launches them (issue #380):
 #
-#   1. Accessibility for OpenSkyUITests-Runner.app. This is what "enabling
-#      automation mode" asks for: WindowServer checks kTCCServiceAccessibility
-#      for nl.jjgroenendijk.openskyUITests.xctrunner before it will let the
-#      runner drive another process. Automation ("control this app with Apple
-#      events") is a different service and is not what XCTest requests.
+#   1. Accessibility for OpenSkyUITests-Runner.app, so the runner may drive
+#      another process. "Timed out while enabling automation mode" is usually
+#      not this grant: it is Automation Mode asking for a password (check 3).
 #   2. File access for OpenSky.app. DerivedData/ lives inside the checkout
 #      (AGENTS.md), the checkout is on an external volume, so macOS treats the
 #      built app as a binary on a removable volume and asks before it may read
@@ -73,14 +71,24 @@ check_signature() {
 check_signature "$products/OpenSky.app"
 check_signature "$products/OpenSkyUITests-Runner.app"
 
+# 3. Automation Mode. XCTest turns it on at the start of every UI run. When it
+#    needs authentication, a password prompt waits and the run fails after 60 s
+#    with "Timed out while enabling automation mode".
+if automationmodetool 2>&1 | grep -q 'DOES NOT REQUIRE'; then
+    echo "[ OK ] Automation Mode needs no authentication."
+else
+    echo "[ERROR] Automation Mode asks for a password on every UI test run."
+    echo "        Run once: sudo automationmodetool enable-automationmode-without-authentication"
+    status=1
+fi
+
 cat <<'MSG'
 
 The two grants themselves live in the root-owned system TCC database, which this
 script cannot read without Full Disk Access of its own, so they are listed here
 rather than verified. Each is one click, once per signature:
 
-1. Accessibility — lets the UI-test runner drive the app, which is what
-   "Timed out while enabling automation mode" means when it is missing.
+1. Accessibility — lets the UI-test runner drive the app.
    System Settings > Privacy & Security > Accessibility > add:
      OpenSkyUITests-Runner.app   (in DerivedData/Build/Products/Debug)
 
@@ -89,9 +97,8 @@ rather than verified. Each is one click, once per signature:
    System Settings > Privacy & Security > Full Disk Access > add:
      OpenSky.app                 (in DerivedData/Build/Products/Debug)
 
-`make test-ui` is the check that matters: it reaches a test case when the
-Accessibility grant is in place, and fails fast naming this script when it is
-not.
+`make test-ui` is the check that matters: it reaches a test case when every
+grant above is in place.
 
 Opening the Accessibility pane now...
 MSG

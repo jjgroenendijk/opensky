@@ -391,8 +391,8 @@ test-parser: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .parser 
 test-gpu: link-shared $(SHADER_LIBRARY) ## Run the unit tests tagged .gpu (GPU plan)
 	@$(XCB_RUN) test-gpu $(XCB_TEST) $(call test_bundle,gpu) -testPlan GPU test
 
-# A timeout in "enabling automation mode" means the Accessibility grant is
-# missing: run make test-perms.
+# A timeout in "enabling automation mode" means Automation Mode asks for a
+# password: run make test-perms.
 test-ui: link-shared ## Run the UI tests (launches and drives the app) [T='Suite/test()']
 	@$(XCB_RUN) test-ui $(XCB_TEST) $(call test_bundle,ui) -testPlan UITests \
 		$(call only_testing,OpenSkyUITests) test
