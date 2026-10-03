@@ -5,6 +5,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
 
+@MainActor
 public protocol ExplosionControlProviding: AnyObject {
     var explosionNames: [String] { get }
     var debrisNames: [String] { get }
@@ -51,6 +52,7 @@ public protocol ExplosionControlWorld: AnyObject {
     var hazardRows: [TrapHazardRow] { get }
 }
 
+@MainActor
 public protocol ExplosionControlForwarding: ExplosionControlProviding {
     var combat: CombatCoordinator { get }
     var explosionControlWorld: any ExplosionControlWorld { get }

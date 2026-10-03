@@ -5,6 +5,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
 
+@MainActor
 public protocol ImageSpaceControlProviding: AnyObject {
     var imageSpacePassEnabled: Bool { get set }
     /// The `IMGS` editor IDs, for the forced baseline picker.
@@ -18,6 +19,7 @@ public protocol ImageSpaceControlProviding: AnyObject {
     var imageSpaceState: ImageSpaceState { get }
 }
 
+@MainActor
 public protocol VisualEffectControlProviding: AnyObject {
     var visualEffectNames: [String] { get }
     func visualEffectDetails(named name: String) -> [String]
@@ -45,6 +47,7 @@ nonisolated public struct VisualEffectSnapshot: Equatable, Sendable {
     }
 }
 
+@MainActor
 public protocol EffectsControlForwarding: ImageSpaceControlProviding, VisualEffectControlProviding {
     var effects: EffectsCoordinator { get }
     var renderer: Renderer? { get }
