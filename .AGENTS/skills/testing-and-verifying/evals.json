@@ -88,5 +88,27 @@
       "Disables it with .disabled(\"flaky: #NNN\") and opens a bug issue with the run directory",
       "Does not add a retry"
     ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I changed how the combat coordinator applies damage. What should I run before pushing?",
+    "files": [],
+    "expected_behavior": [
+      "Runs the covering unit suites with make test-unit T='...'",
+      "Does not run make test-ui, because no UI test path changed, and says so in the Tests: section"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I renamed the accessibility id of the lockpicking sidebar control. What should I test?",
+    "files": [],
+    "expected_behavior": [
+      "Runs make test-ui with T= set to the UI tests that use that control, not the whole UI plan",
+      "Runs it in a background shell and waits for the notification"
+    ]
   }
 ]

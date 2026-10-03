@@ -46,7 +46,7 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | `make test-real [T='Class/method()'] [CAP=MB]` | The real-data plan under the memory watchdog, narrowed by `T` |
 | `make test-perf` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
 | `make test-sanitize-thread`, `make test-sanitize-address` `[CAP=MB]` | The unit bundles under the Thread Sanitizer, or under ASan with UBSan |
-| `make test-ui [T='Suite/test()']` | The UI smoke tests. Needs the Accessibility grant; a time-out in "enabling automation mode" means it is missing |
+| `make test-ui [T='Suite/test()']` | The UI smoke tests. A time-out in "enabling automation mode" means Automation Mode asks for a password; `make test-perms` names the fix |
 | `make test-perms` | Checks the one-time permission grants |
 
 Each kind of test has one target named `test-<kind>`. Each is one plain `xcodebuild test` call on

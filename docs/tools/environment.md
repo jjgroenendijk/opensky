@@ -60,11 +60,27 @@ Retires when a `plugins.txt` appears in a searched location.
 
 ## Permission grants
 
-Observed 2026-08-11 on macOS 26.6.1, and again 2026-09-28. `OpenSkyUITests-Runner.app` starts,
-then XCTest times out after 60 seconds with "Timed out while enabling automation mode", although
-the UI plan is isolated
-correctly ([test runs](/tools/test-runs.md#test-plans)). The missing Accessibility grant is the rest
-of the problem.
+Observed 2026-08-11 on macOS 26.6.1, and in linked worktrees on 2026-10-01, 10-02, and 10-03.
+`OpenSkyUITests-Runner.app` starts, then XCTest times out after 60 seconds with "Timed out while
+enabling automation mode". The cause, found 2026-10-03: XCTest turns on Automation Mode at the
+start of each UI run, and this Mac asked for a password each time. Nobody answered the prompt.
+`automationmodetool` without arguments shows the setting. Run this once per machine to drop the
+password:
+
+```sh
+sudo automationmodetool enable-automationmode-without-authentication
+```
+
+After that, any process of this user can turn on Automation Mode without asking. Apple provides
+the switch for test machines. `make test-perms` fails while the password is still required.
+
+Observed 2026-10-03: right after the command, a worktree run started its tests with no prompt and
+six passed. Then the app lost its connection, the remaining tests failed with "Not authorized for
+performing UI testing actions", and `automationmodetool` again reported that authentication is
+required. Why the setting reverted is not known. Retires when the setting survives a full UI run.
+
+The worktrees were not the cause. Every runner build has the same bundle ID and signature, so macOS
+sees one program whatever its folder.
 
 A grant belongs to the built product, not the terminal, and lasts only while the product keeps one
 code signature, which is why signing names a real identity ([build system](/tools/build-system.md#signing)).
@@ -79,13 +95,6 @@ asks that runner for removable-volume access, and the run waits on the dialog un
 with "timed out while preparing". Clicking Allow once let the run continue. The package test
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
-
-Observed 2026-10-01 in a linked worktree: `make test-ui` stops again at "Timed out while enabling
-automation mode", so the UI plan's slowest test could not be measured for its time allowance
-([test runs](/tools/test-runs.md#timeouts)).
-Observed again 2026-10-02 in a linked worktree under `.claude/worktrees/`: the same time-out at
-harness init. A worktree builds its own runner under its own `DerivedData/`, so the grant given to
-the main checkout's runner likely does not cover it. Not confirmed.
 
 Observed 2026-10-01: `make test-ui` reaches its test cases, and every case passes except
 `testCapturesRenderedFrame`. That case fails with "Failed to create screenshot. Image creation
