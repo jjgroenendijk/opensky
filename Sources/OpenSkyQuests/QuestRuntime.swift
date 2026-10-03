@@ -5,6 +5,7 @@
 // silent no-op would hide a caller bug. See docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -100,9 +101,30 @@ public struct QuestRuntime: QuestAccess {
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func startQuest(_ id: FormID) throws -> QuestRuntimeState {
+        try startQuest(id, event: nil)
+    }
+
+    /// - Parameter event: the story-manager event that starts it, for event aliases.
+    @discardableResult
+    public func startQuest(_ id: FormID, event: StoryEventData?) throws -> QuestRuntimeState {
         let resolved = try resolve(id)
-        try fillAliases(of: resolved.quest, key: resolved.key)
+        try fillAliases(of: resolved.quest, key: resolved.key, event: event)
         return try apply(to: id) { $0.starting() }
+    }
+
+    /// Starts the quest and sets its start-up stage, as the game does on a real
+    /// start. A quest with no start-up stage only starts.
+    @discardableResult
+    public func startQuestWithStartUpStage(
+        _ id: FormID,
+        event: StoryEventData?
+    ) throws -> QuestRuntimeState {
+        let state = try startQuest(id, event: event)
+        guard
+            let stage = quests.quest(id)?.stages
+                .first(where: { $0.flags.contains(.startUpStage) })
+        else { return state }
+        return try setStage(stage.index, on: id)
     }
 
     /// Stops the quest. Reached stages and the completed flag stay; the alias table

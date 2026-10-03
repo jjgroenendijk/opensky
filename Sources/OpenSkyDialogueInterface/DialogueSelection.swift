@@ -18,6 +18,12 @@ nonisolated public enum DialogueRejection: Equatable, Sendable {
     case alreadySaid
     /// The response's condition list evaluated false.
     case conditionsFailed
+    /// The topic is not the starting topic of a top-level branch, so only a
+    /// link from a chosen response reaches it.
+    case notBranchEntry
+    /// A blocking or exclusive branch answers, so its starting topic is the only
+    /// topic offered. Carries that branch.
+    case blockedByBranch(FormID)
     /// An earlier response in file order already won, so this one was never
     /// evaluated. File order is selection order, so this is a real outcome
     /// rather than a missing one.

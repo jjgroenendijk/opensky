@@ -56,8 +56,11 @@ The run-on type picks the object that the function runs on.
 - Combat target (3): the combat target of the actor the condition runs on. The player
   fights the nearest hostile living actor, and every hostile living actor fights the player.
   A dead actor fights nobody.
-- Linked reference, package data, event data, and unknown values fail as
-  `unsupportedRunOn`. That means a missing subsystem.
+- Event data (7): the reference member of the story-manager event that parameter 3 names, such
+  as `R1` ([story manager](/engine/story-manager.md#event-data)). Outside a walk there is no event,
+  and the lookup fails as `unresolvedReference`.
+- Linked reference, package data, and unknown values fail as `unsupportedRunOn`. That means a
+  missing subsystem.
 - A supported run-on that names nothing the context can give — no subject, an unknown key,
   or an empty alias — fails as `unresolvedReference`. That means the caller gave a weak
   context.

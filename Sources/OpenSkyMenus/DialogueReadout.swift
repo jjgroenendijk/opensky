@@ -105,6 +105,8 @@ nonisolated public enum DialogueReadout: Sendable {
         case .alreadySaid: "already said"
         case .conditionsFailed: "conditions failed"
         case .notReached: "not reached"
+        case .notBranchEntry: "not a branch start"
+        case let .blockedByBranch(branch): "blocked by branch \(branch)"
         }
     }
 }

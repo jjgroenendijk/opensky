@@ -573,8 +573,9 @@ targets += feature(
         "OpenSkyFormatsESM", "OpenSkyGameData"
     ],
     tests: [
-        "FormatsESMTesting", "GameDataTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyWorldState", "WorldStateTesting"
+        "FormatsESMTesting", "GameDataTesting", "OpenSkyConditions", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyWorldState",
+        "WorldStateTesting"
     ]
 )
 targets += feature(
@@ -588,9 +589,10 @@ targets += feature(
         "OpenSkyConditions", "OpenSkyQuestsInterface"
     ],
     tests: [
-        "OpenSkyConditions", "OpenSkyDialogueFixtures", "OpenSkyDialogueInterface",
-        "OpenSkyDialogueTesting", "OpenSkyFormatsESM", "OpenSkyGameData",
-        "OpenSkyQuestsInterface", "OpenSkyWorldState", "OpenSkyWorldTesting"
+        "FormatsESMTesting", "GameDataTesting", "OpenSkyConditions", "OpenSkyDialogueFixtures",
+        "OpenSkyDialogueInterface", "OpenSkyDialogueTesting", "OpenSkyFormatsESM",
+        "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyWorldState", "OpenSkyWorldTesting",
+        "WorldStateTesting"
     ]
 )
 targets += feature(
@@ -674,8 +676,8 @@ targets += feature(
         "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyActorsInterface",
         "OpenSkyCrimeInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
-        "OpenSkyMagicInterface", "OpenSkyQuestsInterface", "OpenSkySaveFixtures",
-        "OpenSkyWorldState", "WorldStateTesting"
+        "OpenSkyDialogueInterface", "OpenSkyMagicInterface", "OpenSkyQuestsInterface",
+        "OpenSkySaveFixtures", "OpenSkyWorldState", "WorldStateTesting"
     ]
 )
 

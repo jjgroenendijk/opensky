@@ -8,6 +8,7 @@ import AppKit
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
@@ -15,6 +16,7 @@ import OpenSkyMenus
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgression
+import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
@@ -44,8 +46,8 @@ typealias WorldControlProviders = AINavigationControlProviding
     & CameraControlProviding & CastingControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
     & CraftingControlProviding
-    & CrimeFactionControlProviding & DialogueCameraControlProviding
-    & DialogueControlProviding
+    & CrimeFactionControlProviding & DialogueBranchControlProviding
+    & DialogueCameraControlProviding & DialogueControlProviding
     & FaceMorphControlProviding
     & FirstPersonControlProviding & FrameStatsProviding
     & GrassControlProviding
@@ -60,8 +62,10 @@ typealias WorldControlProviders = AINavigationControlProviding
     & PlayerLocomotionControlProviding
     & PrecipitationControlProviding & ProgressionControlProviding
     & RagdollControlProviding & RenderDebugControlProviding
-    & RuntimeStateControlProviding & SWFLabControlProviding & SceneStatsProviding
+    & RuntimeStateControlProviding & SWFLabControlProviding & SceneControlProviding
+    & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding
+    & StoryManagerControlProviding
     & SystemMenuControlProviding & TerrainLODControlProviding & TrapControlProviding
     & TriggerControlProviding
     & UILabControlProviding
@@ -285,6 +289,7 @@ enum DestinationRegistry {
                 let panel = DialoguePanelViewController()
                 panel.dialogueProvider = context.providers
                 panel.dialogueCameraProvider = context.providers
+                panel.branchProvider = context.providers
                 panel.audioProvider = context.providers
                 panel.faceMorphProvider = context.providers
                 let providers = context.providers
@@ -364,6 +369,8 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = JournalPanelViewController()
                 panel.provider = context.providers
+                panel.sceneProvider = context.providers
+                panel.storyProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
                 return panel

@@ -13,7 +13,7 @@ struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
         // Pinned so an added or lost native is a visible change.
-        #expect(standard.count == 159)
+        #expect(standard.count == 165)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -33,6 +33,8 @@ struct PapyrusNativeRegistryTests {
         #expect(standard.contains(scriptName: "actor", functionName: "KILL"))
         #expect(standard.contains(scriptName: "ACTOR", functionName: "addspell"))
         #expect(standard.contains(scriptName: "spell", functionName: "CAST"))
+        #expect(standard.contains(scriptName: "keyword", functionName: "SENDSTORYEVENT"))
+        #expect(standard.contains(scriptName: "SCENE", functionName: "forcestart"))
         // `SetActorValue` sets the *base* value, which item 20.3 gave the
         // three primaries a store for; all three writes are registered since
         // (see PapyrusNativeActorValues.swift).

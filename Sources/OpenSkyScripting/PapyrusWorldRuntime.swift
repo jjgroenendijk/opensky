@@ -63,6 +63,8 @@ public final class PapyrusWorldRuntime {
     /// Dialogue result fragments enqueued this session, for the Scripts
     /// readout.
     public var dialogueFragmentsQueued = 0
+    /// Scene begin, end, and phase fragments enqueued.
+    public var sceneFragmentsQueued = 0
     /// Stage fragments enqueued this session, for the Scripts readout.
     public var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until

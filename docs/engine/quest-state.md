@@ -114,8 +114,11 @@ The fill follows four rules from the same page:
 
 ## What does not fill yet
 
-Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. Every other fill type is counted and
-left empty, and an unimplemented fill type never fails a quest start. Refusing a start because
+Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. From Event fills when the
+[story manager](/engine/story-manager.md) starts the quest: `ALFD` names the event data member, and
+a reference alias takes a reference member while a location alias takes a location member. A quest
+started any other way has no event, so the alias is counted and left empty. Every other fill type is
+counted and left empty, and an unimplemented fill type never fails a quest start. Refusing a start because
 OpenSky cannot run a Find Matching Reference search would present an engine gap as game behavior.
 Only an implemented fill that finds nothing (an `ALFR` or `ALFL` naming no record) fails a required
 alias.

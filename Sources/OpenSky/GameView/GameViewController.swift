@@ -154,6 +154,8 @@ final class GameViewController: NSViewController {
     }()
 
     lazy var dialogueWorld = DialogueWorldAdapter(game: self)
+    /// Owns the scene and story-manager coordinators.
+    lazy var storyWorld = StoryWorldAdapter(game: self)
     lazy var dialogueMenu = DialogueMenuController(game: self)
     lazy var dialogueCamera = DialogueCameraController(game: self)
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
@@ -381,7 +383,8 @@ final class GameViewController: NSViewController {
 }
 
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
-    UILabControlForwarding, SystemMenuControlForwarding {}
+    UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
+    StoryManagerControlForwarding, DialogueBranchControlForwarding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {

@@ -13,10 +13,10 @@ struct ConditionMagicRealDataTests {
     private static let magicIndices: Set<UInt16> = [214, 223, 264, 570, 571, 572, 632, 699]
 
     /// Indices added after the magic functions: `HasPerk`, `GetLevel`,
-    /// `GetBaseActorValue`, faction, crime-gold, and `GetItemCount`. They are subtracted, so the
-    /// pinned number stays the M19 step.
+    /// `GetBaseActorValue`, faction, crime-gold, `GetItemCount`, and `GetEventData`. They are
+    /// subtracted, so the pinned number stays the M19 step.
     private static let laterIndices: Set<UInt16> = [
-        80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459, 47, 65
+        80, 277, 448, 60, 71, 73, 403, 449, 719, 375, 376, 459, 47, 65, 576
     ]
 
     /// Magic-adjacent indices the sweep measured and this milestone leaves

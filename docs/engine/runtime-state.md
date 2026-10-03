@@ -37,6 +37,9 @@ component kind, plus the cell of its most recent change. Some examples:
 | Actor values | Current health, magicka, and stamina, plus the override table |
 | Death | Death, the corpse's resting root transform, and whether it was searched |
 | Dialogue | How often one response has been said, keyed by its `INFO` |
+| Dialogue branch | The exclusive branch one speaker is in, keyed by the speaker |
+| Scene | One playing scene's phase and actions, keyed by its `SCEN` |
+| Story manager | When the story manager last started one quest, and how often |
 
 The set of components is open. The module that owns a component conforms its value type to
 `WorldStateComponent` and declares its kind, for example

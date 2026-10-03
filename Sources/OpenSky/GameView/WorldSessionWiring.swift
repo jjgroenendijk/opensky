@@ -133,6 +133,8 @@ final class WorldSessionWiring {
         game.dialogueWorld.wireDialogue(provider: provider, streamer: streamer)
         // The camera samples the speaker's head bone in the same world tick.
         game.dialogueWorld.wireDialogueCamera(renderer: renderer)
+        // Scenes speak through the dialogue index, so they come after it.
+        game.storyWorld.wireStory(provider: provider, renderer: renderer)
     }
 
     /// Player-controlled modes only: the fly camera never picks up a target.

@@ -145,6 +145,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var inventoryEquipment = FakeInventoryEquipmentState()
     var crafting = FakeCraftingState()
     var locksTraps = FakeLockTrapState()
+    var story = FakeStoryState()
 
     // UILabControlProviding
     var uiOverlayEnabled = true

@@ -7,9 +7,9 @@ tags: [format, plugin, quest]
 
 # Story manager records
 
-The story manager starts quests when game events happen. Its nodes form a tree: an event
-node (`SMEN`) is a root, branch nodes (`SMBN`) group children, and quest nodes (`SMQN`)
-list the quests to start.
+The story manager starts quests when game events happen. Its nodes form a tree: event nodes
+(`SMEN`) name an event, branch nodes (`SMBN`) group children, and quest nodes (`SMQN`) list
+the quests to start. The runtime is on the [story manager](/engine/story-manager.md) page.
 
 Source: xEdit `dev-4.1.6`, commit `9fb0168`,
 [`wbDefinitionsTES5.pas`](https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas)
@@ -52,9 +52,11 @@ OpenSky rebuilds the tree once, when the store is built:
 3. A node that no root reaches sits on or below a parent cycle. It is counted as
    unreachable. No walk follows a link twice, so a cycle never hangs.
 
-Roots are grouped by the `SMEN` event code, such as `KILL`. Each `SMQN` quest entry is
+Event nodes are not roots. In the vanilla data every `SMEN` sits under one branch node named
+`Root`, so event nodes are found by a walk from the roots in sibling order, and grouped by their
+event code, such as `KILL`. Each `SMQN` quest entry is
 indexed by quest, so a quest finds the nodes that can start it. The event of any node is
-the event of the root its path reaches.
+the event of the nearest event node on its path from the root.
 
 On the five masters the 657 nodes form one tree, 6 levels deep. Every parent resolves.
 10 child groups have a split sibling chain and keep file order.

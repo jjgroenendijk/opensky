@@ -3,6 +3,8 @@
 // chunks. A nested `internal` type so the parent keeps saying `Body`.
 
 import Foundation
+import OpenSkyDialogueInterface
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
@@ -68,5 +70,11 @@ nonisolated extension OpenSkySaveDecoder {
         public var harvests: [SaveHarvestEntry] = []
         /// Absent `LOCK`: every lock is as its plugin placed it.
         public var locks: [SaveLockEntry] = []
+        /// Absent `SCNS`: no scene is playing.
+        public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
+        /// Absent `SMQS`: the story manager started no quest.
+        public var storyManagerQuests: [SaveStoryEntry<StoryManagerQuestState>] = []
+        /// Absent `DLBS`: no speaker is in an exclusive branch.
+        public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
     }
 }

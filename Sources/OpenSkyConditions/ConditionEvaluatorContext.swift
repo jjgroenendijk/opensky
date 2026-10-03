@@ -64,6 +64,8 @@ nonisolated public struct ConditionContext: Sendable {
     /// The combat-target seam the core reads. The actor module sets it
     /// together with its own resolution.
     public var combatTargetResolver: (any ConditionCombatTargetResolving)?
+    /// The story-manager event being walked. The Event Data run-on reads it.
+    public var event: StoryEventData?
 
     private var resolutions: [ObjectIdentifier: any ConditionResolution] = [:]
 
@@ -176,6 +178,10 @@ nonisolated public struct ConditionCall: Sendable {
             return key(combatTargetKey(swapped: swapped), runOn: runOn)
         case .questAlias:
             return key(questAliasKey(), runOn: runOn)
+        case .eventData:
+            let member = StoryEventData
+                .Member(rawValue: UInt16(truncatingIfNeeded: condition.parameter3))
+            return key(member.flatMap { context.event?.reference($0) }, runOn: runOn)
         default:
             return .failure(.unsupportedRunOn(runOn))
         }

@@ -29,12 +29,13 @@ extension PapyrusWorldRuntime {
         }
         let target = PapyrusInstanceKey(reference: key, scriptName: fragment.scriptName)
         guard
-            attachTopicInfoScript(
-                target, declaredBy: info, formIDResolver: formIDResolver
+            attachRecordScript(
+                target, declared: info.script.scripts, formIDResolver: formIDResolver
             )
         else {
             return []
         }
+        dialogueInstanceKeys.insert(target)
         enqueue(PapyrusScriptEvent(
             target: target,
             functionName: fragment.functionName,
@@ -44,6 +45,30 @@ extension PapyrusWorldRuntime {
         return [fragment.functionName]
     }
 
+    /// Instantiates a scene's fragment script if needed and enqueues `functionName`.
+    /// Keyed like a result script: the SCEN's `ReferenceKey` plus the script name.
+    @discardableResult
+    public func queueSceneFragment(
+        of scene: Scene,
+        key: ReferenceKey,
+        scriptName: String,
+        functionName: String,
+        formIDResolver: FormIDResolver
+    ) -> Bool {
+        guard !scriptName.isEmpty else { return false }
+        let target = PapyrusInstanceKey(reference: key, scriptName: scriptName)
+        guard
+            attachRecordScript(
+                target, declared: scene.scriptData.scripts, formIDResolver: formIDResolver
+            )
+        else {
+            return false
+        }
+        enqueue(PapyrusScriptEvent(target: target, functionName: functionName, arguments: []))
+        sceneFragmentsQueued += 1
+        return true
+    }
+
     /// Response result scripts holding a live instance.
     public var dialogueInfoCount: Int {
         Set(dialogueInstanceKeys.map(\.reference)).count
@@ -51,19 +76,19 @@ extension PapyrusWorldRuntime {
 
     // MARK: - Private
 
-    /// Instantiates one result script, reporting whether an instance exists after.
-    /// Idempotent, so script variables persist. The response's VMAD entry is
+    /// Instantiates one fragment script, reporting whether an instance exists after.
+    /// Idempotent, so script variables persist. The record's VMAD entry is
     /// preferred, because it carries the filled properties; the bare name is the
     /// fallback.
-    private func attachTopicInfoScript(
+    private func attachRecordScript(
         _ target: PapyrusInstanceKey,
-        declaredBy info: TopicInfo,
+        declared scripts: [AttachedScript],
         formIDResolver: FormIDResolver
     ) -> Bool {
         if instancesByKey[target] != nil {
             return true
         }
-        let declared = info.script.scripts.first {
+        let declared = scripts.first {
             $0.name.lowercased() == target.scriptName.lowercased()
         }
         if let declared, declared.isRemoved {
@@ -84,7 +109,6 @@ extension PapyrusWorldRuntime {
             return false
         }
         persistentKeys.insert(target)
-        dialogueInstanceKeys.insert(target)
         bind(plan: [item], created: [target], formIDResolver: formIDResolver)
         enqueueOnInitIfNeeded(target)
         return true

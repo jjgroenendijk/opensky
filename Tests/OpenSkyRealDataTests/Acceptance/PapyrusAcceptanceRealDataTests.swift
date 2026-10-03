@@ -39,8 +39,9 @@ struct PapyrusAcceptanceRealDataTests {
         #expect(census.referenceTotal == 65477)
         #expect(census.distinctReferencedTotal == 508)
         // Pinned so a new native shows up here. The SKSE perk-point functions add
-        // nothing, because the vanilla corpus never calls them.
-        #expect(coverage == PexNativeCoverage(implemented: 141, referenced: 508))
+        // nothing, because the vanilla corpus never calls them. The six scene and
+        // story natives are all called.
+        #expect(coverage == PexNativeCoverage(implemented: 147, referenced: 508))
         #expect(run.entryPoints == 577)
         // Two entry points still sit in `Utility.Wait` when the tick cap ends the run.
         #expect(run.pending == 2)

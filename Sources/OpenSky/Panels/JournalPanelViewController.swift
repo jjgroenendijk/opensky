@@ -3,12 +3,16 @@
 // runs and shows objectives whether or not it has any Papyrus.
 
 import AppKit
+import OpenSkyDialogue
 import OpenSkyMenus
+import OpenSkyQuests
 
 final class JournalPanelViewController: InspectorPanelViewController {
     let questsSection = JournalQuestsSection()
     let controlsSection = JournalQuestControlsSection()
     let pageSection = JournalPageSection()
+    let scenesSection = ScenesSection()
+    let storySection = StoryManagerSection()
 
     /// Live journal bridge. Weak: the game controller owns this panel's parent
     /// and the quest runtime, so the panel must not retain back.
@@ -20,8 +24,16 @@ final class JournalPanelViewController: InspectorPanelViewController {
         }
     }
 
+    weak var sceneProvider: (any SceneControlProviding)? {
+        didSet { scenesSection.provider = sceneProvider }
+    }
+
+    weak var storyProvider: (any StoryManagerControlProviding)? {
+        didSet { storySection.provider = storyProvider }
+    }
+
     override func makeSections() -> [PanelSectionViewController] {
-        [questsSection, controlsSection, pageSection]
+        [questsSection, controlsSection, pageSection, scenesSection, storySection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring

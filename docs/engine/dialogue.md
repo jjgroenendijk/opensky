@@ -47,6 +47,34 @@ quest as the alias quest ([condition evaluation](/engine/conditions.md)).
 Greetings use the same rules, but are found by `DIAL` `SNAM` subtype `HELO`, not by category,
 because the player does not pick a greeting. `Skyrim.esm` has 297.
 
+## Branches
+
+A dialogue branch (`DLBR`) groups the topics of one conversation. The Creation Kit page
+(<https://ck.uesp.net/wiki/Dialogue_Branch>) gives three flags: top-level (0x01), blocking
+(0x02), and exclusive (0x04). The branch's starting topic (`SNAM`) is where the conversation
+opens. OpenSky applies them like this:
+
+1. A blocking branch whose quest runs and whose starting topic has a passing response for the
+   speaker is the only topic offered, and it is also the greeting. All other topics are
+   rejected as blocked by that branch. When several answer, the branch of the quest with the
+   highest priority wins, and ties go to the lower `DLBR` FormID. The tie-break is OpenSky's.
+2. Otherwise, only the starting topics of top-level branches open a conversation. A topic that
+   is not a branch entry is rejected as not a branch entry. Only a link (`TCLT`) from a chosen
+   response reaches it.
+3. When the speaker says a line of an exclusive branch, the speaker stays in that branch. The
+   branch then acts as blocking for that speaker and goes before every other blocking branch.
+   A line from any other branch takes the speaker out. An exclusive branch whose starting topic
+   no longer passes is passed over, so the speaker is not stuck.
+4. A topic that names no branch is offered. Every player topic in `Skyrim.esm` names one, so
+   this only keeps plugins that leave `BNAM` out working.
+
+`Skyrim.esm` has 3,061 branches: 2,116 top-level, 712 blocking, 203 with no flag, 16 blocking
+and exclusive, 13 exclusive, and 1 top-level and exclusive.
+
+Which branch a speaker is in is a world-state component, `dialogueBranch`, keyed by the
+speaker. Only an exclusive branch is stored, and a save keeps it in the `DLBS` chunk
+([world chunks](/formats/opensky-save-world-chunks.md)).
+
 ## The trace
 
 A selection returns the offered topics, the topics that offered nothing, and the condition
@@ -72,7 +100,7 @@ It is per response, not per speaker. The Creation Kit rule belongs to the respon
 responses (`INFO` `DNAM`) can be reached from several speakers, so a table per speaker would let
 each of them say the same "once" line.
 
-Where the conversation is in a branch is not stored. `Skyrim.esm` has zero `INFO` records with a
+Where the conversation is inside a branch is not stored. `Skyrim.esm` has zero `INFO` records with a
 `PNAM` previous-info link, and 4,294 with `TCLT` topic links. So the next lines depend only on
 the chosen response and said-state. There is no cursor to save.
 
@@ -145,12 +173,9 @@ decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 
 ## Not done yet
 
-- Topics are not limited to the speaker's dialogue views. The original engine also limits topics
-  to the speaker's active dialogue views, so its menu is much shorter. With the vanilla master,
-  Delphine is offered 54 topics here, where the game shows a few. One obvious fix, dropping every
-  topic that some `TCLT` links to, was measured and rejected. It cut the list to 7, but also
-  removed real top-level topics that are link targets elsewhere.
-- Scenes (`SCEN`) do not play. 7,426 `DIAL` records in `Skyrim.esm` belong to them.
+- Topics are scoped by branch, not by dialogue view (`DLVW`). Views are an editor layout, and no
+  open source says the game reads them at run time.
+- Scene topics are spoken only by the [scene runtime](/engine/scenes.md).
 - Shared responses (`INFO` `DNAM`) are not applied. They change what a line says, not whether it
   is offered.
 - Reset times are decoded but not used. A repeatable line can repeat at once.
@@ -158,17 +183,18 @@ decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 ## Measured coverage
 
 Selecting for Delphine (named by more player-facing `INFO` conditions than any other NPC in
-`Skyrim.esm`), with only the quests that start enabled:
+`Skyrim.esm`), with only the quests that start enabled, and with branch scoping. Most topics are
+rejected as not a branch entry without their conditions being evaluated:
 
 | Measure | Value |
 | --- | ---: |
-| Topics offered | 54 |
-| Topics rejected | 6,481 |
-| Conditions evaluated | 11,622 |
-| Conditions that could not be answered | 7,837 |
+| Topics offered | 4 |
+| Topics rejected | 6,531 |
+| Conditions evaluated | 6,101 |
+| Conditions that could not be answered | 4,305 |
 
-The functions most often still missing, by Creation Kit number: 4167 (1,103 conditions), 4725
-(761), 4702 (356), 4143 (201), 4169 (79), 4163 (76). These are numbers, not names, because the
+The functions most often still missing, by Creation Kit number: 4725 (411 conditions), 4702
+(303), 4163 (61), 4351 (44), 4227 (25), 4180 (21). These are numbers, not names, because the
 sweep counts what the plugin stores. Each gets its name when it is implemented from a cited
 source. The full table goes to `logs/dialogue-selection/<stamp>/`.
 
