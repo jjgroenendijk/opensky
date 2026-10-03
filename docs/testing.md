@@ -40,8 +40,7 @@ a test there would run in both bundles. It holds only fixtures that need the app
 | `make test-unit LOCALE=nl [T='Suite/test()']` | The unit plan in Dutch language and region, where the decimal separator is a comma |
 | `make test-unit TAG=parser`, `TAG=gpu` | The unit tests tagged `.parser` or `.gpu`, through the `Parser` or `GPU` plan |
 | `make compile [M='Module ...']` | `swift build` of the changed package modules, or the named ones, and every package target that depends on them. No Xcode, so it is the quick check while fixing compile errors |
-| `make verify-build` | Compiles the app, the CLI, and the unit bundles without running a test |
-| `make realdata-build` | Compiles the real-data suites without running them. Needs no install |
+| `make verify-build` | Compiles the app, the CLI, and every test bundle, the real-data suites included, without running a test. Needs no install |
 | `make test-report` | Pass and fail counts, each failure's name and message, and code coverage, from the newest result bundle |
 | `make test-real [T='Class/method()'] [CAP=MB]` | The real-data plan under the memory watchdog, narrowed by `T` |
 | `make test-real PERF=1` | Every real-data test tagged `.perf`, built optimized, for perf budgets |
