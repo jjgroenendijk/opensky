@@ -114,6 +114,7 @@ JSCPD_CFG        := tools/lint/.jscpd.json
 PERIPHERY_CFG    := tools/lint/.periphery.yml
 CLANGFORMAT_CFG  := tools/format/.clang-format
 MD_CFG           := tools/markdown/.markdownlint-cli2.yaml
+ACTIONLINT_CFG   := tools/lint/actionlint.yaml
 MD_GLOB          := **/*.md
 # The tool commands. Override one to try another build of the tool.
 SWIFTLINT        ?= swiftlint
@@ -169,7 +170,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
-swift-baseline: #| Check for Apple Swift 6.3.3+ and Swift 6 mode in every target
+swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
 	@./tools/lint/swift-baseline.sh
 
 swift-format: #| Autoformat Swift
@@ -234,7 +235,7 @@ agent-files: #| Check AGENTS.md symlinks and the skill format limits
 	@./tools/lint/agent-files.sh
 
 workflow-lint: #| Lint the GitHub Actions workflows with actionlint
-	@actionlint && echo "[ OK ] workflows clean"
+	@actionlint -config-file $(ACTIONLINT_CFG) && echo "[ OK ] workflows clean"
 
 comment-length: #| Check no comment block is over the line limit
 	@./tools/lint/comment-length.sh
