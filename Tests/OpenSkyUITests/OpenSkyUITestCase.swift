@@ -5,9 +5,10 @@ import XCTest
 
 class OpenSkyUITestCase: XCTestCase {
     /// Launches the app against a synthetic data root; returns the running
-    /// app with its window on screen.
+    /// app with its window on screen. Developer mode unless the case asks for
+    /// the launcher with an empty mode.
     @MainActor
-    func launchApp() throws -> XCUIApplication {
+    func launchApp(launchMode: String = "developer") throws -> XCUIApplication {
         let install = FileManager.default.temporaryDirectory
             .appending(path: "opensky-uitest-\(UUID().uuidString)")
         let data = install.appending(path: "Data")
@@ -20,6 +21,7 @@ class OpenSkyUITestCase: XCTestCase {
 
         let app = XCUIApplication()
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = install.path(percentEncoded: false)
+        app.launchEnvironment["OPENSKY_LAUNCH_MODE"] = launchMode
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
         return app
@@ -28,9 +30,10 @@ class OpenSkyUITestCase: XCTestCase {
     /// Launches against explicit external data. Caller gates the path; no
     /// default-root fallback keeps CI deterministic.
     @MainActor
-    func launchApp(dataRoot: String) -> XCUIApplication {
+    func launchApp(dataRoot: String, launchMode: String = "developer") -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = dataRoot
+        app.launchEnvironment["OPENSKY_LAUNCH_MODE"] = launchMode
         app.launch()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10))
         return app

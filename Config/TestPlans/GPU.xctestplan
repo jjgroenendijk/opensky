@@ -61,6 +61,11 @@
         },
         {
           "containerPath" : "container:.",
+          "identifier" : "OpenSkyLaunch",
+          "name" : "OpenSkyLaunch"
+        },
+        {
+          "containerPath" : "container:.",
           "identifier" : "OpenSkyPhysics",
           "name" : "OpenSkyPhysics"
         },
@@ -370,6 +375,19 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyBehaviorTests",
         "name" : "OpenSkyBehaviorTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "selectedTags" : {
+        "tags" : [
+          "gpu"
+        ]
+      },
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyLaunchTests",
+        "name" : "OpenSkyLaunchTests"
       }
     },
     {

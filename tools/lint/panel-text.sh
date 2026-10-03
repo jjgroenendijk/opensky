@@ -8,7 +8,7 @@ limit=100
 cd "$(git rev-parse --show-toplevel)"
 
 report="$(
-  git ls-files -z -- 'Sources/OpenSky/Shell/*.swift' 'Sources/OpenSky/Panels/*.swift' |
+  git ls-files -z -- 'Sources/OpenSky/Shell/*.swift' 'Sources/OpenSky/Panels/*.swift' 'Sources/OpenSky/Launcher/*.swift' |
     xargs -0 awk -v limit="$limit" "
       /wrappingLabelWithString: *\"[^\"]/ {
         printf \"%s:%d: wrapping label with text; use a tooltip\\n\", FILENAME, FNR

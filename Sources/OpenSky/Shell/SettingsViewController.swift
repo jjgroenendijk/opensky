@@ -1,11 +1,13 @@
-// Settings window (Cmd+,): data root, plugins.txt, and string-table language.
-// Validation lives in engine settings. Choices go to the shared defaults
-// domain so the CLI sees them too.
+// Settings content: data root, plugins.txt, and string-table language. The
+// Cmd+, window and the launcher's Settings page both host it. Validation lives
+// in engine settings. Choices go to the shared defaults domain so the CLI sees
+// them too.
 
 import AppKit
 import OpenSkyGameData
+import OpenSkyLaunch
 
-final class SettingsWindowController: NSWindowController {
+final class SettingsViewController: NSViewController {
     /// Called after a persisted engine-load setting changes.
     var onSettingsChanged: (() -> Void)?
 
@@ -16,17 +18,14 @@ final class SettingsWindowController: NSWindowController {
     private let languageField = NSTextField(string: "")
     private let languageNoteLabel = NSTextField(wrappingLabelWithString: "")
 
-    convenience init() {
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 420),
-            styleMask: [.titled, .closable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "Settings"
-        self.init(window: window)
-        window.contentView = makeContentView()
-        window.center()
+    override func loadView() {
+        view = makeContentView()
+        view.frame = NSRect(x: 0, y: 0, width: 520, height: 420)
+        refresh()
+    }
+
+    override func viewWillAppear() {
+        super.viewWillAppear()
         refresh()
     }
 
@@ -47,11 +46,13 @@ final class SettingsWindowController: NSWindowController {
             target: self,
             action: #selector(chooseDataRoot)
         )
+        chooseButton.setAccessibilityIdentifier("SettingsChooseGameFolderControl")
         let resetButton = NSButton(
             title: "Use Default",
             target: self,
             action: #selector(useDefaultRoot)
         )
+        resetButton.setAccessibilityIdentifier("SettingsResetGameFolderControl")
         let buttons = NSStackView(views: [resetButton, chooseButton])
         buttons.orientation = .horizontal
         buttons.alignment = .centerY
@@ -147,16 +148,10 @@ final class SettingsWindowController: NSWindowController {
     /// Re-resolves the root and updates the labels. `problem` (a failed
     /// choice) shows in place of the source note.
     private func refresh(problem: String? = nil, pluginsProblem: String? = nil) {
-        var root: GameDataRoot?
-        do {
-            let located = try GameDataLocator.locate()
-            root = located
-            pathLabel.stringValue = located.installURL.path(percentEncoded: false)
-            noteLabel.stringValue = problem ?? Self.sourceNote(for: located.source)
-        } catch {
-            pathLabel.stringValue = "Not located"
-            noteLabel.stringValue = problem ?? error.localizedDescription
-        }
+        let root = try? GameDataLocator.locate()
+        let status = GameFolderStatus { try GameDataLocator.locate() }
+        pathLabel.stringValue = status.path ?? "Not located"
+        noteLabel.stringValue = problem ?? status.note
         noteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
         refreshPluginsText(root: root, problem: pluginsProblem)
         refreshLanguage(root: root)
@@ -191,41 +186,15 @@ final class SettingsWindowController: NSWindowController {
             : .systemOrange
     }
 
-    private static func sourceNote(for source: GameDataRoot.Source) -> String {
-        switch source {
-        case .environment:
-            "Set by the \(GameDataLocator.environmentKey) environment variable — "
-                + "it overrides the choice made here."
-        case .userDefaults:
-            "Chosen in Settings."
-        case .steamDefault:
-            "Default Steam install location."
-        }
-    }
-
     // MARK: - Actions
 
     @objc private func chooseDataRoot() {
-        guard let window else { return }
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.message =
-            "Select the Skyrim Special Edition install folder (contains Data/Skyrim.esm)."
-        panel.prompt = "Use Folder"
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard let self, response == .OK, let url = panel.url else { return }
-            let path = url.path(percentEncoded: false)
-            do {
-                try GameDataLocator.saveUserChoice(path: path)
-                refresh()
+        guard let window = view.window else { return }
+        GameFolderPicker.choose(for: window) { [weak self] problem in
+            guard let self else { return }
+            refresh(problem: problem)
+            if problem == nil {
                 onSettingsChanged?()
-            } catch {
-                refresh(
-                    problem: "Not a Skyrim SE install: \(path) — "
-                        + "expected a folder containing Data/Skyrim.esm."
-                )
             }
         }
     }
@@ -237,7 +206,7 @@ final class SettingsWindowController: NSWindowController {
     }
 
     @objc private func choosePluginsText() {
-        guard let window else { return }
+        guard let window = view.window else { return }
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -279,5 +248,29 @@ final class SettingsWindowController: NSWindowController {
         LocalizationLanguageSettings.clearOverride()
         refresh()
         onSettingsChanged?()
+    }
+}
+
+/// The Cmd+, window around `SettingsViewController`.
+final class SettingsWindowController: NSWindowController {
+    let settings = SettingsViewController()
+
+    var onSettingsChanged: (() -> Void)? {
+        get { settings.onSettingsChanged }
+        set { settings.onSettingsChanged = newValue }
+    }
+
+    convenience init() {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 420),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Settings"
+        self.init(window: window)
+        window.contentViewController = settings
+        window.setContentSize(NSSize(width: 520, height: 420))
+        window.center()
     }
 }

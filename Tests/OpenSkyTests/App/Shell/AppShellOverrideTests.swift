@@ -5,7 +5,7 @@ import Testing
 struct AppShellOverrideTests {
     @Test @MainActor
     func viewMenuRegistersResetAllOverridesOnResponderChain() throws {
-        let menu = AppDelegate.makeViewMenu()
+        let menu = MainMenu.makeViewMenu()
         let item = try #require(
             menu.items.first {
                 $0.identifier?.rawValue == "ResetAllOverridesCommand"

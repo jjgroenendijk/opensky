@@ -102,6 +102,7 @@ OpenSkyGameData           virtual file system, load order, record stores, actor 
                           item index, equip slots, barter prices, projectile profiles
   ^
 OpenSkyBehavior           Havok behavior graph evaluation, skeleton pose math
+OpenSkyLaunch             launch modes, the remembered mode, game folder status
   ^
 OpenSkyPhysics            static and trigger collision, dynamic bodies, ragdolls, melee hit sweeps
 OpenSkyDiagnostics        memory footprint, debug overlays; needs only OpenSkyShaderTypes

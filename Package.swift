@@ -309,6 +309,11 @@ targets += testing(
     ]
 )
 
+targets += foundation(
+    "OpenSkyLaunch",
+    dependencies: ["OpenSkyGameData"],
+    tests: ["OpenSkyGameData"]
+)
 targets += foundation("OpenSkyDiagnostics", dependencies: ["OpenSkyShaderTypes"])
 targets += foundation(
     "OpenSkyPhysics",
