@@ -94,19 +94,19 @@ nonisolated public protocol EditorIdentified {
     var editorID: String? { get }
 }
 
-extension ImageSpace: EditorIdentified {}
-extension ImageSpaceAdapter: EditorIdentified {}
-extension EffectShader: EditorIdentified {}
-extension VisualEffect: EditorIdentified {}
-extension AddonNode: EditorIdentified {}
-extension Explosion: EditorIdentified {}
-extension Debris: EditorIdentified {}
-extension ShaderParticleGeometry: EditorIdentified {}
-extension VolumetricLighting: EditorIdentified {}
-extension MaterialObject: EditorIdentified {}
-extension SoundOutputModel: EditorIdentified {}
-extension ReverbParameters: EditorIdentified {}
-extension ArtObject: EditorIdentified {}
+nonisolated extension ImageSpace: EditorIdentified {}
+nonisolated extension ImageSpaceAdapter: EditorIdentified {}
+nonisolated extension EffectShader: EditorIdentified {}
+nonisolated extension VisualEffect: EditorIdentified {}
+nonisolated extension AddonNode: EditorIdentified {}
+nonisolated extension Explosion: EditorIdentified {}
+nonisolated extension Debris: EditorIdentified {}
+nonisolated extension ShaderParticleGeometry: EditorIdentified {}
+nonisolated extension VolumetricLighting: EditorIdentified {}
+nonisolated extension MaterialObject: EditorIdentified {}
+nonisolated extension SoundOutputModel: EditorIdentified {}
+nonisolated extension ReverbParameters: EditorIdentified {}
+nonisolated extension ArtObject: EditorIdentified {}
 
 nonisolated extension TypedRecordStore {
     /// The record a load-order identity names.
