@@ -166,11 +166,12 @@ jobs:
       # The download overlaps the steps up to "Wait for the Metal Toolchain".
       - name: Start Metal Toolchain download
         run: tools/ci/metal-toolchain.sh start
-      # Tests that need a Metal 4 GPU skip unless this shows Metal 4.
+      # Tests that need a Metal 4 GPU skip unless this shows Metal 4. The runner's
+      # virtual GPU may list no Metal line at all.
       - name: Show Xcode and GPU
         run: |
           xcodebuild -version
-          system_profiler SPDisplaysDataType | grep -E 'Chipset Model|Metal Support'
+          system_profiler SPDisplaysDataType
       - run: make swift-baseline
       # One run then lists the compile errors of every target, not only the first.
       - name: Keep building after errors
