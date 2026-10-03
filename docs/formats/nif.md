@@ -123,6 +123,15 @@ After the shared fields:
 are not walked on purpose. They draw one child, not all, and walking them would stack LOD
 versions on top of each other.
 
+## NiStringExtraData
+
+Two `uint32` string-table indices: the name, then the value. -1 is none. A prop mesh
+(`ANIO` model) names the bone it rides in an extra data called `Prn`, such as
+`AnimObjectR` or `NPC R Hand [RHnd]`. Confirmed on the 82 `ANIO` models of the five
+masters: each one carries `Prn`. Each value is a bone of the character `skeleton.hkx`,
+except `NPC L Hand` and `NPC R Hand`, which leave out the bone's `[LHnd]` or `[RHnd]` tag.
+OpenSky matches such a value to the bone whose name starts with it.
+
 ## BSTriShape
 
 Skyrim SE geometry, stream 100 only. After the shared fields:

@@ -16,6 +16,9 @@ pages: [hkaSkeleton](/formats/hka-skeleton.md) and
 
 `openskycli hkx <key>` prints the container of a file (see [CLI](/tools/cli.md)).
 
+A `.hkt` file is not a packfile. It is a Havok binary tagfile, on its own page:
+[HKT binary tagfile](/formats/hkt-tagfile.md).
+
 ## References
 
 There is no public Havok specification. The layout comes from open parsers and community

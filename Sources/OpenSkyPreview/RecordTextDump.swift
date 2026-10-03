@@ -130,10 +130,10 @@ nonisolated public enum RecordTextDump: Sendable {
                     magicContext: magicContext
                 )
                 ?? progressionSummary(record, localized, magicContext)
-                ?? factionSummary(record, localized)
-                ?? relationshipSummary(record)
+                ?? factionSummary(record, localized) ?? relationshipSummary(record)
                 ?? craftingSummary(record, localized, keywordContext)
                 ?? trapSummary(record, localized) ?? storySummary(record)
+                ?? characterSummary(record, localized)
         }
     }
 

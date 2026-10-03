@@ -45,6 +45,11 @@ nonisolated public protocol PackageDataProviding {
     var packageStore: PackageStore? { get }
 }
 
+/// Load-order IDLE, IDLM, ANIO, and AACT records for the idle runtime.
+nonisolated public protocol IdleDataProviding {
+    var idleStore: IdleStore? { get }
+}
+
 /// Optional item and container indexes. With the session's `WorldStateStore` they build
 /// the `InventoryRuntime` behind take, drop and container sessions.
 nonisolated public protocol ItemDataProviding {

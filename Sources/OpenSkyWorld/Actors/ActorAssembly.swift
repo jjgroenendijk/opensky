@@ -26,13 +26,36 @@ nonisolated public protocol ActorAssetProvider {
         bone: String,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
+    /// A head part with its texture set and tint applied.
+    func loadActorHeadPart(
+        path: String,
+        diffuseTexture: String?,
+        normalTexture: String?,
+        tint: SIMD3<Float>?,
+        skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure>
+}
+
+nonisolated extension ActorAssetProvider {
+    /// A provider that cannot retexture loads the plain mesh.
+    public func loadActorHeadPart(
+        path: String,
+        diffuseTexture _: String?,
+        normalTexture _: String?,
+        tint _: SIMD3<Float>?,
+        skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure> {
+        loadActorModel(path: path, skeleton: skeleton)
+    }
 }
 
 nonisolated public enum ActorModelRole: Equatable, Sendable {
     case body(ResolvedBodyPart)
     case faceGenHead(tintPath: String?)
-    /// A drawn weapon riding a hand bone.
+    /// A drawn weapon or an idle prop riding a bone.
     case attachment(ResolvedAttachment)
+    /// One part of an assembled head.
+    case headPart(ResolvedHeadPart)
 }
 
 nonisolated public struct ActorAssemblySkip: Equatable, Sendable {
@@ -112,7 +135,11 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
                 skips: &skips
             )
         }
-        if let facePath = visual.faceGenMeshPath {
+        if visual.headSource == .assembled, !visual.headParts.parts.isEmpty {
+            for part in visual.headParts.parts {
+                appendHeadPart(part, skeleton: skeleton, models: &models, skips: &skips)
+            }
+        } else if let facePath = visual.faceGenMeshPath {
             append(
                 path: facePath,
                 role: .faceGenHead(tintPath: visual.faceGenTintPath),
@@ -175,6 +202,30 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         case let .failure(failure):
             skips.append(ActorAssemblySkip(
                 subject: .model(role: role, path: path),
+                reason: reason(for: failure)
+            ))
+        }
+    }
+
+    private func appendHeadPart(
+        _ part: ResolvedHeadPart,
+        skeleton: Provider.Skeleton?,
+        models: inout [AssembledActorModel<Provider.Asset>],
+        skips: inout [ActorAssemblySkip]
+    ) {
+        let role = ActorModelRole.headPart(part)
+        switch provider.loadActorHeadPart(
+            path: part.modelPath,
+            diffuseTexture: part.diffuseTexture,
+            normalTexture: part.normalTexture,
+            tint: part.tint,
+            skeleton: skeleton
+        ) {
+        case let .success(asset):
+            models.append(AssembledActorModel(role: role, path: part.modelPath, asset: asset))
+        case let .failure(failure):
+            skips.append(ActorAssemblySkip(
+                subject: .model(role: role, path: part.modelPath),
                 reason: reason(for: failure)
             ))
         }

@@ -164,6 +164,7 @@ public func appearance(
     wornArmor: UInt32? = nil,
     headParts: [UInt32] = [0x2000],
     headSource: UInt32 = 0x1000,
+    hairColor: UInt32? = nil,
     outfit: UInt32? = nil
 ) -> ResolvedActorAppearance {
     let base = FormID(0x1000)
@@ -177,6 +178,7 @@ public func appearance(
         headParts: ActorSourcedField(
             value: headParts.map(FormID.init), source: FormID(headSource)
         ),
+        hairColor: ActorSourcedField(value: hairColor.map(FormID.init), source: base),
         defaultOutfit: ActorSourcedField(value: outfit.map(FormID.init), source: base)
     )
 }

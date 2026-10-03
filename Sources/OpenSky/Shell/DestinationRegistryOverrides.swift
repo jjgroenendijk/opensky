@@ -177,9 +177,11 @@ extension DestinationRegistry {
     static let aiNavigationOverrides = DestinationOverrideActions(
         isOverridden: { context in
             AIOverlaySection.isOverridden(provider: context.providers)
+                || AIIdleSection.isOverridden(provider: context.providers)
         },
         resetToDefaults: { context in
             AIOverlaySection.resetToDefaults(provider: context.providers)
+            AIIdleSection.resetToDefaults(provider: context.providers)
         }
     )
 

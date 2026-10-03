@@ -767,3 +767,13 @@ extension GameViewController {
         storyWorld.storyManager
     }
 }
+
+extension GameViewController {
+    var idles: IdleCoordinator {
+        idleWorld.idles
+    }
+
+    var headAssembly: HeadAssemblyCoordinator {
+        idleWorld.headAssembly
+    }
+}

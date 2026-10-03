@@ -35,6 +35,10 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     /// The actor's level, which `GetLevel` reports: the derived level for an NPC,
     /// and the character level for the player.
     public var level: Int
+    /// Whether the actor's race is a child race, which `IsChild` reports.
+    public var isChild: Bool
+    /// What the left hand holds out, or nil when nothing observes it.
+    public var leftHandOut: ActorLeftHandOut?
 
     public init(
         current: ActorValues,
@@ -45,7 +49,9 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
         combatTarget: ReferenceKey? = nil,
         general: [Int32: ActorValueEntry] = [:],
         generalBaseline: [Int32: Float] = [:],
-        level: Int = PlayerLevelSource.startingLevel
+        level: Int = PlayerLevelSource.startingLevel,
+        isChild: Bool = false,
+        leftHandOut: ActorLeftHandOut? = nil
     ) {
         self.current = current
         self.maximums = maximums
@@ -56,6 +62,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
         self.general = general
         self.generalBaseline = generalBaseline
         self.level = max(PlayerLevelSource.startingLevel, level)
+        self.isChild = isChild
+        self.leftHandOut = leftHandOut
     }
 
     /// This actor's combat state as `GetCombatState` spells it: 0 "Not in combat",
@@ -72,6 +80,13 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var weaponOutValue: Float? {
         weaponDrawState.map { $0.isWeaponInHand ? 2 : 0 }
     }
+}
+
+/// What an actor holds out in its left hand: `IsTorchOut` and `IsShieldOut`.
+nonisolated public enum ActorLeftHandOut: Equatable, Sendable {
+    case nothing
+    case torch
+    case shield
 }
 
 /// Resolved actor state for a whole evaluation, keyed by reference.

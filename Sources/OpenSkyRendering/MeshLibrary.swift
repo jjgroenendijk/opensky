@@ -109,14 +109,16 @@ nonisolated public final class MeshLibrary {
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeleton: ActorSkeletonAsset? = nil,
         explicitActorSkeleton: Bool = false,
-        attachmentBone: String? = nil
+        attachmentBone: String? = nil,
+        surface: ModelSurfaceOverride? = nil
     ) throws -> RenderModel {
         let pathKey = try meshKey(for: path)
         let key = cacheKey(
             path: pathKey,
             terrainLODClipMask: terrainLODClipMask,
             actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil,
-            attachmentBone: attachmentBone
+            attachmentBone: attachmentBone,
+            surface: surface
         )
         touchedKeys.insert(key)
         if let hit = cache[key] {
@@ -132,6 +134,9 @@ nonisolated public final class MeshLibrary {
         let decodedParticles = decoded.particles
         var model = terrainLODClipMask
             .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
+        if let surface {
+            model = surface.applied(to: model)
+        }
         if let attachmentBone {
             model = RigidAttachment.skinned(
                 model,
@@ -292,7 +297,8 @@ nonisolated public final class MeshLibrary {
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeletonKey: String? = nil,
-        attachmentBone: String? = nil
+        attachmentBone: String? = nil,
+        surface: ModelSurfaceOverride? = nil
     ) -> String {
         var key = path
         if let terrainLODClipMask {
@@ -303,6 +309,9 @@ nonisolated public final class MeshLibrary {
         }
         if let attachmentBone {
             key += "|attach:" + attachmentBone
+        }
+        if let surface, !surface.isEmpty {
+            key += "|" + surface.cacheKey
         }
         return key
     }

@@ -21,7 +21,7 @@ final class PreviewDetailBuilder {
         let image: CGImage?
     }
 
-    private let fileSystem: any GameFileSource
+    let fileSystem: any GameFileSource
     private let referenceInspector: ReferenceRecordInspector?
     /// Nil without a Metal 4 GPU or its texture placeholders; previews are then text-only.
     private let device: (any MTLDevice)?
@@ -59,10 +59,9 @@ final class PreviewDetailBuilder {
     }
 
     private func recordText(_ preview: PreviewRecord) -> String {
-        guard let referenceInspector else {
-            return RecordTextDump.dump(record: preview.record, localized: preview.localized)
-        }
-        return referenceInspector.text(for: preview)
+        let text = referenceInspector?.text(for: preview)
+            ?? RecordTextDump.dump(record: preview.record, localized: preview.localized)
+        return bodyPartNodes(preview).map { text + "\n\n" + $0 } ?? text
     }
 
     // MARK: - Files
@@ -83,6 +82,9 @@ final class PreviewDetailBuilder {
         }
         if entry.path.hasSuffix(".dds") {
             return ddsDetail(header: header, path: entry.path, data: data)
+        }
+        if entry.path.hasSuffix(".hkt") {
+            return Detail(text: header + tagfileText(data), image: nil)
         }
         return Detail(text: header + "(no preview for this file type)", image: nil)
     }

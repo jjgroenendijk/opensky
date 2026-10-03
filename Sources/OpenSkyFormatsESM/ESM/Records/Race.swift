@@ -96,6 +96,7 @@ nonisolated public struct Race: Sendable {
         /// Race uses baked FaceGen head assets (facegeom/facetint files);
         /// clear on creature races like cow/dog/bear.
         public static let faceGenHead = Flags(rawValue: 0x0000_0002)
+        public static let child = Flags(rawValue: 0x0000_0004)
     }
 
     /// Level-1 starting attributes and their regen rates. Regen is a percentage

@@ -221,6 +221,12 @@ extension CellStreamer {
             .map { String($0.dropFirst(prefix.count)) }
     }
 
+    /// The head the last build gave one ACHR, or nil when it is not resident.
+    public func actorHead(forActor formID: FormID) -> ActorHeadReadout? {
+        let summaries = interiorScene.map { [$0.summary] } ?? composition.actorSummaries()
+        return summaries.lazy.compactMap { $0.actorHeads[formID] }.first
+    }
+
     /// Which resident cell holds a reference, so a Papyrus world write can be
     /// attributed to one cell instead of every resident one.
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

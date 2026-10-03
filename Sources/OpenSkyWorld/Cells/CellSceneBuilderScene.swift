@@ -314,6 +314,7 @@ nonisolated extension CellSceneBuilder {
         summary.actorAnimationFailureCount = actors.counts.animationFailures
         summary.actorAnimationFailureReasons = actors.counts.animationFailureReasons
         summary.actorAppearanceSkipReasons = actors.counts.appearanceSkipReasons
+        summary.actorHeads = actors.counts.heads
         summary.skippedRecords = skippedRecords
         return summary
     }

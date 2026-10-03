@@ -263,6 +263,9 @@ final class GameViewController: NSViewController {
 
     lazy var aiWorld = AIWorldAdapter(game: self)
 
+    /// Ambient idles and the head switch, with the coordinators they drive.
+    lazy var idleWorld = IdleWorldAdapter(game: self)
+
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
         gameView.input = cameraInput
@@ -384,7 +387,8 @@ final class GameViewController: NSViewController {
 
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
-    StoryManagerControlForwarding, DialogueBranchControlForwarding {}
+    StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
+    HeadAssemblyControlForwarding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {

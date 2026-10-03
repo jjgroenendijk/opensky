@@ -40,6 +40,8 @@ nonisolated public struct ActorBuildCounts: Sendable {
     /// Not an error: a masked skin torso still reports one. The inventory panel
     /// uses it to say why an equipped piece drew nothing.
     public var appearanceSkipReasons: [String] = []
+    /// Each drawn humanoid's head parts and the head it shows, by ACHR.
+    public var heads: [FormID: ActorHeadReadout] = [:]
 }
 
 /// Assembled actor render data handed to makeScene beside static instances.
@@ -196,7 +198,9 @@ nonisolated extension CellSceneBuilder {
                     equipped: runtimeEquipment(
                         entry: indexed[actor.formID], deltas: deltas
                     )
-                )
+                ).presenting(indexed[actor.formID].flatMap {
+                    deltas[$0.key]?.component(ActorPresentationState.self)
+                })
                 let placed = actorApplyingRuntimeTransform(
                     actor,
                     entry: indexed[actor.formID],
@@ -262,6 +266,9 @@ nonisolated extension CellSceneBuilder {
             return
         }
         build.counts.rendered += 1
+        if assembly.visual.faceGenMeshPath != nil || !assembly.visual.headParts.parts.isEmpty {
+            build.counts.heads[assembly.actor] = ActorHeadReadout(assembly: assembly)
+        }
         let faceMorph = makeFaceMorphPlayback(assembly: assembly)
         build.placements.append(contentsOf: assembly.renderPlacements(
             at: assembly.transform,
