@@ -1,23 +1,25 @@
 ---
 type: Tool
 title: Swift toolchain and language mode
-description: The Apple Swift 6.3.3 baseline, Swift 6 language mode across every target, the gate that enforces both, and the isolation patterns the migration settled on.
+description: The one Apple Swift version shared by local builds and CI, Swift 6 language mode across every target, the gate that enforces both, and the isolation patterns the migration settled on.
 tags: [tool, build, concurrency, swift]
 ---
 
 # Swift toolchain and language mode
 
-OpenSky builds with Apple Swift 6.3.3 (Xcode 26.6) and every Xcode build configuration
-is in Swift 6 language mode. Both facts are checked by `tools/lint/swift-baseline.sh`,
+OpenSky builds with Apple Swift 6.4 (Xcode 27.0), locally and in CI, and every Xcode build
+configuration is in Swift 6 language mode. Both facts are checked by `tools/lint/swift-baseline.sh`,
 reachable as `make swift-baseline`, so neither can regress silently.
 
 ## What is enforced
 
 `tools/lint/swift-baseline.sh` fails, naming what it found, when either half slips:
 
-* The compiler reported by `swiftc --version` is older than Apple Swift 6.3.3. The
-  comparison is on the three version integers, so 6.3.2 and 6.2.0 both fail while 6.4.0
-  passes. A missing or non-Apple `swiftc` fails the same way.
+* The compiler reported by `swiftc --version` is not Apple Swift 6.4. Each Swift release
+  accepts code that another one rejects. So a newer local compiler passes code that fails in
+  CI, and an older one fails code that passes there. The check wants the same version, not a
+  minimum, so 6.3.3 and 6.4.1 both fail. A version without a patch number matches the same
+  version with `.0`. A missing or non-Apple `swiftc` fails the same way.
 * Any `SWIFT_VERSION` build setting reads something other than `6.0`. Both places a
   setting can be declared are scanned: `Config/Build/*.xcconfig`, where the one declaration
   covering every target lives today, and `OpenSky.xcodeproj/project.pbxproj`, where a
@@ -36,11 +38,8 @@ failing the build, the linter, or the tests.
 | Local one-shot | `make check` (first step) or `make swift-baseline` |
 | CI | "Swift baseline" step in the `build-test` job |
 
-The CI step sits behind the same `Xcode >= 26` guard as the build and test steps. A
-hosted runner that lags the toolchain skips the whole job with a warning rather than
-failing on a compiler it was never going to build with; local `make check` covers that case
-unconditionally, and it is the gate that actually runs today (see
-[Local environment and external state](/tools/environment.md) for the CI suspension).
+Both run the same script. The CI job runs it before the build, so a runner with another
+Xcode fails at once with the version it found, not later with compile errors.
 
 ## Default actor isolation
 
@@ -105,10 +104,11 @@ The reverse also holds. The Papyrus VM is main-actor isolated, because its nativ
 and write main-actor world state and the VM runs only from the main-actor tick. A
 nonisolated VM would need a `MainActor.assumeIsolated` hop in every world call.
 
-## Raising the baseline
+## Moving to a new Xcode
 
-The required version lives in one place: the `required_major`/`required_minor`/
-`required_patch` variables at the top of `tools/lint/swift-baseline.sh`. Raising the
-baseline is that edit; the language mode is a
+The version lives in two places that change in one commit: `required` at the top of
+`tools/lint/swift-baseline.sh`, and `DEVELOPER_DIR` in `.github/workflows/ci.yml`, which
+names the Xcode the runner uses ([CI](/tools/ci.md)). Install the new Xcode locally, then
+change both; the language mode is a
 separate constant in the same script and changes only when a new Swift language version
 ships and every configuration moves to it together.

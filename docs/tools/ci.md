@@ -10,7 +10,8 @@ tags: [tool, ci, lint, github-actions]
 # Continuous integration
 
 `.github/workflows/ci.yml` runs on every pull request and on every push to `main`. Every job runs
-on a `macos-26` runner, so CI uses the same platform, Xcode, and tools as a developer machine.
+on an `xcode-27` runner (macOS 27), so CI uses the same platform, Xcode, and tools as a developer
+machine.
 
 | Job | Make targets |
 | --- | --- |
@@ -66,8 +67,11 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 - **Metal 4.** A test that needs a Metal 4 GPU gates on `device.supportsFamily(.metal4)` and
   skips without one. The runner's virtual GPU has no Metal 4, so these tests run only on a
   developer machine ([environment](/tools/environment.md)).
-- **Xcode 26.** The runner builds with the Xcode that `make swift-baseline` names as the floor,
-  which can be older than the local one. Code must build with both.
+- **Xcode.** The image holds several Xcodes, and its default changes over time. So the workflow
+  `env` sets `DEVELOPER_DIR` to the one Xcode that matches the local one, and
+  `make swift-baseline` fails when the two Swift versions differ
+  ([Swift toolchain](/tools/swift-toolchain.md)). The `xcode-27` image is a public preview of
+  GitHub, so a job can wait longer for a runner than on `macos-26`.
 - **Every error at once.** The job sets Xcode's "continue building after errors" default, so a
   failed run lists the compile errors of every target.
 - **Cache.** The vendored ffmpeg is cached on the hash of `tools/vendor-ffmpeg.sh`. The Xcode

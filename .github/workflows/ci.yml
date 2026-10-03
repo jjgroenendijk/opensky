@@ -24,11 +24,14 @@ env:
   SHELLCHECK_VERSION: v0.11.0
   ACTIONLINT_VERSION: 1.7.12
   JSCPD_VERSION: 5.4.0
+  # The image holds several Xcodes and its default moves. Name the one that matches the
+  # local Xcode; `make swift-baseline` fails when the Swift versions differ.
+  DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
 
 jobs:
   format:
     name: Format
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +61,7 @@ jobs:
 
   static-checks:
     name: Static checks
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -104,7 +107,7 @@ jobs:
   # OPENSKY_DATA_ROOT, so a gated test skips. The real-data suites only compile.
   build-test:
     name: Build & test
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     env:
       SIGNING: CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM=
@@ -173,7 +176,7 @@ jobs:
     name: Lint
     if: always()
     needs: [format, static-checks, build-test]
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 5
     steps:
       - name: Fail unless every job passed

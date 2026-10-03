@@ -38,7 +38,7 @@ conflict.
 
 - The repo sits on a case-insensitive external APFS volume. A case-only rename needs
   `git mv`, and AppleDouble `._*` files are ignored.
-- Xcode 26 ships without the Metal Toolchain. `make bootstrap`, once per checkout,
+- Xcode 26 and 27 ship without the Metal Toolchain. `make bootstrap`, once per checkout,
   downloads it.
 - Target membership under `Sources/` follows the folder, not a list in the project file:
   `OpenSky/` builds only into the app, `OpenSkyCLI/` only into the CLI, and `Shaders/` into
@@ -69,8 +69,10 @@ conflict.
 ## Environment & tech stack
 
 - Metal 4 only. No OpenGL, no MoltenVK, no abstraction layer over another API.
-- macOS 26+ (Tahoe), Xcode 26, Apple Silicon. No older-macOS or Intel paths unless asked.
-- Swift 6 language mode, Apple Swift 6.3.3 or newer (`make swift-baseline`).
+- macOS 26+ (Tahoe) as the deployment target, Xcode 27, Apple Silicon. No older-macOS or
+  Intel paths unless asked.
+- Swift 6 language mode. Local builds and CI use the same Apple Swift, 6.4
+  (`make swift-baseline`).
 - Minimal C interop, only where a format genuinely needs it, wrapped behind a Swift
   interface. No embedded game engine.
 - Dependencies: prefer the standard library and Apple frameworks, then Swift Packages via
