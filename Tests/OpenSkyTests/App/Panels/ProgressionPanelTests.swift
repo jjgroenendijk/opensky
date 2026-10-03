@@ -87,7 +87,7 @@ struct ProgressionPanelTests {
 
         let ids = DestinationRegistry.all.map(\.id)
         let index = try #require(ids.firstIndex(of: "progression"))
-        #expect(ids[index - 1] == "dialogueVoice")
+        #expect(ids[index - 1] == "effects")
         #expect(ids[index + 1] == "crimeFactions")
     }
 

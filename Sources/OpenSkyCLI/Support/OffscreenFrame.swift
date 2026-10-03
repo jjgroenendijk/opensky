@@ -46,7 +46,10 @@ extension RenderCommand {
         timeOfDay: Float,
         uiScene: UIScene = .empty,
         navigationOverlayGraph: RuntimeNavigationGraph? = nil,
-        detectionOverlay: PerceptionRuntime? = nil
+        detectionOverlay: PerceptionRuntime? = nil,
+        frames: Int = 1,
+        configure: (Renderer) throws -> Void = { _ in },
+        inspect: (Renderer) -> Void = { _ in }
     ) throws -> OffscreenFrame {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
@@ -77,7 +80,12 @@ extension RenderCommand {
                 detectionOverlay.appendWorldOverlay(context: context, to: &list)
             }
         }
-        let texture = try renderer.renderOffscreen(width: size.width, height: size.height)
+        try configure(renderer)
+        var texture = try renderer.renderOffscreen(width: size.width, height: size.height)
+        for _ in 1 ..< max(frames, 1) {
+            texture = try renderer.renderOffscreen(width: size.width, height: size.height)
+        }
+        inspect(renderer)
         return OffscreenFrame(
             texture: texture,
             stats: renderer.lastDrawStats,

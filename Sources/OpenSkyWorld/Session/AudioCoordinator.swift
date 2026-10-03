@@ -101,13 +101,17 @@ public final class AudioCoordinator {
         let audioData = provider as? AudioDataProviding
         let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
         let fileSystem = world?.audioFileSystem
-        soundDirector = WorldAudioSoundDirector(
+        let director = WorldAudioSoundDirector(
             engine: engine,
             soundStore: audioData?.soundStore,
             weatherStore: weatherStore,
             aspcStore: audioData?.aspcStore,
             fileSystem: fileSystem
         )
+        if let records = (provider as? EffectDataProviding)?.effectRecords {
+            director.wireEffectRecords(records)
+        }
+        soundDirector = director
         let music = WorldMusicDirector(
             engine: engine,
             musicStore: audioData?.musicStore,

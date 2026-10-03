@@ -35,10 +35,13 @@ extension WorldAudioEngine {
                     fadeGain: source.fadeGain,
                     isFading: source.activeFade != nil,
                     effectiveGain: effectiveGain(of: source),
-                    positionSeconds: playbackPosition(ofSource: source.id)
+                    positionSeconds: playbackPosition(ofSource: source.id),
+                    outputModel: source.outputModelName,
+                    distanceGain: source.distanceGain
                 )
             },
-            sourceCap: Self.maxConcurrentSources
+            sourceCap: Self.maxConcurrentSources,
+            reverb: reverb
         )
     }
 }

@@ -87,6 +87,10 @@ public protocol ParticleControlProviding: AnyObject {
 public protocol PrecipitationControlProviding: AnyObject {
     var precipitationEnabled: Bool { get set }
     var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
+    /// The `SPGD` scales in use, the fallback when the weather names none.
+    var precipitationTuning: PrecipitationTuning { get }
+    /// The volumetric lighting the strongest weather names now, nil when none.
+    var weatherVolumetricLighting: String? { get }
 }
 
 nonisolated public struct GrassControlSnapshot: Equatable, Sendable {
@@ -275,6 +279,12 @@ public protocol AudioControlProviding: AnyObject {
     func playAudioFile(named name: String) -> String?
     func stopAllAudioSources()
     var audioStatsSnapshot: AudioStatsSnapshot { get }
+    /// Fixes the room reverb's wet level, in dB; nil follows the acoustic space.
+    var reverbWetOverride: Float? { get set }
+    /// The `REVB` record of the current acoustic space, nil outdoors.
+    var reverbRecord: ReverbParameters? { get }
+    /// How the last one-shot was routed, and why.
+    var lastAudioRouting: String? { get }
 
     // Voice-line controls. The archives hold 75,408 `.fuz` voice
     // files, far past what a picker can list, so the picker is a filter over

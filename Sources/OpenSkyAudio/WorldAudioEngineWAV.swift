@@ -64,4 +64,13 @@ extension WorldAudioEngine {
         return magic.elementsEqual(Array("RIFF".utf8))
             && form.elementsEqual(Array("WAVE".utf8))
     }
+
+    /// The channel count a `.wav` or `.xwm` file declares, or nil when neither parses.
+    /// The routing fallback reads it when a sound names no output model.
+    nonisolated public static func channelCount(of data: Data) -> Int? {
+        if isWAV(data) {
+            return try? WAVFile(data: data).format.channelCount
+        }
+        return try? XWMFile(data: data).codec.channelCount
+    }
 }

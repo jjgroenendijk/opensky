@@ -93,16 +93,23 @@ final class AudioSourcesSection: PanelSectionViewController {
             let elapsed = source.positionSeconds
                 .map { String(format: "%.2f s", $0) } ?? "--"
             lines.append(String(
-                format: "%@ [%@] %.0f, %.0f, %.0f | %.1f m | gain %.2f | %@",
+                format: "%@ [%@] %.0f, %.0f, %.0f | %.1f m | gain %.2f | %@ | %@",
                 Self.shortName(source.name), source.categoryName,
                 position.x, position.y, position.z,
-                source.distanceMeters, source.effectiveGain, elapsed
+                source.distanceMeters, source.effectiveGain, elapsed, Self.routing(source)
             ))
         }
         if let lastPlayError {
             lines.append("Play failed: \(lastPlayError)")
         }
         statsLabel.stringValue = lines.joined(separator: "\n")
+    }
+
+    /// The output model and its curve gain, or the channel-count rule.
+    static func routing(_ source: AudioSourceStatsSnapshot) -> String {
+        let route = source.isPositional ? "3D" : "flat"
+        guard let model = source.outputModel else { return "\(route) by channels" }
+        return String(format: "%@ %@, curve %.2f", route, model, source.distanceGain)
     }
 
     /// Last path component, so a row fits the panel column.

@@ -67,6 +67,8 @@ final class FakeWorldProviders: WorldControlProviders {
     var particleEmissionScale: Float = 1
     var particleSnapshot = ParticleControlSnapshot(systemCount: 0, emitterCount: 0, liveCount: 0)
 
+    var effectsState = FakeEffectsState()
+
     // PrecipitationControlProviding
     var precipitationEnabled = true
     var precipitationSnapshot = PrecipitationRuntimeSnapshot(

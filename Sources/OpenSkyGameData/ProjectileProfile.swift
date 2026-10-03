@@ -22,6 +22,12 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
     /// PROJ `collisionRadius`, world units. The radius the impact sweep uses;
     /// zero flies as a point and is a supported case, not a degraded one.
     public let collisionRadius: Float
+    /// PROJ `explosion`, spelled in the item plugin. Nil on a projectile that does not explode.
+    public var explosion: FormID?
+    /// With the alternate trigger: an actor this close detonates it. Zero is off.
+    public var explosionProximity: Float = 0
+    /// With the alternate trigger: seconds of flight that detonate it. Zero is off.
+    public var explosionTimer: Float = 0
 
     public init(
         projectile: FormID? = nil,
@@ -49,6 +55,11 @@ nonisolated public struct ProjectileProfile: Equatable, Sendable {
             lifetime: record.lifetime,
             collisionRadius: record.collisionRadius
         )
+        explosion = record.explosion
+        if record.flags.contains(.alternateTrigger) {
+            explosionProximity = Self.clean(record.explosionProximity)
+            explosionTimer = Self.clean(record.explosionTimer)
+        }
     }
 
     /// Whether this profile describes something the flight model can integrate.

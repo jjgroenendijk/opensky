@@ -275,7 +275,8 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
     /// body moves every frame.
     public func renderPlacements(
         at transform: float4x4,
-        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
+        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
+        owner: UInt32 = 0
     ) -> [RenderPlacement] {
         models.map {
             let morphs: [ObjectIdentifier: FaceMorphBuffer] =
@@ -291,7 +292,8 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
                     ? nil
                     : $0.asset.bounds?.transformed(by: transform),
                 faceMorphs: morphs,
-                layer: .actors
+                layer: .actors,
+                owner: owner
             )
         }
     }

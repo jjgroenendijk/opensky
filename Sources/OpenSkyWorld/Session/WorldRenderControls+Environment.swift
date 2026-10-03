@@ -117,6 +117,20 @@ extension WorldRenderControls: PrecipitationControlProviding {
             snowLiveCount: 0
         )
     }
+
+    public var precipitationTuning: PrecipitationTuning {
+        renderer?.precipitation.tuning ?? .fallback
+    }
+
+    public var weatherVolumetricLighting: String? {
+        guard
+            let renderer, let weather = renderer.weather,
+            let links = renderer.session.imageSpaceLinks
+        else { return nil }
+        return weather.volumetricLighting(
+            in: links.records, plugin: links.weatherPlugin, hour: renderer.timeOfDay
+        )
+    }
 }
 
 extension WorldRenderControls: GrassControlProviding {

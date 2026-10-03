@@ -22,4 +22,10 @@ nonisolated extension HazardStore {
             affectsPlayerOnly: properties.affectsPlayerOnly
         )
     }
+
+    /// The `MODL` path of `key`, drawn where a spawned hazard sits.
+    public func modelPath(for key: ReferenceKey) -> String? {
+        guard case let .plugin(name, objectID) = key else { return nil }
+        return hazards.record(ResolvedFormID(plugin: name, objectID: objectID))?.record.model?.path
+    }
 }

@@ -167,6 +167,8 @@ final class GameViewController: NSViewController {
     lazy var lockWorld = LockWorldAdapter(game: self)
     lazy var hazards = HazardCoordinator()
     lazy var hazardWorld = HazardWorldAdapter(game: self)
+    lazy var effects = EffectsCoordinator()
+    lazy var effectsWorld = EffectsWorldAdapter(game: self)
     lazy var trapControl = TrapControlAdapter(game: self)
     /// The player graphs, the body, and the locomotion and first-person panels.
     lazy var player: PlayerCoordinator = {
@@ -352,18 +354,6 @@ final class GameViewController: NSViewController {
         try FrameScreenshot.write(texture: texture, to: url)
     }
 
-    /// The playback drawing one resident actor, matched by its ACHR.
-    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
-        guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
-        return renderer?.scene.actorPlayback(for: actor.formID)
-    }
-
-    /// The pose one actor's clip holds now, keyed by bone name.
-    func animatedPose(for key: ReferenceKey) -> [String: float4x4]? {
-        guard let renderer, let playback = actorPlayback(for: key) else { return nil }
-        return playback.clip.namedWorldTransforms(at: renderer.animationTime)
-    }
-
     static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
@@ -382,6 +372,20 @@ final class GameViewController: NSViewController {
             label.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 32),
             label.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32)
         ])
+    }
+}
+
+extension GameViewController {
+    /// The playback drawing one resident actor, matched by its ACHR.
+    func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
+        guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
+        return renderer?.scene.actorPlayback(for: actor.formID)
+    }
+
+    /// The pose one actor's clip holds now, keyed by bone name.
+    func animatedPose(for key: ReferenceKey) -> [String: float4x4]? {
+        guard let renderer, let playback = actorPlayback(for: key) else { return nil }
+        return playback.clip.namedWorldTransforms(at: renderer.animationTime)
     }
 }
 
@@ -416,8 +420,17 @@ extension GameViewController: @MainActor SystemMenuWorld {
 }
 
 extension GameViewController: AudioControlForwarding, RuntimeStateControlForwarding,
-    ScriptControlForwarding, WorldRenderControlForwarding, RenderControlWorld
+    ScriptControlForwarding, WorldRenderControlForwarding, RenderControlWorld,
+    EffectsControlForwarding, ExplosionControlForwarding
 {
+    var effectsSelectedActor: ReferenceKey? {
+        actorWorld.nearestActorValueHolder()?.key
+    }
+
+    var explosionControlWorld: any ExplosionControlWorld {
+        effectsWorld
+    }
+
     func refocusGameView() {
         view.window?.makeFirstResponder(view)
     }

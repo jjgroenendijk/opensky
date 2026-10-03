@@ -12,16 +12,16 @@ extension Renderer {
     /// are drawn separately (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
         guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
-            return scene.opaque
+            return scene.opaque + effects.scene.opaque
         }
-        return scene.opaque + playerBody.render.opaque
+        return scene.opaque + playerBody.render.opaque + effects.scene.opaque
     }
 
     public var alphaTestedDrawGroups: [DrawGroup] {
         guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
-            return scene.alphaTested
+            return scene.alphaTested + effects.scene.alphaTested
         }
-        return scene.alphaTested + playerBody.render.alphaTested
+        return scene.alphaTested + playerBody.render.alphaTested + effects.scene.alphaTested
     }
 
     /// What the shadow pass rasterizes: the scene plus the player's body in
@@ -51,8 +51,9 @@ extension Renderer {
     /// so a body attached over a large scene has to ask for its own headroom.
     public func growRingsForPlayerBody(_ body: any RenderRig) throws {
         try growRings(
-            drawCount: scene.drawCount + body.render.drawCount,
+            drawCount: scene.drawCount + body.render.drawCount + effects.scene.drawCount,
             instanceCount: scene.instanceCount + body.render.instanceCount
+                + effects.scene.instanceCount
         )
     }
 }

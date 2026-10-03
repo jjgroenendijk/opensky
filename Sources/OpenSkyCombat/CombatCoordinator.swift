@@ -15,6 +15,8 @@ public final class CombatCoordinator {
     public private(set) var melee: MeleeCombatRuntime?
     public private(set) var archery: ArcheryRuntime?
     public private(set) var loop: CombatLoopRuntime?
+    /// Every explosion: projectile, spell, and sidebar detonations share it.
+    public let explosions = ExplosionRuntime()
     /// The WEAP, AMMO and PROJ index the hands and arrows resolve through.
     public private(set) var items: ItemDefinitionStore?
     /// Fighting actors may cast their spells unless the panel turns it off.
@@ -51,6 +53,7 @@ public final class CombatCoordinator {
     ) {
         let projectiles = ProjectileRuntime(settings: settings)
         projectiles.impacts = impacts
+        projectiles.explosions = explosions
         let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles)
         self.items = items ?? self.items
         archery = runtime

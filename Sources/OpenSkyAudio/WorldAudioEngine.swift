@@ -88,6 +88,8 @@ public final class WorldAudioEngine {
     public private(set) var unavailableReason: String?
     /// Listener pose in world space, kept for the snapshot's distance column.
     public private(set) var listenerWorldPosition = SIMD3<Float>.zero
+    /// The room reverb on the 3D submix (`WorldAudioEngineReverb.swift`).
+    public var reverb = ReverbRamp()
 
     /// Off by default: no audio engine starts (and no output device is touched)
     /// until the user enables it in World > Audio.
@@ -222,6 +224,8 @@ public final class WorldAudioEngine {
             source.voiceClock?.publish(max(0, playbackClockSeconds - source.startClockSeconds))
         }
         advanceFades(deltaTime: deltaTime)
+        advanceReverb(deltaTime: deltaTime)
+        updateDistanceGains()
         retireFinishedSources()
         purgeSources(fartherThan: Self.cellPurgeRadius, fromCell: listenerCell)
     }

@@ -45,6 +45,8 @@ public final class GameSession: RenderFrameDriver {
     public var weatherEnabled = true
     /// Wall-clock delta source for the weather runtime, paused in menu mode.
     public var weatherClock = FrameSimClock()
+    /// Where the baseline image space comes from; nil leaves the frame ungraded.
+    public var imageSpaceLinks: ImageSpaceLinks?
     /// World audio playback graph; nil until the app wires one (offscreen and
     /// CLI paths stay silent). Ticked by Renderer+Audio.swift.
     public var worldAudio: WorldAudioEngine?

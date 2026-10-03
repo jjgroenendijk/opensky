@@ -88,6 +88,8 @@ nonisolated public struct CellScene: Sendable {
     public var assets = CellAssets()
     /// Enabled `PHZD` placed hazards, for the hazard runtime.
     public var hazards: [CellHazard] = []
+    /// CELL `XCIM`, the interior's image space, spelled in `ownerPluginName`.
+    public var imageSpace: FormID?
 
     public init(
         renderScene: RenderScene,

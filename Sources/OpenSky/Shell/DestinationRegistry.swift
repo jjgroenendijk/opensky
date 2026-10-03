@@ -48,28 +48,29 @@ typealias WorldControlProviders = AINavigationControlProviding
     & CraftingControlProviding
     & CrimeFactionControlProviding & DialogueBranchControlProviding
     & DialogueCameraControlProviding & DialogueControlProviding
-    & FaceMorphControlProviding
-    & FirstPersonControlProviding & FrameStatsProviding
-    & GrassControlProviding
-    & HUDControlProviding & HeadAssemblyControlProviding & IdleControlProviding
-    & InventoryEquipmentControlProviding
-    & InventoryMenuControlProviding & ItemControlProviding
-    & JournalControlProviding & LockControlProviding
-    & MagicEffectControlProviding
+    & ExplosionControlProviding & FaceMorphControlProviding & FirstPersonControlProviding
+    & FrameStatsProviding
+    & GrassControlProviding & HUDControlProviding
+    & HeadAssemblyControlProviding
+    & IdleControlProviding & ImageSpaceControlProviding & InventoryEquipmentControlProviding
+    & InventoryMenuControlProviding
+    & ItemControlProviding & JournalControlProviding
+    & LockControlProviding & MagicEffectControlProviding
     & MeleeCombatControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
-    & PrecipitationControlProviding & ProgressionControlProviding
-    & RagdollControlProviding & RenderDebugControlProviding
-    & RuntimeStateControlProviding & SWFLabControlProviding & SceneControlProviding
-    & SceneStatsProviding
-    & ScriptControlProviding & ShadowControlProviding
-    & StoryManagerControlProviding
-    & SystemMenuControlProviding & TerrainLODControlProviding & TrapControlProviding
-    & TriggerControlProviding
+    & PrecipitationControlProviding
+    & ProgressionControlProviding & RagdollControlProviding
+    & RenderDebugControlProviding & RuntimeStateControlProviding
+    & SWFLabControlProviding & SceneControlProviding & SceneStatsProviding
+    & ScriptControlProviding
+    & ShadowControlProviding & StoryManagerControlProviding
+    & SystemMenuControlProviding
+    & TerrainLODControlProviding & TrapControlProviding & TriggerControlProviding
     & UILabControlProviding
+    & VisualEffectControlProviding
     & WeatherControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
@@ -171,7 +172,7 @@ enum DestinationRegistry {
     /// The registered destinations, in sidebar order. The menu, progression and
     /// crime destinations are spliced in from the `DestinationRegistry*` files,
     /// which exist only for the type-length cap.
-    static let all: [DestinationDescriptor] = simulationDestinations
+    static let all: [DestinationDescriptor] = simulationDestinations + effectsDestinations
         + progressionDestinations + crimeDestinations + menuDestinations
         + sessionDestinations
 

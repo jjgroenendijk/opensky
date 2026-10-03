@@ -63,6 +63,8 @@ nonisolated public struct ActiveHazard: Equatable, Sendable {
     public internal(set) var age: Float = 0
     /// Seconds until each actor in the radius may be hit again.
     public internal(set) var cooldowns: [ReferenceKey: Float] = [:]
+    /// Steps on which this hazard hit at least one actor.
+    public internal(set) var tickCount = 0
 
     /// Only a spawned hazard expires: a placed one lives while its cell is resident
     /// and its enable state allows. OpenSky's reading of the lifetime field.
@@ -134,10 +136,11 @@ nonisolated public struct HazardRuntime: Equatable, Sendable {
                 candidates: candidates,
                 player: player
             )
-            active[id] = hazard
             if !targets.isEmpty {
+                hazard.tickCount += 1
                 hits.append(HazardHit(hazard: id, spec: hazard.spec, targets: targets))
             }
+            active[id] = hazard
         }
         return hits
     }

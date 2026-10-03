@@ -102,6 +102,21 @@ nonisolated public final class WeatherSystem {
         transitionProgress
     }
 
+    /// The weathers the current look blends, with the eased weights the sky uses.
+    public var blendedWeathers: [(weather: FormID, weight: Float)] {
+        guard let toWeather else { return [] }
+        guard transitionProgress < 1, let fromWeather, fromWeather != toWeather else {
+            return [(toWeather, 1)]
+        }
+        let time = transitionProgress * transitionProgress * (3 - 2 * transitionProgress)
+        return [(fromWeather, 1 - time), (toWeather, time)]
+    }
+
+    /// The four time-of-day weights at `hour` under this worldspace's climate.
+    public func timeOfDayWeights(hour: Float) -> TimeOfDayWeights {
+        TimeOfDayWeights(hour: hour, timing: climateTiming())
+    }
+
     // MARK: Inputs
 
     /// Feeds the current exterior cell's XCLR regions. A changed region set

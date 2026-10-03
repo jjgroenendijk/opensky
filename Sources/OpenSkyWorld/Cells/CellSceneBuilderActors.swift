@@ -272,7 +272,8 @@ nonisolated extension CellSceneBuilder {
         let faceMorph = makeFaceMorphPlayback(assembly: assembly)
         build.placements.append(contentsOf: assembly.renderPlacements(
             at: assembly.transform,
-            faceMorphs: faceMorph?.bindings ?? [:]
+            faceMorphs: faceMorph?.bindings ?? [:],
+            owner: assembly.actor.rawValue
         ))
         if let faceMorph {
             build.animations.append(faceMorph)

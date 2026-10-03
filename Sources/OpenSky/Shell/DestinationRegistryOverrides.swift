@@ -11,12 +11,14 @@ extension DestinationRegistry {
                 || AudioSfxSection.isOverridden(provider: context.providers)
                 || AudioMusicSection.isOverridden(provider: context.providers)
                 || AudioFootstepsSection.isOverridden(provider: context.providers)
+                || AudioReverbSection.isOverridden(provider: context.providers)
         },
         resetToDefaults: { context in
             AudioOutputSection.resetToDefaults(provider: context.providers)
             AudioSfxSection.resetToDefaults(provider: context.providers)
             AudioMusicSection.resetToDefaults(provider: context.providers)
             AudioFootstepsSection.resetToDefaults(provider: context.providers)
+            AudioReverbSection.resetToDefaults(provider: context.providers)
         }
     )
 

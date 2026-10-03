@@ -13,6 +13,9 @@ extension Renderer {
         // ignore it.
         view.depthStencilPixelFormat = .depth32Float_stencil8
         view.sampleCount = 1
+        // The image-space pass copies the drawable's color, which needs a non-framebuffer-only
+        // texture.
+        view.framebufferOnly = false
     }
 
     /// Two timestamp entries (frame start/end) per in-flight slot; nil when the

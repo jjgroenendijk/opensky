@@ -50,6 +50,16 @@ struct HazardRuntimeTests {
         #expect(runtime.step(0.5, candidates: inside).first?.targets.map(\.key) == [.player])
     }
 
+    @Test func onlyAStepThatHitsCountsAsATick() {
+        var runtime = HazardRuntime()
+        runtime.place(Self.spec(), id: Self.id(1), at: .zero, source: .spawned)
+        let inside = [Self.actor(.player, x: 50)]
+        _ = runtime.step(0.1, candidates: inside)
+        _ = runtime.step(0.5, candidates: inside)
+        _ = runtime.step(0.5, candidates: inside)
+        #expect(runtime.active[Self.id(1)]?.tickCount == 2)
+    }
+
     @Test func anActorOutsideTheRadiusIsNotHit() {
         var runtime = HazardRuntime()
         runtime.place(Self.spec(radius: 30), id: Self.id(1), at: .zero, source: .placed(Self.cell))

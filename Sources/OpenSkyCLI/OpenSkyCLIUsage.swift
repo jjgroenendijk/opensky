@@ -75,6 +75,9 @@ extension OpenSkyCLI {
                                   class-name + object inventory
       hkt <key> | hkt sweep       Decode a Havok binary tagfile: classes with
                                   versions, objects, cloth classes, bones
+      effects census | effects imad <edid> [--at <seconds>]
+                                  Census the IMAD, IMGS, SPGD, SOPM, and REVB
+                                  records, or sample one IMAD at a time
       skeleton <hkx-key> [--nif <nif-key>]
                                   Decode each hkaSkeleton (bone names, parent
                                   chain, roots); --nif name-maps the rig onto
@@ -152,14 +155,19 @@ extension OpenSkyCLI {
                                   the naming check
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
-             [--ui-sample]
+             [--ui-sample] [--image-space-off] [--imgs <edid>]
+             [--imad <edid> [--imad-at <s>]] [--membrane <efsh>]
+             [--weather <edid>] [--frames <n>]
                                   Save an offscreen World frame as PNG; zoom
                                   moves the eye toward the framed center;
                                   time-of-day defaults to 13:00;
                                   --neighbors adds the 8 surrounding cells,
                                   camera frames the combined bounds;
                                   --ui-sample overlays the screen-space UI
-                                  sample scene + prints its draw stats
+                                  sample scene + prints its draw stats;
+                                  the effect flags force image space,
+                                  a modifier, a membrane on the first
+                                  actor, or a weather; --frames warms up
       render <screenshot options> Compatibility alias for screenshot
       bench [--worldspace <edid>] [--x <n>] [--y <n>] [--size WxH]
             [--frames <n>] [--budget-ms <f>]

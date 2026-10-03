@@ -67,3 +67,34 @@ Each channel field is a run of keyframes: time then value, 8 bytes each. `TNAM` 
 
 The first byte of the counter signatures is often not printable. A channel whose keyframe
 count differs from the header is tallied.
+
+## Resolution
+
+The baseline image space comes from the place the camera is in:
+
+- An interior cell uses its own `XCIM` image space. A cell without one is neutral.
+- An exterior uses `WTHR IMSP`: four image spaces, one per time of day (sunrise, day,
+  sunset, night). OpenSky blends them by the time-of-day weights the sky colors use, and
+  then by the weight of each weather in a weather transition.
+
+Every link resolves relative to the plugin that holds the weather or the cell. The blend is
+a weighted sum of each numeric field. A slot that names nothing counts as neutral, so a
+weather that leaves one slot empty fades toward neutral at that time of day.
+
+The original game's exact blend rule is not documented. Weighting by the same factors as the
+sky colors keeps the sky and the image space in step during a transition.
+
+## Sampling
+
+An `IMAD` channel is sampled linearly between its two nearest keys and is clamped to the
+first and last key outside them. Keys need not be sorted.
+
+The animatable flag (`DNAM` offset 0) selects the time unit of the keys. On the install, an
+animatable modifier spells its key times as fractions of its duration (0 to 1). A modifier
+that is not animatable spells them in seconds, and it then holds its last values for its
+duration. A duration under 0.1 s plays for 0.1 s, so a zero duration still shows one frame.
+
+A multiply channel scales the baseline value and an add channel adds to it. A strength
+between 0 and 1 weighs both: multiply by `1 + (m - 1) * s`, then add `a * s`. Several
+modifiers apply in start order. A one-shot start of a modifier that is already running
+restarts it, so a burst of hits does not stack one flash many times.

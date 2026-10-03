@@ -39,6 +39,19 @@ extension AudioCoordinator: AudioControlProviding {
         engine?.statsSnapshot() ?? .empty
     }
 
+    public var reverbWetOverride: Float? {
+        get { engine?.reverb.wetOverride }
+        set { engine?.setReverbWetOverride(newValue) }
+    }
+
+    public var reverbRecord: ReverbParameters? {
+        soundDirector?.currentReverbRecord
+    }
+
+    public var lastAudioRouting: String? {
+        soundDirector?.lastRouting
+    }
+
     public var sfxEnabled: Bool {
         get { soundDirector?.sfxEnabled ?? true }
         set { soundDirector?.sfxEnabled = newValue }

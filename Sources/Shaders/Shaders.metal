@@ -937,3 +937,73 @@ fragment float4 swfMaskFragment(SWFVertexOut in [[stage_in]])
 {
     return float4(0.0);
 }
+
+// Image-space composite: one fullscreen triangle over a copy of the scene color.
+// Order: blur, double vision, saturation, brightness, contrast, tint, fade
+// (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
+constant float3 imageSpaceLuminance = float3(0.2126, 0.7152, 0.0722);
+
+static float3 imageSpaceBlur(
+    texture2d<float> scene,
+    sampler linearClamp,
+    float2 uv,
+    float2 texel,
+    float radius,
+    float3 center)
+{
+    float3 sum = center;
+    float count = 1.0;
+    for (int ring = 1; ring <= 2; ++ring) {
+        float reach = radius * float(ring) * 0.5;
+        for (int tap = 0; tap < 6; ++tap) {
+            float angle = (float(tap) + 0.5 * float(ring)) * 1.0471976;
+            float2 offset = float2(cos(angle), sin(angle)) * reach * texel;
+            sum += scene.sample(linearClamp, uv + offset).rgb;
+            count += 1.0;
+        }
+    }
+    return sum / count;
+}
+
+fragment float4 imageSpaceFragment(
+    SkyVertexOut in [[stage_in]],
+    constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
+    texture2d<float> scene [[texture(TextureIndexSceneColor)]])
+{
+    constexpr sampler linearClamp(filter::linear, address::clamp_to_edge);
+    float2 size = float2(scene.get_width(), scene.get_height());
+    float2 texel = 1.0 / size;
+    float2 uv = in.position.xy * texel;
+    float3 color = scene.sample(linearClamp, uv).rgb;
+    if (uniforms.grading.w > 0.5) {
+        color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);
+    }
+    float doubleVision = saturate(uniforms.extra.x);
+    if (doubleVision > 0.0) {
+        float3 ghost = scene.sample(linearClamp, uv + float2(0.02 * doubleVision, 0.0)).rgb;
+        color = mix(color, ghost, 0.5 * doubleVision);
+    }
+    float luminance = dot(color, imageSpaceLuminance);
+    color = mix(float3(luminance), color, uniforms.grading.x);
+    color *= uniforms.grading.y;
+    float3 encoded = pow(max(color, 0.0), 1.0 / 2.2);
+    encoded = (encoded - 0.5) * uniforms.grading.z + 0.5;
+    color = pow(max(encoded, 0.0), 2.2);
+    float tinted = dot(color, imageSpaceLuminance);
+    color = mix(color, tinted * uniforms.tint.rgb, uniforms.tint.a);
+    color = mix(color, uniforms.fade.rgb, uniforms.fade.a);
+    return float4(saturate(color), 1.0);
+}
+
+// Effect-shader membrane: an additive glow over the target's meshes, brighter at
+// grazing angles (docs/rendering/visual-effects.md). Blending is one + one.
+fragment float4 membraneFragment(
+    StaticVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant MembraneUniforms &membrane [[buffer(BufferIndexMembraneUniforms)]])
+{
+    float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
+    float facing = saturate(abs(dot(normalize(in.normal), toEye)));
+    float rim = pow(1.0 - facing, max(membrane.edge.a, 0.05));
+    return float4(membrane.fill.rgb + membrane.edge.rgb * rim, 0.0);
+}

@@ -19,7 +19,9 @@ nonisolated extension DrawInstance {
             castsShadows: castsShadows,
             receivesPointLights: receivesPointLights,
             receivesShadows: receivesShadows,
-            referenceFormID: referenceFormID
+            referenceFormID: referenceFormID,
+            layer: layer,
+            owner: owner
         )
     }
 }
