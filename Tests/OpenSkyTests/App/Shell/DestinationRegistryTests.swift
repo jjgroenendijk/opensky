@@ -24,7 +24,8 @@ struct DestinationRegistryTests {
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder"
+            "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder",
+            "agentControl"
         ])
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
@@ -38,14 +39,14 @@ struct DestinationRegistryTests {
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
             "Destination-journal", "Destination-uiLab", "Destination-assetBrowser",
-            "Destination-loadOrder"
+            "Destination-loadOrder", "Destination-agentControl"
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "journal", "uiLab"
+            "runtimeState", "scripts", "journal", "uiLab", "agentControl"
         ])
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }

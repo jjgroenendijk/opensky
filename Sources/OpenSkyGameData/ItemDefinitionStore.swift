@@ -217,6 +217,12 @@ nonisolated public final class ItemDefinitionStore {
         definitions[id.rawValue]
     }
 
+    /// A linear scan, for a console-style command that names an item by editor ID.
+    public func definition(editorID: String) -> ItemDefinition? {
+        let wanted = editorID.lowercased()
+        return definitions.values.first { $0.editorID?.lowercased() == wanted }
+    }
+
     public func container(_ id: FormID) -> Container? {
         containers[id.rawValue]
     }

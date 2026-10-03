@@ -62,12 +62,35 @@ extension CellStreamer {
 
     @discardableResult
     public func requestDoorTransition(_ door: PlacedDoor?) -> Bool {
-        guard transitionInFlight == nil, let door else { return false }
-        transitionInFlight = door.reference
+        guard let door else { return false }
+        return requestDoorTransition(from: door.reference)
+    }
+
+    /// Goes through any door REFR in the load order, resident or not. A
+    /// console-style teleport into an interior enters through its door.
+    @discardableResult
+    public func requestDoorTransition(from sourceDoor: FormID) -> Bool {
+        guard transitionInFlight == nil else { return false }
+        transitionInFlight = sourceDoor
         interiorRebuildInFlight = false
         // Built against the live store, so a changed interior comes back changed.
-        runner.enqueueDoorTransition(from: door.reference, state: stateSource())
+        runner.enqueueDoorTransition(from: sourceDoor, state: stateSource())
         return true
+    }
+
+    /// Drops the interior and shows the resident exterior again at `camera`,
+    /// for a teleport out that uses no door. The grid then follows the camera.
+    public func leaveInterior(camera: SceneCamera) {
+        guard let previous = interiorScene else { return }
+        interiorScene = nil
+        interiorSourceDoor = nil
+        interiorMutationSequence = 0
+        updateInteractionTarget(ray: nil)
+        emitCellDetached(previous)
+        evictUnused(previous.assets)
+        sink(composition.composedScene(), camera)
+        invalidateAmbienceContext()
+        invalidateMusicContext()
     }
 
     private func emitDoorMotion(

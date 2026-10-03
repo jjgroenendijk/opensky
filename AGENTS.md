@@ -226,6 +226,7 @@ the skill.
 | `implementing-format-parsers` | Adding or changing any file format parser: ESM, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |
 | `probing-real-game-data` | Running engine code against the real Skyrim SE install |
+| `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game` |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
 | `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |

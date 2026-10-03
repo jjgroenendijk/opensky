@@ -20,6 +20,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
     var faceMorphSnapshot = FaceMorphControlSnapshot.empty
     var idleState = FakeIdleState()
+    var agentControlState = FakeAgentControlState()
 
     /// AI and navigation. The behaviour is in
     /// `FakeWorldProvidersAI.swift`; only the state lives here, because an

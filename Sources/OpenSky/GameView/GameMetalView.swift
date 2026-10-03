@@ -1,5 +1,5 @@
-// MTKView subclass that turns AppKit key and pointer events into
-// `CameraInputState`. Click captures the pointer; Esc or focus loss releases it.
+// MTKView subclass that turns AppKit key and pointer events into game actions
+// through `GameInputDispatcher`. Click captures the pointer; Esc or focus loss releases it.
 // Camera math lives in `FreeFlyCamera` (docs/engine/free-fly-camera.md).
 
 import AppKit
@@ -50,29 +50,36 @@ final class GameMetalView: MTKView {
 
     private var captured = false
 
+    /// World-mode inventory key, an accelerator like `onJournalKey` for
+    /// `World > Menus > Inventory Menu > Open`.
+    var onInventoryKey: (() -> Void)?
+
+    /// The path every key press takes, shared with the agent control server.
+    var dispatcher: GameInputDispatcher {
+        GameInputDispatcher(
+            input: input,
+            menuMode: menuMode,
+            openJournal: onJournalKey,
+            openInventory: onInventoryKey
+        )
+    }
+
     /// US ANSI virtual key codes (Carbon `kVK_*`). Physical layout, not
     /// characters — WASD stay under the left hand on any keyboard layout.
     private enum KeyCode {
-        static let keyW: UInt16 = 13
-        static let keyA: UInt16 = 0
-        static let keyS: UInt16 = 1
-        static let keyD: UInt16 = 2
-        static let keyQ: UInt16 = 12
-        static let keyE: UInt16 = 14
-        static let keyF: UInt16 = 3
-        static let keyG: UInt16 = 5
-        static let keyJ: UInt16 = 38
-        static let keyC: UInt16 = 8
-        static let keyR: UInt16 = 15
-        static let space: UInt16 = 49
         static let escape: UInt16 = 53
-        static let returnKey: UInt16 = 36
-        static let keypadEnter: UInt16 = 76
-        static let arrowLeft: UInt16 = 123
-        static let arrowRight: UInt16 = 124
-        static let arrowDown: UInt16 = 125
-        static let arrowUp: UInt16 = 126
     }
+
+    /// The action of each bound key. Space is the vanilla jump key. C stands
+    /// in for sneak because macOS reserves Control-click. R draws and sheathes.
+    /// All are listed on `World > Player & Locomotion`.
+    private static let keyActions: [UInt16: GameInputAction] = [
+        13: .forward, 1: .back, 0: .left, 2: .right, 14: .up, 12: .down,
+        3: .activate, 5: .cameraMode, 38: .journal, 34: .inventory, 49: .jump,
+        8: .sneak, 15: .readyWeapon,
+        36: .menuAccept, 76: .menuAccept, KeyCode.escape: .menuCancel,
+        126: .menuUp, 125: .menuDown, 123: .menuLeft, 124: .menuRight
+    ]
 
     override var acceptsFirstResponder: Bool {
         true
@@ -91,109 +98,43 @@ final class GameMetalView: MTKView {
         if event.isARepeat {
             return
         }
-        // Menu mode is the input-capture switch: world movement/look keys are
-        // suppressed and mapped to menu events for the menu layer.
-        if menuMode?.isMenuMode == true {
-            routeMenuKey(event)
-            return
-        }
-        if event.keyCode == KeyCode.escape {
+        // Outside a menu, Esc releases the pointer instead of acting.
+        if event.keyCode == KeyCode.escape, menuMode?.isMenuMode != true {
             releaseCapture()
             return
         }
-        if event.keyCode == KeyCode.keyF {
-            input?.requestActivation()
-            return
-        }
-        if event.keyCode == KeyCode.keyG {
-            input?.requestCameraModeCycle()
-            return
-        }
-        if event.keyCode == KeyCode.keyJ {
-            onJournalKey?()
-            return
-        }
-        // Space is the vanilla jump key. C stands in for the vanilla sneak key
-        // because macOS reserves Control-click. Both are listed on the
-        // `World > Player & Locomotion` panel.
-        if event.keyCode == KeyCode.space {
-            input?.requestJump()
-            return
-        }
-        if event.keyCode == KeyCode.keyC {
-            input?.toggleSneak()
-            return
-        }
-        // R is the vanilla draw/sheath key. Mouse buttons carry attack and
-        // block, as in vanilla. Listed on `World > Player & Locomotion > Melee`.
-        if event.keyCode == KeyCode.keyR {
-            input?.requestWeaponToggle()
-            return
-        }
-        guard let key = Self.moveKey(for: event.keyCode) else {
-            super.keyDown(with: event)
-            return
-        }
-        input?.press(key)
-    }
-
-    override func keyUp(with event: NSEvent) {
-        // Menus act on key-down. A direction key-up goes to the menu as a release,
-        // for menus that read held keys; no key-up reaches world input.
-        if menuMode?.isMenuMode == true {
-            if let direction = Self.menuDirection(for: event.keyCode) {
-                menuMode?.routeMenuInput(.release(direction))
+        guard let action = Self.keyActions[event.keyCode] else {
+            // A menu swallows unbound keys so none reaches the world.
+            if menuMode?.isMenuMode != true {
+                super.keyDown(with: event)
             }
             return
         }
-        guard let key = Self.moveKey(for: event.keyCode) else {
-            super.keyUp(with: event)
+        dispatcher.apply(action, .press)
+    }
+
+    override func keyUp(with event: NSEvent) {
+        // Menus act on key-down; a held direction's key-up reaches a menu that
+        // reads held keys. One-shot actions have no key-up.
+        guard
+            let action = Self.keyActions[event.keyCode],
+            action.isHeld || menuMode?.isMenuMode == true
+        else {
+            if menuMode?.isMenuMode != true {
+                super.keyUp(with: event)
+            }
             return
         }
-        input?.release(key)
-    }
-
-    /// Maps a key-down to a toolkit-free menu event and routes it while menu
-    /// mode is active. Unmapped keys are swallowed (still suppressed from the
-    /// world) rather than passed on.
-    private func routeMenuKey(_ event: NSEvent) {
-        let menuEvent: MenuInputEvent? = switch event.keyCode {
-        case KeyCode.returnKey, KeyCode.keypadEnter: .button(.accept)
-        case KeyCode.escape: .button(.cancel)
-        default: Self.menuDirection(for: event.keyCode).map { .move($0) }
-        }
-        if let menuEvent {
-            menuMode?.routeMenuInput(menuEvent)
-        }
-    }
-
-    private static func menuDirection(for keyCode: UInt16) -> MenuInputEvent.Direction? {
-        switch keyCode {
-        case KeyCode.keyW, KeyCode.arrowUp: .up
-        case KeyCode.keyS, KeyCode.arrowDown: .down
-        case KeyCode.keyA, KeyCode.arrowLeft: .left
-        case KeyCode.keyD, KeyCode.arrowRight: .right
-        default: nil
-        }
+        dispatcher.apply(action, .release)
     }
 
     override func flagsChanged(with event: NSEvent) {
-        input?.setBoost(event.modifierFlags.contains(.shift))
-        // Option is the vanilla sprint modifier (Alt on a PC keyboard).
-        input?.setSprint(event.modifierFlags.contains(.option))
-        super.flagsChanged(with: event)
-    }
-
-    private static func moveKey(for code: UInt16) -> CameraInputState.MoveKey? {
-        switch code {
-        case KeyCode.keyW: .forward
-        case KeyCode.keyS: .back
-        case KeyCode.keyA: .left
-        case KeyCode.keyD: .right
-        case KeyCode.keyE: .up
-        case KeyCode.keyQ: .down
-        default: nil
+        // Shift runs; Option is the vanilla sprint modifier (Alt on a PC keyboard).
+        if menuMode?.isMenuMode != true {
+            dispatcher.apply(.run, event.modifierFlags.contains(.shift) ? .press : .release)
+            dispatcher.apply(.sprint, event.modifierFlags.contains(.option) ? .press : .release)
         }
+        super.flagsChanged(with: event)
     }
 
     // MARK: - Pointer
@@ -208,10 +149,7 @@ final class GameMetalView: MTKView {
         // The first click captures the cursor; every later click attacks, as
         // in vanilla. Look follows pointer motion, so the button is free.
         if captured {
-            // One press gives both signals: melee latches on the edge, archery
-            // draws while the button stays down.
-            input?.requestAttack()
-            input?.setAttackHeld(true)
+            dispatcher.apply(.attack, .press)
         } else {
             captureCursor()
         }
@@ -231,11 +169,11 @@ final class GameMetalView: MTKView {
             super.rightMouseDown(with: event)
             return
         }
-        input?.setBlocking(true)
+        dispatcher.apply(.block, .press)
     }
 
     override func rightMouseUp(with event: NSEvent) {
-        input?.setBlocking(false)
+        dispatcher.apply(.block, .release)
     }
 
     override func mouseMoved(with event: NSEvent) {

@@ -84,6 +84,19 @@ expect_usage "walk path rejects fly collision budget" \
   "--collision-build-budget-ms is not supported with --walk-path" \
   bench --walk-path --collision-build-budget-ms 1
 
+# Agent control offline paths (docs/tools/agent-control.md): an unknown game
+# command is a usage error, and no server at the socket is notRunning, exit 1.
+expect_usage "game rejects an unknown command" "unknown game command" game dance
+if output="$(OPENSKY_AGENT_SOCKET="$log_dir/no-server.sock" "$cli" game status 2>&1)"; then
+  fail "game status succeeded with no app running"
+else
+  exit_status="$?"
+fi
+printf -- '--- game status without an app\n%s\n' "$output" >>"$log"
+[ "$exit_status" -eq 1 ] || fail "game status without an app exited $exit_status instead of 1"
+printf '%s\n' "$output" | grep -Fq "notRunning" || fail "game status did not report notRunning"
+echo "[ OK ] game status without an app (notRunning)"
+
 # vfs ls resolves archives and finds meshes.
 mesh_count="$("$cli" --data-root "$data_root" vfs ls 'meshes\*.nif' 2>>"$log" | wc -l)"
 [ "$mesh_count" -gt 0 ] || fail "vfs ls found no meshes"

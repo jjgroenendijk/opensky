@@ -4,6 +4,7 @@
 import AppKit
 import MetalKit
 import OpenSkyActors
+import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCrime
@@ -88,6 +89,8 @@ final class GameViewController: NSViewController {
     /// Free-fly input shared with the renderer; the view writes it from
     /// NSEvents, the renderer drains it each frame.
     let cameraInput = CameraInputState()
+    /// The clock every frame clock reads. Agent control freezes and steps it.
+    let simulationClock = SteppedWallClock()
 
     /// Entering menu mode pauses the world sim and drops held world input.
     let menuMode = MenuModeController()
@@ -264,6 +267,9 @@ final class GameViewController: NSViewController {
     }()
 
     lazy var aiWorld = AIWorldAdapter(game: self)
+    /// What `openskycli game` drives. The app's `AgentControlHost` owns the server.
+    lazy var agentWorld = AgentWorldAdapter(game: self)
+    var agentControl: AgentControlCoordinator?
 
     /// Ambient idles and the head switch, with the coordinators they drive.
     lazy var idleWorld = IdleWorldAdapter(game: self)
@@ -273,6 +279,7 @@ final class GameViewController: NSViewController {
         gameView.input = cameraInput
         gameView.menuMode = menuMode
         gameView.onJournalKey = { [weak self] in self?.journalMenu.open() }
+        gameView.onInventoryKey = { [weak self] in self?.inventoryMenu.open() }
         view = gameView
     }
 
@@ -304,7 +311,8 @@ final class GameViewController: NSViewController {
                 camera: nil,
                 input: cameraInput,
                 movementConfiguration: (provider as? MovementConfigurationProviding)?
-                    .movementConfiguration ?? .synthetic
+                    .movementConfiguration ?? .synthetic,
+                wallClock: simulationClock
             )
             newRenderer.shadowQuality = ShadowQualitySettings.load()
             newRenderer.timeOfDay = TimeOfDaySettings.load()
@@ -392,7 +400,7 @@ extension GameViewController {
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
-    HeadAssemblyControlForwarding {}
+    HeadAssemblyControlForwarding, AgentControlForwarding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
