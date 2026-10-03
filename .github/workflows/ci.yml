@@ -112,7 +112,7 @@ jobs:
           docs-length agent-files comment-length panel-text duplicates no-suppressions
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
-  # skills, or the dependency bot configs skips it. Any other event always builds.
+  # skills, or the Renovate config skips it. Any other event always builds.
   changes:
     name: Changes
     runs-on: ubuntu-latest
@@ -133,7 +133,7 @@ jobs:
             build=false
             for file in $files; do
               case "$file" in
-                *.md | docs/* | .AGENTS/* | .claude/* | .github/dependabot.yml | .github/renovate.json) ;;
+                *.md | docs/* | .AGENTS/* | .claude/* | .github/renovate.json) ;;
                 *) build=true ;;
               esac
             done

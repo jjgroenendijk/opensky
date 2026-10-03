@@ -2,7 +2,7 @@
 type: Tool
 title: Continuous integration
 description: What the GitHub Actions workflow runs on macOS, how each step shares its make target
-  with `make check`, how the jobs fit the macOS runner limit, how the caches and dependency bots
+  with `make check`, how the jobs fit the macOS runner limit, how the caches and Renovate
   work, and why the build-and-test job runs no real-data test.
 tags: [tool, ci, lint, github-actions]
 ---
@@ -25,8 +25,8 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 failing unit test cannot merge. A new job goes into the `needs` list of `Lint`, so branch
 protection does not change.
 
-A pull request that changes only Markdown, `docs/`, `.AGENTS/`, `.claude/`, or the dependency bot
-configs skips Build & test, because nothing in it is compiled. `Lint` accepts that skip only when
+A pull request that changes only Markdown, `docs/`, `.AGENTS/`, `.claude/`, or the Renovate config
+skips Build & test, because nothing in it is compiled. `Lint` accepts that skip only when
 `Changes` asked for it. A push to `main` always builds, so the compilation cache stays current.
 
 ## One make target per step
@@ -62,17 +62,16 @@ actionlint also runs shellcheck on each `run:` script, so the two share a job an
 
 ## Dependency updates
 
-Two bots open one update pull request each Monday. Each one runs CI like any other pull request.
+Renovate (`.github/renovate.json`) opens one pull request each Monday with every update. CI runs on
+it like on any other pull request. It runs only after the Renovate GitHub app is installed on the
+repository.
 
-- **Dependabot** (`.github/dependabot.yml`) updates the GitHub Actions and the Swift packages. One
-  multi-ecosystem group puts every update in a single pull request.
-- **Renovate** (`.github/renovate.json`) updates the tool pins in the workflow `env`, which
-  Dependabot cannot read. A `# renovate:` comment above each pin names its release source. Renovate
-  runs only after the Renovate GitHub app is installed on the repository. After a pin moves,
-  `brew upgrade` brings the local tool to the same release.
-- **Neither** updates `DEVELOPER_DIR`, which follows the local Xcode, or ffmpeg.
-  `tools/vendor-ffmpeg.sh` pins the tarball checksum next to the version, and no bot can check a
-  new checksum against Homebrew's, as that script requires.
+- **GitHub Actions and Swift packages**, through Renovate's built-in managers.
+- **The tool pins in the workflow `env`.** A `# renovate:` comment above each pin names its release
+  source. After a pin moves, `brew upgrade` brings the local tool to the same release.
+- **Not updated:** `DEVELOPER_DIR`, which follows the local Xcode, and ffmpeg.
+  `tools/vendor-ffmpeg.sh` pins the tarball checksum next to the version, and Renovate cannot check
+  a new checksum against Homebrew's, as that script requires.
 
 ## Build & test
 

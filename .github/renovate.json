@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["custom.regex"],
+  "enabledManagers": ["github-actions", "swift", "custom.regex"],
   "customManagers": [
     {
       "customType": "regex",
@@ -20,7 +20,7 @@
   "packageRules": [
     {
       "matchPackageNames": ["*"],
-      "groupName": "CI tool pins",
+      "groupName": "all dependencies",
       "separateMajorMinor": false
     }
   ]
