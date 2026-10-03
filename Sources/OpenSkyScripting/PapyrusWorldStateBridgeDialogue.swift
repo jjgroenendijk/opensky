@@ -24,3 +24,23 @@ extension PapyrusWorldStateBridge: DialogueFragmentDispatching {
         )
     }
 }
+
+@MainActor
+extension PapyrusWorldStateBridge: SceneFragmentDispatching {
+    @discardableResult
+    public func runSceneFragment(
+        of scene: Scene,
+        key: ReferenceKey,
+        scriptName: String,
+        functionName: String
+    ) -> Bool {
+        guard let world else { return false }
+        return world.queueSceneFragment(
+            of: scene,
+            key: key,
+            scriptName: scriptName,
+            functionName: functionName,
+            formIDResolver: formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
+        )
+    }
+}

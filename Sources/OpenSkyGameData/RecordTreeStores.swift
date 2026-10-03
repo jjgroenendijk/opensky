@@ -123,10 +123,17 @@ nonisolated public struct StoryManagerStore: Sendable {
             records: nodes.records, index: index,
             parent: \.parent, previousSibling: \.previousSibling
         )
+        // Vanilla hangs every SMEN under one branch node named Root, so event
+        // nodes are found by a walk in sibling order, not among the roots.
         var rootsByEvent: [FourCC: [ResolvedFormID]] = [:]
-        for root in forest.roots {
-            guard let event = nodes.record(root)?.record.event else { continue }
-            rootsByEvent[event, default: []].append(root)
+        var pending = Array(forest.roots.reversed())
+        var visited: Set<ResolvedFormID> = []
+        while let id = pending.popLast() {
+            guard visited.insert(id).inserted else { continue }
+            if let event = nodes.record(id)?.record.event {
+                rootsByEvent[event, default: []].append(id)
+            }
+            pending += forest.children(of: id).reversed()
         }
         var nodesByQuest: [ResolvedFormID: [ResolvedFormID]] = [:]
         for node in nodes.records {
@@ -144,9 +151,14 @@ nonisolated public struct StoryManagerStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: Self.types))
     }
 
-    /// The root event nodes for one event code, such as `KILL`, in sibling order.
+    /// The event nodes for one event code, such as `KILL`, in tree order.
     public func roots(forEvent event: FourCC) -> [ResolvedRecord<StoryManagerNode>] {
         (rootsByEvent[event] ?? []).compactMap { nodes.record($0) }
+    }
+
+    /// Event codes with at least one event node, in text order.
+    public var events: [FourCC] {
+        rootsByEvent.keys.sorted { $0.description < $1.description }
     }
 
     /// The quest nodes that can start `quest`.
@@ -154,8 +166,8 @@ nonisolated public struct StoryManagerStore: Sendable {
         (nodesByQuest[quest] ?? []).compactMap { nodes.record($0) }
     }
 
-    /// The event the node's tree hangs under, or nil when its root is not an event node.
+    /// The event the node hangs under, or nil when no node on its path is an event node.
     public func event(of node: ResolvedFormID) -> FourCC? {
-        forest.path(to: node).first.flatMap { nodes.record($0)?.record.event }
+        forest.path(to: node).lazy.compactMap { nodes.record($0)?.record.event }.first
     }
 }

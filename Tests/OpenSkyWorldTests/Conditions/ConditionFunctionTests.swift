@@ -33,9 +33,9 @@ struct ConditionFunctionTests {
             1, 14, 18, 27, 35, 45, 46, 47, 56, 58, 59, 60, 65, 71, 72, 73, 74, 77, 80, 170, 180,
             181, 214, 223, 249, 263, 264, 277, 323, 359, 360, 372, 375, 376, 403, 426, 444, 448,
             449, 459, 543, 560, 562,
-            565, 566, 567, 570, 571, 572, 603, 604, 605, 610, 632, 640, 699, 719
+            565, 566, 567, 570, 571, 572, 576, 603, 604, 605, 610, 632, 640, 699, 719
         ])
-        #expect(registry.count == 57)
+        #expect(registry.count == 58)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight",
             "GetDisabled", "GetDetected", "GetDead", "GetItemCount", "GetQuestRunning",
@@ -55,7 +55,7 @@ struct ConditionFunctionTests {
             "HasKeyword",
             "LocationHasKeyword", "GetIsEditorLocation", "GetIsAliasRef",
             "GetIsEditorLocAlias", "HasEquippedSpell", "GetCurrentCastingType",
-            "GetCurrentDeliveryType", "IsInSameCurrentLocAsRef",
+            "GetCurrentDeliveryType", "GetEventData", "IsInSameCurrentLocAsRef",
             "IsInSameCurrentLocAsRefAlias", "LocAliasIsLocation", "LocAliasHasKeyword",
             "IsCasting", "GetActorValuePercent", "HasMagicEffectKeyword",
             "IsHostileToActor"
@@ -69,7 +69,7 @@ struct ConditionFunctionTests {
             4662,
             4663, 4666,
             4667,
-            4668, 4699, 4700, 4701, 4706, 4728, 4736, 4795, 4815
+            4668, 4672, 4699, 4700, 4701, 4706, 4728, 4736, 4795, 4815
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)
@@ -114,13 +114,13 @@ struct ConditionFunctionTests {
     // MARK: - Run-on fallbacks
 
     @Test func unsupportedRunOnTypesAreTaggedFalse() throws {
-        // Quest Alias (5) and Combat Target (3) are absent: both resolve now.
+        // Quest Alias (5), Combat Target (3), and Event Data (7) are absent:
+        // they resolve now. Event data is covered by `EventDataConditionTests`.
         // They are covered by `QuestAliasConditionTests` and
         // `ConditionActorFunctionTests`.
         let cases: [(raw: UInt32, runOn: Condition.RunOnType)] = [
             (4, .linkedReference),
             (6, .packageData),
-            (7, .eventData),
             (99, .unknown(99))
         ]
         var evaluator = try ConditionEvaluatorFixture.evaluator()
@@ -132,7 +132,7 @@ struct ConditionFunctionTests {
         }
         #expect(evaluator.tally.unsupportedRunOnTotal == cases.count)
         #expect(evaluator.tally.rankedUnsupportedRunOns.map(\.name) == [
-            "eventData", "linkedReference", "packageData", "unknown(99)"
+            "linkedReference", "packageData", "unknown(99)"
         ])
         // A context with no quest scope cannot answer an alias run-on, but the
         // reason is that the alias named nothing, not that the run-on is

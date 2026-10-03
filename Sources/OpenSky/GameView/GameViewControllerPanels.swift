@@ -6,6 +6,7 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCrime
+import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -754,5 +755,15 @@ extension GameViewController: PerceptionControlProviding {
 
     func perceptionLines(for actor: ReferenceKey) -> [String] {
         perception.perceptionLines(for: actor)
+    }
+}
+
+extension GameViewController {
+    var scenes: SceneCoordinator {
+        storyWorld.scenes
+    }
+
+    var storyManager: StoryManagerCoordinator {
+        storyWorld.storyManager
     }
 }

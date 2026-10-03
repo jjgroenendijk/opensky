@@ -4,6 +4,7 @@
 // The rules and the fill types not done yet are in docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -15,12 +16,15 @@ nonisolated public enum QuestAliasFiller: Sendable {
     ///
     /// - Parameter resolver: master-list resolver of the plugin that defines
     ///   `quest`, which is what turns an ALFR FormID into a session-stable key.
+    /// - Parameter event: the story-manager event that starts the quest, for the
+    ///   "find matching reference from event" fill.
     public static func fill(
         _ quest: Quest,
         resolver: FormIDResolver,
-        locations: LocationStore? = nil
+        locations: LocationStore? = nil,
+        event: StoryEventData? = nil
     ) -> QuestAliasFillResult {
-        var pass = FillPass(resolver: resolver, locations: locations)
+        var pass = FillPass(resolver: resolver, locations: locations, event: event)
         for alias in quest.aliases {
             pass.fill(alias)
         }
@@ -32,6 +36,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
     private struct FillPass {
         let resolver: FormIDResolver
         let locations: LocationStore?
+        let event: StoryEventData?
         var state = QuestAliasState()
         var skipped = QuestAliasTally()
         var unfilledRequired: [UInt32] = []
@@ -47,6 +52,10 @@ nonisolated public enum QuestAliasFiller: Sendable {
         mutating func fill(_ alias: Quest.Alias) {
             guard alias.category == .reference else {
                 fillLocation(alias)
+                return
+            }
+            if case .fromEvent = alias.fillType {
+                fillFromEvent(alias)
                 return
             }
             guard case .specificReference = alias.fillType else {
@@ -77,7 +86,33 @@ nonisolated public enum QuestAliasFiller: Sendable {
             }
         }
 
+        /// ALFE names the event, ALFD the member that fills the alias
+        /// (<https://ck.uesp.net/wiki/Quest_Alias_Tab>).
+        private mutating func fillFromEvent(_ alias: Quest.Alias) {
+            let member = alias.eventData.flatMap {
+                StoryEventData.Member(rawValue: UInt16(truncatingIfNeeded: $0))
+            }
+            // Without an event the fill is not possible, which is OpenSky's start
+            // path, not the quest's fault, so it never fails the start.
+            guard let event, let member else {
+                skipped.note(.unsupportedFillType(alias.fillType))
+                return
+            }
+            if alias.category == .reference, let key = event.reference(member) {
+                store(alias.id, key)
+            } else if alias.category != .reference, let location = event.location(member) {
+                state = state.fillingLocation(alias.id, with: location)
+            } else {
+                skipped.note(.unresolvedReference)
+                note(unfilled: alias)
+            }
+        }
+
         private mutating func fillLocation(_ alias: Quest.Alias) {
+            if case .fromEvent = alias.fillType {
+                fillFromEvent(alias)
+                return
+            }
             guard case .specificLocation = alias.fillType, let locations else {
                 skipped.note(.locationAlias)
                 return

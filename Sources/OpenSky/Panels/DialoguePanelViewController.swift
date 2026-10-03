@@ -1,20 +1,26 @@
 // World > Dialogue & Voice: the conversation loop in one destination, in the
-// order a conversation uses it: start, framing, voice, mouth. Each section owns
+// order a conversation uses it: start, branches, framing, voice, mouth. Each section owns
 // its provider seam, sync, and readout, and the four provider types stay
 // separate so each dependency is explicit.
 
 import AppKit
+import OpenSkyDialogue
 import OpenSkyMenus
 import OpenSkyWorld
 
 final class DialoguePanelViewController: InspectorPanelViewController {
     let dialogueSection = DialogueSection()
+    let branchesSection = DialogueBranchesSection()
     let dialogueCameraSection = DialogueCameraSection()
     let voiceSection = AudioVoiceSection()
     let faceMorphSection = FaceMorphSection()
 
     weak var dialogueProvider: (any DialogueControlProviding)? {
         didSet { dialogueSection.provider = dialogueProvider }
+    }
+
+    weak var branchProvider: (any DialogueBranchControlProviding)? {
+        didSet { branchesSection.provider = branchProvider }
     }
 
     weak var dialogueCameraProvider: (any DialogueCameraControlProviding)? {
@@ -30,7 +36,7 @@ final class DialoguePanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [dialogueSection, dialogueCameraSection, voiceSection, faceMorphSection]
+        [dialogueSection, branchesSection, dialogueCameraSection, voiceSection, faceMorphSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring the

@@ -153,3 +153,39 @@ The same shape as `QALS`, for location aliases. It is a separate chunk because `
 have no length, and an older reader would take location fills for the next quest. The key
 must be a plugin key, because an LCTN is always a plugin record; a generated key is
 rejected.
+
+## SCNS: playing scenes
+
+One entry per playing [scene](/engine/scenes.md). A scene that is not in the chunk is not
+playing.
+
+| type | field | notes |
+| --- | --- | --- |
+| key | key | the SCEN record |
+| cell | cell | always "no cell" today |
+| uint32 | phase | 0-based phase index |
+| uint8 | entered | 1 when the phase was entered |
+| uint32 | runningCount | running actions that follow |
+| bytes | running | per action: uint32 index, float64 start in scene seconds, uint8 timed, float32 duration |
+| uint32 | completedCount | completed actions that follow |
+| uint32 | completed | one action index per `completedCount` |
+
+A start time that is not finite is rejected. When `timed` is 0 the action has no end time and
+the duration is ignored. Minimum sizes: 21 bytes per entry, 17 per running action.
+
+## SMQS: story-manager starts
+
+One entry per quest the [story manager](/engine/story-manager.md) started: the QUST key, the
+cell, a float64 game-seconds time of the last start, and a uint32 start count. Reset times and
+"do all before repeating" read them. A time that is not finite is rejected. Minimum size: 20
+bytes per entry.
+
+## DLBS: exclusive dialogue branches
+
+One entry per speaker in an exclusive [dialogue](/engine/dialogue.md#branches) branch: the
+speaker's key, the cell, and the uint32 FormID of the `DLBR`. The FormID is in the space of the
+base plugin the dialogue store reads, which does not depend on the load order. Minimum size: 12
+bytes per entry.
+
+`SCNS`, `SMQS`, and `DLBS` merge into the `RDLT` deltas by key, like the other component
+chunks.

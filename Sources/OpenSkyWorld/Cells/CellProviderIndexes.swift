@@ -142,6 +142,7 @@ nonisolated public struct CellProviderIndexes {
     public let archerySettings: ArcherySettings
     public let detectionSettings: DetectionSettings
     public let lockTrapData: LockTrapData
+    public let storyData: StoryData
 
     public init(
         root: GameDataRoot,
@@ -210,8 +211,19 @@ nonisolated public struct CellProviderIndexes {
         actorValueBaselines = Self.actorValueBaselines(
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
-        lockTrapData = LockTrapData.load(
-            root: root, baseFile: file, baseName: pluginName, settings: tuning.store
+        (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
+    }
+
+    /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
+    private static func scriptedData(
+        _ root: GameDataRoot,
+        _ file: ESMFile,
+        _ pluginName: String,
+        _ settings: GameSettingStore
+    ) -> (LockTrapData, StoryData) {
+        (
+            LockTrapData.load(root: root, baseFile: file, baseName: pluginName, settings: settings),
+            StoryData.load(root: root, baseFile: file, baseName: pluginName)
         )
     }
 
@@ -308,6 +320,7 @@ nonisolated public struct CellProviderIndexes {
         )
         stores.craftingCatalog = craftingCatalog
         stores.lockTrapData = lockTrapData
+        stores.storyData = storyData
         return stores
     }
 }

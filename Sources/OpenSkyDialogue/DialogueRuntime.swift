@@ -78,19 +78,36 @@ public struct DialogueRuntime: DialogueAccess {
 
     /// The topics `speaker` offers the player, plus those that offered nothing. Only
     /// DIAL category 0, the player's menu; other categories are spoken elsewhere.
+    /// Branches scope the list: see `DialogueRuntimeBranches.swift`.
     public func topics(for speaker: ReferenceKey) -> DialogueSelection {
-        select(
-            topics: dialogue.sortedTopics().filter { $0.category == .player },
-            speaker: speaker
+        let player = dialogue.sortedTopics().filter { $0.category == .player }
+        if let blocking = blockingOffer(for: speaker) {
+            let others = player.filter { $0.formID != blocking.offer.topic }
+                .map { scopedOut($0, reason: .blockedByBranch(blocking.branch)) }
+            return DialogueSelection(
+                offers: [blocking.offer], rejected: others, tally: ConditionTally()
+            )
+        }
+        let selection = selectTopics(player.filter(isBranchEntry), speaker: speaker)
+        let scoped = player.filter { !isBranchEntry($0) }
+            .map { scopedOut($0, reason: .notBranchEntry) }
+        return DialogueSelection(
+            offers: selection.offers,
+            rejected: selection.rejected + scoped,
+            tally: selection.tally
         )
     }
 
-    /// The greeting `speaker` opens with, or nil. Greetings are the HELO subtype in
-    /// DIAL SNAM. The highest-priority topic with a winning response wins; ties go to
-    /// FormID.
+    /// The greeting `speaker` opens with, or nil. A blocking branch that answers
+    /// greets with its starting topic. Otherwise greetings are the HELO subtype in
+    /// DIAL SNAM; the highest-priority topic with a winning response wins, and ties
+    /// go to FormID.
     public func greeting(for speaker: ReferenceKey) -> DialogueTopicOffer? {
-        select(
-            topics: dialogue.sortedTopics().filter { $0.subtype == "HELO" },
+        if let blocking = blockingOffer(for: speaker) {
+            return blocking.offer
+        }
+        return selectTopics(
+            dialogue.sortedTopics().filter { $0.subtype == "HELO" },
             speaker: speaker
         ).offers.first
     }
@@ -98,14 +115,14 @@ public struct DialogueRuntime: DialogueAccess {
     /// Selection restricted to the topics `ids` names, which is what a chosen
     /// response's TCLT links produce.
     public func topics(linked ids: [FormID], speaker: ReferenceKey) -> DialogueSelection {
-        select(topics: ids.compactMap { dialogue.topic($0) }, speaker: speaker)
+        selectTopics(ids.compactMap { dialogue.topic($0) }, speaker: speaker)
     }
 
     // MARK: - Private
 
     /// One pass over `topics`, ordered and traced. Every topic is evaluated, even after
     /// winners, so the tally can explain why an expected line did not appear.
-    private func select(topics: [DialogueTopic], speaker: ReferenceKey) -> DialogueSelection {
+    func selectTopics(_ topics: [DialogueTopic], speaker: ReferenceKey) -> DialogueSelection {
         var evaluator = ConditionEvaluator(
             context: context, registry: registry, tally: ConditionTally()
         )
@@ -203,7 +220,7 @@ public struct DialogueRuntime: DialogueAccess {
 
     /// Whether the topic's owning quest is running. A topic naming no quest is
     /// always available, which is what an absent QNAM means.
-    private func isRunning(quest id: FormID?) -> Bool {
+    func isRunning(quest id: FormID?) -> Bool {
         guard let id else { return true }
         return questStates.state(for: id)?.isRunning ?? false
     }

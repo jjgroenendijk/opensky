@@ -117,6 +117,12 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let harvests = "HRVS"
         /// Runtime lock state of doors and containers.
         public static let locks = "LOCK"
+        /// Playing scenes: phase, started actions, and completed actions.
+        public static let scenes = "SCNS"
+        /// Quests the story manager started: last start time and start count.
+        public static let storyManagerQuests = "SMQS"
+        /// Speakers in an exclusive dialogue branch.
+        public static let dialogueBranches = "DLBS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

@@ -4,6 +4,7 @@
 // (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -69,6 +70,15 @@ extension QuestRuntime {
     /// - Returns: the table as stored, and why any alias stayed empty.
     @discardableResult
     public func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult {
+        try fillAliases(of: quest, key: key, event: nil)
+    }
+
+    @discardableResult
+    public func fillAliases(
+        of quest: Quest,
+        key: ReferenceKey,
+        event: StoryEventData?
+    ) throws -> QuestAliasFillResult {
         if let existing = store.component(QuestAliasState.self, for: key), !existing.isEmpty {
             return QuestAliasFillResult(
                 state: existing, skipped: QuestAliasTally(), unfilledRequired: []
@@ -77,7 +87,8 @@ extension QuestRuntime {
         let result = QuestAliasFiller.fill(
             quest,
             resolver: quests.resolver,
-            locations: locations
+            locations: locations,
+            event: event
         )
         guard result.canStartQuest else {
             throw QuestError.aliasFillFailed(

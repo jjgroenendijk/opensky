@@ -10,6 +10,8 @@ nonisolated struct DialogueBranchIndex: Sendable {
     let branchIDsByQuest: [UInt32: [UInt32]]
     let topicIDsByBranch: [UInt32: [UInt32]]
     let viewsByQuest: [UInt32: [DialogueView]]
+    /// DLBR records with the blocking flag, in FormID order.
+    let blockingBranches: [DialogueBranch]
 
     init(branches: [DialogueBranch], views: [DialogueView], topics: [DialogueTopic]) {
         var byFormID: [UInt32: DialogueBranch] = [:]
@@ -30,6 +32,8 @@ nonisolated struct DialogueBranchIndex: Sendable {
             guard let quest = view.quest else { continue }
             viewsByQuest[quest.rawValue, default: []].append(view)
         }
+        blockingBranches = branches.filter { $0.flags.contains(.blocking) }
+            .sorted { $0.formID.rawValue < $1.formID.rawValue }
         branchesByFormID = byFormID
         branchIDsByQuest = byQuest
         topicIDsByBranch = topicsByBranch

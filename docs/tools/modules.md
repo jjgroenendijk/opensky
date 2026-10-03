@@ -131,8 +131,8 @@ OpenSkyProgressionInterface perk and progress state, skill use events, PerkAcces
 OpenSkyActors             actor value runtime
 OpenSkyMagic              active effect, caster, spellbook, and enchantment runtimes
 OpenSkyCombat             melee, archery, projectile, combat loop, and ragdoll runtimes
-OpenSkyQuests             quest runtime, alias filler
-OpenSkyDialogue           dialogue runtime, voice file lookup
+OpenSkyQuests             quest runtime, alias filler, story manager, start-game pass
+OpenSkyDialogue           dialogue runtime, branches, scenes, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
 OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
                           the whole-game condition registry

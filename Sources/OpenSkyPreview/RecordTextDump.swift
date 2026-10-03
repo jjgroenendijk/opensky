@@ -133,7 +133,7 @@ nonisolated public enum RecordTextDump: Sendable {
                 ?? factionSummary(record, localized)
                 ?? relationshipSummary(record)
                 ?? craftingSummary(record, localized, keywordContext)
-                ?? trapSummary(record, localized)
+                ?? trapSummary(record, localized) ?? storySummary(record)
         }
     }
 

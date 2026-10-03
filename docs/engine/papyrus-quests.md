@@ -50,6 +50,14 @@ A method call on an instance runs under the script that declares the function. S
 `someQuest.SetStage(10)` reaches the `Quest` natives only when `Quest.pex` is loaded. That is why a
 script loads with its ancestors ([lazy script library](/engine/papyrus-world.md#lazy-script-library)).
 
+## Scene and story natives
+
+`Scene.Start`, `Scene.ForceStart`, `Scene.Stop`, and `Scene.IsPlaying` call the
+[scene runtime](/engine/scenes.md). `Keyword.SendStoryEvent` and `Keyword.SendStoryEventAndWait`
+fire a `SCPT` event with the keyword and the call's location, actors, and values. Both return
+true when the walk started a quest. Scene begin, end, and phase fragments queue on the scene's
+fragment script like stage fragments.
+
 ## Stage fragments
 
 The Creation Kit compiles each stage fragment into a numbered function on the generated script. The
@@ -93,5 +101,5 @@ restored fills.
   used: nothing open says what the game does with it, and a guess would run fragments twice.
 - A shut-down stage stops the quest but does not retire its instances, so the fragment that stage
   queued still runs. Only `Stop` retires them.
-- Quests start only when start-game-enabled, from `Start`, or from a start-up stage. The story
-  manager is not modeled.
+- Quests start from the `.seq` start-game pass, from `Start`, from a start-up stage, or from the
+  [story manager](/engine/story-manager.md).

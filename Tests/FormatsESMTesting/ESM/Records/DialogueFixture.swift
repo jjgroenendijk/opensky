@@ -36,6 +36,21 @@ public enum DialogueFixture {
         return ESMFixture.record("INFO", formID: formID, data: fields)
     }
 
+    /// A DLBR: QNAM quest, TNAM category 0, DNAM flags, SNAM starting topic.
+    public static func branchRecord(
+        formID: UInt32,
+        quest: UInt32,
+        flags: UInt32,
+        startingTopic: UInt32
+    ) -> Data {
+        ESMFixture.record(
+            "DLBR",
+            formID: formID,
+            data: word("QNAM", quest) + word("TNAM", 0) + word("DNAM", flags)
+                + word("SNAM", startingTopic)
+        )
+    }
+
     public static func voiceRecord(formID: UInt32 = 0x300, fields: Data) -> Data {
         ESMFixture.record("VTYP", formID: formID, data: fields)
     }
@@ -55,9 +70,13 @@ public enum DialogueFixture {
     public static func plugin(
         dialogueChildren: Data = Data(),
         voiceRecords: Data = Data(),
+        branchRecords: Data = Data(),
         localized: Bool = false
     ) -> Data {
         var data = ESMFixture.tes4(flags: localized ? 0x81 : 1)
+        if !branchRecords.isEmpty {
+            data += ESMFixture.topGroup("DLBR", contents: branchRecords)
+        }
         if !dialogueChildren.isEmpty {
             data += ESMFixture.topGroup("DIAL", contents: dialogueChildren)
         }

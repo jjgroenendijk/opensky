@@ -27,6 +27,7 @@ extension DialogueRuntime {
         }
         let state = saidState(of: id).said()
         store.set(state, for: key)
+        noteBranch(ofSaid: id, speaker: speaker)
 
         var dispatched: [String] = []
         var unrun = 0

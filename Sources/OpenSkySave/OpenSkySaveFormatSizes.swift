@@ -89,6 +89,15 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `LOCK` entry: the smallest key and cell (8), the locked byte, the
     /// level byte, and the key FormID (4).
     public static let minimumLockEntrySize = 14
+    /// Smallest `SCNS` entry: the smallest key and cell (8), the phase (4), the
+    /// entered byte, and the two empty list counts (8).
+    public static let minimumSceneEntrySize = 21
+    /// One `SCNS` running action: index (4), start (8), timed byte, duration (4).
+    public static let sceneActionRecordSize = 17
+    /// `SMQS` entry: the smallest key and cell (8), the start time (8), the count (4).
+    public static let minimumStoryManagerQuestEntrySize = 20
+    /// `DLBS` entry: the smallest key and cell (8) and the branch FormID (4).
+    public static let minimumDialogueBranchEntrySize = 12
     /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
     /// byte (1). A generated key or a named cell is longer, so this is a lower

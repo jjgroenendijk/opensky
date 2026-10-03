@@ -9,12 +9,13 @@ import OpenSkyWorldState
 
 nonisolated public enum ConditionFunctions: Sendable {
     /// The functions the core answers from state it owns: time, reference
-    /// identity and globals. The record-data family (`installData`) is core
+    /// identity, globals, and story-event data. The record-data family (`installData`) is core
     /// too; the whole-game registry installs it in its own place.
     public static func installCore(into registry: inout ConditionFunctionRegistry) {
         installTime(&registry)
         installReference(&registry)
         installGlobals(&registry)
+        installEventData(&registry)
     }
 
     // MARK: - Reference identity

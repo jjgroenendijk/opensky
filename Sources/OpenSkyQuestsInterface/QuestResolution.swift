@@ -39,6 +39,11 @@ nonisolated public struct QuestResolution: Sendable {
         return override
     }
 
+    /// The QUST record `id` names, or nil.
+    public func quest(_ id: FormID) -> Quest? {
+        defaults.quest(id)
+    }
+
     public func state(editorID: String) -> QuestRuntimeState? {
         guard let id = defaults.formID(editorID: editorID) else { return nil }
         return state(for: id)

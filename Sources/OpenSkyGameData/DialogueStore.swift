@@ -211,12 +211,22 @@ nonisolated public final class DialogueStore: Sendable {
             .compactMap { topicsByFormID[$0] }
     }
 
+    /// DLBR records with the blocking flag, in FormID order.
+    public func blockingBranches() -> [DialogueBranch] {
+        branchIndex.blockingBranches
+    }
+
     public func views(forQuest quest: FormID) -> [DialogueView] {
         branchIndex.viewsByQuest[quest.rawValue] ?? []
     }
 
     public var branchCount: Int {
         branchIndex.branchesByFormID.count
+    }
+
+    /// DLBR records in FormID order.
+    public func sortedBranches() -> [DialogueBranch] {
+        branchIndex.branchesByFormID.keys.sorted().compactMap { branchIndex.branchesByFormID[$0] }
     }
 
     public func voiceType(editorID: String) -> VoiceType? {
