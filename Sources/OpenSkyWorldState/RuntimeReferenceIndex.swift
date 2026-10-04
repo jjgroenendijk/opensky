@@ -55,6 +55,9 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
 nonisolated public struct RuntimeReferenceIndex: Sendable {
     private var entriesByKey: [ReferenceKey: RuntimeReferenceEntry]
     private var keysByFormID: [FormID: ReferenceKey]
+    /// ACHR entries in `sortedKeys()` order, built once: per-frame actor systems read
+    /// this list, and the index never changes after a build.
+    public let sortedActorEntries: [RuntimeReferenceEntry]
 
     /// Cells built without reference retention (synthetic render tests) use
     /// this rather than an optional field.
@@ -71,6 +74,9 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
         }
         entriesByKey = byKey
         keysByFormID = byFormID
+        sortedActorEntries = byKey.values
+            .filter { $0.placedActor != nil }
+            .sorted { $0.key < $1.key }
     }
 
     public var count: Int {

@@ -132,6 +132,21 @@ struct RuntimeReferenceIndexTests {
         #expect(index[.plugin(name: "skyrim.esm", objectID: 0x200)] != nil)
     }
 
+    @Test func sortedActorEntriesKeepOnlyActorsInKeyOrder() throws {
+        let actors = try [0x305, 0x301].map { raw in
+            try RuntimeReferenceEntry(
+                key: .plugin(name: "skyrim.esm", objectID: FormID(raw).objectID),
+                formID: FormID(raw),
+                isPersistent: false,
+                record: .actor(placedActor(formID: raw))
+            )
+        }
+        let index = try RuntimeReferenceIndex(entries: actors + [entry(formID: 0x302)])
+        #expect(index.sortedActorEntries.map(\.formID) == [FormID(0x301), FormID(0x305)])
+        #expect(index.sortedActorEntries.map(\.formID)
+            == index.sortedEntries().filter { $0.placedActor != nil }.map(\.formID))
+    }
+
     @Test func sortedKeysFollowReferenceKeyTotalOrder() throws {
         var entries = try [
             entry(formID: 0x203, plugin: "update.esm"),
