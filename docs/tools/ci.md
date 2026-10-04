@@ -124,12 +124,19 @@ The compilation cache roughly halves the build:
 
 - A pull request restores its own newest entry first, then falls back to `main`'s. So the second
   push to a pull request reuses the first push's work.
+- A pull request run builds the pull request merged into the current `main`. When `main` changed
+  a low-level module since the last run, most tasks miss even though the pull request did not
+  change. That is a real source change, not a broken cache: the same sources hit 601 of 601.
 - After each save, `tools/ci/cache-prune.sh` deletes the older entries of the same scope.
 - The `Cache cleanup` workflow deletes a pull request's entries when it closes.
 - The cache is saved after a failed test too, because the compiled tasks are still valid.
 - A restored store only grows. `COMPILATION_CACHE_LIMIT_SIZE` does not shrink it
   ([build system](/tools/build-system.md)). So a push to `main` deletes the store before the build
-  when it is over `CAS_MAX_MB`. That run builds cold and saves a fresh, small entry.
+  when it is over `CAS_MAX_MB`. That run builds cold and saves a fresh entry.
+- One cold build makes a store of about 1.6 GB on disk, or 470 MB compressed (measured
+  2026-10-04). `CAS_MAX_MB` is 3072, so a store holds about one more full rebuild before it
+  starts over. A limit below one cold build would delete the store on every push to `main`.
+  Every build on `main` would then be cold.
 
 ## Not in CI
 

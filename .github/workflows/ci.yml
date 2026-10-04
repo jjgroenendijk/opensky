@@ -163,7 +163,8 @@ jobs:
         CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
         -skipPackagePluginValidation -skipMacroValidation
       # A restored compilation cache only grows. Main starts over above this size.
-      CAS_MAX_MB: 1024
+      # One cold build alone is about 1.6 GB, so the limit must stay well above that.
+      CAS_MAX_MB: 3072
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
