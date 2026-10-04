@@ -62,15 +62,15 @@ struct PreviewRealDataTests {
 
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor
-    func previewsSkinnedBodyWithoutBindPoseDistortion() throws {
+    func previewsSkinnedBodyWithoutBindPoseDistortion() async throws {
         let root = try #require(RealDataEnvironment.dataRoot)
-        try previewSkinnedBody(vfs: VirtualFileSystem(root: root))
+        try await previewSkinnedBody(vfs: VirtualFileSystem(root: root))
     }
 
     /// Milestone 5.3 acceptance: exact Asset Browser preview path over a
     /// vanilla body, plus a CPU bind-pose check against source bounds.
     @MainActor
-    private func previewSkinnedBody(vfs: VirtualFileSystem) throws {
+    private func previewSkinnedBody(vfs: VirtualFileSystem) async throws {
         let path = "meshes\\actors\\character\\character assets\\malebody_1.nif"
         let data = try vfs.contents(forPath: path)
         let skeletonData = try vfs.contents(
@@ -87,7 +87,7 @@ struct PreviewRealDataTests {
         #expect(simd_distance(sourceBounds.min, skinnedBounds.min) < 0.01)
         #expect(simd_distance(sourceBounds.max, skinnedBounds.max) < 0.01)
 
-        let detail = PreviewDetailBuilder(fileSystem: vfs).detail(
+        let detail = await PreviewDetailLoader(fileSystem: vfs).detail(
             for: .file(VFSEntry(path: path, archive: "Skyrim - Meshes0.bsa"))
         )
         #expect(!detail.text.contains("[ERROR]"))

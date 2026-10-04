@@ -66,19 +66,19 @@ final class FakeRuntimeStateWorld: RuntimeStateWorld {
         return ConditionContext(globals: globals)
     }
 
-    func saveSlots() throws -> [String] {
+    func saveSlots() async throws -> [String] {
         slotListings += 1
         return slots
     }
 
-    func saveSession(slot: String) throws {
+    func saveSession(slot: String) async throws {
         if let saveError {
             throw saveError
         }
         slots.append(slot)
     }
 
-    func loadSession(slot: String) throws {
+    func loadSession(slot: String) async throws {
         guard slots.contains(slot) else { throw FakeSaveError.unwritable }
     }
 

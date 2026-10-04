@@ -12,14 +12,26 @@ extension TitleMenuCoordinator {
     static let version = "OpenSky"
 
     func startMovie() {
-        guard let renderer = world?.renderer, let hud, let loader = movies?.loader else {
+        guard let hud, world?.renderer != nil, movies?.isAvailable == true else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
+        hud.suspend()
+        movieRequest += 1
+        let request = movieRequest
+        movies?.request(TitleMenuMovieBridge.moviePath, while: { [weak self] in
+            self?.movieRequest == request
+        }, then: { [weak self] result in
+            self?.showMovie(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the open.
+    func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer = world?.renderer else { return }
         do {
-            hud.suspend()
-            try renderer.setSWFMovie(loader.load(path: TitleMenuMovieBridge.moviePath))
+            try renderer.setSWFMovie(result.get())
             renderer.swfEnabled = true
             renderer.swfScale = 1
             let started = try renderer.startSWFRuntime { [weak self] runtime in
@@ -52,6 +64,7 @@ extension TitleMenuCoordinator {
     }
 
     func stopMovie() {
+        movieRequest += 1
         movieLoaded = false
         movieError = nil
         pendingRequest = nil

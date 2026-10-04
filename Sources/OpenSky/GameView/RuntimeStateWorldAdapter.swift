@@ -31,7 +31,7 @@ final class RuntimeStateWorldAdapter {
     /// readout tick would hit the disk for the same answer.
     private var saveStore: OpenSkySaveStore?
     /// Parses every plugin header, so it is built once per session.
-    private var fingerprint: [SavePluginFingerprint]?
+    private var fingerprint: Task<[SavePluginFingerprint], any Error>?
 
     init(game: GameViewController) {
         self.game = game
@@ -89,22 +89,25 @@ final class RuntimeStateWorldAdapter {
         )
     }
 
-    private func store() throws -> OpenSkySaveStore {
+    private func store() async throws -> OpenSkySaveStore {
         if let saveStore {
             return saveStore
         }
-        let store = try OpenSkySaveStore.defaultStore()
+        let store = try await OpenSkySaveStore.openDefault()
         saveStore = store
         return store
     }
 
-    private func pluginFingerprint() throws -> [SavePluginFingerprint] {
-        if let fingerprint {
-            return fingerprint
+    /// A failed build is not kept, so the next save tries again.
+    private func pluginFingerprint() async throws -> [SavePluginFingerprint] {
+        let task = fingerprint ?? Task { try await OpenSkySaveStore.installedFingerprint() }
+        fingerprint = task
+        do {
+            return try await task.value
+        } catch {
+            fingerprint = nil
+            throw error
         }
-        let built = try OpenSkySaveStore.fingerprint(forRoot: GameDataLocator.locate())
-        fingerprint = built
-        return built
     }
 }
 
@@ -200,50 +203,48 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         return RuntimeReferenceIndex(entries: entries)
     }
 
-    func saveSlots() throws -> [String] {
-        try store().listSlots()
+    func saveSlots() async throws -> [String] {
+        try await store().readSlots()
     }
 
-    func saveSession(slot: String) throws {
-        try saveSession(slot: slot, summary: nil, thumbnail: nil)
+    func saveSession(slot: String) async throws {
+        try await saveSession(slot: slot, summary: nil, thumbnail: nil)
     }
 
     /// Arrows in flight and falling corpses are dropped first: neither survives
     /// a reload, and a save that kept them would freeze an arrow in the air.
-    func saveSession(slot: String, summary: SaveSummary?, thumbnail: SaveThumbnail?) throws {
+    func saveSession(slot: String, summary: SaveSummary?, thumbnail: SaveThumbnail?) async throws {
         game.streamer?.persistNPCMovementForSave()
         game.combat.loop?.prepareForPersistence()
-        let metadata = SaveCreationMetadata(
-            creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
-            appVersion: Self.saveAppVersion
-        )
-        try store().save(
+        let contents = OpenSkySaveContents(
             snapshot: game.worldState.snapshot(),
-            fingerprint: pluginFingerprint(),
-            metadata: metadata,
+            metadata: SaveCreationMetadata(
+                creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
+                appVersion: Self.saveAppVersion
+            ),
             clock: game.renderer?.gameClock,
             scripts: game.scripts.runtime?.instanceStates() ?? [],
             timers: game.scripts.runtime?.timerStates() ?? [],
             summary: summary,
-            thumbnail: thumbnail,
-            toSlot: slot
+            thumbnail: thumbnail
         )
+        let store = try await store()
+        try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
     }
 
-    func saveListings() throws -> [OpenSkySaveSlotListing] {
-        try store().listings()
+    func saveListings() async throws -> [OpenSkySaveSlotListing] {
+        try await store().readListings()
     }
 
-    func deleteSave(slot: String) throws {
-        try store().delete(slot: slot)
+    func deleteSave(slot: String) async throws {
+        try await store().remove(slot: slot)
     }
 
     /// A missing install skips fingerprint verification instead of blocking the
     /// load; the file's own contents are still checked.
-    func loadSession(slot: String) throws {
-        let file = try store().load(
-            slot: slot, verifyingAgainst: try? pluginFingerprint()
-        )
+    func loadSession(slot: String) async throws {
+        let current = try? await pluginFingerprint()
+        let file = try await store().read(slot: slot, verifyingAgainst: current)
         game.worldState.restore(from: file.snapshot)
         // A save without a CLOK chunk restores the vanilla-start clock.
         game.renderer?.gameClock = file.clock ?? GameClock()

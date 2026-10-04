@@ -83,9 +83,13 @@ public final class TitleMenuCoordinator {
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
     public internal(set) var movieLoaded = false
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    var movieRequest = 0
     public internal(set) var movieError: String?
     /// A row the movie picked during input, applied once the movie returns.
     var pendingRequest: TitleMenuMovieBridge.Request?
+    /// The running load; one at a time.
+    public private(set) var loadWork: Task<Void, Never>?
     private let menuMode: MenuModeController
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
@@ -103,9 +107,9 @@ public final class TitleMenuCoordinator {
         self.world = world
     }
 
-    /// Continue shows only when a save exists.
+    /// Continue shows only when a save exists, once the save list has been read.
     public var entries: [TitleMenuEntry] {
-        let hasSaves = !(saves?.saveRows().isEmpty ?? true)
+        let hasSaves = !(saves?.saveRows.isEmpty ?? true)
         return TitleMenuEntry.allCases.filter { $0 != .resume || hasSaves }
     }
 
@@ -119,6 +123,7 @@ public final class TitleMenuCoordinator {
         if movieEnabled {
             startMovie()
         }
+        refreshSaveRows()
     }
 
     public func close() {
@@ -164,7 +169,7 @@ public final class TitleMenuCoordinator {
     func activate(_ entry: TitleMenuEntry) {
         switch entry {
         case .resume:
-            guard let newest = saves?.saveRows().max(by: { $0.savedAt < $1.savedAt })
+            guard let newest = saves?.saveRows.max(by: { $0.savedAt < $1.savedAt })
             else { return }
             load(newest.slot)
         case .new:
@@ -172,7 +177,8 @@ public final class TitleMenuCoordinator {
             world?.startNewGame()
             lastResult = "New game"
         case .load:
-            loadPage = SaveLoadPageModel(mode: .load, rows: saves?.saveRows() ?? [])
+            loadPage = SaveLoadPageModel(mode: .load, rows: saves?.saveRows ?? [])
+            refreshSaveRows()
         case .quit:
             world?.quitApplication()
         }
@@ -190,12 +196,25 @@ public final class TitleMenuCoordinator {
     }
 
     private func load(_ slot: String) {
-        do {
-            try saves?.loadGame(slot: slot)
-            close()
-            lastResult = "Loaded \(slot)"
-        } catch {
-            lastResult = "Load failed: \(error)"
+        guard let saves, loadWork == nil else { return }
+        lastResult = "Loading \(slot)"
+        loadWork = Task {
+            do {
+                try await saves.loadGame(slot: slot)
+                self.close()
+                self.lastResult = "Loaded \(slot)"
+            } catch {
+                self.lastResult = "Load failed: \(error)"
+            }
+            self.loadWork = nil
+        }
+    }
+
+    private func refreshSaveRows() {
+        guard let saves else { return }
+        Task {
+            let rows = await saves.refreshSaveRows()
+            self.loadPage?.replaceRows(rows)
         }
     }
 

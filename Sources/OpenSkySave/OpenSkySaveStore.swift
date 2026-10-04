@@ -24,7 +24,7 @@ nonisolated public enum OpenSkySaveStoreError: Error, Equatable {
 }
 
 /// A directory of named OpenSky saves.
-nonisolated public struct OpenSkySaveStore {
+nonisolated public struct OpenSkySaveStore: Sendable {
     /// Longest slot name accepted. Well under every filesystem's limit, and
     /// long enough for a date plus a description.
     public static let maximumSlotNameLength = 64
@@ -32,11 +32,14 @@ nonisolated public struct OpenSkySaveStore {
     /// Directory the slots live in. Created by whoever produced the URL;
     /// `defaultStore(fileManager:)` creates it.
     public let directory: URL
-    private let fileManager: FileManager
 
-    public init(directory: URL, fileManager: FileManager = .default) {
+    /// `FileManager` is not `Sendable`, so the store reads `.default` at each call.
+    private var fileManager: FileManager {
+        .default
+    }
+
+    public init(directory: URL) {
         self.directory = directory
-        self.fileManager = fileManager
     }
 
     /// Store rooted at `OpenSkySaveIO.defaultSavesDirectory(fileManager:)`.
@@ -44,7 +47,7 @@ nonisolated public struct OpenSkySaveStore {
         -> OpenSkySaveStore
     {
         let directory = try OpenSkySaveIO.defaultSavesDirectory(fileManager: fileManager)
-        return OpenSkySaveStore(directory: directory, fileManager: fileManager)
+        return OpenSkySaveStore(directory: directory)
     }
 
     // MARK: - Slot names

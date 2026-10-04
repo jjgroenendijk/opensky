@@ -31,7 +31,9 @@ public protocol RuntimeStateWorld: AnyObject {
         crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
     ) -> ConditionContext
 
-    func saveSlots() throws -> [String]
-    func saveSession(slot: String) throws
-    func loadSession(slot: String) throws
+    /// The file work runs off the main actor. The state is read before the first
+    /// await and a loaded save is applied after the last one, each in one frame.
+    func saveSlots() async throws -> [String]
+    func saveSession(slot: String) async throws
+    func loadSession(slot: String) async throws
 }

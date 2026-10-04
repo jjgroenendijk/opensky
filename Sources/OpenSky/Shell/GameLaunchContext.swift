@@ -114,7 +114,7 @@ final class GameLaunchContext {
         if let vfs = virtualFileSystem {
             let language = localizationLanguage.language
             controller.uiLab.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
-            controller.swfMovies.factory = { SWFMovieLoader(fileSystem: vfs) }
+            controller.swfMovies.fileSystem = vfs
             controller.menuTextLoader = { LocalizedLabels.load(vfs: vfs, language: language) }
             controller.controlMapLoader = {
                 try ControlMapFile(data: vfs.contents(forPath: ControlMapFile.path))

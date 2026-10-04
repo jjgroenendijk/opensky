@@ -195,23 +195,22 @@ extension CombatWorldAdapter: CombatWorld {
         game.renderer?.locomotion.write(value, to: name)
     }
 
-    /// A playback failure is logged by the engine and leaves the hit silent.
+    /// A playback failure is logged by the engine and leaves the hit silent. The
+    /// file loads off the main actor and is kept, so a repeated impact does not read it.
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         guard
             let engine = game.renderer?.worldAudio, engine.isRunning,
+            let assets = game.audio.assets,
             let sounds = (game.worldData as? AudioDataProviding)?.soundStore,
             let sound = try? sounds.resolveAny(impact.sound),
-            let path = sound.filePaths.first,
-            let data = try? game.audioFileSystem?.contents(forPath: path)
+            let path = sound.filePaths.first
         else { return }
-        _ = try? engine.playPositional(
-            fileData: data,
-            request: AudioPlayRequest(
-                name: path,
-                category: sound.audioCategory ?? .footsteps,
-                worldPosition: position
-            )
+        let request = AudioPlayRequest(
+            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position
         )
+        assets.request(path) { result in
+            _ = try? engine.playPositional(asset: result.get(), request: request)
+        }
     }
 
     func setCombatMusicActive(_ active: Bool) {

@@ -169,8 +169,8 @@ extension AIWorldAdapter: NPCAnimationWorld {
         game.actorPlayback(for: actor)
     }
 
-    var animationFiles: (any GameFileSource)? {
-        game.audioFileSystem
+    var animationClips: ActorClipLoader? {
+        game.sessionWiring.animationClips
     }
 }
 

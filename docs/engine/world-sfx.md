@@ -110,8 +110,11 @@ stops them: on a context change, through the toggle, or with Stop ambience.
 
 ## Threading
 
-Everything runs on the main actor, like the rest of the audio engine. Decoding runs on the
-engine's decode queue. Nothing from OpenSky runs on the audio render thread. The sound, weather,
+The director runs on the main actor, like the rest of the audio engine. A sound file is read and
+parsed on the shared play-time worker ([concurrency](/decisions/concurrency.md)). A sound whose
+file has not arrived starts after the drain that brings it, so it can start a frame or more late.
+A loop or ambience bed that was stopped in the meantime does not start. Streaming decode runs on
+the engine's decode queue. Nothing from OpenSky runs on the audio render thread. The sound, weather,
 and acoustic space stores are immutable after they are built.
 
 ## Controls

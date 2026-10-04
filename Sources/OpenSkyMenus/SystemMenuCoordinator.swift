@@ -2,6 +2,7 @@
 // world sim and routes keys here. The vanilla movie is an optional
 // presentation over `SystemMenuModel`. See docs/engine/system-menu.md.
 
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
 import OSLog
@@ -15,14 +16,18 @@ public protocol SystemMenuWorld: SWFLayerWorld, MenuInputConsumer {
     func quitToMainMenu()
 }
 
-/// Saving and loading for the Save and Load pages and the quick keys.
+/// Saving and loading for the Save and Load pages and the quick keys. The file work
+/// runs off the main actor; game state is read and applied on it.
 public protocol SaveGameService: AnyObject {
-    func saveRows() -> [SaveSlotRow]
+    /// The newest listing read, empty before the first.
+    var saveRows: [SaveSlotRow] { get }
+    @discardableResult
+    func refreshSaveRows() async -> [SaveSlotRow]
     /// Writes `slot`, or a new slot when nil; returns the slot written.
     @discardableResult
-    func saveGame(slot: String?) throws -> String
-    func loadGame(slot: String) throws
-    func deleteSave(slot: String) throws
+    func saveGame(slot: String?) async throws -> String
+    func loadGame(slot: String) async throws
+    func deleteSave(slot: String) async throws
 }
 
 public final class SystemMenuCoordinator {
@@ -35,11 +40,15 @@ public final class SystemMenuCoordinator {
     public internal(set) var quitPage: ConfirmationModel?
     /// The result of the last save, load, or remap, for the readout.
     public internal(set) var lastMessage: String?
+    /// The running save, load, or delete; one at a time.
+    public internal(set) var saveWork: Task<Void, Never>?
     public private(set) var settings: PlayerSettingsCoordinator?
     public weak var saves: SaveGameService?
     /// Off by default: the vanilla movie takes the one SWF layer from the HUD.
     public private(set) var movieEnabled = false
     public private(set) var movieLoaded = false
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    private var movieRequest = 0
     public private(set) var movieError: String?
     /// Called once; finding the data root walks the file system.
     public var locateDataRoot: () -> GameDataRoot? = { try? GameDataLocator.locate() }
@@ -178,14 +187,26 @@ public final class SystemMenuCoordinator {
     /// A missing install or a movie the AS2 subset cannot run degrades to a
     /// readout, never to a thrown error out of a control action.
     private func startMovie() {
-        guard let renderer, let loader = movies.loader else {
+        guard renderer != nil, movies.isAvailable else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
+        hud.suspend()
+        movieRequest += 1
+        let request = movieRequest
+        movies.request(SystemMenuMovieBridge.moviePath, while: { [weak self] in
+            self?.movieRequest == request
+        }, then: { [weak self] result in
+            self?.showMovie(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the open.
+    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer else { return }
         do {
-            hud.suspend()
-            let scene = try loader.load(path: SystemMenuMovieBridge.moviePath)
+            let scene = try result.get()
             try renderer.setSWFMovie(scene)
             renderer.swfEnabled = true
             renderer.swfScale = 1
@@ -221,6 +242,7 @@ public final class SystemMenuCoordinator {
 
     /// Hands the SWF layer back to the HUD.
     private func stopMovie() {
+        movieRequest += 1
         movieLoaded = false
         movieError = nil
         hud.start()

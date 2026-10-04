@@ -1,8 +1,7 @@
 // Builds the detail pane for one selection: decoded info text plus (NIF/DDS)
 // an offscreen-rendered preview image through the same engine path the game
-// renderer uses. MeshLibrary/TextureLibrary caches stay warm across
-// selections. Failures never crash the browser — they become [ERROR] text
-// (AGENTS.md mod-quirk rule). Pipeline: docs/tools/preview-gui.md.
+// renderer uses. Files are read and parsed off the main actor; only the render
+// runs on it. Failures become [ERROR] text. Pipeline: docs/tools/preview-gui.md.
 
 import AppKit
 import Metal
@@ -14,12 +13,83 @@ import OpenSkyPreview
 import OpenSkyRendering
 import OpenSkyWorld
 import simd
+import Synchronization
 
-final class PreviewDetailBuilder {
+/// The selection's text, and the scene to render when the file has a picture.
+nonisolated struct PreviewDetailDraft: Sendable {
+    let text: String
+    let render: PreviewRender?
+
+    init(text: String, render: PreviewRender? = nil) {
+        self.text = text
+        self.render = render
+    }
+}
+
+nonisolated struct PreviewRender: Sendable {
+    let device: any MTLDevice
+    let scene: RenderScene
+    let camera: SceneCamera
+    let width: Int
+    let height: Int
+}
+
+/// The main-actor side: drafts each selection on the concurrent pool, then renders.
+final class PreviewDetailLoader {
     struct Detail {
         let text: String
         let image: CGImage?
     }
+
+    private let worker: PreviewDetailWorker
+
+    init(fileSystem: any GameFileSource, referenceInspector: ReferenceRecordInspector? = nil) {
+        worker = PreviewDetailWorker(
+            builder: PreviewDetailBuilder(
+                fileSystem: fileSystem,
+                referenceInspector: referenceInspector
+            )
+        )
+    }
+
+    func detail(for selection: PreviewSelection) async -> Detail {
+        let draft = await worker.draft(for: selection)
+        return Detail(text: draft.text, image: draft.render.flatMap(Self.image))
+    }
+
+    /// Headless MTKView carries the pixel-format config Renderer reads;
+    /// renderOffscreen never touches its drawable (CLI render pattern).
+    private static func image(_ render: PreviewRender) -> CGImage? {
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: render.width, height: render.height),
+            device: render.device
+        )
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        guard
+            let renderer = try? Renderer(view: view, scene: render.scene, camera: render.camera),
+            let texture = try? renderer.renderOffscreen(width: render.width, height: render.height)
+        else { return nil }
+        return FrameScreenshot.image(from: texture)
+    }
+}
+
+/// Owns the builder and its mesh and texture caches; one draft at a time.
+nonisolated final class PreviewDetailWorker: Sendable {
+    private let builder: Mutex<PreviewDetailBuilder>
+
+    init(builder: sending PreviewDetailBuilder) {
+        self.builder = Mutex(builder)
+    }
+
+    @concurrent
+    func draft(for selection: PreviewSelection) async -> PreviewDetailDraft {
+        builder.withLock { $0.draft(for: selection) }
+    }
+}
+
+nonisolated final class PreviewDetailBuilder {
+    typealias Detail = PreviewDetailDraft
 
     let fileSystem: any GameFileSource
     private let referenceInspector: ReferenceRecordInspector?
@@ -49,10 +119,10 @@ final class PreviewDetailBuilder {
         }
     }
 
-    func detail(for selection: PreviewSelection) -> Detail {
+    func draft(for selection: PreviewSelection) -> Detail {
         switch selection {
         case let .record(record):
-            Detail(text: recordText(record), image: nil)
+            Detail(text: recordText(record))
         case let .file(entry):
             fileDetail(entry: entry)
         }
@@ -72,8 +142,7 @@ final class PreviewDetailBuilder {
             data = try fileSystem.contents(forPath: entry.path)
         } catch {
             return Detail(
-                text: "[ERROR] cannot read \(entry.path): \(String(describing: error))",
-                image: nil
+                text: "[ERROR] cannot read \(entry.path): \(String(describing: error))"
             )
         }
         let header = "\(entry.path)\narchive: \(entry.archive)\n\(data.count) bytes\n\n"
@@ -84,9 +153,9 @@ final class PreviewDetailBuilder {
             return ddsDetail(header: header, path: entry.path, data: data)
         }
         if entry.path.hasSuffix(".hkt") {
-            return Detail(text: header + tagfileText(data), image: nil)
+            return Detail(text: header + tagfileText(data))
         }
-        return Detail(text: header + "(no preview for this file type)", image: nil)
+        return Detail(text: header + "(no preview for this file type)")
     }
 
     private func nifDetail(header: String, path: String, data: Data) -> Detail {
@@ -95,13 +164,12 @@ final class PreviewDetailBuilder {
             file = try NIFFile(data: data)
         } catch {
             return Detail(
-                text: header + "[ERROR] NIF parse failed: \(String(describing: error))",
-                image: nil
+                text: header + "[ERROR] NIF parse failed: \(String(describing: error))"
             )
         }
         let text = header + AssetInfoText.nif(file: file)
         guard let meshes else {
-            return Detail(text: text + Self.noGPUNote, image: nil)
+            return Detail(text: text + Self.noGPUNote)
         }
         let model: RenderModel
         do {
@@ -109,12 +177,11 @@ final class PreviewDetailBuilder {
         } catch {
             let reason = String(describing: error)
             return Detail(
-                text: text + "\n[WARNING] no preview image: \(reason)",
-                image: nil
+                text: text + "\n[WARNING] no preview image: \(reason)"
             )
         }
         guard let bounds = meshes.bounds(forPath: path) else {
-            return Detail(text: text + "\n[WARNING] no bounds — nothing to frame", image: nil)
+            return Detail(text: text + "\n[WARNING] no bounds — nothing to frame")
         }
         let scene = RenderScene(instances: [
             RenderPlacement(model: model, transform: matrix_identity_float4x4)
@@ -122,7 +189,7 @@ final class PreviewDetailBuilder {
         let camera = SceneCamera.framing(bounds: (bounds.min, bounds.max))
         return Detail(
             text: text,
-            image: renderImage(scene: scene, camera: camera, width: 1024, height: 768)
+            render: render(scene: scene, camera: camera, width: 1024, height: 768)
         )
     }
 
@@ -132,13 +199,12 @@ final class PreviewDetailBuilder {
             file = try DDSFile(data: data)
         } catch {
             return Detail(
-                text: header + "[ERROR] DDS parse failed: \(String(describing: error))",
-                image: nil
+                text: header + "[ERROR] DDS parse failed: \(String(describing: error))"
             )
         }
         let text = header + AssetInfoText.dds(file: file, byteCount: data.count)
         guard let device, let textures else {
-            return Detail(text: text + Self.noGPUNote, image: nil)
+            return Detail(text: text + Self.noGPUNote)
         }
         let aspect = Float(file.width) / Float(file.height)
         let quad = TexturePreviewScene.model(textureKey: path, aspect: aspect)
@@ -150,8 +216,7 @@ final class PreviewDetailBuilder {
             )
         else {
             return Detail(
-                text: text + "\n[WARNING] no preview image: GPU transfer failed",
-                image: nil
+                text: text + "\n[WARNING] no preview image: GPU transfer failed"
             )
         }
         let scene = RenderScene(instances: [
@@ -160,7 +225,7 @@ final class PreviewDetailBuilder {
         let size = Self.imageSize(width: file.width, height: file.height)
         return Detail(
             text: text,
-            image: renderImage(
+            render: render(
                 scene: scene,
                 camera: TexturePreviewScene.camera(),
                 width: size.width,
@@ -181,25 +246,14 @@ final class PreviewDetailBuilder {
         )
     }
 
-    /// Headless MTKView carries the pixel-format config Renderer reads;
-    /// renderOffscreen never touches its drawable (CLI render pattern).
-    private func renderImage(
+    private func render(
         scene: RenderScene,
         camera: SceneCamera,
         width: Int,
         height: Int
-    ) -> CGImage? {
-        guard let device else { return nil }
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: width, height: height),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        guard
-            let renderer = try? Renderer(view: view, scene: scene, camera: camera),
-            let texture = try? renderer.renderOffscreen(width: width, height: height)
-        else { return nil }
-        return FrameScreenshot.image(from: texture)
+    ) -> PreviewRender? {
+        device.map {
+            PreviewRender(device: $0, scene: scene, camera: camera, width: width, height: height)
+        }
     }
 }

@@ -8,6 +8,7 @@ import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import OSLog
+import Synchronization
 
 /// What `ScriptCoordinator` reads from the live session.
 @MainActor
@@ -25,6 +26,8 @@ public final class ScriptCoordinator {
     public private(set) var runtime: PapyrusWorldRuntime?
     /// The seam natives reach the world through.
     public private(set) var bridge: PapyrusWorldStateBridge?
+    /// Scripts with their ancestors, loaded off the main actor once play starts.
+    private var scripts: AssetLoader<String, [PexFile]>?
     weak var world: (any ScriptWorld)?
 
     public init() {}
@@ -46,9 +49,32 @@ public final class ScriptCoordinator {
                 context: PapyrusNativeContext(world: bridge)
             )
         ))
+        // Session start runs before the first frame, so it may load at once.
         runtime.scriptProvider = Self.scriptProvider(fileSystem: fileSystem)
+        scripts = AssetLoader(load: Self.chainLoad(fileSystem: fileSystem))
         install(runtime: runtime, bridge: bridge)
         return runtime
+    }
+
+    /// The frame's drain point. The first call is the first frame: from then on,
+    /// scripts load off the main actor, and work that waits for one runs here.
+    public func drainLoads() {
+        guard let runtime, let scripts else { return }
+        scripts.drain()
+        if runtime.scriptLibrary == nil {
+            runtime.scriptLibrary = { [weak scripts] name in
+                guard let scripts else { return .failed(AssetLoadFailure(reason: "no loader")) }
+                let key = PapyrusRuntime.key(name)
+                let state = scripts.state(of: key)
+                switch state {
+                case .ready: scripts.evict { $0 == key }
+                case let .failed(failure): Self.logUnavailable(name, failure)
+                case .loading: break
+                }
+                return state
+            }
+        }
+        runtime.retryDeferredScriptWork()
     }
 
     /// Takes a VM built elsewhere, such as a test fixture's.
@@ -88,15 +114,53 @@ public final class ScriptCoordinator {
             do {
                 return try loader.load(name)
             } catch {
-                logger.warning(
-                    """
-                    [WARNING] script \(name, privacy: .public) unavailable: \
-                    \(String(describing: error), privacy: .public)
-                    """
-                )
+                logUnavailable(name, AssetLoadFailure(error))
                 return nil
             }
         }
+    }
+
+    /// The worker's load: the script, then each ancestor that loads. Parsed files
+    /// stay in a worker-side cache, because most scripts share a few ancestors.
+    private static func chainLoad(
+        fileSystem: any GameFileSource
+    ) -> @Sendable (String) throws -> [PexFile] {
+        let parsed = PexParseCache()
+        let load: @Sendable (String) throws -> PexFile = { name in
+            let key = PapyrusRuntime.key(name)
+            if let cached = parsed.files.withLock({ $0[key] }) {
+                return cached
+            }
+            let file = try PexScriptLoader.load(name) { try fileSystem.contents(forPath: $0) }
+            parsed.files.withLock { $0[key] = file }
+            return file
+        }
+        return { name in
+            var chain = try [load(name)]
+            var visited: Set<String> = [PapyrusRuntime.key(name)]
+            var current = name
+            while
+                let parent = chain.last?.objects
+                    .first(where: { PapyrusRuntime.key($0.name) == PapyrusRuntime.key(current) })?
+                    .parentClassName,
+                !parent.isEmpty,
+                visited.insert(PapyrusRuntime.key(parent)).inserted,
+                let file = try? load(parent)
+            {
+                chain.append(file)
+                current = parent
+            }
+            return chain
+        }
+    }
+
+    private static func logUnavailable(_ name: String, _ failure: AssetLoadFailure) {
+        logger.warning(
+            """
+            [WARNING] script \(name, privacy: .public) unavailable: \
+            \(failure.reason, privacy: .public)
+            """
+        )
     }
 
     private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Papyrus")
@@ -196,4 +260,8 @@ extension ScriptControlForwarding {
     public func stepScripts(ticks: Int) {
         scripts.stepScripts(ticks: ticks)
     }
+}
+
+nonisolated private final class PexParseCache: Sendable {
+    let files = Mutex<[String: PexFile]>([:])
 }

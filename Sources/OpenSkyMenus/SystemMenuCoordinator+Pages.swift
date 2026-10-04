@@ -41,8 +41,9 @@ extension SystemMenuCoordinator {
             controlsPage = ControlsPageModel()
         case .save, .load:
             saveLoadPage = SaveLoadPageModel(
-                mode: page == .save ? .save : .load, rows: saves?.saveRows() ?? []
+                mode: page == .save ? .save : .load, rows: saves?.saveRows ?? []
             )
+            refreshSaveRows()
         case .quit:
             quitPage = ConfirmationModel(question: "Quit", options: Self.quitOptions)
         }
@@ -84,7 +85,9 @@ extension SystemMenuCoordinator {
     }
 
     public func quicksave() {
-        perform("Quicksave") { _ = try $0.saveGame(slot: AutosavePolicy.quicksaveSlot) }
+        perform("Saving", done: "Quicksave") {
+            _ = try await $0.saveGame(slot: AutosavePolicy.quicksaveSlot)
+        }
     }
 
     /// Asks before deleting the selected save, as the Delete key does in vanilla.
@@ -134,16 +137,11 @@ extension SystemMenuCoordinator {
         saveLoadPage = page
         switch action {
         case let .save(slot):
-            perform("Saved") { _ = try $0.saveGame(slot: slot) }
-            refreshSaveRows()
+            perform("Saving", done: "Saved") { _ = try await $0.saveGame(slot: slot) }
         case let .load(slot):
-            perform("Loaded") { try $0.loadGame(slot: slot) }
-            if lastMessage == "Loaded" {
-                close()
-            }
+            perform("Loading", done: "Loaded") { try await $0.loadGame(slot: slot) }
         case let .delete(slot):
-            perform("Deleted") { try $0.deleteSave(slot: slot) }
-            refreshSaveRows()
+            perform("Deleting", done: "Deleted") { try await $0.deleteSave(slot: slot) }
         case .back:
             saveLoadPage = nil
             showPage(.main)
@@ -172,19 +170,36 @@ extension SystemMenuCoordinator {
     }
 
     private func refreshSaveRows() {
-        saveLoadPage?.replaceRows(saves?.saveRows() ?? [])
+        guard let saves else { return }
+        Task {
+            let rows = await saves.refreshSaveRows()
+            self.saveLoadPage?.replaceRows(rows)
+        }
     }
 
-    private func perform(_ done: String, _ body: (SaveGameService) throws -> Void) {
+    /// Shows `running` until the file work ends. A finished load closes the menu.
+    private func perform(
+        _ running: String, done: String,
+        _ body: @escaping @MainActor (SaveGameService) async throws -> Void
+    ) {
         guard let saves else {
             lastMessage = "Saving unavailable"
             return
         }
-        do {
-            try body(saves)
-            lastMessage = done
-        } catch {
-            lastMessage = "Failed: \(error)"
+        guard saveWork == nil else { return }
+        lastMessage = running
+        saveWork = Task {
+            do {
+                try await body(saves)
+                self.lastMessage = done
+                if done == "Loaded" {
+                    self.close()
+                }
+            } catch {
+                self.lastMessage = "Failed: \(error)"
+            }
+            self.saveWork = nil
+            self.refreshSaveRows()
         }
     }
 

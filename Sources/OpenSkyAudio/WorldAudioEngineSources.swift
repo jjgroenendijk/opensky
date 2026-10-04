@@ -144,16 +144,7 @@ extension WorldAudioEngine {
     @discardableResult
     public func playPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
-        if Self.isWAV(fileData) {
-            // Sound effects — footsteps, doors, activators — ship as plain
-            // RIFF/WAVE, which needs no decoder and no streaming; see
-            // WorldAudioEngineWAV.swift.
-            return try playPositional(
-                buffer: Self.makeBuffer(wav: fileData, downmixToMono: true),
-                request: request
-            )
-        }
-        return try playPositional(file: XWMFile(data: fileData), request: request)
+        return try playPositional(asset: AudioFileAsset(data: fileData), request: request)
     }
 
     /// Starts a positional streamed source from an already-framed container.
@@ -223,13 +214,13 @@ extension WorldAudioEngine {
     @discardableResult
     public func playNonPositional(fileData: Data, request: AudioPlayRequest) throws -> Int {
         guard isRunning else { throw AudioEngineError.notRunning }
-        if Self.isWAV(fileData) {
-            return try playNonPositional(
-                buffer: Self.makeBuffer(wav: fileData, downmixToMono: false),
-                request: request
-            )
-        }
-        let file = try XWMFile(data: fileData)
+        return try playNonPositional(asset: AudioFileAsset(data: fileData), request: request)
+    }
+
+    /// Non-positional streaming from an already-framed container.
+    @discardableResult
+    public func playNonPositional(file: XWMFile, request: AudioPlayRequest) throws -> Int {
+        guard isRunning else { throw AudioEngineError.notRunning }
         let channels = AVAudioChannelCount(file.codec.channelCount)
         guard
             channels > 0,

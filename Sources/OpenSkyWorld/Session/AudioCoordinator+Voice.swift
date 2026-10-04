@@ -1,6 +1,7 @@
 // World > Audio > Voice: the picker over the 75,408 `.fuz` lines, the
 // positional trigger, the playback clock, and lip sync on the speaker.
 
+import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
@@ -9,6 +10,10 @@ import OSLog
 struct VoiceLabState {
     var filter = AudioLabCore.defaultVoiceFilter
     var cachedPaths: [String]?
+    /// Set once the list is requested; a test awaits it.
+    var listing: Task<Void, Never>?
+    /// The line the trigger asked for while its file loads.
+    var waitingPath: String?
     var matches: [String] = []
     /// The filter `matches` was computed for.
     var matchedFilter: String?
@@ -32,6 +37,11 @@ extension AudioCoordinator {
         set { voice.filter = newValue }
     }
 
+    /// The running or finished voice list read, for a test to await.
+    var voiceListing: Task<Void, Never>? {
+        voice.listing
+    }
+
     public var selectableVoiceFileNames: [String] {
         Array(matchedVoicePaths().prefix(AudioLabCore.voicePickerLimit))
     }
@@ -40,18 +50,41 @@ extension AudioCoordinator {
         matchedVoicePaths().count
     }
 
+    /// Nil when the line played or waits for its file; else the reason.
     public func playVoiceFile(named name: String) -> String? {
         guard let engine, engine.isRunning else {
             voice.lastError = "audio engine is not running"
             return voice.lastError
         }
-        guard let fileSystem = world?.audioFileSystem else {
+        guard let voiceFiles else {
             voice.lastError = "no game data"
             return voice.lastError
         }
+        voice.waitingPath = nil
+        switch voiceFiles.state(of: name) {
+        case .loading:
+            voice.waitingPath = name
+            return nil
+        case let .failed(failure):
+            voice.lastError = failure.reason
+            return voice.lastError
+        case let .ready(data):
+            voiceFiles.evict { $0 == name }
+            return playVoice(data, named: name, engine: engine)
+        }
+    }
+
+    /// Plays the line the trigger waited for, once its file is in.
+    func drainVoice() {
+        voiceFiles?.drain()
+        guard let name = voice.waitingPath else { return }
+        _ = playVoiceFile(named: name)
+    }
+
+    private func playVoice(_ data: Data, named name: String, engine: WorldAudioEngine) -> String? {
         do {
             let playback = try engine.playVoice(
-                fuzData: fileSystem.contents(forPath: name),
+                fuzData: data,
                 name: name,
                 worldPosition: triggerPosition()
             )
@@ -109,8 +142,14 @@ extension AudioCoordinator {
         if let cached = voice.cachedPaths {
             paths = cached
         } else {
-            paths = AudioLabCore.voicePaths(in: world?.audioFileSystem?.archiveEntries() ?? [])
-            voice.cachedPaths = paths
+            if voice.listing == nil, let files = world?.audioFileSystem {
+                voice.listing = Task { [weak self] in
+                    let names = await Self.listPaths(files: files, AudioLabCore.voicePaths(in:))
+                    self?.voice.cachedPaths = names
+                    self?.voice.matchedFilter = nil
+                }
+            }
+            return []
         }
         if voice.matchedFilter == voice.filter {
             return voice.matches

@@ -20,7 +20,7 @@ public final class WorldAudioFootstepDirector {
     private let engine: WorldAudioEngine
     private let footstepStore: FootstepStore?
     private let soundStore: SoundRecordStore?
-    private let fileLoader: (String) throws -> Data
+    private let assets: AudioAssetLoader
     /// MATT index, for naming the ground material in the readout. Empty in a
     /// synthetic session, and then a material is reported by FormID.
     public var materialTypes = MaterialTypeIndex.empty
@@ -54,17 +54,12 @@ public final class WorldAudioFootstepDirector {
         engine: WorldAudioEngine,
         footstepStore: FootstepStore?,
         soundStore: SoundRecordStore?,
-        fileSystem: (any GameFileSource)?
+        assets: AudioAssetLoader
     ) {
         self.engine = engine
         self.footstepStore = footstepStore
         self.soundStore = soundStore
-        fileLoader = { path in
-            guard let fileSystem else {
-                throw NSError(domain: "WorldAudioFootstepDirector", code: 1)
-            }
-            return try fileSystem.contents(forPath: path)
-        }
+        self.assets = assets
         footstepSet = footstepStore?.defaultSet
     }
 
@@ -78,7 +73,7 @@ public final class WorldAudioFootstepDirector {
         self.engine = engine
         self.footstepStore = footstepStore
         self.soundStore = soundStore
-        self.fileLoader = fileLoader
+        assets = AudioAssetLoader(immediate: fileLoader)
         footstepSet = footstepStore?.defaultSet
     }
 
@@ -185,6 +180,7 @@ public final class WorldAudioFootstepDirector {
         set.editorID ?? set.formID.description
     }
 
+    /// Nil when the step played or waits for its file; else the reason it did not.
     @discardableResult
     private func play(
         _ resolved: ResolvedFootstep,
@@ -197,27 +193,32 @@ public final class WorldAudioFootstepDirector {
         }
         guard
             let sound = try? soundStore.resolveAny(resolved.sound),
-            let path = sound.filePaths.first,
-            let data = try? fileLoader(path)
+            let path = sound.filePaths.first
         else {
             lastFootstepError = "unresolved \(tag) -> \(resolved.sound.description)"
             return lastFootstepError
         }
+        // The SNCT chain places vanilla footstep descriptors under
+        // `AudioCategoryFST`; the fallback is for a chain that reaches no menu category.
+        let request = AudioPlayRequest(
+            name: path, category: sound.audioCategory ?? .footsteps, worldPosition: position
+        )
+        var reason: String?
+        assets.request(path) { [weak self] result in
+            reason = self?.start(result, request: request, tag: tag)
+        }
+        return reason
+    }
+
+    private func start(
+        _ result: Result<AudioFileAsset, AssetLoadFailure>,
+        request: AudioPlayRequest,
+        tag: String
+    ) -> String? {
         do {
-            try engine.playPositional(
-                fileData: data,
-                request: AudioPlayRequest(
-                    name: path,
-                    // The SNCT chain places vanilla footstep descriptors under
-                    // `AudioCategoryFST` on its own; the fallback only matters
-                    // for a descriptor whose chain does not reach a menu
-                    // category, and footsteps is the right home for it.
-                    category: sound.audioCategory ?? .footsteps,
-                    worldPosition: position
-                )
-            )
+            try engine.playPositional(asset: result.get(), request: request)
             playedFootstepCount += 1
-            lastFootstepDescription = "\(tag): \(path)"
+            lastFootstepDescription = "\(tag): \(request.name)"
             lastFootstepError = nil
             return nil
         } catch {

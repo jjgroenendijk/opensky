@@ -92,6 +92,8 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
         switch outcome {
         case .none:
             "Nothing saved or loaded this session."
+        case let .running(operation, slot):
+            "Running \(operation) of \(slot)..."
         case let .saved(slot):
             "Saved to \(slot)."
         case let .loaded(slot):

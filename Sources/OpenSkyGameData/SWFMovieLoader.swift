@@ -34,6 +34,10 @@ nonisolated public final class SWFMovieLoader {
     /// Every `Interface\*.swf` movie in the mounted archives, path-sorted so a
     /// sweep or a picker lists them in a stable order.
     public func moviePaths() -> [String] {
+        Self.moviePaths(in: fileSystem)
+    }
+
+    public static func moviePaths(in fileSystem: any GameFileSource) -> [String] {
         fileSystem.archiveEntries()
             .map(\.path)
             .filter { $0.hasPrefix(Self.interfacePrefix) && $0.hasSuffix(Self.movieSuffix) }

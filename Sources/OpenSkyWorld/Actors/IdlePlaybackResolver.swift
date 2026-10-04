@@ -8,6 +8,7 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import Synchronization
 
 /// Which way an idle reached its clip.
 nonisolated public enum IdleServedPath: Equatable, Sendable {
@@ -191,5 +192,45 @@ nonisolated public final class IdlePlaybackResolver {
             }
         }
         return parts.joined(separator: "\\")
+    }
+}
+
+/// One idle's plan request. Equal by record identity.
+nonisolated public struct IdlePlanKey: Hashable, Sendable {
+    public let idle: ResolvedRecord<IdleAnimation>
+
+    public init(_ idle: ResolvedRecord<IdleAnimation>) {
+        self.idle = idle
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.idle.id == rhs.idle.id
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(idle.id)
+    }
+}
+
+public typealias IdlePlanLoader = AssetLoader<IdlePlanKey, IdlePlaybackPlan>
+
+nonisolated extension IdlePlaybackResolver {
+    /// The plan decode a worker runs. The resolver and its graph caches live on the worker.
+    public static func planLoad(
+        files: any GameFileSource,
+        animatedObjects: TypedRecordStore<AnimatedObject>
+    ) -> @Sendable (IdlePlanKey) throws -> IdlePlaybackPlan {
+        let box = IdlePlaybackResolverBox(
+            IdlePlaybackResolver(files: files, animatedObjects: animatedObjects)
+        )
+        return { key in box.resolver.withLock { $0.plan(for: key.idle) } }
+    }
+}
+
+nonisolated private final class IdlePlaybackResolverBox: Sendable {
+    let resolver: Mutex<IdlePlaybackResolver>
+
+    init(_ resolver: sending IdlePlaybackResolver) {
+        self.resolver = Mutex(resolver)
     }
 }

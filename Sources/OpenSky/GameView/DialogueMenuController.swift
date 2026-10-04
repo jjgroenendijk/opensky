@@ -29,6 +29,8 @@ final class DialogueMenuController {
     private(set) var model = DialogueMenuModel.empty
     private(set) var isOpen = false
     private(set) var movieLoaded = false
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    private var movieRequest = 0
     private(set) var movieError: String?
 
     init(game: GameViewController) {
@@ -179,22 +181,30 @@ final class DialogueMenuController {
     /// A missing install or a failed movie degrades to a readout, never to a
     /// conversation that cannot be left.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
+        guard game.renderer != nil, game.swfMovies.isAvailable else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
+        // The renderer owns one SWF layer; this takes it from the HUD.
+        game.hud.suspend()
+        movieRequest += 1
+        let request = movieRequest
+        game.swfMovies.request(DialogueMenuMovieBridge.moviePath, while: { [weak self] in
+            self?.movieRequest == request
+        }, then: { [weak self] result in
+            self?.showMovie(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the open.
+    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer = game.renderer else { return }
         do {
-            // The renderer owns one SWF layer; this takes it from the HUD.
-            game.hud.suspend()
-            let scene = try loader.load(path: DialogueMenuMovieBridge.moviePath)
-            try renderer.setSWFMovie(scene)
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime(
-                prepare: DialogueMenuMovieBridge.prepare(runtime:)
+            let started = try renderer.startMenuMovie(
+                result.get(), prepare: DialogueMenuMovieBridge.prepare(runtime:)
             )
-            guard started != nil else {
+            guard started else {
                 movieLoaded = false
                 movieError = "SWF runtime unavailable."
                 return
@@ -220,6 +230,7 @@ final class DialogueMenuController {
     }
 
     private func stopMovie() {
+        movieRequest += 1
         movieLoaded = false
         movieError = nil
         game.hud.start()

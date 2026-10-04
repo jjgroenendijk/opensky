@@ -2,9 +2,11 @@
 // every system to it and to the renderer, in dependency order.
 
 import OpenSkyFormatsCore
+import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -13,6 +15,8 @@ import simd
 
 final class WorldSessionWiring {
     unowned let game: GameViewController
+    /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
+    private(set) var animationClips: ActorClipLoader?
 
     init(game: GameViewController) {
         self.game = game
@@ -36,6 +40,8 @@ final class WorldSessionWiring {
                 }
             }
         )
+        wireAnimationAssets(renderer: renderer)
+        wireMenuMovies(renderer: renderer)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
         game.runtimeState.attach(globals: (provider as? GlobalDataProviding)?.globalStore)
         game.aiWorld.wireNPCMovement(renderer: renderer, streamer: streamer)
@@ -45,6 +51,10 @@ final class WorldSessionWiring {
         // After the audio callbacks, so the engine's own interaction handling
         // stays first in the multicast order.
         game.scriptWorld.wirePapyrus(provider: provider, renderer: renderer, streamer: streamer)
+        let scripts = game.scripts
+        renderer.session.assetDrains.add { [weak scripts] _ in scripts?.drainLoads() }
+        let audio = game.audio
+        renderer.session.assetDrains.add { [weak audio] _ in audio?.drainLoads() }
         game.messageWorld.wire(renderer: renderer)
         // Last in the multicast order: the activation sound and the recorded
         // activation both land before the item leaves the world.
@@ -73,6 +83,28 @@ final class WorldSessionWiring {
             streamer?.sampleWaterHeight(at: position)
         }
         game.streamer = streamer
+    }
+
+    /// Menu movies decode off the main actor, so a menu opens without a stall.
+    func wireMenuMovies(renderer: Renderer) {
+        let movies = game.swfMovies
+        movies.prefetch(SWFMovieSource.menuMoviePaths)
+        renderer.session.assetDrains.add { _ in movies.drain() }
+    }
+
+    /// One clip loader for idles, gaits, and combat reactions. Its results enter
+    /// before the world tick, and the coordinators that wait on it go right after.
+    private func wireAnimationAssets(renderer: Renderer) {
+        guard let files = game.audioFileSystem else { return }
+        let clips = ActorClipLoader.clips(files: files)
+        animationClips = clips
+        let idles = game.idleWorld.idles
+        let npcAnimation = game.npcAnimation
+        renderer.session.assetDrains.add { [weak idles, weak npcAnimation] _ in
+            clips.drain()
+            idles?.drainLoads()
+            npcAnimation?.applyArrivedClips()
+        }
     }
 
     private func wireFrame(renderer: Renderer, streamer: CellStreamer) {

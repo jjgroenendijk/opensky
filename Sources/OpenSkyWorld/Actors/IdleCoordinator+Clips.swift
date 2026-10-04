@@ -1,7 +1,6 @@
 // The idle selector, clip cache, and report book-keeping of `IdleCoordinator`.
 
 import OpenSkyConditions
-import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -31,24 +30,8 @@ extension IdleCoordinator {
         world?.setProp(nil, on: actor)
     }
 
-    func clip(_ path: String, skeleton: String) -> ActorAnimationClip? {
-        let key = "\(skeleton)#\(path)"
-        if let cached = clips[key] {
-            return cached
-        }
-        guard let files, !failedClips.contains(key) else { return nil }
-        guard
-            let clip = try? ActorAnimationClipLoader.clip(
-                skeletonMeshPath: skeleton,
-                animationPath: path,
-                readHKX: { try HKXFile(data: files.contents(forPath: $0)) }
-            )
-        else {
-            failedClips.insert(key)
-            return nil
-        }
-        clips[key] = clip
-        return clip
+    func clip(_ path: String, skeleton: String) -> AssetLoadState<ActorAnimationClip>? {
+        clips?.state(of: ActorClipKey(skeletonMeshPath: skeleton, animationPath: path))
     }
 
     func failed(_ actor: ReferenceKey, source: String, _ reason: String) -> IdleReport {

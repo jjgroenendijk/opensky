@@ -9,7 +9,7 @@ import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPreview
 
-extension PreviewDetailBuilder {
+nonisolated extension PreviewDetailBuilder {
     private static let characterSkeleton =
         "meshes\\actors\\character\\character assets\\skeleton.hkx"
 

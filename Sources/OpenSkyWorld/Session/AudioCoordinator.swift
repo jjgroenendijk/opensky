@@ -2,6 +2,7 @@
 // state. Rules live in `AudioLabCore`; the app answers `AudioWorld`
 // (docs/engine/coordinators.md).
 
+import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -35,9 +36,15 @@ public final class AudioCoordinator {
     public private(set) var soundDirector: WorldAudioSoundDirector?
     public private(set) var musicDirector: WorldMusicDirector?
     public private(set) var footstepDirector: WorldAudioFootstepDirector?
+    /// Effect, footstep, and ambience files, shared by the directors. Nil before audio is on.
+    public private(set) var assets: AudioAssetLoader?
+    /// Voice line bytes for the lab trigger, read off the main actor.
+    var voiceFiles: AssetLoader<String, Data>?
     weak var world: (any AudioWorld)?
-    /// Enumerating every archive entry is not free.
+    /// Enumerating every archive entry is not free, so the list builds off the main actor.
     var musicFileNames: [String]?
+    /// Set once the list is requested; a test awaits it.
+    var musicListing: Task<Void, Never>?
     var voice = VoiceLabState()
 
     public init() {}
@@ -65,32 +72,53 @@ public final class AudioCoordinator {
         footstepDirector?.updateFootstepSet(feetArmatures: feetArmatures)
     }
 
+    /// Empty until the list is built; the panel refreshes and then shows it.
     public var selectableAudioFileNames: [String] {
         if let musicFileNames {
             return musicFileNames
         }
-        let names = AudioLabCore.musicPaths(in: world?.audioFileSystem?.archiveEntries() ?? [])
-        musicFileNames = names
-        return names
+        if musicListing == nil, let files = world?.audioFileSystem {
+            musicListing = Task { [weak self] in
+                let names = await Self.listPaths(files: files, AudioLabCore.musicPaths(in:))
+                self?.musicFileNames = names
+            }
+        }
+        return []
     }
 
+    @concurrent
+    nonisolated static func listPaths(
+        files: any GameFileSource,
+        _ select: @Sendable ([VFSEntry]) -> [String]
+    ) async -> [String] {
+        select(files.archiveEntries())
+    }
+
+    /// Nil when the play started or waits for its file; else the reason.
     public func playAudioFile(named name: String) -> String? {
-        guard let engine, engine.isRunning else {
+        guard let engine, engine.isRunning, let assets else {
             return "audio engine is not running"
         }
-        guard let fileSystem = world?.audioFileSystem else {
-            return "no game data"
+        var reason: String?
+        let position = triggerPosition()
+        assets.request(name) { result in
+            do {
+                // Vanilla `.xwm` is all music, but the trigger tests the positional path.
+                try engine.playPositional(asset: result.get(), request: AudioPlayRequest(
+                    name: name, category: .effects, worldPosition: position
+                ))
+            } catch {
+                reason = String(describing: error)
+            }
         }
-        do {
-            let data = try fileSystem.contents(forPath: name)
-            // Vanilla `.xwm` is all music, but the trigger tests the positional path.
-            try engine.playPositional(fileData: data, request: AudioPlayRequest(
-                name: name, category: .effects, worldPosition: triggerPosition()
-            ))
-            return nil
-        } catch {
-            return String(describing: error)
-        }
+        return reason
+    }
+
+    /// The frame's drain point: loaded sound files start the plays that waited.
+    public func drainLoads() {
+        assets?.drain()
+        musicDirector?.drainLoads()
+        drainVoice()
     }
 
     func triggerPosition() -> SIMD3<Float> {
@@ -105,12 +133,18 @@ public final class AudioCoordinator {
         let audioData = provider as? AudioDataProviding
         let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
         let fileSystem = world?.audioFileSystem
+        let assets = fileSystem.map(AudioAssetLoader.init(files:))
+            ?? AudioAssetLoader(immediate: { throw VFSError.fileNotFound(path: $0) })
+        self.assets = assets
+        voiceFiles = fileSystem.map { files in
+            AssetLoader { path in try files.contents(forPath: path) }
+        }
         let director = WorldAudioSoundDirector(
             engine: engine,
             soundStore: audioData?.soundStore,
             weatherStore: weatherStore,
             aspcStore: audioData?.aspcStore,
-            fileSystem: fileSystem
+            assets: assets
         )
         if let records = (provider as? EffectDataProviding)?.effectRecords {
             director.wireEffectRecords(records)
@@ -127,7 +161,7 @@ public final class AudioCoordinator {
             engine: engine,
             footstepStore: audioData?.footstepStore,
             soundStore: audioData?.soundStore,
-            fileSystem: fileSystem
+            assets: assets
         )
         footsteps.materialTypes = audioData?.materialTypes ?? .empty
         footstepDirector = footsteps

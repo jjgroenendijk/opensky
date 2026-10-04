@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMenus
@@ -24,6 +23,8 @@ final class LockpickingMenuController {
     private(set) var presentation: LockpickingMenuPresentation?
     private var lastFrame: Date?
     private var wasTurning = false
+    /// Lowercased SNDR editor ID -> FormID, built on the first sound.
+    private var soundIDs: [String: FormID]?
 
     init(game: GameViewController) {
         self.game = game
@@ -152,26 +153,38 @@ final class LockpickingMenuController {
     // MARK: - Sound
 
     /// Plays a lockpicking `SNDR` at the camera. A missing record stays silent.
+    /// The file loads off the main actor, so the first play of a sound may start late.
     private func play(_ sound: LockpickingSound) {
         guard
             let renderer = game.renderer,
             let engine = renderer.worldAudio, engine.isRunning,
+            let assets = game.audio.assets,
             let sounds = (game.worldData as? AudioDataProviding)?.soundStore,
-            let descriptor = sounds.descriptors.values.first(where: {
-                $0.editorID?.caseInsensitiveCompare(sound.rawValue) == .orderedSame
-            }),
-            let resolved = try? sounds.resolveAny(descriptor.formID),
-            let path = resolved.filePaths.first,
-            let data = try? game.audioFileSystem?.contents(forPath: path)
+            let formID = soundID(sound, in: sounds),
+            let resolved = try? sounds.resolveAny(formID),
+            let path = resolved.filePaths.first
         else { return }
-        _ = try? engine.playPositional(
-            fileData: data,
-            request: AudioPlayRequest(
-                name: path,
-                category: resolved.audioCategory ?? .effects,
-                worldPosition: renderer.freeFlyCamera.position
-            )
+        let request = AudioPlayRequest(
+            name: path,
+            category: resolved.audioCategory ?? .effects,
+            worldPosition: renderer.freeFlyCamera.position
         )
+        assets.request(path) { result in
+            _ = try? engine.playPositional(asset: result.get(), request: request)
+        }
+    }
+
+    private func soundID(_ sound: LockpickingSound, in sounds: SoundRecordStore) -> FormID? {
+        if soundIDs == nil {
+            var ids: [String: FormID] = [:]
+            for descriptor in sounds.descriptors.values {
+                if let editorID = descriptor.editorID?.lowercased(), ids[editorID] == nil {
+                    ids[editorID] = descriptor.formID
+                }
+            }
+            soundIDs = ids
+        }
+        return soundIDs?[sound.rawValue.lowercased()]
     }
 
     static func describe(_ refusal: any Error, name: String) -> String {

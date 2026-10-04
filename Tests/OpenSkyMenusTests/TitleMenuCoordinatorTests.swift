@@ -9,7 +9,7 @@ import Testing
 @MainActor
 private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameService {
     let menuMode = MenuModeController()
-    var rows: [SaveSlotRow] = []
+    var saveRows: [SaveSlotRow] = []
     var newGames = 0
     var quits = 0
     var loaded: [String] = []
@@ -34,19 +34,19 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
         quits += 1
     }
 
-    func saveRows() -> [SaveSlotRow] {
-        rows
+    func refreshSaveRows() async -> [SaveSlotRow] {
+        saveRows
     }
 
-    func saveGame(slot: String?) throws -> String {
+    func saveGame(slot: String?) async throws -> String {
         slot ?? "New"
     }
 
-    func loadGame(slot: String) throws {
+    func loadGame(slot: String) async throws {
         loaded.append(slot)
     }
 
-    func deleteSave(slot: String) throws {}
+    func deleteSave(slot: String) async throws {}
 }
 
 struct TitleMenuCoordinatorTests {
@@ -61,11 +61,11 @@ struct TitleMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func continueShowsOnlyWithSavesAndLoadsTheNewest() {
+    func continueShowsOnlyWithSavesAndLoadsTheNewest() async {
         let (menu, world) = Self.make()
         let menuMode = world.menuMode
         #expect(menu.entries == [.new, .load, .quit])
-        world.rows = [
+        world.saveRows = [
             SaveSlotRow(
                 slot: "Old",
                 title: "Old",
@@ -83,6 +83,8 @@ struct TitleMenuCoordinatorTests {
         #expect(menuMode.isWorldSimPaused)
         #expect(menu.snapshot.rows == ["Continue", "New", "Load", "Quit"])
         menu.route(.button(.accept))
+        #expect(menu.snapshot.lastResult == "Loading New")
+        await menu.loadWork?.value
         #expect(world.loaded == ["New"])
         #expect(!menu.isOpen)
     }
@@ -100,7 +102,7 @@ struct TitleMenuCoordinatorTests {
     @Test @MainActor
     func loadPageListsSavesAndBacksOut() {
         let (menu, world) = Self.make()
-        world.rows = [SaveSlotRow(slot: "A", title: "A", detail: "", savedAt: Date())]
+        world.saveRows = [SaveSlotRow(slot: "A", title: "A", detail: "", savedAt: Date())]
         menu.open()
         menu.route(.move(.down))
         menu.route(.move(.down))

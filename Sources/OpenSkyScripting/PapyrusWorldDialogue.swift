@@ -28,6 +28,14 @@ extension PapyrusWorldRuntime {
             return []
         }
         let target = PapyrusInstanceKey(reference: key, scriptName: fragment.scriptName)
+        if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
+            deferUntilScriptsLoad { [weak self] in
+                self?.queueTopicInfoFragment(
+                    of: info, key: key, phase: phase, formIDResolver: formIDResolver
+                )
+            }
+            return []
+        }
         guard
             attachRecordScript(
                 target, declared: info.script.scripts, formIDResolver: formIDResolver
@@ -57,6 +65,15 @@ extension PapyrusWorldRuntime {
     ) -> Bool {
         guard !scriptName.isEmpty else { return false }
         let target = PapyrusInstanceKey(reference: key, scriptName: scriptName)
+        if instancesByKey[target] == nil, scriptsLoading([scriptName]) {
+            deferUntilScriptsLoad { [weak self] in
+                self?.queueSceneFragment(
+                    of: scene, key: key, scriptName: scriptName, functionName: functionName,
+                    formIDResolver: formIDResolver
+                )
+            }
+            return false
+        }
         guard
             attachRecordScript(
                 target, declared: scene.scriptData.scripts, formIDResolver: formIDResolver
