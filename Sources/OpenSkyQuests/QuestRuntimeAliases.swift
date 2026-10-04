@@ -50,14 +50,10 @@ extension QuestRuntime {
     /// `resolution()` builds the quest-state seam.
     public func aliasResolution() -> QuestAliasResolution {
         var tables: [ReferenceKey: QuestAliasState] = [:]
-        for quest in quests.sortedQuests() {
-            guard
-                let key = quests.key(for: quest.formID),
-                let state = store.component(QuestAliasState.self, for: key)
-            else {
-                continue
+        for key in quests.sortedKeys {
+            if let state = store.component(QuestAliasState.self, for: key) {
+                tables[key] = state
             }
-            tables[key] = state
         }
         return QuestAliasResolution(defaults: quests, tables: tables)
     }

@@ -27,6 +27,11 @@ nonisolated public final class QuestStore: Sendable {
     private let sourceResolvers: [UInt32: FormIDResolver]
     /// QUST records in the top group that failed to decode. Zero in vanilla data.
     public let skippedRecords: SkippedRecords
+    /// Sorted once, because condition contexts read quests in order every frame.
+    private let questsInOrder: [Quest]
+    private let journalQuestsInOrder: [Quest]
+    /// Keys of `questsInOrder` that resolve, in the same order.
+    public let sortedKeys: [ReferenceKey]
 
     public var skippedRecordCount: Int {
         skippedRecords.total
@@ -124,6 +129,12 @@ nonisolated public final class QuestStore: Sendable {
             inverse[key] = raw
         }
         formIDsByKey = inverse
+        let ordered = byFormID.values.sorted {
+            ($0.editorID ?? $0.formID.description) < ($1.editorID ?? $1.formID.description)
+        }
+        questsInOrder = ordered
+        journalQuestsInOrder = ordered.filter { $0.kind != .none }
+        sortedKeys = ordered.compactMap { keys[$0.formID.rawValue] }
         self.resolver = resolver
         self.sourceResolvers = sourceResolvers
         self.skippedRecords = skippedRecords
@@ -185,14 +196,12 @@ nonisolated public final class QuestStore: Sendable {
     /// Records in editor-ID order, for inspection surfaces. Records without an
     /// editor ID sort by FormID under their hex spelling.
     public func sortedQuests() -> [Quest] {
-        questsByFormID.values.sorted {
-            ($0.editorID ?? $0.formID.description) < ($1.editorID ?? $1.formID.description)
-        }
+        questsInOrder
     }
 
     /// Quests that would appear in the journal — everything except type
     /// `none`, which the journal never lists.
     public func journalQuests() -> [Quest] {
-        sortedQuests().filter { $0.kind != .none }
+        journalQuestsInOrder
     }
 }
