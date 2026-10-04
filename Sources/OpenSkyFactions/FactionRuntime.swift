@@ -32,6 +32,8 @@ public struct FactionRuntime: FactionAccess {
     public private(set) var seededActors: Set<ReferenceKey> = []
 
     private let worldState: WorldStateStore
+    /// Walking the template chain is costly, and hostility asks every frame.
+    private let baselineMemo = BaselineMemo<FormID, ActorFactionBaseline>()
 
     public init(
         store: WorldStateStore,
@@ -115,9 +117,9 @@ public struct FactionRuntime: FactionAccess {
             return FactionSeedReport(added: [], unresolved: 0, wasAlreadySeeded: true)
         }
         seededActors.insert(holder.key)
-        guard let baselines, let pluginName else { return .none }
+        guard baselines != nil, let pluginName else { return .none }
         return seed(
-            baselines.baseline(for: holder.subject).memberships,
+            baseline(for: holder.subject).memberships,
             fromPlugin: pluginName,
             to: holder
         )
@@ -165,7 +167,7 @@ public struct FactionRuntime: FactionAccess {
             relationshipOverrides: worldState
                 .component(ActorRelationshipState.self, for: holder.key)
                 ?? ActorRelationshipState(),
-            aiData: baselines?.baseline(for: holder.subject).aiData ?? .absent,
+            aiData: baseline(for: holder.subject).aiData,
             hostilityOverride: worldState
                 .component(ActorCombatState.self, for: holder.key)?
                 .hostility,
@@ -178,7 +180,7 @@ public struct FactionRuntime: FactionAccess {
     public func crimeFaction(of subject: ActorValueSubject) -> ReferenceKey? {
         guard
             let pluginName,
-            let link = baselines?.baseline(for: subject).crimeFaction,
+            let link = baseline(for: subject).crimeFaction,
             let resolved = factions.resolve(link, fromPlugin: pluginName)
         else { return nil }
         return ReferenceKey(resolved: resolved.id)
@@ -220,6 +222,12 @@ public struct FactionRuntime: FactionAccess {
     }
 
     // MARK: - Private
+
+    /// The authored baseline, resolved once per base record. Nil resolver reads `.none`.
+    private func baseline(for subject: ActorValueSubject) -> ActorFactionBaseline {
+        guard let baselines, case let .actor(base) = subject else { return .none }
+        return baselineMemo.value(for: base) { baselines.baseline(for: base) }
+    }
 
     /// The NPC_ base identity a RELA record would name, resolved through the
     /// relationship store's own index so it matches the keys that store built
