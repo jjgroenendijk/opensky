@@ -361,7 +361,8 @@ only_testing = $(if $(T),-only-testing:'$(if $(filter OpenSky%Tests,$(firstword 
 	$(subst /, ,$(T)))),,$(1)/)$(T)')
 # One test host, watched by the memory watchdog: a real-data run once reached
 # 30 GB and locked the machine. $(1) is the default cap in MB, CAP overrides it.
-guarded = sh tools/memguard.sh $(or $(CAP),$(1)) 10800 & guard=$$!; \
+# $(3) is the run's derived data: the watchdog only watches processes built there.
+guarded = sh tools/memguard.sh "$(3)" $(or $(CAP),$(1)) 10800 & guard=$$!; \
 	trap 'kill $$guard 2>/dev/null' EXIT INT TERM; \
 	$(2) -parallel-testing-enabled NO -maximum-parallel-testing-workers 1 test
 # The perf gates measure the engine, not -Onone, so they build optimized in their
@@ -408,7 +409,7 @@ SANITIZER_CONFIG_address := Address
 test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanitizer SAN=thread|address [CAP=MB]
 	@$(call guarded,12288,$(XCB_RUN) test-sanitize-$(SAN) $(XCB_TEST) \
 		$(call test_bundle,sanitize-$(SAN)) -testPlan Sanitizers -only-test-configuration \
-		$(or $(SANITIZER_CONFIG_$(SAN)),$(error SAN must be thread or address)))
+		$(or $(SANITIZER_CONFIG_$(SAN)),$(error SAN must be thread or address)),$(DERIVED_DATA))
 
 # Real-data tests read the user's install, so they run on demand and before a
 # milestone acceptance, never in CI. The plan holds the install path. PERF=1 runs
@@ -417,7 +418,7 @@ test-real: link-shared ## Run the real-data plan [T='Suite/test()'] [CAP=MB] [PE
 	@$(call guarded,6144,$(if $(PERF), \
 		$(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
 		$(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan RealData) \
-		$(call only_testing,OpenSkyRealDataTests))
+		$(call only_testing,OpenSkyRealDataTests),$(DERIVED_DATA)$(if $(PERF),-optimized))
 
 ##@ Test tools
 

@@ -4,19 +4,24 @@
 # task_vm_info.phys_footprint ledger, matching Activity Monitor + jetsam.
 # Polls every 2s and kills an OpenSky test host/app before system pressure.
 #
-# Usage: tools/memguard.sh [CAP_MB] [MAX_SECONDS]
+# Usage: tools/memguard.sh DERIVED_DATA [CAP_MB] [MAX_SECONDS]
+#   DERIVED_DATA the derived-data folder of the guarded run; only processes
+#                that run or load a test bundle from its Build/Products
 #   CAP_MB       kill threshold, physical-footprint MB (default 4096 = 4 GB)
 #   MAX_SECONDS  self-exit after this long (default 900)
 set -eu
 
-cap_mb="${1:-4096}"
-max_seconds="${2:-900}"
+if [ "$#" -lt 1 ] || [ -z "$1" ]; then
+    echo "[ERROR] usage: tools/memguard.sh DERIVED_DATA [CAP_MB] [MAX_SECONDS]" >&2
+    exit 2
+fi
+# A name match would also catch other checkouts' test runs and the installed app.
+products="${1%/}/Build/Products/"
+cap_mb="${2:-4096}"
+max_seconds="${3:-900}"
 cap_bytes=$((cap_mb * 1024 * 1024))
 
-# Match unit-test hosts, app, and CLI benchmark; never this script or grep.
-pattern='OpenSky\.app/Contents/MacOS/OpenSky|Debug/openskycli( |$)|OpenSkyTests\.xctest|OpenSkyUITests|xctest'
-
-echo "[MEMGUARD] cap ${cap_mb} MB, timeout ${max_seconds}s, pattern ${pattern}"
+echo "[MEMGUARD] cap ${cap_mb} MB, timeout ${max_seconds}s, products ${products}"
 
 start=$(date +%s)
 peak_bytes=0
@@ -28,10 +33,18 @@ while :; do
         exit 0
     fi
 
-    # shellcheck disable=SC2009
-    targets=$(ps -axo pid=,rss=,command= 2>/dev/null \
-        | grep -E "$pattern" \
-        | grep -v -E 'memguard|grep' || true)
+    # comm is the executable path without arguments, so a compiler that only
+    # names the products folder in its arguments does not match. A package
+    # test runs in Xcode's xctest agent; its environment names the bundle.
+    targets=$({
+        ps -axo pid=,rss=,comm= 2>/dev/null \
+            | awk -v products="$products" \
+                '{ path = $0; sub(/^ *[0-9]+ +[0-9]+ /, "", path) }
+                 index(path, products) == 1 { print $1, $2 }'
+        ps -axwwE -o pid=,rss=,command= 2>/dev/null \
+            | awk -v products="$products" \
+                'index($0, "XCTestBundlePath=" products) > 0 { print $1, $2 }'
+    } | sort -u -k1,1 || true)
     old_ifs=$IFS
     IFS='
 '
