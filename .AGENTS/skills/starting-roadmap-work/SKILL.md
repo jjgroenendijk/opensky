@@ -2,8 +2,9 @@
 name: starting-roadmap-work
 description: Picks up and finishes OpenSky roadmap work on GitHub - how milestones map to
   Mn, choosing the next issue, writing an issue body, one branch and one PR per issue,
-  labels, and closing a milestone. Use when choosing what to work on, filing or editing an
-  issue, starting an issue, or finishing a milestone.
+  labels, assigning an issue, the draft PR flow, and closing a milestone. Use when
+  choosing what to work on, filing or editing an issue, starting an issue, or finishing a
+  milestone.
 ---
 
 # Starting roadmap work
@@ -27,8 +28,8 @@ fresh session starts from `gh`, not from a doc.
 1. List the milestone: `gh issue list --milestone "M9 - audio"`.
 2. Take the lowest open item by its roadmap number (`9.1.2` before `9.1.3`), not by issue
    number. Issues inserted later get higher numbers than the items around them.
-   Skip an item that already has an open PR (`gh pr list --state open`): another session
-   is working on it.
+   Skip an item that has an assignee or an open PR (`gh pr list --state open`): another
+   session is working on it.
 3. Read the issue body. Its acceptance gate is what "done" means.
 
 ## Writing an issue body
@@ -47,18 +48,28 @@ code itself.
 - A record, format, or feature named as the subject is fine, such as "the `.xwm` framing
   parser" or "`XLOC` lock data".
 
-Check a body before you post it. This search must print nothing:
-
-```sh
-grep -nE 'Sources/|Tests/|\.swift|^```' body.md
-```
-
 ## Working an item
 
-- One branch and one PR per issue. The PR body closes it with `Closes #NNN`.
+1. Assign the issue to yourself before any other step:
+   `gh issue edit NNN --add-assignee @me`. The assignee shows other sessions that someone
+   works on it.
+2. Branch from `origin/main`, make the first atomic commit, push it, and open a draft PR:
+   `gh pr create --draft`. The PR body closes the issue with `Closes #NNN`. CI does not
+   run on a draft PR, so the runners stay free while the work is in progress.
+3. Push each further atomic commit to the draft PR as it is done.
+4. When the acceptance gate is met and verified, mark the PR ready:
+   `gh pr ready <pr>`. This starts CI.
+
+- One branch and one PR per issue.
 - Load the skill for the kind of work: `implementing-format-parsers`, `building-app-ui`,
   `testing-and-verifying`, and `committing-and-landing-work` to land it.
 - Scope changes are issue edits, not doc edits.
+- A problem found during the work that the current change did not cause becomes a new
+  issue (`gh issue create`, with the `bug` label for a bug). Do not fix it in this PR
+  unless it blocks the task, so the PR stays about one issue and the problem is not lost.
+- A performance idea becomes a new issue too, one issue per idea. The title states the
+  win; the body states why it can be faster. No measurement is needed to file it. Do not
+  make the change in this PR.
 
 ## Finishing a milestone
 

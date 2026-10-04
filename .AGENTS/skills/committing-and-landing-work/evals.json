@@ -19,7 +19,7 @@
     "files": [],
     "expected_behavior": [
       "Does not push to main",
-      "Creates a fix/<slug> branch from origin/main and opens a PR with gh pr create",
+      "Creates a fix/<slug> branch from origin/main and opens a draft PR with gh pr create --draft",
       "Does not use --no-verify"
     ]
   },
@@ -44,6 +44,17 @@
     "expected_behavior": [
       "Branches from origin/main, not a stale local main",
       "Names the branch <type>/<issue>-<slug>, such as feat/812-btxt-terrain-layers"
+    ]
+  },
+  {
+    "skills": [
+      "committing-and-landing-work"
+    ],
+    "query": "The work on my draft PR is done and verified. Land it.",
+    "files": [],
+    "expected_behavior": [
+      "Runs gh pr ready so CI starts",
+      "Waits for the Lint check with gh pr checks --watch before merging"
     ]
   }
 ]

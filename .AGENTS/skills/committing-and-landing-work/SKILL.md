@@ -50,13 +50,17 @@ or `Model:`. Allowed trailers:
 2. Branch from up-to-date `origin/main`, named `<type>/<issue>-<slug>` with the commit
    type, for example `feat/716-test-plans-and-tags` or `docs/707-rework-skills`.
 3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
-   local, and rebase or squash them before the PR.
-4. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
+   local, and rebase or squash them before you push.
+4. Open the PR as a draft after the first push: `gh pr create --draft`. Describe what and
+   why, and cite the format specs used. Push each later atomic commit to it. CI skips a
+   draft PR, so a draft costs no runner time.
+5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
    is checked here.
-5. PR via `gh pr create` — describe what and why, cite format specs used.
-6. Merge after review. Done and verified work always lands: commit and open the PR
-   without waiting to be asked.
+6. When the work is done and verified, `gh pr ready <pr>`. That starts CI.
+7. Merge after review with `gh pr merge <pr> --merge`. A merge commit keeps every atomic
+   commit on `main`; the repo disables squash and rebase merging. Done and verified work
+   always lands: commit and open the PR without waiting to be asked.
 
 ## Landing gotchas seen repeatedly
 

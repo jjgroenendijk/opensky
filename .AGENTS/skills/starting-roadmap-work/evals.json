@@ -19,8 +19,11 @@
     "query": "Start issue 9.1.2 and open a PR when it is done.",
     "files": [],
     "expected_behavior": [
+      "Assigns the issue with gh issue edit --add-assignee @me before branching",
       "Creates one branch for the one issue",
-      "Puts Closes #NNN for that issue in the PR body",
+      "Opens the PR with gh pr create --draft and Closes #NNN in the body",
+      "Pushes each atomic commit to the draft PR",
+      "Runs gh pr ready only when the acceptance gate is verified",
       "Does not bundle a second issue into the same PR"
     ]
   },
@@ -44,8 +47,7 @@
     "files": [],
     "expected_behavior": [
       "Writes the body as intent: the goal, the measured cost, and an acceptance gate in observable terms",
-      "Leaves the file path, line number, and pasted code out of the body",
-      "Runs the grep check from the skill on the body before gh issue create"
+      "Leaves the file path, line number, and pasted code out of the body"
     ]
   },
   {
@@ -66,6 +68,18 @@
     "expected_behavior": [
       "Checks gh pr list --state open before picking",
       "Skips the item with the open PR and takes the next lowest roadmap number"
+    ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "While working issue 9.1.2 I noticed the BSA reader crashes on an empty folder name, and the record lookup could use a dictionary to be faster.",
+    "files": [],
+    "expected_behavior": [
+      "Files the crash as a new issue with the bug label instead of fixing it in the 9.1.2 PR",
+      "Files the speed idea as its own issue whose title states the win",
+      "Keeps the current PR about issue 9.1.2 only"
     ]
   }
 ]
