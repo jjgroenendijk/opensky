@@ -349,7 +349,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-ui test-sanitize test-real test-report test-perms coverage-floor \
-        sanitizer-shaders profile benchmark
+        sanitizer-shaders profile benchmark launch-sample
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -436,6 +436,10 @@ profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MOD
 benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI
 	@$(MAKE) --no-print-directory cli CONFIG=Release
 	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli"
+
+launch-sample: ## Sample the installed app's main thread through its first minute [SECONDS=60]
+	@./tools/launch-sample.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" \
+		/Applications/OpenSky.app $(or $(SECONDS),60)
 
 ##@ Housekeeping
 
