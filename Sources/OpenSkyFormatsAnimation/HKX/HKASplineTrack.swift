@@ -109,20 +109,26 @@ nonisolated public struct HKASplineHeader: Sendable {
         blend: (Point, Point, Float) -> Point
     ) -> Point {
         let span = knotSpan(for: frame)
-        var points = (0 ... degree).map { controlPoints[span - degree + $0] }
-        for level in 1 ... degree {
-            for index in stride(from: degree, through: level, by: -1) {
-                let knotIndex = span - degree + index
-                let denominator = Float(
-                    Int(knots[knotIndex + degree - level + 1]) - Int(knots[knotIndex])
-                )
-                let alpha = denominator == 0
-                    ? 0
-                    : (frame - Float(knots[knotIndex])) / denominator
-                points[index] = blend(points[index - 1], points[index], alpha)
+        // Stack scratch, not an Array: this runs per sub-track per sample.
+        return withUnsafeTemporaryAllocation(of: Point.self, capacity: degree + 1) { points in
+            for index in 0 ... degree {
+                points.initializeElement(at: index, to: controlPoints[span - degree + index])
             }
+            defer { _ = points.deinitialize() }
+            for level in 1 ... degree {
+                for index in stride(from: degree, through: level, by: -1) {
+                    let knotIndex = span - degree + index
+                    let denominator = Float(
+                        Int(knots[knotIndex + degree - level + 1]) - Int(knots[knotIndex])
+                    )
+                    let alpha = denominator == 0
+                        ? 0
+                        : (frame - Float(knots[knotIndex])) / denominator
+                    points[index] = blend(points[index - 1], points[index], alpha)
+                }
+            }
+            return points[degree]
         }
-        return points[degree]
     }
 
     private func knotSpan(for frame: Float) -> Int {

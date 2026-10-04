@@ -100,10 +100,15 @@ nonisolated public struct HKASplineCompressedAnimation: Sendable {
         binding: HKAAnimationBinding
     ) throws -> [HKABoneTransformSample] {
         let poses = try localTransforms(at: time)
-        let boneIndices = try binding.boneIndices(transformTrackCount: poses.count)
-        return zip(boneIndices, poses).map {
-            HKABoneTransformSample(boneIndex: $0.0, pose: $0.1)
+        try binding.validate(transformTrackCount: poses.count)
+        var samples: [HKABoneTransformSample] = []
+        samples.reserveCapacity(poses.count)
+        for index in poses.indices {
+            samples.append(HKABoneTransformSample(
+                boneIndex: binding.boneIndex(ofTrack: index), pose: poses[index]
+            ))
         }
+        return samples
     }
 }
 

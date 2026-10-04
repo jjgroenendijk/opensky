@@ -115,31 +115,47 @@ nonisolated public struct HKASplineBlock: Sendable {
 
     public func localTransforms(at localFrame: Float) throws -> [HKABonePose] {
         var result: [HKABonePose] = []
-        result.reserveCapacity(tracks.count)
-        for (index, track) in tracks.enumerated() {
-            let translation = track.translation.value(at: localFrame)
-            let rotationVector = track.rotation.value(at: localFrame)
-            let scale = track.scale.value(at: localFrame)
-            let lanes = [
-                translation.x, translation.y, translation.z,
-                rotationVector.x, rotationVector.y, rotationVector.z, rotationVector.w,
-                scale.x, scale.y, scale.z
-            ]
-            let maxMagnitude: Float = 1_000_000
-            guard lanes.allSatisfy({ $0.isFinite && abs($0) <= maxMagnitude }) else {
-                throw HKASplineAnimationError.nonFiniteTransform(trackIndex: index)
-            }
-            let norm = simd_length(rotationVector)
-            guard norm.isFinite, norm > 0.000_001 else {
-                throw HKASplineAnimationError.nonFiniteTransform(trackIndex: index)
-            }
-            result.append(HKABonePose(
-                translation: translation,
-                rotation: simd_quatf(vector: rotationVector / norm),
-                scale: scale
-            ))
-        }
+        try localTransforms(at: localFrame, into: &result)
         return result
+    }
+
+    /// The same poses written into `poses`, reusing its storage across frames.
+    public func localTransforms(at localFrame: Float, into poses: inout [HKABonePose]) throws {
+        poses.removeAll(keepingCapacity: true)
+        poses.reserveCapacity(tracks.count)
+        // By index: iterating the elements copies each track and retains its arrays.
+        for index in tracks.indices {
+            try poses.append(Self.pose(of: tracks[index], at: localFrame, trackIndex: index))
+        }
+    }
+
+    private static let maxMagnitude: Float = 1_000_000
+
+    private static func pose(
+        of track: borrowing HKASplineTransformTrack,
+        at localFrame: Float,
+        trackIndex: Int
+    ) throws -> HKABonePose {
+        let translation = track.translation.value(at: localFrame)
+        let rotationVector = track.rotation.value(at: localFrame)
+        let scale = track.scale.value(at: localFrame)
+        // A NaN fails `<=`, so the bound check also rejects every non-finite lane.
+        guard
+            all(abs(translation) .<= maxMagnitude),
+            all(abs(rotationVector) .<= maxMagnitude),
+            all(abs(scale) .<= maxMagnitude)
+        else {
+            throw HKASplineAnimationError.nonFiniteTransform(trackIndex: trackIndex)
+        }
+        let norm = simd_length(rotationVector)
+        guard norm.isFinite, norm > 0.000_001 else {
+            throw HKASplineAnimationError.nonFiniteTransform(trackIndex: trackIndex)
+        }
+        return HKABonePose(
+            translation: translation,
+            rotation: simd_quatf(vector: rotationVector / norm),
+            scale: scale
+        )
     }
 }
 
