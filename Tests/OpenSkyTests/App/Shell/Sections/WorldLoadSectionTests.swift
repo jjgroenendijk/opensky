@@ -9,6 +9,7 @@ import Testing
 struct WorldLoadSectionTests {
     private final class FakeProvider: WorldLoadReportProviding {
         var worldLoadReport: WorldLoadReport?
+        var sessionStartTiming = SessionStartTiming()
     }
 
     @Test
@@ -53,6 +54,29 @@ struct WorldLoadSectionTests {
         Total: 4.75 s
         Items and inventories: 4.50 s
         Dialogue: 1.40 s
+        """)
+    }
+
+    @Test
+    func listsTheSessionStartPhasesInRunOrderAfterTheStages() {
+        var timeline = WorldLoadTimeline()
+        timeline.apply(WorldLoadEvent(stage: .items, kind: .finished(.milliseconds(4500))))
+        let provider = FakeProvider()
+        provider.worldLoadReport = WorldLoadReport(timeline: timeline, total: .milliseconds(4500))
+        provider.sessionStartTiming.record(.firstFrame, .milliseconds(120))
+        provider.sessionStartTiming.record(.renderer, .milliseconds(50))
+        provider.sessionStartTiming.record(.systems, .milliseconds(830))
+        let section = WorldLoadSection()
+        section.loadViewIfNeeded()
+        section.provider = provider
+
+        #expect(section.statsReadout == """
+        Total: 4.50 s
+        Items and inventories: 4.50 s
+        Session start: 1.00 s
+        Renderer setup: 0.05 s
+        Game systems: 0.83 s
+        First frame: 0.12 s
         """)
     }
 }
