@@ -28,6 +28,19 @@ nonisolated public struct HKAAnimationBinding: Sendable {
         if transformTrackToBoneIndices.isEmpty {
             return Array(0 ..< transformTrackCount)
         }
+        try validate(transformTrackCount: transformTrackCount)
+        return transformTrackToBoneIndices
+    }
+
+    /// The bone a transform track drives, once `validate(transformTrackCount:)` passed.
+    /// An empty map is the identity.
+    public func boneIndex(ofTrack track: Int) -> Int {
+        transformTrackToBoneIndices.isEmpty ? track : transformTrackToBoneIndices[track]
+    }
+
+    /// Checks the map against a clip's track count without building an array.
+    public func validate(transformTrackCount: Int) throws {
+        guard !transformTrackToBoneIndices.isEmpty else { return }
         guard transformTrackToBoneIndices.count == transformTrackCount else {
             throw HKASplineAnimationError.countMismatch(
                 field: "m_transformTrackToBoneIndices",
@@ -42,7 +55,6 @@ nonisolated public struct HKAAnimationBinding: Sendable {
                 )
             }
         }
-        return transformTrackToBoneIndices
     }
 
     private static let nameField = HKXField(0x10, "m_originalSkeletonName")
