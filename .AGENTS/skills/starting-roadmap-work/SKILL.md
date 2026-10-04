@@ -14,8 +14,10 @@ fresh session starts from `gh`, not from a doc.
 
 ## How the roadmap maps to GitHub
 
-- GitHub milestone `#n` is OpenSky milestone `Mn`. The milestone description holds the
-  goal, spec references, and legal notes.
+- GitHub milestone `#n` is OpenSky milestone `Mn`. The milestone description says what
+  belongs in the milestone: its scope, spec references, and legal notes. It names no
+  dates, issue or PR numbers, item numbers, outcomes, or status, because those go stale
+  and the issue list and merged PRs already show them.
 - Each issue is one numbered roadmap item, such as `9.1.2 .xwm framing parser`, and carries
   its own acceptance gate.
 - Labels: `roadmap`, `acceptance-gate`, `format-parser`, `app-ui`.
@@ -78,5 +80,5 @@ code itself.
   was built.
 - The closing PR carries the acceptance record in the format of
   `docs/tools/sidebar-acceptance.md`.
-- Record the outcome in the milestone description or the closing PR, then close the
+- Record the outcome in the closing PR, not in the milestone description, then close the
   milestone. Project history lives in git, merged PRs, and closed issues, never in `docs/`.

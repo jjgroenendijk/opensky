@@ -35,7 +35,7 @@
     "files": [],
     "expected_behavior": [
       "Checks that the closing PR carries the acceptance record from docs/tools/sidebar-acceptance.md",
-      "Records the outcome in the milestone description or the closing PR, not in docs/",
+      "Records the outcome in the closing PR, not in the milestone description or docs/",
       "Closes the milestone with gh"
     ]
   },
@@ -80,6 +80,17 @@
       "Files the crash as a new issue with the bug label instead of fixing it in the 9.1.2 PR",
       "Files the speed idea as its own issue whose title states the win",
       "Keeps the current PR about issue 9.1.2 only"
+    ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Update the M24 milestone description now that its acceptance PR merged.",
+    "files": [],
+    "expected_behavior": [
+      "Keeps the description to the scope, spec references, and legal notes",
+      "Adds no dates, issue or PR numbers, outcome, or status to the description"
     ]
   }
 ]
