@@ -121,6 +121,7 @@ Every package module uses `defaultIsolation(MainActor.self)` (see `librarySettin
 threads is a `nonisolated` `Sendable` value type, for example `SkinningPalette`. Shared
 mutable state off the main thread uses `Mutex`, as in `WorldAudioEngine`.
 
-[Concurrency](/decisions/concurrency.md) decides which subsystems leave the main actor, what
-isolation each one uses, and how their results reach the frame loop. Do not add a new
+Simulation stays on the main actor. Reading and decoding files runs off it.
+[Concurrency](/decisions/concurrency.md) gives the isolation each subsystem uses and how a
+loaded asset reaches the frame loop. Do not add a new
 `@unchecked Sendable` class or `Task.detached`. A new `DispatchQueue` needs a row on that page.
