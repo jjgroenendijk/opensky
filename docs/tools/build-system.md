@@ -199,18 +199,18 @@ interface change, while the compiler has emitted the new one under `Build/Interm
 Every module above it then fails with "cannot find in scope", "has no member", or "extra argument",
 and a clean rebuild does not help ([environment](/tools/environment.md)). After a healthy build the
 two files are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the
-copy. `tools/xcodebuild-run.sh` runs it before every build, in the tree named by the build's
+copy. A failed build stops at one module layer, so the modules above a stale copy are not emitted
+again, and their own stale copies would show only after the next pass. So the script also deletes the
+copy of every module whose emit-module dependency file (`<Module>-primary-emit-module.d`) names a
+stale copy, and repeats until no new module is added. One more build then rebuilds all layers
+together. `tools/xcodebuild-run.sh` runs it before every build, in the tree named by the build's
 `-derivedDataPath`, so the index tree of `make health` is checked too. When a build fails and
-leaves new stale copies, it deletes them and builds again. It repeats this while each failed build
-finds new stale copies, up to `OPENSKY_STALE_RETRIES` times (default 8). No new pass starts after
-`OPENSKY_RETRY_MINUTES` (default 15), so a build that keeps finding stale copies fails instead of
-running for an hour. One pass is often not enough: a failed build stops
-at one module layer, so the modules above it are not emitted again, and their stale copies show
-only after the next pass. Moving `SkippedRecords` from `OpenSkyGameData` down to
-`OpenSkyFormatsESM` needed four passes. A failed build that finds no new stale copies has a real
-error, so it stops at once. Before each new pass it deletes the `-resultBundlePath` bundle that the
-failed pass wrote, because xcodebuild refuses a path that exists. A test run without building
-skips all of this.
+leaves new stale copies, it deletes them and builds again, up to `OPENSKY_STALE_RETRIES` times
+(default 8). No new pass starts after `OPENSKY_RETRY_MINUTES` (default 15), so a build that keeps
+finding stale copies fails instead of running for an hour. A failed build that finds no new stale
+copies has a real error, so it stops at once. Before each new pass it deletes the
+`-resultBundlePath` bundle that the failed pass wrote, because xcodebuild refuses a path that
+exists. A test run without building skips all of this.
 
 ## Warnings are errors
 
