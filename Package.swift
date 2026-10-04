@@ -299,7 +299,7 @@ targets += foundation(
     dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "OpenSkyGameData"],
     tests: [
         "BehaviorTesting", "OpenSkyFormatsCore", "OpenSkyFormatsAnimation", "FormatsMeshTesting",
-        "OpenSkyFormatsMesh"
+        "OpenSkyFormatsMesh", "OpenSkyGameData"
     ]
 )
 targets += testing(
