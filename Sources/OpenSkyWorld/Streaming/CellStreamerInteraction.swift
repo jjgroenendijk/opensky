@@ -39,8 +39,8 @@ extension CellStreamer {
     public func staticCollisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
-        if let interiorScene {
-            return interiorScene.staticCollision.candidates(overlapping: bounds)
+        if let collision = interiorScene?.staticCollision {
+            return collision.candidates(overlapping: bounds)
         }
         return composition.collisionCandidates(overlapping: bounds)
     }

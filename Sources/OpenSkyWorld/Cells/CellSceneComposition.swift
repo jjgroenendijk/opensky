@@ -23,7 +23,12 @@ nonisolated public struct CellSceneComposition {
         var scene: RenderScene
     }
 
-    public private(set) var cells: [CellCoordinate: CellScene] = [:]
+    public private(set) var cells: [CellCoordinate: CellScene] = [:] {
+        didSet { residentCollision = cells.values.map(\.staticCollision) }
+    }
+    /// Kept apart from `cells`, so a collision query walks small values and does not
+    /// copy each whole `CellScene` out of the dictionary.
+    private var residentCollision: [StaticCollisionSet] = []
     public private(set) var distantLOD: DistantLODScene?
     /// Per-reference draw data detached from the placing cell's bulk scene.
     /// It can therefore outlive that cell while its occupied cell is resident.
@@ -248,7 +253,7 @@ nonisolated public struct CellSceneComposition {
     /// Broadphase over resident per-cell BVHs. Cross-cell capsule queries can
     /// touch both sides of a seam; each cell remains independently evictable.
     public func collisionCandidates(overlapping bounds: ModelBounds) -> [StaticCollisionShape] {
-        cells.values.flatMap { $0.staticCollision.candidates(overlapping: bounds) }
+        residentCollision.flatMap { $0.candidates(overlapping: bounds) }
     }
 
     /// Trigger broadphase over resident cells, so a volume on a seam is found from either
