@@ -119,6 +119,12 @@ nonisolated public final class CellSceneBuilder {
     /// Resolves FULL/RNAM interaction text when the builder has a VFS.
     public let localizedStrings: LocalizedStrings?
     public var worldspaceIndex: [UInt32: Worldspace]?
+    /// Keyed by WRLD editor ID; holds only lookups made with `pluginLocalized`.
+    var worldChildrenGroups: [String: FoundWorld] = [:]
+    /// Keyed by the world-children group's file offset, then by XCLC grid.
+    var exteriorCellIndexes: [Int: [SIMD2<Int32>: FoundCell]] = [:]
+    /// LTEX FormID to its TXST diffuse key; nil marks a broken chain.
+    var terrainDiffuseKeys: [UInt32: String?] = [:]
     public var waterTypeIndex: [UInt32: WaterType]?
     public var waterPlaneMesh: RenderMesh?
     public var landTextureIndex: [UInt32: LandTexture]?
@@ -295,6 +301,22 @@ nonisolated extension CellSceneBuilder {
         editorID: String,
         localized: Bool
     ) throws -> FoundWorld {
+        guard localized == pluginLocalized else {
+            return try uncachedWorldChildrenGroup(editorID: editorID, localized: localized)
+        }
+        if let cached = worldChildrenGroups[editorID] {
+            return cached
+        }
+        let found = try uncachedWorldChildrenGroup(editorID: editorID, localized: localized)
+        worldChildrenGroups[editorID] = found
+        return found
+    }
+
+    /// Decodes every WRLD up to the match, so `worldChildrenGroup` keeps the result.
+    nonisolated private func uncachedWorldChildrenGroup(
+        editorID: String,
+        localized: Bool
+    ) throws -> FoundWorld {
         guard let top = file.topGroup(of: "WRLD") else {
             throw CellSceneError.worldspaceNotFound(editorID: editorID)
         }
@@ -321,43 +343,69 @@ nonisolated extension CellSceneBuilder {
         throw CellSceneError.worldspaceNotFound(editorID: editorID)
     }
 
-    /// Depth-first; matches the decoded XCLC grid, never the unreliable block labels.
-    /// Skips the persistent CELL, which also carries XCLC (0,0) (`persistentCell(in:)`).
+    /// Matches the decoded XCLC grid, never the unreliable block labels. The first
+    /// decodable CELL in depth-first order wins. Skips the persistent CELL, which
+    /// also carries XCLC (0,0) (`persistentCell(in:)`).
     nonisolated public func findCell(
         in group: ESMGroup,
         gridX: Int32,
         gridY: Int32,
         localized: Bool
     ) -> FoundCell? {
-        // Prune a malformed subtree: the target may live in a sibling block.
-        guard let children = childrenOrSkip(group) else { return nil }
-        for (index, child) in children.enumerated() {
+        let grid = SIMD2(gridX, gridY)
+        guard localized == pluginLocalized else {
+            return exteriorCellIndex(of: group, localized: localized)[grid]
+        }
+        let key = group.contentRange.lowerBound
+        if let cached = exteriorCellIndexes[key] {
+            return cached[grid]
+        }
+        let index = exteriorCellIndex(of: group, localized: localized)
+        exteriorCellIndexes[key] = index
+        return index[grid]
+    }
+
+    /// Every exterior CELL under `group` by grid. One full walk costs about as much
+    /// as a few single-cell searches, and each later build then skips the walk.
+    nonisolated private func exteriorCellIndex(
+        of group: ESMGroup,
+        localized: Bool
+    ) -> [SIMD2<Int32>: FoundCell] {
+        var index: [SIMD2<Int32>: FoundCell] = [:]
+        indexExteriorCells(in: group, localized: localized, into: &index)
+        return index
+    }
+
+    nonisolated private func indexExteriorCells(
+        in group: ESMGroup,
+        localized: Bool,
+        into index: inout [SIMD2<Int32>: FoundCell]
+    ) {
+        // Prune a malformed subtree: other cells may live in a sibling block.
+        guard let children = childrenOrSkip(group) else { return }
+        for (position, child) in children.enumerated() {
             switch child {
             case let .record(record) where record.type == "CELL" && group.kind != .worldChildren:
                 guard
                     let cell = decodeOrSkip(record, using: {
                         try Cell(record: $0, localized: localized)
                     }),
-                    let grid = cell.grid, grid.x == gridX, grid.y == gridY
+                    let grid = cell.grid, index[SIMD2(grid.x, grid.y)] == nil
                 else { continue }
-                return FoundCell(
+                index[SIMD2(grid.x, grid.y)] = FoundCell(
                     cell: cell,
                     formID: record.formID,
                     children: cellChildrenGroup(
-                        following: index, in: children, cellFormID: record.formID
+                        following: position, in: children, cellFormID: record.formID
                     )
                 )
             case let .group(sub)
                 where sub.kind == .exteriorCellBlock || sub.kind == .exteriorCellSubBlock:
-                let found = findCell(in: sub, gridX: gridX, gridY: gridY, localized: localized)
-                if let found {
-                    return found
-                }
+                indexExteriorCells(in: sub, localized: localized, into: &index)
             default:
                 break
             }
         }
-        return nil
     }
 
     /// The worldspace persistent CELL: the one CELL stored directly in the world

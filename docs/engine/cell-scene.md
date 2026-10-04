@@ -21,9 +21,8 @@ From the UESP "Groups" page:
 1. The `WRLD` top group, then the `WRLD` record with the matching editor ID, then its world
    children group (type 1).
 2. Depth first through the exterior block (type 4) and sub-block (type 5) groups. The block grid
-   labels are not trusted. The cell is found by its decoded `XCLC` grid. So every exterior
-   `CELL` in the worldspace is decoded once per build. That is acceptable at start-up. Using the
-   labels as a hint could make it faster later.
+   labels are not trusted. The cell is found by its decoded `XCLC` grid. If two `CELL` records
+   carry the same grid, the first one in walk order wins.
 3. The cell children group (type 6) that follows the matching `CELL`. No children group means a
    cell with no references, not an error.
 4. Both the persistent (type 8) and temporary (type 9) groups, for their `REFR` records.
@@ -36,6 +35,13 @@ rounding down. Teleport doors use the same rule
 
 The walk is lazy. Only group headers are read. A record is decoded only when needed, and only
 the record types the scene uses.
+
+The builder keeps what does not change between builds of the same plugin: the world children
+group for each editor ID, and an index of every exterior `CELL` by grid. The first build in a
+worldspace decodes all of its `CELL` records once to fill that index. Every later build, including
+a rebuild of a cell the player walks back into, finds its cell without a walk. Terrain keeps each
+`LTEX` to `TXST` diffuse path the same way, because finding one record by FormID scans the
+whole file.
 
 ## Base objects
 

@@ -202,6 +202,16 @@ nonisolated extension CellSceneBuilder {
     /// LTEX TNAM -> TXST TX00, normalized like NIF materials. Nil on any broken
     /// link. The splat path is diffuse-only (docs/engine/terrain.md).
     nonisolated private func terrainDiffuseKey(for ltexID: FormID) -> String? {
+        if let cached = terrainDiffuseKeys[ltexID.rawValue] {
+            return cached
+        }
+        let key = uncachedTerrainDiffuseKey(for: ltexID)
+        terrainDiffuseKeys[ltexID.rawValue] = .some(key)
+        return key
+    }
+
+    /// Each lookup walks the whole file, so `terrainDiffuseKey(for:)` keeps the result.
+    nonisolated private func uncachedTerrainDiffuseKey(for ltexID: FormID) -> String? {
         guard
             let ltexRecord = ESMWalk.record(withFormID: ltexID.rawValue, in: file),
             let ltex = decodeOrSkip(ltexRecord, using: LandTexture.init(record:)),

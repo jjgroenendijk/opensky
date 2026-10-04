@@ -123,6 +123,24 @@ struct CellSceneTerrainTests {
         #expect(scene.renderScene.terrain.flatMap(\.layerTextures).isEmpty)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func rebuildKeepsResolvedAndBrokenLayers() throws {
+        // The second build reads the cached LTEX -> TXST keys, broken one included.
+        let dds = DDSFixture.file(format: .bc1, width: 4, height: 4, mipCount: 1)
+        try writeLooseFile("textures/landscape/grass01.dds", dds)
+        let scene = try build(pluginData: pluginWithLand(
+            land: landFields(baseQuadrants: [0], ltexFormID: 0, layers: [
+                .init(quadrant: 0, layer: 0, ltexFormID: 0x301),
+                .init(quadrant: 0, layer: 1, ltexFormID: 0x999)
+            ]),
+            ltex: ltexRecord(formID: 0x301, textureSet: 0x401),
+            txst: txstRecord(formID: 0x401, diffuse: "Landscape\\Grass01.dds")
+        ), passes: 2)
+        #expect(scene.summary.terrainLayerCount == 1)
+        #expect(scene.summary.terrainLayerSkipCount == 1)
+        let quadrant0 = try #require(scene.renderScene.terrain.first)
+        #expect(quadrant0.layerTextures.map(\.label) == ["textures\\landscape\\grass01.dds"])
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func fallbackPlaneAtDNAMWhenNoLAND() throws {
         // No LAND, WRLD carries DNAM default land height -27000 -> one plane.
         let scene = try build(pluginData: pluginWithLand(land: Data(), defaultLandHeight: -27000))
@@ -325,7 +343,7 @@ extension CellSceneTerrainTests {
             + ESMFixture.topGroup("STAT", contents: Data())
     }
 
-    private func build(pluginData: Data) throws -> CellScene {
+    private func build(pluginData: Data, passes: Int = 1) throws -> CellScene {
         let device = try #require(Self.device)
         let vfs = VirtualFileSystem(dataURL: dataURL, archiveURLs: [])
         let textures = try TextureLibrary(fileSystem: vfs, device: device)
@@ -335,6 +353,10 @@ extension CellSceneTerrainTests {
             meshes: meshes,
             textures: textures
         )
-        return try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+        var scene = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+        for _ in 1 ..< passes {
+            scene = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+        }
+        return scene
     }
 }
