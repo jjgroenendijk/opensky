@@ -125,6 +125,7 @@ numbers are an upper bound.
 | Save, load, and the save list | `@concurrent` function | Loading after a user action. The encoder and decoder are pure |
 | Preview catalog and detail | `@concurrent` function | Loading for a panel. Hundreds of thousands of records. The detail builder sits in a `Mutex`, because its mesh and texture caches have no lock. Only the offscreen render of the picture runs on the main actor |
 | Launch setup (locate the install, settings) | Main actor | Reads a few small files before the first frame |
+| Session start (renderer, game systems, first frame) | Main actor | Wires every system to the loaded data and starts the start-game quests before the first frame. 0.74 s in a Release build (measured 2026-10-05). World > World Load lists each phase |
 | World data load (archives, record stores) | `@concurrent` function with one child task per stage | Loading before the game window opens. 19.3 s on the main thread in a Debug build (measured 2026-10-04). The launcher shows each stage |
 
 ## The shared play-time worker

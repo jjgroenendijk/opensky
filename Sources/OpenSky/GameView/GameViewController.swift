@@ -46,6 +46,8 @@ final class GameViewController: NSViewController {
     var cellSession: CellSession?
     /// The stage times of the load that built `cellSession`, for World > World Load.
     var worldLoadReport: WorldLoadReport?
+    /// Times the work between the load and the first frame, for World > World Load.
+    let sessionStart = SessionStartRecorder()
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -347,15 +349,17 @@ final class GameViewController: NSViewController {
         let provider = session?.data
 
         do {
-            let newRenderer = try Renderer(
-                view: mtkView,
-                scene: provider != nil ? RenderScene(instances: []) : nil,
-                camera: nil,
-                input: cameraInput,
-                movementConfiguration: (provider as? MovementConfigurationProviding)?
-                    .movementConfiguration ?? .synthetic,
-                wallClock: simulationClock
-            )
+            let newRenderer = try sessionStart.measure(.renderer) {
+                try Renderer(
+                    view: mtkView,
+                    scene: provider != nil ? RenderScene(instances: []) : nil,
+                    camera: nil,
+                    input: cameraInput,
+                    movementConfiguration: (provider as? MovementConfigurationProviding)?
+                        .movementConfiguration ?? .synthetic,
+                    wallClock: simulationClock
+                )
+            }
             newRenderer.shadowQuality = ShadowQualitySettings.load()
             newRenderer.timeOfDay = TimeOfDaySettings.load()
             // Without weather data the renderer keeps its procedural sky.
@@ -363,16 +367,12 @@ final class GameViewController: NSViewController {
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer
-            hud.start()
-            wireMenus(renderer: newRenderer)
-            wireMenuMode(renderer: newRenderer)
-            if let session {
-                worldData = session.data
-                sessionWiring.wireStreaming(session: session, renderer: newRenderer)
+            sessionStart.measure(.systems) {
+                wireSystems(session: session, renderer: newRenderer)
             }
-            // After the world data, because the title's logo loads through it.
-            if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
-                titleMenu.open()
+            sessionStart.waitForFirstFrame()
+            newRenderer.onFrame.add { [weak sessionStart] _ in
+                sessionStart?.frameDidDraw()
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
             newRenderer.onFrame.add { [weak self] _ in
@@ -380,6 +380,26 @@ final class GameViewController: NSViewController {
             }
         } catch {
             show(message: "Renderer setup failed: \(error)")
+        }
+    }
+}
+
+extension GameViewController {
+    var sessionStartTiming: SessionStartTiming {
+        sessionStart.timing
+    }
+
+    private func wireSystems(session: CellSession?, renderer newRenderer: Renderer) {
+        hud.start()
+        wireMenus(renderer: newRenderer)
+        wireMenuMode(renderer: newRenderer)
+        if let session {
+            worldData = session.data
+            sessionWiring.wireStreaming(session: session, renderer: newRenderer)
+        }
+        // After the world data, because the title's logo loads through it.
+        if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
+            titleMenu.open()
         }
     }
 }

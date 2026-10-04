@@ -128,6 +128,14 @@ Release build. `MODE=fly` profiles `--fly-path` instead. `ARGS` passes more benc
 `ARGS='--footprint-cap-mb 2048'` when a bench gate stops the run early. The run directory holds
 the trace and `samples.xml`, the exported sample table, for reading without Instruments.
 
+`make launch-sample` checks the app itself rather than the CLI. It launches
+`/Applications/OpenSky.app` in play mode and, every few seconds for one minute (`SECONDS`), takes a
+one-second `sample` of the app and reads `game state frame`. Run `make install` and
+`make build-cli CONFIG=Release` first, so the app and the CLI come from one build. The run
+directory holds `launch.log` with the second the world was ready, `frames.txt` with the frame
+times, and one `s_<second>.txt` per sample. The main thread is the first thread in each sample. A
+sample in which the main thread sits in one call for the whole second is a hang.
+
 - Profile a Release build. A Debug build makes tight math code many times slower, so it points at
   the wrong loops.
 - Start the process first, then run `xctrace record --attach <pid>`
