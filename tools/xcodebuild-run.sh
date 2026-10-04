@@ -22,6 +22,7 @@
 #        OPENSKY_RUN_DIR           write into this run directory, not a new one
 #        OPENSKY_MAX_ERRORS        unique errors to print (default 40)
 #        OPENSKY_STALE_RETRIES     rebuilds after removing stale copies (default 8)
+#        OPENSKY_RETRY_MINUTES     no new rebuild starts after this many minutes (default 15)
 set -eu
 
 if [ "$#" -lt 2 ]; then
@@ -65,9 +66,12 @@ run_once() {
     status="$(cat "$status_file")"
 }
 
-result_bundle() {
+# The value after option $1 in the remaining arguments, or nothing.
+arg_value() {
+    option="$1"
+    shift
     while [ "$#" -gt 1 ]; do
-        if [ "$1" = "-resultBundlePath" ]; then
+        if [ "$1" = "$option" ]; then
             printf '%s\n' "$2"
             return
         fi
@@ -75,8 +79,12 @@ result_bundle() {
     done
 }
 
+# The build's own tree, so a build into the index tree is checked there too.
+derived_data="$(arg_value -derivedDataPath "$@")"
+
 remove_stale() {
-    stale="$("$root/tools/stale-modules.sh" -d | tr '\n' ' ' | sed 's/ $//')"
+    stale="$(OPENSKY_DERIVED_DATA="${derived_data:-$OPENSKY_DERIVED_DATA}" \
+        "$root/tools/stale-modules.sh" -d | tr '\n' ' ' | sed 's/ $//')"
     [ -n "$stale" ] || return 1
     printf '[INFO] removed stale module copies: %s\n' "$stale"
 }
@@ -84,12 +92,19 @@ remove_stale() {
 if [ -n "$compiles" ]; then
     remove_stale || true
 fi
+started="$(date +%s)"
 run_once "$@"
 max_retries="${OPENSKY_STALE_RETRIES:-8}"
-bundle="$(result_bundle "$@")"
+retry_seconds=$((${OPENSKY_RETRY_MINUTES:-15} * 60))
+bundle="$(arg_value -resultBundlePath "$@")"
 retry=0
 while [ "$status" -ne 0 ] && [ -n "$compiles" ] && [ "$retry" -lt "$max_retries" ] \
     && remove_stale; do
+    if [ $(($(date +%s) - started)) -ge "$retry_seconds" ]; then
+        printf '[ERROR] stale-module rebuilds passed %s minutes; stopping\n' \
+            "${OPENSKY_RETRY_MINUTES:-15}"
+        break
+    fi
     retry=$((retry + 1))
     printf '[INFO] build %s of %s after removing stale modules\n' "$retry" "$max_retries"
     log="$run_dir/$name-retry$retry.log"

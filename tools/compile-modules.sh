@@ -12,7 +12,7 @@
 #                             package instead (default 12)
 #
 # Xcode-only code (the app, the CLI, OpenSkyTests, the real-data and UI tests)
-# is not a package target; `make verify-build` covers it.
+# is not a package target; make build-app, build-cli, or build-tests covers it.
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -40,7 +40,7 @@ else
                 if grep -q "^$dir -$" "$graph"; then
                     printf '%s ' "$dir"
                 else
-                    printf '[INFO] %s is Xcode-only; make verify-build compiles it\n' "$dir" >&2
+                    printf '[INFO] %s is Xcode-only; make build-app, build-cli, or build-tests compiles it\n' "$dir" >&2
                 fi
             done
     )"

@@ -131,7 +131,8 @@ Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar
   `DestinationRegistryTests`. Update the literals in the same change that renames an id.
 - Keep `OpenSkyUITests` correct.
 - Run the panel tests and the coordinator tests with `make test-unit T='...'`, then
-  `make verify-build`, because only it compiles the app (`testing-and-verifying` skill).
+  `make build-app`, because the package tests do not compile the app (`testing-and-verifying`
+  skill).
 - Update `docs/tools/app-ui.md` in the same commit when the framework changes.
 - At milestone acceptance, write the record from `docs/tools/sidebar-acceptance.md` into
   the PR that closes the milestone, not into `docs/`. The tests are the evidence; any A/B

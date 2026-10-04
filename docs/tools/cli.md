@@ -19,7 +19,7 @@ Swift package through the `OpenSkyModules` product ([Swift modules](/tools/modul
 app-only code is invisible to the CLI with no exception lists to maintain. Metal structs come
 through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).
 `Shaders.metal` compiles into `default.metallib` next to the binary, so
-`device.makeDefaultLibrary()` works without an app bundle. Build it with `make cli`.
+`device.makeDefaultLibrary()` works without an app bundle. Build it with `make build-cli`.
 
 There is no swift-argument-parser. The options are positionals and `--name value`, and a small
 standard library scanner covers them, which keeps the build free of dependencies. Revisit this if

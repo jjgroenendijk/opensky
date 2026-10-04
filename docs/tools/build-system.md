@@ -113,9 +113,10 @@ What it helps and what it does not:
   own incremental state decides.
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
   ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
-  Each switch between build contexts, such as `make cli` then `make test-unit`, then compiles those
-  modules again and relinks everything above them. So the `OpenSky` scheme builds `openskycli` and
-  `OpenSkyRealDataTests` for testing, and every test build compiles all of them in one context.
+  Each switch between build contexts, such as `make build-cli` then `make test-unit`, then
+  compiles those modules again and relinks everything above them. So the `OpenSky` scheme
+  builds `openskycli` and `OpenSkyRealDataTests` for testing, and every test build compiles
+  all of them in one context.
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
   states compiled before.
 
@@ -123,7 +124,7 @@ What it helps and what it does not:
 It is not checked in, because it adds lines to every transcript. Pass it when measuring:
 
 ```sh
-make build XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
+make build-app XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
 grep -c 'Cache hit' logs/build/latest/build.log
 ```
 
@@ -198,9 +199,12 @@ interface change, while the compiler has emitted the new one under `Build/Interm
 Every module above it then fails with "cannot find in scope", "has no member", or "extra argument",
 and a clean rebuild does not help ([environment](/tools/environment.md)). After a healthy build the
 two files are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the
-copy. `tools/xcodebuild-run.sh` runs it before every build. When a build fails and leaves new stale
-copies, it deletes them and builds again. It repeats this while each failed build finds new stale copies,
-up to `OPENSKY_STALE_RETRIES` times (default 8). One pass is often not enough: a failed build stops
+copy. `tools/xcodebuild-run.sh` runs it before every build, in the tree named by the build's
+`-derivedDataPath`, so the index tree of `make health` is checked too. When a build fails and
+leaves new stale copies, it deletes them and builds again. It repeats this while each failed build
+finds new stale copies, up to `OPENSKY_STALE_RETRIES` times (default 8). No new pass starts after
+`OPENSKY_RETRY_MINUTES` (default 15), so a build that keeps finding stale copies fails instead of
+running for an hour. One pass is often not enough: a failed build stops
 at one module layer, so the modules above it are not emitted again, and their stale copies show
 only after the next pass. Moving `SkippedRecords` from `OpenSkyGameData` down to
 `OpenSkyFormatsESM` needed four passes. A failed build that finds no new stale copies has a real

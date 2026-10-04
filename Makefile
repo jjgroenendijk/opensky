@@ -58,7 +58,7 @@ xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) $(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
 # A test build compiles every target with coverage and a plain build does not, and
 # both write the same package intermediates. So each Debug build turns coverage on,
-# or `make cli` and `make test` rebuild each other's engine (issue #714). Only the
+# or `make build-cli` and `make test` rebuild each other's engine (issue #714). Only the
 # command line wins over the setting each action picks; an xcconfig does not.
 COVERAGE_Debug   := CLANG_COVERAGE_MAPPING=YES
 # Apple Silicon only. Release would also compile x86_64, where Float16 does not
@@ -266,20 +266,18 @@ comment-apply: #| Write rewritten blocks from a comment-blocks spec back [SPEC=f
 
 ##@ Build checks
 
-.PHONY: compile verify-build shader-library
+.PHONY: compile build-tests shader-library
 
 # swift build of the package modules the branch changed, or M='A B', plus their
 # dependents. No Xcode, so it is the quick loop while fixing compile errors;
-# Xcode-only code still needs verify-build.
+# Xcode-only code still needs build-app, build-cli, or build-tests.
 compile: link-shared ## Compile changed package modules and their dependents [M='Module ...']
 	@./tools/compile-modules.sh $(M)
 
-# The app, openskycli, and every test bundle compiled, no test run. Catches a
-# change that breaks a target it did not test. The OpenSky scheme builds
-# openskycli and the real-data suites for testing, so every test build compiles
-# them in one context. A separate OpenSkyCLI build recompiles the engine.
-verify-build: link-shared ## Compile the app, the CLI, and every test bundle without running tests
-	@$(XCB_RUN) verify-build $(XCB_TEST) $(UNIT_PLAN) build-for-testing
+# Every test bundle compiled, no test run. Catches a change that breaks a test
+# target it did not run. Hosted bundles need the app, so it builds too.
+build-tests: link-shared ## Compile every test bundle without running tests
+	@$(XCB_RUN) build-tests $(XCB_TEST) $(UNIT_PLAN) build-for-testing
 
 shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
 
@@ -310,15 +308,15 @@ health-index: link-shared
 
 ##@ Build and run
 
-.PHONY: build cli run-cli install app-path cli-path probe icon
+.PHONY: build-app build-cli run-cli install app-path cli-path probe icon
 
-build: link-shared ## Build the app [CONFIG]
-	@$(XCB_RUN) build $(XCB_APP) build
+build-app: link-shared ## Build the app [CONFIG]
+	@$(XCB_RUN) build-app $(XCB_APP) build
 
-cli: link-shared ## Build the openskycli dev tool [CONFIG]
-	@$(XCB_RUN) cli $(XCB_CLI) build
+build-cli: link-shared ## Build the openskycli dev tool [CONFIG]
+	@$(XCB_RUN) build-cli $(XCB_CLI) build
 
-run-cli: cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
+run-cli: build-cli ## Build and run openskycli, e.g. make run-cli ARGS="vfs ls"
 	@"$(PRODUCTS)/openskycli" $(ARGS)
 
 # Release shares the Debug cache directory (xcodebuild keeps the configurations

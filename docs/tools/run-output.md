@@ -66,7 +66,7 @@ reads like a stale file rather than contention.
 
 | Producer | Run directory | Contents |
 | --- | --- | --- |
-| `make build`, `cli`, `install` | `logs/<target>/` | xcodebuild transcript |
+| `make build-app`, `build-cli`, `install` | `logs/<target>/` | xcodebuild transcript |
 | `make test-<kind>` | `logs/test-<kind>/`, `DerivedData/TestResults/<kind>/` | xcodebuild transcript, `.xcresult` |
 | `tools/probe.sh` | `logs/probe/` | `probe.log` and every PNG the probe renders |
 | `tools/check-docs-links.sh` | `logs/docs-links/` | link report |
