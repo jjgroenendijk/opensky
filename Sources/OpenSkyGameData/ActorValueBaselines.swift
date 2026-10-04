@@ -1,6 +1,6 @@
 // What an actor's values are before anything at runtime touched them. Never
-// stored: re-derived from plugin data on every call, so a reset restores what
-// the records say now. See docs/engine/actor-values.md.
+// saved: derived from plugin data, so a reset restores what the records say.
+// See docs/engine/actor-values.md.
 
 import Foundation
 import OpenSkyFormatsESM

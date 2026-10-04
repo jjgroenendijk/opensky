@@ -17,12 +17,20 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     public let store: WorldStateStore
     public let baselines: ActorValueBaselineResolver
+    /// Regeneration reads every actor's baseline each step. A `PC Level Mult` actor
+    /// scales with the player, so the key holds the player level too.
+    private let actorBaselines = BaselineMemo<ActorBaselineKey, ActorValueBaseline>()
 
     // MARK: - Reading
 
-    /// `holder`'s maximums and regen rates, re-derived from plugin data.
+    /// `holder`'s maximums and regen rates, derived from plugin data once per base
+    /// record and player level.
     public func baseline(of holder: ActorValueHolder) -> ActorValueBaseline {
-        baselines.baseline(for: holder.subject)
+        guard case let .actor(base) = holder.subject else {
+            return baselines.baseline(for: holder.subject)
+        }
+        let key = ActorBaselineKey(base: base, playerLevel: baselines.playerLevel.level)
+        return actorBaselines.value(for: key) { baselines.baseline(for: holder.subject) }
     }
 
     /// `holder`'s effective state: its runtime component when it has one, a
@@ -251,4 +259,9 @@ public struct ActorValueRuntime: ActorValueAccess {
         self.store = store
         self.baselines = baselines
     }
+}
+
+private struct ActorBaselineKey: Hashable {
+    let base: FormID
+    let playerLevel: Int
 }
