@@ -14,7 +14,7 @@ import Testing
 
 @MainActor
 struct NPCMovementRuntimeTests {
-    private let actor = ReferenceKey.plugin(name: "movement.esm", objectID: 1)
+    let actor = ReferenceKey.plugin(name: "movement.esm", objectID: 1)
     private let trigger = ReferenceKey.plugin(name: "movement.esm", objectID: 2)
 
     @Test
@@ -185,7 +185,7 @@ struct NPCMovementRuntimeTests {
         )
     }
 
-    private static func start(actor: ReferenceKey, path: NavigationPath) -> NPCMoveStart {
+    static func start(actor: ReferenceKey, path: NavigationPath) -> NPCMoveStart {
         NPCMoveStart(
             actor: actor,
             formID: FormID(1),
@@ -197,7 +197,7 @@ struct NPCMovementRuntimeTests {
         )
     }
 
-    private static func path(
+    static func path(
         waypoints: [SIMD3<Float>],
         target: SIMD3<Float>,
         door: NavigationDoorCrossing? = nil
@@ -212,7 +212,7 @@ struct NPCMovementRuntimeTests {
         )
     }
 
-    private static func world(
+    static func world(
         cellAt: @escaping (SIMD3<Float>) -> CellSceneLocation? = { _ in
             .exterior(CellCoordinate(x: 0, y: 0))
         },

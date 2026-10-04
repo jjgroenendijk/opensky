@@ -17,7 +17,7 @@ extension CellStreamer {
     /// A nil `location` rebuilds every resident cell, because the streamer cannot
     /// tell which one holds the reference.
     public func noteStateMutation(in location: CellSceneLocation?, sequence: UInt64) {
-        guard !isRecordingSettledBody else { return }
+        guard !isRecordingSettledBody, !noteNPCRestMutation(sequence: sequence) else { return }
         switch location {
         case let .exterior(coordinate):
             noteExteriorMutation(coordinate, sequence: sequence)

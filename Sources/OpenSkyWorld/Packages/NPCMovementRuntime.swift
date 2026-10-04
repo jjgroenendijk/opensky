@@ -64,7 +64,10 @@ public struct NPCMovementRuntime {
         guard movers[start.actor] != nil || movers.count < Self.maximumSimultaneousMovers else {
             return false
         }
-        movers[start.actor] = NPCMover(start: start)
+        movers[start.actor] = NPCMover(
+            start: start,
+            drawnPlacement: drawnPlacement(of: start.actor)
+        )
         parked.removeValue(forKey: start.actor)
         // Walking somewhere outranks standing still looking at something: the
         // mover owns the yaw from here, and a hold left behind would fight it.
@@ -85,11 +88,13 @@ public struct NPCMovementRuntime {
             return
         }
         let settled = parked[start.actor]?.readout ?? movers[start.actor]?.readout
+        let drawn = drawnPlacement(of: start.actor)
         stop(start.actor)
         facings[start.actor] = NPCFacingHold(
             start: start,
             feetPosition: settled?.feetPosition ?? start.placement.position,
-            yaw: settled?.yaw ?? start.placement.rotation.z
+            yaw: settled?.yaw ?? start.placement.rotation.z,
+            drawnPlacement: drawn
         )
     }
 
@@ -100,7 +105,8 @@ public struct NPCMovementRuntime {
     public mutating func releaseFacing(_ actor: ReferenceKey) -> Bool {
         guard let hold = facings.removeValue(forKey: actor) else { return false }
         parked[actor] = NPCParkedMovement(
-            readout: hold.readout, transform: hold.transform
+            readout: hold.readout, transform: hold.transform, formID: hold.formID,
+            scale: hold.scale, drawnPlacement: hold.authoredPlacement
         )
         onPersist?(hold.persistence(reason: .turn))
         return true
@@ -112,9 +118,7 @@ public struct NPCMovementRuntime {
     @discardableResult
     public mutating func stop(_ actor: ReferenceKey) -> Bool {
         guard let mover = movers.removeValue(forKey: actor) else { return false }
-        parked[actor] = NPCParkedMovement(
-            readout: mover.readout(as: .halted), transform: mover.transform
-        )
+        parked[actor] = NPCParkedMovement(mover, readout: mover.readout(as: .halted))
         onPersist?(mover.persistence(reason: .halt))
         // The same still-drive a mover publishes when it finishes on its own,
         // so the gait clip stops rather than looping on a standing actor.
@@ -136,10 +140,7 @@ public struct NPCMovementRuntime {
             let outcome = mover.advance(by: frameTime, world: world)
             publish(outcome.emissions)
             if outcome.isFinished {
-                parked[key] = NPCParkedMovement(
-                    readout: mover.readout,
-                    transform: mover.transform
-                )
+                parked[key] = NPCParkedMovement(mover, readout: mover.readout)
                 movers.removeValue(forKey: key)
             } else {
                 movers[key] = mover
@@ -173,10 +174,27 @@ public struct NPCMovementRuntime {
         return (live + held).sorted { $0.actor < $1.actor }
     }
 
+    /// A parked actor keeps its delta until a cell build bakes its pose in (`bake`), so
+    /// it stays drawn where it stopped and its arrival rebuilds nothing.
     public func instanceDeltas() -> [UInt32: float4x4] {
+        let resting = parked.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let moving = movers.values.map { ($0.formID.rawValue, $0.instanceDelta) }
         let turning = facings.values.map { ($0.formID.rawValue, $0.instanceDelta) }
-        return Dictionary(moving + turning) { _, turned in turned }
+        return Dictionary(resting + moving + turning) { _, later in later }
+    }
+
+    /// Records that `actor`'s cell is now built with it at `placement`, so its draw
+    /// delta starts there, whether it is parked, walking or turning.
+    public mutating func bake(_ actor: ReferenceKey, at placement: PlacedReference.Placement) {
+        parked[actor]?.drawnPlacement = placement
+        movers[actor]?.authoredPlacement = placement
+        facings[actor]?.authoredPlacement = placement
+    }
+
+    /// Where the current build draws `actor`, when a mover, hold or rest knows it.
+    private func drawnPlacement(of actor: ReferenceKey) -> PlacedReference.Placement? {
+        movers[actor]?.authoredPlacement ?? facings[actor]?.authoredPlacement
+            ?? parked[actor]?.drawnPlacement
     }
 
     private func publish(_ emissions: NPCMoverEmissions) {
@@ -198,6 +216,35 @@ public struct NPCMovementRuntime {
 private struct NPCParkedMovement {
     let readout: NPCMovementReadout
     let transform: ReferenceTransformOverride
+    let formID: FormID
+    let scale: Float
+    /// Where the current cell build draws the actor.
+    var drawnPlacement: PlacedReference.Placement
+
+    init(
+        readout: NPCMovementReadout,
+        transform: ReferenceTransformOverride,
+        formID: FormID,
+        scale: Float,
+        drawnPlacement: PlacedReference.Placement
+    ) {
+        self.readout = readout
+        self.transform = transform
+        self.formID = formID
+        self.scale = scale
+        self.drawnPlacement = drawnPlacement
+    }
+
+    init(_ mover: NPCMover, readout: NPCMovementReadout) {
+        self.init(
+            readout: readout, transform: mover.transform, formID: mover.formID,
+            scale: mover.scale, drawnPlacement: mover.authoredPlacement
+        )
+    }
+
+    var instanceDelta: float4x4 {
+        NPCDrawDelta.from(drawn: drawnPlacement, to: transform, scale: scale)
+    }
 }
 
 public struct NPCMoverEmissions {

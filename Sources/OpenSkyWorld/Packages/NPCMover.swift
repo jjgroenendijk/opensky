@@ -17,7 +17,8 @@ public struct NPCMover {
     public let formID: FormID
     public let scale: Float
     public let capsule: PlayerCapsule
-    public let authoredPlacement: PlacedReference.Placement
+    /// Where the current cell build draws the actor, which the draw delta starts from.
+    public internal(set) var authoredPlacement: PlacedReference.Placement
     private let configuration: PlayerMovementConfiguration
     public var controller: WalkController
     public var path: NavigationPath
@@ -31,12 +32,14 @@ public struct NPCMover {
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
 
-    public init(start: NPCMoveStart) {
+    /// `drawnPlacement` is where the cell build drew the actor, when that is not
+    /// where it starts: an actor parked since the last build of its cell.
+    public init(start: NPCMoveStart, drawnPlacement: PlacedReference.Placement? = nil) {
         actor = start.actor
         formID = start.formID
         scale = start.scale
         capsule = start.capsule
-        authoredPlacement = start.placement
+        authoredPlacement = drawnPlacement ?? start.placement
         configuration = start.configuration
         path = start.path
         yaw = start.placement.rotation.z
