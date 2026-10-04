@@ -15,9 +15,9 @@ enum CLIError: Error {
 
 @main
 enum OpenSkyCLI {
-    static func main() {
+    static func main() async {
         do {
-            try run(arguments: Array(CommandLine.arguments.dropFirst()))
+            try await run(arguments: Array(CommandLine.arguments.dropFirst()))
         } catch let CLIError.usage(message) {
             printError("[ERROR] \(message)\n\n\(usage)")
             exit(2)
@@ -32,11 +32,18 @@ enum OpenSkyCLI {
         }
     }
 
-    private static func run(arguments: [String]) throws {
+    private static func run(arguments: [String]) async throws {
         var scanner = ArgumentScanner(arguments)
         let dataRoot = try scanner.option("--data-root")
         guard let command = scanner.next() else {
             throw CLIError.usage("no command given")
+        }
+        // The one async command: it awaits the same off-main loader the app runs.
+        if command == "launch-bench" {
+            try await LaunchBenchCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+            return
         }
         if try runEngineCommand(command, dataRoot: dataRoot, scanner: &scanner) {
             return

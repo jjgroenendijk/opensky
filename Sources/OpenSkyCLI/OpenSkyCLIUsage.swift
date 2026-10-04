@@ -209,6 +209,8 @@ extension OpenSkyCLI {
                                   Fixed-step M4 route: terrain + farm stairs,
                                   paired interior crossing, exterior return;
                                   fail route/collision/stream/physics/audio gates
+      launch-bench                Time each stage of the world data load the
+                                  app runs before its game window opens
       benchmark [--out <file>] [--frame <png>]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
