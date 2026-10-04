@@ -49,7 +49,7 @@ The policy is per menu, because two menus can be open at once. The system menu o
 conversation still pauses. Closing it gives the running world back to the dialogue. A closed
 menu's policy goes with it.
 
-Input target and pause no longer always change together. The app releases held world keys when the
+Input target and pause do not always change together. The app releases held world keys when the
 input target changes, not when the pause changes. Otherwise a key held into a non-pausing menu
 would keep moving a camera nobody is steering.
 

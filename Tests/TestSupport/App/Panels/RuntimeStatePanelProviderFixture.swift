@@ -15,10 +15,8 @@ func sendRuntimeStateControl(_ control: NSControl) {
 
 /// Depth-first search for a readout label's text by accessibility identifier.
 ///
-/// Reading a readout back by id is what pins the id contract in this repo:
-/// `make test-ui` is blocked on this machine (docs/tools/environment.md), so
-/// these unit tests are the evidence that the UI-test API exists and carries
-/// the value it claims.
+/// Reading a readout back by id pins the id contract in a unit test, so a
+/// renamed id fails without a UI-test run.
 @MainActor
 func runtimeStateReadout(_ identifier: String, in view: NSView) -> String? {
     if view.accessibilityIdentifier() == identifier, let field = view as? NSTextField {

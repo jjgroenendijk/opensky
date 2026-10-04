@@ -129,8 +129,7 @@ Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar
 
 - Pin new ids as literals in the panel test, and destination ids in
   `DestinationRegistryTests`. Update the literals in the same change that renames an id.
-- Keep `OpenSkyUITests` correct even where the UI-test harness cannot run locally
-  (`docs/tools/environment.md`).
+- Keep `OpenSkyUITests` correct.
 - Run the panel tests and the coordinator tests with `make test-unit T='...'`, then
   `make verify-build`, because only it compiles the app (`testing-and-verifying` skill).
 - Update `docs/tools/app-ui.md` in the same commit when the framework changes.

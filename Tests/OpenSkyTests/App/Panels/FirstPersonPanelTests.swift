@@ -1,7 +1,7 @@
 // `World > First person`: controls exist, lay out, and drive the provider; the
 // readout says whether the graph loaded, how many arm meshes survived MOD4/MOD5,
-// and which pieces were dropped. Ids are pinned because `make test-ui` is
-// TCC-blocked (docs/tools/environment.md).
+// and which pieces were dropped. Ids are pinned so a rename fails a unit test,
+// not only `make test-ui`.
 
 import AppKit
 @testable import OpenSky

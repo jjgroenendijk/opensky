@@ -67,4 +67,3 @@ or `Model:`. Allowed trailers:
   `git fetch && git switch --detach origin/main` over assuming `git checkout main`.
 - Waiting on CI or PR checks: `sleep N && gh pr checks` is hard-blocked by the harness. Use
   `gh pr checks <n> --watch` (blocking) or a `run_in_background` poll, not chained sleeps.
-  Whether CI runs at all is environment state — see `docs/tools/environment.md`.
