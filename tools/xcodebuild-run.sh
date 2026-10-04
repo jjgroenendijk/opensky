@@ -65,6 +65,16 @@ run_once() {
     status="$(cat "$status_file")"
 }
 
+result_bundle() {
+    while [ "$#" -gt 1 ]; do
+        if [ "$1" = "-resultBundlePath" ]; then
+            printf '%s\n' "$2"
+            return
+        fi
+        shift
+    done
+}
+
 remove_stale() {
     stale="$("$root/tools/stale-modules.sh" -d | tr '\n' ' ' | sed 's/ $//')"
     [ -n "$stale" ] || return 1
@@ -76,12 +86,18 @@ if [ -n "$compiles" ]; then
 fi
 run_once "$@"
 max_retries="${OPENSKY_STALE_RETRIES:-8}"
+bundle="$(result_bundle "$@")"
 retry=0
 while [ "$status" -ne 0 ] && [ -n "$compiles" ] && [ "$retry" -lt "$max_retries" ] \
     && remove_stale; do
     retry=$((retry + 1))
     printf '[INFO] build %s of %s after removing stale modules\n' "$retry" "$max_retries"
     log="$run_dir/$name-retry$retry.log"
+    # xcodebuild refuses an existing -resultBundlePath, and the failed pass
+    # already wrote one there.
+    case "$bundle" in
+        *.xcresult) rm -rf "$bundle" ;;
+    esac
     run_once "$@"
 done
 
