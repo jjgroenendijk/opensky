@@ -117,6 +117,25 @@ struct RecordGraphStoreTests {
         #expect(store.views(forQuest: FormID(0x70)).count == 1)
     }
 
+    @Test func nameFollowsTheBaseDataTemplateFlag() throws {
+        let template = try ActorBase(record: FactionFixture.decode(FactionFixture.actor(
+            formID: 0x600, editorID: "Template",
+            aiData: Fixture.field("FULL", Fixture.zstring("Hulda"))
+        )), localized: false)
+        let inheriting = try FactionFixture.actorBase(
+            formID: 0x601, editorID: "Inheriting", templateFlags: 0x0080, template: 0x600
+        )
+        let own = try FactionFixture.actorBase(
+            formID: 0x602, editorID: "Own", templateFlags: 0x0010, template: 0x600
+        )
+        let resolver = ActorTemplateResolver(
+            actors: [0x600: template, 0x601: inheriting, 0x602: own],
+            leveledActors: [:]
+        )
+        #expect(try resolver.resolveName(base: FormID(0x601)).value == .inline("Hulda"))
+        #expect(try resolver.resolveName(base: FormID(0x602)).value == nil)
+    }
+
     @Test func combatStyleFollowsTheAIDataTemplateFlag() throws {
         let template = try ActorBase(record: FactionFixture.decode(FactionFixture.actor(
             formID: 0x600, editorID: "Template",

@@ -52,5 +52,9 @@ entry is stored:
 The language comes from `[General] sLanguage`, see [INI settings](/formats/ini.md). When a
 table is missing, lookups return nothing and OpenSky logs one error.
 
+A string ID is local to the plugin that wrote the record. Two plugins can use the same ID
+for different text. So a record's text is looked up in the tables of the
+plugin whose record won in the load order, for example `dawnguard_english.strings`.
+
 Real data check: all 273 table files in the vanilla archives (10 languages) decode with no
 errors. Chinese, Japanese, and Russian use UTF-8. French and German use windows-1252.

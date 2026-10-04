@@ -80,9 +80,9 @@ state. Quests start first; then scripts attach once; then each quest runs its st
 and starts its begin-on-start scenes. That order lets a start-up stage fragment see the other
 start-game quests running.
 
-The quest store indexes `Skyrim.esm` only, so the quests of the other plugins' lists are
-reported as not in the quest store. On the install the pass starts the 330 quests of
-`Skyrim.esm`.
+The quest store, the scene index, and the story-manager index read every active plugin. On
+the install the pass starts 436 quests: 330 from `Skyrim.esm` and the rest from `Update.esm`,
+the three DLC, and the two free Creation Club plugins.
 
 ## State and saving
 
@@ -103,5 +103,5 @@ data, because their conditions ask for event data the sidebar does not give.
 - Only `KILL`, `CLOC`, and `SCPT` fire from play. Events such as `ADIA`, `LEVL`, `SKIL`, and
   `CRFT` fire only from the sidebar.
 - `KILL` crime status and relationship rank are always 0.
-- The quests of plugins other than `Skyrim.esm` do not start, because the quest store does not
-  index them.
+- A DLC quest's conditions and dialogue still read FormIDs as if they were `Skyrim.esm`
+  numbers. Its aliases and script properties use the quest's own plugin.

@@ -66,6 +66,13 @@ nonisolated public struct FormIDResolver: Sendable {
         self.masters = masters
     }
 
+    /// The FormID space of a whole load order: the top byte is the plugin's
+    /// position, as the game numbers forms at runtime. The first plugin, `Skyrim.esm`,
+    /// is 0, so its own FormIDs keep their value.
+    public static func loadOrder(_ plugins: [String]) -> FormIDResolver {
+        FormIDResolver(pluginName: plugins.last ?? "", masters: Array(plugins.dropLast()))
+    }
+
     /// Nil for the null FormID. A master index at/above `masters.count`
     /// resolves to the plugin itself — index == count is the normal encoding
     /// for records the plugin defines; anything higher is clamped the same

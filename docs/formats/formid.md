@@ -54,8 +54,10 @@ In vanilla, the highest index used is exactly the number of masters. For example
 
 The index the game console shows is different. It depends on the user's full load order.
 OpenSky names a record by (plugin file name, object ID) instead, which does not depend on
-load order. For identities that must stay stable during a session, see
-[runtime reference identity](/engine/runtime-state.md).
+load order. The quest store is the exception: it numbers quests in the load-order space, as
+the console does, so `Skyrim.esm` FormIDs keep their value and a DLC quest gets its load
+position as top byte. The FormIDs inside a quest record stay relative to its own plugin.
+For identities that must stay stable during a session, see [runtime reference identity](/engine/runtime-state.md).
 
 Light plugins (ESL) use the `0xFE` prefix only at runtime. Inside the file, they encode
 master indices as above. OpenSky does not model the `0xFE` slots yet, so the Load Order

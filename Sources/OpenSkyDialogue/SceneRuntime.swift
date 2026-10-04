@@ -62,8 +62,8 @@ public struct SceneRuntime {
     @discardableResult
     public func start(_ id: FormID) throws -> [SceneEvent] {
         guard let entry = catalog.scene(id) else { throw SceneError.unknownScene(id) }
-        guard dialogue.isRunning(quest: entry.scene.quest) else {
-            throw SceneError.questNotRunning(entry.scene.quest ?? FormID(0))
+        guard dialogue.isRunning(quest: entry.quest) else {
+            throw SceneError.questNotRunning(entry.quest ?? FormID(0))
         }
         guard store.component(SceneRuntimeState.self, for: entry.key) == nil else { return [] }
         var playback = Playback(
@@ -97,7 +97,7 @@ public struct SceneRuntime {
             guard let state = store.component(SceneRuntimeState.self, for: entry.key)
             else { continue }
             var playback = Playback(runtime: self, entry: entry, state: state, isNew: false)
-            if dialogue.isRunning(quest: entry.scene.quest) {
+            if dialogue.isRunning(quest: entry.quest) {
                 playback.advance()
             } else {
                 playback.end(.questStopped)

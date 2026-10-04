@@ -93,6 +93,16 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// family that has no enchantment field at all.
     public let enchantment: ItemEnchantment?
 
+    /// The same definition with a FULL string ID replaced by its text. A missing
+    /// table or ID keeps the ID, so callers still fall back to the editor ID.
+    func resolvingName(with strings: LocalizedStrings) -> ItemDefinition {
+        guard case .tableID = name, let text = strings.resolve(name) else { return self }
+        return ItemDefinition(
+            formID: formID, family: family, editorID: editorID, name: .inline(text),
+            value: value, weight: weight, keywords: keywords, enchantment: enchantment
+        )
+    }
+
     /// v1 stacking key: the base FormID. See the file header for why this is
     /// provisional.
     public var stackKey: UInt32 {
@@ -142,8 +152,13 @@ nonisolated public final class ItemDefinitionStore {
 
     /// Builds the index. Supply `enchantments` to have every weapon and armor
     /// EITM resolved to the winning ENCH identity while the index is built;
-    /// without it the links are still carried, just unresolved.
-    public init(file: ESMFile, enchantments: ItemEnchantmentResolver? = nil) {
+    /// without it the links are still carried, just unresolved. Supply `strings`
+    /// to turn each FULL string ID into its text.
+    public init(
+        file: ESMFile,
+        enchantments: ItemEnchantmentResolver? = nil,
+        strings: LocalizedStrings? = nil
+    ) {
         self.enchantments = enchantments
         let localized = file.isLocalized
         var skipped = SkippedRecords()
@@ -159,7 +174,9 @@ nonisolated public final class ItemDefinitionStore {
             }
             definitions.merge(decoded) { _, later in later }
         }
-        self.definitions = definitions
+        self.definitions = strings.map { strings in
+            definitions.mapValues { $0.resolvingName(with: strings) }
+        } ?? definitions
         skippedCounts = Dictionary(
             uniqueKeysWithValues: ItemDefinition.Family.allCases.map {
                 ($0, skipped.count(of: $0.recordType))

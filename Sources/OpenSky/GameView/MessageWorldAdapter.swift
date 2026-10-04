@@ -48,9 +48,13 @@ final class MessageWorldAdapter {
         return quests.quest(id)
     }
 
-    private var builder: MessageTextBuilder {
+    /// A message's text IDs point into the tables of the plugin whose record won.
+    private func builder(plugin: String) -> MessageTextBuilder {
         let naming = game.journalMenu.questRuntime.map { game.journalMenu.aliasNaming(runtime: $0) }
-        return MessageTextBuilder(strings: game.journal.strings, naming: naming ?? .none)
+        return MessageTextBuilder(
+            strings: game.journal.strings?.scoped(to: plugin),
+            naming: naming ?? .none
+        )
     }
 }
 
@@ -63,7 +67,7 @@ extension MessageWorldAdapter: MessageWorld {
         guard let message = presentation?.messages.record(key) else { return nil }
         var context = game.runtimeState.conditionContext()
         context.subject = .player
-        return builder.build(
+        return builder(plugin: message.sourcePlugin).build(
             message.record,
             arguments: arguments,
             quest: quest(of: message),

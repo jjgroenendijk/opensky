@@ -17,10 +17,9 @@ nonisolated public struct StoryPlugin: Equatable, Sendable {
 }
 
 nonisolated public struct StoryData: Sendable {
-    /// Base-plugin SCEN index, in the FormID space of the quest store. Nil on a
-    /// synthetic scene.
+    /// Load-order SCEN index. Nil on a synthetic scene.
     public var scenes: SceneStore?
-    /// Base-plugin SMBN, SMQN, and SMEN index, for the same reason.
+    /// Load-order SMBN, SMQN, and SMEN index.
     public var storyManager: StoryManagerStore?
     /// Active plugins, lowest priority first.
     public var plugins: [StoryPlugin]
@@ -35,12 +34,12 @@ nonisolated public struct StoryData: Sendable {
         self.plugins = plugins
     }
 
-    public static func load(root: GameDataRoot, baseFile: ESMFile, baseName: String) -> StoryData {
-        let base = [(name: baseName, file: baseFile)]
-        return StoryData(
-            scenes: SceneStore(plugins: base),
-            storyManager: StoryManagerStore(plugins: base),
-            plugins: ActivePluginFiles.load(root: root, baseFile: baseFile).map { plugin in
+    /// - Parameter plugins: the active plugins, lowest priority first.
+    public static func load(plugins: [(name: String, file: ESMFile)]) -> StoryData {
+        StoryData(
+            scenes: SceneStore(plugins: plugins),
+            storyManager: StoryManagerStore(plugins: plugins),
+            plugins: plugins.map { plugin in
                 let header = try? PluginHeader(tes4: plugin.file.tes4)
                 return StoryPlugin(name: plugin.name, masters: header?.masters ?? [])
             }

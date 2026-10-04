@@ -129,8 +129,8 @@ extension PapyrusWorldStateBridge {
         return ResolvedQuestBridge(quest: quest, runtime: questRuntime)
     }
 
-    /// A quest's scripts, bound with the session's master-list resolver. A
-    /// synthetic session with no resolver binds against an empty master list,
+    /// A quest's scripts, bound with the master list of the plugin whose record won.
+    /// A synthetic session with no resolver binds against an empty master list,
     /// which resolves only same-plugin FormIDs — the same fallback the
     /// reference path takes.
     @discardableResult
@@ -146,12 +146,9 @@ extension PapyrusWorldStateBridge {
                 "\(quest.editorID ?? quest.formID.description)"
                     + "[\(newest.aliasID)] -> \(newest.reference.description)"
         }
-        return world.attachQuest(
-            quest,
-            key: key,
-            formIDResolver: formIDResolver
-                ?? FormIDResolver(pluginName: "", masters: []),
-            aliases: aliases
-        )
+        let resolver = questRuntime?.quests.sourceResolver(of: quest.formID)
+            ?? formIDResolver
+            ?? FormIDResolver(pluginName: "", masters: [])
+        return world.attachQuest(quest, key: key, formIDResolver: resolver, aliases: aliases)
     }
 }

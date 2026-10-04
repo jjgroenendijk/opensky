@@ -96,7 +96,6 @@ nonisolated public struct CellProviderIndexes {
     public let aspcStore: AcousticSpaceStore
     public let musicStore: MusicRecordStore
     public let globalStore: GlobalStore
-    public let questStore: QuestStore
     public let locationStore: LocationStore
     public let dialogueStore: DialogueStore
     public let packageStore: PackageStore
@@ -144,8 +143,7 @@ nonisolated public struct CellProviderIndexes {
     public let difficultySettings: DifficultySettings
     public let archerySettings: ArcherySettings
     public let detectionSettings: DetectionSettings
-    public let lockTrapData: LockTrapData
-    public let storyData: StoryData
+    let scripted: ScriptedData
     let loadOrder: LoadOrderStores
 
     public init(
@@ -184,7 +182,6 @@ nonisolated public struct CellProviderIndexes {
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: pluginName)
-        questStore = QuestStore(file: file, pluginName: pluginName)
         locationStore = LocationStoreLoader.load(root: root, baseFile: file)
         dialogueStore = DialogueStore(file: file, pluginName: pluginName)
         packageStore = PackageStore(file: file)
@@ -202,9 +199,8 @@ nonisolated public struct CellProviderIndexes {
         // Built after the ENCH store so every enchanted item's `EITM` arrives
         // already load-order resolved: without the resolver an
         // equipped enchanted weapon would look unenchanted at runtime.
-        inventoryBaselines = InventoryBaselineResolver.build(
-            from: file,
-            enchantments: ItemEnchantmentResolver(store: magic.enchantments, pluginName: pluginName)
+        inventoryBaselines = Self.inventoryBaselines(
+            file, pluginName, magic.enchantments, fileSystem, localizationLanguage
         )
         equipmentCatalog = EquipmentCatalog.build(from: file)
         craftingCatalog = CraftingCatalog(
@@ -215,7 +211,7 @@ nonisolated public struct CellProviderIndexes {
         actorValueBaselines = Self.actorValueBaselines(
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
-        (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
+        scripted = ScriptedData(root, file, pluginName, tuning.store)
         loadOrder = Self.loadOrderStores(root: root, file: file, settings: tuning.store)
     }
 
@@ -323,17 +319,53 @@ nonisolated public struct CellProviderIndexes {
 }
 
 nonisolated extension CellProviderIndexes {
-    /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
-    private static func scriptedData(
-        _ root: GameDataRoot,
+    /// Item names resolve through the string tables while the index is built.
+    private static func inventoryBaselines(
         _ file: ESMFile,
         _ pluginName: String,
-        _ settings: GameSettingStore
-    ) -> (LockTrapData, StoryData) {
-        (
-            LockTrapData.load(root: root, baseFile: file, baseName: pluginName, settings: settings),
-            StoryData.load(root: root, baseFile: file, baseName: pluginName)
+        _ enchantments: EnchantmentStore,
+        _ fileSystem: any GameFileSource,
+        _ language: String
+    ) -> InventoryBaselineResolver {
+        InventoryBaselineResolver.build(
+            from: file,
+            enchantments: ItemEnchantmentResolver(store: enchantments, pluginName: pluginName),
+            strings: LocalizedStrings(vfs: fileSystem, pluginName: pluginName, language: language)
         )
+    }
+
+    /// Lock, trap, quest, scene, and story-manager data: what quest and trap scripts
+    /// act on. Quests, scenes, and story nodes come from every active plugin.
+    struct ScriptedData {
+        let lockTrap: LockTrapData
+        let story: StoryData
+        let quests: QuestStore
+
+        init(
+            _ root: GameDataRoot,
+            _ file: ESMFile,
+            _ pluginName: String,
+            _ settings: GameSettingStore
+        ) {
+            let plugins = ActivePluginFiles.load(root: root, baseFile: file)
+            lockTrap = LockTrapData.load(
+                root: root, baseFile: file, baseName: pluginName, settings: settings
+            )
+            story = StoryData.load(plugins: plugins)
+            quests = QuestStore(plugins: plugins)
+        }
+    }
+
+    public var questStore: QuestStore {
+        scripted.quests
+    }
+
+    public var lockTrapData: LockTrapData {
+        scripted.lockTrap
+    }
+
+    public var storyData: StoryData {
+        scripted.story
     }
 
     /// Load-order idle records and markers.

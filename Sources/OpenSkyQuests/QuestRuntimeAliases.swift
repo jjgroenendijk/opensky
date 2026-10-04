@@ -86,7 +86,7 @@ extension QuestRuntime {
         }
         let result = QuestAliasFiller.fill(
             quest,
-            resolver: quests.resolver,
+            resolver: quests.sourceResolver(of: quest.formID),
             locations: locations,
             event: event
         )
