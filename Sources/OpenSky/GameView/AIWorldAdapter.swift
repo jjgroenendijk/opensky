@@ -187,7 +187,7 @@ extension AIWorldAdapter: PerceptionSessionWorld {
                     eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
                     facing: actor.facing,
                     isExterior: isExterior,
-                    name: actor.name
+                    label: actor.label
                 ),
                 isDead: actor.isDead,
                 isHostile: game.factions.hostility(of: actor.key) == .hostile,

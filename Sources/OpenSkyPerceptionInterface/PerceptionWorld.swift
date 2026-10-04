@@ -21,9 +21,12 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     /// Whether this observer stands in an exterior cell, which is what
     /// `fSneakExteriorDistanceMult` applies to.
     public let isExterior: Bool
-    /// FULL name when one resolves, else the editor ID, else the FormID. Never
-    /// empty, so a readout line always names something.
-    public let name: String
+    /// FULL name, editor ID, or key and base form, formatted only when read.
+    public let label: ActorLabel
+
+    public var name: String {
+        label.text
+    }
 
     public init(
         key: ReferenceKey,
@@ -33,12 +36,26 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
         isExterior: Bool = true,
         name: String = "—"
     ) {
+        self.init(
+            key: key, feet: feet, eye: eye, facing: facing, isExterior: isExterior,
+            label: ActorLabel(name)
+        )
+    }
+
+    public init(
+        key: ReferenceKey,
+        feet: SIMD3<Float>,
+        eye: SIMD3<Float>?,
+        facing: Float,
+        isExterior: Bool,
+        label: ActorLabel
+    ) {
         self.key = key
         self.feet = feet
         self.eye = eye ?? (feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight))
         self.facing = facing
         self.isExterior = isExterior
-        self.name = name
+        self.label = label
     }
 
     /// The unit heading the cone is centred on, in the XY plane. Perception is
