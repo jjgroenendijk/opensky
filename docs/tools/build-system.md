@@ -204,7 +204,9 @@ up to `OPENSKY_STALE_RETRIES` times (default 8). One pass is often not enough: a
 at one module layer, so the modules above it are not emitted again, and their stale copies show
 only after the next pass. Moving `SkippedRecords` from `OpenSkyGameData` down to
 `OpenSkyFormatsESM` needed four passes. A failed build that finds no new stale copies has a real
-error, so it stops at once. A test run without building skips all of this.
+error, so it stops at once. Before each new pass it deletes the `-resultBundlePath` bundle that the
+failed pass wrote, because xcodebuild refuses a path that exists. A test run without building
+skips all of this.
 
 ## Warnings are errors
 
