@@ -66,6 +66,7 @@ extension Renderer {
     /// Both the live and offscreen loops use this seam so the fly benchmark
     /// measures the same Papyrus VM work the shipping frame loop performs.
     public func updateWorldSim(deltaTime: Float) {
+        session.assetDrains(())
         guard let onWorldUpdate else {
             lastScriptUpdateMS = 0
             return
