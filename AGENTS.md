@@ -202,7 +202,7 @@ better name instead.
   Training data is confidently wrong about byte layouts.
 - A performance idea, or a performance problem spotted mid-task, becomes a GitHub issue
   (`gh issue create`) rather than an inline fix. One issue per idea; the title states the
-  win, the body states the measured cost and why it can shrink.
+  win, the body states why it can be faster. No measurement is needed to file it.
 - A pre-existing bug found mid-task, one the current change did not cause, becomes a GitHub
   issue with the `bug` label (`gh issue create --label bug`). One issue per bug; the body
   states how to reproduce it, what was observed, and what is expected. This keeps the bug from

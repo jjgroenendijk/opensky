@@ -2,8 +2,9 @@
 name: starting-roadmap-work
 description: Picks up and finishes OpenSky roadmap work on GitHub - how milestones map to
   Mn, choosing the next issue, writing an issue body, one branch and one PR per issue,
-  labels, assigning an issue, the draft PR flow, and closing a milestone. Use when choosing what to work on, filing or editing an
-  issue, starting an issue, or finishing a milestone.
+  labels, assigning an issue, the draft PR flow, and closing a milestone. Use when
+  choosing what to work on, filing or editing an issue, starting an issue, or finishing a
+  milestone.
 ---
 
 # Starting roadmap work
@@ -67,8 +68,8 @@ code itself.
   issue (`gh issue create`, with the `bug` label for a bug). Do not fix it in this PR
   unless it blocks the task, so the PR stays about one issue and the problem is not lost.
 - A performance idea becomes a new issue too, one issue per idea. The title states the
-  win; the body states the measured cost and why it can shrink. Do not make the change
-  inline: a speed change needs its own measurement.
+  win; the body states why it can be faster. No measurement is needed to file it. Do not
+  make the change in this PR.
 
 ## Finishing a milestone
 
