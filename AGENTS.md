@@ -108,8 +108,10 @@ with an example. When you add code:
   `RenderFrameDriver`, so a test can pass a fake.
 - Game logic goes in a coordinator in its feature module, not in `GameViewController`.
 - Change a data layout for speed only after a measurement shows the cost.
-- Code runs on the main actor by default. Do not add a new `@unchecked Sendable` class,
-  `DispatchQueue`, or `Task.detached`. `docs/decisions/concurrency.md` says what leaves it.
+- Simulation runs on the main actor, in a fixed order and without `await`. Reading and
+  decoding a file runs off it, and the frame drains the result. Do not add a new
+  `@unchecked Sendable` class, `DispatchQueue`, or `Task.detached`.
+  `docs/decisions/concurrency.md` has the rules.
 
 ## Build, run, test
 
