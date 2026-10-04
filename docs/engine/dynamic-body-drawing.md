@@ -59,3 +59,15 @@ draw instances are split off from their cell's scene. They keep the same baked m
 Only their owner changes. They are added once under the occupied cell, survive the removal of the
 placing cell, and are removed with the occupied cell. Terrain, lighting, animations, and untagged
 instances stay with their own cell.
+
+## Walking NPCs
+
+A walking NPC uses the same delta, keyed by its `ACHR` FormID. The delta is measured from the
+pose the current cell build drew the NPC at, not from the pose where the walk started. When the
+NPC stops, its resting pose is written to the world state like a settled body, and the write
+rebuilds no cell. The NPC keeps its delta and stays drawn where it stopped.
+
+Each such write remembers its world-state sequence. A cell build carries the sequence of the
+snapshot it read. Once the build that draws the NPC is at or past that sequence, the build holds
+the resting pose, so the delta's starting pose moves there. This also holds while the NPC walks
+again, so a rebuild in the middle of a walk does not draw the NPC moved twice.

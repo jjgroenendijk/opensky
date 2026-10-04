@@ -14,6 +14,18 @@ public struct CellStreamerNPCMovementState {
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
     public var onPosesChanged: (([UInt32: float4x4]) -> Void)?
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    /// Rest writes no resident build has drawn yet, oldest first, per actor.
+    public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
+    /// The rest write in progress, so its store mutation rebuilds no cell.
+    public var recordingRest: NPCMovementPersistence?
+}
+
+/// One NPC pose written to the store and drawn through a delta until the cell
+/// that draws the actor is built from a snapshot that holds it.
+public struct NPCUnbakedRest {
+    public let sequence: UInt64
+    public let placement: PlacedReference.Placement
+    public let drawingCell: CellSceneLocation
 }
 
 extension CellStreamer {
@@ -161,7 +173,46 @@ extension CellStreamer {
                 Set(self?.triggerVolumes(intersecting: state).map(\.reference) ?? [])
             }
         ))
+        bakeBuiltRests()
         onNPCPosesChanged?(npcMovement.instanceDeltas())
+    }
+
+    /// Called from `noteStateMutation` while a rest write is in progress. The actor
+    /// already draws at that pose, so the write rebuilds nothing; a later build of
+    /// its cell bakes it in. Returns false when no rest write is in progress.
+    func noteNPCRestMutation(sequence: UInt64) -> Bool {
+        guard let rest = npcMovementState.recordingRest else { return false }
+        if let cell = cellLocation(of: rest.actor) {
+            npcMovementState.unbakedRests[rest.actor, default: []].append(NPCUnbakedRest(
+                sequence: sequence, placement: rest.transform.placement, drawingCell: cell
+            ))
+        }
+        return true
+    }
+
+    /// Moves each actor's draw base to the newest rest its cell's resident build holds.
+    private func bakeBuiltRests() {
+        for actor in npcMovementState.unbakedRests.keys.sorted() {
+            guard
+                var rests = npcMovementState.unbakedRests[actor],
+                let cell = rests.last?.drawingCell,
+                let built = residentStateSequence(at: cell),
+                let baked = rests.lastIndex(where: { $0.sequence <= built })
+            else { continue }
+            npcMovement.bake(actor, at: rests[baked].placement)
+            rests.removeSubrange(...baked)
+            npcMovementState.unbakedRests[actor] = rests.isEmpty ? nil : rests
+        }
+    }
+
+    private func residentStateSequence(at location: CellSceneLocation) -> UInt64? {
+        switch location {
+        case let .exterior(coordinate):
+            return composition.cells[coordinate]?.stateSequence
+        case .interior:
+            guard let interiorScene, interiorScene.location == location else { return nil }
+            return interiorScene.stateSequence
+        }
     }
 
     private func navigationCell(at position: SIMD3<Float>) -> CellSceneLocation? {
@@ -174,7 +225,9 @@ extension CellStreamer {
             self?.onNPCLocomotionDrive?(update)
         }
         npcMovement.onPersist = { [weak self] persistence in
+            self?.npcMovementState.recordingRest = persistence
             self?.onNPCMovementPersist?(persistence)
+            self?.npcMovementState.recordingRest = nil
         }
         npcMovement.onTriggerTransition = { [weak self] event in
             self?.onTriggerTransition(event)

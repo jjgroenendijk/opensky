@@ -30,7 +30,8 @@ nonisolated public struct NPCFaceStart: Equatable, Sendable {
 nonisolated public struct NPCFacingHold: Equatable, Sendable {
     public let actor: ReferenceKey
     public let formID: FormID
-    public let authoredPlacement: PlacedReference.Placement
+    /// Where the current cell build draws the actor, which the draw delta starts from.
+    public internal(set) var authoredPlacement: PlacedReference.Placement
     public let scale: Float
     /// Where the actor stands. Fixed for the life of the hold — this is a turn,
     /// not a move.
@@ -39,10 +40,15 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     public private(set) var targetYaw: Float
     public private(set) var yaw: Float
 
-    public init(start: NPCFaceStart, feetPosition: SIMD3<Float>, yaw: Float) {
+    public init(
+        start: NPCFaceStart,
+        feetPosition: SIMD3<Float>,
+        yaw: Float,
+        drawnPlacement: PlacedReference.Placement? = nil
+    ) {
         actor = start.actor
         formID = start.formID
-        authoredPlacement = start.placement
+        authoredPlacement = drawnPlacement ?? start.placement
         scale = start.scale
         self.feetPosition = feetPosition
         self.yaw = yaw
@@ -91,17 +97,7 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     /// The same projection `NPCMover` publishes, so a turning actor and a
     /// walking one reach the draw path identically.
     public var instanceDelta: float4x4 {
-        let authored = MatrixMath.placement(
-            position: authoredPlacement.position,
-            rotation: authoredPlacement.rotation,
-            scale: scale
-        )
-        let current = MatrixMath.placement(
-            position: transform.position,
-            rotation: transform.rotation,
-            scale: scale
-        )
-        return current * authored.inverse
+        NPCDrawDelta.from(drawn: authoredPlacement, to: transform, scale: scale)
     }
 
     public var readout: NPCMovementReadout {

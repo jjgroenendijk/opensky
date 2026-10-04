@@ -1,6 +1,5 @@
 // Transform, draw delta, readout and persistence projections for one mover.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 import simd
@@ -15,17 +14,7 @@ extension NPCMover {
     }
 
     public var instanceDelta: float4x4 {
-        let authored = MatrixMath.placement(
-            position: authoredPlacement.position,
-            rotation: authoredPlacement.rotation,
-            scale: scale
-        )
-        let current = MatrixMath.placement(
-            position: transform.position,
-            rotation: transform.rotation,
-            scale: scale
-        )
-        return current * authored.inverse
+        NPCDrawDelta.from(drawn: authoredPlacement, to: transform, scale: scale)
     }
 
     public var readout: NPCMovementReadout {
