@@ -4,7 +4,6 @@
 
 import OpenSkyCombat
 import OpenSkyCombatInterface
-import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -14,11 +13,8 @@ import OpenSkyWorld
 /// Answers `CombatWorld` from the session systems `game` owns.
 final class CombatWorldAdapter {
     unowned let game: GameViewController
-    /// Reaction clips, decoded once per skeleton and kind, because a room of
-    /// actors shares one rig.
-    private var clips: [String: ActorAnimationClip] = [:]
-    /// Keys whose rig has no such clip, so they are not decoded again.
-    private var unresolvableClips: Set<String> = []
+    /// Rigs whose reaction clips were requested, because a room of actors shares one rig.
+    private var warmedSkeletons: Set<String> = []
 
     init(game: GameViewController) {
         self.game = game
@@ -113,27 +109,28 @@ final class CombatWorldAdapter {
         return true
     }
 
+    /// The clip when it is loaded. The first ask for a skeleton warms every reaction
+    /// of that rig off the main actor; a hit before it arrives plays no reaction.
     private func reactionClip(
         _ clip: CombatActorClip,
         skeletonMeshPath: String
     ) -> ActorAnimationClip? {
-        let cacheKey = "\(skeletonMeshPath)#\(clip.rawValue)"
-        guard !unresolvableClips.contains(cacheKey) else { return nil }
-        if let cached = clips[cacheKey] {
-            return cached
+        guard let clips = game.sessionWiring.animationClips else { return nil }
+        if warmedSkeletons.insert(skeletonMeshPath).inserted {
+            for other in CombatActorClip.allCases where other != clip {
+                clips.prefetch(Self.reactionKey(other, skeletonMeshPath: skeletonMeshPath))
+            }
         }
-        guard
-            let fileSystem = game.audioFileSystem,
-            let loaded = try? ActorAnimationClipLoader.clip(
-                skeletonMeshPath: skeletonMeshPath,
-                animationPath: ActorAnimationClipLoader.animationPath(for: clip),
-                readHKX: { path in try HKXFile(data: fileSystem.contents(forPath: path)) }
-            )
-        else {
-            unresolvableClips.insert(cacheKey)
-            return nil
-        }
-        clips[cacheKey] = loaded
-        return loaded
+        return clips.value(for: Self.reactionKey(clip, skeletonMeshPath: skeletonMeshPath))
+    }
+
+    private static func reactionKey(
+        _ clip: CombatActorClip,
+        skeletonMeshPath: String
+    ) -> ActorClipKey {
+        ActorClipKey(
+            skeletonMeshPath: skeletonMeshPath,
+            animationPath: ActorAnimationClipLoader.animationPath(for: clip)
+        )
     }
 }

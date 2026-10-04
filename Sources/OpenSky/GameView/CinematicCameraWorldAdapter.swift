@@ -17,7 +17,8 @@ import simd
 
 final class CinematicCameraWorldAdapter {
     unowned let game: GameViewController
-    private var tracks: [String: NIFCameraTrack?] = [:]
+    /// Camera tracks by CAMS model path, all requested at wiring, off the main actor.
+    private var tracks: AssetLoader<String, NIFCameraTrack>?
     private var lastFrame: Date?
 
     init(game: GameViewController) {
@@ -26,6 +27,7 @@ final class CinematicCameraWorldAdapter {
 
     func wire(renderer: Renderer) {
         game.cinematicCamera.attach(world: self)
+        wireTracks(renderer: renderer)
         // `onFrame` runs under a menu too; the shot keeps real time, so a
         // paused frame advances nothing.
         renderer.onFrame.add { [weak self, weak renderer] _ in
@@ -49,6 +51,23 @@ final class CinematicCameraWorldAdapter {
             target: key,
             remainingHostiles: remaining
         )
+    }
+
+    /// A shot whose track has not arrived plays without one, as a shot with no model does.
+    private func wireTracks(renderer: Renderer) {
+        guard let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem else {
+            return
+        }
+        let tracks = AssetLoader<String, NIFCameraTrack> { model in
+            try NIFCameraTrack(file: NIFFile(data: files.contents(forPath: "meshes\\" + model)))
+        }
+        for shot in cameraPaths?.shots.records ?? [] {
+            if let model = shot.record.model?.path {
+                tracks.prefetch(model)
+            }
+        }
+        self.tracks = tracks
+        renderer.session.assetDrains.add { _ in tracks.drain() }
     }
 
     func anchorPosition(of key: ReferenceKey) -> SIMD3<Float>? {
@@ -98,16 +117,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
     }
 
     func cameraTrack(model: String) -> NIFCameraTrack? {
-        if let cached = tracks[model] {
-            return cached
-        }
-        let fileSystem = (game.worldData as? ScriptDataProviding)?.scriptFileSystem
-        let track = try? fileSystem
-            .map {
-                try NIFCameraTrack(file: NIFFile(data: $0.contents(forPath: "meshes\\" + model)))
-            }
-        tracks[model] = track
-        return track
+        tracks?.value(for: model)
     }
 
     /// The player stands where the capsule is and faces the player's own view,

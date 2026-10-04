@@ -149,12 +149,13 @@ changed the time within noise.
 The plan's target list scopes only the report. A test build compiles every target with
 `-profile-coverage-mapping -profile-generate`, test bundles and fixtures included. A plain `build`
 compiles without them, and both write the same package intermediates under `DerivedData/Build`.
-Without a fix, `make cli` after `make test-unit` would recompile the whole engine, and the next test
-build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES` on every Debug
-command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be the command line:
-xcodebuild sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcconfig
-value does not reach the compiler. A Release build stays without coverage. An instrumented program
-writes `default.profraw` into its working directory when it exits; `.gitignore` covers it.
+Without a fix, `make build-cli` after `make test-unit` would recompile the whole engine, and the
+next test build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES`
+on every Debug command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be
+the command line: xcodebuild sets this setting per action above `Config/Build/Overrides.xcconfig`,
+so an xcconfig value does not reach the compiler. A Release build stays without coverage. An
+instrumented program writes `default.profraw` into its working directory when it exits;
+`.gitignore` covers it.
 
 `make test-report` and `make coverage-floor` read `DerivedData/Build/ProfileData/*/Coverage.profdata`
 with `llvm-cov`, not the result bundle with `xccov`. Each package module builds into its own

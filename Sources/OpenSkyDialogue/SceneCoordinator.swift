@@ -88,7 +88,7 @@ public final class SceneCoordinator {
 
     /// Starts the quest's begin-on-start scenes.
     public func questDidStart(_ quest: FormID) {
-        guard let runtime, !catalog.scenes(ofQuest: quest).isEmpty else { return }
+        guard !catalog.scenes(ofQuest: quest).isEmpty, let runtime else { return }
         record(runtime.questDidStart(quest))
     }
 

@@ -58,13 +58,22 @@ public final class SWFLabCoordinator {
             return
         }
         renderer?.swfEnabled = true
-        guard let loader = movies.loader else {
+        guard movies.isAvailable else {
             loadError = "No game data located."
             assign(nil)
             return
         }
+        movies.request(path, while: { [weak self] in
+            self?.selectedPath == path
+        }, then: { [weak self] result in
+            self?.show(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the selection.
+    private func show(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
         do {
-            let scene = try loader.load(path: path)
+            let scene = try result.get()
             tally = scene.movie.tally
             unresolvedFontNames = scene.unresolvedFontNames
             assign(scene)
@@ -83,7 +92,7 @@ public final class SWFLabCoordinator {
             tally: tally,
             unresolvedFontNames: unresolvedFontNames,
             drawStats: renderer?.lastSWFDrawStats ?? SWFDrawStats(),
-            installLoaded: movies.loader != nil,
+            installLoaded: movies.isAvailable,
             runtime: renderer?.swfRuntime.map(SWFLabRuntimeSnapshot.init(runtime:))
         )
     }

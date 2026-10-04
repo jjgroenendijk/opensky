@@ -41,6 +41,11 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         var layers: [Layer] = []
     }
 
+    private struct QuadrantMask {
+        let base: Bool
+        let layers: [Bool]
+    }
+
     private struct GridSample {
         let first: Int
         let second: Int
@@ -55,6 +60,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         let land: Land
         let heightField: TerrainHeightField
         let quadrants: [Quadrant]
+        let masks: [QuadrantMask]
         let waterHeight: Float?
         let data: Grass.PlacementData
         let modelPath: String
@@ -157,6 +163,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
             land: land,
             heightField: heightField,
             quadrants: quadrants,
+            masks: coverageMasks(quadrants, matching: source.textures),
             waterHeight: waterHeight,
             data: data,
             modelPath: modelPath,
@@ -207,9 +214,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         let worldXY = context.origin + local
         guard let ground = context.heightField.sample(at: worldXY) else { return nil }
         let coverage = textureCoverage(
-            at: local,
-            matching: context.source.textures,
-            quadrants: context.quadrants
+            at: local, quadrants: context.quadrants, masks: context.masks
         )
         guard coverage > 0, random.unitFloat() < context.density * coverage else {
             return nil
@@ -280,21 +285,31 @@ nonisolated extension GrassPlacementBuilder {
         return result
     }
 
-    /// Mirrors terrainFragment's ordered lerps, retaining each LTEX's final
-    /// contribution rather than only the resulting RGB.
+    /// Which of a quadrant's textures feed one grass type, looked up once per type.
+    private static func coverageMasks(
+        _ quadrants: [Quadrant], matching textures: Set<FormID>
+    ) -> [QuadrantMask] {
+        quadrants.map { quadrant in
+            QuadrantMask(
+                base: quadrant.base.map(textures.contains) ?? false,
+                layers: quadrant.layers.map { textures.contains($0.texture) }
+            )
+        }
+    }
+
+    /// Mirrors terrainFragment's ordered lerps. Each layer scales every earlier
+    /// weight by `1 - opacity`, so the matching sum can be scaled as one value.
     private static func textureCoverage(
         at local: SIMD2<Float>,
-        matching textures: Set<FormID>,
-        quadrants: [Quadrant]
+        quadrants: [Quadrant],
+        masks: [QuadrantMask]
     ) -> Float {
         let east = local.x >= TerrainMeshBuilder.cellSize * 0.5
         let north = local.y >= TerrainMeshBuilder.cellSize * 0.5
         let quadrantIndex = (north ? 2 : 0) + (east ? 1 : 0)
         let quadrant = quadrants[quadrantIndex]
-        var weights: [FormID: Float] = [:]
-        if let base = quadrant.base {
-            weights[base] = 1
-        }
+        let mask = masks[quadrantIndex]
+        var matched: Float = mask.base ? 1 : 0
         let quadrantOrigin = SIMD2<Float>(
             east ? TerrainMeshBuilder.cellSize * 0.5 : 0,
             north ? TerrainMeshBuilder.cellSize * 0.5 : 0
@@ -303,16 +318,14 @@ nonisolated extension GrassPlacementBuilder {
             at: local - quadrantOrigin,
             dimension: TerrainMeshBuilder.quadrantDimension
         )
-        for layer in quadrant.layers {
+        for (index, layer) in quadrant.layers.enumerated() {
             let opacity = scalarSample(layer.opacity, at: sample)
-            for texture in weights.keys {
-                weights[texture, default: 0] *= 1 - opacity
+            matched *= 1 - opacity
+            if mask.layers[index] {
+                matched += opacity
             }
-            weights[layer.texture, default: 0] += opacity
         }
-        return min(weights.reduce(0) { partial, entry in
-            textures.contains(entry.key) ? partial + entry.value : partial
-        }, 1)
+        return min(matched, 1)
     }
 }
 

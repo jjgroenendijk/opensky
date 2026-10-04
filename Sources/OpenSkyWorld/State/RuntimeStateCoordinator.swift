@@ -16,9 +16,12 @@ public final class RuntimeStateCoordinator {
     let worldState: WorldStateStore
     weak var world: (any RuntimeStateWorld)?
 
-    // The readout asks twice a second, so these are cached. Globals and music
-    // records do not change while the app runs; slots change only on save or load.
+    /// The readout asks twice a second, so these are cached. Globals and music
+    /// records do not change while the app runs; slots change only on save or load.
     var cachedSlotNames: [String]?
+    /// The running save, load, or slot listing; one at a time.
+    public private(set) var saveWork: Task<Void, Never>?
+    private(set) var slotListing: Task<Void, Never>?
     var globalNamesByKey: [ReferenceKey: String]?
     var globalEditorIDs: [String]?
     var conditionSourceFormIDs: [String: FormID]?
@@ -99,13 +102,15 @@ extension RuntimeStateCoordinator: RuntimeStateControlProviding {
     }
 
     /// A listing failure reads as "no slots": the list is a readout.
+    /// Empty until the first listing arrives.
     public var runtimeStateSaveSlots: [String] {
-        if let cached = cachedSlotNames {
-            return cached
+        if cachedSlotNames == nil, slotListing == nil, let world {
+            slotListing = Task {
+                self.cachedSlotNames = await (try? world.saveSlots()) ?? []
+                self.slotListing = nil
+            }
         }
-        let slots = (try? world?.saveSlots()) ?? []
-        cachedSlotNames = slots
-        return slots
+        return cachedSlotNames ?? []
     }
 
     @discardableResult
@@ -138,25 +143,47 @@ extension RuntimeStateCoordinator: RuntimeStateControlProviding {
     }
 
     public func saveWorldState(slot: String) {
-        do {
-            guard let world else { throw RuntimeStateSessionError.noSession }
-            try world.saveSession(slot: slot)
-            lastSaveOutcome = .saved(slot: slot)
-        } catch {
-            lastSaveOutcome = .failed(operation: "save", message: String(describing: error))
-        }
-        cachedSlotNames = nil
+        runSaveOperation("save", slot: slot) { try await $0.saveSession(slot: slot) }
     }
 
     public func loadWorldState(slot: String) {
-        do {
-            guard let world else { throw RuntimeStateSessionError.noSession }
-            try world.loadSession(slot: slot)
-            lastSaveOutcome = .loaded(slot: slot)
-        } catch {
-            lastSaveOutcome = .failed(operation: "load", message: String(describing: error))
+        runSaveOperation("load", slot: slot) { try await $0.loadSession(slot: slot) }
+    }
+
+    private func runSaveOperation(
+        _ operation: String, slot: String,
+        _ body: @escaping @MainActor (any RuntimeStateWorld) async throws -> Void
+    ) {
+        guard saveWork == nil else {
+            lastSaveOutcome = .failed(
+                operation: operation,
+                message: "another save or load is running"
+            )
+            return
         }
-        cachedSlotNames = nil
+        guard let world else {
+            lastSaveOutcome = .failed(
+                operation: operation,
+                message: String(describing: RuntimeStateSessionError.noSession)
+            )
+            return
+        }
+        lastSaveOutcome = .running(operation: operation, slot: slot)
+        saveWork = Task {
+            do {
+                try await body(world)
+                self
+                    .lastSaveOutcome = operation == "save" ? .saved(slot: slot) :
+                    .loaded(slot: slot)
+            } catch {
+                self.lastSaveOutcome = .failed(
+                    operation: operation,
+                    message: String(describing: error)
+                )
+            }
+            self.cachedSlotNames = nil
+            self.saveWork = nil
+        }
     }
 }
 

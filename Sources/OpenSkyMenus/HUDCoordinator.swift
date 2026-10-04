@@ -16,6 +16,8 @@ public final class HUDCoordinator {
     public private(set) var settings = HUDSettings()
 
     private let movies: SWFMovieSource
+    /// Bumped by each start and suspend, so only the newest start shows the HUD.
+    private var startRequest = 0
     private weak var world: SWFLayerWorld?
 
     public init(movies: SWFMovieSource) {
@@ -34,16 +36,30 @@ public final class HUDCoordinator {
     /// never be changed by a HUD update.
     public func suspend() {
         isLoaded = false
+        startRequest += 1
     }
 
+    /// The HUD shows once its movie is decoded. A menu that takes the layer first
+    /// cancels it, through `suspend()`.
     public func start() {
         guard let renderer else { return }
-        guard let loader = movies.loader else {
+        guard movies.isAvailable else {
             fail(HUDMovieError.movieLoaderUnavailable, renderer: renderer)
             return
         }
+        startRequest += 1
+        let request = startRequest
+        movies.request(HUDMovieBridge.moviePath, while: { [weak self] in
+            self?.startRequest == request
+        }, then: { [weak self] result in
+            self?.show(result)
+        })
+    }
+
+    private func show(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer else { return }
         do {
-            let scene = try loader.load(path: HUDMovieBridge.moviePath)
+            let scene = try result.get()
             try renderer.setSWFMovie(scene)
             renderer.swfEnabled = settings.layerEnabled
             renderer.swfScale = settings.scale

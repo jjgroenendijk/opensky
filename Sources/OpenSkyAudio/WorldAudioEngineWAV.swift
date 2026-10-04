@@ -16,7 +16,13 @@ extension WorldAudioEngine {
         wav data: Data,
         downmixToMono: Bool
     ) throws -> AVAudioPCMBuffer {
-        let file = try WAVFile(data: data)
+        try makeBuffer(wav: WAVFile(data: data), downmixToMono: downmixToMono)
+    }
+
+    nonisolated public static func makeBuffer(
+        wav file: WAVFile,
+        downmixToMono: Bool
+    ) throws -> AVAudioPCMBuffer {
         let channels = downmixToMono ? 1 : file.format.channelCount
         guard
             channels > 0,
@@ -63,14 +69,5 @@ extension WorldAudioEngine {
         let form = data[(start + 8) ..< (start + 12)]
         return magic.elementsEqual(Array("RIFF".utf8))
             && form.elementsEqual(Array("WAVE".utf8))
-    }
-
-    /// The channel count a `.wav` or `.xwm` file declares, or nil when neither parses.
-    /// The routing fallback reads it when a sound names no output model.
-    nonisolated public static func channelCount(of data: Data) -> Int? {
-        if isWAV(data) {
-            return try? WAVFile(data: data).format.channelCount
-        }
-        return try? XWMFile(data: data).codec.channelCount
     }
 }

@@ -91,8 +91,13 @@ public final class PapyrusWorldRuntime {
     /// library (headless tests). Failed names go into `unresolvableScripts`, so they
     /// are not decoded again.
     public var scriptProvider: ((String) -> PexFile?)?
+    /// The off-main script source used during play: a script and its ancestors, or
+    /// `.loading`. Wins over `scriptProvider` when set.
+    public var scriptLibrary: ((String) -> AssetLoadState<[PexFile]>)?
     /// Script names the provider already failed to resolve, keyed lowercased.
     public var unresolvableScripts: Set<String> = []
+    /// Attaches and fragments that wait for a script to load, oldest first.
+    public var deferredScriptWork: [PapyrusDeferredScriptWork] = []
 
     /// Handles for references with no script instance, such as the player. Allocated
     /// down from `UInt64.max`, while instance handles count up from 1.
@@ -217,41 +222,63 @@ public final class PapyrusWorldRuntime {
     /// is remembered. Ancestors load too, so an inherited call such as
     /// `Quest.SetStage` dispatches under the declaring script's name.
     public func resolveScript(named name: String) -> Bool {
-        guard resolveScriptFile(named: name) else { return false }
-        var parent = runtime.script(named: name)?.parentClassName ?? ""
-        var visited: Set<String> = [PapyrusRuntime.key(name)]
-        while
-            !parent.isEmpty,
-            visited.insert(PapyrusRuntime.key(parent)).inserted,
-            resolveScriptFile(named: parent)
-        {
-            parent = runtime.script(named: parent)?.parentClassName ?? ""
-        }
-        return true
+        scriptAvailability(named: name) == .ready
     }
 
-    /// One script file into the library, with no chain walk. A provider miss is
-    /// remembered so the next attach naming it costs a set lookup.
-    private func resolveScriptFile(named name: String) -> Bool {
+    /// Like `resolveScript(named:)`, but tells a script that still loads from a missing one.
+    public func scriptAvailability(named name: String) -> PapyrusScriptAvailability {
+        let own = scriptFileAvailability(named: name)
+        guard own == .ready else { return own }
+        var parent = runtime.script(named: name)?.parentClassName ?? ""
+        var visited: Set<String> = [PapyrusRuntime.key(name)]
+        while !parent.isEmpty, visited.insert(PapyrusRuntime.key(parent)).inserted {
+            switch scriptFileAvailability(named: parent) {
+            case .ready: parent = runtime.script(named: parent)?.parentClassName ?? ""
+            case .loading: return .loading
+            case .missing: return .ready
+            }
+        }
+        return .ready
+    }
+
+    /// One script file into the library, with no chain walk. A miss is remembered
+    /// so the next attach naming it costs a set lookup.
+    private func scriptFileAvailability(named name: String) -> PapyrusScriptAvailability {
         if runtime.script(named: name) != nil {
-            return true
+            return .ready
         }
         let key = PapyrusRuntime.key(name)
-        guard let scriptProvider, !unresolvableScripts.contains(key) else {
-            return false
+        guard !unresolvableScripts.contains(key) else { return .missing }
+        let files: [PexFile]
+        if let scriptLibrary {
+            switch scriptLibrary(name) {
+            case .loading: return .loading
+            case .failed:
+                unresolvableScripts.insert(key)
+                return .missing
+            case let .ready(chain): files = chain
+            }
+        } else if let scriptProvider {
+            guard let file = scriptProvider(name) else {
+                unresolvableScripts.insert(key)
+                return .missing
+            }
+            files = [file]
+        } else {
+            return .missing
         }
-        guard let file = scriptProvider(name) else {
-            unresolvableScripts.insert(key)
-            return false
+        for file in files
+            where !file.objects.contains(where: { runtime.script(named: $0.name) != nil })
+        {
+            runtime.register(file)
         }
-        runtime.register(file)
         // A file whose objects do not include the requested name is as useless
         // as a missing one; do not ask for it again.
         guard runtime.script(named: name) != nil else {
             unresolvableScripts.insert(key)
-            return false
+            return .missing
         }
-        return true
+        return .ready
     }
 
     /// One handle per world reference for VMAD object-property binding. A

@@ -483,7 +483,7 @@ extension GameViewController: @MainActor SystemMenuWorld {
         case .quicksave:
             systemMenu.quicksave()
         case .quickload:
-            try? saveGames.quickload()
+            saveGames.quickload()
         case .pause:
             saveGames.autosave(.pause)
             systemMenu.open()

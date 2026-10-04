@@ -33,6 +33,14 @@ public final class IdleCoordinator {
         var played: Set<ResolvedFormID> = []
         var reselectAt: Float = 0
         var playing: Playing?
+        /// The chosen idle while its plan or clip loads; it plays when both arrive.
+        var waiting: Waiting?
+    }
+
+    struct Waiting {
+        let selection: IdleSelection
+        let source: String
+        let timer: Float?
     }
 
     struct Playing {
@@ -44,14 +52,12 @@ public final class IdleCoordinator {
     }
 
     private(set) var store: IdleStore?
-    private var resolver: IdlePlaybackResolver?
-    var files: (any GameFileSource)?
+    private var plans: IdlePlanLoader?
+    var clips: ActorClipLoader?
     var sessions: [ReferenceKey: Session] = [:]
     var reports: [ReferenceKey: IdleReport] = [:]
     /// Markers an actor could not path to, so it does not retry every frame.
     private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
-    var clips: [String: ActorAnimationClip] = [:]
-    var failedClips: Set<String> = []
     private(set) var markers: [IdleMarkerPlacement] = []
     private var markersRefreshAt: Float = 0
     public internal(set) var usesIdleMarkers = true
@@ -67,14 +73,28 @@ public final class IdleCoordinator {
         self.world = world
     }
 
-    public func wire(store: IdleStore, files: any GameFileSource) {
+    /// - Parameter planWorker: where plans load; nil runs them on the shared queue.
+    public func wire(
+        store: IdleStore,
+        files: any GameFileSource,
+        clips: ActorClipLoader,
+        planWorker: (any AssetLoadWorking<IdlePlanKey, IdlePlaybackPlan>)? = nil
+    ) {
         self.store = store
-        self.files = files
-        resolver = IdlePlaybackResolver(files: files, animatedObjects: store.animatedObjects)
+        self.clips = clips
+        let load = IdlePlaybackResolver.planLoad(
+            files: files, animatedObjects: store.animatedObjects
+        )
+        plans = IdlePlanLoader(worker: planWorker ?? SerialAssetLoadWorker(load: load))
         sessions = [:]
         reports = [:]
         markers = []
         markersRefreshAt = 0
+    }
+
+    /// Takes finished idle plans in. The frame calls it at its asset drain point.
+    public func drainLoads() {
+        plans?.drain()
     }
 
     public func advance() {
@@ -176,6 +196,10 @@ public final class IdleCoordinator {
             session.reselectAt = now
         }
         sessions[actor.key] = session
+        if let waiting = session.waiting {
+            retry(waiting, on: actor.key, now: now)
+            return
+        }
         guard let marker = session.marker, session.arrived, now >= session.reselectAt else {
             return
         }
@@ -203,35 +227,51 @@ public final class IdleCoordinator {
             session.played.insert(chosen.id)
         }
         sessions[actor] = session
-        let report = play(
-            selection, on: actor, source: marker.marker.record.editorID ?? "marker", now: now
+        return play(
+            selection, on: actor, source: marker.marker.record.editorID ?? "marker",
+            timer: marker.marker.record.idleTimer, now: now
         )
-        sessions[actor]?.reselectAt = IdleCore.nextSelection(
-            after: now, playSeconds: report.seconds, timer: marker.marker.record.idleTimer
-        )
-        return report
     }
 
+    /// Plays the chosen idle, or parks it in `waiting` while its plan or clip loads.
+    /// The actor keeps its current clip until then.
+    @discardableResult
     func play(
         _ selection: IdleSelection,
         on actor: ReferenceKey,
         source: String,
+        timer: Float? = nil,
         now: Float
     ) -> IdleReport {
-        guard let chosen = selection.chosen, let resolver else {
+        sessions[actor]?.waiting = nil
+        guard let chosen = selection.chosen, let plans else {
             return record(IdleReport(
                 actor: actor, source: source, trace: selection.trace, chosen: nil, plan: nil,
                 seconds: 0, failure: "no idle passed its conditions"
             ))
         }
-        let plan = resolver.plan(for: chosen)
+        let waiting = Waiting(selection: selection, source: source, timer: timer)
+        let plan: IdlePlaybackPlan
+        switch plans.state(of: IdlePlanKey(chosen)) {
+        case let .ready(ready): plan = ready
+        case .loading: return wait(waiting, on: actor, chosen: chosen, plan: nil)
+        case let .failed(failure):
+            return finish(IdleReport(
+                actor: actor, source: source, trace: selection.trace,
+                chosen: chosen.record.editorID, plan: nil, seconds: 0, failure: failure.reason
+            ), timer: timer, now: now)
+        }
+        let playback = world?.actorPlayback(for: actor)
+        var clipState: AssetLoadState<ActorAnimationClip>?
+        if let path = plan.clipPath, let playback {
+            clipState = clip(path, skeleton: playback.clip.skeletonMeshPath)
+        }
+        if case .loading = clipState {
+            return wait(waiting, on: actor, chosen: chosen, plan: plan)
+        }
         var failure: String?
         var seconds: Float = 0
-        if
-            let path = plan.clipPath,
-            let playback = world?.actorPlayback(for: actor),
-            let clip = clip(path, skeleton: playback.clip.skeletonMeshPath)
-        {
+        if let playback, let clip = clipState?.value {
             seconds = IdleCore.playSeconds(
                 clipDuration: clip.animation.duration,
                 properties: chosen.record.properties,
@@ -249,9 +289,36 @@ public final class IdleCoordinator {
         } else {
             failure = plan.clipPath == nil ? "no clip" : "the clip did not load"
         }
-        return record(IdleReport(
+        return finish(IdleReport(
             actor: actor, source: source, trace: selection.trace,
             chosen: chosen.record.editorID, plan: plan, seconds: seconds, failure: failure
+        ), timer: timer, now: now)
+    }
+}
+
+/// Waiting for a load and recording the outcome of a play.
+extension IdleCoordinator {
+    private func retry(_ waiting: Waiting, on actor: ReferenceKey, now: Float) {
+        play(waiting.selection, on: actor, source: waiting.source, timer: waiting.timer, now: now)
+    }
+
+    private func wait(
+        _ waiting: Waiting,
+        on actor: ReferenceKey,
+        chosen: ResolvedRecord<IdleAnimation>,
+        plan: IdlePlaybackPlan?
+    ) -> IdleReport {
+        sessions[actor, default: Session()].waiting = waiting
+        return record(IdleReport(
+            actor: actor, source: waiting.source, trace: waiting.selection.trace,
+            chosen: chosen.record.editorID, plan: plan, seconds: 0, failure: "loading"
         ))
+    }
+
+    private func finish(_ report: IdleReport, timer: Float?, now: Float) -> IdleReport {
+        sessions[report.actor]?.reselectAt = IdleCore.nextSelection(
+            after: now, playSeconds: report.seconds, timer: timer
+        )
+        return record(report)
     }
 }

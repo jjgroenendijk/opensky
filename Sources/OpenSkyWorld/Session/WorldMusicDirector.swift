@@ -20,9 +20,10 @@ public final class WorldMusicDirector {
     private let engine: WorldAudioEngine
     private let musicStore: MusicRecordStore?
     private let weatherStore: WeatherStore?
-    /// Resolves a canonical music path to its file bytes. Production wraps
-    /// `VirtualFileSystem.contents(forPath:)`; tests inject a stub.
-    private let fileLoader: (String) throws -> Data
+    /// Tracks load off the main actor in production; tests load on the caller.
+    private let trackSource: TrackSource
+    /// The playlist entry whose file is still loading; `tick` starts it once loaded.
+    private var waitingTrackIndex: Int?
 
     /// Music playback. Toggling takes effect immediately: off fades the current
     /// track out, on restarts the selection the last context resolved.
@@ -64,12 +65,16 @@ public final class WorldMusicDirector {
         self.engine = engine
         self.musicStore = musicStore
         self.weatherStore = weatherStore
-        fileLoader = { path in
-            guard let fileSystem else {
-                throw NSError(domain: "WorldMusicDirector", code: 1)
-            }
-            return try fileSystem.contents(forPath: path)
+        guard let fileSystem else {
+            trackSource = .immediate { _ in throw NSError(domain: "WorldMusicDirector", code: 1) }
+            return
         }
+        trackSource = .loader(AssetLoader { path in
+            let file = try MusicRecordStore.loadAudioFile(at: path) {
+                try fileSystem.contents(forPath: $0)
+            }
+            return try MusicTrackAsset(name: file.key, asset: AudioFileAsset(data: file.data))
+        })
     }
 
     /// Test seam: same shape as the production init but takes a file loader
@@ -83,7 +88,14 @@ public final class WorldMusicDirector {
         self.engine = engine
         self.musicStore = musicStore
         self.weatherStore = weatherStore
-        self.fileLoader = fileLoader
+        trackSource = .immediate(fileLoader)
+    }
+
+    /// Takes loaded tracks in. The frame calls it at its asset drain point.
+    public func drainLoads() {
+        if case let .loader(loader) = trackSource {
+            loader.drain()
+        }
     }
 
     // MARK: - Streamer event hook
@@ -112,6 +124,10 @@ public final class WorldMusicDirector {
     /// engine: `WorldAudioEngine.tick` retires a stream that reached its end.
     public func tick(deltaTime: Float) {
         pruneRetiringSources()
+        if let waiting = waitingTrackIndex {
+            waitingTrackIndex = nil
+            applyMusicState(at: waiting)
+        }
         guard let sourceID = currentSourceID else { return }
         guard engine.sources.contains(where: { $0.id == sourceID }) else {
             currentSourceID = nil
@@ -261,13 +277,18 @@ public final class WorldMusicDirector {
     /// Single path from wanted state to playing state, shared by the context
     /// change, the force control and the enable toggle so they cannot drift.
     private func applyMusicState() {
+        applyMusicState(at: trackIndex)
+    }
+
+    private func applyMusicState(at index: Int) {
+        waitingTrackIndex = nil
         guard musicEnabled, engine.isRunning else {
             // Switching music off (or losing the engine) stops now rather than
             // fading: the user asked for silence, not for a slow one.
             retireMusicSources(overSeconds: 0)
             return
         }
-        startTrack(at: trackIndex)
+        startTrack(at: index)
     }
 
     /// Starts the track at `index`, crossfading out whatever is playing. A
@@ -283,7 +304,14 @@ public final class WorldMusicDirector {
         let duration = desiredSelection.crossfadeSeconds
         for offset in 0 ..< tracks.count {
             let candidate = (index + offset) % tracks.count
-            guard let sourceID = startSource(for: tracks[candidate]) else { continue }
+            let sourceID: Int
+            switch startSource(for: tracks[candidate]) {
+            case let .started(id): sourceID = id
+            case .waiting:
+                waitingTrackIndex = candidate
+                return
+            case .failed: continue
+            }
             crossfade(incoming: sourceID, overSeconds: duration)
             trackIndex = candidate
             currentTrackElapsedSeconds = 0
@@ -293,17 +321,32 @@ public final class WorldMusicDirector {
         retireMusicSources(overSeconds: duration)
     }
 
-    /// Starts one playable track as a non-positional music source. Returns nil, with
-    /// `lastMusicError` set, when the file or engine refuses.
-    /// `MusicRecordStore.loadAudioFile` falls back to the `.xwm` sibling, and the
-    /// source is named after the file that loaded.
-    private func startSource(for track: PlayableMusicTrack) -> Int? {
+    private func advancePlaylist() {
+        switch desiredSelection.advance {
+        case .cycle:
+            guard !desiredSelection.tracks.isEmpty else { return }
+            startTrack(at: (trackIndex + 1) % desiredSelection.tracks.count)
+        case .stopAfterOne, .repeatCurrent:
+            // One-selection playlists end in silence; a repeating one loops in
+            // the engine, so reaching here means it was retired for another
+            // reason. Either way there is nothing to start.
+            currentTrackElapsedSeconds = 0
+        }
+    }
+}
+
+/// Starting, crossfading, and retiring the music sources.
+extension WorldMusicDirector {
+    /// Starts one playable track as a non-positional music source. A failure sets
+    /// `lastMusicError`. `MusicRecordStore.loadAudioFile` falls back to the `.xwm`
+    /// sibling, and the source is named after the file that loaded.
+    private func startSource(for track: PlayableMusicTrack) -> TrackStart {
         do {
-            let file = try MusicRecordStore.loadAudioFile(at: track.path, load: fileLoader)
-            return try engine.playNonPositional(
-                fileData: file.data,
+            guard let file = try loadTrack(track.path) else { return .waiting }
+            let id = try engine.playNonPositional(
+                asset: file.asset,
                 request: .nonPositional(
-                    name: file.key,
+                    name: file.name,
                     category: .music,
                     gain: 1,
                     // `.repeatCurrent` has the engine rewind at end of file;
@@ -312,13 +355,32 @@ public final class WorldMusicDirector {
                     loops: desiredSelection.advance == .repeatCurrent
                 )
             )
+            return .started(id)
         } catch {
             let reason = "\(track.path): \(String(describing: error))"
             lastMusicError = reason
             Self.logger.warning(
                 "[WARNING] music start failed: \(reason, privacy: .public)"
             )
-            return nil
+            return .failed
+        }
+    }
+
+    /// The track when it is loaded, nil while it loads. A started track is forgotten,
+    /// because a music file is large and plays for minutes.
+    private func loadTrack(_ path: String) throws -> MusicTrackAsset? {
+        switch trackSource {
+        case let .immediate(load):
+            let file = try MusicRecordStore.loadAudioFile(at: path, load: load)
+            return try MusicTrackAsset(name: file.key, asset: AudioFileAsset(data: file.data))
+        case let .loader(loader):
+            switch loader.state(of: path) {
+            case .loading: return nil
+            case let .failed(failure): throw failure
+            case let .ready(file):
+                loader.evict { $0 == path }
+                return file
+            }
         }
     }
 
@@ -345,23 +407,26 @@ public final class WorldMusicDirector {
         pruneRetiringSources()
     }
 
-    private func advancePlaylist() {
-        switch desiredSelection.advance {
-        case .cycle:
-            guard !desiredSelection.tracks.isEmpty else { return }
-            startTrack(at: (trackIndex + 1) % desiredSelection.tracks.count)
-        case .stopAfterOne, .repeatCurrent:
-            // One-selection playlists end in silence; a repeating one loops in
-            // the engine, so reaching here means it was retired for another
-            // reason. Either way there is nothing to start.
-            currentTrackElapsedSeconds = 0
-        }
-    }
-
     /// Forgets ids the engine has already dropped, so the tracked set only ever
     /// names sources that still exist.
     private func pruneRetiringSources() {
         let live = Set(engine.sources.map(\.id))
         retiringSourceIDs.removeAll { !live.contains($0) }
     }
+}
+
+nonisolated struct MusicTrackAsset: Sendable {
+    let name: String
+    let asset: AudioFileAsset
+}
+
+private enum TrackSource {
+    case loader(AssetLoader<String, MusicTrackAsset>)
+    case immediate((String) throws -> Data)
+}
+
+private enum TrackStart {
+    case started(Int)
+    case waiting
+    case failed
 }

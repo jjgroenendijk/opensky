@@ -11,11 +11,19 @@ import OpenSkyWorldInterface
 import OSLog
 import simd
 
-private struct ResolvedAudioFile {
-    let data: Data
-    let name: String
+private struct ResolvedSoundFile {
+    let path: String
     let category: AudioCategory
     let outputModel: FormID?
+}
+
+/// One sound waiting for its file: where it plays, and whether it is still wanted.
+private struct PendingSound {
+    let resolved: ResolvedSoundFile
+    let position: SIMD3<Float>
+    let kind: String
+    let loops: Bool
+    let adopt: ((Int) -> Bool)?
 }
 
 @MainActor
@@ -29,9 +37,14 @@ public final class WorldAudioSoundDirector {
     private let soundStore: SoundRecordStore?
     private let weatherStore: WeatherStore?
     private let aspcStore: AcousticSpaceStore?
-    /// Resolves a canonical sound-path string to its file bytes. Production
-    /// wraps `VirtualFileSystem.contents(forPath:)`; tests inject a stub.
-    private let fileLoader: (String) throws -> Data
+    /// Sound files by canonical path, loaded off the main actor in production.
+    private let assets: AudioAssetLoader
+    /// Bumped on each bed change, so a bed file that arrives late for an old bed is dropped.
+    private var ambienceGeneration = 0
+    /// The request each interaction loop is for. A loop that arrives after its door
+    /// closed finds another token, or none, and does not start.
+    private var interactionLoopTokens: [FormID: Int] = [:]
+    private var nextLoopToken = 0
 
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the panel control writes back here.
@@ -78,18 +91,13 @@ public final class WorldAudioSoundDirector {
         soundStore: SoundRecordStore?,
         weatherStore: WeatherStore?,
         aspcStore: AcousticSpaceStore?,
-        fileSystem: (any GameFileSource)?
+        assets: AudioAssetLoader
     ) {
         self.engine = engine
         self.soundStore = soundStore
         self.weatherStore = weatherStore
         self.aspcStore = aspcStore
-        fileLoader = { path in
-            guard let fileSystem else {
-                throw NSError(domain: "WorldAudioSoundDirector", code: 1)
-            }
-            return try fileSystem.contents(forPath: path)
-        }
+        self.assets = assets
     }
 
     /// Test seam: same shape as the production init but takes a file loader
@@ -105,7 +113,7 @@ public final class WorldAudioSoundDirector {
         self.soundStore = soundStore
         self.weatherStore = weatherStore
         self.aspcStore = aspcStore
-        self.fileLoader = fileLoader
+        assets = AudioAssetLoader(immediate: fileLoader)
     }
 
     // MARK: - Streamer event hooks
@@ -139,12 +147,17 @@ public final class WorldAudioSoundDirector {
                 engine.isRunning,
                 let loopID = interaction.sounds?.loop
             else { return }
-            interactionLoopSourceIDs[interaction.reference] = playResolved(
-                id: loopID,
-                at: interaction.position,
-                kind: "interaction loop",
-                loops: true
-            )
+            nextLoopToken += 1
+            let token = nextLoopToken
+            let reference = interaction.reference
+            interactionLoopTokens[reference] = token
+            playResolved(
+                id: loopID, at: interaction.position, kind: "interaction loop", loops: true
+            ) { [weak self] sourceID in
+                guard let self, interactionLoopTokens[reference] == token else { return false }
+                interactionLoopSourceIDs[reference] = sourceID
+                return true
+            }
         case .closed:
             retireInteractionLoop(reference: interaction.reference)
             guard
@@ -224,83 +237,40 @@ public final class WorldAudioSoundDirector {
 
     // MARK: - Internals
 
-    @discardableResult
+    /// Starts the sound when its file is loaded. `adopt` gets the new source's id and
+    /// returns false for a sound no longer wanted, which then stops at once.
     private func playResolved(
         id: FormID,
         at position: SIMD3<Float>,
         kind: String,
-        loops: Bool = false
-    ) -> Int? {
+        loops: Bool = false,
+        adopt: ((Int) -> Bool)? = nil
+    ) {
         guard let resolved = resolveSound(id: id) else {
             lastSFXError = "unresolved \(id.description)"
             Self.logger.debug(
                 "[INFO] \(kind, privacy: .public) unresolved: \(id.description, privacy: .public)"
             )
-            return nil
+            return
         }
-        do {
-            let profile = resolved.outputModel.flatMap { outputModels?($0) }
-            var request = AudioPlayRequest(
-                name: resolved.name,
-                category: resolved.category,
-                worldPosition: position,
-                loops: loops
-            )
-            request.outputModel = profile
-            let routing = AudioRoutingDecision.routing(
-                profile: profile,
-                channelCount: profile == nil ? WorldAudioEngine
-                    .channelCount(of: resolved.data) : nil
-            )
-            lastRouting = "\(routing.rawValue) (\(profile?.name ?? "channel count"))"
-            let sourceID = try routing == .positional
-                ? engine.playPositional(fileData: resolved.data, request: request)
-                : engine.playNonPositional(fileData: resolved.data, request: request)
-            lastSFXDescription = resolved.name
-            lastSFXError = nil
-            return sourceID
-        } catch {
-            let reason = String(describing: error)
-            lastSFXError = reason
-            Self.logger.warning(
-                "[WARNING] \(kind, privacy: .public) play failed: \(reason, privacy: .public)"
-            )
-            return nil
+        let pending = PendingSound(
+            resolved: resolved, position: position, kind: kind, loops: loops, adopt: adopt
+        )
+        assets.request(resolved.path) { [weak self] result in
+            self?.start(result, pending)
         }
     }
 
     private func retireInteractionLoop(reference: FormID) {
+        interactionLoopTokens[reference] = nil
         guard let sourceID = interactionLoopSourceIDs.removeValue(forKey: reference) else {
             return
         }
         engine.stopSource(id: sourceID)
     }
 
-    private func startAmbience(bed: AmbienceBed) {
-        for entry in bed.entries {
-            guard let resolved = resolveSound(id: entry.sound) else { continue }
-            do {
-                let sourceID = try engine.playNonPositional(
-                    fileData: resolved.data,
-                    request: .nonPositional(
-                        name: resolved.name,
-                        category: resolved.category,
-                        // A bed is continuous: the streamer rewinds at end of
-                        // file instead of letting the engine retire it.
-                        loops: true
-                    )
-                )
-                ambienceSourceIDs.append(sourceID)
-            } catch {
-                let reason = String(describing: error)
-                Self.logger.warning(
-                    "[WARNING] ambience start failed: \(reason, privacy: .public)"
-                )
-            }
-        }
-    }
-
     private func retireAmbience() {
+        ambienceGeneration += 1
         for id in ambienceSourceIDs {
             engine.stopSource(id: id)
         }
@@ -313,8 +283,84 @@ public final class WorldAudioSoundDirector {
         let live = Set(engine.sources.map(\.id))
         ambienceSourceIDs.removeAll { !live.contains($0) }
     }
+}
 
-    private func resolveSound(id: FormID) -> ResolvedAudioFile? {
+/// Starting a sound once its file arrives.
+extension WorldAudioSoundDirector {
+    private func start(
+        _ result: Result<AudioFileAsset, AssetLoadFailure>,
+        _ pending: PendingSound
+    ) {
+        let resolved = pending.resolved
+        do {
+            let asset = try result.get()
+            let profile = resolved.outputModel.flatMap { outputModels?($0) }
+            var request = AudioPlayRequest(
+                name: resolved.path,
+                category: resolved.category,
+                worldPosition: pending.position,
+                loops: pending.loops
+            )
+            request.outputModel = profile
+            let routing = AudioRoutingDecision.routing(
+                profile: profile,
+                channelCount: profile == nil ? asset.channelCount : nil
+            )
+            lastRouting = "\(routing.rawValue) (\(profile?.name ?? "channel count"))"
+            let sourceID = try routing == .positional
+                ? engine.playPositional(asset: asset, request: request)
+                : engine.playNonPositional(asset: asset, request: request)
+            if let adopt = pending.adopt, !adopt(sourceID) {
+                engine.stopSource(id: sourceID)
+                return
+            }
+            lastSFXDescription = resolved.path
+            lastSFXError = nil
+        } catch {
+            let reason = String(describing: error)
+            lastSFXError = reason
+            let kind = pending.kind
+            Self.logger.warning(
+                "[WARNING] \(kind, privacy: .public) play failed: \(reason, privacy: .public)"
+            )
+        }
+    }
+
+    private func startAmbience(bed: AmbienceBed) {
+        let generation = ambienceGeneration
+        for entry in bed.entries {
+            guard let resolved = resolveSound(id: entry.sound) else { continue }
+            assets.request(resolved.path) { [weak self] result in
+                self?.startAmbienceEntry(result, resolved: resolved, generation: generation)
+            }
+        }
+    }
+
+    /// A bed is continuous: the streamer rewinds at end of file instead of letting
+    /// the engine retire it.
+    private func startAmbienceEntry(
+        _ result: Result<AudioFileAsset, AssetLoadFailure>,
+        resolved: ResolvedSoundFile,
+        generation: Int
+    ) {
+        guard generation == ambienceGeneration, ambienceEnabled, engine.isRunning else { return }
+        do {
+            let sourceID = try engine.playNonPositional(
+                asset: result.get(),
+                request: .nonPositional(
+                    name: resolved.path, category: resolved.category, loops: true
+                )
+            )
+            ambienceSourceIDs.append(sourceID)
+        } catch {
+            let reason = String(describing: error)
+            Self.logger.warning(
+                "[WARNING] ambience start failed: \(reason, privacy: .public)"
+            )
+        }
+    }
+
+    private func resolveSound(id: FormID) -> ResolvedSoundFile? {
         guard let soundStore else { return nil }
         let resolved: ResolvedSound
         do {
@@ -323,10 +369,8 @@ public final class WorldAudioSoundDirector {
             return nil
         }
         guard let path = resolved.filePaths.first else { return nil }
-        guard let data = try? fileLoader(path) else { return nil }
-        return ResolvedAudioFile(
-            data: data,
-            name: path,
+        return ResolvedSoundFile(
+            path: path,
             category: resolved.audioCategory ?? .effects,
             outputModel: resolved.descriptor.outputModel
         )

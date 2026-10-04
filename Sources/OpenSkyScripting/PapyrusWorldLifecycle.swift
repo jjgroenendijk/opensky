@@ -27,6 +27,17 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver,
         firstIntegration: Bool
     ) {
+        let names = references.sortedEntries().flatMap(attachedScripts(of:))
+            .filter { !$0.isRemoved }.map(\.name)
+        if deferredScriptWork.contains(where: { $0.cell == cell }) || scriptsLoading(names) {
+            deferUntilScriptsLoad(cell: cell) { [weak self] in
+                self?.attach(
+                    cell: cell, references: references, formIDResolver: formIDResolver,
+                    firstIntegration: firstIntegration
+                )
+            }
+            return
+        }
         retainFormIDResolver(formIDResolver)
         let plan = collectAttachPlan(references: references)
         var attached = attachedByCell[cell] ?? []
@@ -52,6 +63,7 @@ extension PapyrusWorldRuntime {
     /// world-space transitions, since nothing ever retires them; everything
     /// else is removed from the runtime and from the event queue.
     public func detach(cell: CellSceneLocation) {
+        deferredScriptWork.removeAll { $0.cell == cell }
         guard let keys = attachedByCell.removeValue(forKey: cell) else {
             return
         }

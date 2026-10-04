@@ -36,6 +36,8 @@ image and monospaced info text.
 - Loading opens every archive and walks every record, which takes seconds, so it runs off the main
   thread with a loading status. Filtering the record list runs off the main thread too, and a
   generation counter drops stale results.
+- Selecting a row reads and parses the file off the main thread, and the info text says it is
+  loading. Only the newest selection is shown. The picture is rendered on the main thread.
 - A missing or broken plugin leaves file browsing working, with a note in the status line.
 - The data root comes from the [game data locator](/engine/game-data-locator.md). A missing install
   is a message in the window. The app still launches, with no alert loop.

@@ -27,6 +27,8 @@ nonisolated public struct CellSceneComposition {
         didSet {
             residentCollision = cells.values.map(\.staticCollision)
             residentActors = Self.mergedActorEntries(cells)
+            residentReferences = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
+                .map { (location: $0.value.location, references: $0.value.references) }
         }
     }
 
@@ -35,6 +37,11 @@ nonisolated public struct CellSceneComposition {
     private var residentCollision: [StaticCollisionSet] = []
     /// `actorEntries()`, merged when residency changes rather than on each read.
     private var residentActors: [RuntimeReferenceEntry] = []
+    /// Per-frame reference lookups walk this, in grid order, instead of copying scenes.
+    private var residentReferences: [(
+        location: CellSceneLocation?,
+        references: RuntimeReferenceIndex
+    )] = []
     public private(set) var distantLOD: DistantLODScene?
     /// Per-reference draw data detached from the placing cell's bulk scene.
     /// It can therefore outlive that cell while its occupied cell is resident.
@@ -174,8 +181,8 @@ nonisolated public struct CellSceneComposition {
     /// Runtime reference lookup across resident cells. Linear over a few cells, with a
     /// dictionary hit per cell.
     public func referenceEntry(key: ReferenceKey) -> RuntimeReferenceEntry? {
-        for scene in cells.values {
-            if let entry = scene.references[key] {
+        for resident in residentReferences {
+            if let entry = resident.references[key] {
                 return entry
             }
         }
@@ -183,8 +190,8 @@ nonisolated public struct CellSceneComposition {
     }
 
     public func referenceEntry(formID: FormID) -> RuntimeReferenceEntry? {
-        for scene in cells.values {
-            if let entry = scene.references.entry(for: formID) {
+        for resident in residentReferences {
+            if let entry = resident.references.entry(for: formID) {
                 return entry
             }
         }
@@ -194,10 +201,7 @@ nonisolated public struct CellSceneComposition {
     /// Which resident cell holds `key`, so a write rebuilds one cell, not all. Nil when no
     /// resident cell knows it.
     public func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {
-        for scene in cells.values where scene.references[key] != nil {
-            return scene.location
-        }
-        return nil
+        residentReferences.first { $0.references[key] != nil }.flatMap(\.location)
     }
 
     /// Every resident ACHR, by `ReferenceKey` in a cell and by grid across cells, so

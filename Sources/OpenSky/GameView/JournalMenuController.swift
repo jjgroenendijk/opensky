@@ -29,6 +29,8 @@ final class JournalMenuController {
     private(set) var model = JournalMenuModel.empty
     private(set) var isOpen = false
     private(set) var movieLoaded = false
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    private var movieRequest = 0
     private(set) var movieError: String?
 
     init(game: GameViewController) {
@@ -173,22 +175,30 @@ final class JournalMenuController {
     /// A missing install or a failed movie degrades to a readout, never to a
     /// thrown error out of a control action.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
+        guard game.renderer != nil, game.swfMovies.isAvailable else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
+        // The renderer owns one SWF layer; this takes it from the HUD.
+        game.hud.suspend()
+        movieRequest += 1
+        let request = movieRequest
+        game.swfMovies.request(QuestJournalMovieBridge.moviePath, while: { [weak self] in
+            self?.movieRequest == request
+        }, then: { [weak self] result in
+            self?.showMovie(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the open.
+    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer = game.renderer else { return }
         do {
-            // The renderer owns one SWF layer; this takes it from the HUD.
-            game.hud.suspend()
-            let scene = try loader.load(path: QuestJournalMovieBridge.moviePath)
-            try renderer.setSWFMovie(scene)
-            renderer.swfEnabled = true
-            renderer.swfScale = 1
-            let started = try renderer.startSWFRuntime(
-                prepare: SystemMenuMovieBridge.prepare(runtime:)
+            let started = try renderer.startMenuMovie(
+                result.get(), prepare: SystemMenuMovieBridge.prepare(runtime:)
             )
-            guard started != nil else {
+            guard started else {
                 movieLoaded = false
                 movieError = "SWF runtime unavailable."
                 return
@@ -216,6 +226,7 @@ final class JournalMenuController {
     }
 
     private func stopMovie() {
+        movieRequest += 1
         movieLoaded = false
         movieError = nil
         game.hud.start()
@@ -279,6 +290,17 @@ final class JournalMenuController {
         )
     }
 
+    private func movieValue<Value>(_ read: (SWFMovieRuntime) -> Value) -> Value? {
+        guard movieLoaded, let runtime = game.renderer?.swfRuntime else { return nil }
+        return read(runtime)
+    }
+
+    private var diagnostics: QuestJournalDiagnostics? {
+        movieValue(QuestJournalMovieBridge.diagnostics(runtime:))
+    }
+}
+
+extension JournalMenuController {
     private static func row(_ entry: JournalQuestStatus) -> JournalQuestRow {
         JournalQuestRow(
             editorID: entry.quest.editorID ?? entry.quest.formID.description,
@@ -290,15 +312,6 @@ final class JournalMenuController {
             declaredStages: JournalCore.declaredStages(of: entry.quest),
             objectives: JournalCore.objectiveLines(entry)
         )
-    }
-
-    private func movieValue<Value>(_ read: (SWFMovieRuntime) -> Value) -> Value? {
-        guard movieLoaded, let runtime = game.renderer?.swfRuntime else { return nil }
-        return read(runtime)
-    }
-
-    private var diagnostics: QuestJournalDiagnostics? {
-        movieValue(QuestJournalMovieBridge.diagnostics(runtime:))
     }
 }
 

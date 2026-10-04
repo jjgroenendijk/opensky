@@ -23,6 +23,16 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver,
         aliases: QuestAliasState = .empty
     ) -> Int {
+        let names = (quest.script.scripts + fragmentScripts(of: quest)
+            + quest.aliasScripts.flatMap(\.scripts)).filter { !$0.isRemoved }.map(\.name)
+        if hasDeferredWork(forQuest: key) || scriptsLoading(names) {
+            deferUntilScriptsLoad(quest: key) { [weak self] in
+                self?.attachQuest(
+                    quest, key: key, formIDResolver: formIDResolver, aliases: aliases
+                )
+            }
+            return 0
+        }
         let plan = questAttachPlan(quest, key: key)
         var created: Set<PapyrusInstanceKey> = []
         for item in plan {
@@ -53,6 +63,7 @@ extension PapyrusWorldRuntime {
     /// - Returns: instances retired.
     @discardableResult
     public func detachQuest(key: ReferenceKey) -> Int {
+        deferredScriptWork.removeAll { $0.quest == key }
         var keys = questInstanceKeys.filter { $0.reference == key }
         let aliasKeys = questAliasInstanceKeys.removeValue(forKey: key) ?? []
         keys.formUnion(aliasKeys)
@@ -75,6 +86,12 @@ extension PapyrusWorldRuntime {
         stage: UInt16,
         key: ReferenceKey
     ) -> Int {
+        if hasDeferredWork(forQuest: key) {
+            deferUntilScriptsLoad(quest: key) { [weak self] in
+                self?.queueQuestFragments(of: quest, stage: stage, key: key)
+            }
+            return 0
+        }
         var queued = 0
         for fragment in quest.fragments where fragment.stageIndex == stage {
             let target = PapyrusInstanceKey(

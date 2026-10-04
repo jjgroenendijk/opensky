@@ -115,17 +115,23 @@ numbers are an upper bound.
 | Asset decode for cells (NIF, DDS, meshes, textures) | Inside the cell build worker | Loading. It fills the same caches as the cell build |
 | Distant LOD and door transitions | Inside the cell build worker | Loading. Same caches and same queue as cell builds |
 | Animation clips, behavior graphs, camera tracks | Serial worker, `Mutex` mailbox | Loading during play |
+| Player behavior graph clips | Main actor, on first use | The graph asks for a clip inside its own update and has no wait state yet. Each clip loads once |
 | Papyrus script files | Serial worker, `Mutex` mailbox | Loading during play |
 | Audio file read and decode | Serial worker, `Mutex` state | Loading during play. Decoders are not `Sendable`, and AVFAudio calls back on its own threads. See [audio](/engine/audio.md) |
 | Audio tick (volumes, retire, purge) | Main actor | Simulation. Average 0.006 ms, maximum 0.450 ms per frame |
 | Script execution (Papyrus) | Main actor | Simulation. Native functions read and write main-actor game state synchronously |
 | Menu movies (SWF) and fonts | Serial worker, `Mutex` mailbox | Loading when a menu opens |
 | Save, load, and the save list | `@concurrent` function | Loading after a user action. The encoder and decoder are pure |
-| Preview catalog and detail | `@concurrent` function | Loading for a panel. Hundreds of thousands of records |
+| Preview catalog and detail | `@concurrent` function | Loading for a panel. Hundreds of thousands of records. The detail builder sits in a `Mutex`, because its mesh and texture caches have no lock. Only the offscreen render of the picture runs on the main actor |
 | Launch setup (locate the install, settings) | Main actor | Reads a few small files before the first frame |
 | World data load (archives, record stores) | `@concurrent` function with one child task per stage | Loading before the game window opens. 19.3 s on the main thread in a Debug build (measured 2026-10-04). The launcher shows each stage |
 
-Some loads in this table still run on the main actor. Each one has a GitHub issue.
+## The shared play-time worker
+
+Every load during play uses one serial queue, `nl.jjgroenendijk.opensky.assetload`. One queue
+keeps these loads from competing with the cell build worker for cores. A load that something
+waits for now runs before a prefetch. Each loader keeps its finished values and its failures on
+the main actor, and `GameSession.assetDrains` drains them all at the start of the world update.
 
 The cell build worker hands its scenes over in a checked `Mutex`, because `CellScene` is
 `Sendable`. It owns the builder alone: the main actor reads a separate set of record stores

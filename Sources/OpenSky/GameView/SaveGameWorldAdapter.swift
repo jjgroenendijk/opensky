@@ -22,37 +22,51 @@ final class SaveGameWorldAdapter: SaveGameService {
     private(set) var lastSaveDate: Date?
     private var sessionStart = Date()
     private var playSecondsBefore: Double = 0
+    /// The newest listing, so menus and autosave dates need no disk read.
+    private var listings: [OpenSkySaveSlotListing] = []
+    private(set) var saveRows: [SaveSlotRow] = []
+    private var hasListed = false
 
     init(game: GameViewController) {
         self.game = game
     }
 
-    func saveRows() -> [SaveSlotRow] {
-        let listings = (try? game.runtimeStateWorld.saveListings()) ?? []
-        return listings.map(Self.row)
+    /// A listing failure reads as no saves: the list is a readout.
+    @discardableResult
+    func refreshSaveRows() async -> [SaveSlotRow] {
+        listings = await (try? game.runtimeStateWorld.saveListings()) ?? []
+        saveRows = listings.map(Self.row)
+        hasListed = true
+        return saveRows
     }
 
+    /// The summary and picture are taken now, before the file work starts.
     @discardableResult
-    func saveGame(slot: String?) throws -> String {
-        let name = slot ?? Self.newSlotName(existing: Set(saveRows().map(\.slot)))
-        try game.runtimeStateWorld.saveSession(
+    func saveGame(slot: String?) async throws -> String {
+        let name = slot ?? Self.newSlotName(existing: Set(saveRows.map(\.slot)))
+        lastSaveDate = Date()
+        try await game.runtimeStateWorld.saveSession(
             slot: name, summary: summary(), thumbnail: thumbnail()
         )
-        lastSaveDate = Date()
+        await refreshSaveRows()
         return name
     }
 
     /// Play time continues from the loaded save.
-    func loadGame(slot: String) throws {
-        try game.runtimeStateWorld.loadSession(slot: slot)
-        let listing = try? game.runtimeStateWorld.saveListings().first { $0.slot == slot }
-        playSecondsBefore = listing?.summary?.summary?.playSeconds ?? 0
+    func loadGame(slot: String) async throws {
+        if !listings.contains(where: { $0.slot == slot }) {
+            await refreshSaveRows()
+        }
+        let playSeconds = listings.first { $0.slot == slot }?.summary?.summary?.playSeconds
+        try await game.runtimeStateWorld.loadSession(slot: slot)
+        playSecondsBefore = playSeconds ?? 0
         sessionStart = Date()
         lastSaveDate = Date()
     }
 
-    func deleteSave(slot: String) throws {
-        try game.runtimeStateWorld.deleteSave(slot: slot)
+    func deleteSave(slot: String) async throws {
+        try await game.runtimeStateWorld.deleteSave(slot: slot)
+        await refreshSaveRows()
     }
 
     /// A new game counts play time from zero.
@@ -62,8 +76,15 @@ final class SaveGameWorldAdapter: SaveGameService {
         lastSaveDate = nil
     }
 
-    func quickload() throws {
-        try loadGame(slot: AutosavePolicy.quicksaveSlot)
+    func quickload() {
+        Task {
+            do {
+                try await loadGame(slot: AutosavePolicy.quicksaveSlot)
+            } catch {
+                Self.logger
+                    .error("[ERROR] quickload: \(String(describing: error), privacy: .public)")
+            }
+        }
     }
 
     /// Writes an autosave when the player's settings ask for one.
@@ -73,11 +94,17 @@ final class SaveGameWorldAdapter: SaveGameService {
             ? autosaves.shouldSaveOnPause(settings: settings, lastSave: lastSaveDate, now: Date())
             : autosaves.isEnabled(trigger, settings: settings)
         guard due else { return }
-        let dates = Dictionary(saveRows().map { ($0.slot, $0.savedAt) }) { first, _ in first }
-        do {
-            try saveGame(slot: autosaves.nextSlot(saved: dates))
-        } catch {
-            Self.logger.error("[ERROR] autosave: \(String(describing: error), privacy: .public)")
+        Task {
+            if !hasListed {
+                await refreshSaveRows()
+            }
+            let dates = Dictionary(saveRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
+            do {
+                try await saveGame(slot: autosaves.nextSlot(saved: dates))
+            } catch {
+                Self.logger
+                    .error("[ERROR] autosave: \(String(describing: error), privacy: .public)")
+            }
         }
     }
 

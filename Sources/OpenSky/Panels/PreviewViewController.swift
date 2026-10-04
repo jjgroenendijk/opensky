@@ -18,7 +18,9 @@ final class PreviewViewController: NSViewController {
 
     private var catalog: PreviewCatalog?
     private var referenceCatalog: ReferenceRecordCatalog?
-    private var detailBuilder: PreviewDetailBuilder?
+    private var detailLoader: PreviewDetailLoader?
+    /// Bumped per selection, so only the newest detail is shown.
+    private var detailGeneration = 0
     private var visibleItems: [PreviewItem] = []
     /// Bumped per filter request; stale off-main results are dropped.
     private var filterGeneration = 0
@@ -87,7 +89,8 @@ final class PreviewViewController: NSViewController {
         guard isViewLoaded else { return }
         catalog = nil
         referenceCatalog = nil
-        detailBuilder = nil
+        detailLoader = nil
+        detailGeneration += 1
         filterGeneration += 1
         catalogGeneration += 1
         show(items: [])
@@ -208,7 +211,7 @@ final class PreviewViewController: NSViewController {
         pluginPopUp.removeAllItems()
         pluginPopUp.addItem(withTitle: "All winning plugins")
         pluginPopUp.addItems(withTitles: referenceCatalog.pluginNames)
-        detailBuilder = PreviewDetailBuilder(
+        detailLoader = PreviewDetailLoader(
             fileSystem: fileSystem,
             referenceInspector: referenceInspector
         )
@@ -344,8 +347,20 @@ extension PreviewViewController: NSTableViewDelegate {
 
     func tableViewSelectionDidChange(_: Notification) {
         let row = tableView.selectedRow
-        guard visibleItems.indices.contains(row), let detailBuilder else { return }
-        let detail = detailBuilder.detail(for: visibleItems[row].selection)
+        guard visibleItems.indices.contains(row), let detailLoader else { return }
+        detailGeneration += 1
+        let generation = detailGeneration
+        let selection = visibleItems[row].selection
+        infoTextView?.string = "Loading \(visibleItems[row].display)..."
+        imageView.image = nil
+        Task(priority: .userInitiated) { [weak self] in
+            let detail = await detailLoader.detail(for: selection)
+            guard let self, detailGeneration == generation else { return }
+            show(detail: detail)
+        }
+    }
+
+    private func show(detail: PreviewDetailLoader.Detail) {
         infoTextView?.string = detail.text
         if let image = detail.image {
             imageView.image = NSImage(

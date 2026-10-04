@@ -29,25 +29,25 @@ private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
 
 @MainActor
 private final class FakeSaves: SaveGameService {
-    var rows: [SaveSlotRow] = []
+    var saveRows: [SaveSlotRow] = []
     var saved: [String?] = []
     var loaded: [String] = []
     var deleted: [String] = []
 
-    func saveRows() -> [SaveSlotRow] {
-        rows
+    func refreshSaveRows() async -> [SaveSlotRow] {
+        saveRows
     }
 
-    func saveGame(slot: String?) throws -> String {
+    func saveGame(slot: String?) async throws -> String {
         saved.append(slot)
         return slot ?? "Save\(saved.count)"
     }
 
-    func loadGame(slot: String) throws {
+    func loadGame(slot: String) async throws {
         loaded.append(slot)
     }
 
-    func deleteSave(slot: String) throws {
+    func deleteSave(slot: String) async throws {
         deleted.append(slot)
     }
 }
@@ -163,35 +163,39 @@ struct SystemMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func quicksaveWritesTheQuicksaveSlot() {
+    func quicksaveWritesTheQuicksaveSlot() async {
         let harness = Harness()
         harness.open(.quicksave)
+        #expect(harness.menu.lastMessage == "Saving")
+        await harness.menu.saveWork?.value
         #expect(harness.saves.saved == [AutosavePolicy.quicksaveSlot])
         #expect(harness.menu.lastMessage == "Quicksave")
         #expect(harness.menu.isOpen)
     }
 
     @Test @MainActor
-    func savePageWritesANewSlotAndAsksBeforeOverwriting() {
+    func savePageWritesANewSlotAndAsksBeforeOverwriting() async {
         let harness = Harness()
-        harness.saves.rows = [SaveSlotRow(
+        harness.saves.saveRows = [SaveSlotRow(
             slot: "Old", title: "Old", detail: "", savedAt: Date(timeIntervalSince1970: 1)
         )]
         harness.open(.save)
         harness.menu.route(.button(.accept))
+        await harness.menu.saveWork?.value
         #expect(harness.saves.saved == [nil])
         harness.menu.route(.move(.down))
         harness.menu.route(.button(.accept))
         #expect(harness.saves.saved == [nil], "overwriting asks first")
         harness.menu.route(.move(.up))
         harness.menu.route(.button(.accept))
+        await harness.menu.saveWork?.value
         #expect(harness.saves.saved == [nil, "Old"])
     }
 
     @Test @MainActor
-    func loadPageLoadsAndClosesAndDeleteAsks() {
+    func loadPageLoadsAndClosesAndDeleteAsks() async {
         let harness = Harness()
-        harness.saves.rows = [SaveSlotRow(
+        harness.saves.saveRows = [SaveSlotRow(
             slot: "A", title: "A", detail: "", savedAt: Date(timeIntervalSince1970: 1)
         )]
         harness.open(.load)
@@ -201,8 +205,11 @@ struct SystemMenuCoordinatorTests {
         harness.menu.requestDeleteSelectedSave()
         harness.menu.route(.move(.up))
         harness.menu.route(.button(.accept))
+        await harness.menu.saveWork?.value
         #expect(harness.saves.deleted == ["A"])
         harness.menu.route(.button(.accept))
+        #expect(harness.menu.lastMessage == "Loading")
+        await harness.menu.saveWork?.value
         #expect(harness.saves.loaded == ["A"])
         #expect(!harness.menu.isOpen)
     }

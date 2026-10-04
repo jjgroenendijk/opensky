@@ -82,14 +82,10 @@ public struct QuestRuntime: QuestAccess {
     /// runtime states over the plugin baselines.
     public func resolution() -> QuestResolution {
         var overrides: [ReferenceKey: QuestRuntimeState] = [:]
-        for quest in quests.sortedQuests() {
-            guard
-                let key = quests.key(for: quest.formID),
-                let state = store.component(QuestRuntimeState.self, for: key)
-            else {
-                continue
+        for key in quests.sortedKeys {
+            if let state = store.component(QuestRuntimeState.self, for: key) {
+                overrides[key] = state
             }
-            overrides[key] = state
         }
         return QuestResolution(defaults: quests, overrides: overrides)
     }

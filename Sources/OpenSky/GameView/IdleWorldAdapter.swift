@@ -27,9 +27,10 @@ final class IdleWorldAdapter {
     func wireIdles(provider: any WorldDataProviding, renderer: Renderer) {
         guard
             let store = (provider as? IdleDataProviding)?.idleStore,
-            let files = game.audioFileSystem
+            let files = game.audioFileSystem,
+            let clips = game.sessionWiring.animationClips
         else { return }
-        idles.wire(store: store, files: files)
+        idles.wire(store: store, files: files, clips: clips)
         let idles = idles
         let advanceWorld = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak idles] delta in

@@ -48,21 +48,19 @@ struct SWFLabCoordinatorTests {
     }
 
     /// Mounts a synthetic archive holding the given `Interface\` movies.
-    private func makeLoader(movies: [(name: String, data: Data)]) throws -> SWFMovieLoader {
+    private func makeFiles(movies: [(name: String, data: Data)]) throws -> VirtualFileSystem {
         var fixture = BSAFixture()
         fixture.files = movies.map {
             BSAFixture.File(folder: "interface", name: $0.name, stored: $0.data)
         }
         let url = dataURL.appending(path: "swflab.bsa", directoryHint: .notDirectory)
         try fixture.build().write(to: url)
-        return SWFMovieLoader(
-            fileSystem: VirtualFileSystem(dataURL: dataURL, archiveURLs: [url])
-        )
+        return VirtualFileSystem(dataURL: dataURL, archiveURLs: [url])
     }
 
     @MainActor
-    private static func makeLab(factory: (() -> SWFMovieLoader)? = nil) -> SWFLabCoordinator {
-        let movies = SWFMovieSource(factory: factory)
+    private static func makeLab(files: (any GameFileSource)? = nil) -> SWFLabCoordinator {
+        let movies = SWFMovieSource(fileSystem: files, loadsImmediately: true)
         return SWFLabCoordinator(movies: movies, hud: HUDCoordinator(movies: movies))
     }
 
@@ -70,8 +68,7 @@ struct SWFLabCoordinatorTests {
     private func makeController(
         movies: [(name: String, data: Data)]
     ) throws -> SWFLabCoordinator {
-        let loader = try makeLoader(movies: movies)
-        return Self.makeLab { loader }
+        try Self.makeLab(files: makeFiles(movies: movies))
     }
 
     @Test @MainActor
@@ -86,22 +83,13 @@ struct SWFLabCoordinatorTests {
         #expect(SWFLabReadout.text(for: snapshot).contains("no game data"))
     }
 
-    /// Enumerating movies walks every mounted archive index, so the 2 Hz panel
-    /// readout must never repeat it.
     @Test @MainActor
-    func moviePathsAreSortedAndEnumeratedOnce() throws {
-        var builds = 0
-        let loader = try makeLoader(movies: [
+    func moviePathsAreSorted() throws {
+        let lab = try Self.makeLab(files: makeFiles(movies: [
             ("zeta.swf", Self.movieBytes()), ("alpha.swf", Self.movieBytes())
-        ])
-        let lab = Self.makeLab {
-            builds += 1
-            return loader
-        }
+        ]))
         #expect(lab.moviePaths == ["interface\\alpha.swf", "interface\\zeta.swf"])
         #expect(lab.moviePaths.count == 2)
-        _ = lab.snapshot
-        #expect(builds == 1, "loader built \(builds) times, expected once")
         #expect(lab.snapshot.installLoaded)
     }
 
@@ -209,8 +197,10 @@ struct SWFLabCoordinatorTests {
     /// the layer back to the HUD, which fails here: the archive has no HUD movie.
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device)) @MainActor
     func runtimeRunsOnARendererAndClearingRestartsTheHUD() throws {
-        let loader = try makeLoader(movies: [("alpha.swf", Self.movieBytes())])
-        let movies = SWFMovieSource { loader }
+        let movies = try SWFMovieSource(
+            fileSystem: makeFiles(movies: [("alpha.swf", Self.movieBytes())]),
+            loadsImmediately: true
+        )
         let hud = HUDCoordinator(movies: movies)
         let lab = SWFLabCoordinator(movies: movies, hud: hud)
         let canvas = OffscreenCanvas(width: 64, height: 64, shaders: .packageFixture)

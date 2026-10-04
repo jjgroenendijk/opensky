@@ -49,17 +49,21 @@ struct AudioCoordinatorTests {
     }
 
     @Test
-    func musicPickerReadsTheFileSystemOnce() {
+    func musicPickerReadsTheFileSystemOnce() async {
         let (audio, world) = Self.makeCoordinator()
+        #expect(audio.selectableAudioFileNames.isEmpty, "the list builds off the main actor")
+        await audio.musicListing?.value
         #expect(audio.selectableAudioFileNames == ["music\\a.xwm", "music\\b.xwm"])
         world.audioFileSystem = InMemoryFileSource()
         #expect(audio.selectableAudioFileNames == ["music\\a.xwm", "music\\b.xwm"])
     }
 
     @Test
-    func voicePickerFollowsTheFilter() {
+    func voicePickerFollowsTheFilter() async {
         let (audio, world) = Self.makeCoordinator()
         defer { withExtendedLifetime(world) {} }
+        #expect(audio.selectableVoiceFileNames.isEmpty, "the list builds off the main actor")
+        await audio.voiceListing?.value
         #expect(audio.selectableVoiceFileNames == [
             "sound\\voice\\skyrim.esm\\femaleeventoned\\a.fuz"
         ])

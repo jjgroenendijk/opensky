@@ -177,7 +177,7 @@ from `OpenSkyFactionsInterface`. The app answers it from its faction runtime.
 4. Test the core with values. Test the shell with a fake port.
 5. In the app, add the stored property, the wire function, and the port adapter. Point every
    caller at the coordinator, and delete the old functions.
-6. Run `make check` and `make test-unit T='<Feature>Tests'`, then `make verify-build`.
+6. Run `make check` and `make test-unit T='<Feature>Tests'`, then `make build-app`.
 
 Do not add a new `GameViewController+X` file for new logic. A SwiftLint rule will enforce this
 once every domain has moved ([code-health automation](/decisions/code-health-automation.md)).

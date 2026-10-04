@@ -54,7 +54,7 @@ check_signature() {
     bundle="$1"
     name="$(basename "$bundle")"
     if [ ! -d "$bundle" ]; then
-        echo "[INFO] $name not built yet — run make build or make test-ui first."
+        echo "[INFO] $name not built yet — run make build-app or make test-ui first."
         return 0
     fi
     authority="$(codesign -dv --verbose=2 "$bundle" 2>&1 \

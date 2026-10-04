@@ -49,7 +49,7 @@
     "files": [],
     "expected_behavior": [
       "Loops on make compile (swift build of the changed modules and their dependents) while fixing errors",
-      "Runs make verify-build once at the end, in the background, and reads the errors from the notification without polling or grepping the transcript",
+      "Runs only the build-app, build-cli, or build-tests targets the change reaches, once at the end, in the background, and reads the errors from the notification without polling or grepping the transcript",
       "Does not delete .swiftmodule folders by hand"
     ]
   },

@@ -130,20 +130,31 @@ struct RuntimeStateCoordinatorTests {
         #expect(world.appliedResolutions == [false, true])
     }
 
-    @Test func saveOutcomesAndSlotCache() {
+    @Test func saveOutcomesAndSlotCache() async {
         #expect(coordinator.runtimeStateSaveSlots.isEmpty)
         #expect(coordinator.runtimeStateSaveSlots.isEmpty)
+        await coordinator.slotListing?.value
         #expect(world.slotListings == 1)
 
         coordinator.saveWorldState(slot: "quick")
+        #expect(coordinator.lastSaveOutcome == .running(operation: "save", slot: "quick"))
+        coordinator.loadWorldState(slot: "quick")
+        #expect(coordinator.lastSaveOutcome == .failed(
+            operation: "load", message: "another save or load is running"
+        ))
+        await coordinator.saveWork?.value
         #expect(coordinator.lastSaveOutcome == .saved(slot: "quick"))
+        _ = coordinator.runtimeStateSaveSlots
+        await coordinator.slotListing?.value
         #expect(coordinator.runtimeStateSaveSlots == ["quick"])
 
         coordinator.loadWorldState(slot: "quick")
+        await coordinator.saveWork?.value
         #expect(coordinator.lastSaveOutcome == .loaded(slot: "quick"))
 
         world.saveError = FakeSaveError.unwritable
         coordinator.saveWorldState(slot: "other")
+        await coordinator.saveWork?.value
         #expect(coordinator.lastSaveOutcome == .failed(operation: "save", message: "unwritable"))
     }
 

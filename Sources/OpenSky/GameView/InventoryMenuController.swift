@@ -4,6 +4,7 @@
 // `InventoryCoordinator` method the Items panel calls.
 // See docs/engine/inventory-menu.md.
 
+import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
@@ -25,6 +26,8 @@ final class InventoryMenuController {
     /// gameplay HUD.
     private(set) var movieEnabled = false
     private(set) var movieLoaded = false
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    private var movieRequest = 0
     private(set) var movieError: String?
     private(set) var lastActionText: String?
 
@@ -95,14 +98,26 @@ final class InventoryMenuController {
     /// Brings the vanilla movie up in place of the gameplay HUD. Any failure
     /// becomes a readout, never a thrown error out of a control action.
     private func startMovie() {
-        guard let renderer = game.renderer, let loader = game.swfMovies.loader else {
+        guard game.renderer != nil, game.swfMovies.isAvailable else {
             movieLoaded = false
             movieError = "No game data located."
             return
         }
+        game.hud.suspend()
+        movieRequest += 1
+        let request = movieRequest
+        game.swfMovies.request(InventoryMenuMovieBridge.moviePath, while: { [weak self] in
+            self?.movieRequest == request
+        }, then: { [weak self] result in
+            self?.showMovie(result)
+        })
+    }
+
+    /// Runs when the movie is decoded, which may be a later frame than the open.
+    private func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
+        guard let renderer = game.renderer else { return }
         do {
-            game.hud.suspend()
-            try renderer.setSWFMovie(loader.load(path: InventoryMenuMovieBridge.moviePath))
+            try renderer.setSWFMovie(result.get())
             renderer.swfEnabled = true
             renderer.swfScale = 1
             let started = try renderer.startSWFRuntime(
@@ -135,6 +150,7 @@ final class InventoryMenuController {
 
     /// Hands the SWF layer back to the gameplay HUD.
     private func stopMovie() {
+        movieRequest += 1
         movieLoaded = false
         movieError = nil
         game.hud.start()

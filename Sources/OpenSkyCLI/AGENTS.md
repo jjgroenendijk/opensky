@@ -13,7 +13,7 @@ socket. Load the `driving-the-running-game` skill before using it.
 
 ## Build + verify
 
-- `make cli` — build (Debug). `make probe` — env-gated smoke run (`tools/probe.sh`,
+- `make build-cli` — build (Debug). `make probe` — env-gated smoke run (`tools/probe.sh`,
   self-skips when install absent, logs -> `logs/probe.log`).
 - No CLI-only test bundle; shared logic is tested in `Tests/OpenSkyTests/`.
 

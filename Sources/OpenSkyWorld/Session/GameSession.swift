@@ -72,6 +72,9 @@ public final class GameSession: RenderFrameDriver {
     /// advances. The delta is seconds, already gated by `worldSimClock`, so a
     /// paused frame delivers zero.
     public var onWorldUpdate: ((Float) -> Void)?
+    /// Drains of the off-main asset loaders, run before `onWorldUpdate` each frame,
+    /// paused or not. The one point where loaded assets enter the simulation.
+    public let assetDrains = CallbackFanOut<Void>()
     /// CPU wall time of the world-simulation callback, which currently owns
     /// the per-frame Papyrus VM advance. Exactly zero when no callback is set.
     public var lastScriptUpdateMS = 0.0

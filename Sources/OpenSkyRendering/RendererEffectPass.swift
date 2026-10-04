@@ -97,19 +97,33 @@ extension Renderer {
             guard let body = frameDriver?.playerBodyRig, isPlayerBodyVisible else { return [] }
             return body.render.opaque + body.render.alphaTested
         case let .actor(owner):
-            return (scene.opaque + scene.alphaTested).compactMap { group in
-                guard group.layer == .actors else { return nil }
-                return group.owned(by: owner)
-            }
+            return actorGroupsByOwner[owner] ?? []
         }
     }
 }
 
 nonisolated extension DrawGroup {
-    /// The same mesh and material with only `owner`'s instances, or nil when it has none.
-    func owned(by owner: UInt32) -> DrawGroup? {
-        let mine = instances.filter { $0.owner == owner }
-        guard !mine.isEmpty else { return nil }
-        return DrawGroup(mesh: mesh, material: material, faceMorph: faceMorph, instances: mine)
+    /// The scene's actor-layer groups split by instance owner, opaque before alpha-tested.
+    static func actorGroupsByOwner(in scene: RenderScene) -> [UInt32: [DrawGroup]] {
+        var byOwner: [UInt32: [DrawGroup]] = [:]
+        for group in scene.opaque + scene.alphaTested where group.layer == .actors {
+            var owners: [UInt32] = []
+            var instancesByOwner: [UInt32: [DrawInstance]] = [:]
+            for instance in group.instances {
+                if instancesByOwner[instance.owner] == nil {
+                    owners.append(instance.owner)
+                }
+                instancesByOwner[instance.owner, default: []].append(instance)
+            }
+            for owner in owners {
+                byOwner[owner, default: []].append(DrawGroup(
+                    mesh: group.mesh,
+                    material: group.material,
+                    faceMorph: group.faceMorph,
+                    instances: instancesByOwner[owner] ?? []
+                ))
+            }
+        }
+        return byOwner
     }
 }

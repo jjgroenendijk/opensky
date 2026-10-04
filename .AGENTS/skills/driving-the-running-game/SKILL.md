@@ -14,7 +14,7 @@ one JSON object, and the reply carries `ok`, `frame`, `paused`, and `result` or 
 The command list and every argument are in [reference.md](reference.md). The protocol is
 in `docs/tools/agent-control.md`.
 
-Build first with `make cli` and `make verify-build` (background shell, root `AGENTS.md`).
+Build first with `make build-app` and `make build-cli` (background shell, root `AGENTS.md`).
 Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or through
 `make run-cli ARGS="game ..."`.
 

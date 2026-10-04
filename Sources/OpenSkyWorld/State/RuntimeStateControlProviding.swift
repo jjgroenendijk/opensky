@@ -93,6 +93,8 @@ nonisolated public struct RuntimeStateSnapshot: Equatable, Sendable {
 nonisolated public enum RuntimeStateSaveOutcome: Equatable, Sendable {
     /// Nothing has been saved or loaded this session.
     case none
+    /// The file work for `operation` ("save" or "load") has not finished yet.
+    case running(operation: String, slot: String)
     case saved(slot: String)
     case loaded(slot: String)
     /// `operation` names what was attempted ("save" or "load") and `message`
