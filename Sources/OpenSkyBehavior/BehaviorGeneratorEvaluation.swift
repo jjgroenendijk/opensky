@@ -35,16 +35,16 @@ nonisolated extension BehaviorGraphInstance {
             tally.note(.depthCapReached)
             return skeleton.restPose
         }
-        guard let object = object(at: target) else { return skeleton.restPose }
+        guard let node = compiledNode(at: target) else { return skeleton.restPose }
         markReached(target)
         tally.noteGenerator()
-        if isDisabled(object) {
+        if isDisabled(node) {
             tally.note(.disabledNode)
             return skeleton.restPose
         }
-        let bound = boundValues(of: object)
+        let bound = boundValues(of: node)
         return evaluate(
-            object, at: target, bound: bound, depth: depth, deltaTime: deltaTime
+            node.object, at: target, bound: bound, depth: depth, deltaTime: deltaTime
         )
     }
 
@@ -205,11 +205,14 @@ nonisolated extension BehaviorGraphInstance {
         depth: Int,
         deltaTime: Float
     ) -> BehaviorBlendChild? {
-        guard let child = object(at: target, as: HKBBlenderGeneratorChild.self) else {
+        guard
+            let node = compiledNode(at: target),
+            let child = node.object as? HKBBlenderGeneratorChild
+        else {
             return nil
         }
         markReached(target)
-        let bound = boundValues(of: child)
+        let bound = boundValues(of: node)
         let weight = bound.float("m_weight", or: child.weight)
         guard weight > threshold else { return nil }
         return BehaviorBlendChild(

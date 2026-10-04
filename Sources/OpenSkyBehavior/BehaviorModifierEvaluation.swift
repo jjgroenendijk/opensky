@@ -22,11 +22,11 @@ nonisolated extension BehaviorGraphInstance {
             }
             return pose
         }
-        guard let object = object(at: target) else { return pose }
+        guard let node = compiledNode(at: target) else { return pose }
         markReached(target)
         tally.noteModifier()
-        guard isEnabled(object), !isDisabled(object) else { return pose }
-        return run(object, at: target, to: pose, deltaTime: deltaTime, depth: depth)
+        guard isEnabled(node.object), !isDisabled(node) else { return pose }
+        return run(node.object, at: target, to: pose, deltaTime: deltaTime, depth: depth)
     }
 
     /// `hkbModifier::m_enable`, read through the class header each modifier
