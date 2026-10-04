@@ -168,9 +168,7 @@ extension CellStreamer {
     /// Every resident ACHR, deterministically ordered: the set actor-value
     /// regeneration advances. An interior scene replaces the exterior composition.
     public func residentActorEntries() -> [RuntimeReferenceEntry] {
-        interiorScene.map {
-            $0.references.sortedEntries().filter { $0.placedActor != nil }
-        } ?? composition.actorEntries()
+        interiorScene?.references.sortedActorEntries ?? composition.actorEntries()
     }
 
     /// The built scene for one resident cell, or nil. It gives a cell's `XOWN` owner

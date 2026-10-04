@@ -24,11 +24,17 @@ nonisolated public struct CellSceneComposition {
     }
 
     public private(set) var cells: [CellCoordinate: CellScene] = [:] {
-        didSet { residentCollision = cells.values.map(\.staticCollision) }
+        didSet {
+            residentCollision = cells.values.map(\.staticCollision)
+            residentActors = Self.mergedActorEntries(cells)
+        }
     }
+
     /// Kept apart from `cells`, so a collision query walks small values and does not
     /// copy each whole `CellScene` out of the dictionary.
     private var residentCollision: [StaticCollisionSet] = []
+    /// `actorEntries()`, merged when residency changes rather than on each read.
+    private var residentActors: [RuntimeReferenceEntry] = []
     public private(set) var distantLOD: DistantLODScene?
     /// Per-reference draw data detached from the placing cell's bulk scene.
     /// It can therefore outlive that cell while its occupied cell is resident.
@@ -198,10 +204,16 @@ nonisolated public struct CellSceneComposition {
     /// "the nearest actor" answers the same way twice. One entry per key: the first
     /// cell in grid order wins, because the worldspace persistent CELL repeats actors.
     public func actorEntries() -> [RuntimeReferenceEntry] {
+        residentActors
+    }
+
+    private static func mergedActorEntries(
+        _ cells: [CellCoordinate: CellScene]
+    ) -> [RuntimeReferenceEntry] {
         var seen = Set<ReferenceKey>()
         return cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
-            .flatMap { $0.value.references.sortedEntries() }
-            .filter { $0.placedActor != nil && seen.insert($0.key).inserted }
+            .flatMap(\.value.references.sortedActorEntries)
+            .filter { seen.insert($0.key).inserted }
     }
 
     /// Every resident placement, ordered by cell and then stable reference
