@@ -132,7 +132,38 @@ nonisolated public struct DrawGroup: Sendable {
     public let material: RenderMaterial
     public let faceMorph: FaceMorphBuffer?
     /// Mutable only during scene construction (GroupAccumulator).
-    public fileprivate(set) var instances: [DrawInstance]
+    public private(set) var instances: [DrawInstance]
+    /// Kept with `instances`, so the lighting center costs no per-frame pass.
+    private var originSum: SIMD3<Float>
+
+    init(
+        mesh: RenderMesh,
+        material: RenderMaterial,
+        faceMorph: FaceMorphBuffer?,
+        instances: [DrawInstance]
+    ) {
+        self.mesh = mesh
+        self.material = material
+        self.faceMorph = faceMorph
+        self.instances = []
+        originSum = .zero
+        self.instances.reserveCapacity(instances.count)
+        for instance in instances {
+            append(instance)
+        }
+    }
+
+    fileprivate mutating func append(_ instance: DrawInstance) {
+        instances.append(instance)
+        let origin = instance.modelMatrix.columns.3
+        originSum += SIMD3(origin.x, origin.y, origin.z)
+    }
+
+    /// Mean instance origin at the baked pose: the point the nearest lights are
+    /// picked for.
+    public var lightingCenter: SIMD3<Float> {
+        originSum / Float(max(1, instances.count))
+    }
 
     public var castsShadows: Bool {
         instances.first?.castsShadows == true
@@ -181,7 +212,7 @@ nonisolated private struct GroupAccumulator {
             layer: instance.layer
         )
         if let index = indexByKey[key] {
-            groups[index].instances.append(instance)
+            groups[index].append(instance)
         } else {
             indexByKey[key] = groups.count
             groups.append(DrawGroup(

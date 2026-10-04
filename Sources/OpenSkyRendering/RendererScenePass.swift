@@ -141,17 +141,6 @@ extension Renderer {
         return (lights.count, first * stride)
     }
 
-    private func lightingCenter(of group: DrawGroup) -> SIMD3<Float> {
-        let sum = group.instances.reduce(SIMD3<Float>.zero) { partial, instance in
-            partial + SIMD3(
-                instance.modelMatrix.columns.3.x,
-                instance.modelMatrix.columns.3.y,
-                instance.modelMatrix.columns.3.z
-            )
-        }
-        return sum / Float(max(1, group.instances.count))
-    }
-
     /// Writes the group's frustum-surviving instance transforms tightly
     /// packed from the current instance cursor; returns the visible count
     /// and the byte offset the group's draw binds the transform ring at.
@@ -243,7 +232,7 @@ extension Renderer {
             // visible groups <= scene.drawCount <= ring capacity.
             let lightOffset = group.instances.first?.receivesPointLights == true
                 ? writePointLights(
-                    near: lightingCenter(of: group), slot: state.slot, draw: state.drawCursor
+                    near: group.lightingCenter, slot: state.slot, draw: state.drawCursor
                 )
                 : (count: 0, byteOffset: 0)
             let uniformOffset = updateDrawUniforms(

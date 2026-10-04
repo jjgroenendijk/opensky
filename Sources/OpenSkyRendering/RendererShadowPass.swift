@@ -240,30 +240,15 @@ extension Renderer {
     }
 
     /// World-AABB union of every resident caster (opaque + alphaTested +
-    /// terrain). The scene IS the resident cell set, so this bounds the
-    /// geometry the sun can actually shadow — used to clamp each cascade's
-    /// caster backup. nil when any caster is unbounded (conservative: no clamp).
+    /// terrain), used to clamp each cascade's caster backup. Only movable casters
+    /// merge here; the rest was built with the scene. nil when any caster is
+    /// unbounded (conservative: no clamp).
     private func residentCasterBounds() -> ModelBounds? {
-        var result: ModelBounds?
-        func merge(_ bounds: ModelBounds?) -> Bool {
-            guard let bounds else { return false }
+        guard !shadowCasters.isUnbounded else { return nil }
+        var result = shadowCasters.fixed
+        for instance in shadowCasters.movable {
+            guard let bounds = drawn(instance).bounds else { return nil }
             result = result.map { $0.union(bounds) } ?? bounds
-            return true
-        }
-        for group in scene.opaque {
-            guard group.castsShadows else { continue }
-            for instance in group.instances where !merge(drawn(instance).bounds) {
-                return nil
-            }
-        }
-        for group in scene.alphaTested {
-            guard group.castsShadows else { continue }
-            for instance in group.instances where !merge(drawn(instance).bounds) {
-                return nil
-            }
-        }
-        for item in scene.terrain where !merge(item.bounds) {
-            return nil
         }
         return result
     }
