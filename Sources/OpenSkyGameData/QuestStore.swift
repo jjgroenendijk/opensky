@@ -1,6 +1,7 @@
-// QUST index for one plugin, immutable after construction. Quest state lives
-// in the runtime, not here. Editor-ID lookup ignores case, as scripts and the
-// console do (docs/formats/quest-records.md).
+// QUST index, immutable after construction. Over a load order, quest FormIDs use
+// the load-order space of `FormIDResolver.loadOrder`, and a later plugin's record
+// wins. Quest state lives in the runtime, not here. Editor-ID lookup ignores case,
+// as scripts and the console do (docs/formats/quest-records.md).
 
 import Foundation
 import OpenSkyFormatsCore
@@ -18,9 +19,12 @@ nonisolated public final class QuestStore: Sendable {
     /// The inverse of `keysByFormID`: a Papyrus `Quest` native holds a
     /// `ReferenceKey` and needs the QUST record behind it.
     private let formIDsByKey: [ReferenceKey: UInt32]
-    /// Master-list resolver of the source plugin. Alias filling resolves the
-    /// FormIDs the QUST records point at, such as an ALFR reference.
+    /// Resolver of the quest FormIDs this store hands out: the load-order space
+    /// for a load-order store, else the one plugin's master list.
     public let resolver: FormIDResolver
+    /// Raw FormID -> master list of the plugin whose record won. The FormIDs
+    /// inside a record, such as an ALFR reference, are relative to that plugin.
+    private let sourceResolvers: [UInt32: FormIDResolver]
     /// QUST records in the top group that failed to decode. Zero in vanilla data.
     public let skippedRecords: SkippedRecords
 
@@ -36,16 +40,9 @@ nonisolated public final class QuestStore: Sendable {
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
     public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
-        let isLocalized = localized ?? file.isLocalized
-        var decoded: [Quest] = []
         var skipped = SkippedRecords()
         let masters = skipped.masters(of: file)
-        if let top = file.topGroup(of: "QUST") {
-            for case let .record(record) in skipped.children(of: top) where record.type == "QUST" {
-                let quest = skipped.decode(record) { try Quest(record: $0, localized: isLocalized) }
-                decoded.append(contentsOf: quest.map { [$0] } ?? [])
-            }
-        }
+        let decoded = Self.decodeQuests(in: file, localized: localized, skipped: &skipped)
         self.init(
             quests: decoded,
             resolver: FormIDResolver(pluginName: pluginName, masters: masters),
@@ -53,9 +50,53 @@ nonisolated public final class QuestStore: Sendable {
         )
     }
 
+    /// Every active plugin's QUST records, lowest priority first.
+    public convenience init(plugins: [(name: String, file: ESMFile)]) {
+        let space = FormIDResolver.loadOrder(plugins.map(\.name))
+        var byFormID: [UInt32: Quest] = [:]
+        var sources: [UInt32: FormIDResolver] = [:]
+        var skipped = SkippedRecords()
+        for plugin in plugins {
+            let local = FormIDResolver(
+                pluginName: plugin.name,
+                masters: skipped.masters(of: plugin.file)
+            )
+            for quest in Self.decodeQuests(in: plugin.file, skipped: &skipped) {
+                guard
+                    let resolved = local.resolve(quest.formID),
+                    let id = space.localFormID(of: resolved)
+                else { continue }
+                byFormID[id.rawValue] = quest.renumbered(id)
+                sources[id.rawValue] = local
+            }
+        }
+        self.init(
+            quests: Array(byFormID.values),
+            resolver: space,
+            sourceResolvers: sources,
+            skippedRecords: skipped
+        )
+    }
+
+    private static func decodeQuests(
+        in file: ESMFile,
+        localized: Bool? = nil,
+        skipped: inout SkippedRecords
+    ) -> [Quest] {
+        let isLocalized = localized ?? file.isLocalized
+        guard let top = file.topGroup(of: "QUST") else { return [] }
+        var decoded: [Quest] = []
+        for case let .record(record) in skipped.children(of: top) where record.type == "QUST" {
+            let quest = skipped.decode(record) { try Quest(record: $0, localized: isLocalized) }
+            decoded.append(contentsOf: quest.map { [$0] } ?? [])
+        }
+        return decoded
+    }
+
     public init(
         quests: [Quest],
         resolver: FormIDResolver,
+        sourceResolvers: [UInt32: FormIDResolver] = [:],
         skippedRecords: SkippedRecords = SkippedRecords()
     ) {
         var byFormID: [UInt32: Quest] = [:]
@@ -84,6 +125,7 @@ nonisolated public final class QuestStore: Sendable {
         }
         formIDsByKey = inverse
         self.resolver = resolver
+        self.sourceResolvers = sourceResolvers
         self.skippedRecords = skippedRecords
     }
 
@@ -123,6 +165,16 @@ nonisolated public final class QuestStore: Sendable {
     /// The QUST record a session-stable key names, or nil when it names none.
     public func quest(key: ReferenceKey) -> Quest? {
         formIDsByKey[key].flatMap { questsByFormID[$0] }
+    }
+
+    /// The master list the FormIDs inside quest `id`'s record are relative to.
+    public func sourceResolver(of id: FormID) -> FormIDResolver {
+        sourceResolvers[id.rawValue] ?? resolver
+    }
+
+    /// The plugin whose record of quest `id` won, whose string tables hold its text.
+    public func sourcePlugin(of id: FormID) -> String {
+        sourceResolver(of: id).pluginName
     }
 
     public func key(editorID: String) -> ReferenceKey? {

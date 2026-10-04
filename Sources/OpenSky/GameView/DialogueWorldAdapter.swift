@@ -91,8 +91,11 @@ final class DialogueWorldAdapter {
         guard let entry = game.streamer?.referenceEntry(key: speaker) else {
             return speaker.description
         }
-        let name = game.streamer?.interactionName(reference: entry.formID)
-        return name?.isEmpty == false ? (name ?? "") : speaker.description
+        if let name = game.streamer?.interactionName(reference: entry.formID), !name.isEmpty {
+            return name
+        }
+        return entry.placedActor.flatMap { game.actorWorld.displayName(base: $0.base) }
+            ?? speaker.description
     }
 
     /// The posed `NPC Head [Head]` bone, or the capsule eye height when the

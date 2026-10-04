@@ -87,4 +87,46 @@ struct QuestStoreTests {
         #expect(store.sortedQuests().isEmpty)
         #expect(QuestStore.empty.isEmpty)
     }
+
+    /// `Extra.esm` writes its own quest under master index 1, but it loads third,
+    /// so the store numbers it 0x02. A later plugin's override wins.
+    @Test("a load-order store numbers every plugin's quests by load position")
+    func numbersQuestsByLoadOrder() throws {
+        let quest = { (formID: UInt32, editorID: String) in
+            QuestFixture.record(
+                formID: formID, fields: QuestFixture.editorID(editorID) + QuestFixture.general()
+            )
+        }
+        let plugins = try [
+            (name: "Base.esm", file: ESMFixture.plugin(records: [quest(0x0100, "BaseQuest")])),
+            (
+                name: "Patch.esm",
+                file: ESMFixture.plugin(
+                    masters: ["Base.esm"],
+                    records: [quest(0x0100, "BaseQuestPatched"), quest(0x0100_0200, "PatchQuest")]
+                )
+            ),
+            (
+                name: "Extra.esm",
+                file: ESMFixture.plugin(
+                    masters: ["Base.esm"], records: [quest(0x0100_0300, "ExtraQuest")]
+                )
+            )
+        ]
+        let store = QuestStore(plugins: plugins)
+
+        #expect(store.count == 3)
+        #expect(store.quest(FormID(0x0100))?.editorID == "BaseQuestPatched")
+        #expect(store.formID(editorID: "PatchQuest") == FormID(0x0100_0200))
+        #expect(store.formID(editorID: "ExtraQuest") == FormID(0x0200_0300))
+        #expect(store.quest(editorID: "ExtraQuest")?.formID == FormID(0x0200_0300))
+        #expect(store.key(for: FormID(0x0200_0300)) == .plugin(name: "extra.esm", objectID: 0x300))
+        #expect(store.sourcePlugin(of: FormID(0x0100)) == "Patch.esm")
+        #expect(store.sourcePlugin(of: FormID(0x0200_0300)) == "Extra.esm")
+        // FormIDs inside Extra.esm's record still use its own master list.
+        let inner = store.sourceResolver(of: FormID(0x0200_0300)).resolve(FormID(0x0100_0400))
+        #expect(inner == ResolvedFormID(plugin: "Extra.esm", objectID: 0x400))
+        let resolved = ResolvedFormID(plugin: "Extra.esm", objectID: 0x300)
+        #expect(store.resolver.localFormID(of: resolved) == FormID(0x0200_0300))
+    }
 }

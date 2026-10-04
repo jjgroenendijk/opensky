@@ -1,6 +1,7 @@
 // Resolves one plugin's lstrings from Strings/<plugin>_<language>.{strings,dlstrings,
-// ilstrings}, loaded lazily. The field picks the table (FULL -> .strings, journal and
-// books -> .dlstrings, dialogue -> .ilstrings), so callers pass the kind. A missing or
+// ilstrings}, loaded lazily. A string ID is local to the plugin that wrote the record,
+// so a DLC record reads through `scoped(to:)`. The field picks the table (FULL ->
+// .strings, journal and books -> .dlstrings, dialogue -> .ilstrings). A missing or
 // bad table is logged once and gives nil. See docs/formats/strings.md.
 
 import Foundation
@@ -16,9 +17,18 @@ nonisolated public final class LocalizedStrings: Sendable {
     )
 
     private enum Slot {
-        case unloaded
         case loaded(StringTable)
         case failed
+    }
+
+    private struct TableKey: Hashable {
+        let plugin: String
+        let kind: StringTable.Kind
+    }
+
+    /// Tables of every plugin, shared by all scoped copies.
+    private final class TableCache: Sendable {
+        let tables = Mutex<[TableKey: Slot]>([:])
     }
 
     private let vfs: any GameFileSource
@@ -28,13 +38,32 @@ nonisolated public final class LocalizedStrings: Sendable {
     /// Normalized language part of the table file name. The app resolves this
     /// from Skyrim.ini or its persistent Settings override.
     public let language: String
-    private let tables: Mutex<[StringTable.Kind: Slot]>
+    private let cache: TableCache
 
-    public init(vfs: any GameFileSource, pluginName: String, language: String = "english") {
+    public convenience init(
+        vfs: any GameFileSource,
+        pluginName: String,
+        language: String = "english"
+    ) {
+        self.init(vfs: vfs, pluginName: pluginName, language: language, cache: TableCache())
+    }
+
+    private init(
+        vfs: any GameFileSource,
+        pluginName: String,
+        language: String,
+        cache: TableCache
+    ) {
         self.vfs = vfs
         self.pluginName = pluginName
         self.language = language
-        tables = Mutex([.strings: .unloaded, .dlstrings: .unloaded, .ilstrings: .unloaded])
+        self.cache = cache
+    }
+
+    /// The tables of `plugin`, sharing this object's loaded tables.
+    public func scoped(to plugin: String) -> LocalizedStrings {
+        guard plugin.caseInsensitiveCompare(pluginName) != .orderedSame else { return self }
+        return LocalizedStrings(vfs: vfs, pluginName: plugin, language: language, cache: cache)
     }
 
     /// Resolves display text: inline strings pass through, table IDs look up
@@ -52,21 +81,22 @@ nonisolated public final class LocalizedStrings: Sendable {
     }
 
     private func table(of kind: StringTable.Kind) -> StringTable? {
-        tables.withLock { tables in
-            switch tables[kind] {
+        let key = TableKey(plugin: pluginName.lowercased(), kind: kind)
+        return cache.tables.withLock { tables in
+            switch tables[key] {
             case let .loaded(table):
                 return table
             case .failed:
                 return nil
-            case .unloaded, nil:
-                let stem = (pluginName as NSString).deletingPathExtension
+            case nil:
+                let stem = (key.plugin as NSString).deletingPathExtension
                 let path = "strings\\\(stem)_\(language).\(kind.fileExtension)"
                 do {
                     let table = try StringTable(data: vfs.contents(forPath: path), kind: kind)
-                    tables[kind] = .loaded(table)
+                    tables[key] = .loaded(table)
                     return table
                 } catch {
-                    tables[kind] = .failed
+                    tables[key] = .failed
                     Self.logger.error(
                         """
                         No usable string table \(path, privacy: .public): \

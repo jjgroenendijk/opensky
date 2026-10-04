@@ -56,7 +56,13 @@ extension JournalMenuModel {
         for quest in runtime.quests.journalQuests() {
             guard let state = try? runtime.state(of: quest.formID) else { continue }
             guard state.isRunning || state.isCompleted else { continue }
-            let entry = makeEntry(quest: quest, state: state, strings: strings, aliases: aliases)
+            // A DLC quest's text IDs point into its own plugin's tables.
+            let entry = makeEntry(
+                quest: quest,
+                state: state,
+                strings: strings?.scoped(to: runtime.quests.sourcePlugin(of: quest.formID)),
+                aliases: aliases
+            )
             if state.isRunning {
                 active.append(entry)
             }

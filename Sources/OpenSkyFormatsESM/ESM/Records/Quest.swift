@@ -69,7 +69,9 @@ nonisolated public struct Quest: Sendable {
         }
     }
 
-    public let formID: FormID
+    /// The FormID as its plugin writes it, unless a load-order store renumbered it
+    /// with `renumbered(_:)`.
+    public private(set) var formID: FormID
     public let editorID: String?
     /// FULL. Hidden by the journal for a miscellaneous quest, which shows only
     /// its objectives.
@@ -122,6 +124,14 @@ nonisolated public struct Quest: Sendable {
     /// The alias `id` names, or nil when the quest defines no such alias.
     public func alias(id: UInt32) -> Alias? {
         aliases.first { $0.id == id }
+    }
+
+    /// The same record under another FormID, for a store that numbers quests
+    /// from several plugins in one space. The fields inside keep their own FormIDs.
+    public func renumbered(_ id: FormID) -> Quest {
+        var copy = self
+        copy.formID = id
+        return copy
     }
 
     /// Stages carrying at least one journal log entry — the ones a journal UI

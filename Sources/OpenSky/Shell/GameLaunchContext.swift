@@ -79,8 +79,7 @@ final class GameLaunchContext {
             }
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
-            // Journal text. The session indexes quests only from Skyrim.esm,
-            // so its string tables are the ones the journal uses.
+            // UI text. Records from another plugin read through `scoped(to:)`.
             controller.localizedStringsLoader = {
                 LocalizedStrings(
                     vfs: vfs,

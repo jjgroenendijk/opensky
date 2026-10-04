@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -20,6 +21,8 @@ final class ActorWorldAdapter {
     unowned let game: GameViewController
     /// Change gate in front of the HUD meter contract.
     private var meters = HUDMeterBinding()
+    /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
+    private var baseNames: [UInt32: String?] = [:]
 
     init(game: GameViewController) {
         self.game = game
@@ -28,6 +31,7 @@ final class ActorWorldAdapter {
     /// A provider without stat indexes, such as every synthetic scene, leaves
     /// the runtime nil.
     func wireActorValues(provider: any WorldDataProviding, renderer: Renderer) {
+        baseNames = [:]
         guard let baselines = (provider as? ActorValueDataProviding)?.actorValueBaselines
         else { return }
         let coordinator = game.actorValues
@@ -77,9 +81,27 @@ final class ActorWorldAdapter {
                 scale: actor.scale,
                 isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
                     ?? false,
-                name: "\(entry.key.description) (base \(actor.base))"
+                name: displayName(base: actor.base)
+                    ?? "\(entry.key.description) (base \(actor.base))"
             )
         }
+    }
+
+    /// The FULL name of an NPC_ base after template inheritance, as the crosshair shows it.
+    func displayName(base: FormID) -> String? {
+        if let cached = baseNames[base.rawValue] {
+            return cached
+        }
+        guard
+            let templates = (game.worldData as? ActorValueDataProviding)?
+                .actorValueBaselines?.resolver?.templates,
+            let strings = game.journal.strings
+        else { return nil }
+        let name = (try? templates.resolveName(base: base))
+            .flatMap { strings.resolve($0.value) }
+            .flatMap { $0.isEmpty ? nil : $0 }
+        baseNames[base.rawValue] = .some(name)
+        return name
     }
 
     private func publishHUDMeters(renderer: Renderer?) {

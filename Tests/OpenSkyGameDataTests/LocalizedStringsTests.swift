@@ -59,4 +59,24 @@ struct LocalizedStringsTests {
         #expect(makeStrings(files, language: "french").resolve(.tableID(0x42)) == "Blancherive")
         #expect(makeStrings(files, language: "english").resolve(.tableID(0x42)) == nil)
     }
+
+    /// A string ID belongs to the plugin that wrote the record. Two plugins may
+    /// use the same ID for different text.
+    @Test func scopedTablesKeepTwoPluginsApart() {
+        let strings = makeStrings(InMemoryFileSource(files: [
+            "Strings/Skyrim_English.strings": StringTableFixture.table(
+                kind: .strings, entries: [(id: 0x42, text: "Whiterun")]
+            ),
+            "Strings/Dawnguard_English.strings": StringTableFixture.table(
+                kind: .strings, entries: [(id: 0x42, text: "Fort Dawnguard")]
+            )
+        ]))
+        let dawnguard = strings.scoped(to: "Dawnguard.esm")
+
+        #expect(strings.resolve(.tableID(0x42)) == "Whiterun")
+        #expect(dawnguard.resolve(.tableID(0x42)) == "Fort Dawnguard")
+        #expect(dawnguard.pluginName == "Dawnguard.esm")
+        #expect(strings.scoped(to: "skyrim.esm") === strings)
+        #expect(strings.scoped(to: "Missing.esm").resolve(.tableID(0x42)) == nil)
+    }
 }

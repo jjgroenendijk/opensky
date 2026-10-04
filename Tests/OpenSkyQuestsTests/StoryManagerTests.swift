@@ -184,4 +184,35 @@ struct StoryManagerTests {
         #expect(second.entries.map(\.outcome) == [.alreadyHasState, .notInQuestStore])
         #expect(second.startedCount == 0)
     }
+
+    /// A list that writes its plugin's own quest under a master's index, as
+    /// `HearthFires.seq` does, still starts that quest.
+    @Test func aListedQuestFallsBackToTheListsOwnPlugin() throws {
+        let quests = try QuestStore(plugins: [
+            (name: "Base.esm", file: ESMFixture.plugin(records: [])),
+            (
+                name: "Test.esm",
+                file: ESMFixture.plugin(
+                    masters: ["Base.esm", "Patch.esm"],
+                    records: [QuestFixture.record(
+                        formID: 0x0200_0100,
+                        fields: QuestFixture.editorID("OwnQuest") + QuestFixture.general()
+                    )]
+                )
+            )
+        ])
+        let runtime = QuestRuntime(store: WorldStateStore(), quests: quests)
+        let data = withUnsafeBytes(of: UInt32(0x0100_0100).littleEndian) { Data($0) }
+        let list = PluginQuestList(
+            plugin: "Test.esm",
+            masters: ["Base.esm", "Patch.esm"],
+            list: Result { () throws(StartGameQuestListError) in
+                try StartGameQuestList(data: data)
+            }
+        )
+        let report = runtime.runSessionStart(lists: [list], starter: nil)
+        #expect(report.entries.map(\.outcome) == [.started])
+        #expect(report.entries.first?.quest == ResolvedFormID(plugin: "Test.esm", objectID: 0x100))
+        #expect(report.entries.first?.editorID == "OwnQuest")
+    }
 }

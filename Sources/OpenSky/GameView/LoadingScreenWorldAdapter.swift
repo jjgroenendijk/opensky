@@ -112,7 +112,7 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
         DialogueMenuModel.text(
             screen.record.description,
             kind: .strings,
-            strings: game.journal.strings
+            strings: game.journal.strings?.scoped(to: screen.sourcePlugin)
         )
     }
 

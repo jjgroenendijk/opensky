@@ -272,6 +272,14 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         }
     }
 
+    /// FULL after template inheritance. xEdit lists FULL under `useBaseData`.
+    public func resolveName(base: FormID) throws -> ActorSourcedField<LString?> {
+        let (npcs, _) = try resolveChain(base: base)
+        return resolveField(in: npcs, flag: .useBaseData) {
+            ActorSourcedField(value: $0.name, source: $0.formID)
+        }
+    }
+
     /// Walks TPLT links from `base`, expanding LVLN hops via the
     /// deterministic entry policy, until a record without a template.
     private func resolveChain(

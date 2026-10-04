@@ -36,14 +36,17 @@ nonisolated public struct InventoryBaselineResolver {
     /// Builds every index from one plugin, keyed by raw FormID.
     /// - Parameter enchantments: the load-order ENCH view `EITM` links resolve
     ///   through. Nil leaves every `resolvedID` nil, as in a synthetic session.
+    /// - Parameter strings: the tables item names resolve through. Nil keeps
+    ///   string IDs, so a row falls back to the editor ID.
     public static func build(
         from file: ESMFile,
-        enchantments: ItemEnchantmentResolver? = nil
+        enchantments: ItemEnchantmentResolver? = nil,
+        strings: LocalizedStrings? = nil
     ) -> InventoryBaselineResolver {
         let localized = file.isLocalized
         var skipped = SkippedRecords()
         var resolver = InventoryBaselineResolver(
-            items: ItemDefinitionStore(file: file, enchantments: enchantments),
+            items: ItemDefinitionStore(file: file, enchantments: enchantments, strings: strings),
             leveledItems: file.indexRecords(of: "LVLI", skipped: &skipped) {
                 try LeveledList(record: $0)
             },

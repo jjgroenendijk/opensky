@@ -28,8 +28,8 @@ struct StoryManagerRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func sessionStartReadsEverySeqFile() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
-        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
-        let data = StoryData.load(root: root, baseFile: file, baseName: "Skyrim.esm")
+        let plugins = ActivePluginFiles.load(root: root)
+        let data = StoryData.load(plugins: plugins)
         let files = VirtualFileSystem(root: root)
         let lists = data.plugins.map {
             PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
@@ -42,16 +42,12 @@ struct StoryManagerRealDataTests {
             #expect((try? list.get())?.quests.count == count, "\(plugin) list drift")
         }
 
-        let quests = QuestStore(file: file, pluginName: "Skyrim.esm")
-        let runtime = QuestRuntime(store: WorldStateStore(), quests: quests)
+        let runtime = QuestRuntime(store: WorldStateStore(), quests: QuestStore(plugins: plugins))
         let report = runtime.runSessionStart(lists: lists, starter: nil)
-        // The quest store indexes `Skyrim.esm` only, so the other lists report
-        // `notInQuestStore`.
-        #expect(report.startedCount == Self.expectedListCounts["Skyrim.esm"])
+        // The quest store indexes every active plugin, so every listed quest starts.
+        #expect(report.startedCount == Self.expectedListCounts.values.reduce(0, +))
         for entry in report.entries {
-            let expected: SessionStartOutcome = entry
-                .plugin == "Skyrim.esm" ? .started : .notInQuestStore
-            #expect(entry.outcome == expected, "\(entry.plugin) \(entry.quest)")
+            #expect(entry.outcome == .started, "\(entry.plugin) \(entry.quest)")
         }
         #expect(report.entries.first?.editorID == Self.firstStartedQuest)
         #expect(report.brokenLists.isEmpty)

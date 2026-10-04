@@ -49,8 +49,9 @@ final class StoryWorldAdapter {
     func wireStory(provider: any WorldDataProviding, renderer: Renderer) {
         let data = (provider as? StoryDataProviding)?.storyData ?? StoryData()
         let scripts = provider as? ScriptDataProviding
-        if let store = data.scenes, let resolver = scripts?.scriptFormIDResolver {
-            scenes.catalog = SceneCatalog(store: store, resolver: resolver)
+        // The quest store's space, so a DLC scene names its quest as the runtime does.
+        if let store = data.scenes, let quests = (provider as? QuestDataProviding)?.questStore {
+            scenes.catalog = SceneCatalog(store: store, resolver: quests.resolver)
         }
         storyManager.story = data.storyManager
         game.scripts.bridge?.story = self

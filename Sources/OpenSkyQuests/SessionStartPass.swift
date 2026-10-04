@@ -93,7 +93,7 @@ extension QuestRuntime {
                 for raw in list.quests {
                     guard let resolved = resolver.resolve(raw) else { continue }
                     report.entries.append(sessionStart(
-                        resolved,
+                        storedQuest(resolved, listedBy: plugin.plugin),
                         plugin: plugin.plugin,
                         starter: starter
                     ))
@@ -101,6 +101,20 @@ extension QuestRuntime {
             }
         }
         return report
+    }
+
+    /// `HearthFires.seq` writes its own quests with master index 1, which its master
+    /// list maps to `Update.esm`. So a FormID that names no stored quest falls back to
+    /// the same object ID in the plugin that owns the list (docs/formats/seq.md).
+    private func storedQuest(
+        _ resolved: ResolvedFormID,
+        listedBy plugin: String
+    ) -> ResolvedFormID {
+        let own = ResolvedFormID(plugin: plugin, objectID: resolved.objectID)
+        let isStored = { (id: ResolvedFormID) in
+            quests.resolver.localFormID(of: id).flatMap { quests.quest($0) } != nil
+        }
+        return !isStored(resolved) && isStored(own) ? own : resolved
     }
 
     private func sessionStart(

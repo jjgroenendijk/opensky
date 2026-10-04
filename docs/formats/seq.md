@@ -31,6 +31,12 @@ Each FormID uses the master indexes of the plugin that owns the file, the same w
 plugin's records do. `Dawnguard.esm` has masters `Skyrim.esm` and `Update.esm`, so a FormID
 with the top byte `02` names a Dawnguard record.
 
+`HearthFires.seq` breaks this rule. Its 7 quests are `HearthFires.esm` records with the top
+byte `02`, but the file writes them with `01`, which the master list maps to `Update.esm`.
+The file seems to have been written when `HearthFires.esm` had one master. How the game reads
+it is not confirmed. OpenSky reads each FormID through the master list first; when that names
+no quest, it uses the same object ID in the plugin that owns the file.
+
 ## Observed on the install
 
 | Plugin | Quests |

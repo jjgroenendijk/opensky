@@ -33,7 +33,7 @@ extension SceneRuntime {
             var context = runtime.dialogue.context
             context.subject = .player
             context.target = nil
-            context.aliasQuest = entry.scene.quest
+            context.aliasQuest = entry.quest
             evaluator = ConditionEvaluator(
                 context: context, registry: runtime.dialogue.registry, tally: ConditionTally()
             )
@@ -156,7 +156,7 @@ extension SceneRuntime {
         }
 
         private func actor(of action: SceneAction) -> ReferenceKey? {
-            guard let alias = action.aliasID, alias >= 0, let quest = scene.quest else {
+            guard let alias = action.aliasID, alias >= 0, let quest = entry.quest else {
                 return nil
             }
             return evaluator.context.aliases.reference(alias: UInt32(alias), in: quest)
@@ -197,7 +197,7 @@ extension SceneRuntime {
             runFragment(slot: 0x02)
             note(.ended(reason))
             let stopsQuest = scene.flags.contains(.stopQuestOnEnd)
-            if reason == .finished, stopsQuest, let quest = scene.quest {
+            if reason == .finished, stopsQuest, let quest = entry.quest {
                 runtime.host?.stopQuest(quest)
             }
         }

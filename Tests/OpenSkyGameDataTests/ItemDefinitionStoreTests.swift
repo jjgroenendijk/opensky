@@ -5,6 +5,8 @@
 @testable import FormatsCoreTesting
 import FormatsESMTesting
 import Foundation
+import GameDataTesting
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
@@ -34,6 +36,33 @@ struct ItemDefinitionStoreTests {
         #expect(weapon.value == 25)
         #expect(weapon.weight == 9)
         #expect(weapon.keywords == [FormID(0x0001_E713)])
+    }
+
+    /// A localized plugin stores FULL as a string ID; the store turns it into text.
+    @Test func resolvesLocalizedNamesThroughTheStringTables() throws {
+        let file = try ESMFile(
+            data: ESMFixture.tes4(flags: 0x81) + ESMFixture.topGroup(
+                "WEAP", contents: ESMFixture.record(
+                    "WEAP", formID: 0x500,
+                    data: ESMFixture.field("EDID", ESMFixture.zstring("IronSword"))
+                        + ESMFixture.field("FULL", ESMFixture.words([0x42]))
+                        + ESMFixture.field(
+                            "DATA", InventoryFixture.weaponData(value: 25, weight: 9, damage: 7)
+                        )
+                )
+            )
+        )
+        let strings = LocalizedStrings(
+            vfs: InMemoryFileSource(files: [
+                "Strings/Test_English.strings": StringTableFixture.table(
+                    kind: .strings, entries: [(id: 0x42, text: "Iron Sword")]
+                )
+            ]),
+            pluginName: "Test.esm"
+        )
+        let named = ItemDefinitionStore(file: file, strings: strings)
+        #expect(named.definition(FormID(0x500))?.name == .inline("Iron Sword"))
+        #expect(ItemDefinitionStore(file: file).definition(FormID(0x500))?.name == .tableID(0x42))
     }
 
     /// ALCH's gold value lives in ENIT and its weight in DATA; the unified
