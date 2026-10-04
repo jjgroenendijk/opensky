@@ -44,6 +44,8 @@ final class GameViewController: NSViewController {
     /// Loaded off the main actor before the view loads, on the system default
     /// device the view also uses. Nil falls back to `DemoScene`.
     var cellSession: CellSession?
+    /// The stage times of the load that built `cellSession`, for World > World Load.
+    var worldLoadReport: WorldLoadReport?
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -462,7 +464,7 @@ extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
     HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
-    TitleMenuControlForwarding, MapMenuControlForwarding {}
+    TitleMenuControlForwarding, MapMenuControlForwarding, WorldLoadReportProviding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {

@@ -26,6 +26,7 @@ final class GameLaunchContext {
     private(set) var virtualFileSystem: VirtualFileSystem?
     /// Built by `load`, handed to the next game view, which owns it from then on.
     private var cellSession: CellSession?
+    private var worldLoadReport: WorldLoadReport?
     private(set) var gameDataErrorMessage: String?
     private var localizationLanguage = LocalizationLanguageSnapshot(
         language: LocalizationLanguageSettings.fallback,
@@ -44,6 +45,7 @@ final class GameLaunchContext {
         gameDataRoot = nil
         virtualFileSystem = nil
         cellSession = nil
+        worldLoadReport = nil
         gameDataErrorMessage = nil
         do {
             let root = try GameDataLocator.locate()
@@ -85,9 +87,12 @@ final class GameLaunchContext {
                 )
             },
             onUpdate: onUpdate,
-            completion: { [weak self] world in
+            completion: { [weak self, weak loader] world in
                 self?.virtualFileSystem = world.fileSystem
                 self?.cellSession = world.session
+                self?.worldLoadReport = loader.map {
+                    WorldLoadReport(timeline: $0.timeline, total: $0.elapsed)
+                }
                 completion()
             }
         )
@@ -96,6 +101,7 @@ final class GameLaunchContext {
     func makeGameViewController() -> GameViewController {
         let controller = GameViewController()
         controller.cellSession = cellSession
+        controller.worldLoadReport = worldLoadReport
         cellSession = nil
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore

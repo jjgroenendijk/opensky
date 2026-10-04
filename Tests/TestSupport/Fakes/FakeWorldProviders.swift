@@ -204,6 +204,7 @@ final class FakeWorldProviders: WorldControlProviders {
 
     /// FrameStatsProviding
     var frameStatsSnapshot = FrameStatsSnapshot.empty
+    var worldLoadReport: WorldLoadReport?
 
     /// SceneStatsProviding
     var sceneStatsSnapshot = SceneStatsSnapshot.empty
