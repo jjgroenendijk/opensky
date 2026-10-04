@@ -32,9 +32,9 @@ nonisolated public struct CellProviderIndexes {
         /// `AVSK` parameters off the same ones.
         let actorValues: ActorValueInformationStore
 
-        init(root: GameDataRoot, baseFile: ESMFile) {
+        init(plugins: [(name: String, file: ESMFile)]) {
             let index = RecordIndex(
-                plugins: ActivePluginFiles.load(root: root, baseFile: baseFile),
+                plugins: plugins,
                 recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK", "AVIF"]
             )
             let effects = MagicEffectStore(index: index)
@@ -65,13 +65,13 @@ nonisolated public struct CellProviderIndexes {
         /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
         let store: GameSettingStore
 
-        init(root: GameDataRoot, baseFile: ESMFile) {
+        init(plugins: [(name: String, file: ESMFile)]) {
             // One GMST load for every consumer: resolving the load order twice
             // would parse every plugin's GMST group twice for the same answer.
-            let settings = GameSettingLoader.load(root: root, baseFile: baseFile)
+            let settings = GameSettingStore(plugins: plugins)
             movement = PlayerMovementConfiguration.resolve(
                 store: settings,
-                movementTypes: MovementTypeLoader.load(root: root, baseFile: baseFile)
+                movementTypes: MovementTypeStore(plugins: plugins)
             )
             barter = BarterPricing.resolve(store: settings)
             combat = CombatSettings.resolve(store: settings)
@@ -156,7 +156,9 @@ nonisolated public struct CellProviderIndexes {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try ESMFile(url: esmURL)
         let pluginName = esmURL.lastPathComponent
-        let tuning = SettingIndexes(root: root, baseFile: file)
+        // Every load-order store reads this one list, so each plugin opens once.
+        let plugins = ActivePluginFiles.load(root: root, baseFile: file)
+        let tuning = SettingIndexes(plugins: plugins)
         movementConfiguration = tuning.movement
         barterPricing = tuning.barter
         combatSettings = tuning.combat
@@ -182,13 +184,13 @@ nonisolated public struct CellProviderIndexes {
         aspcStore = AcousticSpaceStore(file: file)
         musicStore = MusicRecordStore(file: file)
         globalStore = GlobalStore(file: file, pluginName: pluginName)
-        locationStore = LocationStoreLoader.load(root: root, baseFile: file)
+        locationStore = LocationStore(plugins: plugins)
         dialogueStore = DialogueStore(file: file, pluginName: pluginName)
         packageStore = PackageStore(file: file)
-        factionStore = FactionStoreLoader.load(root: root, baseFile: file)
-        relationshipStore = RelationshipStoreLoader.load(root: root, baseFile: file)
-        formListStore = FormListStoreLoader.load(root: root, baseFile: file)
-        let magic = MagicIndexes(root: root, baseFile: file)
+        factionStore = FactionStore(plugins: plugins)
+        relationshipStore = RelationshipStore(plugins: plugins)
+        formListStore = FormListStore(plugins: plugins)
+        let magic = MagicIndexes(plugins: plugins)
         magicEffectStore = magic.effects
         spellStore = magic.spells
         equipSlotStore = magic.equipSlots
@@ -204,15 +206,15 @@ nonisolated public struct CellProviderIndexes {
         )
         equipmentCatalog = EquipmentCatalog.build(from: file)
         craftingCatalog = CraftingCatalog(
-            recipes: RecipeStoreLoader.load(root: root, baseFile: file),
+            recipes: RecipeStore(plugins: plugins),
             itemPlugin: scriptFormIDResolver,
             file: file
         )
         actorValueBaselines = Self.actorValueBaselines(
-            root: root, file: file, pluginName: pluginName, tuning: tuning
+            plugins: plugins, file: file, pluginName: pluginName, tuning: tuning
         )
-        scripted = ScriptedData(root, file, pluginName, tuning.store)
-        loadOrder = Self.loadOrderStores(root: root, file: file, settings: tuning.store)
+        scripted = ScriptedData(plugins, file, pluginName, tuning.store)
+        loadOrder = Self.loadOrderStores(plugins: plugins, file: file, settings: tuning.store)
     }
 
     /// Hands the new builder straight to the runner, so no other code holds it.
@@ -248,7 +250,7 @@ nonisolated public struct CellProviderIndexes {
     /// baselines take the resolver's own, so a level-up moves an NPC's
     /// `PC Level Mult` scaling and the player's reported level together.
     private static func actorValueBaselines(
-        root: GameDataRoot,
+        plugins: [(name: String, file: ESMFile)],
         file: ESMFile,
         pluginName: String,
         tuning: SettingIndexes
@@ -260,7 +262,7 @@ nonisolated public struct CellProviderIndexes {
                 pluginName: pluginName,
                 // Load-order wide, so a patch plugin's CLAS override reaches
                 // the derivation instead of being invisible to it.
-                classes: CharacterClassStoreLoader.load(root: root, baseFile: file),
+                classes: CharacterClassStore(plugins: plugins),
                 settings: tuning.level
             )
         )
@@ -342,14 +344,13 @@ nonisolated extension CellProviderIndexes {
         let quests: QuestStore
 
         init(
-            _ root: GameDataRoot,
+            _ plugins: [(name: String, file: ESMFile)],
             _ file: ESMFile,
             _ pluginName: String,
             _ settings: GameSettingStore
         ) {
-            let plugins = ActivePluginFiles.load(root: root, baseFile: file)
             lockTrap = LockTrapData.load(
-                root: root, baseFile: file, baseName: pluginName, settings: settings
+                plugins: plugins, baseFile: file, baseName: pluginName, settings: settings
             )
             story = StoryData.load(plugins: plugins)
             quests = QuestStore(plugins: plugins)
@@ -384,10 +385,9 @@ nonisolated extension CellProviderIndexes {
 
     /// Stores built over the whole active load order.
     static func loadOrderStores(
-        root: GameDataRoot, file: ESMFile, settings: GameSettingStore
+        plugins: [(name: String, file: ESMFile)], file: ESMFile, settings: GameSettingStore
     ) -> LoadOrderStores {
-        let plugins = ActivePluginFiles.load(root: root, baseFile: file)
-        return LoadOrderStores(
+        LoadOrderStores(
             idles: IdleStore(plugins: plugins),
             effects: EffectRecordStore(plugins: plugins),
             presentation: PresentationRecordStore(plugins: plugins),
