@@ -65,4 +65,33 @@ nonisolated public struct SkinningPalette: Sendable {
         }
         return Posed(matrices: matrices, matchedBoneCount: matchedBoneCount)
     }
+
+    /// The skeleton bone each palette bone takes its pose from, or -1 when the
+    /// skeleton does not name it. Built once per skeleton a mesh binds to.
+    public func skeletonIndices(in bones: SkeletonBoneIndex) -> [Int] {
+        boneNames.map { bones.index(of: $0) ?? -1 }
+    }
+
+    /// Composes `pose` into `matrices` in place through `skeletonIndices(in:)`.
+    /// An unmapped or unposed bone keeps its bind matrix. Returns the matched count.
+    public func pose(
+        _ pose: SkeletonPose,
+        through skeletonIndices: [Int],
+        into matrices: inout [float4x4]
+    ) -> Int {
+        if matrices.count != bindPoseMatrices.count {
+            matrices = bindPoseMatrices
+        }
+        var matchedBoneCount = 0
+        for index in boneNames.indices {
+            let source = index < skeletonIndices.count ? skeletonIndices[index] : -1
+            guard source >= 0, source < pose.matrices.count else {
+                matrices[index] = bindPoseMatrices[index]
+                continue
+            }
+            matrices[index] = rootParentToSkin * pose.matrices[source] * skinToBoneMatrices[index]
+            matchedBoneCount += 1
+        }
+        return matchedBoneCount
+    }
 }

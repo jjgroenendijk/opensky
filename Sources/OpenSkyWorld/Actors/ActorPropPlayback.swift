@@ -2,6 +2,7 @@
 // or ending an idle then changes only this actor's draw list, not its cell.
 // See docs/engine/idle-runtime.md.
 
+import OpenSkyFormatsCore
 import OpenSkyRendering
 import simd
 
@@ -18,9 +19,9 @@ nonisolated public final class ActorPropPlayback: SharedPoseAnimation {
 
     @discardableResult
     public func update(at time: Float) -> Int {
-        guard let transforms = actor.pose(at: time) else { return 0 }
+        guard let pose = actor.skeletonPose(at: time) else { return 0 }
         var updatedMeshes = Set<ObjectIdentifier>()
-        return apply(transforms, updating: &updatedMeshes)
+        return apply(pose, updating: &updatedMeshes)
     }
 
     public var actorFormID: UInt32 {
@@ -31,15 +32,15 @@ nonisolated public final class ActorPropPlayback: SharedPoseAnimation {
         actor.sharedClipKey
     }
 
-    public func sampleSharedPose(at time: Float) -> [String: float4x4]? {
+    public func sampleSharedPose(at time: Float) -> SkeletonPose? {
         actor.sampleSharedPose(at: time)
     }
 
     public func apply(
-        _ transforms: [String: float4x4],
+        _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        meshes.applySkinningPose(transforms, updating: &updatedMeshes)
+        meshes.applySkinningPose(pose, updating: &updatedMeshes)
     }
 
     @discardableResult
@@ -51,12 +52,12 @@ nonisolated public final class ActorPropPlayback: SharedPoseAnimation {
 nonisolated extension [RenderMesh] {
     /// Poses each skinned mesh once per frame; a mesh in `updatedMeshes` is skipped.
     func applySkinningPose(
-        _ transforms: [String: float4x4],
+        _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
         reduce(0) { count, mesh in
             guard updatedMeshes.insert(ObjectIdentifier(mesh)).inserted else { return count }
-            return count + mesh.updateSkinningPose(transforms)
+            return count + mesh.updateSkinningPose(pose)
         }
     }
 

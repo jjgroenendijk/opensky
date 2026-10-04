@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
@@ -18,6 +19,8 @@ nonisolated public final class ActorAnimationClip: Sendable {
     /// The `.nif` this rig's skeleton came from, which also holds its ragdoll bodies
     /// and joints.
     public let skeletonMeshPath: String
+    /// The skeleton's bone names, indexed once so skinning can map to bone order.
+    public let boneIndex: SkeletonBoneIndex
 
     public init(
         skeleton: HKASkeleton,
@@ -29,6 +32,7 @@ nonisolated public final class ActorAnimationClip: Sendable {
         self.animation = animation
         self.binding = binding
         self.skeletonMeshPath = skeletonMeshPath
+        boneIndex = SkeletonBoneIndex(names: skeleton.boneNames)
     }
 
     /// The rig's bind pose as skeleton-world matrices, in bone order. The frame
@@ -43,14 +47,24 @@ nonisolated public final class ActorAnimationClip: Sendable {
     /// what a ragdoll hand-off reads. Nil where the clip cannot be sampled, the
     /// same condition `namedWorldTransforms(at:)` returns nil on.
     public func orderedWorldTransforms(at time: Float) -> [float4x4]? {
-        guard let named = namedWorldTransforms(at: time) else { return nil }
+        guard let pose = worldPose(at: time) else { return nil }
         let bind = bindWorldMatrices
-        return skeleton.boneNames.enumerated().map { index, name in
-            named[name] ?? (bind.indices.contains(index) ? bind[index] : matrix_identity_float4x4)
+        return skeleton.boneNames.indices.map { index in
+            // A repeated name poses as its first bone, as skinning reads it.
+            let source = boneIndex.index(of: skeleton.boneNames[index]) ?? index
+            if source < pose.matrices.count {
+                return pose.matrices[source]
+            }
+            return bind.indices.contains(index) ? bind[index] : matrix_identity_float4x4
         }
     }
 
     public func namedWorldTransforms(at time: Float) -> [String: float4x4]? {
+        worldPose(at: time)?.named
+    }
+
+    /// The pose at `time` in skeleton bone order. Nil where the clip cannot be sampled.
+    public func worldPose(at time: Float) -> SkeletonPose? {
         guard animation.duration > 0 else { return nil }
         let sampleTime = time.truncatingRemainder(dividingBy: animation.duration)
         guard
@@ -63,11 +77,7 @@ nonisolated public final class ActorAnimationClip: Sendable {
                 samples: samples
             )
         else { return nil }
-        var named: [String: float4x4] = [:]
-        for (name, transform) in zip(skeleton.boneNames, world) where named[name] == nil {
-            named[name] = transform
-        }
-        return named
+        return SkeletonPose(bones: boneIndex, matrices: world)
     }
 }
 
@@ -168,10 +178,10 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         }
     }
 
-    /// The pose to draw at `time`, with an expired override already retired.
+    /// The skeleton-ordered pose to draw at `time`, with an expired override retired.
     /// The one place the override's own clock is applied, so every consumer —
     /// skinning here, the ragdoll hand-off in the app — reads the same pose.
-    public func pose(at time: Float) -> [String: float4x4]? {
+    public func skeletonPose(at time: Float) -> SkeletonPose? {
         let (clip, clipTime) = state.withLock { state in
             if state.overrideEnd > 0, time >= state.overrideEnd {
                 state.clip = state.locomotionClip
@@ -181,14 +191,14 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
             let clipTime = state.overrideEnd > 0 ? time - state.overrideStart : time
             return (state.clip, clipTime)
         }
-        return clip.namedWorldTransforms(at: clipTime)
+        return clip.worldPose(at: clipTime)
     }
 
     @discardableResult
     public func update(at time: Float) -> Int {
-        guard let transforms = pose(at: time) else { return 0 }
+        guard let pose = skeletonPose(at: time) else { return 0 }
         var updatedMeshes = Set<ObjectIdentifier>()
-        return apply(transforms, updating: &updatedMeshes)
+        return apply(pose, updating: &updatedMeshes)
     }
 
     public var actorFormID: UInt32 {
@@ -199,15 +209,15 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         ObjectIdentifier(clip)
     }
 
-    public func sampleSharedPose(at time: Float) -> [String: float4x4]? {
-        clip.namedWorldTransforms(at: time)
+    public func sampleSharedPose(at time: Float) -> SkeletonPose? {
+        clip.worldPose(at: time)
     }
 
     public func apply(
-        _ transforms: [String: float4x4],
+        _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        meshes.applySkinningPose(transforms, updating: &updatedMeshes)
+        meshes.applySkinningPose(pose, updating: &updatedMeshes)
     }
 
     @discardableResult

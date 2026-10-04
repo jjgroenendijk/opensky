@@ -6,6 +6,7 @@
 
 import OpenSkyBehavior
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyRendering
 import simd
 import Synchronization
@@ -57,6 +58,7 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     public let skeleton: HKASkeleton
     public let pose: PlayerPoseBuffer
     private let meshes: [RenderMesh]
+    private let boneIndex: SkeletonBoneIndex
     /// The revision last composed, so an unchanged pose costs one comparison.
     private let appliedRevision = Mutex<Int?>(nil)
     private let updatedBoneCount = Mutex(0)
@@ -69,6 +71,7 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     public init(skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel]) {
         self.skeleton = skeleton
         self.pose = pose
+        boneIndex = SkeletonBoneIndex(names: skeleton.boneNames)
         var seen = Set<ObjectIdentifier>()
         meshes = models.flatMap(\.meshes).filter {
             $0.isSkinned && seen.insert(ObjectIdentifier($0)).inserted
@@ -95,11 +98,8 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
             !bones.isEmpty,
             let world = try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
         else { return 0 }
-        var named: [String: float4x4] = [:]
-        for (name, transform) in zip(skeleton.boneNames, world) where named[name] == nil {
-            named[name] = transform
-        }
-        return meshes.reduce(0) { $0 + $1.updateSkinningPose(named) }
+        let pose = SkeletonPose(bones: boneIndex, matrices: world)
+        return meshes.reduce(0) { $0 + $1.updateSkinningPose(pose) }
     }
 
     @discardableResult

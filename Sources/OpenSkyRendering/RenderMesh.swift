@@ -176,6 +176,8 @@ nonisolated public final class RenderMesh: Sendable {
     private let skinningPalette: SkinningPalette?
     /// Written on the main actor after the build queue hands the mesh over.
     private let boneMatrices: Mutex<[float4x4]>
+    /// The skeleton this mesh last bound to and where each palette bone reads from it.
+    private let skeletonBinding = Mutex<(bones: SkeletonBoneIndex, indices: [Int])?>(nil)
     public var currentBoneMatrices: [float4x4] {
         boneMatrices.withLock { $0 }
     }
@@ -301,6 +303,22 @@ nonisolated public final class RenderMesh: Sendable {
         let posed = palette.posed(by: transformsByName)
         boneMatrices.withLock { $0 = posed.matrices }
         return posed.matchedBoneCount
+    }
+
+    /// The same refresh from a pose in skeleton bone order. The palette maps its bones
+    /// to that skeleton once, so a frame hashes no bone names.
+    @discardableResult
+    public func updateSkinningPose(_ pose: SkeletonPose) -> Int {
+        guard let palette = skinningPalette else { return 0 }
+        let indices = skeletonBinding.withLock { binding in
+            if let binding, binding.bones === pose.bones {
+                return binding.indices
+            }
+            let indices = palette.skeletonIndices(in: pose.bones)
+            binding = (pose.bones, indices)
+            return indices
+        }
+        return boneMatrices.withLock { palette.pose(pose, through: indices, into: &$0) }
     }
 
     /// Restores verified NIF bind matrices for actor-animation A/B. Returns
