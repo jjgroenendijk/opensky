@@ -1,5 +1,6 @@
 // World > World Load: the readout of the load that built the running session.
 
+import AppKit
 @testable import OpenSky
 import OpenSkyWorld
 import Testing

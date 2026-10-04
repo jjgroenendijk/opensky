@@ -343,8 +343,7 @@ final class GameViewController: NSViewController {
 
         // With game data the renderer starts empty and streams cells in;
         // without it the renderer shows `DemoScene`.
-        let session = cellSession
-        cellSession = nil
+        let session = cellSession.take()
         let provider = session?.data
 
         do {
