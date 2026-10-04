@@ -6,6 +6,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
@@ -15,6 +16,21 @@ import Testing
 
 @Suite(.tags(.gpu))
 struct RendererShadowTests {
+    /// Untagged casters are fixed, so the per-frame merge has nothing left to walk,
+    /// and the fixed union still reaches the far tower.
+    @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device))
+    @MainActor
+    func casterBoundsKeepUntaggedCastersFixed() throws {
+        let device = try #require(ShadowSceneFixture.device)
+        let scene = try ShadowSceneFixture.cullingScene(device: device)
+        let casters = ShadowCasterBounds(scene: scene)
+        #expect(casters.movable.isEmpty)
+        #expect(!casters.isUnbounded)
+        let fixed = try #require(casters.fixed)
+        #expect(fixed.max.x >= 200_000)
+        #expect(fixed.min.x <= 0)
+    }
+
     @Test(.enabled(if: ShadowSceneFixture.hasMetal4Device))
     @MainActor
     func shadowsDarkenReceiverUnderCasterAndSpareSky() throws {

@@ -100,7 +100,12 @@ public final class Renderer: NSObject {
     public var frameMorphPrepared: Set<ObjectIdentifier> = []
     /// Internal, not `private(set)`: `RendererSceneSwap.swift` owns the swap
     /// cross-file (same rule as the offscreen/setup satellites above).
-    public var scene: RenderScene
+    public var scene: RenderScene {
+        didSet { shadowCasters = ShadowCasterBounds(scene: scene) }
+    }
+
+    /// The scene's caster bounds, built once per scene for the shadow pass.
+    public private(set) lazy var shadowCasters = ShadowCasterBounds(scene: scene)
     /// Injected framing camera — source of the sun/ambient light and the
     /// free-fly camera's starting pose. setScene may replace it.
     public var camera: SceneCamera
