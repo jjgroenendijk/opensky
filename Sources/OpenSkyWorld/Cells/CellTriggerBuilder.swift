@@ -31,20 +31,22 @@ nonisolated extension CellSceneBuilder {
         resolved: EffectiveReferences,
         location: CellSceneLocation
     ) -> CellCollisionBuild {
-        let products = buildCollisionProducts(
-            refs: resolved.references,
-            location: location,
-            keys: resolved.entries.reduce(into: [:]) { keys, entry in
-                keys[entry.formID] = entry.key
-            }
-        )
-        return CellCollisionBuild(
-            staticCollision: products.collision,
-            triggerVolumes: buildTriggerVolumes(
-                refs: resolved.references, entries: resolved.entries, location: location
-            ),
-            dynamicBodies: products.dynamicBodies
-        )
+        loadPhases.measure(.collision) {
+            let products = buildCollisionProducts(
+                refs: resolved.references,
+                location: location,
+                keys: resolved.entries.reduce(into: [:]) { keys, entry in
+                    keys[entry.formID] = entry.key
+                }
+            )
+            return CellCollisionBuild(
+                staticCollision: products.collision,
+                triggerVolumes: buildTriggerVolumes(
+                    refs: resolved.references, entries: resolved.entries, location: location
+                ),
+                dynamicBodies: products.dynamicBodies
+            )
+        }
     }
 
     /// Every authored trigger volume of one cell, primitives first, then mesh
