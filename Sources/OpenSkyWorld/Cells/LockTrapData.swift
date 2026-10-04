@@ -24,7 +24,7 @@ nonisolated public struct LockTrapData: Sendable {
     }
 
     public static func load(
-        root: GameDataRoot,
+        plugins: [(name: String, file: ESMFile)],
         baseFile: ESMFile,
         baseName: String,
         settings: GameSettingStore
@@ -33,7 +33,7 @@ nonisolated public struct LockTrapData: Sendable {
             lockpicking: .resolve(store: settings),
             lockpickItem: DefaultObjectStore(plugins: [(baseName, baseFile)])
                 .entry(tag: "LKPK")?.rawObject,
-            hazards: HazardStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
+            hazards: HazardStore(plugins: plugins)
         )
     }
 }

@@ -36,10 +36,16 @@ To add a page, such as a mods list or an asset cache, add one descriptor to
 `LauncherRegistry.pages`. Put the page's rules in its own package module, not in the view
 controller.
 
+A launch mode first loads the world data off the main actor. While it runs, the launch page
+shows a load panel instead of the mode buttons: a progress bar, the stages that run now, one row
+per stage with its time, and Cancel. The mode's window opens when the load ends. A settings
+change reloads the same way, and the new game view replaces the old one after the load.
+
 Closing a mode's window, or `Game > Return to Launcher`, ends the mode and shows the launcher
 again. Closing the launcher quits the app.
 
-Set `OPENSKY_LAUNCH_MODE` to `play` or `developer` to skip the launcher. The UI tests set it to
+Set `OPENSKY_LAUNCH_MODE` to `play` or `developer` to skip the launcher. The load still runs,
+without the load panel. The UI tests set it to
 `developer`, because most of them test the shell.
 
 ## Shell anatomy
@@ -231,6 +237,7 @@ Accessibility ids are the UI test API and never change silently.
 | Section reset | `PanelSection-<sectionIdentifier>-ResetControl` |
 | Reset all menu item | `ResetAllOverridesCommand` |
 | Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
+| Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
 | Toolbar | `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
 | Frame HUD | `FrameHUDStatsLabel` |
 

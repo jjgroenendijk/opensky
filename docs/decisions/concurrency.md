@@ -122,7 +122,8 @@ numbers are an upper bound.
 | Menu movies (SWF) and fonts | Serial worker, `Mutex` mailbox | Loading when a menu opens |
 | Save, load, and the save list | `@concurrent` function | Loading after a user action. The encoder and decoder are pure |
 | Preview catalog and detail | `@concurrent` function | Loading for a panel. Hundreds of thousands of records |
-| Launch setup (plugin load, record stores) | Main actor | Runs before the first frame. Under 0.33 s from process start to the first frame |
+| Launch setup (locate the install, settings) | Main actor | Reads a few small files before the first frame |
+| World data load (archives, record stores) | `@concurrent` function with one child task per stage | Loading before the game window opens. 19.3 s on the main thread in a Debug build (measured 2026-10-04). The launcher shows each stage |
 
 Some loads in this table still run on the main actor. Each one has a GitHub issue.
 
@@ -133,6 +134,16 @@ The cell build worker hands its scenes over in a checked `Mutex`, because `CellS
 The render encode grew with the loaded cells in the same run: 0.6 ms at the start and up to 24 ms
 with 25 cells loaded. That is a data layout question for the per-frame profile, not a reason to
 leave the main actor.
+
+## The world data load
+
+The record stores are built once, before the game window opens. The launcher starts the load
+with a main-actor `Task` and draws the stages. Stores that do not read each other build in
+`async let` child tasks. The stores that are classes without `Sendable`, such as the sound
+stores, build in the parent task while the children run. The session is not `Sendable`, so the
+function returns it as a `sending` value: no other code holds it. Each stage reports its start
+and end through a `@Sendable` closure into an `AsyncStream`, and a main-actor task reads that
+stream. Cancel cancels the task. A stage that already runs finishes, and no new stage starts.
 
 ## Rules for new code
 

@@ -147,9 +147,3 @@ nonisolated private struct FlattenState {
     var maximumDepth = 0
     var hitDepthCap = false
 }
-
-nonisolated public enum FormListStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> FormListStore {
-        FormListStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
-    }
-}

@@ -13,6 +13,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let loadingSection = LoadingScreenSection()
     let firstPersonSection = FirstPersonSection()
     let frameSection = FrameStatsSection()
+    let worldLoadSection = WorldLoadSection()
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
     let trapSection = TrapSection()
@@ -44,6 +45,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { frameSection.provider = frameStatsProvider }
     }
 
+    /// Launch cost, beside the per-frame cost above it.
+    weak var worldLoadProvider: (any WorldLoadReportProviding)? {
+        didSet { worldLoadSection.provider = worldLoadProvider }
+    }
+
     weak var sceneStatsProvider: (any SceneStatsProviding)? {
         didSet { sceneSection.provider = sceneStatsProvider }
     }
@@ -67,8 +73,8 @@ final class WorldPanelViewController: InspectorPanelViewController {
 
     override func makeSections() -> [PanelSectionViewController] {
         [
-            cameraSection, cinematicSection, firstPersonSection, frameSection, sceneSection,
-            renderDebugSection, triggerSection, trapSection, loadingSection
+            cameraSection, cinematicSection, firstPersonSection, frameSection, worldLoadSection,
+            sceneSection, renderDebugSection, triggerSection, trapSection, loadingSection
         ]
     }
 

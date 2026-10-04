@@ -3,6 +3,7 @@
 // stay cached.
 
 import AppKit
+import OpenSkyWorld
 
 final class LauncherViewController: NSSplitViewController {
     private let sidebar = LauncherSidebarViewController()
@@ -48,6 +49,24 @@ final class LauncherViewController: NSSplitViewController {
 
     func showPage(id: String) {
         sidebar.select(id: id)
+    }
+
+    /// Brings the launch page forward, where the load is drawn.
+    func beginLoad() {
+        showPage(id: LauncherRegistry.defaultPageID)
+        launchPage?.showLoad(WorldLoadTimeline(), elapsed: .zero)
+    }
+
+    func showLoad(_ timeline: WorldLoadTimeline, elapsed: Duration) {
+        launchPage?.showLoad(timeline, elapsed: elapsed)
+    }
+
+    func endLoad() {
+        launchPage?.endLoad()
+    }
+
+    private var launchPage: LaunchPageViewController? {
+        pageControllers[LauncherRegistry.defaultPageID] as? LaunchPageViewController
     }
 
     private func show(_ page: LauncherPageDescriptor) {

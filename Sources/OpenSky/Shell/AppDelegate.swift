@@ -1,5 +1,6 @@
 // App lifecycle. The app opens on the launcher, where the user picks the game
-// folder and a launch mode. Closing a mode's window returns to the launcher.
+// folder and a launch mode. The launcher shows the world load, then the mode's
+// window opens. Closing a mode's window returns to the launcher.
 
 import AppKit
 import MetalKit
@@ -7,6 +8,7 @@ import OpenSkyLaunch
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let gameContext = GameLaunchContext()
+    private let worldLoader = WorldLoader()
     private var launcher: LauncherViewController?
     private var launcherWindow: NSWindow?
     private var modeWindow: NSWindow?
@@ -25,7 +27,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         agentControl = AgentControlHost()
 
         if let mode = LaunchPreferences.forcedMode() {
-            begin(mode, atTitleScreen: LaunchPreferences.forcedTitleScreen())
+            begin(
+                mode,
+                atTitleScreen: LaunchPreferences.forcedTitleScreen(),
+                showingLauncher: false
+            )
         } else {
             showLauncher()
         }
@@ -33,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_: Notification) {
+        worldLoader.cancel()
         agentControl?.shutdown()
     }
 
@@ -83,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Ends the running mode. The window is already closing, so this only
     /// stops the draw loop and drops the game graph.
     private func endMode() {
+        cancelLoad()
         pauseRendering(
             shellViewController?.gameViewController
                 ?? modeWindow?.contentViewController as? GameViewController
@@ -109,9 +117,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// A settings change applies without a relaunch, to whatever is running.
+    /// The launcher shows the load, and the new game view swaps in after it.
     private func reloadRunningMode() {
-        guard let activeMode else { return }
+        guard activeMode != nil else { return }
         gameContext.resolve()
+        showLauncher()
+        loadWorld { [weak self] in self?.swapRunningGame() }
+    }
+
+    private func swapRunningGame() {
+        guard let activeMode else { return }
+        launcherWindow?.orderOut(nil)
         let game = makeGame(for: activeMode)
         switch activeMode {
         case .developer:
@@ -132,17 +148,50 @@ extension AppDelegate: LauncherActions {
     }
 
     func gameFolderDidChange() {
+        // A load in the launcher reads the old folder, so it stops.
+        if activeMode == nil {
+            cancelLoad()
+        }
         launcher?.refreshGameFolder()
         reloadRunningMode()
     }
 
-    private func begin(_ mode: LaunchMode, atTitleScreen: Bool) {
+    func cancelLoad() {
+        worldLoader.cancel()
+        launcher?.endLoad()
+    }
+
+    /// A forced mode skips the launcher, so its load shows no panel.
+    private func begin(_ mode: LaunchMode, atTitleScreen: Bool, showingLauncher: Bool = true) {
         guard GameFolderStatus().canStart(mode) else {
             showLauncher()
             return
         }
         LaunchPreferences.remember(mode)
         gameContext.resolve()
+        if showingLauncher {
+            showLauncher()
+        }
+        loadWorld { [weak self] in self?.open(mode, atTitleScreen: atTitleScreen) }
+    }
+
+    /// The load runs off the main actor, so the launcher stays responsive and
+    /// draws each stage as it starts and finishes.
+    private func loadWorld(then finish: @escaping () -> Void) {
+        launcher?.beginLoad()
+        gameContext.load(
+            with: worldLoader,
+            onUpdate: { [weak self] timeline, elapsed in
+                self?.launcher?.showLoad(timeline, elapsed: elapsed)
+            },
+            completion: { [weak self] in
+                self?.launcher?.endLoad()
+                finish()
+            }
+        )
+    }
+
+    private func open(_ mode: LaunchMode, atTitleScreen: Bool) {
         let window = makeModeWindow(for: mode, atTitleScreen: atTitleScreen)
         window.delegate = self
         modeWindow = window

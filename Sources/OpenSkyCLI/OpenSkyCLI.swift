@@ -15,9 +15,9 @@ enum CLIError: Error {
 
 @main
 enum OpenSkyCLI {
-    static func main() {
+    static func main() async {
         do {
-            try run(arguments: Array(CommandLine.arguments.dropFirst()))
+            try await run(arguments: Array(CommandLine.arguments.dropFirst()))
         } catch let CLIError.usage(message) {
             printError("[ERROR] \(message)\n\n\(usage)")
             exit(2)
@@ -32,13 +32,13 @@ enum OpenSkyCLI {
         }
     }
 
-    private static func run(arguments: [String]) throws {
+    private static func run(arguments: [String]) async throws {
         var scanner = ArgumentScanner(arguments)
         let dataRoot = try scanner.option("--data-root")
         guard let command = scanner.next() else {
             throw CLIError.usage("no command given")
         }
-        if try runEngineCommand(command, dataRoot: dataRoot, scanner: &scanner) {
+        if try await runEngineCommand(command, dataRoot: dataRoot, scanner: &scanner) {
             return
         }
         switch command {
@@ -93,7 +93,7 @@ enum OpenSkyCLI {
         _ command: String,
         dataRoot: String?,
         scanner: inout ArgumentScanner
-    ) throws -> Bool {
+    ) async throws -> Bool {
         switch command {
         case "vfs":
             try VFSCommand.run(
@@ -135,7 +135,7 @@ enum OpenSkyCLI {
             // The scene and media commands, in their own pass: this switch is at
             // the strict cyclomatic-complexity limit, and a new command belongs
             // beside its siblings rather than pushing it over.
-            return try runSceneCommand(command, dataRoot: dataRoot, scanner: &scanner)
+            return try await runSceneCommand(command, dataRoot: dataRoot, scanner: &scanner)
         }
         return true
     }
@@ -144,7 +144,7 @@ enum OpenSkyCLI {
         _ command: String,
         dataRoot: String?,
         scanner: inout ArgumentScanner
-    ) throws -> Bool {
+    ) async throws -> Bool {
         switch command {
         case "collision":
             try CollisionCommand.run(
@@ -180,6 +180,11 @@ enum OpenSkyCLI {
             )
         case "game":
             try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
+        case "launch-bench":
+            // Async: it awaits the same off-main loader the app runs.
+            try await LaunchBenchCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         default:
             return false
         }
