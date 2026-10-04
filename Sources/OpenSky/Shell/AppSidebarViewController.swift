@@ -43,6 +43,8 @@ final class AppSidebarViewController: NSViewController {
 
     private final class DestinationItem {
         let descriptor: DestinationDescriptor
+        /// The indicator state last shown, so a refresh touches only changed rows.
+        var isOverridden = false
 
         init(descriptor: DestinationDescriptor) {
             self.descriptor = descriptor
@@ -92,11 +94,22 @@ final class AppSidebarViewController: NSViewController {
         outlineView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
     }
 
-    /// Re-queries visible destination rows without rebuilding the sidebar model.
+    /// Re-queries each destination and updates only changed indicators in place.
+    /// Panels call this on every timer tick, and reloading a row rebuilds its view.
     func refreshOverrideIndicators() {
         for group in groups {
             for child in group.children {
-                outlineView.reloadItem(child)
+                let overridden = isDestinationOverridden?(child.descriptor.id) == true
+                guard overridden != child.isOverridden else { continue }
+                child.isOverridden = overridden
+                let row = outlineView.row(forItem: child)
+                guard
+                    row >= 0,
+                    let cell = outlineView.view(
+                        atColumn: 0, row: row, makeIfNecessary: false
+                    ) as? DestinationCell
+                else { continue }
+                cell.overrideIndicator.isHidden = !overridden
             }
         }
     }
@@ -176,8 +189,8 @@ extension AppSidebarViewController: NSOutlineViewDelegate {
             cell.imageView?.contentTintColor = Theme.gold
             cell.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
             cell.textField?.setAccessibilityIdentifier(descriptor.sidebarIdentifier)
-            cell.overrideIndicator.isHidden =
-                isDestinationOverridden?(descriptor.id) != true
+            destination.isOverridden = isDestinationOverridden?(descriptor.id) == true
+            cell.overrideIndicator.isHidden = !destination.isOverridden
             cell.overrideIndicator.setAccessibilityIdentifier(
                 "\(descriptor.sidebarIdentifier)-OverrideIndicator"
             )
