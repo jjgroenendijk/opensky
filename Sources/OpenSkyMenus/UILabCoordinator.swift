@@ -110,7 +110,8 @@ public final class UILabCoordinator {
             language: install?.language ?? LocalizedLabels.uiLabSample.language,
             installLoaded: install != nil,
             installFileCount: install?.fileCount ?? 0,
-            installKeyCount: install?.keyCount ?? 0
+            installKeyCount: install?.keyCount ?? 0,
+            installVanillaPath: install?.vanillaPath
         )
     }
 

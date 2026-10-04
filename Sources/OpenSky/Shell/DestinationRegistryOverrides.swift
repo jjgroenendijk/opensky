@@ -3,6 +3,7 @@
 // the main file uses them.
 
 import AppKit
+import OpenSkyMenus
 
 extension DestinationRegistry {
     static let audioOverrides = DestinationOverrideActions(
@@ -88,6 +89,24 @@ extension DestinationRegistry {
             SystemMenuSection.resetToDefaults(provider: context.providers)
             SystemMenuSettingsSection.resetToDefaults(provider: context.providers)
         }
+    )
+
+    /// An open title or race menu holds the world paused.
+    static let characterMenuOverrides = DestinationOverrideActions(
+        isOverridden: { context in
+            context.providers.titleMenuSnapshot.isOpen || context.providers.raceMenuSnapshot.isOpen
+        },
+        resetToDefaults: { context in
+            if context.providers.raceMenuSnapshot.isOpen {
+                context.providers.sendRaceMenuInput(.button(.cancel))
+            }
+            context.providers.closeTitleMenu()
+        }
+    )
+
+    static let mapMenuOverrides = DestinationOverrideActions(
+        isOverridden: { context in context.providers.mapMenuSnapshot.mode != nil },
+        resetToDefaults: { context in context.providers.closeMap() }
     )
 
     static let inventoryMenuOverrides = DestinationOverrideActions(

@@ -44,6 +44,9 @@ nonisolated public final class SWFMovieRuntime {
     public let timers = SWFRuntimeTimers()
     /// Both directions of the `GameDelegate` bridge, bounded.
     public private(set) var invokeLog = SWFInvokeLog()
+    /// Resolves a `$TOKEN` text when a field is read, as Scaleform's translator does.
+    /// Nil shows every text as written.
+    public var textTranslator: ((String) -> String)?
     /// Engine-side handlers a movie may call by name.
     public var hostFunctions: [String: SWFHostFunction] = [:]
     /// Placements that attached a key CLIPACTIONS handler. Zero across the whole

@@ -234,6 +234,13 @@ run "swf container-menu (bartermenu.swf)" swf container-menu --mode barter --tra
 grep 'swf container-menu diagnostics:' "$log" | tail -1 | grep -q ' 0 unhandled of ' \
   || fail "bartermenu.swf made unanswered engine calls"
 
+# M28 menu probes: the System page of quest_journal.swf comes up, and the race
+# menu movie starts and makes host calls.
+run "swf system-menu (quest_journal.swf System page)" swf system-menu
+grep -q 'swf probe ' "$log" || fail "swf system-menu printed no host calls"
+run "swf movie-probe (racesex_menu.swf)" swf movie-probe --movie 'interface\racesex_menu.swf'
+grep -q 'swf probe ' "$log" || fail "swf movie-probe printed no host calls"
+
 # M17.3 dialogue menu gate: the vanilla movie comes up through
 # DialogueMenuMovieBridge, publishes every entry point the bridge drives, takes
 # a published topic list and says a line. Vanilla install: 0 faults, 0 unhandled

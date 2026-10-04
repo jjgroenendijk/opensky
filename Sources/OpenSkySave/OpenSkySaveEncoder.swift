@@ -11,18 +11,27 @@ import OpenSkyWorldState
 nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its fingerprint and header metadata, byte-deterministic:
     /// key order, ascending tags, no clock or hash seed. Only the header depends on
-    /// `metadata`. A nil `clock` or empty `scripts`/`timers` writes no chunk.
+    /// `metadata`. A nil `clock`, `summary`, or `thumbnail`, or empty `scripts`/`timers`,
+    /// writes no chunk.
     public static func encode(
         snapshot: WorldStateSnapshot,
         fingerprint: [SavePluginFingerprint],
         metadata: SaveCreationMetadata,
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
-        timers: [PapyrusTimerState] = []
+        timers: [PapyrusTimerState] = [],
+        summary: SaveSummary? = nil,
+        thumbnail: SaveThumbnail? = nil
     ) -> Data {
         var writer = BinaryWriter()
         writeHeader(metadata: metadata, into: &writer)
         writeFingerprint(fingerprint, into: &writer)
+        if let summary {
+            OpenSkySaveSummaryCodec.write(summary, into: &writer)
+        }
+        if let thumbnail {
+            OpenSkySaveSummaryCodec.write(thumbnail, into: &writer)
+        }
         writeChunk(tag: OpenSkySaveFormat.ChunkTag.allocator, into: &writer) { payload in
             payload.writeUInt64(snapshot.nextGeneratedSequence)
         }
@@ -103,6 +112,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writeStoryManagerQuests(entries, into: &writer)
         writeDialogueBranches(entries, into: &writer)
         writeHelpMessages(entries, into: &writer)
+        writeIdentityAndMap(entries, into: &writer)
     }
 
     // MARK: - Header
@@ -296,9 +306,11 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writer.writeUInt64(state.interval.bitPattern)
         writer.writeUInt64(state.remaining.bitPattern)
     }
+}
 
-    // MARK: - Strings
+// MARK: - Strings
 
+nonisolated extension OpenSkySaveEncoder {
     /// UInt16 byte length + UTF-8 bytes. Strings longer than `UInt16.max`
     /// bytes are cut back to the last whole UTF-8 scalar that fits, so the
     /// decoder still sees valid text.

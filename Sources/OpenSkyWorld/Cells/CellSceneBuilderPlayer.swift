@@ -44,7 +44,8 @@ nonisolated public protocol PlayerBodyProviding {
     func makePlayerBody(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerBody, PlayerBodyError>
 
     /// Assembles the first-person arms from the same equipped set, over the
@@ -52,7 +53,8 @@ nonisolated public protocol PlayerBodyProviding {
     func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerFirstPersonRig, PlayerBodyError>
 }
 
@@ -64,50 +66,60 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
     public func makePlayerBody(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerBody, PlayerBodyError> {
-        assemblePlayer(equipped: equipped, firstPerson: false, label: "player body")
-            .map { assembly in
-                PlayerBody(
-                    assembly: assembly,
-                    animation: PlayerAnimationPlayback(
-                        skeleton: skeleton,
-                        pose: pose,
-                        models: assembly.models.map(\.asset.model)
-                    )
+        assemblePlayer(
+            equipped: equipped, appearance: appearance, firstPerson: false, label: "player body"
+        )
+        .map { assembly in
+            PlayerBody(
+                assembly: assembly,
+                animation: PlayerAnimationPlayback(
+                    skeleton: skeleton,
+                    pose: pose,
+                    models: assembly.models.map(\.asset.model)
                 )
-            }
+            )
+        }
     }
 
     public func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {
-        assemblePlayer(equipped: equipped, firstPerson: true, label: "player arms")
-            .map { assembly in
-                PlayerFirstPersonRig(
-                    assembly: assembly,
-                    animation: PlayerAnimationPlayback(
-                        skeleton: skeleton,
-                        pose: pose,
-                        models: assembly.models.map(\.asset.model)
-                    )
+        assemblePlayer(
+            equipped: equipped, appearance: appearance, firstPerson: true, label: "player arms"
+        )
+        .map { assembly in
+            PlayerFirstPersonRig(
+                assembly: assembly,
+                animation: PlayerAnimationPlayback(
+                    skeleton: skeleton,
+                    pose: pose,
+                    models: assembly.models.map(\.asset.model)
                 )
-            }
+            )
+        }
     }
 
     /// Resolves the player's appearance once and assembles both rigs. The arms are the
     /// third-person answer through `firstPersonProjection`, so the rigs cannot disagree.
     private func assemblePlayer(
         equipped: [FormID]?,
+        appearance override: PlayerAppearanceOverride?,
         firstPerson: Bool,
         label: String
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
         let resolvers = actorResolversBuildingIfNeeded(localized: pluginLocalized)
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
-            let appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)
+            var appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)
+            if let override {
+                appearance = appearance.applying(override)
+            }
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
             if firstPerson {
                 visual = visual.firstPersonProjection(

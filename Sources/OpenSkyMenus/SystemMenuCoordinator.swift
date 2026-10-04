@@ -10,14 +10,33 @@ import OSLog
 /// input consumer, which routes by the top of the menu stack.
 public protocol SystemMenuWorld: SWFLayerWorld, MenuInputConsumer {
     var audioEnabled: Bool { get }
-    var audioMasterVolume: Float { get set }
     func quitApplication()
+    /// Ends the session and shows the title menu.
+    func quitToMainMenu()
+}
+
+/// Saving and loading for the Save and Load pages and the quick keys.
+public protocol SaveGameService: AnyObject {
+    func saveRows() -> [SaveSlotRow]
+    /// Writes `slot`, or a new slot when nil; returns the slot written.
+    @discardableResult
+    func saveGame(slot: String?) throws -> String
+    func loadGame(slot: String) throws
+    func deleteSave(slot: String) throws
 }
 
 public final class SystemMenuCoordinator {
     public static let identifier: MenuIdentifier = "SystemMenu"
 
-    public private(set) var model = SystemMenuModel()
+    public internal(set) var model = SystemMenuModel()
+    public internal(set) var settingsPage = SettingsPageModel(catalog: .vanilla)
+    public internal(set) var saveLoadPage: SaveLoadPageModel?
+    public internal(set) var controlsPage = ControlsPageModel()
+    public internal(set) var quitPage: ConfirmationModel?
+    /// The result of the last save, load, or remap, for the readout.
+    public internal(set) var lastMessage: String?
+    public private(set) var settings: PlayerSettingsCoordinator?
+    public weak var saves: SaveGameService?
     /// Off by default: the vanilla movie takes the one SWF layer from the HUD.
     public private(set) var movieEnabled = false
     public private(set) var movieLoaded = false
@@ -30,7 +49,7 @@ public final class SystemMenuCoordinator {
     private let menuMode: MenuModeController
     private let movies: SWFMovieSource
     private let hud: HUDCoordinator
-    private weak var world: SystemMenuWorld?
+    weak var world: SystemMenuWorld?
 
     public init(menuMode: MenuModeController, movies: SWFMovieSource, hud: HUDCoordinator) {
         self.menuMode = menuMode
@@ -42,7 +61,12 @@ public final class SystemMenuCoordinator {
         self.world = world
     }
 
-    private var renderer: Renderer? {
+    public func attach(settings: PlayerSettingsCoordinator) {
+        self.settings = settings
+        settingsPage = SettingsPageModel(catalog: settings.store.catalog)
+    }
+
+    var renderer: Renderer? {
         world?.renderer
     }
 
@@ -63,6 +87,11 @@ public final class SystemMenuCoordinator {
     public func close() {
         guard model.isOpen else { return }
         model.close()
+        dismiss()
+    }
+
+    /// Resume and cancel close the model first, so this skips the model guard.
+    private func dismiss() {
         menuMode.dismiss(Self.identifier)
         if movieLoaded {
             stopMovie()
@@ -80,42 +109,51 @@ public final class SystemMenuCoordinator {
         }
     }
 
+    /// The settings store owns the value; this reads and writes through it.
     public var masterVolume: Float {
-        get { world?.audioMasterVolume ?? 1 }
-        set { world?.audioMasterVolume = newValue }
+        get { Float(settings?.store.value(.masterVolume) ?? 1) }
+        set { settings?.store.set(.masterVolume, to: Double(newValue)) }
     }
 
-    /// The movie gets the event first; the model handles what it leaves.
+    /// On the main page the movie moves its own highlight, and accept opens the
+    /// engine row the movie shows. A sub-page has its own model.
     public func route(_ event: MenuInputEvent) {
         guard model.isOpen else { return }
-        if movieLoaded, let renderer {
+        guard model.page == .main else {
+            routePage(event)
+            return
+        }
+        if movieLoaded, let renderer, case .move = event {
             do {
-                if try SystemMenuMovieBridge.send(event, renderer: renderer) {
-                    return
-                }
+                try SystemMenuMovieBridge.send(event, renderer: renderer)
             } catch {
                 movieError = String(describing: error)
                 Self.logger.error(
                     "[ERROR] system menu input: \(String(describing: error), privacy: .public)"
                 )
-                return
             }
+            return
+        }
+        if
+            movieLoaded, event == .button(.accept),
+            let entry = renderer?.swfRuntime.flatMap(SystemMenuMovieBridge.selectedEntry(runtime:))
+        {
+            model.select(entry)
         }
         if let outcome = model.handle(event) {
             apply(outcome)
         }
     }
 
-    /// Settings is state on the model, not a second menu on the stack.
-    private func apply(_ outcome: SystemMenuOutcome) {
+    /// A sub-page is state on the model, not a second menu on the stack.
+    func apply(_ outcome: SystemMenuOutcome) {
         switch outcome {
         case .resume:
-            close()
-        case .showSettings:
-            break
-        case .quit:
-            close()
-            world?.quitApplication()
+            dismiss()
+        case .quicksave:
+            quicksave()
+        case let .showPage(page):
+            showPage(page)
         }
     }
 
@@ -163,6 +201,9 @@ public final class SystemMenuCoordinator {
                 SystemMenuMovieBridge.activate(runtime: runtime) { [weak self] in
                     self?.close()
                 }
+                SettingsMovieBridge.register(runtime: runtime) { [weak self] group in
+                    self?.openSettingsCategory(group)
+                }
             }
             for _ in 0 ..< SystemMenuMovieBridge.activationTicks {
                 try renderer.advanceSWFRuntime()
@@ -208,7 +249,8 @@ public final class SystemMenuCoordinator {
             movieFaults: diagnostics?.faults ?? 0,
             movieMissingNames: diagnostics?.missingNames ?? 0,
             movieEntryTitles: runtime.map(SystemMenuMovieBridge.entryLabels(runtime:)) ?? [],
-            movieState: runtime.flatMap(SystemMenuMovieBridge.currentState(runtime:))
+            movieState: runtime.flatMap(SystemMenuMovieBridge.currentState(runtime:)),
+            page: pageSnapshot
         )
     }
 
@@ -248,6 +290,10 @@ extension SystemMenuControlForwarding {
 
     public func sendSystemMenuInput(_ event: MenuInputEvent) {
         systemMenu.route(event)
+    }
+
+    public func deleteSelectedSave() {
+        systemMenu.requestDeleteSelectedSave()
     }
 
     public var systemMenuSnapshot: SystemMenuControlSnapshot {

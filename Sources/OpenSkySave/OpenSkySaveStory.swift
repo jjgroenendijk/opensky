@@ -205,6 +205,12 @@ nonisolated extension OpenSkySaveDecoder {
             body.dialogueBranches = try OpenSkySaveStoryDecoder.decodeDialogueBranches(payload)
         case OpenSkySaveFormat.ChunkTag.helpMessages:
             body.helpMessages = try OpenSkySaveStoryDecoder.decodeHelpMessages(payload)
+        case OpenSkySaveFormat.ChunkTag.playerIdentity:
+            body.identities = try OpenSkySaveStoryDecoder.decodeIdentities(payload)
+        case OpenSkySaveFormat.ChunkTag.mapMarkers:
+            body.markers = try OpenSkySaveStoryDecoder.decodeMarkers(payload)
+        case OpenSkySaveFormat.ChunkTag.localMapFog:
+            body.fog = try OpenSkySaveStoryDecoder.decodeFog(payload)
         default:
             break
         }

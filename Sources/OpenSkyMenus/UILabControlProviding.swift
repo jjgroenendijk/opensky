@@ -44,6 +44,8 @@ nonisolated public struct LocalizedLabelsControlSnapshot: Equatable, Sendable {
     public let installLoaded: Bool
     public let installFileCount: Int
     public let installKeyCount: Int
+    /// The vanilla translation file the install's map starts from, if any.
+    public let installVanillaPath: String?
 
     public init(
         sampleShown: Bool,
@@ -51,7 +53,8 @@ nonisolated public struct LocalizedLabelsControlSnapshot: Equatable, Sendable {
         language: String,
         installLoaded: Bool,
         installFileCount: Int,
-        installKeyCount: Int
+        installKeyCount: Int,
+        installVanillaPath: String? = nil
     ) {
         self.sampleShown = sampleShown
         self.sampleKeyCount = sampleKeyCount
@@ -59,6 +62,7 @@ nonisolated public struct LocalizedLabelsControlSnapshot: Equatable, Sendable {
         self.installLoaded = installLoaded
         self.installFileCount = installFileCount
         self.installKeyCount = installKeyCount
+        self.installVanillaPath = installVanillaPath
     }
 }
 

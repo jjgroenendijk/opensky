@@ -3,9 +3,11 @@
 // chunks. A nested `internal` type so the parent keeps saying `Body`.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyDialogueInterface
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 
 nonisolated extension OpenSkySaveDecoder {
@@ -77,5 +79,11 @@ nonisolated extension OpenSkySaveDecoder {
         /// Absent `DLBS`: no speaker is in an exclusive branch.
         public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
         public var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
+        /// Absent `PIDN`: the player is the vanilla `Player` record.
+        public var identities: [SaveStoryEntry<PlayerIdentityState>] = []
+        /// Absent `MRKS`: every marker is as its record flags say.
+        public var markers: [SaveStoryEntry<MapMarkerState>] = []
+        /// Absent `FOGM`: the local map is fogged everywhere.
+        public var fog: [SaveStoryEntry<LocalMapFogState>] = []
     }
 }

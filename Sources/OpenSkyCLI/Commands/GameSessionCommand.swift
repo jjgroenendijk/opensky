@@ -17,12 +17,14 @@ enum GameLaunch {
         }
         let appPath = try scanner.option("--app")
         let wait = try scanner.option("--wait").flatMap(Double.init) ?? defaultWaitSeconds
+        let title = scanner.flag("--title")
         try scanner.finish()
         // An app already serving the socket is attached to, not launched twice.
         if (try? AgentClientSession(path: options.socketPath, connectTimeout: 2)) == nil {
             try open(
                 app: locateApp(appPath),
                 mode: mode,
+                title: title,
                 dataRoot: dataRoot,
                 socket: options.socketPath
             )
@@ -48,11 +50,14 @@ enum GameLaunch {
         return installed
     }
 
-    private static func open(app: URL, mode: String, dataRoot: String?, socket: String) throws {
+    private static func open(
+        app: URL, mode: String, title: Bool, dataRoot: String?, socket: String
+    ) throws {
         var arguments = [
             "-n", app.path(percentEncoded: false),
             "--env", "OPENSKY_AGENT_CONTROL=1",
             "--env", "OPENSKY_LAUNCH_MODE=\(mode)",
+            "--env", "OPENSKY_START_AT_TITLE=\(title ? 1 : 0)",
             "--env", "OPENSKY_AGENT_SOCKET=\(socket)"
         ]
         if let dataRoot {

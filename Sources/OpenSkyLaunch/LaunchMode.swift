@@ -7,6 +7,12 @@ nonisolated public enum LaunchMode: String, CaseIterable, Sendable {
     /// The developer shell: sidebar destinations and inspector panels.
     case developer
 
+    /// Play opens on the game's main menu, as the original game does. The
+    /// developer shell opens in the world, so a check starts where it acts.
+    public var opensAtTitleScreen: Bool {
+        self == .play
+    }
+
     /// The developer shell shows a demo scene without an install; play does not.
     public var requiresGameData: Bool {
         switch self {

@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         agentControl = AgentControlHost()
 
         if let mode = LaunchPreferences.forcedMode() {
-            start(mode)
+            begin(mode, atTitleScreen: LaunchPreferences.forcedTitleScreen())
         } else {
             showLauncher()
         }
@@ -57,8 +57,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Modes
 
-    private func makeModeWindow(for mode: LaunchMode) -> NSWindow {
+    private func makeModeWindow(for mode: LaunchMode, atTitleScreen: Bool) -> NSWindow {
         let game = makeGame(for: mode)
+        game.startsAtTitleScreen = atTitleScreen
         switch mode {
         case .play:
             shellViewController = nil
@@ -127,23 +128,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: LauncherActions {
     func start(_ mode: LaunchMode) {
+        begin(mode, atTitleScreen: mode.opensAtTitleScreen)
+    }
+
+    func gameFolderDidChange() {
+        launcher?.refreshGameFolder()
+        reloadRunningMode()
+    }
+
+    private func begin(_ mode: LaunchMode, atTitleScreen: Bool) {
         guard GameFolderStatus().canStart(mode) else {
             showLauncher()
             return
         }
         LaunchPreferences.remember(mode)
         gameContext.resolve()
-        let window = makeModeWindow(for: mode)
+        let window = makeModeWindow(for: mode, atTitleScreen: atTitleScreen)
         window.delegate = self
         modeWindow = window
         activeMode = mode
         window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
-    }
-
-    func gameFolderDidChange() {
-        launcher?.refreshGameFolder()
-        reloadRunningMode()
     }
 }
 

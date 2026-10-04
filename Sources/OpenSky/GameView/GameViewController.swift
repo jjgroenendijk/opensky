@@ -10,6 +10,7 @@ import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyFactions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -37,6 +38,8 @@ final class GameViewController: NSViewController {
     /// Locator failure shown inside World. Settings remains reachable so the
     /// root can be corrected without relaunching or dismissing an alert loop.
     var startupErrorMessage: String?
+    /// Set by the launch mode; the player setting can also ask for it.
+    var startsAtTitleScreen = false
 
     /// Runs here, not in the AppDelegate, because the asset libraries bind GPU
     /// resources to the view's device. A nil result falls back to `DemoScene`.
@@ -136,7 +139,39 @@ final class GameViewController: NSViewController {
     lazy var systemMenu: SystemMenuCoordinator = {
         let systemMenu = SystemMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
         systemMenu.attach(world: self)
+        systemMenu.attach(settings: playerSettings)
+        systemMenu.saves = saveGames
         return systemMenu
+    }()
+
+    /// The INI defaults under the player's own values. The AppDelegate sets the catalog.
+    var settingsCatalog = PlayerSettingsCatalog.vanilla
+    lazy var playerSettings = PlayerSettingsCoordinator(store: PlayerSettingsStore(
+        catalog: settingsCatalog, persistence: try? PlayerSettingsFile.defaultFile()
+    ))
+    /// `interface\translations` for the `$` keys movies show; nil without game data.
+    var menuTextLoader: (() -> LocalizedLabels)?
+    var controlMapLoader: (() throws -> ControlMapFile)?
+    lazy var saveGames = SaveGameWorldAdapter(game: self)
+    lazy var menuWorld = MenuWorldAdapter(game: self)
+    lazy var mapWorld = MapWorldAdapter(game: self)
+    lazy var titleMenu: TitleMenuCoordinator = {
+        let titleMenu = TitleMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
+        titleMenu.attach(world: menuWorld)
+        titleMenu.saves = saveGames
+        return titleMenu
+    }()
+
+    lazy var raceMenu: RaceMenuCoordinator = {
+        let raceMenu = RaceMenuCoordinator(menuMode: menuMode)
+        raceMenu.attach(world: menuWorld)
+        return raceMenu
+    }()
+
+    lazy var mapMenu: MapMenuCoordinator = {
+        let mapMenu = MapMenuCoordinator(menuMode: menuMode)
+        mapMenu.attach(world: mapWorld)
+        return mapMenu
     }()
 
     /// Inventory menu row list + presentation state.
@@ -284,11 +319,7 @@ final class GameViewController: NSViewController {
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
-        gameView.input = cameraInput
-        gameView.menuMode = menuMode
-        gameView.onJournalKey = { [weak self] in self?.journalMenu.open() }
-        gameView.onInventoryKey = { [weak self] in self?.inventoryMenu.open() }
-        gameView.onInputEvent = { [weak self] event in self?.messages.noteInputEvent(event) }
+        wireInput(gameView)
         view = gameView
     }
 
@@ -331,21 +362,15 @@ final class GameViewController: NSViewController {
             mtkView.delegate = newRenderer
             renderer = newRenderer
             hud.start()
-            // Menu mode drives the renderer's world-sim pause and clears held
-            // world input on entry so no key sticks while the menu owns input.
-            menuMode.onModeChange = { [weak newRenderer, weak cameraInput] route, paused in
-                newRenderer?.worldSimPaused = paused
-                // Released on the route flip rather than on the pause, because
-                // the dialogue menu captures input without stopping the world
-                // and a key held into it would otherwise keep
-                // driving the camera nobody is steering.
-                if route == .menu {
-                    cameraInput?.releaseAll()
-                }
-            }
+            wireMenus(renderer: newRenderer)
+            wireMenuMode(renderer: newRenderer)
             if let session {
                 worldData = session.data
                 sessionWiring.wireStreaming(session: session, renderer: newRenderer)
+            }
+            // After the world data, because the title's logo loads through it.
+            if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
+                titleMenu.open()
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
             newRenderer.onFrame.add { [weak self] _ in
@@ -355,11 +380,39 @@ final class GameViewController: NSViewController {
             show(message: "Renderer setup failed: \(error)")
         }
     }
+}
 
+extension GameViewController {
     static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
+
+    private func wireInput(_ gameView: GameMetalView) {
+        gameView.input = cameraInput
+        gameView.menuMode = menuMode
+        gameView.onJournalKey = { [weak self] in self?.journalMenu.open() }
+        gameView.onInventoryKey = { [weak self] in self?.inventoryMenu.open() }
+        gameView.onInputEvent = { [weak self] event in self?.messages.noteInputEvent(event) }
+        gameView.onCommand = { [weak self] action in self?.runCommand(action) }
+        gameView.onCapturedKey = { [weak self] code in
+            self?.systemMenu.captureKey(scanCode: code) ?? false
+        }
+        gameView.onTypedText = { [weak self] text in self?.raceMenu.type(text) ?? false }
+    }
+
+    /// Menu mode drives the renderer's world-sim pause and clears held world
+    /// input on entry, so no key sticks while the menu owns input.
+    private func wireMenuMode(renderer: Renderer) {
+        menuMode.onModeChange = { [weak renderer, weak cameraInput] route, paused in
+            renderer?.worldSimPaused = paused
+            // Released on the route flip, not the pause: the dialogue menu
+            // captures input without stopping the world.
+            if route == .menu {
+                cameraInput?.releaseAll()
+            }
+        }
+    }
 
     private func show(message: String) {
         let label = NSTextField(wrappingLabelWithString: message)
@@ -375,9 +428,7 @@ final class GameViewController: NSViewController {
             label.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -32)
         ])
     }
-}
 
-extension GameViewController {
     /// Saves the live World camera + current streamed scene, excluding app
     /// chrome. Runs on main, same as draw(in:), so renderer state cannot race.
     func writeScreenshot(to url: URL) throws {
@@ -409,11 +460,48 @@ extension GameViewController {
 extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
-    HeadAssemblyControlForwarding, AgentControlForwarding {}
+    HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
+    TitleMenuControlForwarding, MapMenuControlForwarding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
         NSApplication.shared.terminate(nil)
+    }
+
+    func quitToMainMenu() {
+        systemMenu.close()
+        titleMenu.open()
+    }
+
+    /// The bound keys that open a menu or save, outside any menu.
+    func runCommand(_ action: GameInputAction) {
+        switch action {
+        case .map:
+            mapMenu.open()
+        case .quicksave:
+            systemMenu.quicksave()
+        case .quickload:
+            try? saveGames.quickload()
+        case .pause:
+            saveGames.autosave(.pause)
+            systemMenu.open()
+        default:
+            return
+        }
+    }
+
+    /// Settings, key bindings, menu text, the menu natives, and map discovery.
+    private func wireMenus(renderer: Renderer) {
+        playerSettings.loadControlMap(try? controlMapLoader?())
+        playerSettings.attach(world: menuWorld)
+        audio.onEngineBuilt = { [weak self] in self?.playerSettings.applyAll() }
+        if let labels = menuTextLoader?() {
+            renderer.swfTextTranslator = { labels.label(for: $0) }
+        }
+        renderer.onFrame.add { [weak self] _ in
+            self?.mapMenu.tick()
+            self?.menuWorld.refreshTitleBackdrop()
+        }
     }
 
     /// The one menu input consumer routes by the top of the menu stack. Each
@@ -434,6 +522,12 @@ extension GameViewController: @MainActor SystemMenuWorld {
             messages.route(event)
         case LoadingScreenWorldAdapter.identifier:
             return
+        case TitleMenuCoordinator.identifier:
+            titleMenu.route(event)
+        case RaceMenuCoordinator.identifier:
+            raceMenu.route(event)
+        case MapMenuCoordinator.identifier:
+            mapMenu.route(event)
         default:
             systemMenu.route(event)
         }

@@ -677,11 +677,12 @@ targets += feature(
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
         "OpenSkyActorsInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
-        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface"
+        "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface",
+        "OpenSkyWorldInterface"
     ],
     tests: [
         "FormatsCoreTesting", "FormatsESMTesting", "OpenSkyActorsInterface",
-        "OpenSkyCrimeInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsCore",
+        "OpenSkyCrimeInterface", "OpenSkyWorldInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
         "OpenSkyDialogueInterface", "OpenSkyMagicInterface", "OpenSkyQuestsInterface",
         "OpenSkySaveFixtures", "OpenSkyScriptingInterface", "OpenSkyWorldState",
@@ -698,10 +699,10 @@ targets += feature(
         "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
     ],
     tests: [
-        "FormatsCoreTesting", "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
-        "RenderingTesting"
+        "FormatsCoreTesting", "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyActorsInterface",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
+        "OpenSkyRendering", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
+        "OpenSkyWorldInterface", "RenderingTesting"
     ]
 )
 

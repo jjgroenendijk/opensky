@@ -150,7 +150,7 @@ extension EffectsWorldAdapter: ExplosionWorld {
     }
 
     func applyExplosionDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        game.combatWorld.damageHealth(by: amount, of: target)
+        game.combat.applyHealthDamage(amount, to: target, attacker: nil)
     }
 
     /// The sound index is built from the base plugin, so only its sounds play.

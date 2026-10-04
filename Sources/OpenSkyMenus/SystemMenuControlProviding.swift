@@ -33,6 +33,7 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
     public let movieEntryTitles: [String]
     /// The movie page driven to the front (`System`).
     public let movieState: String?
+    public let page: SystemMenuPageSnapshot
 
     public init(
         isOpen: Bool,
@@ -52,7 +53,8 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
         movieFaults: Int,
         movieMissingNames: Int,
         movieEntryTitles: [String],
-        movieState: String?
+        movieState: String?,
+        page: SystemMenuPageSnapshot
     ) {
         self.isOpen = isOpen
         self.entryTitles = entryTitles
@@ -72,6 +74,7 @@ nonisolated public struct SystemMenuControlSnapshot: Equatable, Sendable {
         self.movieMissingNames = movieMissingNames
         self.movieEntryTitles = movieEntryTitles
         self.movieState = movieState
+        self.page = page
     }
 }
 
@@ -87,6 +90,8 @@ public protocol SystemMenuControlProviding: AnyObject {
     /// Routes one menu event through the same path as keyboard input, so the
     /// panel buttons and the live keys cannot diverge.
     func sendSystemMenuInput(_ event: MenuInputEvent)
+    /// Asks before deleting the save selected on the Save or Load page.
+    func deleteSelectedSave()
     var systemMenuSnapshot: SystemMenuControlSnapshot { get }
     func refocusGameView()
 }

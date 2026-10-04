@@ -23,6 +23,11 @@ struct SystemMenuPanelTests {
         let panel = makePanel(FakeWorldProviders())
         #expect(panel.menuSection.sectionIdentifier == "systemMenu")
         #expect(panel.settingsSection.sectionIdentifier == "systemMenuSettings")
+        #expect(panel.pageSection.sectionIdentifier == "systemMenuPage")
+        #expect(panel.pageSection.buttons.map { $0.accessibilityIdentifier() } == [
+            "SystemMenuPageLeftControl", "SystemMenuPageRightControl",
+            "SystemMenuPageBackControl", "SystemMenuDeleteSaveControl"
+        ])
         let controls: [(NSControl, String)] = [
             (panel.menuSection.openControl, "SystemMenuOpenControl"),
             (panel.menuSection.resumeControl, "SystemMenuResumeControl"),
@@ -53,15 +58,17 @@ struct SystemMenuPanelTests {
         #expect(!section.openControl.isEnabled)
         #expect(section.activateControl.isEnabled)
 
-        send(section.downControl)
-        #expect(provider.systemMenuSnapshot.selectedIndex == 1)
+        for _ in 0 ..< 4 {
+            send(section.downControl)
+        }
+        #expect(provider.systemMenuSnapshot.selectedIndex == 4)
         send(section.activateControl)
         #expect(provider.systemMenuSnapshot.settingsRevealed)
         #expect(provider.systemMenuIsOpen, "Settings keeps the menu open")
 
         send(section.resumeControl)
         #expect(!provider.systemMenuIsOpen)
-        #expect(provider.refocusCount == 4)
+        #expect(provider.refocusCount == 7)
     }
 
     @Test @MainActor
@@ -70,7 +77,7 @@ struct SystemMenuPanelTests {
         let panel = makePanel(provider)
         send(panel.menuSection.openControl)
         send(panel.menuSection.upControl)
-        #expect(provider.systemMenuSnapshot.selectedIndex == 2)
+        #expect(provider.systemMenuSnapshot.selectedIndex == 6)
     }
 
     @Test @MainActor
@@ -115,7 +122,7 @@ struct SystemMenuPanelTests {
     @Test
     func openReadoutMarksTheSelectionAndTheStack() {
         let snapshot = Self.snapshot(
-            isOpen: true, selectedIndex: 1, lastOutcome: "Settings",
+            isOpen: true, selectedIndex: 4, lastOutcome: "Settings",
             openMenus: ["SystemMenu"], worldSimPaused: true
         )
         let readout = SystemMenuSection.readout(for: snapshot)
@@ -214,7 +221,10 @@ struct SystemMenuPanelTests {
             movieFaults: faults,
             movieMissingNames: missingNames,
             movieEntryTitles: movieEntryTitles,
-            movieState: movieState
+            movieState: movieState,
+            page: SystemMenuPageSnapshot(
+                page: "main", rows: [], selectedIndex: 0, question: nil, message: nil
+            )
         )
     }
 

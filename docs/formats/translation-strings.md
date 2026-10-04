@@ -55,9 +55,13 @@ order, and the last file wins when two share a key.
 A token that is not found is shown as it is, for example `$Unknown`. A string without `$`
 is also shown as it is. The game also leaves an unknown `$KEY` visible on screen.
 
-## Vanilla has no translation files
+## The vanilla file
 
-The vanilla archives hold no files under `Interface/Translations/`. Vanilla Skyrim SE keeps
-its UI text in the `.strings` tables. Translation files come from SkyUI, other mods,
-Creation Club content, and some localized builds. The `Developer > UI Lab` preview uses
-made-up strings for this reason.
+Vanilla Skyrim SE ships one file per language at the archive root of the interface folder,
+for example `interface\translate_english.txt` in `Skyrim - Interface.bsa` (seen on the
+install). The vanilla archives hold no files under `Interface/Translations/`; those come
+from SkyUI, other mods, and Creation Club content.
+
+OpenSky loads the vanilla file first, then each `Interface/Translations/` file over it. The
+running game passes every `$KEY` text in a menu movie through this map, so a menu shows real
+words such as "Settings" in place of `$SETTINGS`.

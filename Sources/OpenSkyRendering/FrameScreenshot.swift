@@ -55,6 +55,24 @@ nonisolated public enum FrameScreenshot: Sendable {
         }
     }
 
+    /// The pixels of a shared-storage BGRA8 render target as RGBA8 rows, top first.
+    public static func rgbaBytes(from texture: MTLTexture) -> Data {
+        let width = texture.width
+        let height = texture.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        pixels.withUnsafeMutableBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            texture.getBytes(
+                base, bytesPerRow: width * 4, from: MTLRegionMake2D(0, 0, width, height),
+                mipmapLevel: 0
+            )
+        }
+        for offset in stride(from: 0, to: pixels.count, by: 4) {
+            pixels.swapAt(offset, offset + 2)
+        }
+        return Data(pixels)
+    }
+
     public static func write(texture: MTLTexture, to url: URL) throws {
         guard let image = image(from: texture) else {
             throw FrameScreenshotError.imageCreationFailed

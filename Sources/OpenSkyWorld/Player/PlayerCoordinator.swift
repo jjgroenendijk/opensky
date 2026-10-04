@@ -21,6 +21,7 @@ public final class PlayerCoordinator {
     public private(set) var firstPersonGraph: PlayerBehaviorGraph?
     /// The set the current body was assembled from, to detect a change.
     private var equipped: [FormID]?
+    private var appearance: PlayerAppearanceOverride?
     /// Why there is no body, when there is none.
     public private(set) var failureReason: String?
     /// Kept apart from `failureReason`: an install can have a working
@@ -98,7 +99,10 @@ public final class PlayerCoordinator {
     /// Equipment changes come from the panel, a menu, or a script, so the body
     /// watches the resulting set. One array comparison per frame.
     public func refreshBody() {
-        guard world?.playerEquippedSet != equipped else { return }
+        guard
+            world?.playerEquippedSet != equipped
+            || world?.playerAppearanceOverride != appearance
+        else { return }
         rebuildBody()
     }
 
@@ -111,11 +115,14 @@ public final class PlayerCoordinator {
             let locomotion = world.playerLocomotion
         else { return }
         let equipped = world.playerEquippedSet
+        let appearance = world.playerAppearanceOverride
         switch provider.makePlayerBody(
-            skeleton: graph.skeleton, pose: locomotion.pose, equipped: equipped
+            skeleton: graph.skeleton, pose: locomotion.pose, equipped: equipped,
+            appearance: appearance
         ) {
         case let .success(body):
             self.equipped = equipped
+            self.appearance = appearance
             failureReason = nil
             do {
                 try world.showPlayerBody(body)
@@ -129,19 +136,23 @@ public final class PlayerCoordinator {
             failureReason = error.localizedDescription
             Self.logger.warning("player body: \(String(describing: error), privacy: .public)")
         }
-        rebuildFirstPersonRig(provider: provider, world: world, equipped: equipped)
+        rebuildFirstPersonRig(
+            provider: provider, world: world, equipped: equipped, appearance: appearance
+        )
     }
 
     private func rebuildFirstPersonRig(
         provider: any PlayerBodyProviding,
         world: any PlayerWorld,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) {
         guard let firstPersonGraph, let locomotion = world.playerLocomotion else { return }
         switch provider.makePlayerFirstPersonRig(
             skeleton: firstPersonGraph.skeleton,
             pose: locomotion.firstPersonPose,
-            equipped: equipped
+            equipped: equipped,
+            appearance: appearance
         ) {
         case let .success(rig):
             firstPersonFailureReason = nil

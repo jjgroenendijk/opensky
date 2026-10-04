@@ -116,6 +116,11 @@ chunk cannot read into the next.
 | `CRVG` | violent part of crime gold | actors |
 | `HRVS` | harvested flora and trees | world |
 | `LOCK` | changed locks | world |
+| `SUMM` | save list row: name, level, race, location, play time | below |
+| `THMB` | save list picture | below |
+| `PIDN` | the player's race, sex, name, and face | world |
+| `MRKS` | changed map markers | world |
+| `FOGM` | local map fog | world |
 
 `HRVS` is a uint32 entry count, then one key and one cell per harvested reference. An entry
 means harvested, so it has no other field.
@@ -123,6 +128,12 @@ means harvested, so it has no other field.
 `LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or
 1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that
 still matches its `XLOC` writes no entry. See [locks](/engine/locks.md).
+
+`SUMM` holds the character name (string), the level (uint16), the race name and the
+location name (strings), and the real play time in seconds (float64, finite, not negative).
+`THMB` holds a uint16 width and height, each 1 to 512, then width times height RGBA8
+pixels, top row first. The save list reads only these two chunks and `CLOK`; it skips the
+others by their length ([title menu](/engine/main-menu.md)).
 
 The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkySave/`).
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.

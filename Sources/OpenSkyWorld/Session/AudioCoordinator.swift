@@ -46,12 +46,16 @@ public final class AudioCoordinator {
         self.world = world
     }
 
+    /// Called once the engine exists, so stored volumes reach it.
+    public var onEngineBuilt: (() -> Void)?
+
     /// The first enable builds the engine and the directors once.
     public var audioEnabled: Bool {
         get { engine?.isEnabled ?? false }
         set {
             if newValue, engine == nil {
                 buildEngine()
+                onEngineBuilt?()
             }
             engine?.isEnabled = newValue
         }

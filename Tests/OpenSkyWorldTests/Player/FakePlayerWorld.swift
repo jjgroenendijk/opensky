@@ -16,6 +16,7 @@ final class FakePlayerWorld: PlayerWorld {
     var isWalkModeActive = true
     var isPlayerGrounded = true
     var playerEquippedSet: [FormID]?
+    var playerAppearanceOverride: PlayerAppearanceOverride?
     var playerFirstPersonRig: PlayerFirstPersonRig?
     var areFirstPersonArmsVisible = false
     var firstPersonFOVYRadians: Float? = 1
@@ -47,7 +48,8 @@ nonisolated final class FakePlayerBodyProvider: WorldDataProviding, PlayerBodyPr
     func makePlayerBody(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerBody, PlayerBodyError> {
         bodyRequests.append(equipped)
         return .failure(.noRenderableGeometry(["no skin"]))
@@ -56,7 +58,8 @@ nonisolated final class FakePlayerBodyProvider: WorldDataProviding, PlayerBodyPr
     func makePlayerFirstPersonRig(
         skeleton: HKASkeleton,
         pose: PlayerPoseBuffer,
-        equipped: [FormID]?
+        equipped: [FormID]?,
+        appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {
         rigRequests += 1
         return .failure(.noRenderableGeometry(["no arms"]))

@@ -10,7 +10,7 @@ a usage error.
 
 | Command | Does |
 | --- | --- |
-| `launch [--mode play\|developer] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady` |
+| `launch [--mode play\|developer] [--title] [--app <path>] [--wait <s>]` | Opens the app with the server on; waits for `worldReady`. `--title` opens on the main menu, as the launcher's Play button does |
 | `attach` | Prints the hello line: protocol version, data root, `worldReady` |
 | `status` | Running, mode, data root, frame, paused |
 | `quit` | Quits the app after the reply |
@@ -24,8 +24,10 @@ pauses first), `time scale <x>` (0 to 16, while running).
 ## Input
 
 Actions: `forward back left right up down run sprint sneak jump activate attack block
-readyWeapon cameraMode journal inventory menuUp menuDown menuLeft menuRight menuAccept
-menuCancel`. In a menu, `forward` and `back` move the selection like the arrow keys.
+readyWeapon cameraMode journal inventory map quicksave quickload pause menuUp menuDown
+menuLeft menuRight menuAccept menuCancel`. `map` opens the world map, and `pause` opens the
+System menu after an autosave. In a menu, `forward` and `back` move the selection like the
+arrow keys.
 
 - `input press <action>`, `input release <action>`
 - `input hold <action> --frames <n>` or `--seconds <s>`; held actions only

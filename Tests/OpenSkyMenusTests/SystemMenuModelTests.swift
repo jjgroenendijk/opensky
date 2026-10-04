@@ -5,11 +5,13 @@ import Testing
 
 struct SystemMenuModelTests {
     @Test
-    func startsClosedWithThreeEntries() {
+    func startsClosedWithTheVanillaRows() {
         let model = SystemMenuModel()
         #expect(!model.isOpen)
-        #expect(model.entries == [.resume, .settings, .quit])
-        #expect(model.entries.map(\.title) == ["Resume", "Settings", "Quit"])
+        #expect(model.entries == [.resume, .quicksave, .save, .load, .settings, .controls, .quit])
+        #expect(model.entries.map(\.title) == [
+            "Resume", "Quicksave", "Save", "Load", "Settings", "Controls", "Quit"
+        ])
         #expect(model.selectedEntry == .resume)
         #expect(model.lastOutcome == nil)
     }
@@ -46,8 +48,9 @@ struct SystemMenuModelTests {
         var model = SystemMenuModel()
         model.open()
         model.moveSelection(.down)
-        #expect(model.selectedEntry == .settings)
-        model.moveSelection(.down)
+        #expect(model.selectedEntry == .quicksave)
+        model.moveSelection(.up)
+        model.moveSelection(.up)
         #expect(model.selectedEntry == .quit)
         model.moveSelection(.down)
         #expect(model.selectedEntry == .resume, "the list wraps forward")
@@ -69,33 +72,58 @@ struct SystemMenuModelTests {
     }
 
     @Test
-    func activatingSettingsRevealsThePlaceholdersAndKeepsTheMenuOpen() {
+    func activatingSettingsOpensItsPageAndKeepsTheMenuOpen() {
         var model = SystemMenuModel()
         model.open()
-        model.moveSelection(.down)
-        #expect(model.activateSelection() == .showSettings)
+        model.select(.settings)
+        #expect(model.activateSelection() == .showPage(.settings))
         #expect(model.isOpen)
         #expect(model.settingsRevealed)
-        #expect(model.lastOutcome == .showSettings)
+        #expect(model.page == .settings)
+        #expect(model.lastOutcome == .showPage(.settings))
     }
 
     @Test
-    func activatingQuitReportsQuitWithoutClosing() {
+    func eachRowOpensItsPage() {
+        let pages: [SystemMenuEntry: SystemMenuPage] = [
+            .save: .save, .load: .load, .controls: .controls, .quit: .quit
+        ]
+        for (entry, page) in pages {
+            var model = SystemMenuModel()
+            model.open()
+            model.select(entry)
+            #expect(model.activateSelection() == .showPage(page))
+            #expect(model.page == page)
+        }
+    }
+
+    @Test
+    func quicksaveStaysOnTheMainPage() {
         var model = SystemMenuModel()
         model.open()
-        model.moveSelection(.up)
-        #expect(model.selectedEntry == .quit)
-        #expect(model.activateSelection() == .quit)
-        // Terminating is the host's job; the model must not pretend it happened.
+        model.select(.quicksave)
+        #expect(model.activateSelection() == .quicksave)
         #expect(model.isOpen)
-        #expect(model.lastOutcome == .quit)
+        #expect(model.page == .main)
+    }
+
+    @Test
+    func aSubPageIgnoresMainPageEventsUntilShowMain() {
+        var model = SystemMenuModel()
+        model.open()
+        model.select(.quit)
+        model.activateSelection()
+        #expect(model.handle(.button(.cancel)) == nil, "the quit page handles its own cancel")
+        #expect(model.isOpen)
+        model.showMain()
+        #expect(model.page == .main)
     }
 
     @Test
     func closeClearsRevealedSettingsAndSelection() {
         var model = SystemMenuModel()
         model.open()
-        model.moveSelection(.down)
+        model.select(.settings)
         model.activateSelection()
         model.close()
         #expect(!model.isOpen)
@@ -134,16 +162,17 @@ struct SystemMenuModelTests {
     func acceptRoutesThroughHandle() {
         var model = SystemMenuModel()
         model.open()
-        model.handle(.move(.down))
-        #expect(model.handle(.button(.accept)) == .showSettings)
+        model.select(.settings)
+        #expect(model.handle(.button(.accept)) == .showPage(.settings))
         #expect(model.settingsRevealed)
     }
 
     @Test
     func outcomeLabelsMatchTheRowTitles() {
         #expect(SystemMenuOutcome.resume.label == "Resume")
-        #expect(SystemMenuOutcome.showSettings.label == "Settings")
-        #expect(SystemMenuOutcome.quit.label == "Quit")
+        #expect(SystemMenuOutcome.showPage(.settings).label == "Settings")
+        #expect(SystemMenuOutcome.showPage(.quit).label == "Quit")
+        #expect(SystemMenuOutcome.quicksave.label == "Quicksave")
     }
 
     @Test

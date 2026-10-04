@@ -27,6 +27,21 @@ extension Renderer {
         }
     }
 
+    /// Alpha over the whole layer, 0 to 1: the HUD Opacity setting.
+    public var swfOpacity: Float {
+        get { swf.opacity }
+        set { swf.opacity = newValue.isFinite ? min(max(newValue, 0), 1) : 1 }
+    }
+
+    /// Resolves `$TOKEN` text in every movie started after it is set.
+    public var swfTextTranslator: ((String) -> String)? {
+        get { swf.textTranslator }
+        set {
+            swf.textTranslator = newValue
+            swf.runtime?.textTranslator = newValue
+        }
+    }
+
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
     public var swfScene: SWFMovieScene? {
         swf.movie?.scene
@@ -90,6 +105,7 @@ extension Renderer {
             contentScale: swf.scale,
             glyphAtlas: uiResources.glyphAtlas
         )
+        frame.opacity = swf.opacity
         frame.build()
         stats.skippedItems = frame.skipped + movie.buildSkipped
         uploadUIAtlasIfNeeded()
@@ -213,6 +229,8 @@ nonisolated public struct SWFFrameBuilder {
     public private(set) var glyphVertices: [SWFVertex] = []
     public private(set) var skipped = 0
     private var glyphQuadCount = 0
+    /// Multiplies every draw's alpha: the HUD Opacity setting.
+    public var opacity: Float = 1
 
     public init(
         movie: SWFMovieResources,
@@ -430,8 +448,8 @@ nonisolated public struct SWFFrameBuilder {
         var uniforms = SWFDrawUniforms()
         uniforms.transformRotation = transform.packedLinear
         uniforms.transformTranslation = transform.packedTranslation
-        uniforms.colorMultiply = colorTransform.multiply
-        uniforms.colorAdd = colorTransform.add
+        uniforms.colorMultiply = colorTransform.multiply * SIMD4(1, 1, 1, opacity)
+        uniforms.colorAdd = colorTransform.add * SIMD4(1, 1, 1, opacity)
         switch fill {
         case let .solid(color):
             uniforms.baseColor = color

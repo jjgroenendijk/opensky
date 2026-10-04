@@ -51,6 +51,11 @@ nonisolated public protocol IdleDataProviding {
 }
 
 /// Load-order cameras, combat styles, messages, and loading screens.
+/// The player record, playable races, map markers, and map settings the menus read.
+nonisolated public protocol MenuDataProviding {
+    var menuRecords: MenuRecordData? { get }
+}
+
 nonisolated public protocol PresentationDataProviding {
     var presentationRecords: PresentationRecordStore? { get }
 }
@@ -167,6 +172,14 @@ nonisolated public protocol CombatDataProviding {
     var archerySettings: ArcherySettings { get }
     /// The detection GMSTs, on the same terms, from the same GMST load.
     var detectionSettings: DetectionSettings { get }
+    /// The `fDiffMult*` GMSTs, on the same terms.
+    var difficultySettings: DifficultySettings { get }
+}
+
+nonisolated extension CombatDataProviding {
+    public var difficultySettings: DifficultySettings {
+        .synthetic
+    }
 }
 
 /// Optional audio-record stores for the world sound director. `WeatherStore` comes via

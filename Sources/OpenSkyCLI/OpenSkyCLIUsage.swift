@@ -106,6 +106,9 @@ extension OpenSkyCLI {
                                   names, default 120), clip-event usage,
                                   function/structure stats, and a
                                   most-action-records movie ranking
+      swf action-list --movie <substring>
+                                  Print one movie's action records with names
+                                  resolved; redirect the output into logs/
       swf action-run [--movie <substring>] [--ticks <n>] [--limit <n>]
                      [--tree-depth <n>] [--dump <paths>] [--call <names>]
                                   Bring one movie up through SWFMovieRuntime and
@@ -127,6 +130,19 @@ extension OpenSkyCLI {
                                   and player; print the movie's rows, both
                                   purses, the resolved barter pricing, the
                                   selected row's price and the diagnostics
+      swf system-menu [--state <name>] [--focus <path>] [--row <n>] [--ticks <n>]
+                      [--dump <paths>]
+                                  Open quest_journal.swf on its System page,
+                                  start one SystemPage state by its constant
+                                  name, focus a page-relative list,
+                                  optionally accept a list row, and print
+                                  every GameDelegate call the movie made
+      swf movie-probe --movie <path> [--ticks <n>] [--capture <names>]
+                      [--then <steps>] [--dump <paths>]
+                                  Start any movie; steps (split by ;) are
+                                  call:<path>:<method>[:<JSON args>],
+                                  focus:<path>, or key:<code>; print host
+                                  calls and nodes
       swf dialogue-menu [--ticks <n>] [--down <n>] [--rows <n>] [--speak]
                         [--text] [--probe-rows <n>]
                                   Drive dialoguemenu.swf through its bridge
@@ -197,7 +213,7 @@ extension OpenSkyCLI {
            [--record <file>]
                                   Drive the running app over its agent control
                                   socket; prints one JSON object per call.
-                                  Commands: launch [--mode play|developer]
+                                  Commands: launch [--mode play|developer] [--title]
                                   [--app <path>] [--wait <s>], attach, status,
                                   quit, screenshot [--out <png>] [--size WxH]
                                   [--world-only], input press|release|hold

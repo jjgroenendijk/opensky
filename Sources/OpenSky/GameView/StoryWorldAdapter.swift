@@ -20,6 +20,7 @@ final class StoryWorldAdapter {
     unowned let game: GameViewController
     /// Quests the session-start pass started, whose stages wait for one script attach.
     private var deferredStarts: [FormID]?
+    private var sessionStartLists: [PluginQuestList] = []
     /// Nil until the first check; then the player's last known location, or none.
     private var lastPlayerLocation: ResolvedFormID??
     private var framesSinceLocationCheck = 0
@@ -53,10 +54,12 @@ final class StoryWorldAdapter {
         }
         storyManager.story = data.storyManager
         game.scripts.bridge?.story = self
+        game.scripts.bridge?.menus = game.menuWorld
         if let files = scripts?.scriptFileSystem {
-            runSessionStart(lists: data.plugins.map {
+            sessionStartLists = data.plugins.map {
                 PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
-            })
+            }
+            runSessionStart(lists: sessionStartLists)
         }
         let advancePreviousSystems = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak self] delta in
@@ -64,6 +67,11 @@ final class StoryWorldAdapter {
             self?.scenes.tick()
             self?.checkPlayerLocation()
         }
+    }
+
+    /// A new game starts the same listed quests again over the cleared state.
+    func rerunSessionStart() {
+        runSessionStart(lists: sessionStartLists)
     }
 
     /// Starts every listed quest, then attaches scripts once and runs the start-up stages.

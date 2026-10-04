@@ -176,8 +176,10 @@ struct SystemMenuAcceptanceRealDataTests {
     func selectorIsIndependentOfTheMovie() {
         var model = SystemMenuModel()
         model.open()
-        model.handle(.move(.down))
-        #expect(model.handle(.button(.accept)) == .showSettings)
+        for _ in 0 ..< 4 {
+            model.handle(.move(.down))
+        }
+        #expect(model.handle(.button(.accept)) == .showPage(.settings))
         #expect(model.settingsRevealed)
     }
 

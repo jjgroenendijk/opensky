@@ -10,12 +10,16 @@ import Testing
 private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
     var renderer: Renderer?
     var audioEnabled = true
-    var audioMasterVolume: Float = 0.5
     var quitCount = 0
+    var mainMenuCount = 0
     var events: [MenuInputEvent] = []
 
     func quitApplication() {
         quitCount += 1
+    }
+
+    func quitToMainMenu() {
+        mainMenuCount += 1
     }
 
     func handleMenuInput(_ event: MenuInputEvent) {
@@ -24,9 +28,36 @@ private final class FakeSystemMenuWorld: @MainActor SystemMenuWorld {
 }
 
 @MainActor
+private final class FakeSaves: SaveGameService {
+    var rows: [SaveSlotRow] = []
+    var saved: [String?] = []
+    var loaded: [String] = []
+    var deleted: [String] = []
+
+    func saveRows() -> [SaveSlotRow] {
+        rows
+    }
+
+    func saveGame(slot: String?) throws -> String {
+        saved.append(slot)
+        return slot ?? "Save\(saved.count)"
+    }
+
+    func loadGame(slot: String) throws {
+        loaded.append(slot)
+    }
+
+    func deleteSave(slot: String) throws {
+        deleted.append(slot)
+    }
+}
+
+@MainActor
 private struct Harness {
     let menuMode = MenuModeController()
     let world = FakeSystemMenuWorld()
+    let saves = FakeSaves()
+    let settings = PlayerSettingsCoordinator(store: PlayerSettingsStore(persistence: nil))
     let menu: SystemMenuCoordinator
 
     init() {
@@ -35,6 +66,21 @@ private struct Harness {
             menuMode: menuMode, movies: movies, hud: HUDCoordinator(movies: movies)
         )
         menu.attach(world: world)
+        menu.attach(settings: settings)
+        menu.saves = saves
+    }
+
+    func open(_ entry: SystemMenuEntry) {
+        menu.open()
+        menu.sendSelect(entry)
+        menu.route(.button(.accept))
+    }
+}
+
+@MainActor
+extension SystemMenuCoordinator {
+    fileprivate func sendSelect(_ entry: SystemMenuEntry) {
+        model.select(entry)
     }
 }
 
@@ -59,17 +105,117 @@ struct SystemMenuCoordinatorTests {
         harness.menu.open()
         harness.menu.route(.button(.accept))
         #expect(!harness.menu.isOpen)
+        #expect(!harness.menuMode.isMenuMode)
         #expect(harness.world.quitCount == 0)
     }
 
     @Test @MainActor
-    func acceptOnQuitClosesAndQuits() {
+    func cancelOnTheMainPageLeavesTheMenuStack() {
         let harness = Harness()
         harness.menu.open()
+        harness.menu.route(.button(.cancel))
+        #expect(!harness.menu.isOpen)
+        #expect(!harness.menuMode.isMenuMode)
+        #expect(!harness.menuMode.isWorldSimPaused)
+    }
+
+    @Test @MainActor
+    func quitAsksThenQuitsToDesktop() {
+        let harness = Harness()
+        harness.open(.quit)
+        #expect(harness.menu.isOpen, "Quit asks first")
+        #expect(harness.menu.snapshot.page.rows == ["Main Menu", "Desktop", "Cancel"])
+        #expect(harness.menu.snapshot.page.selectedIndex == 2, "the safe option is selected")
         harness.menu.route(.move(.up))
         harness.menu.route(.button(.accept))
         #expect(!harness.menu.isOpen)
         #expect(harness.world.quitCount == 1)
+        #expect(harness.world.mainMenuCount == 0)
+    }
+
+    @Test @MainActor
+    func quitToMainMenuAndCancel() {
+        let harness = Harness()
+        harness.open(.quit)
+        harness.menu.route(.button(.cancel))
+        #expect(harness.menu.model.page == .main)
+        harness.open(.quit)
+        harness.menu.route(.move(.down))
+        harness.menu.route(.button(.accept))
+        #expect(harness.world.mainMenuCount == 1)
+        #expect(harness.world.quitCount == 0)
+    }
+
+    @Test @MainActor
+    func settingsPageStepsTheStore() {
+        let harness = Harness()
+        harness.open(.settings)
+        #expect(harness.menu.snapshot.page.rows == ["Gameplay", "Display", "Audio"])
+        harness.menu.route(.move(.up))
+        harness.menu.route(.button(.accept))
+        #expect(harness.menu.settingsPage.openGroup == .audio)
+        harness.menu.route(.move(.left))
+        #expect(harness.settings.store.value(.masterVolume) < 1)
+        harness.menu.route(.button(.cancel))
+        harness.menu.route(.button(.cancel))
+        #expect(harness.menu.model.page == .main)
+        #expect(harness.menu.isOpen)
+    }
+
+    @Test @MainActor
+    func quicksaveWritesTheQuicksaveSlot() {
+        let harness = Harness()
+        harness.open(.quicksave)
+        #expect(harness.saves.saved == [AutosavePolicy.quicksaveSlot])
+        #expect(harness.menu.lastMessage == "Quicksave")
+        #expect(harness.menu.isOpen)
+    }
+
+    @Test @MainActor
+    func savePageWritesANewSlotAndAsksBeforeOverwriting() {
+        let harness = Harness()
+        harness.saves.rows = [SaveSlotRow(
+            slot: "Old", title: "Old", detail: "", savedAt: Date(timeIntervalSince1970: 1)
+        )]
+        harness.open(.save)
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.saved == [nil])
+        harness.menu.route(.move(.down))
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.saved == [nil], "overwriting asks first")
+        harness.menu.route(.move(.up))
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.saved == [nil, "Old"])
+    }
+
+    @Test @MainActor
+    func loadPageLoadsAndClosesAndDeleteAsks() {
+        let harness = Harness()
+        harness.saves.rows = [SaveSlotRow(
+            slot: "A", title: "A", detail: "", savedAt: Date(timeIntervalSince1970: 1)
+        )]
+        harness.open(.load)
+        harness.menu.requestDeleteSelectedSave()
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.deleted.isEmpty, "No is selected first")
+        harness.menu.requestDeleteSelectedSave()
+        harness.menu.route(.move(.up))
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.deleted == ["A"])
+        harness.menu.route(.button(.accept))
+        #expect(harness.saves.loaded == ["A"])
+        #expect(!harness.menu.isOpen)
+    }
+
+    @Test @MainActor
+    func controlsPageRebindsTheNextKey() {
+        let harness = Harness()
+        harness.open(.controls)
+        harness.menu.route(.button(.accept))
+        #expect(harness.menu.isWaitingForKey)
+        #expect(harness.menu.captureKey(scanCode: 0x48))
+        #expect(harness.settings.bindings.scanCode(for: .forward) == 0x48)
+        #expect(!harness.menu.captureKey(scanCode: 0x11), "not waiting any more")
     }
 
     @Test @MainActor
@@ -110,10 +256,10 @@ struct SystemMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func volumeAndAudioStateComeFromTheWorld() {
+    func volumeGoesThroughTheSettingsStore() {
         let harness = Harness()
         harness.menu.masterVolume = 0.25
-        #expect(harness.world.audioMasterVolume == 0.25)
+        #expect(harness.settings.store.value(.masterVolume) == 0.25)
         harness.world.audioEnabled = false
         #expect(!harness.menu.snapshot.audioEnabled)
     }

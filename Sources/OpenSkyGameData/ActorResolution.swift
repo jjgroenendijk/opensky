@@ -329,3 +329,36 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         return extract(npcs[npcs.count - 1])
     }
 }
+
+/// The player's race menu choices, laid over the `Player` record's appearance.
+nonisolated public struct PlayerAppearanceOverride: Equatable, Sendable {
+    public var race: FormID
+    public var isFemale: Bool
+    /// Empty keeps the record's head parts.
+    public var headParts: [FormID]
+    public var hairColor: FormID?
+
+    public init(race: FormID, isFemale: Bool, headParts: [FormID], hairColor: FormID?) {
+        self.race = race
+        self.isFemale = isFemale
+        self.headParts = headParts
+        self.hairColor = hairColor
+    }
+}
+
+nonisolated extension ResolvedActorAppearance {
+    /// Each overridden field names the base record as its source.
+    public func applying(_ override: PlayerAppearanceOverride) -> Self {
+        Self(
+            base: base, chain: chain,
+            isFemale: ActorSourcedField(value: override.isFemale, source: base),
+            race: ActorSourcedField(value: override.race, source: base),
+            voiceType: voiceType, wornArmor: wornArmor,
+            headParts: override.headParts.isEmpty
+                ? headParts : ActorSourcedField(value: override.headParts, source: base),
+            hairColor: override.hairColor.map { ActorSourcedField(value: $0, source: base) }
+                ?? hairColor,
+            defaultOutfit: defaultOutfit
+        )
+    }
+}

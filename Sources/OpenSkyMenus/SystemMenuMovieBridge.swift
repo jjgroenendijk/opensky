@@ -186,4 +186,21 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
     }
 
     public static let settingsCategoryIndex = 4
+
+    /// The movie's row text for each engine row. Installed Content and Help have none.
+    public static let rowEntries: [String: SystemMenuEntry] = [
+        "$QUICKSAVE": .quicksave, "$SAVE": .save, "$LOAD": .load, "$SETTINGS": .settings,
+        "$CONTROLS": .controls, "$QUIT": .quit
+    ]
+
+    /// The engine row the movie's highlighted row stands for.
+    public static func selectedEntry(runtime: SWFMovieRuntime) -> SystemMenuEntry? {
+        guard
+            let list = runtime.node(atPath: systemCategoryListPath, from: runtime.root),
+            case let .number(selected) = list.object.lookup("iSelectedIndex")?.property.value
+        else { return nil }
+        let labels = entryLabels(runtime: runtime)
+        let index = Int(selected)
+        return labels.indices.contains(index) ? rowEntries[labels[index]] : nil
+    }
 }

@@ -23,6 +23,15 @@ struct LaunchPreferencesTests {
         #expect(LaunchPreferences.forcedMode(environment: [:]) == nil)
     }
 
+    @Test func playOpensAtTheTitleAndAForcedLaunchOnlyWhenAsked() {
+        #expect(LaunchMode.play.opensAtTitleScreen)
+        #expect(!LaunchMode.developer.opensAtTitleScreen)
+        let key = LaunchPreferences.titleScreenKey
+        #expect(LaunchPreferences.forcedTitleScreen(environment: [key: "1"]))
+        #expect(!LaunchPreferences.forcedTitleScreen(environment: [key: "0"]))
+        #expect(!LaunchPreferences.forcedTitleScreen(environment: [:]))
+    }
+
     @Test func theLastModeDefaultsToPlayAndIsRemembered() throws {
         let defaults = try isolatedDefaults()
         #expect(LaunchPreferences.lastMode(userDefaults: defaults) == .play)

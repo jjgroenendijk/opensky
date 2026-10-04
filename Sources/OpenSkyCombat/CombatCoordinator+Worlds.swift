@@ -82,10 +82,24 @@ extension CombatCoordinator: MeleeCombatWorld {
             * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 
+    /// The player's own swing: the melee runtime only ever swings for the player.
     @discardableResult
     public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
+        applyHealthDamage(amount, to: target, attacker: meleeAttacker.key)
+    }
+
+    /// Every weapon, arrow, and explosion hit passes here, so difficulty scales
+    /// health damage at one point. A nil attacker is never the player.
+    @discardableResult
+    public func applyHealthDamage(
+        _ amount: Float, to target: ReferenceKey, attacker: ReferenceKey?
+    ) -> Bool {
         guard amount > 0 else { return false }
-        return world?.damageHealth(by: amount, of: target) ?? false
+        let scaled = DifficultyDamage.scaled(
+            amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
+            multipliers: difficultyMultipliers
+        )
+        return world?.damageHealth(by: scaled, of: target) ?? false
     }
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
@@ -115,7 +129,7 @@ extension CombatCoordinator: ProjectileWorld {
 
     @discardableResult
     public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        applyMeleeDamage(amount, to: target)
+        applyHealthDamage(amount, to: target, attacker: projectileShooter.key)
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
