@@ -1,5 +1,6 @@
-// The located install and the settings read from it. Every launch mode builds
-// its game view from one context, so World and Asset Browser share one root.
+// The located install, the settings read from it, and the world data loaded
+// from it. Every launch mode builds its game view from one context, so World
+// and Asset Browser share one root.
 
 import AppKit
 import Metal
@@ -10,13 +11,21 @@ import OpenSkyWorld
 import OSLog
 
 final class GameLaunchContext {
-    private static let logger = Logger(
+    /// What one world load produced. Opening the archives is a load stage too.
+    nonisolated struct LoadedWorld {
+        let fileSystem: VirtualFileSystem
+        let session: CellSession?
+    }
+
+    nonisolated private static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "GameData"
     )
 
     private(set) var gameDataRoot: GameDataRoot?
     private(set) var virtualFileSystem: VirtualFileSystem?
+    /// Built by `load`, handed to the next game view, which owns it from then on.
+    private var cellSession: CellSession?
     private(set) var gameDataErrorMessage: String?
     private var localizationLanguage = LocalizationLanguageSnapshot(
         language: LocalizationLanguageSettings.fallback,
@@ -34,6 +43,7 @@ final class GameLaunchContext {
     func resolve() {
         gameDataRoot = nil
         virtualFileSystem = nil
+        cellSession = nil
         gameDataErrorMessage = nil
         do {
             let root = try GameDataLocator.locate()
@@ -42,12 +52,6 @@ final class GameLaunchContext {
             let path = root.dataURL.path(percentEncoded: false)
             Self.logger.info(
                 "Game data located (\(source, privacy: .public)): \(path, privacy: .public)"
-            )
-
-            let vfs = VirtualFileSystem(root: root)
-            virtualFileSystem = vfs
-            Self.logger.info(
-                "VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order"
             )
         } catch {
             let message = error.localizedDescription
@@ -58,9 +62,41 @@ final class GameLaunchContext {
         terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: gameDataRoot))
     }
 
+    /// Opens the archives and builds the world data of the resolved root off the
+    /// main actor. Without a root there is nothing to load, so `completion` runs at once.
+    func load(
+        with loader: WorldLoader,
+        onUpdate: @escaping (WorldLoadTimeline, Duration) -> Void,
+        completion: @escaping () -> Void
+    ) {
+        guard let root = gameDataRoot else {
+            completion()
+            return
+        }
+        let language = localizationLanguage.language
+        let configurationStore = terrainLODConfigurationStore
+        loader.start(
+            work: { progress in
+                try await Self.loadWorld(
+                    root: root,
+                    language: language,
+                    configurationStore: configurationStore,
+                    progress: progress
+                )
+            },
+            onUpdate: onUpdate,
+            completion: { [weak self] world in
+                self?.virtualFileSystem = world.fileSystem
+                self?.cellSession = world.session
+                completion()
+            }
+        )
+    }
+
     func makeGameViewController() -> GameViewController {
         let controller = GameViewController()
-        controller.cellSessionFactory = makeCellSessionFactory()
+        controller.cellSession = cellSession
+        cellSession = nil
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
         controller.settingsCatalog = gameDataRoot.map { root in
@@ -99,33 +135,38 @@ final class GameLaunchContext {
         )
     }
 
-    /// Sets up the off-main cell builder over the located install. No cell is
-    /// built here, so launch never waits on a scene. A failure logs [ERROR] and
-    /// returns nil, and the controller falls back to `DemoScene`.
-    private func makeCellSessionFactory() -> ((MTLDevice) -> CellSession?)? {
-        guard let root = gameDataRoot, let vfs = virtualFileSystem else { return nil }
-        let configurationStore = terrainLODConfigurationStore
-        let language = localizationLanguage.language
-        return { device in
-            do {
-                let indexes = try CellProviderIndexes(
-                    root: root,
-                    fileSystem: vfs,
-                    device: device,
-                    localizationLanguage: language,
-                    terrainLODConfigurationStore: configurationStore
-                )
-                return indexes.makeSession()
-            } catch {
-                let reason = String(describing: error)
-                Self.logger.error(
-                    """
-                    [ERROR] cell provider setup failed, using demo scene: \
-                    \(reason, privacy: .public)
-                    """
-                )
-                return nil
-            }
+    /// A failure logs [ERROR] and loads no session, and the game view falls back
+    /// to `DemoScene`. Only a cancel throws.
+    @concurrent
+    nonisolated private static func loadWorld(
+        root: GameDataRoot,
+        language: String,
+        configurationStore: TerrainLODConfigurationStore,
+        progress: WorldLoadProgress
+    ) async throws -> sending LoadedWorld {
+        let vfs = try progress.measure(.archives) { VirtualFileSystem(root: root) }
+        logger.info("VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order")
+        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
+            return LoadedWorld(fileSystem: vfs, session: nil)
+        }
+        do {
+            let session = try await CellProviderIndexes.loadSession(
+                root: root,
+                fileSystem: vfs,
+                device: device,
+                localizationLanguage: language,
+                terrainLODConfigurationStore: configurationStore,
+                progress: progress
+            )
+            return LoadedWorld(fileSystem: vfs, session: session)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            let reason = String(describing: error)
+            logger.error(
+                "[ERROR] cell provider setup failed, using demo scene: \(reason, privacy: .public)"
+            )
+            return LoadedWorld(fileSystem: vfs, session: nil)
         }
     }
 }

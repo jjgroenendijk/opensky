@@ -1,8 +1,10 @@
 // The launcher's first page: the game folder and one button per launch mode.
+// While a world load runs, the load panel takes the place of the mode buttons.
 
 import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyWorld
 
 /// A page that shows game-folder state and must redraw when it changes.
 protocol LauncherPageRefreshing: AnyObject {
@@ -16,6 +18,8 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     private let chooseButton = NSButton(title: "Choose…", target: nil, action: nil)
     private let resetButton = NSButton(title: "Use Default", target: nil, action: nil)
     private var modeButtons: [(LaunchMode, NSButton)] = []
+    private var modeRow = NSView()
+    private let loadPanel = WorldLoadPanel()
     private var problem: String?
 
     init(actions: any LauncherActions) {
@@ -29,7 +33,10 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     }
 
     override func loadView() {
-        let stack = NSStackView(views: [makeTitle(), makeFolderGroup(), makeModeRow()])
+        modeRow = makeModeRow()
+        loadPanel.isHidden = true
+        loadPanel.onCancel = { [weak self] in self?.actions?.cancelLoad() }
+        let stack = NSStackView(views: [makeTitle(), makeFolderGroup(), modeRow, loadPanel])
         stack.orientation = .vertical
         stack.alignment = .centerX
         stack.spacing = 32
@@ -58,6 +65,25 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             button.isEnabled = status.canStart(mode)
             button.keyEquivalent = mode == lastMode && button.isEnabled ? "\r" : ""
         }
+    }
+
+    func showLoad(_ timeline: WorldLoadTimeline, elapsed: Duration) {
+        loadViewIfNeeded()
+        setLoading(true)
+        loadPanel.show(timeline, elapsed: elapsed)
+    }
+
+    func endLoad() {
+        setLoading(false)
+    }
+
+    /// The folder cannot change under a running load, so its buttons pause too.
+    private func setLoading(_ loading: Bool) {
+        guard isViewLoaded, loadPanel.isHidden == loading else { return }
+        modeRow.isHidden = loading
+        loadPanel.isHidden = !loading
+        chooseButton.isEnabled = !loading
+        resetButton.isEnabled = !loading
     }
 
     // MARK: - Layout

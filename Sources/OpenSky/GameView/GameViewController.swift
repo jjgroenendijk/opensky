@@ -41,9 +41,9 @@ final class GameViewController: NSViewController {
     /// Set by the launch mode; the player setting can also ask for it.
     var startsAtTitleScreen = false
 
-    /// Runs here, not in the AppDelegate, because the asset libraries bind GPU
-    /// resources to the view's device. A nil result falls back to `DemoScene`.
-    var cellSessionFactory: ((MTLDevice) -> CellSession?)?
+    /// Loaded off the main actor before the view loads, on the system default
+    /// device the view also uses. Nil falls back to `DemoScene`.
+    var cellSession: CellSession?
 
     /// Thread-safe effective INI/sidebar LOD values shared with the off-main
     /// DistantLODBuilder. AppDelegate replaces this before view load.
@@ -341,7 +341,8 @@ final class GameViewController: NSViewController {
 
         // With game data the renderer starts empty and streams cells in;
         // without it the renderer shows `DemoScene`.
-        let session = cellSessionFactory?(device)
+        let session = cellSession
+        cellSession = nil
         let provider = session?.data
 
         do {

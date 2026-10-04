@@ -1,5 +1,6 @@
 // Complete index set backing the streamed-cell provider. Keeping this
 // assembly outside AppDelegate makes additions testable without app startup.
+// `CellProviderIndexes+Load.swift` builds it off the main actor, in stages.
 
 import Metal
 import OpenSkyAudio
@@ -15,21 +16,15 @@ import OpenSkyWorldState
 
 nonisolated public struct CellProviderIndexes {
     /// The load-order magic stores (MGEF, SPEL, SCRL, EQUP, ENCH), decoded off one
-    /// shared `RecordIndex` so the plugins are walked once. A type, so the outer
-    /// initializer stays under its length limit.
-    private struct MagicIndexes {
+    /// shared `RecordIndex` so the plugins are walked once.
+    struct MagicIndexes: Sendable {
         let effects: MagicEffectStore
         let spells: SpellStore
         let equipSlots: EquipSlotStore
         let enchantments: EnchantmentStore
-        /// PERK rides the same index: its ability effects and its
-        /// spell-selecting entry-point functions join against the SPEL store
-        /// built two lines above, so building it here is one record walk rather
-        /// than a second load order resolution for the same plugins.
+        /// PERK and AVIF ride the same index: perk effects join against the SPEL
+        /// store, and the perk trees hang off the AVIF records.
         let perks: PerkStore
-        /// AVIF rides it too: the perk trees this index already
-        /// decodes hang off AVIF records, and skill advancement reads the
-        /// `AVSK` parameters off the same ones.
         let actorValues: ActorValueInformationStore
 
         init(plugins: [(name: String, file: ESMFile)]) {
@@ -48,11 +43,7 @@ nonisolated public struct CellProviderIndexes {
     }
 
     /// Every GMST-derived tuning, resolved off one load of the settings table.
-    ///
-    /// Grouped for the reason `MagicIndexes` is: six resolutions in a row is
-    /// six lines the outer initializer does not have to spend, and the group is
-    /// a real one — each of these is a settings read and nothing else.
-    private struct SettingIndexes {
+    struct SettingIndexes: Sendable {
         let movement: PlayerMovementConfiguration
         let barter: BarterPricing
         let combat: CombatSettings
@@ -66,8 +57,6 @@ nonisolated public struct CellProviderIndexes {
         let store: GameSettingStore
 
         init(plugins: [(name: String, file: ESMFile)]) {
-            // One GMST load for every consumer: resolving the load order twice
-            // would parse every plugin's GMST group twice for the same answer.
             let settings = GameSettingStore(plugins: plugins)
             movement = PlayerMovementConfiguration.resolve(
                 store: settings,
@@ -85,190 +74,63 @@ nonisolated public struct CellProviderIndexes {
         }
     }
 
+    /// The audio and weather stores. They are classes without `Sendable`, so
+    /// the loading task builds them itself rather than in a child task.
+    struct AudioStores {
+        let weather: WeatherSystem?
+        let sound: SoundRecordStore
+        let footstep: FootstepStore
+        let materialTypes: MaterialTypeIndex
+        let acousticSpaces: AcousticSpaceStore
+        let music: MusicRecordStore
+
+        init(file: ESMFile) {
+            weather = WeatherSystem(
+                file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+            )
+            sound = SoundRecordStore(file: file)
+            footstep = FootstepStore(file: file)
+            materialTypes = MaterialTypeIndex(file: file)
+            acousticSpaces = AcousticSpaceStore(file: file)
+            music = MusicRecordStore(file: file)
+        }
+    }
+
+    /// The `Sendable` record stores, each built in its own child task.
+    struct RecordStores: Sendable {
+        let dialogue: DialogueStore
+        let packages: PackageStore
+        let world: WorldRecords
+        let equipment: EquipmentCatalog
+        let actorValueBaselines: ActorValueBaselineResolver
+        let scripted: ScriptedData
+        let loadOrder: LoadOrderStores
+    }
+
+    /// Globals, locations, and the faction graph.
+    struct WorldRecords: Sendable {
+        let globals: GlobalStore
+        let locations: LocationStore
+        let factions: FactionStore
+        let relationships: RelationshipStore
+        let formLists: FormListStore
+    }
+
     /// Owns the builder, which never reaches the main actor.
-    public let runner: SerialCellBuildRunner
-    public let scriptFileSystem: any GameFileSource
-    public let scriptFormIDResolver: FormIDResolver
-    public let weatherSystem: WeatherSystem?
-    public let soundStore: SoundRecordStore
-    public let footstepStore: FootstepStore
-    public let materialTypes: MaterialTypeIndex
-    public let aspcStore: AcousticSpaceStore
-    public let musicStore: MusicRecordStore
-    public let globalStore: GlobalStore
-    public let locationStore: LocationStore
-    public let dialogueStore: DialogueStore
-    public let packageStore: PackageStore
-    public let inventoryBaselines: InventoryBaselineResolver
-    public let equipmentCatalog: EquipmentCatalog
-    public let craftingCatalog: CraftingCatalog
-    public let actorValueBaselines: ActorValueBaselineResolver
-    /// Load-order MGEF index, behind every EFID an applied effect
-    /// resolves.
-    public let magicEffectStore: MagicEffectStore
-    /// Load-order SPEL and SCRL index, which the spellbook keys
-    /// its known spells against.
-    public let spellStore: SpellStore
-    /// Load-order EQUP index, which answers which hands a readied
-    /// spell takes.
-    public let equipSlotStore: EquipSlotStore
-    /// Load-order ENCH index, behind every enchanted weapon's charge
-    /// and every worn item's constant effects.
-    public let enchantmentStore: EnchantmentStore
-    /// Load-order PERK index, which the perk runtime owns perks
-    /// out of.
-    public let perkStore: PerkStore
-    /// Load-order AVIF index, which skill advancement reads each
-    /// skill's `AVSK` parameters out of.
-    public let actorValueInformation: ActorValueInformationStore
-    /// Load-order FACT index, which every runtime membership is
-    /// resolved through.
-    public let factionStore: FactionStore
-    /// Load-order RELA and ASTP index, which the hostility
-    /// derivation asks about one specific pair of actors.
-    public let relationshipStore: RelationshipStore
-    /// Load-order FLST index, which a vendor faction's buy/sell
-    /// keyword list is flattened through.
-    public let formListStore: FormListStore
-    /// GMST-derived `fSkillUseCurve` and `fXPPerSkillRank`.
-    public let skillAdvancementSettings: SkillAdvancementSettings
-    /// GMST-derived level curve and level-up rewards.
-    public let characterLevelSettings: CharacterLevelSettings
+    let runner: SerialCellBuildRunner
+    let scriptFileSystem: any GameFileSource
+    let scriptFormIDResolver: FormIDResolver
     /// Plugin the item indexes were built from, which magic-item EFID links are
     /// relative to.
-    public let magicItemPluginName: String
-    public let movementConfiguration: PlayerMovementConfiguration
-    public let barterPricing: BarterPricing
-    public let combatSettings: CombatSettings
-    public let difficultySettings: DifficultySettings
-    public let archerySettings: ArcherySettings
-    public let detectionSettings: DetectionSettings
-    let scripted: ScriptedData
-    let loadOrder: LoadOrderStores
+    let magicItemPluginName: String
+    let tuning: SettingIndexes
+    let magic: MagicIndexes
+    let audio: AudioStores
+    let inventoryBaselines: InventoryBaselineResolver
+    let craftingCatalog: CraftingCatalog
+    let records: RecordStores
 
-    public init(
-        root: GameDataRoot,
-        fileSystem: any GameFileSource,
-        device: MTLDevice,
-        localizationLanguage: String = LocalizationLanguageSettings.fallback,
-        terrainLODConfigurationStore: TerrainLODConfigurationStore
-    ) throws {
-        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
-        let file = try ESMFile(url: esmURL)
-        let pluginName = esmURL.lastPathComponent
-        // Every load-order store reads this one list, so each plugin opens once.
-        let plugins = ActivePluginFiles.load(root: root, baseFile: file)
-        let tuning = SettingIndexes(plugins: plugins)
-        movementConfiguration = tuning.movement
-        barterPricing = tuning.barter
-        combatSettings = tuning.combat
-        difficultySettings = tuning.difficulty
-        archerySettings = tuning.archery
-        detectionSettings = tuning.detection
-        skillAdvancementSettings = tuning.skillAdvancement
-        characterLevelSettings = tuning.characterLevel
-        (runner, scriptFormIDResolver) = try Self.makeRunner(
-            file: file,
-            fileSystem: fileSystem,
-            device: device,
-            localizationLanguage: localizationLanguage,
-            terrainLODConfigurationStore: terrainLODConfigurationStore
-        )
-        scriptFileSystem = fileSystem
-        weatherSystem = WeatherSystem(
-            file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID
-        )
-        soundStore = SoundRecordStore(file: file)
-        footstepStore = FootstepStore(file: file)
-        materialTypes = MaterialTypeIndex(file: file)
-        aspcStore = AcousticSpaceStore(file: file)
-        musicStore = MusicRecordStore(file: file)
-        globalStore = GlobalStore(file: file, pluginName: pluginName)
-        locationStore = LocationStore(plugins: plugins)
-        dialogueStore = DialogueStore(file: file, pluginName: pluginName)
-        packageStore = PackageStore(file: file)
-        factionStore = FactionStore(plugins: plugins)
-        relationshipStore = RelationshipStore(plugins: plugins)
-        formListStore = FormListStore(plugins: plugins)
-        let magic = MagicIndexes(plugins: plugins)
-        magicEffectStore = magic.effects
-        spellStore = magic.spells
-        equipSlotStore = magic.equipSlots
-        enchantmentStore = magic.enchantments
-        perkStore = magic.perks
-        actorValueInformation = magic.actorValues
-        magicItemPluginName = pluginName
-        // Built after the ENCH store so every enchanted item's `EITM` arrives
-        // already load-order resolved: without the resolver an
-        // equipped enchanted weapon would look unenchanted at runtime.
-        inventoryBaselines = Self.inventoryBaselines(
-            file, pluginName, magic.enchantments, fileSystem, localizationLanguage
-        )
-        equipmentCatalog = EquipmentCatalog.build(from: file)
-        craftingCatalog = CraftingCatalog(
-            recipes: RecipeStore(plugins: plugins),
-            itemPlugin: scriptFormIDResolver,
-            file: file
-        )
-        actorValueBaselines = Self.actorValueBaselines(
-            plugins: plugins, file: file, pluginName: pluginName, tuning: tuning
-        )
-        scripted = ScriptedData(plugins, file, pluginName, tuning.store)
-        loadOrder = Self.loadOrderStores(plugins: plugins, file: file, settings: tuning.store)
-    }
-
-    /// Hands the new builder straight to the runner, so no other code holds it.
-    private static func makeRunner(
-        file: ESMFile,
-        fileSystem: any GameFileSource,
-        device: MTLDevice,
-        localizationLanguage: String,
-        terrainLODConfigurationStore: TerrainLODConfigurationStore
-    ) throws -> (SerialCellBuildRunner, FormIDResolver) {
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        let builder = CellSceneBuilder(
-            file: file,
-            meshes: meshes,
-            textures: textures,
-            fileSystem: fileSystem,
-            localizationLanguage: localizationLanguage,
-            terrainLODConfigurationStore: terrainLODConfigurationStore
-        )
-        let formIDResolver = builder.formIDResolver
-        let runner = SerialCellBuildRunner(provider: BuilderCellSceneProvider(
-            builder: builder,
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID
-        ))
-        return (runner, formIDResolver)
-    }
-
-    /// The stat derivation and the baselines over it.
-    ///
-    /// Its own step because the initializer is at its length cap, and because
-    /// the two halves have to share one `PlayerLevelSource`: the
-    /// baselines take the resolver's own, so a level-up moves an NPC's
-    /// `PC Level Mult` scaling and the player's reported level together.
-    private static func actorValueBaselines(
-        plugins: [(name: String, file: ESMFile)],
-        file: ESMFile,
-        pluginName: String,
-        tuning: SettingIndexes
-    ) -> ActorValueBaselineResolver {
-        ActorValueBaselineResolver(
-            resolver: ActorValueResolver.build(
-                from: file,
-                localized: file.isLocalized,
-                pluginName: pluginName,
-                // Load-order wide, so a patch plugin's CLAS override reaches
-                // the derivation instead of being invisible to it.
-                classes: CharacterClassStore(plugins: plugins),
-                settings: tuning.level
-            )
-        )
-    }
-
-    public func makeSession() -> CellSession {
+    func makeSession() -> CellSession {
         CellSession(runner: runner, data: makeDataStores())
     }
 
@@ -276,69 +138,54 @@ nonisolated public struct CellProviderIndexes {
         var stores = WorldDataStores(
             scriptFormIDResolver: scriptFormIDResolver,
             scriptFileSystem: scriptFileSystem,
-            weatherSystem: weatherSystem,
-            soundStore: soundStore,
-            footstepStore: footstepStore,
-            materialTypes: materialTypes,
-            aspcStore: aspcStore,
-            musicStore: musicStore,
-            globalStore: globalStore,
-            questStore: questStore,
-            locationStore: locationStore,
-            dialogueStore: dialogueStore,
-            packageStore: packageStore,
+            weatherSystem: audio.weather,
+            soundStore: audio.sound,
+            footstepStore: audio.footstep,
+            materialTypes: audio.materialTypes,
+            aspcStore: audio.acousticSpaces,
+            musicStore: audio.music,
+            globalStore: records.world.globals,
+            questStore: records.scripted.quests,
+            locationStore: records.world.locations,
+            dialogueStore: records.dialogue,
+            packageStore: records.packages,
             inventoryBaselines: inventoryBaselines,
-            equipmentCatalog: equipmentCatalog,
-            actorValueBaselines: actorValueBaselines,
-            magicEffectStore: magicEffectStore,
+            equipmentCatalog: records.equipment,
+            actorValueBaselines: records.actorValueBaselines,
+            magicEffectStore: magic.effects,
             magicItemPluginName: magicItemPluginName,
-            spellStore: spellStore,
-            equipSlotStore: equipSlotStore,
-            enchantmentStore: enchantmentStore,
-            perkStore: perkStore,
-            factionStore: factionStore,
-            relationshipStore: relationshipStore,
-            formListStore: formListStore,
-            actorValueInformation: actorValueInformation,
-            skillAdvancementSettings: skillAdvancementSettings,
-            characterLevelSettings: characterLevelSettings,
-            movementConfiguration: movementConfiguration,
-            barterPricing: barterPricing,
-            combatSettings: combatSettings,
-            archerySettings: archerySettings,
-            detectionSettings: detectionSettings
+            spellStore: magic.spells,
+            equipSlotStore: magic.equipSlots,
+            enchantmentStore: magic.enchantments,
+            perkStore: magic.perks,
+            factionStore: records.world.factions,
+            relationshipStore: records.world.relationships,
+            formListStore: records.world.formLists,
+            actorValueInformation: magic.actorValues,
+            skillAdvancementSettings: tuning.skillAdvancement,
+            characterLevelSettings: tuning.characterLevel,
+            movementConfiguration: tuning.movement,
+            barterPricing: tuning.barter,
+            combatSettings: tuning.combat,
+            archerySettings: tuning.archery,
+            detectionSettings: tuning.detection
         )
         stores.craftingCatalog = craftingCatalog
-        stores.lockTrapData = lockTrapData
-        stores.storyData = storyData
-        stores.idleStore = idleStore
-        stores.effectRecords = effectRecords
-        stores.presentationRecords = presentationRecords
-        stores.menuRecords = loadOrder.menus
-        stores.difficultySettings = difficultySettings
+        stores.lockTrapData = records.scripted.lockTrap
+        stores.storyData = records.scripted.story
+        stores.idleStore = records.loadOrder.idles
+        stores.effectRecords = records.loadOrder.effects
+        stores.presentationRecords = records.loadOrder.presentation
+        stores.menuRecords = records.loadOrder.menus
+        stores.difficultySettings = tuning.difficulty
         return stores
     }
 }
 
 nonisolated extension CellProviderIndexes {
-    /// Item names resolve through the string tables while the index is built.
-    private static func inventoryBaselines(
-        _ file: ESMFile,
-        _ pluginName: String,
-        _ enchantments: EnchantmentStore,
-        _ fileSystem: any GameFileSource,
-        _ language: String
-    ) -> InventoryBaselineResolver {
-        InventoryBaselineResolver.build(
-            from: file,
-            enchantments: ItemEnchantmentResolver(store: enchantments, pluginName: pluginName),
-            strings: LocalizedStrings(vfs: fileSystem, pluginName: pluginName, language: language)
-        )
-    }
-
     /// Lock, trap, quest, scene, and story-manager data: what quest and trap scripts
     /// act on. Quests, scenes, and story nodes come from every active plugin.
-    struct ScriptedData {
+    struct ScriptedData: Sendable {
         let lockTrap: LockTrapData
         let story: StoryData
         let quests: QuestStore
@@ -357,45 +204,8 @@ nonisolated extension CellProviderIndexes {
         }
     }
 
-    public var questStore: QuestStore {
-        scripted.quests
-    }
-
-    public var lockTrapData: LockTrapData {
-        scripted.lockTrap
-    }
-
-    public var storyData: StoryData {
-        scripted.story
-    }
-
-    /// Load-order idle records and markers.
-    public var idleStore: IdleStore {
-        loadOrder.idles
-    }
-
-    public var effectRecords: EffectRecordStore {
-        loadOrder.effects
-    }
-
-    /// Load-order cameras, combat styles, messages, and loading screens.
-    public var presentationRecords: PresentationRecordStore {
-        loadOrder.presentation
-    }
-
     /// Stores built over the whole active load order.
-    static func loadOrderStores(
-        plugins: [(name: String, file: ESMFile)], file: ESMFile, settings: GameSettingStore
-    ) -> LoadOrderStores {
-        LoadOrderStores(
-            idles: IdleStore(plugins: plugins),
-            effects: EffectRecordStore(plugins: plugins),
-            presentation: PresentationRecordStore(plugins: plugins),
-            menus: MenuRecordData(file: file, plugins: plugins, settings: settings)
-        )
-    }
-
-    struct LoadOrderStores {
+    struct LoadOrderStores: Sendable {
         let idles: IdleStore
         let effects: EffectRecordStore
         let presentation: PresentationRecordStore

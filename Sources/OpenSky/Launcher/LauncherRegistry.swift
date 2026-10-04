@@ -7,6 +7,7 @@ import OpenSkyLaunch
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {
     func start(_ mode: LaunchMode)
+    func cancelLoad()
     func gameFolderDidChange()
 }
 
