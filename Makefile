@@ -351,7 +351,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-ui test-sanitize test-real test-report test-perms coverage-floor \
-        sanitizer-shaders profile
+        sanitizer-shaders profile benchmark
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -434,6 +434,10 @@ coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last
 profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MODE=walk|fly] [ARGS=...]
 	@$(MAKE) --no-print-directory cli CONFIG=Release
 	@./tools/profile.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(or $(MODE),walk) $(ARGS)
+
+benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI
+	@$(MAKE) --no-print-directory cli CONFIG=Release
+	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli"
 
 ##@ Housekeeping
 

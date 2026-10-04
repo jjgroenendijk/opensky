@@ -239,18 +239,26 @@ enum RenderCommand {
     /// Reusing one instance across multiple `buildScene` calls (the
     /// `--neighbors` grid) shares the STAT index and dedups mesh/texture
     /// residency across cells — `--neighbors` calls this once, `buildScene`
-    /// calls it once per invocation.
-    static func makeBuilder(context: CLIContext, device: MTLDevice) throws -> CellSceneBuilder {
-        let fileSystem = context.makeFileSystem()
+    /// calls it once per invocation. A `recorder` gets every file read and asset phase.
+    static func makeBuilder(
+        context: CLIContext,
+        device: MTLDevice,
+        recorder: LoadPhaseRecorder? = nil
+    ) throws -> CellSceneBuilder {
+        let vfs = context.makeFileSystem()
+        let fileSystem: any GameFileSource = recorder
+            .map { PhaseTimedFileSource(base: vfs, recorder: $0) } ?? vfs
         let file = try context.loadSkyrimESM()
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        return CellSceneBuilder(
+        let builder = CellSceneBuilder(
             file: file,
             meshes: meshes,
             textures: textures,
             fileSystem: fileSystem,
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
+        builder.loadPhases = recorder
+        return builder
     }
 }

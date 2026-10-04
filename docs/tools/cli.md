@@ -79,6 +79,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `bench --fly-path [...]` | A scripted flight across cells through the real streamer, with memory, build, and update budgets |
 | `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |
 | `bench --walk-path [...]` | A fixed walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, up stairs, through an interior, and back |
+| `benchmark [--out <file>] [--frame <png>]` | The shared benchmark: a cold and a warm load of fixed cells split into asset phases, then frame time on a fixed view. `--out` writes the JSON result, `--frame` a PNG of the view ([benchmark](/tools/benchmark.md)) |
 
 ## Notes on the probes
 

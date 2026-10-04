@@ -85,6 +85,16 @@ with "timed out while preparing". Clicking Allow once let the run continue. The 
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
 
+## UI test window screenshot fails on a second display
+
+Observed 2026-10-04 on macOS 27.0.1, with a second display arranged above the main one.
+`testCapturesRenderedFrame` failed with `Failed to get screenshot: Failed to create screenshot.
+Image creation failed.` The app window opened at a negative y position, on the second display. The
+other 31 UI tests passed in the same run.
+
+Retires when the test passes with this display arrangement, or when the window opens on the main
+display.
+
 ## Stale testmanagerd
 
 Observed 2026-08-06. A days-old XCTest daemon can stall a fresh run at 0% CPU. The signs are

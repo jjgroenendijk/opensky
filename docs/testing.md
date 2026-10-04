@@ -118,6 +118,10 @@ changes timings: no other OpenSky should be running, and Spotlight may be indexi
 
 ## Profiling
 
+`make benchmark` gives the before and after numbers for a performance change: load time split
+into asset phases, and frame time ([shared benchmark](/tools/benchmark.md)). `make profile` then
+shows where the time goes inside one phase.
+
 `make profile` records an Instruments Time Profiler trace of `openskycli bench --walk-path` on a
 Release build. `MODE=fly` profiles `--fly-path` instead. `ARGS` passes more bench options, such as
 `ARGS='--footprint-cap-mb 2048'` when a bench gate stops the run early. The run directory holds

@@ -174,6 +174,10 @@ enum OpenSkyCLI {
             try EffectsCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "benchmark":
+            try BenchmarkCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         case "game":
             try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
         default:

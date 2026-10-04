@@ -520,4 +520,11 @@ run "walk/collision route bench (640x360)" bench --walk-path --size 640x360 \
 grep 'active physics frames @' "$log" | tail -1
 grep 'audio update:' "$log" | tail -1 \
   || fail "walk bench reported no audio update budget line"
+# M31.2 shared benchmark: cold + warm load of the fixed cells, then frame time.
+# The command exits 1 when a cell fails to build, so the result compares.
+benchmark_json="$log_dir/probe-benchmark.json"
+run "shared performance benchmark" benchmark --out "$benchmark_json"
+[ -s "$benchmark_json" ] || fail "benchmark wrote no JSON result"
+grep 'cold phases:' "$log" | tail -1
+grep 'frame time over' "$log" | tail -1
 echo "[INFO] probe passed — full output in $log"

@@ -97,6 +97,14 @@ nonisolated public final class CellSceneBuilder {
     /// Whether movable clutter joins the dynamic world. Off only for builds that
     /// want the immutable collision set, such as `openskycli collision`.
     public var simulatesDynamicBodies = true
+    /// Splits build time into asset phases for a benchmark; nil in normal play.
+    public var loadPhases: LoadPhaseRecorder? {
+        didSet {
+            meshes.loadPhases = loadPhases
+            textures.loadPhases = loadPhases
+        }
+    }
+
     public let distantLODBuilder: DistantLODBuilder?
     /// Built on first use, like every index below.
     public var statIndex: [UInt32: StaticObject]?

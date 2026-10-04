@@ -45,6 +45,8 @@ nonisolated public final class TextureLibrary {
     public private(set) var loadedCount = 0
     /// Distinct paths the VFS could not resolve (each fell back to placeholder).
     public private(set) var missingCount = 0
+    /// Books each upload to `LoadPhase.texture` when a benchmark attaches one.
+    public var loadPhases: LoadPhaseRecorder?
 
     public init(fileSystem: any GameFileSource, loader: TextureLoader) {
         self.fileSystem = fileSystem
@@ -74,16 +76,20 @@ nonisolated public final class TextureLibrary {
             return hit
         }
 
-        let texture: MTLTexture
-        if let data = try? fileSystem.contents(forPath: normalized) {
-            texture = loader.texture(dds: data, usage: usage, label: normalized)
-            loadedCount += 1
-        } else {
-            texture = loader.missingTexture(usage: usage, label: normalized)
-            missingCount += 1
+        let texture = loadPhases.measure(.texture) {
+            load(path: normalized, usage: usage)
         }
         cache[cacheKey] = texture
         return texture
+    }
+
+    private func load(path: String, usage: TextureUsage) -> MTLTexture {
+        guard let data = try? fileSystem.contents(forPath: path) else {
+            missingCount += 1
+            return loader.missingTexture(usage: usage, label: path)
+        }
+        loadedCount += 1
+        return loader.texture(dds: data, usage: usage, label: path)
     }
 
     /// TextureProvider closure for RenderModel construction. Captures self —

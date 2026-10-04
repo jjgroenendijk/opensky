@@ -50,6 +50,8 @@ nonisolated public final class MeshLibrary {
 
     /// Distinct mesh paths successfully parsed + uploaded.
     public private(set) var loadedCount = 0
+    /// Books each parse and upload to `LoadPhase.mesh` when a benchmark attaches one.
+    public var loadPhases: LoadPhaseRecorder?
 
     public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
@@ -126,51 +128,60 @@ nonisolated public final class MeshLibrary {
             return hit
         }
 
-        let decoded = try decode(
-            pathKey: pathKey,
-            actorSkeleton: actorSkeleton,
-            explicitActorSkeleton: explicitActorSkeleton
-        )
-        let decodedParticles = decoded.particles
-        var model = terrainLODClipMask
-            .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
-        if let surface {
-            model = surface.applied(to: model)
-        }
-        if let attachmentBone {
-            model = RigidAttachment.skinned(
-                model,
-                to: attachmentBone,
-                restTransform: actorSkeleton?.skeleton
-                    .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
+        return try loadPhases.measure(.mesh) {
+            let decoded = try decode(
+                pathKey: pathKey,
+                actorSkeleton: actorSkeleton,
+                explicitActorSkeleton: explicitActorSkeleton
             )
-        }
-        guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
+            let decodedParticles = decoded.particles
+            var model = terrainLODClipMask
+                .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
+            if let surface {
+                model = surface.applied(to: model)
+            }
+            if let attachmentBone {
+                model = RigidAttachment.skinned(
+                    model,
+                    to: attachmentBone,
+                    restTransform: actorSkeleton?.skeleton
+                        .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
+                )
+            }
+            guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
 
-        let render: RenderModel
-        textures.beginKeyCapture()
-        do {
-            render = try RenderModel(
-                device: device,
-                model: model,
-                textureProvider: textures.provider
-            )
-        } catch {
-            _ = textures.endKeyCapture()
-            throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
+            let render: RenderModel
+            textures.beginKeyCapture()
+            do {
+                render = try RenderModel(
+                    device: device,
+                    model: model,
+                    textureProvider: textures.provider
+                )
+            } catch {
+                _ = textures.endKeyCapture()
+                throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
+            }
+            modelTextureKeys[key] = textures.endKeyCapture()
+            cache[key] = render
+            particleDefinitions[key] = decodedParticles
+            skippedShapes[key] = model.skippedShapeCount
+            modelBounds[key] = ModelBounds.containing(model: model)
+            loadedCount += 1
+            return render
         }
-        modelTextureKeys[key] = textures.endKeyCapture()
-        cache[key] = render
-        particleDefinitions[key] = decodedParticles
-        skippedShapes[key] = model.skippedShapeCount
-        modelBounds[key] = ModelBounds.containing(model: model)
-        loadedCount += 1
-        return render
     }
 
     /// Uploads a LAND terrain patch: the quadrant mesh and its splat-weight stream (two
     /// float4 per vertex, `TerrainVertexLayout`). Not cached: each patch is unique.
     public func terrainMesh(
+        _ mesh: Mesh,
+        weights: [SIMD4<Float>]
+    ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {
+        try loadPhases.measure(.mesh) { try uploadTerrain(mesh, weights: weights) }
+    }
+
+    private func uploadTerrain(
         _ mesh: Mesh,
         weights: [SIMD4<Float>]
     ) throws -> (mesh: RenderMesh, weightsBuffer: MTLBuffer) {

@@ -209,6 +209,11 @@ extension OpenSkyCLI {
                                   Fixed-step M4 route: terrain + farm stairs,
                                   paired interior crossing, exterior return;
                                   fail route/collision/stream/physics/audio gates
+      benchmark [--out <file>] [--frame <png>]
+                                  Shared benchmark: cold + warm load of fixed
+                                  cells split into asset phases, then frame
+                                  time on a fixed view; --out writes stable
+                                  JSON, --frame a PNG of the measured view
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control
