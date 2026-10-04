@@ -9,9 +9,9 @@
 # text exists, leaving no full copy anywhere.
 #
 # A build removes stale module copies first (tools/stale-modules.sh). When a
-# failed build leaves new stale copies, it removes them and builds again. A
-# failed build stops at one module layer, so the layer above shows its stale
-# copies only after the next pass: it repeats while each pass finds new ones.
+# failed build leaves new stale copies, it removes them and builds again. The
+# script also removes the copies of the modules above, so one more pass is
+# usually enough; it repeats while each pass finds new ones.
 #
 # The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
