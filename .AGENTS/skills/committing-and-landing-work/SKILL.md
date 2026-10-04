@@ -58,8 +58,9 @@ or `Model:`. Allowed trailers:
    the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`. That starts CI.
-7. Merge after review. Done and verified work always lands: commit and open the PR
-   without waiting to be asked.
+7. Merge after review with `gh pr merge <pr> --merge`. A merge commit keeps every atomic
+   commit on `main`; the repo disables squash and rebase merging. Done and verified work
+   always lands: commit and open the PR without waiting to be asked.
 
 ## Landing gotchas seen repeatedly
 
