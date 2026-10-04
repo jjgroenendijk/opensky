@@ -56,6 +56,10 @@ extension CombatCoordinator: CombatLoopWorld {
         .unarmed
     }
 
+    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        world?.combatStyle(of: key)
+    }
+
     public func combatCasting(of key: ReferenceKey) -> CombatCastingProfile {
         guard allowsActorCasting, let facts = world?.castingFacts(of: key) else { return .none }
         return CombatCore.castingProfile(facts)

@@ -25,6 +25,8 @@ final class NPCAIRealDataFight {
     var playerFeet = SIMD3<Float>()
     var blockSight = false
     var health: Float = 1
+    /// The actor's combat style; nil fights on the base settings.
+    var style: CombatStyleTuning?
 
     private(set) var packageResumes: [ReferenceKey] = []
     private(set) var visitedPhases: Set<CombatBehaviorPhase> = []
@@ -139,6 +141,10 @@ extension NPCAIRealDataFight: NoCasterCombatWorld {
 
     func combatWeapon(of _: ReferenceKey) -> MeleeWeaponProfile {
         .unarmed
+    }
+
+    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        key == actor ? style : nil
     }
 
     /// No navmesh here, so the actor walks straight at whatever it was told to

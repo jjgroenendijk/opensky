@@ -152,6 +152,12 @@ public final class CombatCoordinator {
         }
     }
 
+    /// The first weapon the player has equipped, or nil when unarmed.
+    public func playerWeapon() -> Weapon? {
+        guard let equipment = world?.equipment, let items else { return nil }
+        return equipment.equipped(on: .player).lazy.compactMap { items.weapon($0) }.first
+    }
+
     func selectedArrow() -> ArcheryAmmunition? {
         guard let items, let world else { return nil }
         return CombatCore.arrow(

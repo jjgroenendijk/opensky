@@ -123,6 +123,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let storyManagerQuests = "SMQS"
         /// Speakers in an exclusive dialogue branch.
         public static let dialogueBranches = "DLBS"
+        /// Help messages per input event: times shown and whether the event happened.
+        public static let helpMessages = "HELP"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

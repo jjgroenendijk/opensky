@@ -50,6 +50,11 @@ nonisolated public protocol IdleDataProviding {
     var idleStore: IdleStore? { get }
 }
 
+/// Load-order cameras, combat styles, messages, and loading screens.
+nonisolated public protocol PresentationDataProviding {
+    var presentationRecords: PresentationRecordStore? { get }
+}
+
 /// Load-order effect records: image spaces, effect shaders, explosions, output models.
 nonisolated public protocol EffectDataProviding {
     var effectRecords: EffectRecordStore? { get }

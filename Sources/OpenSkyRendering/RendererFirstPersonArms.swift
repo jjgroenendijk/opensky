@@ -11,7 +11,7 @@ extension Renderer {
     /// Whether the arms are drawn to the camera this frame. First person only:
     /// fly and third person show the body instead.
     public var areFirstPersonArmsVisible: Bool {
-        rigVisibility.drawsArms
+        rigVisibility.drawsArms && effects.loadingCover == nil
     }
 
     /// The vertical field of view this frame projects with, from the driver:

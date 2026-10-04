@@ -22,6 +22,8 @@ public final class GameSession: RenderFrameDriver {
     /// The conversation camera's focus, framing and saved player pose. An override on top
     /// of `movementMode`, never a mode (Renderer+DialogueCamera.swift).
     public var dialogueCameraState = RendererDialogueCameraState()
+    /// The kill-cam pose and camera shake, applied over the dialogue camera.
+    public var cinematicCameraState = RendererCinematicCameraState()
     /// The player's rendered body, attached once the app has assembled it and
     /// deliberately not part of the scene: it survives every cell swap
     /// (Renderer+PlayerBody.swift). nil in offscreen/CLI paths and until the

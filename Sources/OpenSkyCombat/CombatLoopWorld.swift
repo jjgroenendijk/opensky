@@ -132,6 +132,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// The profile `key` swings with, which sizes its reach and its damage.
     func combatWeapon(of key: ReferenceKey) -> MeleeWeaponProfile
 
+    /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
+    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
+
     /// What `key` could cast right now and what it can pay for. The session holds
     /// the spellbook and magicka. A world with no caster runtime answers `.none`, so
     /// every actor fights with its hands.
@@ -214,5 +217,10 @@ nonisolated extension CombatLoopWorld {
     /// formula, which is the value the term had before either existed.
     public func combatBlockMultiplier(of key: ReferenceKey) -> Float {
         1
+    }
+
+    /// A session that resolves no combat styles fights with the base settings.
+    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        nil
     }
 }

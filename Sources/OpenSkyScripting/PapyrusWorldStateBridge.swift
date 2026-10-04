@@ -111,6 +111,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var formIDResolver: FormIDResolver?
     /// The story manager and scenes, for the `Keyword` and `Scene` natives.
     public weak var story: (any PapyrusStoryBridge)?
+    /// Notifications, message boxes, and camera effects. Nil in a headless session.
+    public weak var presenter: (any PapyrusPresenting)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.

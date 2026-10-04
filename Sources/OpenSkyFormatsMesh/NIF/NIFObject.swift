@@ -13,9 +13,9 @@ nonisolated extension BinaryReader {
     }
 }
 
-/// NiObjectNET field run: name, extra data refs (skipped), controller ref
-/// (skipped). Property blocks (BSLightingShaderProperty, NiAlphaProperty)
-/// start here directly; scene-graph objects continue with NiAVObject fields
+/// NiObjectNET field run: name, extra data refs (skipped), controller ref.
+/// Property blocks (BSLightingShaderProperty, NiAlphaProperty) start here directly; scene-graph
+/// objects continue with NiAVObject fields
 /// (NIFObjectPrefix).
 nonisolated public struct NIFObjectNET: Sendable {
     /// Resolved from the header string table. nil when unnamed (index -1) or
@@ -23,6 +23,8 @@ nonisolated public struct NIFObjectNET: Sendable {
     /// exporter garbage (docs/formats/nif.md) and a bad name must not reject
     /// the mesh.
     public let name: String?
+    /// The first NiTimeController; -1 = none.
+    public let controllerRef: Int32
 
     public init(reader: inout BinaryReader, header: NIFHeader) throws {
         let nameIndex = try reader.readUInt32()
@@ -39,13 +41,15 @@ nonisolated public struct NIFObjectNET: Sendable {
             )
         }
         reader.skip(extraDataCount * 4) // NiExtraData refs, unused
-        reader.skip(4) // NiTimeController ref, unused (animation skipped)
+        controllerRef = try Int32(bitPattern: reader.readUInt32())
     }
 }
 
 nonisolated public struct NIFObjectPrefix: Sendable {
     /// See NIFObjectNET.name.
     public let name: String?
+    /// See NIFObjectNET.controllerRef.
+    public let controllerRef: Int32
     public let flags: UInt32
     public let translation: SIMD3<Float>
     /// The node's rotation in the engine's convention: `R * v` on column
@@ -75,7 +79,9 @@ nonisolated public struct NIFObjectPrefix: Sendable {
             )
         }
 
-        name = try NIFObjectNET(reader: &reader, header: header).name
+        let net = try NIFObjectNET(reader: &reader, header: header)
+        name = net.name
+        controllerRef = net.controllerRef
 
         flags = try reader.readUInt32()
         translation = try reader.readVector3()

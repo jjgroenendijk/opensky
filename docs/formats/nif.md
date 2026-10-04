@@ -201,6 +201,34 @@ index. A wrong byte count, bad values, or a different vertex count rejects the s
   512 KB secondary thread, or the main thread under Address Sanitizer, ran out before depth
   64. The limit of 64 is again a rule about plausible files.
 
+## Camera animation
+
+A `CAMS` camera mesh holds one `NiCamera`. In vanilla meshes the camera itself has no
+controller: its parent, the root `BSFadeNode`, carries the `NiTransformController`, and the
+camera sits at a fixed offset below it. OpenSky reads the first `NiCamera` block, walks up to
+the nearest node whose controller chain holds a transform controller, and composes the camera
+offset under that node's keys. Reference: `nif.xml` blocks `NiCamera`, `NiTimeController`,
+`NiTransformController`, `NiTransformInterpolator`, and `NiTransformData`.
+
+| Block | Fields OpenSky reads |
+| --- | --- |
+| `NiCamera` | The shared node fields (rest transform and controller ref), then 2 bytes of camera flags and the frustum floats left, right, top, bottom, near; top and bottom are skipped |
+| `NiTransformController` | Next controller ref, flags (uint16), frequency, phase, start time, stop time, target ref, interpolator ref |
+| `NiTransformInterpolator` | A rest translation, rotation, and scale (32 bytes), then the data ref |
+| `NiTransformData` | Rotation and translation keys, as in `.kf` animation files. Scale keys come last and are not read |
+
+The horizontal field of view is `2 * atan((right - left) / 2 / near)`. A camera with no
+controller, or with a controller that has no interpolator, keeps its rest transform. Between
+two keys OpenSky blends linearly: translations mix, quaternions slerp, and XYZ rotation data
+mixes each angle, then applies X, then Y, then Z. It ignores the tangents of quadratic keys,
+so a curved camera path is followed as straight segments between keys.
+
+A chain can start with a `BSFrustumFOVController` before the transform controller. OpenSky
+follows the next-controller links and skips it, so the field of view stays the frustum's. On
+the install, 77 meshes are named by `CAMS` records and one, `killcam_topsideclosea.nif`, is
+not in the archives. Of the other 76, 73 use XYZ rotation keys and 67 move the camera; most
+run from -0.033 to 15.7 seconds.
+
 ## Vanilla meshes
 
 All 22,806 `.nif` files in the vanilla archives parse. All are 20.2.0.7, user version 12,

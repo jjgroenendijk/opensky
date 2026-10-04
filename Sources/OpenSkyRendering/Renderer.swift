@@ -173,6 +173,8 @@ public final class Renderer: NSObject {
     public let wallClock: any WallClock
     /// Wall-clock delta source for the animation clock, paused in menu mode.
     public var animationClock = FrameSimClock()
+    /// Slows animation, particles, and the world sim, not the camera. A kill cam sets it below 1.
+    public var worldTimeScale: Float = 1
     public var lastAnimationUpdateMS = 0.0
     public var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.

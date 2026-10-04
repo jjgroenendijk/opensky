@@ -15,8 +15,9 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   controllers), and `Resources/`.
 - `OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus `Binary/`,
   `Compression/`, and `Geometry/`.
-- `OpenSkyWorld/`: `Actors/`, `Cells/`, `Conditions/`, `Effects/`, `Navigation/`,
-  `Packages/`, `Player/`, `Session/`, `State/`, `Streaming/`, `Terrain/`, and `Weather/`.
+- `OpenSkyWorld/`: `Actors/`, `Camera/`, `Cells/`, `Conditions/`, `Effects/`, `Loading/`,
+  `Navigation/`, `Packages/`, `Player/`, `Session/`, `State/`, `Streaming/`, `Terrain/`, and
+  `Weather/`.
 - A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in the module of its
   domain. A seam that names a higher layer, such as menus, cameras, or scripts, lives in
   `OpenSkyMenus/`.

@@ -39,4 +39,19 @@ nonisolated public struct ConditionDataResolution: Sendable {
     public func editorLocation(of reference: ReferenceKey) -> ResolvedFormID? {
         editorLocations[reference]
     }
+
+    /// A copy that reads FormIDs from `plugin` and puts `reference` in `location`,
+    /// for a check about a place the reference is going to.
+    public func with(
+        sourcePlugin plugin: String?,
+        location: ResolvedFormID?,
+        of reference: ReferenceKey
+    ) -> Self {
+        var current = currentLocations
+        current[reference] = location
+        return Self(
+            keywords: keywords, formLists: formLists, locations: locations,
+            sourcePlugin: plugin, currentLocations: current, editorLocations: editorLocations
+        )
+    }
 }

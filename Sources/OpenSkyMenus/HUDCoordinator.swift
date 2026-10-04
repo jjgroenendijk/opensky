@@ -93,6 +93,27 @@ public final class HUDCoordinator {
         }
     }
 
+    /// Lines the movie showed, newest last, for the panel readout.
+    public private(set) var shownNotifications: [String] = []
+
+    public func showNotification(_ text: String) {
+        shownNotifications = Array((shownNotifications + [text]).suffix(5))
+        callMovie { HUDMovieBridge.showNotification(text, runtime: $0) }
+    }
+
+    public func setHelpMessage(_ text: String?) {
+        callMovie { HUDMovieBridge.setHelpMessage(text, runtime: $0) }
+    }
+
+    private func callMovie(_ body: (SWFMovieRuntime) -> Void) {
+        guard isLoaded, let renderer else { return }
+        do {
+            try renderer.updateSWFRuntime(body)
+        } catch {
+            fail(error, renderer: renderer)
+        }
+    }
+
     public func updateTarget(_ target: InteractionTarget?) {
         let oldPrompt = effectivePrompt
         let oldReference = interactionTarget?.interaction.reference

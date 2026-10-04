@@ -28,6 +28,8 @@ nonisolated public struct RenderLayer: OptionSet, Hashable, Sendable {
     public static let grass = RenderLayer(rawValue: 1 << 6)
     /// Cell particle systems and precipitation, which share one encode path.
     public static let particles = RenderLayer(rawValue: 1 << 7)
+    /// The loading screen's object. Never in `all`: it draws alone, in place of the world.
+    public static let loadingCover = RenderLayer(rawValue: 1 << 8)
 
     /// Every layer on: the default, and the only mask a shipping frame uses.
     public static let all: RenderLayer = [
@@ -161,7 +163,8 @@ extension Renderer {
     /// removes the shadows they were casting — a mask that hid the geometry and
     /// kept its shadow would be actively misleading.
     public var effectiveRenderLayers: RenderLayer {
-        RenderLayerPolicy.effective(
+        guard effects.loadingCover == nil else { return .loadingCover }
+        return RenderLayerPolicy.effective(
             mask: renderDebug.layers,
             grassEnabled: grassEnabled,
             particlesEnabled: particlesEnabled,

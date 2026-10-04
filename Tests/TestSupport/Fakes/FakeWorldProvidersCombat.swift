@@ -191,6 +191,10 @@ extension FakeWorldProviders {
     func clearCombatTrace() {
         combatLoop.traceClearCount += 1
     }
+
+    var selectedCombatStyle: CombatStyleReadout? {
+        presentationState.combatStyle
+    }
 }
 
 /// The dynamic-body part of the fake's stored state.

@@ -23,6 +23,7 @@ final class FakeCoordinatorWorld: CombatWorld {
     var perkMultipliers: [ReferenceKey: Float] = [:]
     var healths: [ReferenceKey: (current: Float, maximum: Float)] = [:]
     var casting: [ReferenceKey: CombatCastingFacts] = [:]
+    var styles: [ReferenceKey: CombatStyleTuning] = [:]
     var finishesCasts = true
     var bodyTransients = CombatTransientCounts.none
     var trimmedBodies = CombatTransientCounts.none
@@ -57,6 +58,10 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func selectedActor() -> ReferenceKey? {
         selected
+    }
+
+    func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        styles[key]
     }
 
     func hostility(of key: ReferenceKey) -> ActorHostility {

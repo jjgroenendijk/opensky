@@ -155,6 +155,9 @@ type length limit. The arrays join in sidebar order.
   `refreshReadout`, `isOverridden`, and `resetToDefaults`, and set `sectionTitle` and
   `sectionIdentifier`. Call `finishInteraction()` from an action to refresh and give focus back to
   the game. Continuous sliders pass `refocusOnMouseUpOnly: true`.
+- Never name an `@objc` action after an `NSObject` method, such as `release`, `retain`, `copy`, or
+  `description`. A `release()` action overrides memory management: the next release calls the
+  action, and the app crashes with a stack overflow when the panel is built.
 - `InspectionTicker` runs the 2 Hz readout timer.
 - Each section normally runs its own ticker. A panel whose sections all read one costly value sets
   `sectionsTickIndependently` to false, runs the only ticker, builds that value once in

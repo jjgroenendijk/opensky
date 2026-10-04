@@ -19,6 +19,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var healthFractions: [ReferenceKey: Float] = [:]
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
+    public var styles: [ReferenceKey: CombatStyleTuning] = [:]
     /// What each actor could cast, and what it can pay for.
     public var casting: [ReferenceKey: CombatCastingProfile] = [:]
     /// Whether a begun cast is accepted. False is the world refusing a cast the
@@ -92,6 +93,10 @@ public final class FakeCombatWorld: CombatLoopWorld {
             isDead: true,
             name: previous.name
         )
+    }
+
+    public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
+        styles[key]
     }
 
     public var combatPlayer: MeleeAttacker {

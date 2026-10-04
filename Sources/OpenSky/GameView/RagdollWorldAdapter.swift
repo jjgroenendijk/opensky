@@ -74,6 +74,7 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
 
     func reportMurder(of key: ReferenceKey) {
         game.crime.reportMurder(of: key)
+        game.cinematicWorld.actorDied(key)
     }
 
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose? {

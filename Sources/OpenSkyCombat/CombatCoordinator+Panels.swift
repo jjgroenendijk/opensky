@@ -222,6 +222,11 @@ extension CombatCoordinator: CombatLoopControlProviding {
         loop?.clearTrace()
     }
 
+    public var selectedCombatStyle: CombatStyleReadout? {
+        guard let loop, let key = world?.selectedActor() else { return nil }
+        return loop.styleReadout(of: key)
+    }
+
     /// One line per actor with a behavior machine, nearest first, from the same
     /// observation the loop stepped against.
     private func actorReadouts(loop: CombatLoopRuntime) -> [CombatActorReadout] {

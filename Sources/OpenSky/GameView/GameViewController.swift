@@ -164,6 +164,14 @@ final class GameViewController: NSViewController {
     /// Container and barter menu two-pane list, merchant nomination and presentation state.
     lazy var containerMenu = ContainerMenuController(game: self)
     lazy var lockpickingMenu = LockpickingMenuController(game: self)
+    /// Notifications, help messages, and message boxes for scripts and the sidebar.
+    lazy var messages = MessageCoordinator(menuMode: menuMode)
+    lazy var messageWorld = MessageWorldAdapter(game: self)
+    /// Kill cams and camera shake.
+    lazy var cinematicCamera = CinematicCameraCoordinator()
+    lazy var cinematicWorld = CinematicCameraWorldAdapter(game: self)
+    lazy var loadingScreens = LoadingScreenCoordinator()
+    lazy var loadingWorld = LoadingScreenWorldAdapter(game: self)
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
     let inventory = InventoryCoordinator()
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
@@ -280,6 +288,7 @@ final class GameViewController: NSViewController {
         gameView.menuMode = menuMode
         gameView.onJournalKey = { [weak self] in self?.journalMenu.open() }
         gameView.onInventoryKey = { [weak self] in self?.inventoryMenu.open() }
+        gameView.onInputEvent = { [weak self] event in self?.messages.noteInputEvent(event) }
         view = gameView
     }
 
@@ -347,21 +356,6 @@ final class GameViewController: NSViewController {
         }
     }
 
-    /// Saves the live World camera + current streamed scene, excluding app
-    /// chrome. Runs on main, same as draw(in:), so renderer state cannot race.
-    func writeScreenshot(to url: URL) throws {
-        guard let renderer, let view = view as? MTKView else {
-            throw ScreenshotError.rendererNotReady
-        }
-        let width = Int(view.drawableSize.width.rounded())
-        let height = Int(view.drawableSize.height.rounded())
-        guard width > 0, height > 0 else {
-            throw ScreenshotError.rendererNotReady
-        }
-        let texture = try renderer.renderOffscreen(width: width, height: height)
-        try FrameScreenshot.write(texture: texture, to: url)
-    }
-
     static let logger = Logger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
@@ -384,6 +378,21 @@ final class GameViewController: NSViewController {
 }
 
 extension GameViewController {
+    /// Saves the live World camera + current streamed scene, excluding app
+    /// chrome. Runs on main, same as draw(in:), so renderer state cannot race.
+    func writeScreenshot(to url: URL) throws {
+        guard let renderer, let view = view as? MTKView else {
+            throw ScreenshotError.rendererNotReady
+        }
+        let width = Int(view.drawableSize.width.rounded())
+        let height = Int(view.drawableSize.height.rounded())
+        guard width > 0, height > 0 else {
+            throw ScreenshotError.rendererNotReady
+        }
+        let texture = try renderer.renderOffscreen(width: width, height: height)
+        try FrameScreenshot.write(texture: texture, to: url)
+    }
+
     /// The playback drawing one resident actor, matched by its ACHR.
     func actorPlayback(for key: ReferenceKey) -> ActorAnimationPlayback? {
         guard let actor = streamer?.referenceEntry(key: key)?.placedActor else { return nil }
@@ -421,6 +430,10 @@ extension GameViewController: @MainActor SystemMenuWorld {
             dialogueMenu.route(event)
         case LockpickingMenuController.identifier:
             lockpickingMenu.route(event)
+        case MessageCoordinator.identifier:
+            messages.route(event)
+        case LoadingScreenWorldAdapter.identifier:
+            return
         default:
             systemMenu.route(event)
         }
@@ -429,8 +442,17 @@ extension GameViewController: @MainActor SystemMenuWorld {
 
 extension GameViewController: AudioControlForwarding, RuntimeStateControlForwarding,
     ScriptControlForwarding, WorldRenderControlForwarding, RenderControlWorld,
-    EffectsControlForwarding, ExplosionControlForwarding
+    EffectsControlForwarding, ExplosionControlForwarding, CinematicCameraControlForwarding,
+    LoadingScreenControlForwarding, MessageControlForwarding
 {
+    var cinematicSelectedActor: ReferenceKey? {
+        actorWorld.nearestActorValueHolder()?.key
+    }
+
+    var cinematicRemainingHostiles: Int {
+        combat.combatLoopSnapshot.hostileCount
+    }
+
     var effectsSelectedActor: ReferenceKey? {
         actorWorld.nearestActorValueHolder()?.key
     }

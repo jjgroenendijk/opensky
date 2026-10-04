@@ -34,6 +34,10 @@ final class CombatLoopSection: PanelSectionViewController {
         "combatLoop"
     }
 
+    var readout: String {
+        statsLabel.stringValue
+    }
+
     override func makeContentViews() -> [NSView] {
         hostilityControl.toolTip = "The actor fights only after it detects the player."
         castingControl.toolTip = "Off keeps every fighter on weapons only."
@@ -79,6 +83,8 @@ final class CombatLoopSection: PanelSectionViewController {
             CombatLoopReadout.actorsText(for: snapshot),
             CombatLoopReadout.castingText(for: snapshot),
             CombatLoopReadout.hostilityText(for: snapshot),
+            provider.selectedCombatStyle
+                .map { "\($0.styleText)\n\($0.settingsText)" } ?? "Style: none",
             CombatLoopReadout.incomingText(for: snapshot),
             CombatLoopReadout.transientText(for: snapshot),
             snapshot.lastActionText

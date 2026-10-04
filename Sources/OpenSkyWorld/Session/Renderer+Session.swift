@@ -80,6 +80,11 @@ extension Renderer {
         _modify { yield &session.dialogueCameraState }
     }
 
+    public var cinematicCameraState: RendererCinematicCameraState {
+        get { session.cinematicCameraState }
+        _modify { yield &session.cinematicCameraState }
+    }
+
     public var playerBody: PlayerBody? {
         get { session.playerBody }
         _modify { yield &session.playerBody }

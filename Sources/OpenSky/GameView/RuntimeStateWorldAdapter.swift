@@ -237,6 +237,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
         game.combat.loop?.prepareForPersistence()
+        game.messages.reloadHelpRecords()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild
         // them. Player only: other actors have no holder until their cells
         // stream back in (docs/engine/magic.md).

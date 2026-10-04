@@ -172,6 +172,9 @@ extension Renderer {
         guard !ready.isEmpty else { return }
         var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
         live.formUnion(effects.scene.residencyAllocations.map(ObjectIdentifier.init))
+        live
+            .formUnion((effects.loadingCover?.residencyAllocations ?? [])
+                .map(ObjectIdentifier.init))
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
         live.insert(ObjectIdentifier(pointLightBuffer))

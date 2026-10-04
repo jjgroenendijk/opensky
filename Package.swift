@@ -684,22 +684,24 @@ targets += feature(
         "OpenSkyCrimeInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
         "OpenSkyDialogueInterface", "OpenSkyMagicInterface", "OpenSkyQuestsInterface",
-        "OpenSkySaveFixtures", "OpenSkyWorldState", "WorldStateTesting"
+        "OpenSkySaveFixtures", "OpenSkyScriptingInterface", "OpenSkyWorldState",
+        "WorldStateTesting"
     ]
 )
 
 targets += feature(
     "OpenSkyMenus",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData",
-        "OpenSkyRendering", "OpenSkyActorsInterface", "OpenSkyDialogueInterface",
-        "OpenSkyInventoryInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface",
-        "OpenSkyWorldInterface"
+        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF",
+        "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
+        "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyQuestsInterface",
+        "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
     ],
     tests: [
         "FormatsCoreTesting", "FormatsESMTesting", "FormatsSWFTesting", "OpenSkyFormatsCore",
         "OpenSkyFormatsESM", "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
-        "OpenSkyShaderTypes", "OpenSkyWorldInterface", "RenderingTesting"
+        "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
+        "RenderingTesting"
     ]
 )
 

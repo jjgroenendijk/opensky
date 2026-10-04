@@ -82,7 +82,7 @@ nonisolated extension OpenSkySaveEncoder {
         }
     }
 
-    private static func writeStory<State: WorldStateComponent>(
+    static func writeStory<State: WorldStateComponent>(
         _: State.Type,
         tag: String,
         _ entries: [WorldStateSnapshotEntry],
@@ -170,7 +170,7 @@ nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
         }
     }
 
-    private static func decode<State: WorldStateComponent>(
+    static func decode<State: WorldStateComponent>(
         _ payload: Data,
         tag: String,
         minimumSize: Int,
@@ -203,6 +203,8 @@ nonisolated extension OpenSkySaveDecoder {
             body.storyManagerQuests = try OpenSkySaveStoryDecoder.decodeStoryManagerQuests(payload)
         case OpenSkySaveFormat.ChunkTag.dialogueBranches:
             body.dialogueBranches = try OpenSkySaveStoryDecoder.decodeDialogueBranches(payload)
+        case OpenSkySaveFormat.ChunkTag.helpMessages:
+            body.helpMessages = try OpenSkySaveStoryDecoder.decodeHelpMessages(payload)
         default:
             break
         }

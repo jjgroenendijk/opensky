@@ -98,6 +98,10 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumStoryManagerQuestEntrySize = 20
     /// `DLBS` entry: the smallest key and cell (8) and the branch FormID (4).
     public static let minimumDialogueBranchEntrySize = 12
+    /// `HELP` entry: the smallest key and cell (8) and the record count (4).
+    public static let minimumHelpMessageEntrySize = 12
+    /// One `HELP` record: an empty event name (2), the count (4), the done byte.
+    public static let minimumHelpMessageRecordSize = 7
     /// Smallest number of bytes a single `CBTS` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and the hostility
     /// byte (1). A generated key or a named cell is longer, so this is a lower

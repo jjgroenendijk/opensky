@@ -44,7 +44,7 @@ enum SidebarSection: String, CaseIterable {
 typealias WorldControlProviders = AINavigationControlProviding & AIOverlayControlProviding
     & ActorValueControlProviding & AgentControlProviding & AnimationControlProviding
     & ArcheryControlProviding & AudioControlProviding
-    & CameraControlProviding & CastingControlProviding
+    & CameraControlProviding & CastingControlProviding & CinematicCameraControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
     & CraftingControlProviding
     & CrimeFactionControlProviding & DialogueBranchControlProviding
@@ -56,8 +56,9 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & IdleControlProviding & ImageSpaceControlProviding & InventoryEquipmentControlProviding
     & InventoryMenuControlProviding
     & ItemControlProviding & JournalControlProviding
-    & LockControlProviding & MagicEffectControlProviding
+    & LoadingScreenControlProviding & LockControlProviding & MagicEffectControlProviding
     & MeleeCombatControlProviding
+    & MessageControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
@@ -186,6 +187,8 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = WorldPanelViewController()
                 panel.cameraProvider = context.providers
+                panel.cinematicProvider = context.providers
+                panel.loadingProvider = context.providers
                 panel.firstPersonProvider = context.providers
                 panel.frameStatsProvider = context.providers
                 panel.sceneStatsProvider = context.providers
@@ -281,6 +284,7 @@ enum DestinationRegistry {
                 let panel = HUDInteractionPanelViewController()
                 panel.provider = context.providers
                 panel.itemProvider = context.providers
+                panel.messageProvider = context.providers
                 return panel
             },
             overrides: hudInteractionOverrides
@@ -420,7 +424,9 @@ enum DestinationRegistry {
             }
         )
     ]
+}
 
+extension DestinationRegistry {
     /// World-inspector destinations, in order.
     static var worldInspectors: [DestinationDescriptor] {
         all.filter(\.isWorldInspector)
