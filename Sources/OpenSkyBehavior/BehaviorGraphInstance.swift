@@ -157,6 +157,12 @@ nonisolated public final class BehaviorGraphInstance {
     /// The list being built by the update in progress.
     public var activeStatesThisUpdate: [BehaviorActiveState] = []
 
+    /// True when the update in progress reached a clip that is still loading.
+    public var isWaitingForClip = false
+    /// The bones of the last update that had every clip it reached, held while
+    /// a clip loads so the character keeps its pose instead of snapping to rest.
+    private var lastCompleteBones: [HKABonePose]?
+
     /// Compiled nodes, cached so a DAG node shared by ten parents decodes
     /// once. The optional is stored so a miss is remembered as a miss.
     private var compiled: [HKXPointerTarget: BehaviorCompiledNode?] = [:]
@@ -260,6 +266,7 @@ nonisolated public final class BehaviorGraphInstance {
         referencedResults = [:]
         pendingClipPhase = nil
         pendingNestedStateId = nil
+        isWaitingForClip = false
         let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)
         activeStates = activeStatesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
@@ -271,6 +278,12 @@ nonisolated public final class BehaviorGraphInstance {
         {
             bones[skeleton.rootBoneIndex] = skeleton.referencePose[skeleton.rootBoneIndex]
         }
+        if isWaitingForClip, let held = lastCompleteBones {
+            return BehaviorUpdateResult(
+                bones: held, rootMotion: .identity, firedEvents: events.endUpdate()
+            )
+        }
+        lastCompleteBones = bones
         return BehaviorUpdateResult(
             bones: bones,
             rootMotion: pose.rootMotion,
@@ -333,10 +346,14 @@ nonisolated public final class BehaviorGraphInstance {
         object(at: target) as? Value
     }
 
-    /// The clip a generator names, or nil with one tally entry.
+    /// The clip a generator names, or nil: a wait while it loads, else one tally entry.
     public func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)? {
         guard let found = clips.clip(named: name, bindingIndex: bindingIndex) else {
-            tally.noteUnresolvedClip(name)
+            if clips.isLoading(named: name, bindingIndex: bindingIndex) {
+                isWaitingForClip = true
+            } else {
+                tally.noteUnresolvedClip(name)
+            }
             return nil
         }
         return found

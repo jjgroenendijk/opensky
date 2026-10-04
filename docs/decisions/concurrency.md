@@ -85,6 +85,7 @@ caller writes it down next to the request. Examples:
 | Asset | Behavior until it arrives |
 | --- | --- |
 | Animation clip | The actor keeps its current pose or clip |
+| Player behavior clip | The graph runs its states, but shows its last full pose |
 | Sound | The sound starts one or more frames late |
 | Menu movie | The menu opens when the movie is ready |
 | Papyrus script | The event waits in the queue of that script instance |
@@ -115,7 +116,7 @@ numbers are an upper bound.
 | Asset decode for cells (NIF, DDS, meshes, textures) | Inside the cell build worker | Loading. It fills the same caches as the cell build |
 | Distant LOD and door transitions | Inside the cell build worker | Loading. Same caches and same queue as cell builds |
 | Animation clips, behavior graphs, camera tracks | Serial worker, `Mutex` mailbox | Loading during play |
-| Player behavior graph clips | Main actor, on first use | The graph asks for a clip inside its own update and has no wait state yet. Each clip loads once |
+| Player behavior graph clips | Serial worker, `Mutex` mailbox | Loading during play. The clips the start states reach are prefetched when the graph is built. While a clip loads, the graph keeps its last full pose |
 | Papyrus script files | Serial worker, `Mutex` mailbox | Loading during play |
 | Audio file read and decode | Serial worker, `Mutex` state | Loading during play. Decoders are not `Sendable`, and AVFAudio calls back on its own threads. See [audio](/engine/audio.md) |
 | Audio tick (volumes, retire, purge) | Main actor | Simulation. Average 0.006 ms, maximum 0.450 ms per frame |

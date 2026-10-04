@@ -48,6 +48,19 @@ nonisolated public protocol BehaviorClipSource {
     /// Both spellings are passed because vanilla data uses both: most
     /// generators carry a name, and a few carry only a binding index.
     func clip(named name: String?, bindingIndex: Int) -> (any BehaviorClip)?
+    /// True while the clip is being read off the main actor, so nil means "not yet".
+    func isLoading(named name: String?, bindingIndex: Int) -> Bool
+    /// Starts loading a clip that a later update will probably need.
+    func prefetch(named name: String)
+}
+
+nonisolated extension BehaviorClipSource {
+    /// A source that answers at once never has a clip in flight.
+    public func isLoading(named _: String?, bindingIndex _: Int) -> Bool {
+        false
+    }
+
+    public func prefetch(named _: String) {}
 }
 
 /// A source that supplies nothing. The evaluator stays usable — every clip

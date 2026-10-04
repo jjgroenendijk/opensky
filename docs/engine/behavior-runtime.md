@@ -41,6 +41,12 @@ third-person one this way.
 The engine's object source decodes on demand. A test gives a table of decoded values built in code.
 So the runtime's tests need no packfile bytes. The byte layouts are covered by the decode tests.
 
+In the game, the player's clip source reads clips on the shared play-time worker. A clip it has not
+read yet is "loading", not missing. An update that reaches a loading clip still runs its state
+machines and events, but returns the last pose in which every clip was ready, with no root motion.
+When the graph is built, it asks the source to prefetch the clips its start states reach. Those are
+the clip generators below each state machine's start state, through behavior references too.
+
 The state of each node (clip time, cycle count, timer, running flag) is keyed by the node's pointer
 target, not by its path in the tree. A behavior graph shares nodes: one bone weight array or one
 transition effect can have many parents. Havok keys node state the same way.

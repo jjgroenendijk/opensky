@@ -23,6 +23,9 @@ final class PlayerWorldAdapter {
     func wirePlayerBody(provider: any WorldDataProviding, renderer: Renderer) {
         let player = game.player
         guard player.wireBody(provider: provider) else { return }
+        renderer.session.assetDrains.add { [weak player] _ in
+            player?.drainClipLoads()
+        }
         renderer.onFrame.add { [weak player] _ in
             player?.refreshBody()
         }

@@ -3,6 +3,7 @@
 // load failure is recorded and shown, not retried, because it is a fact about
 // the install. See docs/engine/coordinators.md.
 
+import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
@@ -50,7 +51,9 @@ public final class PlayerCoordinator {
         }
         let loaded: PlayerBehaviorGraph
         do {
-            loaded = try PlayerBehaviorGraph.load(fileSystem: fileSystem)
+            loaded = try PlayerBehaviorGraph.load(
+                fileSystem: fileSystem, clipWorker: Self.clipWorker(fileSystem)
+            )
         } catch let error as PlayerBehaviorGraphError {
             failureReason = PlayerBodyError.behavior(error).localizedDescription
             Self.logger.error(
@@ -65,11 +68,26 @@ public final class PlayerCoordinator {
             try PlayerBehaviorGraph.load(
                 fileSystem: fileSystem,
                 behaviorPath: PlayerBehaviorGraph.firstPersonBehaviorPath,
-                skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath
+                skeletonPath: PlayerBehaviorGraph.firstPersonSkeletonPath,
+                clipWorker: Self.clipWorker(fileSystem)
             )
         }
         attach(graph: loaded, firstPerson: firstPerson, provider: bodyProvider)
         return true
+    }
+
+    /// Clips read on the shared play-time queue; a state whose clip is still
+    /// loading keeps the current pose (docs/decisions/concurrency.md).
+    private static func clipWorker(
+        _ fileSystem: any GameFileSource
+    ) -> SerialAssetLoadWorker<String, SplineBehaviorClip> {
+        SerialAssetLoadWorker(load: InstallBehaviorClipSource.load(fileSystem: fileSystem))
+    }
+
+    /// Moves finished clip loads into both graphs. Runs at the frame's drain point.
+    public func drainClipLoads() {
+        graph?.clips.drain()
+        firstPersonGraph?.clips.drain()
     }
 
     /// The locomotion bridge drops every write until a graph is attached.

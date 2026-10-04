@@ -40,6 +40,9 @@ nonisolated extension BehaviorGraphInstance {
         pushVariables(into: child)
         pushEvents(into: child, key: key)
         let result = child.update(deltaTime: deltaTime)
+        if child.isWaitingForClip {
+            isWaitingForClip = true
+        }
         referencedResults[name] = result
         pullEvents(from: child, key: key)
         activeStatesThisUpdate += child.activeStates
@@ -49,7 +52,7 @@ nonisolated extension BehaviorGraphInstance {
     /// The child instance for `name`, loaded once. A miss is remembered as a
     /// miss so a graph naming an absent file does not retry the load every
     /// frame.
-    private func referencedGraph(named name: String) -> BehaviorGraphInstance? {
+    func referencedGraph(named name: String) -> BehaviorGraphInstance? {
         let key = Self.referenceKey(name)
         if let cached = referencedGraphs[key] {
             return cached

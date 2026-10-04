@@ -53,11 +53,12 @@ nonisolated public struct PlayerBehaviorGraph {
 
     /// Loads a player graph and its rig; defaults name the third-person set. Throws on a
     /// missing or malformed `0_master.hkx`, because running without a graph would look
-    /// like an animation bug, not a load failure.
+    /// like an animation bug, not a load failure. A `clipWorker` reads clips off the caller.
     public static func load(
         fileSystem: any GameFileSource,
         behaviorPath: String = Self.behaviorPath,
-        skeletonPath: String = Self.skeletonPath
+        skeletonPath: String = Self.skeletonPath,
+        clipWorker: (any AssetLoadWorking<String, SplineBehaviorClip>)? = nil
     ) throws -> PlayerBehaviorGraph {
         let behaviorFile = try read(behaviorPath, from: fileSystem)
         guard let objectGraph = try? HKXObjectGraph(file: behaviorFile) else {
@@ -73,7 +74,11 @@ nonisolated public struct PlayerBehaviorGraph {
         else {
             throw PlayerBehaviorGraphError.noSkeleton(skeletonPath)
         }
-        let clips = InstallBehaviorClipSource(fileSystem: fileSystem)
+        let clips = clipWorker.map {
+            InstallBehaviorClipSource(
+                paths: InstallBehaviorClipSource.animationPaths(in: fileSystem), worker: $0
+            )
+        } ?? InstallBehaviorClipSource(fileSystem: fileSystem)
         let references = InstallBehaviorReferenceSource(
             fileSystem: fileSystem, rootPath: behaviorPath
         )
@@ -88,6 +93,7 @@ nonisolated public struct PlayerBehaviorGraph {
         // its jump branch (docs/engine/behavior-clips.md, "Behavior references").
         instance.references = references
         instance.activate()
+        instance.prefetchReachableClips()
         return PlayerBehaviorGraph(
             instance: instance, skeleton: rig, clips: clips, referenceSource: references
         )
