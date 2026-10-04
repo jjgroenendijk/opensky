@@ -94,7 +94,7 @@ nonisolated extension BehaviorGraphInstance {
         of machine: HKBStateMachine,
         id: Int
     ) -> (target: HKXPointerTarget, info: HKBStateMachineStateInfo)? {
-        for stateTarget in machine.states.compactMap(\.self) {
+        for case let stateTarget? in machine.states {
             guard
                 let info = object(at: stateTarget, as: HKBStateMachineStateInfo.self),
                 info.stateId == id, info.enable

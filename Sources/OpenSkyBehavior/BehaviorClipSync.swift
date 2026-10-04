@@ -20,12 +20,12 @@ nonisolated extension BehaviorGraphInstance {
             guard depth < Self.maximumDepth, visited.insert(current).inserted else {
                 continue
             }
-            guard let object = object(at: current) else { continue }
-            if object is HKBClipGenerator, let state = nodeStates[current], state.hasSeeded {
+            guard let node = compiledNode(at: current) else { continue }
+            if node.object is HKBClipGenerator, let state = nodeStates[current], state.hasSeeded {
                 return state.phase
             }
-            for reference in object.references.reversed() {
-                stack.append((reference.target, depth + 1))
+            for child in node.children.reversed() {
+                stack.append((child, depth + 1))
             }
         }
         return nil

@@ -157,9 +157,9 @@ nonisolated public final class BehaviorGraphInstance {
     /// The list being built by the update in progress.
     public var activeStatesThisUpdate: [BehaviorActiveState] = []
 
-    /// Decoded objects, cached so a DAG node shared by ten parents decodes
+    /// Compiled nodes, cached so a DAG node shared by ten parents decodes
     /// once. The optional is stored so a miss is remembered as a miss.
-    private var decoded: [HKXPointerTarget: (any HKBClass)?] = [:]
+    private var compiled: [HKXPointerTarget: BehaviorCompiledNode?] = [:]
 
     public init(
         root: HKXPointerTarget?,
@@ -302,15 +302,30 @@ nonisolated public final class BehaviorGraphInstance {
     /// The decoded object at `target`, cached. A location with no registered
     /// class, or a class with no decoder, comes back nil and is tallied once.
     public func object(at target: HKXPointerTarget) -> (any HKBClass)? {
-        if let cached = decoded[target] {
+        compiledNode(at: target)?.object
+    }
+
+    /// The node at `target` with its children and bindings resolved, built once.
+    public func compiledNode(at target: HKXPointerTarget) -> BehaviorCompiledNode? {
+        if let cached = compiled[target] {
             return cached
         }
-        let value = source.object(at: target)
-        decoded[target] = value
-        if value == nil {
+        guard let object = source.object(at: target) else {
+            compiled[target] = BehaviorCompiledNode?.none
             tally.noteUndecodableObject(source.className(at: target))
+            return nil
         }
-        return value
+        let references = object.references
+        let bindingSet = references
+            .first { $0.field == "m_variableBindingSet" }
+            .flatMap { self.object(at: $0.target, as: HKBVariableBindingSet.self) }
+        let node = BehaviorCompiledNode(
+            object: object,
+            children: references.map(\.target),
+            bindings: bindingSet.map(BehaviorCompiledBindings.init)
+        )
+        compiled[target] = node
+        return node
     }
 
     /// The decoded object at `target` as `Value`, or nil.
@@ -346,26 +361,21 @@ nonisolated public final class BehaviorGraphInstance {
     /// The variable values bound onto `object` right now, keyed by the member
     /// path the binding names. Recomputed per evaluation rather than cached,
     /// because a binding must see a variable another node wrote this update.
-    public func boundValues(of object: any HKBClass) -> [String: BehaviorVariableValue] {
-        guard
-            let setTarget = object.references
-                .first(where: { $0.field == "m_variableBindingSet" })?.target,
-            let bindingSet = self.object(at: setTarget, as: HKBVariableBindingSet.self)
-        else {
-            return [:]
-        }
+    public func boundValues(of node: BehaviorCompiledNode) -> [String: BehaviorVariableValue] {
+        guard let compiled = node.bindings else { return [:] }
         var values: [String: BehaviorVariableValue] = [:]
-        for binding in bindingSet.bindings {
+        for index in compiled.bindings.indices {
+            let binding = compiled.bindings[index]
             guard let value = resolve(binding) else { continue }
-            guard let path = binding.memberPath, !path.isEmpty else {
+            guard let path = compiled.paths[index], let memberPath = binding.memberPath else {
                 // An empty path binds the object wholesale, which only Havok's
                 // pointer variables can do; nothing in this evaluator can act
                 // on one, so it is recorded rather than guessed at.
                 tally.noteUnappliedBinding(binding.memberPath)
                 continue
             }
-            tally.noteBinding(path)
-            values[Self.normalizedMemberPath(path)] = value
+            tally.noteBinding(memberPath)
+            values[path] = value
         }
         return values
     }
@@ -402,14 +412,12 @@ nonisolated public final class BehaviorGraphInstance {
         return .bool(value.intValue & (1 << bit) != 0)
     }
 
-    /// True when `object`'s binding set names a binding that disables it.
-    public func isDisabled(_ object: any HKBClass) -> Bool {
+    /// True when `node`'s binding set names a binding that disables it.
+    public func isDisabled(_ node: BehaviorCompiledNode) -> Bool {
         guard
-            let setTarget = object.references
-                .first(where: { $0.field == "m_variableBindingSet" })?.target,
-            let bindingSet = self.object(at: setTarget, as: HKBVariableBindingSet.self),
-            bindingSet.bindings.indices.contains(bindingSet.indexOfBindingToEnable),
-            let value = resolve(bindingSet.bindings[bindingSet.indexOfBindingToEnable])
+            let compiled = node.bindings,
+            let index = compiled.enableIndex,
+            let value = resolve(compiled.bindings[index])
         else {
             return false
         }
