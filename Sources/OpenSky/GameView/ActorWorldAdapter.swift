@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyPerceptionInterface
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld
@@ -81,8 +82,8 @@ final class ActorWorldAdapter {
                 scale: actor.scale,
                 isDead: worldState.component(ActorDeathState.self, for: entry.key)?.isDead
                     ?? false,
-                name: displayName(base: actor.base)
-                    ?? "\(entry.key.description) (base \(actor.base))"
+                label: displayName(base: actor.base).map(ActorLabel.init)
+                    ?? ActorLabel(key: entry.key, base: actor.base)
             )
         }
     }

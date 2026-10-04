@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import simd
@@ -28,9 +29,12 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
     /// Whether `ActorDeathState` has latched. A dead actor is never a combat
     /// target and never attacks.
     public let isDead: Bool
-    /// FULL name when one resolves, else the editor ID, else the FormID. Never
-    /// empty, so a readout line always names something.
-    public let name: String
+    /// FULL name, editor ID, or key and base form, formatted only when read.
+    public let label: ActorLabel
+
+    public var name: String {
+        label.text
+    }
 
     public init(
         key: ReferenceKey,
@@ -47,7 +51,24 @@ nonisolated public struct CombatActorObservation: Equatable, Sendable {
         self.facing = facing
         self.scale = scale
         self.isDead = isDead
-        self.name = name
+        label = ActorLabel(name)
+    }
+
+    public init(
+        key: ReferenceKey,
+        feet: SIMD3<Float>,
+        facing: Float,
+        scale: Float,
+        isDead: Bool,
+        label: ActorLabel
+    ) {
+        self.key = key
+        self.feet = feet
+        capsule = .standard
+        self.facing = facing
+        self.scale = scale
+        self.isDead = isDead
+        self.label = label
     }
 }
 
