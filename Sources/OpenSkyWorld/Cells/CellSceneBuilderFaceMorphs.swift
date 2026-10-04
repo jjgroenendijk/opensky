@@ -69,7 +69,7 @@ nonisolated extension CellSceneBuilder {
         }
         let tri: TRIFile
         do {
-            tri = try TRIFile(data: fileSystem.contents(forPath: resourcePath))
+            tri = try faceMorphFile(resourcePath, fileSystem: fileSystem).get()
         } catch {
             state.misses.append(FaceMorphAssociationMiss(
                 headPart: part.formID,
@@ -103,5 +103,17 @@ nonisolated extension CellSceneBuilder {
                 headPart: part.formID, reason: "FaceGen shape \(name) is not skinned"
             ))
         }
+    }
+
+    private func faceMorphFile(
+        _ path: String, fileSystem: any GameFileSource
+    ) -> Result<TRIFile, AssetLoadFailure> {
+        if let known = faceMorphFiles[path] {
+            return known
+        }
+        let loaded = Result { try TRIFile(data: fileSystem.contents(forPath: path)) }
+            .mapError(AssetLoadFailure.init)
+        faceMorphFiles[path] = loaded
+        return loaded
     }
 }

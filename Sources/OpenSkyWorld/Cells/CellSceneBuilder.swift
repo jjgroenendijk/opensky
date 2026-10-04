@@ -6,6 +6,7 @@ import Foundation
 import Metal
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -119,6 +120,9 @@ nonisolated public final class CellSceneBuilder {
     public var actorVisualResolver: ActorVisualResolver?
     /// Immutable decoded rig/idle assets; playback objects remain cell-owned.
     public var actorAnimationClips: [ActorAnimationCacheKey: ActorAnimationClip] = [:]
+    /// Decoded expression TRI files by resource path. A file does not change while the
+    /// game runs, so a rebuild reuses it; a failure is kept too.
+    var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver
