@@ -58,7 +58,7 @@ enum PlayerBodyFixture {
         bridge.attachFirstPerson(graph: firstPersonGraph.instance)
         let body = try unwrap(
             builder.makePlayerBody(
-                skeleton: graph.skeleton, pose: bridge.pose, equipped: equipped
+                skeleton: graph.skeleton, pose: bridge.pose, equipped: equipped, appearance: nil
             ),
             what: "player body"
         )
@@ -66,7 +66,8 @@ enum PlayerBodyFixture {
             builder.makePlayerFirstPersonRig(
                 skeleton: firstPersonGraph.skeleton,
                 pose: bridge.firstPersonPose,
-                equipped: equipped
+                equipped: equipped,
+                appearance: nil
             ),
             what: "first-person arms"
         )

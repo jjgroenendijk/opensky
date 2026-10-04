@@ -1,22 +1,28 @@
-// Engine-owned system menu: Resume, Settings, and Quit (docs/engine/system-menu.md).
-// The model owns entries, selection, and activation, so keyboard input, the
-// panel, and `SystemMenuMovieBridge` share one state.
+// Engine-owned system menu: the vanilla System page rows and which sub-page is
+// open (docs/engine/system-menu.md). The model owns entries, selection, and
+// activation, so keyboard input, the panel, and the movie bridge share one state.
 
 import Foundation
 
-/// One row of the system menu. Vanilla has more rows. This enum is the only
-/// place a row is named, so the movie bridge and the panel cannot disagree.
+/// One row of the system menu, in the vanilla order. Installed Content and Help
+/// are left out: OpenSky has no online content and no help pages.
 nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     case resume
+    case quicksave
+    case save
+    case load
     case settings
+    case controls
     case quit
 
-    /// Row label. Not localized yet — the vanilla string tables land with the
-    /// movie-driven presentation, not with the engine-side selector.
     public var title: String {
         switch self {
         case .resume: "Resume"
+        case .quicksave: "Quicksave"
+        case .save: "Save"
+        case .load: "Load"
         case .settings: "Settings"
+        case .controls: "Controls"
         case .quit: "Quit"
         }
     }
@@ -28,39 +34,33 @@ nonisolated public enum SystemMenuEntry: String, CaseIterable, Sendable {
     }
 }
 
-/// What activating a row asks the host to do. `settings` has no engine effect:
-/// the data-root and volume rows sit beside the menu, not in a second menu.
-nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
-    /// Close the menu and return to gameplay.
-    case resume
-    /// Reveal the settings placeholders; the menu stays open.
-    case showSettings
-    /// Terminate the application.
-    case quit
+/// The page the menu shows. A sub-page has its own model in the coordinator.
+nonisolated public enum SystemMenuPage: String, Equatable, Sendable {
+    case main, settings, controls, save, load, quit
+}
 
-    /// Readout label for the verification panel.
+/// What activating a row asks the host to do.
+nonisolated public enum SystemMenuOutcome: Equatable, Sendable {
+    case resume
+    case quicksave
+    case showPage(SystemMenuPage)
+
     public var label: String {
         switch self {
         case .resume: "Resume"
-        case .showSettings: "Settings"
-        case .quit: "Quit"
+        case .quicksave: "Quicksave"
+        case let .showPage(page): page.rawValue.prefix(1).uppercased() + page.rawValue.dropFirst()
         }
     }
 }
 
-/// Selection state for the system menu. A value type so the panel, the input
-/// path, and the tests all reason about the same transitions without touching
-/// AppKit or the renderer.
 nonisolated public struct SystemMenuModel: Equatable, Sendable {
-    /// Rows in display order.
     public let entries: [SystemMenuEntry]
     public private(set) var isOpen = false
     public private(set) var selectedIndex = 0
+    public private(set) var page = SystemMenuPage.main
     /// The last row activated while open, for the verification readout.
     public private(set) var lastOutcome: SystemMenuOutcome?
-    /// True once Settings has been activated, so the placeholders read as
-    /// revealed rather than merely present.
-    public private(set) var settingsRevealed = false
 
     public init(entries: [SystemMenuEntry] = SystemMenuEntry.allCases) {
         self.entries = entries.isEmpty ? SystemMenuEntry.allCases : entries
@@ -70,30 +70,35 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
         entries.indices.contains(selectedIndex) ? entries[selectedIndex] : nil
     }
 
-    /// Opens the menu at the first row. Re-opening an already-open menu keeps
-    /// the current selection so a stray open cannot silently reset it.
+    /// True while the Settings page is up.
+    public var settingsRevealed: Bool {
+        page == .settings
+    }
+
+    /// Opens the menu at the first row. Re-opening keeps the current state.
     public mutating func open() {
         guard !isOpen else { return }
         isOpen = true
         selectedIndex = 0
+        page = .main
         lastOutcome = nil
-        settingsRevealed = false
     }
 
-    /// Closes the menu and clears the revealed-settings state. Selection resets
-    /// so the next open starts at the top, matching the vanilla menu.
     public mutating func close() {
         isOpen = false
         selectedIndex = 0
-        settingsRevealed = false
+        page = .main
     }
 
-    /// Moves the highlight. Vertical moves wrap, because the vanilla list wraps
-    /// and a three-row menu is unusable without it; horizontal moves are
-    /// accepted and ignored (a one-column list has nowhere to go) so the caller
-    /// still treats the event as consumed by the menu.
+    /// Back from a sub-page to the row list.
+    public mutating func showMain() {
+        page = .main
+    }
+
+    /// Vertical moves wrap, as the vanilla list does. Horizontal moves are
+    /// accepted and ignored, so the caller still counts the event as handled.
     public mutating func moveSelection(_ direction: MenuInputEvent.Direction) {
-        guard isOpen, !entries.isEmpty else { return }
+        guard isOpen, page == .main, !entries.isEmpty else { return }
         switch direction {
         case .up:
             selectedIndex = (selectedIndex + entries.count - 1) % entries.count
@@ -104,36 +109,41 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
         }
     }
 
-    /// Activates the highlighted row and returns what the host must do. Resume
-    /// closes the menu here; quit is left to the host because terminating is not
-    /// a state transition the model can perform.
+    public mutating func select(_ entry: SystemMenuEntry) {
+        if let index = entries.firstIndex(of: entry) {
+            selectedIndex = index
+        }
+    }
+
     @discardableResult
     public mutating func activateSelection() -> SystemMenuOutcome? {
-        guard isOpen, let entry = selectedEntry else { return nil }
+        guard isOpen, page == .main, let entry = selectedEntry else { return nil }
         let outcome: SystemMenuOutcome = switch entry {
         case .resume: .resume
-        case .settings: .showSettings
-        case .quit: .quit
+        case .quicksave: .quicksave
+        case .save: .showPage(.save)
+        case .load: .showPage(.load)
+        case .settings: .showPage(.settings)
+        case .controls: .showPage(.controls)
+        case .quit: .showPage(.quit)
         }
         lastOutcome = outcome
         switch outcome {
         case .resume:
             close()
-            lastOutcome = .resume
-        case .showSettings:
-            settingsRevealed = true
-        case .quit:
+        case let .showPage(next):
+            page = next
+        case .quicksave:
             break
         }
         return outcome
     }
 
-    /// Applies a routed menu event. Returns the outcome when the event
-    /// activated a row, nil otherwise. Cancel is Resume: the vanilla pause menu
-    /// closes on the same key that opened it.
+    /// The main page's events. Cancel there is Resume: the vanilla pause menu
+    /// closes on the key that opened it. A sub-page handles its own events.
     @discardableResult
     public mutating func handle(_ event: MenuInputEvent) -> SystemMenuOutcome? {
-        guard isOpen else { return nil }
+        guard isOpen, page == .main else { return nil }
         switch event {
         case let .move(direction):
             moveSelection(direction)

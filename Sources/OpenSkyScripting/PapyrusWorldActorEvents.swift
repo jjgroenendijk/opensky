@@ -43,6 +43,13 @@ extension PapyrusWorldRuntime {
             + queueActorEvent(Self.onDeathEventName, on: actor, arguments: arguments)
     }
 
+    /// Queues `OnRaceSwitchComplete()` on each script of `actor`, after the race menu
+    /// changed the player's race. Returns the count.
+    @discardableResult
+    public func queueRaceSwitchComplete(actor: ReferenceKey) -> Int {
+        queueActorEvent("OnRaceSwitchComplete", on: actor, arguments: [])
+    }
+
     /// Instance iteration is `instancesByKey.keys.sorted()`, the same
     /// deterministic order `queueOnActivate` uses, so a reference carrying
     /// several scripts always queues them the same way.

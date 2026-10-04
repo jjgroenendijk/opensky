@@ -22,7 +22,7 @@ struct DestinationRegistryTests {
         #expect(DestinationRegistry.all.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
-            "systemMenu",
+            "systemMenu", "characterMenus", "mapMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder",
             "agentControl"
@@ -34,7 +34,7 @@ struct DestinationRegistryTests {
             "Destination-environment",
             "Destination-hudInteraction", "Destination-dialogueVoice", "Destination-effects",
             "Destination-progression", "Destination-crimeFactions",
-            "Destination-systemMenu",
+            "Destination-systemMenu", "Destination-characterMenus", "Destination-mapMenu",
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
@@ -44,7 +44,7 @@ struct DestinationRegistryTests {
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
             "world", "playerLocomotion", "combatPhysics", "aiNavigation", "environment",
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
-            "systemMenu",
+            "systemMenu", "characterMenus", "mapMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
             "runtimeState", "scripts", "journal", "uiLab", "agentControl"
         ])

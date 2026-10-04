@@ -115,6 +115,7 @@ final class FakeWorldProviders: WorldControlProviders {
 
     // SystemMenuControlProviding
     var systemMenuModel = SystemMenuModel()
+    let menuCalls = FakeMenuCalls()
     var systemMenuMovieEnabled = false
     var systemMenuMasterVolume: Float = 1
     var systemMenuIsOpen: Bool {
@@ -171,18 +172,6 @@ final class FakeWorldProviders: WorldControlProviders {
             stackDepth: menuMode.stack.count,
             isWorldSimPaused: menuMode.isWorldSimPaused
         )
-    }
-
-    func pushPreviewMenu() {
-        menuMode.present(MenuIdentifier("UILabMenu\(menuMode.stack.count + 1)"))
-    }
-
-    func popPreviewMenu() {
-        menuMode.dismissTop()
-    }
-
-    func clearPreviewMenus() {
-        menuMode.dismissAll()
     }
 
     var uiLocalizedSampleShown = false
@@ -498,7 +487,28 @@ extension FakeWorldProviders {
             movieFaults: 0,
             movieMissingNames: 0,
             movieEntryTitles: [],
-            movieState: nil
+            movieState: nil,
+            page: SystemMenuPageSnapshot(
+                page: systemMenuModel.page.rawValue, rows: [], selectedIndex: 0, question: nil,
+                message: nil
+            )
         )
+    }
+
+    func deleteSelectedSave() {}
+}
+
+/// UILabControlProviding preview stack
+extension FakeWorldProviders {
+    func pushPreviewMenu() {
+        menuMode.present(MenuIdentifier("UILabMenu\(menuMode.stack.count + 1)"))
+    }
+
+    func popPreviewMenu() {
+        menuMode.dismissTop()
+    }
+
+    func clearPreviewMenus() {
+        menuMode.dismissAll()
     }
 }

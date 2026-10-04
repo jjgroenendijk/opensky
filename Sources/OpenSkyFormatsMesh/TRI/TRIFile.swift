@@ -22,6 +22,12 @@ nonisolated public struct TRIMorphTarget: Equatable, Sendable {
     /// Signed on-disk components widened to Float, one per base vertex.
     public let deltas: [SIMD3<Float>]
 
+    public init(name: String, scale: Float, deltas: [SIMD3<Float>]) {
+        self.name = name
+        self.scale = scale
+        self.deltas = deltas
+    }
+
     public var scaledDeltas: [SIMD3<Float>] {
         deltas.map { $0 * scale }
     }

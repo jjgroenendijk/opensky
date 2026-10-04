@@ -109,6 +109,8 @@ nonisolated public struct OpenSkySaveStore {
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
+        summary: SaveSummary? = nil,
+        thumbnail: SaveThumbnail? = nil,
         toSlot slot: String
     ) throws -> URL {
         let destination = try url(forSlot: slot)
@@ -118,7 +120,9 @@ nonisolated public struct OpenSkySaveStore {
             metadata: metadata,
             clock: clock,
             scripts: scripts,
-            timers: timers
+            timers: timers,
+            summary: summary,
+            thumbnail: thumbnail
         )
         try OpenSkySaveIO.writeAtomically(data, to: destination)
         return destination
@@ -163,6 +167,49 @@ nonisolated public struct OpenSkySaveStore {
             .filter { $0.pathExtension == OpenSkySaveFormat.fileExtension }
             .map { $0.deletingPathExtension().lastPathComponent }
             .sorted()
+    }
+}
+
+// MARK: - The save list
+
+/// One file in the save list. `summary` is nil when the file cannot be read, so the
+/// list still shows it and says why.
+nonisolated public struct OpenSkySaveSlotListing: Equatable, Sendable {
+    public let slot: String
+    public let modified: Date
+    public let summary: OpenSkySaveSummaryFile?
+    public let error: String?
+}
+
+nonisolated extension OpenSkySaveStore {
+    /// Every slot, newest first by file date, with its list chunks read.
+    public func listings() throws -> [OpenSkySaveSlotListing] {
+        try listSlots().map { slot in
+            let url = try url(forSlot: slot)
+            let modified = (try? fileManager.attributesOfItem(
+                atPath: url.path(percentEncoded: false)
+            )[.modificationDate] as? Date) ?? .distantPast
+            do {
+                let summary = try OpenSkySaveSummaryCodec.readSummary(Data(contentsOf: url))
+                return OpenSkySaveSlotListing(
+                    slot: slot, modified: modified, summary: summary, error: nil
+                )
+            } catch {
+                return OpenSkySaveSlotListing(
+                    slot: slot, modified: modified, summary: nil,
+                    error: String(describing: error)
+                )
+            }
+        }
+        .sorted { ($0.modified, $1.slot) > ($1.modified, $0.slot) }
+    }
+
+    public func delete(slot: String) throws {
+        let url = try url(forSlot: slot)
+        guard fileManager.fileExists(atPath: url.path(percentEncoded: false)) else {
+            throw OpenSkySaveStoreError.slotNotFound(slot)
+        }
+        try fileManager.removeItem(at: url)
     }
 }
 

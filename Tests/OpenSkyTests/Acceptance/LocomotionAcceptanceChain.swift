@@ -36,16 +36,6 @@ final class LocomotionLocationLog {
 final class LocomotionAcceptanceChain {
     // MARK: - Identities and geometry
 
-    /// US ANSI virtual key codes, the same physical layout `GameMetalView`
-    /// maps. Spelled here rather than imported because the view keeps them
-    /// private, which is right: they are its own input contract.
-    enum Key: UInt16 {
-        case keyW = 13
-        case keyC = 8
-        case space = 49
-        case keyF = 3
-    }
-
     static let doorReference: UInt32 = 0x0000_0A01
     static let interiorDoorReference: UInt32 = 0x0000_0A02
     static let interiorCell = FormID(0x0000_138C)
@@ -158,7 +148,7 @@ final class LocomotionAcceptanceChain {
         route(key, down: false)
     }
 
-    /// Sets the modifier flags the way `flagsChanged` delivers them: shift is
+    /// Sends one `flagsChanged` per modifier key, as AppKit does: shift is
     /// run, option is sprint.
     func setModifiers(run: Bool, sprint: Bool) {
         var flags: NSEvent.ModifierFlags = []
@@ -168,11 +158,13 @@ final class LocomotionAcceptanceChain {
         if sprint {
             flags.insert(.option)
         }
-        guard let event = Self.event(type: .flagsChanged, key: .keyW, flags: flags) else {
-            Issue.record("AppKit refused to build a flagsChanged event")
-            return
+        for key in [Key.leftShift, .leftOption] {
+            guard let event = Self.event(type: .flagsChanged, key: key, flags: flags) else {
+                Issue.record("AppKit refused to build a flagsChanged event")
+                return
+            }
+            view.flagsChanged(with: event)
         }
-        view.flagsChanged(with: event)
     }
 
     private func route(_ key: Key, down: Bool) {
@@ -368,5 +360,19 @@ final class LocomotionAcceptanceChain {
             destination: doorReference,
             position: interiorPosition
         )
+    }
+}
+
+extension LocomotionAcceptanceChain {
+    /// US ANSI virtual key codes, the same physical layout `GameMetalView`
+    /// maps. Spelled here rather than imported because the view keeps them
+    /// private, which is right: they are its own input contract.
+    enum Key: UInt16 {
+        case keyW = 13
+        case keyC = 8
+        case space = 49
+        case keyE = 14
+        case leftShift = 56
+        case leftOption = 58
     }
 }

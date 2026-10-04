@@ -57,20 +57,21 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & InventoryMenuControlProviding
     & ItemControlProviding & JournalControlProviding
     & LoadingScreenControlProviding & LockControlProviding & MagicEffectControlProviding
+    & MapMenuControlProviding
     & MeleeCombatControlProviding
     & MessageControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
-    & PrecipitationControlProviding
-    & ProgressionControlProviding & RagdollControlProviding
-    & RenderDebugControlProviding & RuntimeStateControlProviding
-    & SWFLabControlProviding & SceneControlProviding & SceneStatsProviding
-    & ScriptControlProviding
-    & ShadowControlProviding & StoryManagerControlProviding
-    & SystemMenuControlProviding
-    & TerrainLODControlProviding & TrapControlProviding & TriggerControlProviding
+    & PrecipitationControlProviding & ProgressionControlProviding
+    & RaceMenuControlProviding & RagdollControlProviding
+    & RenderDebugControlProviding & RuntimeStateControlProviding & SWFLabControlProviding
+    & SceneControlProviding
+    & SceneStatsProviding & ScriptControlProviding
+    & ShadowControlProviding & StoryManagerControlProviding & SystemMenuControlProviding
+    & TerrainLODControlProviding
+    & TitleMenuControlProviding & TrapControlProviding & TriggerControlProviding
     & UILabControlProviding
     & VisualEffectControlProviding
     & WeatherControlProviding

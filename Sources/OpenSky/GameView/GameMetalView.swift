@@ -57,32 +57,36 @@ final class GameMetalView: MTKView {
     /// `World > Menus > Inventory Menu > Open`.
     var onInventoryKey: (() -> Void)?
 
+    /// The install's keys plus the player's remaps; the settings coordinator sets it.
+    var bindings = InputBindings()
+    /// Map, quicksave, quickload, and pause.
+    var onCommand: ((GameInputAction) -> Void)?
+    /// The Controls page waiting for a key; true when it took the key.
+    var onCapturedKey: ((UInt32) -> Bool)?
+    /// A menu that takes typed text, such as the race menu name; true when it did.
+    var onTypedText: ((String) -> Bool)?
+
     /// The path every key press takes, shared with the agent control server.
     var dispatcher: GameInputDispatcher {
         GameInputDispatcher(
             input: input,
             menuMode: menuMode,
             openJournal: onJournalKey,
-            openInventory: onInventoryKey
+            openInventory: onInventoryKey,
+            onCommand: onCommand
         )
     }
 
     /// US ANSI virtual key codes (Carbon `kVK_*`). Physical layout, not
-    /// characters — WASD stay under the left hand on any keyboard layout.
+    /// characters, so the keys stay in place on any keyboard layout.
     private enum KeyCode {
         static let escape: UInt16 = 53
+        static let textKeysExcluded: Set<UInt16> = [36, 76, 53]
     }
 
-    /// The action of each bound key. Space is the vanilla jump key. C stands
-    /// in for sneak because macOS reserves Control-click. R draws and sheathes.
-    /// All are listed on `World > Player & Locomotion`.
-    private static let keyActions: [UInt16: GameInputAction] = [
-        13: .forward, 1: .back, 0: .left, 2: .right, 14: .up, 12: .down,
-        3: .activate, 5: .cameraMode, 38: .journal, 34: .inventory, 49: .jump,
-        8: .sneak, 15: .readyWeapon,
-        36: .menuAccept, 76: .menuAccept, KeyCode.escape: .menuCancel,
-        126: .menuUp, 125: .menuDown, 123: .menuLeft, 124: .menuRight
-    ]
+    private var inMenu: Bool {
+        menuMode?.isMenuMode == true
+    }
 
     override var acceptsFirstResponder: Bool {
         true
@@ -101,22 +105,37 @@ final class GameMetalView: MTKView {
         if event.isARepeat {
             return
         }
-        // Outside a menu, Esc releases the pointer instead of acting.
-        if event.keyCode == KeyCode.escape, menuMode?.isMenuMode != true {
+        if inMenu, takeMenuKey(event) {
+            return
+        }
+        // Outside a menu, the first Esc releases a captured pointer.
+        if event.keyCode == KeyCode.escape, !inMenu, captured {
             releaseCapture()
             return
         }
-        guard let action = Self.keyActions[event.keyCode] else {
+        guard let action = bindings.action(forMacKey: event.keyCode, inMenu: inMenu) else {
             // A menu swallows unbound keys so none reaches the world.
-            if menuMode?.isMenuMode != true {
+            if !inMenu {
                 super.keyDown(with: event)
             }
             return
         }
-        if menuMode?.isMenuMode != true, let name = Self.helpEvents[action] {
+        if !inMenu, let name = Self.helpEvents[action] {
             onInputEvent?(name)
         }
         dispatcher.apply(action, .press)
+    }
+
+    /// Key capture for the Controls page, then typed text for a name field.
+    private func takeMenuKey(_ event: NSEvent) -> Bool {
+        if let code = DirectInputKeyCodes.scanCode(event.keyCode), onCapturedKey?(code) == true {
+            return true
+        }
+        guard
+            !KeyCode.textKeysExcluded.contains(event.keyCode),
+            let text = event.characters, !text.isEmpty
+        else { return false }
+        return onTypedText?(text) == true
     }
 
     /// The input event names a help message can wait for.
@@ -128,10 +147,10 @@ final class GameMetalView: MTKView {
         // Menus act on key-down; a held direction's key-up reaches a menu that
         // reads held keys. One-shot actions have no key-up.
         guard
-            let action = Self.keyActions[event.keyCode],
-            action.isHeld || menuMode?.isMenuMode == true
+            let action = bindings.action(forMacKey: event.keyCode, inMenu: inMenu),
+            action.isHeld || inMenu
         else {
-            if menuMode?.isMenuMode != true {
+            if !inMenu {
                 super.keyUp(with: event)
             }
             return
@@ -139,14 +158,23 @@ final class GameMetalView: MTKView {
         dispatcher.apply(action, .release)
     }
 
+    /// A modifier key bound to an action, such as Shift for run and Option for
+    /// sprint, presses while its flag is set.
     override func flagsChanged(with event: NSEvent) {
-        // Shift runs; Option is the vanilla sprint modifier (Alt on a PC keyboard).
-        if menuMode?.isMenuMode != true {
-            dispatcher.apply(.run, event.modifierFlags.contains(.shift) ? .press : .release)
-            dispatcher.apply(.sprint, event.modifierFlags.contains(.option) ? .press : .release)
+        if
+            !inMenu, DirectInputKeyCodes.modifierKeyCodes.contains(event.keyCode),
+            let action = bindings.action(forMacKey: event.keyCode, inMenu: false),
+            let flag = Self.modifierFlags[event.keyCode]
+        {
+            dispatcher.apply(action, event.modifierFlags.contains(flag) ? .press : .release)
         }
         super.flagsChanged(with: event)
     }
+
+    private static let modifierFlags: [UInt16: NSEvent.ModifierFlags] = [
+        56: .shift, 60: .shift, 58: .option, 61: .option, 59: .control, 62: .control,
+        55: .command, 54: .command, 57: .capsLock
+    ]
 
     // MARK: - Pointer
 

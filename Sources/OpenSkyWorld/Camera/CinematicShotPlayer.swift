@@ -55,6 +55,11 @@ nonisolated public struct CinematicAnchors: Equatable, Sendable {
 nonisolated public struct CinematicCameraPose: Equatable, Sendable {
     public var eye: SIMD3<Float>
     public var lookAt: SIMD3<Float>
+
+    public init(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
+        self.eye = eye
+        self.lookAt = lookAt
+    }
 }
 
 nonisolated public struct CinematicStage: Sendable {

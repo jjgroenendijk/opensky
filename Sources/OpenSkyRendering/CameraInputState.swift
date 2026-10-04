@@ -92,11 +92,16 @@ public final class CameraInputState {
         weaponToggleRequested = true
     }
 
+    /// The player's look speed; 1 is the camera's own speed.
+    public var lookScale: Float = 1
+    /// Invert Y: pointer up looks down.
+    public var invertLook = false
+
     /// Accumulates pointer motion (points) until the next frame drains it.
     /// `right` = pointer moved right, `up` = pointer moved up.
     public func addLook(right: Float, up: Float) {
-        pendingLookRight += right
-        pendingLookUp += up
+        pendingLookRight += right * lookScale
+        pendingLookUp += (invertLook ? -up : up) * lookScale
     }
 
     /// Latches one interaction key-down until world controller consumes it.

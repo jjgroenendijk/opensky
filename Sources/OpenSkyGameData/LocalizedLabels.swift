@@ -1,7 +1,7 @@
-// Localized labels for Scaleform menus and the HUD: merges every
-// Interface/Translations/<name>_<language>.txt into one `$KEY` lookup. An unknown key
-// stays as written, as Scaleform shows it. `LocalizedStrings` handles plugin lstrings.
-// See docs/formats/translation-strings.md.
+// Localized labels for Scaleform menus and the HUD: the vanilla
+// interface\translate_<language>.txt first, then every
+// Interface/Translations/<name>_<language>.txt over it, as one `$KEY` lookup. An
+// unknown key stays as written. See docs/formats/translation-strings.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -13,11 +13,12 @@ nonisolated public final class LocalizedLabels: Sendable {
         category: "Strings"
     )
 
-    /// Language segment of the translation file names. "english" is the default
-    /// until a language setting exists; vanilla ships ten.
+    /// Language segment of the translation file names; vanilla ships nine.
     public let language: String
     /// Number of translation files merged into this provider.
     public let fileCount: Int
+    /// The vanilla file that was read, or nil when the install has none.
+    public let vanillaPath: String?
     /// Merged `$key` -> value across every discovered file.
     private let entries: [String: String]
 
@@ -27,8 +28,9 @@ nonisolated public final class LocalizedLabels: Sendable {
 
     /// Merges parsed files in the given order; on a duplicate key the later file
     /// wins (provisional load-order rule, see docs/formats/translation-strings.md).
-    public init(language: String, files: [TranslationFile]) {
+    public init(language: String, files: [TranslationFile], vanillaPath: String? = nil) {
         self.language = language
+        self.vanillaPath = vanillaPath
         fileCount = files.count
         var merged: [String: String] = [:]
         for file in files {
@@ -55,31 +57,43 @@ nonisolated extension LocalizedLabels {
     /// Directory (VFS key) that holds the translation files.
     public static let translationsDirectory = "interface\\translations"
 
-    /// Discovers and merges every `<name>_<language>.txt` under
-    /// Interface/Translations that the VFS resolves (loose files and archives).
-    /// A malformed file is logged and skipped so one bad file cannot take the
-    /// provider down (mod-quirk rule, AGENTS.md).
+    /// The vanilla file for a language, such as `interface\translate_english.txt`.
+    public static func vanillaPath(language: String) -> String {
+        "interface\\translate_\(language.lowercased()).txt"
+    }
+
+    /// The vanilla file for `language`, or English when the install has none for
+    /// it, then every mod file for `language` in sorted path order. A later file
+    /// wins a duplicate key. A malformed file is logged and skipped.
     public static func load(
         vfs: any GameFileSource,
         language: String = "english"
     ) -> LocalizedLabels {
+        var files: [TranslationFile] = []
+        let vanilla = [vanillaPath(language: language), vanillaPath(language: "english")]
+            .first { vfs.exists($0) }
+        if let vanilla, let file = read(vanilla, vfs: vfs) {
+            files.append(file)
+        }
         let suffix = "_\(language.lowercased()).txt"
         let paths = vfs.fileNames(inDirectory: translationsDirectory)
             .filter { $0.hasSuffix(suffix) }
-        var files: [TranslationFile] = []
-        files.reserveCapacity(paths.count)
-        for path in paths {
-            do {
-                try files.append(TranslationFile(data: vfs.contents(forPath: path)))
-            } catch {
-                logger.error(
-                    """
-                    Skipping unreadable translation file \(path, privacy: .public): \
-                    \(String(describing: error), privacy: .public)
-                    """
-                )
-            }
+            .sorted()
+        files += paths.compactMap { read($0, vfs: vfs) }
+        return LocalizedLabels(language: language, files: files, vanillaPath: vanilla)
+    }
+
+    private static func read(_ path: String, vfs: any GameFileSource) -> TranslationFile? {
+        do {
+            return try TranslationFile(data: vfs.contents(forPath: path))
+        } catch {
+            logger.error(
+                """
+                Skipping unreadable translation file \(path, privacy: .public): \
+                \(String(describing: error), privacy: .public)
+                """
+            )
+            return nil
         }
-        return LocalizedLabels(language: language, files: files)
     }
 }

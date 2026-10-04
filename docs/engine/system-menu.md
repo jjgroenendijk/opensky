@@ -8,7 +8,8 @@ tags: [engine, ui, menu, swf, settings]
 
 # System menu
 
-The system menu is the pause menu: Resume, Settings, and Quit. It was the first real consumer of
+The system menu is the pause menu: Resume, Quicksave, Save, Load, Settings, Controls, and Quit,
+the rows of the vanilla System page. It was the first real consumer of
 [menu mode](/engine/menu-mode.md) input. It can also show itself through the vanilla
 `Interface\quest_journal.swf` movie.
 
@@ -16,19 +17,24 @@ The menu works with no install, no renderer, and no movie. Only the movie layer 
 
 ## Selector
 
-The selector is a plain value: the rows, the highlighted row, the last result, and whether
-Settings is shown. It knows nothing about the renderer, the movie, or AppKit.
+The selector is a plain value: the rows, the highlighted row, the last result, and the open
+page. It knows nothing about the renderer, the movie, or AppKit.
 
-Activating a row returns a result instead of doing the action, because two of the three actions
-are not changes the selector can make:
+Activating a row returns a result instead of doing the action:
 
 | Row | Result | Who acts |
 | --- | --- | --- |
 | Resume | resume | The selector closes; the host closes the menu |
-| Settings | show settings | The selector shows settings; the menu stays open |
-| Quit | quit | The host quits the app |
+| Quicksave | quicksave | The host writes the `Quicksave` slot; the menu stays open |
+| Save, Load, Settings, Controls, Quit | show page | The page model takes the keys |
 
-Up and down wrap around, as the vanilla list does. A three-row list is hard to use without it.
+Each page is its own model: the Settings page steps the [player settings](/engine/settings.md),
+the Save and Load pages list saves newest first and ask before an overwrite or a delete, the
+Controls page waits for the next key and rebinds it ([control map](/formats/controlmap.md)),
+and Quit asks Main Menu, Desktop, or Cancel, with Cancel selected. Main Menu opens the
+[title menu](/engine/main-menu.md). Cancel on a page returns to the row list.
+
+Up and down wrap around, as the vanilla list does.
 Left and right are accepted and ignored, so they count as handled and do not reach the world.
 Cancel means Resume, because the vanilla pause menu closes on the key that opened it.
 
@@ -38,20 +44,19 @@ Opening the menu pushes `SystemMenu` onto the menu stack, and makes the game vie
 consumer. That push is what pauses the world. The menu does not own the pause. It gets it by being
 on the stack.
 
-The menu has no key to open it, on purpose. In gameplay, Esc releases the mouse. Using Esc to open
-the menu would clash with that, and the [app UI](/tools/app-ui.md) rules forbid features that only
-a hidden key can reach. The menu opens from its panel. Once open, the normal menu keys drive it.
-`J` opens the [quest journal](/engine/journal.md), as a shortcut for that panel's Open button.
+The control map's Pause key, Esc, opens the menu. While the mouse is captured, the first Esc
+releases it instead. The menu also opens from its panel, so no feature needs a hidden key.
+Opening it may write a pause autosave. `J` opens the [quest journal](/engine/journal.md).
 
 ## Settings
 
-Neither setting is new state. Both use the systems that already own them, so the menu can never
-disagree with them.
+The sidebar settings use the systems that already own them, so the menu can never disagree
+with them.
 
 - Game data folder: shown, not changed here. It is found once through the
   [game data locator](/engine/game-data-locator.md) and cached, because finding it walks the disk
   and the panel refreshes twice a second. Change it in the Settings window (Cmd+,).
-- Master volume: the same value as World > Audio > Output ([audio](/engine/audio.md)).
+- Master volume: the value in the player settings store, which the audio engine follows.
 
 ## The vanilla movie
 
@@ -67,8 +72,8 @@ the movie builds its own rows:
 `$QUICKSAVE`, `$SAVE`, `$LOAD`, `$INSTALLED CONTENT`, `$SETTINGS`, `$CONTROLS`, `$HELP`, `$QUIT`.
 
 Settings opens the movie's own panel with `$Gameplay`, `$Display`, and `$Audio`. Quit shows
-`$Main Menu` and `$Desktop`. The strings are still tokens, because translation is not connected
-yet. The pages and transitions are the movie's own.
+`$Main Menu` and `$Desktop`. The game resolves each token through the
+[translation map](/formats/translation-strings.md). The pages and transitions are the movie's own.
 
 Start-up order:
 
@@ -97,13 +102,13 @@ call the runtime cannot answer becomes a message in the panel readout.
 
 ## Controls
 
-World > System Menu has a Menu section (Open, Resume, Up, Down, Activate, vanilla movie on and off)
-and a Settings section (master volume). The readout shows the selection with a `>` marker, the open
+World > System Menu has a Menu section (Open, Resume, Up, Down, Activate, vanilla movie on and off),
+a Page section (Left, Right, Back, Delete Save, and the page rows), and a Settings section
+(master volume). The readout shows the selection with a `>` marker, the open
 menus, the pause state, the last row used, and the movie's draws, faults, and missing calls. An open
 menu or an active movie marks the panel as changed, and Reset returns to gameplay.
 
 ## Not done yet
 
-- The vanilla Settings panel shows and moves, but its values are not connected to engine data.
-- Quit exits at once, with no question and no save.
-- SWF text still shows `$TOKEN` names.
+- The movie mirrors the System page rows; the sub-pages are drawn by the engine readout, not by
+  the movie's own Save, Load, and Controls lists.

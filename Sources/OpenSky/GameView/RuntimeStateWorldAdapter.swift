@@ -204,9 +204,13 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         try store().listSlots()
     }
 
+    func saveSession(slot: String) throws {
+        try saveSession(slot: slot, summary: nil, thumbnail: nil)
+    }
+
     /// Arrows in flight and falling corpses are dropped first: neither survives
     /// a reload, and a save that kept them would freeze an arrow in the air.
-    func saveSession(slot: String) throws {
+    func saveSession(slot: String, summary: SaveSummary?, thumbnail: SaveThumbnail?) throws {
         game.streamer?.persistNPCMovementForSave()
         game.combat.loop?.prepareForPersistence()
         let metadata = SaveCreationMetadata(
@@ -220,8 +224,18 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             clock: game.renderer?.gameClock,
             scripts: game.scripts.runtime?.instanceStates() ?? [],
             timers: game.scripts.runtime?.timerStates() ?? [],
+            summary: summary,
+            thumbnail: thumbnail,
             toSlot: slot
         )
+    }
+
+    func saveListings() throws -> [OpenSkySaveSlotListing] {
+        try store().listings()
+    }
+
+    func deleteSave(slot: String) throws {
+        try store().delete(slot: slot)
     }
 
     /// A missing install skips fingerprint verification instead of blocking the

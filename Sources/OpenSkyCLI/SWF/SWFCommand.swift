@@ -21,21 +21,40 @@ enum SWFCommand {
             try SWFActionSweep.run(context: context, scanner: &scanner)
         case "action-run":
             try SWFActionRunCommand.run(context: context, scanner: &scanner)
+        case "action-list":
+            try SWFActionListCommand.run(context: context, scanner: &scanner)
+        case "info":
+            let path = try scanner.positional("path")
+            try scanner.finish()
+            try runInfo(context: context, path: path)
+        default:
+            guard try runMenu(sub, context: context, scanner: &scanner) else {
+                throw CLIError.usage("swf: unknown subcommand \(sub)")
+            }
+        }
+    }
+
+    /// The menu movie drivers; false when `sub` names none of them.
+    private static func runMenu(
+        _ sub: String, context: CLIContext, scanner: inout ArgumentScanner
+    ) throws -> Bool {
+        switch sub {
         case "inventory-menu":
             try SWFInventoryMenuCommand.run(context: context, scanner: &scanner)
         case "quest-journal":
             try SWFQuestJournalCommand.run(context: context, scanner: &scanner)
         case "container-menu":
             try SWFContainerMenuCommand.run(context: context, scanner: &scanner)
+        case "system-menu":
+            try SWFSystemMenuCommand.run(context: context, scanner: &scanner)
+        case "movie-probe":
+            try SWFMovieProbeCommand.run(context: context, scanner: &scanner)
         case "dialogue-menu":
             try SWFDialogueMenuCommand.run(context: context, scanner: &scanner)
-        case "info":
-            let path = try scanner.positional("path")
-            try scanner.finish()
-            try runInfo(context: context, path: path)
         default:
-            throw CLIError.usage("swf: unknown subcommand \(sub)")
+            return false
         }
+        return true
     }
 
     private static func runInfo(context: CLIContext, path: String) throws {

@@ -2,6 +2,7 @@
 // the running renderer. The app answers it; a test passes a fake.
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 /// What `PlayerCoordinator` reads from the running world.
 public protocol PlayerWorld: AnyObject {
@@ -12,6 +13,8 @@ public protocol PlayerWorld: AnyObject {
     /// Nil while nothing has touched the player's inventory. The body then
     /// wears the plugin's default outfit.
     var playerEquippedSet: [FormID]? { get }
+    /// The race menu choices; nil keeps the `Player` record.
+    var playerAppearanceOverride: PlayerAppearanceOverride? { get }
     func showPlayerBody(_ body: PlayerBody) throws
     func showFirstPersonRig(_ rig: PlayerFirstPersonRig) throws
     var playerFirstPersonRig: PlayerFirstPersonRig? { get }

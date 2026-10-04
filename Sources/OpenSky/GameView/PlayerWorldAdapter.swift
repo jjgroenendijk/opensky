@@ -2,7 +2,9 @@
 // ports from the live renderer, the inventory, and the dialogue menu. The rules
 // live in the coordinators (docs/engine/coordinators.md).
 
+import OpenSkyActorsInterface
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyRendering
@@ -46,6 +48,15 @@ extension PlayerWorldAdapter: PlayerWorld {
             equipment.inventory.hasRuntimeInventory(InventoryHolder.player)
         else { return nil }
         return equipment.equipped(on: InventoryHolder.player)
+    }
+
+    var playerAppearanceOverride: PlayerAppearanceOverride? {
+        game.worldState.component(PlayerIdentityState.self, for: .player).map {
+            PlayerAppearanceOverride(
+                race: $0.race, isFemale: $0.isFemale, headParts: $0.face.headParts,
+                hairColor: $0.face.hairColor
+            )
+        }
     }
 
     /// The footstep set follows the boots of the assembly just built.

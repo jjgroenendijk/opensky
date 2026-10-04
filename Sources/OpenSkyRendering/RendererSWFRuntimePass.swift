@@ -25,6 +25,7 @@ extension Renderer {
             return nil
         }
         let runtime = SWFMovieRuntime(movieScene: movie.scene, limits: limits)
+        runtime.textTranslator = swfTextTranslator
         prepare?(runtime)
         runtime.start()
         do {

@@ -30,7 +30,8 @@ final class AgentWorldAdapter {
             input: game.cameraInput,
             menuMode: game.menuMode,
             openJournal: { [weak game] in game?.journalMenu.open() },
-            openInventory: { [weak game] in game?.inventoryMenu.open() }
+            openInventory: { [weak game] in game?.inventoryMenu.open() },
+            onCommand: { [weak game] in game?.runCommand($0) }
         )
     }
 

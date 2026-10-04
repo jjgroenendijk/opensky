@@ -56,6 +56,7 @@ nonisolated public struct CellProviderIndexes {
         let movement: PlayerMovementConfiguration
         let barter: BarterPricing
         let combat: CombatSettings
+        let difficulty: DifficultySettings
         let archery: ArcherySettings
         let detection: DetectionSettings
         let skillAdvancement: SkillAdvancementSettings
@@ -74,6 +75,7 @@ nonisolated public struct CellProviderIndexes {
             )
             barter = BarterPricing.resolve(store: settings)
             combat = CombatSettings.resolve(store: settings)
+            difficulty = DifficultySettings.resolve(store: settings)
             archery = ArcherySettings.resolve(store: settings)
             detection = DetectionSettings.resolve(store: settings)
             skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
@@ -139,6 +141,7 @@ nonisolated public struct CellProviderIndexes {
     public let movementConfiguration: PlayerMovementConfiguration
     public let barterPricing: BarterPricing
     public let combatSettings: CombatSettings
+    public let difficultySettings: DifficultySettings
     public let archerySettings: ArcherySettings
     public let detectionSettings: DetectionSettings
     public let lockTrapData: LockTrapData
@@ -159,6 +162,7 @@ nonisolated public struct CellProviderIndexes {
         movementConfiguration = tuning.movement
         barterPricing = tuning.barter
         combatSettings = tuning.combat
+        difficultySettings = tuning.difficulty
         archerySettings = tuning.archery
         detectionSettings = tuning.detection
         skillAdvancementSettings = tuning.skillAdvancement
@@ -212,20 +216,7 @@ nonisolated public struct CellProviderIndexes {
             root: root, file: file, pluginName: pluginName, tuning: tuning
         )
         (lockTrapData, storyData) = Self.scriptedData(root, file, pluginName, tuning.store)
-        loadOrder = Self.loadOrderStores(root: root, file: file)
-    }
-
-    /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
-    private static func scriptedData(
-        _ root: GameDataRoot,
-        _ file: ESMFile,
-        _ pluginName: String,
-        _ settings: GameSettingStore
-    ) -> (LockTrapData, StoryData) {
-        (
-            LockTrapData.load(root: root, baseFile: file, baseName: pluginName, settings: settings),
-            StoryData.load(root: root, baseFile: file, baseName: pluginName)
-        )
+        loadOrder = Self.loadOrderStores(root: root, file: file, settings: tuning.store)
     }
 
     /// Hands the new builder straight to the runner, so no other code holds it.
@@ -325,11 +316,26 @@ nonisolated public struct CellProviderIndexes {
         stores.idleStore = idleStore
         stores.effectRecords = effectRecords
         stores.presentationRecords = presentationRecords
+        stores.menuRecords = loadOrder.menus
+        stores.difficultySettings = difficultySettings
         return stores
     }
 }
 
 nonisolated extension CellProviderIndexes {
+    /// Lock, trap, scene, and story-manager data: what quest and trap scripts act on.
+    private static func scriptedData(
+        _ root: GameDataRoot,
+        _ file: ESMFile,
+        _ pluginName: String,
+        _ settings: GameSettingStore
+    ) -> (LockTrapData, StoryData) {
+        (
+            LockTrapData.load(root: root, baseFile: file, baseName: pluginName, settings: settings),
+            StoryData.load(root: root, baseFile: file, baseName: pluginName)
+        )
+    }
+
     /// Load-order idle records and markers.
     public var idleStore: IdleStore {
         loadOrder.idles
@@ -345,12 +351,15 @@ nonisolated extension CellProviderIndexes {
     }
 
     /// Stores built over the whole active load order.
-    static func loadOrderStores(root: GameDataRoot, file: ESMFile) -> LoadOrderStores {
+    static func loadOrderStores(
+        root: GameDataRoot, file: ESMFile, settings: GameSettingStore
+    ) -> LoadOrderStores {
         let plugins = ActivePluginFiles.load(root: root, baseFile: file)
         return LoadOrderStores(
             idles: IdleStore(plugins: plugins),
             effects: EffectRecordStore(plugins: plugins),
-            presentation: PresentationRecordStore(plugins: plugins)
+            presentation: PresentationRecordStore(plugins: plugins),
+            menus: MenuRecordData(file: file, plugins: plugins, settings: settings)
         )
     }
 
@@ -358,5 +367,6 @@ nonisolated extension CellProviderIndexes {
         let idles: IdleStore
         let effects: EffectRecordStore
         let presentation: PresentationRecordStore
+        let menus: MenuRecordData
     }
 }

@@ -3,6 +3,7 @@
 
 import AppKit
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyWorld
@@ -62,11 +63,20 @@ final class GameLaunchContext {
         controller.cellSessionFactory = makeCellSessionFactory()
         controller.startupErrorMessage = gameDataErrorMessage
         controller.terrainLODConfigurationStore = terrainLODConfigurationStore
+        controller.settingsCatalog = gameDataRoot.map { root in
+            PlayerSettingsCatalog.vanilla.applyingINIDefaults(INISettings.load(
+                candidates: PlayerSettingsCatalog.iniCandidates(installURL: root.installURL)
+            ))
+        } ?? .vanilla
         // Both loaders run on first use, not here, because they walk the VFS.
         if let vfs = virtualFileSystem {
             let language = localizationLanguage.language
             controller.uiLab.localizedLabelsLoader = { LocalizedLabels.load(vfs: vfs) }
             controller.swfMovies.factory = { SWFMovieLoader(fileSystem: vfs) }
+            controller.menuTextLoader = { LocalizedLabels.load(vfs: vfs, language: language) }
+            controller.controlMapLoader = {
+                try ControlMapFile(data: vfs.contents(forPath: ControlMapFile.path))
+            }
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
             // Journal text. The session indexes quests only from Skyrim.esm,

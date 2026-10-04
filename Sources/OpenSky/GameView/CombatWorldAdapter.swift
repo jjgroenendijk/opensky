@@ -27,8 +27,10 @@ final class CombatWorldAdapter {
     /// Without combat settings, which is every synthetic scene, the runtime
     /// stays nil and no fight starts with invented numbers.
     func wireMelee(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let settings = (provider as? CombatDataProviding)?.combatSettings else { return }
+        guard let data = provider as? CombatDataProviding else { return }
+        let settings = data.combatSettings
         let combat = game.combat
+        combat.difficultySettings = data.difficultySettings
         combat.attach(world: self)
         combat.wireMelee(
             settings: settings,
@@ -74,8 +76,10 @@ final class CombatWorldAdapter {
 
     /// Wired after melee, archery and the ragdolls, so the loop steps last.
     func wireLoop(provider: any WorldDataProviding, renderer: Renderer) {
-        guard let settings = (provider as? CombatDataProviding)?.combatSettings else { return }
+        guard let data = provider as? CombatDataProviding else { return }
+        let settings = data.combatSettings
         let combat = game.combat
+        combat.difficultySettings = data.difficultySettings
         combat.attach(world: self)
         combat.wireLoop(settings: settings)
         let advanceWorld = renderer.onWorldUpdate

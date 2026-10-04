@@ -196,3 +196,29 @@ byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per r
 
 `SCNS`, `SMQS`, `DLBS`, and `HELP` merge into the `RDLT` deltas by key, like the other
 component chunks.
+
+## PIDN: player identity
+
+One entry for the player: the key, the cell, the race as a uint32 FormID, a sex byte (1 is
+female), and the name as a string of at most 64 characters. The face follows: a uint32
+count and that many float32 `NAM9` sliders, a uint32 count and that many int32 `NAMA`
+values, a uint32 count and that many head part FormIDs, the hair color FormID (0 for none),
+a uint32 tint count with per tint a uint16 mask index, four color bytes, and a float32
+strength, then the float32 weight and height. See [race menu](/engine/race-menu.md).
+Minimum size: 12 bytes per entry.
+
+## MRKS: map markers
+
+One entry per marker whose state is stored: the key, the cell, and one flag byte. Bit 0 is
+visible, bit 1 discovered, bit 2 can travel to; any other bit is rejected. See
+[world map](/engine/world-map.md). Minimum size: 9 bytes per entry.
+
+## FOGM: local map fog
+
+One entry for the player: the key, the cell, a uint32 row count, then per explored cell
+the cell and a uint64 mask, one bit per square of an 8 by 8 grid. Rows are in save order:
+exteriors before interiors, then by coordinate or FormID. Minimum size: 9 bytes per entry
+and per row.
+
+`PIDN`, `MRKS`, and `FOGM` merge into the `RDLT` deltas by key, like the other component
+chunks.

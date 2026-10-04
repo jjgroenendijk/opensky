@@ -232,3 +232,13 @@ before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirt
 
 Retires when swift-build reports a replayed job to the driver: then `make cli` followed by
 `make test-unit` compiles no Swift file.
+
+## A stopped signing step leaves a `.cstemp` file
+
+Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`
+file inside the bundle. The next build of that variant fails with
+`invalid or unsupported format for signature` and `In subcomponent: ... .cstemp`. Seen in the
+sanitizer variants under `DerivedData/Build/Products/Variant-*`. Delete the leftovers with
+`find DerivedData/Build/Products -name '*.cstemp' -delete` and build again.
+
+Retires when Xcode cleans its own signing temp files.

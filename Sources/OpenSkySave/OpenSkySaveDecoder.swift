@@ -80,6 +80,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.identities, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.markers, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.fog, into: entries)
         // After `INVN`: `STOL` re-flags stacks the inventory merge has already
         // restored, so it cannot run before those totals are in place.
         return OpenSkySaveCrimeDecoder.mergeStolen(body.stolenGoods, into: entries)
@@ -89,7 +92,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
 
     /// Metadata is length-delimited so unknown trailing fields a newer build
     /// added are skipped rather than mistaken for the fingerprint.
-    private static func decodeMetadata(_ reader: inout SaveReader) throws -> SaveCreationMetadata {
+    static func decodeMetadata(_ reader: inout SaveReader) throws -> SaveCreationMetadata {
         let length = try Int(reader.uint32("metadata length"))
         let block = try reader.bytes(length, "metadata")
         var blockReader = SaveReader(block)
@@ -98,7 +101,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         return SaveCreationMetadata(creationTimestamp: timestamp, appVersion: appVersion)
     }
 
-    private static func decodeFingerprint(
+    static func decodeFingerprint(
         _ reader: inout SaveReader
     ) throws -> [SavePluginFingerprint] {
         let count = try reader.uint32("fingerprint plugin count")
@@ -146,7 +149,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
     /// A tag that is not valid UTF-8 is reported as hex rather than dropped:
     /// an unreadable tag is exactly the corruption whose error message needs to
     /// say what it saw, and an unknown tag is skipped by its length anyway.
-    private static func tagName(_ bytes: Data) -> String {
+    static func tagName(_ bytes: Data) -> String {
         String(bytes: bytes, encoding: .utf8) ?? bytes.map { String(format: "%02X", $0) }.joined()
     }
 
@@ -276,7 +279,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
 
     /// `CLOK` payload: one `Float64` bit pattern of the clock's total game
     /// seconds. A non-finite or negative value is corruption, not a clock.
-    private static func decodeClock(_ payload: Data) throws -> GameClock {
+    static func decodeClock(_ payload: Data) throws -> GameClock {
         guard payload.count == MemoryLayout<UInt64>.size else {
             throw OpenSkySaveError.invalidValue(
                 context: "CLOK payload is \(payload.count) bytes, expected 8"
@@ -291,7 +294,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         }
         return GameClock(totalGameSeconds: seconds)
     }
+}
 
+nonisolated extension OpenSkySaveDecoder {
     /// Rejects a declared element count that cannot possibly fit in the bytes
     /// left, before anything reserves storage for it. Without this a corrupt
     /// four-byte count is an out-of-memory crash rather than a thrown error.

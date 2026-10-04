@@ -27,6 +27,9 @@ public final class CombatCoordinator {
     var archeryActionText = "No shot taken yet."
     /// The stuck arrows this coordinator spawned, so a reset removes only those.
     var stuckKeys: Set<ReferenceKey> = []
+    /// The Difficulty setting; the app sets it from the settings store.
+    public var difficulty = DifficultyLevel.default
+    public var difficultySettings = DifficultySettings.synthetic
 
     public init() {}
 

@@ -136,6 +136,10 @@ nonisolated extension SWFMovieRuntime {
     /// The string a field currently draws: an explicit assignment first, then
     /// its `VariableName` binding, then the character's `InitialText`.
     public func text(of node: SWFDisplayObject) -> String? {
+        rawText(of: node).map { textTranslator?($0) ?? $0 }
+    }
+
+    private func rawText(of node: SWFDisplayObject) -> String? {
         if let override = node.textOverride {
             return override
         }

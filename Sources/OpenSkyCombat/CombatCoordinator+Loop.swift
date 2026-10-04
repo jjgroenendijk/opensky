@@ -28,7 +28,7 @@ extension CombatCoordinator: CombatLoopWorld {
 
     @discardableResult
     public func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
-        applyMeleeDamage(amount, to: key)
+        applyHealthDamage(amount, to: key, attacker: nil)
     }
 
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {

@@ -107,7 +107,7 @@ extension MagicWorldAdapter: MagicWorld {
 
     @discardableResult
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        game.progression.reportSkillUse(use)
+        game.progression.reportSkillUse(game.combat.adjustingForDifficulty(use))
     }
 
     func actorValueHolder(for key: ReferenceKey) -> ActorValueHolder? {

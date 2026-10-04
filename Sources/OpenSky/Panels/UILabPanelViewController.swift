@@ -247,6 +247,7 @@ extension UILabControlsSection {
         let sample = snapshot.sampleShown ? "on" : "off"
         let install = snapshot.installLoaded
             ? "\(snapshot.installFileCount) files · \(snapshot.installKeyCount) keys"
+            + (snapshot.installVanillaPath.map { " · \($0)" } ?? "")
             : "no game data"
         stringsStatsLabel.stringValue = """
         Sample: \(sample) · \(snapshot.sampleKeyCount) sample keys (\(snapshot.language))
