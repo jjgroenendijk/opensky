@@ -10,8 +10,14 @@ import simd
 /// matrix. Each plane satisfies `dot(normal, point) + d >= 0` for points on the
 /// inside (visible) half-space; `normal` (plane.xyz) is unit length.
 nonisolated public struct Frustum: Sendable {
-    /// Left, right, bottom, top, near, far, in that order.
-    public let planes: [SIMD4<Float>]
+    // Stored inline, not in an Array: the cull test runs per instance per pass,
+    // and an Array iterator costs a bounds check and an index compare per plane.
+    public let left: SIMD4<Float>
+    public let right: SIMD4<Float>
+    public let bottom: SIMD4<Float>
+    public let top: SIMD4<Float>
+    public let near: SIMD4<Float>
+    public let far: SIMD4<Float>
 
     /// `viewProjection` is the combined `P * V` matrix (column-vector
     /// convention: `clip = viewProjection * v`) — no model matrix, since this
@@ -30,7 +36,12 @@ nonisolated public struct Frustum: Sendable {
 
         // Metal clip range z in [0, 1]: near is clip.z >= 0 (row2 alone), far is
         // clip.w - clip.z >= 0 (row3 - row2). x/y stay the usual +-1 NDC pairs.
-        planes = [r3 + r0, r3 - r0, r3 + r1, r3 - r1, r2, r3 - r2].map(Self.normalized)
+        left = Self.normalized(r3 + r0)
+        right = Self.normalized(r3 - r0)
+        bottom = Self.normalized(r3 + r1)
+        top = Self.normalized(r3 - r1)
+        near = Self.normalized(r2)
+        far = Self.normalized(r3 - r2)
     }
 
     private static func normalized(_ plane: SIMD4<Float>) -> SIMD4<Float> {
@@ -47,18 +58,23 @@ nonisolated public struct Frustum: Sendable {
     /// box straddling a plane, or fully inside all six, tests `true`. Never
     /// culls a box that is actually visible; may keep one that is not.
     public func intersects(min: SIMD3<Float>, max: SIMD3<Float>) -> Bool {
-        for plane in planes {
-            let normal = SIMD3(plane.x, plane.y, plane.z)
-            let pVertex = SIMD3(
-                normal.x >= 0 ? max.x : min.x,
-                normal.y >= 0 ? max.y : min.y,
-                normal.z >= 0 ? max.z : min.z
-            )
-            if simd_dot(normal, pVertex) + plane.w < 0 {
-                return false
-            }
-        }
-        return true
+        Self.keeps(left, min: min, max: max)
+            && Self.keeps(right, min: min, max: max)
+            && Self.keeps(bottom, min: min, max: max)
+            && Self.keeps(top, min: min, max: max)
+            && Self.keeps(near, min: min, max: max)
+            && Self.keeps(far, min: min, max: max)
+    }
+
+    @inline(__always)
+    private static func keeps(_ plane: SIMD4<Float>, min: SIMD3<Float>, max: SIMD3<Float>) -> Bool {
+        let normal = SIMD3(plane.x, plane.y, plane.z)
+        let pVertex = SIMD3(
+            normal.x >= 0 ? max.x : min.x,
+            normal.y >= 0 ? max.y : min.y,
+            normal.z >= 0 ? max.z : min.z
+        )
+        return !(simd_dot(normal, pVertex) + plane.w < 0)
     }
 
     /// Convenience overload for `ModelBounds` (Rendering/MeshLibrary.swift) so
