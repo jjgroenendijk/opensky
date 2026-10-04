@@ -9,7 +9,8 @@ tags: [tool, ci, lint, github-actions]
 
 # Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request and on every push to `main`. Every check
+`.github/workflows/ci.yml` runs on every pull request that is ready for review and on every push to
+`main`. Every check
 runs on an `xcode-27` runner (macOS 27), so CI uses the same platform, Xcode, and tools as a
 developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 
@@ -24,6 +25,11 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a
 failing unit test cannot merge. A new job goes into the `needs` list of `Lint`, so branch
 protection does not change.
+
+A draft pull request runs no job. The work on an issue goes to a draft pull request, one commit at
+a time, so a draft would otherwise use macOS runners for unfinished work. `gh pr ready` sends the
+`ready_for_review` event, and that starts the full run. Each later push to a ready pull request runs
+CI again.
 
 A pull request that changes only Markdown, `docs/`, `.AGENTS/`, `.claude/`, or the Renovate config
 skips Build & test, because nothing in it is compiled. `Lint` accepts that skip only when

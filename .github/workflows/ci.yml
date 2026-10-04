@@ -4,8 +4,10 @@ name: CI
 # runs the same make target as `make check`. The lint checks share two jobs, so one
 # run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
+# A draft pull request runs nothing; marking it ready for review starts the run.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -39,6 +41,7 @@ env:
 jobs:
   format:
     name: Format
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
@@ -69,6 +72,7 @@ jobs:
 
   static-checks:
     name: Static checks
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
@@ -115,6 +119,7 @@ jobs:
   # skills, or the Renovate config skips it. Any other event always builds.
   changes:
     name: Changes
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -260,7 +265,7 @@ jobs:
   # protection needs no change. Build & test may skip only when Changes said so.
   lint:
     name: Lint
-    if: always()
+    if: ${{ always() && !github.event.pull_request.draft }}
     needs: [changes, format, static-checks, build-test]
     runs-on: ubuntu-latest
     timeout-minutes: 5
