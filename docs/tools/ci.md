@@ -85,7 +85,7 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
   unit plan does not include.
 - **Metal 4.** A test that needs a Metal 4 GPU gates on `device.supportsFamily(.metal4)` and
   skips without one. The runner's virtual GPU has no Metal 4, so these tests run only on a
-  developer machine ([environment](/tools/environment.md)).
+  developer machine.
 - **Xcode.** The image holds several Xcodes, and its default changes over time. So the workflow
   `env` sets `DEVELOPER_DIR` to the one Xcode that matches the local one, and
   `make swift-baseline` fails when the two Swift versions differ

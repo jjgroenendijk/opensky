@@ -156,8 +156,8 @@ struct WorldPanelTests {
         #expect(readout.contains("Memory: 1234 MB"))
     }
 
-    /// The accessibility ids are the UI-test contract, pinned here because the
-    /// UI-test harness does not run on every machine (docs/tools/environment.md).
+    /// The accessibility ids are the UI-test contract, pinned here so a rename
+    /// fails a unit test, not only `make test-ui`.
     @Test @MainActor
     func triggerSectionPublishesItsAccessibilityIdentifiers() {
         let panel = makePanel(FakeWorldProviders())

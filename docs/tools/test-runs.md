@@ -57,7 +57,7 @@ measured serially with `-parallel-testing-enabled NO`:
 | Plan | Slowest test | Default | Maximum |
 | --- | --- | --- | --- |
 | `UnitTests` | 10 s | 120 s | 300 s |
-| `UITests` | not measured ([permission grants](/tools/environment.md#permission-grants)) | 300 s | 600 s |
+| `UITests` | not measured | 300 s | 600 s |
 | `RealData`, `Perf` | 152 s | 600 s | 1800 s |
 | `Sanitizers` | 25 s | 600 s | 1800 s |
 
@@ -130,10 +130,7 @@ does not change it. To use another install, edit both plans.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
 plan selects the whole target, which does work. That is why the real-data suites are their own
-bundle. Before, they lived in `OpenSkyTests`: every unit build compiled them though they always
-skipped there, and the plan needed a long hand-kept list of suites. The shared fixtures now compile
-into both bundles instead. Types that mixed a fixture with `@Test` methods were split into a fixture
-in `Tests/TestSupport/` and tests in an extension under `Tests/OpenSkyTests/`, so no test name changed.
+bundle. The shared fixtures compile into both bundles.
 
 `make realdata-plan`, part of `make lint`, checks that every suite with a `@Test` that reads
 `RealDataEnvironment` or declares a `dataRoot: GameDataRoot?` is in `Tests/OpenSkyRealDataTests/`,
@@ -151,13 +148,13 @@ changed the time within noise.
 
 The plan's target list scopes only the report. A test build compiles every target with
 `-profile-coverage-mapping -profile-generate`, test bundles and fixtures included. A plain `build`
-compiles without them, and both write the same package intermediates under `DerivedData/Build`. So
-`make cli` after `make test-unit` used to recompile the whole engine, and the next test build did it
-again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES` on every Debug command line
-(`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be the command line: xcodebuild
-sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcconfig value does not
-reach the compiler. A Release build stays without coverage. An instrumented program writes
-`default.profraw` into its working directory when it exits; `.gitignore` covers it.
+compiles without them, and both write the same package intermediates under `DerivedData/Build`.
+Without a fix, `make cli` after `make test-unit` would recompile the whole engine, and the next test
+build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES` on every Debug
+command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be the command line:
+xcodebuild sets this setting per action above `Config/Build/Overrides.xcconfig`, so an xcconfig
+value does not reach the compiler. A Release build stays without coverage. An instrumented program
+writes `default.profraw` into its working directory when it exits; `.gitignore` covers it.
 
 `make test-report` and `make coverage-floor` read `DerivedData/Build/ProfileData/*/Coverage.profdata`
 with `llvm-cov`, not the result bundle with `xccov`. Each package module builds into its own

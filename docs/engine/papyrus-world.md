@@ -27,9 +27,8 @@ camera, run the frame handlers (cell streaming and the HUD), advance the game cl
 simulation, then weather, animation, particles, and audio. Scripts run after the clock on purpose, so
 a script waking on game time sees this frame's clock.
 
-The frame handler list is ordered and has no removal. It used to be one closure, and the second
-subscriber silently replaced the first. The streamer is registered before the HUD, so it still runs
-first.
+The frame handler list is ordered and has no removal. The streamer is registered before the HUD,
+so it runs first.
 
 Menu pause reaches the VM as a clock, not a branch. A paused frame delivers a delta of exactly zero
 and the hook still runs ([menu mode](/engine/menu-mode.md)). The world runtime never reads the wall

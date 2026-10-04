@@ -1,8 +1,7 @@
 // M16 panel acceptance: one run through World > AI & Navigation on one
 // provider set: overlays on, choose an actor, send it somewhere, read its
 // package and perception, and make it hostile.
-// Readouts are found by accessibility id, the deterministic substitute while
-// UI automation cannot run here (docs/tools/environment.md).
+// Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
 @testable import OpenSky

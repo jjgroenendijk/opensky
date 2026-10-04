@@ -2,8 +2,7 @@
 // provider set, in the order a magic session uses it: read values and
 // resistances, learn, ready, and cast a spell, and read the enchanted weapon.
 // It also checks the enchanted-equipment readout and the magic record families.
-// Readouts are found by accessibility id, the deterministic substitute while
-// UI automation cannot run here (docs/tools/environment.md).
+// Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
 @testable import OpenSky

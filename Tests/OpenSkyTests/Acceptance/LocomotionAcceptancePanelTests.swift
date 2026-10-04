@@ -1,7 +1,6 @@
 // M14 panel acceptance: one run through World > Player & Locomotion on one
 // provider set, in the order a session uses it.
-// Readouts are found by accessibility id, the deterministic substitute while
-// UI automation cannot run here (docs/tools/environment.md).
+// Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
 @testable import OpenSky

@@ -1,8 +1,7 @@
 // M20 panel acceptance: one run through `World > Progression` on a wired
 // session, in the order progression happens: level a skill, spend experience,
 // take the attribute, buy a perk, and read its record in the Asset Browser.
-// Readouts are found by accessibility id, the deterministic substitute while
-// UI automation cannot run here (docs/tools/environment.md).
+// Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
 @testable import OpenSky

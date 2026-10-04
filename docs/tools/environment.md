@@ -60,27 +60,16 @@ Retires when a `plugins.txt` appears in a searched location.
 
 ## Permission grants
 
-Observed 2026-08-11 on macOS 26.6.1, and in linked worktrees on 2026-10-01, 10-02, and 10-03.
-`OpenSkyUITests-Runner.app` starts, then XCTest times out after 60 seconds with "Timed out while
-enabling automation mode". The cause, found 2026-10-03: XCTest turns on Automation Mode at the
-start of each UI run, and this Mac asked for a password each time. Nobody answered the prompt.
-`automationmodetool` without arguments shows the setting. Run this once per machine to drop the
-password:
+UI tests need Automation Mode, and XCTest turns it on at the start of each UI run. If the Mac asks
+for a password, nobody answers, and the run times out with "Timed out while enabling automation
+mode". Run this once per machine to drop the password:
 
 ```sh
 sudo automationmodetool enable-automationmode-without-authentication
 ```
 
-After that, any process of this user can turn on Automation Mode without asking. Apple provides
-the switch for test machines. `make test-perms` fails while the password is still required.
-
-Observed 2026-10-03: right after the command, a worktree run started its tests with no prompt and
-six passed. Then the app lost its connection, the remaining tests failed with "Not authorized for
-performing UI testing actions", and `automationmodetool` again reported that authentication is
-required. Why the setting reverted is not known. Retires when the setting survives a full UI run.
-
-The worktrees were not the cause. Every runner build has the same bundle ID and signature, so macOS
-sees one program whatever its folder.
+`automationmodetool` without arguments shows the setting, and `make test-perms` fails while the
+password is still required.
 
 A grant belongs to the built product, not the terminal, and lasts only while the product keeps one
 code signature, which is why signing names a real identity ([build system](/tools/build-system.md#signing)).
@@ -95,10 +84,6 @@ asks that runner for removable-volume access, and the run waits on the dialog un
 with "timed out while preparing". Clicking Allow once let the run continue. The package test
 targets run in that runner ([Swift modules](/tools/modules.md)), so a machine without the grant sees
 the same dialog on its first unit run.
-
-Observed 2026-10-04: `make test-ui` passes all 27 cases, `testCapturesRenderedFrame` included.
-The saved window is 1280 x 752 on a 1440 x 870 screen, so the sidebar's Library rows sit below
-the window edge. XCUI still calls such a row hittable, so the UI tests scroll by frame first.
 
 ## Stale testmanagerd
 
@@ -145,26 +130,6 @@ Observed 2026-08-06 on Xcode 26.5 (build 25F70):
   a plan works.
 
 Retires when a later Xcode matches plan selection against Swift Testing names.
-
-## build-for-testing and test-without-building
-
-Observed 2026-08-08 on Xcode 26.6 and macOS 26.6.1:
-
-- `build-for-testing` writes one `.xctestrun` per plan under `Build/Products/`, named
-  `opensky_<Plan>_macosx26.5-arm64.xctestrun`. The version is the SDK, not the OS, so it moves with
-  Xcode and the tools find it by glob. It is format version 2: the useful data is under
-  `TestConfigurations[0].TestTargets[0]`.
-- The RealData plan's `OPENSKY_DATA_ROOT` lands in the `.xctestrun` under `EnvironmentVariables`,
-  and `test-without-building` passes it to the app-hosted test host.
-- Command-line `-only-testing` overrides any `OnlyTestIdentifiers` in the `.xctestrun`. A misspelled
-  Swift Testing selector still runs zero tests and exits 0.
-- `-enumerate-tests` rejects `-derivedDataPath` with a usage error (exit 64) in any position, so it
-  drops a small session log folder under Xcode's default DerivedData. It also refuses an existing
-  `-test-enumeration-output-path` file with exit 64, so a file made by `mktemp` trips it.
-- Plain `test-without-building` does accept `-derivedDataPath`, and without it the session logs land
-  on the boot volume, so the flag stays.
-
-Retires if a later Xcode lets `-enumerate-tests` take `-derivedDataPath`.
 
 ## A cached module emit can leave a stale module in Products
 

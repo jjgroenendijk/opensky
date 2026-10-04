@@ -1,8 +1,7 @@
 // M21 panel acceptance: one run through `World > Crime & Factions` on a real
 // `GameViewController` with the faction runtime and crime reporter over
 // `CrimeFixture`'s synthetic load order, plus the new Asset Browser families.
-// Readouts are found by accessibility id, the deterministic substitute while
-// UI automation cannot run here (docs/tools/environment.md).
+// Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
 @testable import OpenSky

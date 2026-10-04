@@ -236,8 +236,7 @@ Accessibility ids are the UI test API and never change silently.
 
 Some ids are built at run time, such as `Audio<Category>VolumeControl`. The ids are pinned as literal
 assertions in `DestinationRegistryTests` and the panel tests, which are the list. Update those
-literals in the same change that renames an id, and keep `OpenSkyUITests` correct wherever the UI
-test harness runs ([environment](/tools/environment.md)).
+literals in the same change that renames an id, and keep `OpenSkyUITests` correct.
 
 ## Verification
 
