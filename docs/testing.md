@@ -90,7 +90,13 @@ ever run it: `make test-real` would not reach it, and `make test-unit` would ski
 
 A cell streaming test once grew to about 30 GB resident and locked the machine. Mapping a BSA with
 `.mappedIfSafe` on an external APFS volume can fall back to full reads. So `tools/memguard.sh`
-watches the process tree of every real-data run and kills it past a cap in MB.
+watches the test host of every real-data run and kills it past a cap in MB.
+
+The watchdog takes the run's derived-data folder and watches only processes built there. An
+app-hosted test runs in `OpenSky.app` under that folder's `Build/Products/`. A package test runs in
+Xcode's own `xctest` agent, so the watchdog reads its environment instead: `XCTestBundlePath` points
+at the test bundle under `Build/Products/`. Matching by process name would also catch test runs from
+other checkouts and the installed `/Applications/OpenSky.app`, and kill them.
 
 | Run | Cap | Time limit |
 | --- | --- | --- |
