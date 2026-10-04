@@ -1,6 +1,7 @@
 // Animation the renderer steps once per frame. The world owns the playback
 // objects; the scene holds them so a cell's animations leave with its scene.
 
+import OpenSkyFormatsCore
 import simd
 
 /// RenderScene stores these references. Removing a resident CellScene removes
@@ -31,11 +32,11 @@ nonisolated public protocol SharedPoseAnimation: RenderAnimation {
     var sharedClipKey: ObjectIdentifier { get }
     /// Samples the shared clip. Nil means the clip failed and every actor
     /// playing it keeps its last pose this frame.
-    func sampleSharedPose(at time: Float) -> [String: float4x4]?
+    func sampleSharedPose(at time: Float) -> SkeletonPose?
     /// Applies a pose to the actor's meshes. A mesh already in
     /// `updatedMeshes` is skipped. Returns the number of bones updated.
     func apply(
-        _ transforms: [String: float4x4],
+        _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int
 }

@@ -426,7 +426,7 @@ nonisolated public struct RenderScene: Sendable {
     /// runtime sample freezes only that actor; validated clips normally update.
     @discardableResult
     public func updateAnimations(at time: Float) -> Int {
-        var poses: [ObjectIdentifier: [String: float4x4]] = [:]
+        var poses: [ObjectIdentifier: SkeletonPose] = [:]
         var failedClips = Set<ObjectIdentifier>()
         var updatedMeshes = Set<ObjectIdentifier>()
         var updated = 0
@@ -439,7 +439,7 @@ nonisolated public struct RenderScene: Sendable {
             if failedClips.contains(key) {
                 continue
             }
-            let pose: [String: float4x4]
+            let pose: SkeletonPose
             if let cached = poses[key] {
                 pose = cached
             } else if let sampled = actor.sampleSharedPose(at: time) {
@@ -449,9 +449,7 @@ nonisolated public struct RenderScene: Sendable {
                 failedClips.insert(key)
                 continue
             }
-            let posed = ragdollPoses[actor.actorFormID].map {
-                pose.merging($0) { _, simulated in simulated }
-            } ?? pose
+            let posed = ragdollPoses[actor.actorFormID].map(pose.overriding) ?? pose
             updated += actor.apply(posed, updating: &updatedMeshes)
         }
         return updated

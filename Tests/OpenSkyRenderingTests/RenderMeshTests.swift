@@ -200,6 +200,14 @@ struct RenderMeshTests {
             "root": MatrixMath.translation(SIMD3(0, 0, 3))
         ]) == 1)
         #expect(render.currentBoneMatrices[0].columns.3 == SIMD4(1, 2, 3, 1))
+
+        // The same compose from a skeleton-ordered pose, mapped by bone index.
+        let pose = SkeletonPose(
+            bones: SkeletonBoneIndex(names: ["pelvis", "root"]),
+            matrices: [matrix_identity_float4x4, MatrixMath.translation(SIMD3(0, 0, 5))]
+        )
+        #expect(render.updateSkinningPose(pose) == 1)
+        #expect(render.currentBoneMatrices[0].columns.3 == SIMD4(1, 2, 5, 1))
     }
 
     @Test(.enabled(if: Self.hasDevice)) func rejectsOutOfRangeBoneIndex() throws {
