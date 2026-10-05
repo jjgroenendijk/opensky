@@ -92,7 +92,8 @@ in wireframe, or with no terrain, looks like a rendering bug, and telling those 
 the tools.
 
 For the same reason, an offscreen frame uses the normal settings unless it asks for the debug state.
-Screenshots and bench runs stay clean whatever the sidebar says. Device tests opt in.
+Offscreen captures and bench runs stay clean whatever the sidebar says. Device tests opt in. A
+window screenshot is a copy of the presented frame, so it shows the debug view.
 
 ## Where to see it
 

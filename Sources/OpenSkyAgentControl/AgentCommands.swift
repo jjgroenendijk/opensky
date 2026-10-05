@@ -136,31 +136,41 @@ nonisolated public enum AgentInputPhase: String, Sendable {
     case release
 }
 
+/// By default a screenshot is the next frame the window presents. A size or
+/// `worldOnly` needs a second render, so it implies `offscreen`.
 nonisolated public struct AgentScreenshotRequest: Equatable, Sendable {
     public var path: String
     public var width: Int?
     public var height: Int?
     public var worldOnly: Bool
+    public var offscreen: Bool
 
-    public init(path: String, width: Int? = nil, height: Int? = nil, worldOnly: Bool = false) {
+    public init(
+        path: String, width: Int? = nil, height: Int? = nil, worldOnly: Bool = false,
+        offscreen: Bool = false
+    ) {
         self.path = path
         self.width = width
         self.height = height
         self.worldOnly = worldOnly
+        self.offscreen = offscreen || worldOnly || width != nil || height != nil
     }
 
     public static func parse(_ args: AgentArguments) throws(AgentFailure) -> Self {
         let path = try args.string("out")
         guard path.hasPrefix("/") else { throw args.invalid("out", "an absolute path") }
-        var request = try Self(path: path, worldOnly: args.bool("worldOnly", default: false))
-        if let size = try args.optionalString("size") {
-            let parts = size.lowercased().split(separator: "x").compactMap { Int($0) }
+        var size: [Int]?
+        if let text = try args.optionalString("size") {
+            let parts = text.lowercased().split(separator: "x").compactMap { Int($0) }
             guard parts.count == 2, parts.allSatisfy({ (16 ... 8192).contains($0) }) else {
                 throw args.invalid("size", "WxH, each 16 to 8192")
             }
-            request.width = parts[0]
-            request.height = parts[1]
+            size = parts
         }
-        return request
+        return try Self(
+            path: path, width: size?[0], height: size?[1],
+            worldOnly: args.bool("worldOnly", default: false),
+            offscreen: args.bool("offscreen", default: false)
+        )
     }
 }

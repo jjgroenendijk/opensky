@@ -51,6 +51,7 @@ extension Renderer: MTKViewDelegate {
             return
         }
 
+        encodeWindowCapture(of: drawable.texture)
         commandBuffer.useResidencySet(metalLayer.residencySet)
         commandBuffer.endCommandBuffer()
 

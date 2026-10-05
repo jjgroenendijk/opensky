@@ -222,9 +222,10 @@ extension OpenSkyCLI {
                                   socket; prints one JSON object per call.
                                   Commands: launch [--mode play|developer] [--title]
                                   [--app <path>] [--wait <s>], attach, status,
-                                  quit, screenshot [--out <png>] [--size WxH]
-                                  [--world-only], input press|release|hold
-                                  <action> [--frames <n>|--seconds <s>],
+                                  quit, screenshot [--out <png>] [--offscreen]
+                                  [--size WxH] [--world-only], input
+                                  press|release|hold <action> [--frames <n>|
+                                  --seconds <s>],
                                   input look --dx <deg> --dy <deg>, input
                                   select <label>, time pause|resume|step [n]
                                   |scale <x>, state player|target|actors|menu|

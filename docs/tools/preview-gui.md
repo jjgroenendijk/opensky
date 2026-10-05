@@ -90,8 +90,9 @@ the costs live in the `MGEF` records.
 
 ## Screenshot
 
-The toolbar's Screenshot button asks for a PNG path, then renders the live camera and the current
-streamed scene offscreen at the drawable's pixel size. App chrome is not in it. The button works only
+The toolbar's Screenshot button asks for a PNG path, then saves a copy of the next frame the game
+window presents, at the drawable's pixel size and with the active debug view. App chrome is not
+in it. The button works only
 while a World destination is in front, because asset previews already render on their own. A failure
 shows an error sheet. The app and CLI share one PNG readback.
 

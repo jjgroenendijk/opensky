@@ -1,6 +1,6 @@
-// Toolbar screenshot flow: save panel, offscreen render of the World camera
-// through `GameViewController.writeScreenshot(to:)`, then a "Saved" state or
-// an error sheet.
+// Toolbar screenshot flow: save panel, a copy of the next frame the window
+// presents through `GameViewController.writeScreenshot(to:)`, then a "Saved"
+// state or an error sheet.
 
 import AppKit
 import UniformTypeIdentifiers
@@ -24,12 +24,14 @@ final class ScreenshotCoordinator {
         panel.nameFieldStringValue = Self.defaultScreenshotName()
         panel.beginSheetModal(for: window) { response in
             guard response == .OK, let url = panel.url else { return }
-            do {
-                try game.writeScreenshot(to: url)
-                Self.flashSaved(on: button)
-            } catch {
-                let alert = NSAlert(error: error)
-                alert.beginSheetModal(for: window)
+            Task {
+                do {
+                    try await game.writeScreenshot(to: url)
+                    Self.flashSaved(on: button)
+                } catch {
+                    let alert = NSAlert(error: error)
+                    alert.beginSheetModal(for: window) { _ in }
+                }
             }
         }
     }

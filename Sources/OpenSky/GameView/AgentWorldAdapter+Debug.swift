@@ -16,7 +16,9 @@ import OpenSkyWorld
 import OpenSkyWorldState
 
 extension AgentWorldAdapter {
+    /// Overlays, then the render-debug layers, such as `distantlod`.
     static let overlayNames = ["navmesh", "path", "detection", "hud", "ui"]
+        + RenderLayer.ordered.map { $0.identifierFragment.lowercased() }
 
     func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling {
         switch command {
@@ -173,9 +175,17 @@ extension AgentWorldAdapter {
         case "hud": renderer.swfEnabled = enabled
         case "ui": renderer.uiEnabled = enabled
         default:
-            let known = Self.overlayNames.joined(separator: ", ")
-            throw AgentFailure(.invalidArgument, "unknown overlay '\(name)'; known: \(known)")
+            guard let layer = Self.layer(named: name.lowercased()) else {
+                let known = Self.overlayNames.joined(separator: ", ")
+                throw AgentFailure(.invalidArgument, "unknown overlay '\(name)'; known: \(known)")
+            }
+            let layers = renderer.renderDebug.layers
+            renderer.renderDebug.layers = enabled ? layers.union(layer) : layers.subtracting(layer)
         }
         return ["overlay": .string(name.lowercased()), "on": .bool(enabled)]
+    }
+
+    private static func layer(named name: String) -> RenderLayer? {
+        RenderLayer.ordered.first { $0.identifierFragment.lowercased() == name }
     }
 }

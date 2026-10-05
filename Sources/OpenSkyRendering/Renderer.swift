@@ -229,6 +229,8 @@ public final class Renderer: NSObject {
     /// Written only by encodeScenePass (RendererScenePass.swift).
     public var lastDrawStats = SceneDrawStats()
     public var lastGrassDrawStats = GrassDrawStats()
+    /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
+    var windowCapture = WindowCaptureState.idle
     /// Shadow-pass culling/draw counts of the last encoded frame (see
     /// ShadowDrawStats). Written only by encodeShadowPass; reset to zero on
     /// idle/off frames.

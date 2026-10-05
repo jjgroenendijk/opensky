@@ -110,6 +110,11 @@ struct AgentCommandParsingTests {
         ]))
         #expect(request.width == 640)
         #expect(request.height == 360)
+        #expect(request.offscreen, "a size needs a second render")
+        let window = try AgentScreenshotRequest.parse(args(["out": "/tmp/a.png"]))
+        #expect(!window.offscreen, "the default is the window's own frame")
+        #expect(try AgentScreenshotRequest.parse(args(["out": "/tmp/a.png", "worldOnly": true]))
+            .offscreen)
         #expect(throws: AgentFailure.self) {
             try AgentScreenshotRequest.parse(args(["out": "a.png"]))
         }

@@ -58,8 +58,10 @@ final class FakeAgentWorld: AgentControlWorld {
         ["selected": .string(label)]
     }
 
-    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentJSON {
-        ["path": .string(request.path)]
+    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
+        -> AgentHandling
+    {
+        .done(.success(["path": .string(request.path), "offscreen": .bool(request.offscreen)]))
     }
 
     func query(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON {

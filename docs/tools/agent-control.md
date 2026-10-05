@@ -58,8 +58,10 @@ interval (1/60 s by default) to the clock in the next drawn frame. So a paused r
 the same commands gets the same frame deltas on any machine, however fast it draws.
 
 A key press made while paused is kept until the next step, because a frame with no elapsed
-time does not consume one-shot input. A screenshot renders with the simulation paused, so
-taking one does not move the game.
+time does not consume one-shot input. A screenshot is a copy of the next frame the window
+presents, debug view included, so it shows what the user sees. `--offscreen`, `--size`, and
+`--world-only` render a second frame instead, with the simulation paused and the debug view off.
+The reply's `source` says which one it is.
 
 A step only advances when a frame draws. A minimized or hidden window draws nothing, and a
 step then ends in `timeout`.

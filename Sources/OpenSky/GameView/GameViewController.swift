@@ -26,14 +26,6 @@ import OpenSkyWorldState
 import simd
 
 final class GameViewController: NSViewController {
-    enum ScreenshotError: LocalizedError {
-        case rendererNotReady
-
-        var errorDescription: String? {
-            "World renderer is not ready for a screenshot."
-        }
-    }
-
     /// Locator failure shown inside World. Settings remains reachable so the
     /// root can be corrected without relaunching or dismissing an alert loop.
     var startupErrorMessage: String?
@@ -404,6 +396,18 @@ extension GameViewController {
 }
 
 extension GameViewController {
+    enum ScreenshotError: LocalizedError {
+        case rendererNotReady
+        case noWindowFrame
+
+        var errorDescription: String? {
+            switch self {
+            case .rendererNotReady: "World renderer is not ready for a screenshot."
+            case .noWindowFrame: "The game window presented no frame to capture."
+            }
+        }
+    }
+
     static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
@@ -450,19 +454,21 @@ extension GameViewController {
         ])
     }
 
-    /// Saves the live World camera + current streamed scene, excluding app
-    /// chrome. Runs on main, same as draw(in:), so renderer state cannot race.
-    func writeScreenshot(to url: URL) throws {
-        guard let renderer, let view = view as? MTKView else {
-            throw ScreenshotError.rendererNotReady
+    /// Saves the next frame the window presents, without app chrome. Waits at
+    /// most 2 s, because a hidden window presents no frame.
+    func writeScreenshot(to url: URL) async throws {
+        guard let renderer else { throw ScreenshotError.rendererNotReady }
+        renderer.requestWindowCapture()
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while clock.now < deadline {
+            if let texture = renderer.takeWindowCapture() {
+                try FrameScreenshot.write(texture: texture, to: url)
+                return
+            }
+            try await Task.sleep(for: .milliseconds(8))
         }
-        let width = Int(view.drawableSize.width.rounded())
-        let height = Int(view.drawableSize.height.rounded())
-        guard width > 0, height > 0 else {
-            throw ScreenshotError.rendererNotReady
-        }
-        let texture = try renderer.renderOffscreen(width: width, height: height)
-        try FrameScreenshot.write(texture: texture, to: url)
+        throw ScreenshotError.noWindowFrame
     }
 
     /// The playback drawing one resident actor, matched by its ACHR.

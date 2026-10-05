@@ -61,7 +61,8 @@ public protocol AgentControlWorld: AnyObject {
     /// Moves the top menu's selection to the row with this visible label.
     func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON
 
-    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentJSON
+    /// A window capture waits for the next presented frame, so it may return a wait.
+    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentHandling
     func query(_ query: AgentStateQuery) throws(AgentFailure) -> AgentJSON
     /// A teleport waits until the destination has loaded, so it may return a wait.
     func perform(_ command: AgentDebugCommand) throws(AgentFailure) -> AgentHandling
