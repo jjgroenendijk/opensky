@@ -59,15 +59,16 @@ TEST_RESULTS     := $(DERIVED_DATA)/TestResults
 XCODE_DERIVED_DATA ?= $(HOME)/Library/Developer/Xcode/DerivedData
 
 # Every xcodebuild runs through this wrapper. It keeps the full transcript under
-# logs/ and prints each diagnostic once, failures, and the final counts. It also
+# .logs/ and prints each diagnostic once, failures, and the final counts. It also
 # clears stale module copies (tools/stale-modules.sh). OPENSKY_XCODEBUILD_RAW=1
 # prints everything.
 XCB_RUN          := ./tools/xcodebuild-run.sh
-# Allocates a per-run output directory, logs/<name>/<UTC timestamp>/, and points
+# Allocates a per-run output directory, .logs/<name>/<UTC timestamp>/, and points
 # <name>/latest at it, so `make prune` can age whole runs out (issue #347).
 RUN_DIR          := ./tools/run-dir.sh
-# How many days of run output `make prune` keeps.
-PRUNE_DAYS       ?= 14
+# How many days of run output `make prune` keeps. One: xcodebuild scans every
+# file under .logs/ at each start (docs/tools/build-system.md).
+PRUNE_DAYS       ?= 1
 
 # The shared xcodebuild command line: $(1) is the scheme, $(2) the configuration.
 # Targets append only their action and their own flags, so the project, cache
@@ -513,7 +514,7 @@ launch-sample: ## Sample the installed app's main thread through its first minut
 
 # `clean` empties this checkout. `prune` reaches what no checkout owns any more,
 # chiefly the caches of removed worktrees, which is what fills the data volume.
-prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_RUN=1]
+prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RUN=1]
 	@./tools/prune.sh --days $(PRUNE_DAYS) $(if $(DRY_RUN),--dry-run,)
 
 # Keeps the shared compilation cache store. Its entries are keyed on the full
