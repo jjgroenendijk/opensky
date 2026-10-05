@@ -534,4 +534,13 @@ run "shared performance benchmark" benchmark --out "$benchmark_json"
 [ -s "$benchmark_json" ] || fail "benchmark wrote no JSON result"
 grep 'cold phases:' "$log" | tail -1
 grep 'frame time over' "$log" | tail -1
+# Asset format comparison, animation kind only: the fastest kind to measure.
+formats_json="$log_dir/probe-asset-formats.json"
+formats_scratch="$log_dir/probe-asset-formats-scratch"
+run "asset format comparison (animation)" asset-formats --kind animation \
+  --scratch "$formats_scratch" --out "$formats_json"
+rm -rf "$formats_scratch"
+[ -s "$formats_json" ] || fail "asset-formats wrote no JSON result"
+grep '^\[OK\] animation highestQuality' "$log" | tail -1 \
+  || fail "asset-formats printed no animation recommendation"
 echo "[INFO] probe passed — full output in $log"

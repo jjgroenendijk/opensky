@@ -216,6 +216,12 @@ extension OpenSkyCLI {
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
                                   JSON, --frame a PNG of the measured view
+      asset-formats --scratch <dir> [--out <file>] [--kind <kind>]
+                                  Compare cache formats per asset kind on a
+                                  fixed sample: load time, memory, disk size,
+                                  and the difference from the original.
+                                  --kind limits it to texture, mesh,
+                                  collision, animation, or audio
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control

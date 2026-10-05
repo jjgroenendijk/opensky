@@ -81,6 +81,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `bench --walk-path [...]` | A fixed walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, up stairs, through an interior, and back |
 | `launch-bench` | Times each stage of the world data load the app runs before its game window opens, slowest first, then the wall time. Stages run in parallel, so the wall time is less than their sum |
 | `benchmark [--out <file>] [--frame <png>]` | The shared benchmark: a cold and a warm load of fixed cells split into asset phases, then frame time on a fixed view. `--out` writes the JSON result, `--frame` a PNG of the view ([benchmark](/tools/benchmark.md)) |
+| `asset-formats --scratch <dir> [--out <file>] [--kind <kind>]` | The asset format comparison: each sampled asset loaded the current way and from every cache candidate, with time, memory, disk size, and the difference from the original. `--scratch` holds the cache files during the run; `--kind` limits it to one asset kind ([asset format comparison](/tools/asset-format-comparison.md)) |
 
 ## Notes on the probes
 

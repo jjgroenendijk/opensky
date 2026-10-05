@@ -97,6 +97,17 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         throw VFSError.fileNotFound(path: normalized)
     }
 
+    /// The bytes the winning archive stores for a path, compressed or not. Nil
+    /// for a loose file or a path no archive holds.
+    public func storedByteCount(forPath path: String) -> Int? {
+        guard
+            let normalized = try? Self.normalize(path),
+            looseFileURL(for: normalized) == nil,
+            let (_, entry) = archiveEntry(for: normalized)
+        else { return nil }
+        return Int(entry.packedSize)
+    }
+
     /// Every path any archive provides, one entry per path attributed to the
     /// archive that wins the lookup, sorted by path for stable output. Loose
     /// files are not enumerated — walking all of Data/ costs more than a

@@ -178,6 +178,10 @@ enum OpenSkyCLI {
             try BenchmarkCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
+        case "asset-formats":
+            try AssetFormatsCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         case "game":
             try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
         case "launch-bench":
