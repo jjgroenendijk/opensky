@@ -131,10 +131,9 @@ public final class FactionCoordinator {
 
     /// What `key` makes of the player. Nil without a runtime or for the player.
     public func derivedHostilityDecision(of key: ReferenceKey) -> HostilityDecision? {
-        guard runtime != nil, key != .player, let observer = world?.actorValueHolder(for: key)
-        else { return nil }
-        seed(observer)
-        return runtime?.decision(observer, toward: .player)
+        guard key != .player, let observer = world?.actorValueHolder(for: key) else { return nil }
+        // Mutating, so it runs on the stored runtime instead of a copy of it.
+        return runtime?.decide(observer, toward: .player)
     }
 
     /// The derived answer, or the stored override alone without a runtime.

@@ -359,10 +359,12 @@ public final class CombatLoopRuntime: CombatControlling {
     /// follows the edge, the flash decays, and the caps are enforced.
     private func step() {
         guard let world else { return }
-        driveBehaviors(world: world)
+        let hostility = driveBehaviors(world: world)
         state = CombatLoopState.derive(
             actors: world.combatActors(),
-            hostility: { [weak world] key in world?.combatHostility(of: key) ?? .neutral },
+            hostility: { [weak world] key in
+                hostility[key] ?? world?.combatHostility(of: key) ?? .neutral
+            },
             phase: { [weak self] key in self?.behaviors[key]?.phase },
             playerFeet: world.combatPlayer.feet
         )

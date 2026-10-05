@@ -29,8 +29,12 @@ nonisolated public struct CellSceneComposition {
             residentActors = Self.mergedActorEntries(cells)
             residentReferences = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
                 .map { (location: $0.value.location, references: $0.value.references) }
+            actorPlacements = ResidentActorPlacement.index(residentReferences)
         }
     }
+
+    /// Every resident ACHR by key, so a per-actor read is one dictionary hit.
+    public private(set) var actorPlacements: [ReferenceKey: ResidentActorPlacement] = [:]
 
     /// Kept apart from `cells`, so a collision query walks small values and does not
     /// copy each whole `CellScene` out of the dictionary.

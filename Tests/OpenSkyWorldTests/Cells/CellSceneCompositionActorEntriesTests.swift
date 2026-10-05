@@ -6,6 +6,7 @@ import FormatsESMTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
@@ -32,11 +33,39 @@ struct CellSceneCompositionActorEntriesTests {
         #expect(entries.first?.placedActor?.base == FormID(0x202))
     }
 
+    @Test func actorPlacementKeepsTheFirstCellInGridOrder() throws {
+        let origin = CellCoordinate(x: 0, y: 0)
+        let southWest = CellCoordinate(x: -2, y: -1)
+        var composition = CellSceneComposition()
+        try composition.setCell(
+            Self.scene([(Self.shared, 0x101), (Self.single, 0x303)], at: origin), at: origin
+        )
+        try composition.setCell(Self.scene([(Self.shared, 0x202)], at: southWest), at: southWest)
+
+        #expect(composition.actorPlacements[Self.key(Self.shared)] == ResidentActorPlacement(
+            base: FormID(0x202), cell: .exterior(southWest)
+        ))
+        #expect(composition.actorPlacements[Self.key(Self.single)]?.cell == .exterior(origin))
+    }
+
+    @Test func actorPlacementFollowsResidency() throws {
+        let origin = CellCoordinate(x: 0, y: 0)
+        var composition = CellSceneComposition()
+        try composition.setCell(Self.scene([(Self.single, 0x303)], at: origin), at: origin)
+
+        composition.removeCell(at: origin)
+
+        #expect(composition.actorPlacements.isEmpty)
+    }
+
     private static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: "skyrim.esm", objectID: objectID)
     }
 
-    private static func scene(_ actors: [(UInt32, UInt32)]) throws -> CellScene {
+    private static func scene(
+        _ actors: [(UInt32, UInt32)],
+        at coordinate: CellCoordinate? = nil
+    ) throws -> CellScene {
         let entries = try actors.map { objectID, base in
             try RuntimeReferenceEntry(
                 key: key(objectID),
@@ -62,6 +91,7 @@ struct CellSceneCompositionActorEntriesTests {
                 missingTextureCount: 0
             ),
             bounds: nil,
+            location: coordinate.map(CellSceneLocation.exterior),
             references: RuntimeReferenceIndex(entries: entries)
         )
     }

@@ -156,6 +156,15 @@ extension CellStreamer {
         return composition.referenceEntry(key: key)
     }
 
+    /// One resident ACHR in constant time. An interior scene replaces the
+    /// exterior composition.
+    public func residentActorPlacement(key: ReferenceKey) -> ResidentActorPlacement? {
+        if let interiorActorPlacements {
+            return interiorActorPlacements[key]
+        }
+        return composition.actorPlacements[key]
+    }
+
     /// The resident ACHR closest to `position`, or nil when none is loaded. The
     /// equipment sidebar uses it. Linear over resident actors, with deterministic
     /// ties through `actorEntries()`.

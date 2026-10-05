@@ -14,7 +14,9 @@ import simd
 
 extension CombatLoopRuntime {
     /// Advances every engaged actor by one fixed step and acts on what each did.
-    public func driveBehaviors(world: any CombatLoopWorld) {
+    /// - Returns: the hostility read for each living actor, so the step asks once.
+    @discardableResult
+    public func driveBehaviors(world: any CombatLoopWorld) -> [ReferenceKey: ActorHostility] {
         let actors = world.combatActors()
         let resident = Set(actors.map(\.key))
         // Over a snapshot of the keys, not the live view: retiring mutates the
@@ -27,8 +29,15 @@ extension CombatLoopRuntime {
             parkBehavior(of: actor.key)
         }
         let player = world.combatPlayer
+        var hostility: [ReferenceKey: ActorHostility] = [:]
+        for actor in actors where !actor.isDead && actor.key != player.key {
+            hostility[actor.key] = world.combatHostility(of: actor.key)
+        }
         let candidates = actors
-            .filter { !$0.isDead && $0.key != player.key && shouldFight($0.key, world: world) }
+            .filter { actor in
+                guard let stance = hostility[actor.key] else { return false }
+                return stance == .hostile || engagesWithoutPerceiving(actor.key)
+            }
             .sorted {
                 (simd_distance($0.feet, player.feet), $0.key)
                     < (simd_distance($1.feet, player.feet), $1.key)
@@ -37,11 +46,7 @@ extension CombatLoopRuntime {
         for actor in candidates.prefix(Self.maximumEngagedActors) {
             drive(actor: actor, player: player, world: world)
         }
-    }
-
-    /// Whether `key` is somebody this step should think about at all.
-    private func shouldFight(_ key: ReferenceKey, world: any CombatLoopWorld) -> Bool {
-        world.combatHostility(of: key) == .hostile || engagesWithoutPerceiving(key)
+        return hostility
     }
 
     /// One actor: build what it knows, step its machine, act on the answer.
