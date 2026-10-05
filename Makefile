@@ -39,9 +39,11 @@ XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
 # The compilation cache store. Every worktree shares the main checkout's, which
 # stays on the data volume because it runs to tens of gigabytes. Prefix mapping in
-# Config/Build/Debug.xcconfig makes the keys the same in every worktree.
+# Config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
+# in a hidden folder: xcodebuild scans every visible file under the package root
+# at each start, and the store holds hundreds of thousands (docs/tools/build-system.md).
 SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --git-common-dir)))
-COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/DerivedData/CompilationCache.noindex)
+COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/CompilationCache.noindex)
 export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
 # The unused-code scan's own build tree: uncached, so its index store is complete.
 INDEX_DATA       ?= $(DERIVED_DATA)-index
@@ -519,6 +521,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=14] [DRY_R
 # timing a truly cold build; every worktree then starts cold.
 clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
 	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
+	@rm -rf DerivedData DerivedData-optimized DerivedData-index
 	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)"
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \

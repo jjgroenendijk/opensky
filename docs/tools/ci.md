@@ -118,7 +118,7 @@ A repository keeps 10 GB of caches. When it is full, GitHub drops the least rece
 | --- | --- | --- |
 | Vendored ffmpeg | hash of `tools/vendor-ffmpeg.sh` | any run that missed it |
 | SDK modules (`ModuleCache.noindex`, `SDKStatCaches.noindex`) | Xcode build version | a push to `main` that missed it |
-| Compilation cache (`CompilationCache.noindex`) | `cas-<arch>-<scope>-<run>`, where scope is `main` or `pr-<number>` | every run that was not cancelled |
+| Compilation cache (`CompilationCache.noindex`) | `cas2-<arch>-<scope>-<run>`, where scope is `main` or `pr-<number>` | every run that was not cancelled |
 
 The compilation cache roughly halves the build:
 

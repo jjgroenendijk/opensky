@@ -34,6 +34,20 @@
                ReferencedContainer = "container:OpenSky.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5A3BAE183000109300177F95"
+               BuildableName = "OpenSkyTests.xctest"
+               BlueprintName = "OpenSkyTests"
+               ReferencedContainer = "container:OpenSky.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction

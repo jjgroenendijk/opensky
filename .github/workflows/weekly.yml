@@ -14,8 +14,8 @@ permissions:
 
 env:
   DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
-  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/DerivedData
-  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/DerivedData/CompilationCache.noindex
+  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/.cache/DerivedData
+  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
   BUILD_FLAGS: >-
     CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
     -skipPackagePluginValidation -skipMacroValidation

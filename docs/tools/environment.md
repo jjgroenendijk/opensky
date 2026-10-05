@@ -178,19 +178,29 @@ the record never becomes clean. Source: `Sources/SWBTaskExecution/TaskActions/Sw
 in [swift-build](https://github.com/swiftlang/swift-build), still so at commit `748527d` (2026-09-30).
 
 The driver plans a module again only when its planning task's signature changes. Two builds in
-the same context skip it. A plain `build` and a `build-for-testing`, the `OpenSky` and
-`OpenSkyCLI` schemes, or two test plans give it different signatures: a `make test-unit` after a
-run of another plan replays about 200 compiles and 70 links from the cache, 16 s on 2026-10-05.
-A switch between the schemes recompiled `OpenSkyFormatsCore` and `OpenSkyDiagnostics` (records
-left dirty by earlier cache hits) and relinked and re-signed every framework above them. That is
-why `make build-tests` builds the CLI through the `OpenSky` scheme.
+the same context skip it. A plain `build` and a `build-for-testing`, or the `OpenSky` and
+`OpenSkyCLI` schemes, give it different signatures: a switch between the schemes recompiled
+`OpenSkyFormatsCore` and `OpenSkyDiagnostics` (records left dirty by earlier cache hits) and
+relinked and re-signed every framework above them. That is why `make build-tests` builds the
+CLI through the `OpenSky` scheme.
+
+A test plan is not part of the signature, but the variant is. Xcode builds a package target that
+the app and an app-hosted test bundle both link as a dynamic variant, a separate target with its
+own signature that writes the same intermediates, and only in a build that holds such a bundle.
+So on 2026-10-05 every change between the `Quick` and the `UnitTests` plan replanned the 36
+modules the app links, replayed every file their shared record marked (201 in a worked
+checkout, all 1,553 after a fresh replay), and relinked the 30 bundles: 16 to 35 s. The scheme
+now builds `OpenSkyTests` for testing in every plan, so every build holds the bundle and the
+variants never change: two warm runs of different plans compile and link nothing. Giving each
+variant its own `TARGET_TEMP_DIR` was tried first and left the static record dirty.
 
 To see the driver's reasons, export `ADDITIONAL_SWIFT_DRIVER_FLAGS=-driver-show-incremental`
 before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirtied this way shows
 `Scheduling noncascading build` for every file.
 
 Retires when swift-build reports a replayed job to the driver: then `make build-cli` followed by
-`make test-unit` compiles no Swift file.
+`make test-unit` compiles no Swift file, and the scheme no longer needs to build `OpenSkyTests`
+in every plan.
 
 ## A stopped signing step leaves a `.cstemp` file
 
