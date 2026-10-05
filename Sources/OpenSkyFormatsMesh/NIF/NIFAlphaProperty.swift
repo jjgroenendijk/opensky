@@ -26,6 +26,11 @@ nonisolated public struct NIFAlphaProperty: Equatable, Sendable {
         (flags >> 5) & 0xF
     }
 
+    /// Blend with destination factor ONE: the shape only adds light.
+    public var isAdditive: Bool {
+        blendEnabled && destinationBlendMode == 0
+    }
+
     public var testEnabled: Bool {
         flags & 0x0200 != 0
     }

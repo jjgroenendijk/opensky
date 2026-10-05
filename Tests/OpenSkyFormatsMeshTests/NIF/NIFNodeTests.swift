@@ -17,6 +17,22 @@ struct NIFNodeTests {
         return try NIFHeader(reader: &reader)
     }
 
+    @Test func decodesSwitchNodeFlagsAndActiveIndex() throws {
+        let payload = NIFFixture.niSwitchNode(children: [4, 7], activeIndex: 1, flags: 2)
+        let node = try NIFSwitchNode(data: payload, header: header())
+        #expect(node.children == [4, 7])
+        #expect(node.flags == 2)
+        #expect(node.activeIndex == 1)
+        #expect(node.activeNode.children == [7])
+    }
+
+    @Test func truncatedSwitchNodeThrows() throws {
+        let payload = NIFFixture.niNode(children: [4])
+        #expect(throws: (any Error).self) {
+            try NIFSwitchNode(data: payload, header: header())
+        }
+    }
+
     @Test func decodesNameFlagsTransformAndChildren() throws {
         let payload = NIFFixture.niNode(
             prefix: NIFFixture.avObjectPrefix(

@@ -25,13 +25,15 @@ nonisolated extension DistantLODBuilder {
         let cacheKey: String
         let center: CellCoordinate
         let loadDistance: Float
+        let hiddenCells: Set<CellCoordinate>
     }
 
     public func buildTrees(
         worldspace: String,
         settings: LODSettings,
         configuration: TerrainLODConfiguration,
-        center: CellCoordinate
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>
     ) throws -> TreeBuild {
         let key = worldspace.lowercased()
         let listPath = "meshes\\terrain\\\(key)\\trees\\\(key).lst"
@@ -64,7 +66,8 @@ nonisolated extension DistantLODBuilder {
                 atlasPath: atlasPath,
                 cacheKey: key,
                 center: center,
-                loadDistance: configuration.treeLoadDistance
+                loadDistance: configuration.treeLoadDistance,
+                hiddenCells: hiddenCells
             )
             try placements.append(contentsOf: treePlacements(
                 block: block,
@@ -84,7 +87,6 @@ nonisolated extension DistantLODBuilder {
     ) throws -> [RenderPlacement] {
         var pending: [PendingTreePlacement] = []
         let center = CellGridManager.cellCenter(of: context.center)
-        let centerPosition = SIMD2(center.x, center.y)
         for group in block.groups {
             guard let type = context.list.type(index: group.typeIndex) else { continue }
             let sourceModel = TreeLODBillboard.model(type: type, atlasPath: context.atlasPath)
@@ -94,10 +96,13 @@ nonisolated extension DistantLODBuilder {
             )
             guard let localBounds = ModelBounds.containing(model: sourceModel) else { continue }
             for reference in group.references {
-                let position = SIMD2(reference.position.x, reference.position.y)
-                guard simd_distance(position, centerPosition) <= context.loadDistance else {
-                    continue
-                }
+                guard
+                    Self.drawsTreeLOD(
+                        at: reference.position,
+                        center: center,
+                        loadDistance: context.loadDistance,
+                        hiddenCells: context.hiddenCells
+                    ) else { continue }
                 let transform = MatrixMath.translation(reference.position)
                     * MatrixMath.rotationZ(radians: reference.rotation)
                     * MatrixMath.scale(uniform: reference.scale)
@@ -119,6 +124,19 @@ nonisolated extension DistantLODBuilder {
                 layer: .distantLOD
             )
         }
+    }
+
+    /// A tree inside the load distance draws as LOD, unless its cell is loaded:
+    /// a loaded cell draws its full trees (docs/engine/distant-lod.md).
+    public static func drawsTreeLOD(
+        at position: SIMD3<Float>,
+        center: SIMD3<Float>,
+        loadDistance: Float,
+        hiddenCells: Set<CellCoordinate>
+    ) -> Bool {
+        let offset = SIMD2(position.x - center.x, position.y - center.y)
+        return simd_length(offset) <= loadDistance
+            && !hiddenCells.contains(CellCoordinate(containing: position))
     }
 
     private func treeList(worldspace: String, path: String) throws -> TreeLODList {

@@ -31,10 +31,9 @@ nonisolated public struct MaterialTypeIndex: Sendable {
         }
         self.init(
             materials: materials,
-            landTextureMaterials: Dictionary(
-                textures.map { ($0.formID, $0.materialType) },
-                uniquingKeysWith: { _, last in last }
-            ),
+            landTextureMaterials: LandTexture.index(textures).reduce(into: [:]) { result, entry in
+                result[FormID(entry.key)] = entry.value.materialType
+            },
             skippedRecords: skipped
         )
         for line in skipped.lines {

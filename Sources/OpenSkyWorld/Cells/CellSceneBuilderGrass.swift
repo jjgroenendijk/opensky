@@ -93,19 +93,20 @@ nonisolated extension CellSceneBuilder {
         return result
     }
 
-    nonisolated private func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {
+    nonisolated func landTextureIndexBuildingIfNeeded() -> [UInt32: LandTexture] {
         if let landTextureIndex {
             return landTextureIndex
         }
-        var index: [UInt32: LandTexture] = [:]
+        var textures: [LandTexture] = []
         if let top = file.topGroup(of: "LTEX"), let children = childrenOrSkip(top) {
             for case let .record(record) in children {
                 guard record.type == "LTEX", !record.isDeleted else { continue }
                 if let texture = decodeOrSkip(record, using: LandTexture.init(record:)) {
-                    index[record.formID] = texture
+                    textures.append(texture)
                 }
             }
         }
+        let index = LandTexture.index(textures)
         landTextureIndex = index
         return index
     }

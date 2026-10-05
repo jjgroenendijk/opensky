@@ -78,6 +78,12 @@ listed. The layer number sets the blend order.
 In vanilla Tamriel, a cell has up to 23 extra layers across its four quadrants, so about 6
 per quadrant. The largest `VTXT` position is 288.
 
+A null `LTEX` (FormID `00000000`) in a `BTXT` or `ATXT` is the default ground texture,
+not a broken link. UESP `LAND` says the engine falls back to `dirt02.dds`. xEdit
+dev-4.1.6 (`wbLANDTextureToStr` in `wbDefinitionsCommon.pas`) shows it as the `LTEX` with
+editor ID `LDirt02` for Skyrim. OpenSky resolves a null `LTEX` to `LDirt02`, for the
+texture, the grass, and the ground material.
+
 OpenSky does not read `MPCD` (multi-pass color data, rare).
 
 ## LTEX

@@ -322,7 +322,8 @@ nonisolated public final class DistantLODBuilder {
             worldspace: worldspace,
             settings: settings,
             configuration: configuration,
-            center: center
+            center: center,
+            hiddenCells: hiddenCells
         )) ?? TreeBuild(placements: [], blockCount: 0, missingBlockCount: 1)
         placements.append(contentsOf: trees.placements)
         return DistantLODScene(

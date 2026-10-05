@@ -153,6 +153,18 @@ extension NIFFixture {
         return out
     }
 
+    /// nif.xml NiSwitchNode: the NiNode fields, then uint16 flags and uint32 index.
+    public static func niSwitchNode(
+        children: [Int32],
+        activeIndex: UInt32,
+        flags: UInt16 = 3
+    ) -> Data {
+        var out = niNode(children: children)
+        out.appendUInt16(flags)
+        out.appendUInt32(activeIndex)
+        return out
+    }
+
     /// nif.xml NiTransform: Matrix33, translation, scale. Row-vector rotation,
     /// same as `avObjectPrefix`.
     public static func niTransform(
@@ -487,5 +499,39 @@ extension NIFFixture {
             out.appendUInt32(UInt32(bitPattern: root))
         }
         return out
+    }
+}
+
+extension NIFFixture {
+    private static let staticAttributes: UInt16 = 0x1B
+    private static let staticStrideDwords = 7
+
+    /// Minimal one-triangle static shape payload.
+    public static func staticTriangleShape(
+        prefix: Data = NIFFixture.avObjectPrefix(),
+        skinRef: Int32 = -1,
+        shaderPropertyRef: Int32 = -1,
+        alphaPropertyRef: Int32 = -1,
+        vertexCount: Int = 3
+    ) -> Data {
+        var record = Data()
+        record.appendFloat32(1)
+        record.appendFloat32(2)
+        record.appendFloat32(3)
+        record.appendFloat32(0) // bitangent X
+        record.appendFloat16(0)
+        record.appendFloat16(0)
+        record.append(contentsOf: [128, 128, 255, 128]) // normal + bitangent Y
+        record.append(contentsOf: [255, 128, 128, 128]) // tangent + bitangent Z
+        return NIFFixture.bsTriShape(
+            prefix: prefix,
+            skinRef: skinRef,
+            shaderPropertyRef: shaderPropertyRef,
+            alphaPropertyRef: alphaPropertyRef,
+            attributes: Self.staticAttributes,
+            strideDwords: Self.staticStrideDwords,
+            vertexRecords: Array(repeating: record, count: vertexCount),
+            triangles: [0, 1, 2]
+        )
     }
 }

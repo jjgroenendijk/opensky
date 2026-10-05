@@ -13,10 +13,6 @@ import Testing
 
 @Suite(.tags(.parser))
 struct NIFModelTests {
-    private static let staticAttributes: UInt16 = 0x1B
-    private static let staticStrideDwords = 7
-
-    /// Minimal one-triangle static shape payload.
     private func shape(
         prefix: Data = NIFFixture.avObjectPrefix(),
         skinRef: Int32 = -1,
@@ -24,24 +20,12 @@ struct NIFModelTests {
         alphaPropertyRef: Int32 = -1,
         vertexCount: Int = 3
     ) -> Data {
-        var record = Data()
-        record.appendFloat32(1)
-        record.appendFloat32(2)
-        record.appendFloat32(3)
-        record.appendFloat32(0) // bitangent X
-        record.appendFloat16(0)
-        record.appendFloat16(0)
-        record.append(contentsOf: [128, 128, 255, 128]) // normal + bitangent Y
-        record.append(contentsOf: [255, 128, 128, 128]) // tangent + bitangent Z
-        return NIFFixture.bsTriShape(
+        NIFFixture.staticTriangleShape(
             prefix: prefix,
             skinRef: skinRef,
             shaderPropertyRef: shaderPropertyRef,
             alphaPropertyRef: alphaPropertyRef,
-            attributes: Self.staticAttributes,
-            strideDwords: Self.staticStrideDwords,
-            vertexRecords: Array(repeating: record, count: vertexCount),
-            triangles: [0, 1, 2]
+            vertexCount: vertexCount
         )
     }
 
@@ -161,9 +145,7 @@ struct NIFModelTests {
         #expect(abs(threshold - 64.0 / 255) < 1e-6)
     }
 
-    @Test func nonLightingShaderFallsBack() throws {
-        // Effect shaders are legitimate content out of M2 scope — fallback
-        // material, no throw.
+    @Test func undecodableEffectShaderFallsBack() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape(shaderPropertyRef: 1)),
             .init("BSEffectShaderProperty", Data(count: 32))
@@ -207,7 +189,7 @@ struct NIFModelTests {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
             .init("bhkCollisionObject", Data(count: 12)),
-            .init("NiSwitchNode", NIFFixture.niNode(children: [3])),
+            .init("NiLODNode", NIFFixture.niNode(children: [3])),
             .init("BSTriShape", shape())
         ]))
         let model = try file.model()

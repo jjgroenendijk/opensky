@@ -37,6 +37,19 @@ struct TreeLODTests {
         return data
     }
 
+    @Test func treeLODSkipsLoadedCellsAndTreesPastTheLoadDistance() {
+        let center = SIMD3<Float>(2048, 2048, 0)
+        let loaded: Set = [CellCoordinate(x: 0, y: 0)]
+        let draws = { (position: SIMD3<Float>) in
+            DistantLODBuilder.drawsTreeLOD(
+                at: position, center: center, loadDistance: 10000, hiddenCells: loaded
+            )
+        }
+        #expect(!draws(SIMD3(100, 100, 0)))
+        #expect(draws(SIMD3(5000, 100, 0)))
+        #expect(!draws(SIMD3(20000, 100, 0)))
+    }
+
     @Test func decodesListAndBlockLayouts() throws {
         let list = try TreeLODList(data: listData())
         let type = try #require(list.types.first)

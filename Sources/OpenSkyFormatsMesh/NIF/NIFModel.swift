@@ -82,7 +82,10 @@ nonisolated extension NIFFile {
                 }
 
                 let block = file.blocks[index]
-                if NIFNode.traversedTypes.contains(block.typeName) {
+                if
+                    NIFNode.traversedTypes.contains(block.typeName)
+                    || block.typeName == NIFSwitchNode.typeName
+                {
                     guard let node = try drawableNode(block) else { continue }
                     guard !Self.isEditorMarker(node.object.name) else {
                         editorMarkerShapeCount += 1
@@ -105,6 +108,9 @@ nonisolated extension NIFFile {
         /// The node a traversed block contributes, or `nil` for a subtree the
         /// flatten deliberately drops.
         private func drawableNode(_ block: NIFFile.Block) throws -> NIFNode? {
+            if block.typeName == NIFSwitchNode.typeName {
+                return try NIFSwitchNode(data: block.data, header: file.header).activeNode
+            }
             guard block.typeName == "BSMultiBoundNode" else {
                 return try NIFNode(data: block.data, header: file.header)
             }
@@ -129,6 +135,10 @@ nonisolated extension NIFFile {
             }
             guard !Self.isEditorMarker(shape.object.name) else {
                 editorMarkerShapeCount += 1
+                return
+            }
+            guard try !isUndrawableEffect(shape) else {
+                skippedShapeCount += 1
                 return
             }
             let geometry = try resolveGeometry(
@@ -204,17 +214,24 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// Resolves a shape's property refs into an engine Material.
-    /// A ref to a non-lighting shader (effect/water/sky) or no ref at
-    /// all falls back to `Material.fallback`; that is legitimate
-    /// content drawn by other paths. Out-of-range refs are malformed, same as the walk.
+    /// Resolves a shape's property refs into an engine Material. A ref to a
+    /// water or sky shader, an undecodable effect, or no ref falls back to `Material.fallback`.
+    /// Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
         var textures: NIFShaderTextureSet?
-        var alpha: NIFAlphaProperty?
 
         if let index = key.shaderPropertyBlock {
             let block = try block(at: index)
+            if
+                block.typeName == NIFFile.effectShaderType,
+                let material = try? effectMaterial(
+                    block: block,
+                    alphaBlock: key.alphaPropertyBlock
+                )
+            {
+                return material
+            }
             if block.typeName == "BSLightingShaderProperty" {
                 let property = try NIFLightingShaderProperty(
                     data: block.data,
@@ -232,15 +249,7 @@ nonisolated extension NIFFile.Flattener {
                 }
             }
         }
-        if let index = key.alphaPropertyBlock {
-            let block = try block(at: index)
-            if block.typeName == "NiAlphaProperty" {
-                alpha = try NIFAlphaProperty(
-                    data: block.data,
-                    header: file.header
-                )
-            }
-        }
+        let alpha = try alphaProperty(at: key.alphaPropertyBlock)
 
         let fallback = Material.fallback
         return Material(
@@ -258,5 +267,54 @@ nonisolated extension NIFFile.Flattener {
             alphaTestThreshold: (alpha?.testEnabled ?? false)
                 ? alpha?.testThreshold : nil
         )
+    }
+}
+
+nonisolated extension NIFFile {
+    static let effectShaderType = "BSEffectShaderProperty"
+}
+
+nonisolated extension NIFFile.Flattener {
+    /// The static path has no additive blend and no texture-less effect look, so
+    /// those effect shapes are skipped; drawn anyway they show as flat cards.
+    /// An effect block that does not decode keeps the fallback material.
+    func isUndrawableEffect(_ shape: NIFTriShape) throws -> Bool {
+        guard shape.shaderPropertyRef >= 0 else { return false }
+        let block = try block(at: Int(shape.shaderPropertyRef))
+        guard
+            block.typeName == NIFFile.effectShaderType,
+            let effect = try? NIFEffectShaderProperty(data: block.data, header: file.header)
+        else { return false }
+        let alphaRef = shape.alphaPropertyRef >= 0 ? Int(shape.alphaPropertyRef) : nil
+        let isAdditive = try alphaProperty(at: alphaRef)?.isAdditive ?? false
+        return effect.sourceTexturePath == nil || isAdditive
+    }
+
+    /// The static path draws an effect shape lit, with its source texture
+    /// and alpha property. The effect shader's blend modes are not modeled.
+    func effectMaterial(block: NIFFile.Block, alphaBlock: Int?) throws -> Material {
+        let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
+        let alpha = try alphaProperty(at: alphaBlock)
+        let fallback = Material.fallback
+        return Material(
+            diffuseTexture: effect.sourceTexturePath,
+            normalTexture: nil,
+            uvOffset: effect.uvOffset,
+            uvScale: effect.uvScale,
+            alpha: fallback.alpha,
+            glossiness: fallback.glossiness,
+            specularColor: fallback.specularColor,
+            specularStrength: 0,
+            doubleSided: effect.isDoubleSided,
+            alphaBlend: alpha?.blendEnabled ?? false,
+            alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil
+        )
+    }
+
+    private func alphaProperty(at index: Int?) throws -> NIFAlphaProperty? {
+        guard let index else { return nil }
+        let block = try block(at: index)
+        guard block.typeName == "NiAlphaProperty" else { return nil }
+        return try NIFAlphaProperty(data: block.data, header: file.header)
     }
 }
