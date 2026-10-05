@@ -144,9 +144,14 @@ public final class PerceptionRuntime {
         // Nearest first past the cap, then back to key order so evaluation stays
         // stable while actors move: a slice cursor over a distance-sorted list
         // would re-slice differently every frame.
-        candidates.sort { ($0.distance, $0.key) < ($1.distance, $1.key) }
+        // Under the cap the loops above already built key order, so nothing sorts.
         droppedPairCount = max(0, candidates.count - Self.maximumPairs)
-        order = candidates.prefix(Self.maximumPairs).map(\.key).sorted()
+        if droppedPairCount == 0 {
+            order = candidates.map(\.key)
+        } else {
+            candidates.sort { ($0.distance, $0.key) < ($1.distance, $1.key) }
+            order = candidates.prefix(Self.maximumPairs).map(\.key).sorted()
+        }
         let live = Set(order)
         pairs = pairs.filter { live.contains($0.key) }
         lastEvaluatedStep = lastEvaluatedStep.filter { live.contains($0.key) }
