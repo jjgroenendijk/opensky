@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
 
@@ -45,7 +46,7 @@ extension ActiveEffectRuntime {
     private mutating func tick(over holders: [ActorValueHolder], seconds: Float) -> Int {
         guard seconds > 0 else { return 0 }
         var expiredCount = 0
-        for holder in holders.sorted(by: { $0.key < $1.key }) {
+        for holder in holderOrder.sorted(holders, by: \.key) {
             let state = state(of: holder)
             guard !state.isEmpty else { continue }
             var advanced: [ActiveEffect] = []

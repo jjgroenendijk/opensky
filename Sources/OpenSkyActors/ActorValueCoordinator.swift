@@ -22,6 +22,8 @@ public final class ActorValueCoordinator {
     /// Kept here, not in the runtime: the runtime is a struct over a shared
     /// store, and a per-copy accumulator would split the simulation.
     private var regenAccumulator: Double = 0
+    /// Regeneration walks holders in key order; this keeps that order between frames.
+    private var holderOrder = ReferenceKeyOrder()
 
     let store: WorldStateStore
     weak var world: (any ActorValueWorld)?
@@ -45,7 +47,8 @@ public final class ActorValueCoordinator {
     /// follow the same rule; docs/engine/spellcasting.md records the deviation.
     public func advance(delta: Float) {
         guard let runtime, let world else { return }
-        let holders = world.regeneratingHolders().filter { !world.isCasting($0.key) }
+        let holders = holderOrder.sorted(world.regeneratingHolders(), by: \.key)
+            .filter { !world.isCasting($0.key) }
         runtime.advance(delta: delta, accumulator: &regenAccumulator, over: holders)
     }
 

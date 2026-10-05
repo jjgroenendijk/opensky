@@ -46,6 +46,9 @@ public final class PerceptionRuntime {
 
     private weak var world: (any PerceptionWorld)?
     private var accumulator: Double = 0
+    /// The roster in key order, kept between frames while its members stay.
+    private var observerOrder = ReferenceKeyOrder()
+    private var targetOrder = ReferenceKeyOrder()
     /// Evaluation order, rebuilt per `advance(by:)`.
     private var order: [DetectionPairKey] = []
     /// Where the next slice starts in `order`.
@@ -127,8 +130,8 @@ public final class PerceptionRuntime {
     /// Collects observers and targets, builds the capped pair order, and drops
     /// the state of every pair that no longer exists.
     private func refreshRoster(world: any PerceptionWorld) {
-        observers = world.perceptionObservers().sorted { $0.key < $1.key }
-        targets = world.perceptionTargets().sorted { $0.key < $1.key }
+        observers = observerOrder.sorted(world.perceptionObservers(), by: \.key)
+        targets = targetOrder.sorted(world.perceptionTargets(), by: \.key)
         var candidates: [(key: DetectionPairKey, distance: Float)] = []
         for observer in observers {
             for target in targets where target.key != observer.key {
@@ -141,9 +144,14 @@ public final class PerceptionRuntime {
         // Nearest first past the cap, then back to key order so evaluation stays
         // stable while actors move: a slice cursor over a distance-sorted list
         // would re-slice differently every frame.
-        candidates.sort { ($0.distance, $0.key) < ($1.distance, $1.key) }
+        // Under the cap the loops above already built key order, so nothing sorts.
         droppedPairCount = max(0, candidates.count - Self.maximumPairs)
-        order = candidates.prefix(Self.maximumPairs).map(\.key).sorted()
+        if droppedPairCount == 0 {
+            order = candidates.map(\.key)
+        } else {
+            candidates.sort { ($0.distance, $0.key) < ($1.distance, $1.key) }
+            order = candidates.prefix(Self.maximumPairs).map(\.key).sorted()
+        }
         let live = Set(order)
         pairs = pairs.filter { live.contains($0.key) }
         lastEvaluatedStep = lastEvaluatedStep.filter { live.contains($0.key) }
