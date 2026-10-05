@@ -2,7 +2,7 @@
 // resident's packages follow the game clock, its path is the real Chillfurrow
 // navmesh through door `0001633D`, detection uses the plugins' constants, and
 // the combat machine runs its full arc. It needs no GPU;
-// `NPCAIAcceptanceRenderTests` holds the pixel half. The report in `logs/` holds
+// `NPCAIAcceptanceRenderTests` holds the pixel half. The report in `.logs/` holds
 // FormIDs, counts, and timings only.
 
 import Foundation

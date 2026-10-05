@@ -1,5 +1,5 @@
 // Every CAMS camera mesh on the install decodes into a camera track. The key
-// types, play windows, and eye offsets go to `logs/camera-tracks.log`.
+// types, play windows, and eye offsets go to `.logs/camera-tracks.log`.
 // Run with `make test-real T='NIFCameraTrackRealDataTests'`.
 
 import Foundation

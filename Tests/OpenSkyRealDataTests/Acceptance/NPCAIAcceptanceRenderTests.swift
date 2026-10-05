@@ -2,7 +2,7 @@
 // a real navmesh, which the synthetic overlay test cannot show. Three frames in
 // checkbox order (nothing, navmesh, navmesh plus corridor), each compared with
 // the one before. The detection overlay is not measured: this stage has no
-// observers. Frames stay in gitignored `logs/`.
+// observers. Frames stay in gitignored `.logs/`.
 
 import Foundation
 import Metal

@@ -180,4 +180,4 @@ World > Container Menu has two sections:
 
 To repeat a run without the test host:
 `make run-cli ARGS="swf container-menu --mode barter --side player --down 2 --transfer 1"`.
-Frames go to the gitignored `logs/` folder.
+Frames go to the gitignored `.logs/` folder.

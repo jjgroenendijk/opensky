@@ -76,7 +76,7 @@ specification. Vanilla uses none of them.
 
 `openskycli swf sweep` decodes every tag in every movie and prints the counts.
 `openskycli swf render-sweep` renders frame 1 of each movie. `openskycli swf action-sweep`
-counts the bytecode. See [CLI](/tools/cli.md). Their logs and captures go to `logs/` only,
+counts the bytecode. See [CLI](/tools/cli.md). Their logs and captures go to `.logs/` only,
 because a rendered vanilla movie contains game art.
 
 ## Not implemented

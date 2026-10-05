@@ -46,7 +46,7 @@ ones only this bundle uses. Other fixtures are in the `Tests/<Name>Testing/` and
   `Tests/FormatsTesting/`.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
-  value or write an artifact to gitignored `logs/`.
+  value or write an artifact to gitignored `.logs/`.
 - `make test-unit PLAN=App T='Suite'` or `T='Suite/method()'` runs one suite or test in
   `OpenSkyTests`, and `make test-rerun PLAN=App T=...` reruns it without the build system;
   the `testing-and-verifying` skill covers what to run. `make test-report` extracts failure

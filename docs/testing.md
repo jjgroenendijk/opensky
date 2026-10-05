@@ -179,7 +179,7 @@ the app pointed at an install on an external volume blocked the unit tests forev
 - Fixtures are built in code (`BSAFixture`, `ESMFixture`, `NIFFixture`, `StringTableFixture`) or are
   tiny synthetic files the test writes. Never game files.
 - Rendering checks prefer exact assertions (buffer contents, transform math), plus a capture in a
-  run directory under `logs/` for a person to look at ([run output](/tools/run-output.md)).
+  run directory under `.logs/` for a person to look at ([run output](/tools/run-output.md)).
   `print()` shows in the live console but not in the `.xcresult`, so a backgrounded run loses it.
   Assert on a value or write a file.
 - Full-frame checks go through the offscreen renderer: one synchronous frame into an owned texture.

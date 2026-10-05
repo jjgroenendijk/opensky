@@ -26,7 +26,7 @@ ignores:
   - DerivedData
   - DerivedData-optimized   # the optimized real-data perf build's own cache
   - DerivedData-index       # the uncached index build `make health` scans
-  - logs            # gitignored scratch output; agents drop free-form notes here
+  - .logs           # gitignored scratch output; agents drop free-form notes here
   - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
   - .claude/worktrees  # linked worktrees nested below the main checkout
   - "**/._*"        # macOS AppleDouble junk on this volume

@@ -1,7 +1,7 @@
 // Env-gated dynamic-body probe over the user's install. It checks what the
 // synthetic suites cannot: a vanilla interior yields bodies from its own Havok
 // data, they settle, a shove moves them, and a step fits the frame budget. The
-// report holds counts and timings and goes to gitignored `logs/`. Run with
+// report holds counts and timings and goes to gitignored `.logs/`. Run with
 // `make test-real T='DynamicBodyRealDataTests/settlesAndPushesVanillaClutter()'`,
 // or `make test-real PERF=1` for the optimized budget.
 

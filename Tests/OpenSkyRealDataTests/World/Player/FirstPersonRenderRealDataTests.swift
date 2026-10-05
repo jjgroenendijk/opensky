@@ -2,7 +2,7 @@
 // with a weapon in idle, walk, and sprint, and each state differs. First person
 // draws the arms and not the body, third person the reverse, and switching back
 // gives the same frame byte for byte. Arms with a weapon differ from arms
-// without one. Captures stay in gitignored `logs/`.
+// without one. Captures stay in gitignored `.logs/`.
 
 import CoreGraphics
 import Foundation

@@ -1,6 +1,6 @@
 // Every archived `.hkt` on the install decodes as a Havok binary tagfile. The
 // census pins the totals and shows that no file holds a cloth class. The class
-// table goes to `logs/`; it holds names and counts only.
+// table goes to `.logs/`; it holds names and counts only.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation

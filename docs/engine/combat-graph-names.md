@@ -10,7 +10,7 @@ tags: [engine, combat, behavior-graph, hkx, weapons]
 
 [Melee combat](/engine/melee-combat.md) talks to the player's
 [behavior graph](/engine/behavior-runtime.md) by name. Every name here comes from the behavior
-census over the install (`logs/hkx-behavior-census.log`), never from memory. `0_master.hkx`
+census over the install (`.logs/hkx-behavior-census.log`), never from memory. `0_master.hkx`
 declares 230 variables and 1,217 events, and a name that only sounds right resolves to nothing.
 Each name is spelled exactly as the third-person
 `meshes\actors\character\behaviors\0_master.hkx` spells it, including vanilla's mixed

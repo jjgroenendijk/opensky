@@ -1,7 +1,7 @@
 // Integrated acceptance against user's read-only Skyrim SE install.
 // One exterior combines actors, shadows, forced rain, world particles,
 // precipitation, and grass; Chillfurrow Farm interior combines animation +
-// its applicable fire effect. Numeric A/B deltas + PNGs stay in ignored logs/.
+// its applicable fire effect. Numeric A/B deltas + PNGs stay in ignored .logs/.
 
 import Foundation
 import Metal

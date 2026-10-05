@@ -1,7 +1,7 @@
 // Dialogue camera acceptance, pixel half: engaging the camera over the user's
 // cell moves the frame, and releasing it restores the view exactly. Both
 // frames render at one animation time, so only the camera differs. Needs a
-// Metal 4 device and the install; frames go to gitignored `logs/`.
+// Metal 4 device and the install; frames go to gitignored `.logs/`.
 
 import Foundation
 import Metal

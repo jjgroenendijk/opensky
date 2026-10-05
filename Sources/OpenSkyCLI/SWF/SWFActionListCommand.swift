@@ -1,6 +1,6 @@
 // `swf action-list`: print every action record of one movie, one per line, with
 // constant-pool names resolved. It shows which movie fields gate a menu row.
-// The listing names game code, so redirect it into `logs/`, never the repo.
+// The listing names game code, so redirect it into `.logs/`, never the repo.
 
 import Foundation
 import OpenSkyFormatsSWF

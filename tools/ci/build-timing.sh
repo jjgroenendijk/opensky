@@ -9,7 +9,7 @@ set -eu
 dd="${1:-DerivedData}"
 # Run directories are UTC timestamps, so the last name is the newest run.
 bundle="$(find "$dd/TestResults/unit" -maxdepth 2 -name unit.xcresult 2>/dev/null | sort | tail -n 1)"
-transcript=logs/test-unit/latest/test-unit.log
+transcript=.logs/test-unit/latest/test-unit.log
 if [ -z "$bundle" ]; then
     echo "[INFO] no unit result bundle under $dd/TestResults"
     exit 0

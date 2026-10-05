@@ -57,5 +57,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}-logs
-          path: logs/
+          path: .logs/
+          include-hidden-files: true
           retention-days: 14

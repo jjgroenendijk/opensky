@@ -1,7 +1,7 @@
 // Enchantment acceptance against the user's install, headless: a real
 // enchanted weapon hits and runs down, and a Fortify One-Handed armour
 // enchantment changes a damage number. Both items are found by search, not
-// pinned FormID. The summary goes to gitignored `logs/`: counts, editor IDs,
+// pinned FormID. The summary goes to gitignored `.logs/`: counts, editor IDs,
 // and numbers only.
 
 import Foundation
@@ -253,7 +253,7 @@ struct EnchantmentAcceptanceRealDataTests {
         let damage: (plain: MeleeDamageResult, fortified: MeleeDamageResult)
     }
 
-    /// A summary into gitignored `logs/`, so a pull request can link the run
+    /// A summary into gitignored `.logs/`, so a pull request can link the run
     /// rather than describe it.
     ///
     /// Anchored on the source file rather than the working directory, which in a

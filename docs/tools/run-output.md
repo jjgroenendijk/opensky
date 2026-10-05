@@ -9,7 +9,7 @@ tags: [tool, make, logs, disk, retention]
 
 # Run output layout and make prune
 
-Two gitignored trees hold everything a run of the tooling produces: `logs/` for
+Two gitignored trees hold everything a run of the tooling produces: `.logs/` for
 transcripts and captures, `TestResults/` in the build cache for `.xcresult` bundles. Both grow
 without bound, which fills a disk mid-session: one build cache per linked worktree runs to
 about ten gigabytes, and the worktree for a merged branch leaves its cache behind. The
@@ -22,8 +22,8 @@ Claude Code session closes, so nobody has to remember it.
 Every script that writes output a human reads later allocates one directory per run:
 
 ```text
-logs/<script>/<UTC timestamp>/          for example logs/probe/<YYYYMMDDTHHMMSSZ>/
-logs/<script>/latest -> <UTC timestamp>
+.logs/<script>/<UTC timestamp>/          for example .logs/probe/<YYYYMMDDTHHMMSSZ>/
+.logs/<script>/latest -> <UTC timestamp>
 $OPENSKY_DERIVED_DATA/TestResults/<name>/<UTC timestamp>/<name>.xcresult
 ```
 
@@ -39,7 +39,7 @@ modification times that a backup or a copy can rewrite. `tools/run-dir.sh` creat
 directory, repoints `latest`, and prints the absolute path:
 
 ```sh
-run_dir="$("$root/tools/run-dir.sh" probe)"                       # under logs/
+run_dir="$("$root/tools/run-dir.sh" probe)"                       # under .logs/
 bundle="$("$root/tools/run-dir.sh" -b "$OPENSKY_DERIVED_DATA/TestResults" unit)"  # absolute
 ```
 
@@ -67,11 +67,11 @@ reads like a stale file rather than contention.
 
 | Producer | Run directory | Contents |
 | --- | --- | --- |
-| `make build-app`, `build-cli`, `install` | `logs/<target>/` | xcodebuild transcript, `phases.tsv` |
-| `make test-<kind>` | `logs/test-<kind>/`, `TestResults/<kind>/` in the build cache | xcodebuild transcript, `phases.tsv`, `.xcresult` |
-| `tools/probe.sh` | `logs/probe/` | `probe.log` and every PNG the probe renders |
-| `tools/check-docs-links.sh` | `logs/docs-links/` | link report |
-| `tools/vendor-ffmpeg.sh` | `logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |
+| `make build-app`, `build-cli`, `install` | `.logs/<target>/` | xcodebuild transcript, `phases.tsv` |
+| `make test-<kind>` | `.logs/test-<kind>/`, `TestResults/<kind>/` in the build cache | xcodebuild transcript, `phases.tsv`, `.xcresult` |
+| `tools/probe.sh` | `.logs/probe/` | `probe.log` and every PNG the probe renders |
+| `tools/check-docs-links.sh` | `.logs/docs-links/` | link report |
+| `tools/vendor-ffmpeg.sh` | `.logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |
 
 `make test-report` reads the newest `.xcresult` under the build cache's `TestResults`, one run
 directory deep, and falls back to the derived-data glob when there is none.
@@ -79,9 +79,9 @@ directory deep, and falls back to the derived-data glob when there is none.
 ## make prune
 
 ```sh
-make prune                    # retention 14 days
+make prune                    # retention 1 day
 make prune DRY_RUN=1          # print the plan, delete nothing
-make prune PRUNE_DAYS=2       # tighter retention
+make prune PRUNE_DAYS=7       # keep a week
 ```
 
 `tools/prune.sh` builds a plan, prints every entry with its size and the reason it is in
@@ -89,17 +89,17 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
 
 1. **Stale worktree caches.** Every directory under the main checkout's
    `.claude/worktrees/` that `git worktree list --porcelain` no longer names loses its
-   `DerivedData/`, `build/`, and `logs/`, and every build cache under
+   `DerivedData/`, `build/`, and `.logs/`, and every build cache under
    `~/Library/Caches/OpenSky/` whose checkout is not a live worktree goes too. This is the
    rule that frees gigabytes: removing a worktree often leaves the directory behind precisely
    because those trees are untracked, so git's own `worktree prune` never reaches them.
 2. **`build/install`**, the private Release tree `make install` used before it started
    sharing the main derived-data cache.
-3. **Aged-out runs** under `logs/` and the build cache's `TestResults/`: a run directory whose
+3. **Aged-out runs** under `.logs/` and the build cache's `TestResults/`: a run directory whose
    timestamp is older than the retention age goes, except that the newest run of each
    script is always kept, so `latest` still resolves after a prune. A `latest` symlink left
    dangling by a prune is removed.
-4. **Pre-convention leftovers**: loose files directly under `logs/` older than the
+4. **Pre-convention leftovers**: loose files directly under `.logs/` older than the
    retention age, `.xcresult` bundles written straight into `build/test-results`, and
    run directories left in `build/test-results/` from before bundles moved.
 

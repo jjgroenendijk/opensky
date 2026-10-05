@@ -1,6 +1,6 @@
 // Ragdoll acceptance on the real install, headless: the vanilla humanoid
 // skeleton's ragdoll falls onto a synthetic floor with every constraint resolved
-// and every bone name bound. The report in `logs/` holds bone names, joint
+// and every bone name bound. The report in `.logs/` holds bone names, joint
 // counts, and settle times only.
 
 import EngineTesting

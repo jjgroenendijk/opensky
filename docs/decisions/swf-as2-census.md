@@ -11,7 +11,7 @@ tags: [decision, swf, as2, ui, scaleform, census]
 
 This page holds the measurement behind the [AS2 runtime scope](/decisions/swf-as2-scope.md). The
 numbers come from `openskycli swf action-sweep`, run over all 53 vanilla `Interface/*.swf` movies.
-Its output is derived from game content, so it stays in `logs/`. Run it with
+Its output is derived from game content, so it stays in `.logs/`. Run it with
 `make run-cli ARGS="swf action-sweep"`.
 
 ## Totals

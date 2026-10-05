@@ -3,7 +3,7 @@
 // A posed body keeps about the bind-pose silhouette, which a torn mesh cannot.
 // A locomotion state change changes the frame. A body reassembled at a pose
 // matches one assembled there from the start; the check uses assembly, because
-// a crossfading graph is time-dependent. Captures stay in gitignored `logs/`.
+// a crossfading graph is time-dependent. Captures stay in gitignored `.logs/`.
 
 import Foundation
 import Metal
@@ -114,7 +114,7 @@ struct PlayerBodyRenderRealDataTests {
     /// The posed body and the bind-pose body cover about the same ground. A
     /// mismatched skinning convention throws shards across the frame and
     /// covers several times more, so bounding the ratio catches it without
-    /// pinning a pose. Both captures go to gitignored `logs/`.
+    /// pinning a pose. Both captures go to gitignored `.logs/`.
     @MainActor
     private static func assertPosedBodyIsStillAFigure(
         _ renderer: Renderer,
@@ -247,7 +247,7 @@ struct PlayerBodyRenderRealDataTests {
         RenderedPixels.changedCount(lhs, rhs)
     }
 
-    /// Writes one capture into gitignored `logs/` for human review. A rendered
+    /// Writes one capture into gitignored `.logs/` for human review. A rendered
     /// frame embeds the user's own game assets and is never committed.
     private static func writePNG(_ pixels: [UInt8], name: String) throws {
         try RenderedPixels.writePNG(

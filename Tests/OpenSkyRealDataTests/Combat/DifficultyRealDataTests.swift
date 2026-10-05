@@ -1,5 +1,5 @@
 // Difficulty on the real install: the damage ratio for each level, from the
-// load order's fDiffMult GMSTs or the UESP fallback. The report in `logs/`
+// load order's fDiffMult GMSTs or the UESP fallback. The report in `.logs/`
 // holds the six levels, their multipliers, and where each value came from.
 
 import Foundation

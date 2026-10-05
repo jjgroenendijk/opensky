@@ -1,6 +1,6 @@
 // Two real Skyrim.esm NPCs whose combat styles differ most in offense fight the
 // player for the same seeded minute under vanilla constants. Their attack and
-// block counts must differ. The report goes to `logs/combat-style-fight.log`.
+// block counts must differ. The report goes to `.logs/combat-style-fight.log`.
 // Run with `make test-real T='CombatStyleFightRealDataTests'`.
 
 import Foundation

@@ -1,6 +1,6 @@
 // Behavior-evaluator smoke test on the real install: every character behavior
 // file, third person and `_1stperson`, steps with no input. Nothing may crash,
-// and every gap is named in the pinned `BehaviorTally`. The report in `logs/`
+// and every gap is named in the pinned `BehaviorTally`. The report in `.logs/`
 // holds class names, counts, and paths only.
 
 import Foundation

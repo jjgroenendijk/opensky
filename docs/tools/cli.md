@@ -134,5 +134,5 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
 - `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.
   Both run without the app or an install.
 
-Captures and the full `probe.log` go to `logs/probe/<UTC timestamp>/`
+Captures and the full `probe.log` go to `.logs/probe/<UTC timestamp>/`
 ([run output](/tools/run-output.md)).

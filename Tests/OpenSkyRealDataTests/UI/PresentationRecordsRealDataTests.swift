@@ -1,7 +1,7 @@
 // The M27 records over the active load order: every Skyrim.esm MESG built to
 // text with its unresolved tokens counted, LSCR pass counts for a few
 // destinations with the run-on census, and the CSTY numbers combat styles
-// feed the machine. Reports go to `logs/presentation-records.log`.
+// feed the machine. Reports go to `.logs/presentation-records.log`.
 // Run with `make test-real T='PresentationRecordsRealDataTests'`.
 
 import Foundation

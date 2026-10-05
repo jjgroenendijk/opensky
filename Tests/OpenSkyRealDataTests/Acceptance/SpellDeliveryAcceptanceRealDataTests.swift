@@ -1,7 +1,7 @@
 // Spell delivery acceptance against the user's install, headless: a vanilla
 // destruction spell is cast at an actor, its projectile flies on the record's
 // numbers, and the health loss is resistance-adjusted. Read-only; the summary
-// in gitignored `logs/` holds editor IDs and numbers only.
+// in gitignored `.logs/` holds editor IDs and numbers only.
 
 import Foundation
 @testable import OpenSkyActors
@@ -287,7 +287,7 @@ struct SpellDeliveryAcceptanceRealDataTests {
         )
     }
 
-    /// The run summary into a directory under gitignored `logs/`, so a pull
+    /// The run summary into a directory under gitignored `.logs/`, so a pull
     /// request can link the run rather than describe it. Anchored on the source
     /// file, because a test host's working directory is `/`.
     @MainActor

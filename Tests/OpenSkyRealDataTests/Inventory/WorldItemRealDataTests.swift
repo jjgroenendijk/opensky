@@ -67,7 +67,7 @@ struct WorldItemRealDataTests {
         }
     }
 
-    /// The sweep's numbers go to gitignored `logs/`, not into an assertion
+    /// The sweep's numbers go to gitignored `.logs/`, not into an assertion
     /// message: `print` is absent from the `.xcresult`, and a rendered frame or
     /// a record dump from a real install is game content.
     private static func writeReport(_ sweep: Sweep) throws {

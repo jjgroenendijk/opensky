@@ -23,6 +23,11 @@ if [ -d "$old_store" ] && [ ! -L "$old_store" ] && [ ! -e "$store" ]; then
   mv "$old_store" "$store"
   echo "  [ OK ] moved the compilation cache store to $store"
 fi
+# Run output moved from the visible logs/ to .logs/, which the scan skips.
+if [ -d "$root/logs" ] && [ ! -L "$root/logs" ] && [ ! -e "$root/.logs" ]; then
+  mv "$root/logs" "$root/.logs"
+  echo "  [ OK ] moved run output to $root/.logs"
+fi
 # An older version of this script linked a worktree's DerivedData/ to the store.
 if [ -L "$root/DerivedData/CompilationCache.noindex" ]; then
   rm "$root/DerivedData/CompilationCache.noindex"

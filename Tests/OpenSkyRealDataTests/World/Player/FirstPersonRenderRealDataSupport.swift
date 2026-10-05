@@ -1,5 +1,5 @@
 // Helpers for `FirstPersonRenderRealDataTests`: driving the bridge, placing the
-// rigs, and turning a rendered texture into pixels and a capture in `logs/`.
+// rigs, and turning a rendered texture into pixels and a capture in `.logs/`.
 
 import CoreGraphics
 import Foundation
@@ -96,7 +96,7 @@ extension FirstPersonRenderRealDataTests {
         RenderedPixels.changedCount(lhs, rhs)
     }
 
-    /// Writes one square capture into gitignored `logs/`; the frame embeds game assets.
+    /// Writes one square capture into gitignored `.logs/`; the frame embeds game assets.
     static func writePNG(_ pixels: [UInt8], name: String, size: Int = size) throws {
         try RenderedPixels.writePNG(
             pixels, width: size, height: size,

@@ -18,7 +18,7 @@
     "query": "Verify that the new shadow pass renders on the real install.",
     "files": [],
     "expected_behavior": [
-      "Renders offscreen or through openskycli render into a logs/ run directory from tools/run-dir.sh",
+      "Renders offscreen or through openskycli render into a .logs/ run directory from tools/run-dir.sh",
       "Does not launch the app without telling the user",
       "Does not commit the captured frame"
     ]

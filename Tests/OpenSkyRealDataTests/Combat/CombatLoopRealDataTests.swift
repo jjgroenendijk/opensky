@@ -97,7 +97,7 @@ struct CombatLoopRealDataTests {
     /// One fixed step of the loop, over the install's own combat GMSTs and a
     /// crowd of actors, measured and reported.
     ///
-    /// The report goes to gitignored `logs/` and is linked from the PR; item
+    /// The report goes to gitignored `.logs/` and is linked from the PR; item
     /// 15.9 reads the number beside the 15.2 physics gate.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     @MainActor
@@ -240,7 +240,7 @@ struct CombatLoopRealDataTests {
         blows landed:    \(hits)
         """
         // Through the shared helper rather than a relative path: the test host's
-        // working directory is not the checkout, so `logs/...` resolves to the
+        // working directory is not the checkout, so `.logs/...` resolves to the
         // filesystem root and the write fails.
         try PlayerBodyFixture.write(text, to: file)
     }

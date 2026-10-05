@@ -2,7 +2,7 @@
 // .fingerprint(forRoot:)` reads the shipped plugins, and a save is refused once
 // the load order changes. Only each plugin's TES4 record is decoded. The save
 // goes to a temporary directory that is deleted afterwards; the report goes to
-// gitignored `logs/`.
+// gitignored `.logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

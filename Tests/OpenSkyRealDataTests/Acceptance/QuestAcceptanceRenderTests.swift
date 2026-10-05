@@ -1,6 +1,6 @@
 // M13 acceptance, pixel half: advancing a stage adds a journal paragraph. The
 // advanced page must also be byte-identical to a page built at that stage
-// directly. Needs Metal 4 and the install; frames go to gitignored `logs/`.
+// directly. Needs Metal 4 and the install; frames go to gitignored `.logs/`.
 
 import Foundation
 import Metal

@@ -1,6 +1,6 @@
 // Inventory menu acceptance on the real install. `inventorymenu.swf` places
 // three characters it does not define, so it needs cross-movie imports before
-// it shows a list. Frames and numbers stay in gitignored `logs/`.
+// it shows a list. Frames and numbers stay in gitignored `.logs/`.
 
 import FeaturesTesting
 import Foundation

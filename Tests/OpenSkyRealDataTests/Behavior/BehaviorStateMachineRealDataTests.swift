@@ -1,7 +1,7 @@
 // State-machine drive on the real install: the vanilla third-person movement
 // behavior steps headlessly under the locomotion events it declares. Checks use
 // the state names the file declares, which do not drift like ids. The report in
-// `logs/` holds names and counts only.
+// `.logs/` holds names and counts only.
 
 import Foundation
 @testable import OpenSkyBehavior

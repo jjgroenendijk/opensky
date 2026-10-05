@@ -14,7 +14,7 @@ socket. Load the `driving-the-running-game` skill before using it.
 ## Build + verify
 
 - `make build-cli` — build (Debug). `make probe` — env-gated smoke run (`tools/probe.sh`,
-  self-skips when install absent, logs -> `logs/probe.log`).
+  self-skips when install absent, logs -> `.logs/probe.log`).
 - No CLI-only test bundle; shared logic is tested in `Tests/OpenSkyTests/`.
 
 ## Rules
@@ -29,4 +29,4 @@ socket. Load the `driving-the-running-game` skill before using it.
 - New/changed subcommand -> same commit updates `docs/tools/cli.md`, probe coverage,
   and the usage text in `OpenSkyCLIUsage.swift` (split out of `OpenSkyCLI.swift`, which
   now holds only dispatch).
-- Install is read-only. Writes go only where `--out` points; logs -> `logs/`.
+- Install is read-only. Writes go only where `--out` points; logs -> `.logs/`.

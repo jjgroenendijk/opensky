@@ -196,7 +196,7 @@ rejected as not a branch entry without their conditions being evaluated:
 The functions most often still missing, by Creation Kit number: 4725 (411 conditions), 4702
 (303), 4163 (61), 4351 (44), 4227 (25), 4180 (21). These are numbers, not names, because the
 sweep counts what the plugin stores. Each gets its name when it is implemented from a cited
-source. The full table goes to `logs/dialogue-selection/<stamp>/`.
+source. The full table goes to `.logs/dialogue-selection/<stamp>/`.
 
 All 7,661 `INFO` fragment tails in the five masters decode, with 8,009 result script fragments,
 no record failures, and no bytes left over.

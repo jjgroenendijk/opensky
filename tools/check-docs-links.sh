@@ -4,7 +4,7 @@
 # get removed -> links dangle silently; this makes the break visible at
 # commit time (AGENTS.md "if a machine can check a rule...").
 #
-# Report -> stdout/stderr; full run log -> logs/docs-links/<timestamp>/.
+# Report -> stdout/stderr; full run log -> .logs/docs-links/<timestamp>/.
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"

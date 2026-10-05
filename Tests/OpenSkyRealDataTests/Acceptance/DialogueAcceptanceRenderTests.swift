@@ -1,7 +1,7 @@
 // M17 acceptance, pixel half, as changed-pixel counts. The mouth region must
 // change and hold most of the frame's change. The camera and menu toggles run
 // together on one real cell, in the order a conversation applies them. Needs
-// a Metal 4 device and the install; frames go to gitignored `logs/`.
+// a Metal 4 device and the install; frames go to gitignored `.logs/`.
 
 import CoreGraphics
 import Foundation

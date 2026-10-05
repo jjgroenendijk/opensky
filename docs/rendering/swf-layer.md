@@ -128,5 +128,5 @@ to the load error the readout shows.
 
 Across all 53 vanilla movies, `openskycli swf render-sweep` renders frame 1 with no failures. Many
 vanilla menus are blank at frame 1, because their top-level content starts at alpha zero until
-ActionScript shows it ([SWF container](/formats/swf.md)). Captures stay in `logs/`, because they
+ActionScript shows it ([SWF container](/formats/swf.md)). Captures stay in `.logs/`, because they
 contain game art.

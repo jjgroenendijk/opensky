@@ -2,7 +2,7 @@
 // (`0_master.hkx`) on the locomotion bridge, driven by scripted input through
 // `WalkController` over the launch cell's LAND. Travel moves forward within the
 // install's gait speed, a jump leaves the ground and lands, and every census
-// name is declared. The per-step trace goes to `logs/`.
+// name is declared. The per-step trace goes to `.logs/`.
 
 import Foundation
 @testable import OpenSkyBehavior

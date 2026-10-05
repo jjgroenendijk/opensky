@@ -1,7 +1,7 @@
 // Quest alias checks on the real install: `MGRArniel01`, the cheapest quest on
 // the census shortlist (docs/formats/quest-records.md), fills its one
 // forced-reference alias, and a corpus sweep counts how much of vanilla each
-// deferred fill type affects. The report in `logs/` holds counts, alias names,
+// deferred fill type affects. The report in `.logs/` holds counts, alias names,
 // fill types, and editor IDs only.
 
 import Foundation

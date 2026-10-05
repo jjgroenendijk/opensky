@@ -1,7 +1,7 @@
 // Effect probes on the real load order: a projectile's explosion detonates with
 // damage and sound, an explosion's hazard hurts an actor once per interval, and a
 // dungeon's acoustic space gives a reverb the exterior does not. The report goes
-// to `logs/m26-effects-probe.log`; it names records and numbers only.
+// to `.logs/m26-effects-probe.log`; it names records and numbers only.
 
 import Foundation
 @testable import OpenSkyAudio

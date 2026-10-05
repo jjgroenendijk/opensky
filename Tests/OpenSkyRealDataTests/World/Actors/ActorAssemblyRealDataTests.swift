@@ -1,7 +1,7 @@
 // Env-gated milestone 5.4 acceptance over the user's read-only Skyrim SE
 // install. Resolves named Whiterun NPC Heimskr, assembles deterministic
 // outfit + FaceGen assets at the ACHR pose, renders offscreen, writes only
-// the resulting frame to gitignored logs/. CI skips without game data/Metal 4.
+// the resulting frame to gitignored .logs/. CI skips without game data/Metal 4.
 
 import CoreGraphics
 import Foundation
@@ -77,7 +77,7 @@ struct ActorAssemblyRealDataTests {
     }
 
     /// Renders the assembly offscreen and writes the frame to gitignored
-    /// `logs/`. A rendered frame embeds the user's own assets, so it never
+    /// `.logs/`. A rendered frame embeds the user's own assets, so it never
     /// leaves that directory (AGENTS.md "Legal & IP boundary").
     @MainActor
     private func renderAndCapture(

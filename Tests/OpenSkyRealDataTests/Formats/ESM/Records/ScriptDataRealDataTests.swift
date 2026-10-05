@@ -1,6 +1,6 @@
 // Env-gated VMAD sweep over the user's own Skyrim.esm plus a PEX metadata
 // probe through the VFS. Game bytes remain read-only external input; only
-// aggregate counts and sampled ReferenceKeys reach gitignored logs/.
+// aggregate counts and sampled ReferenceKeys reach gitignored .logs/.
 
 import Foundation
 @testable import OpenSkyFormatsCore

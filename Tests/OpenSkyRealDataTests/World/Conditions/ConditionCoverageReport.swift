@@ -1,4 +1,4 @@
-// The CTDA coverage sweep's report text for gitignored `logs/`. It names
+// The CTDA coverage sweep's report text for gitignored `.logs/`. It names
 // function indices and counts, never records.
 
 import Foundation

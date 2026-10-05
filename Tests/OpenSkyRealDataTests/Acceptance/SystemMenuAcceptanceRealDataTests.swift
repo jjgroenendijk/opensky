@@ -1,5 +1,5 @@
 // System menu acceptance on the real install: the System page of
-// `quest_journal.swf` in game. Frames and numbers stay in gitignored `logs/`.
+// `quest_journal.swf` in game. Frames and numbers stay in gitignored `.logs/`.
 
 import Foundation
 import Metal

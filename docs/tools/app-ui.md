@@ -250,5 +250,5 @@ literals in the same change that renames an id, and keep `OpenSkyUITests` correc
 - Add or extend a panel geometry test: controls visible and inside the scroll document.
 - Acceptance writes the record defined on the [sidebar acceptance](/tools/sidebar-acceptance.md) page
   into the closing PR or issue, not into `docs/`.
-- A/B captures are optional, stay in `logs/`, and are never committed, because a rendered frame holds
+- A/B captures are optional, stay in `.logs/`, and are never committed, because a rendered frame holds
   the user's game assets.

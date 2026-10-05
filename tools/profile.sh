@@ -8,7 +8,7 @@
 #   walk  bench --walk-path; fly runs bench --fly-path
 #   BENCH_OPTION  passed on to bench, e.g. --footprint-cap-mb 2048
 #
-# Writes logs/profile/<UTC timestamp>/: bench.log, bench.trace, and
+# Writes .logs/profile/<UTC timestamp>/: bench.log, bench.trace, and
 # samples.xml, the time-profile table for agents without Instruments.
 set -eu
 

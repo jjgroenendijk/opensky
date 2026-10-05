@@ -103,7 +103,7 @@ Use, and a vanilla movie switch, over a readout. Every button sends the same men
 keyboard.
 
 `make run-cli ARGS="swf inventory-menu --ticks 20 --down 3 --right 2"` drives the real movie from
-the command line. Frames go to `logs/`, because a drawn frame contains the user's game art.
+the command line. Frames go to `.logs/`, because a drawn frame contains the user's game art.
 
 ## Not done yet
 

@@ -164,7 +164,7 @@ enum GameCommand {
     }
 }
 
-/// `screenshot` without `--out` writes to `logs/game-screenshot/<UTC>/`,
+/// `screenshot` without `--out` writes to `.logs/game-screenshot/<UTC>/`,
 /// the run-directory layout of `tools/run-dir.sh`.
 enum GameScreenshotPath {
     static func resolve(_ out: String?) throws -> String {
@@ -179,7 +179,7 @@ enum GameScreenshotPath {
         let stamp = Date()
             .formatted(.iso8601.year().month().day().time(includingFractionalSeconds: false)
                 .timeSeparator(.omitted).dateSeparator(.omitted))
-        let base = current.appending(path: "logs/game-screenshot")
+        let base = current.appending(path: ".logs/game-screenshot")
         let run = base.appending(path: stamp)
         try FileManager.default.createDirectory(at: run, withIntermediateDirectories: true)
         let latest = base.appending(path: "latest")
