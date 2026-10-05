@@ -26,6 +26,12 @@ nonisolated public struct DecodedAudio: Equatable, Sendable {
     public let channelCount: Int
     public let samples: [Float]
 
+    public init(sampleRate: Int, channelCount: Int, samples: [Float]) {
+        self.sampleRate = sampleRate
+        self.channelCount = channelCount
+        self.samples = samples
+    }
+
     /// Sample frames, that is one value per channel counted once.
     public var frameCount: Int {
         channelCount > 0 ? samples.count / channelCount : 0
