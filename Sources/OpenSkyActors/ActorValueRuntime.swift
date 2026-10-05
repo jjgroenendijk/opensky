@@ -225,7 +225,7 @@ public struct ActorValueRuntime: ActorValueAccess {
     ) -> [ActorValueHolder] {
         guard seconds > 0 else { return [] }
         var changed: [ActorValueHolder] = []
-        for holder in holders.sorted(by: { $0.key < $1.key }) {
+        for holder in ReferenceKeyOrder.ascending(holders, by: \.key) {
             let baseline = baseline(of: holder)
             let state = state(of: holder)
             let maximums = Self.maximums(derived: baseline.maximums, state: state)

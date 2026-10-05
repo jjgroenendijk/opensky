@@ -46,6 +46,9 @@ public final class PerceptionRuntime {
 
     private weak var world: (any PerceptionWorld)?
     private var accumulator: Double = 0
+    /// The roster in key order, kept between frames while its members stay.
+    private var observerOrder = ReferenceKeyOrder()
+    private var targetOrder = ReferenceKeyOrder()
     /// Evaluation order, rebuilt per `advance(by:)`.
     private var order: [DetectionPairKey] = []
     /// Where the next slice starts in `order`.
@@ -127,8 +130,8 @@ public final class PerceptionRuntime {
     /// Collects observers and targets, builds the capped pair order, and drops
     /// the state of every pair that no longer exists.
     private func refreshRoster(world: any PerceptionWorld) {
-        observers = world.perceptionObservers().sorted { $0.key < $1.key }
-        targets = world.perceptionTargets().sorted { $0.key < $1.key }
+        observers = observerOrder.sorted(world.perceptionObservers(), by: \.key)
+        targets = targetOrder.sorted(world.perceptionTargets(), by: \.key)
         var candidates: [(key: DetectionPairKey, distance: Float)] = []
         for observer in observers {
             for target in targets where target.key != observer.key {

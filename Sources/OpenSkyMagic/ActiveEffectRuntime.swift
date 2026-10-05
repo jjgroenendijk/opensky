@@ -36,6 +36,9 @@ public struct ActiveEffectRuntime {
     /// half lives in `ActiveEffectRuntimeTick.swift` and a file-private setter
     /// would put it out of reach there.
     public var tally = ActiveEffectTally()
+    /// The tick walks holders in key order; this keeps that order between frames.
+    /// Internal, because the tick half reads it from another file.
+    var holderOrder = ReferenceKeyOrder()
 
     public init(
         values: any ActorValueAccess,
