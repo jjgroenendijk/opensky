@@ -34,6 +34,16 @@ fi
 # is GPL-configured (docs/decisions/ffmpeg-audio.md).
 ./tools/vendor-ffmpeg.sh
 
+# ASTC texture encoding uses ARM's astcenc, built from a pinned source tarball with cmake
+# (docs/decisions/astcenc.md).
+if command -v cmake >/dev/null 2>&1; then
+  echo "  [ OK ] cmake"
+else
+  echo "  [INFO] installing cmake"
+  brew install cmake
+fi
+./tools/vendor-astcenc.sh
+
 if ! command -v xcodebuild >/dev/null 2>&1; then
   echo "  [WARN] xcodebuild not found — install Xcode from the App Store." >&2
 else

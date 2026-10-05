@@ -156,9 +156,11 @@ OpenSky app, OpenSkyCLI   composition roots
 The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
 rebuilds its family and the modules that import it, not every format.
 
-Two more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
+Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
 ([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg
-([ffmpeg](/decisions/ffmpeg-audio.md)).
+([ffmpeg](/decisions/ffmpeg-audio.md)). `CASTCEncoder` is a C shim over the vendored, static
+astcenc ([astcenc](/decisions/astcenc.md)). It holds code, so it is in the `OpenSkyModules`
+product.
 
 `Sources/Shaders/Shaders.metal` is not in the package. The app and the CLI each compile it into
 the `default.metallib` of their own bundle, and `Renderer` loads it with

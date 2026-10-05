@@ -22,5 +22,6 @@ MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
 // The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
 // it loads the dylibs straight from .vendor at run time.
 LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
-LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
-OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib $(SRCROOT)/.vendor/astcenc/lib
+// astcenc is static (docs/decisions/astcenc.md) and needs the C++ runtime.
+OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample -lastcenc -lc++
