@@ -30,7 +30,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill and `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make health`, `make test-real`, `make test-sanitize SAN=thread` and `SAN=address`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR |
+| Milestone acceptance | `make health`, `make test-real`, `make test-sanitize SAN=thread` and `SAN=address`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
 
 Find the suites for a file with `grep -rl 'TypeName' Tests`.
 A tag plan runs one kind of suite across every unit target: `make test-unit TAG=parser` or
