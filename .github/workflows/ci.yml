@@ -39,9 +39,10 @@ env:
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
   DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
   # The build cache and the compilation cache store inside the workspace, where the
-  # cache actions find them. Locally both default to paths outside the checkout.
-  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/DerivedData
-  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/DerivedData/CompilationCache.noindex
+  # cache actions find them, under a hidden folder that xcodebuild's start-up scan
+  # of the package root skips. Locally both default to paths outside the checkout.
+  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/.cache/DerivedData
+  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/.cache/CompilationCache.noindex
 
 jobs:
   format:
@@ -205,28 +206,28 @@ jobs:
         run: |
           echo "xcode=$(xcodebuild -version | awk '/Build version/ { print $3 }')" >>"$GITHUB_OUTPUT"
           if [ -n "$PR" ]; then scope="pr-$PR"; else scope="$(echo "$GITHUB_REF_NAME" | tr '/' '-')"; fi
-          echo "cas=cas-$RUNNER_ARCH-$scope-" >>"$GITHUB_OUTPUT"
+          echo "cas=cas2-$RUNNER_ARCH-$scope-" >>"$GITHUB_OUTPUT"
       # The SDK's precompiled modules and stat cache change only with Xcode.
       - uses: actions/cache/restore@v6
         id: sdk
         with:
           path: |
-            DerivedData/ModuleCache.noindex
-            DerivedData/SDKStatCaches.noindex
-          key: sdk-${{ runner.arch }}-${{ steps.keys.outputs.xcode }}
+            .cache/DerivedData/ModuleCache.noindex
+            .cache/DerivedData/SDKStatCaches.noindex
+          key: sdk2-${{ runner.arch }}-${{ steps.keys.outputs.xcode }}
       - uses: actions/cache/restore@v6
         id: cas
         with:
-          path: DerivedData/CompilationCache.noindex
+          path: .cache/CompilationCache.noindex
           key: ${{ steps.keys.outputs.cas }}${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             ${{ steps.keys.outputs.cas }}
-            cas-${{ runner.arch }}-main-
+            cas2-${{ runner.arch }}-main-
       # COMPILATION_CACHE_LIMIT_SIZE does not shrink the store, so main drops it when too big.
       - name: Start the compilation cache over when too big
         if: github.event_name == 'push'
         run: |
-          store=DerivedData/CompilationCache.noindex
+          store=.cache/CompilationCache.noindex
           size="$(du -sm "$store" 2>/dev/null | cut -f1)"
           echo "[INFO] compilation cache: ${size:-0} MB, limit $CAS_MAX_MB MB"
           if [ "${size:-0}" -gt "$CAS_MAX_MB" ]; then rm -rf "$store"; fi
@@ -240,14 +241,14 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: |
-            DerivedData/ModuleCache.noindex
-            DerivedData/SDKStatCaches.noindex
+            .cache/DerivedData/ModuleCache.noindex
+            .cache/DerivedData/SDKStatCaches.noindex
           key: ${{ steps.sdk.outputs.cache-primary-key }}
       # Saved after a failed test too, because the compiled tasks are still valid.
       - if: ${{ !cancelled() && steps.cas.outcome == 'success' }}
         uses: actions/cache/save@v6
         with:
-          path: DerivedData/CompilationCache.noindex
+          path: .cache/CompilationCache.noindex
           key: ${{ steps.cas.outputs.cache-primary-key }}
       - name: Delete superseded compilation caches
         if: ${{ !cancelled() && steps.cas.outcome == 'success' }}

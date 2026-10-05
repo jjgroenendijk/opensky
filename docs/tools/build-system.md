@@ -19,8 +19,10 @@ environment.
 The `Makefile` defines the common part once:
 
 ```make
-xcb = xcodebuild -project $(PROJECT) -scheme $(1) -configuration $(2) \
-    $(XCODEBUILD_DD) $(XCODEBUILD_FLAGS)
+xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
+    $(XCODEBUILD_DD) COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
+    -IDEBuildingContinueBuildingAfterErrors=YES \
+    $(COVERAGE_$(2)) $(ARCHS_$(2)) $(XCODEBUILD_FLAGS)
 XCB_APP     := $(call xcb,$(SCHEME),$(CONFIG))
 XCB_CLI     := $(call xcb,$(CLI_SCHEME),$(CONFIG))
 XCB_RELEASE := $(call xcb,$(SCHEME),Release)
@@ -29,6 +31,23 @@ XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
 
 A target adds only its action and its own flags. `make -n build cli test install` shows the shared
 prefix on every line, which checks that it still holds.
+
+### The workspace and the start-up scan
+
+`OpenSky.xcworkspace` holds the project and, as a folder, the package at the repository root. Only
+that folder reference puts the package test targets into a test plan's build: through
+`-project OpenSky.xcodeproj`, or a workspace that names `Package.swift` instead of the folder,
+`build-for-testing` succeeds and writes an `.xctestrun` with no package test bundle in it
+(measured 2026-10-05). So every command line uses the workspace.
+
+The folder reference has a price. At every start, before it resolves the package graph,
+xcodebuild scans every visible file under that folder, through symlinks; a hidden name such as
+`.build` or `.cache` is skipped. On 2026-10-05 a worktree whose root held a link to the
+212,000-file compilation cache store spent 9 to 30 s in that scan, and 1 to 2 s once the link
+was gone; 29,000 files added under `logs/` cost 12 s; the main checkout, whose root held 573,000
+files of old build output and the store, listed its schemes in 109 s. That is why the store lives
+under the hidden `.cache/`, why `make clean` removes a `DerivedData*` tree left in a checkout, and
+why nothing else that grows should be visible under the root. `make prune` keeps `logs/` short.
 
 The cache is on the internal disk because the data volume is a USB disk that writes at about
 135 MB/s against the internal disk's 2 GB/s, and a build writes gigabytes of intermediates. The
@@ -49,7 +68,7 @@ alone. `make test-rerun` takes no lock, because it compiles nothing.
 | `DESTINATION` | `platform=macOS` | The test destination |
 | `CACHE_ROOT` | `~/Library/Caches/OpenSky` | Where every checkout's build cache lives, on the internal disk, exported as `OPENSKY_CACHE_ROOT` |
 | `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
-| `COMPILATION_CACHE` | `<main checkout>/DerivedData/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
+| `COMPILATION_CACHE` | `<main checkout>/.cache/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
@@ -157,7 +176,9 @@ hit only SDK module builds. `Config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PRE
 temporaries to `/^derived`, and products to `/^built`, so the same source gets the same key in any
 worktree. Every checkout passes the same store path, the main checkout's, so a fresh worktree's
 first unit build takes seconds instead of minutes. `make link-shared`, run first by every
-building target, links a worktree's `.vendor/ffmpeg` to the main checkout's.
+building target, links a worktree's `.vendor/ffmpeg` to the main checkout's, and moves a store
+still at the old visible path `DerivedData/` under `.cache/`
+([the start-up scan](#the-workspace-and-the-start-up-scan)).
 
 The mapping has three costs:
 

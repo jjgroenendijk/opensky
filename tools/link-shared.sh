@@ -3,7 +3,9 @@
 # worktree does not rebuild it. Run first by every building make target
 # (`make link-shared`) and by tools/vendor-ffmpeg.sh. Idempotent, and silent when
 # there is nothing to do. The compilation cache needs no link: the Makefile names
-# one shared store on every xcodebuild command line.
+# one shared store on every xcodebuild command line. A store left at its old
+# visible path moves to the hidden one, because xcodebuild scans every visible
+# file under the package root at each start (docs/tools/build-system.md).
 set -eu
 
 root=$(git rev-parse --show-toplevel)
@@ -13,6 +15,19 @@ cd "$root"
 # back to `root`.
 common=$(git rev-parse --git-common-dir)
 shared=$(cd "$(dirname "$common")" && pwd)
+
+old_store="$shared/DerivedData/CompilationCache.noindex"
+store="$shared/.cache/CompilationCache.noindex"
+if [ -d "$old_store" ] && [ ! -L "$old_store" ] && [ ! -e "$store" ]; then
+  mkdir -p "$shared/.cache"
+  mv "$old_store" "$store"
+  echo "  [ OK ] moved the compilation cache store to $store"
+fi
+# An older version of this script linked a worktree's DerivedData/ to the store.
+if [ -L "$root/DerivedData/CompilationCache.noindex" ]; then
+  rm "$root/DerivedData/CompilationCache.noindex"
+  rmdir "$root/DerivedData" 2>/dev/null || true
+fi
 
 # Vendored ffmpeg: `.vendor` -> `<main checkout>/.vendor`. An existing `.vendor` is never
 # touched, so a worktree that deliberately holds its own copy keeps it.

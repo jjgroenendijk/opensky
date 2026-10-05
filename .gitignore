@@ -3,6 +3,7 @@
 DerivedData/
 DerivedData-optimized/
 DerivedData-index/
+/.cache/
 .build/
 *.xcuserstate
 xcuserdata/
