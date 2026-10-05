@@ -5,10 +5,10 @@
 
 import Foundation
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
-import OSLog
 import simd
 
 /// Why the player has no body. Every case is reported rather than swallowed:

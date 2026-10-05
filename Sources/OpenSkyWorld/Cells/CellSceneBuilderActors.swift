@@ -10,7 +10,6 @@ import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyRendering
 import OpenSkyWorldState
-import OSLog
 import simd
 
 /// Per-build actor accounting; folded into CellLoadSummary. The exact

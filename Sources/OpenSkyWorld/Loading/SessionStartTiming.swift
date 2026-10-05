@@ -2,6 +2,7 @@
 // The World panel lists them after the load stages; Instruments shows them as signposts.
 
 import Foundation
+import OpenSkyFormatsCore
 import OSLog
 
 /// One step of the session start, in the order it runs on the main actor.
@@ -47,7 +48,7 @@ public final class SessionStartRecorder {
     private static let signposter = OSSignposter(
         subsystem: "nl.jjgroenendijk.opensky", category: "SessionStart"
     )
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky", category: "SessionStart"
     )
 

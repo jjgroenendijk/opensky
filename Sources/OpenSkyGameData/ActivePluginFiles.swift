@@ -3,11 +3,11 @@
 // will not open is logged and skipped, so one bad mod does not cost every setting.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 
 nonisolated public enum ActivePluginFiles: Sendable {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Plugins"
     )

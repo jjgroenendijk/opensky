@@ -11,7 +11,6 @@ import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld
-import OSLog
 import simd
 
 final class LoadingScreenWorldAdapter {
@@ -90,7 +89,10 @@ final class LoadingScreenWorldAdapter {
         }
     }
 
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Loading")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Loading"
+    )
 }
 
 extension LoadingScreenWorldAdapter: LoadingScreenWorld {

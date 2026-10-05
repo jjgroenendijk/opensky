@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyCombat
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -13,7 +14,6 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
-import OSLog
 import simd
 
 final class EffectsWorldAdapter {

@@ -6,7 +6,6 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 
 nonisolated public struct IndexedRecord: Sendable {
     public let record: ESMRecord
@@ -41,7 +40,7 @@ nonisolated public struct RecordIndex: Sendable {
         "PERK", "FACT", "RELA", "ASTP"
     ]
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "RecordIndex"
     )

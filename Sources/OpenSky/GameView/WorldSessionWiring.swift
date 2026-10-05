@@ -1,6 +1,7 @@
 // The composition root of a game session: builds the cell streamer and wires
 // every system to it and to the renderer, in dependency order.
 
+import Foundation
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
@@ -10,7 +11,6 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
-import OSLog
 import simd
 
 final class WorldSessionWiring {

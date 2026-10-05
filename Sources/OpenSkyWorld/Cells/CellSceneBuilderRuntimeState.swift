@@ -4,10 +4,10 @@
 // per build. See docs/engine/runtime-state.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
-import OSLog
 
 /// One cell's references as a build should place them: the index entries every
 /// placement keeps, the deltas that applied to them, and the effective set that

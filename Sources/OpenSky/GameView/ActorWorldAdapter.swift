@@ -3,9 +3,11 @@
 // which actors are resident. The rules live in the coordinator
 // (docs/engine/coordinators.md).
 
+import Foundation
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagic
@@ -15,7 +17,6 @@ import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
-import OSLog
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 final class ActorWorldAdapter {
@@ -122,7 +123,7 @@ final class ActorWorldAdapter {
         }
     }
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ActorValues"
     )

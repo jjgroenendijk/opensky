@@ -5,6 +5,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormatsCore
 import os
 
 /// Latest completed short-window reading, for live readouts (the World panel
@@ -40,7 +41,7 @@ nonisolated public struct FrameStatsSnapshot: Equatable, Sendable {
 }
 
 nonisolated public final class FrameStats {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "FrameStats"
     )

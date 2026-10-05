@@ -11,7 +11,6 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
-import OSLog
 import simd
 
 nonisolated public enum CellSceneError: Error, Equatable {
@@ -86,7 +85,7 @@ nonisolated public struct FoundWorld: Sendable {
 /// A class because the record indexes are cached across builds.
 /// Single-threaded, like the libraries it drives.
 nonisolated public final class CellSceneBuilder {
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellScene"
     )

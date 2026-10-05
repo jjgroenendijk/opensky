@@ -3,15 +3,16 @@
 // load failure is recorded and shown, not retried, because it is a fact about
 // the install. See docs/engine/coordinators.md.
 
+import Foundation
 import OpenSkyBehavior
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
-import OSLog
 
 /// Owns the player graphs and body state, and reads the world through `PlayerWorld`.
 public final class PlayerCoordinator {
-    static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "CellStream")
+    static let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky", category: "CellStream")
 
     let input: CameraInputState
     weak var world: (any PlayerWorld)?

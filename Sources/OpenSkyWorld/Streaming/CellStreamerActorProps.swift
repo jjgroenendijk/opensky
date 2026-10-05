@@ -2,9 +2,9 @@
 // baked into it, so starting or ending an idle rebuilds no cell. A rebuilt cell
 // brings a new actor playback, and the next view scene binds the prop to it.
 
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
-import OSLog
 
 /// The prop one actor shows. `model` is nil while the build queue loads it.
 nonisolated public struct ActorPropDraw {

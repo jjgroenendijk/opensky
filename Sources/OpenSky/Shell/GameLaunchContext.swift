@@ -8,7 +8,6 @@ import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyWorld
-import OSLog
 
 final class GameLaunchContext {
     /// What one world load produced. Opening the archives is a load stage too.
@@ -17,7 +16,7 @@ final class GameLaunchContext {
         let session: CellSession?
     }
 
-    nonisolated private static let logger = Logger(
+    nonisolated private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "GameData"
     )

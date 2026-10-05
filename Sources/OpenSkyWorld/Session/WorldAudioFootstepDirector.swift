@@ -4,15 +4,15 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
-import OSLog
 import simd
 
 @MainActor
 public final class WorldAudioFootstepDirector {
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioFootstep"
     )

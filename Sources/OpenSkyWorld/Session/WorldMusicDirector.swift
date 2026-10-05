@@ -6,13 +6,13 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OSLog
 
 @MainActor
 public final class WorldMusicDirector {
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldMusicDirector"
     )

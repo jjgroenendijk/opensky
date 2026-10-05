@@ -5,7 +5,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OSLog
 
 extension CellStreamer {
     /// Drops unloaded cells and schedules eviction of assets no resident cell needs. Only

@@ -4,6 +4,7 @@
 // change is a `JournalCoordinator` call. See docs/engine/journal.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -14,13 +15,12 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
-import OSLog
 
 /// Holds the journal's page model and movie state for `game`.
 final class JournalMenuController {
     static let identifier: MenuIdentifier = "Journal"
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Journal"
     )

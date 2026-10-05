@@ -4,8 +4,8 @@
 
 import Foundation
 import Metal
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
-import os
 
 /// How a texture is consumed — decides color space and the placeholder pixel.
 nonisolated public enum TextureUsage: Sendable {
@@ -26,7 +26,7 @@ nonisolated public enum TextureLoaderError: Error, Equatable {
 /// Uploads DDS bytes to `MTLTexture`s. One per device; placeholders are
 /// created once and shared across every failed load.
 nonisolated public final class TextureLoader {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "TextureLoader"
     )

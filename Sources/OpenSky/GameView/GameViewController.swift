@@ -23,7 +23,6 @@ import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
-import OSLog
 import simd
 
 final class GameViewController: NSViewController {
@@ -405,7 +404,7 @@ extension GameViewController {
 }
 
 extension GameViewController {
-    static let logger = Logger(
+    static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )

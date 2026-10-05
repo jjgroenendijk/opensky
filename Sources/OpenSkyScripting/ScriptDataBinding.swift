@@ -8,7 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
-import OSLog
 
 nonisolated public enum ScriptBindingError: Error, Equatable {
     case removedScript(String)
@@ -107,7 +106,7 @@ extension AttachedScript {
 }
 
 private struct ScriptBindingBuilder {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ScriptDataBinding"
     )

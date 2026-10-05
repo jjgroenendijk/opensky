@@ -1,13 +1,14 @@
 // The session's Papyrus VM, its world bridge, and the World > Scripts panel.
 // Without game data there is no VM, and the panel shows `ScriptsSnapshot.empty`.
 
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
 import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
-import OSLog
 import Synchronization
 
 /// What `ScriptCoordinator` reads from the live session.
@@ -163,7 +164,10 @@ public final class ScriptCoordinator {
         )
     }
 
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Papyrus")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Papyrus"
+    )
 }
 
 extension ScriptCoordinator: ScriptControlProviding {

@@ -3,7 +3,7 @@
 // and the sidebar and the menu read the same value.
 
 import Foundation
-import OSLog
+import OpenSkyFormatsCore
 
 /// Where the settings file lives. A test passes an in-memory fake.
 public protocol PlayerSettingsPersistence: AnyObject {
@@ -118,7 +118,10 @@ public final class PlayerSettingsStore {
         }
     }
 
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Settings")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Settings"
+    )
 }
 
 nonisolated extension PlayerSettingID {
