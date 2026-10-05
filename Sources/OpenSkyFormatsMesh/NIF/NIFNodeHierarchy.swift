@@ -45,7 +45,9 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
                     throw NIFError.malformed("scene graph deeper than \(Self.maxDepth)")
                 }
                 let block = file.blocks[index]
-                guard NIFNode.traversedTypes.contains(block.typeName) else { continue }
+                guard
+                    NIFNode.traversedTypes.contains(block.typeName)
+                    || block.typeName == NIFSwitchNode.typeName else { continue }
                 guard stack.enter(index) else {
                     throw NIFError.malformed("node hierarchy cycle at block \(index)")
                 }
@@ -71,6 +73,10 @@ nonisolated public struct NIFNodeHierarchy: Sendable {
             _ block: NIFFile.Block,
             header: NIFHeader
         ) throws -> NIFNode {
+            if block.typeName == NIFSwitchNode.typeName {
+                let switchNode = try NIFSwitchNode(data: block.data, header: header)
+                return NIFNode(object: switchNode.object, children: switchNode.children)
+            }
             if block.typeName == "BSMultiBoundNode" {
                 let multi = try NIFMultiBoundNode(data: block.data, header: header)
                 return NIFNode(object: multi.object, children: multi.children)

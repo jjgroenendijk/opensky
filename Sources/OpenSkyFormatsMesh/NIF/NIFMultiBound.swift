@@ -15,27 +15,11 @@ nonisolated public struct NIFMultiBoundNode: Sendable {
     public init(data: Data, header: NIFHeader) throws {
         var reader = BinaryReader(data)
         object = try NIFObjectPrefix(reader: &reader, header: header)
-        children = try Self.readRefs(&reader, label: "child")
-        _ = try Self.readRefs(&reader, label: "effect")
+        children = try NIFNode.readRefs(&reader, label: "child")
+        _ = try NIFNode.readRefs(&reader, label: "effect")
         multiBoundRef = try Int32(bitPattern: reader.readUInt32())
         // BSCPCullingType is uint in Skyrim's nif.xml enum storage.
         cullingMode = try reader.readUInt32()
-    }
-
-    private static func readRefs(
-        _ reader: inout BinaryReader,
-        label: String
-    ) throws -> [Int32] {
-        let count = try Int(reader.readUInt32())
-        guard count <= reader.bytesRemaining / 4 else {
-            throw NIFError.malformed("\(label) count \(count) exceeds block size")
-        }
-        var refs: [Int32] = []
-        refs.reserveCapacity(count)
-        for _ in 0 ..< count {
-            try refs.append(Int32(bitPattern: reader.readUInt32()))
-        }
-        return refs
     }
 }
 

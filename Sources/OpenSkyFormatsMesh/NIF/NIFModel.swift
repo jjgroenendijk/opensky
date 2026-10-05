@@ -82,7 +82,10 @@ nonisolated extension NIFFile {
                 }
 
                 let block = file.blocks[index]
-                if NIFNode.traversedTypes.contains(block.typeName) {
+                if
+                    NIFNode.traversedTypes.contains(block.typeName)
+                    || block.typeName == NIFSwitchNode.typeName
+                {
                     guard let node = try drawableNode(block) else { continue }
                     guard !Self.isEditorMarker(node.object.name) else {
                         editorMarkerShapeCount += 1
@@ -105,6 +108,9 @@ nonisolated extension NIFFile {
         /// The node a traversed block contributes, or `nil` for a subtree the
         /// flatten deliberately drops.
         private func drawableNode(_ block: NIFFile.Block) throws -> NIFNode? {
+            if block.typeName == NIFSwitchNode.typeName {
+                return try NIFSwitchNode(data: block.data, header: file.header).activeNode
+            }
             guard block.typeName == "BSMultiBoundNode" else {
                 return try NIFNode(data: block.data, header: file.header)
             }

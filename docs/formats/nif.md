@@ -119,9 +119,25 @@ After the shared fields:
 | int32 x count | Effects | Skipped |
 
 `BSFadeNode`, `BSLeafAnimNode`, `BSTreeNode`, and `BSOrderedNode` use the same layout.
-`BSMultiBoundNode` adds a tail (see [LOD](/formats/lod.md)). `NiSwitchNode` and `NiLODNode`
-are not walked on purpose. They draw one child, not all, and walking them would stack LOD
+`BSMultiBoundNode` adds a tail (see [LOD](/formats/lod.md)). `NiLODNode` is not walked on
+purpose. It picks one child by distance, and walking all of them would stack the LOD
 versions on top of each other.
+
+## NiSwitchNode
+
+A `NiNode` that draws one child, the active one. After the `NiNode` fields:
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| uint16 | Switch flags | Bit 0 update only the active child, bit 1 update controllers |
+| uint32 | Index | The active child, counted in the child list |
+
+Source: NifTools `nif.xml` (`NiSwitchNode`, `NiSwitchFlags`). The mesh walk enters only
+the active child. An index past the child list draws nothing. The bone hierarchy walk
+enters every child, because a bone transform does not depend on which child draws.
+
+Vanilla flora and trees put one between the root and their shapes. A crop such as
+`floracabbage01.nif` holds the unharvested and the harvested variant.
 
 ## NiStringExtraData
 
