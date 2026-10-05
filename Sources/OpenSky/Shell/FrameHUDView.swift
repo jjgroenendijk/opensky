@@ -93,7 +93,7 @@ final class FrameHUDView: NSView {
 
     /// Formats one HUD reading. Before the first stats window closes there is
     /// no measurement at all, and rendering the zeroed snapshot would read as a
-    /// stalled renderer; `gpuMS` stays nil until a counter-heap pair resolves.
+    /// stalled renderer; `gpuMS` stays nil until the first commit feedback arrives.
     nonisolated static func statsText(
         frame: FrameStatsSnapshot,
         scene: SceneStatsSnapshot

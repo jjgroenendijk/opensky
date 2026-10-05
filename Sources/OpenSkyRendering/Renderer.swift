@@ -218,9 +218,6 @@ public final class Renderer: NSObject {
     public var retired: [RetiredAllocations] = []
     public let residencySet: MTLResidencySet
     public let endFrameEvent: MTLSharedEvent
-    /// Two timestamp entries (frame start/end) per in-flight slot; nil when
-    /// the device cannot allocate one — stats then report CPU only.
-    public let timestampHeap: MTL4CounterHeap?
     public let frameStats: FrameStats
 
     public var frameIndex: Int
@@ -313,8 +310,7 @@ public final class Renderer: NSObject {
         )
         commandQueue.addResidencySet(residencySet)
 
-        timestampHeap = Self.makeTimestampHeap(device: device)
-        frameStats = FrameStats(device: device)
+        frameStats = FrameStats()
 
         super.init()
     }
