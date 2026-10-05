@@ -68,6 +68,19 @@ struct CombatLoopRuntimeTests {
         #expect(world.damage[.player] == nil)
     }
 
+    @Test func oneStepReadsEachActorsHostilityOnce() {
+        let (runtime, world) = Fixture.session()
+        runtime.setHostility(.hostile, on: Fixture.opponent)
+
+        let steps = (0 ..< 3).reduce(0) { total, _ in
+            total + runtime.advance(by: CombatLoopRuntime.fixedStepSeconds)
+        }
+
+        #expect(steps == 3)
+        #expect(world.hostilityReads == steps * world.actors.count)
+        #expect(runtime.state.hostileCount == 1)
+    }
+
     @Test func hostilityWithoutPerceptionIsNotYetCombat() {
         let (runtime, world) = Fixture.session()
         runtime.setHostility(.hostile, on: Fixture.opponent)

@@ -46,6 +46,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     }
 
     public private(set) var hostilityWrites = 0
+    public private(set) var hostilityReads = 0
     public private(set) var damage: [ReferenceKey: Float] = [:]
     public private(set) var raised: [String] = []
     public private(set) var variables: [String: BehaviorVariableValue] = [:]
@@ -108,7 +109,8 @@ public final class FakeCombatWorld: CombatLoopWorld {
     }
 
     public func combatHostility(of key: ReferenceKey) -> ActorHostility {
-        hostility[key] ?? .neutral
+        hostilityReads += 1
+        return hostility[key] ?? .neutral
     }
 
     @discardableResult
