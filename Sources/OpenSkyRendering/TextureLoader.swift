@@ -107,7 +107,7 @@ nonisolated public final class TextureLoader {
 
     /// xRGB stores B,G,R,X bytes per little-endian channel masks. Metal's
     /// BGRA8 format consumes the same byte order, but X is undefined -> 255.
-    private static func withOpaqueAlpha(_ source: Data) -> Data {
+    static func withOpaqueAlpha(_ source: Data) -> Data {
         var result = source
         for offset in stride(from: 3, to: result.count, by: 4) {
             result[offset] = 255

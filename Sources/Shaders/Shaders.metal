@@ -1007,3 +1007,30 @@ fragment float4 membraneFragment(
     float rim = pow(1.0 - facing, max(membrane.edge.a, 0.05));
     return float4(membrane.fill.rgb + membrane.edge.rgb * rim, 0.0);
 }
+
+// Asset format comparison: decodes any sampled texture (BC, ASTC, RGBA8) to
+// RGBA8, so two formats compare on the pixels the GPU sees.
+kernel void textureReadbackCopy(
+    texture2d<float, access::read> source [[texture(0)]],
+    texture2d<float, access::write> target [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= target.get_width() || gid.y >= target.get_height()) {
+        return;
+    }
+    target.write(source.read(gid), gid);
+}
+
+// Same, resampled bilinearly to the target size, for a texture stored smaller.
+kernel void textureReadbackScaled(
+    texture2d<float, access::sample> source [[texture(0)]],
+    texture2d<float, access::write> target [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]])
+{
+    if (gid.x >= target.get_width() || gid.y >= target.get_height()) {
+        return;
+    }
+    constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
+    float2 uv = (float2(gid) + 0.5) / float2(target.get_width(), target.get_height());
+    target.write(source.sample(bilinear, uv, level(0.0)), gid);
+}
