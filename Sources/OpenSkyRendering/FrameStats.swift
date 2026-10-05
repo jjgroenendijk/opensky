@@ -1,11 +1,12 @@
 // CPU and GPU frame statistics over a rolling 120-frame window, one log line each; the
-// measured basis for frame-rate gates. GPU ticks come from the MTL4 counter heap and
-// convert to time through `sampleTimestamps` pairs. A shorter parallel window feeds
-// `snapshot()` for live readouts.
+// measured basis for frame-rate gates. GPU time is the span Metal's commit feedback
+// reports for each frame's commit. A shorter parallel window feeds `snapshot()` for live
+// readouts.
 
 import Foundation
-import Metal
+import OpenSkyFormatsCore
 import os
+import Synchronization
 
 /// Latest completed short-window reading, for live readouts (the World panel
 /// and the frame HUD both poll this so they can never show different numbers).
@@ -20,8 +21,8 @@ nonisolated public struct FrameStatsSnapshot: Equatable, Sendable {
     public let maxFrameMS: Double
     /// Average CPU encode time in milliseconds.
     public let encodeMS: Double
-    /// Average GPU time in milliseconds, or nil while no counter-heap pair has
-    /// resolved yet (the readout shows "n/a", matching the log line).
+    /// Average GPU time in milliseconds, or nil while no commit feedback has
+    /// arrived yet (the readout shows "n/a", matching the log line).
     public let gpuMS: Double?
     /// Frames that fed this reading; zero means "no window has closed yet".
     public let sampleCount: Int
@@ -39,8 +40,30 @@ nonisolated public struct FrameStatsSnapshot: Equatable, Sendable {
     }
 }
 
+/// GPU spans reported by Metal's commit feedback, which runs on a Metal thread.
+/// `FrameStats.endFrame` takes them on the render thread.
+nonisolated public final class GPUSpanInbox: Sendable {
+    private let pending = Mutex<(totalNS: UInt64, count: Int)>((0, 0))
+
+    public init() {}
+
+    /// Host times in seconds, as `MTL4CommitFeedback` reports them.
+    public func record(start: CFTimeInterval, end: CFTimeInterval) {
+        guard end > start else { return }
+        let nanoseconds = UInt64(((end - start) * 1e9).rounded())
+        pending.withLock { $0 = ($0.totalNS + nanoseconds, $0.count + 1) }
+    }
+
+    func take() -> (totalNS: UInt64, count: Int) {
+        pending.withLock { value in
+            defer { value = (0, 0) }
+            return value
+        }
+    }
+}
+
 nonisolated public final class FrameStats {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "FrameStats"
     )
@@ -55,13 +78,7 @@ nonisolated public final class FrameStats {
     /// not jitter between polls.
     private static let liveWindowSize = 30
 
-    private let device: MTLDevice
-    /// (CPU ns, GPU ticks) pair from the previous window boundary.
-    private var correlation: (cpu: MTLTimestamp, gpu: MTLTimestamp)
-    /// The live window's own correlation pair. Deliberately separate from
-    /// `correlation`: sampling for a readout must not move the boundary the
-    /// 120-frame GPU average is computed against.
-    private var liveCorrelation: (cpu: MTLTimestamp, gpu: MTLTimestamp)
+    public let gpuSpans = GPUSpanInbox()
     private var live = LiveWindow()
     /// The only state read from outside the render callback. Everything else in
     /// this class is confined to the thread that calls beginFrame/endFrame (the
@@ -78,7 +95,7 @@ nonisolated public final class FrameStats {
         var intervalTotalNS: UInt64 = 0
         var intervalMaxNS: UInt64 = 0
         var intervalCount = 0
-        var gpuTotalTicks: UInt64 = 0
+        var gpuTotalNS: UInt64 = 0
         var gpuFrameCount = 0
     }
 
@@ -88,25 +105,16 @@ nonisolated public final class FrameStats {
     private var intervalMaxNS: UInt64 = 0
     private var intervalCount = 0
     private var lastFrameEndNS: UInt64?
-    private var gpuTotalTicks: UInt64 = 0
+    private var gpuTotalNS: UInt64 = 0
     private var gpuFrameCount = 0
     private var signpostState: OSSignpostIntervalState?
 
-    public init(device: MTLDevice) {
-        self.device = device
-        correlation = Self.sample(device: device)
-        liveCorrelation = correlation
-    }
+    public init() {}
 
     /// Current live reading. Safe from any thread, including while frames are
     /// being recorded — see `published`.
     public func snapshot() -> FrameStatsSnapshot {
         published.withLock { $0 }
-    }
-
-    private static func sample(device: MTLDevice) -> (cpu: MTLTimestamp, gpu: MTLTimestamp) {
-        let sample = device.sampleTimestamps()
-        return (sample.cpu, sample.gpu)
     }
 
     /// Call at the top of the render callback; pass the result to endFrame.
@@ -115,12 +123,11 @@ nonisolated public final class FrameStats {
         return DispatchTime.now().uptimeNanoseconds
     }
 
-    /// Call after commit. `gpuTicks` is the resolved counter-heap pair of an
-    /// earlier completed frame (nil while the pipeline fills or when the
-    /// heap is unavailable). Returns the logged summary line when this frame
-    /// closed a stats window — surfaced so tests can verify the instrument.
+    /// Call after commit. GPU time comes from the spans that reached `gpuSpans`
+    /// since the last call. Returns the logged summary line when this frame
+    /// closed a stats window, so tests can check the instrument.
     @discardableResult
-    public func endFrame(cpuStartNS: UInt64, gpuTicks: (start: UInt64, end: UInt64)?) -> String? {
+    public func endFrame(cpuStartNS: UInt64) -> String? {
         if let state = signpostState {
             Self.signposter.endInterval("frame", state)
             signpostState = nil
@@ -134,12 +141,11 @@ nonisolated public final class FrameStats {
             intervalCount += 1
         }
         lastFrameEndNS = now
-        if let gpuTicks, gpuTicks.end > gpuTicks.start {
-            gpuTotalTicks += gpuTicks.end - gpuTicks.start
-            gpuFrameCount += 1
-        }
+        let gpu = gpuSpans.take()
+        gpuTotalNS += gpu.totalNS
+        gpuFrameCount += gpu.count
         frameCount += 1
-        recordLive(encodeNS: now - cpuStartNS, interval: interval, gpuTicks: gpuTicks)
+        recordLive(encodeNS: now - cpuStartNS, interval: interval, gpu: gpu)
         if frameCount >= Self.windowSize {
             return flush()
         }
@@ -151,7 +157,7 @@ nonisolated public final class FrameStats {
     private func recordLive(
         encodeNS: UInt64,
         interval: UInt64?,
-        gpuTicks: (start: UInt64, end: UInt64)?
+        gpu: (totalNS: UInt64, count: Int)
     ) {
         live.encodeTotalNS += encodeNS
         if let interval {
@@ -159,29 +165,18 @@ nonisolated public final class FrameStats {
             live.intervalMaxNS = max(live.intervalMaxNS, interval)
             live.intervalCount += 1
         }
-        if let gpuTicks, gpuTicks.end > gpuTicks.start {
-            live.gpuTotalTicks += gpuTicks.end - gpuTicks.start
-            live.gpuFrameCount += 1
-        }
+        live.gpuTotalNS += gpu.totalNS
+        live.gpuFrameCount += gpu.count
         live.frameCount += 1
         guard live.frameCount >= Self.liveWindowSize else { return }
         publishLiveWindow()
     }
 
     private func publishLiveWindow() {
-        let next = Self.sample(device: device)
-        defer {
-            liveCorrelation = next
-            live = LiveWindow()
-        }
+        defer { live = LiveWindow() }
         guard live.intervalCount > 0 else { return }
         let frameMS = Double(live.intervalTotalNS) / Double(live.intervalCount) / 1e6
-        var gpuMS: Double?
-        if live.gpuFrameCount > 0, next.gpu > liveCorrelation.gpu, next.cpu > liveCorrelation.cpu {
-            let scale = Double(next.cpu - liveCorrelation.cpu)
-                / Double(next.gpu - liveCorrelation.gpu)
-            gpuMS = Double(live.gpuTotalTicks) / Double(live.gpuFrameCount) * scale / 1e6
-        }
+        let gpuMS = Self.averageMS(live.gpuTotalNS, count: live.gpuFrameCount)
         let snapshot = FrameStatsSnapshot(
             fps: frameMS > 0 ? 1000 / frameMS : 0,
             frameMS: frameMS,
@@ -194,15 +189,13 @@ nonisolated public final class FrameStats {
     }
 
     private func flush() -> String? {
-        let next = Self.sample(device: device)
         defer {
-            correlation = next
             frameCount = 0
             encodeTotalNS = 0
             intervalTotalNS = 0
             intervalMaxNS = 0
             intervalCount = 0
-            gpuTotalTicks = 0
+            gpuTotalNS = 0
             gpuFrameCount = 0
         }
 
@@ -212,13 +205,8 @@ nonisolated public final class FrameStats {
         let maxMS = Double(intervalMaxNS) / 1e6
         let fps = intervalMS > 0 ? 1000 / intervalMS : 0
 
-        var gpuText = "n/a"
-        // Ticks -> ns scale from how far both clocks moved over the window.
-        if gpuFrameCount > 0, next.gpu > correlation.gpu, next.cpu > correlation.cpu {
-            let scale = Double(next.cpu - correlation.cpu) / Double(next.gpu - correlation.gpu)
-            let gpuMS = Double(gpuTotalTicks) / Double(gpuFrameCount) * scale / 1e6
-            gpuText = String(format: "%.2f", gpuMS)
-        }
+        let gpuText = Self.averageMS(gpuTotalNS, count: gpuFrameCount)
+            .map { String(format: "%.2f", $0) } ?? "n/a"
 
         let summary = String(
             format: "frame avg %.2f ms (%.0f fps, max %.2f ms) | "
@@ -230,5 +218,9 @@ nonisolated public final class FrameStats {
         // fps measurement, it must be retrievable.
         Self.logger.notice("\(summary, privacy: .public)")
         return summary
+    }
+
+    private static func averageMS(_ totalNS: UInt64, count: Int) -> Double? {
+        count > 0 ? Double(totalNS) / Double(count) / 1e6 : nil
     }
 }

@@ -6,7 +6,6 @@ import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
-import OSLog
 import simd
 
 nonisolated public struct WaterBuild {

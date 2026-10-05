@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OSLog
 import Synchronization
 
 nonisolated public enum VFSError: Error, Equatable, Sendable {
@@ -27,7 +26,7 @@ nonisolated public struct VFSEntry: Equatable, Sendable {
 }
 
 nonisolated public final class VirtualFileSystem: GameFileSource {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "VFS"
     )

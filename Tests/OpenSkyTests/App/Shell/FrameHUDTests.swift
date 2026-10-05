@@ -45,7 +45,7 @@ struct FrameHUDTests {
         #expect(!text.contains("FPS 0"))
     }
 
-    /// The GPU average stays nil until a counter-heap pair resolves, and the
+    /// The GPU average stays nil until the first commit feedback arrives, and the
     /// footprint is nil when the mach call fails.
     @Test func missingGPUAndMemoryRenderAsNotAvailable() {
         let noMemory = SceneStatsSnapshot(

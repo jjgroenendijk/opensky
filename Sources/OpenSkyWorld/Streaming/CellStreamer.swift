@@ -3,6 +3,7 @@
 // builds under a budget, and hands the scene to a sink
 // (docs/engine/cell-streaming.md).
 
+import Foundation
 import OpenSkyAudio
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
@@ -12,7 +13,6 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import OpenSkyWorldState
-import OSLog
 import simd
 
 public final class CellStreamer {
@@ -22,7 +22,7 @@ public final class CellStreamer {
     /// arrives; later changes pass nil so they never yank the free-fly view.
     public typealias SceneSink = (RenderScene, SceneCamera?) -> Void
 
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "CellStream"
     )
@@ -90,6 +90,8 @@ public final class CellStreamer {
     /// Internal (not private) so the CellStreamerCoverage satellite can read
     /// and write it; the coverage state below is shared for the same reason.
     public var requestedLODCenter: CellCoordinate?
+    /// The center whose distant ring was last integrated or failed.
+    public internal(set) var settledLODCenter: CellCoordinate?
     /// Once settled coverage exists, recenter builds stay offscreen here.
     /// Old full cells + LOD remain composed until replacement LOD arrives,
     /// then full grid + ring swap in one recompose.

@@ -2,10 +2,11 @@
 // world sim and routes keys here. The vanilla movie is an optional
 // presentation over `SystemMenuModel`. See docs/engine/system-menu.md.
 
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
-import OSLog
 
 /// What the system menu reads from the app. The world is also the one menu
 /// input consumer, which routes by the top of the menu stack.
@@ -276,7 +277,7 @@ public final class SystemMenuCoordinator {
         )
     }
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "SystemMenu"
     )

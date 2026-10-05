@@ -1,6 +1,6 @@
 // Offscreen render path and sustained bench. Single frames feed render tests and
 // screenshots; the sustained loop is the fps gate, timed by `FrameStats` with
-// counter-heap GPU timestamps, so the fps claim is measured.
+// commit-feedback GPU spans, so the fps claim is measured.
 
 import Metal
 import MetalKit
@@ -165,8 +165,8 @@ extension Renderer {
     }
 
     /// One synchronous frame through the normal slot/event bookkeeping:
-    /// drain in-flight frames, encode with GPU timestamps around the pass,
-    /// commit, block until the GPU finishes. Feeds FrameStats; returns the
+    /// drain in-flight frames, encode, commit, block until the GPU finishes. Feeds FrameStats;
+    /// returns the
     /// summary line when this frame closed a 120-frame stats window.
     @discardableResult
     private func renderOffscreenFrame(
@@ -207,19 +207,13 @@ extension Renderer {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2)
-        }
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
         let encoded = shadowEncoded
             && encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2 + 1)
-        }
         commandBuffer.endCommandBuffer()
         guard encoded else { throw RendererError.encoderUnavailable }
 
-        commandQueue.commit([commandBuffer])
+        commitFrame()
         commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
         let finished = endFrameEvent.wait(
             untilSignaledValue: UInt64(frameIndex),
@@ -228,11 +222,7 @@ extension Renderer {
         frameIndex += 1
         guard finished else { throw RendererError.gpuTimeout }
         purgeRetiredResources()
-        // Wait above proved the frame finished -> this slot's pair is valid.
-        return frameStats.endFrame(
-            cpuStartNS: cpuStart,
-            gpuTicks: readTimestampPair(slot: slot)
-        )
+        return frameStats.endFrame(cpuStartNS: cpuStart)
     }
 
     /// Renders one frame offscreen and waits for the GPU, for deterministic tests and

@@ -23,6 +23,11 @@ page.
    seconds, and the world runs again.
 4. A transition that fails keeps the old scene, so the cover lifts at once.
 
+A session that starts in the world, not at the title screen, also starts behind a loading
+screen. It is picked at once and holds until the near grid and the first ring of
+[distant LOD](/engine/distant-lod.md) are in, or for at most 60 seconds. So the world never opens
+with bare sky past the grid edge. Then the same minimum and fade apply.
+
 In the game, the screen holds as long as the load takes. OpenSky builds a cell much faster,
 so without a minimum the screen would flash for one frame and the tip could not be read. The
 1.5 seconds and the 0.4-second fade are OpenSky's choice.

@@ -3,10 +3,10 @@
 // take them. See docs/engine/reference-identity.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState
-import OSLog
 
 /// The spawned half of one build's reference set.
 nonisolated public struct SpawnedReferenceBuild: Sendable {

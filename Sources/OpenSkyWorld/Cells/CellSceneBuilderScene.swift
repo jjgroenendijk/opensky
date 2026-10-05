@@ -1,6 +1,7 @@
 // Final CellScene assembly: placed models, environment draws, bounds, and one
 // load summary.
 
+import Foundation
 import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -9,7 +10,6 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldInterface
 import OpenSkyWorldState
-import OSLog
 
 nonisolated public struct CellGeometryBuild {
     public let location: CellSceneLocation

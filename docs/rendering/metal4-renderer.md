@@ -113,16 +113,17 @@ identity within float error, so the mesh draws in its authored pose. Animated po
 Up to 3 frames are in flight, each with its own allocator, one reused command buffer, and a shared
 event signaled with the frame index.
 
-GPU time comes from a timestamp counter heap, two entries per slot, written at frame start and end.
-They are resolved when the slot's event proves the frame finished. Ticks become nanoseconds through
-the device's timestamp correlation pairs.
+GPU time is the span that Metal's commit feedback reports for each frame's commit: from
+`GPUStartTime` to `GPUEndTime`, in host seconds. It covers the shadow and scene passes together.
+Command-buffer timestamps (`writeTimestamp`) are not used. On Apple GPUs they reported about
+0.2 ms for frames that took several milliseconds, because the passes did not run between them.
 
 Frame stats log one line per 120-frame window, and emit a signpost per frame for Instruments. Live
-readouts use a separate 30-frame window with its own correlation pair, so reading it never moves
-the logged window. The counters stay on the render thread, and only the finished snapshot crosses
-threads, behind a lock. So a 2 Hz poll never sees a half-updated window. Before the first window
-closes, the snapshot says "measuring", not zero frames per second. The frame HUD and the World panel
-read the same snapshot, so they cannot disagree.
+readouts use a separate 30-frame window, so reading it never moves the logged window. The counters
+stay on the render thread, and only the finished snapshot crosses threads, behind a lock. So a 2 Hz
+poll never sees a half-updated window. Before the first window closes, the snapshot says
+"measuring", not zero frames per second. The frame HUD and the World panel read the same snapshot,
+so they cannot disagree.
 
 ## Offscreen render
 

@@ -4,10 +4,10 @@
 // Skyrim_Default.ini (SSE 1.6). See docs/formats/vfs.md.
 
 import Foundation
-import OSLog
+import OpenSkyFormatsCore
 
 nonisolated public enum ArchiveLoadOrder: Sendable {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "VFS"
     )

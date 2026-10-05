@@ -2,13 +2,16 @@
 // in charge and a readout, never a thrown error.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
-import OSLog
 
 extension TitleMenuCoordinator {
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Menus")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Menus"
+    )
     static let version = "OpenSky"
 
     func startMovie() {

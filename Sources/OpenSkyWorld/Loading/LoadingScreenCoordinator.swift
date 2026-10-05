@@ -45,6 +45,7 @@ public final class LoadingScreenCoordinator {
     public private(set) var lastPassingCount = 0
     public private(set) var shownCount = 0
     private var text: String?
+    private var loadInFlight = false
     private var random = ConditionRandom()
     private(set) weak var world: (any LoadingScreenWorld)?
 
@@ -75,6 +76,20 @@ public final class LoadingScreenCoordinator {
         var next = LoadingScreenSession(screen: screen, startedAt: time)
         next.markReady(at: time)
         start(next)
+    }
+
+    /// A load that can show its screen at once, such as the session start. The
+    /// screen stays until `loadFinished(at:)`.
+    public func beginLoad(at time: Double) {
+        guard isEnabled, forced == nil, session == nil, waitingSince == nil else { return }
+        loadInFlight = true
+        start(LoadingScreenSession(screen: pick(location: nil), startedAt: time))
+    }
+
+    public func loadFinished(at time: Double) {
+        guard loadInFlight else { return }
+        loadInFlight = false
+        session?.markReady(at: time)
     }
 
     /// The transition failed: the old scene stays, so the cover lifts now.

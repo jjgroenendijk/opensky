@@ -218,9 +218,6 @@ public final class Renderer: NSObject {
     public var retired: [RetiredAllocations] = []
     public let residencySet: MTLResidencySet
     public let endFrameEvent: MTLSharedEvent
-    /// Two timestamp entries (frame start/end) per in-flight slot; nil when
-    /// the device cannot allocate one — stats then report CPU only.
-    public let timestampHeap: MTL4CounterHeap?
     public let frameStats: FrameStats
 
     public var frameIndex: Int
@@ -232,6 +229,8 @@ public final class Renderer: NSObject {
     /// Written only by encodeScenePass (RendererScenePass.swift).
     public var lastDrawStats = SceneDrawStats()
     public var lastGrassDrawStats = GrassDrawStats()
+    /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
+    var windowCapture = WindowCaptureState.idle
     /// Shadow-pass culling/draw counts of the last encoded frame (see
     /// ShadowDrawStats). Written only by encodeShadowPass; reset to zero on
     /// idle/off frames.
@@ -313,8 +312,7 @@ public final class Renderer: NSObject {
         )
         commandQueue.addResidencySet(residencySet)
 
-        timestampHeap = Self.makeTimestampHeap(device: device)
-        frameStats = FrameStats(device: device)
+        frameStats = FrameStats()
 
         super.init()
     }

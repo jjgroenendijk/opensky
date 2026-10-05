@@ -36,12 +36,18 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
         readyLOD.append(DistantLODBuildResult(center: center, result: .success(scene)))
     }
 
+    func failLOD(_ center: CellCoordinate) {
+        readyLOD.append(DistantLODBuildResult(center: center, result: .failure(LODTestError())))
+    }
+
     func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
         let out = readyLOD
         readyLOD.removeAll(keepingCapacity: true)
         return out
     }
 }
+
+private struct LODTestError: Error {}
 
 @MainActor
 struct DistantLODStreamerTests {
@@ -121,5 +127,52 @@ struct DistantLODStreamerTests {
         #expect(!streamer.isCoverageTransitionActive)
         #expect(streamer.composedCellCount == 9)
         #expect(streamer.distantLODBlockCount == 8)
+    }
+
+    private func loadNearGrid(
+        _ streamer: CellStreamer, runner: LODManualRunner, position: SIMD3<Float>
+    ) {
+        let cells = (-1 ... 1).flatMap { x in
+            (-1 ... 1).map { CellCoordinate(x: Int32(x), y: Int32($0)) }
+        }
+        for cell in cells {
+            runner.complete(cell, scene: cellScene())
+        }
+        for _ in cells {
+            streamer.update(cameraPosition: position)
+        }
+    }
+
+    @Test func startAreaWaitsForTheFirstDistantRing() {
+        let runner = LODManualRunner()
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        #expect(!streamer.startAreaReady)
+
+        loadNearGrid(streamer, runner: runner, position: position)
+        #expect(streamer.nearGridResolved)
+        #expect(!streamer.startAreaReady, "the near grid alone leaves bare sky beyond it")
+
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(meshKeys: ["lod"], textureKeys: []),
+            blockCount: 7,
+            missingBlockCount: 0
+        ))
+        streamer.update(cameraPosition: position)
+        #expect(streamer.startAreaReady)
+    }
+
+    @Test func aFailedDistantRingStillReadiesTheStartArea() {
+        let runner = LODManualRunner()
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        loadNearGrid(streamer, runner: runner, position: position)
+
+        runner.failLOD(Self.center)
+        streamer.update(cameraPosition: position)
+        #expect(streamer.startAreaReady)
     }
 }

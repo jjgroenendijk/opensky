@@ -2,7 +2,7 @@
 
 import Foundation
 import OpenSkyConditions
-import OSLog
+import OpenSkyFormatsCore
 
 nonisolated public struct PapyrusNativeKey: Equatable, Hashable, Sendable {
     public let scriptName: String
@@ -85,7 +85,7 @@ public struct PapyrusNativeRegistry: PapyrusNativeDispatch {
         return registry
     }
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",
         category: "PapyrusNatives"
     )

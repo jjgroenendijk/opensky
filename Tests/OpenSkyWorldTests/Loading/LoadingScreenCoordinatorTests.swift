@@ -73,6 +73,23 @@ struct LoadingScreenCoordinatorTests {
         #expect(!loading.isCovering)
     }
 
+    @Test func aLoadShowsItsScreenUntilItFinishes() throws {
+        let world = try Self.world()
+        let loading = LoadingScreenCoordinator()
+        loading.attach(world: world)
+
+        loading.beginLoad(at: 0)
+        #expect(world.paused == [true])
+        #expect(world.frames.last??.text == "LoadScreenDragon")
+        loading.tick(time: 30)
+        #expect(world.frames.last??.drawsObject == true, "no fade before the load ends")
+
+        loading.loadFinished(at: 30)
+        loading.tick(time: 30 + LoadingScreenSession.fadeSeconds + 0.01)
+        #expect(!loading.isCovering)
+        #expect(world.paused.last == false)
+    }
+
     @Test func disabledLoadingScreensLeaveTheViewAlone() throws {
         let world = try Self.world()
         let loading = LoadingScreenCoordinator()

@@ -1,11 +1,12 @@
 // The vanilla gameplay HUD: loads `Interface\hudmenu.swf`, starts its AS2
 // runtime, and keeps the prompt, meters, and compass in step with the camera.
 
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorldInterface
-import OSLog
 import simd
 
 public final class HUDCoordinator {
@@ -233,5 +234,5 @@ public final class HUDCoordinator {
         Self.logger.error("[ERROR] HUD disabled: \(String(describing: error), privacy: .public)")
     }
 
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "HUD")
+    private static let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky", category: "HUD")
 }

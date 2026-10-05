@@ -95,7 +95,7 @@ public final class AgentCommandRouter {
             quitRequested = true
             return .done(.success(["quitting": true]))
         case "screenshot":
-            return try .done(.success(world.captureScreenshot(.parse(args))))
+            return try world.captureScreenshot(.parse(args))
         case "time":
             return try routeTime(name, args: args, world: world)
         case "input":

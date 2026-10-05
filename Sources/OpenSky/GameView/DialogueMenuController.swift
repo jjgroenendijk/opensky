@@ -3,15 +3,16 @@
 // running while the player reads the list. A spoken line goes into the HUD's
 // subtitle field once the HUD movie is back. See docs/engine/dialogue-menu.md.
 
+import Foundation
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
-import OSLog
 
 /// Holds the conversation's menu model and movie state for `game`.
 final class DialogueMenuController {
@@ -20,7 +21,7 @@ final class DialogueMenuController {
     /// before `eMenuState` reaches `TOPIC_LIST_SHOWN`.
     static let activationTicks = 30
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Dialogue"
     )

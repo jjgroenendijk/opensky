@@ -4,10 +4,9 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 
 nonisolated public struct NavmeshIndex: Sendable {
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Navmesh"
     )

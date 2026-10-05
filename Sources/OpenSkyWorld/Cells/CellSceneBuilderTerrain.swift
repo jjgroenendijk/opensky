@@ -9,7 +9,6 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyRendering
 import OpenSkyShaderTypes
-import OSLog
 import simd
 
 /// Splat draw items, world bounds, and the layer counts for the summary.

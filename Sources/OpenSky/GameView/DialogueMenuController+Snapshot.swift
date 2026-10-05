@@ -1,15 +1,16 @@
 // The Dialogue panel's sample of the conversation and the live movie.
 
+import Foundation
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
-import OSLog
 
 extension DialogueMenuController {
     var snapshot: DialogueControlSnapshot {

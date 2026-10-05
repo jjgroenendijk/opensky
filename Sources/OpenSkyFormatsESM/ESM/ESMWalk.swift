@@ -6,10 +6,9 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OSLog
 
 nonisolated public enum ESMWalk: Sendable {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "ESMWalk"
     )

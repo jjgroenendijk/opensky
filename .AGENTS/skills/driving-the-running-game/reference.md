@@ -14,7 +14,7 @@ a usage error.
 | `attach` | Prints the hello line: protocol version, data root, `worldReady` |
 | `status` | Running, mode, data root, frame, paused |
 | `quit` | Quits the app after the reply |
-| `screenshot [--out <png>] [--size WxH] [--world-only]` | HUD and menus included unless `--world-only` |
+| `screenshot [--out <png>] [--offscreen] [--size WxH] [--world-only]` | The window's next presented frame, debug view included. `--offscreen`, `--size`, or `--world-only` render a second frame instead |
 
 ## Time
 
@@ -55,7 +55,7 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 | `debug item <editorID> [--count <n>]` | negative count removes; player only |
 | `debug quest <editorID> <stage>` | sets a stage |
 | `debug kill <ref>`, `debug resurrect <ref>` | not the player |
-| `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | |
+| `debug overlay <navmesh\|path\|detection\|hud\|ui> on\|off` | Also a render-debug layer: `statics`, `actors`, `distantlod`, `terrain`, `grass`, `water`, `sky`, `particles` |
 
 ## Events
 

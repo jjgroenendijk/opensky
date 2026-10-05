@@ -10,7 +10,6 @@ import OpenSkyProgression
 import OpenSkyRendering
 import OpenSkySave
 import OpenSkyWorld
-import OSLog
 
 @MainActor
 final class SaveGameWorldAdapter: SaveGameService {
@@ -165,5 +164,8 @@ final class SaveGameWorldAdapter: SaveGameService {
         )
     }
 
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Saves")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Saves"
+    )
 }

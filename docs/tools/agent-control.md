@@ -58,8 +58,10 @@ interval (1/60 s by default) to the clock in the next drawn frame. So a paused r
 the same commands gets the same frame deltas on any machine, however fast it draws.
 
 A key press made while paused is kept until the next step, because a frame with no elapsed
-time does not consume one-shot input. A screenshot renders with the simulation paused, so
-taking one does not move the game.
+time does not consume one-shot input. A screenshot is a copy of the next frame the window
+presents, debug view included, so it shows what the user sees. `--offscreen`, `--size`, and
+`--world-only` render a second frame instead, with the simulation paused and the debug view off.
+The reply's `source` says which one it is.
 
 A step only advances when a frame draws. A minimized or hidden window draws nothing, and a
 step then ends in `timeout`.
@@ -76,8 +78,10 @@ selection with the same up and down events, one row at a time.
 
 The app keeps the last 512 events in a ring buffer. Each has a sequence number that only
 grows. Cell loads and unloads and activations come from streamer callbacks. Menus, deaths,
-quest stages, melee hits, script faults, and warnings from the app's own log are found by
-comparing state between polls, so they can arrive a few frames after the cause.
+quest stages, melee hits, and script faults are found by comparing state between polls, so they
+can arrive a few frames after the cause. Error and fault lines from the app's own loggers come
+from an in-process buffer that `EngineLogger` fills. Querying the system log store instead kept
+one core busy the whole time.
 
 `events --until <kind>` waits for the first event of that kind after the request. A plain
 `events` lists the ring.

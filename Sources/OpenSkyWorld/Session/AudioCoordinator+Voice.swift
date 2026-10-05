@@ -4,8 +4,8 @@
 import Foundation
 import OpenSkyAudio
 import OpenSkyFormatsAnimation
+import OpenSkyFormatsCore
 import OpenSkyGameData
-import OSLog
 
 struct VoiceLabState {
     var filter = AudioLabCore.defaultVoiceFilter
@@ -27,7 +27,7 @@ struct VoiceLabState {
 }
 
 extension AudioCoordinator {
-    private static let lipSyncLogger = Logger(
+    private static let lipSyncLogger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "LipSync"
     )

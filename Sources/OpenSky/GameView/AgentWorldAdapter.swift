@@ -38,7 +38,9 @@ final class AgentWorldAdapter {
     /// True once a cell is in the scene and no door transition is loading.
     var isWorldReady: Bool {
         guard game.renderer != nil, let streamer = game.streamer else { return false }
-        guard streamer.transitionInFlight == nil else { return false }
+        guard streamer.transitionInFlight == nil, !game.loadingScreens.isCovering else {
+            return false
+        }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
     }
 
@@ -110,15 +112,45 @@ extension AgentWorldAdapter: AgentControlWorld {
         )
     }
 
-    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentJSON {
+    func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
+        -> AgentHandling
+    {
         guard let renderer = game.renderer, let view = game.view as? MTKView else {
             throw notReady()
         }
+        if request.offscreen {
+            return try .done(.success(captureOffscreen(request, renderer: renderer, view: view)))
+        }
+        renderer.requestWindowCapture()
+        var deadline: Double?
+        return .waiting(AgentWait { [weak renderer] now in
+            guard let renderer else { return .done(.failure(Self.closed)) }
+            let limit = deadline ?? now + Self.windowCaptureSeconds
+            deadline = limit
+            guard let texture = renderer.takeWindowCapture() else {
+                return now < limit ? .wait : .done(.failure(Self.noWindowFrame))
+            }
+            return .done(Result { () throws(AgentFailure) in
+                try Self.write(texture, to: request.path)
+                return Self.reply(request, texture: texture, source: "window")
+            })
+        })
+    }
+
+    private static let windowCaptureSeconds = 2.0
+    private static let closed = AgentFailure(.notReady, "the game closed")
+    private static let noWindowFrame = AgentFailure(
+        .failed, "the window presented no frame in 2 s; is it hidden? --offscreen renders one"
+    )
+
+    /// A second render at any size. A paused offscreen frame advances no clock, so
+    /// a capture does not move the simulation that a deterministic run depends on.
+    private func captureOffscreen(
+        _ request: AgentScreenshotRequest, renderer: Renderer, view: MTKView
+    ) throws(AgentFailure) -> AgentJSON {
         let width = request.width ?? Int(view.drawableSize.width.rounded())
         let height = request.height ?? Int(view.drawableSize.height.rounded())
         guard width > 0, height > 0 else { throw notReady() }
-        // A paused offscreen frame advances no clock, so a capture does not
-        // move the simulation that a deterministic run depends on.
         let saved = (renderer.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled)
         renderer.worldSimPaused = true
         if request.worldOnly {
@@ -128,19 +160,35 @@ extension AgentWorldAdapter: AgentControlWorld {
         defer {
             (renderer.worldSimPaused, renderer.uiEnabled, renderer.swfEnabled) = saved
         }
-        let url = URL(filePath: request.path)
+        let texture: MTLTexture
+        do {
+            texture = try renderer.renderOffscreen(width: width, height: height)
+        } catch {
+            throw AgentFailure(.failed, "screenshot failed: \(error.localizedDescription)")
+        }
+        try Self.write(texture, to: request.path)
+        return Self.reply(request, texture: texture, source: "offscreen")
+    }
+
+    private static func write(_ texture: MTLTexture, to path: String) throws(AgentFailure) {
+        let url = URL(filePath: path)
         do {
             try FileManager.default.createDirectory(
                 at: url.deletingLastPathComponent(), withIntermediateDirectories: true
             )
-            let texture = try renderer.renderOffscreen(width: width, height: height)
             try FrameScreenshot.write(texture: texture, to: url)
         } catch {
             throw AgentFailure(.failed, "screenshot failed: \(error.localizedDescription)")
         }
-        return [
-            "path": .string(request.path), "width": .init(width), "height": .init(height),
-            "worldOnly": .bool(request.worldOnly)
+    }
+
+    private static func reply(
+        _ request: AgentScreenshotRequest, texture: MTLTexture, source: String
+    ) -> AgentJSON {
+        [
+            "path": .string(request.path), "width": .init(texture.width),
+            "height": .init(texture.height), "worldOnly": .bool(request.worldOnly),
+            "source": .string(source)
         ]
     }
 

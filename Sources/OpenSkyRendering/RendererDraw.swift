@@ -36,13 +36,9 @@ extension Renderer: MTKViewDelegate {
         )
 
         let slot = frameIndex % Self.maxFramesInFlight
-        let gpuTicks = resolveTimestamps(slot: slot)
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2)
-        }
 
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)
         let encoded = shadowEncoded && encodeScenePass(
@@ -55,18 +51,16 @@ extension Renderer: MTKViewDelegate {
             return
         }
 
-        if let heap = timestampHeap {
-            commandBuffer.writeTimestamp(counterHeap: heap, index: slot * 2 + 1)
-        }
+        encodeWindowCapture(of: drawable.texture)
         commandBuffer.useResidencySet(metalLayer.residencySet)
         commandBuffer.endCommandBuffer()
 
         commandQueue.waitForDrawable(drawable)
-        commandQueue.commit([commandBuffer])
+        commitFrame()
         commandQueue.signalDrawable(drawable)
         commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
         frameIndex += 1
         drawable.present()
-        frameStats.endFrame(cpuStartNS: cpuStart, gpuTicks: gpuTicks)
+        frameStats.endFrame(cpuStartNS: cpuStart)
     }
 }

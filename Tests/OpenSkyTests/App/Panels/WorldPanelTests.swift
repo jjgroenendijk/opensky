@@ -136,7 +136,7 @@ struct WorldPanelTests {
         )
         panel.frameSection.refreshReadout()
         #expect(panel.frameSection.statsReadout.contains("FPS: 60"))
-        // A GPU average is nil until a counter-heap pair resolves.
+        // A GPU average is nil until the first commit feedback arrives.
         #expect(panel.frameSection.statsReadout.contains("GPU: n/a"))
     }
 

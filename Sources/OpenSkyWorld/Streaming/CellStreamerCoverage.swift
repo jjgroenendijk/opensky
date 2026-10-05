@@ -5,7 +5,6 @@
 
 import Foundation
 import OpenSkyFormatsCore
-import OSLog
 
 extension CellStreamer {
     /// Drops unloaded cells and schedules eviction of assets no resident cell needs. Only
@@ -22,14 +21,24 @@ extension CellStreamer {
         evictUnused(departed)
     }
 
+    /// Every desired near cell is loaded, empty, or failed.
+    public var nearGridResolved: Bool {
+        core.resident.union(core.void).union(core.failed).isSuperset(of: grid.desiredCells)
+    }
+
+    /// The start area can show without holes: an interior is in, or the near grid
+    /// resolved and the distant ring of its center was integrated or failed.
+    public var startAreaReady: Bool {
+        interiorScene != nil || (nearGridResolved && settledLODCenter == grid.center)
+    }
+
     /// Requests the distant ring for the current center once the near grid has
     /// settled.
     public func requestDistantLODIfNeeded() {
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
         // loading 100+ distant assets cannot starve the near grid.
-        let resolved = core.resident.union(core.void).union(core.failed)
-        guard resolved.isSuperset(of: grid.desiredCells) else { return }
+        guard nearGridResolved else { return }
         guard requestedLODCenter != grid.center else { return }
         if runner.enqueueDistantLOD(center: grid.center, hiddenCells: core.resident) {
             requestedLODCenter = grid.center
@@ -39,6 +48,9 @@ extension CellStreamer {
     public func integrateDistantLOD(_ entries: [DistantLODBuildResult]) -> Bool {
         var changed = false
         for entry in entries {
+            if entry.center == grid.center {
+                settledLODCenter = entry.center
+            }
             switch entry.result {
             case let .success(scene) where entry.center == grid.center:
                 if coverageTransitionActive {

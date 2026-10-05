@@ -8,7 +8,6 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
-import OSLog
 import simd
 
 nonisolated public struct CellCollisionPlacement: Sendable {

@@ -4,6 +4,8 @@
 // `InventoryCoordinator` method the Items panel calls.
 // See docs/engine/inventory-menu.md.
 
+import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -11,7 +13,6 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyRendering
-import OSLog
 
 /// Holds the inventory menu's row list and movie state for `game`.
 final class InventoryMenuController {
@@ -286,7 +287,7 @@ final class InventoryMenuController {
         )
     }
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "InventoryMenu"
     )

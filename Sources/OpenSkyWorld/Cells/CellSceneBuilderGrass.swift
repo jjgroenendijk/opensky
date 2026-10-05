@@ -4,7 +4,6 @@
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
-import OSLog
 
 nonisolated public struct GrassBuild {
     public let placements: [GrassPlacement]

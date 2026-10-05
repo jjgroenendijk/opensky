@@ -7,11 +7,10 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 import Synchronization
 
 nonisolated public final class LocalizedStrings: Sendable {
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "Strings"
     )

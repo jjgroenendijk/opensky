@@ -1,12 +1,12 @@
 // Debug natives selected from the vanilla PEX census.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyScriptingInterface
-import OSLog
 
 extension PapyrusNativeFunctions {
-    private static var debugLogger: Logger {
-        Logger(
+    private static var debugLogger: EngineLogger {
+        EngineLogger(
             subsystem: Bundle.main.bundleIdentifier ?? "OpenSky",
             category: "PapyrusDebug"
         )

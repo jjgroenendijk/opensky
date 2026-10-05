@@ -5,10 +5,10 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldInterface
-import OSLog
 import simd
 
 private struct ResolvedSoundFile {
@@ -28,7 +28,7 @@ private struct PendingSound {
 
 @MainActor
 public final class WorldAudioSoundDirector {
-    public static let logger = Logger(
+    public static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "WorldAudioDirector"
     )

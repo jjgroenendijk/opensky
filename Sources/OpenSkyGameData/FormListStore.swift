@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 
 nonisolated public struct ResolvedFormList: Equatable, Sendable {
     public let id: ResolvedFormID
@@ -26,7 +25,7 @@ nonisolated public struct FormListStore: Sendable {
     /// acyclic mods. A branch at the cap is omitted and logged.
     public static let depthCap = 32
 
-    private static let logger = Logger(
+    private static let logger = EngineLogger(
         subsystem: "nl.jjgroenendijk.opensky",
         category: "FormListStore"
     )

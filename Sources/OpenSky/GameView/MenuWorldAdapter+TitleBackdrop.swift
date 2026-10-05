@@ -6,10 +6,12 @@ import OpenSkyFormatsCore
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
-import OSLog
 
 extension MenuWorldAdapter {
-    private static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "Menus")
+    private static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "Menus"
+    )
 
     func showTitleBackdrop(_ shown: Bool) {
         titleLogoView = nil

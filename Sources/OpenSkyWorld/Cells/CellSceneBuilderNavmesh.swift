@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OSLog
 
 nonisolated extension CellSceneBuilder {
     /// Live NAVM records from the persistent and temporary children groups. A

@@ -3,7 +3,9 @@
 // and every transaction is an `InventoryCoordinator` call.
 // See docs/engine/barter.md.
 
+import Foundation
 import OpenSkyCombat
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
@@ -12,7 +14,6 @@ import OpenSkyInventoryInterface
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorldInterface
-import OSLog
 
 /// Holds the container menu's target, list and movie state for `game`.
 final class ContainerMenuController {
@@ -303,5 +304,8 @@ final class ContainerMenuController {
         refreshModel()
     }
 
-    static let logger = Logger(subsystem: "nl.jjgroenendijk.opensky", category: "ContainerMenu")
+    static let logger = EngineLogger(
+        subsystem: "nl.jjgroenendijk.opensky",
+        category: "ContainerMenu"
+    )
 }

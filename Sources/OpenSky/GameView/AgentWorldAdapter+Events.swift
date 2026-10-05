@@ -1,6 +1,7 @@
 // Game events for `openskycli game events`. Cell and activation events come
-// from streamer callbacks; menus, deaths, quest stages, hits, script faults,
-// and log warnings come from comparing state between polls.
+// from streamer callbacks. Menus, deaths, quest stages, hits, and script
+// faults come from comparing state between polls. Error and fault log lines
+// come from `EngineLogTap`.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -16,7 +17,6 @@ import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
-import OSLog
 
 struct AgentEventTapState {
     static let pendingLimit = 512
@@ -30,9 +30,6 @@ struct AgentEventTapState {
     var hitCount = 0
     var scriptTick = 0
     var nextSlowPoll = 0.0
-    var nextLogPoll = 0.0
-    var logCursor = Date()
-    var logReadInFlight = false
 
     mutating func append(_ kind: String, _ data: [String: AgentJSON]) {
         pending.append((kind, data))
@@ -42,16 +39,8 @@ struct AgentEventTapState {
     }
 }
 
-nonisolated struct AgentLogLine: Sendable {
-    let date: Date
-    let category: String
-    let message: String
-}
-
 extension AgentWorldAdapter {
     static let slowPollSeconds = 0.25
-    static let logPollSeconds = 1.0
-    nonisolated static let logSubsystem = "nl.jjgroenendijk.opensky"
 
     func pollEvents(_ emit: (String, [String: AgentJSON]) -> Void) {
         wireEventCallbacks()
@@ -64,9 +53,10 @@ extension AgentWorldAdapter {
             diffCombatAndScripts()
             tap.seeded = true
         }
-        if now >= tap.nextLogPoll {
-            tap.nextLogPoll = now + Self.logPollSeconds
-            readLogWarnings()
+        for line in EngineLogTap.drain() {
+            tap.append(AgentEventKind.log, [
+                "category": .string(line.category), "message": .string(line.message)
+            ])
         }
         for (kind, data) in tap.pending {
             emit(kind, data)
@@ -185,50 +175,5 @@ extension AgentWorldAdapter {
             ])
         }
         tap.scriptTick = scripts.tickCount
-    }
-
-    /// Reads off the main actor, because a log store query can take tens of
-    /// milliseconds.
-    private func readLogWarnings() {
-        guard !tap.logReadInFlight else { return }
-        tap.logReadInFlight = true
-        let since = tap.logCursor
-        Task { [weak self] in
-            let lines = await Self.readLog(since: since)
-            guard let self else { return }
-            tap.logReadInFlight = false
-            for line in lines {
-                tap.logCursor = max(tap.logCursor, line.date)
-                tap.append(AgentEventKind.log, [
-                    "category": .string(line.category), "message": .string(line.message)
-                ])
-            }
-        }
-    }
-
-    @concurrent
-    nonisolated private static func readLog(since: Date) async -> [AgentLogLine] {
-        guard let store = try? OSLogStore(scope: .currentProcessIdentifier) else { return [] }
-        let predicate = NSPredicate(format: "subsystem == %@", logSubsystem)
-        guard
-            let entries = try? store.getEntries(
-                at: store.position(date: since),
-                matching: predicate
-            )
-        else {
-            return []
-        }
-        return entries.compactMap { entry -> AgentLogLine? in
-            guard
-                let log = entry as? OSLogEntryLog,
-                log.date > since,
-                log.level == .error || log.level == .fault
-            else { return nil }
-            return AgentLogLine(
-                date: log.date,
-                category: log.category,
-                message: log.composedMessage
-            )
-        }
     }
 }
