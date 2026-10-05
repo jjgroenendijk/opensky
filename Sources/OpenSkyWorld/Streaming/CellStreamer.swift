@@ -95,7 +95,16 @@ public final class CellStreamer {
     /// then full grid + ring swap in one recompose.
     public var coverageTransitionActive = false
     public var stagedCells: [CellCoordinate: CellScene] = [:]
-    public var interiorScene: CellScene?
+    public var interiorScene: CellScene? {
+        didSet {
+            interiorActorPlacements = interiorScene.map {
+                ResidentActorPlacement.index([(location: $0.location, references: $0.references)])
+            }
+        }
+    }
+
+    /// Nil outside an interior, where `composition` answers instead.
+    private(set) var interiorActorPlacements: [ReferenceKey: ResidentActorPlacement]?
     public var transitionInFlight: FormID?
     public private(set) var doorTransitionFailureCount = 0
     public var interactionTarget: InteractionTarget?

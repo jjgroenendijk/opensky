@@ -65,7 +65,7 @@ extension FactionWorldAdapter: FactionWorld {
     }
 
     func placedActorBase(of key: ReferenceKey) -> FormID? {
-        game.streamer?.referenceEntry(key: key)?.placedActor?.base
+        game.streamer?.residentActorPlacement(key: key)?.base
     }
 
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation? {

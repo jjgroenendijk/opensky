@@ -57,12 +57,11 @@ final class ActorWorldAdapter {
         if key == .player {
             return .player
         }
-        guard
-            let streamer = game.streamer,
-            let actor = streamer.referenceEntry(key: key)?.placedActor
-        else { return nil }
+        guard let placement = game.streamer?.residentActorPlacement(key: key) else { return nil }
         return ActorValueHolder(
-            key: key, subject: .actor(base: actor.base), cell: streamer.cellLocation(of: key)
+            key: key,
+            subject: .actor(base: placement.base),
+            cell: placement.cell
         )
     }
 
