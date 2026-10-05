@@ -30,6 +30,7 @@ nonisolated public struct CellSceneComposition {
             residentReferences = cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
                 .map { (location: $0.value.location, references: $0.value.references) }
             actorPlacements = ResidentActorPlacement.index(residentReferences)
+            mergedReferences = nil
         }
     }
 
@@ -46,6 +47,8 @@ nonisolated public struct CellSceneComposition {
         location: CellSceneLocation?,
         references: RuntimeReferenceIndex
     )] = []
+    /// `referenceEntries()` as one index, built on the first read after residency changes.
+    private var mergedReferences: RuntimeReferenceIndex?
     public private(set) var distantLOD: DistantLODScene?
     /// Per-reference draw data detached from the placing cell's bulk scene.
     /// It can therefore outlive that cell while its occupied cell is resident.
@@ -229,6 +232,17 @@ nonisolated public struct CellSceneComposition {
     public func referenceEntries() -> [RuntimeReferenceEntry] {
         cells.sorted { ($0.key.x, $0.key.y) < ($1.key.x, $1.key.y) }
             .flatMap { $0.value.references.sortedEntries() }
+    }
+
+    /// `referenceEntries()` as one index. A later cell in grid order wins a
+    /// repeated key. Mutating, because it keeps the index until residency changes.
+    public mutating func mergedReferenceIndex() -> RuntimeReferenceIndex {
+        if let mergedReferences {
+            return mergedReferences
+        }
+        let merged = RuntimeReferenceIndex(entries: referenceEntries())
+        mergedReferences = merged
+        return merged
     }
 
     /// Every resident cell's load summary, in `actorEntries()` grid order.
