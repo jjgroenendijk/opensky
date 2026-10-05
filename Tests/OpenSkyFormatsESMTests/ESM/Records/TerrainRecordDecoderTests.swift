@@ -241,6 +241,20 @@ struct TerrainRecordDecoderTests {
         #expect(ltex.materialType == nil)
     }
 
+    @Test func landTextureIndexKeysTheNullFormIDToLDirt02() throws {
+        let textures = try [(0x5A, "LGrass01"), (0x5B, "LDirt02")].map { formID, editorID in
+            try LandTexture(record: ESMFixture.parseRecord(ESMFixture.record(
+                "LTEX",
+                formID: UInt32(formID),
+                data: ESMFixture.field("EDID", ESMFixture.zstring(editorID))
+            )))
+        }
+        let index = LandTexture.index(textures)
+        #expect(index[0x5A]?.editorID == "LGrass01")
+        #expect(index[0]?.formID == FormID(0x5B))
+        #expect(LandTexture.index(Array(textures.prefix(1)))[0] == nil)
+    }
+
     @Test func landTextureRejectsWrongRecordType() {
         #expect(throws: (any Error).self) {
             _ = try LandTexture(record: ESMFixture.parseRecord(ESMFixture.record(

@@ -50,3 +50,23 @@ nonisolated public struct LandTexture: Sendable {
         self.grasses = grasses
     }
 }
+
+nonisolated extension LandTexture {
+    /// A LAND layer with a null LTEX draws this LTEX (docs/formats/land.md).
+    public static let nullFallbackEditorID = "LDirt02"
+
+    /// Keys textures by raw FormID, with the null FormID keyed to the fallback.
+    public static func index(_ textures: [LandTexture]) -> [UInt32: LandTexture] {
+        var index: [UInt32: LandTexture] = [:]
+        for texture in textures {
+            index[texture.formID.rawValue] = texture
+        }
+        let fallback = textures.last {
+            $0.editorID?.caseInsensitiveCompare(nullFallbackEditorID) == .orderedSame
+        }
+        if let fallback {
+            index[0] = fallback
+        }
+        return index
+    }
+}
