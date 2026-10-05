@@ -121,7 +121,20 @@ alpha test at 0.5.
 ## Engine material
 
 Each (shader, alpha) pair becomes one material: texture keys, UV transform, alpha,
-glossiness, specular, double-sided, and alpha blend and test. Shaders other than lighting
-(effect, water, sky) get a plain fallback material, untextured but drawn. Effect shaders
-used by particles go to the particle path instead (see
-[NIF particle systems](/formats/nif-particles.md)).
+glossiness, specular, double-sided, and alpha blend and test. Water and sky shaders get a
+plain fallback material, untextured but drawn. Effect shaders used by particles go to the
+particle path instead (see [NIF particle systems](/formats/nif-particles.md)).
+
+A mesh shape with an effect shader, such as a smoke disc, a fire card, or waterfall foam,
+draws with the effect's source texture, UV transform, and double-sided flag, plus its
+`NiAlphaProperty`. This differs from the game: the static path lights the shape, and it
+does not model the effect's base color, falloff, or greyscale palette. Two kinds of effect
+shape are skipped, because drawn this way they show as flat cards:
+
+- An effect shape with no source texture.
+- An additive one: `NiAlphaProperty` blends with destination factor `ONE`, so it only adds
+  light. Glow cards are additive. So is `wrlodwindowglow01.nif`, the window glow of the
+  low-detail Whiterun that the `WhiterunLODlights` reference places in Tamriel. Its `XEMI`
+  emittance (`FXLightRegionInvertWindowWhiterun`) darkens it by day.
+
+An effect block that does not decode keeps the fallback material.

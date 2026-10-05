@@ -145,9 +145,7 @@ struct NIFModelTests {
         #expect(abs(threshold - 64.0 / 255) < 1e-6)
     }
 
-    @Test func nonLightingShaderFallsBack() throws {
-        // Effect shaders are legitimate content out of M2 scope — fallback
-        // material, no throw.
+    @Test func undecodableEffectShaderFallsBack() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape(shaderPropertyRef: 1)),
             .init("BSEffectShaderProperty", Data(count: 32))

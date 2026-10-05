@@ -37,4 +37,28 @@ struct NIFModelSwitchAndEffectTests {
         ]))
         #expect(try file.model().meshes.isEmpty)
     }
+
+    @Test func effectShapeDrawsItsSourceTextureBlended() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
+            .init("BSTriShape", shape(shaderPropertyRef: 4, alphaPropertyRef: 6)),
+            .init("BSTriShape", shape(shaderPropertyRef: 5)),
+            .init("BSTriShape", shape(shaderPropertyRef: 4, alphaPropertyRef: 7)),
+            .init("BSEffectShaderProperty", NIFParticleFixture.effectShaderProperty(
+                flags2: 0x10,
+                sourceTexture: "textures\\effects\\cloudtile.dds"
+            )),
+            .init("BSEffectShaderProperty", NIFParticleFixture.effectShaderProperty()),
+            // SRC_ALPHA / INV_SRC_ALPHA, then SRC_ALPHA / ONE (additive).
+            .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 0xED, threshold: 0)),
+            .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 0x0D, threshold: 0))
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.skippedShapeCount == 2)
+        let material = model.materials[0]
+        #expect(material.diffuseTexture == "textures/effects/cloudtile.dds")
+        #expect(material.alphaBlend)
+        #expect(material.doubleSided)
+    }
 }
