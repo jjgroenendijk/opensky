@@ -73,6 +73,10 @@ BC or ASTC at the same size, so they are left out.
 | `cpu` | The cache file is mapped when raw, or decompressed by MTLIO into memory, then copied into GPU resources or engine arrays |
 | `mtlio` | Metal fast resource loading reads and decompresses the file straight into the texture or buffers |
 
+All loads are warm: each cache file was just written, and the archive was read by the
+earlier repeats, so the bytes come from the page cache. The numbers compare decode and copy
+cost, not cold disk reads.
+
 Textures and meshes load on both cache paths. Collision, animation, and audio have no GPU
 resource, so they load on `cpu` only. Each loaded texture or buffer is compared with the
 cache payload byte for byte; a difference is an error on that row.
