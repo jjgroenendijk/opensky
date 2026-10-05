@@ -71,9 +71,9 @@ Each tree type gets one cached model of two crossed planes. The tree positions (
 drawn with normal instancing, one draw per type. `fTreeLoadDistance` is an exact circle, not a
 square of cells.
 
-Tree LOD also stays visible inside loaded cells, because full `TREE` records have no renderer
-yet. Hiding them would leave a hole in the near grid. Remove this when full trees are drawn. A
-missing tree block is counted on its own and does not hide terrain or object LOD.
+Tree LOD is hidden inside loaded cells, as terrain and object LOD are, because a loaded cell
+draws its full `TREE` references. A missing tree block is counted on its own and does not hide
+terrain or object LOD.
 
 Distant LOD does not cast or receive near shadows and ignores point lights. Sun, ambient, and fog
 still apply.
