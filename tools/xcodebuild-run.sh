@@ -15,7 +15,8 @@
 #
 # The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
-# a wrapper script keeps all of its output together.
+# a wrapper script keeps all of its output together. phases.tsv beside it notes
+# when each phase of the run started, and the last line printed sums them up.
 #
 # Usage: tools/xcodebuild-run.sh LOG_NAME xcodebuild [args...]
 # Env:   OPENSKY_XCODEBUILD_RAW=1  pass everything through, transcript included
@@ -23,6 +24,7 @@
 #        OPENSKY_MAX_ERRORS        unique errors to print (default 40)
 #        OPENSKY_STALE_RETRIES     rebuilds after removing stale copies (default 1)
 #        OPENSKY_RETRY_MINUTES     no new rebuild starts after this many minutes (default 15)
+#        OPENSKY_MAKE_STARTED      epoch seconds when make started (make exports it)
 set -eu
 
 if [ "$#" -lt 2 ]; then
@@ -43,11 +45,18 @@ else
     run_dir="$("$root/tools/run-dir.sh" "$name")"
 fi
 log="$run_dir/$name.log"
+phases="$run_dir/phases.tsv"
 # The pipeline below runs xcodebuild in a subshell, so its exit status comes
 # back through a file rather than $?. `set -o pipefail` is not in POSIX sh.
 status_file="$(mktemp -t opensky-xcodebuild)"
 shown_file="$(mktemp -t opensky-xcodebuild-shown)"
 trap 'rm -f "$status_file" "$shown_file"; opensky_build_unlock' EXIT INT TERM
+
+mark() {
+    printf '%s %s\n' "$(date +%s)" "$1" >>"$phases"
+}
+[ -z "${OPENSKY_MAKE_STARTED:-}" ] || printf '%s make\n' "$OPENSKY_MAKE_STARTED" >>"$phases"
+mark wrapper
 
 # test-without-building compiles nothing, so it cannot meet a stale module.
 compiles="yes"
@@ -58,12 +67,16 @@ esac
 run_once() {
     printf '0\n' >"$status_file"
     if [ "${OPENSKY_XCODEBUILD_RAW:-0}" = "1" ]; then
-        { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log"
+        { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log" \
+            | xcodebuild_phase_marks "$phases"
     else
         { "$@" 2>&1 || printf '%s\n' "$?" >"$status_file"; } | tee "$log" \
+            | xcodebuild_phase_marks "$phases" \
             | xcodebuild_summary "$root" | tee "$shown_file"
     fi
+    mark end
     status="$(cat "$status_file")"
+    printf '[INFO] phases: %s\n' "$(xcodebuild_phases "$phases")"
 }
 
 # The value after option $1 in the remaining arguments, or nothing.
@@ -93,6 +106,7 @@ if [ -n "$compiles" ]; then
     opensky_build_lock
     remove_stale || true
 fi
+mark lock
 started="$(date +%s)"
 run_once "$@"
 max_retries="${OPENSKY_STALE_RETRIES:-1}"
@@ -109,6 +123,9 @@ while [ "$status" -ne 0 ] && [ -n "$compiles" ] && [ "$retry" -lt "$max_retries"
     retry=$((retry + 1))
     printf '[INFO] build %s of %s after removing stale modules\n' "$retry" "$max_retries"
     log="$run_dir/$name-retry$retry.log"
+    phases="$run_dir/phases-retry$retry.tsv"
+    mark wrapper
+    mark lock
     # xcodebuild refuses an existing -resultBundlePath, and the failed pass
     # already wrote one there.
     case "$bundle" in

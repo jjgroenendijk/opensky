@@ -208,26 +208,53 @@ transcript lines instead. `xcodebuild -quiet` cannot do this: it decides what to
 exists, keeps no full copy, and drops `** TEST SUCCEEDED **`. Where transcripts go and how they age
 out is on the [run output](/tools/run-output.md) page.
 
+### Phases
+
+The transcript has no clock, so the wrapper notes when each phase starts in `phases.tsv` beside
+it and ends with one line, for example
+`[INFO] phases: make 2s, lock 0s, start 9s, resolve 4s, plan 41s, build 70s, test 12s (total 136s)`:
+
+| Phase | From | To |
+| --- | --- | --- |
+| `make` | `make` started (`OPENSKY_MAKE_STARTED`) | the wrapper started |
+| `lock` | the wrapper started | the build lock was taken and the stale-module check ran |
+| `start` | the lock | xcodebuild printed `Resolve Package Graph` |
+| `resolve` | `Resolve Package Graph` | `Resolved source packages:` |
+| `plan` | `Resolved source packages:` | `Build description path:` |
+| `build` | `Build description path:` | xcodebuild exited, less the test time |
+| `test` | the test time xcodebuild reports in `elapsed -- Testing started` | |
+
+The test runner's own output reaches the pipe only when the run ends, so the test time comes from
+xcodebuild's report of it, not from a line in the transcript. A phase whose start never appeared,
+such as `test` in a plain build, is left out. The [test runs](/tools/test-runs.md) page records
+what each phase costs on this machine.
+
 ### Stale module copies
 
-xcodebuild sometimes keeps an old copy of a package module in `Build/Products/<config>/` after an
-interface change, while the compiler has emitted the new one under `Build/Intermediates.noindex/`.
-Every module above it then fails with "cannot find in scope", "has no member", or "extra argument",
-and a clean rebuild does not help ([environment](/tools/environment.md)). After a healthy build the
-two files are identical, so `tools/stale-modules.sh` treats any difference as stale and deletes the
-copy. A failed build stops at one module layer, so the modules above a stale copy are not emitted
-again, and their own stale copies would show only after the next pass. So the script also deletes the
-copy of every module whose emit-module dependency file (`<Module>-primary-emit-module.d`) names a
-stale copy, and repeats until no new module is added. One more build then rebuilds all layers
-together. `tools/xcodebuild-run.sh` runs it before every build, in the tree named by the build's
-`-derivedDataPath`, so the index tree of `make health` is checked too. When a build fails and
-leaves new stale copies, it deletes them and builds again, `OPENSKY_STALE_RETRIES` times
-(default 1). Every command line also passes `-IDEBuildingContinueBuildingAfterErrors=YES`, so a
-failed pass still emits the modules the failing one does not block, and fewer stale copies are
-left for the next pass. No new pass starts after `OPENSKY_RETRY_MINUTES` (default 15). A failed
-build that finds no new stale copies has a real error, so it stops at once. Before each new pass
-it deletes the `-resultBundlePath` bundle that the failed pass wrote, because xcodebuild refuses
-a path that exists. A test run without building skips all of this.
+The compiler emits a package module's `.swiftmodule` under `Build/Intermediates.noindex/` without
+type-checking function bodies, and a separate copy task puts it in `Build/Products/<config>/`, where
+the modules above read it. So a module whose public interface changed emits fine even when one of
+its own files no longer compiles, and a build that stops at the first error cancels the copy task
+queued behind the emit. Products then keeps the old module while Intermediates holds the new one,
+and every module above fails with "cannot find in scope", "has no member", or "extra argument"
+until something rewrites the copy. Reproduced on 2026-10-05 by renaming a public `BinaryReader`
+method: with `-IDEBuildingContinueBuildingAfterErrors=NO`, the failed build left the copy of
+`OpenSkyFormatsESM` stale; with `YES`, the same build ran the copy task and left Products
+consistent. Every command line therefore passes `YES`, so a failed build still writes every module
+that did emit.
+
+`tools/stale-modules.sh` stays as the safety net. After a healthy build the two files are identical,
+so it treats any difference as stale and deletes the copy, together with the copy of every module
+whose emit-module dependency file (`<Module>-primary-emit-module.d`) names a stale copy, repeated
+until no new module is added, so one build rebuilds all layers together. `tools/xcodebuild-run.sh`
+runs it before every build, in the tree named by the build's `-derivedDataPath`, so the index tree
+of `make health` is checked too. When a build fails and leaves new stale copies, it deletes them
+and builds again, `OPENSKY_STALE_RETRIES` times (default 1), and no new pass starts after
+`OPENSKY_RETRY_MINUTES` (default 15). A failed build that finds no new stale copies has a real
+error, so it stops at once. Before each new pass it deletes the `-resultBundlePath` bundle that
+the failed pass wrote, because xcodebuild refuses a path that exists. A test run without building
+skips all of this. A `removed stale module copies` line in a build's output is worth a `bug`
+issue with the transcript: it means a case the flag does not cover.
 
 ## Warnings are errors
 

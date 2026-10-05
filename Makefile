@@ -18,6 +18,9 @@ CONFIG           ?= Debug
 DESTINATION      ?= platform=macOS
 XCODEBUILD_FLAGS ?=
 SWIFT_PATHS      := Sources Tests
+# When this make started, so tools/xcodebuild-run.sh can report the time make spent
+# before xcodebuild. A nested make keeps the outer value.
+export OPENSKY_MAKE_STARTED ?= $(shell date +%s)
 # The Swift files the branch changed, for the per-file format and lint checks.
 # ALL=1 checks the whole tree, as CI does.
 CHANGED_SWIFT     = $(shell { git diff --name-only --diff-filter=AMR $$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD) -- '*.swift'; \
@@ -68,9 +71,9 @@ PRUNE_DAYS       ?= 14
 # Targets append only their action and their own flags, so the project, cache
 # location, and XCODEBUILD_FLAGS cannot drift apart. tools/xcodebuild-lib.sh is
 # the shell twin of this.
-# A build keeps going after an error, so a failed build still writes the module
-# copies of the other layers; a build that stops mid-way is what leaves stale copies
-# (docs/tools/build-system.md).
+# A build keeps going after an error: a build that stops at the first error cancels
+# the Products copy of a module whose emit already finished, and that stale copy
+# breaks every build above it (docs/tools/build-system.md).
 xcb = xcodebuild -workspace $(WORKSPACE) -scheme $(1) -configuration $(2) \
 	$(XCODEBUILD_DD) COMPILATION_CACHE_CAS_PATH=$(COMPILATION_CACHE) \
 	-IDEBuildingContinueBuildingAfterErrors=YES \

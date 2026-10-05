@@ -141,28 +141,6 @@ Observed 2026-08-06 on Xcode 26.5 (build 25F70):
 
 Retires when a later Xcode matches plan selection against Swift Testing names.
 
-## A cached module emit can leave a stale module in Products
-
-Observed 2026-09-29 and 2026-09-30 on Xcode 26, for at least eight package modules. After a change
-to the public interface of a package module, the build wrote the new module under
-`Build/Intermediates.noindex/`. The copy in
-`Build/Products/Debug/<Module>.swiftmodule` kept the old interface, or had no
-`.swiftmodule` file at all. The next module up failed with "extra argument", "has no member", or
-"cannot find type in scope", on repeated builds and with a forced rebuild. It happened with the "Emitting
-module" step both a compilation cache hit and a miss. Deleting the Products copy fixed the next
-build. `tools/xcodebuild-run.sh` does that delete itself
-([build system](/tools/build-system.md#stale-module-copies)).
-
-The cause is not found. The best hypothesis, from the transcripts, is that a failed build cancels
-the copy task of a module whose emit task did finish, so the product keeps the old copy. Since
-2026-10-05 every build passes `-IDEBuildingContinueBuildingAfterErrors=YES`, which lets those
-copy tasks run; whether that ends the stale copies is to be observed.
-
-Once, after the delete, the next `make test-unit` ran test bundles built against the old struct layout
-and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". A forced rebuild fixed that.
-
-Retires when an interface change builds through xcodebuild without the delete.
-
 ## Package framework variants warn about declared dependencies
 
 Observed 2026-10-01 on Xcode 26 and on Xcode 27.0 (27A266a). A unit build printed hundreds of
@@ -200,11 +178,12 @@ the record never becomes clean. Source: `Sources/SWBTaskExecution/TaskActions/Sw
 in [swift-build](https://github.com/swiftlang/swift-build), still so at commit `748527d` (2026-09-30).
 
 The driver plans a module again only when its planning task's signature changes. Two builds in
-the same context skip it. A plain `build` and a `build-for-testing`, or the `OpenSky` and
-`OpenSkyCLI` schemes, give it different signatures. So a switch between them recompiled
-`OpenSkyFormatsCore` and `OpenSkyDiagnostics` (records left dirty by earlier cache hits) and
-relinked and re-signed every framework above them. That is why `make build-tests` builds the
-CLI through the `OpenSky` scheme.
+the same context skip it. A plain `build` and a `build-for-testing`, the `OpenSky` and
+`OpenSkyCLI` schemes, or two test plans give it different signatures: a `make test-unit` after a
+run of another plan replays about 200 compiles and 70 links from the cache, 16 s on 2026-10-05.
+A switch between the schemes recompiled `OpenSkyFormatsCore` and `OpenSkyDiagnostics` (records
+left dirty by earlier cache hits) and relinked and re-signed every framework above them. That is
+why `make build-tests` builds the CLI through the `OpenSky` scheme.
 
 To see the driver's reasons, export `ADDITIONAL_SWIFT_DRIVER_FLAGS=-driver-show-incremental`
 before a build. The same flag in `OTHER_SWIFT_FLAGS` does nothing. A record dirtied this way shows

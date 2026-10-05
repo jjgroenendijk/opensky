@@ -132,17 +132,24 @@ the session starts. Only the plan does.
 
 ## Start-up cost
 
-A warm `xcodebuild test` spends most of its time on the build system starting, resolving the scheme
-and plan, and checking the whole graph, not on the tests. Measured on 2026-10-02 with nothing to
-compile: one unit suite took 15 to 21 s, one real-data test 25 s, the `Formats` plan 47 s, and
-the whole unit plan 56 s. Each run pays the start-up, so batch edits into one run, and rerun a
-built plan with `make test-rerun`.
+A warm `xcodebuild test` spends about as long before the first task as on the tests. Every run
+prints a `phases` line and keeps `phases.tsv` in its run directory
+([build system](/tools/build-system.md#phases)). Measured on 2026-10-05 with the cache on the
+internal disk, the lock held, and nothing edited:
 
-That is the cost after the build system starts. Measured over three weeks of runs up to
-2026-10-05, the median `make test-unit` on the whole plan took 7.5 minutes while the test action
-itself took under a minute: the rest was package resolution, the graph check, and waiting on a
-disk shared with other builds. The machine-wide build lock ([build system](/tools/build-system.md))
-removes the waiting; the smaller plans remove most of the graph.
+| Run | start | resolve | plan | build | test | total |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PLAN=Quick`, after a `UnitTests` run | 32 s | 1 s | 6 s | 16 s | 35 s | 91 s |
+| `PLAN=UnitTests`, after a `Quick` run | 22 s | 1 s | 6 s | 19 s | 40 s | 90 s |
+| `PLAN=UnitTests`, after the same plan | 32 s | 1 s | 7 s | 3 s | 35 s | 79 s |
+
+`start` is xcodebuild loading the workspace, the scheme, and the package manifest before it
+resolves the graph; it varied from 13 to 32 s between runs. A run after a different plan replays
+about 200 compiles and 70 links from the cache, because the plan is part of the driver's planning
+signature ([environment](/tools/environment.md)). Over three weeks of runs before the cache moved,
+the median whole-plan run took 7.5 minutes: the difference was waiting on the external disk and on
+other sessions' builds. Each run pays the start-up, so batch edits into one run, and rerun a built
+plan with `make test-rerun`.
 
 `make test-real` and `make test-sanitize` start `tools/memguard.sh` beside the
 call and turn parallel testing off, so one test host runs and the watchdog's cap is per run. `CAP=MB`

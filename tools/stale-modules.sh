@@ -1,8 +1,8 @@
 #!/bin/sh
 # Find package modules whose copy in Build/Products differs from the module the
-# compiler last emitted under Build/Intermediates.noindex. xcodebuild can skip
-# the copy after an interface change, and every module above then fails with
-# "cannot find in scope" or "has no member" (docs/tools/environment.md). A
+# compiler last emitted under Build/Intermediates.noindex. A build that stops at
+# the first error can cancel the copy, and every module above then fails with
+# "cannot find in scope" or "has no member" (docs/tools/build-system.md). A
 # healthy build leaves the two files identical, so any difference is stale.
 #
 # A copy that reads a stale copy counts as stale too, so one more build
