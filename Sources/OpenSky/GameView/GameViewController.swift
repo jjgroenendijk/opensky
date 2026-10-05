@@ -391,6 +391,8 @@ extension GameViewController {
         // After the world data, because the title's logo loads through it.
         if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
             titleMenu.open()
+        } else {
+            loadingWorld.coverSessionStart()
         }
     }
 }

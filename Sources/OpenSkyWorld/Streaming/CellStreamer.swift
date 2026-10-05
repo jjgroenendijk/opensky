@@ -90,6 +90,8 @@ public final class CellStreamer {
     /// Internal (not private) so the CellStreamerCoverage satellite can read
     /// and write it; the coverage state below is shared for the same reason.
     public var requestedLODCenter: CellCoordinate?
+    /// The center whose distant ring was last integrated or failed.
+    public internal(set) var settledLODCenter: CellCoordinate?
     /// Once settled coverage exists, recenter builds stay offscreen here.
     /// Old full cells + LOD remain composed until replacement LOD arrives,
     /// then full grid + ring swap in one recompose.

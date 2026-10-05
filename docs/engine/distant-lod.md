@@ -51,7 +51,9 @@ level 4 LOD stays visible there.
 LOD scenes are built on the same serial queue as cells:
 
 1. The 5 x 5 near grid finishes first: every cell loaded, empty, or failed.
-2. Then the LOD build is queued, so first-load LOD cannot hold up near cells.
+2. Then the LOD build is queued, so first-load LOD cannot hold up near cells. At the session
+   start, the loading screen stays up until this first ring is in
+   ([loading screens](/engine/loading-screens.md)).
 3. After the first ring, a move keeps the old grid and old LOD visible.
 4. New full cells are collected off-screen.
 5. When the matching new LOD is ready, the new cells and new LOD swap in together. There is no

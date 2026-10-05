@@ -19,6 +19,10 @@ final class LoadingScreenWorldAdapter {
     unowned let game: GameViewController
     private var meshes: MeshLibrary?
     private var failedModels: Set<String> = []
+    /// When the session-start cover went up; nil once it lifted.
+    private var startCoverSince: Double?
+    /// A stuck build must not trap the player behind the cover.
+    static let startCoverLimitSeconds = 60.0
 
     init(game: GameViewController) {
         self.game = game
@@ -45,8 +49,30 @@ final class LoadingScreenWorldAdapter {
         }
         renderer.onFrame.add { [weak self] _ in
             guard let self else { return }
+            liftStartCoverIfReady()
             game.loadingScreens.tick(time: now)
         }
+    }
+
+    /// Covers the session start until the near grid and the first distant ring
+    /// are in, as the game does, so the world never opens with bare sky.
+    func coverSessionStart() {
+        guard game.streamer != nil else { return }
+        startCoverSince = now
+        game.loadingScreens.beginLoad(at: now)
+    }
+
+    private func liftStartCoverIfReady() {
+        guard let since = startCoverSince, let streamer = game.streamer else { return }
+        let timedOut = now - since > Self.startCoverLimitSeconds
+        guard streamer.startAreaReady || timedOut else { return }
+        startCoverSince = nil
+        if timedOut {
+            Self.logger.warning("[WARNING] start area not ready in time; cover lifted")
+        }
+        let seconds = String(format: "%.2f", now - since)
+        Self.logger.notice("[INFO] start cover lifted after \(seconds, privacy: .public) s")
+        game.loadingScreens.loadFinished(at: now)
     }
 
     /// The destination cell's `XLCN`, which is where the player stands when the screen is chosen.

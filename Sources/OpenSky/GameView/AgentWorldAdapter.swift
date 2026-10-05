@@ -38,7 +38,9 @@ final class AgentWorldAdapter {
     /// True once a cell is in the scene and no door transition is loading.
     var isWorldReady: Bool {
         guard game.renderer != nil, let streamer = game.streamer else { return false }
-        guard streamer.transitionInFlight == nil else { return false }
+        guard streamer.transitionInFlight == nil, !game.loadingScreens.isCovering else {
+            return false
+        }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
     }
 
