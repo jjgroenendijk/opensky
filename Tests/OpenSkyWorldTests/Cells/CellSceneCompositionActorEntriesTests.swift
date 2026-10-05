@@ -58,6 +58,21 @@ struct CellSceneCompositionActorEntriesTests {
         #expect(composition.actorPlacements.isEmpty)
     }
 
+    @Test func mergedReferenceIndexFollowsResidency() throws {
+        let origin = CellCoordinate(x: 0, y: 0)
+        var composition = CellSceneComposition()
+        try composition.setCell(Self.scene([(Self.single, 0x303)]), at: origin)
+        #expect(composition.mergedReferenceIndex()[Self.key(Self.single)] != nil)
+
+        try composition.setCell(Self.scene([(Self.shared, 0x202)]), at: CellCoordinate(x: 1, y: 0))
+        #expect(composition.mergedReferenceIndex().count == 2)
+
+        composition.removeCell(at: origin)
+        let index = composition.mergedReferenceIndex()
+        #expect(index.count == 1)
+        #expect(index[Self.key(Self.single)] == nil)
+    }
+
     private static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: "skyrim.esm", objectID: objectID)
     }
