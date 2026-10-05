@@ -137,6 +137,25 @@ struct MeshLibraryTests {
         }
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func markerOnlyModelThrowsEditorMarkerOnly() throws {
+        let device = try #require(Self.device)
+        try writeLooseFile("meshes/marker.nif", NIFFixture.file(
+            blocks: [
+                .init("NiNode", NIFFixture.niNode(children: [1])),
+                .init("BSTriShape", NIFFixture.bsTriShape(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0),
+                    attributes: Self.staticAttributes,
+                    strideDwords: Self.staticStrideDwords
+                ))
+            ],
+            strings: ["EditorMarker"]
+        ))
+        let library = try library(device: device)
+        #expect(throws: MeshLibraryError.editorMarkerOnly(path: "meshes\\marker.nif")) {
+            _ = try library.model(path: "marker.nif")
+        }
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func reportsSkippedShapeCount() throws {
         let device = try #require(Self.device)
         // One empty shape (dropped) + one drawable shape (kept).

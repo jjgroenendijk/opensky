@@ -31,7 +31,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         Model(
             meshes: model.meshes.map(tinted),
             materials: model.materials.map(retextured),
-            skippedShapeCount: model.skippedShapeCount
+            skippedShapeCount: model.skippedShapeCount,
+            editorMarkerShapeCount: model.editorMarkerShapeCount
         )
     }
 

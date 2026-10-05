@@ -96,14 +96,16 @@ nonisolated extension CellSceneBuilder {
             return ResolvedBase(
                 formID: stat.formID,
                 recordType: "STAT",
-                modelPath: stat.modelPath
+                modelPath: stat.modelPath,
+                isEditorMarker: stat.isEditorMarker
             )
         }
         if let base = modelBaseIndex[formID] {
             return ResolvedBase(
                 formID: base.formID,
                 recordType: base.recordType,
-                modelPath: base.modelPath
+                modelPath: base.modelPath,
+                isEditorMarker: base.isEditorMarker
             )
         }
         return nil

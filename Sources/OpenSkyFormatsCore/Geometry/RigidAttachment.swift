@@ -18,7 +18,8 @@ nonisolated public enum RigidAttachment: Sendable {
         Model(
             meshes: model.meshes.map { skinned($0, to: bone, restTransform: restTransform) },
             materials: model.materials,
-            skippedShapeCount: model.skippedShapeCount
+            skippedShapeCount: model.skippedShapeCount,
+            editorMarkerShapeCount: model.editorMarkerShapeCount
         )
     }
 

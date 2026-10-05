@@ -18,6 +18,8 @@ nonisolated public enum MeshLibraryError: Error, Equatable {
     /// Parsed fine but flattened to zero drawable meshes (unsupported/empty) —
     /// nothing to place, so the ref is dropped rather than drawn invisible.
     case emptyModel(path: String)
+    /// Every shape is an editor marker, which the game does not draw.
+    case editorMarkerOnly(path: String)
 }
 
 nonisolated public final class MeshLibrary {
@@ -148,7 +150,11 @@ nonisolated public final class MeshLibrary {
                         .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
                 )
             }
-            guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
+            guard !model.meshes.isEmpty else {
+                throw model.editorMarkerShapeCount > 0
+                    ? MeshLibraryError.editorMarkerOnly(path: key)
+                    : MeshLibraryError.emptyModel(path: key)
+            }
 
             let render: RenderModel
             textures.beginKeyCapture()

@@ -204,6 +204,26 @@ struct RecordDecoderTests {
         #expect(stat.modelPath == nil)
     }
 
+    @Test func markerFlagHidesStaticFurnitureActivatorAndDoorOnly() throws {
+        let model = ESMFixture.field("MODL", ESMFixture.zstring("MarkerXHeading.nif"))
+        let stat = try StaticObject(
+            record: record(ESMFixture.record("STAT", flags: 0x0080_0000, data: model))
+        )
+        #expect(stat.isEditorMarker)
+        #expect(stat.modelPath == "MarkerXHeading.nif")
+        for type in ["ACTI", "DOOR", "FURN"] {
+            let base = try ModelBase(
+                record: record(ESMFixture.record(type, flags: 0x0080_0000, data: model))
+            )
+            #expect(base.isEditorMarker, "\(type)")
+        }
+        // Bit 23 names no marker on other types, and a plain STAT is drawn.
+        let misc = try record(ESMFixture.record("MISC", flags: 0x0080_0000, data: model))
+        #expect(try !ModelBase(record: misc).isEditorMarker)
+        let plain = try StaticObject(record: record(ESMFixture.record("STAT", data: model)))
+        #expect(!plain.isEditorMarker)
+    }
+
     // MARK: - ModelBase (MSTT/TREE/FURN/ACTI/CONT/DOOR)
 }
 

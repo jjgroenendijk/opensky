@@ -194,6 +194,13 @@ index. A wrong byte count, bad values, or a different vertex count rejects the s
   `BSDynamicTriShape` become meshes with their model-space transform.
 - Materials are shared by (shader property, alpha property) pair.
 - Collision and controller blocks end the walk of their subtree.
+- A shape or node named `EditorMarker` is dropped with its subtree, because the game does
+  not draw it. Vanilla marker meshes name their visible box this way, for example
+  `Furniture\CounterLeanMarker.nif`, `Furniture\ChairInvisibleSingle.nif`, and
+  `Markers\Marker_LinkMarker.nif`. Their `BSXFlags` block is present too. A mesh with only
+  editor-marker geometry has nothing to draw. Some marker meshes, such as `MarkerX.nif` and
+  `MarkerXHeading.nif`, have no such shape; the record flag below hides them
+  ([world records](/formats/world-records.md#stat)).
 - A ref out of range, a loop, or depth above 64 is an error. A subtree used under two
   parents is allowed; only a loop on the current path is an error.
 - Every scene walk (bind pose, meshes, particles, collision targets) uses one explicit work
