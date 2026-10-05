@@ -14,6 +14,8 @@
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
 #   opensky_build_lock               wait for the machine-wide build lock
 #   opensky_build_unlock             release it
+#   xcodebuild_phase_marks FILE      stdin -> stdout, noting when each phase starts in FILE
+#   xcodebuild_phases FILE           print one line with the length of each phase
 # shellcheck shell=sh
 
 : "${OPENSKY_CACHE_ROOT:=$HOME/Library/Caches/OpenSky}"
@@ -88,4 +90,55 @@ opensky_build_unlock() {
     [ -n "${OPENSKY_BUILD_LOCK:-}" ] || return 0
     rm -rf "$OPENSKY_BUILD_LOCK"
     OPENSKY_BUILD_LOCK=""
+}
+
+# A run spends most of its time before the first compile, and the transcript
+# has no clock. This stage passes the transcript through and appends
+# "<epoch> <phase>" to $1 at the line that starts each phase: resolve (package
+# graph), plan (build description), build (first task). The test runner's own
+# output is buffered until the end, so the test phase comes from xcodebuild's
+# "elapsed -- Testing started" line, which carries the test time in seconds.
+xcodebuild_phase_marks() {
+    awk -v out="$1" '
+        function mark(phase, extra,    cmd, now) {
+            cmd = "date +%s"
+            cmd | getline now
+            close(cmd)
+            printf "%s %s%s\n", now, phase, extra >> out
+            close(out)
+        }
+        /^Command line invocation:/ { mark("xcodebuild") }
+        /^Resolve Package Graph/ { mark("resolve") }
+        /^Resolved source packages:/ { mark("plan") }
+        /^Build description path:/ { mark("build") }
+        match($0, /[0-9.]+ elapsed -- Testing started/) {
+            mark("tested", " " substr($0, RSTART, RLENGTH - 27))
+        }
+        { print; fflush() }
+    '
+}
+
+# One line from the marks file: how long make, the lock wait, xcodebuild
+# start-up, package resolution, planning, the build, and the tests each took.
+# A phase whose start was never seen is left out.
+xcodebuild_phases() {
+    sort -n "$1" | awk '
+        { if (!($2 in t)) t[$2] = $1; if ($2 == "tested") tested += $3 }
+        function span(from, to) { return (from in t && to in t) ? t[to] - t[from] : -1 }
+        function show(name, seconds) {
+            if (seconds < 0) return
+            line = line sprintf("%s%s %ds", sep, name, seconds)
+            sep = ", "
+        }
+        END {
+            show("make", span("make", "wrapper"))
+            show("lock", span("wrapper", "lock"))
+            show("start", span("lock", "resolve"))
+            show("resolve", span("resolve", "plan"))
+            show("plan", span("plan", "build"))
+            if ("build" in t && "end" in t) show("build", t["end"] - t["build"] - tested)
+            if (tested) show("test", tested)
+            if ("wrapper" in t && "end" in t) printf "%s (total %ds)\n", line, t["end"] - t["wrapper"]
+        }
+    '
 }
