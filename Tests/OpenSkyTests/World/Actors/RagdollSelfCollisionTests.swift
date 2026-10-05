@@ -3,11 +3,11 @@
 // solver pushes admitted pairs apart and never asks about rejected ones.
 // Vanilla numbers are in `RagdollRealDataTests`.
 
+import EngineTesting
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
-import PhysicsTesting
 import simd
 import Testing
 

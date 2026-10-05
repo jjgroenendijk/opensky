@@ -1,7 +1,7 @@
 // Synthetic load-order, editor-id, pair-query and ASTP-join coverage for
 // RelationshipStore. No game-derived bytes.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

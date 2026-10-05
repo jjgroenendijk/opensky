@@ -1,8 +1,7 @@
 // Scene-graph flatten of selector nodes and effect shapes. Synthetic in-code
 // files only (NIFFixture); docs/formats/nif.md.
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

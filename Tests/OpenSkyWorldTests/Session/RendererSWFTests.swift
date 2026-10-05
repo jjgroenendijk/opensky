@@ -3,14 +3,14 @@
 // repeat byte for byte, a clip layer shrinks the covered area, and the draw
 // stats count draws, triangles, glyphs, and masks.
 
-import FormatsSWFTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

@@ -2,6 +2,7 @@
 // three characters it does not define, so it needs cross-movie imports before
 // it shows a list. Frames and numbers stay in gitignored `logs/`.
 
+import FeaturesTesting
 import Foundation
 import Metal
 import MetalKit
@@ -11,7 +12,6 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorldState

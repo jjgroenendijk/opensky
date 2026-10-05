@@ -1,11 +1,11 @@
 // The dynamic solver: a dropped box settles and sleeps, an impulse wakes it,
 // and a crowded scene stays finite, above the floor, and repeatable.
 
+import EngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
-import PhysicsTesting
 import simd
 import TagsTesting
 import Testing

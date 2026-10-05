@@ -1,6 +1,6 @@
 // Native registry families, fallback policy, and tally evidence.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting

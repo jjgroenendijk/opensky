@@ -1,6 +1,6 @@
 // Papyrus opcode and external-call census tests.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 import TagsTesting

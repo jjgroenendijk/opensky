@@ -2,13 +2,13 @@
 // and reload, resolves the in-flight-build race, and survives save and load.
 // The store joins the streamer through `CellStreamer.bind(to:)`. No Metal.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkySave
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures

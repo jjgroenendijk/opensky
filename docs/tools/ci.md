@@ -19,17 +19,17 @@ developer machine. `Changes` and `Lint` only read results, so they run on Linux.
 | Format | `swift-format-check`, `metal-format-check`, `md-lint` |
 | Static checks | `swift-lint`, `sh-lint`, `workflow-lint`, `module-graph`, `cli-boundary`, `realdata-plan`, `lint-test-plans`, `lint-test-tags`, `lint-test-targets`, `no-game-content`, `docs-links`, `docs-length`, `agent-files`, `comment-length`, `duplicates`, `no-suppressions` |
 | Changes | None. It decides whether Build & test runs |
-| Build & test | `swift-baseline`, `ffmpeg`, `test-unit`, `coverage-floor` |
+| Build & test | `swift-baseline`, `ffmpeg`, `test-unit PLAN=UnitTests COVERAGE=1`, `coverage-floor` |
 | Lint | None. It passes only when the jobs above pass |
 
 `Lint` is the one required status check on `main`. A pull request with a lint failure or a
 failing unit test cannot merge. A new job goes into the `needs` list of `Lint`, so branch
 protection does not change.
 
-A draft pull request runs no job. The work on an issue goes to a draft pull request, one commit at
-a time, so a draft would otherwise use macOS runners for unfinished work. `gh pr ready` sends the
-`ready_for_review` event, and that starts the full run. Each later push to a ready pull request runs
-CI again.
+A draft pull request runs every job, on every push. The work on an issue goes to a draft pull
+request one commit at a time, and the runner tests each commit while the session goes on with the
+next one, so the session never runs the whole unit plan locally. A newer push cancels the run of
+the older one, so unfinished work costs at most one run per push.
 
 A pull request that changes only Markdown, `docs/`, `.AGENTS/`, `.claude/`, or the Renovate config
 skips Build & test, because nothing in it is compiled. `Lint` accepts that skip only when
@@ -138,8 +138,14 @@ The compilation cache roughly halves the build:
   starts over. A limit below one cold build would delete the store on every push to `main`.
   Every build on `main` would then be cold.
 
+## Weekly
+
+`weekly.yml` runs on Sunday night and on demand (`gh workflow run weekly.yml`). It holds the
+checks that take an hour or recompile everything, so they run on a runner rather than in a
+session: `make test-sanitize SAN=thread`, `SAN=address`, and `make health`. A failure is read
+from the run, not from a pull request, so the person who reads it opens an issue.
+
 ## Not in CI
 
 - `make test-ui`. It needs the Accessibility grant, which a runner cannot give.
-- `make test-sanitize` and the real-data perf gates.
-- The real-data suites. A runner has no game install.
+- The real-data suites and perf gates. A runner has no game install.

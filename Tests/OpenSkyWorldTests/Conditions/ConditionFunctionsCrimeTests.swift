@@ -1,13 +1,12 @@
 // `GetCrimeGold` through the real evaluator. Raw index 459 (Creation Kit 4555);
 // see the ConditionFunctionsCrime.swift header.
 
+@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

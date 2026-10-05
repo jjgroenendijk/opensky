@@ -2,7 +2,7 @@
 // in docs/formats/hkx-behavior-nodes.md: state names, transitions, weights,
 // and clip paths come back as written, reached through the registry.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

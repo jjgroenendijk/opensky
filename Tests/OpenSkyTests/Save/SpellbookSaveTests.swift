@@ -1,10 +1,10 @@
 // The `SPLB` chunk: spellbook round trip, the readied-hand invariant after a
 // load, and an absent chunk keeping a save without spells byte-identical.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState

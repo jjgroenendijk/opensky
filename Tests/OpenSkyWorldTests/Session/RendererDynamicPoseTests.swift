@@ -3,13 +3,13 @@
 // leave its baked spot and appear at the body. `DynamicBodyRenderPoseTests`
 // covers the arithmetic. Skips without Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

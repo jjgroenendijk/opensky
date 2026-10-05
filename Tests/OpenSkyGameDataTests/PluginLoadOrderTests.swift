@@ -1,7 +1,7 @@
 // Active-plugin order from empty synthetic install trees and text lists.
 
+import EngineTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyGameData
 import Testing
 

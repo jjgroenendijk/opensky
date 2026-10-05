@@ -1,14 +1,13 @@
 // GlobalStore index + the GlobalResolution lookup seam, over synthetic GLOB
 // records only. See docs/engine/global-variables.md.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 struct GlobalStoreTests {
     @Test func indexesByFormIDAndEditorID() throws {

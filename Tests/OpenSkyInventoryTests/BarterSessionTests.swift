@@ -2,12 +2,12 @@
 // sell, the two insufficient-funds refusals, and the journal entries a save
 // needs. A merchant is an ordinary container reference here.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

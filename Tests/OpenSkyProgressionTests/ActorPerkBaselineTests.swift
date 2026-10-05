@@ -1,10 +1,10 @@
 // An actor's authored perk list: the NPC_ `PRKR` run and the template flag it
 // inherits through.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import OpenSkyMagicTesting
 @testable import OpenSkyProgression
 import Testing
 

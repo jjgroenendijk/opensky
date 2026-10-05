@@ -2,12 +2,12 @@
 // from owned containers. UESP says stolen items are tracked separately and stay
 // stolen (<https://en.uesp.net/wiki/Skyrim:Crime>), so the flag is in the key.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyWorldState
 import Testing

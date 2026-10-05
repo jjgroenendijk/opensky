@@ -2,9 +2,8 @@
 // REFR entries, event-handler scripts, and a note-recording native dispatch.
 // Every byte is built in code; no game data is embedded.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
-import FormatsPEXTesting
+import FeaturesTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
@@ -13,7 +12,6 @@ import Foundation
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 /// Records "Probe.Note" calls in dispatch order while forwarding everything

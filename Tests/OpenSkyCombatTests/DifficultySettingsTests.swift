@@ -1,7 +1,7 @@
 // Difficulty: the damage ratio by level, the GMST overrides, and the Destruction
 // experience rule. Fallback values are the UESP "Skyrim:Damage" table.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM

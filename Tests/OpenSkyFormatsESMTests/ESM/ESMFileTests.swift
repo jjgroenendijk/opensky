@@ -1,7 +1,6 @@
 // ESM/ESP container-walk tests over synthetic in-code plugins (ESMFixture).
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

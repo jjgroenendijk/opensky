@@ -1,12 +1,12 @@
 // IsTorchOut, IsShieldOut, and IsChild through the real evaluator. Idle markers
 // test the first two, so an unobserved hand must fail with a reason, not 0.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionActorBodyFunctionTests {

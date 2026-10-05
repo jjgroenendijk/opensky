@@ -1,7 +1,7 @@
 // Malformed records in a cell build are counted in `skippedRecords`, not dropped
 // without a trace. Synthetic plugin fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

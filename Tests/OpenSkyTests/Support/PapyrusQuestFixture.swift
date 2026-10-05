@@ -3,8 +3,7 @@
 // `native` members, like `Quest.psc`, so `SetStage(10)` dispatches as the
 // native once `PapyrusWorldRuntime.resolveScript` loads the parent chain.
 
-import FormatsESMTesting
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

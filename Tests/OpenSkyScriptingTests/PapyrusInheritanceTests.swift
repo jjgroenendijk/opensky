@@ -1,4 +1,4 @@
-import FormatsPEXTesting
+import FormatsTesting
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

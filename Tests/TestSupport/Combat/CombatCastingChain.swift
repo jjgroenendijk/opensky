@@ -4,6 +4,7 @@
 // Both test bundles use it: synthetic `SpellbookFixture` records, or the
 // install's stores. Nothing here is extracted game data.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
@@ -15,7 +16,6 @@ import Foundation
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorld

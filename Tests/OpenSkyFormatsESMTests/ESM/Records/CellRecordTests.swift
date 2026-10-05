@@ -1,8 +1,7 @@
 // CELL decoder tests over synthetic in-code records only. Covers field layout
 // variants and malformed-payload policy without using extracted game data.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import TagsTesting

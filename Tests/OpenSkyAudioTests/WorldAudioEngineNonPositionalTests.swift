@@ -4,7 +4,7 @@
 // decode-queue timing. Gain ramps are covered by WorldAudioEngineFadeTests.
 
 import AVFAudio
-import FormatsAudioTesting
+import FormatsTesting
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsCore
 import simd

@@ -2,6 +2,7 @@
 // type-length cap. Each step checks engine state before the next, so a failure
 // names its step. The order is fixed: each step needs the one before.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
@@ -9,7 +10,6 @@ import Foundation
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkySave
 import OpenSkySaveFixtures

@@ -2,9 +2,9 @@
 // node with two quests, and a fallback quest node after it. Plus the `.seq`
 // session-start pass.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

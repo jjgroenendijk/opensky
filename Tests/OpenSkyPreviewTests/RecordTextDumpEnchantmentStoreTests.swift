@@ -1,6 +1,6 @@
 // Record dumps that name linked records through `EnchantmentStore`. In-code plugin fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyPreview
 import Testing

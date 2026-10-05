@@ -1,8 +1,7 @@
 // The package reconcile input when plugin data repeats an actor key.
 // Synthetic records only.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

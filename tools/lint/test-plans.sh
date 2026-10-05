@@ -3,8 +3,10 @@
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
-# target or tag, never by test name. The Perf plan selects the `perf` tag, and
-# each tag plan is the unit plan narrowed to one tag.
+# target or tag, never by test name. The layer plans split the unit plan's
+# targets without overlap, Quick is every package target, the Perf plan selects
+# the `perf` tag, RealData the `smoke` tag, and each tag plan is the unit plan
+# narrowed to one tag.
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
@@ -25,7 +27,11 @@ TIMEOUT_KEYS = (
 )
 # Repetition hides a flaky test, so only `make test-unit N=...` asks for it.
 REPEAT_KEYS = ("testRepetitionMode", "maximumTestRepetitions")
-TAG_PLANS = {"Parser": "parser", "GPU": "gpu"}
+TAG_PLANS = {"GPU": "gpu"}
+# The layer plans partition the unit plan: every target in exactly one of them.
+LAYER_PLANS = ("Formats", "Engine", "Features", "App")
+# Quick is every package target, skipping the tests that need seconds or a GPU.
+QUICK_SKIPS = ["slow", "gpu"]
 problems = []
 
 
@@ -68,6 +74,20 @@ for name, plan in plans.items():
                 problems.append(f"{name}: {target} {key} names unknown tags {sorted(unknown)}")
 
 
+layered = []
+for name in LAYER_PLANS:
+    entries = plans.get(name, {}).get("testTargets", [])
+    layered += [entry["target"]["name"] for entry in entries]
+    if any(entry.get("selectedTags") or entry.get("skippedTags") for entry in entries):
+        problems.append(f"{name}: a layer plan selects whole targets, no tags")
+if sorted(layered) != sorted(unit if (unit := [e["target"]["name"] for e in plans.get("UnitTests", {}).get("testTargets", [])]) else []):
+    problems.append(f"layer plans {LAYER_PLANS} must list every UnitTests target exactly once")
+quick = plans.get("Quick", {}).get("testTargets", [])
+if [e["target"]["name"] for e in quick] != [t for t in unit if t != "OpenSkyTests"]:
+    problems.append("Quick: must list every UnitTests target but OpenSkyTests, in the same order")
+if any(e.get("skippedTags", {}).get("tags") != QUICK_SKIPS for e in quick):
+    problems.append(f"Quick: every target must skip the tags {QUICK_SKIPS}")
+
 perf = plans.get("Perf", {})
 perf_targets = perf.get("testTargets", [])
 if [entry.get("target", {}).get("name") for entry in perf_targets] != ["OpenSkyRealDataTests"]:
@@ -81,10 +101,19 @@ def data_root(plan):
     return [entry.get("value") for entry in entries if entry.get("key") == "OPENSKY_DATA_ROOT"]
 
 
-if data_root(perf) != data_root(plans.get("RealData", {})):
-    problems.append("Perf: OPENSKY_DATA_ROOT must match the RealData plan")
+real = plans.get("RealData", {})
+real_all = plans.get("RealDataAll", {})
+for name, plan in (("Perf", perf), ("RealDataAll", real_all)):
+    if data_root(plan) != data_root(real):
+        problems.append(f"{name}: OPENSKY_DATA_ROOT must match the RealData plan")
+real_targets = real.get("testTargets", [])
+if [e.get("selectedTags", {}).get("tags") for e in real_targets] != [["smoke"]]:
+    problems.append("RealData: must select the `smoke` tag of OpenSkyRealDataTests and nothing else")
+all_targets = real_all.get("testTargets", [])
+if [e.get("target", {}).get("name") for e in all_targets] != ["OpenSkyRealDataTests"] \
+        or any(e.get("selectedTags") or e.get("skippedTags") for e in all_targets):
+    problems.append("RealDataAll: must select the whole OpenSkyRealDataTests target")
 
-unit = [entry["target"]["name"] for entry in plans.get("UnitTests", {}).get("testTargets", [])]
 sanitized = [entry["target"]["name"] for entry in plans.get("Sanitizers", {}).get("testTargets", [])]
 if unit != sanitized:
     problems.append("Sanitizers: must list the same test targets as UnitTests, in the same order")

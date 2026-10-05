@@ -9,6 +9,7 @@ import Foundation
 @testable import OpenSkyGameData
 import Testing
 
+@Suite(.tags(.smoke))
 struct RecordCoverageRealDataTests {
     private struct Sweep {
         var counts: [FourCC: Int] = [:]

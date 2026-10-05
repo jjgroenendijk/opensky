@@ -1,7 +1,6 @@
 // WorldStateStore journal, snapshot and generated-key tests.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

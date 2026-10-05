@@ -9,9 +9,10 @@
 #     a package test folder, or a support folder is a suite `make test-real` never runs, and it
 #     would silently skip inside `make test-unit` instead, because a plain
 #     `xcodebuild test` does not forward OPENSKY_DATA_ROOT into the host.
-#   * The plan selects that target, with no selectedTests narrowing it -- a
-#     plan's own selectedTests does not match Swift Testing tests at all
-#     (measured, issue #381), so one would select nothing.
+#   * The RealData and RealDataAll plans select that target, with no selectedTests
+#     narrowing it -- a plan's own selectedTests does not match Swift Testing
+#     tests at all (measured, issue #381), so one would select nothing. A tag
+#     (the smoke set) does match; tools/lint/test-plans.sh checks the tags.
 #
 # It also re-asserts the issue #380 rule for the new bundle: no plan may list an
 # app-hosted unit bundle beside OpenSkyUITests, or the test host and the UI
@@ -30,7 +31,8 @@ import pathlib
 import re
 import sys
 
-PLAN = pathlib.Path("Config/TestPlans/RealData.xctestplan")
+PLANS = [pathlib.Path("Config/TestPlans/RealData.xctestplan"),
+         pathlib.Path("Config/TestPlans/RealDataAll.xctestplan")]
 TARGET = "OpenSkyRealDataTests"
 HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
 # Every other test folder: the app-hosted unit bundle, the package test and
@@ -74,20 +76,21 @@ for folder in ELSEWHERE:
 if not gated_suites(HOME):
     problems.append(f"{HOME}/ declares no env-gated suite at all")
 
-with PLAN.open("rb") as stream:
-    plan = json.load(stream)
-entries = plan.get("testTargets", [])
-names = [entry.get("target", {}).get("name") for entry in entries]
-if names != [TARGET]:
-    problems.append(f"{PLAN} selects {names}, expected exactly [{TARGET!r}]")
-for entry in entries:
-    for key in ("selectedTests", "skippedTests"):
-        if entry.get(key):
-            problems.append(
-                f"{PLAN} carries {key} for {entry['target']['name']};"
-                " a plan's own test selection does not match Swift Testing"
-                " (issue #381), so it would select nothing"
-            )
+for PLAN in PLANS:
+    with PLAN.open("rb") as stream:
+        plan = json.load(stream)
+    entries = plan.get("testTargets", [])
+    names = [entry.get("target", {}).get("name") for entry in entries]
+    if names != [TARGET]:
+        problems.append(f"{PLAN} selects {names}, expected exactly [{TARGET!r}]")
+    for entry in entries:
+        for key in ("selectedTests", "skippedTests"):
+            if entry.get(key):
+                problems.append(
+                    f"{PLAN} carries {key} for {entry['target']['name']};"
+                    " a plan's own test selection does not match Swift Testing"
+                    " (issue #381), so it would select nothing"
+                )
 
 # Issue #380: an app-hosted unit bundle and the UI runner deadlock in one session.
 HOSTED = {"OpenSkyTests", TARGET}

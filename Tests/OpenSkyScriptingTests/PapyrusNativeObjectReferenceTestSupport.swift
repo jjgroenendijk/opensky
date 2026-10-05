@@ -1,7 +1,7 @@
 // Shared fixture for the `ObjectReference` native suites: one scripted lever in
 // a synthetic cell, the native registry, and the receiver handle.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

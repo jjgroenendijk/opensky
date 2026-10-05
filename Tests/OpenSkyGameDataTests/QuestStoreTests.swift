@@ -1,13 +1,12 @@
 // QuestStore: the immutable QUST index, built from a synthetic plugin.
 // See docs/formats/quest-records.md.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
-import WorldStateTesting
 
 @Suite("QUST store")
 struct QuestStoreTests {

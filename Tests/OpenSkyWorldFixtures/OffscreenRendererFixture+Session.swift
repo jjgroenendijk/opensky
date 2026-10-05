@@ -1,9 +1,9 @@
 // Offscreen renderers driven by a `GameSession`, the way the app builds one.
 
+import EngineTesting
 import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import RenderingTesting
 
 extension OffscreenRendererFixture {
     /// A renderer over a paused view with a `GameSession` as its frame driver.

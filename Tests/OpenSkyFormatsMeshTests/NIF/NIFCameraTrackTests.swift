@@ -1,8 +1,7 @@
 // The camera track decode: the NiCamera's controller chain down to its keys,
 // sampling between keys, and broken links that must not crash.
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import simd

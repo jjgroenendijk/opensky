@@ -19,7 +19,7 @@
     "query": "The NIF parser crashes on a mod mesh with an unknown block type. Fix it.",
     "files": [],
     "expected_behavior": [
-      "Writes a synthetic fixture in Tests/FormatsMeshTesting that reproduces the unknown block and a test that fails first, not a copy of the mod file",
+      "Writes a synthetic fixture in Tests/FormatsTesting/Mesh that reproduces the unknown block and a test that fails first, not a copy of the mod file",
       "Makes the parser skip and count the unknown block instead of trapping",
       "Uses the family's typed error and no force-unwrap on file data"
     ]

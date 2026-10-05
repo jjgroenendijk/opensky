@@ -1,15 +1,14 @@
 // A CLMT WLST entry's global replaces its weather chance, so changing the
 // global changes the deterministic pick. See docs/formats/weather.md.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 @MainActor
 struct WeatherGlobalChanceTests {

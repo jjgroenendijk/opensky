@@ -1,6 +1,6 @@
 // M11 headless acceptance: native dispatch, latency, fallback, determinism.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting

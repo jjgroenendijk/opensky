@@ -4,7 +4,8 @@ name: CI
 # runs the same make target as `make check`. The lint checks share two jobs, so one
 # run uses at most 3 macOS runners at a time; the Free plan allows 5 per account.
 # The Changes and Lint jobs only read results, so they run on Linux.
-# A draft pull request runs nothing; marking it ready for review starts the run.
+# A draft pull request runs too, so the full unit plan runs on a runner while the
+# author keeps working; a newer push cancels the older run.
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -37,11 +38,14 @@ env:
   # The image holds several Xcodes and its default moves. Name the one that matches the
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
   DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+  # The build cache and the compilation cache store inside the workspace, where the
+  # cache actions find them. Locally both default to paths outside the checkout.
+  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/DerivedData
+  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/DerivedData/CompilationCache.noindex
 
 jobs:
   format:
     name: Format
-    if: ${{ !github.event.pull_request.draft }}
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
@@ -63,7 +67,7 @@ jobs:
           fi
           echo "$TOOLS_DIR" >>"$GITHUB_PATH"
           npm install --global --no-audit --no-fund "markdownlint-cli2@$MARKDOWNLINT_VERSION"
-      - run: make swift-format-check
+      - run: make swift-format-check ALL=1
       # The shaders use Xcode's clang-format, as locally.
       - if: success() || failure()
         run: make metal-format-check
@@ -72,7 +76,6 @@ jobs:
 
   static-checks:
     name: Static checks
-    if: ${{ !github.event.pull_request.draft }}
     runs-on: xcode-27
     timeout-minutes: 10
     steps:
@@ -105,7 +108,7 @@ jobs:
           fi
           echo "$TOOLS_DIR" >>"$GITHUB_PATH"
           npm install --global --no-audit --no-fund "jscpd@$JSCPD_VERSION"
-      - run: make swift-lint
+      - run: make swift-lint ALL=1
       - if: success() || failure()
         run: make sh-lint workflow-lint
       - if: success() || failure()
@@ -119,7 +122,6 @@ jobs:
   # skills, or the Renovate config skips it. Any other event always builds.
   changes:
     name: Changes
-    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -230,7 +232,9 @@ jobs:
           if [ "${size:-0}" -gt "$CAS_MAX_MB" ]; then rm -rf "$store"; fi
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
-      - run: make test-unit XCODEBUILD_FLAGS="$BUILD_FLAGS"
+      # The whole unit plan with coverage: locally the default is the Quick plan
+      # without coverage, so this is the one run that sees every test.
+      - run: make test-unit PLAN=UnitTests COVERAGE=1 XCODEBUILD_FLAGS="$BUILD_FLAGS"
       - run: make coverage-floor
       - if: steps.sdk.outputs.cache-hit != 'true' && github.event_name == 'push'
         uses: actions/cache/save@v6
@@ -266,7 +270,7 @@ jobs:
   # protection needs no change. Build & test may skip only when Changes said so.
   lint:
     name: Lint
-    if: ${{ always() && !github.event.pull_request.draft }}
+    if: ${{ always() }}
     needs: [changes, format, static-checks, build-test]
     runs-on: ubuntu-latest
     timeout-minutes: 5

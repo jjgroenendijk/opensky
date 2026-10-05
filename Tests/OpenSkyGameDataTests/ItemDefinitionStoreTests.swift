@@ -2,10 +2,9 @@
 // separate container index. Fixtures are synthetic plugins built in code —
 // never extracted game files (AGENTS.md "Legal & IP boundary").
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+@testable import FormatsTesting
 import Foundation
-import GameDataTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

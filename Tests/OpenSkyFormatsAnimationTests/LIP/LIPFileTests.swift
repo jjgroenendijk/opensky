@@ -1,7 +1,7 @@
 // Defensive `.lip` header, sparse-grid and sampling tests. Every byte is built
 // by LIPFixture; no installed voice data enters the unit target.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

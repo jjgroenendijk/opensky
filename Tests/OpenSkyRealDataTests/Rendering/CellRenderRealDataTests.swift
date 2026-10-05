@@ -36,7 +36,7 @@ private struct StreamStats {
     let series: [String]
 }
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.smoke, .gpu))
 struct CellRenderRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.canRender))
     @MainActor

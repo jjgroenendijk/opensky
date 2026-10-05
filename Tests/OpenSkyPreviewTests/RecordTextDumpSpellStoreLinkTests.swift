@@ -1,6 +1,6 @@
 // Record dumps that name linked records through `SpellStoreLink`. In-code plugin fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

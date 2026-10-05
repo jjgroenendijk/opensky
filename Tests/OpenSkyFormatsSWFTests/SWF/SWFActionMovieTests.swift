@@ -4,7 +4,7 @@
 // and the action-side tally. Also pins that frame-1 display-list behavior and
 // its counters are unchanged. Synthetic fixtures only.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

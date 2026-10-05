@@ -3,14 +3,13 @@
 // The M12 chain supplies an NPC-owned sword and an unowned chest. Fixtures
 // are synthetic.
 
+@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
-import OpenSkyInventoryTesting
 import Testing
 
 @MainActor

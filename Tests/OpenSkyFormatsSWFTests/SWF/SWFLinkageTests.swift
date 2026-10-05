@@ -2,7 +2,7 @@
 // `gotoAndStop("label")` has no target; without linkage a class passed to
 // `Object.registerClass` names no character.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

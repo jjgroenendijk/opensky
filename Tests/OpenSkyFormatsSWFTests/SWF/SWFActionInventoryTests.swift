@@ -4,7 +4,7 @@
 // stats, and DoAction/DoInitAction/ClipActions block-kind counts, over
 // synthetic fixtures only (AGENTS.md "Legal & IP boundary").
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

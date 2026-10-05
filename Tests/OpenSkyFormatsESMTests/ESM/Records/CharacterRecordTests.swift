@@ -2,8 +2,7 @@
 // over synthetic fields. Layout sources: xEdit wbDefinitionsTES5.pas; see the
 // matching docs/formats/ pages.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

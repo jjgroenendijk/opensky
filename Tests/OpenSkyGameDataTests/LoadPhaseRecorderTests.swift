@@ -1,7 +1,7 @@
 // Exclusive phase timing: a nested phase takes its time out of the outer one.
 
+import EngineTesting
 import Foundation
-import GameDataTesting
 import OpenSkyGameData
 import Synchronization
 import Testing

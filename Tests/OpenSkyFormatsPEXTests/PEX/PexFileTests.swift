@@ -1,6 +1,6 @@
 // Defensive PEX container tests over synthetic bytecode only.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 import TagsTesting

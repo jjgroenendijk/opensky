@@ -3,7 +3,7 @@
 // `ClearList()` are installed in code, so the tests check the bridge against
 // its contract.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF

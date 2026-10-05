@@ -1,9 +1,9 @@
 // Quest alias fill rules and the alias table's lifetime on the store, over
 // synthetic `QuestFixture` bytes.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

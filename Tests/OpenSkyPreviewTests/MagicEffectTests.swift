@@ -1,7 +1,7 @@
 // Synthetic MGEF decode coverage. Fixtures are authored from the cited
 // 152-byte layout and contain no bytes from the game install.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

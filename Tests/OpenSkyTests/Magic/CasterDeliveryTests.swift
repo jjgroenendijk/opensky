@@ -2,6 +2,7 @@
 // leaves the caster, and the aimed-beam cadence. `FakeCasterWorld` records
 // what the delivery handed the world; `SpellHitTests` covers the real runtime.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyFormatsESM
@@ -9,7 +10,6 @@ import Foundation
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
 import simd

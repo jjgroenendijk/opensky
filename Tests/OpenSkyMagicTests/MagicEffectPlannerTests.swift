@@ -2,12 +2,12 @@
 // reason every other entry is counted under. Semantics: the Creation Kit wiki
 // Magic Effect page, cited at the planner.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 import Testing
 
 @MainActor

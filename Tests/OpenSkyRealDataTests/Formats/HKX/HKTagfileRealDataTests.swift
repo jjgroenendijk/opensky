@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyGameData
 import Testing
 
+@Suite(.tags(.smoke))
 struct HKTagfileRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryTagfileWithNoClothClass() throws {

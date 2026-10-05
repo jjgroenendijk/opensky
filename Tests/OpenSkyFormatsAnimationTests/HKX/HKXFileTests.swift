@@ -2,7 +2,7 @@
 // (HKXFixture) — never extracted game files (AGENTS.md "Legal & IP boundary").
 // Byte map: docs/formats/hkx-container.md.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore

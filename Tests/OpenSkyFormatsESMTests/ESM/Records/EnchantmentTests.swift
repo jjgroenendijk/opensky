@@ -2,7 +2,7 @@
 // Every fixture is authored from the cited ENIT layout and contains no bytes
 // from the game install.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

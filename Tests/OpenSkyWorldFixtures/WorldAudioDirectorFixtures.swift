@@ -3,9 +3,7 @@
 // REGN plugins. No real audio device, no VFS, no extracted game file.
 
 import AVFAudio
-import FormatsAudioTesting
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM

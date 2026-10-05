@@ -3,7 +3,7 @@
 // a bad pointer at 0x10 records `sectionMissing`. The declared sizes match
 // docs/formats/hkx-behavior-nodes.md.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

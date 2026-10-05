@@ -2,14 +2,14 @@
 // grouping, and one run from CTDA bytes. Conditions are real 32-byte CTDA, so a
 // layout change breaks these too. Sources are in the ConditionEvaluator.swift header.
 
-@testable import FormatsCoreTesting
+import FeaturesTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionEvaluatorTests {

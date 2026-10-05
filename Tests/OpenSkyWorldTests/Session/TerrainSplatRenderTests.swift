@@ -2,13 +2,13 @@
 // green ATXT layer, and layer weight 0 in the west and 1 in the east. The west
 // must read red and the east green. Skips without Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

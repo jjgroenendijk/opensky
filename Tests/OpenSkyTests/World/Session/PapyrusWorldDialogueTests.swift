@@ -3,8 +3,7 @@
 // and `QuestRuntime` records it. Fixtures come from `PapyrusQuestFixture` and
 // `DialogueFixture`.
 
-import FormatsESMTesting
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface

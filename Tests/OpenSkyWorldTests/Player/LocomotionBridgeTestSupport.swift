@@ -1,7 +1,7 @@
 // Shared setup for the locomotion-bridge suites, split from
 // `LocomotionBridgeTests` for the type-length cap.
 
-import BehaviorTesting
+import EngineTesting
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore

@@ -2,8 +2,7 @@
 // guard's packages. Two scheduled packages and no fallback, so the schedule
 // decides: patrol at 09:00, sleep at 21:00, and the clock causes the change.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

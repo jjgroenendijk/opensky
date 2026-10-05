@@ -1,13 +1,13 @@
 // The ragdoll shell against a fake world: the death sweep, the definition
 // cache, pose publishing, the panel trigger, and the corpse search.
 
+import EngineTesting
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorldState
-import PhysicsTesting
 import simd
 import Testing
 

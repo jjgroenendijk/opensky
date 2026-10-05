@@ -2,11 +2,11 @@
 // no crime faction and the hold does: `WhiterunBelethorsGeneralGoodsLocation
 // -> WhiterunLocation -> WhiterunHoldLocation (FNAM)`.
 
-import FormatsESMTesting
+@testable import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

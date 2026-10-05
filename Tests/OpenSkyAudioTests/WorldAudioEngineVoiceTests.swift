@@ -3,7 +3,7 @@
 // covers decoding.
 
 import AVFAudio
-import FormatsAudioTesting
+import FormatsTesting
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAudio
 import simd

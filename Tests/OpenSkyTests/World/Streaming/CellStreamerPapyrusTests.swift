@@ -3,7 +3,7 @@
 // staged offscreen. Wired as `ScriptWorldAdapter.wirePapyrus` wires them, over
 // synthetic references and scripts. No Metal.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -1,6 +1,6 @@
 // A SpellStore over the shared spell fixture records.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyGameData
 

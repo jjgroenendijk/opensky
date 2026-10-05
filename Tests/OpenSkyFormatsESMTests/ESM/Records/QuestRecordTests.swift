@@ -1,7 +1,7 @@
 // QUST decode over synthetic field bytes only (QuestFixture).
 // Layout: docs/formats/quest-records.md.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

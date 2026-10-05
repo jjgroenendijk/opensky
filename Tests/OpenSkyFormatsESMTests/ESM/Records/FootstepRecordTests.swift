@@ -2,8 +2,7 @@
 // sources: UESP FSTP/FSTS/IPDS/IPCT and xEdit wbDefinitionsTES5.pas; see
 // docs/formats/footstep.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import TagsTesting

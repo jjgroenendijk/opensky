@@ -4,8 +4,7 @@
 // `goodbyeTopic` ends the talk; the HELO greeting is say-once. Keyed under
 // `PapyrusWorldFixture.pluginName` so INFO keys match Papyrus instance keys.
 
-import FormatsESMTesting
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

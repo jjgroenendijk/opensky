@@ -2,16 +2,15 @@
 // idempotence, journalling, and snapshot determinism. Quests come from
 // `QuestFixture`. `@MainActor` like the store.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 @MainActor
 @Suite("Quest runtime")

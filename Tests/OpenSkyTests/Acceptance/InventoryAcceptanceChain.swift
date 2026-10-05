@@ -2,18 +2,16 @@
 // `InventoryBaselineFixture` plus a loose iron sword, a chest, and a merchant
 // chest. A guard is the actor an equip is visible on. No Metal or install.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import FeaturesTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import simd
 
 /// The engine objects the gate drives, wired the way `wireWorldItems` wires

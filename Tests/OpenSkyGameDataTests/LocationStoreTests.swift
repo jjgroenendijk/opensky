@@ -1,7 +1,6 @@
 // Synthetic load-order, parent-chain, keyword and CELL-link coverage.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

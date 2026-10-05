@@ -5,7 +5,7 @@
 // so the first assertion here is simply that referencing them no longer counts
 // as missing.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

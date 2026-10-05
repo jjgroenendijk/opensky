@@ -2,7 +2,7 @@
 // (StringTableFixture). Covers all three entry framings, the lenient
 // UTF-8 -> windows-1252 decode policy, and malformed-input rejection.
 
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 import TagsTesting

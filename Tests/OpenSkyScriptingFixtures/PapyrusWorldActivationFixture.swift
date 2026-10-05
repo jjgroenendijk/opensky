@@ -2,8 +2,7 @@
 // the door session every activation test builds on. The M11 and M13
 // scripted-world chains reuse `interaction(reference:action:)`.
 
-@testable import FormatsESMTesting
-import FormatsPEXTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

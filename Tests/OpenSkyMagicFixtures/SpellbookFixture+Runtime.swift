@@ -1,9 +1,9 @@
 // The spellbook runtime over the fixture records.
 
+import FeaturesTesting
 @testable import OpenSkyGameData
 import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 
 extension SpellbookFixture {

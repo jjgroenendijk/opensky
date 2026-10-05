@@ -2,7 +2,7 @@
 // way a stream can be wrong has to end in a recorded fault; every demand on the
 // display layer has to end in a host event and a tally entry.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

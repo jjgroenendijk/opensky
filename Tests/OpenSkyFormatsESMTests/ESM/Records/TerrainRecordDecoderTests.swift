@@ -1,7 +1,6 @@
 // LAND, LTEX and TXST decoding. Layout: docs/formats/land.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import simd

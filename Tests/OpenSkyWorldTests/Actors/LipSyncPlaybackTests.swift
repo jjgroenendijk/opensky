@@ -1,4 +1,4 @@
-import FormatsAnimationTesting
+import FormatsTesting
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM

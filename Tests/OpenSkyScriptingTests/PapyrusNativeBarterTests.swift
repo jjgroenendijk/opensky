@@ -1,7 +1,7 @@
 // `Actor.ShowBarterMenu`, which a merchant's dialogue fragment calls, over a
 // stand-in session closure.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting

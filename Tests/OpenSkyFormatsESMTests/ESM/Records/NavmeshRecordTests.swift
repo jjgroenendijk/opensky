@@ -4,8 +4,7 @@
 // malformed-payload policy: truncation and out-of-range indices throw rather
 // than surviving into the pathing graph.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

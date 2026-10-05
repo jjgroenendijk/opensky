@@ -2,12 +2,12 @@
 // the cast loop see what a script did. Split from PapyrusNativeSpellTests.swift
 // for the type-body cap.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

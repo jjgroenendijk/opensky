@@ -1,7 +1,7 @@
 // The NPC gait clip cache over an in-memory file source. No game data.
 
+import EngineTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

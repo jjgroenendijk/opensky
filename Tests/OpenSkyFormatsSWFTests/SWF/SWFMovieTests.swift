@@ -3,7 +3,7 @@
 // DefineSprite nesting, clip-depth command generation with the counting
 // stencil scheme, and the recorded-feature tallies. Synthetic fixtures only.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

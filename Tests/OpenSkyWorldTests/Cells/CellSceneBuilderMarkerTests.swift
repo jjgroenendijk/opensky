@@ -1,8 +1,7 @@
 // Editor markers placed in a cell are not drawn, as in the game. Both signals are
 // covered: the base record's `Is Marker` flag and `EditorMarker` mesh shapes.
 
-import FormatsESMTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyRendering

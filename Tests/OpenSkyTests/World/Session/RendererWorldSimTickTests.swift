@@ -2,6 +2,7 @@
 // after the right count, and a paused frame does nothing. Offscreen renders use
 // a fixed 1/30 s step without the game clock, so counts are exact. Needs Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 import MetalKit
@@ -10,7 +11,6 @@ import MetalKit
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
-import RenderingTesting
 import TagsTesting
 import Testing
 

@@ -3,7 +3,7 @@
 // Synthetic in-code payloads only; layouts: NifTools nif.xml and
 // docs/formats/nif-collision.md.
 
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import Testing

@@ -43,13 +43,13 @@ ones only this bundle uses. Other fixtures are in the `Tests/<Name>Testing/` and
 
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
   helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
-  the `Tests/Formats<Family>Testing/` libraries.
+  `Tests/FormatsTesting/`.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `logs/`.
-- `make test-unit T='Suite'` or `T='Suite/method()'` runs one suite or test in
-  `OpenSkyTests` without paying the build system when nothing changed; the
-  `testing-and-verifying` skill covers what to run. `make test-report` extracts failure
+- `make test-unit PLAN=App T='Suite'` or `T='Suite/method()'` runs one suite or test in
+  `OpenSkyTests`, and `make test-rerun PLAN=App T=...` reruns it without the build system;
+  the `testing-and-verifying` skill covers what to run. `make test-report` extracts failure
   names and messages from the newest result bundle.
 - Accessibility ids are pinned as literal assertions here (`DestinationRegistryTests`) *and*
   exercised through `OpenSkyUITests`. The two catch different things: a unit assertion pins

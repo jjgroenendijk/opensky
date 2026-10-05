@@ -6,14 +6,19 @@
 #
 #   . "$root/tools/xcodebuild-lib.sh"
 #
-# Sets OPENSKY_DERIVED_DATA and XCODE_XCCONFIG_FILE (the Makefile exports both;
-# this is the fallback for a script run directly from a shell) and provides:
+# Sets OPENSKY_CACHE_ROOT, OPENSKY_DERIVED_DATA, and XCODE_XCCONFIG_FILE (the
+# Makefile exports them; this is the fallback for a script run directly from a
+# shell) and provides:
 #
 #   xcodebuild_products_dir CONFIG   built-products directory for a macOS scheme
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
+#   opensky_build_lock               wait for the machine-wide build lock
+#   opensky_build_unlock             release it
 # shellcheck shell=sh
 
-: "${OPENSKY_DERIVED_DATA:=$(cd "$(dirname "$0")/.." && pwd)/DerivedData}"
+: "${OPENSKY_CACHE_ROOT:=$HOME/Library/Caches/OpenSky}"
+export OPENSKY_CACHE_ROOT
+: "${OPENSKY_DERIVED_DATA:=$OPENSKY_CACHE_ROOT/$(basename "$(cd "$(dirname "$0")/.." && pwd)")}"
 export OPENSKY_DERIVED_DATA
 : "${XCODE_XCCONFIG_FILE:=$(cd "$(dirname "$0")/.." && pwd)/Config/Build/Overrides.xcconfig}"
 export XCODE_XCCONFIG_FILE
@@ -52,4 +57,35 @@ xcodebuild_summary() {
             if (quiet) printf "[INFO] %d more warnings not shown\n", quiet
         }
     '
+}
+
+# One build at a time on this machine. Sessions in several worktrees each start
+# their own build, and eleven at once were seen on eight cores and 16 GB: every
+# one of them then swaps. The lock is a directory, because mkdir is atomic. It
+# holds the owner's pid; a lock whose owner is gone is taken over.
+opensky_build_lock() {
+    lock="$OPENSKY_CACHE_ROOT/build.lock"
+    mkdir -p "$OPENSKY_CACHE_ROOT"
+    waited=0
+    until mkdir "$lock" 2>/dev/null; do
+        owner="$(cat "$lock/pid" 2>/dev/null || true)"
+        if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
+            rm -rf "$lock"
+            continue
+        fi
+        if [ "$((waited % 30))" -eq 0 ]; then
+            printf '[INFO] waiting for the build lock held by pid %s (%s)\n' \
+                "${owner:-?}" "$(ps -o command= -p "${owner:-0}" 2>/dev/null | cut -c1-80)"
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    printf '%s\n' "$$" >"$lock/pid"
+    OPENSKY_BUILD_LOCK="$lock"
+}
+
+opensky_build_unlock() {
+    [ -n "${OPENSKY_BUILD_LOCK:-}" ] || return 0
+    rm -rf "$OPENSKY_BUILD_LOCK"
+    OPENSKY_BUILD_LOCK=""
 }

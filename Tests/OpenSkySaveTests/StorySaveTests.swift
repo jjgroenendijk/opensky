@@ -1,7 +1,7 @@
 // SCNS, SMQS, and DLBS chunks: a scene mid-phase, a story-manager start record,
 // and an exclusive branch come back as they were; an untouched session writes none.
 
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM

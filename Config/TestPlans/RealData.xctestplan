@@ -1,30 +1,35 @@
 {
-  "configurations" : [
+  "configurations": [
     {
-      "id" : "9E1D0A00-0000-4000-A000-00000000D002",
-      "name" : "Configuration 1",
-      "options" : {}
+      "id": "A1B2C3D0-0000-4000-A000-000000000008",
+      "name": "Smoke",
+      "options": {}
     }
   ],
-  "defaultOptions" : {
-    "defaultTestExecutionTimeAllowance" : 600,
-    "environmentVariableEntries" : [
+  "defaultOptions": {
+    "defaultTestExecutionTimeAllowance": 600,
+    "environmentVariableEntries": [
       {
-        "key" : "OPENSKY_DATA_ROOT",
-        "value" : "/Volumes/data/steam/steamapps/common/Skyrim Special Edition"
+        "key": "OPENSKY_DATA_ROOT",
+        "value": "/Volumes/data/steam/steamapps/common/Skyrim Special Edition"
       }
     ],
-    "maximumTestExecutionTimeAllowance" : 1800,
-    "testTimeoutsEnabled" : true
+    "maximumTestExecutionTimeAllowance": 1800,
+    "testTimeoutsEnabled": true
   },
-  "testTargets" : [
+  "testTargets": [
     {
-      "target" : {
-        "containerPath" : "container:OpenSky.xcodeproj",
-        "identifier" : "5AD1000130001093001700A1",
-        "name" : "OpenSkyRealDataTests"
+      "target": {
+        "containerPath": "container:OpenSky.xcodeproj",
+        "identifier": "5AD1000130001093001700A1",
+        "name": "OpenSkyRealDataTests"
+      },
+      "selectedTags": {
+        "tags": [
+          "smoke"
+        ]
       }
     }
   ],
-  "version" : 1
+  "version": 1
 }

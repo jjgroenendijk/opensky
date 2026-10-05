@@ -2,13 +2,13 @@
 // refusals. Grants go through `PerkRuntime` into the store, so a scripted perk
 // saves like a seeded one.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 @testable import OpenSkyProgressionInterface
-import OpenSkyProgressionTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

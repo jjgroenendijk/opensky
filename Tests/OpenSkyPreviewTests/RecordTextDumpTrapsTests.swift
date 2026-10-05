@@ -1,8 +1,7 @@
 // The trap record views in the Asset Browser and reference inspector: `HAZD`
 // numbers, a `PHZD` with its enable parent, and a `REFR` lock.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPreview

@@ -3,8 +3,7 @@
 // stride/data-size cross-checks. Layouts per NifTools nif.xml;
 // docs/formats/nif.md.
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

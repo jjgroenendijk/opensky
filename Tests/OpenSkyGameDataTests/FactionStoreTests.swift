@@ -1,7 +1,7 @@
 // Synthetic load-order, editor-id, relation-join and SNAM template-inheritance
 // coverage for FactionStore. No game-derived bytes.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

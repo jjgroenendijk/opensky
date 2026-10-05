@@ -30,11 +30,26 @@ XCB_TEST    := $(XCB_APP) -destination '$(DESTINATION)'
 A target adds only its action and its own flags. `make -n build cli test install` shows the shared
 prefix on every line, which checks that it still holds.
 
+The cache is on the internal disk because the data volume is a USB disk that writes at about
+135 MB/s against the internal disk's 2 GB/s, and a build writes gigabytes of intermediates. The
+compilation cache store stays on the data volume: it is tens of gigabytes, more than the boot
+volume can hold, and a replayed task reads a few files from it rather than streaming.
+
+## One build at a time
+
+Every command that compiles takes a machine-wide lock first, `build.lock` under `CACHE_ROOT`, in
+`tools/xcodebuild-lib.sh`. A second session's build waits and prints the owner's pid every
+30 seconds; a lock whose owner is gone is taken over. The machine has four performance cores and
+16 GB, and before the lock, up to eleven builds ran at once and each took many times longer than
+alone. `make test-rerun` takes no lock, because it compiles nothing.
+
 | Knob | Default | Changes |
 | --- | --- | --- |
 | `CONFIG` | `Debug` | The configuration for `build`, `cli`, `test`, `app-path`, and `cli-path`. `install` is always Release |
 | `DESTINATION` | `platform=macOS` | The test destination |
-| `DERIVED_DATA` | `$(CURDIR)/DerivedData` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
+| `CACHE_ROOT` | `~/Library/Caches/OpenSky` | Where every checkout's build cache lives, on the internal disk, exported as `OPENSKY_CACHE_ROOT` |
+| `DERIVED_DATA` | `$(CACHE_ROOT)/<checkout folder name>` | The build cache, exported to scripts as `OPENSKY_DERIVED_DATA` |
+| `COMPILATION_CACHE` | `<main checkout>/DerivedData/CompilationCache.noindex` | The compilation cache store every checkout shares, exported as `OPENSKY_COMPILATION_CACHE` |
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
@@ -101,22 +116,23 @@ every compile task. The reason for the module is explicit dependencies and two d
 `COMPILATION_CACHE_ENABLE_CACHING = YES` in `Config/Build/Base.xcconfig` turns on Xcode 26's compilation
 cache. Each compile task is keyed on its command line and inputs, and a task with a known key
 replays the stored result instead of compiling. Explicit modules, which the cache needs, are already
-on by default. The store is `$(DERIVED_DATA)/CompilationCache.noindex`, so it follows
-`-derivedDataPath` onto the external volume. `make clean` keeps it; `make clean DEEP=1` removes it.
+on by default. The store is `$(COMPILATION_CACHE)`, passed as `COMPILATION_CACHE_CAS_PATH` on every
+command line, so it stays on the data volume while the build cache is on the internal disk.
+`make clean` keeps it; `make clean DEEP=1` removes it.
 
 What it helps and what it does not:
 
 - It helps a rebuild of a state compiled before, after the build folder is gone. In Debug that was
   about four and a half times faster. In Release, which compiles the module as one task, it was half
   a minute instead of thirteen.
-- A branch switch gains nothing: switching in place keeps `DerivedData/Build`, so the build system's
-  own incremental state decides.
+- A branch switch gains nothing: switching in place keeps `Build/` in the cache, so the build
+  system's own incremental state decides.
 - A cache hit leaves the Swift driver's incremental record saying "needs build"
   ([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
   Each switch between build contexts, such as `make build-cli` then `make test-unit`, then
   compiles those modules again and relinks everything above them. So the `OpenSky` scheme
-  builds `openskycli` and `OpenSkyRealDataTests` for testing, and every test build compiles
-  all of them in one context.
+  builds `openskycli` for testing, and the Debug `make build-app` and `make build-cli` use
+  `build-for-testing` on the `AgentControl` plan, so every Debug build is the test context.
 - An ordinary edit-and-build loop is unaffected. Apple describes the feature as being for rebuilding
   states compiled before.
 
@@ -139,14 +155,14 @@ hit only SDK module builds. `Config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PRE
 `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
 `CLANG_ENABLE_PROJECT_PREFIX_MAPPING`. Xcode then rewrites the checkout path to `/^src`, derived-data
 temporaries to `/^derived`, and products to `/^built`, so the same source gets the same key in any
-worktree. `make link-shared`, run first by every building target, replaces a linked worktree's store
-with a symlink to the main checkout's. A fresh worktree's first unit build then takes seconds
-instead of minutes. In a linked worktree `make clean DEEP=1` removes only the link.
+worktree. Every checkout passes the same store path, the main checkout's, so a fresh worktree's
+first unit build takes seconds instead of minutes. `make link-shared`, run first by every
+building target, links a worktree's `.vendor/ffmpeg` to the main checkout's.
 
 The mapping has three costs:
 
 - A replayed task writes no index data. Periphery reads the index, so `make health` builds
-  uncached into `DerivedData-index/` ([code-health automation](/decisions/code-health-automation.md)).
+  uncached into the `-index` cache tree ([code-health automation](/decisions/code-health-automation.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. Real-data suites find
   `logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
@@ -205,12 +221,13 @@ copy of every module whose emit-module dependency file (`<Module>-primary-emit-m
 stale copy, and repeats until no new module is added. One more build then rebuilds all layers
 together. `tools/xcodebuild-run.sh` runs it before every build, in the tree named by the build's
 `-derivedDataPath`, so the index tree of `make health` is checked too. When a build fails and
-leaves new stale copies, it deletes them and builds again, up to `OPENSKY_STALE_RETRIES` times
-(default 8). No new pass starts after `OPENSKY_RETRY_MINUTES` (default 15), so a build that keeps
-finding stale copies fails instead of running for an hour. A failed build that finds no new stale
-copies has a real error, so it stops at once. Before each new pass it deletes the
-`-resultBundlePath` bundle that the failed pass wrote, because xcodebuild refuses a path that
-exists. A test run without building skips all of this.
+leaves new stale copies, it deletes them and builds again, `OPENSKY_STALE_RETRIES` times
+(default 1). Every command line also passes `-IDEBuildingContinueBuildingAfterErrors=YES`, so a
+failed pass still emits the modules the failing one does not block, and fewer stale copies are
+left for the next pass. No new pass starts after `OPENSKY_RETRY_MINUTES` (default 15). A failed
+build that finds no new stale copies has a real error, so it stops at once. Before each new pass
+it deletes the `-resultBundlePath` bundle that the failed pass wrote, because xcodebuild refuses
+a path that exists. A test run without building skips all of this.
 
 ## Warnings are errors
 

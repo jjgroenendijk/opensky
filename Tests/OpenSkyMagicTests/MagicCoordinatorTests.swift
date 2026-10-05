@@ -2,15 +2,14 @@
 // state it keeps. The rules are tested in `MagicCoreTests`. Records are
 // synthetic and built in code, never extracted game files.
 
+import FeaturesTesting
 import OpenSkyActorsInterface
-import OpenSkyActorsTesting
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 

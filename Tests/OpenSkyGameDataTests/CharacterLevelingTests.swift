@@ -2,7 +2,7 @@
 // experience. UESP's numbers (100 to leave level 1, 1300 to leave level 49) are
 // checked directly. `CharacterLevelingRealDataTests` checks the settings.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

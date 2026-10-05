@@ -2,13 +2,13 @@
 // passes, and pixels proving a debug channel changes the frame but not a plain
 // offscreen render. Rules are in `RenderDebugStateTests`. Needs Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

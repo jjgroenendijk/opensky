@@ -1,6 +1,6 @@
 // PackageStore built from a synthetic plugin: malformed PACK records are counted.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

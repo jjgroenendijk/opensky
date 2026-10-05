@@ -3,8 +3,7 @@
 // in-code payloads only (NIFFixture); layouts per NifTools nif.xml;
 // docs/formats/nif.md.
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

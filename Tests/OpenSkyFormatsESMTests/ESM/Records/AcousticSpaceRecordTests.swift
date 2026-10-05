@@ -3,8 +3,7 @@
 // docs/formats/acoustic-space.md. The RDAT field here is a 4-byte REGN FormID,
 // not the 8-byte area header the REGN record uses (Region.swift).
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import TagsTesting

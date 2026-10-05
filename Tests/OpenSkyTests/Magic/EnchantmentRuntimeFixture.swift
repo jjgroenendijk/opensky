@@ -2,7 +2,8 @@
 // is constant effect on self, weapons fire and forget on touch, as measured
 // (see `ItemEnchantmentProfile`). Cost 18 and EAMT 90 give exactly five uses.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyFormatsCore
@@ -10,7 +11,6 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 

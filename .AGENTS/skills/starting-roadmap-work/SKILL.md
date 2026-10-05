@@ -56,11 +56,11 @@ code itself.
    `gh issue edit NNN --add-assignee @me`. The assignee shows other sessions that someone
    works on it.
 2. Branch from `origin/main`, make the first atomic commit, push it, and open a draft PR:
-   `gh pr create --draft`. The PR body closes the issue with `Closes #NNN`. CI does not
-   run on a draft PR, so the runners stay free while the work is in progress.
+   `gh pr create --draft`. The PR body closes the issue with `Closes #NNN`. CI runs the
+   whole unit plan on every push, so the draft collects test results while the work goes on.
 3. Push each further atomic commit to the draft PR as it is done.
 4. When the acceptance gate is met and verified, mark the PR ready:
-   `gh pr ready <pr>`. This starts CI.
+   `gh pr ready <pr>`.
 
 - One branch and one PR per issue.
 - Load the skill for the kind of work: `implementing-format-parsers`, `building-app-ui`,

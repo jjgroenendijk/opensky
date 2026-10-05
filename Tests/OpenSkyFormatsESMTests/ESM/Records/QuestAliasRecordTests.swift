@@ -1,8 +1,7 @@
 // The ALST/ALLS alias run of a QUST record, over synthetic QuestFixture bytes.
 // Layout: docs/formats/quest-records.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -3,7 +3,7 @@
 // record dump. The EITM links that reach an item live in
 // EnchantmentItemLinkTests.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

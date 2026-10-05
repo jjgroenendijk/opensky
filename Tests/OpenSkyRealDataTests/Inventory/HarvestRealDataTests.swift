@@ -2,6 +2,7 @@
 // inventory, the harvested state survives a save round trip, and a second
 // harvest is refused. Run with `make test-real T='HarvestRealDataTests'`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -12,7 +13,6 @@ import OpenSkySaveFixtures
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import TagsTesting
 import Testing
 

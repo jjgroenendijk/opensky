@@ -1,6 +1,6 @@
 // Station query, recipe listing, and eligibility verdicts over synthetic recipes.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

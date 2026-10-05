@@ -1,8 +1,7 @@
 // A kill cam picks its stages, slows the world while it plays, frames the
 // target, and lets go when the last stage ends. A shake fades with distance.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM

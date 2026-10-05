@@ -2,8 +2,7 @@
 // resolution `ActorValueResolver` derives an actor's attribute spread through.
 // Layout: UESP "Skyrim Mod:Mod File Format/CLAS"; see docs/formats/actors.md.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

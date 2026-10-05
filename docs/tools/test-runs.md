@@ -18,29 +18,37 @@ behaviors they depend on, with the dates they were seen, are on the
 Which bundles a run touches is a checked-in test plan, not a flag. Each `make test-<kind>` target is
 one plain `xcodebuild test` call on one plan, with no script between `make` and `xcodebuild`, so the
 plan decides what runs. `make lint-test-targets` fails a target that runs tests under another name.
-The `OpenSky` scheme has seven plans, under `Config/TestPlans/`:
+A plan builds only the bundles it lists, and the build is most of a run's time, so the plans are
+small. The `OpenSky` scheme has these plans, under `Config/TestPlans/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
-| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test-unit`, `make test-unit LOCALE=nl`. The scheme default |
-| `Parser.xctestplan` | the unit plan's targets, only the tests tagged `parser` | `make test-unit TAG=parser` |
-| `GPU.xctestplan` | the unit plan's targets, only the tests tagged `gpu` | `make test-unit TAG=gpu` |
+| `UnitTests.xctestplan` | `OpenSkyTests` and every package test target | `make test-unit PLAN=UnitTests`; CI on every push. The scheme default |
+| `Quick.xctestplan` | every package test target, skipping the tests tagged `slow` and `gpu` | `make test-unit`, the default plan. Builds no app |
+| `Formats.xctestplan` | the `OpenSkyFormats*Tests` targets | `make test-unit PLAN=Formats` |
+| `Engine.xctestplan` | the engine-layer targets: game data, behavior, launch, agent control, physics, rendering, audio, world state | `make test-unit PLAN=Engine` |
+| `Features.xctestplan` | the feature targets, save, menus, and preview | `make test-unit PLAN=Features` |
+| `App.xctestplan` | `OpenSkyTests` | `make test-unit PLAN=App` |
+| `AgentControl.xctestplan` | `OpenSkyAgentControlTests` | `make build-app`, `make build-cli` in Debug, so the app and the CLI build in the test build context |
+| `GPU.xctestplan` | the unit plan's targets, only the tests tagged `gpu` | `make test-unit PLAN=GPU` |
 | `UITests.xctestplan` | `OpenSkyUITests` | `make test-ui` |
-| `RealData.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make test-real` |
+| `RealData.xctestplan` | `OpenSkyRealDataTests`, only the suites tagged `smoke`, plus the data root | `make test-real` |
+| `RealDataAll.xctestplan` | `OpenSkyRealDataTests`, plus the data root | `make test-real ALL=1` |
 | `Perf.xctestplan` | `OpenSkyRealDataTests`, only the tests tagged `perf`, plus the data root | `make test-real PERF=1` |
-| `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize SAN=thread`, `SAN=address` |
+| `Sanitizers.xctestplan` | the unit plan's targets, one configuration per sanitizer | `make test-sanitize SAN=thread`, `SAN=address`; the weekly CI workflow |
 
-The unit plan has two configurations. `Unit` is the normal run, and every command but one names it
-with `-only-test-configuration`, because xcodebuild runs every configuration of a plan when none is
-named. `Locale` sets the language to `nl` and the region to `NL`, where the decimal separator is a
-comma, and `make test-unit LOCALE=nl` runs it. It catches text parsing that reads the user's
-locale. Both configurations share one build, because neither changes a build setting.
+The four layer plans, `Formats`, `Engine`, `Features`, and `App`, partition the unit plan: each
+target is in exactly one of them. The Debug `build-app` and `build-cli` targets use
+`build-for-testing` on the `AgentControl` plan rather than a plain `build`, because a plain build
+compiles the package modules without coverage mapping and a test build with it, and the two
+contexts rewrite the same intermediates (Code coverage, below).
 
 `make lint-test-plans`, part of `make lint`, checks the rules below that a machine can check: every
 plan is in the scheme, sets the timeouts, sets no repetition, and selects no test by name. It also
-checks that the Perf plan selects only the `perf` tag with the RealData data root, that each tag
-plan selects only its tag, and that the sanitizer and tag plans list the unit plan's targets and set
-its environment, such as the shader library path.
+checks that the Perf plan selects only the `perf` tag with the RealData data root, that the
+`RealData` plan selects only the `smoke` tag and `RealDataAll` the whole target, that `Quick` skips
+`slow` and `gpu`, that the layer plans partition the unit plan, and that the sanitizer and `GPU`
+plans list the unit plan's targets and set its environment, such as the shader library path.
 
 ## Timeouts
 
@@ -74,7 +82,8 @@ from `Tests/TagsTesting/Tags.swift`. `Tests/AGENTS.md` says which suite carries 
 A plan's `selectedTests` matches no Swift Testing test, but its `selectedTags` does. Each test
 target entry takes `"selectedTags" : { "tags" : [ "perf" ] }`. The Perf plan ran exactly the two
 tagged tests of `OpenSkyRealDataTests` this way. xcodebuild has no flag that selects a tag, so a tag
-run needs its own plan: `Parser` and `GPU` are the unit plan with every target narrowed to one tag.
+run needs its own plan: `GPU` is the unit plan with every target narrowed to one tag, and `Quick`
+is the package targets with two tags skipped.
 
 A tag cannot replace a plan. A plan chooses the bundles that are built and the environment of the
 host; a tag only chooses tests inside them. So the real-data suites stay in their own bundle.
@@ -82,12 +91,23 @@ host; a tag only chooses tests inside them. So the real-data suites stay in thei
 `make test-report` prints passed, failed, and time per tag. A result bundle does not carry the tags,
 so the report reads them from the sources and matches each test by suite and name.
 
-## Repeat and locale runs
+## Repeat runs and reruns
 
 `make test-unit T='Suite/test()' N=100` passes `-run-tests-until-failure -test-iterations N` and
 stops at the first failure. It is a make target and not a plan configuration on purpose. A plan with
 `testRepetitionMode` would repeat every run that uses the plan, and a retry on failure hides the
 failure a flaky hunt is looking for. `make lint-test-plans` fails a plan that sets either.
+
+`make test-rerun PLAN=<plan>` runs `xcodebuild test-without-building` on the `.xctestrun` file
+that the last `xcodebuild test` or `build-for-testing` of that plan wrote under `Build/Products/`.
+It skips the build system, so one suite reruns in seconds instead of the start-up cost below. It
+tests the products as they were built: the target warns when a source under `Sources/` or `Tests/`
+is newer than the file, and the warning means the result is for the old code.
+
+`make test-package T='Target/Suite'` runs `swift test --filter` for one package test target. It
+needs no Xcode and no app. SwiftPM links every package test target into one bundle, so the first
+run compiles them all, under the build lock; later runs recompile only what changed. It shares
+the `swift build` products of `make compile`.
 
 ## Attachments
 
@@ -114,23 +134,34 @@ the session starts. Only the plan does.
 
 A warm `xcodebuild test` spends most of its time on the build system starting, resolving the scheme
 and plan, and checking the whole graph, not on the tests. Measured on 2026-10-02 with nothing to
-compile: one unit suite took 15 to 21 s, one real-data test 25 s, the `Parser` plan 47 s, and the
-whole unit plan 56 s. Each run pays the start-up, so batch edits into one run.
+compile: one unit suite took 15 to 21 s, one real-data test 25 s, the `Formats` plan 47 s, and
+the whole unit plan 56 s. Each run pays the start-up, so batch edits into one run, and rerun a
+built plan with `make test-rerun`.
+
+That is the cost after the build system starts. Measured over three weeks of runs up to
+2026-10-05, the median `make test-unit` on the whole plan took 7.5 minutes while the test action
+itself took under a minute: the rest was package resolution, the graph check, and waiting on a
+disk shared with other builds. The machine-wide build lock ([build system](/tools/build-system.md))
+removes the waiting; the smaller plans remove most of the graph.
 
 `make test-real` and `make test-sanitize` start `tools/memguard.sh` beside the
 call and turn parallel testing off, so one test host runs and the watchdog's cap is per run. `CAP=MB`
 changes the cap.
 
+`make test-real` runs the `RealData` plan, which selects the `smoke` tag: one quick suite per
+format family and subsystem, so a change gets a real-data check in minutes. `ALL=1` runs
+`RealDataAll`, the whole bundle, for a milestone acceptance.
+
 ## The RealData plan
 
 `Config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
-macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The Perf plan holds the
-same path, and `make lint-test-plans` fails when the two differ. An exported `OPENSKY_DATA_ROOT`
-does not change it. To use another install, edit both plans.
+macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The `RealDataAll` and
+Perf plans hold the same path, and `make lint-test-plans` fails when they differ. An exported
+`OPENSKY_DATA_ROOT` does not change it. To use another install, edit all three plans.
 
 A plan's `selectedTests` does not match Swift Testing tests: selecting any runs zero tests. So the
-plan selects the whole target, which does work. That is why the real-data suites are their own
-bundle. The shared fixtures compile into both bundles.
+plans select the whole target, or a tag, which do work. That is why the real-data suites are their
+own bundle. The shared fixtures compile into both bundles.
 
 `make realdata-plan`, part of `make lint`, checks that every suite with a `@Test` that reads
 `RealDataEnvironment` or declares a `dataRoot: GameDataRoot?` is in `Tests/OpenSkyRealDataTests/`,
@@ -140,15 +171,14 @@ bundle beside `OpenSkyUITests`.
 ## Code coverage
 
 The unit, UI, and sanitizer plans gather line coverage for the `OpenSky` target and the package
-modules only, so the number is about engine code, not the test bundles. `make test-unit` gathers it
-and `make test-report` prints it. There is no separate target and no `-enableCodeCoverage` flag.
-`ENABLE_CODE_COVERAGE` defaults to `YES` in Xcode, so coverage was already gathered on every run and
-thrown away. Scoping it cost nothing measurable: turning it on explicitly recompiled nothing and
-changed the time within noise.
+modules only, so the number is about engine code, not the test bundles. `make test-unit COVERAGE=1`
+passes `-enableCodeCoverage YES` and gathers it, and `make test-report` prints it. A local run
+passes `NO`, because gathering and merging the profile adds time to every run and the number is
+read only by `make coverage-floor`, which CI runs on every push with `COVERAGE=1`.
 
 The plan's target list scopes only the report. A test build compiles every target with
 `-profile-coverage-mapping -profile-generate`, test bundles and fixtures included. A plain `build`
-compiles without them, and both write the same package intermediates under `DerivedData/Build`.
+compiles without them, and both write the same package intermediates under `Build/`.
 Without a fix, `make build-cli` after `make test-unit` would recompile the whole engine, and the
 next test build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES`
 on every Debug command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be
@@ -157,7 +187,7 @@ so an xcconfig value does not reach the compiler. A Release build stays without 
 instrumented program writes `default.profraw` into its working directory when it exits;
 `.gitignore` covers it.
 
-`make test-report` and `make coverage-floor` read `DerivedData/Build/ProfileData/*/Coverage.profdata`
+`make test-report` and `make coverage-floor` read `Build/ProfileData/*/Coverage.profdata`
 with `llvm-cov`, not the result bundle with `xccov`. Each package module builds into its own
 framework under `PackageFrameworks/`, and the bundle lists none of them as a coverage product. So
 `xccov` reports only the app, with no files, and a plan's package targets change nothing. Each test
@@ -181,15 +211,15 @@ of failing a bounds check, and much of the engine's concurrency is in `nonisolat
 
 | Configuration | Plan options | Products |
 | --- | --- | --- |
-| `Thread` | `threadSanitizerEnabled` | `DerivedData/Build/Products/Variant-TSan/` |
+| `Thread` | `threadSanitizerEnabled` | `Build/Products/Variant-TSan/` |
 | `Address` | `addressSanitizer.enabled`, `undefinedBehaviorSanitizerEnabled` | `.../Variant-ASan-UBSan/` |
 
 The two sanitizers cannot share a build. xcodebuild builds every configuration in a plan even when
 told to run one, so each target narrows what runs, not what compiles. That is why this is its own
 plan: as configurations on `UnitTests`, the sanitized builds would compile on every `make
-test-unit`. The first run of each configuration recompiles everything, so it is an occasional check,
-like `make test-real`. A sanitizer report shows as a failing test. Both configurations were clean
-when added, so a new report is a regression, and a real one becomes its own GitHub issue.
+test-unit`. The first run of each configuration recompiles everything, so the weekly CI workflow
+runs both, not a local session. A sanitizer report shows as a failing test. Both configurations were
+clean when added, so a new report is a regression, and a real one becomes its own GitHub issue.
 
 ## Where test time goes
 

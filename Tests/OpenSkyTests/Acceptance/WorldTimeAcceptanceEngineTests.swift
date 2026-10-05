@@ -3,7 +3,8 @@
 // `WorldStateSnapshot.==` ignores the journal sequence, so the tests check both
 // equality and that a restore records nothing. Plugin bytes are built in code.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -14,7 +15,6 @@ import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
 import simd
 import Testing
-import WorldStateTesting
 
 /// The clock the store's time-global redirect drives. A reference type because
 /// `WorldStateStore.onTimeGlobalWrite` has to mutate it from a closure, exactly

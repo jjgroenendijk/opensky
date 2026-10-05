@@ -1,12 +1,12 @@
 // Runtime globals in WorldStateStore: typed writes and rounding, reset, the
 // journal, the snapshot, and restore. See docs/engine/global-variables.md.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 @MainActor
 struct WorldStateGlobalsTests {

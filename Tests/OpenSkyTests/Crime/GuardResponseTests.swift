@@ -1,15 +1,14 @@
 // Guard response: who is a guard, which bounty means talk or fight, the crime
 // term of hostility, and one confrontation at a time.
 
-import FormatsESMTesting
+@testable import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFactions
 import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
-import OpenSkyFactionsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

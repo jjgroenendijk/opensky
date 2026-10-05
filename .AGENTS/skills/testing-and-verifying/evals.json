@@ -6,7 +6,7 @@
     "query": "I changed BSAArchive's header parsing. Is it safe to push?",
     "files": [],
     "expected_behavior": [
-      "Runs make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
+      "Runs make test-package T='OpenSkyFormatsCoreTests/BSAArchiveTests' or make test-unit PLAN=Formats T='OpenSkyFormatsCoreTests/BSAArchiveTests' in a background shell",
       "Runs only one xcodebuild at a time",
       "Lists the exact commands and results in the commit's Tests: section"
     ]
@@ -72,8 +72,8 @@
     "query": "I changed how the NIF parser reads block sizes. What should I run before pushing?",
     "files": [],
     "expected_behavior": [
-      "Runs the covering suite first with make test-unit T='...'",
-      "Then runs make test-unit TAG=parser to cover every parser suite across targets",
+      "Runs the covering suite first with make test-package T='...'",
+      "Then runs make test-unit PLAN=Formats, not the whole unit plan, and leaves PLAN=UnitTests to CI",
       "Does not run make test-real, because no real-data path changed"
     ]
   },
@@ -96,7 +96,8 @@
     "query": "I changed how the combat coordinator applies damage. What should I run before pushing?",
     "files": [],
     "expected_behavior": [
-      "Runs the covering unit suites with make test-unit T='...'",
+      "Runs the covering unit suites with make test-unit PLAN=Features T='...'",
+      "Does not build after every edit: makes the edits first and runs one check",
       "Does not run make test-ui, because no UI test path changed, and says so in the Tests: section"
     ]
   },
@@ -109,6 +110,28 @@
     "expected_behavior": [
       "Runs make test-ui with T= set to the UI tests that use that control, not the whole UI plan",
       "Runs it in a background shell and waits for the notification"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "BSAArchiveTests failed in make test-unit PLAN=Formats. I read the assertion and want to see the full failure output again without rebuilding.",
+    "files": [],
+    "expected_behavior": [
+      "Runs make test-rerun PLAN=Formats T='OpenSkyFormatsCoreTests/BSAArchiveTests' instead of make test-unit",
+      "Does not rerun after an edit without a build, because test-rerun tests the products as last built"
+    ]
+  },
+  {
+    "skills": [
+      "testing-and-verifying"
+    ],
+    "query": "I have six small edits to make across the dialogue coordinator. Should I build after each one?",
+    "files": [],
+    "expected_behavior": [
+      "Makes every edit first and runs one check",
+      "Runs make test-unit PLAN=Features T='...' once, then fixes everything it reports"
     ]
   }
 ]

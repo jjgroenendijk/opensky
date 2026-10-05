@@ -1,7 +1,7 @@
 // The effect catalog and visual-effect specs over a synthetic plugin, the
 // effects coordinator's attach and detach, and the panel readout text.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

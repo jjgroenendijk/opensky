@@ -3,7 +3,7 @@
 // alignment, kerning, and missing-glyph accounting. Synthetic fonts built
 // with SWFFontBodyBuilder.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

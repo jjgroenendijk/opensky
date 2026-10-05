@@ -3,6 +3,7 @@
 // chain's real state, so the route integrates the four runtimes. Impacts and
 // sounds are dropped: a SNDR needs the install.
 
+import EngineTesting
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
@@ -20,7 +21,6 @@ import OpenSkyCombatFixtures
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import PhysicsTesting
 import simd
 
 // MARK: - Melee

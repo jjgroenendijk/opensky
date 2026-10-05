@@ -1,7 +1,7 @@
 // A clip that is still loading: the graph holds its last pose until the clip
 // arrives, and building a graph prefetches the clips its start states reach.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation

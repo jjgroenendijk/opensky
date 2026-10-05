@@ -1,6 +1,6 @@
 // Cross-plugin identity and precedence over synthetic ESM fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

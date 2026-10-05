@@ -1,13 +1,12 @@
 // The effect runtime setup that the active-effect suites share.
 
+import FeaturesTesting
 @testable import OpenSkyActors
-import OpenSkyActorsTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 
 extension ActiveEffectFixture {

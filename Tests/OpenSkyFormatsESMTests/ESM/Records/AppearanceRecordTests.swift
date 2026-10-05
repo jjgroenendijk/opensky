@@ -1,8 +1,7 @@
 // RACE, ARMO, ARMA, OTFT and BodyTemplate decoding. Layouts: UESP "Skyrim
 // Mod:Mod File Format"; biped slot bits: nif.xml BSDismemberBodyPartType.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

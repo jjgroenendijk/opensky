@@ -1,10 +1,10 @@
 // The `PRKS` chunk: owned-perk round trip, load normalization, and an absent
 // chunk keeping a save without perks byte-identical.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyProgressionInterface
-import OpenSkyProgressionTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState

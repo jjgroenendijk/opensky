@@ -3,11 +3,11 @@
 // Every mutation goes through `CrimeRuntime`, so a scripted bounty is saved
 // like a witnessed one. Fixtures are synthetic.
 
-import FormatsESMTesting
+@testable import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting

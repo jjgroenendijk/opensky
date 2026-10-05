@@ -1,7 +1,6 @@
 // ARTO over synthetic records. Layout: docs/formats/art-objects.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -1,7 +1,7 @@
 // The image-space baseline resolve, the IMAD sampler, and the modifier runtime
 // over synthetic IMGS and IMAD records.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering

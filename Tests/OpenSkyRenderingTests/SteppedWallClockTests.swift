@@ -1,8 +1,8 @@
 // The agent clock: frozen time stands still, a step moves it by exactly one
 // frame, and resuming or scaling never jumps.
 
+import EngineTesting
 import OpenSkyRendering
-import RenderingTesting
 import Testing
 
 @MainActor

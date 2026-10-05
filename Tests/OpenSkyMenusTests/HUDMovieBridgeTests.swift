@@ -2,7 +2,7 @@
 // extracted asset is used; the named display object and its entry points are
 // installed in code.
 
-import FormatsSWFTesting
+import FormatsTesting
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyMenus
 import simd

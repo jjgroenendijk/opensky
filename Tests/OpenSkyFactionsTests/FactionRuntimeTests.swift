@@ -1,12 +1,12 @@
 // Runtime faction membership: seeding from SNAM, joining, leaving, refusals,
 // and the derived hostility.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
-import OpenSkyFactionsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

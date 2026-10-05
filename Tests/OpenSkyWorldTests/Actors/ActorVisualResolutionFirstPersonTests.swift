@@ -1,7 +1,7 @@
 // The first-person projection of a resolved actor visual, and the ARMA
 // MOD4/MOD5 decode behind it. Synthetic fixtures throughout.
 
-import FormatsESMTesting
+import FormatsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures

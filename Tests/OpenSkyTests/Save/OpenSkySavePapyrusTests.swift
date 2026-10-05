@@ -2,8 +2,7 @@
 // no script state, corrupt payloads throw, and a later unknown chunk is
 // skipped. See docs/formats/opensky-save-world-chunks.md.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

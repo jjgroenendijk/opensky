@@ -3,7 +3,7 @@
 // value, duplicate keys, case-sensitive keys, non-ASCII values, big-endian
 // tolerance, and malformed (truncated) input.
 
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 import TagsTesting

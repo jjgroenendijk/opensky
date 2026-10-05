@@ -5,6 +5,7 @@
 // advances through dialogue. The report goes to gitignored `logs/` and holds
 // counts and editor IDs only. Run with `make test-real T='QuestAcceptanceRealDataTests/...'`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFormatsCore
@@ -18,7 +19,6 @@ import OpenSkySaveFixtures
 @testable import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import TagsTesting
 import Testing
 

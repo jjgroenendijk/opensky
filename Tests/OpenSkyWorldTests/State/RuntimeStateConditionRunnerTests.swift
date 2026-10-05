@@ -2,11 +2,11 @@
 // verdict must equal `ConditionEvaluator.evaluate(_ conditions:)`, so tests
 // compare the two directly and an OR-grouping change cannot drift.
 
+import FeaturesTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import Testing
 
 struct RuntimeStateConditionRunnerTests {

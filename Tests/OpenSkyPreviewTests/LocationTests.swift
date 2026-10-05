@@ -1,7 +1,6 @@
 // Synthetic LCTN/LCRT layout coverage. No game-derived bytes.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -2,7 +2,7 @@
 // summary, and the resolved enchantment threaded onto their item definitions.
 // The store itself is covered in EnchantmentStoreTests.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

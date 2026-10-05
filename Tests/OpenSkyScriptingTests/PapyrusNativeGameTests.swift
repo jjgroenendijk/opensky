@@ -1,6 +1,6 @@
 // `Game.GetPlayer`: the one `Game` native with an engine behind it.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting

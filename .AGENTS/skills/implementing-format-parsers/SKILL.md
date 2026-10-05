@@ -41,8 +41,8 @@ Copy the shape of an existing format:
 
 | Kind | Parser | Fixture | Unit tests | Page |
 | --- | --- | --- | --- | --- |
-| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/FormatsCoreTesting/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
-| ESM record | `Sources/OpenSkyFormatsESM/ESM/Records/Footstep.swift` | `ESMFixture` in `Tests/FormatsESMTesting/` | `Tests/OpenSkyFormatsESMTests/ESM/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
+| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/FormatsTesting/Core/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
+| ESM record | `Sources/OpenSkyFormatsESM/ESM/Records/Footstep.swift` | `ESMFixture` in `Tests/FormatsTesting/ESM/` | `Tests/OpenSkyFormatsESMTests/ESM/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
 
 The real-data check of the record model is
 `Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`.
@@ -79,8 +79,8 @@ a one-line why. The spec links and the evidence go in the page, not in the code.
   `@Suite(.tags(.parser))`. `make lint-test-tags` checks the tag. A suite that also builds
   engine state goes in the test target of the highest module it imports (`Tests/AGENTS.md`).
 - A bug fix starts with a fixture that reproduces it and a test that fails.
-- Run `make test-unit T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
-  `make test-unit TAG=parser` before pushing.
+- Run `make test-package T='OpenSkyFormats<Family>Tests/<Suite>'` while working, then
+  `make test-unit PLAN=Formats` before pushing.
 - Check the layout on the real install with `make run-cli ARGS=...` or a real-data suite
   under `Tests/OpenSkyRealDataTests/Formats/`, run by `make test-real`. A throwaway probe
   never lands in a commit.

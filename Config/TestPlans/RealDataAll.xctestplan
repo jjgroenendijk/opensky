@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "id": "A1B2C3D0-0000-4000-A000-000000000007",
+      "name": "All",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "defaultTestExecutionTimeAllowance": 600,
+    "environmentVariableEntries": [
+      {
+        "key": "OPENSKY_DATA_ROOT",
+        "value": "/Volumes/data/steam/steamapps/common/Skyrim Special Edition"
+      }
+    ],
+    "maximumTestExecutionTimeAllowance": 1800,
+    "testTimeoutsEnabled": true
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:OpenSky.xcodeproj",
+        "identifier": "5AD1000130001093001700A1",
+        "name": "OpenSkyRealDataTests"
+      }
+    }
+  ],
+  "version": 1
+}

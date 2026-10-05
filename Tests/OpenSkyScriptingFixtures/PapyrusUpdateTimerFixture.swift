@@ -1,8 +1,7 @@
 // The update-timer script and session the timer, clock, persistence and save
 // suites share.
 
-import FormatsESMTesting
-import FormatsPEXTesting
+import FormatsTesting
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

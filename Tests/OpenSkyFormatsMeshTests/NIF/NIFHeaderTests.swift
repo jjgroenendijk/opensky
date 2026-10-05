@@ -1,7 +1,6 @@
 // NIF header decode tests over synthetic in-code files (NIFFixture).
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

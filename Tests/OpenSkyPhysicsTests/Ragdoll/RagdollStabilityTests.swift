@@ -2,8 +2,8 @@
 // many simulated minutes without NaN or divergence. It is never rebuilt, so
 // joint drift from each collapse carries into the next.
 
+import EngineTesting
 @testable import OpenSkyPhysics
-import PhysicsTesting
 import simd
 import TagsTesting
 import Testing

@@ -4,8 +4,7 @@
 // Synthetic plugin/NIF fixtures only, never extracted game files (AGENTS.md
 // Legal & IP boundary).
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering

@@ -1,9 +1,9 @@
 // The fourteen data condition functions, over CTDA and records built in code.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+import FeaturesTesting
+@testable import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
@@ -12,7 +12,6 @@ import GameDataTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

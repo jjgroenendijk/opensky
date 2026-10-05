@@ -1,8 +1,7 @@
 // NIF container block-walk + footer tests over synthetic in-code files
 // (NIFFixture). Unknown block types must be carried, not crash the walk.
 
-import FormatsCoreTesting
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import TagsTesting

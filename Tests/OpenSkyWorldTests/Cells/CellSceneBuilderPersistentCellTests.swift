@@ -2,7 +2,7 @@
 // carries XCLC (0,0), like the real block cell at (0,0). Grid lookups must skip
 // it; its references map into cells by position. Synthetic fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

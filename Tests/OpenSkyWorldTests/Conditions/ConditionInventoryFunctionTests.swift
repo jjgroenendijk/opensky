@@ -1,12 +1,12 @@
 // `GetItemCount` through the whole-game registry, and the first failing group
 // that a crafting verdict names.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionInventoryFunctionTests {

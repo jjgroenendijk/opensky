@@ -3,7 +3,7 @@
 // checked on the types: one weight per viseme, a finished line costs nothing,
 // a disabled seam costs nothing, one vertex range per active target.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAnimation

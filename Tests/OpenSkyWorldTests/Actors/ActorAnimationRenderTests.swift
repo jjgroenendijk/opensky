@@ -1,12 +1,12 @@
 // Actor animation render gate: frames at different times differ for a skinned
 // actor, while an identical static prop stays byte-identical.
 
+import EngineTesting
 import Metal
 import MetalKit
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

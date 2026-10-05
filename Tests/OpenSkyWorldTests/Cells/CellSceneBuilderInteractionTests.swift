@@ -1,7 +1,7 @@
 // Scene-owned interaction metadata built from synthetic REFR/model-base
 // records. No game data is embedded in these fixtures.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

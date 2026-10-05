@@ -1,9 +1,8 @@
 // The actor values the caster suites spend from. Needs the Actors runtime, so
 // it lives beside the suites that combine it with Magic.
 
+import FeaturesTesting
 @testable import OpenSkyActors
-import OpenSkyActorsTesting
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 
 extension SpellbookFixture {

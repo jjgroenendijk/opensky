@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyGameData
 import Testing
 
+@Suite(.tags(.smoke))
 struct RecordIndexRealDataTests {
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func indexesReferenceRecordFamiliesAcrossTheLoadOrder() throws {
