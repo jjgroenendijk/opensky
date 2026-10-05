@@ -1009,28 +1009,34 @@ fragment float4 membraneFragment(
 }
 
 // Asset format comparison: decodes any sampled texture (BC, ASTC, RGBA8) to
-// RGBA8, so two formats compare on the pixels the GPU sees.
-kernel void textureReadbackCopy(
-    texture2d<float, access::read> source [[texture(0)]],
-    texture2d<float, access::write> target [[texture(1)]],
-    uint2 gid [[thread_position_in_grid]])
+// RGBA8, so two formats compare on the pixels the GPU sees. A render pass, not a
+// compute pass, because virtual GPUs such as CI runners lack Metal 4 compute.
+struct TextureReadbackVertexOut
 {
-    if (gid.x >= target.get_width() || gid.y >= target.get_height()) {
-        return;
-    }
-    target.write(source.read(gid), gid);
+    float4 position [[position]];
+    float2 uv;
+};
+
+vertex TextureReadbackVertexOut textureReadbackVertex(uint vertexID [[vertex_id]])
+{
+    float2 corner = float2((vertexID << 1) & 2, vertexID & 2);
+    TextureReadbackVertexOut out;
+    out.position = float4(corner * 2.0 - 1.0, 0.0, 1.0);
+    out.uv = float2(corner.x, 1.0 - corner.y);
+    return out;
+}
+
+fragment float4 textureReadbackCopy(
+    TextureReadbackVertexOut in [[stage_in]], texture2d<float, access::read> source [[texture(0)]])
+{
+    return source.read(uint2(in.position.xy));
 }
 
 // Same, resampled bilinearly to the target size, for a texture stored smaller.
-kernel void textureReadbackScaled(
-    texture2d<float, access::sample> source [[texture(0)]],
-    texture2d<float, access::write> target [[texture(1)]],
-    uint2 gid [[thread_position_in_grid]])
+fragment float4 textureReadbackScaled(
+    TextureReadbackVertexOut in [[stage_in]],
+    texture2d<float, access::sample> source [[texture(0)]])
 {
-    if (gid.x >= target.get_width() || gid.y >= target.get_height()) {
-        return;
-    }
     constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
-    float2 uv = (float2(gid) + 0.5) / float2(target.get_width(), target.get_height());
-    target.write(source.sample(bilinear, uv, level(0.0)), gid);
+    return source.sample(bilinear, in.uv, level(0.0));
 }

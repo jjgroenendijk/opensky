@@ -3,11 +3,11 @@
 
 import Metal
 
-/// One compute pass per call, waited on. For tools and tests, not for frames.
+/// One render pass per call, waited on. For tools and tests, not for frames.
 public final class TextureReadback {
     private let device: MTLDevice
-    private let copyPipeline: MTLComputePipelineState
-    private let scaledPipeline: MTLComputePipelineState
+    private let copyPipeline: MTLRenderPipelineState
+    private let scaledPipeline: MTLRenderPipelineState
     private let queue: MTL4CommandQueue
     private let allocator: MTL4CommandAllocator
     private let commandBuffer: MTL4CommandBuffer
@@ -28,7 +28,7 @@ public final class TextureReadback {
         }
         self.allocator = allocator
         let tableDescriptor = MTL4ArgumentTableDescriptor()
-        tableDescriptor.maxTextureBindCount = 2
+        tableDescriptor.maxTextureBindCount = 1
         argumentTable = try device.makeArgumentTable(descriptor: tableDescriptor)
         residency = try Renderer.makeResidencySet(device: device, allocations: [])
         guard let event = device.makeSharedEvent() else {
@@ -61,7 +61,7 @@ public final class TextureReadback {
     }
 
     private func run(
-        _ pipeline: MTLComputePipelineState,
+        _ pipeline: MTLRenderPipelineState,
         source: MTLTexture,
         width: Int,
         height: Int
@@ -69,7 +69,7 @@ public final class TextureReadback {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false
         )
-        descriptor.usage = .shaderWrite
+        descriptor.usage = .renderTarget
         descriptor.storageMode = .shared
         guard let target = device.makeTexture(descriptor: descriptor) else {
             throw RendererError.textureAllocationFailed
@@ -92,25 +92,25 @@ public final class TextureReadback {
     }
 
     private func encode(
-        _ pipeline: MTLComputePipelineState,
+        _ pipeline: MTLRenderPipelineState,
         source: MTLTexture,
         target: MTLTexture
     ) throws {
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
         commandBuffer.useResidencySet(residency)
-        guard let encoder = commandBuffer.makeComputeCommandEncoder() else {
+        let pass = MTL4RenderPassDescriptor()
+        pass.colorAttachments[0].texture = target
+        pass.colorAttachments[0].loadAction = .dontCare
+        pass.colorAttachments[0].storeAction = .store
+        guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: pass) else {
             commandBuffer.endCommandBuffer()
             throw RendererError.encoderUnavailable
         }
         argumentTable.setTexture(source.gpuResourceID, index: 0)
-        argumentTable.setTexture(target.gpuResourceID, index: 1)
-        encoder.setComputePipelineState(pipeline)
-        encoder.setArgumentTable(argumentTable)
-        encoder.dispatchThreads(
-            threadsPerGrid: MTLSize(width: target.width, height: target.height, depth: 1),
-            threadsPerThreadgroup: MTLSize(width: 8, height: 8, depth: 1)
-        )
+        encoder.setRenderPipelineState(pipeline)
+        encoder.setArgumentTable(argumentTable, stages: .fragment)
+        encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
         encoder.endEncoding()
         commandBuffer.endCommandBuffer()
         submitted += 1
@@ -122,15 +122,20 @@ public final class TextureReadback {
     }
 
     private static func pipeline(
-        _ name: String,
+        _ fragmentName: String,
         _ library: MTLLibrary,
         _ compiler: MTL4Compiler
-    ) throws -> MTLComputePipelineState {
-        let function = MTL4LibraryFunctionDescriptor()
-        function.library = library
-        function.name = name
-        let descriptor = MTL4ComputePipelineDescriptor()
-        descriptor.computeFunctionDescriptor = function
-        return try compiler.makeComputePipelineState(descriptor: descriptor)
+    ) throws -> MTLRenderPipelineState {
+        let vertex = MTL4LibraryFunctionDescriptor()
+        vertex.library = library
+        vertex.name = "textureReadbackVertex"
+        let fragment = MTL4LibraryFunctionDescriptor()
+        fragment.library = library
+        fragment.name = fragmentName
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.vertexFunctionDescriptor = vertex
+        descriptor.fragmentFunctionDescriptor = fragment
+        descriptor.colorAttachments[0].pixelFormat = .rgba8Unorm
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 }
