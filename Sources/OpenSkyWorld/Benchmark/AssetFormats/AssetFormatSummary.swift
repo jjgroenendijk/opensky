@@ -102,9 +102,9 @@ nonisolated public struct AssetFormatRecommendation: Codable, Equatable, Sendabl
     public let choice: AssetFormatGroup
     public let reason: String
 
-    /// Highest quality: the fastest exact load. Balanced: the fastest load within
-    /// the loss limit that holds no more memory than the original. Best
-    /// performance: the least memory within its looser limit, then the fastest.
+    /// Highest quality: the fastest exact load. Balanced and best performance: the
+    /// least memory within the preset's loss limit, then the fastest load. Memory
+    /// comes first because the CPU and the GPU share it.
     public static func recommend(_ summaries: [AssetFormatSummary]) -> [Self] {
         var keys: [AssetFormatGroup] = []
         for summary in summaries where summary.group.candidate == "original" {
@@ -127,11 +127,10 @@ nonisolated public struct AssetFormatRecommendation: Codable, Equatable, Sendabl
         let eligible = peers.filter { summary in
             summary.errorCount == 0 && summary.assetCount == original.assetCount
                 && passes(summary, preset.limit)
-                && (preset != .balanced || summary.memoryBytes <= original.memoryBytes)
         }
-        let best = preset == .bestPerformance
-            ? eligible.min { Self.byMemory($0, $1) }
-            : eligible.min { Self.bySpeed($0, $1) }
+        let best = preset == .highestQuality
+            ? eligible.min { Self.bySpeed($0, $1) }
+            : eligible.min { Self.byMemory($0, $1) }
         guard let best else { return nil }
         let reason = String(
             format: "%.1f ms, %d KiB memory, %d KiB disk; original %.1f ms, %d KiB, %d KiB",

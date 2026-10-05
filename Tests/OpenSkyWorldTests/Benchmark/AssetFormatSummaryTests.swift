@@ -66,7 +66,7 @@ struct AssetFormatSummaryTests {
         }
         // Exact only, fastest: RGBA8 beats the shipped blocks on time.
         #expect(choice(.highestQuality) == "rgba8")
-        // Within 40 dB and no more memory than the original: ASTC 4x4.
+        // Least memory within 40 dB: ASTC 4x4 ties the original and loads faster.
         #expect(choice(.balanced) == "astc4x4")
         // Least memory within 30 dB.
         #expect(choice(.bestPerformance) == "astc8x8")

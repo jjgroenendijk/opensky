@@ -61,8 +61,11 @@ nonisolated public struct AssetCandidateMeasurement: Codable, Equatable, Sendabl
     /// Bytes on disk: the archive entry, or the cache file.
     public let diskBytes: Int
     public let fidelity: AssetFidelity
-    /// Time to build the cache payload from the original; zero for the original itself.
+    /// Time to build the cache payload from the archive bytes, parse included;
+    /// zero for the original itself.
     public let convertMS: Double
+    /// Time to compress and write the cache file.
+    public let writeMS: Double
     public let error: String?
 
     public init(
@@ -73,6 +76,7 @@ nonisolated public struct AssetCandidateMeasurement: Codable, Equatable, Sendabl
         sizes: (memory: Int, disk: Int),
         fidelity: AssetFidelity,
         convertMS: Double = 0,
+        writeMS: Double = 0,
         error: String? = nil
     ) {
         self.candidate = candidate
@@ -83,6 +87,7 @@ nonisolated public struct AssetCandidateMeasurement: Codable, Equatable, Sendabl
         diskBytes = sizes.disk
         self.fidelity = fidelity
         self.convertMS = convertMS
+        self.writeMS = writeMS
         self.error = error
     }
 }
@@ -92,6 +97,9 @@ nonisolated public struct AssetMeasurement: Codable, Equatable, Sendable {
     /// `2048x2048 bc1, 11 mips` or `2 meshes, 1156 vertices`.
     public let detail: String
     public let candidates: [AssetCandidateMeasurement]
+    /// The size the processing time scales with: texels over all mips for a
+    /// texture, the stored archive bytes otherwise. `AssetCensus` counts the same.
+    public let workUnits: Int
     /// Set when the original could not be loaded; then there are no candidates.
     public let error: String?
 
@@ -99,11 +107,13 @@ nonisolated public struct AssetMeasurement: Codable, Equatable, Sendable {
         entry: AssetSampleEntry,
         detail: String,
         candidates: [AssetCandidateMeasurement],
+        workUnits: Int = 0,
         error: String? = nil
     ) {
         self.entry = entry
         self.detail = detail
         self.candidates = candidates
+        self.workUnits = workUnits
         self.error = error
     }
 }
@@ -113,7 +123,7 @@ nonisolated public enum AssetFormatComparisonResultError: Error, Equatable, Send
 }
 
 nonisolated public struct AssetFormatComparisonResult: Codable, Equatable, Sendable {
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 
     public let schemaVersion: Int
     public let startedAt: Date
@@ -125,13 +135,17 @@ nonisolated public struct AssetFormatComparisonResult: Codable, Equatable, Senda
     public let assets: [AssetMeasurement]
     public let summaries: [AssetFormatSummary]
     public let recommendations: [AssetFormatRecommendation]
+    /// Nil when the run did not count the install.
+    public let census: AssetCensus?
+    public let estimates: [AssetProcessingEstimate]
 
     public init(
         startedAt: Date,
         machine: BenchmarkMachine,
         loadAverage: [Double],
         plan: AssetFormatComparisonPlan,
-        assets: [AssetMeasurement]
+        assets: [AssetMeasurement],
+        census: AssetCensus? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
         self.startedAt = startedAt
@@ -142,6 +156,9 @@ nonisolated public struct AssetFormatComparisonResult: Codable, Equatable, Senda
         self.assets = assets
         summaries = AssetFormatSummary.summarize(assets)
         recommendations = AssetFormatRecommendation.recommend(summaries)
+        self.census = census
+        estimates = census
+            .map { AssetProcessingEstimate.estimate(assets: assets, census: $0) } ?? []
     }
 
     /// True when every sampled asset loaded, so totals compare with another run.

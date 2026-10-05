@@ -19,23 +19,26 @@ extension AssetFormatComparison {
                 memoryBytes: audio.samples.count * MemoryLayout<Float>.size
             )
         }
-        let reference = try Self.decodeShippedAudio(source)
+        let (reference, decodeMS) = try Self.timed { try Self.decodeShippedAudio(source) }
         var rows = [original]
         for format in CAFAudioFormat.allCases {
-            rows += try audioRows(format, reference: reference)
+            rows += try audioRows(format, reference: reference, decodeMS: decodeMS)
         }
         return AssetMeasurement(
             entry: entry,
             detail: "\(reference.sampleRate) Hz, \(reference.channelCount) channels, "
                 + String(format: "%.1f s", reference.duration),
-            candidates: rows
+            candidates: rows,
+            workUnits: original.diskBytes
         )
     }
 
     /// AudioToolbox reads the file itself, so the whole load counts as decode.
+    /// It also writes the file while encoding, so `convertMS` holds the write.
     private func audioRows(
         _ format: CAFAudioFormat,
-        reference: DecodedAudio
+        reference: DecodedAudio,
+        decodeMS: Double
     ) throws -> [AssetCandidateMeasurement] {
         let url = nextScratchURL(.raw).appendingPathExtension("caf")
         defer { try? FileManager.default.removeItem(at: url) }
@@ -55,7 +58,8 @@ extension AssetFormatComparison {
         }
         return [AssetCandidateMeasurement(
             candidate: format.rawValue, storage: .raw, path: .cpu, timing: sample.timing,
-            sizes: (sample.memoryBytes, disk), fidelity: fidelity, convertMS: convertMS
+            sizes: (sample.memoryBytes, disk), fidelity: fidelity,
+            convertMS: decodeMS + convertMS
         )]
     }
 

@@ -48,7 +48,11 @@ public final class AssetFormatComparison {
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
     }
 
-    public func run(machine: BenchmarkMachine) -> AssetFormatComparisonResult {
+    /// - Parameter census: the install's size, for the whole-game estimate.
+    public func run(
+        machine: BenchmarkMachine,
+        census: AssetCensus? = nil
+    ) -> AssetFormatComparisonResult {
         let startedAt = Date()
         let startLoad = Self.loadAverage()
         let assets = plan.entries.map { entry in
@@ -60,7 +64,8 @@ public final class AssetFormatComparison {
             machine: machine,
             loadAverage: [startLoad, Self.loadAverage()],
             plan: plan,
-            assets: assets
+            assets: assets,
+            census: census
         )
     }
 
@@ -126,8 +131,11 @@ public final class AssetFormatComparison {
             let url = nextScratchURL(storage)
             defer { try? FileManager.default.removeItem(at: url) }
             let disk: Int
+            let writeMS: Double
             do {
-                try AssetFileLoader.write(payload, to: url, storage: storage)
+                (_, writeMS) = try Self.timed {
+                    try AssetFileLoader.write(payload, to: url, storage: storage)
+                }
                 disk = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             } catch {
                 return paths.map { failedRow(candidate, storage, $0, String(describing: error)) }
@@ -138,7 +146,8 @@ public final class AssetFormatComparison {
                     return AssetCandidateMeasurement(
                         candidate: candidate, storage: storage, path: path,
                         timing: sample.timing, sizes: (sample.memoryBytes, disk),
-                        fidelity: fidelity, convertMS: convertMS, error: sample.mismatch
+                        fidelity: fidelity, convertMS: convertMS, writeMS: writeMS,
+                        error: sample.mismatch
                     )
                 } catch {
                     return failedRow(candidate, storage, path, String(describing: error))

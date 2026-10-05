@@ -91,12 +91,15 @@ cache payload byte for byte; a difference is an error on that row.
   collision and animation, and the decoded samples of audio. The `original` animation row
   counts the HKX file, because the engine keeps the spline data, not poses.
 - `diskBytes`: the bytes the archive stores for `original`, or the cache file size.
-- `convertMS`: time to build the cache payload, for ASTC the encode time.
+- `convertMS`: time to build the cache payload from the archive bytes, parse included. For
+  ASTC it holds the DDS parse, the GPU decode of the shipped levels, and the encode. For
+  audio it holds the decode of the shipped file and the CAF write.
+- `writeMS`: time to compress and write the cache file.
 - `fidelity`: `exact` when bytes or pixels match. Lossy textures report the PSNR over RGB and
   alpha, the largest channel error, and for normal maps the mean angle between normals.
   Audio reports the signal-to-noise ratio against the shipped file decoded by the engine.
 
-Texture pixels compare as the GPU decodes them. A compute kernel samples both textures into
+Texture pixels compare as the GPU decodes them. A render pass samples both textures into
 RGBA8, in the stored values, not linearized. A half or quarter size candidate is resampled
 bilinearly to full size first. Only mip level 0 is compared.
 
@@ -112,7 +115,25 @@ is not picked.
 | Preset | Loss allowed | Picks |
 | --- | --- | --- |
 | `highestQuality` | None | The fastest total load |
-| `balanced` | 40 dB RGB, 2 degrees on normals, 20 dB audio SNR | The fastest total load that holds no more memory than the original |
+| `balanced` | 40 dB RGB, 2 degrees on normals, 20 dB audio SNR | The least memory, then the fastest |
 | `bestPerformance` | 30 dB RGB, 5 degrees on normals, 10 dB audio SNR | The least memory, then the fastest |
 
+Memory comes before speed in the lossy presets, because the CPU and the GPU share one
+memory on Apple Silicon. A texture the GPU holds is memory the engine cannot use.
+
 These limits are starting values. The asset quality presets set the final ones.
+
+## Whole-game estimate
+
+Before the sample is measured, `AssetCensus` walks every archive entry of the measured kinds
+and counts work units: texels over all mips for a texture, read from its DDS header, and
+stored bytes for the other kinds. A NIF counts as both a mesh and a collision source. A
+texture's role comes from its name suffix: `_n` and `_msn` are normal maps; `_s`, `_sk`,
+`_em`, `_e`, `_g`, `_m`, `_p`, `_b`, and `_h` are data maps; the rest are color maps.
+
+For each candidate and storage, the processing time of one sampled asset is its archive
+read, `convertMS`, and `writeMS`. `AssetProcessingEstimate` scales the sum over the sample
+by the install's work units divided by the sample's. The log prints it for every candidate,
+and per preset the total for the picks, on one core and divided by the core count. The
+divided number is a lower bound: the efficiency cores are slower, and astcenc runs one
+thread per texture. The archive reads are warm, so a cold first run reads slower.

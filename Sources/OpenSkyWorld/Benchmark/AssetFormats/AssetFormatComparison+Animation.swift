@@ -17,9 +17,11 @@ extension AssetFormatComparison {
             let (data, read) = try Self.timed { try files.contents(forPath: entry.path) }
             return try parseAnimation(data, read: read)
         }
-        let animations = try HKASplineCompressedAnimation.animations(in: HKXFile(data: source))
+        let (animations, parseMS) = try Self.timed {
+            try HKASplineCompressedAnimation.animations(in: HKXFile(data: source))
+        }
         let (sampled, sampleMS) = try Self.timed { try animations.map(Self.sampledPoses) }
-        let packed = PackedBlobs(sampled.map { PackedBlobs.blob($0) })
+        let (packed, packMS) = Self.timed { PackedBlobs(sampled.map { PackedBlobs.blob($0) }) }
         let shippedRows = cacheRows(
             candidate: "shipped", payload: source, paths: [.cpu], fidelity: .lossless
         ) { _, url, storage in
@@ -29,7 +31,8 @@ extension AssetFormatComparison {
             return try parseAnimation(data, read: read)
         }
         let readyRows = cacheRows(
-            candidate: "ready", payload: packed.bytes, paths: [.cpu], fidelity: .lossless
+            candidate: "ready", payload: packed.bytes, convertMS: parseMS + sampleMS + packMS,
+            paths: [.cpu], fidelity: .lossless
         ) { _, url, storage in
             let (data, read) = try Self.timed {
                 try readCacheFile(url, storage, byteCount: packed.bytes.count)
@@ -50,7 +53,8 @@ extension AssetFormatComparison {
             entry: entry,
             detail: "\(animations.count) clips, \(tracks) tracks, \(frames) frames; "
                 + String(format: "%.1f us per pose from the spline", perPose),
-            candidates: [original] + shippedRows + readyRows
+            candidates: [original] + shippedRows + readyRows,
+            workUnits: original.diskBytes
         )
     }
 

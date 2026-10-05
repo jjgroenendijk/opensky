@@ -26,20 +26,28 @@ enum AssetFormatsCommand {
         }
         let files = context.makeFileSystem()
         let standard = AssetFormatComparisonPlan.standard
+        let plan = AssetFormatComparisonPlan(
+            entries: standard.entries.filter { kind == nil || $0.kind == kind },
+            repeats: standard.repeats
+        )
         let comparison = try AssetFormatComparison(
             files: files,
             storedSize: { files.storedByteCount(forPath: $0) },
             device: device,
             library: Renderer.makeBundledShaderLibrary(device: device),
             scratch: URL(fileURLWithPath: scratchPath),
-            plan: AssetFormatComparisonPlan(
-                entries: standard.entries.filter { kind == nil || $0.kind == kind },
-                repeats: standard.repeats
-            )
+            plan: plan
+        )
+        print("[INFO] counting the install")
+        let census = AssetCensus.count(
+            files: files,
+            storedSize: { files.storedByteCount(forPath: $0) },
+            kinds: Set(plan.entries.map(\.kind))
         )
         comparison.progress = { print("[INFO] measuring \($0)") }
-        let result = comparison.run(machine: .current(gpu: device.name))
+        let result = comparison.run(machine: .current(gpu: device.name), census: census)
         report(result)
+        reportEstimates(result)
         if let outPath {
             let url = URL(fileURLWithPath: outPath)
             try result.jsonData().write(to: url)
@@ -100,5 +108,43 @@ enum AssetFormatsCommand {
             parts.append(String(format: "worst SNR %.1f dB", noise))
         }
         return parts.isEmpty ? ", lossy" : ", " + parts.joined(separator: ", ")
+    }
+
+    private static func reportEstimates(_ result: AssetFormatComparisonResult) {
+        for bucket in result.census?.buckets ?? [] {
+            let role = bucket.role.map { "/\($0.rawValue)" } ?? ""
+            print(
+                "[INFO] install \(bucket.kind.rawValue)\(role): "
+                    + "\(bucket.fileCount) files, \(bucket.storedBytes >> 20) MiB stored, "
+                    + "\(bucket.unreadableCount) unreadable"
+            )
+        }
+        for estimate in result.estimates {
+            print(
+                "[INFO] whole game \(estimate.kind.rawValue)"
+                    + "\(estimate.role.map { "/\($0.rawValue)" } ?? "") \(estimate.candidate) "
+                    + "\(estimate.storage?.rawValue ?? ""): \(duration(estimate.processingMS)) "
+                    + "on one core, \(estimate.diskBytes >> 20) MiB cache"
+            )
+        }
+        let cores = ProcessInfo.processInfo.activeProcessorCount
+        for preset in AssetQualityPreset.allCases where !result.estimates.isEmpty {
+            let total = AssetProcessingEstimate.total(
+                preset, recommendations: result.recommendations, estimates: result.estimates
+            )
+            print(
+                "[OK] whole game \(preset.rawValue): \(duration(total.processingMS)) on one core, "
+                    + "at best \(duration(total.processingMS / Double(cores))) on \(cores) cores, "
+                    + "\(total.diskBytes >> 20) MiB cache"
+            )
+        }
+    }
+
+    private static func duration(_ milliseconds: Double) -> String {
+        let seconds = Int(milliseconds / 1000)
+        if seconds >= 3600 {
+            return "\(seconds / 3600) h \(seconds % 3600 / 60) min"
+        }
+        return seconds >= 60 ? "\(seconds / 60) min \(seconds % 60) s" : "\(seconds) s"
     }
 }

@@ -18,9 +18,11 @@ extension AssetFormatComparison {
             let (data, read) = try Self.timed { try files.contents(forPath: entry.path) }
             return try parseAndUpload(data, read: read, provider: provider)
         }
-        let model = try NIFFile(data: source).model(skeleton: nil)
+        let ((model, ready), convertMS) = try Self.timed {
+            let model = try NIFFile(data: source).model(skeleton: nil)
+            return (model, ReadyMeshPayload(model: model))
+        }
         let reference = try RenderModel(device: device, model: model, textureProvider: provider)
-        let ready = ReadyMeshPayload(model: model)
         let expected = ReadyMeshPayload.bufferBytes(of: reference)
         let fidelity = try AssetFidelity(exact: ready.packed
             .blobs(from: ready.packed.bytes) == expected)
@@ -33,8 +35,8 @@ extension AssetFormatComparison {
             return try parseAndUpload(data, read: read, provider: provider)
         }
         let readyRows = cacheRows(
-            candidate: "ready", payload: ready.packed.bytes, paths: [.cpu, .mtlio],
-            fidelity: fidelity
+            candidate: "ready", payload: ready.packed.bytes, convertMS: convertMS,
+            paths: [.cpu, .mtlio], fidelity: fidelity
         ) { path, url, storage in
             try loadReadyMesh(ready, url: url, storage: storage, path: path)
         }
@@ -43,7 +45,8 @@ extension AssetFormatComparison {
         return AssetMeasurement(
             entry: entry,
             detail: "\(model.meshes.count) meshes, \(vertices) vertices, \(triangles) triangles",
-            candidates: [original] + shippedRows + readyRows
+            candidates: [original] + shippedRows + readyRows,
+            workUnits: original.diskBytes
         )
     }
 

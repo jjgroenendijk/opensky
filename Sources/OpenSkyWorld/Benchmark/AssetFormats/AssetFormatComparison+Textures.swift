@@ -23,14 +23,15 @@ extension AssetFormatComparison {
                 memoryBytes: texture.allocatedSize
             )
         }
-        let dds = try DDSFile(data: source)
-        let shipped = try GPUTexturePayload.shipped(dds)
-        let shippedTexture = try shipped.upload(device: device, source: shipped.bytes)
-        let levels = try shipped.levels.indices.map { level in
-            try readback.pixels(of: shippedTexture, level: level)
+        let (dds, parseMS) = try Self.timed { try DDSFile(data: source) }
+        let (shipped, shippedMS) = try Self.timed { try GPUTexturePayload.shipped(dds) }
+        let (levels, decodeMS) = try Self.timed {
+            let texture = try shipped.upload(device: device, source: shipped.bytes)
+            return try shipped.levels.indices.map { try readback.pixels(of: texture, level: $0) }
         }
+        let costs = TextureSourceCosts(parse: parseMS, shipped: shippedMS, decode: decodeMS)
         var rows = [original]
-        for candidate in try textureCandidates(dds: dds, shipped: shipped, levels: levels) {
+        for candidate in try textureCandidates(dds: dds, shipped: shipped, levels: levels, costs) {
             let payload = candidate.payload
             let fidelity = try textureFidelity(payload, reference: levels[0], role: entry.role)
             rows += cacheRows(
@@ -43,37 +44,48 @@ extension AssetFormatComparison {
         return AssetMeasurement(
             entry: entry,
             detail: "\(dds.width)x\(dds.height) \(dds.format), \(dds.mipCount) mips",
-            candidates: rows
+            candidates: rows,
+            workUnits: shipped.levels.map { $0.width * $0.height }.reduce(0, +)
         )
     }
 
-    /// Each candidate with the milliseconds its conversion took.
+    /// Each candidate with the milliseconds its conversion took, parse included.
     private func textureCandidates(
         dds: DDSFile,
         shipped: GPUTexturePayload,
-        levels: [TexturePixels]
+        levels: [TexturePixels],
+        _ costs: TextureSourceCosts
     ) throws -> [TextureCandidate] {
-        var candidates = [TextureCandidate(name: "shipped", payload: shipped, convertMS: 0)]
-        func add(_ name: String, _ build: () throws -> GPUTexturePayload) throws {
+        var candidates = [TextureCandidate(
+            name: "shipped", payload: shipped, convertMS: costs.parse + costs.shipped
+        )]
+        func add(
+            _ name: String,
+            from base: Double,
+            _ build: () throws -> GPUTexturePayload
+        ) throws {
             let (payload, convertMS) = try Self.timed(build)
-            candidates.append(TextureCandidate(name: name, payload: payload, convertMS: convertMS))
+            candidates.append(TextureCandidate(
+                name: name, payload: payload, convertMS: base + convertMS
+            ))
         }
-        try add("rgba8") { try .rgba8(levels: levels) }
+        let decoded = costs.parse + costs.shipped + costs.decode
+        try add("rgba8", from: decoded) { try .rgba8(levels: levels) }
         for block in ASTCBlockSize.square {
-            try add("astc\(block.width)x\(block.height)") {
+            try add("astc\(block.width)x\(block.height)", from: decoded) {
                 try .astc(levels: levels, block: block, effort: .medium)
             }
         }
         let effortBlock = ASTCBlockSize(width: 6, height: 6)
         for effort in [ASTCEffort.fastest, .fast, .thorough] {
-            try add("astc6x6-\(effort.rawValue)") {
+            try add("astc6x6-\(effort.rawValue)", from: decoded) {
                 try .astc(levels: levels, block: effortBlock, effort: effort)
             }
         }
         for (name, dropped) in [("shippedHalf", 1), ("shippedQuarter", 2)]
             where dds.mipCount > dropped
         {
-            try add(name) { try .shipped(dds, droppedLevels: dropped) }
+            try add(name, from: costs.parse) { try .shipped(dds, droppedLevels: dropped) }
         }
         return candidates
     }
@@ -153,4 +165,12 @@ private struct TextureCandidate {
     let name: String
     let payload: GPUTexturePayload
     let convertMS: Double
+}
+
+/// What every texture candidate pays before its own conversion: the DDS parse,
+/// the shipped payload, and the GPU decode of every level to RGBA8.
+private struct TextureSourceCosts {
+    let parse: Double
+    let shipped: Double
+    let decode: Double
 }

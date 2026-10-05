@@ -30,9 +30,10 @@ extension AssetFormatComparison {
             let (data, read) = try Self.timed { try files.contents(forPath: entry.path) }
             return try parseCollision(data, read: read)
         }
-        let model = try NIFFile(data: source).collisionModel()
-        let (types, blobs) = Self.collisionBlobs(model)
-        let packed = PackedBlobs(blobs)
+        let (model, parseMS) = try Self.timed { try NIFFile(data: source).collisionModel() }
+        let ((types, blobs), blobMS) = Self.timed { Self.collisionBlobs(model) }
+        let (packed, packMS) = Self.timed { PackedBlobs(blobs) }
+        let convertMS = parseMS + blobMS + packMS
         let expectedValues = zip(types, blobs).map { $0.values($1) }.reduce(0, +)
         let shippedRows = cacheRows(
             candidate: "shipped", payload: source, paths: [.cpu], fidelity: .lossless
@@ -43,7 +44,8 @@ extension AssetFormatComparison {
             return try parseCollision(data, read: read)
         }
         let readyRows = cacheRows(
-            candidate: "ready", payload: packed.bytes, paths: [.cpu], fidelity: .lossless
+            candidate: "ready", payload: packed.bytes, convertMS: convertMS, paths: [.cpu],
+            fidelity: .lossless
         ) { _, url, storage in
             let (data, read) = try Self.timed {
                 try readCacheFile(url, storage, byteCount: packed.bytes.count)
@@ -63,7 +65,8 @@ extension AssetFormatComparison {
             entry: entry,
             detail: "\(model.bodies.count) bodies, \(model.shapeCount) shapes, "
                 + "\(model.triangleCount) triangles",
-            candidates: [original] + shippedRows + readyRows
+            candidates: [original] + shippedRows + readyRows,
+            workUnits: original.diskBytes
         )
     }
 
