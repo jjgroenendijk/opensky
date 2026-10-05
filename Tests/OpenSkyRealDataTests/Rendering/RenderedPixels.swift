@@ -73,7 +73,7 @@ enum RenderedPixels {
         }
     }
 
-    /// Writes BGRA8 frame bytes, as `read` returns them, to a PNG under `logs/`.
+    /// Writes BGRA8 frame bytes, as `read` returns them, to a PNG under `.logs/`.
     static func writePNG(_ pixels: [UInt8], width: Int, height: Int, to url: URL) throws {
         var pixels = pixels
         let colorSpace = try #require(CGColorSpace(name: CGColorSpace.sRGB))

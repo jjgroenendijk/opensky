@@ -1,6 +1,6 @@
 // Inventory baseline sweep on the real install. Only real data shows that the
 // leveled-list expansion ends and that the vanilla gold form is the one the
-// engine expects. Summaries go to `logs/`.
+// engine expects. Summaries go to `.logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

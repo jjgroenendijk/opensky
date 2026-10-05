@@ -6,7 +6,7 @@
     "expected_behavior": [
       "Tells the user a game window will open before running openskycli game launch",
       "Pauses with game time pause, then holds forward with input hold forward --frames 60 rather than sleeping in the shell",
-      "Takes the picture with openskycli game screenshot into logs/ and does not commit it"
+      "Takes the picture with openskycli game screenshot into .logs/ and does not commit it"
     ]
   },
   {

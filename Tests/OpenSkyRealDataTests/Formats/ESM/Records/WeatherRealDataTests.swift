@@ -2,7 +2,7 @@
 // (read-only external input, never committed — AGENTS.md Legal & IP): decodes
 // every WTHR, CLMT, and REGN record in Skyrim.esm and asserts the whole set
 // parses with sane values. Skips automatically when OPENSKY_DATA_ROOT is
-// unset/unresolvable (CI has no game data). Summary printed + written to logs/.
+// unset/unresolvable (CI has no game data). Summary printed + written to .logs/.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -165,7 +165,7 @@ struct WeatherRealDataTests {
         return result
     }
 
-    /// logs/weather-sweep.log (gitignored) next to the other real-data sidecars.
+    /// .logs/weather-sweep.log (gitignored) next to the other real-data sidecars.
     private var logURL: URL {
         get throws { try logsDirectory.appending(path: "weather-sweep.log") }
     }

@@ -1,14 +1,14 @@
 #!/bin/sh
 # Samples the main thread of the app through its first minute of play: from the
 # launch, through the world load and the session start, into steady frames.
-# The app shows the user's game, so everything stays in logs/.
+# The app shows the user's game, so everything stays in .logs/.
 #
 # Usage: tools/launch-sample.sh CLI APP [SECONDS]
 #   CLI      an openskycli from the same build as APP
 #   APP      the OpenSky.app to launch (make launch-sample uses the Release app)
 #   SECONDS  how long to sample after the launch starts (default 60)
 #
-# Writes logs/launch-sample/<UTC timestamp>/: launch.log, frames.txt (one
+# Writes .logs/launch-sample/<UTC timestamp>/: launch.log, frames.txt (one
 # `game state frame` reply per line, with seconds since launch), and one
 # `sample` report per tick, s_<seconds>.txt.
 set -eu

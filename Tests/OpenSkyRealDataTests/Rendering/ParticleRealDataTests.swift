@@ -1,7 +1,7 @@
 // Env-gated NIF particle sweep over the user's install: decodes the particle
 // systems of every model the WhiterunWorld city cells and the Whiterun exterior
 // home cell reference. The set must decode without throwing, some NIFs must
-// carry particles, and their effect shaders must resolve. Summary goes to logs/.
+// carry particles, and their effect shaders must resolve. Summary goes to .logs/.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -112,7 +112,7 @@ struct ParticleRealDataTests {
         }
     }
 
-    /// logs/particle-sweep.log (gitignored) next to the other real-data
+    /// .logs/particle-sweep.log (gitignored) next to the other real-data
     /// sidecars.
     private var logURL: URL {
         get throws { try logsDirectory.appending(path: "particle-sweep.log") }

@@ -1,6 +1,6 @@
 // Real-data acceptance: the scripts of `MGRArniel01`, the cheapest quest on the
 // census shortlist (docs/formats/quest-records.md), bind and run their first
-// stage fragment, with the tallies pinned. The report goes to gitignored `logs/`
+// stage fragment, with the tallies pinned. The report goes to gitignored `.logs/`
 // and holds counts and editor IDs only.
 
 import Foundation

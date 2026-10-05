@@ -1,6 +1,6 @@
 // Env-gated head-part sweep over every NPC_ of Skyrim.esm. Each NPC resolves
 // without a throw, each resolved part names a mesh that exists, and the
-// parts-per-head histogram goes to logs/head-part-assembly/.
+// parts-per-head histogram goes to .logs/head-part-assembly/.
 
 import Foundation
 import OpenSkyFormatsCore

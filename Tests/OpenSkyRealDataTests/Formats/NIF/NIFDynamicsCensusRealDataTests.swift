@@ -1,7 +1,7 @@
 // Havok dynamics census on the real install over Whiterun-area exterior models,
 // clutter meshes with movable bodies, and every actor skeleton (the ragdoll
 // constraints). It sets the motion systems and constraints the physics code must
-// support. The report in `logs/` holds counts, names, and paths only.
+// support. The report in `.logs/` holds counts, names, and paths only.
 
 import Foundation
 @testable import OpenSkyFormatsESM

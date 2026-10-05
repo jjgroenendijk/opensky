@@ -1,6 +1,6 @@
 // Container and barter menu acceptance on the real install: the movies come
 // up, take their data, and settle a real buy and sell through the engine's own
-// accounting. Frames and numbers stay in gitignored `logs/`.
+// accounting. Frames and numbers stay in gitignored `.logs/`.
 
 import Foundation
 import Metal

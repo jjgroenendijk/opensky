@@ -22,7 +22,7 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 - NEVER copy Bethesda code. No decompiled, disassembled, or leaked source. No pasted
   SKSE or Creation Kit internals. Reimplement from observed behavior and open format docs.
 - A frame OpenSky renders embeds the user's game assets, so a rendered capture is game
-  content too. Verification captures go to gitignored `logs/`; link the local path in the
+  content too. Verification captures go to gitignored `.logs/`; link the local path in the
   PR rather than committing the image.
 - The game install is read-only external input: located at runtime, never bundled, cached
   into the repo, or copied into build output.
@@ -86,8 +86,8 @@ conflict.
 - `Config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
   (`docs/tools/build-system.md`). `Config/TestPlans/` holds the test plans
   (`docs/tools/test-runs.md`).
-- `logs/` and `.vendor/` are gitignored. A script writes its output into
-  `logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
+- `.logs/` and `.vendor/` are gitignored. A script writes its output into
+  `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
   Link the run directory, never a loose file (`docs/tools/run-output.md`).
 - Skills live in `.AGENTS/skills/`; `.claude/skills` is a symlink to it. Each nested
   `AGENTS.md` has a `CLAUDE.md` symlink beside it; `make lint` checks it.

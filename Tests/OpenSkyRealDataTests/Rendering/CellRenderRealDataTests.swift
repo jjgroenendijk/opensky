@@ -1,5 +1,5 @@
 // Builds FirstRenderCell from the user's install, checks the load summary,
-// renders offscreen, and writes a PNG to logs/ for review. Skips without
+// renders offscreen, and writes a PNG to .logs/ for review. Skips without
 // OPENSKY_DATA_ROOT or a Metal 4 GPU.
 
 import CoreGraphics
@@ -297,7 +297,7 @@ extension CellRenderRealDataTests {
         return Double(lit) / Double(pixels.count / 4)
     }
 
-    /// Resolved through `RepositoryLogs`; logs/ is the designated gitignored
+    /// Resolved through `RepositoryLogs`; .logs/ is the designated gitignored
     /// output directory (AGENTS.md "Code scripts").
     private var logsDirectory: URL {
         get throws { try RepositoryLogs.directory() }
@@ -321,7 +321,7 @@ extension CellRenderRealDataTests {
         print(stats)
     }
 
-    /// Writes the frame to logs/cell-whiterunexterior06.png (gitignored) and
+    /// Writes the frame to .logs/cell-whiterunexterior06.png (gitignored) and
     /// returns the absolute path for the stats log / human review.
     private func writePNG(pixels: [UInt8], width: Int, height: Int) throws -> URL {
         try FileManager.default.createDirectory(

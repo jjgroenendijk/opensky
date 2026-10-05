@@ -10,14 +10,14 @@
 #
 # Usage: tools/run-dir.sh [-b BASE] NAME
 #   BASE  where the per-script tree lives, relative to the repo root or absolute.
-#         Default "logs"; result bundles pass "$OPENSKY_DERIVED_DATA/TestResults".
+#         Default ".logs"; result bundles pass "$OPENSKY_DERIVED_DATA/TestResults".
 #   NAME  the script or make target the run belongs to (probe, test-ui, unit).
 #
 # Prints the absolute path of the created run directory. A script that calls
 # another script exports OPENSKY_RUN_DIR instead, so both write into one run.
 set -eu
 
-base=logs
+base=.logs
 while [ "$#" -gt 0 ]; do
     case "$1" in
         -b)

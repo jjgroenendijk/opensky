@@ -1,5 +1,5 @@
 // Env-gated lip-sync render evidence over a real archive track and a real
-// actor face. Six PNGs and a numeric report remain under gitignored `logs/`.
+// actor face. Six PNGs and a numeric report remain under gitignored `.logs/`.
 
 import Foundation
 @testable import OpenSkyAudio

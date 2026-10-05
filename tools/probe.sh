@@ -2,7 +2,7 @@
 # Env-gated smoke probe: drive openskycli against the local Skyrim SE
 # install (docs/tools/cli.md). Self-skips with [INFO] when no install is
 # present (CI has no game data). Install is read-only external input;
-# outputs go to logs/ only (AGENTS.md "Legal & IP boundary").
+# outputs go to .logs/ only (AGENTS.md "Legal & IP boundary").
 set -eu
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,7 +20,7 @@ if [ ! -f "$data_root/Data/Skyrim.esm" ] && [ ! -f "$data_root/Skyrim.esm" ]; th
 fi
 
 # One run, one directory (issue #347): the transcript and every capture this
-# probe renders land here, and `logs/probe/latest` points at the newest run.
+# probe renders land here, and `.logs/probe/latest` points at the newest run.
 log_dir="$("$root/tools/run-dir.sh" probe)"
 log="$log_dir/probe.log"
 echo "[INFO] run directory: $log_dir"

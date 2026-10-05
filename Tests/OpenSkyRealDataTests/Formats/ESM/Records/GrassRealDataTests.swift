@@ -1,7 +1,7 @@
 // Env-gated GRAS/LTEX + placement probe over the user's own Skyrim SE
 // install (read-only external input, never committed — AGENTS.md Legal & IP).
 // Skips automatically when OPENSKY_DATA_ROOT is unset/unresolvable; placement
-// also requires a Metal 4 GPU. Summaries print + write to logs/.
+// also requires a Metal 4 GPU. Summaries print + write to .logs/.
 
 import Foundation
 import Metal

@@ -1,5 +1,5 @@
 // What the vanilla humanoid skeleton's Havok biped filter bits say, and which
-// body pairs they let collide. Headless; the report in `logs/` holds bone names
+// body pairs they let collide. Headless; the report in `.logs/` holds bone names
 // and pair counts only. `RagdollSelfCollisionTests` is the synthetic half.
 
 import Foundation

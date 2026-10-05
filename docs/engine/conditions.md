@@ -124,5 +124,5 @@ gates magic mostly through perks and equipment. `GetEquippedItemType` (stored 59
 conditions) looks like a magic function because its parameter is a casting source. It
 reports the item type in a hand, so it belongs with equipment.
 
-A full sweep writes every tally bucket to `logs/condition-sweep.log`. That file is
+A full sweep writes every tally bucket to `.logs/condition-sweep.log`. That file is
 gitignored because it comes from the user's own plugins.

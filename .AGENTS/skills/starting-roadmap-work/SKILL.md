@@ -43,7 +43,7 @@ code itself.
 
 - Keep: the goal and its reason; an acceptance gate written as observable behavior; spec
   and format references (`docs/formats/` pages, UESP, xEdit); game behavior; legal notes;
-  links to other issues and milestones; measurements, with their `logs/` run directory.
+  links to other issues and milestones; measurements, with their `.logs/` run directory.
 - Leave out: file paths, line numbers, type or function names used to say where a change
   goes, pasted code of the current implementation, and step-by-step plans tied to the
   current code structure.

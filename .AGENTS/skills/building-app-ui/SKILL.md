@@ -136,4 +136,4 @@ Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar
 - Update `docs/tools/app-ui.md` in the same commit when the framework changes.
 - At milestone acceptance, write the record from `docs/tools/sidebar-acceptance.md` into
   the PR that closes the milestone, not into `docs/`. The tests are the evidence; any A/B
-  capture stays in gitignored `logs/`.
+  capture stays in gitignored `.logs/`.

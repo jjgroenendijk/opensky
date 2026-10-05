@@ -22,7 +22,7 @@ accessibility ids, the destination checks in `DestinationRegistryTests`, and any
 render test the milestone already has. If they pass, the gate passes.
 
 An A/B capture (one frame before the change, one after) can still help a human reviewer.
-It is optional, it goes in `logs/`, and it is never committed. A frame rendered from a real
+It is optional, it goes in `.logs/`, and it is never committed. A frame rendered from a real
 install contains Bethesda textures, meshes, and UI art, so committing it would share game
 content (`AGENTS.md`, "Legal & IP boundary").
 
@@ -35,7 +35,7 @@ Destination id: Destination-hudInteraction
 Controls exercised: HUDLayerEnabledControl, HUDCrosshairControl, HUDScaleControl
 Readout: HUDElementsStatsLabel
 Deterministic tests: HUDInteractionPanelTests, DestinationRegistryTests
-Local A/B (optional, never committed): logs/probe/<UTC timestamp>/hud-elements-ab.png
+Local A/B (optional, never committed): .logs/probe/<UTC timestamp>/hud-elements-ab.png
 ```
 
 - **Sidebar path**: the exact path a user clicks, with section names, spelled as the sidebar
@@ -49,5 +49,5 @@ Local A/B (optional, never committed): logs/probe/<UTC timestamp>/hud-elements-a
 - **Readout**: the accessibility id of the label whose text shows that the behavior
   changed. A record without a readout is incomplete, because nothing is left to check again.
 - **Deterministic tests**: the test classes that check all of the above.
-- **Local A/B**: a run directory under `logs/` ([run output](/tools/run-output.md)), or
+- **Local A/B**: a run directory under `.logs/` ([run output](/tools/run-output.md)), or
   `none`. `make prune` deletes old run directories, so the tests stay the lasting evidence.

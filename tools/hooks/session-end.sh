@@ -21,7 +21,7 @@ done
 
 root="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
 if [ -x "$root/tools/prune.sh" ]; then
-    mkdir -p "$root/logs/prune"
-    nohup "$root/tools/prune.sh" >"$root/logs/prune/session-end.log" 2>&1 &
+    mkdir -p "$root/.logs/prune"
+    nohup "$root/tools/prune.sh" >"$root/.logs/prune/session-end.log" 2>&1 &
 fi
 exit 0

@@ -1,6 +1,6 @@
 // Node-class sweep on the real install: every class the character behavior
 // files declare has a decoder, every object decodes, and no member misreads its
-// bytes. The report in `logs/` holds class names and counts only.
+// bytes. The report in `.logs/` holds class names and counts only.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation

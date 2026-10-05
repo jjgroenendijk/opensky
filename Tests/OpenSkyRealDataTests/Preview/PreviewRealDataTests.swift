@@ -2,7 +2,7 @@
 // external input, never committed — AGENTS.md Legal & IP): catalog load (VFS
 // enumeration + full record walk), a DDS textured-quad preview and a NIF
 // single-model preview through Renderer.renderOffscreen — the exact images
-// main-app Asset Browser shows. PNGs land in logs/ for human review. Skips without
+// main-app Asset Browser shows. PNGs land in .logs/ for human review. Skips without
 // OPENSKY_DATA_ROOT or a Metal 4 GPU (CI has neither game data nor one).
 
 import CoreGraphics
@@ -238,7 +238,7 @@ struct PreviewRealDataTests {
         return Double(lit) / Double(max(pixelCount, 1))
     }
 
-    /// Resolved through `RepositoryLogs`; logs/ is the designated gitignored
+    /// Resolved through `RepositoryLogs`; .logs/ is the designated gitignored
     /// output directory (AGENTS.md "Code scripts").
     private var logsDirectory: URL {
         get throws { try RepositoryLogs.directory() }

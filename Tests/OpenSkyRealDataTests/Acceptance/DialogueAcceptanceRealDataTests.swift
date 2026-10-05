@@ -2,7 +2,7 @@
 // install, from the offered list to the voice file to the save. The stage is
 // set through `QuestRuntime.setStage`, the call `SetStage` lands on; running
 // vanilla result scripts is covered elsewhere. Assertions are counts, editor
-// IDs, and FormIDs; the report goes to gitignored `logs/`.
+// IDs, and FormIDs; the report goes to gitignored `.logs/`.
 // Run: make test-real T='DialogueAcceptanceRealDataTests'
 
 import FeaturesTesting

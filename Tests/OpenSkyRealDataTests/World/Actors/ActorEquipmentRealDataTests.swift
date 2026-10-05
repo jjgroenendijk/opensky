@@ -1,6 +1,6 @@
 // Env-gated equipment acceptance over the user's install: resolve a dressed
 // vanilla NPC before and after an equip that swaps his torso piece and adds a
-// weapon, and render both. Frames go to gitignored `logs/`. Run with
+// weapon, and render both. Frames go to gitignored `.logs/`. Run with
 // `make test-real T='ActorEquipmentRealDataTests/<name>()'`; plain
 // `xcodebuild test` does not pass `OPENSKY_DATA_ROOT`, so it skips.
 

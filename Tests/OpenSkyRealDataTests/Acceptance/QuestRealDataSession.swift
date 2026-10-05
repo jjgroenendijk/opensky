@@ -153,7 +153,7 @@ nonisolated enum QuestRealDataError: Error {
     case questWouldNotStart
 }
 
-/// The gate's numeric evidence, written to gitignored `logs/`.
+/// The gate's numeric evidence, written to gitignored `.logs/`.
 ///
 /// Counts, editor IDs and tally names only. No journal text, no objective text
 /// and no script body ever reaches the file: those are the plugin's own strings

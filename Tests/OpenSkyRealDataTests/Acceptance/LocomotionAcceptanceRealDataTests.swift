@@ -1,7 +1,7 @@
 // Locomotion acceptance on the real install: the synthetic route over the
 // vanilla player behavior graph. Every class the route reaches decodes, every
 // census name binds, and the evaluator's tally is pinned. It needs no GPU;
-// `LocomotionAcceptanceRenderTests` holds the pixel half. The report in `logs/` holds
+// `LocomotionAcceptanceRenderTests` holds the pixel half. The report in `.logs/` holds
 // class names and counts only.
 
 import Foundation
@@ -176,7 +176,7 @@ struct LocomotionAcceptanceRealDataTests {
     // MARK: - Evidence
 
     /// The coverage ledger the milestone's log entry quotes, written to
-    /// gitignored `logs/`. Class names and counts only.
+    /// gitignored `.logs/`. Class names and counts only.
     private static func write(
         harness: LocomotionDriveHarness,
         graph: BehaviorGraphInstance,

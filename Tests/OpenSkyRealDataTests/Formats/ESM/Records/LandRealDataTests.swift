@@ -2,7 +2,7 @@
 // external input, never committed — AGENTS.md Legal & IP): walks the Tamriel
 // worldspace, decodes every LAND record, and asserts the whole set parses with
 // in-bounds quadrant/VTXT values. Skips automatically when OPENSKY_DATA_ROOT is
-// unset/unresolvable (CI has no game data). Summary printed + written to logs/.
+// unset/unresolvable (CI has no game data). Summary printed + written to .logs/.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -225,12 +225,12 @@ struct LandRealDataTests {
         return nil
     }
 
-    /// logs/land-sweep.log (gitignored) next to the other real-data sidecars.
+    /// .logs/land-sweep.log (gitignored) next to the other real-data sidecars.
     private var logURL: URL {
         get throws { try logsDirectory.appending(path: "land-sweep.log") }
     }
 
-    /// logs/land-edge-probe.log (gitignored) — the edge-overlap finding.
+    /// .logs/land-edge-probe.log (gitignored) — the edge-overlap finding.
     private var edgeLogURL: URL {
         get throws { try logsDirectory.appending(path: "land-edge-probe.log") }
     }

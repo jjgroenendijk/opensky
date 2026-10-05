@@ -106,7 +106,7 @@ enum PlayerBodyFixture {
             .flatMap(\.currentBoneMatrices)
     }
 
-    /// Writes one report into gitignored `logs/`. A rendered frame or a trace of
+    /// Writes one report into gitignored `.logs/`. A rendered frame or a trace of
     /// the user's own install never enters the repository.
     static func write(_ report: String, to name: String) throws {
         let directory = try logsDirectory()

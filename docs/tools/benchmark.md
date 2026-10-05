@@ -15,12 +15,12 @@ benchmark definition would give numbers that do not compare, so callers reuse th
 ## Run it
 
 `make benchmark` builds a Release `openskycli` and runs `openskycli benchmark`. It writes
-`logs/benchmark/<UTC timestamp>/` ([run output](/tools/run-output.md)):
+`.logs/benchmark/<UTC timestamp>/` ([run output](/tools/run-output.md)):
 
 - `benchmark.log`: the printed summary.
 - `result.json`: the full result.
 - `view.png`: the measured view, to check that it drew. It embeds game assets, so it stays in
-  `logs/` and is never committed.
+  `.logs/` and is never committed.
 
 `openskycli benchmark --out <file>` runs the same steps from any build. A Debug build is
 much slower, and the result says which build ran it.

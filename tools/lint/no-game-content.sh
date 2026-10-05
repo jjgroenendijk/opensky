@@ -5,7 +5,7 @@
 #   1. Extracted Bethesda assets must never be committed, in any form.
 #   2. A frame OpenSky renders embeds the user's own game textures and meshes,
 #      so a rendered capture is game content too. Only the app icon set is a
-#      legitimately tracked image; verification captures go to gitignored logs/.
+#      legitimately tracked image; verification captures go to gitignored .logs/.
 #
 # Checks every tracked file, so it also catches a blob that arrived by merge or
 # rebase rather than by `git add`.
@@ -44,7 +44,7 @@ if [ -n "$images" ]; then
     printf '%s\n' "$images" | indent
     printf 'A frame OpenSky renders embeds Bethesda assets, so captures are\n'
     printf 'game content even as milestone evidence.\n'
-    printf 'Fix: write it to logs/ (gitignored) and link the local path in the\n'
+    printf 'Fix: write it to .logs/ (gitignored) and link the local path in the\n'
     printf 'PR body instead of committing it.\n'
   } >&2
   exit 1

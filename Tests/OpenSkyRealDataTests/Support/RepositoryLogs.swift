@@ -1,6 +1,6 @@
 import Foundation
 
-/// The checkout's gitignored `logs/` directory. `#filePath` reads `/^src/...`
+/// The checkout's gitignored `.logs/` directory. `#filePath` reads `/^src/...`
 /// under the compilation cache, and the host's working directory is `/`, so
 /// this walks up from the test bundle to the folder with `OpenSky.xcodeproj`.
 enum RepositoryLogs {
@@ -13,14 +13,14 @@ enum RepositoryLogs {
         }
     }
 
-    /// `<checkout>/logs`, or `<checkout>/logs/<subpath>` when a subpath is given.
+    /// `<checkout>/.logs`, or `<checkout>/.logs/<subpath>` when a subpath is given.
     static func directory(_ subpath: String = "") throws -> URL {
         let bundle = Bundle(for: BundleToken.self).bundleURL
         var candidate = bundle.deletingLastPathComponent()
         while candidate.path != "/" {
             let project = candidate.appending(path: "OpenSky.xcodeproj")
             if FileManager.default.fileExists(atPath: project.path) {
-                let logs = candidate.appending(path: "logs", directoryHint: .isDirectory)
+                let logs = candidate.appending(path: ".logs", directoryHint: .isDirectory)
                 return subpath.isEmpty
                     ? logs : logs.appending(path: subpath, directoryHint: .isDirectory)
             }
@@ -29,7 +29,7 @@ enum RepositoryLogs {
         throw CheckoutNotFound(bundle: bundle)
     }
 
-    /// `<checkout>/logs/<subpath>`, created when missing, so a capture never
+    /// `<checkout>/.logs/<subpath>`, created when missing, so a capture never
     /// depends on another run having made the folder.
     static func createdDirectory(_ subpath: String) throws -> URL {
         let url = try directory(subpath)

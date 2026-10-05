@@ -9,7 +9,7 @@
 #   2. build/install, the separate Release tree older checkouts installed from.
 #   3. Result bundles and log run directories past the retention age, keeping
 #      the newest run of each script so `latest` always resolves.
-#   4. Loose pre-convention files left directly under logs/.
+#   4. Loose pre-convention files left directly under .logs/.
 #
 # Sources are never touched: the plan is built from a fixed set of cache and
 # output path shapes, every entry is checked to live inside this checkout or a
@@ -144,6 +144,7 @@ if [ -d "$worktree_home" ]; then
         add "stale worktree cache" "$checkout/DerivedData-optimized"
         add "stale worktree cache" "$checkout/DerivedData-index"
         add "stale worktree output" "$checkout/build"
+        add "stale worktree output" "$checkout/.logs"
         add "stale worktree output" "$checkout/logs"
     done
 fi
@@ -158,7 +159,7 @@ add "obsolete install tree" "$root/build/install"
 results="${OPENSKY_DERIVED_DATA:-$root/DerivedData}/TestResults"
 prune_run_dirs "$results" "aged-out result bundle"
 prune_run_dirs "$root/build/test-results" "aged-out result bundle"
-prune_run_dirs "$root/logs" "aged-out run output"
+prune_run_dirs "$root/.logs" "aged-out run output"
 # Bundles written straight into build/test-results predate the run-directory
 # convention; nothing points at them and every one is a full test result.
 for bundle in "$root"/build/test-results/*.xcresult; do
@@ -166,10 +167,10 @@ for bundle in "$root"/build/test-results/*.xcresult; do
     add "pre-convention result bundle" "$bundle"
 done
 
-# 4. Loose files directly under logs/, from before the convention. Aged the
+# 4. Loose files directly under .logs/, from before the convention. Aged the
 #    same way, by modification time since they carry no timestamp in the name.
-if [ -d "$root/logs" ]; then
-    find "$root/logs" -mindepth 1 -maxdepth 1 -type f -mtime "+$days" \
+if [ -d "$root/.logs" ]; then
+    find "$root/.logs" -mindepth 1 -maxdepth 1 -type f -mtime "+$days" \
         >"$scratch" 2>/dev/null || : >"$scratch"
     while IFS= read -r loose; do
         [ -n "$loose" ] || continue
@@ -209,7 +210,7 @@ done <"$plan"
 
 # A pruned run can leave `latest` pointing at nothing; drop those symlinks so a
 # dangling link never reads as "the newest run is missing".
-for base in "$root/logs" "$results" "$root/build/test-results"; do
+for base in "$root/.logs" "$results" "$root/build/test-results"; do
     [ -d "$base" ] || continue
     for name_dir in "$base"/*; do
         link="$name_dir/latest"

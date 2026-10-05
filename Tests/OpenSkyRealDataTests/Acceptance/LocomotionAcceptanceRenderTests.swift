@@ -1,7 +1,7 @@
 // Locomotion acceptance, pixel half: the player is drawn, the drawing follows
 // the locomotion state, and the two camera modes draw different frames. A
 // changed state is also checked against a frame built at that state from the
-// start, which must match byte for byte. Frames stay in gitignored `logs/`.
+// start, which must match byte for byte. Frames stay in gitignored `.logs/`.
 
 import Foundation
 import Metal

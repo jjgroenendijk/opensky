@@ -82,4 +82,4 @@ There is one SWF layer, and the HUD owns it by default. Two surfaces take it and
   headings. It has no synthetic preview on purpose, so a broken targeting or localization path shows
   as broken.
 
-Captures of the HUD over a real cell contain game art, so they stay in `logs/`.
+Captures of the HUD over a real cell contain game art, so they stay in `.logs/`.

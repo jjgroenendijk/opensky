@@ -1,6 +1,6 @@
 // Env-gated census of every compiled Papyrus script the user's own install
 // exposes through the VFS. Game bytes remain read-only external input; only
-// aggregate counts and call names are written to gitignored logs/.
+// aggregate counts and call names are written to gitignored .logs/.
 
 import Foundation
 @testable import OpenSkyFormatsPEX

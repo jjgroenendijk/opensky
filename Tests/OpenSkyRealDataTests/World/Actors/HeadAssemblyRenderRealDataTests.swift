@@ -1,7 +1,7 @@
 // Env-gated head assembly A/B over the user's install: Heimskr with his baked
 // FaceGen head and with his head parts loaded one by one. The two silhouettes
 // must agree, and the assembled head must add a head to a headless body.
-// Captures go to logs/head-assembly-render/.
+// Captures go to .logs/head-assembly-render/.
 
 import Foundation
 import Metal

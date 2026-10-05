@@ -1,7 +1,7 @@
 // Behavior census on the real install: every character `.hkx`, third person
 // and `_1stperson`, parses, and the report lists roles, class signatures,
 // variables, events, and referenced files. This census sets the classes the
-// evaluator must decode. The report in `logs/` holds counts, names, and paths.
+// evaluator must decode. The report in `.logs/` holds counts, names, and paths.
 
 import Foundation
 @testable import OpenSkyFormatsAnimation

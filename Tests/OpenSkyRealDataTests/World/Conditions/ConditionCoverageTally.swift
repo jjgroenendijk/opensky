@@ -1,7 +1,7 @@
 // Per-function coverage tally for the real-data CTDA sweep. It measures how
 // much condition traffic `ConditionFunctionRegistry.standard` can evaluate, and
 // the on-disk shape of each function index. Counts are aggregate only, so the
-// report written to gitignored `logs/` extracts no record.
+// report written to gitignored `.logs/` extracts no record.
 
 import Foundation
 @testable import OpenSkyConditions

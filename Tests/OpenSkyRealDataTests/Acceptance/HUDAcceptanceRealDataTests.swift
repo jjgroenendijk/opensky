@@ -1,6 +1,6 @@
 // HUD acceptance against the user's read-only Skyrim SE install.
 // The walk-route farm door supplies real interaction metadata and collision;
-// numeric A/B evidence plus rendered frames stay in ignored logs/.
+// numeric A/B evidence plus rendered frames stay in ignored .logs/.
 
 import Foundation
 import Metal

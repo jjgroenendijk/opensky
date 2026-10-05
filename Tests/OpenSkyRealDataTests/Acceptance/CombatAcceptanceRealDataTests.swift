@@ -2,7 +2,7 @@
 // player behavior graph. Every combat, archery, and ragdoll census name is
 // declared, a draw and a swing reach a real contact frame, and the evaluator's
 // tally is pinned. It needs no GPU; `CombatAcceptanceRenderTests` holds the pixel
-// half. The report in `logs/` holds class names and counts only.
+// half. The report in `.logs/` holds class names and counts only.
 
 import Foundation
 @testable import OpenSkyActorsInterface
@@ -259,7 +259,7 @@ struct CombatAcceptanceRealDataTests {
     }
 
     /// The coverage ledger the milestone's log entry quotes, written to
-    /// gitignored `logs/`. Class names and counts only.
+    /// gitignored `.logs/`. Class names and counts only.
     private static func write(_ lines: [String]) throws {
         let directory = try RepositoryLogs.directory()
         try FileManager.default.createDirectory(

@@ -95,7 +95,7 @@ extension OpenSkyCLI {
                                   Render every movie's frame-1 display list
                                   over an offscreen frame; report per-movie
                                   draw stats + changed pixels. --out writes
-                                  one PNG per movie (use a logs/ path: the
+                                  one PNG per movie (use a .logs/ path: the
                                   frames embed game art)
       swf action-sweep [--movie <substring>] [--limit <n>]
                                   Decode every movie's action side (DoAction,
@@ -108,7 +108,7 @@ extension OpenSkyCLI {
                                   most-action-records movie ranking
       swf action-list --movie <substring>
                                   Print one movie's action records with names
-                                  resolved; redirect the output into logs/
+                                  resolved; redirect the output into .logs/
       swf action-run [--movie <substring>] [--ticks <n>] [--limit <n>]
                      [--tree-depth <n>] [--dump <paths>] [--call <names>]
                                   Bring one movie up through SWFMovieRuntime and

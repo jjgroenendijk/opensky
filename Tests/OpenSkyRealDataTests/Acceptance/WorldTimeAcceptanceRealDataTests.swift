@@ -2,7 +2,7 @@
 // suite cannot: the plugins define `TimeScale` and the clock globals, a
 // `TimeScale` override reaches the renderer, and Tamriel's climate rerolls every
 // six game hours. It decodes records only (no cell, no archive, no render), so
-// it stays light. The report in `logs/` holds counts and editor IDs only.
+// it stays light. The report in `.logs/` holds counts and editor IDs only.
 
 import Foundation
 @testable import OpenSkyFormatsESM

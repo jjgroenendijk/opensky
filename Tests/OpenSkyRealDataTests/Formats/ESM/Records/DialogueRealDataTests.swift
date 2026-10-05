@@ -1,6 +1,6 @@
 // DIAL, INFO, and VTYP sweep over `Skyrim.esm` and the three DLC masters: every
 // record decodes, the totals are pinned, and each skipped field category goes
-// to a report in `logs/`. INFO VMAD fragment tails decode, and the sweep counts
+// to a report in `.logs/`. INFO VMAD fragment tails decode, and the sweep counts
 // their result scripts.
 
 import Foundation

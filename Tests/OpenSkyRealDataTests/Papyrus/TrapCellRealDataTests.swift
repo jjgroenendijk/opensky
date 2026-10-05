@@ -1,7 +1,7 @@
 // The trap test cell `WarehouseTraps` with the install's own scripts: a pressure plate
 // fires its trap chain, crossing a tripwire spends it, the use key reaches the
 // plate's script, and a HAZD hits the player. Only counts, editor IDs, and script
-// state names go to `logs/`.
+// state names go to `.logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

@@ -3,7 +3,7 @@
 // interior yields its own bed and music state, and the door yields open and
 // close sounds that resolve to real files. Nothing is played: vanilla effects
 // are `.wav`, which no decoder reads yet (docs/engine/audio.md). The report in
-// `logs/` names records, paths, and counts only.
+// `.logs/` names records, paths, and counts only.
 
 import Foundation
 @testable import OpenSkyAudio

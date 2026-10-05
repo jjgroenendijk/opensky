@@ -13,7 +13,7 @@
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
 #
-# The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
+# The transcript goes to .logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
 # a wrapper script keeps all of its output together. phases.tsv beside it notes
 # when each phase of the run started, and the last line printed sums them up.

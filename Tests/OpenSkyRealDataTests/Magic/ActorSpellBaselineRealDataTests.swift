@@ -115,7 +115,7 @@ struct ActorSpellBaselineRealDataTests {
         }
     }
 
-    /// One line into a run directory under gitignored `logs/`, so a pull
+    /// One line into a run directory under gitignored `.logs/`, so a pull
     /// request can link the run rather than describe it.
     @MainActor
     private func writeSummary(

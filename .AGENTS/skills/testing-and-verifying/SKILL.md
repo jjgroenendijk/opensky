@@ -126,7 +126,7 @@ These guard the machine and are not optional:
   real-data test, for a milestone acceptance. Iterate with `T=...` on one test, and rerun
   it only after a change that could alter the result.
 - A perf gate carries the `.perf` tag; `make test-real PERF=1` runs every one, built optimized.
-- Captures and probe output go under `logs/` (root `AGENTS.md`, Legal & IP boundary).
+- Captures and probe output go under `.logs/` (root `AGENTS.md`, Legal & IP boundary).
 
 ## Flaky tests
 

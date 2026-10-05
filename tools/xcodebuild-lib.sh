@@ -35,7 +35,7 @@ xcodebuild_products_dir() {
 # that did not pass, and the closing counts. xcodebuild repeats each diagnostic
 # with colour codes, absolute paths, and an "(in target ...)" suffix, so the
 # filter strips those, prints each line once, and caps errors, failed tests,
-# and warnings. The full transcript stays in logs/. $1 is the checkout root.
+# and warnings. The full transcript stays in .logs/. $1 is the checkout root.
 xcodebuild_summary() {
     awk -v root="$1/" -v max="${OPENSKY_MAX_ERRORS:-40}" '
         { gsub(/\033\[[0-9;]*m/, "") }

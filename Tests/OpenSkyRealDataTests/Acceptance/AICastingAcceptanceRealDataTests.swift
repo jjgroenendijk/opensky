@@ -1,7 +1,7 @@
 // AI casting acceptance on the user's install: a pinned vanilla caster, given
 // its own record spells, decides to cast in a fight and damages the player.
 // Headless: `CombatCastingChain` runs over the real SPEL, MGEF and EQUP
-// indexes. A one-line summary goes to gitignored `logs/`.
+// indexes. A one-line summary goes to gitignored `.logs/`.
 
 import Foundation
 @testable import OpenSkyActors
@@ -118,7 +118,7 @@ struct AICastingAcceptanceRealDataTests {
         #expect(machine.attackCount > 0)
     }
 
-    /// One summary into a run directory under gitignored `logs/`.
+    /// One summary into a run directory under gitignored `.logs/`.
     @MainActor
     private func writeSummary(
         chain: CombatCastingChain,

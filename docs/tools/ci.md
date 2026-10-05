@@ -108,7 +108,7 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
 - **Timing.** `tools/ci/build-timing.sh` writes the build and test time, the compilation cache hit
   rate, the time per task kind, and the slowest tasks to the run summary. It reads the build log in
   the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`. The job uploads
-  `logs/` on every run, not only on failure.
+  `.logs/` on every run, not only on failure.
 
 ## Caches
 

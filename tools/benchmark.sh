@@ -5,8 +5,8 @@
 # Usage: tools/benchmark.sh CLI
 #   CLI   the Release openskycli (make benchmark builds and passes it)
 #
-# Writes logs/benchmark/<UTC timestamp>/: benchmark.log, result.json, and
-# view.png, the measured view. The PNG embeds game assets, so it stays in logs/.
+# Writes .logs/benchmark/<UTC timestamp>/: benchmark.log, result.json, and
+# view.png, the measured view. The PNG embeds game assets, so it stays in .logs/.
 set -eu
 
 if [ "$#" -ne 1 ]; then

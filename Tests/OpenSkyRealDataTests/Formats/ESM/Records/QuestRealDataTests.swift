@@ -1,5 +1,5 @@
 // QUST sweep over `Skyrim.esm`: count and link invariants, plus a target-quest
-// census in `logs/` that ranks quests by what OpenSky still lacks (condition
+// census in `.logs/` that ranks quests by what OpenSky still lacks (condition
 // functions, alias fill types, stage scripts without fragments). Coverage is
 // asserted, because print() never reaches the .xcresult. Layout: UESP "QUST"
 // and "VMAD Field", and xEdit `wbRecord(QUST, ...)` and `wbVMADFragmentedQUST`.
@@ -115,7 +115,7 @@ struct QuestRealDataTests {
         #expect(census.fillTypes["none"] == 2062)
     }
 
-    /// logs/quest-census.log (gitignored) next to the other real-data sidecars.
+    /// .logs/quest-census.log (gitignored) next to the other real-data sidecars.
     private var logURL: URL {
         get throws { try logsDirectory.appending(path: "quest-census.log") }
     }

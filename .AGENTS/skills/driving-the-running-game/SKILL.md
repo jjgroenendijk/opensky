@@ -31,15 +31,15 @@ Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or th
    `game events --until cell.loaded --timeout 30`.
 5. Check with state reads: `game state player`, `state target`, `state menu`,
    `state quest <id>`, `state av <name>`.
-6. Look with `game screenshot`. It writes to `logs/game-screenshot/<UTC>/` by default.
-   A capture shows game assets, so it stays in `logs/` and never lands in a commit
+6. Look with `game screenshot`. It writes to `.logs/game-screenshot/<UTC>/` by default.
+   A capture shows game assets, so it stays in `.logs/` and never lands in a commit
    (root `AGENTS.md`, Legal & IP boundary).
 7. End with `game quit`, unless the user wants the window kept.
 
 For a check that must repeat, write a JSONL script with `expect` objects and run it with
 `game run <file>`; it stops at the first failed line. `--record <file>` on any call
 appends that call to a script, so record a run first to see the exact `args` keys. Keep
-scripts in `logs/`: they need the user's install, so no tracked suite runs them.
+scripts in `.logs/`: they need the user's install, so no tracked suite runs them.
 
 ## When it fails
 

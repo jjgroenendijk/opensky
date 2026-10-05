@@ -30,17 +30,17 @@ modules, and it does not get the data root or the memory watchdog.
 
 ## Rendering verification
 
-Reliable paths, in order. Captures stay in `logs/`, because a rendered frame is game
+Reliable paths, in order. Captures stay in `.logs/`, because a rendered frame is game
 content (root `AGENTS.md`, Legal & IP boundary).
 
 1. `Renderer.renderOffscreen` from a scratch test class — deterministic pixel assertions
    first, with an optional local temp capture for human review (`RendererOffscreenTests`).
-2. `make run-cli ARGS="render --out logs/<run dir>/frame.png ..."`.
+2. `make run-cli ARGS="render --out .logs/<run dir>/frame.png ..."`.
 3. Ask the user to look at the running app; they see launched apps.
 
-Output belongs to one run, not to `logs/` at large: allocate a run directory with
+Output belongs to one run, not to `.logs/` at large: allocate a run directory with
 `tools/run-dir.sh <name>` (or write into the one a script already printed, such as
-`logs/probe/latest`) and link that directory from the pull request, so a reviewer cannot
+`.logs/probe/latest`) and link that directory from the pull request, so a reviewer cannot
 mistake an older capture for this run's. `make prune` ages those directories out. The
 convention is `docs/tools/run-output.md`.
 

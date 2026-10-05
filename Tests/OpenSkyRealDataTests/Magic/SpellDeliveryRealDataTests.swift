@@ -147,7 +147,7 @@ struct SpellDeliveryRealDataTests {
 
     /// How much of the vanilla spell catalogue each delivery covers, so the
     /// ground items 19.8 does and does not carry is measured rather than
-    /// guessed at. Written to gitignored `logs/`, never asserted on a count
+    /// guessed at. Written to gitignored `.logs/`, never asserted on a count
     /// that a load order with mods would move.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func theDeliveryCensusIsWrittenForTheRecord() throws {
@@ -177,7 +177,7 @@ struct SpellDeliveryRealDataTests {
         try write(report)
     }
 
-    /// The census into a directory under gitignored `logs/`, so a pull request
+    /// The census into a directory under gitignored `.logs/`, so a pull request
     /// can link the run rather than describe it.
     ///
     /// Resolved through `RepositoryLogs` rather than the working directory,

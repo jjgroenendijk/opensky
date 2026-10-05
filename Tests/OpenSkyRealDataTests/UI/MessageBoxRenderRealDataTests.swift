@@ -1,6 +1,6 @@
 // A vanilla yes/no message box, built from its MESG and drawn by the box
 // overlay with each button highlighted in turn. Frames and the report go to
-// `logs/message-box/`.
+// `.logs/message-box/`.
 // Run with `make test-real T='MessageBoxRenderRealDataTests'`.
 
 import Foundation

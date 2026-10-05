@@ -1,5 +1,5 @@
 // COBJ sweep over the five masters: every recipe decodes, its links resolve, and
-// the per-workbench, component-type, and condition-function censuses go to `logs/`.
+// the per-workbench, component-type, and condition-function censuses go to `.logs/`.
 // Run with `make test-real T='RecipeRealDataTests'`.
 
 import Foundation

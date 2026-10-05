@@ -2,7 +2,7 @@
 // the demo scene, a movie-free baseline is captured, then each vanilla
 // Interface movie renders through the production display-list layer. Per movie
 // it reports draw stats and how much of the frame changed, so an empty layer
-// fails. `--out <dir>` writes frames; they hold game art, so use gitignored logs/.
+// fails. `--out <dir>` writes frames; they hold game art, so use gitignored .logs/.
 
 import Foundation
 import Metal

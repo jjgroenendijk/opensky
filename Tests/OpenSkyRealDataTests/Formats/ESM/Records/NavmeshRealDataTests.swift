@@ -1,7 +1,7 @@
 // NAVM census on the real install: every navmesh in the Whiterun interiors,
 // the WhiterunWorld exteriors, and the Tamriel cells around the first-render
 // cell decodes, and each NVNM parent matches the CELL it sits under. That
-// settles xEdit's parent rule against UESP's. The summary goes to `logs/`.
+// settles xEdit's parent rule against UESP's. The summary goes to `.logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -279,7 +279,7 @@ struct NavmeshRealDataTests {
         entries.prefix(20).joined(separator: "\n")
     }
 
-    /// logs/navmesh-census.log (gitignored) beside the other real-data
+    /// .logs/navmesh-census.log (gitignored) beside the other real-data
     /// sidecars.
     private var logURL: URL {
         get throws { try RepositoryLogs.directory().appending(path: "navmesh-census.log") }

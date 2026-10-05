@@ -1,7 +1,7 @@
 // Dialogue menu acceptance on the user's install: `dialoguemenu.swf` still has
 // the shape `DialogueMenuMovieBridge` measured, a published conversation is
 // read back from the movie's own `EntriesA`, subtitle and `eMenuState`, and an
-// open menu changes rendered pixels. Frames go to gitignored `logs/`.
+// open menu changes rendered pixels. Frames go to gitignored `.logs/`.
 
 import Foundation
 import Metal

@@ -1,5 +1,5 @@
 // Every `XLOC` lock in Skyrim.esm: the levels it uses, whether each key resolves
-// to a `KEYM`, and the use-key gate on a real keyed lock. Counts go to `logs/`.
+// to a `KEYM`, and the use-key gate on a real keyed lock. Counts go to `.logs/`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

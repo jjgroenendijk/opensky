@@ -2,7 +2,7 @@
 // its real scripts, with the fault, native and condition tallies pinned. It is
 // the cheapest journal-visible quest and the same target as the other quest
 // gates. Stages are set from outside, as the Quest Controls do, because it
-// advances through dialogue. The report goes to gitignored `logs/` and holds
+// advances through dialogue. The report goes to gitignored `.logs/` and holds
 // counts and editor IDs only. Run with `make test-real T='QuestAcceptanceRealDataTests/...'`.
 
 import FeaturesTesting

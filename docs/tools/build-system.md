@@ -44,10 +44,11 @@ The folder reference has a price. At every start, before it resolves the package
 xcodebuild scans every visible file under that folder, through symlinks; a hidden name such as
 `.build` or `.cache` is skipped. On 2026-10-05 a worktree whose root held a link to the
 212,000-file compilation cache store spent 9 to 30 s in that scan, and 1 to 2 s once the link
-was gone; 29,000 files added under `logs/` cost 12 s; the main checkout, whose root held 573,000
-files of old build output and the store, listed its schemes in 109 s. That is why the store lives
-under the hidden `.cache/`, why `make clean` removes a `DerivedData*` tree left in a checkout, and
-why nothing else that grows should be visible under the root. `make prune` keeps `logs/` short.
+was gone; 29,000 files added under a visible `logs/` cost 12 s; the main checkout, whose root
+held 573,000 files of old build output and the store, listed its schemes in 109 s. That is why the
+store lives under the hidden `.cache/`, why run output goes to the hidden `.logs/` and `make prune`
+keeps one day of it, why `make clean` removes a `DerivedData*` tree left in a checkout, and why
+nothing else that grows should be visible under the root.
 
 The cache is on the internal disk because the data volume is a USB disk that writes at about
 135 MB/s against the internal disk's 2 GB/s, and a build writes gigabytes of intermediates. The
@@ -160,7 +161,7 @@ It is not checked in, because it adds lines to every transcript. Pass it when me
 
 ```sh
 make build-app XCODEBUILD_FLAGS='COMPILATION_CACHE_ENABLE_DIAGNOSTIC_REMARKS=YES'
-grep -c 'Cache hit' logs/build/latest/build.log
+grep -c 'Cache hit' .logs/build/latest/build.log
 ```
 
 The store grows to gigabytes and is not visibly bounded: `COMPILATION_CACHE_LIMIT_SIZE` set below
@@ -185,7 +186,7 @@ The mapping has three costs:
 - A replayed task writes no index data. Periphery reads the index, so `make health` builds
   uncached into the `-index` cache tree ([code-health automation](/decisions/code-health-automation.md)).
 - `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. Real-data suites find
-  `logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
+  `.logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
   `settings set target.source-map /^src <checkout>`.
 
@@ -220,9 +221,9 @@ with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 ## Output and transcripts
 
 `tools/xcodebuild-run.sh` takes a log name and a full xcodebuild command. It writes the whole
-transcript to `logs/<name>/<UTC timestamp>/<name>.log` and prints only diagnostics, tests that did not
-pass, and the closing status line. xcodebuild repeats each diagnostic several times, with colour codes
-and absolute paths. The filter strips both, prints each line once, and stops after
+transcript to `.logs/<name>/<UTC timestamp>/<name>.log` and prints only diagnostics, tests that did
+not pass, and the closing status line. xcodebuild repeats each diagnostic several times, with colour
+codes and absolute paths. The filter strips both, prints each line once, and stops after
 `OPENSKY_MAX_ERRORS` errors. The first screen of a failed build is then the whole answer, and nobody
 has to grep the transcript. A failing run where no line matched the filter prints the last 40
 transcript lines instead. `xcodebuild -quiet` cannot do this: it decides what to print before the text

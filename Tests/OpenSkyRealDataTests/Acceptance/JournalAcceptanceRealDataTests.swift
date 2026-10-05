@@ -1,6 +1,6 @@
 // Journal acceptance on the real install: the target quest's title, objective,
 // and text reach the Quests page of `quest_journal.swf`, the tabs still switch
-// pages, and the bring-up tallies stay at zero. Frames stay in gitignored `logs/`.
+// pages, and the bring-up tallies stay at zero. Frames stay in gitignored `.logs/`.
 
 import Foundation
 import Metal

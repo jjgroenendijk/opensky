@@ -1,7 +1,7 @@
 // Env-gated idle runtime over the user's install. The selector runs over every
 // idle marker of a few inns for the nearest resident NPC, the 0_Master idles
 // resolve to clips and props, and one NPC plays its marker idle in a capture
-// under logs/idle-runtime/.
+// under .logs/idle-runtime/.
 
 import Foundation
 import MetalKit
@@ -190,7 +190,7 @@ struct IdleRuntimeRealDataTests {
     }
 
     /// The NPC alone, standing and then at the middle of its idle with the prop
-    /// on, so the frame shows only the idle. `logs/idle-runtime/` holds both.
+    /// on, so the frame shows only the idle. `.logs/idle-runtime/` holds both.
     @MainActor
     private func capture(
         _ pick: Pick,

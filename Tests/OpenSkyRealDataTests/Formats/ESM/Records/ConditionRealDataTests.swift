@@ -202,7 +202,7 @@ struct ConditionRealDataTests {
         }
     }
 
-    /// logs/condition-sweep.log (gitignored) next to the other real-data sidecars.
+    /// .logs/condition-sweep.log (gitignored) next to the other real-data sidecars.
     private var logURL: URL {
         get throws { try logsDirectory.appending(path: "condition-sweep.log") }
     }

@@ -1,7 +1,7 @@
 // Archery checks on the real install that the synthetic suites cannot make:
 // the PROJ `gravity` census shows the arrow band is a multiplier, the vanilla
 // iron arrow's drop at a fixed distance is pinned, and every census-named
-// archery event resolves on the vanilla player graph. The report in `logs/`
+// archery event resolves on the vanilla player graph. The report in `.logs/`
 // holds counts, editor IDs, and numbers only.
 
 import Foundation
@@ -20,7 +20,7 @@ struct ProjectileRealDataTests {
 
     /// The measurement that settles what PROJ `gravity` means, plus the
     /// vanilla iron arrow's own numbers through the flight model. Writes the
-    /// whole report to gitignored `logs/`.
+    /// whole report to gitignored `.logs/`.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func censusesProjectileFlightFields() throws {
         let root = try #require(RealDataEnvironment.dataRoot)

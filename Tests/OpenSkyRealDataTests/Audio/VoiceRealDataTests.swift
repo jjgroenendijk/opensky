@@ -1,6 +1,6 @@
 // `.fuz` sweep on the real install: frame every voice file, derive every voice
 // file name from the records and compare it with the archive, then play one
-// line and watch the clock reach its decoded length. The report in `logs/`
+// line and watch the clock reach its decoded length. The report in `.logs/`
 // holds counts and derived names only.
 
 import AVFAudio
