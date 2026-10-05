@@ -93,10 +93,18 @@ nonisolated public struct Model: Sendable {
     /// build can report skips instead of silently thinning
     /// geometry.
     public let skippedShapeCount: Int
+    /// Editor-only shapes left out on purpose, as the game hides them.
+    public let editorMarkerShapeCount: Int
 
-    public init(meshes: [Mesh], materials: [Material], skippedShapeCount: Int) {
+    public init(
+        meshes: [Mesh],
+        materials: [Material],
+        skippedShapeCount: Int,
+        editorMarkerShapeCount: Int = 0
+    ) {
         self.meshes = meshes
         self.materials = materials
         self.skippedShapeCount = skippedShapeCount
+        self.editorMarkerShapeCount = editorMarkerShapeCount
     }
 }

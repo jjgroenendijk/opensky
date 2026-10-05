@@ -87,6 +87,13 @@ and the `0x01` flag decide what the cell is.
 Not read: `MODT`, `DNAM` (maximum angle and material), `MNAM` (LOD models). `Skyrim.esm`
 has 9,720 STAT records; 9,712 have a model.
 
+Record-header bit 23 (`0x00800000`) means `Is Marker` on `ACTI`, `DOOR`, `FURN`, and `STAT`
+(xEdit lines 3306, 4912, 5210, and 10155). The game does not draw a marker, even when it
+has a model, such as `XMarkerHeading` with `MarkerXHeading.nif`. In the five vanilla
+masters, only these four types set the bit, and every base that sets it is a marker:
+spawn points, idle and lean furniture, invisible chairs, map and door markers, and trailer
+cameras. A flagged `FURN` is still usable furniture; only its mesh is hidden.
+
 ## MSTT, TREE, FLOR, FURN, ACTI, TACT, CONT, DOOR
 
 These placeable base objects share the fields that matter here:

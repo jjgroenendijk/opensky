@@ -22,7 +22,8 @@ nonisolated extension NIFFile {
         return Model(
             meshes: flattener.meshes,
             materials: flattener.materials,
-            skippedShapeCount: flattener.skippedShapeCount
+            skippedShapeCount: flattener.skippedShapeCount,
+            editorMarkerShapeCount: flattener.editorMarkerShapeCount
         )
     }
 
@@ -40,11 +41,20 @@ nonisolated extension NIFFile {
         public var materials: [Material] = []
         public var slotIndexes: [SlotKey: Int] = [:]
         public var skippedShapeCount = 0
+        public var editorMarkerShapeCount = 0
 
         /// Types that carry drawable geometry rather than children.
         public static let shapeTypes: Set = [
             "BSTriShape", "BSSubIndexTriShape", "BSDynamicTriShape"
         ]
+
+        /// The name of editor-only geometry, such as the box of a lean marker.
+        /// Vanilla marker meshes use it; docs/formats/nif.md.
+        public static let editorMarkerName = "EditorMarker"
+
+        public static func isEditorMarker(_ name: String?) -> Bool {
+            name?.caseInsensitiveCompare(editorMarkerName) == .orderedSame
+        }
 
         public init(file: NIFFile, skeleton: NIFSkeleton?) throws {
             self.file = file
@@ -74,6 +84,10 @@ nonisolated extension NIFFile {
                 let block = file.blocks[index]
                 if NIFNode.traversedTypes.contains(block.typeName) {
                     guard let node = try drawableNode(block) else { continue }
+                    guard !Self.isEditorMarker(node.object.name) else {
+                        editorMarkerShapeCount += 1
+                        continue
+                    }
                     let world = visit.parent * node.object.localTransform
                     stack.push(
                         children: node.children,
@@ -112,6 +126,10 @@ nonisolated extension NIFFile {
                 try NIFDynamicTriShape(data: block.data, header: file.header).shape
             default:
                 try NIFTriShape(data: block.data, header: file.header)
+            }
+            guard !Self.isEditorMarker(shape.object.name) else {
+                editorMarkerShapeCount += 1
+                return
             }
             let geometry = try resolveGeometry(
                 shape: shape,

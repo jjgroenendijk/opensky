@@ -54,6 +54,8 @@ nonisolated public struct ResolvedBase: Sendable {
     public let recordType: FourCC
     /// Nil = marker base (no MODL), nothing to draw.
     public let modelPath: String?
+    /// The base is flagged as a marker, so its model is not drawn either.
+    public let isEditorMarker: Bool
 }
 
 /// One resolved placement, sortable into instancing-ready order.
@@ -460,7 +462,7 @@ nonisolated extension CellSceneBuilder {
         return nil
     }
 
-    /// Skips unknown bases, markers without MODL, and failed meshes. Sorted by
+    /// Skips unknown bases, markers, and failed meshes. Sorted by
     /// (mesh path, FormID) so shared models sit together for instancing.
     nonisolated public func resolveInstances(
         refs: [PlacedReference],
@@ -488,7 +490,7 @@ nonisolated extension CellSceneBuilder {
                 )
                 continue
             }
-            guard let modelPath = resolved.modelPath else {
+            guard let modelPath = resolved.modelPath, !resolved.isEditorMarker else {
                 counts.markers += 1
                 let base = resolved.formID.description
                 let type = resolved.recordType.description
@@ -500,30 +502,44 @@ nonisolated extension CellSceneBuilder {
                 )
                 continue
             }
-            do {
-                let model = try meshes.model(path: modelPath)
-                instances.append(ResolvedInstance(
-                    sortKey: (try? VirtualFileSystem.normalize(modelPath)) ?? modelPath,
-                    formID: ref.formID.rawValue,
-                    modelPath: modelPath,
-                    model: model,
-                    transform: MatrixMath.placement(
-                        position: ref.placement.position,
-                        rotation: ref.placement.rotation,
-                        scale: ref.scale
-                    )
-                ))
-            } catch {
-                counts.modelFailures += 1
-                let reason = String(describing: error)
-                Self.logger.warning(
-                    """
-                    REFR \(id, privacy: .public): model \(modelPath, privacy: .public) \
-                    failed (\(reason, privacy: .public)), skipped
-                    """
-                )
+            if let instance = loadInstance(ref: ref, modelPath: modelPath, counts: &counts) {
+                instances.append(instance)
             }
         }
         return instances.sorted { ($0.sortKey, $0.formID) < ($1.sortKey, $1.formID) }
+    }
+
+    /// Nil when the mesh fails to load or holds only editor-marker geometry.
+    nonisolated private func loadInstance(
+        ref: PlacedReference,
+        modelPath: String,
+        counts: inout BuildCounts
+    ) -> ResolvedInstance? {
+        do {
+            return try ResolvedInstance(
+                sortKey: (try? VirtualFileSystem.normalize(modelPath)) ?? modelPath,
+                formID: ref.formID.rawValue,
+                modelPath: modelPath,
+                model: meshes.model(path: modelPath),
+                transform: MatrixMath.placement(
+                    position: ref.placement.position,
+                    rotation: ref.placement.rotation,
+                    scale: ref.scale
+                )
+            )
+        } catch MeshLibraryError.editorMarkerOnly {
+            counts.markers += 1
+        } catch {
+            counts.modelFailures += 1
+            let id = ref.formID.description
+            let reason = String(describing: error)
+            Self.logger.warning(
+                """
+                REFR \(id, privacy: .public): model \(modelPath, privacy: .public) \
+                failed (\(reason, privacy: .public)), skipped
+                """
+            )
+        }
+        return nil
     }
 }

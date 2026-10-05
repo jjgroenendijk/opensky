@@ -48,6 +48,8 @@ nonisolated public struct ModelBase: Sendable {
     /// MODL — mesh path relative to Data/ (e.g. "meshes\\trees\\treepineforest01.nif").
     /// Nil for bases with no model (rare outside markers).
     public let modelPath: String?
+    /// Placed for the editor or for scripts; the game does not draw it.
+    public let isEditorMarker: Bool
     /// Sound links for activator/door/container bases; nil when the record
     /// carries none of the decoded sound fields.
     public let sounds: Sounds?
@@ -76,6 +78,7 @@ nonisolated public struct ModelBase: Sendable {
         }
         formID = FormID(record.formID)
         recordType = record.type
+        isEditorMarker = record.isEditorMarker
 
         var fields = ModelBaseFields(ownerType: record.type)
         var rest = try RecordFields(

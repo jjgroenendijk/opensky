@@ -79,6 +79,26 @@ struct NIFModelTests {
         #expect(model.skippedShapeCount == 0)
     }
 
+    @Test func dropsEditorMarkerShapesAndSubtrees() throws {
+        // Root -> [kept shape, "EditorMarker" shape, "editormarker" node -> shape].
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                .init("BSFadeNode", NIFFixture.niNode(children: [1, 2, 3])),
+                .init("BSTriShape", shape(prefix: NIFFixture.avObjectPrefix(nameIndex: 0))),
+                .init("BSTriShape", shape(prefix: NIFFixture.avObjectPrefix(nameIndex: 1))),
+                .init("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 2), children: [4]
+                )),
+                .init("BSTriShape", shape())
+            ],
+            strings: ["CounterTop", "EditorMarker", "editormarker"]
+        ))
+        let model = try file.model()
+        #expect(model.meshes.map(\.name) == ["CounterTop"])
+        #expect(model.editorMarkerShapeCount == 2)
+        #expect(model.skippedShapeCount == 0)
+    }
+
     @Test func dedupsMaterialSlotsAcrossShapes() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),

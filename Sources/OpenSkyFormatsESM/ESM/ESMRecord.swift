@@ -38,7 +38,12 @@ nonisolated public struct ESMRecord: Sendable {
         public static let constantGlobal = Flags(rawValue: 1 << 6)
         /// Data is uint32 decompressedSize + zlib stream.
         public static let compressed = Flags(rawValue: 1 << 18)
+        /// ACTI, DOOR, FURN, STAT: an editor-only marker the game does not draw.
+        public static let marker = Flags(rawValue: 1 << 23)
     }
+
+    /// The record types whose header bit 23 means `Is Marker` (xEdit dev-4.1.6).
+    public static let markerFlagTypes: Set<FourCC> = ["ACTI", "DOOR", "FURN", "STAT"]
 
     /// 24-byte SSE record header (Oblivion's is 20 — not supported).
     public struct Header: Sendable {
@@ -101,6 +106,11 @@ nonisolated public struct ESMRecord: Sendable {
 
     public var isInitiallyDisabled: Bool {
         header.flags.contains(.initiallyDisabled)
+    }
+
+    /// A base object placed only as an editor marker, such as `XMarkerHeading`.
+    public var isEditorMarker: Bool {
+        Self.markerFlagTypes.contains(type) && header.flags.contains(.marker)
     }
 
     /// Field bytes, zlib-decompressed when the record is compressed.

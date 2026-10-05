@@ -10,12 +10,15 @@ nonisolated public struct StaticObject: Sendable {
     /// MODL — mesh path relative to Data/ (e.g. "meshes\\clutter\\cup.nif").
     /// Nil for marker statics that have no model.
     public let modelPath: String?
+    /// Placed for the editor or for scripts; the game does not draw it.
+    public let isEditorMarker: Bool
 
     public init(record: ESMRecord) throws {
         guard record.type == "STAT" else {
             throw ESMError.malformed("expected STAT record, got \(record.type)")
         }
         formID = FormID(record.formID)
+        isEditorMarker = record.isEditorMarker
 
         var editorID: String?
         var modelPath: String?
