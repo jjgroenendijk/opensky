@@ -111,9 +111,12 @@ the `swift build` products of `make compile`.
 
 ## Attachments
 
-A green unit run writes a result bundle of about 113 MB with no attachments at all. The largest part
-is the coverage archive. So the plans leave `userAttachmentLifetime` and `systemAttachmentLifetime`
-at their defaults: deleting attachments on success would save nothing.
+A green unit run writes a result bundle with no attachments at all, so the plans leave
+`userAttachmentLifetime` and `systemAttachmentLifetime` at their defaults: deleting attachments on
+success would save nothing. The unit plans set `diagnosticCollectionPolicy` to `Never`. With the
+default, xcodebuild collected a system log archive after the last bundle finished, 60 MB of a
+106 MB bundle and about 9 s of a 37 s test phase on 2026-10-05, on a green run too. The test
+output, the failures, and the per-test durations stay in the bundle.
 
 `xcodebuild` builds every buildable in a scheme's Test action before it looks at `-only-testing`, so
 a selector never saves building a bundle. A plan does, because the plan decides what is built.
@@ -132,24 +135,36 @@ the session starts. Only the plan does.
 
 ## Start-up cost
 
-A warm `xcodebuild test` spends about as long before the first task as on the tests. Every run
+A warm `xcodebuild test` spends about as long before the first test as on the tests. Every run
 prints a `phases` line and keeps `phases.tsv` in its run directory
 ([build system](/tools/build-system.md#phases)). Measured on 2026-10-05 with the cache on the
 internal disk, the lock held, and nothing edited:
 
 | Run | start | resolve | plan | build | test | total |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PLAN=Quick`, after a `UnitTests` run | 32 s | 1 s | 6 s | 16 s | 35 s | 91 s |
-| `PLAN=UnitTests`, after a `Quick` run | 22 s | 1 s | 6 s | 19 s | 40 s | 90 s |
-| `PLAN=UnitTests`, after the same plan | 32 s | 1 s | 7 s | 3 s | 35 s | 79 s |
+| `PLAN=UnitTests`, after a `Quick` run | 2 s | 1 s | 6 s | 2 s | 31 s | 43 s |
+| `PLAN=Quick`, after a `UnitTests` run | 1 s | 1 s | 6 s | 2 s | 26 s | 38 s |
+| `PLAN=Formats`, after a `UnitTests` run | 1 s | 1 s | 5 s | | 3 s | |
 
-`start` is xcodebuild loading the workspace, the scheme, and the package manifest before it
-resolves the graph; it varied from 13 to 32 s between runs. A run after a different plan replays
-about 200 compiles and 70 links from the cache, because the plan is part of the driver's planning
-signature ([environment](/tools/environment.md)). Over three weeks of runs before the cache moved,
-the median whole-plan run took 7.5 minutes: the difference was waiting on the external disk and on
-other sessions' builds. Each run pays the start-up, so batch edits into one run, and rerun a built
-plan with `make test-rerun`.
+`start` is xcodebuild scanning the package folder and loading the scheme and the manifest
+before it resolves the graph; it grows with every visible file under the repository root, and
+was 9 to 30 s while a link to the compilation cache store sat there
+([the start-up scan](/tools/build-system.md#the-workspace-and-the-start-up-scan)). A change of
+plan builds nothing, because the scheme builds the app-hosted bundle in every plan
+([environment](/tools/environment.md#a-compilation-cache-hit-leaves-the-driver-record-dirty)).
+Over three weeks of runs before the cache moved, the median whole-plan run took 7.5 minutes: the
+difference was waiting on the external disk and on other sessions' builds. Each run pays the
+start-up, so batch edits into one run, and rerun a built plan with `make test-rerun`.
+
+### The test phase
+
+The `Quick` plan runs 30 bundles on 6 test runners at once, in plan order, 133 s of runner time
+in a 26 s span; the session logs in the result bundle (`xcresulttool export diagnostics`) hold
+the timestamps. Launching a runner and loading its bundle costs 1 to 3 s per bundle, 68 s of the
+133 s, so merging small bundles into fewer hosts is the next lever. Eight runners changed
+nothing, and the longest bundles first saved 2 to 3 s: the span is set by the longest chains,
+`OpenSkyPhysicsTests` at 17 s and `OpenSkyWorldTests` at 9 s. `UnitTests` adds `OpenSkyTests`,
+26 s in the app.
 
 `make test-real` and `make test-sanitize` start `tools/memguard.sh` beside the
 call and turn parallel testing off, so one test host runs and the watchdog's cap is per run. `CAP=MB`

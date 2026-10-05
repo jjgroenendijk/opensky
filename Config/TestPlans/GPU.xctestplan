@@ -232,6 +232,7 @@
       ]
     },
     "defaultTestExecutionTimeAllowance" : 120,
+    "diagnosticCollectionPolicy" : "Never",
     "environmentVariableEntries" : [
       {
         "key" : "OPENSKY_SHADER_LIBRARY",
