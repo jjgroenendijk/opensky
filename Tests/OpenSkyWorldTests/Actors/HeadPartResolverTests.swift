@@ -1,7 +1,7 @@
 // The assembled head's part set over synthetic HDPT, FLST, TXST, and CLFM
 // records: overrides by type, extra parts, the race filter, and colors.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

@@ -1,12 +1,12 @@
 // A synthetic ground and tower under a low sun, shared by the sun-shadow suites
 // and the acceptance chains that render it. Everything is built in code.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import RenderingTesting
 import simd
 
 public enum ShadowSceneFixtureError: Error {

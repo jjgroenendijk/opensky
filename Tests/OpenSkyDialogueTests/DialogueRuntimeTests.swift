@@ -2,15 +2,14 @@
 // gate, file order, say-once, priority, and what a choice does to said-state
 // and follow-up topics.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
-import OpenSkyDialogueTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

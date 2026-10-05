@@ -2,7 +2,7 @@
 // Creation Kit text replacement page. Vanilla journal strings contain
 // `<Alias=QuestNameLocation>` verbatim; the quests below are synthetic.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus

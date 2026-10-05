@@ -2,12 +2,12 @@
 // pose, the renderer's map, and its effect on a draw instance. Pixel proof is
 // in RendererDynamicPoseTests.
 
+import EngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
-import PhysicsTesting
 import simd
 import Testing
 

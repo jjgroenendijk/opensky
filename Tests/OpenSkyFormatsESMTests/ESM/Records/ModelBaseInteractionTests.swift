@@ -1,7 +1,6 @@
 // Interaction text and suppression fields on synthetic model-base records.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

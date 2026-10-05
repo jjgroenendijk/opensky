@@ -2,11 +2,11 @@
 // bones, joints onto bodies, pivots into centre-of-mass frames. The decode is
 // in `NIFCollisionConstraintTests`.
 
+import EngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
-import PhysicsTesting
 import simd
 import Testing
 

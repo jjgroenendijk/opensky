@@ -1,7 +1,7 @@
 // Synthetic SPEL and SCRL decode coverage. Every fixture is authored from the
 // cited 36-byte SPIT layout and contains no bytes from the game install.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

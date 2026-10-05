@@ -1,8 +1,8 @@
 // The strings the Load Order panel and the Settings window show. They live in
 // the engine so they are assertable without driving AppKit.
 
+import EngineTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyGameData
 import Testing
 

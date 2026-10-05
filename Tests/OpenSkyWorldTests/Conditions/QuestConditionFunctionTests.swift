@@ -2,17 +2,16 @@
 // `ConditionContext` quest seam. Indices are raw on-disk numbers (Creation Kit
 // minus 4096).
 
-import FormatsESMTesting
+import EngineTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
-import WorldStateTesting
 
 @Suite("Quest condition functions")
 struct QuestConditionFunctionTests {

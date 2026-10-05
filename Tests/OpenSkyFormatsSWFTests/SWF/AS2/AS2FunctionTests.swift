@@ -2,7 +2,7 @@
 // 8.3.2). `ActionDefineFunction2` outnumbers `ActionDefineFunction` eight to
 // one in the vanilla movies, so both paths are pinned here.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

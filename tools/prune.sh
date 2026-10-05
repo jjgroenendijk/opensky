@@ -2,9 +2,10 @@
 # make prune — delete the build cache and run output nothing needs any more
 # (issue #347). Four kinds of garbage, all of them gitignored:
 #
-#   1. DerivedData (and build/) inside a linked checkout whose worktree is gone.
-#      Each one runs to tens of gigabytes and outlives the branch it was built
-#      for, which is what fills the data volume mid-session.
+#   1. The build cache of a checkout whose worktree is gone: its tree under
+#      $OPENSKY_CACHE_ROOT, and the DerivedData older checkouts kept inside the
+#      worktree. Each one runs to tens of gigabytes and outlives the branch it was
+#      built for, which is what fills a volume mid-session.
 #   2. build/install, the separate Release tree older checkouts installed from.
 #   3. Result bundles and log run directories past the retention age, keeping
 #      the newest run of each script so `latest` always resolves.
@@ -48,6 +49,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # the main checkout, which is where .claude/worktrees/ lives.
 main="$(cd "$(dirname "$(git -C "$root" rev-parse --git-common-dir)")" && pwd)"
 worktree_home="$main/.claude/worktrees"
+cache_root="${OPENSKY_CACHE_ROOT:-$HOME/Library/Caches/OpenSky}"
 cutoff="$(date -u -v-"${days}"d +%Y%m%dT%H%M%SZ)"
 
 plan="$(mktemp -t opensky-prune)"
@@ -66,7 +68,7 @@ add() {
         exit 1
     fi
     case "$2" in
-        "$root"/* | "$worktree_home"/*) ;;
+        "$root"/* | "$worktree_home"/* | "$cache_root"/*) ;;
         *)
             printf '[ERROR] refusing to prune outside the checkout: %s\n' "$2" >&2
             exit 1
@@ -124,6 +126,16 @@ prune_run_dirs() {
 #    is untracked, so the multi-gigabyte part is what git's own prune skips.
 git -C "$root" worktree list --porcelain \
     | sed -n 's/^worktree //p' >"$live"
+# The cache trees are named after the checkout folder (Makefile DERIVED_DATA).
+if [ -d "$cache_root" ]; then
+    for tree in "$cache_root"/*; do
+        [ -d "$tree" ] || continue
+        name="$(basename "$tree")"
+        case "$name" in *-optimized | *-index) name="${name%-*}" ;; esac
+        if grep -q "/$name\$" "$live"; then continue; fi
+        add "stale worktree cache" "$tree"
+    done
+fi
 if [ -d "$worktree_home" ]; then
     for checkout in "$worktree_home"/*; do
         [ -d "$checkout" ] || continue

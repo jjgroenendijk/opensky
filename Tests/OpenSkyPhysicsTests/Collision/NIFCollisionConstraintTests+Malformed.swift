@@ -1,7 +1,7 @@
 // Malformed bhkConstraint input: each fault costs only the joint or body it
 // touches. Layouts: docs/formats/nif-collision.md.
 
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import Testing

@@ -1,7 +1,6 @@
 // Stage timing, early ends, the world time scale, and where the eye goes.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

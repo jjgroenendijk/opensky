@@ -3,6 +3,7 @@
 // and every bone name bound. The report in `logs/` holds bone names, joint
 // counts, and settle times only.
 
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
@@ -11,7 +12,6 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
-import PhysicsTesting
 import simd
 import Testing
 

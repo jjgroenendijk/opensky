@@ -2,8 +2,7 @@
 // No Metal device and no plugin tree: the index is pure value logic, so the
 // records are decoded straight from fixture bytes.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState

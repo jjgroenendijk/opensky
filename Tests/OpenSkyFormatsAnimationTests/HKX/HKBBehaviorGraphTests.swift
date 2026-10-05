@@ -4,7 +4,7 @@
 // docs/formats/hkx-behavior.md. Class-name signatures are invented hashes, as
 // in HKXFixture.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

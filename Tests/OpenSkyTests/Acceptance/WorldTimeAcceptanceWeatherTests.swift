@@ -5,8 +5,8 @@
 // `WorldTimeAcceptanceRealDataTests.swift`.
 
 import AppKit
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyFormatsESM
@@ -16,7 +16,6 @@ import Foundation
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 extension WorldTimeAcceptanceTests {
     // MARK: Step 8 — weather transitions fire from real elapsed game hours

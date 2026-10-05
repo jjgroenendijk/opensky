@@ -1,10 +1,10 @@
 // The HUD shell without a renderer, and its load failure with one.
 
+import EngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import OpenSkyWorldInterface
-import RenderingTesting
 import TagsTesting
 import Testing
 

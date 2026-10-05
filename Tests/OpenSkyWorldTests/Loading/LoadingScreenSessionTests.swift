@@ -1,8 +1,7 @@
 // Loading-screen timing: a fast build still shows the minimum time, a slow
 // build holds the screen until ready, and the object turns inside its range.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

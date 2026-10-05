@@ -2,7 +2,7 @@
 // `Message` script, and the camera calls. A `Message.Show` box suspends its
 // script until the engine answers with the chosen button.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX

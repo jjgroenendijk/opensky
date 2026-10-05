@@ -2,15 +2,14 @@
 // absent chunk means no overrides, and a corrupt payload throws.
 // See docs/formats/opensky-save-world-chunks.md.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import EngineTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 @MainActor
 struct OpenSkySaveGlobalsTests {

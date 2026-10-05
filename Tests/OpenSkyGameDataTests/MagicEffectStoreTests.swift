@@ -1,8 +1,8 @@
 // Synthetic two-plugin MGEF override and EFID resolution coverage.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

@@ -1,6 +1,6 @@
 // Behavior pose math against hand-computed values on invented poses.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation

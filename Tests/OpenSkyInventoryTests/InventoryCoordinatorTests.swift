@@ -2,17 +2,16 @@
 // and the enchantment hooks through `InventoryWorld`. Decisions are tested in
 // `InventoryCoreTests`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

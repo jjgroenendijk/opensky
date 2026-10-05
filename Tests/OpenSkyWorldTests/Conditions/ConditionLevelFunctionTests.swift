@@ -3,13 +3,13 @@
 // dev-4.1.6 `Core/wbDefinitionsTES5.pas`. Vanilla perk requirements use this
 // pair, for example `Armsman20` reads `GetBaseActorValue One-Handed >= 20`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionLevelFunctionTests {

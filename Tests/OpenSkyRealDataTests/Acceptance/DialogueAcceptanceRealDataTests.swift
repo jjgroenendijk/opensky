@@ -5,6 +5,7 @@
 // IDs, and FormIDs; the report goes to gitignored `logs/`.
 // Run: make test-real T='DialogueAcceptanceRealDataTests'
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
@@ -19,7 +20,6 @@ import Foundation
 import OpenSkySaveFixtures
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import TagsTesting
 import Testing
 

@@ -1,11 +1,11 @@
 // The pure rules of the Runtime State panel. Synthetic values only.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 struct RuntimeStateCoreTests {
     @Test func formIDParsesHexWithOrWithoutPrefix() {

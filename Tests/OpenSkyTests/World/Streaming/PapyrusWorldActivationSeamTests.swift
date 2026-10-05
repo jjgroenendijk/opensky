@@ -2,7 +2,7 @@
 // activation reaches both the engine's own subscriber and the Papyrus world
 // bridge.
 
-@testable import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

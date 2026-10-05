@@ -1,6 +1,6 @@
 // Faction memberships inherited through the actor template chain. In-code plugin fixtures only.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

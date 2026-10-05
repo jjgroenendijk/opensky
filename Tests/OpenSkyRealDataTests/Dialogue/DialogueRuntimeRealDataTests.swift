@@ -4,6 +4,7 @@
 // the branch rules behind them are in docs/engine/dialogue.md.
 // Assertions are counts, editor IDs, and FormIDs.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
@@ -13,7 +14,6 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 struct DialogueRuntimeRealDataTests {

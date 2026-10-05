@@ -1,10 +1,10 @@
 // Container transfer sessions: effective contents, moves both ways, and
 // open-state bookkeeping. Reuses `WorldItemRuntimeTests` fixtures.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing

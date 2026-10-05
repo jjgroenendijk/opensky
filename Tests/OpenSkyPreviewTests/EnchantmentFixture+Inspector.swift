@@ -1,6 +1,6 @@
 // The record-dump inspector context over one enchantment fixture plugin.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

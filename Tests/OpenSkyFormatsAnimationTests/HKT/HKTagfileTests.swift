@@ -1,7 +1,7 @@
 // Havok binary tagfile decode over synthetic streams from HKTagfileFixture.
 // Layout: docs/formats/hkt-tagfile.md.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

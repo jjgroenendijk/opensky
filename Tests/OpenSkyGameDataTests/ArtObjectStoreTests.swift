@@ -1,7 +1,6 @@
 // ARTO lookup and the MGEF and DUAL art links over synthetic plugins.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

@@ -2,6 +2,7 @@
 // The effect runtime is real over a real `WorldStateStore`, because the
 // question is the final actor value. Records come from `SpellbookFixture`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyFormatsESM
@@ -9,7 +10,6 @@ import Foundation
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

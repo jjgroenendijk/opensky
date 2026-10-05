@@ -10,11 +10,12 @@ tags: [tool, make, logs, disk, retention]
 # Run output layout and make prune
 
 Two gitignored trees hold everything a run of the tooling produces: `logs/` for
-transcripts and captures, `DerivedData/TestResults/` for `.xcresult` bundles. Both grow without
-bound and neither is anybody's job to clean, which fills the data volume mid-session — one
-`DerivedData/` per linked worktree already runs to tens of gigabytes, and the worktree for
-a merged branch leaves its cache behind. The convention below makes each run a single
-directory, and `make prune` deletes the runs and caches nothing needs any more.
+transcripts and captures, `TestResults/` in the build cache for `.xcresult` bundles. Both grow
+without bound, which fills a disk mid-session: one build cache per linked worktree runs to
+about ten gigabytes, and the worktree for a merged branch leaves its cache behind. The
+convention below makes each run a single directory, and `make prune` deletes the runs and
+caches nothing needs any more. The session-end hook in `.claude/settings.json` runs it when a
+Claude Code session closes, so nobody has to remember it.
 
 ## The run directory convention
 
@@ -23,7 +24,7 @@ Every script that writes output a human reads later allocates one directory per 
 ```text
 logs/<script>/<UTC timestamp>/          for example logs/probe/<YYYYMMDDTHHMMSSZ>/
 logs/<script>/latest -> <UTC timestamp>
-DerivedData/TestResults/<name>/<UTC timestamp>/<name>.xcresult
+$OPENSKY_DERIVED_DATA/TestResults/<name>/<UTC timestamp>/<name>.xcresult
 ```
 
 Result bundles live under the build cache, not under `build/`. Xcode watches the Swift
@@ -67,13 +68,13 @@ reads like a stale file rather than contention.
 | Producer | Run directory | Contents |
 | --- | --- | --- |
 | `make build-app`, `build-cli`, `install` | `logs/<target>/` | xcodebuild transcript |
-| `make test-<kind>` | `logs/test-<kind>/`, `DerivedData/TestResults/<kind>/` | xcodebuild transcript, `.xcresult` |
+| `make test-<kind>` | `logs/test-<kind>/`, `TestResults/<kind>/` in the build cache | xcodebuild transcript, `.xcresult` |
 | `tools/probe.sh` | `logs/probe/` | `probe.log` and every PNG the probe renders |
 | `tools/check-docs-links.sh` | `logs/docs-links/` | link report |
 | `tools/vendor-ffmpeg.sh` | `logs/vendor-ffmpeg/` | configure and build log, only when it actually builds |
 
-`make test-report` reads the newest `.xcresult` under `DerivedData/TestResults`, one run
-directory deep, and falls back to the DerivedData glob when there is none.
+`make test-report` reads the newest `.xcresult` under the build cache's `TestResults`, one run
+directory deep, and falls back to the derived-data glob when there is none.
 
 ## make prune
 
@@ -88,12 +89,13 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
 
 1. **Stale worktree caches.** Every directory under the main checkout's
    `.claude/worktrees/` that `git worktree list --porcelain` no longer names loses its
-   `DerivedData/`, `build/`, and `logs/`. This is the rule that frees gigabytes: removing a
-   worktree often leaves the directory behind precisely because those trees are untracked,
-   so git's own `worktree prune` never reaches them.
+   `DerivedData/`, `build/`, and `logs/`, and every build cache under
+   `~/Library/Caches/OpenSky/` whose checkout is not a live worktree goes too. This is the
+   rule that frees gigabytes: removing a worktree often leaves the directory behind precisely
+   because those trees are untracked, so git's own `worktree prune` never reaches them.
 2. **`build/install`**, the private Release tree `make install` used before it started
    sharing the main derived-data cache.
-3. **Aged-out runs** under `logs/` and `DerivedData/TestResults/`: a run directory whose
+3. **Aged-out runs** under `logs/` and the build cache's `TestResults/`: a run directory whose
    timestamp is older than the retention age goes, except that the newest run of each
    script is always kept, so `latest` still resolves after a prune. A `latest` symlink left
    dangling by a prune is removed.
@@ -105,11 +107,11 @@ the plan, deletes them, and reports the space freed. Four rules produce the plan
 
 The plan is built from that fixed set of path shapes and nothing else — there is no
 "delete everything untracked" rule, and no rule reaches a source directory. Every entry is
-checked before deletion to sit inside this checkout or the worktree home, and the checkout
+checked before deletion to sit inside this checkout, the worktree home, or the cache root, and the checkout
 roots themselves are refused outright; a path that fails the check aborts the run instead
 of being deleted. Sources, `Config/Build/Local.xcconfig`, and the shared `.vendor/ffmpeg` prefix
 are out of scope.
 
 `make clean` remains the way to empty the current checkout: it deletes this checkout's
-`build/` and `DerivedData/` outright, retention age irrelevant. `prune` is for what no
+`build/` and its build cache outright, retention age irrelevant. `prune` is for what no
 checkout owns any more.

@@ -1,6 +1,6 @@
 // DDS parser tests over synthetic in-code files (DDSFixture).
 
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
 import TagsTesting

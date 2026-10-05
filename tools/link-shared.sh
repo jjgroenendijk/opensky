@@ -1,9 +1,9 @@
 #!/bin/sh
-# Point a linked git worktree at the main checkout's vendored ffmpeg and compilation
-# cache, so a fresh worktree neither rebuilds ffmpeg nor recompiles the project from
-# nothing. Both are byte-identical across worktrees. Run first by every building make
-# target (`make link-shared`) and by tools/vendor-ffmpeg.sh. Idempotent, and silent when
-# there is nothing to do.
+# Point a linked git worktree at the main checkout's vendored ffmpeg, so a fresh
+# worktree does not rebuild it. Run first by every building make target
+# (`make link-shared`) and by tools/vendor-ffmpeg.sh. Idempotent, and silent when
+# there is nothing to do. The compilation cache needs no link: the Makefile names
+# one shared store on every xcodebuild command line.
 set -eu
 
 root=$(git rev-parse --show-toplevel)
@@ -34,19 +34,3 @@ if [ ! -d "$prefix/lib" ]; then
   : >"$prefix/embed-inputs.xcfilelist"
   : >"$prefix/embed-outputs.xcfilelist"
 fi
-
-# Compilation cache. Config/Build/Debug.xcconfig maps the checkout path to /^src before a
-# cache key is computed, so two worktrees produce the same keys and can share one store
-# (docs/tools/build-system.md). A worktree's own store holds only cache entries, so
-# replacing it loses nothing.
-[ "$root" != "$shared" ] || exit 0
-derived="${OPENSKY_DERIVED_DATA:-$root/DerivedData}"
-link="$derived/CompilationCache.noindex"
-target="$shared/DerivedData/CompilationCache.noindex"
-mkdir -p "$target" "$derived"
-# `-ef` compares the files, not the spelling, so a DERIVED_DATA that names the main
-# checkout's tree stops here instead of deleting the store it would link to.
-[ ! "$link" -ef "$target" ] || exit 0
-rm -rf "$link"
-ln -s "$target" "$link"
-echo "  [ OK ] linked $link -> $target"

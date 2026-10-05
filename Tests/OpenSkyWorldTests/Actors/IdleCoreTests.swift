@@ -1,7 +1,7 @@
 // The idle runtime's pure rules: which actors use markers, which marker they
 // take, how long an idle plays, and the readout wording.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

@@ -20,7 +20,7 @@ tight matters: a file here is compiled twice, once per bundle.
 
 Fixtures are synthetic and built in code, never an extracted game file (root `AGENTS.md`,
 Legal & IP boundary). The established byte builders, `BSAFixture`, `ESMFixture`, `NIFFixture`
-and `PexFixture`, live in the `Tests/Formats<Family>Testing/` libraries.
+and `PexFixture`, live in the `Tests/FormatsTesting/` library.
 
 ## No tests here
 

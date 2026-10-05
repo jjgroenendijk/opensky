@@ -1,8 +1,7 @@
 // Unit tests for DefineFont2 (48) / DefineFont3 (75) decoding and the font
 // companion tags. All fixtures are synthetic, built through SWFFontBodyBuilder.
 
-@testable import FormatsCoreTesting
-import FormatsSWFTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

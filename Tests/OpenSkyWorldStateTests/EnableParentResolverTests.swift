@@ -1,7 +1,7 @@
 // Enable parents over synthetic REFRs: both flag polarities, a runtime disable on
 // the parent, a chain, the initially-disabled flag, and a missing parent.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState

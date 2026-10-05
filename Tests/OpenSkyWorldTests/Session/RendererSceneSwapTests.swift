@@ -2,6 +2,7 @@
 // the draw-uniform ring while old frames may still be in flight, and an empty
 // scene renders pure clear. Skips without Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
@@ -10,7 +11,6 @@ import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

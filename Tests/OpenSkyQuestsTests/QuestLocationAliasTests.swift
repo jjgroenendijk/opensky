@@ -1,8 +1,8 @@
 // Direct ALFL quest-alias integration over synthetic records only.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests

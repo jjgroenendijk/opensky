@@ -1,7 +1,7 @@
 // HELP chunk: help-message counts on the player come back as they were; a
 // session that showed none writes no chunk.
 
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave

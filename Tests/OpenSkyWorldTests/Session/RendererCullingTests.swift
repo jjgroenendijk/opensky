@@ -2,13 +2,13 @@
 // geometry still draws; `SceneDrawStats` proves that the out-of-frustum item
 // was skipped, not rasterized away. Skips without Metal 4.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

@@ -1,4 +1,4 @@
-@testable import FormatsCoreTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

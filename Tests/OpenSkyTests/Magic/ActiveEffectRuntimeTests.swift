@@ -2,13 +2,13 @@
 // the Recover flag selects, including the exact reversal on expiry. Conditions,
 // stacking, and dispel are in `ActiveEffectStackingTests`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 

@@ -1,8 +1,7 @@
 // Loading-screen selection: passing screens in load order, a seeded pick, and
 // the player standing in the destination while the check runs.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM

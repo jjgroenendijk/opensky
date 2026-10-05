@@ -2,7 +2,7 @@
 // degrees; the display list uses twips and matrix terms. A wrong factor of 20
 // misplaces every menu silently, so each conversion is checked both ways.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

@@ -1,0 +1,308 @@
+{
+  "configurations": [
+    {
+      "id": "A1B2C3D0-0000-4000-A000-000000000002",
+      "name": "Formats",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "codeCoverage": {
+      "targets": [
+        {
+          "containerPath": "container:OpenSky.xcodeproj",
+          "identifier": "5A3BAE003000109100177F95",
+          "name": "OpenSky"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsCore",
+          "name": "OpenSkyFormatsCore"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsESM",
+          "name": "OpenSkyFormatsESM"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsMesh",
+          "name": "OpenSkyFormatsMesh"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsAnimation",
+          "name": "OpenSkyFormatsAnimation"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsAudio",
+          "name": "OpenSkyFormatsAudio"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsPEX",
+          "name": "OpenSkyFormatsPEX"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsSWF",
+          "name": "OpenSkyFormatsSWF"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyGameData",
+          "name": "OpenSkyGameData"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyBehavior",
+          "name": "OpenSkyBehavior"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyLaunch",
+          "name": "OpenSkyLaunch"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyPhysics",
+          "name": "OpenSkyPhysics"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyDiagnostics",
+          "name": "OpenSkyDiagnostics"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyRendering",
+          "name": "OpenSkyRendering"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyAudio",
+          "name": "OpenSkyAudio"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyWorldState",
+          "name": "OpenSkyWorldState"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyConditions",
+          "name": "OpenSkyConditions"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyPerception",
+          "name": "OpenSkyPerception"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyPerceptionInterface",
+          "name": "OpenSkyPerceptionInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyActors",
+          "name": "OpenSkyActors"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyActorsInterface",
+          "name": "OpenSkyActorsInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFactions",
+          "name": "OpenSkyFactions"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyFactionsInterface",
+          "name": "OpenSkyFactionsInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyProgression",
+          "name": "OpenSkyProgression"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyProgressionInterface",
+          "name": "OpenSkyProgressionInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyCrime",
+          "name": "OpenSkyCrime"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyCrimeInterface",
+          "name": "OpenSkyCrimeInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyInventoryInterface",
+          "name": "OpenSkyInventoryInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyWorldInterface",
+          "name": "OpenSkyWorldInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyInventory",
+          "name": "OpenSkyInventory"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyMagicInterface",
+          "name": "OpenSkyMagicInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyMagic",
+          "name": "OpenSkyMagic"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyCombat",
+          "name": "OpenSkyCombat"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyCombatInterface",
+          "name": "OpenSkyCombatInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyQuests",
+          "name": "OpenSkyQuests"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyQuestsInterface",
+          "name": "OpenSkyQuestsInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyDialogue",
+          "name": "OpenSkyDialogue"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyDialogueInterface",
+          "name": "OpenSkyDialogueInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyScripting",
+          "name": "OpenSkyScripting"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyScriptingInterface",
+          "name": "OpenSkyScriptingInterface"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyPreview",
+          "name": "OpenSkyPreview"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyWorld",
+          "name": "OpenSkyWorld"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkySave",
+          "name": "OpenSkySave"
+        },
+        {
+          "containerPath": "container:.",
+          "identifier": "OpenSkyMenus",
+          "name": "OpenSkyMenus"
+        }
+      ]
+    },
+    "defaultTestExecutionTimeAllowance": 120,
+    "environmentVariableEntries": [
+      {
+        "key": "OPENSKY_SHADER_LIBRARY",
+        "value": "$(BUILD_DIR)/OpenSkyShaders.metallib"
+      }
+    ],
+    "maximumTestExecutionTimeAllowance": 300,
+    "targetForVariableExpansion": {
+      "containerPath": "container:OpenSky.xcodeproj",
+      "identifier": "5A3BAE003000109100177F95",
+      "name": "OpenSky"
+    },
+    "testTimeoutsEnabled": true
+  },
+  "testTargets": [
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsCoreTests",
+        "name": "OpenSkyFormatsCoreTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsESMTests",
+        "name": "OpenSkyFormatsESMTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsMeshTests",
+        "name": "OpenSkyFormatsMeshTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsAnimationTests",
+        "name": "OpenSkyFormatsAnimationTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsAudioTests",
+        "name": "OpenSkyFormatsAudioTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsPEXTests",
+        "name": "OpenSkyFormatsPEXTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyFormatsSWFTests",
+        "name": "OpenSkyFormatsSWFTests"
+      }
+    }
+  ],
+  "version": 1
+}

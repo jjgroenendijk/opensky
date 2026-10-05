@@ -3,16 +3,14 @@
 // engine. Interior ambience arrives only through `apply(transition:)`. The
 // interaction comes through `onInteraction`, not a raycast.
 
-import FormatsAudioTesting
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+import FeaturesTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import OpenSkyWorldTesting
 import simd
 import TagsTesting
 import Testing

@@ -1,8 +1,7 @@
 // Weather sky A/B renders: no weather matches the procedural baseline exactly,
 // a forced weather repaints the sky, and two weathers differ. Needs Metal 4.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 import Metal
 import MetalKit

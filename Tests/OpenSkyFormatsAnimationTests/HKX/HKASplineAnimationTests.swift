@@ -1,8 +1,7 @@
 // hkaSplineCompressedAnimation decode over synthetic packfiles from
 // HKASplineFixture.swift. Byte map: docs/formats/hka-animation.md.
 
-import FormatsAnimationTesting
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import simd

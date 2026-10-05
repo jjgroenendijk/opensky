@@ -1,8 +1,7 @@
 // The character record views in the Asset Browser: an `IDLM` and an `HDPT`
 // summary, and the body-part node table and tagfile bone binding.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPreview

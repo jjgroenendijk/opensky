@@ -2,8 +2,7 @@
 // bytes: 3 bound floats, 3 color floats, an unknown float, a uint32 type.
 // Layout: docs/formats/placed-references.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import TagsTesting

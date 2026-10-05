@@ -2,13 +2,13 @@
 // scale change moves pixels, and a paused world with the sample up repeats
 // byte for byte. Skips without a Metal 4 GPU.
 
+import EngineTesting
 import Foundation
 import Metal
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

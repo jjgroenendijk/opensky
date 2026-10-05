@@ -1,7 +1,7 @@
 // The audio record stores count a record that fails to decode instead of
 // dropping it without a trace.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 import OpenSkyFormatsCore

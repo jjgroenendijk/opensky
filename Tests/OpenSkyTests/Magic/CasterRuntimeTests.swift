@@ -1,6 +1,7 @@
 // The cast loop: charge, magicka spent, effects applied, and every refusal it
 // reports. `FakeCasterWorld` records what each cast handed the effect runtime.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyFormatsESM
@@ -8,7 +9,6 @@ import Foundation
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 

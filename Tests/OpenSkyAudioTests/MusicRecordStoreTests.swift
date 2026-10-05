@@ -1,8 +1,7 @@
 // MusicRecordStore indexing, MUSC -> MUST expansion, and music path
 // canonicalization. Fixtures are synthetic plugins built in code.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM

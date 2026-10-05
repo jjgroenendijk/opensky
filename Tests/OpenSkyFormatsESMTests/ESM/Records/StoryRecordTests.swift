@@ -2,8 +2,7 @@
 // Layout sources: xEdit wbDefinitionsTES5.pas; see docs/formats/dialogue.md,
 // docs/formats/story-manager.md and docs/formats/scenes.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

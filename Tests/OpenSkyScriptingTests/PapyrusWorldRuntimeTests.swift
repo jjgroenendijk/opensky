@@ -1,7 +1,7 @@
 // `PapyrusWorldRuntime` save seam: deterministic `instanceStates()`, tolerant
 // restore, and the `PapyrusInstanceKey` order.
 
-@testable import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsPEX

@@ -1,6 +1,7 @@
 // The active-effect runtime, second half: condition gating, the two stacking
 // rules, dispel, `HasMagicEffect`, and modifiers set up again after a load.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
@@ -8,10 +9,8 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

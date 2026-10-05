@@ -50,16 +50,16 @@ conflict.
   the target: `make test-unit T='OpenSkyFormatsCoreTests/BSAArchiveTests'`. Two names stay
   lowercase on purpose: the CLI binary `openskycli`, and the bundle IDs, because macOS
   stores permission grants against them.
-- The build cache is `DerivedData/` inside the checkout. The boot volume is too small for
-  this project's tens of gigabytes. `make` passes `-derivedDataPath` on every `xcodebuild`
-  call and exports `OPENSKY_DERIVED_DATA` for `tools/`. A new build command that skips it
-  silently starts a second cache on the boot disk.
-- Anything that builds runs in a background shell: it can pass the tool timeout. Only one
-  `xcodebuild` may run per derived-data tree, because two deadlock. `git push` builds too.
-- Linked worktrees share the main checkout's `.vendor/ffmpeg` and compilation cache through
-  `make`, so a worktree needs no `make bootstrap`. The cache's prefix mapping makes
-  `#filePath` read `/^src/...`; find the checkout at runtime instead
-  (`docs/tools/build-system.md`).
+- The build cache is one tree per checkout under `~/Library/Caches/OpenSky/`, on the fast
+  internal disk; the compilation cache store they all share stays on the data volume.
+  `make` passes both on every `xcodebuild` call and exports `OPENSKY_DERIVED_DATA` for
+  `tools/`. A new build command that skips them starts a second, cold cache.
+- Anything that builds runs in a background shell: it can pass the tool timeout. One build
+  runs at a time on the machine: `make` waits for the build lock and says whose build it
+  waits for. `git push` builds too.
+- Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
+  needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
+  `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
 - No git hook runs on commit or push. Run `make check` before committing. The CI lint jobs
   on each pull request are the gate before code lands.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
@@ -80,9 +80,6 @@ conflict.
   stay compatible with redistributing our code.
 
 ## Where things live
-
-The repo root holds this file, `Makefile`, the Xcode project and workspace, `Package.swift`,
-`Config/`, `Sources/`, `Tests/`, `docs/`, `tools/`, and dotfiles.
 
 - `Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
   its layer and gives the import rules. Read it before you add a module or an import.
@@ -116,15 +113,18 @@ with an example. When you add code:
 ## Build, run, test
 
 `make help` lists the main targets; `make help ALL=1` lists every one. `make fix` (autoformat
-plus strict lint) before committing; `make check` is the same gate without writes. `make install` refreshes
+plus strict lint) before committing; `make check` is the same gate without writes. Both lint
+the Swift files the branch changed; `ALL=1` lints every file. `make install` refreshes
 `/Applications/OpenSky.app` after landing rendering work, because the user checks progress
 there.
 
-No automatic step runs the tests. What to test is the author's judgment, guided by the
-`testing-and-verifying` skill, and recorded in the commit's `Tests:` section. A green build
-does not prove a triangle appeared. Unit-test every format parser and math routine with
-synthetic fixtures built in code. The real-data suites need the user's install, so only
-`make test-real` runs them, and never in CI.
+Every build or test run costs minutes, so make every edit a change needs, then run one
+check, and fix everything it reports at once. CI runs the whole unit plan on every push to a
+pull request; locally, run the smallest plan that covers the change (`testing-and-verifying`
+skill) and record it in the commit's `Tests:` section. A green build does not prove a
+triangle appeared. Unit-test every format parser and math routine with synthetic fixtures
+built in code. The real-data suites need the user's install, so only `make test-real` runs
+them, and never in CI.
 
 ## Loading game data (runtime, never repo)
 
@@ -155,14 +155,12 @@ procedure. `make check` and `ci.yml` mirror each other, so a change to one gate 
 both.
 
 Linting is strict and warnings are errors. Fix the issue rather than disabling or
-downgrading a rule. `make lint` fails on any `swiftlint:disable` comment, and there is no
-`periphery:ignore`. Parse and load failures use `throws` with typed errors, and malformed input
-must not crash: no force-unwrap, force-try, or force-cast on data from external files.
-
-Code-health gates start at zero findings and keep no baseline file
-(`docs/decisions/code-health-automation.md`). `make lint` fails on duplicated Swift
-(jscpd) and on a comment block over 6 lines. `make health` fails on unused code
-(Periphery); run it when a change adds, moves, or stops using declarations or imports.
+downgrading a rule: `make lint` fails on any suppression comment, on duplicated Swift, and
+on a comment block over 6 lines, with no baseline file
+(`docs/decisions/code-health-automation.md`). Parse and load failures use `throws` with typed
+errors, and malformed input must not crash: no force-unwrap, force-try, or force-cast on data
+from external files. `make health` (unused code) runs in the weekly CI workflow and once in a
+milestone's closing PR, not per change.
 
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
@@ -189,7 +187,6 @@ better name instead.
 - A format fact gets one line plus a link to its `docs/formats/` page, which holds the detail.
 - No history ("was", "used to", issue numbers) and no restating of the type or parameter
   names; git and the signature already hold them.
-- `make comment-length`, part of `make lint`, fails on a comment block over 6 lines.
 
 ```swift
 // Bad: restates the code and tells history.

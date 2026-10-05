@@ -79,6 +79,8 @@ count="$(printf '%s\n' "$tops" | wc -l | tr -d ' ')"
 
 log="$run_dir/compile.log"
 status=0
+opensky_build_lock
+trap 'opensky_build_unlock' EXIT INT TERM
 if [ "$count" -gt "${OPENSKY_COMPILE_MAX:-12}" ]; then
     printf '[INFO] %s top targets depend on %s; building the whole package\n' "$count" "$wanted"
     swift build --build-tests >"$log" 2>&1 || status=$?

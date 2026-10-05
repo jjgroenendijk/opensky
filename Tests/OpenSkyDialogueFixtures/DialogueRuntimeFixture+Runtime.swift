@@ -1,8 +1,8 @@
 // The dialogue runtime over the fixture world.
 
+import FeaturesTesting
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-import OpenSkyDialogueTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 

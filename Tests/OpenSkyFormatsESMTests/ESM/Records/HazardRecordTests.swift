@@ -2,8 +2,7 @@
 // synthetic fields. Layout sources: xEdit wbDefinitionsTES5.pas; see
 // docs/formats/hazards.md and docs/formats/placed-references.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

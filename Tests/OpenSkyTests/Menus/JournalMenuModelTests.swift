@@ -2,9 +2,9 @@
 // The fixture plugin is not localized, so its text is inline, which also covers
 // the unlocalized-mod path through `JournalMenuModel.text`.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus

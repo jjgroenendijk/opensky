@@ -2,7 +2,7 @@
 // the documented layout (docs/formats/fuz.md); no extracted game audio is
 // involved. Malformed input must throw `FUZError`, never trap.
 
-import FormatsAudioTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAudio
 import TagsTesting

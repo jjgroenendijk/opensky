@@ -40,7 +40,7 @@ A **feature module** has up to four targets:
 | --- | --- | --- |
 | `X` | the implementation | always |
 | `XInterface` | the protocols and value types other modules use | another module uses the feature |
-| `XTesting` | fakes and fixtures other modules' tests share | another module's tests need them |
+| `FeaturesTesting` | fakes and fixtures of every feature interface that other modules' tests share | one library for all features |
 | `XTests` | the unit tests of `X` | `X` has tests |
 | `XFixtures` | fixtures that build the real `X`, for `XTests` and the Xcode test bundles | both use such a fixture |
 
@@ -62,8 +62,9 @@ targets += feature("OpenSkyMagic", dependencies: [...], interface: [...], tests:
 ```
 
 `foundation` declares `X` and, when `tests` is given, `XTests`. `feature` declares `X` and, on
-request, `XInterface`, `XTesting`, and `XTests`, with the dependencies wired as the table above
-says. Both helpers check each dependency before the package loads:
+request, `XInterface` and `XTests`, with the dependencies wired as the table above says. Test
+targets are declared after every library, so a test may link any testing library. Both helpers
+check each dependency before the package loads:
 
 - The dependency must be declared earlier. A module never depends on a module on its own layer
   or above.
@@ -163,7 +164,7 @@ Two more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared w
 the `default.metallib` of their own bundle, and `Renderer` loads it with
 `device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
 such bundle. `make shader-library` compiles the same file with `xcrun metal`,
-and `ShaderLibraryFixture` in `Tests/RenderingTesting/` loads it from
+and `ShaderLibraryFixture` in `Tests/EngineTesting/Rendering/` loads it from
 the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
 
@@ -230,7 +231,7 @@ rules:
   appear in an expression".
 - Tests write `@testable import` to reach `internal` members.
 
-After a module is renamed or removed, delete its old products from `DerivedData/Build/Products`
+After a module is renamed or removed, delete its old products from `Build/Products` in the build cache
 (including `PackageFrameworks/`) and from `.build/`. Otherwise a stale `.swiftmodule` still
 satisfies an old `import`, and the build fails with two types of the same name, for example
 "cannot convert value of type 'OpenSkyFormatsESM.FormID' to expected argument type
@@ -238,10 +239,12 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 
 ## Tests
 
-Shared test fixtures live in a testing library, `Tests/<Name>Testing/`. For a foundation
-module the name is the one the module declares, for example `BehaviorTesting`. For a feature it
-is the feature name plus `Testing`, for example `OpenSkyPerceptionTesting`. Its declarations are
-`public`, and it may `@testable import` the module it builds fixtures for. One library,
+Shared test fixtures live in three testing libraries, one per layer: `FormatsTesting` for the
+format modules, `EngineTesting` for the engine modules, and `FeaturesTesting` for the feature
+interfaces. Each has one subfolder per module, for example `Tests/EngineTesting/Physics/`. Three
+libraries instead of one per module keep the package at 89 targets, because every target costs
+manifest and graph time on each build. Their declarations are `public`, and a library may
+`@testable import` the modules it builds fixtures for. One library,
 `TagsTesting`, holds no fixtures: it declares the shared Swift Testing tags, and the
 `testTarget` helper in `Package.swift` links it into every package test target
 ([test runs](/tools/test-runs.md#tags)).

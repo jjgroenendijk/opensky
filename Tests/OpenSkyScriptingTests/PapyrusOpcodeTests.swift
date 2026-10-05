@@ -1,4 +1,4 @@
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting

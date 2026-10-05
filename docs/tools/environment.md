@@ -74,7 +74,7 @@ password is still required.
 A grant belongs to the built product, not the terminal, and lasts only while the product keeps one
 code signature, which is why signing names a real identity ([build system](/tools/build-system.md#signing)).
 Accessibility goes to `OpenSkyUITests-Runner.app`. File access goes to `OpenSky.app`, which macOS
-treats as a program on a removable volume, because `DerivedData/` is on an external disk. The grant
+treats as a program on a removable volume when the build cache is on an external disk. The grant
 cannot be scripted: TCC is protected by SIP, and the Accessibility entry is in the root-owned system
 database. `make test-perms` checks what it can (the data root is readable, and both bundles have a
 real signature) and opens the right settings pane for the rest.
@@ -145,13 +145,18 @@ Retires when a later Xcode matches plan selection against Swift Testing names.
 
 Observed 2026-09-29 and 2026-09-30 on Xcode 26, for at least eight package modules. After a change
 to the public interface of a package module, the build wrote the new module under
-`DerivedData/Build/Intermediates.noindex/`. The copy in
-`DerivedData/Build/Products/Debug/<Module>.swiftmodule` kept the old interface, or had no
+`Build/Intermediates.noindex/`. The copy in
+`Build/Products/Debug/<Module>.swiftmodule` kept the old interface, or had no
 `.swiftmodule` file at all. The next module up failed with "extra argument", "has no member", or
 "cannot find type in scope", on repeated builds and with a forced rebuild. It happened with the "Emitting
 module" step both a compilation cache hit and a miss. Deleting the Products copy fixed the next
 build. `tools/xcodebuild-run.sh` does that delete itself
 ([build system](/tools/build-system.md#stale-module-copies)).
+
+The cause is not found. The best hypothesis, from the transcripts, is that a failed build cancels
+the copy task of a module whose emit task did finish, so the product keeps the old copy. Since
+2026-10-05 every build passes `-IDEBuildingContinueBuildingAfterErrors=YES`, which lets those
+copy tasks run; whether that ends the stale copies is to be observed.
 
 Once, after the delete, the next `make test-unit` ran test bundles built against the old struct layout
 and crashed with `EXC_BAD_ACCESS` in "outlined init with copy". A forced rebuild fixed that.
@@ -213,7 +218,7 @@ Retires when swift-build reports a replayed job to the driver: then `make build-
 Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`
 file inside the bundle. The next build of that variant fails with
 `invalid or unsupported format for signature` and `In subcomponent: ... .cstemp`. Seen in the
-sanitizer variants under `DerivedData/Build/Products/Variant-*`. Delete the leftovers with
-`find DerivedData/Build/Products -name '*.cstemp' -delete` and build again.
+sanitizer variants under `Build/Products/Variant-*` in the build cache. Delete the leftovers with
+`find "$OPENSKY_DERIVED_DATA/Build/Products" -name '*.cstemp' -delete` and build again.
 
 Retires when Xcode cleans its own signing temp files.

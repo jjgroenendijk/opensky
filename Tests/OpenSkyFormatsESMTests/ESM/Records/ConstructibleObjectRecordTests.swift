@@ -1,7 +1,6 @@
 // COBJ over synthetic records. Layout: docs/formats/recipes.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

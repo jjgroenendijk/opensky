@@ -1,7 +1,7 @@
 // Milestone 3.5 sky/water scene-build cases. Fixtures live beside the core
 // CellSceneBuilder tests; every byte is synthetic, never game content.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

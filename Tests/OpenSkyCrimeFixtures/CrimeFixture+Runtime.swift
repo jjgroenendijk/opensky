@@ -1,7 +1,7 @@
 // The fixture builders that need the Crime implementation.
 
+import FeaturesTesting
 @testable import OpenSkyCrime
-import OpenSkyCrimeTesting
 @testable import OpenSkyWorldState
 
 extension CrimeFixture {

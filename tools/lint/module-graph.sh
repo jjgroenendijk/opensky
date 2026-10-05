@@ -38,11 +38,7 @@ COMPOSITION = {"OpenSkyPreview"}
 # Rule 6. A feature without one of its targets, and why.
 MISSING = {
     ("OpenSkyMenus", "Interface"): "nothing depends on menus",
-    ("OpenSkyMenus", "Testing"): "no other tests need menu fakes",
     ("OpenSkySave", "Interface"): "nothing depends on saves",
-    ("OpenSkyCombat", "Testing"): "its fakes fake seams the implementation declares",
-    ("OpenSkySave", "Testing"): "nothing depends on saves",
-    ("OpenSkyScripting", "Testing"): "its fixtures run the Papyrus implementation",
 }
 
 layer = {name: index for index, names in enumerate(LAYERS) for name in names}
@@ -111,7 +107,7 @@ for name in sorted(names):
                 failures.append(f"rule 5: {name} depends on {dep}, another feature's fixtures")
 
 for feature in sorted(features):
-    for part in ("Interface", "Testing", "Tests"):
+    for part in ("Interface", "Tests"):
         present = feature + part in names
         excused = (feature, part) in MISSING
         if not present and not excused:

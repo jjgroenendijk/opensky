@@ -2,15 +2,15 @@
 // CIS1/CIS2 name override. Each condition is a real 32-byte CTDA. `@MainActor`
 // like the store.
 
-import FormatsESMTesting
+import EngineTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyQuests
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

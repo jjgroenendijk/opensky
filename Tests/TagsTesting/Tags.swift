@@ -13,4 +13,6 @@ extension Tag {
     @Tag public static var perf: Self
     /// Covers a file-format parser.
     @Tag public static var parser: Self
+    /// A real-data test in the smoke set, the ones `make test-real` runs by default.
+    @Tag public static var smoke: Self
 }

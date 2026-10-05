@@ -1,6 +1,7 @@
 // Dialogue-camera framing, projection policy, and the speaker's turn.
 // Synthetic transforms only.
 
+import EngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
@@ -8,7 +9,6 @@
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import PhysicsTesting
 import simd
 import Testing
 

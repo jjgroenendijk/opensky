@@ -1,7 +1,7 @@
 // The worldspace and exterior-cell lookups a builder caches across builds must
 // answer like the uncached depth-first walk did.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyRendering

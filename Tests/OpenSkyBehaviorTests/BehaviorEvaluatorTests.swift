@@ -2,7 +2,7 @@
 // graphs. Lifecycle is in BehaviorLifecycleTests.swift; generators in
 // BehaviorGeneratorTests.swift and BehaviorClipTests.swift.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation

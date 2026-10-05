@@ -1,7 +1,7 @@
 // `GlobalVariable` natives over a synthetic `GlobalStore`. Writes go through
 // the GLOB coercion, so a short or long global never holds a fraction.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting

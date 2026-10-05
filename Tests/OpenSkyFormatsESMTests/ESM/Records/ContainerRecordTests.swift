@@ -1,8 +1,7 @@
 // CONT contents (COCT/CNTO/COED) and REFR ownership (XOWN/XRNK/XCNT), over
 // synthetic InventoryFixture records. Layout: docs/formats/item-records.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import TagsTesting

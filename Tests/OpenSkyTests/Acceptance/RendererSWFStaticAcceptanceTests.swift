@@ -3,14 +3,14 @@
 // `swfEnabled = false` and a cleared movie restore it byte for byte, and
 // repeated frames are identical. Movies are built in code.
 
-import FormatsSWFTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

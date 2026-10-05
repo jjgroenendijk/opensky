@@ -1,11 +1,10 @@
 // The perk runtime, its tree index, and the actor values the perk suites
 // spend. Needs Progression, Actors, and the whole-game condition registry.
 
+import FeaturesTesting
 @testable import OpenSkyActors
-import OpenSkyActorsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
-import OpenSkyProgressionTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 

@@ -3,13 +3,13 @@
 // `AVOneHanded`: an empty entry node, one box off it, two boxes off that, and a
 // rank chain whose higher ranks are in no box.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
-import OpenSkyProgressionTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

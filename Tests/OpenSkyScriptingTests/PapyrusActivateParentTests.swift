@@ -1,7 +1,7 @@
 // `XAPR` activate parents: activating a reference also activates the references
 // that name it, each with its parent as the activator.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyScripting

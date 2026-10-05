@@ -1,10 +1,10 @@
 // The perception shell over a fake session: which resident actors observe,
 // and what the panel reads before and after the pass is wired.
 
+import FeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
-import OpenSkyPerceptionTesting
 import simd
 import Testing
 

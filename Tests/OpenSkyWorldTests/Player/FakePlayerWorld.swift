@@ -1,8 +1,7 @@
 // Plain-value fakes for `PlayerCoordinatorTests`: the renderer side of the
 // player and a body provider that records what it was asked to assemble.
 
-import BehaviorTesting
-import GameDataTesting
+import EngineTesting
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM

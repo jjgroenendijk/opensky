@@ -1,13 +1,13 @@
 // A crafting session at a synthetic station: keyword filtering, verdicts,
 // atomic consumption, the created count, and the reported skill use.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 import OpenSkyProgressionInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState

@@ -2,14 +2,14 @@
 // starting topic, a blocking branch preempts the list, and an exclusive branch
 // the speaker entered acts as blocking until a line from another branch.
 
-import FormatsESMTesting
+import EngineTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
-import GameDataTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
-import OpenSkyDialogueTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface

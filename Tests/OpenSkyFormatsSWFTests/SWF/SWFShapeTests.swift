@@ -3,7 +3,7 @@
 // style counts, and defensive failure on malformed bodies. All fixtures are
 // synthetic, built through SWFShapeBodyBuilder.
 
-import FormatsSWFTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
 import TagsTesting

@@ -1,12 +1,12 @@
 // Controller behavior under injected movement tuning. Synthetic collision
 // geometry only; no game content.
 
+import EngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import PhysicsTesting
 import simd
 import Testing
 

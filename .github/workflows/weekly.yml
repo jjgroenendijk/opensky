@@ -1,0 +1,61 @@
+name: Weekly checks
+
+# The slow checks that no change needs on every push: the unit tests under each
+# sanitizer, and the unused-code scan. They run on a macOS runner once a week and
+# on demand, so a session never waits for them (docs/tools/ci.md). A finding is
+# a regression to file as an issue, not a reason to rerun.
+on:
+  schedule:
+    - cron: "17 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+  OPENSKY_DERIVED_DATA: ${{ github.workspace }}/DerivedData
+  OPENSKY_COMPILATION_CACHE: ${{ github.workspace }}/DerivedData/CompilationCache.noindex
+  BUILD_FLAGS: >-
+    CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
+    -skipPackagePluginValidation -skipMacroValidation
+
+jobs:
+  checks:
+    name: ${{ matrix.name }}
+    runs-on: xcode-27
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Thread sanitizer
+            command: make test-sanitize SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
+          - name: Address sanitizer
+            command: make test-sanitize SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
+          - name: Unused code
+            command: make health XCODEBUILD_FLAGS="$BUILD_FLAGS"
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start Metal Toolchain download
+        run: tools/ci/metal-toolchain.sh start
+      - run: make swift-baseline
+      - uses: actions/cache/restore@v6
+        id: ffmpeg
+        with:
+          path: .vendor/ffmpeg
+          key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
+      - run: make ffmpeg
+      # Periphery is the one tool the CI image does not ship.
+      - if: matrix.name == 'Unused code'
+        run: brew install peripheryapp/periphery/periphery
+      - name: Wait for the Metal Toolchain
+        run: tools/ci/metal-toolchain.sh wait
+      - run: ${{ matrix.command }}
+      - name: Upload logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}-logs
+          path: logs/
+          retention-days: 14

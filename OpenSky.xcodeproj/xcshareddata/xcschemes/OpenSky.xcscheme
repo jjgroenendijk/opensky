@@ -34,20 +34,6 @@
                ReferencedContainer = "container:OpenSky.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "NO"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "5AD1000130001093001700A1"
-               BuildableName = "OpenSkyRealDataTests.xctest"
-               BlueprintName = "OpenSkyRealDataTests"
-               ReferencedContainer = "container:OpenSky.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -61,6 +47,27 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
+            reference = "container:Config/TestPlans/Quick.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/Formats.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/Engine.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/Features.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/App.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/AgentControl.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
+            reference = "container:Config/TestPlans/RealDataAll.xctestplan">
+         </TestPlanReference>
+         <TestPlanReference
             reference = "container:Config/TestPlans/UITests.xctestplan">
          </TestPlanReference>
          <TestPlanReference
@@ -71,9 +78,6 @@
          </TestPlanReference>
          <TestPlanReference
             reference = "container:Config/TestPlans/Perf.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
-            reference = "container:Config/TestPlans/Parser.xctestplan">
          </TestPlanReference>
          <TestPlanReference
             reference = "container:Config/TestPlans/GPU.xctestplan">

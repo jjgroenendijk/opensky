@@ -2,8 +2,7 @@
 // MISC and BOOK families, over synthetic InventoryFixture records.
 // Layout: docs/formats/item-records.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

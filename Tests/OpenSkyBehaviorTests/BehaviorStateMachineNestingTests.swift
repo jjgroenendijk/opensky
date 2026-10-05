@@ -1,6 +1,6 @@
 // Nested machines, clip synchronization, and determinism across both.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation

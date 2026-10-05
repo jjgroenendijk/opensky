@@ -2,8 +2,7 @@
 // files, AGENTS.md "Legal & IP boundary"). Layout sources: UESP WTHR + xEdit
 // dev-4.1.5 wbDefinitionsTES5.pas; see docs/formats/records.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 import simd

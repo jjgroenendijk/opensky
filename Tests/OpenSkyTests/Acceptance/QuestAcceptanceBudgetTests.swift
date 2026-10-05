@@ -2,7 +2,8 @@
 // so `PapyrusTickBudget` bounds them. Quest conditions run no bytecode; that is
 // checked, not assumed. Timings are synthetic.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsCore
@@ -13,7 +14,6 @@ import Foundation
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import TagsTesting
 import Testing
 

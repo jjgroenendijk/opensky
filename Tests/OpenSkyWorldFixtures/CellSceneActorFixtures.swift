@@ -1,8 +1,7 @@
 // Actor and equipment records for the cell-scene fixture, shared by the world
 // suites and the acceptance chains.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

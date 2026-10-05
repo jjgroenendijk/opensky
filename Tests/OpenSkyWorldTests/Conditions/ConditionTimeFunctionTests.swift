@@ -3,12 +3,12 @@
 // Everything here is deterministic: game time comes from a `GameClock` the test
 // builds, and `GetRandomPercent` draws from a seeded `ConditionRandom`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionTimeFunctionTests {

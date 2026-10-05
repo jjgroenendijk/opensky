@@ -8,10 +8,10 @@
 # xcodebuild's own -quiet cannot do this: it decides what to print before the
 # text exists, leaving no full copy anywhere.
 #
-# A build removes stale module copies first (tools/stale-modules.sh). When a
-# failed build leaves new stale copies, it removes them and builds again. The
-# script also removes the copies of the modules above, so one more pass is
-# usually enough; it repeats while each pass finds new ones.
+# A build takes the machine-wide build lock first (tools/xcodebuild-lib.sh),
+# then removes stale module copies (tools/stale-modules.sh). When a failed build
+# leaves new stale copies, it removes them and builds once more; the stale check
+# also removes the copies of the modules above, so one pass is enough.
 #
 # The transcript goes to logs/<name>/<UTC timestamp>/<name>.log (issue #347);
 # a caller that has already opened a run directory passes it in so one run of
@@ -21,7 +21,7 @@
 # Env:   OPENSKY_XCODEBUILD_RAW=1  pass everything through, transcript included
 #        OPENSKY_RUN_DIR           write into this run directory, not a new one
 #        OPENSKY_MAX_ERRORS        unique errors to print (default 40)
-#        OPENSKY_STALE_RETRIES     rebuilds after removing stale copies (default 8)
+#        OPENSKY_STALE_RETRIES     rebuilds after removing stale copies (default 1)
 #        OPENSKY_RETRY_MINUTES     no new rebuild starts after this many minutes (default 15)
 set -eu
 
@@ -47,7 +47,7 @@ log="$run_dir/$name.log"
 # back through a file rather than $?. `set -o pipefail` is not in POSIX sh.
 status_file="$(mktemp -t opensky-xcodebuild)"
 shown_file="$(mktemp -t opensky-xcodebuild-shown)"
-trap 'rm -f "$status_file" "$shown_file"' EXIT INT TERM
+trap 'rm -f "$status_file" "$shown_file"; opensky_build_unlock' EXIT INT TERM
 
 # test-without-building compiles nothing, so it cannot meet a stale module.
 compiles="yes"
@@ -90,11 +90,12 @@ remove_stale() {
 }
 
 if [ -n "$compiles" ]; then
+    opensky_build_lock
     remove_stale || true
 fi
 started="$(date +%s)"
 run_once "$@"
-max_retries="${OPENSKY_STALE_RETRIES:-8}"
+max_retries="${OPENSKY_STALE_RETRIES:-1}"
 retry_seconds=$((${OPENSKY_RETRY_MINUTES:-15} * 60))
 bundle="$(arg_value -resultBundlePath "$@")"
 retry=0

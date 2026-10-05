@@ -1,7 +1,7 @@
 // AIDT decode: the named values, defensive length handling, and the
 // `useAIData` template inheritance the hostility derivation needs.
 
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

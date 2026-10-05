@@ -1,13 +1,13 @@
 // The spellbook: knowing spells, reading a tome, and readying a spell to the
 // hand its ETYP's EQUP slot names.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 @testable import OpenSkyWorldState
 import Testing
 

@@ -2,8 +2,7 @@
 // minimum time after the destination is ready, then fades and resumes the
 // world. A forced screen holds until released.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM

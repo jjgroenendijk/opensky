@@ -2,7 +2,7 @@
 // values at the offsets in docs/formats/hkx-behavior-modifiers.md and reads
 // every member back. All values are invented.
 
-import FormatsAnimationTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
 import TagsTesting

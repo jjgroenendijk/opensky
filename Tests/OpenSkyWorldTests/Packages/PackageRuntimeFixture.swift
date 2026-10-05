@@ -1,8 +1,7 @@
 // Synthetic PACK, NPC_ and ACHR records for the package tests. Built in code,
 // never extracted from game data.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -3,6 +3,7 @@
 // `CasterRuntime`, and `ActiveEffectRuntime`. The decision is in
 // `CombatCastingBehaviorTests`.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyCombat
@@ -10,7 +11,6 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
-import OpenSkyMagicTesting
 import Testing
 
 @MainActor

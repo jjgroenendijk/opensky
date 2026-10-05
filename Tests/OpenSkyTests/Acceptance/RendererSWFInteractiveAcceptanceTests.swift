@@ -3,7 +3,8 @@
 // pointer, as CLIK's `gfx.controls.Button` uses, and `handleInput` for keys, as
 // every vanilla menu class defines. Movies are built in code.
 
-import FormatsSWFTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsSWF
@@ -11,7 +12,6 @@ import Metal
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

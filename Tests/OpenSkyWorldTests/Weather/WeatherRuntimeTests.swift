@@ -3,8 +3,7 @@
 // weather blend math, wind blending, region/climate selection semantics, the
 // deterministic weighted pick, and the WeatherSystem transition machine.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

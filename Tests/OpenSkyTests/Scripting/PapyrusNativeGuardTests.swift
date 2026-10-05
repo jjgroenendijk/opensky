@@ -2,18 +2,17 @@
 // `Faction.CanPayCrimeGold`, `Faction.PlayerPayCrimeGold`, and
 // `Faction.SendPlayerToJail`, over a session running the real `CrimeArrest`.
 
-import FormatsESMTesting
+@testable import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
-@testable import OpenSkyCrimeTesting
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

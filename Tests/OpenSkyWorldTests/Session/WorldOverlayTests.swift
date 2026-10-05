@@ -1,5 +1,6 @@
 // Overlay-buffer coverage and the offscreen pixel-delta proof.
 
+import EngineTesting
 import Metal
 import MetalKit
 @testable import OpenSkyDiagnostics
@@ -9,7 +10,6 @@ import MetalKit
 import OpenSkyShaderTypes
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
-import RenderingTesting
 import simd
 import TagsTesting
 import Testing

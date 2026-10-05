@@ -1,8 +1,8 @@
 // The perk baseline resolver over `ActorSpellFixture` records.
 
+import FeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import OpenSkyMagicTesting
 @testable import OpenSkyProgression
 
 extension ActorSpellFixture {

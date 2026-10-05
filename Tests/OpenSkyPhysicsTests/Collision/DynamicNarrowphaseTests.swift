@@ -3,11 +3,11 @@
 // collider, a solid slab, one contact through many shapes, and side-by-side
 // bodies.
 
+import EngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
 @testable import OpenSkyPhysics
-import PhysicsTesting
 import simd
 import Testing
 

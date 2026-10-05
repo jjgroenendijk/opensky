@@ -2,7 +2,7 @@
 // static clips hold bone 1 at a known translation, so the pose shows which
 // state is visible and how far a crossfade has run.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation

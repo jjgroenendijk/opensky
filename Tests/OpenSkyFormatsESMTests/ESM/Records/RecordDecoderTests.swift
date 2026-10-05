@@ -3,8 +3,7 @@
 // "Legal & IP boundary"). Layouts: UESP "Skyrim Mod:Mod File Format" per-
 // record pages; see docs/formats/records.md.
 
-import FormatsCoreTesting
-import FormatsESMTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

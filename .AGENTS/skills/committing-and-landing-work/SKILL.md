@@ -14,9 +14,9 @@ skill is how it is done right.
 
 1. One logical change per commit — no mixed refactor, behavior, and formatting.
 2. `make check` green, and the change verified as the `testing-and-verifying` skill
-   describes. `make check` includes the duplicate, comment-length, and suppression gates;
-   `make health` (unused code) runs only when you start it. Nothing else runs the tests
-   before a push.
+   describes. `make check` lints the Swift files the branch changed and includes the
+   duplicate, comment-length, and suppression gates. The whole unit plan runs in CI on
+   every push; `make health` and the sanitizers run in the weekly CI workflow.
 3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
 
 ## Message format
@@ -32,8 +32,11 @@ Context: what problem/need triggered this
 Change: high-level summary of what changed
 Rationale: why this approach; trade-offs; alternatives rejected
 Impact/Risk: behavior changes, migrations, compatibility, performance
-Tests: exact command(s) run
+Tests: what ran and what did not, one line each
 ```
+
+`Tests:` is a record, not a checklist: one quick run that covers the change is a complete
+entry, and `test-ui not run: no UI test path changed` is a valid line.
 
 Breaking change -> `type(scope)!:` or `BREAKING CHANGE:` footer with migration steps.
 Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.
@@ -52,12 +55,14 @@ or `Model:`. Allowed trailers:
 3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
    local, and rebase or squash them before you push.
 4. Open the PR as a draft after the first push: `gh pr create --draft`. Describe what and
-   why, and cite the format specs used. Push each later atomic commit to it. CI skips a
-   draft PR, so a draft costs no runner time.
+   why, and cite the format specs used. Push each later atomic commit to it. CI runs the
+   whole unit plan on every push, draft included, so push early and keep working while
+   the runner tests; a newer push cancels the older run.
 5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
    is checked here.
-6. When the work is done and verified, `gh pr ready <pr>`. That starts CI.
+6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
+   `gh pr checks <pr> --watch`.
 7. Merge after review with `gh pr merge <pr> --merge`. A merge commit keeps every atomic
    commit on `main`; the repo disables squash and rebase merging. Done and verified work
    always lands: commit and open the PR without waiting to be asked.

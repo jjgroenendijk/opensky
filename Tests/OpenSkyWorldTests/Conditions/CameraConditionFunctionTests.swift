@@ -1,10 +1,10 @@
 // The VATS camera condition functions read the shot request, and fail with
 // the camera domain when no request is set.
 
+import FeaturesTesting
 @testable import OpenSkyConditions
 import OpenSkyFormatsESM
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 struct CameraConditionFunctionTests {

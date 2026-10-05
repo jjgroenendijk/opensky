@@ -2,8 +2,7 @@
 // fields, the skill spread, and their decode. Expected numbers are quoted or
 // hand-computed from the sources in `ActorValueDerivationGeneral.swift`.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

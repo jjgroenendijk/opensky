@@ -2,12 +2,12 @@
 // from the clock, and `setGlobal` on a clock-owned ID moves the clock.
 // See docs/engine/game-clock.md.
 
-import FormatsESMTesting
+import EngineTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing
-import WorldStateTesting
 
 @MainActor
 struct GameClockGlobalsTests {

@@ -1,11 +1,10 @@
-import FormatsESMTesting
-import FormatsPEXTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
-import OpenSkyQuestsTesting
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
 import Testing

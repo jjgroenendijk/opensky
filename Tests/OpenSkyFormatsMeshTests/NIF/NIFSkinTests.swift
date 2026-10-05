@@ -1,6 +1,6 @@
 // Skin blocks and the bind-pose flatten. Layout: docs/formats/nif.md.
 
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

@@ -2,13 +2,13 @@
 // evaluator against a synthetic fight. Function indices are raw on-disk numbers
 // (Creation Kit number minus 4096); see the ConditionFunctionsActor.swift header.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 struct ConditionActorFunctionTests {

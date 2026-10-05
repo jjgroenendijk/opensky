@@ -5,7 +5,7 @@
 // seam between the runtimes and animation. Everything is invented; the vanilla
 // half is `CombatAcceptanceRealDataTests`.
 
-import BehaviorTesting
+import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
@@ -15,7 +15,6 @@ import Foundation
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
-import PhysicsTesting
 import simd
 
 /// The synthetic arena. Flat, so the fight is the one variable. The wall stops

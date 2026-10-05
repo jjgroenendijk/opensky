@@ -1,6 +1,6 @@
 // Typed native call resolution over synthetic PEX models.
 
-import FormatsPEXTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting

@@ -2,9 +2,9 @@
 // nothing, a blocked one stops short, an overlapping start says so, and ties
 // break the way `InteractionRaycaster` breaks them.
 
+import EngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
-import PhysicsTesting
 import simd
 import Testing
 

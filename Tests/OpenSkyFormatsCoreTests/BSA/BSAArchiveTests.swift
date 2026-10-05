@@ -2,7 +2,7 @@
 // in code via BSAFixture — never extracted game files (AGENTS.md "Legal & IP
 // boundary").
 
-import FormatsCoreTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 import TagsTesting

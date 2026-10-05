@@ -13,6 +13,7 @@ import Foundation
 import simd
 import Testing
 
+@Suite(.tags(.smoke))
 struct VoiceRealDataTests {
     private static let pluginNames = [
         "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm"

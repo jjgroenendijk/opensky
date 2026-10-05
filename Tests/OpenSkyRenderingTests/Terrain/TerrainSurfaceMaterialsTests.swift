@@ -1,8 +1,7 @@
 // Exterior ground takes the material of the landscape texture painted heaviest
 // at each vertex.
 
-@testable import FormatsCoreTesting
-import FormatsESMTesting
+@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

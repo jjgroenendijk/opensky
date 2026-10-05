@@ -1,7 +1,7 @@
 // The speaker focus state machine and the readout sentences, with plain values.
 
+import FeaturesTesting
 @testable import OpenSkyDialogue
-import OpenSkyDialogueTesting
 import OpenSkyFormatsESM
 import Testing
 

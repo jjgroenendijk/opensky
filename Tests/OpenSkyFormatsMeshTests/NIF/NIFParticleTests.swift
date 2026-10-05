@@ -5,7 +5,7 @@
 // .unsupported, and defensive rejection of truncated + out-of-range input.
 // Layouts per NifTools nif.xml; docs/formats/nif-particles.md.
 
-import FormatsMeshTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh

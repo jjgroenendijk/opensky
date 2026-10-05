@@ -2,14 +2,13 @@
 // evaluator. Indices are raw on-disk numbers (Creation Kit minus 4096); see
 // the ConditionFunctionsFaction.swift header.
 
+import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
-import OpenSkyFactionsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
-import OpenSkyWorldTesting
 import Testing
 
 @MainActor

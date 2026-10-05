@@ -3,13 +3,13 @@
 // InventoryBaselineFixture through `InventoryBaselineResolver.build(from:)`,
 // so the record indexing is covered too.
 
-import FormatsESMTesting
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
-import OpenSkyInventoryTesting
 import Testing
 
 struct InventoryBaselineTests {
