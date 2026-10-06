@@ -163,6 +163,15 @@ public struct NPCMovementRuntime {
         movers[actor]?.transform ?? facings[actor]?.transform ?? parked[actor]?.transform
     }
 
+    /// Where an actor stands: its movement pose, else the pose a cell build draws
+    /// from `snapshot`, which is the saved transform when one exists, then the record.
+    public func standingTransform(
+        of entry: RuntimeReferenceEntry,
+        in snapshot: @autoclosure () -> WorldStateSnapshot
+    ) -> ReferenceTransformOverride {
+        transform(for: entry.key) ?? snapshot().resolvedState(for: entry).transform
+    }
+
     /// What one actor is turning towards, when it is turning.
     public func facing(for actor: ReferenceKey) -> NPCFacingHold? {
         facings[actor]
