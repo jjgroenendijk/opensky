@@ -4,6 +4,8 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyAssetCache
+import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
 
@@ -11,6 +13,7 @@ enum BenchmarkCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         let outPath = try scanner.option("--out")
         let framePath = try scanner.option("--frame")
+        let assets = try AssetLoadOptions(scanner: &scanner, context: context)
         try scanner.finish()
         guard
             let device = MTLCreateSystemDefaultDevice(),
@@ -35,9 +38,13 @@ enum BenchmarkCommand {
             machine: .current(gpu: device.name),
             renderer: renderer
         ) { recorder in
-            try RenderCommand.makeBuilder(context: context, device: device, recorder: recorder)
+            try RenderCommand.makeBuilder(
+                context: context, device: device, recorder: recorder, assets: assets
+            )
         }
         report(result)
+        print("[INFO] GPU memory: \(device.currentAllocatedSize >> 20) MiB allocated")
+        try assets.report()
         if let outPath {
             let url = URL(fileURLWithPath: outPath)
             try result.jsonData().write(to: url)

@@ -215,11 +215,30 @@ extension OpenSkyCLI {
                                   fail route/collision/stream/physics/audio gates
       launch-bench                Time each stage of the world data load the
                                   app runs before its game window opens
-      benchmark [--out <file>] [--frame <png>]
+      asset-cache build|check|clear|status [--preset best|balanced|highest]
+            [--folder <dir>] [--limit-gib <n>] [--kinds <list>] [--width <n>]
+            [--paths <file>]
+                                  Build, check, clear, or show the asset
+                                  cache; settings come from the app unless an
+                                  option overrides them; --paths limits a
+                                  build or check to the listed files
+      asset-cache extract --paths <file> --out <dir>
+                                  Write loose copies of the listed files, the
+                                  baseline the cache is measured against
+      asset-cache compare <reference.png> <candidate.png>
+                                  PSNR and largest channel error of two
+                                  captures of the same view
+      benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict]
+                [--preset best|balanced|highest] [--folder <dir>]
+                [--loose <dir>] [--record-paths <file>]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
-                                  JSON, --frame a PNG of the measured view
+                                  JSON, --frame a PNG of the measured view;
+                                  --asset-cache loads through the cache,
+                                  --evict drops the files from the page cache,
+                                  --loose reads extracted copies first,
+                                  --record-paths lists the assets it read
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control

@@ -61,6 +61,7 @@ enum BenchCommand {
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
+        let assets = try AssetLoadOptions(scanner: &scanner, context: context)
         let options = try parseOptions(scanner: &scanner)
         guard
             let device = MTLCreateSystemDefaultDevice(),
@@ -70,9 +71,9 @@ enum BenchCommand {
         }
 
         if options.flyPath {
-            try runFlyPath(context: context, device: device, options: options)
+            try runFlyPath(context: context, device: device, options: options, assets: assets)
         } else if options.walkPath {
-            try runWalkPath(context: context, device: device, options: options)
+            try runWalkPath(context: context, device: device, options: options, assets: assets)
         } else {
             try runSustained(context: context, device: device, options: options)
         }
@@ -141,30 +142,21 @@ enum BenchCommand {
     private static func runFlyPath(
         context: CLIContext,
         device: MTLDevice,
-        options: Options
+        options: Options,
+        assets: AssetLoadOptions
     ) throws {
-        let builder = try RenderCommand.makeBuilder(context: context, device: device)
+        let builder = try RenderCommand.makeBuilder(
+            context: context,
+            device: device,
+            assets: assets
+        )
+        defer { try? assets.report() }
         let weather = WeatherSystem(file: builder.file, worldspaceEditorID: options.worldspace)
         let provider = BuilderCellSceneProvider(
             builder: builder,
             worldspaceEditorID: options.worldspace
         )
-        let view = MTKView(
-            frame: CGRect(
-                x: 0, y: 0,
-                width: options.size.width,
-                height: options.size.height
-            ),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
-            view: view,
-            scene: RenderScene(instances: []),
-            movementConfiguration: .synthetic
-        )
-        renderer.worldAudio = benchAudioEngine()
+        let renderer = try makeStreamRenderer(device: device, size: options.size)
         wireBenchScriptRuntime(to: renderer)
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
@@ -205,29 +197,20 @@ enum BenchCommand {
     private static func runWalkPath(
         context: CLIContext,
         device: MTLDevice,
-        options: Options
+        options: Options,
+        assets: AssetLoadOptions
     ) throws {
-        let builder = try RenderCommand.makeBuilder(context: context, device: device)
+        let builder = try RenderCommand.makeBuilder(
+            context: context,
+            device: device,
+            assets: assets
+        )
+        defer { try? assets.report() }
         let provider = BuilderCellSceneProvider(
             builder: builder,
             worldspaceEditorID: options.worldspace
         )
-        let view = MTKView(
-            frame: CGRect(
-                x: 0, y: 0,
-                width: options.size.width,
-                height: options.size.height
-            ),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
-            view: view,
-            scene: RenderScene(instances: []),
-            movementConfiguration: .synthetic
-        )
-        renderer.worldAudio = benchAudioEngine()
+        let renderer = try makeStreamRenderer(device: device, size: options.size)
         let result = try CellStreamingWalkBenchmark.run(
             renderer: renderer,
             provider: provider,
@@ -270,6 +253,25 @@ enum BenchCommand {
 }
 
 extension BenchCommand {
+    /// A paused offscreen renderer with the bench audio engine, for the stream routes.
+    private static func makeStreamRenderer(
+        device: MTLDevice, size: (width: Int, height: Int)
+    ) throws -> Renderer {
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: size.width, height: size.height),
+            device: device
+        )
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        let renderer = try Renderer(
+            view: view,
+            scene: RenderScene(instances: []),
+            movementConfiguration: .synthetic
+        )
+        renderer.worldAudio = benchAudioEngine()
+        return renderer
+    }
+
     /// Attaches an empty VM so the fly path measures the fixed engine-loop
     /// floor. The callback retains the runtime for the complete render run.
     private static func wireBenchScriptRuntime(to renderer: Renderer) {

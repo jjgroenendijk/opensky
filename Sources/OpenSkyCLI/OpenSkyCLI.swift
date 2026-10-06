@@ -174,14 +174,31 @@ enum OpenSkyCLI {
             try EffectsCommand.run(
                 context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
             )
-        case "benchmark":
-            try BenchmarkCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
         case "game":
             try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
         case "ess":
             try await ESSCommand.run(dataRoot: dataRoot, scanner: &scanner)
+        default:
+            return try await runLoadCommand(command, dataRoot: dataRoot, scanner: &scanner)
+        }
+        return true
+    }
+
+    /// The commands that measure or prepare asset loading.
+    private static func runLoadCommand(
+        _ command: String,
+        dataRoot: String?,
+        scanner: inout ArgumentScanner
+    ) async throws -> Bool {
+        switch command {
+        case "benchmark":
+            try BenchmarkCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
+        case "asset-cache":
+            try await AssetCacheCommand.run(
+                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
+            )
         case "launch-bench":
             // Async: it awaits the same off-main loader the app runs.
             try await LaunchBenchCommand.run(
@@ -195,6 +212,6 @@ enum OpenSkyCLI {
 }
 
 /// Diagnostics go to stderr so stdout stays pipeable data.
-func printError(_ message: String) {
+nonisolated func printError(_ message: String) {
     FileHandle.standardError.write(Data("\(message)\n".utf8))
 }

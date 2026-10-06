@@ -25,6 +25,18 @@ benchmark definition would give numbers that do not compare, so callers reuse th
 `openskycli benchmark --out <file>` runs the same steps from any build. A Debug build is
 much slower, and the result says which build ran it.
 
+`--asset-cache` loads textures and meshes through the [asset cache](/engine/asset-cache.md),
+with the preset and folder from the app settings unless `--preset` or `--folder` overrides
+them. The summary then prints the cache hits and misses. `--evict` first drops the game data
+and the cache folder from the page cache, so the cold load reads from disk. It uses `msync`
+with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
+
+`--loose <dir>` reads the files that `asset-cache extract` copied there before the archives.
+Comparing a run with it against a run without it separates the cost of the archive from the
+cost of the parse. `--record-paths <file>` writes the asset paths the cache was asked for,
+so `asset-cache build --paths` and `extract --paths` can work on just the benchmark's assets.
+The summary also prints the GPU memory allocated after the load.
+
 The command exits 1 when a cell fails to build. Such a result does not compare with a
 clean run.
 
