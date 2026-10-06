@@ -204,6 +204,13 @@ struct AssetPayloadCodecTests {
         #expect(stride(from: 3, to: ready.bytes.count, by: 4).allSatisfy { ready.bytes[$0] == 255 })
     }
 
+    @Test func aDDSLayoutTheEngineDoesNotReadIsNotStored() throws {
+        let rgb24 = DDSFixture.xrgb8888File(width: 4, height: 4, mipCount: 1, bitCount: 24)
+        #expect(try ShippedTextureConverter().convert(
+            path: "textures\\a.dds", bytes: rgb24, preset: .highestQuality
+        ) == nil)
+    }
+
     @Test func aTexturePayloadWithMissingBytesThrows() throws {
         let dds = try DDSFile(data: DDSFixture.file(format: .bc1, width: 8, height: 8, mipCount: 4))
         let payload = ReadyTextureCodec.encode(ReadyTexture(dds: dds))
