@@ -19,6 +19,9 @@ public final class PapyrusRuntime {
 
     public var scripts: [String: PexObject] = [:]
     public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
+    /// Another script instance on the same form that is of the named type. The game keeps
+    /// all scripts of one form in one object, so a cast between them succeeds.
+    public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
 
     private var nextHandleValue: UInt64 = 1
     private var nextSuspensionValue: UInt64 = 1

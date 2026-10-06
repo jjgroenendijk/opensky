@@ -118,6 +118,8 @@ public final class HUDCoordinator {
         callMovie { HUDMovieBridge.showNotification(text, runtime: $0) }
     }
 
+    public private(set) var shownSubtitle: String?
+
     public func setHelpMessage(_ text: String?) {
         callMovie { HUDMovieBridge.setHelpMessage(text, runtime: $0) }
     }
@@ -235,4 +237,11 @@ public final class HUDCoordinator {
     }
 
     private static let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky", category: "HUD")
+}
+
+extension HUDCoordinator: SubtitlePresenting {
+    public func presentSubtitle(_ text: String?) {
+        shownSubtitle = text
+        callMovie { HUDMovieBridge.setSubtitleText(text, runtime: $0) }
+    }
 }

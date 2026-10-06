@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
@@ -39,6 +40,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?
+    /// Picks which log entry of a stage runs its fragment. Nil runs every entry's fragment.
+    public var logEntryEvaluator: (() -> ConditionEvaluator)?
     /// The `Actor` native collaborators, as closures so they can be wired in any order.
     /// Nil makes every actor native a tallied failure, not a fake zero. See
     /// `PapyrusWorldStateBridgeActors.swift`.

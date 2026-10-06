@@ -54,11 +54,21 @@ extension PlayerWorldAdapter: PlayerWorld {
     }
 
     var playerAppearanceOverride: PlayerAppearanceOverride? {
-        game.worldState.component(PlayerIdentityState.self, for: .player).map {
-            PlayerAppearanceOverride(
-                race: $0.race, isFemale: $0.isFemale, headParts: $0.face.headParts,
-                hairColor: $0.face.hairColor
+        game.worldState.component(PlayerIdentityState.self, for: .player).map { identity in
+            var appearance = PlayerAppearanceOverride(
+                race: identity.race, isFemale: identity.isFemale,
+                headParts: identity.face.headParts, hairColor: identity.face.hairColor
             )
+            appearance.faceMorphs = identity.face.morphs
+            appearance.faceParts = identity.face.parts
+            appearance.tints = identity.face.tints.map {
+                PlayerAppearanceTint(
+                    maskIndex: $0.maskIndex,
+                    color: $0.color,
+                    strength: $0.strength
+                )
+            }
+            return appearance
         }
     }
 

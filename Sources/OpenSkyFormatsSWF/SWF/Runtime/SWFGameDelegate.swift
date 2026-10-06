@@ -154,6 +154,7 @@ nonisolated extension SWFMovieRuntime {
             )
             return nil
         }
+        lastHostArguments[name] = arguments
         let result = handler(SWFHostCall(arguments: arguments))
         noteInvoke(
             SWFInvokeEntry(

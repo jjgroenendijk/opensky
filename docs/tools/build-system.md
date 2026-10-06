@@ -185,8 +185,9 @@ The mapping has three costs:
 
 - A replayed task writes no index data. Periphery reads the index, so `make health` builds
   uncached into the `-index` cache tree ([code-health automation](/decisions/code-health-automation.md)).
-- `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. Real-data suites find
-  `.logs/` by walking up from the test bundle to the folder holding `OpenSky.xcodeproj`.
+- `#filePath` reads `/^src/...`, so a test cannot find the checkout from it. The build cache is
+  outside the checkout too, so `make test-real` passes the checkout to the test process as
+  `TEST_RUNNER_OPENSKY_CHECKOUT`, and real-data suites write into its `.logs/`.
 - Debug info names sources `/^src/...`. A command-line `lldb` needs
   `settings set target.source-map /^src <checkout>`.
 

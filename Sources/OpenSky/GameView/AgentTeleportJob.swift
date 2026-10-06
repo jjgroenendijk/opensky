@@ -28,6 +28,9 @@ final class AgentTeleportJob {
     private var phase: Phase
     private var deadline: Double?
     private var lookup: Result<CellDirectoryEntry?, AgentFailure>?
+    private var referenceLookup: Result<PlacedReference.Placement?, AgentFailure>?
+    /// Where a reference outside the loaded cells stands, once its cell has loaded.
+    private var exactFeet: SIMD3<Float>?
 
     private var game: GameViewController {
         adapter.game
@@ -47,7 +50,15 @@ final class AgentTeleportJob {
             place(at: position, renderer: renderer, streamer: streamer, leavingInterior: false)
             phase = settling()
         case let .reference(text):
-            let reference = try adapter.resolveReference(text)
+            let reference: AgentReference
+            do throws(AgentFailure) {
+                reference = try adapter.resolveReference(text)
+            } catch where error.code == .notFound {
+                guard let formID = Self.formID(text) else { throw error }
+                phase = .lookingUp
+                try startReferenceLookup(formID)
+                return
+            }
             guard
                 let placement = streamer.referenceEntry(key: reference.key)?.placedReference?
                     .placement
@@ -135,6 +146,17 @@ final class AgentTeleportJob {
     }
 
     private func finishLookup() throws(AgentFailure) {
+        if let referenceLookup {
+            guard let placement = try referenceLookup.get() else {
+                throw AgentFailure(
+                    .notFound,
+                    "no exterior reference with that FormID in Skyrim.esm"
+                )
+            }
+            exactFeet = placement.position
+            enterGrid(CellCoordinate(containing: placement.position))
+            return
+        }
         guard let lookup else { return }
         guard let entry = try lookup.get() else {
             throw AgentFailure(.notFound, "no cell with that editor ID in Skyrim.esm")
@@ -166,6 +188,37 @@ final class AgentTeleportJob {
         }
     }
 
+    // MARK: - References outside the loaded cells
+
+    private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
+        guard let root = adapter.dataRoot else {
+            throw AgentFailure(.notReady, "no game data is loaded")
+        }
+        let url = root.dataURL.appending(path: "Skyrim.esm")
+        Task { [weak self] in
+            let result = await Self.findReference(formID, in: url)
+            self?.referenceLookup = result
+        }
+    }
+
+    @concurrent
+    nonisolated private static func findReference(
+        _ formID: FormID,
+        in url: URL
+    ) async -> Result<PlacedReference.Placement?, AgentFailure> {
+        do {
+            let file = try ESMFile(url: url)
+            return .success(CellDirectory.exteriorPlacement(of: formID, in: file))
+        } catch {
+            return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
+        }
+    }
+
+    private static func formID(_ text: String) -> FormID? {
+        let digits = text.lowercased().hasPrefix("0x") ? String(text.dropFirst(2)) : text
+        return UInt32(digits, radix: 16).map { FormID($0) }
+    }
+
     // MARK: - Moving the player
 
     private func enterGrid(_ grid: CellCoordinate) {
@@ -180,6 +233,10 @@ final class AgentTeleportJob {
 
     private func snapToGround(in grid: CellCoordinate) {
         guard let renderer = game.renderer, let streamer = game.streamer else { return }
+        if let exactFeet {
+            place(at: exactFeet, renderer: renderer, streamer: streamer)
+            return
+        }
         let center = Self.center(of: grid)
         guard let ground = streamer.sampleTerrain(at: center) else { return }
         place(at: SIMD3(center, ground.height), renderer: renderer, streamer: streamer)

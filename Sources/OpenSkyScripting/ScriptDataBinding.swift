@@ -79,10 +79,12 @@ extension AttachedScript {
         return BoundScriptInstance(handle: instanceHandle, binding: binding)
     }
 
+    /// `aliasHandle` answers filled-alias properties; nil means `objectHandle` does.
     public func binding(
         in runtime: PapyrusRuntime,
         formIDResolver: FormIDResolver,
         aliases: QuestAliasResolution = .empty,
+        aliasHandle: ((ReferenceKey) -> PapyrusObjectHandle?)? = nil,
         objectHandle: @escaping (ReferenceKey) -> PapyrusObjectHandle?
     ) throws -> ScriptBinding {
         guard !isRemoved else {
@@ -96,7 +98,8 @@ extension AttachedScript {
             scriptName: name,
             formIDResolver: formIDResolver,
             aliases: aliases,
-            objectHandle: objectHandle
+            objectHandle: objectHandle,
+            aliasHandle: aliasHandle ?? objectHandle
         )
         for property in properties {
             builder.bind(property, chain: chain, runtime: runtime)
@@ -117,6 +120,7 @@ private struct ScriptBindingBuilder {
     /// headless binding, where every alias-typed property keeps its default.
     let aliases: QuestAliasResolution
     let objectHandle: (ReferenceKey) -> PapyrusObjectHandle?
+    let aliasHandle: (ReferenceKey) -> PapyrusObjectHandle?
     var initialValues: [String: PapyrusValue] = [:]
     var resolvedReferences: [ReferenceKey] = []
     var skipped = ScriptBindingTally()
@@ -277,7 +281,7 @@ private struct ScriptBindingBuilder {
                 skip(.aliasObject, property: propertyName)
                 return nil
             }
-            return handleValue(for: key, propertyName: propertyName)
+            return handleValue(aliasHandle(key), for: key, propertyName: propertyName)
         }
         guard !value.formID.isNull else {
             return ResolvedScriptValue(value: .none)
@@ -286,16 +290,17 @@ private struct ScriptBindingBuilder {
             skip(.unresolvedReference, property: propertyName)
             return nil
         }
-        return handleValue(for: key, propertyName: propertyName)
+        return handleValue(objectHandle(key), for: key, propertyName: propertyName)
     }
 
     /// The live opaque handle for one resolved key, or a counted skip when the
     /// session has none for it.
     private mutating func handleValue(
+        _ handle: PapyrusObjectHandle?,
         for key: ReferenceKey,
         propertyName: String
     ) -> ResolvedScriptValue? {
-        guard let handle = objectHandle(key) else {
+        guard let handle else {
             skip(.unresolvedReference, property: propertyName)
             return nil
         }

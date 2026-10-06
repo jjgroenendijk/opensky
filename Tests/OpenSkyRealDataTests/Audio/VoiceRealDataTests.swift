@@ -11,6 +11,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import simd
+import TagsTesting
 import Testing
 
 @Suite(.tags(.smoke))

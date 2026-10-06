@@ -232,6 +232,8 @@ nonisolated public struct SWFMovie: Sendable {
     /// What the cross-movie import merge did, or an empty record when the movie
     /// imports nothing that needs merging. Counters only, never a throw.
     public var importDiagnostics = SWFImportMergeDiagnostics()
+    /// Engine pictures by `img://` name (`SWFImageSlot`). Empty for a decoded movie.
+    public var imageSlots: [String: SWFImageSlot] = [:]
 
     /// Main-timeline display list at the first ShowFrame, depth-ascending.
     public var frame1: [SWFPlacedObject] {

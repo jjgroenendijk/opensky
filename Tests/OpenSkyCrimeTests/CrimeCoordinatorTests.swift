@@ -115,8 +115,10 @@ struct CrimeCoordinatorTests {
             memberships: CrimeFixture.state([(CrimeFixture.Factions.guards, 0)]),
             crimeFaction: Self.hold
         )
+        #expect(!coordinator.isPlayerPursued)
         coordinator.advanceGuardResponse()
 
+        #expect(coordinator.isPlayerPursued)
         #expect(world.moved[Self.guardKey] == .zero)
         #expect(world.suspended.contains(Self.guardKey))
         #expect(coordinator.lastGuardText.contains("pursuing"))

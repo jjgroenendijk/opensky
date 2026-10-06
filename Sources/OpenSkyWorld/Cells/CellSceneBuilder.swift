@@ -124,6 +124,8 @@ nonisolated public final class CellSceneBuilder {
     /// Decoded expression TRI files by resource path. A file does not change while the
     /// game runs, so a rebuild reuses it; a failure is kept too.
     var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
+    /// Painted chargen face color maps as DDS bytes, by their synthetic texture key.
+    var faceTintTextures: [String: Data] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver

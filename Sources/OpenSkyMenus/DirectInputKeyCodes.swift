@@ -51,7 +51,22 @@ nonisolated public enum DirectInputKeyCodes {
         case 0x01: "Esc"
         case 0x3A: "CapsLock"
         case 0x1C: "Enter"
-        default: String(format: "0x%02X", scanCode)
+        default: letterName(scanCode) ?? String(format: "0x%02X", scanCode)
         }
+    }
+
+    /// The US keyboard rows of the DirectInput scan code table.
+    private static let letterRows: [(first: UInt32, keys: String)] = [
+        (0x02, "1234567890"), (0x10, "QWERTYUIOP"), (0x1E, "ASDFGHJKL"), (0x2C, "ZXCVBNM")
+    ]
+
+    private static func letterName(_ scanCode: UInt32) -> String? {
+        for row in letterRows where scanCode >= row.first {
+            let offset = Int(scanCode - row.first)
+            if offset < row.keys.count {
+                return String(Array(row.keys)[offset])
+            }
+        }
+        return nil
     }
 }

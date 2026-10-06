@@ -1,8 +1,8 @@
 import Foundation
 
 /// The checkout's gitignored `.logs/` directory. `#filePath` reads `/^src/...`
-/// under the compilation cache, and the host's working directory is `/`, so
-/// this walks up from the test bundle to the folder with `OpenSky.xcodeproj`.
+/// under the compilation cache, and the build cache sits outside the checkout,
+/// so `make test-real` passes the checkout in `OPENSKY_CHECKOUT`.
 enum RepositoryLogs {
     struct CheckoutNotFound: Error, CustomStringConvertible {
         let bundle: URL
@@ -15,6 +15,14 @@ enum RepositoryLogs {
 
     /// `<checkout>/.logs`, or `<checkout>/.logs/<subpath>` when a subpath is given.
     static func directory(_ subpath: String = "") throws -> URL {
+        if
+            let checkout = ProcessInfo.processInfo.environment["OPENSKY_CHECKOUT"],
+            FileManager.default.fileExists(atPath: checkout + "/OpenSky.xcodeproj")
+        {
+            let logs = URL(filePath: checkout).appending(path: ".logs", directoryHint: .isDirectory)
+            return subpath.isEmpty
+                ? logs : logs.appending(path: subpath, directoryHint: .isDirectory)
+        }
         let bundle = Bundle(for: BundleToken.self).bundleURL
         var candidate = bundle.deletingLastPathComponent()
         while candidate.path != "/" {

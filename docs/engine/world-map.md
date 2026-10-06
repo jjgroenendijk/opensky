@@ -39,8 +39,14 @@ The map selects the visible marker nearest its center, like the game's cursor.
 
 The targets come from the displayed, unfinished objectives of the quest selected in the
 journal. Each objective `QSTA` target names an alias; the alias's reference gives the
-place. A reference held in a container follows the holder, up to 8 holders deep. `QSTA`
-conditions are not evaluated yet.
+place. A reference held in a container follows the holder, up to 8 holders deep.
+
+Each target's conditions (the `CTDA` records after `QSTA`) must pass, or the target is
+hidden. They run with the target's reference as the subject, the player as the Target
+run-on, and the objective's quest as the alias quest. The subject is the target because the
+most common check in `Skyrim.esm` is `GetDead` on the subject, on 155 targets. An example
+with two targets is `MQ105Ustengrav` objective 20: one target needs `GetStage MQ105 < 10`
+and the other `GetStage MQ105 >= 10`, so only one shows at a time.
 
 ## Local map
 
@@ -50,11 +56,30 @@ interior shows every floor; the game cuts the view above the player's floor. Fog
 
 ## Fast travel
 
-Fast travel is refused, in this order, for combat, hostiles near, overencumbered, in the
-air, an alarm, a location that forbids it, a script block (`Game.EnableFastTravel(false)`),
-and an undiscovered target. The message is the matching `sNoFastTravel*` GMST string.
+Fast travel is refused for a script block (`Game.EnableFastTravel(false)`), an
+undiscovered target, a location that forbids it, combat, hostiles near, an alarm, being in
+the air, and being overencumbered, checked in that order. Overencumbered means the carried
+weight is above the `CarryWeight` actor value. An alarm means guards pursue the player for
+a crime. The message is the matching `sNoFastTravel*` GMST string.
 
-The trip moves the clock by the walk time: distance divided by the walk speed, times the
-`TimeScale` default of 20. UESP "Skyrim:Time" says travel time depends on distance and
-`TimeScale`; the exact formula is not documented, so this is an approximation. A travel
-autosave follows when the player's setting asks for one.
+The trip moves the clock by the walk time:
+
+```text
+game seconds = distance / (walk speed * fFastTravelSpeedMult) * TimeScale
+```
+
+The distance is the straight line in game units. The walk speed is the `NPC_Default_MT`
+forward walk, 80.1 units per second. `fFastTravelSpeedMult` is 1 and `TimeScale` is 20 by
+default. A travel autosave follows when the player's setting asks for one.
+
+The formula was fitted to the Elder Scrolls wiki table "Fast Travel (Skyrim)", which lists
+game hours between towns, measured in light armor and rounded to half hours.
+`FastTravelTimeRealDataTests` (run with `make test-real`) measures the marker distances on
+the install. A city without a marker of its own name is timed from its stables, and
+Solitude is left out because nothing there sits beside its gate. The best-fit speed over the
+36 measured routes is 80.7 units per second, within 1% of 80.1. With 80.1, the mean ratio
+of OpenSky time to the table is 1.00; the test allows 5% for the mean and 20% for each
+route. The worst route is Riverwood to Whiterun, 3 hours in the table and 2.4 in OpenSky. Results
+are in
+`.logs/fast-travel-time/routes.tsv`. For example, Riverwood to Winterhold is 171746 units:
+the table says 12 hours, and OpenSky gives 11.9.

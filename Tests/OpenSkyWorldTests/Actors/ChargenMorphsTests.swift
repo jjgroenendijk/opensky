@@ -57,10 +57,20 @@ struct ChargenMorphsTests {
     func tintsPaintByMaskStrengthAndSkipBadMasks() {
         let base: [UInt8] = [0, 0, 0, 255, 100, 100, 100, 255]
         let layers = [
-            ChargenTintLayer(mask: [255, 0], color: SIMD4(200, 100, 50, 255), strength: 0.5),
+            ChargenTintLayer(mask: [255, 0], color: SIMD4(200, 100, 50, 0), strength: 0.5),
             ChargenTintLayer(mask: [255], color: SIMD4(255, 255, 255, 255), strength: 1)
         ]
         let painted = ChargenTints.paint(rgba: base, layers: layers)
         #expect(painted == [100, 50, 25, 255, 100, 100, 100, 255])
+    }
+
+    @Test func coverageTakesTheRedChannelAndScalesByNearestTexel() {
+        let mask: [UInt8] = [10, 0, 0, 255, 200, 0, 0, 255]
+        #expect(ChargenTints.coverage(rgba: mask, width: 2, height: 1, toWidth: 4, toHeight: 2)
+            == [10, 10, 200, 200, 10, 10, 200, 200])
+        #expect(ChargenTints.coverage(rgba: [], width: 2, height: 1, toWidth: 2, toHeight: 1) == [
+            0,
+            0
+        ])
     }
 }

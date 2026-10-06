@@ -135,6 +135,7 @@ nonisolated public struct MovementTypeStore: Equatable, Sendable {
 
     /// Editor IDs of the player gaits OpenSky reads, as vanilla names them.
     public enum PlayerGait: Sendable {
+        public static let walking = "NPC_Default_MT"
         public static let sneaking = "NPC_Sneaking_MT"
         public static let sprinting = "NPC_Sprinting_MT"
         public static let swimming = "NPC_Swimming_MT"

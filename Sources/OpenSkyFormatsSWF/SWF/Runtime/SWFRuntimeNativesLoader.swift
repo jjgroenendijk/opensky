@@ -1,6 +1,6 @@
-// The `MovieClip` geometry methods and `MovieClipLoader`. The loader never
-// loads anything: it reports `onLoadError` on the next tick, so CLIK's icon
-// loader gives up cleanly. Each load is logged and tallied.
+// The `MovieClip` geometry methods and `MovieClipLoader`. The loader shows an
+// engine picture for an `img://` URL with an image slot. Anything else reports
+// `onLoadError` on the next tick, so CLIK's icon loader gives up cleanly.
 
 import Foundation
 import simd
@@ -100,7 +100,7 @@ nonisolated extension SWFRuntimeNatives {
 
     // MARK: - MovieClipLoader
 
-    /// `new MovieClipLoader()`: a broadcaster whose `loadClip` always fails.
+    /// `new MovieClipLoader()`: a broadcaster whose `loadClip` shows image slots only.
     public static func installMovieClipLoader(_ runtime: AS2Runtime) {
         let prototype = AS2Object(prototype: runtime.objectPrototype)
         AS2Natives.constructor(runtime, name: "MovieClipLoader", prototype: prototype) { context in
@@ -111,7 +111,16 @@ nonisolated extension SWFRuntimeNatives {
             return .undefined
         }
         AS2Natives.method(runtime, on: prototype, name: "loadClip") { context in
-            failLoad(context)
+            loadImage(context) ?? failLoad(context)
+        }
+        AS2Natives.method(runtime, on: prototype, name: "onDeferredLoadInit") { context in
+            guard let owner = movieRuntime(context), let loader = context.thisObject else {
+                return .undefined
+            }
+            for event in ["onLoadStart", "onLoadComplete", "onLoadInit"] {
+                owner.broadcast(event, from: loader, arguments: [context.argument(0)])
+            }
+            return .undefined
         }
         AS2Natives.method(runtime, on: prototype, name: "unloadClip") { _ in .boolean(true) }
         // Deferred failure delivery. Named rather than anonymous because the
@@ -132,6 +141,30 @@ nonisolated extension SWFRuntimeNatives {
             progress.define(.integer(0), for: "bytesTotal")
             return .object(progress)
         }
+    }
+
+    static let imageScheme = "img://"
+
+    /// Puts the slot's picture at depth 0 of the target clip, then reports the
+    /// load on the next tick, as Flash does. Nil when the URL names no slot.
+    private static func loadImage(_ context: AS2CallContext) -> AS2Value? {
+        guard
+            let owner = movieRuntime(context), let loader = context.thisObject,
+            case let .string(url) = context.argument(0), url.hasPrefix(imageScheme),
+            let slot = owner.movie.imageSlots[String(url.dropFirst(imageScheme.count))],
+            let target = SWFDisplayObject.resolve(context.argument(1).objectValue),
+            let picture = owner.makeDisplayObject(characterId: slot.shapeId)
+        else { return nil }
+        target.addChild(picture, atDepth: 0)
+        owner.markDirty()
+        _ = owner.timers.add(
+            callee: .object(loader),
+            method: "onDeferredLoadInit",
+            arguments: [context.argument(1)],
+            period: 1,
+            repeats: false
+        )
+        return .boolean(true)
     }
 
     /// Reports the failure the listeners are waiting for. It is queued on the

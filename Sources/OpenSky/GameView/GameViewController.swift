@@ -158,7 +158,7 @@ final class GameViewController: NSViewController {
     }()
 
     lazy var raceMenu: RaceMenuCoordinator = {
-        let raceMenu = RaceMenuCoordinator(menuMode: menuMode)
+        let raceMenu = RaceMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
         raceMenu.attach(world: menuWorld)
         return raceMenu
     }()
@@ -196,6 +196,12 @@ final class GameViewController: NSViewController {
     lazy var lockpickingMenu = LockpickingMenuController(game: self)
     /// Notifications, help messages, and message boxes for scripts and the sidebar.
     lazy var messages = MessageCoordinator(menuMode: menuMode)
+    lazy var subtitles: SubtitleCoordinator = {
+        let subtitles = SubtitleCoordinator()
+        subtitles.attach(presenter: hud)
+        return subtitles
+    }()
+
     lazy var messageWorld = MessageWorldAdapter(game: self)
     /// Kill cams and camera shake.
     lazy var cinematicCamera = CinematicCameraCoordinator()
@@ -519,7 +525,8 @@ extension GameViewController: @MainActor SystemMenuWorld {
         }
     }
 
-    /// Settings, key bindings, menu text, the menu natives, and map discovery.
+    /// Settings, key bindings, menu text, the menu natives, map discovery, and
+    /// the menu movies' late calls.
     private func wireMenus(renderer: Renderer) {
         playerSettings.loadControlMap(try? controlMapLoader?())
         playerSettings.attach(world: menuWorld)
@@ -529,6 +536,9 @@ extension GameViewController: @MainActor SystemMenuWorld {
         }
         renderer.onFrame.add { [weak self] _ in
             self?.mapMenu.tick()
+            let now = Date().timeIntervalSinceReferenceDate
+            self?.titleMenu.tick(now: now)
+            self?.raceMenu.tick(now: now)
             self?.menuWorld.refreshTitleBackdrop()
         }
     }

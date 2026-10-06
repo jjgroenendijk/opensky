@@ -37,7 +37,8 @@ struct QuestAcceptanceRealDataTests {
 
         try session.walk(quest: quest, key: key)
         let state = try session.state(of: quest.formID)
-        #expect(state.isRunning)
+        // The last stage's log entry completes the quest, and its fragment calls `Stop()`.
+        #expect(!state.isRunning)
         #expect(state.isCompleted)
         #expect(state.stagesReached == quest.stages.map(\.index).sorted())
 
@@ -53,25 +54,21 @@ struct QuestAcceptanceRealDataTests {
 
     // MARK: - Assertions
 
-    /// The quest's own scripts ran without reaching for a missing native. The one
-    /// fault is pinned: `typeMismatch(expected: "Object", actual: "None")` in the
-    /// second fragment. No cell is loaded, so its five object properties stay
-    /// `None` (the five `unresolvedReference` skips below). The synthetic gate,
-    /// which attaches a cell, faults zero times.
+    /// The quest's own scripts ran to their end with no fault. The last fragment
+    /// reaches two item natives OpenSky does not have yet, then stops the quest, which
+    /// retires its instances and clears its alias table. No cell is loaded, so four
+    /// object properties stay `None`; the one filled alias binds to its reference.
     @MainActor
     private static func expectCleanRun(_ session: QuestRealDataSession) throws {
         let world = session.world
-        #expect(world.questCount == 1)
-        #expect(world.runtime.tally.faultTotal == 1)
-        #expect(world.runtime.tally.faultKindCounts == ["typeMismatch": 1])
-        #expect(world.bindingSkips.counts[.unresolvedReference] == 5)
+        #expect(world.questCount == 0)
+        #expect(world.runtime.tally.faultTotal == 0)
+        #expect(world.bindingSkips.counts[.unresolvedReference] == 4)
         #expect(world.bindingSkips.counts[.aliasObject] == nil)
-        #expect(world.runtime.tally.unimplementedNativeTotal == 0)
+        #expect(world.runtime.tally.unimplementedNativeTotal == 2)
         #expect(world.questFragmentsQueued > 0, "no stage fragment ever ran")
         #expect(world.eventQueue.isEmpty, "the quest left work queued")
-        // The quest's one alias filled, which is what its scripts and its
-        // journal text read through.
-        #expect(world.aliasResolution.filledAliasCount == 1)
+        #expect(world.aliasResolution.filledAliasCount == 0)
     }
 
     /// The journal page the run produced: a title, an objective and at least
@@ -84,7 +81,7 @@ struct QuestAcceptanceRealDataTests {
         _ session: QuestRealDataSession,
         quest: Quest
     ) throws -> JournalQuestEntry {
-        let model = try session.journal()
+        let model = try session.journal(showsCompleted: true)
         let row = try #require(
             model.entries.first { $0.editorID == targetEditorID },
             "the target quest is not on the journal page"
@@ -172,7 +169,7 @@ struct QuestAcceptanceRealDataTests {
         )
         #expect(restored.world.skips.counts[.unknownSaveScript] == nil)
         let restoredRow = try #require(
-            restored.journal().entries.first { $0.editorID == targetEditorID }
+            restored.journal(showsCompleted: true).entries.first { $0.editorID == targetEditorID }
         )
         #expect(restoredRow == page)
     }

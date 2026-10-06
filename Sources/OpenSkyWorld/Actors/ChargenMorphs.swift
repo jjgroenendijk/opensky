@@ -16,7 +16,7 @@ nonisolated public enum ChargenMorphs {
     public static let sliders: [SliderPair] = [
         SliderPair(negative: "NoseShort", positive: "NoseLong"),
         SliderPair(negative: "NoseDown", positive: "NoseUp"),
-        SliderPair(negative: "JawDown", positive: "JawUp"),
+        SliderPair(negative: "JawUp", positive: "JawDown"),
         SliderPair(negative: "JawNarrow", positive: "JawWide"),
         SliderPair(negative: "JawBack", positive: "JawForward"),
         SliderPair(negative: "CheeksDown", positive: "CheeksUp"),
@@ -29,7 +29,7 @@ nonisolated public enum ChargenMorphs {
         SliderPair(negative: "LipMoveDown", positive: "LipMoveUp"),
         SliderPair(negative: "LipMoveIn", positive: "LipMoveOut"),
         SliderPair(negative: "ChinThin", positive: "ChinWide"),
-        SliderPair(negative: "ChinMoveDown", positive: "ChinMoveUp"),
+        SliderPair(negative: "ChinMoveUp", positive: "ChinMoveDown"),
         SliderPair(negative: "Overbite", positive: "Underbite"),
         SliderPair(negative: "EyesBack", positive: "EyesForward")
     ]

@@ -60,9 +60,15 @@ nonisolated public enum FastTravelRule {
         return nil
     }
 
-    /// Game seconds the trip takes: the walk at `walkSpeed` units per second, sped
-    /// up by `fFastTravelSpeedMult`, in game time at `timeScale`. UESP "Skyrim:Time"
-    /// describes these inputs; the exact vanilla formula is not documented.
+    /// The game refuses once the carried weight passes the `CarryWeight` actor value.
+    public static func isOverencumbered(carried: Float, capacity: Float?) -> Bool {
+        guard let capacity else { return false }
+        return carried > capacity
+    }
+
+    /// Game seconds the trip takes: the straight line walked at `walkSpeed` units per
+    /// second, sped up by `fFastTravelSpeedMult`, in game time at `timeScale`. Fitted to
+    /// measured trips in docs/engine/world-map.md.
     public static func gameSeconds(
         distance: Float, walkSpeed: Float, speedMultiplier: Float, timeScale: Float
     ) -> Double {

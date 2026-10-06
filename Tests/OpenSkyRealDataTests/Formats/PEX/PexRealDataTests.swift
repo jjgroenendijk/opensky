@@ -5,6 +5,7 @@
 import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
+import TagsTesting
 import Testing
 
 @Suite(.tags(.smoke))

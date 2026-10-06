@@ -79,7 +79,9 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
                     skeleton: skeleton,
                     pose: pose,
                     models: assembly.models.map(\.asset.model)
-                )
+                ),
+                faceMorphs: appearance
+                    .map { chargenMorphs(assembly: assembly, appearance: $0) } ?? [:]
             )
         }
     }
@@ -121,6 +123,9 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
                 appearance = appearance.applying(override)
             }
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
+            if let override, !firstPerson {
+                visual = chargenVisual(visual, appearance: override)
+            }
             if firstPerson {
                 visual = visual.firstPersonProjection(
                     skeletonPath: PlayerBehaviorGraph.firstPersonRigPath

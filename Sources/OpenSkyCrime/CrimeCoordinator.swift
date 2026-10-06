@@ -40,6 +40,12 @@ public final class CrimeCoordinator {
     public internal(set) var guards = GuardResponseState()
     /// Where each pursuing guard was last sent.
     var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:]
+    /// A guard walks toward the player or holds the arrest talk. Fast travel
+    /// refuses with `sNoFastTravelAlarm` meanwhile.
+    public var isPlayerPursued: Bool {
+        !pursuitTargets.isEmpty || guards.active != nil
+    }
+
     public internal(set) var lastActionText = "No crime recorded yet."
     public internal(set) var lastGuardText = "No guard has acted yet."
     public var panel = CrimeFactionPanelState()

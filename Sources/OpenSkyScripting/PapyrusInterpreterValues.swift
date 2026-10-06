@@ -129,6 +129,9 @@ extension PapyrusInterpreter {
             if runtime.instance(for: handle) == nil || runtime.resolvesObject(handle, as: name) {
                 return value
             }
+            if let sibling = runtime.siblingInstance?(handle, name) {
+                return .object(sibling)
+            }
         case let (.array(array), .array(elementType))
             where array.elementType == elementType:
             return value

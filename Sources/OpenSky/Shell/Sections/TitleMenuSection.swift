@@ -5,6 +5,7 @@ import OpenSkyMenus
 
 final class TitleMenuSection: MenuButtonSection {
     weak var provider: (any TitleMenuControlProviding)?
+    let cellControl = NSTextField(string: "")
 
     init() {
         super.init(statsIdentifier: "TitleMenuStatsLabel")
@@ -20,6 +21,15 @@ final class TitleMenuSection: MenuButtonSection {
 
     override var isOverridden: Bool {
         provider?.titleMenuSnapshot.isOpen == true
+    }
+
+    override func makeContentViews() -> [NSView] {
+        PanelComponents.configureTextField(
+            cellControl, identifier: "TitleMenuNewGameCellControl", width: 180,
+            placeholder: "Cell editor ID"
+        )
+        cellControl.toolTip = "Cell for New Game Here. Empty starts at the vanilla opening."
+        return super.makeContentViews() + [cellControl]
     }
 
     override func makeActions() -> [[Action]] {
@@ -39,7 +49,14 @@ final class TitleMenuSection: MenuButtonSection {
             guard let provider = self?.provider else { return }
             provider.setTitleMenuMovieEnabled(!provider.titleMenuSnapshot.movie.isEnabled)
         }
-        return [rows, [movie]]
+        let newGame = Action(
+            title: "New Game Here", identifier: "TitleMenuNewGameHereControl",
+            toolTip: "Start a new game in the cell typed below."
+        ) { [weak self] in
+            guard let self else { return }
+            provider?.startNewGame(atCell: cellControl.stringValue)
+        }
+        return [rows, [movie, newGame]]
     }
 
     private func send(_ title: String, _ id: String, _ event: MenuInputEvent) -> Action {
@@ -53,7 +70,7 @@ final class TitleMenuSection: MenuButtonSection {
         let isOpen = provider?.titleMenuSnapshot.isOpen == true
         switch identifier {
         case "TitleMenuOpenControl": return provider != nil && !isOpen
-        case "TitleMenuMovieControl": return provider != nil
+        case "TitleMenuMovieControl", "TitleMenuNewGameHereControl": return provider != nil
         default: return isOpen
         }
     }

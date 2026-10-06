@@ -11,6 +11,7 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
     let menuMode = MenuModeController()
     var saveRows: [SaveSlotRow] = []
     var newGames = 0
+    var starts: [NewGameStart] = []
     var quits = 0
     var loaded: [String] = []
 
@@ -26,8 +27,9 @@ private final class FakeTitleWorld: TitleMenuWorld, MenuInputConsumer, SaveGameS
 
     func handleMenuInput(_ event: MenuInputEvent) {}
 
-    func startNewGame() {
+    func startNewGame(at start: NewGameStart) {
         newGames += 1
+        starts.append(start)
     }
 
     func quitApplication() {
@@ -116,9 +118,10 @@ struct TitleMenuCoordinatorTests {
     }
 
     @Test @MainActor
-    func withoutARendererTheEngineRowsStayInCharge() {
+    func withoutARendererTheEngineRowsStayInCharge() async {
         let (menu, world) = Self.make()
         menu.open()
+        await menu.openWork?.value
         #expect(menu.movieEnabled)
         #expect(!menu.movieLoaded)
         #expect(menu.snapshot.movie.error == "No game data located.")
@@ -130,9 +133,9 @@ struct TitleMenuCoordinatorTests {
     func aMovieRequestRunsTheMatchingRow() {
         let (menu, world) = Self.make()
         menu.open()
-        menu.apply(.load)
+        menu.apply(.credits)
         #expect(menu.isOpen)
-        #expect(menu.snapshot.lastResult == "Load: use Continue")
+        #expect(menu.snapshot.lastResult == "Credits: not shown")
         menu.apply(.quit)
         #expect(world.quits == 1)
         menu.apply(.new)

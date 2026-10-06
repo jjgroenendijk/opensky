@@ -1,4 +1,4 @@
-// The race menu, map marker, fast travel, and identity natives. The menus answer
+// The race menu, map marker, fast travel, identity, and player MoveTo natives. The menus answer
 // through `PapyrusMenuBridge`, which the app sets. Signatures follow the Creation
 // Kit wiki pages for `Game`, `ObjectReference`, `Actor`, `ActorBase`, and `Form`.
 
@@ -20,6 +20,8 @@ public protocol PapyrusMenuBridge: AnyObject {
     /// 0 male, 1 female, or nil for an unknown base.
     func sex(ofBase base: FormID) -> Int?
     func name(of form: FormID) -> String?
+    /// Moves the player next to `target`, loading its cell when it is not loaded.
+    func movePlayer(to target: ReferenceKey)
 }
 
 extension PapyrusNativeFunctions {
@@ -50,6 +52,24 @@ extension PapyrusNativeFunctions {
         })
         installMarkerNatives(into: &registry)
         installIdentityNatives(into: &registry)
+        installMoveTo(into: &registry)
+    }
+
+    /// `MoveTo(akTarget, ...)` moves only the player for now. The opening quest
+    /// places the player this way, through an `Actor`-typed variable, so both names
+    /// are registered. Offsets and rotation are not applied.
+    private static func installMoveTo(into registry: inout PapyrusNativeRegistry) {
+        for script in ["ObjectReference", "Actor"] {
+            withReference(script, "MoveTo", into: &registry) { call, world, menus, key in
+                guard key == .player else { return failure(call, "MoveTo moves only the player") }
+                guard
+                    let handle = objectArgument(call, at: 0),
+                    let target = world.referenceKey(for: handle)
+                else { return failure(call, "MoveTo needs a target reference") }
+                menus.movePlayer(to: target)
+                return .returned(.none)
+            }
+        }
     }
 
     private static func installMarkerNatives(into registry: inout PapyrusNativeRegistry) {
@@ -74,6 +94,16 @@ extension PapyrusNativeFunctions {
                 let handle = world.objectHandle(for: raceKey)
             else { return .returned(.none) }
             return .returned(.object(handle))
+        }
+        for name in ["GetActorBase", "GetLeveledActorBase"] {
+            withReference("Actor", name, into: &registry) { _, world, _, key in
+                let base = key == .player ? FormID(0x7) : world.placedReference(for: key)?.base
+                guard
+                    let base, let baseKey = world.referenceKey(forFormID: base),
+                    let handle = world.objectHandle(for: baseKey)
+                else { return .returned(.none) }
+                return .returned(.object(handle))
+            }
         }
         withForm("ActorBase", "GetSex", into: &registry) { _, menus, form in
             .returned(.integer(Int32(menus.sex(ofBase: form) ?? -1)))

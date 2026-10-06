@@ -101,8 +101,9 @@ A sweep of every `.dds` in the vanilla archives (about 33,000 files) found:
   and BC7, so OpenSky still reads them.
 - BCn files: mostly BC3, then BC1, and about 150 BC2.
 - About 10,000 uncompressed files: face `_msn` normal maps, tint masks, interface art, and
-  LOD atlases. OpenSky reads the three 32-bit formats above. Other uncompressed layouts, 58
-  cubemaps, and 1 volume texture are not supported and get a placeholder.
+  LOD atlases. OpenSky reads the three 32-bit formats above on the GPU, and the 24-bit tint
+  masks on the CPU ("CPU decode" below). Other uncompressed layouts, 58 cubemaps, and 1
+  volume texture are not supported and get a placeholder.
 - Some textures are 8192 pixels wide, not only 4096.
 
 ## Color space
@@ -113,3 +114,18 @@ BC4 and BC5 have no sRGB formats. Legacy FourCC files carry no color space at al
 
 xRGB8888 and BGRA8888 upload as BGRA8. RGBA8888 uploads as RGBA8. Missing alpha becomes
 fully opaque. Stored alpha is kept.
+
+## CPU decode
+
+The chargen face is painted on the CPU, so two kinds of file are also decoded there:
+
+- The face color map, such as `textures\actors\character\male\malehead.dds`, is BC1
+  (1024 x 1024 on this install).
+- The tint masks under `textures\actors\character\character assets\tintmasks\` use a
+  24-bit `DDPF_RGB` layout (flags `0x40`, bit count 24) at 512 x 512. The GPU path does
+  not read this layout. The mask is gray, so the red channel is the coverage.
+
+The CPU decoder reads the top level of BC1, BC3, the three 32-bit formats, and 24-bit RGB.
+A BC1 block with `color0 <= color1` uses the three-color mode with transparent black. A BC3
+color block always uses four colors. The painted result is written back as an RGBA8888
+file with a box-filtered mip chain, so the normal texture path uploads it.

@@ -80,6 +80,11 @@ extension DestinationRegistry {
         }
     )
 
+    static let playerSettingsOverrides = DestinationOverrideActions(
+        isOverridden: { KeyBindingsSection.isOverridden(provider: $0.providers) },
+        resetToDefaults: { KeyBindingsSection.resetToDefaults(provider: $0.providers) }
+    )
+
     static let systemMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
             SystemMenuSection.isOverridden(provider: context.providers)

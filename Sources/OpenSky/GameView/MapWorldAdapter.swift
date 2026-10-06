@@ -2,10 +2,14 @@
 // their saved states, the view, quest targets, and the fast travel trip.
 
 import Foundation
+import OpenSkyActors
 import OpenSkyCombat
+import OpenSkyConditions
+import OpenSkyCrime
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyProgression
@@ -42,9 +46,16 @@ final class MapWorldAdapter {
         if let baseSites {
             return baseSites
         }
-        guard let records, let tamriel = records.tamriel else { return [] }
-        let world = ResolvedFormID(plugin: "Skyrim.esm", objectID: tamriel.formID.rawValue)
-        let sites = records.markers.markers(in: world).map { entry in
+        guard let tamriel = records?.tamriel else { return [] }
+        let sites = baseSites(
+            in: ResolvedFormID(plugin: "Skyrim.esm", objectID: tamriel.formID.rawValue)
+        )
+        baseSites = sites
+        return sites
+    }
+
+    private func baseSites(in world: ResolvedFormID) -> [MapMarkerSite] {
+        (records?.markers.markers(in: world) ?? []).map { entry in
             MapMarkerSite(
                 key: ReferenceKey(resolved: entry.reference),
                 name: text(entry.name) ?? "\(entry.reference.objectID)",
@@ -52,8 +63,16 @@ final class MapWorldAdapter {
                 state: MapMarkerState(record: entry.marker)
             )
         }
-        baseSites = sites
-        return sites
+    }
+
+    private func withSavedStates(_ sites: [MapMarkerSite]) -> [MapMarkerSite] {
+        sites.map { site in
+            var site = site
+            if let state = game.worldState.component(MapMarkerState.self, for: site.key) {
+                site.state = state
+            }
+            return site
+        }
     }
 }
 
@@ -71,13 +90,22 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     func mapMarkerSites() -> [MapMarkerSite] {
-        sites().map { site in
-            var site = site
-            if let state = game.worldState.component(MapMarkerState.self, for: site.key) {
-                site.state = state
-            }
-            return site
-        }
+        withSavedStates(sites())
+    }
+
+    var mapMarkerWorldspaces: [MapWorldspaceChoice] {
+        guard let records else { return [] }
+        return records.markers.countsByWorldspace.keys.map { world in
+            let name = world.plugin == "Skyrim.esm"
+                ? records.worldspaceEditorIDs[world.objectID] : nil
+            return MapWorldspaceChoice(
+                formID: world, name: name ?? "\(world.plugin) \(world.objectID)"
+            )
+        }.sorted { $0.name < $1.name }
+    }
+
+    func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite] {
+        withSavedStates(baseSites(in: worldspace))
     }
 
     func storeMarkerState(_ state: MapMarkerState, for key: ReferenceKey) {
@@ -118,8 +146,19 @@ extension MapWorldAdapter: MapMenuWorld {
 
     var fastTravelContext: FastTravelContext {
         var context = FastTravelContext()
-        context.hostilesNear = game.combat.combatLoopSnapshot.hostileCount > 0
+        let combat = game.combat.combatLoopSnapshot
+        context.inCombat = combat.isPlayerInCombat
+        context.hostilesNear = combat.hostileCount > 0
         context.inAir = !(game.renderer?.walkController.isGrounded ?? true)
+        context.alarmed = game.crime.isPlayerPursued
+        if let items = game.inventory.runtime {
+            context.overencumbered = FastTravelRule.isOverencumbered(
+                carried: items.inventory.carriedWeight(of: items.player),
+                capacity: game.actorValues.runtime?.value(
+                    at: ActorValueIdentity.carryWeightIndex, on: .player
+                )
+            )
+        }
         return context
     }
 
@@ -128,10 +167,11 @@ extension MapWorldAdapter: MapMenuWorld {
         guard let renderer = game.renderer, let streamer = game.streamer else { return false }
         let from = renderer.locomotion.status.feetPosition
         let walk = (game.worldData as? MovementConfigurationProviding)?
-            .movementConfiguration.walkSpeed.value ?? 80
+            .movementConfiguration.travelSpeed.value ?? 80
         let seconds = FastTravelRule.gameSeconds(
-            distance: simd_distance(from, marker.position), walkSpeed: walk, speedMultiplier: 1,
-            timeScale: GameClock.defaultTimescale
+            distance: simd_distance(from, marker.position), walkSpeed: walk,
+            speedMultiplier: mapSettings.fastTravelSpeedMultiplier,
+            timeScale: renderer.currentTimescale
         )
         renderer
             .gameClock = GameClock(totalGameSeconds: renderer.gameClock.totalGameSeconds + seconds)
@@ -159,19 +199,12 @@ extension MapWorldAdapter: MapMenuWorld {
         guard let entry = game.journal.selectedEntry(), let runtime = game.journal.runtime else {
             return []
         }
-        let requests = entry.quest.objectives.flatMap { objective in
-            let state = entry.state.objectives.first { $0.index == objective.index }
-            guard let state, state.isDisplayed, !state.isCompleted else {
-                return [QuestTargetRequest]()
-            }
-            return objective.targets.map {
-                QuestTargetRequest(
-                    quest: entry.quest.formID,
-                    text: text(objective.displayText) ?? "Objective \(objective.index)",
-                    aliasID: $0.aliasID, conditionsPass: true
-                )
-            }
-        }
+        let check = questTargetCheck(quest: entry.quest.formID, runtime: runtime)
+        let requests = QuestTargetResolver.requests(
+            quest: entry.quest, state: entry.state,
+            text: { [self] in text($0.displayText) ?? "Objective \($0.index)" },
+            conditionsPass: check
+        )
         return QuestTargetResolver.resolve(
             requests,
             alias: { quest, alias in
@@ -183,5 +216,18 @@ extension MapWorldAdapter: MapMenuWorld {
                 }
             }
         )
+    }
+}
+
+extension MapWorldAdapter {
+    private func questTargetCheck(
+        quest: FormID, runtime: QuestRuntime
+    ) -> (Quest.Target) -> Bool {
+        let evaluator = ConditionEvaluator(context: game.runtimeState.conditionContext())
+        return { target in
+            QuestTargetResolver.conditionsPass(target, quest: quest, evaluator: evaluator) {
+                runtime.aliasReference(alias: UInt32(bitPattern: $0), in: quest)
+            }
+        }
     }
 }

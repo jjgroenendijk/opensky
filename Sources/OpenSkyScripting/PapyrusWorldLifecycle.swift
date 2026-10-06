@@ -154,8 +154,10 @@ extension PapyrusWorldRuntime {
             let binding = try item.script.binding(
                 in: runtime,
                 formIDResolver: formIDResolver,
-                aliases: aliasResolution
-            ) { handles[$0] }
+                aliases: aliasResolution,
+                aliasHandle: { self.aliasInstanceHandle(for: $0) ?? self.objectHandle(for: $0) },
+                objectHandle: { handles[$0] }
+            )
             bindingSkips.merge(binding.skipped)
             for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })
                 where !instance.applyInitialValue(
@@ -201,6 +203,9 @@ extension PapyrusWorldRuntime {
         }
         keysByHandle.removeValue(forKey: handle)
         runtime.instances.removeValue(forKey: handle)
+        if let cursor = drainCursor {
+            drainCursor = cursor - eventQueue.prefix(cursor).count { $0.target == key }
+        }
         eventQueue.removeAll { $0.target == key }
         updateTimers.removeAll(for: key)
         pendingOnInit.remove(key)

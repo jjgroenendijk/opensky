@@ -49,6 +49,9 @@ nonisolated public final class SWFMovieRuntime {
     public var textTranslator: ((String) -> String)?
     /// Engine-side handlers a movie may call by name.
     public var hostFunctions: [String: SWFHostFunction] = [:]
+    /// The last arguments of each handled call. A main-actor answer reads a list the
+    /// movie passed from here, because the values cannot cross actors.
+    public var lastHostArguments: [String: [AS2Value]] = [:]
     /// Placements that attached a key CLIPACTIONS handler. Zero across the whole
     /// vanilla install, which is what lets key dispatch skip the tree walk.
     public private(set) var keyClipHandlers = 0

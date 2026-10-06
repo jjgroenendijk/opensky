@@ -72,6 +72,9 @@ public final class PapyrusWorldRuntime {
     public var lastQuestFragment: String?
     /// The single main-actor FIFO event queue; global order is preserved.
     public var eventQueue: [PapyrusScriptEvent] = []
+    /// The next queue position a running drain reads. `retire` moves it back when it
+    /// removes events the drain already passed, so the drain never reads past the end.
+    var drainCursor: Int?
     /// Instances with a latent call in flight. Their queued events stay
     /// queued, in order, until the suspended handler settles.
     public var busyInstances: Set<PapyrusInstanceKey> = []
@@ -174,6 +177,7 @@ public final class PapyrusWorldRuntime {
         scheduler.onResume = { call, outcome in
             tracker.noteResume(of: call, outcome: outcome)
         }
+        runtime.siblingInstance = { [weak self] in self?.sibling(of: $0, as: $1) }
     }
 
     /// Keeps the attach's master-list resolver for later event arguments.
@@ -283,10 +287,13 @@ public final class PapyrusWorldRuntime {
 
     /// One handle per world reference for VMAD object-property binding. A
     /// reference carrying several scripts resolves to the instance with the
-    /// lowest script name, chosen deterministically.
+    /// lowest script name, chosen deterministically. Alias scripts are left out.
     public func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
         var map: [ReferenceKey: PapyrusObjectHandle] = [:]
-        for key in instancesByKey.keys.sorted() where map[key.reference] == nil {
+        let aliasKeys = aliasInstanceKeys
+        for key in instancesByKey.keys.sorted()
+            where map[key.reference] == nil && !aliasKeys.contains(key)
+        {
             map[key.reference] = instancesByKey[key]
         }
         return map

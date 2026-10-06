@@ -1,5 +1,5 @@
 // World > Character > Race Menu: open the full or limited race menu, step its
-// rows, and set the name.
+// rows, set the name, and switch between the game's movie and OpenSky's rows.
 
 import AppKit
 import OpenSkyMenus
@@ -52,6 +52,23 @@ final class RaceMenuSection: MenuButtonSection {
                 ) { [weak self] in self?.provider?.resetPlayerIdentity() }
             ],
             [
+                Action(
+                    title: "Previous Preset", identifier: "RaceMenuPreviousPresetControl",
+                    toolTip: "Give the player the previous preset face of their race."
+                ) { [weak self] in self?.provider?.applyRacePreset(offset: -1) },
+                Action(
+                    title: "Next Preset", identifier: "RaceMenuNextPresetControl",
+                    toolTip: "Give the player the next preset face of their race."
+                ) { [weak self] in self?.provider?.applyRacePreset(offset: 1) },
+                Action(
+                    title: "Movie", identifier: "RaceMenuMovieControl",
+                    toolTip: "Switch between the game's race menu movie and OpenSky's rows."
+                ) { [weak self] in
+                    guard let provider = self?.provider else { return }
+                    provider.setRaceMenuMovieEnabled(!provider.raceMenuSnapshot.movie.isEnabled)
+                }
+            ],
+            [
                 send("Up", "RaceMenuUpControl", .move(.up)),
                 send("Down", "RaceMenuDownControl", .move(.down)),
                 send("Left", "RaceMenuLeftControl", .move(.left)),
@@ -69,9 +86,12 @@ final class RaceMenuSection: MenuButtonSection {
     }
 
     override func isEnabled(_ identifier: String) -> Bool {
+        if identifier == "RaceMenuMovieControl" {
+            return provider != nil
+        }
         let isOpen = provider?.raceMenuSnapshot.isOpen == true
         let needsClosed = identifier.hasPrefix("RaceMenuOpen")
-            || identifier == "RaceMenuResetControl"
+            || identifier == "RaceMenuResetControl" || identifier.hasSuffix("PresetControl")
         return needsClosed ? provider != nil && !isOpen : isOpen
     }
 
@@ -91,7 +111,9 @@ final class RaceMenuSection: MenuButtonSection {
     }
 
     nonisolated static func readout(for snapshot: RaceMenuSnapshot) -> String {
-        let result = snapshot.lastResult.map { "\nLast character: \($0)" } ?? ""
+        let result = "\n" + TitleMenuSection.movieLine(snapshot.movie)
+            + (snapshot.lastResult.map { "\nLast character: \($0)" } ?? "")
+            + (snapshot.face.isEmpty ? "" : "\n" + snapshot.face.joined(separator: "\n"))
         guard snapshot.isOpen else { return "Race menu: closed\(result)" }
         let kind = (snapshot.isLimited ? "limited" : "full")
             + (snapshot.isEditingName ? ", typing a name" : "")

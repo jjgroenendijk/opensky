@@ -68,8 +68,53 @@ final class MapMenuSection: MenuButtonSection {
                     $0.resetLocalMapFog()
                 }
             ]
+        ] + inspectActions
+    }
+
+    private var inspectActions: [[Action]] {
+        [
+            [
+                run(
+                    "Prev World",
+                    "MapMenuPreviousWorldspaceControl",
+                    "Inspect the previous worldspace."
+                ) {
+                    $0.inspectMapWorldspace(offset: -1)
+                },
+                run("Next World", "MapMenuNextWorldspaceControl", "Inspect the next worldspace.") {
+                    $0.inspectMapWorldspace(offset: 1)
+                },
+                run("Prev Marker", "MapMenuPreviousMarkerControl", "Inspect the previous marker.") {
+                    $0.inspectMapMarker(offset: -1)
+                },
+                run("Next Marker", "MapMenuNextMarkerControl", "Inspect the next marker.") {
+                    $0.inspectMapMarker(offset: 1)
+                }
+            ],
+            [
+                run("Reveal", "MapMenuRevealMarkerControl", "Show the inspected marker.") {
+                    $0.applyToInspectedMarker(.reveal)
+                },
+                run(
+                    "Discover",
+                    "MapMenuDiscoverMarkerControl",
+                    "Discover the marker and allow travel."
+                ) {
+                    $0.applyToInspectedMarker(.discover)
+                },
+                run("Hide", "MapMenuHideMarkerControl", "Hide the inspected marker.") {
+                    $0.applyToInspectedMarker(.hide)
+                }
+            ]
         ]
     }
+
+    private static let alwaysEnabled: Set = [
+        "MapMenuRevealAllControl", "MapMenuResetFogControl",
+        "MapMenuPreviousWorldspaceControl", "MapMenuNextWorldspaceControl",
+        "MapMenuPreviousMarkerControl", "MapMenuNextMarkerControl",
+        "MapMenuRevealMarkerControl", "MapMenuDiscoverMarkerControl", "MapMenuHideMarkerControl"
+    ]
 
     private func run(
         _ title: String, _ id: String, _ tip: String,
@@ -88,7 +133,7 @@ final class MapMenuSection: MenuButtonSection {
 
     override func isEnabled(_ identifier: String) -> Bool {
         let isOpen = provider?.mapMenuSnapshot.mode != nil
-        if identifier == "MapMenuRevealAllControl" || identifier == "MapMenuResetFogControl" {
+        if Self.alwaysEnabled.contains(identifier) {
             return provider != nil
         }
         return identifier.hasPrefix("MapMenuOpen") ? provider != nil && !isOpen : isOpen
@@ -112,6 +157,7 @@ final class MapMenuSection: MenuButtonSection {
         }
         lines.append("Quest targets: " + (snapshot.questTargets.isEmpty
                 ? "none" : snapshot.questTargets.joined(separator: ", ")))
+        lines.append("Inspected: \(snapshot.inspectedMarker ?? "none")")
         if let result = snapshot.lastResult {
             lines.append("Last result: \(result)")
         }

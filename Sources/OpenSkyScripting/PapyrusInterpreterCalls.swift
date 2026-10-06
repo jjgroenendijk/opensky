@@ -28,6 +28,12 @@ extension PapyrusInterpreter {
         let operands = try requireOperands(4, instruction: instruction)
         let functionName = try name(from: operands[0])
         let receiverValue = try read(operands[1], frame: frame)
+        if receiverValue == .none {
+            // The game logs "Cannot call ... on a None object" and the script goes on.
+            runtime.tally.noteNoneReceiver()
+            try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
+            return .next
+        }
         guard case let .object(handle) = receiverValue else {
             throw .typeMismatch(
                 instruction: instructionIndex,

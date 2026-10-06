@@ -139,6 +139,29 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         }
     }
 
+    /// A value the movie's slider sent, clamped like a step.
+    public mutating func set(_ row: RaceMenuRow, to value: Float) {
+        guard value.isFinite else { return }
+        switch row {
+        case .weight:
+            identity.face.weight = min(max(value, 0), 100)
+        case let .slider(index):
+            identity.face.morphs[index] = (min(max(value, -1), 1) * 10).rounded() / 10
+        case let .part(index):
+            guard let range = Self.partRanges[index] else { return }
+            let part = Int32(value.rounded())
+            identity.face.parts[index] = min(max(part, range.lowerBound), range.upperBound)
+        case .race, .sex, .name:
+            return
+        }
+    }
+
+    /// Picks a race by its place in `races`. A limited menu keeps the race once left.
+    public mutating func selectRace(at index: Int) {
+        guard races.indices.contains(index), !raceLocked else { return }
+        identity.race = races[index].formID
+    }
+
     public mutating func setName(_ name: String) {
         guard !isLimited else { return }
         let trimmed = name.trimmingCharacters(in: .whitespaces)

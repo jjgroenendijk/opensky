@@ -22,24 +22,37 @@ struct MenuPanelsTests {
         #expect(panel.raceSection.sectionIdentifier == "raceMenu")
         #expect(panel.titleSection.buttons.map { $0.accessibilityIdentifier() } == [
             "TitleMenuOpenControl", "TitleMenuUpControl", "TitleMenuDownControl",
-            "TitleMenuChooseControl", "TitleMenuMovieControl"
+            "TitleMenuChooseControl", "TitleMenuMovieControl", "TitleMenuNewGameHereControl"
         ])
+        #expect(panel.titleSection.cellControl
+            .accessibilityIdentifier() == "TitleMenuNewGameCellControl")
         send(panel.titleSection.buttons[4])
-        #expect(provider.menuCalls.calls == ["title.movie(false)"])
+        panel.titleSection.cellControl.stringValue = "RiverwoodExterior"
+        send(panel.titleSection.buttons[5])
+        #expect(provider.menuCalls.calls == [
+            "title.movie(false)",
+            "title.newGame(RiverwoodExterior)"
+        ])
         provider.menuCalls.calls = []
         #expect(panel.raceSection.buttons.map { $0.accessibilityIdentifier() } == [
             "RaceMenuOpenControl", "RaceMenuOpenLimitedControl", "RaceMenuResetControl",
+            "RaceMenuPreviousPresetControl", "RaceMenuNextPresetControl", "RaceMenuMovieControl",
             "RaceMenuUpControl", "RaceMenuDownControl", "RaceMenuLeftControl",
             "RaceMenuRightControl", "RaceMenuDoneControl"
         ])
         #expect(panel.raceSection.nameControl.accessibilityIdentifier() == "RaceMenuNameControl")
         panel.raceSection.refreshReadout()
-        #expect(!panel.raceSection.buttons[3].isEnabled, "Up waits for an open menu")
+        #expect(!panel.raceSection.buttons[6].isEnabled, "Up waits for an open menu")
         send(panel.raceSection.buttons[2])
+        send(panel.raceSection.buttons[4])
+        send(panel.raceSection.buttons[5])
         send(panel.raceSection.buttons[1])
-        #expect(provider.menuCalls.calls == ["race.reset", "race.open(true)"])
+        #expect(provider.menuCalls.calls == [
+            "race.reset", "race.preset(1)", "race.movie(true)", "race.open(true)"
+        ])
         panel.raceSection.refreshReadout()
-        #expect(panel.raceSection.buttons[3].isEnabled)
+        #expect(panel.raceSection.buttons[6].isEnabled)
+        #expect(!panel.raceSection.buttons[4].isEnabled, "presets wait for a closed menu")
         #expect(!panel.raceSection.buttons[2].isEnabled, "Reset waits for a closed menu")
         panel.raceSection.nameControl.stringValue = "Ada"
         send(panel.raceSection.nameControl)
@@ -65,8 +78,19 @@ struct MenuPanelsTests {
             "MapMenuNorthControl", "MapMenuSouthControl", "MapMenuWestControl",
             "MapMenuEastControl", "MapMenuZoomInControl", "MapMenuZoomOutControl",
             "MapMenuTiltControl", "MapMenuTravelControl", "MapMenuRevealAllControl",
-            "MapMenuResetFogControl"
+            "MapMenuResetFogControl", "MapMenuPreviousWorldspaceControl",
+            "MapMenuNextWorldspaceControl", "MapMenuPreviousMarkerControl",
+            "MapMenuNextMarkerControl", "MapMenuRevealMarkerControl",
+            "MapMenuDiscoverMarkerControl", "MapMenuHideMarkerControl"
         ])
+        for index in 13 ... 19 {
+            send(panel.mapSection.buttons[index])
+        }
+        #expect(provider.menuCalls.calls == [
+            "map.worldspace(-1)", "map.worldspace(1)", "map.marker(-1)", "map.marker(1)",
+            "map.reveal", "map.discover", "map.hide"
+        ])
+        provider.menuCalls.calls = []
         panel.mapSection.refreshReadout()
         #expect(panel.mapSection.buttons[11].isEnabled, "reveal works with the map closed")
         send(panel.mapSection.buttons[11])
@@ -95,6 +119,7 @@ struct MenuPanelsTests {
         Fast travel: off by script
         Camera: 50000 high, 50 degrees
         Quest targets: Get the claw
+        Inspected: none
         """)
         let title = TitleMenuSnapshot(
             isOpen: true, rows: ["New", "Load"], selectedIndex: 1, isLoadPageOpen: false,
@@ -111,7 +136,8 @@ struct MenuPanelsTests {
             lastResult: "Ada, Nord, Female"
         )
         #expect(RaceMenuSection
-            .readout(for: race) == "Race menu: closed\nLast character: Ada, Nord, Female")
+            .readout(for: race) ==
+            "Race menu: closed\nMovie: off\nLast character: Ada, Nord, Female")
         let page = SystemMenuPageSnapshot(
             page: "quit", rows: ["Main Menu", "Desktop", "Cancel"], selectedIndex: 2,
             question: nil, message: "Quicksave"

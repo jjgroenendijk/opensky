@@ -3,6 +3,7 @@
 
 import AppKit
 import OpenSkyActorsInterface
+import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCombatInterface
@@ -18,6 +19,11 @@ final class MenuWorldAdapter {
     unowned let game: GameViewController
     /// Built on first use, because it walks the install.
     var titleMeshes: MeshLibrary?
+    /// The move a new game makes, polled each frame until the player stands.
+    var newGameTeleport: AgentWait?
+    /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
+    private var raceMenuAfterTeleport = false
+    private var startTickerInstalled = false
     /// The camera the logo was placed for, while the title backdrop shows.
     var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 
@@ -74,6 +80,7 @@ extension MenuWorldAdapter: PlayerSettingsWorld {
             $0.markersEnabled = hud.floatingMarkers
         }
         game.renderer?.swfOpacity = hud.opacity
+        game.subtitles.settings = hud.subtitles
     }
 
     func applyDifficulty(index: Int) {
@@ -112,13 +119,29 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
         game.player.refreshBody()
     }
 
+    func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
+        guard let record = records?.playableRaces.first(where: { $0.formID == race }) else {
+            return []
+        }
+        let head = isFemale ? record.details.headData.female : record.details.headData.male
+        return head.presets.compactMap { preset in
+            guard let npc = identityRecords?.templates.actors[preset.rawValue] else { return nil }
+            let name = npc.editorID ?? "\(preset)"
+            return RacePreset(
+                name: name,
+                face: PlayerIdentityState(record: npc, details: npc.details, name: name).face
+            )
+        }
+    }
+
     func raceMenuClosed() {
         game.scripts.runtime?.queueRaceSwitchComplete(actor: .player)
     }
 
-    /// A fresh session: empty world state, the start clock, the opening quests,
-    /// then the race menu, as the opening quest would show it.
-    func startNewGame() {
+    /// A fresh session: empty world state, the start clock, and the opening
+    /// quests. The opening quest places the player and opens the race menu itself.
+    /// A chosen cell is a test start, so the race menu opens there at once.
+    func startNewGame(at start: NewGameStart) {
         game.worldState.restore(from: .empty)
         game.renderer?.gameClock = GameClock()
         game.scripts.restore(instances: [], timers: [])
@@ -126,7 +149,10 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
         game.storyWorld.rerunSessionStart()
         game.saveGames.resetPlayTime()
         game.player.refreshBody()
-        game.raceMenu.open(limited: false)
+        switch start {
+        case .vanilla: game.storyWorld.startOpeningQuest()
+        case let .cell(editorID): teleportPlayer(.cell(editorID), openingRaceMenu: true)
+        }
     }
 
     func quitApplication() {
@@ -158,15 +184,73 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
     }
 
     func race(of actor: ReferenceKey) -> FormID? {
-        actor == .player ? playerIdentity?.race : nil
+        if actor == .player {
+            return playerIdentity?.race
+        }
+        return game.scripts.bridge?.placedReference(for: actor)
+            .flatMap { identityRecords?.race(ofBase: $0.base) }
     }
 
     func sex(ofBase base: FormID) -> Int? {
-        guard base == MenuRecordData.playerBase, let identity = playerIdentity else { return nil }
-        return identity.isFemale ? 1 : 0
+        let isFemale = base == MenuRecordData.playerBase
+            ? playerIdentity?.isFemale : identityRecords?.isFemale(ofBase: base)
+        return isFemale.map { $0 ? 1 : 0 }
     }
 
     func name(of form: FormID) -> String? {
-        form == MenuRecordData.playerBase ? playerIdentity?.name : nil
+        if form == MenuRecordData.playerBase {
+            return playerIdentity?.name
+        }
+        return game.mapWorld.text(identityRecords?.name(of: form))
+    }
+
+    /// Only `Skyrim.esm` references, because the lookup outside the loaded cells
+    /// reads that file.
+    func movePlayer(to target: ReferenceKey) {
+        guard case let .plugin(name, objectID) = target, name == "skyrim.esm" else {
+            game.hud.showNotification("MoveTo: \(target) is not in Skyrim.esm")
+            return
+        }
+        teleportPlayer(.reference(String(format: "0x%06X", objectID)), openingRaceMenu: false)
+    }
+
+    private var identityRecords: ActorIdentityRecords? {
+        (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?.resolver
+            .map(ActorIdentityRecords.init(resolver:))
+    }
+}
+
+extension MenuWorldAdapter {
+    /// Moves the player the way `debug.teleport` does.
+    func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool) {
+        raceMenuAfterTeleport = openingRaceMenu
+        do {
+            newGameTeleport = try AgentTeleportJob(adapter: game.agentWorld, target: target).wait
+        } catch {
+            game.hud.showNotification("Move: \(error.message)")
+            openRaceMenuIfAsked()
+            return
+        }
+        guard !startTickerInstalled, let renderer = game.renderer else { return }
+        startTickerInstalled = true
+        renderer.onFrame.add { [weak self] _ in
+            self?.pollNewGameTeleport(now: Date().timeIntervalSinceReferenceDate)
+        }
+    }
+
+    private func pollNewGameTeleport(now: Double) {
+        guard let wait = newGameTeleport else { return }
+        guard let result = wait.poll(now).finish else { return }
+        newGameTeleport = nil
+        if case let .failure(error) = result {
+            game.hud.showNotification("Move: \(error.message)")
+        }
+        openRaceMenuIfAsked()
+    }
+
+    private func openRaceMenuIfAsked() {
+        guard raceMenuAfterTeleport else { return }
+        raceMenuAfterTeleport = false
+        game.raceMenu.open(limited: false)
     }
 }

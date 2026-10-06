@@ -44,7 +44,7 @@ struct ScriptingAcceptanceRealDataTests {
         // so two scripted persistent references in the grid attach too.
         #expect(setup.world.instancesByKey.count == 30)
         let gridTally = setup.world.runtime.tally
-        #expect(gridTally.faultTotal == 5)
+        #expect(gridTally.faultTotal == 4)
         #expect(gridTally.unimplementedNativeTotal == 4)
         #expect(gridTally.deferredAnimationTotal == 0)
 

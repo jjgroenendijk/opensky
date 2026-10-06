@@ -28,6 +28,36 @@ nonisolated public enum CellDirectory {
         return nil
     }
 
+    /// Where an exterior reference of this file stands. A persistent reference sits in
+    /// its worldspace's persistent CELL, so the whole WRLD group is searched.
+    public static func exteriorPlacement(
+        of formID: FormID, in file: ESMFile
+    ) -> PlacedReference.Placement? {
+        guard let top = file.topGroup(of: "WRLD"), let children = try? top.children() else {
+            return nil
+        }
+        return placement(of: formID, in: children)
+    }
+
+    private static func placement(
+        of formID: FormID, in children: [ESMGroup.Child]
+    ) -> PlacedReference.Placement? {
+        for child in children {
+            switch child {
+            case let .record(record) where record.formID == formID.rawValue:
+                return (try? PlacedReference(record: record))?.placement
+            case let .group(group):
+                guard let nested = try? group.children() else { continue }
+                if let found = placement(of: formID, in: nested) {
+                    return found
+                }
+            case .record:
+                continue
+            }
+        }
+        return nil
+    }
+
     private static func search(
         _ children: [ESMGroup.Child],
         wanted: String,

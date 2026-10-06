@@ -345,12 +345,30 @@ nonisolated public struct PlayerAppearanceOverride: Equatable, Sendable {
     /// Empty keeps the record's head parts.
     public var headParts: [FormID]
     public var hairColor: FormID?
+    /// NAM9 slider values and NAMA part choices; see docs/engine/race-menu.md.
+    public var faceMorphs: [Float] = []
+    public var faceParts: [Int32] = []
+    public var tints: [PlayerAppearanceTint] = []
 
     public init(race: FormID, isFemale: Bool, headParts: [FormID], hairColor: FormID?) {
         self.race = race
         self.isFemale = isFemale
         self.headParts = headParts
         self.hairColor = hairColor
+    }
+}
+
+/// One painted face layer: the race tint mask with this `TINI` index.
+nonisolated public struct PlayerAppearanceTint: Equatable, Sendable {
+    public var maskIndex: UInt16
+    public var color: SIMD4<UInt8>
+    /// 0 to 1.
+    public var strength: Float
+
+    public init(maskIndex: UInt16, color: SIMD4<UInt8>, strength: Float) {
+        self.maskIndex = maskIndex
+        self.color = color
+        self.strength = strength
     }
 }
 

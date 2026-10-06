@@ -1,4 +1,4 @@
-// The System, Character, Map, Inventory, and Container menu descriptors, split out of
+// The System, Settings, Character, Map, Inventory, and Container menu descriptors, split out of
 // DestinationRegistry.swift to stay under the type-length cap.
 // `DestinationRegistry` stays the single registration point.
 
@@ -17,6 +17,18 @@ extension DestinationRegistry {
                 return panel
             },
             overrides: systemMenuOverrides
+        ),
+        DestinationDescriptor(
+            id: "playerSettings",
+            title: "Settings",
+            section: .world,
+            symbolName: "slider.horizontal.3",
+            content: .worldInspector { context in
+                let panel = PlayerSettingsPanelViewController()
+                panel.provider = context.providers
+                return panel
+            },
+            overrides: playerSettingsOverrides
         ),
         DestinationDescriptor(
             id: "characterMenus",
