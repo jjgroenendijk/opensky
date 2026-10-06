@@ -15,7 +15,6 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     public var attacker = MeleeAttacker(key: .generated(0), feet: SIMD3<Float>(), facing: 0)
     public var targets: [MeleeTarget] = []
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
-    public var material: FormID?
     /// The fortify multiplier the runtime asks for. 1 is what the
     /// formula reduces to for a character with no fortify effect.
     public var attackMultiplier: Float = 1
@@ -52,10 +51,6 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
 
     public func meleeTargets() -> [MeleeTarget] {
         targets
-    }
-
-    public func meleeMaterial() -> FormID? {
-        material
     }
 
     public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {

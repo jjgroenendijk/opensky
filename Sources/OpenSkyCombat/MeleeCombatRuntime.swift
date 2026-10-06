@@ -292,9 +292,9 @@ public final class MeleeCombatRuntime {
             isBlocked: damage.wasBlocked
         ))
         let staggered = stagger(hit.target, damage: damage, world: world)
-        let impact = impacts?.resolve(
-            weapon: weapon, material: world.meleeMaterial()
-        )
+        // A swing only strikes actors, which carry no material yet, so the
+        // impact data set's default entry plays.
+        let impact = impacts?.resolve(weapon: weapon, material: nil)
         if let impact {
             world.playMeleeImpact(impact, at: hit.position)
         }

@@ -250,7 +250,7 @@ public final class ProjectileRuntime {
         impactCount += 1
         let applied = applyArrow(projectile, impact: impact)
         let spellHit = applySpell(projectile, impact: impact)
-        let sound = playImpact(at: impact.position)
+        let sound = playImpact(of: impact)
         detonateExplosion(of: projectile, at: impact.position)
         let didStick = !detonated && stick(projectile, at: impact)
         return record(
@@ -328,6 +328,7 @@ public final class ProjectileRuntime {
             target: impact?.target,
             appliedDamage: appliedDamage,
             sound: sound,
+            material: impact?.material,
             stuck: stuck,
             spellHit: spellHit,
             // Only a landed hit provokes: a projectile that expired in the air

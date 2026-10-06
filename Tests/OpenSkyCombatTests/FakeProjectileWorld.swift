@@ -20,6 +20,7 @@ final class FakeProjectileWorld: ProjectileWorld {
     struct Wall {
         let x: Float
         let reference: FormID
+        var material: FormID?
     }
 
     var shooter = ProjectileShooter(
@@ -31,7 +32,6 @@ final class FakeProjectileWorld: ProjectileWorld {
     )
     var targets: [MeleeTarget] = []
     var wall: Wall?
-    var material: FormID?
     /// How many arrows the fake quiver holds. Zero makes `consumeArrow` fail,
     /// which is what an empty quiver does.
     var arrowCount = 10
@@ -88,12 +88,9 @@ final class FakeProjectileWorld: ProjectileWorld {
             distance: distance,
             position: query.first + direction * distance,
             normal: SIMD3(-1, 0, 0),
-            startsOverlapping: false
+            startsOverlapping: false,
+            material: wall.material
         )
-    }
-
-    func projectileMaterial() -> FormID? {
-        material
     }
 
     @discardableResult

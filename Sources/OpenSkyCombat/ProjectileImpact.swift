@@ -18,6 +18,9 @@ nonisolated public struct ProjectileImpact: Equatable, Sendable {
     public let target: ReferenceKey?
     /// The reference struck, where the query named one.
     public let reference: FormID?
+    /// The MATT type of the static surface struck. Nil for an actor, which
+    /// carries no material yet, so the impact data set's default entry plays.
+    public var material: FormID?
 
     public var isActor: Bool {
         target != nil
@@ -82,7 +85,8 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
             distance: staticHit.distance,
             position: staticHit.position,
             target: nil,
-            reference: staticHit.reference
+            reference: staticHit.reference,
+            material: staticHit.material
         )
         guard let actorHit else { return asImpact }
         return actorHit.distance <= staticHit.distance ? actorHit : asImpact

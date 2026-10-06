@@ -127,10 +127,6 @@ struct SpellDeliveryAcceptanceRealDataTests {
             nil
         }
 
-        func projectileMaterial() -> FormID? {
-            nil
-        }
-
         @discardableResult
         func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
             false

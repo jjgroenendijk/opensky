@@ -169,6 +169,23 @@ struct ProjectileRuntimeTests {
         #expect(abs(end.x - 800) < 1000 * PhysicsStep.fixedTimeStep + 0.01)
     }
 
+    /// The impact plays against the wall's own material, not the ground the
+    /// shooter stands on.
+    @Test func anImpactUsesTheMaterialOfTheSurfaceHit() {
+        let wood = FormID(0x0000_0C1A)
+        let world = FakeProjectileWorld()
+        world.wall = FakeProjectileWorld.Wall(
+            x: 800, reference: FormID(0x0002_0000), material: wood
+        )
+        let runtime = Self.runtime(world: world)
+        runtime.fire(Self.shot(profile: Self.flatProfile()))
+
+        let traces = Self.advance(runtime, seconds: 2)
+
+        #expect(traces.first?.outcome == .hitStatic)
+        #expect(traces.first?.material == wood)
+    }
+
     /// An actor standing behind a wall is not hit: the nearer touch wins.
     @Test func theNearerOfAWallAndAnActorWins() {
         let world = FakeProjectileWorld()

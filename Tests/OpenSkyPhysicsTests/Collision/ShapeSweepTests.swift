@@ -40,6 +40,17 @@ struct ShapeSweepTests {
     }
 
     @Test
+    func aHitCarriesTheMaterialOfTheShapeTouched() throws {
+        let stone = FormID(0x0000_0C1B)
+        let floor = DynamicBodyScene.floor(material: stone)
+        let query = ShapeSweepQuery.sphere(
+            center: SIMD3(0, 0, 50), radius: 4, direction: SIMD3(0, 0, -1), maximumDistance: 100
+        )
+        let hit = try #require(ShapeSweeper.firstHit(query: query, shapes: [floor]))
+        #expect(hit.material == stone)
+    }
+
+    @Test
     func aCapsuleCastIsBlockedByGeometryOnlyItsFarEndReaches() throws {
         // The segment runs up the Z axis; only its top end is level with the
         // wall panel, which sits above z = 100.

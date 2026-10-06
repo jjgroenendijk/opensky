@@ -83,11 +83,6 @@ extension CombatWorldAdapter: CombatWorld {
         game.actorWorld.nearestActorValueHolder()?.key
     }
 
-    /// The ground under the player stands in for the surface that was hit.
-    var groundMaterial: FormID? {
-        game.renderer?.walkController.groundMaterial
-    }
-
     func hostility(of key: ReferenceKey) -> ActorHostility {
         game.factions.hostility(of: key)
     }
