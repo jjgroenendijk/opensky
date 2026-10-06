@@ -106,6 +106,24 @@ struct QuestConditionFunctionTests {
         #expect(outcome.isConclusive)
     }
 
+    /// A DLC lists "Test.esm" as its second master, so it writes the main quest as
+    /// 0x01000100. Read raw, that names nothing in the store's space.
+    @Test func aConditionFromAnotherPluginReadsTheQuestItsPluginMeans() throws {
+        let reached = QuestRuntimeState(isRunning: true, stagesReached: [20])
+        var context = try context([0x0100: reached])
+        let written = try condition(58, quest: FormID(0x0100_0100), equals: 20)
+        #expect(evaluate(written, context).failures == [.unresolvedQuest(FormID(0x0100_0100))])
+
+        let target = try store().resolver
+        context.formIDTranslation = FormIDTranslation(
+            source: FormIDResolver(pluginName: "DLC.esm", masters: ["Other.esm", "Test.esm"]),
+            target: target
+        )
+        let outcome = evaluate(written, context)
+        #expect(outcome.isTrue)
+        #expect(outcome.isConclusive)
+    }
+
     // MARK: - GetStageDone
 
     /// Only visited stages are done: a lower stage is never implied by a

@@ -19,9 +19,12 @@ nonisolated public final class DialogueStore: Sendable {
     /// load-order-relative number.
     private let keysByInfoFormID: [UInt32: ReferenceKey]
     private let branchIndex: DialogueBranchIndex
-    /// Master-list resolver of the plugin these records came from, retained so
-    /// a caller can resolve the FormIDs the records *point at*.
+    /// This store's FormID space: one plugin's master list, or the load order. A
+    /// caller resolves the FormIDs the records point at through it.
     public let resolver: FormIDResolver
+    /// INFO FormID -> master list of the plugin whose record won, for a load-order
+    /// store. The FormIDs inside that INFO's conditions are relative to it.
+    private let infoSources: [UInt32: FormIDResolver]
 
     /// DIAL, INFO or VTYP records that failed to decode.
     public let skippedRecords: SkippedRecords
@@ -40,53 +43,16 @@ nonisolated public final class DialogueStore: Sendable {
     /// - Parameter pluginName: file name of `file`, needed because a plugin
     ///   does not record its own name and `ReferenceKey` is built from it.
     public convenience init(file: ESMFile, pluginName: String, localized: Bool? = nil) {
-        let isLocalized = localized ?? file.isLocalized
-        var topics: [DialogueTopic] = []
-        var infosByTopic: [UInt32: [TopicInfo]] = [:]
-        var voiceTypes: [VoiceType] = []
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
-
-        if let top = file.topGroup(of: "DIAL") {
-            for child in skipped.children(of: top) {
-                switch child {
-                case let .record(record):
-                    guard record.type == "DIAL", !record.isDeleted else { continue }
-                    let topic = skipped.decode(record) {
-                        try DialogueTopic(record: $0, localized: isLocalized)
-                    }
-                    topics.append(contentsOf: topic.map { [$0] } ?? [])
-                case let .group(group):
-                    guard group.kind == .topicChildren, let parent = group.parentFormID else {
-                        continue
-                    }
-                    let infos = Self.decodeInfos(
-                        in: group,
-                        localized: isLocalized,
-                        skipped: &skipped
-                    )
-                    infosByTopic[parent, default: []].append(contentsOf: infos)
-                }
-            }
-        }
-
-        let branches = DialogueBranchIndex.decode(file: file, skipped: &skipped)
-        if let top = file.topGroup(of: "VTYP") {
-            for case let .record(record) in skipped.children(of: top)
-                where record.type == "VTYP" && !record.isDeleted
-            {
-                let voice = skipped.decode(record) { try VoiceType(record: $0) }
-                voiceTypes.append(contentsOf: voice.map { [$0] } ?? [])
-            }
-        }
+        let plugin = PluginDialogue(file: file, localized: localized, skipped: &skipped)
         self.init(
-            topics: topics,
-            infosByTopic: infosByTopic,
-            voiceTypes: voiceTypes,
-            resolver: FormIDResolver(pluginName: pluginName, masters: masters),
+            topics: plugin.topics,
+            infosByTopic: plugin.infosByTopic,
+            voiceTypes: plugin.voiceTypes,
+            resolver: FormIDResolver(pluginName: pluginName, masters: plugin.masters),
             skippedRecords: skipped,
-            branches: branches.branches,
-            views: branches.views
+            branches: plugin.branches,
+            views: plugin.views
         )
     }
 
@@ -97,7 +63,8 @@ nonisolated public final class DialogueStore: Sendable {
         resolver: FormIDResolver,
         skippedRecords: SkippedRecords = SkippedRecords(),
         branches: [DialogueBranch] = [],
-        views: [DialogueView] = []
+        views: [DialogueView] = [],
+        infoSources: [UInt32: FormIDResolver] = [:]
     ) {
         var topicsByFormID: [UInt32: DialogueTopic] = [:]
         var topicIDs: [String: UInt32] = [:]
@@ -138,6 +105,7 @@ nonisolated public final class DialogueStore: Sendable {
         branchIndex = DialogueBranchIndex(branches: branches, views: views, topics: topics)
         self.resolver = resolver
         self.skippedRecords = skippedRecords
+        self.infoSources = infoSources
     }
 
     public var topicCount: Int {
@@ -229,27 +197,18 @@ nonisolated public final class DialogueStore: Sendable {
         branchIndex.branchesByFormID.keys.sorted().compactMap { branchIndex.branchesByFormID[$0] }
     }
 
-    public func voiceType(editorID: String) -> VoiceType? {
-        voiceFormIDsByEditorID[editorID.lowercased()].flatMap { voicesByFormID[$0] }
+    /// The master list the FormIDs inside INFO `id` are relative to.
+    public func sourceResolver(ofInfo id: FormID) -> FormIDResolver {
+        infoSources[id.rawValue] ?? resolver
     }
 
-    private static func decodeInfos(
-        in group: ESMGroup,
-        localized: Bool,
-        skipped: inout SkippedRecords
-    ) -> [TopicInfo] {
-        let children: [ESMGroup.Child]
-        do {
-            children = try group.children()
-        } catch {
-            skipped.note("INFO", error: error)
-            return []
-        }
-        var infos: [TopicInfo] = []
-        for case let .record(record) in children where record.type == "INFO" && !record.isDeleted {
-            let info = skipped.decode(record) { try TopicInfo(record: $0, localized: localized) }
-            infos.append(contentsOf: info.map { [$0] } ?? [])
-        }
-        return infos
+    /// From INFO `id`'s own plugin to this store's FormID space, or nil when the
+    /// two are the same.
+    public func translation(ofInfo id: FormID) -> FormIDTranslation? {
+        infoSources[id.rawValue].map { FormIDTranslation(source: $0, target: resolver) }
+    }
+
+    public func voiceType(editorID: String) -> VoiceType? {
+        voiceFormIDsByEditorID[editorID.lowercased()].flatMap { voicesByFormID[$0] }
     }
 }

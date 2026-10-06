@@ -140,6 +140,11 @@ nonisolated public struct RecordIndex: Sendable {
             .sorted { RecordStoreOrdering.precedes($0, $1, index: self) }
     }
 
+    /// The master list of a loaded plugin, or nil for a plugin not in the index.
+    public func resolver(ofPlugin pluginName: String) -> FormIDResolver? {
+        resolvers[pluginName.lowercased()]
+    }
+
     public func resolvedID(_ id: FormID?, fromPlugin pluginName: String) -> ResolvedFormID? {
         guard let id, case let .resolved(resolved) = resolve(id, fromPlugin: pluginName) else {
             return nil

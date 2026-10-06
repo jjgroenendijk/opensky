@@ -135,7 +135,7 @@ nonisolated extension CellProviderIndexes.RecordStores {
         let progress = context.progress
         let file = context.file
         async let dialogue = progress.measure(.dialogue) {
-            DialogueStore(file: file, pluginName: context.pluginName)
+            DialogueStore(plugins: context.plugins)
         }
         async let packages = progress.measure(.packages) { PackageStore(file: file) }
         async let world = progress.measure(.factions) {

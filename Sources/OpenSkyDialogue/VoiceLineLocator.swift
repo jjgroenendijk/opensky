@@ -42,8 +42,8 @@ nonisolated public struct VoiceLineLocator: Sendable {
         self.questStores = questStores
     }
 
-    /// File name of the plugin whose records these are, which is also the
-    /// directory name under `sound\voice\`.
+    /// The store's own plugin. A line's directory under `sound\voice\` is the
+    /// plugin of its INFO, which differs in a load-order store.
     public var pluginName: String {
         dialogue.resolver.pluginName
     }
@@ -55,11 +55,19 @@ nonisolated public struct VoiceLineLocator: Sendable {
             let owner = topic.owningQuest,
             let key = ReferenceKey.resolve(owner, using: dialogue.resolver),
             case let .plugin(name, _) = key,
-            let store = questStores[name]
+            let quest = questStores[name]?.quest(key: key)
+            ?? questStores.values.lazy.compactMap({ $0.quest(key: key) }).first
         else {
             return nil
         }
-        return store.quest(key: key)?.editorID
+        return quest.editorID
+    }
+
+    /// The file-name FormID of an INFO: as its own plugin writes it, the plugin's
+    /// own index cleared. A load-order store holds a renumbered ID.
+    private func exportedFormID(of id: FormID, writtenBy source: FormIDResolver) -> UInt32 {
+        let local = dialogue.resolver.resolve(id).flatMap { source.localFormID(of: $0) } ?? id
+        return VoiceFilePath.exportedFormID(local, masterCount: source.masters.count)
     }
 
     /// Every recorded line one INFO holds for one voice type, in response
@@ -67,13 +75,12 @@ nonisolated public struct VoiceLineLocator: Sendable {
     public func lines(info: TopicInfo, voiceType: String) -> [VoiceLine] {
         guard let topic = dialogue.topic(ofInfo: info.formID) else { return [] }
         let quest = questEditorID(ofTopic: topic)
-        let objectID = VoiceFilePath.exportedFormID(
-            info.formID, masterCount: dialogue.resolver.masters.count
-        )
+        let source = dialogue.sourceResolver(ofInfo: info.formID)
+        let objectID = exportedFormID(of: info.formID, writtenBy: source)
         return info.responses.map { response in
             VoiceLine(
                 path: VoiceFilePath.path(
-                    plugin: pluginName,
+                    plugin: source.pluginName,
                     voiceType: voiceType,
                     name: VoiceFilePath.Name(
                         quest: quest,
@@ -94,9 +101,8 @@ nonisolated public struct VoiceLineLocator: Sendable {
     public func fileNames(info: TopicInfo) -> [VoiceFileNameDerivation] {
         guard let topic = dialogue.topic(ofInfo: info.formID) else { return [] }
         let quest = questEditorID(ofTopic: topic)
-        let objectID = VoiceFilePath.exportedFormID(
-            info.formID, masterCount: dialogue.resolver.masters.count
-        )
+        let source = dialogue.sourceResolver(ofInfo: info.formID)
+        let objectID = exportedFormID(of: info.formID, writtenBy: source)
         return info.responses.map { response in
             VoiceFileNameDerivation(
                 name: VoiceFilePath.fileName(

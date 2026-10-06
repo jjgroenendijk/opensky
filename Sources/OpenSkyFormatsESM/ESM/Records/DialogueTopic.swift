@@ -32,13 +32,13 @@ nonisolated public struct DialogueTopic: Sendable {
         }
     }
 
-    public let formID: FormID
+    public private(set) var formID: FormID
     public let editorID: String?
     /// FULL, the player's topic text.
     public let name: LString?
     public let priority: Float
-    public let owningBranch: FormID?
-    public let owningQuest: FormID?
+    public private(set) var owningBranch: FormID?
+    public private(set) var owningQuest: FormID?
     public let doAllBeforeRepeating: Bool
     public let category: Category
     /// DATA's uint16 subtype. Kept for old records; `subtype` is reliable.
@@ -133,5 +133,16 @@ nonisolated extension DialogueTopic {
             let value = try FormID(reader.readUInt32())
             return value.isNull ? nil : value
         }
+    }
+}
+
+nonisolated extension DialogueTopic {
+    /// A copy with every FormID it holds passed through `translate`.
+    public func renumbered(_ translate: (FormID) -> FormID) -> DialogueTopic {
+        var copy = self
+        copy.formID = translate(formID)
+        copy.owningBranch = owningBranch.map(translate)
+        copy.owningQuest = owningQuest.map(translate)
+        return copy
     }
 }

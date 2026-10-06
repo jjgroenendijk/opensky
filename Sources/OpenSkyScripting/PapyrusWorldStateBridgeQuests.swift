@@ -143,6 +143,7 @@ extension PapyrusWorldStateBridge {
         guard entries.count > 1, var evaluator = logEntryEvaluator?() else { return nil }
         evaluator.context.subject = .player
         evaluator.context.aliasQuest = quest.formID
+        evaluator.context.formIDTranslation = questRuntime?.quests.translation(of: quest.formID)
         let index = entries.firstIndex { evaluator.evaluate($0.conditions).isTrue }
         return index.map(Int32.init) ?? -1
     }

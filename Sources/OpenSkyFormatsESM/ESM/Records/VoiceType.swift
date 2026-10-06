@@ -17,7 +17,7 @@ nonisolated public struct VoiceType: Sendable {
         public static let female = Flags(rawValue: 0x02)
     }
 
-    public let formID: FormID
+    public private(set) var formID: FormID
     /// EDID is also the directory name under Sound/Voice/<plugin>/.
     public let editorID: String?
     public let flags: Flags
@@ -46,5 +46,13 @@ nonisolated public struct VoiceType: Sendable {
         self.editorID = editorID
         self.flags = flags
         skipped = tally
+    }
+}
+
+nonisolated extension VoiceType {
+    public func renumbered(_ translate: (FormID) -> FormID) -> VoiceType {
+        var copy = self
+        copy.formID = translate(formID)
+        return copy
     }
 }

@@ -55,7 +55,7 @@ nonisolated extension ResolvedFormID: CustomStringConvertible {
 
 /// Maps raw FormIDs found in one plugin to (plugin, objectID) pairs using
 /// that plugin's master list.
-nonisolated public struct FormIDResolver: Sendable {
+nonisolated public struct FormIDResolver: Equatable, Sendable {
     /// File name of the plugin whose records are being resolved.
     public let pluginName: String
     /// TES4 MAST entries in file order.
@@ -92,5 +92,26 @@ nonisolated public struct FormIDResolver: Sendable {
             : masters.firstIndex { $0.lowercased() == name }
         guard let index, index < 0xFF, id.objectID <= 0xFFFFFF else { return nil }
         return FormID(UInt32(index) << 24 | id.objectID)
+    }
+}
+
+/// Rewrites FormIDs written in one plugin into another FormID space, such as the
+/// load order. A form the target space cannot name becomes the null FormID.
+nonisolated public struct FormIDTranslation: Equatable, Sendable {
+    public let source: FormIDResolver
+    public let target: FormIDResolver
+
+    public init(source: FormIDResolver, target: FormIDResolver) {
+        self.source = source
+        self.target = target
+    }
+
+    public func callAsFunction(_ id: FormID) -> FormID {
+        guard let resolved = source.resolve(id) else { return id }
+        return target.localFormID(of: resolved) ?? FormID(0)
+    }
+
+    public func callAsFunction(_ id: FormID?) -> FormID? {
+        id.map { self($0) }
     }
 }

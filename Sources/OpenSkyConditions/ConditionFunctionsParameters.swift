@@ -24,6 +24,6 @@ nonisolated extension ConditionFunctions {
         if call.condition.flags.contains(.useAliases) {
             return call.aliasReference(parameter)
         }
-        return call.context.references.entry(for: parameter.asFormID)?.key
+        return call.referenceEntry(parameter.asFormID)?.key
     }
 }

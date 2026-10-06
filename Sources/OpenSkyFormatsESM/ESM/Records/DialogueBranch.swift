@@ -19,15 +19,15 @@ nonisolated public struct DialogueBranch: Equatable, Sendable {
         public static let exclusive = Flags(rawValue: 0x04)
     }
 
-    public let formID: FormID
+    public private(set) var formID: FormID
     public let editorID: String?
     /// QNAM, the owning QUST.
-    public let quest: FormID?
+    public private(set) var quest: FormID?
     /// TNAM: 0 player, 1 favor. Other values are kept.
     public let category: UInt32?
     public let flags: Flags
     /// SNAM, the DIAL the branch starts with.
-    public let startingTopic: FormID?
+    public private(set) var startingTopic: FormID?
     public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
@@ -43,14 +43,14 @@ nonisolated public struct DialogueBranch: Equatable, Sendable {
 }
 
 nonisolated public struct DialogueView: Equatable, Sendable {
-    public let formID: FormID
+    public private(set) var formID: FormID
     public let editorID: String?
     /// QNAM, the owning QUST.
-    public let quest: FormID?
+    public private(set) var quest: FormID?
     /// BNAM, DLBR records in file order.
-    public let branches: [FormID]
+    public private(set) var branches: [FormID]
     /// TNAM, DIAL records in file order.
-    public let topics: [FormID]
+    public private(set) var topics: [FormID]
     /// ENAM topic type: player, favor, scene, combat, favors, detection, service, misc.
     public let topicType: UInt32?
     /// DNAM.
@@ -67,5 +67,26 @@ nonisolated public struct DialogueView: Equatable, Sendable {
         topicType = fields.uint32("ENAM")
         showsAllText = (fields.uint8("DNAM") ?? 0) != 0
         skipped = fields.finish()
+    }
+}
+
+nonisolated extension DialogueBranch {
+    public func renumbered(_ translate: (FormID) -> FormID) -> DialogueBranch {
+        var copy = self
+        copy.formID = translate(formID)
+        copy.quest = quest.map(translate)
+        copy.startingTopic = startingTopic.map(translate)
+        return copy
+    }
+}
+
+nonisolated extension DialogueView {
+    public func renumbered(_ translate: (FormID) -> FormID) -> DialogueView {
+        var copy = self
+        copy.formID = translate(formID)
+        copy.quest = quest.map(translate)
+        copy.branches = branches.map(translate)
+        copy.topics = topics.map(translate)
+        return copy
     }
 }

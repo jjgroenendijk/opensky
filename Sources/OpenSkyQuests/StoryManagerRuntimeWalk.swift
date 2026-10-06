@@ -38,6 +38,9 @@ extension StoryManagerRuntime {
                 return false
             }
             evaluator.context.aliasQuest = nil
+            evaluator.context.formIDTranslation = runtime.story.nodes.index
+                .resolver(ofPlugin: node.sourcePlugin)
+                .map { FormIDTranslation(source: $0, target: runtime.quests.quests.resolver) }
             guard evaluator.evaluate(node.record.conditions).isTrue else {
                 note(node, depth, .conditionsFailed)
                 return false
@@ -102,6 +105,7 @@ extension StoryManagerRuntime {
                 return .resetPending
             }
             evaluator.context.aliasQuest = quest
+            evaluator.context.formIDTranslation = runtime.quests.quests.translation(of: quest)
             guard evaluator.evaluate(record.storyManagerConditions).isTrue else {
                 return .conditionsFailed
             }
