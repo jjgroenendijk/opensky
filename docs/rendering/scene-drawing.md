@@ -12,6 +12,14 @@ tags: [rendering, metal, terrain, culling, streaming]
 This page covers what the [Metal 4 renderer](/rendering/metal4-renderer.md) does with a scene:
 terrain, culling, instancing, and swapping.
 
+## Opaque alpha
+
+Opaque and alpha-test draws write alpha 1. Their alpha (texture alpha times vertex alpha) only
+decides the alpha test. The frame is premultiplied when it is saved or shown, so a lower alpha
+would turn a lit pixel pure white, and alpha 0 would turn it black. Vanilla meshes need this: the
+ground skirt of `MountainCliffSlope.nif` has vertex alpha from 0 to 0.5 and no `NiAlphaProperty`,
+because the game fades it into the terrain.
+
 ## Terrain splat
 
 Terrain has its own pipeline. It draws one item per `LAND` quadrant ([terrain](/engine/terrain.md)),
