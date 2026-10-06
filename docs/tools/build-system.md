@@ -87,8 +87,8 @@ Config/
 │   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability, prefix mapping
 │   ├── Release.xcconfig     #include Base + wholemodule, dSYM, VALIDATE_PRODUCT
 │   ├── Signing.xcconfig     CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM, one identity
-│   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg link + rpath
-│   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg link + rpath
+│   ├── App.xcconfig         OpenSky: bundle id, Info.plist keys, ffmpeg + astcenc link
+│   ├── CLI.xcconfig         OpenSkyCLI: binary name, isolation default, ffmpeg + astcenc link
 │   ├── Tests.xcconfig       the unit bundles: TEST_HOST, BUNDLE_LOADER
 │   ├── UITests.xcconfig     OpenSkyUITests: TEST_TARGET_NAME
 │   └── Overrides.xcconfig   above every target, package targets too

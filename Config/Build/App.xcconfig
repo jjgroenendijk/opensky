@@ -31,5 +31,6 @@ SWIFT_EMIT_LOC_STRINGS = YES
 // The vendored decode-only ffmpeg: link it, find it at build time, and load it from
 // the bundle's Frameworks directory at run time (the "Embed vendored ffmpeg" phase).
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/../Frameworks
-LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
-OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib $(SRCROOT)/.vendor/astcenc/lib
+// astcenc is static (docs/decisions/astcenc.md) and needs the C++ runtime.
+OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample -lastcenc -lc++

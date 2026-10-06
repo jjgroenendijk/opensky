@@ -114,6 +114,11 @@ ASTC (Adaptive Scalable Texture Compression) is a block format that Apple GPUs r
 directly. A 4x4 block keeps more detail than a 6x6 or 8x8 block, and uses more memory.
 "Shipped" keeps the BC blocks and mip levels from the archive.
 
+A texture that is converted is first decoded by the GPU, one mip level at a time, and then
+encoded with astcenc ([astcenc decision](/decisions/astcenc.md)) at its fastest effort. The
+GPU decode is the reference because it is the image the renderer shows. The CPU DDS decoder
+cannot read BC5 and BC7, so it cannot be the reference.
+
 The preset lives in the shared settings store. The graphics presets set it later; until then
 it is its own setting.
 

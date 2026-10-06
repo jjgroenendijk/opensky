@@ -198,6 +198,18 @@ jobs:
         with:
           path: .vendor/ffmpeg
           key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
+      - uses: actions/cache/restore@v6
+        id: astcenc
+        with:
+          path: .vendor/astcenc
+          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
+      # The ASTC texture encoder links the vendored astcenc static library.
+      - run: make astcenc
+      - if: steps.astcenc.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: .vendor/astcenc
+          key: ${{ steps.astcenc.outputs.cache-primary-key }}
       # A pull request keeps its own compilation cache and falls back to main's.
       - name: Cache keys
         id: keys
