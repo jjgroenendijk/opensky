@@ -70,6 +70,12 @@ nonisolated public final class MeshLibrary {
         try loadModel(path: path, terrainLODClipMask: nil)
     }
 
+    /// A model with `surface` laid over it, cached apart from the plain model.
+    /// An empty surface is the plain model.
+    public func model(path: String, surface: ModelSurfaceOverride) throws -> RenderModel {
+        try loadModel(path: path, terrainLODClipMask: nil, surface: surface.isEmpty ? nil : surface)
+    }
+
     /// Loads one terrain LOD variant with geometry clipped to exact visible
     /// cells. Variants cache independently from full BTR models.
     public func model(
@@ -261,6 +267,12 @@ nonisolated public final class MeshLibrary {
     /// loaded or the model carried no vertex positions).
     public func bounds(forPath path: String) -> ModelBounds? {
         bounds(forPath: path, terrainLODClipMask: nil)
+    }
+
+    public func bounds(forPath path: String, surface: ModelSurfaceOverride) -> ModelBounds? {
+        guard let pathKey = try? meshKey(for: path) else { return nil }
+        let key = cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)
+        return modelBounds[key]
     }
 
     public func bounds(

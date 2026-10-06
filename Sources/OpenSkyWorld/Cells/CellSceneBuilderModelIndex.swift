@@ -2,6 +2,7 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyPhysics
 
 nonisolated public struct ExteriorBuildSource: Sendable {
@@ -54,6 +55,47 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
+    /// TXST by FormID, for the MODS texture sets of placed models.
+    nonisolated public func textureSetIndexBuildingIfNeeded() -> [UInt32: TextureSet] {
+        if let textureSetIndex {
+            return textureSetIndex
+        }
+        var index: [UInt32: TextureSet] = [:]
+        if let top = file.topGroup(of: "TXST"), let children = childrenOrSkip(top) {
+            for case let .record(record) in children where record.type == "TXST" {
+                guard let set = decodeOrSkip(record, using: TextureSet.init(record:)) else {
+                    continue
+                }
+                index[record.formID] = set
+            }
+        }
+        textureSetIndex = index
+        return index
+    }
+
+    /// MODS entries as per-shape textures. An entry whose TXST is missing keeps
+    /// the shape's own textures.
+    nonisolated public func surface(
+        for alternates: [ModelData.AlternateTexture]
+    ) -> ModelSurfaceOverride {
+        guard !alternates.isEmpty else {
+            return ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
+        }
+        let sets = textureSetIndexBuildingIfNeeded()
+        let shapes = alternates.compactMap { alternate in
+            sets[alternate.textureSet.rawValue].map { set in
+                ModelSurfaceOverride.ShapeTextures(
+                    shapeName: alternate.shapeName,
+                    diffuseTexture: set.diffusePath.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+                    normalTexture: set.normalPath.flatMap(NIFShaderTextureSet.vfsKey(for:))
+                )
+            }
+        }
+        return ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: shapes
+        )
+    }
+
     /// One cached index spans the six model-base top groups.
     nonisolated public func modelBaseIndexBuildingIfNeeded() -> [UInt32: ModelBase] {
         if let modelBaseIndex {
@@ -97,7 +139,8 @@ nonisolated extension CellSceneBuilder {
                 formID: stat.formID,
                 recordType: "STAT",
                 modelPath: stat.modelPath,
-                isEditorMarker: stat.isEditorMarker
+                isEditorMarker: stat.isEditorMarker,
+                alternateTextures: stat.model?.alternateTextures ?? []
             )
         }
         if let base = modelBaseIndex[formID] {
@@ -105,7 +148,8 @@ nonisolated extension CellSceneBuilder {
                 formID: base.formID,
                 recordType: base.recordType,
                 modelPath: base.modelPath,
-                isEditorMarker: base.isEditorMarker
+                isEditorMarker: base.isEditorMarker,
+                alternateTextures: base.details.model?.alternateTextures ?? []
             )
         }
         return nil

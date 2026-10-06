@@ -216,6 +216,12 @@ member belongs to the opener just before it, so these groups are read in file or
 uint32 count, then per entry a uint32-length shape name, a `TXST` FormID, and an int32
 shape index. `MODT` changes layout with the form version, so it stays raw.
 
+A placed `STAT`, or another base with a model, draws each `MODS` entry: the shape with that
+name takes the diffuse and normal map of the `TXST`. OpenSky matches shapes by name, without
+case, and ignores the shape index. A slot the `TXST` leaves empty keeps the shape's own
+texture. Example: `MountainCliffSlopeFieldGrass01` draws `MountainCliffSlope.nif` with the
+field-grass textures instead of the mesh's slab and rock textures.
+
 ## Coverage
 
 Every record type in the five masters and the Creation Club plugins has a decoder: 120

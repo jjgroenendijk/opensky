@@ -1,4 +1,5 @@
-// A head part's texture set and tint laid over a synthetic model.
+// A head part's texture set and tint, and a base record's per-shape texture
+// sets, laid over a synthetic model.
 
 import Foundation
 @testable import OpenSkyFormatsCore
@@ -48,5 +49,31 @@ struct ModelSurfaceOverrideTests {
         let empty = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
         #expect(empty.isEmpty)
         #expect(surface.cacheKey != empty.cacheKey)
+    }
+
+    @Test func aShapeSwapRetexturesOnlyThatShape() {
+        let base = Self.model(colors: [])
+        let other = base.meshes[0]
+        let rock = Mesh(
+            name: "Rock", transform: other.transform, positions: other.positions,
+            normals: [], tangents: [], bitangents: [], uvs: [], colors: [],
+            indices: other.indices, materialSlot: 0
+        )
+        let model = Model(meshes: [other, rock], materials: base.materials, skippedShapeCount: 0)
+        let surface = ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil,
+            shapes: [ModelSurfaceOverride.ShapeTextures(
+                shapeName: "rock", diffuseTexture: "textures/grass_d.dds", normalTexture: nil
+            )]
+        )
+        let result = surface.applied(to: model)
+        #expect(result.meshes.map(\.materialSlot) == [0, 1])
+        #expect(result.materials.map(\.diffuseTexture) == [
+            "textures/old_d.dds", "textures/grass_d.dds"
+        ])
+        #expect(result.materials.last?.normalTexture == "textures/old_n.dds")
+        #expect(!surface.isEmpty)
+        let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
+        #expect(surface.cacheKey != plain.cacheKey)
     }
 }
