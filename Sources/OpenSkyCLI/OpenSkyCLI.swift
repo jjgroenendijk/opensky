@@ -180,6 +180,8 @@ enum OpenSkyCLI {
             )
         case "game":
             try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
+        case "ess":
+            try await ESSCommand.run(dataRoot: dataRoot, scanner: &scanner)
         case "launch-bench":
             // Async: it awaits the same off-main loader the app runs.
             try await LaunchBenchCommand.run(

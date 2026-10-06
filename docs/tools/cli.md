@@ -47,6 +47,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `vfs cat <key> --out <file>` | Extracts one resource. Loose files win, as in the engine |
 | `record <formid-or-editorid>` | One record: header, decoded view, and fields, capped at 64. Reference rows include rotation and the `XTEL` destination. An editor ID lookup scans every record |
 | `plugins` | The resolved load order, where each plugin came from, and plugins listed active that `Data/` lacks |
+| `ess <save.ess> [--offline]`, `ess list <folder>` | A Skyrim save, read-only: header, plugins, sections, global data, change form histograms, the Papyrus table, and the import report against the current load order. `--offline` skips the load order. `list` prints each save's header ([ESS import](/engine/ess-import.md)) |
 | `gmst combat`, `gmst archery`, `gmst detection`, `gmst movement` | The settings one subsystem uses, each with the winning plugin or the documented fallback |
 | `gmst list --prefix <s>` | Every resolved GMST starting with `<s>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
 | `archery [--census] [--ammo <substring>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](/engine/archery.md)) |

@@ -26,7 +26,7 @@ LAYERS = [
     ["OpenSkyShaderTypes", "CFFmpeg"],
     ["OpenSkyFormatsCore"],
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
-     "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF"],
+     "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
     ["OpenSkyGameData"],
     ["OpenSkyBehavior", "OpenSkyLaunch"],
     ["OpenSkyPhysics", "OpenSkyDiagnostics", "OpenSkyAgentControl"],

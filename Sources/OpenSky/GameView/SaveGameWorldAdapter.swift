@@ -24,17 +24,24 @@ final class SaveGameWorldAdapter: SaveGameService {
     /// The newest listing, so menus and autosave dates need no disk read.
     private var listings: [OpenSkySaveSlotListing] = []
     private(set) var saveRows: [SaveSlotRow] = []
+    /// What the last Skyrim save import brought over.
+    private(set) var lastImportReport: ESSImportReport?
     private var hasListed = false
 
     init(game: GameViewController) {
         self.game = game
     }
 
+    /// The OpenSky saves, without the Skyrim imports.
+    private var ownRows: [SaveSlotRow] {
+        saveRows.filter { !$0.isImport }
+    }
+
     /// A listing failure reads as no saves: the list is a readout.
     @discardableResult
     func refreshSaveRows() async -> [SaveSlotRow] {
         listings = await (try? game.runtimeStateWorld.saveListings()) ?? []
-        saveRows = listings.map(Self.row)
+        saveRows = await listings.map(Self.row) + SkyrimSaveImportAdapter.rows()
         hasListed = true
         return saveRows
     }
@@ -42,7 +49,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     /// The summary and picture are taken now, before the file work starts.
     @discardableResult
     func saveGame(slot: String?) async throws -> String {
-        let name = slot ?? Self.newSlotName(existing: Set(saveRows.map(\.slot)))
+        let name = slot ?? Self.newSlotName(existing: Set(ownRows.map(\.slot)))
         lastSaveDate = Date()
         try await game.runtimeStateWorld.saveSession(
             slot: name, summary: summary(), thumbnail: thumbnail()
@@ -51,8 +58,15 @@ final class SaveGameWorldAdapter: SaveGameService {
         return name
     }
 
-    /// Play time continues from the loaded save.
+    /// Play time continues from the loaded save. A Skyrim save starts it from zero.
     func loadGame(slot: String) async throws {
+        if SkyrimSaveImportAdapter.isImport(slot) {
+            lastImportReport = try await SkyrimSaveImportAdapter.load(slot: slot, game: game)
+            await refreshSaveRows()
+            resetPlayTime()
+            lastSaveDate = Date()
+            return
+        }
         if !listings.contains(where: { $0.slot == slot }) {
             await refreshSaveRows()
         }
@@ -64,6 +78,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     }
 
     func deleteSave(slot: String) async throws {
+        guard !SkyrimSaveImportAdapter.isImport(slot) else { return }
         try await game.runtimeStateWorld.deleteSave(slot: slot)
         await refreshSaveRows()
     }
@@ -97,7 +112,7 @@ final class SaveGameWorldAdapter: SaveGameService {
             if !hasListed {
                 await refreshSaveRows()
             }
-            let dates = Dictionary(saveRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
+            let dates = Dictionary(ownRows.map { ($0.slot, $0.savedAt) }) { first, _ in first }
             do {
                 try await saveGame(slot: autosaves.nextSlot(saved: dates))
             } catch {

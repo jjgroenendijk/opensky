@@ -98,6 +98,7 @@ OpenSkyFormatsCore        binary readers, compression, geometry values, BSA, str
 OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI, LOD, DDS
 OpenSkyFormatsAnimation   HKX, LIP                OpenSkyFormatsAudio   WAV, XWM, FUZ
 OpenSkyFormatsPEX         compiled Papyrus        OpenSkyFormatsSWF     Flash menus, AS2
+OpenSkyFormatsESS         Skyrim saves (.ess)
   ^
 OpenSkyGameData           virtual file system, load order, record stores, actor stats from records,
                           item index, equip slots, barter prices, projectile profiles
@@ -140,7 +141,7 @@ OpenSkyDialogue           dialogue runtime, branches, scenes, voice file lookup
 OpenSkyScripting          Papyrus interpreter, script world runtime, native functions
 OpenSkyWorld              cells, streaming, terrain, navigation, packages, player, weather,
                           the whole-game condition registry
-OpenSkySave               OpenSky save files: encoder, decoders, store
+OpenSkySave               OpenSky save files: encoder, decoders, store; Skyrim save import
 OpenSkyMenus              menu models, movie bridges, panel seams that name several features
 OpenSkyCrime              crime runtime, witnesses, ownership, guards, arrest, reporter
 OpenSkyInventory          inventory, equipment, container, barter, and world item runtimes

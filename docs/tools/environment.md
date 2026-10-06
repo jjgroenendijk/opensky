@@ -211,3 +211,13 @@ sanitizer variants under `Build/Products/Variant-*` in the build cache. Delete t
 `find "$OPENSKY_DERIVED_DATA/Build/Products" -name '*.cstemp' -delete` and build again.
 
 Retires when Xcode cleans its own signing temp files.
+
+## No Skyrim saves on this machine
+
+Observed 2026-10-06. The game was never launched on this machine, so no `.ess` save exists.
+The [ESS](/formats/ess.md) layouts are checked only against synthetic saves, and
+`ESSRealDataTests` skips. To run it, set `OPENSKY_SKYRIM_SAVES` to a folder of saves and run
+`make test-real`.
+
+Retires when a real save has been read and the "Confirmed on real data" section of the ESS
+pages is filled in.

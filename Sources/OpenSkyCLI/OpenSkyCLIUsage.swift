@@ -16,6 +16,10 @@ extension OpenSkyCLI {
       plugins                     Print the resolved plugin load order and the
                                   plugins.txt it came from; OPENSKY_PLUGINS_TXT
                                   overrides the search
+      ess <save.ess> [--offline]  Inspect a Skyrim save read-only and run its
+                                  import against the load order; --offline
+                                  skips the load order
+      ess list <folder>           List the .ess saves in a folder
       gmst movement              Print resolved gait/step/jump values + sources
       gmst combat                Print resolved melee reach and block settings
                                   + sources

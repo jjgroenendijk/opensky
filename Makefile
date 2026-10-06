@@ -481,7 +481,8 @@ test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanit
 # runs the Perf plan, the tests tagged `.perf`, built optimized.
 # The checkout, for real-data tests that write into `.logs/`; the build cache is
 # outside it. Xcode passes TEST_RUNNER_ variables to the test process.
-real_env = TEST_RUNNER_OPENSKY_CHECKOUT="$(CURDIR)"
+real_env = TEST_RUNNER_OPENSKY_CHECKOUT="$(CURDIR)" \
+	TEST_RUNNER_OPENSKY_SKYRIM_SAVES="$(OPENSKY_SKYRIM_SAVES)"
 test-real: link-shared ## Run the real-data smoke plan [ALL=1] [T='Suite/test()'] [CAP=MB] [PERF=1]
 	@$(call guarded,6144,$(if $(PERF), \
 		$(real_env) $(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \

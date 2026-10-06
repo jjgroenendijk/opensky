@@ -1,7 +1,7 @@
-// Settings content: data root, plugins.txt, and string-table language. The
-// Cmd+, window and the launcher's Settings page both host it. Validation lives
-// in engine settings. Choices go to the shared defaults domain so the CLI sees
-// them too.
+// Settings content: data root, plugins.txt, string-table language, and the Skyrim
+// saves folder. The Cmd+, window and the launcher's Settings page both host it.
+// Validation lives in engine settings. Choices go to the shared defaults domain so
+// the CLI sees them too.
 
 import AppKit
 import OpenSkyGameData
@@ -17,6 +17,7 @@ final class SettingsViewController: NSViewController {
     private let pluginsNoteLabel = NSTextField(wrappingLabelWithString: "")
     private let languageField = NSTextField(string: "")
     private let languageNoteLabel = NSTextField(wrappingLabelWithString: "")
+    let savesNoteLabel = NSTextField(wrappingLabelWithString: "")
 
     override func loadView() {
         view = makeContentView()
@@ -61,7 +62,7 @@ final class SettingsViewController: NSViewController {
         let languageViews = makeLanguageViews()
         let stack = NSStackView(views: [
             heading, pathLabel, noteLabel, buttons
-        ] + pluginsViews + languageViews)
+        ] + pluginsViews + languageViews + makeSavesFolderViews())
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
@@ -72,8 +73,12 @@ final class SettingsViewController: NSViewController {
         if let pluginsButtons = pluginsViews.last {
             stack.setCustomSpacing(20, after: pluginsButtons)
         }
+        if let languageButtons = languageViews.last {
+            stack.setCustomSpacing(20, after: languageButtons)
+        }
         for label in [
-            pathLabel, noteLabel, pluginsPathLabel, pluginsNoteLabel, languageNoteLabel
+            pathLabel, noteLabel, pluginsPathLabel, pluginsNoteLabel, languageNoteLabel,
+            savesNoteLabel
         ] {
             label.widthAnchor.constraint(
                 equalTo: stack.widthAnchor,
@@ -155,6 +160,7 @@ final class SettingsViewController: NSViewController {
         noteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
         refreshPluginsText(root: root, problem: pluginsProblem)
         refreshLanguage(root: root)
+        refreshSavesFolder()
     }
 
     private func refreshLanguage(root: GameDataRoot?, problem: String? = nil) {

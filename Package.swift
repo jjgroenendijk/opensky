@@ -260,7 +260,7 @@ targets += testing("TagsTesting", dependencies: [])
 targets += foundation("OpenSkyFormatsCore", tests: [
     "FormatsTesting"
 ])
-let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF"]
+let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF", "ESS"]
 for family in formatFamilies {
     let module = "OpenSkyFormats\(family)"
     targets += foundation(
@@ -276,7 +276,7 @@ targets += testing(
     "FormatsTesting",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
-        "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF"
+        "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"
     ]
 )
 
@@ -622,7 +622,9 @@ targets += feature(
 targets += feature(
     "OpenSkySave",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsESS", "OpenSkyFormatsPEX",
+        "OpenSkyGameData",
+        "OpenSkyWorldState",
         "OpenSkyActorsInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyQuestsInterface", "OpenSkyScriptingInterface",
@@ -631,10 +633,10 @@ targets += feature(
     tests: [
         "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyCrimeInterface",
         "OpenSkyWorldInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
-        "OpenSkyDialogueInterface", "OpenSkyMagicInterface", "OpenSkyQuestsInterface",
-        "OpenSkySaveFixtures", "OpenSkyScriptingInterface", "OpenSkyWorldState",
-        "EngineTesting"
+        "OpenSkyFormatsESM", "OpenSkyFormatsESS", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyDialogueInterface", "OpenSkyMagicInterface", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkySaveFixtures", "OpenSkyScriptingInterface",
+        "OpenSkyWorldState", "EngineTesting"
     ]
 )
 

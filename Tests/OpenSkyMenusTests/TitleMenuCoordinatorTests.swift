@@ -92,6 +92,54 @@ struct TitleMenuCoordinatorTests {
     }
 
     @Test @MainActor
+    func continueNeverPicksASkyrimImport() async {
+        let (menu, world) = Self.make()
+        let newest = Date(timeIntervalSince1970: 9)
+        world.saveRows = [SaveSlotRow(
+            slot: "ess:/a.ess",
+            title: "A",
+            detail: "",
+            savedAt: newest,
+            isImport: true
+        )]
+        #expect(menu.entries == [.new, .load, .quit])
+        world.saveRows.append(SaveSlotRow(
+            slot: "Own",
+            title: "Own",
+            detail: "",
+            savedAt: Date(timeIntervalSince1970: 1)
+        ))
+        menu.open()
+        menu.route(.button(.accept))
+        await menu.loadWork?.value
+        #expect(world.loaded == ["Own"])
+    }
+
+    @Test func importRowsLoadButAreNeverSavedOverOrDeleted() {
+        let rows = [
+            SaveSlotRow(
+                slot: "ess:/a.ess",
+                title: "A",
+                detail: "",
+                savedAt: Date(),
+                isImport: true
+            ),
+            SaveSlotRow(
+                slot: "Own",
+                title: "Own",
+                detail: "",
+                savedAt: Date(timeIntervalSince1970: 1)
+            )
+        ]
+        #expect(SaveLoadPageModel(mode: .save, rows: rows).rows.map(\.slot) == ["Own"])
+        var load = SaveLoadPageModel(mode: .load, rows: rows)
+        #expect(load.rows.map(\.slot) == ["ess:/a.ess", "Own"])
+        load.requestDelete()
+        #expect(load.confirmation == nil)
+        #expect(load.handle(.button(.accept)) == .load(slot: "ess:/a.ess"))
+    }
+
+    @Test @MainActor
     func newGameClosesAndStartsTheSession() {
         let (menu, world) = Self.make()
         let menuMode = world.menuMode
