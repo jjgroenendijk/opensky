@@ -35,10 +35,12 @@ nonisolated public struct AssetCacheSettings: Equatable, Sendable {
 
 extension AssetCacheSettings {
     public init(store: PlayerSettingsStore) {
+        let presetIndex = Int(store.value(.assetCachePreset).rounded())
         let limit = UInt64(max(0, store.value(.assetCacheLimitGiB).rounded()))
         let folder = store.text(.assetCacheFolder)
         self.init(
             isEnabled: store.bool(.assetCacheEnabled),
+            preset: AssetQualityPreset(rawValue: UInt8(clamping: presetIndex)) ?? .default,
             folder: folder.map { URL(filePath: $0, directoryHint: .isDirectory) },
             limitBytes: limit > 0 ? limit << 30 : nil
         )
@@ -47,6 +49,7 @@ extension AssetCacheSettings {
     /// Writes every value back, so a change made in one place reaches the others.
     public func save(to store: PlayerSettingsStore) {
         store.set(.assetCacheEnabled, to: isEnabled ? 1 : 0)
+        store.set(.assetCachePreset, to: Double(preset.rawValue))
         store.setText(.assetCacheFolder, to: folder?.path(percentEncoded: false))
         store.set(.assetCacheLimitGiB, to: Double((limitBytes ?? 0) >> 30))
     }

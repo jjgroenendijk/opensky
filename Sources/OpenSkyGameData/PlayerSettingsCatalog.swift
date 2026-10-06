@@ -148,6 +148,14 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         ),
         row("assetCache.enabled", .opensky, .toggle, "Use asset cache", 1, applied: true),
         row(
+            "assetCache.preset",
+            .opensky,
+            .choice(options: assetQualityOptions),
+            "Asset quality",
+            1,
+            applied: true
+        ),
+        row(
             "assetCache.limitGiB",
             .opensky,
             .slider(range: 0 ... 512, step: 1),
@@ -156,11 +164,15 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         )
     ]
+
+    /// In `AssetQualityPreset` raw-value order.
+    public static let assetQualityOptions = ["Best performance", "Balanced", "Highest quality"]
 }
 
 nonisolated extension PlayerSettingID {
     /// The asset cache folder path. No value means the default folder.
     public static let assetCacheFolder = Self("assetCache.folder")
     public static let assetCacheEnabled = Self("assetCache.enabled")
+    public static let assetCachePreset = Self("assetCache.preset")
     public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
 }
