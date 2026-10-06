@@ -203,13 +203,14 @@ public struct DialogueRuntime: DialogueAccess {
                 info: info.formID, outcome: nil, rejection: .conditionsFailed
             )
         }
-        // Only the three per-response fields are written. Re-assigning the
+        // Only the per-response fields are written. Re-assigning the
         // whole context would reset the evaluator's random stream, and every
         // `GetRandomPercent` in one selection pass would then draw the same
         // number.
         evaluator.context.subject = speaker
         evaluator.context.target = .player
         evaluator.context.aliasQuest = topic.owningQuest
+        evaluator.context.formIDTranslation = dialogue.translation(ofInfo: info.formID)
         let outcome = evaluator.evaluate(info.conditions)
         return DialogueInfoTrace(
             info: info.formID,

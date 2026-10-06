@@ -47,6 +47,9 @@ nonisolated public struct ConditionContext: Sendable {
     /// The quest a `questAlias` run-on and a CIS1/CIS2 override resolve against. A CTDA
     /// names no quest; the owning record does. Nil makes every alias path a tagged failure.
     public var aliasQuest: FormID?
+    /// From the plugin the conditions were written in to the space the stores use.
+    /// Nil when both are the same, as for `Skyrim.esm` records.
+    public var formIDTranslation: FormIDTranslation?
     /// Game clock the time functions read. Nil in a context with no world
     /// running, which makes those functions reason-tagged false rather than
     /// wrong.
@@ -170,7 +173,7 @@ nonisolated public struct ConditionCall: Sendable {
         case .target:
             return key(swapped ? context.subject : context.target, runOn: runOn)
         case .reference:
-            guard let entry = context.references.entry(for: condition.reference) else {
+            guard let entry = referenceEntry(condition.reference) else {
                 return .failure(.unresolvedReference(runOn))
             }
             return .success(entry.key)
@@ -210,6 +213,19 @@ nonisolated public struct ConditionCall: Sendable {
         return context.aliasResolver?.reference(
             alias: UInt32(bitPattern: condition.parameter3), in: quest
         )
+    }
+
+    /// The placement `formID` names. A translated ID is in the stores' space, but a
+    /// cell index keeps each reference as its own plugin wrote it, so the key is tried first.
+    public func referenceEntry(_ formID: FormID) -> RuntimeReferenceEntry? {
+        if
+            let target = context.formIDTranslation?.target,
+            let key = ReferenceKey.resolve(formID, using: target),
+            let entry = context.references[key]
+        {
+            return entry
+        }
+        return context.references.entry(for: formID)
     }
 
     /// The game clock, or `.unavailableClock`.

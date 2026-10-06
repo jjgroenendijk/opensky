@@ -34,6 +34,7 @@ extension SceneRuntime {
             context.subject = .player
             context.target = nil
             context.aliasQuest = entry.quest
+            context.formIDTranslation = entry.translation
             evaluator = ConditionEvaluator(
                 context: context, registry: runtime.dialogue.registry, tally: ConditionTally()
             )
@@ -130,7 +131,8 @@ extension SceneRuntime {
                     complete(index)
                     return
                 }
-                say(index, topic: dialogue.topic, speaker: speaker)
+                let topic = entry.translation?(dialogue.topic) ?? dialogue.topic
+                say(index, topic: topic, speaker: speaker)
             case .package, .unknown:
                 note(.unsupportedAction(index, type: action.type))
                 complete(index)

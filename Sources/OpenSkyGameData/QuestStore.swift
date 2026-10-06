@@ -183,6 +183,12 @@ nonisolated public final class QuestStore: Sendable {
         sourceResolvers[id.rawValue] ?? resolver
     }
 
+    /// From the plugin of quest `id` to this store's FormID space, or nil when the
+    /// two are the same.
+    public func translation(of id: FormID) -> FormIDTranslation? {
+        sourceResolvers[id.rawValue].map { FormIDTranslation(source: $0, target: resolver) }
+    }
+
     /// The plugin whose record of quest `id` won, whose string tables hold its text.
     public func sourcePlugin(of id: FormID) -> String {
         sourceResolver(of: id).pluginName

@@ -87,24 +87,24 @@ nonisolated public struct TopicInfo: Sendable {
         public var listenerIdle: FormID?
     }
 
-    public let formID: FormID
+    public private(set) var formID: FormID
     public let editorID: String?
     public let flags: Flags
     /// DATA only, absent from ENAM-era records.
     public let legacyDialogueTab: UInt16?
     /// DATA days or ENAM's scaled day fraction, normalized to hours.
     public let resetHours: Float
-    public let previousTopic: FormID?
-    public let previousInfo: FormID?
+    public private(set) var previousTopic: FormID?
+    public private(set) var previousInfo: FormID?
     public let favorLevel: FavorLevel
-    public let topicLinks: [FormID]
-    public let sharedInfo: FormID?
+    public private(set) var topicLinks: [FormID]
+    public private(set) var sharedInfo: FormID?
     public let responses: [Response]
     public let conditions: ConditionList
     public let prompt: LString?
-    public let speaker: FormID?
-    public let walkAwayTopic: FormID?
-    public let audioOutputOverride: FormID?
+    public private(set) var speaker: FormID?
+    public private(set) var walkAwayTopic: FormID?
+    public private(set) var audioOutputOverride: FormID?
     /// VMAD's script list, including the decoded INFO fragment tail.
     public let script: ScriptData
     public let skipped: DialogueTally
@@ -155,5 +155,22 @@ nonisolated public struct TopicInfo: Sendable {
         audioOutputOverride = contents.audioOutputOverride
         script = contents.script
         skipped = contents.tally
+    }
+}
+
+nonisolated extension TopicInfo {
+    /// A copy with the FormIDs it links through passed through `translate`. The
+    /// conditions stay as written; the evaluator translates them.
+    public func renumbered(_ translate: (FormID) -> FormID) -> TopicInfo {
+        var copy = self
+        copy.formID = translate(formID)
+        copy.previousTopic = previousTopic.map(translate)
+        copy.previousInfo = previousInfo.map(translate)
+        copy.topicLinks = topicLinks.map(translate)
+        copy.sharedInfo = sharedInfo.map(translate)
+        copy.speaker = speaker.map(translate)
+        copy.walkAwayTopic = walkAwayTopic.map(translate)
+        copy.audioOutputOverride = audioOutputOverride.map(translate)
+        return copy
     }
 }

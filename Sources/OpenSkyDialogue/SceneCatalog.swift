@@ -13,17 +13,26 @@ nonisolated public struct CatalogScene: Equatable, Sendable {
     /// The PNAM quest in the catalog's FormID space. `scene.quest` is relative to
     /// the scene's own plugin, which differs for a DLC scene.
     public let quest: FormID?
+    /// From the scene's own plugin to the catalog's space. Nil when they are the same.
+    public let translation: FormIDTranslation?
 
     /// A scene from a plugin whose FormIDs are the catalog's own.
     public init(formID: FormID, key: ReferenceKey, scene: Scene) {
         self.init(formID: formID, key: key, scene: scene, quest: scene.quest)
     }
 
-    public init(formID: FormID, key: ReferenceKey, scene: Scene, quest: FormID?) {
+    public init(
+        formID: FormID,
+        key: ReferenceKey,
+        scene: Scene,
+        quest: FormID?,
+        translation: FormIDTranslation? = nil
+    ) {
         self.formID = formID
         self.key = key
         self.scene = scene
         self.quest = quest
+        self.translation = translation
     }
 
     public var editorID: String {
@@ -69,7 +78,12 @@ nonisolated public struct SceneCatalog: Sendable {
             let quest = store.scenes.index
                 .resolvedID(record.record.quest, fromPlugin: record.sourcePlugin)
                 .flatMap { resolver.localFormID(of: $0) }
-            return CatalogScene(formID: formID, key: key, scene: record.record, quest: quest)
+            let translation = store.scenes.index.resolver(ofPlugin: record.sourcePlugin)
+                .map { FormIDTranslation(source: $0, target: resolver) }
+            return CatalogScene(
+                formID: formID, key: key, scene: record.record, quest: quest,
+                translation: translation
+            )
         })
     }
 

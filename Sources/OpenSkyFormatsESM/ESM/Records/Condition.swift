@@ -106,16 +106,16 @@ nonisolated public struct Condition: Equatable, Sendable {
 
     public let comparison: ComparisonOperator
     public let flags: Flags
-    public let comparisonValue: ComparisonValue
+    public private(set) var comparisonValue: ComparisonValue
     /// Raw on-disk function index. The Creation Kit numbers these 4096 higher,
     /// so `GetWantBlocking` (CK 4096) is 0 here.
     public let functionIndex: UInt16
-    public let parameter1: Parameter
-    public let parameter2: Parameter
+    public private(set) var parameter1: Parameter
+    public private(set) var parameter2: Parameter
     public let runOn: RunOnType
     /// Offset 24. Meaningful only when `runOn == .reference`; otherwise xEdit
     /// treats it as ignored and it may hold leftover garbage.
-    public let reference: FormID
+    public private(set) var reference: FormID
     /// Offset 28, called parameter #3 by xEdit and the quest-alias /
     /// package-data index by UESP. -1 means unused. Stored, not interpreted.
     public let parameter3: Int32
@@ -168,6 +168,31 @@ nonisolated public struct Condition: Equatable, Sendable {
         runOn = try RunOnType(rawValue: reader.readUInt32())
         reference = try FormID(reader.readUInt32())
         parameter3 = try Int32(bitPattern: reader.readUInt32())
+    }
+}
+
+nonisolated extension Condition {
+    /// A copy with its FormID words passed through `translate`. Only the function
+    /// knows which parameter words are FormIDs, so the caller names them.
+    public func translatingFormIDs(
+        parameter1 translatesParameter1: Bool,
+        parameter2 translatesParameter2: Bool,
+        _ translate: (FormID) -> FormID
+    ) -> Condition {
+        var copy = self
+        if translatesParameter1 {
+            copy.parameter1 = Parameter(rawValue: translate(parameter1.asFormID).rawValue)
+        }
+        if translatesParameter2 {
+            copy.parameter2 = Parameter(rawValue: translate(parameter2.asFormID).rawValue)
+        }
+        if runOn == .reference {
+            copy.reference = translate(reference)
+        }
+        if case let .global(id) = comparisonValue {
+            copy.comparisonValue = .global(translate(id))
+        }
+        return copy
     }
 }
 

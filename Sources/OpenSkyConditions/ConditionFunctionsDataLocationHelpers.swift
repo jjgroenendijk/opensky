@@ -94,7 +94,7 @@ nonisolated extension ConditionFunctions {
             name: "HasSameEditorLocAsRef",
             location: { call in editorLocation(call) },
             other: { call, parameter in
-                call.context.references.entry(for: parameter.asFormID)?.key
+                call.referenceEntry(parameter.asFormID)?.key
             }
         ))
         registry.register(sameLocationFunction(
@@ -112,7 +112,7 @@ nonisolated extension ConditionFunctions {
             index: 603,
             name: "IsInSameCurrentLocAsRef",
             other: { call, parameter in
-                call.context.references.entry(for: parameter.asFormID)?.key
+                call.referenceEntry(parameter.asFormID)?.key
             }
         ))
         registry.register(sameLocationFunction(

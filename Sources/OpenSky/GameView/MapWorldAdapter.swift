@@ -223,7 +223,9 @@ extension MapWorldAdapter {
     private func questTargetCheck(
         quest: FormID, runtime: QuestRuntime
     ) -> (Quest.Target) -> Bool {
-        let evaluator = ConditionEvaluator(context: game.runtimeState.conditionContext())
+        var context = game.runtimeState.conditionContext()
+        context.formIDTranslation = runtime.quests.translation(of: quest)
+        let evaluator = ConditionEvaluator(context: context)
         return { target in
             QuestTargetResolver.conditionsPass(target, quest: quest, evaluator: evaluator) {
                 runtime.aliasReference(alias: UInt32(bitPattern: $0), in: quest)

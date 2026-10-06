@@ -211,6 +211,7 @@ nonisolated public struct ConditionEvaluator: Sendable {
         guard let function = registry[condition.functionIndex] else {
             return .failure(.unknownFunction(condition.functionIndex))
         }
+        let condition = translated(condition, for: function)
         var call = ConditionCall(condition: condition, context: context)
         let value = function.body(&call)
         context = call.context
@@ -225,6 +226,17 @@ nonisolated public struct ConditionEvaluator: Sendable {
                 return .success(isTrue)
             }
         }
+    }
+
+    /// `condition` in the stores' FormID space. With `useAliases` the parameter
+    /// words are alias IDs, not FormIDs.
+    private func translated(_ condition: Condition, for function: ConditionFunction) -> Condition {
+        guard let translation = context.formIDTranslation else { return condition }
+        let usesAliases = condition.flags.contains(.useAliases)
+        return condition.translatingFormIDs(
+            parameter1: function.parameter1 == .formID && !usesAliases,
+            parameter2: function.parameter2 == .formID && !usesAliases
+        ) { translation($0) }
     }
 
     /// The right-hand side, through the documented globals seam. A `use global`
