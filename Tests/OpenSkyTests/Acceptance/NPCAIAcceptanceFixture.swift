@@ -192,7 +192,8 @@ enum NPCAIAcceptanceFixture {
             template: nil,
             dataInputs: [],
             procedureTypes: procedureNames,
-            scriptData: ScriptData(ownerType: "PACK")
+            scriptData: ScriptData(ownerType: "PACK"),
+            skipped: FieldTally()
         )
     }
 

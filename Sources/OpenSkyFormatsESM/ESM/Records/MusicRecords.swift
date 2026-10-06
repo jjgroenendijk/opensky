@@ -37,6 +37,7 @@ nonisolated public struct MusicType: Sendable {
     /// TNAM — MUST FormIDs in record order. Null entries are kept verbatim so
     /// callers see the authored ordering; `MusicRecordStore.resolve` drops them.
     public let tracks: [FormID]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "MUSC" else {
@@ -45,9 +46,11 @@ nonisolated public struct MusicType: Sendable {
         formID = FormID(record.formID)
 
         var fields = MusicTypeFields()
-        for field in try record.fields() {
-            try fields.decode(field: field)
+        var skipped = FieldTally()
+        for field in try record.fields() where try !fields.decode(field: field) {
+            skipped.note(.unknownField(field.type))
         }
+        self.skipped = skipped
         editorID = fields.editorID
         flags = fields.flags
         priority = fields.priority
@@ -66,28 +69,28 @@ nonisolated public struct MusicType: Sendable {
         var fadeDuration: Float?
         var tracks: [FormID] = []
 
-        mutating func decode(field: ESMField) throws {
+        /// False for a field this decoder does not read.
+        mutating func decode(field: ESMField) throws -> Bool {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
                 editorID = try reader.readZString()
             case "FNAM":
-                guard field.data.count == 4 else { return }
+                guard field.data.count == 4 else { return true }
                 flags = try Flags(rawValue: reader.readUInt32())
             case "PNAM":
-                guard field.data.count == 4 else { return }
+                guard field.data.count == 4 else { return true }
                 priority = try Int(reader.readUInt16())
                 duckingDecibels = try Float(reader.readUInt16()) / 100
             case "WNAM":
-                guard field.data.count == 4 else { return }
+                guard field.data.count == 4 else { return true }
                 fadeDuration = try reader.readFloat32()
             case "TNAM":
                 tracks = try MusicFieldReader.formIDArray(field.data)
             default:
-                // MUSC carries no other fields in Skyrim SE; modder additions
-                // stream past untouched.
-                break
+                return false
             }
+            return true
         }
     }
 }
@@ -142,6 +145,7 @@ nonisolated public struct MusicTrack: Sendable {
     /// CITC, the authored condition count. nil when the field is absent; it can
     /// disagree with `conditions.count` if a CTDA payload was malformed.
     public let declaredConditionCount: Int?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "MUST" else {
@@ -150,9 +154,11 @@ nonisolated public struct MusicTrack: Sendable {
         formID = FormID(record.formID)
 
         var fields = MusicTrackFields()
-        for field in try record.fields() {
-            try fields.decode(field: field)
+        var skipped = FieldTally()
+        for field in try record.fields() where try !fields.decode(field: field) {
+            skipped.note(.unknownField(field.type))
         }
+        self.skipped = skipped
         editorID = fields.editorID
         trackType = fields.trackType
         duration = fields.duration
@@ -178,13 +184,14 @@ nonisolated public struct MusicTrack: Sendable {
         var tracks: [FormID] = []
         var conditions = ConditionList()
 
-        mutating func decode(field: ESMField) throws {
+        /// False for a field this decoder does not read.
+        mutating func decode(field: ESMField) throws -> Bool {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
                 editorID = try reader.readZString()
             case "CNAM":
-                guard field.data.count == 4 else { return }
+                guard field.data.count == 4 else { return true }
                 trackType = try TrackType(rawValue: reader.readUInt32())
             case "FLTV":
                 duration = try MusicFieldReader.float(field.data)
@@ -201,10 +208,9 @@ nonisolated public struct MusicTrack: Sendable {
             case "SNAM":
                 tracks = try MusicFieldReader.formIDArray(field.data)
             default:
-                // CITC/CTDA/CIS1/CIS2 go to the shared condition decoder; any
-                // other field streams past untouched.
-                try conditions.decode(field: field)
+                return try conditions.decode(field: field)
             }
+            return true
         }
     }
 }

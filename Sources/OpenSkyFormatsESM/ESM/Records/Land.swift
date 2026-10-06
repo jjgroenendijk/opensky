@@ -67,6 +67,7 @@ nonisolated public struct Land: Sendable {
     public let baseTextures: [QuadrantTexture]
     /// ATXT/VTXT additional layers in on-disk order.
     public let layers: [TextureLayer]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "LAND" else {
@@ -94,6 +95,7 @@ nonisolated public struct Land: Sendable {
             pendingLayer = nil
         }
 
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -116,9 +118,10 @@ nonisolated public struct Land: Sendable {
                 // VTXT with no preceding ATXT is malformed — dropped, not fatal.
                 flushPendingLayer(alphas: alphas)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         flushPendingLayer(alphas: [])
 
         self.flags = flags

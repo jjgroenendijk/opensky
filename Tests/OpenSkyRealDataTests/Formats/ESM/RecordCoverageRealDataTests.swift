@@ -1,6 +1,6 @@
 // Whole-install coverage: every live record in the five masters and the
 // Creation Club plugins decodes through `RecordDecoders`. A type with no
-// decoder or a decode that throws fails the sweep.
+// decoder, a decode that throws, or a decoder with no skip tally fails the sweep.
 // Run with `make test-real T='RecordCoverageRealDataTests'`.
 
 import Foundation
@@ -16,7 +16,14 @@ struct RecordCoverageRealDataTests {
         var counts: [FourCC: Int] = [:]
         var missing: [FourCC: Int] = [:]
         var failures: [String] = []
-        var unread: [FourCC: FieldTally] = [:]
+        var unread: [FourCC: [String: Int]] = [:]
+        var untallied: Set<FourCC> = []
+
+        var unknownFieldTotal: Int {
+            unread.values.flatMap(\.self)
+                .filter { $0.key.hasPrefix("unknown ") }
+                .reduce(0) { $0 + $1.value }
+        }
 
         mutating func decode(_ record: ESMRecord, localized: Bool) {
             counts[record.type, default: 0] += 1
@@ -26,8 +33,15 @@ struct RecordCoverageRealDataTests {
             }
             do {
                 let value = try decode(record, localized)
-                if let tally = Mirror(reflecting: value).descendant("skipped") as? FieldTally {
-                    unread[record.type, default: FieldTally()].merge(tally)
+                guard
+                    let tally = Mirror(reflecting: value).descendant("skipped")
+                    as? any RankedSkipReport
+                else {
+                    untallied.insert(record.type)
+                    return
+                }
+                for entry in tally.ranked {
+                    unread[record.type, default: [:]][entry.name, default: 0] += entry.count
                 }
             } catch {
                 failures.append("\(record.type) \(FormID(record.formID)): \(error)")
@@ -53,21 +67,26 @@ struct RecordCoverageRealDataTests {
         #expect(sweep.failures.isEmpty, "records that threw: \(sweep.failures.prefix(10))")
         #expect(sweep.counts.count == 120, "record type count drift")
         #expect(sweep.counts.values.reduce(0, +) == Self.pinnedTotal, "record count drift")
+        #expect(sweep.untallied.isEmpty, "types with no skip tally: \(sweep.untallied)")
+        #expect(sweep.unknownFieldTotal == Self.pinnedUnknownFields, "unread field drift")
         Self.writeReport(sweep)
     }
 
     private static let pinnedTotal = 1_188_164
+    /// Fields no decoder reads, summed over the install. docs/formats/records.md.
+    private static let pinnedUnknownFields = 4893
 
     private static func writeReport(_ sweep: Sweep) {
         var lines = [
             "[INFO] records \(sweep.counts.values.reduce(0, +)), types \(sweep.counts.count)",
-            "[INFO] failures \(sweep.failures.count)"
+            "[INFO] failures \(sweep.failures.count)",
+            "[INFO] unknown fields \(sweep.unknownFieldTotal)"
         ]
         lines += sweep.failures.prefix(50).map { "[ERROR] \($0)" }
         for (type, count) in sweep.counts.sorted(by: { $0.key.description < $1.key.description }) {
             lines.append("[INFO] \(type) \(count)")
-            let ranked = sweep.unread[type]?.ranked ?? []
-            lines += ranked.map { "  unread \($0.name): \($0.count)" }
+            let ranked = (sweep.unread[type] ?? [:]).sorted { $0.value > $1.value }
+            lines += ranked.map { "  unread \($0.key): \($0.value)" }
         }
         let report = lines.joined(separator: "\n")
         print(report)

@@ -73,17 +73,42 @@ nonisolated public struct Region: Sendable {
     /// with RDSA under same RDAT or on its own", so it is accepted regardless
     /// of the current area context. nil when absent or null.
     public let musicType: FormID?
+    /// RPLI/RPLD pairs: the outlines that bound the region.
+    public let areas: [Area]
+    /// RDMP — the name the map shows for a map-type region.
+    public let mapName: LString?
+    /// ICON — land-type region icon path.
+    public let iconPath: String?
+    /// RDOT payloads, raw. Every vanilla RDOT is empty, so no decode can be checked.
+    public let objectData: [Data]
+    public let skipped: FieldTally
 
-    public init(record: ESMRecord) throws {
+    /// One RPLI edge falloff with the RPLD outline points after it.
+    public struct Area: Equatable, Sendable {
+        public let edgeFalloff: UInt32
+        public internal(set) var points: [SIMD2<Float>] = []
+    }
+
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "REGN" else {
             throw ESMError.malformed("expected REGN record, got \(record.type)")
         }
         formID = FormID(record.formID)
 
         var fields = RegionFields()
+        var extra = RegionAreaFields()
+        var skipped = FieldTally()
         for field in try record.fields() {
-            try fields.decode(field: field)
+            if try fields.decode(field: field) || extra.decode(field: field, localized: localized) {
+                continue
+            }
+            skipped.note(.unknownField(field.type))
         }
+        self.skipped = skipped
+        areas = extra.areas
+        mapName = extra.mapName
+        iconPath = extra.iconPath
+        objectData = extra.objectData
         editorID = fields.editorID
         worldspace = fields.worldspace
         mapColor = fields.mapColor
@@ -113,7 +138,8 @@ nonisolated public struct Region: Sendable {
         /// Last RDAT area type seen; area fields (RDWT, RDSA, ...) bind to it.
         var currentArea: AreaType?
 
-        mutating func decode(field: ESMField) throws {
+        /// False for a field this decoder does not read.
+        mutating func decode(field: ESMField) throws -> Bool {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -122,7 +148,7 @@ nonisolated public struct Region: Sendable {
                 worldspace = try FormID(reader.readUInt32())
             case "RCLR":
                 // 4-byte RGBX; skip unknown-size variants.
-                guard field.data.count == 4 else { return }
+                guard field.data.count == 4 else { return true }
                 mapColor = try Region.readColor(&reader)
             case "RDAT":
                 try applyRDAT(field: field, reader: &reader)
@@ -130,7 +156,7 @@ nonisolated public struct Region: Sendable {
                 // Weather entries — only meaningful under a type-3 area.
                 // Array of 12-byte structs: weather formid, uint32 chance,
                 // global formid. Reject non-multiples rather than guess.
-                guard currentArea == .weather, field.data.count % 12 == 0 else { return }
+                guard currentArea == .weather, field.data.count % 12 == 0 else { return true }
                 weatherList = try Climate.readWeatherList(
                     &reader, count: field.data.count / 12
                 )
@@ -138,7 +164,7 @@ nonisolated public struct Region: Sendable {
                 // Sound entries — only meaningful under a type-7 area.
                 // Array of 12-byte structs: sound formid, uint32 flags,
                 // float chance. Reject non-multiples rather than guess.
-                guard currentArea == .sound, field.data.count % 12 == 0 else { return }
+                guard currentArea == .sound, field.data.count % 12 == 0 else { return true }
                 soundList = try Region.readSoundList(
                     &reader, count: field.data.count / 12
                 )
@@ -147,11 +173,9 @@ nonisolated public struct Region: Sendable {
                 // Accepted outside the sound area on purpose (see `musicType`).
                 musicType = Region.readMusicType(field.data) ?? musicType
             default:
-                // Skipped: RPLI/RPLD (region point list), RDOT (objects),
-                // RDMP (map name), RDGS (grass). Their payloads stream past
-                // untouched.
-                break
+                return false
             }
+            return true
         }
 
         private mutating func applyRDAT(
@@ -175,6 +199,38 @@ nonisolated public struct Region: Sendable {
                 soundPriority = priority
                 soundOverride = flags & 0x01 != 0
             }
+        }
+    }
+
+    /// The region-area and per-area fields the weather and sound lookups skip.
+    private struct RegionAreaFields {
+        var areas: [Area] = []
+        var mapName: LString?
+        var iconPath: String?
+        var objectData: [Data] = []
+
+        mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
+            var reader = BinaryReader(field.data)
+            switch field.type {
+            case "RPLI":
+                try areas.append(Area(edgeFalloff: reader.readUInt32()))
+            case "RPLD":
+                guard !areas.isEmpty else { return false }
+                while reader.bytesRemaining >= 8 {
+                    try areas[areas.count - 1].points.append(
+                        SIMD2(reader.readFloat32(), reader.readFloat32())
+                    )
+                }
+            case "RDMP":
+                mapName = try LString(field: field, localized: localized)
+            case "ICON":
+                iconPath = try reader.readZString()
+            case "RDOT":
+                objectData.append(field.data)
+            default:
+                return false
+            }
+            return true
         }
     }
 

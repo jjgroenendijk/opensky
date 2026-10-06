@@ -32,6 +32,7 @@ nonisolated public struct Ingestible: Sendable {
     /// ENIT — SNDR played when the item is consumed.
     public let consumeSound: FormID?
     public let effects: [MagicItemEffect]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "ALCH" else {
@@ -43,6 +44,7 @@ nonisolated public struct Ingestible: Sendable {
         var effectList = MagicItemEffectList()
         var weight: Float = 0
         var enchantedItem = EnchantedItemData()
+        var skipped = FieldTally()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
@@ -60,9 +62,10 @@ nonisolated public struct Ingestible: Sendable {
             case "ENIT":
                 enchantedItem = try EnchantedItemData(field: field)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.fields = fields
         itemValue = ItemValue(value: enchantedItem.value, weight: weight)
         flags = enchantedItem.flags

@@ -111,6 +111,7 @@ nonisolated public struct NavmeshInfoMap: Sendable {
     /// than failing the whole map: one bad index entry must not cost the engine
     /// every other navmesh in the plugin.
     public let malformedInfoCount: Int
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "NAVI" else {
@@ -122,6 +123,7 @@ nonisolated public struct NavmeshInfoMap: Sendable {
         var deleted: [FormID] = []
         var pathing = (paths: 0, markers: 0)
         var malformed = 0
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -140,9 +142,10 @@ nonisolated public struct NavmeshInfoMap: Sendable {
             case "NVSI":
                 deleted = try Self.readDeleted(&reader)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         self.version = version
         self.infos = infos

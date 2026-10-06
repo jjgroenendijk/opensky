@@ -66,17 +66,23 @@ nonisolated public struct Grass: Equatable, Sendable {
     /// DATA is required by xEdit; nil remains decodable so callers can
     /// reason-tag malformed mod records instead of losing record identity.
     public let placement: PlacementData?
+    public let bounds: ObjectBounds?
+    /// MODT of the grass model, raw.
+    public let modelTextureHashes: Data?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "GRAS" else {
             throw ESMError.malformed("expected GRAS record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "GRAS")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var modelPath: String?
         var placement: PlacementData?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -86,9 +92,13 @@ nonisolated public struct Grass: Equatable, Sendable {
             case "DATA":
                 placement = try Self.decodePlacement(field.data)
             default:
-                break
+                return false
             }
+            return true
         }
+        bounds = rest.bounds()
+        modelTextureHashes = rest.bytes("MODT")
+        skipped = rest.finish()
         self.editorID = editorID
         self.modelPath = modelPath
         self.placement = placement

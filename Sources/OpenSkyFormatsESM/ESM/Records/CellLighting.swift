@@ -239,6 +239,7 @@ nonisolated public struct LightingTemplate: Sendable {
     public let formID: FormID
     public let editorID: String?
     public let values: CellLightingValues
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "LGTM" else {
@@ -248,6 +249,7 @@ nonisolated public struct LightingTemplate: Sendable {
         var editorID: String?
         var values: CellLightingValues?
         var directionalAmbient: DirectionalAmbientColors?
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -258,9 +260,10 @@ nonisolated public struct LightingTemplate: Sendable {
             case "DALC":
                 directionalAmbient = try CellLightingValues.decodeDirectionalAmbient(field.data)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         guard let values else {
             throw ESMError.malformed("LGTM \(formID) has no usable DATA field")
         }

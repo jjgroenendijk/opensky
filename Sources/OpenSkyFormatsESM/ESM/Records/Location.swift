@@ -23,7 +23,15 @@ nonisolated public struct LocationRefType: Equatable, Sendable {
     }
 }
 
-nonisolated public struct LocationDecodeTally: Equatable, Sendable {
+nonisolated public struct LocationDecodeTally: Equatable, RankedSkipReport {
+    public var ranked: [(name: String, count: Int)] {
+        Self.rank([
+            ("unknown", unknownFields),
+            ("malformed", malformedFields),
+            ("trailing bytes", trailingArrayBytes)
+        ])
+    }
+
     public private(set) var malformedFields: [FourCC: Int] = [:]
     /// Number of bytes dropped after the last whole packed-array element.
     public private(set) var trailingArrayBytes: [FourCC: Int] = [:]

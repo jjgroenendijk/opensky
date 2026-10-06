@@ -14,18 +14,28 @@ nonisolated public struct LandTexture: Sendable {
     public let materialType: FormID?
     /// Repeated GNAM fields — GRAS records eligible where this LTEX contributes.
     public let grasses: [FormID]
+    /// HNAM havok friction and restitution, 0-255 each.
+    public let havokFriction: UInt8?
+    public let havokRestitution: UInt8?
+    /// SNAM — texture specular exponent.
+    public let specularExponent: UInt8?
+    /// INAM — SSE flag for ground that takes the snow shader.
+    public let isSnow: Bool
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "LTEX" else {
             throw ESMError.malformed("expected LTEX record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "LTEX")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var textureSet: FormID?
         var materialType: FormID?
         var grasses: [FormID] = []
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -38,12 +48,18 @@ nonisolated public struct LandTexture: Sendable {
                 materialType = id.isNull ? nil : id
             case "GNAM":
                 try grasses.append(FormID(reader.readUInt32()))
-            // Skipped: HNAM (havok friction/restitution), SNAM (texture
-            // specular), INAM (SSE snow flag).
             default:
-                break
+                return false
             }
+            return true
         }
+        let havok = rest
+            .read("HNAM") { try (friction: $0.readUInt8(), restitution: $0.readUInt8()) }
+        havokFriction = havok?.friction
+        havokRestitution = havok?.restitution
+        specularExponent = rest.uint8("SNAM")
+        isSnow = (rest.uint32("INAM") ?? 0) != 0
+        skipped = rest.finish()
         self.editorID = editorID
         self.textureSet = textureSet
         self.materialType = materialType

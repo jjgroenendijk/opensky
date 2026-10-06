@@ -101,8 +101,9 @@ Exterior ground is not a collision mesh, so it has no Havok material. `MNAM` giv
 material instead. For footsteps, OpenSky takes the texture with the most weight at a
 vertex and uses its material. See [material types](/formats/material-type.md).
 
-Not read yet: `HNAM` (Havok friction and restitution), `SNAM` (specular exponent), and
-`INAM` (Skyrim SE snow flag).
+The decoder also reads `HNAM` (Havok friction and restitution, one byte each), `SNAM`
+(specular exponent, one byte), and `INAM` (Skyrim SE snow flag, uint32). Terrain does not
+use them yet.
 
 ## TXST
 
@@ -113,6 +114,6 @@ Not read yet: `HNAM` (Havok friction and restitution), `SNAM` (specular exponent
 | `TX01` | zstring | Normal map, with gloss |
 
 Paths are relative to `Data/`, for example `textures\...`, and go through the
-[VFS](/formats/vfs.md). Terrain needs only diffuse and normal maps. So OpenSky does not
-read `TX02` to `TX07` (specular, environment, height, and other maps), `DODT` (decal data),
-or `DNAM` (flags).
+[VFS](/formats/vfs.md). Terrain needs only diffuse and normal maps. The decoder also reads
+`TX02` to `TX07` (environment mask, glow, height, environment, multilayer, and specular
+maps), `DODT` (36-byte decal data, shared with `IPCT`), and `DNAM` (uint16 flags).

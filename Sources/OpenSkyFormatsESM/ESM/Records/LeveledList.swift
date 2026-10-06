@@ -32,6 +32,10 @@ nonisolated public struct LeveledList: Sendable {
         public let level: UInt16
         public let reference: FormID
         public let count: UInt32
+        /// COED — owner (NPC_ or FACT), owner condition word, and item health.
+        public internal(set) var owner: FormID?
+        public internal(set) var ownerCondition: UInt32?
+        public internal(set) var condition: Float?
     }
 
     public let formID: FormID
@@ -43,6 +47,13 @@ nonisolated public struct LeveledList: Sendable {
     public let chanceNone: UInt8
     public let flags: Flags
     public let entries: [Entry]
+    public let bounds: ObjectBounds?
+    /// LLCT — the entry count as written. Advisory; `entries` is what decoded.
+    public let declaredEntryCount: UInt8?
+    /// LVLG — a GLOB that overrides `chanceNone`.
+    public let chanceNoneGlobal: FormID?
+    /// LVLN only: the model the editor shows for the list.
+    public let model: ModelData?
 
     /// Deterministic bind-pose policy: highest level wins, first among ties.
     public var deterministicEntry: Entry? {
@@ -55,19 +66,22 @@ nonisolated public struct LeveledList: Sendable {
 
     /// The record types this decoder accepts.
     public static let recordTypes: Set<FourCC> = ["LVLN", "LVLI", "LVSP"]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard Self.recordTypes.contains(record.type) else {
             throw ESMError.malformed("expected LVLN/LVLI/LVSP record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, types: Self.recordTypes)
+        let recordID = rest.formID
+        formID = recordID
         recordType = record.type
 
         var editorID: String?
         var chanceNone: UInt8 = 0
         var flags = Flags()
         var entries: [Entry] = []
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -77,11 +91,9 @@ nonisolated public struct LeveledList: Sendable {
             case "LVLF":
                 flags = try Flags(rawValue: reader.readUInt8())
             case "LVLO":
-                // COED owner data may follow an entry as its own subrecord;
-                // unknown fields (incl. COED) fall through to default.
                 guard field.data.count >= 8 else {
                     throw ESMError.malformed(
-                        "\(record.type) \(formID) LVLO has \(field.data.count) bytes, "
+                        "\(record.type) \(recordID) LVLO has \(field.data.count) bytes, "
                             + "expected 8 or 12"
                     )
                 }
@@ -90,10 +102,23 @@ nonisolated public struct LeveledList: Sendable {
                 let reference = try FormID(reader.readUInt32())
                 let count = field.data.count >= 12 ? try reader.readUInt32() : 1
                 entries.append(Entry(level: level, reference: reference, count: count))
+            case "COED":
+                // Owner data for the entry just before it.
+                guard !entries.isEmpty, field.data.count >= 12 else { return false }
+                let owner = try FormID(reader.readUInt32())
+                entries[entries.count - 1].owner = owner.nonNull
+                entries[entries.count - 1].ownerCondition = try reader.readUInt32()
+                entries[entries.count - 1].condition = try reader.readFloat32()
             default:
-                break
+                return false
             }
+            return true
         }
+        bounds = rest.bounds()
+        declaredEntryCount = rest.uint8("LLCT")
+        chanceNoneGlobal = rest.formID("LVLG")
+        model = rest.model()
+        skipped = rest.finish()
         self.editorID = editorID
         self.chanceNone = chanceNone
         self.flags = flags

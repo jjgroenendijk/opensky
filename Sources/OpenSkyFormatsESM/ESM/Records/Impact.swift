@@ -5,51 +5,62 @@
 import Foundation
 import OpenSkyFormatsCore
 
-/// One IPCT, reduced to its sound links. The decal, model, and hazard members
-/// are deliberately not decoded: nothing draws an impact yet, and a field this
-/// decoder does not read cannot go stale against the spec.
+/// One IPCT: what a hit leaves behind and how it sounds. xEdit dev-4.1.6 `IPCT`.
 nonisolated public struct Impact: Equatable, Sendable {
+    /// DATA. The first four members are required; the rest arrived later.
+    public struct Effect: Equatable, Sendable {
+        public let duration: Float
+        /// 0 surface normal, 1 projectile vector, 2 projectile reflection.
+        public let orientation: UInt32
+        public let angleThreshold: Float
+        public let placementRadius: Float
+        public let soundLevel: UInt32?
+        /// Bit 0: no decal data.
+        public let flags: UInt8?
+        /// 0 default, 1 destroy, 2 bounce, 3 impale, 4 stick.
+        public let result: UInt8?
+
+        init(_ reader: inout BinaryReader) throws {
+            duration = try reader.readFloat32()
+            orientation = try reader.readUInt32()
+            angleThreshold = try reader.readFloat32()
+            placementRadius = try reader.readFloat32()
+            soundLevel = reader.bytesRemaining >= 4 ? try reader.readUInt32() : nil
+            flags = reader.bytesRemaining >= 1 ? try reader.readUInt8() : nil
+            result = reader.bytesRemaining >= 1 ? try reader.readUInt8() : nil
+        }
+    }
+
     public let formID: FormID
     public let editorID: String?
+    public let model: ModelData?
+    public let effect: Effect?
+    public let decal: DecalData?
+    /// DNAM/ENAM — the TXSTs the decal draws.
+    public let textureSet: FormID?
+    public let secondaryTextureSet: FormID?
     /// SNAM -> SNDR. The impact's primary sound; nil when absent or null.
     public let sound: FormID?
     /// NAM1 -> SNDR. The secondary sound vanilla layers under a few impacts;
     /// nil when absent or null.
     public let secondarySound: FormID?
+    /// NAM2 -> HAZD left at the hit.
+    public let hazard: FormID?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
-        guard record.type == "IPCT" else {
-            throw ESMError.malformed("expected IPCT record, got \(record.type)")
-        }
-        formID = FormID(record.formID)
-        var editorID: String?
-        var sound: FormID?
-        var secondarySound: FormID?
-        for field in try record.fields() {
-            var reader = BinaryReader(field.data)
-            switch field.type {
-            case "EDID":
-                editorID = try reader.readZString()
-            case "SNAM":
-                sound = try Self.readLink(&reader, size: field.data.count)
-            case "NAM1":
-                secondarySound = try Self.readLink(&reader, size: field.data.count)
-            default:
-                break
-            }
-        }
-        self.editorID = editorID
-        self.sound = sound
-        self.secondarySound = secondarySound
-    }
-
-    private static func readLink(
-        _ reader: inout BinaryReader,
-        size: Int
-    ) throws -> FormID? {
-        guard size == 4 else { return nil }
-        let id = try FormID(reader.readUInt32())
-        return id.isNull ? nil : id
+        var rest = try RecordFields(record: record, type: "IPCT")
+        formID = rest.formID
+        editorID = rest.editorID()
+        model = rest.model()
+        effect = rest.read("DATA") { try Effect(&$0) }
+        decal = rest.read("DODT") { try DecalData(&$0) }
+        textureSet = rest.formID("DNAM")
+        secondaryTextureSet = rest.formID("ENAM")
+        sound = rest.formID("SNAM")
+        secondarySound = rest.formID("NAM1")
+        hazard = rest.formID("NAM2")
+        skipped = rest.finish()
     }
 }
 
@@ -70,6 +81,7 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
     /// the Creation Kit knows about — around 70 of them — and most name the
     /// same impact throughout.
     public let entries: [Entry]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "IPDS" else {
@@ -78,6 +90,7 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
         formID = FormID(record.formID)
         var editorID: String?
         var entries: [Entry] = []
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -92,9 +105,10 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
                 guard !impact.isNull else { break }
                 entries.append(Entry(material: material, impact: impact))
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         self.entries = entries
     }
@@ -104,6 +118,7 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
         self.formID = formID
         self.editorID = editorID
         self.entries = entries
+        skipped = FieldTally()
     }
 
     /// The impact for `material`, or the representative one when the surface is

@@ -55,12 +55,17 @@ nonisolated public struct Climate: Sendable {
     public let glareTexture: String?
     /// MODL night-sky model path (MODT skipped).
     public let nightSkyModel: String?
+    /// MODT of the night sky model, raw.
+    public let nightSkyTextureHashes: Data?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "CLMT" else {
             throw ESMError.malformed("expected CLMT record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "CLMT")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var weatherList: [WeatherChance] = []
@@ -68,7 +73,7 @@ nonisolated public struct Climate: Sendable {
         var sunTexture: String?
         var glareTexture: String?
         var nightSkyModel: String?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -76,11 +81,11 @@ nonisolated public struct Climate: Sendable {
             case "WLST":
                 // Array of 12-byte structs: weather formid, uint32 chance,
                 // global formid. Reject non-multiples rather than guess.
-                guard field.data.count % 12 == 0 else { continue }
+                guard field.data.count % 12 == 0 else { return true }
                 weatherList = try Self.readWeatherList(&reader, count: field.data.count / 12)
             case "TNAM":
                 // 6-byte struct; skip unknown-size variants.
-                guard field.data.count == 6 else { continue }
+                guard field.data.count == 6 else { return true }
                 timing = try Self.readTiming(&reader)
             case "FNAM":
                 sunTexture = try reader.readZString()
@@ -89,10 +94,12 @@ nonisolated public struct Climate: Sendable {
             case "MODL":
                 nightSkyModel = try reader.readZString()
             default:
-                // Skipped: MODT (model textures) — not needed at this scope.
-                break
+                return false
             }
+            return true
         }
+        nightSkyTextureHashes = rest.bytes("MODT")
+        skipped = rest.finish()
         self.editorID = editorID
         self.weatherList = weatherList
         self.timing = timing

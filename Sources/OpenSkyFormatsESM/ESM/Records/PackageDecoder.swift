@@ -13,6 +13,12 @@ nonisolated public enum PackageDecoder: Sendable {
         case tail
     }
 
+    private enum EventSlot {
+        case begin
+        case end
+        case change
+    }
+
     private struct State {
         var section = Section.header
         var editorID: String?
@@ -23,8 +29,29 @@ nonisolated public enum PackageDecoder: Sendable {
         var pendingType: String?
         var inputs: [(type: String, value: Package.DataValue)] = []
         var indexes: [Int8] = []
-        var procedureTypes: [String] = []
         var scriptData = ScriptData(ownerType: "PACK")
+        var details = PackageDetails()
+        var event: EventSlot?
+        var skipped = FieldTally()
+
+        mutating func open(_ slot: EventSlot) {
+            section = .tail
+            event = slot
+            switch slot {
+            case .begin: details.onBegin = PackageDetails.Event()
+            case .end: details.onEnd = PackageDetails.Event()
+            case .change: details.onChange = PackageDetails.Event()
+            }
+        }
+
+        mutating func decodeEvent(_ field: ESMField) throws -> Bool {
+            switch event {
+            case .begin: try PackageDetails.decodeEvent(field, into: &details.onBegin)
+            case .end: try PackageDetails.decodeEvent(field, into: &details.onEnd)
+            case .change: try PackageDetails.decodeEvent(field, into: &details.onChange)
+            case nil: false
+            }
+        }
     }
 
     public static func decode(_ record: ESMRecord) throws -> Package {
@@ -32,8 +59,8 @@ nonisolated public enum PackageDecoder: Sendable {
             throw ESMError.malformed("expected PACK record, got \(record.type)")
         }
         var state = State()
-        for field in try record.fields() {
-            try decode(field, into: &state)
+        for field in try record.fields() where try !decode(field, into: &state) {
+            state.skipped.note(.unknownField(field.type))
         }
         let formID = FormID(record.formID)
         guard let general = state.general else {
@@ -50,12 +77,15 @@ nonisolated public enum PackageDecoder: Sendable {
             conditions: state.conditions,
             template: state.template,
             dataInputs: zipInputs(state.inputs, indexes: state.indexes),
-            procedureTypes: state.procedureTypes,
-            scriptData: state.scriptData
+            procedureTypes: state.details.branches.compactMap(\.procedureType),
+            scriptData: state.scriptData,
+            details: state.details,
+            skipped: state.skipped
         )
     }
 
-    private static func decode(_ field: ESMField, into state: inout State) throws {
+    /// False for a field no section reads.
+    private static func decode(_ field: ESMField, into state: inout State) throws -> Bool {
         switch state.section {
         case .header:
             try decodeHeader(field, into: &state)
@@ -64,11 +94,11 @@ nonisolated public enum PackageDecoder: Sendable {
         case .procedureTree:
             try decodeProcedureTree(field, into: &state)
         case .tail:
-            _ = try state.scriptData.decode(field: field)
+            try decodeTail(field, into: &state)
         }
     }
 
-    private static func decodeHeader(_ field: ESMField, into state: inout State) throws {
+    private static func decodeHeader(_ field: ESMField, into state: inout State) throws -> Bool {
         var reader = BinaryReader(field.data)
         switch field.type {
         case "EDID":
@@ -87,13 +117,17 @@ nonisolated public enum PackageDecoder: Sendable {
             _ = try reader.readUInt32()
             state.section = .publicData
         default:
-            if try !state.conditions.decode(field: field) {
-                _ = try state.scriptData.decode(field: field)
-            }
+            return try state.conditions.decode(field: field)
+                || state.details.decodeHeader(field)
+                || state.scriptData.decode(field: field)
         }
+        return true
     }
 
-    private static func decodePublicData(_ field: ESMField, into state: inout State) throws {
+    private static func decodePublicData(
+        _ field: ESMField,
+        into state: inout State
+    ) throws -> Bool {
         var reader = BinaryReader(field.data)
         switch field.type {
         case "ANAM":
@@ -106,19 +140,36 @@ nonisolated public enum PackageDecoder: Sendable {
             state.pendingType = nil
             state.section = .procedureTree
         default:
-            _ = try state.scriptData.decode(field: field)
+            return try state.scriptData.decode(field: field)
         }
+        return true
     }
 
-    private static func decodeProcedureTree(_ field: ESMField, into state: inout State) throws {
-        var reader = BinaryReader(field.data)
-        switch field.type {
-        case "PNAM" where field.data.count > 4:
-            try state.procedureTypes.append(reader.readZString())
-        case "POBA", "POEA", "POCA":
-            state.section = .tail
-        default:
-            break
+    private static func decodeProcedureTree(
+        _ field: ESMField,
+        into state: inout State
+    ) throws -> Bool {
+        if let slot = eventSlot(field.type) {
+            state.open(slot)
+            return true
+        }
+        return try state.details.decodeProcedureTree(field)
+    }
+
+    private static func decodeTail(_ field: ESMField, into state: inout State) throws -> Bool {
+        if let slot = eventSlot(field.type) {
+            state.open(slot)
+            return true
+        }
+        return try state.decodeEvent(field) || state.scriptData.decode(field: field)
+    }
+
+    private static func eventSlot(_ type: FourCC) -> EventSlot? {
+        switch type {
+        case "POBA": .begin
+        case "POEA": .end
+        case "POCA": .change
+        default: nil
         }
     }
 
@@ -195,7 +246,9 @@ nonisolated public enum PackageDecoder: Sendable {
             return .unknown(type: type, bytes: field.data.count)
         }
     }
+}
 
+nonisolated extension PackageDecoder {
     private static func location(
         _ reader: inout BinaryReader,
         field: ESMField

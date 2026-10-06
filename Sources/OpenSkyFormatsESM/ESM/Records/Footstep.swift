@@ -29,6 +29,7 @@ nonisolated public struct Footstep: Equatable, Sendable {
     /// exactly as `0_master.hkx` declares it (`FootLeft`, `FootScuffRight`,
     /// `JumpDown`, ...). Nil when the record carries no ANAM.
     public let tag: String?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "FSTP" else {
@@ -38,6 +39,7 @@ nonisolated public struct Footstep: Equatable, Sendable {
         var editorID: String?
         var impactDataSet: FormID?
         var tag: String?
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -50,9 +52,10 @@ nonisolated public struct Footstep: Equatable, Sendable {
             case "ANAM":
                 tag = try reader.readZString()
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         self.impactDataSet = impactDataSet
         self.tag = tag
@@ -67,6 +70,8 @@ nonisolated public struct FootstepSet: Equatable, Sendable {
     /// any of which may be empty.
     private let lists: [[FormID]]
 
+    public let skipped: FieldTally
+
     public init(record: ESMRecord) throws {
         guard record.type == "FSTS" else {
             throw ESMError.malformed("expected FSTS record, got \(record.type)")
@@ -75,6 +80,7 @@ nonisolated public struct FootstepSet: Equatable, Sendable {
         var editorID: String?
         var counts: [Int] = []
         var footsteps: [FormID] = []
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -87,9 +93,10 @@ nonisolated public struct FootstepSet: Equatable, Sendable {
                     try footsteps.append(FormID(reader.readUInt32()))
                 }
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         lists = Self.split(footsteps, counts: counts)
     }
@@ -99,6 +106,7 @@ nonisolated public struct FootstepSet: Equatable, Sendable {
         self.formID = formID
         self.editorID = editorID
         self.lists = FootstepGait.allCases.map { lists[$0] ?? [] }
+        skipped = FieldTally()
     }
 
     /// The footsteps for one gait, in record order.

@@ -28,6 +28,7 @@ nonisolated public struct Ingredient: Sendable {
     public let autoCalcValue: Int32
     public let flags: Flags
     public let effects: [MagicItemEffect]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "INGR" else {
@@ -40,6 +41,7 @@ nonisolated public struct Ingredient: Sendable {
         var itemValue = ItemValue.zero
         var autoCalcValue: Int32 = 0
         var flags = Flags()
+        var skipped = FieldTally()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
@@ -56,9 +58,10 @@ nonisolated public struct Ingredient: Sendable {
                 autoCalcValue = try Int32(bitPattern: reader.readUInt32())
                 flags = try Flags(rawValue: reader.readUInt32())
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.fields = fields
         self.itemValue = itemValue
         self.autoCalcValue = autoCalcValue

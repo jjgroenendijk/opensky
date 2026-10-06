@@ -46,6 +46,8 @@ nonisolated public struct Container: Sendable {
     /// DATA flags byte. The float that follows it in the struct is documented
     /// as a misaligned weight and is always 0, so it is not decoded.
     public let flags: Flags
+    /// The fields neither `base` nor the contents run reads.
+    public let skipped: FieldTally
 
     public var formID: FormID {
         base.formID
@@ -64,9 +66,11 @@ nonisolated public struct Container: Sendable {
         base = try ModelBase(record: record, localized: localized)
 
         var contents = Contents()
-        for field in try record.fields() {
-            try contents.decode(field: field)
+        var skipped = base.skipped
+        for field in try record.fields() where try contents.decode(field: field) {
+            skipped.unnote(.unknownField(field.type))
         }
+        self.skipped = skipped
         entries = contents.entries
         declaredEntryCount = contents.declaredEntryCount
         flags = contents.flags
@@ -79,7 +83,7 @@ nonisolated public struct Container: Sendable {
         var declaredEntryCount: UInt32?
         var flags = Flags()
 
-        mutating func decode(field: ESMField) throws {
+        mutating func decode(field: ESMField) throws -> Bool {
             var reader = BinaryReader(field.data)
             switch field.type {
             case "COCT":
@@ -104,8 +108,9 @@ nonisolated public struct Container: Sendable {
                 guard field.data.count >= 1 else { break }
                 flags = try Flags(rawValue: reader.readUInt8())
             default:
-                break
+                return false
             }
+            return true
         }
 
         /// COED applies to the CNTO immediately before it. A COED with no

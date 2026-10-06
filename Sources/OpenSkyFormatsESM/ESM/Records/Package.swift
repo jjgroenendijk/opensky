@@ -161,6 +161,8 @@ nonisolated public struct Package: Equatable, Sendable {
     /// Procedure names from template-package PNAM zstrings, in record order.
     public let procedureTypes: [String]
     public let scriptData: ScriptData
+    public internal(set) var details = PackageDetails()
+    public let skipped: FieldTally
 }
 
 nonisolated extension Package {

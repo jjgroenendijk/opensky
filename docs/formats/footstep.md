@@ -98,7 +98,7 @@ exactly that impact. For the vanilla humanoid sets, it is the solid stone impact
 
 `IPCT` also holds the visual part of an impact: `MODL` model, `DODT` decal, `DNAM` and
 `ENAM` texture sets, `NAM2` hazard, and a `DATA` struct (effect duration, angle threshold,
-placement radius, sound level). OpenSky draws no impacts yet, so it does not read them.
+placement radius, sound level). The decoder reads them, but OpenSky draws no impacts yet.
 
 ## ARMA SNDD
 

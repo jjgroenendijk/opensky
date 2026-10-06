@@ -48,15 +48,26 @@ nonisolated public struct LightRecord: Sendable {
             && !flags.contains(.offByDefault)
     }
 
+    /// The fields lighting does not read: model, name, sound, scripts.
+    public let details: LightDetails
+    public let skipped: FieldTally
+
+    /// Decodes with FULL read as inline text.
     public init(record: ESMRecord) throws {
+        try self.init(record: record, localized: false)
+    }
+
+    public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "LIGH" else {
             throw ESMError.malformed("expected LIGH record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "LIGH", localized: localized)
+        let recordID = rest.formID
+        formID = recordID
         var editorID: String?
         var decoded: DecodedData?
         var fade: Float = 1
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -64,7 +75,7 @@ nonisolated public struct LightRecord: Sendable {
             case "DATA":
                 guard field.data.count == 48 else {
                     throw ESMError.malformed(
-                        "LIGH \(formID) DATA has \(field.data.count) bytes, expected 48"
+                        "LIGH \(recordID) DATA has \(field.data.count) bytes, expected 48"
                     )
                 }
                 let time = try Int32(bitPattern: reader.readUInt32())
@@ -85,9 +96,12 @@ nonisolated public struct LightRecord: Sendable {
                     fade = try reader.readFloat32()
                 }
             default:
-                break
+                return false
             }
+            return true
         }
+        details = LightDetails(&rest)
+        skipped = rest.finish()
         guard let decoded else {
             throw ESMError.malformed("LIGH \(formID) has no DATA field")
         }
@@ -106,5 +120,34 @@ nonisolated public struct LightRecord: Sendable {
         let blue = try Float(reader.readUInt8()) / 255
         _ = try reader.readUInt8()
         return SIMD3(red, green, blue)
+    }
+}
+
+/// LIGH fields beyond the light itself; a carriable torch uses most of them.
+/// xEdit dev-4.1.6 `LIGH`.
+nonisolated public struct LightDetails: Equatable, Sendable {
+    public let bounds: ObjectBounds?
+    public let model: ModelData?
+    /// FULL — the name of a carriable light.
+    public let name: LString?
+    public let iconPath: String?
+    public let messageIconPath: String?
+    /// SNAM — the SNDR the light loops.
+    public let sound: FormID?
+    /// LNAM — lens flare.
+    public let lensFlare: FormID?
+    public let destructible: Destructible?
+    public let scriptData: ScriptData
+
+    init(_ fields: inout RecordFields) {
+        bounds = fields.bounds()
+        model = fields.model()
+        name = fields.lstring("FULL")
+        iconPath = fields.zstring("ICON")
+        messageIconPath = fields.zstring("MICO")
+        sound = fields.formID("SNAM")
+        lensFlare = fields.formID("LNAM")
+        destructible = fields.destructible()
+        scriptData = fields.scriptData()
     }
 }

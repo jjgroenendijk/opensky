@@ -18,18 +18,22 @@ nonisolated public struct AcousticSpace: Sendable {
     /// BNAM -> REVB. Reverb / environment preset; decoded for completeness but
     /// unused until a reverb runtime exists. nil when absent.
     public let reverbModel: FormID?
+    public let bounds: ObjectBounds?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "ASPC" else {
             throw ESMError.malformed("expected ASPC record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "ASPC")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var ambientSound: FormID?
         var borrowedRegion: FormID?
         var reverbModel: FormID?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -47,11 +51,12 @@ nonisolated public struct AcousticSpace: Sendable {
                     &reader, size: field.data.count
                 )
             default:
-                // OBND object bounds, plus any authoring-only fields, are
-                // not consumed here.
-                break
+                return false
             }
+            return true
         }
+        bounds = rest.bounds()
+        skipped = rest.finish()
         self.editorID = editorID
         self.ambientSound = ambientSound
         self.borrowedRegion = borrowedRegion

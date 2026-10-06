@@ -37,9 +37,16 @@ nonisolated public struct MagicEffectSound: Equatable, Sendable {
     public let descriptor: FormID?
 }
 
-nonisolated public enum MagicEffectSkipKind: Hashable, Sendable {
+nonisolated public enum MagicEffectSkipKind: SkipTallyKind {
     case unknownField(FourCC)
     case malformedField(FourCC)
+
+    public var name: String {
+        switch self {
+        case let .unknownField(type): "unknown \(type)"
+        case let .malformedField(type): "malformed \(type)"
+        }
+    }
 }
 
 public typealias MagicEffectTally = SkipTally<MagicEffectSkipKind>

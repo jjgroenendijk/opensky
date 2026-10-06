@@ -6,12 +6,20 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public enum ActorValueInformationSkipKind: Hashable, Sendable {
+nonisolated public enum ActorValueInformationSkipKind: SkipTallyKind {
     case unknownField(FourCC)
     case malformedField(FourCC)
     /// A perk-tree node that reached its end without one of the fields xEdit
     /// marks required. The node is still kept, with zeroes standing in.
     case incompletePerkTreeNode
+
+    public var name: String {
+        switch self {
+        case let .unknownField(type): "unknown \(type)"
+        case let .malformedField(type): "malformed \(type)"
+        case .incompletePerkTreeNode: "incomplete perk tree node"
+        }
+    }
 }
 
 public typealias ActorValueInformationTally = SkipTally<ActorValueInformationSkipKind>

@@ -15,15 +15,23 @@ nonisolated public struct ArmorAddon: Sendable {
     public let primaryRace: FormID?
     /// MODL — extra races this armature also applies to.
     public let additionalRaces: [FormID]
-    /// MOD2 — male biped model path relative to Data/ ("meshes\\...").
-    public let maleModelPath: String?
-    /// MOD3 — female biped model path.
-    public let femaleModelPath: String?
-    /// MOD4 — male first-person model path; nil when the armature shows
+    /// MOD2 with its MO2T/MO2S — male biped model.
+    public let maleModel: ModelData?
+    /// MOD3 group — female biped model.
+    public let femaleModel: ModelData?
+    /// MOD4 group — male first-person model; nil when the armature shows
     /// nothing on the player's own arms.
-    public let maleFirstPersonModelPath: String?
-    /// MOD5 — female first-person model path.
-    public let femaleFirstPersonModelPath: String?
+    public let maleFirstPersonModel: ModelData?
+    /// MOD5 group — female first-person model.
+    public let femaleFirstPersonModel: ModelData?
+    /// NAM0/NAM1 — the TXST that skins exposed skin, per gender.
+    public let maleSkinTexture: FormID?
+    public let femaleSkinTexture: FormID?
+    /// NAM2/NAM3 — FLST of TXSTs the skin texture may swap to, per gender.
+    public let maleSkinTextureSwapList: FormID?
+    public let femaleSkinTextureSwapList: FormID?
+    /// ONAM — an ARTO shown with the armature.
+    public let artObject: FormID?
     /// DNAM male draw priority; 0 when the record carries no DNAM.
     public let malePriority: UInt8
     /// DNAM female draw priority; 0 when the record carries no DNAM.
@@ -36,6 +44,7 @@ nonisolated public struct ArmorAddon: Sendable {
     /// (xEdit `wbFormIDCk(SNDD, 'Footstep Sound', [FSTS, NULL])`). Only boot and
     /// bare-feet armatures carry one. Nil when absent or null.
     public let footstepSound: FormID?
+    public let skipped: FieldTally
 
     /// The draw priority that applies to one gender.
     public func priority(female: Bool) -> UInt8 {
@@ -50,78 +59,45 @@ nonisolated public struct ArmorAddon: Sendable {
         return preferred ?? maleFirstPersonModelPath ?? femaleFirstPersonModelPath
     }
 
-    public init(record: ESMRecord) throws {
-        guard record.type == "ARMA" else {
-            throw ESMError.malformed("expected ARMA record, got \(record.type)")
-        }
-        formID = FormID(record.formID)
+    public var maleModelPath: String? {
+        maleModel?.path
+    }
 
-        var editorID: String?
-        var bodyTemplate: BodyTemplate?
-        var primaryRace: FormID?
-        var additionalRaces: [FormID] = []
-        var models = ModelPaths()
-        var priorities = DrawPriorities()
-        var footstepSound: FormID?
-        for field in try record.fields() {
-            var reader = BinaryReader(field.data)
-            switch field.type {
-            case "EDID":
-                editorID = try reader.readZString()
-            case "BOD2":
-                bodyTemplate = try BodyTemplate(bod2: field)
-            case "BODT":
-                bodyTemplate = try BodyTemplate(bodt: field)
-            case "RNAM":
-                primaryRace = try FormID(reader.readUInt32())
-            case "MODL":
-                guard field.data.count == 4 else { break }
-                try additionalRaces.append(FormID(reader.readUInt32()))
-            case "DNAM":
-                priorities = try DrawPriorities(field: field)
-            case "SNDD":
-                guard field.data.count == 4 else { break }
-                let id = try FormID(reader.readUInt32())
-                footstepSound = id.isNull ? nil : id
-            default:
-                // The four MOD2/MOD3/MOD4/MOD5 model paths, gathered by
-                // `ModelPaths` so this switch stays inside the complexity cap.
-                try models.read(field: field, reader: &reader)
-            }
-        }
-        self.editorID = editorID
-        self.bodyTemplate = bodyTemplate
-        self.primaryRace = primaryRace
-        self.additionalRaces = additionalRaces
-        maleModelPath = models.male
-        femaleModelPath = models.female
-        maleFirstPersonModelPath = models.maleFirstPerson
-        femaleFirstPersonModelPath = models.femaleFirstPerson
+    public var femaleModelPath: String? {
+        femaleModel?.path
+    }
+
+    public var maleFirstPersonModelPath: String? {
+        maleFirstPersonModel?.path
+    }
+
+    public var femaleFirstPersonModelPath: String? {
+        femaleFirstPersonModel?.path
+    }
+
+    public init(record: ESMRecord) throws {
+        var rest = try RecordFields(record: record, type: "ARMA")
+        formID = rest.formID
+        editorID = rest.editorID()
+        bodyTemplate = rest.field("BOD2", BodyTemplate.init(bod2:))
+            ?? rest.field("BODT", BodyTemplate.init(bodt:))
+        primaryRace = rest.read("RNAM") { try $0.readFormID() }
+        additionalRaces = rest.readAll("MODL") { try $0.readFormID() }
+        let priorities = rest.field("DNAM", DrawPriorities.init(field:)) ?? DrawPriorities()
         malePriority = priorities.male
         femalePriority = priorities.female
         weaponAdjust = priorities.weaponAdjust
-        self.footstepSound = footstepSound
-    }
-
-    /// The four model paths an ARMA can declare, gathered so the field loop
-    /// keeps one local instead of four.
-    private struct ModelPaths {
-        var male: String?
-        var female: String?
-        var maleFirstPerson: String?
-        var femaleFirstPerson: String?
-
-        /// Reads `field` when it is one of the four model paths, and ignores
-        /// every other field type.
-        mutating func read(field: ESMField, reader: inout BinaryReader) throws {
-            switch field.type {
-            case "MOD2": male = try reader.readZString()
-            case "MOD3": female = try reader.readZString()
-            case "MOD4": maleFirstPerson = try reader.readZString()
-            case "MOD5": femaleFirstPerson = try reader.readZString()
-            default: break
-            }
-        }
+        footstepSound = rest.formID("SNDD")
+        maleModel = rest.model(path: "MOD2", hashes: "MO2T", alternates: "MO2S")
+        femaleModel = rest.model(path: "MOD3", hashes: "MO3T", alternates: "MO3S")
+        maleFirstPersonModel = rest.model(path: "MOD4", hashes: "MO4T", alternates: "MO4S")
+        femaleFirstPersonModel = rest.model(path: "MOD5", hashes: "MO5T", alternates: "MO5S")
+        maleSkinTexture = rest.formID("NAM0")
+        femaleSkinTexture = rest.formID("NAM1")
+        maleSkinTextureSwapList = rest.formID("NAM2")
+        femaleSkinTextureSwapList = rest.formID("NAM3")
+        artObject = rest.formID("ONAM")
+        skipped = rest.finish()
     }
 
     /// The three DNAM members the engine keeps, with the all-zero reading a
