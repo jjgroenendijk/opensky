@@ -155,7 +155,7 @@ METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
 
 ##@ Getting started
 
-.PHONY: help bootstrap ffmpeg link-shared
+.PHONY: help bootstrap ffmpeg astcenc link-shared
 
 # A `#|` target is a part of a listed one, such as each check inside `lint`.
 help: ## Show the main targets [ALL=1 also lists the parts]
@@ -170,6 +170,9 @@ bootstrap: ## Install the toolchain with Homebrew
 
 ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
+
+astcenc: #| Build the vendored static astcenc into .vendor/astcenc
+	@./tools/vendor-astcenc.sh
 
 link-shared: #| Point this worktree's ffmpeg and compile cache at the main checkout's
 	@./tools/link-shared.sh

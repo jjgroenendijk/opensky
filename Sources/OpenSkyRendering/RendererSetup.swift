@@ -61,14 +61,16 @@ nonisolated public struct ShadowResources {
 }
 
 extension Renderer {
-    public static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
+    nonisolated public static func makeCommandQueue(device: MTLDevice) throws -> MTL4CommandQueue {
         guard let queue = device.makeMTL4CommandQueue() else {
             throw RendererError.commandQueueUnavailable
         }
         return queue
     }
 
-    public static func makeCommandBuffer(device: MTLDevice) throws -> MTL4CommandBuffer {
+    nonisolated public static func makeCommandBuffer(device: MTLDevice) throws
+        -> MTL4CommandBuffer
+    {
         guard let buffer = device.makeCommandBuffer() else {
             throw RendererError.commandBufferUnavailable
         }
@@ -420,7 +422,7 @@ extension Renderer {
         return sampler
     }
 
-    public static func makeResidencySet(
+    nonisolated public static func makeResidencySet(
         device: MTLDevice,
         allocations: [MTLAllocation]
     ) throws -> MTLResidencySet {

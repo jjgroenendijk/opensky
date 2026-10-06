@@ -245,9 +245,21 @@ let cffmpeg = Target.target(
         .linkedLibrary("swresample")
     ]
 )
-declared += ["OpenSkyShaderTypes", "CFFmpeg"]
+/// The vendored astcenc (make astcenc), a static library behind a C shim. Like
+/// CFFmpeg, the target carries the link flags (docs/decisions/astcenc.md).
+let astcenc = Context.packageDirectory + "/.vendor/astcenc"
+let castcencoder = Target.target(
+    name: "CASTCEncoder",
+    cxxSettings: [.unsafeFlags(["-I\(astcenc)/include"])],
+    linkerSettings: [
+        .unsafeFlags(["-L\(astcenc)/lib"]),
+        .linkedLibrary("astcenc"),
+        .linkedLibrary("c++")
+    ]
+)
+declared += ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder"]
 
-var targets: [Target] = [shaderTypes, cffmpeg]
+var targets: [Target] = [shaderTypes, cffmpeg, castcencoder]
 
 // The Swift Testing tags every test target links through `testTarget`.
 targets += testing("TagsTesting", dependencies: [])
@@ -346,7 +358,7 @@ targets += foundation(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
         "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache"
+        "OpenSkyAssetCache", "CASTCEncoder"
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
@@ -755,7 +767,10 @@ let package = Package(
     name: "OpenSky",
     platforms: [.macOS(.v26)],
     products: [
-        .library(name: "OpenSkyModules", targets: ["OpenSkyShaderTypes"] + libraryTargets),
+        .library(
+            name: "OpenSkyModules",
+            targets: ["OpenSkyShaderTypes", "CASTCEncoder"] + libraryTargets
+        ),
         .library(name: "OpenSkyTestSupport", targets: testingTargets + fixtureTargets)
     ],
     targets: targets,

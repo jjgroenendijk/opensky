@@ -1,0 +1,5 @@
+// The clang module over the vendored astcenc shim. See docs/decisions/astcenc.md.
+module CASTCEncoder {
+    header "CASTCEncoder.h"
+    export *
+}

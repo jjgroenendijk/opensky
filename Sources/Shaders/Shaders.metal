@@ -1011,3 +1011,35 @@ fragment float4 membraneFragment(
     float rim = pow(1.0 - facing, max(membrane.edge.a, 0.05));
     return float4(membrane.fill.rgb + membrane.edge.rgb * rim, 0.0);
 }
+// Asset format comparison: decodes any sampled texture (BC, ASTC, RGBA8) to
+// RGBA8, so two formats compare on the pixels the GPU sees. A render pass, not a
+// compute pass, because virtual GPUs such as CI runners lack Metal 4 compute.
+struct TextureReadbackVertexOut
+{
+    float4 position [[position]];
+    float2 uv;
+};
+
+vertex TextureReadbackVertexOut textureReadbackVertex(uint vertexID [[vertex_id]])
+{
+    float2 corner = float2((vertexID << 1) & 2, vertexID & 2);
+    TextureReadbackVertexOut out;
+    out.position = float4(corner * 2.0 - 1.0, 0.0, 1.0);
+    out.uv = float2(corner.x, 1.0 - corner.y);
+    return out;
+}
+
+fragment float4 textureReadbackCopy(
+    TextureReadbackVertexOut in [[stage_in]], texture2d<float, access::read> source [[texture(0)]])
+{
+    return source.read(uint2(in.position.xy));
+}
+
+// Same, resampled bilinearly to the target size, for a texture stored smaller.
+fragment float4 textureReadbackScaled(
+    TextureReadbackVertexOut in [[stage_in]],
+    texture2d<float, access::sample> source [[texture(0)]])
+{
+    constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
+    return source.sample(bilinear, in.uv, level(0.0));
+}
