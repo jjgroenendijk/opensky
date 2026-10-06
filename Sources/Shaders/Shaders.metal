@@ -437,7 +437,9 @@ fragment float4 staticMeshFragment(
         frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = diffuse.rgb * in.color.rgb * illumination;
-    return float4(applyFog(lit, in.worldPosition, frame), alpha);
+    // Opaque: alpha only gates the test above. The frame is premultiplied, so
+    // a lower alpha would show as white or black.
+    return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
 // GRAS path: same material/lighting model as cutout static meshes, with one
@@ -511,7 +513,9 @@ fragment float4 grassFragment(
     float3 illumination =
         frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame);
     float3 lit = diffuse.rgb * in.color.rgb * illumination;
-    return float4(applyFog(lit, in.worldPosition, frame), alpha);
+    // Opaque: alpha only gates the test above. The frame is premultiplied, so
+    // a lower alpha would show as white or black.
+    return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
 // Terrain splat path (docs/rendering/scene-drawing.md): per-quadrant draw blends the BTXT
