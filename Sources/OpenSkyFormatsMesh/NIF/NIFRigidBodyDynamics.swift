@@ -64,7 +64,7 @@ nonisolated public enum NIFSolverDeactivation: UInt8, CaseIterable, Sendable {
 /// The simulation half of `bhkRigidBodyCInfo2010`. `centerOfMass` is in engine
 /// units; mass, inertia, damping, and velocity limits stay in Havok SI units,
 /// because the physics step picks its own units.
-nonisolated public struct NIFRigidBodyDynamics: Sendable {
+nonisolated public struct NIFRigidBodyDynamics: Sendable, BitwiseCopyable {
     /// Kilograms. Zero means immovable even where the motion system is dynamic.
     public let mass: Float
     /// kg m^2, symmetric. nif.xml stores 3x4 rows with an unused fourth

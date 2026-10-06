@@ -4,6 +4,7 @@
 
 import AppKit
 import Metal
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
@@ -14,6 +15,7 @@ final class GameLaunchContext {
     nonisolated struct LoadedWorld {
         let fileSystem: VirtualFileSystem
         let session: CellSession?
+        let assetCache: AssetCacheReader?
     }
 
     nonisolated private static let logger = EngineLogger(
@@ -22,6 +24,8 @@ final class GameLaunchContext {
     )
 
     private(set) var gameDataRoot: GameDataRoot?
+    /// The asset cache the loaded world reads; nil without game data or a usable folder.
+    private(set) var assetCache: AssetCacheReader?
     private(set) var virtualFileSystem: VirtualFileSystem?
     /// Built by `load`, handed to the next game view, which owns it from then on.
     private var cellSession: CellSession?
@@ -76,12 +80,16 @@ final class GameLaunchContext {
         }
         let language = localizationLanguage.language
         let configurationStore = terrainLODConfigurationStore
+        let cacheSettings = AssetCacheSettings(store: PlayerSettingsStore(
+            persistence: try? PlayerSettingsFile.defaultFile()
+        ))
         loader.start(
             work: { progress in
                 try await Self.loadWorld(
                     root: root,
                     language: language,
                     configurationStore: configurationStore,
+                    cacheSettings: cacheSettings,
                     progress: progress
                 )
             },
@@ -89,6 +97,7 @@ final class GameLaunchContext {
             completion: { [weak self, weak loader] world in
                 self?.virtualFileSystem = world.fileSystem
                 self?.cellSession = world.session
+                self?.assetCache = world.assetCache
                 self?.worldLoadReport = loader.map {
                     WorldLoadReport(timeline: $0.timeline, total: $0.elapsed)
                 }
@@ -147,23 +156,26 @@ final class GameLaunchContext {
         root: GameDataRoot,
         language: String,
         configurationStore: TerrainLODConfigurationStore,
+        cacheSettings: AssetCacheSettings,
         progress: WorldLoadProgress
     ) async throws -> sending LoadedWorld {
         let vfs = try progress.measure(.archives) { VirtualFileSystem(root: root) }
         logger.info("VFS ready: \(vfs.archiveCount, privacy: .public) archives in load order")
+        let cache = openAssetCache(settings: cacheSettings, files: vfs, root: root)
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
-            return LoadedWorld(fileSystem: vfs, session: nil)
+            return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
         }
         do {
             let session = try await CellProviderIndexes.loadSession(
                 root: root,
-                fileSystem: vfs,
+                fileSystem: cache.map { AssetCacheFileSource(base: vfs, reader: $0) } ?? vfs,
                 device: device,
                 localizationLanguage: language,
                 terrainLODConfigurationStore: configurationStore,
-                progress: progress
+                progress: progress,
+                assetCache: cache
             )
-            return LoadedWorld(fileSystem: vfs, session: session)
+            return LoadedWorld(fileSystem: vfs, session: session, assetCache: cache)
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -171,7 +183,26 @@ final class GameLaunchContext {
             logger.error(
                 "[ERROR] cell provider setup failed, using demo scene: \(reason, privacy: .public)"
             )
-            return LoadedWorld(fileSystem: vfs, session: nil)
+            return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
+        }
+    }
+
+    /// A folder the location check refuses logs [ERROR], and the game reads the originals.
+    nonisolated private static func openAssetCache(
+        settings: AssetCacheSettings, files: VirtualFileSystem, root: GameDataRoot
+    ) -> AssetCacheReader? {
+        do {
+            return try AssetCacheReader.open(
+                settings: settings,
+                files: files,
+                gameInstall: root.installURL
+            )
+        } catch {
+            logger
+                .error(
+                    "[ERROR] asset cache not opened: \(String(describing: error), privacy: .public)"
+                )
+            return nil
         }
     }
 }

@@ -5,6 +5,7 @@
 
 import Foundation
 import Metal
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
@@ -54,6 +55,9 @@ nonisolated public final class MeshLibrary {
     public private(set) var loadedCount = 0
     /// Books each parse and upload to `LoadPhase.mesh` when a benchmark attaches one.
     public var loadPhases: LoadPhaseRecorder?
+    /// Converted models. The converter stores only models that need no skeleton
+    /// and have no particles, so a hit equals the direct decode.
+    public var assetCache: AssetCacheReader?
 
     public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
@@ -83,35 +87,6 @@ nonisolated public final class MeshLibrary {
         terrainLODClipMask: TerrainLODClipMask
     ) throws -> RenderModel {
         try loadModel(path: path, terrainLODClipMask: terrainLODClipMask)
-    }
-
-    /// The NIF behind one normalized key, flattened. Skeleton choice: an
-    /// explicit actor skeleton when the caller supplied one, otherwise the
-    /// shared character rig for skinned character meshes, otherwise none.
-    private func decode(
-        pathKey: String,
-        actorSkeleton: ActorSkeletonAsset?,
-        explicitActorSkeleton: Bool
-    ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
-        guard let data = try? fileSystem.contents(forPath: pathKey) else {
-            throw MeshLibraryError.fileNotFound(path: pathKey)
-        }
-        do {
-            let file = try NIFFile(data: data)
-            let skeleton: NIFSkeleton?
-            if explicitActorSkeleton {
-                skeleton = actorSkeleton?.skeleton
-            } else {
-                let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
-                    && file.blocks.contains { $0.typeName == "NiSkinData" }
-                skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
-            }
-            return try (file.model(skeleton: skeleton), file.particleSystems())
-        } catch let error as MeshLibraryError {
-            throw error
-        } catch {
-            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
-        }
     }
 
     public func loadModel(
@@ -343,5 +318,42 @@ nonisolated public final class MeshLibrary {
             key += "|" + surface.cacheKey
         }
         return key
+    }
+}
+
+nonisolated extension MeshLibrary {
+    /// The NIF behind one normalized key, flattened. Skeleton choice: an
+    /// explicit actor skeleton when the caller supplied one, otherwise the
+    /// shared character rig for skinned character meshes, otherwise none.
+    private func decode(
+        pathKey: String,
+        actorSkeleton: ActorSkeletonAsset?,
+        explicitActorSkeleton: Bool
+    ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
+        if
+            !explicitActorSkeleton,
+            let model = assetCache?.value(forPath: pathKey, decoder: .model)
+        {
+            return (model, [])
+        }
+        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            throw MeshLibraryError.fileNotFound(path: pathKey)
+        }
+        do {
+            let file = try NIFFile(data: data)
+            let skeleton: NIFSkeleton?
+            if explicitActorSkeleton {
+                skeleton = actorSkeleton?.skeleton
+            } else {
+                let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
+                    && file.blocks.contains { $0.typeName == "NiSkinData" }
+                skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
+            }
+            return try (file.model(skeleton: skeleton), file.particleSystems())
+        } catch let error as MeshLibraryError {
+            throw error
+        } catch {
+            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
+        }
     }
 }

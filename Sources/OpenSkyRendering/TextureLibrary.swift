@@ -5,6 +5,7 @@
 
 import Foundation
 import Metal
+import OpenSkyAssetCache
 import OpenSkyGameData
 
 nonisolated public final class TextureLibrary {
@@ -47,6 +48,8 @@ nonisolated public final class TextureLibrary {
     public private(set) var missingCount = 0
     /// Books each upload to `LoadPhase.texture` when a benchmark attaches one.
     public var loadPhases: LoadPhaseRecorder?
+    /// Converted textures, read before the archive when current.
+    public var assetCache: AssetCacheReader?
 
     public init(fileSystem: any GameFileSource, loader: TextureLoader) {
         self.fileSystem = fileSystem
@@ -93,6 +96,10 @@ nonisolated public final class TextureLibrary {
     }
 
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
+        if let ready = assetCache?.value(forPath: path, decoder: .readyTexture) {
+            loadedCount += 1
+            return loader.texture(ready: ready, usage: usage, label: path)
+        }
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1
             return loader.missingTexture(usage: usage, label: path)

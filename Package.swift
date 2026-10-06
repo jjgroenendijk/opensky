@@ -321,7 +321,7 @@ targets += foundation(
     "OpenSkyPhysics",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
-        "OpenSkyGameData", "OpenSkyBehavior"
+        "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyAssetCache"
     ],
     tests: [
         "EngineTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
@@ -345,12 +345,13 @@ targets += foundation(
     "OpenSkyRendering",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsSWF",
-        "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes"
+        "OpenSkyGameData", "OpenSkyDiagnostics", "OpenSkyPhysics", "OpenSkyShaderTypes",
+        "OpenSkyAssetCache"
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyGameData",
         "OpenSkyPhysics", "OpenSkyShaderTypes", "FormatsTesting", "OpenSkyFormatsSWF",
-        "EngineTesting"
+        "EngineTesting", "OpenSkyAssetCache"
     ]
 )
 
@@ -611,7 +612,8 @@ targets += feature(
         "OpenSkyActorsInterface", "OpenSkyFactionsInterface", "OpenSkyPerceptionInterface",
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
-        "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes"
+        "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
+        "OpenSkyAssetCache"
     ],
     tests: [
         "EngineTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyAudio",
@@ -622,7 +624,8 @@ targets += feature(
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
         "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
         "OpenSkyRendering", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
-        "OpenSkyWorldFixtures", "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyWorldFixtures", "OpenSkyWorldInterface", "OpenSkyWorldState",
+        "OpenSkyAssetCache"
     ]
 )
 

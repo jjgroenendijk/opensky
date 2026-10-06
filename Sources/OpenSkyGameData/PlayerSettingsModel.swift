@@ -11,8 +11,24 @@ nonisolated public struct PlayerSettingsModel: Equatable, Sendable {
     public private(set) var values: [PlayerSettingID: Double] = [:]
     /// Key binding overrides: `"<context>|<event>"` to a DirectInput scan code.
     public private(set) var keyBindings: [String: Int] = [:]
+    /// Text values, such as a folder path. Empty text means the default.
+    public private(set) var texts: [PlayerSettingID: String] = [:]
 
     public init() {}
+
+    public func text(_ id: PlayerSettingID) -> String? {
+        texts[id]
+    }
+
+    /// Returns false when nothing changed or the id is not a text setting.
+    @discardableResult
+    public mutating func setText(_ id: PlayerSettingID, to text: String?) -> Bool {
+        guard PlayerSettingsCatalog.textSettingIDs.contains(id) else { return false }
+        let stored = text?.isEmpty == false ? text : nil
+        guard texts[id] != stored else { return false }
+        texts[id] = stored
+        return true
+    }
 
     public func value(_ id: PlayerSettingID, in catalog: PlayerSettingsCatalog) -> Double {
         let fallback = catalog.definition(id)?.defaultValue ?? 0
@@ -54,7 +70,8 @@ nonisolated extension PlayerSettingsModel {
         let document: [String: Any] = [
             "schema": Self.schemaVersion,
             "values": Dictionary(uniqueKeysWithValues: values.map { ($0.key.rawValue, $0.value) }),
-            "keyBindings": keyBindings
+            "keyBindings": keyBindings,
+            "texts": Dictionary(uniqueKeysWithValues: texts.map { ($0.key.rawValue, $0.value) })
         ]
         return (try? JSONSerialization.data(
             withJSONObject: document, options: [.sortedKeys, .prettyPrinted]
@@ -82,6 +99,10 @@ nonisolated extension PlayerSettingsModel {
         for (key, raw) in migrated["keyBindings"] as? [String: Any] ?? [:] {
             guard let code = raw as? Int, (0 ... 0xFF).contains(code) else { continue }
             keyBindings[key] = code
+        }
+        for (key, raw) in migrated["texts"] as? [String: Any] ?? [:] {
+            guard let text = raw as? String else { continue }
+            setText(PlayerSettingID(key), to: text)
         }
     }
 
