@@ -98,6 +98,25 @@ performance cache is larger than its estimate:
 | Balanced | 22 GiB | 25 GiB |
 | Highest quality | 26 GiB | 29 GiB |
 
+## Presets
+
+The preset sets how each texture group is stored. Meshes, collision, and animation are the
+same in every preset. A texture's group comes from its file name: `_n` and `_msn` are normal
+maps; `_s`, `_g`, `_e`, `_em`, `_m`, `_p`, `_b`, and `_sk` are data maps; the rest are color.
+
+| Preset | Color | Normal | Data | Quality limit |
+| --- | --- | --- | --- | --- |
+| Highest quality | shipped | shipped | shipped | lossless |
+| Balanced | shipped | ASTC 4x4 | shipped | PSNR 40 dB, normal angle 2 degrees |
+| Best performance | ASTC 6x6 | ASTC 6x6 | ASTC 8x8 | PSNR 30 dB |
+
+ASTC (Adaptive Scalable Texture Compression) is a block format that Apple GPUs read
+directly. A 4x4 block keeps more detail than a 6x6 or 8x8 block, and uses more memory.
+"Shipped" keeps the BC blocks and mip levels from the archive.
+
+The preset lives in the shared settings store. The graphics presets set it later; until then
+it is its own setting.
+
 ## Audio
 
 A short sound effect is stored as ALAC (Apple Lossless) in a CAF file. ALAC is lossless, so a
