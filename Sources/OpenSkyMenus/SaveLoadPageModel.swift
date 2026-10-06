@@ -42,10 +42,13 @@ nonisolated public struct SaveSlotRow: Equatable, Sendable {
     public let error: String?
     public let character: SaveSlotCharacter?
     public let picture: SaveSlotPicture?
+    /// A Skyrim `.ess` save: it loads through an import and is never written or deleted.
+    public let isImport: Bool
 
     public init(
         slot: String, title: String, detail: String, savedAt: Date, hasThumbnail: Bool = false,
-        error: String? = nil, character: SaveSlotCharacter? = nil, picture: SaveSlotPicture? = nil
+        error: String? = nil, character: SaveSlotCharacter? = nil, picture: SaveSlotPicture? = nil,
+        isImport: Bool = false
     ) {
         self.slot = slot
         self.title = title
@@ -55,6 +58,7 @@ nonisolated public struct SaveSlotRow: Equatable, Sendable {
         self.error = error
         self.character = character
         self.picture = picture
+        self.isImport = isImport
     }
 
     /// The row as the list shows it: title, detail, and whether it has a picture.
@@ -85,9 +89,10 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     public private(set) var confirmation: ConfirmationModel?
     private var pending: SaveLoadAction?
 
+    /// The Save page leaves imports out, because a Skyrim save is never written.
     public init(mode: SaveLoadMode, rows: [SaveSlotRow]) {
         self.mode = mode
-        self.rows = Self.sorted(rows)
+        self.rows = Self.sorted(mode == .save ? rows.filter { !$0.isImport } : rows)
     }
 
     public static func sorted(_ rows: [SaveSlotRow]) -> [SaveSlotRow] {
@@ -105,15 +110,15 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     }
 
     public mutating func replaceRows(_ rows: [SaveSlotRow]) {
-        self.rows = Self.sorted(rows)
+        self.rows = Self.sorted(mode == .save ? rows.filter { !$0.isImport } : rows)
         selectedIndex = min(selectedIndex, max(0, titles.count - 1))
         confirmation = nil
         pending = nil
     }
 
-    /// Asks before deleting the selected file. Nothing happens on New Save.
+    /// Asks before deleting the selected file. Nothing happens on New Save or an import.
     public mutating func requestDelete() {
-        guard let row = selectedRow else { return }
+        guard let row = selectedRow, !row.isImport else { return }
         ask("Delete \(row.title)?", then: .delete(slot: row.slot))
     }
 

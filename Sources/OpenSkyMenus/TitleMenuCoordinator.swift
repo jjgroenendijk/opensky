@@ -127,9 +127,10 @@ public final class TitleMenuCoordinator {
         self.world = world
     }
 
-    /// Continue shows only when a save exists, once the save list has been read.
+    /// Continue shows only when an OpenSky save exists, once the list has been read.
+    /// It never picks an import.
     public var entries: [TitleMenuEntry] {
-        let hasSaves = !(saves?.saveRows.isEmpty ?? true)
+        let hasSaves = saves?.saveRows.contains { !$0.isImport } ?? false
         return TitleMenuEntry.allCases.filter { $0 != .resume || hasSaves }
     }
 
@@ -199,7 +200,9 @@ public final class TitleMenuCoordinator {
     func activate(_ entry: TitleMenuEntry) {
         switch entry {
         case .resume:
-            guard let newest = saves?.saveRows.max(by: { $0.savedAt < $1.savedAt })
+            guard
+                let newest = saves?.saveRows.filter({ !$0.isImport })
+                    .max(by: { $0.savedAt < $1.savedAt })
             else { return }
             load(newest.slot)
         case .new:

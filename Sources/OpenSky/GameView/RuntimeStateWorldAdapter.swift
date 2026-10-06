@@ -232,6 +232,13 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
     }
 
+    /// An imported Skyrim save is written as an ordinary slot, so it loads through
+    /// the one restore path.
+    func writeImported(_ contents: OpenSkySaveContents, slot: String) async throws {
+        let store = try await store()
+        try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
+    }
+
     func saveListings() async throws -> [OpenSkySaveSlotListing] {
         try await store().readListings()
     }

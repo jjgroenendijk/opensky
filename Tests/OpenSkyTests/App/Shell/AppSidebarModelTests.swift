@@ -23,7 +23,7 @@ struct AppSidebarModelTests {
                 ]
         )
         #expect(groups[1].destinations.map(\.id) == ["uiLab", "agentControl"])
-        #expect(groups[2].destinations.map(\.id) == ["assetBrowser", "loadOrder"])
+        #expect(groups[2].destinations.map(\.id) == ["assetBrowser", "loadOrder", "skyrimSaves"])
     }
 
     @Test

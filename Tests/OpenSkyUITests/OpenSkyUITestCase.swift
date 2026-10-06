@@ -8,7 +8,9 @@ class OpenSkyUITestCase: XCTestCase {
     /// app with its window on screen. Developer mode unless the case asks for
     /// the launcher with an empty mode.
     @MainActor
-    func launchApp(launchMode: String = "developer") throws -> XCUIApplication {
+    func launchApp(
+        launchMode: String = "developer", environment: [String: String] = [:]
+    ) throws -> XCUIApplication {
         let install = FileManager.default.temporaryDirectory
             .appending(path: "opensky-uitest-\(UUID().uuidString)")
         let data = install.appending(path: "Data")
@@ -20,6 +22,7 @@ class OpenSkyUITestCase: XCTestCase {
         addTeardownBlock { try? FileManager.default.removeItem(at: install) }
 
         let app = XCUIApplication()
+        app.launchEnvironment.merge(environment) { _, given in given }
         app.launchEnvironment["OPENSKY_DATA_ROOT"] = install.path(percentEncoded: false)
         app.launchEnvironment["OPENSKY_LAUNCH_MODE"] = launchMode
         app.launch()

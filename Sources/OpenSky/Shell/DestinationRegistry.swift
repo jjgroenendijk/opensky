@@ -173,12 +173,12 @@ enum DestinationRegistry {
     /// Selected on launch: the live render plus its camera/frame/scene readouts.
     static let defaultDestinationID = "world"
 
-    /// The registered destinations, in sidebar order. The menu, progression and
-    /// crime destinations are spliced in from the `DestinationRegistry*` files,
+    /// The registered destinations, in sidebar order. The menu, progression,
+    /// crime, and library destinations are spliced in from the `DestinationRegistry*` files,
     /// which exist only for the type-length cap.
     static let all: [DestinationDescriptor] = simulationDestinations + effectsDestinations
         + progressionDestinations + crimeDestinations + menuDestinations
-        + sessionDestinations + agentDestinations
+        + sessionDestinations + libraryDestinations + agentDestinations
 
     private static let simulationDestinations: [DestinationDescriptor] = [
         DestinationDescriptor(
@@ -401,30 +401,6 @@ enum DestinationRegistry {
                 return panel
             },
             overrides: uiLabOverrides
-        ),
-        DestinationDescriptor(
-            id: "assetBrowser",
-            title: "Asset Browser",
-            section: .library,
-            symbolName: "archivebox",
-            content: .fullContent { context in
-                let controller = PreviewViewController()
-                controller.gameDataRoot = context.gameDataRoot
-                controller.startupErrorMessage = context.startupErrorMessage
-                return controller
-            }
-        ),
-        DestinationDescriptor(
-            id: "loadOrder",
-            title: "Load Order",
-            section: .library,
-            symbolName: "list.number",
-            content: .fullContent { context in
-                let controller = LoadOrderViewController()
-                controller.gameDataRoot = context.gameDataRoot
-                controller.startupErrorMessage = context.startupErrorMessage
-                return controller
-            }
         )
     ]
 }
