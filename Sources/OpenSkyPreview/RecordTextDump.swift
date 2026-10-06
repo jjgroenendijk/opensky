@@ -143,6 +143,7 @@ nonisolated public enum RecordTextDump: Sendable {
         return "decoded WRLD: editorID \(world.editorID ?? "-"), "
             + "parent \(parent), "
             + "flags 0x\(String(world.flags.rawValue, radix: 16))"
+            + (mapDataText(world).map { "\n" + $0 } ?? "")
     }
 
     private static func cellSummary(record: ESMRecord, localized: Bool) throws -> String? {
@@ -168,6 +169,7 @@ nonisolated public enum RecordTextDump: Sendable {
             + "\(vector(ref.placement.position)), rotation "
             + "\(vector(ref.placement.rotation)), scale \(ref.scale)"
             + teleport + lockText(ref.lock) + enableParentText(ref.enableParent)
+            + markerText(ref.mapMarker)
     }
 
     static func vector(_ value: SIMD3<Float>) -> String {
@@ -227,33 +229,6 @@ nonisolated public enum RecordTextDump: Sendable {
             + skips
     }
 
-    /// The navmesh inspector: shows the decoded mesh without drawing it.
-    private static func navmeshSummary(record: ESMRecord) throws -> String? {
-        let navmesh = try Navmesh(record: record)
-        let geometry = navmesh.geometry
-        let location = switch geometry.location {
-        case let .interior(cell): "interior cell \(cell)"
-        case let .exterior(world, x, y): "worldspace \(world) grid (\(x),\(y))"
-        }
-        return "decoded NAVM: editorID \(navmesh.editorID ?? "-"), \(location), "
-            + "version \(geometry.version), \(geometry.vertices.count) vertices, "
-            + "\(geometry.triangles.count) triangles, \(geometry.edgeLinks.count) edge links, "
-            + "\(geometry.doorLinks.count) door links, "
-            + "\(geometry.coverTriangleCount) cover triangles (skipped), "
-            + "grid divisor \(geometry.gridDivisor)"
-    }
-
-    private static func navmeshIndexSummary(record: ESMRecord) throws -> String? {
-        let map = try NavmeshInfoMap(record: record)
-        let islands = map.infos.count { $0.flags.contains(.isIsland) }
-        return "decoded NAVI: editorID \(map.editorID ?? "-"), version \(map.version), "
-            + "\(map.infos.count) navmeshes (\(islands) islands, "
-            + "\(map.malformedInfoCount) malformed), "
-            + "\(map.deletedNavmeshes.count) deleted, "
-            + "\(map.precomputedPathCount) preferred paths and "
-            + "\(map.roadMarkerCount) road markers (skipped)"
-    }
-
     private static func fieldLines(record: ESMRecord) -> [String] {
         guard let fields = try? record.fields() else {
             return ["[WARNING] field payload failed to parse"]
@@ -285,5 +260,34 @@ nonisolated public enum RecordTextDump: Sendable {
         let body = data.dropLast()
         guard body.allSatisfy({ (0x20 ... 0x7E).contains($0) }) else { return nil }
         return String(bytes: body, encoding: .utf8)
+    }
+}
+
+nonisolated extension RecordTextDump {
+    /// The navmesh inspector: shows the decoded mesh without drawing it.
+    private static func navmeshSummary(record: ESMRecord) throws -> String? {
+        let navmesh = try Navmesh(record: record)
+        let geometry = navmesh.geometry
+        let location = switch geometry.location {
+        case let .interior(cell): "interior cell \(cell)"
+        case let .exterior(world, x, y): "worldspace \(world) grid (\(x),\(y))"
+        }
+        return "decoded NAVM: editorID \(navmesh.editorID ?? "-"), \(location), "
+            + "version \(geometry.version), \(geometry.vertices.count) vertices, "
+            + "\(geometry.triangles.count) triangles, \(geometry.edgeLinks.count) edge links, "
+            + "\(geometry.doorLinks.count) door links, "
+            + "\(geometry.coverTriangleCount) cover triangles (skipped), "
+            + "grid divisor \(geometry.gridDivisor)"
+    }
+
+    private static func navmeshIndexSummary(record: ESMRecord) throws -> String? {
+        let map = try NavmeshInfoMap(record: record)
+        let islands = map.infos.count { $0.flags.contains(.isIsland) }
+        return "decoded NAVI: editorID \(map.editorID ?? "-"), version \(map.version), "
+            + "\(map.infos.count) navmeshes (\(islands) islands, "
+            + "\(map.malformedInfoCount) malformed), "
+            + "\(map.deletedNavmeshes.count) deleted, "
+            + "\(map.precomputedPathCount) preferred paths and "
+            + "\(map.roadMarkerCount) road markers (skipped)"
     }
 }

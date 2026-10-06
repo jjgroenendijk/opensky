@@ -20,6 +20,8 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
     /// Upward velocity a jump takes off at, derived from the jump height
     /// `fJumpHeightMin` states and the controller's own gravity.
     public let jumpTakeoffSpeed: MovementSetting
+    /// The walk a fast travel trip is timed at, `NPC_Default_MT` forward walk.
+    public let travelSpeed: MovementSetting
 
     /// Sneak, sprint and swim default to ratios of walk and run, so a synthetic scene or
     /// benchmark still builds a full configuration. `resolve` sets every field.
@@ -30,7 +32,8 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
         sprintSpeed: MovementSetting? = nil,
         sneakSpeed: MovementSetting? = nil,
         swimSpeed: MovementSetting? = nil,
-        jumpTakeoffSpeed: MovementSetting? = nil
+        jumpTakeoffSpeed: MovementSetting? = nil,
+        travelSpeed: MovementSetting? = nil
     ) {
         self.walkSpeed = walkSpeed
         self.runSpeed = runSpeed
@@ -46,6 +49,8 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
                 value: (2 * WalkController.gravity * 76).squareRoot(),
                 source: "fJumpHeightMin engine default over gravity"
             )
+        self.travelSpeed = travelSpeed
+            ?? MovementSetting(value: walkSpeed.value, source: "derived from walk speed")
     }
 
     /// Historic explicit values for synthetic scenes, tests, and benchmarks.
@@ -105,7 +110,14 @@ nonisolated public struct PlayerMovementConfiguration: Equatable, Sendable {
                 fallback: run.value,
                 fallbackSource: "OpenSky fallback (no NPC_Swimming_MT)"
             ),
-            jumpTakeoffSpeed: jumpTakeoff(store: store)
+            jumpTakeoffSpeed: jumpTakeoff(store: store),
+            travelSpeed: gait(
+                editorID: MovementTypeStore.PlayerGait.walking,
+                slot: .walk,
+                store: movementTypes,
+                fallback: 80,
+                fallbackSource: "OpenSky fallback (no NPC_Default_MT)"
+            )
         )
     }
 

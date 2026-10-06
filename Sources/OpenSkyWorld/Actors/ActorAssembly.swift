@@ -280,10 +280,9 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
     ) -> [RenderPlacement] {
         models.map {
             let morphs: [ObjectIdentifier: FaceMorphBuffer] =
-                if case .faceGenHead = $0.role {
-                    faceMorphs
-                } else {
-                    [:]
+                switch $0.role {
+                case .faceGenHead, .headPart: faceMorphs
+                default: [:]
                 }
             return RenderPlacement(
                 model: $0.asset.model,

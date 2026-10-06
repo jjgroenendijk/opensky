@@ -13,7 +13,7 @@ nonisolated extension RecordTextDump {
         case "CLFM": try colorText(ColorForm(record: record, localized: localized))
         case "EYES": try eyesText(Eyes(record: record, localized: localized))
         case "BPTD": try bodyPartText(BodyPartData(record: record, localized: localized))
-        default: try idleSummary(record)
+        default: try idleSummary(record) ?? chargenSummary(record, localized)
         }
     }
 

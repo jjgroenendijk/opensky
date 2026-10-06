@@ -105,7 +105,7 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    private func faceMorphFile(
+    func faceMorphFile(
         _ path: String, fileSystem: any GameFileSource
     ) -> Result<TRIFile, AssetLoadFailure> {
         if let known = faceMorphFiles[path] {

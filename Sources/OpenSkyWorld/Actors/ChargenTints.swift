@@ -6,6 +6,7 @@ import Foundation
 nonisolated public struct ChargenTintLayer: Equatable, Sendable {
     /// One coverage byte per pixel, the same size as the base picture.
     public let mask: [UInt8]
+    /// `TINC`; the fourth byte is 0 in every vanilla NPC, so it is not read.
     public let color: SIMD4<UInt8>
     /// 0 to 1.
     public let strength: Float
@@ -25,9 +26,8 @@ nonisolated public enum ChargenTints {
         let pixels = rgba.count / 4
         for layer in layers where layer.mask.count == pixels {
             let strength = min(max(layer.strength, 0), 1)
-            let alpha = Float(layer.color.w) / 255
             for pixel in 0 ..< pixels {
-                let cover = Float(layer.mask[pixel]) / 255 * strength * alpha
+                let cover = Float(layer.mask[pixel]) / 255 * strength
                 guard cover > 0 else { continue }
                 for channel in 0 ..< 3 {
                     let index = pixel * 4 + channel
@@ -38,5 +38,24 @@ nonisolated public enum ChargenTints {
             }
         }
         return result
+    }
+
+    /// One coverage byte per texel from a mask picture's red channel, scaled to
+    /// `width` x `height` by nearest texel; the masks are smaller than the face.
+    public static func coverage(
+        rgba: [UInt8], width: Int, height: Int, toWidth: Int, toHeight: Int
+    ) -> [UInt8] {
+        guard width > 0, height > 0, rgba.count >= width * height * 4 else {
+            return [UInt8](repeating: 0, count: toWidth * toHeight)
+        }
+        var mask = [UInt8](repeating: 0, count: toWidth * toHeight)
+        for row in 0 ..< toHeight {
+            let sourceRow = row * height / toHeight
+            for column in 0 ..< toWidth {
+                let sourceColumn = column * width / toWidth
+                mask[row * toWidth + column] = rgba[(sourceRow * width + sourceColumn) * 4]
+            }
+        }
+        return mask
     }
 }

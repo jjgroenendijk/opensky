@@ -25,16 +25,25 @@ nonisolated public final class PlayerBody {
 
     public let assembly: ActorAssembly<ActorRenderAsset>
     public let animation: PlayerAnimationPlayback
+    /// Chargen slider morphs on the assembled head parts; empty for a baked head.
+    public let faceMorphs: [ObjectIdentifier: FaceMorphBuffer]
 
     /// Where the body stands, rebuilt from the capsule every frame.
     public private(set) var transform = matrix_identity_float4x4
     /// The draw lists for the current transform.
     public private(set) var render: RenderScene
 
-    public init(assembly: ActorAssembly<ActorRenderAsset>, animation: PlayerAnimationPlayback) {
+    public init(
+        assembly: ActorAssembly<ActorRenderAsset>,
+        animation: PlayerAnimationPlayback,
+        faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:]
+    ) {
         self.assembly = assembly
         self.animation = animation
-        render = RenderScene(instances: assembly.renderPlacements(at: matrix_identity_float4x4))
+        self.faceMorphs = faceMorphs
+        render = RenderScene(instances: assembly.renderPlacements(
+            at: matrix_identity_float4x4, faceMorphs: faceMorphs
+        ))
     }
 
     /// The world transform of a body at `feetPosition` facing `yaw`. Meshes face +Y and
@@ -50,7 +59,10 @@ nonisolated public final class PlayerBody {
         let wanted = Self.transform(feetPosition: feetPosition, yaw: yaw)
         guard !Self.isEqual(wanted, transform) else { return }
         transform = wanted
-        render = RenderScene(instances: assembly.renderPlacements(at: wanted))
+        render = RenderScene(instances: assembly.renderPlacements(
+            at: wanted,
+            faceMorphs: faceMorphs
+        ))
     }
 
     /// GPU allocations the body keeps alive. Added to the renderer's residency
