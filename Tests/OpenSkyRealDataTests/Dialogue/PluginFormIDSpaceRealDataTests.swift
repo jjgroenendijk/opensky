@@ -2,12 +2,10 @@
 // writes its own forms as 0x02xxxxxx but loads fifth, so read raw they name nothing.
 // Run with `make test-real T='PluginFormIDSpaceRealDataTests'`.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
