@@ -59,17 +59,22 @@ done
 
 step extract asset-cache extract --paths "$paths" --out "$cache_root/loose"
 step bench-loose benchmark --evict --loose "$cache_root/loose"
+step io-bench asset-cache io-bench --preset highest --folder "$cache_root/highest" --paths "$paths"
+step bench-highest-fast benchmark --asset-cache --fast-load --evict --preset highest \
+    --folder "$cache_root/highest"
 
 if [ -n "$external_root" ]; then
     step build-external asset-cache build --preset highest --folder "$external_root/highest" --paths "$paths"
     step bench-external benchmark --asset-cache --evict --preset highest --folder "$external_root/highest"
+    step io-bench-external asset-cache io-bench --preset highest --folder "$external_root/highest" \
+        --paths "$paths"
     for preset in $presets; do
         step "full-build-$preset" asset-cache build --preset "$preset" --folder "$external_root/full-$preset"
         echo "[INFO] full $preset cache: $(du -sk "$external_root/full-$preset" | cut -f1) KiB on disk"
     done
 fi
 
-for name in baseline bench-loose bench-highest bench-balanced bench-best \
+for name in baseline bench-loose bench-highest bench-highest-fast bench-balanced bench-best \
     ${external_root:+bench-external}; do
     echo "--- $name"
     summary "$name"
@@ -78,3 +83,5 @@ for preset in $presets; do
     echo "--- $preset: $(cat "$run_dir/compare-$preset.log")"
     grep -E '^[0-9]+/[0-9]+ files' "$run_dir/build-$preset.log" || true
 done
+echo "--- io-bench"
+grep -E '^(\[INFO\]|method|archive|cacheCPU|fastLoad)' "$run_dir/io-bench.log" || true

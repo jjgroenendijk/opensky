@@ -1,9 +1,10 @@
-// `asset-cache build|check|clear|status|extract|compare`: builds the asset cache without the app,
-// with the preset and folder from the shared settings unless options override them. The cache is
-// game content and lives outside the repo (AGENTS.md Legal & IP); the location check refuses a
-// folder inside a git checkout or the install.
+// `asset-cache build|check|clear|status|extract|io-bench|compare`: builds the asset cache without
+// the app, with the preset and folder from the shared settings unless options override them. The
+// cache is game content and lives outside the repo (AGENTS.md Legal & IP); the location check
+// refuses a folder inside a git checkout or the install.
 
 import Foundation
+import Metal
 import OpenSkyAssetCache
 import OpenSkyGameData
 import OpenSkyRendering
@@ -20,7 +21,7 @@ enum AssetCacheCommand {
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) async throws {
-        let subcommand = try scanner.positional("build|check|clear|status|extract|compare")
+        let subcommand = try scanner.positional("build|check|clear|status|extract|io-bench|compare")
         if subcommand == "compare" {
             return try compare(scanner: &scanner)
         }
@@ -48,6 +49,13 @@ enum AssetCacheCommand {
             status(reader: reader, settings: options.settings)
         case "extract":
             try extract(files: files, options: options, install: context.root.installURL)
+        case "io-bench":
+            try ioBench(
+                reader: reader,
+                files: files,
+                options: options,
+                dataURL: context.root.dataURL
+            )
         default:
             throw CLIError.usage("unknown asset-cache subcommand: \(subcommand)")
         }
@@ -95,6 +103,46 @@ enum AssetCacheCommand {
             difference.rgbPSNR,
             difference.maxChannelError
         ))
+    }
+
+    /// Loads the `--paths` textures as one batch each way, cold and then warm.
+    private static func ioBench(
+        reader: AssetCacheReader, files: VirtualFileSystem, options: Options, dataURL: URL
+    ) throws {
+        guard let paths = options.paths
+        else { throw CLIError.usage("io-bench needs --paths <file>") }
+        guard let device = MTLCreateSystemDefaultDevice()
+        else { throw CLIError.failure("no Metal GPU") }
+        let bench = try TextureBatchLoadBenchmark(
+            device: device,
+            files: files,
+            reader: reader,
+            paths: paths
+        )
+        guard bench.textureCount > 0
+        else { throw CLIError.failure("no listed texture has a cache entry") }
+        let copies = reader.store.root.appending(path: "io-bench-lz4", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: copies) }
+        try bench.prepareCompressedCopies(in: copies)
+        let lz4Bytes = bench.compressedURLs
+            .reduce(0) { $0 + ((try? $1.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0) }
+        print("[INFO] \(bench.textureCount) textures; LZ4 copies \(lz4Bytes >> 20) MiB")
+        print("method\tpass\ttextures\tMiB\twall ms\tcpu ms")
+        for method in TextureBatchLoadMethod.allCases {
+            for pass in ["cold", "warm"] {
+                if pass == "cold" {
+                    PageCacheEviction.evict(folders: [dataURL, copies])
+                    for url in bench.entryURLs {
+                        PageCacheEviction.evict(file: url)
+                    }
+                }
+                let timing = try bench.run(method)
+                print(String(
+                    format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", method.rawValue, pass, timing.textures,
+                    timing.bytes >> 20, timing.wallMS, timing.cpuMS
+                ))
+            }
+        }
     }
 
     /// The shared settings, with `--preset`, `--folder`, and `--limit-gib` on top.

@@ -50,6 +50,9 @@ nonisolated public final class TextureLibrary {
     public var loadPhases: LoadPhaseRecorder?
     /// Converted textures, read before the archive when current.
     public var assetCache: AssetCacheReader?
+    /// Reads cached textures inside `batchLoads` without the CPU, when set and on.
+    public var fastLoader: FastTextureLoader?
+    private var batchDepth = 0
 
     public init(fileSystem: any GameFileSource, loader: TextureLoader) {
         self.fileSystem = fileSystem
@@ -95,7 +98,30 @@ nonisolated public final class TextureLibrary {
         )
     }
 
+    /// Runs `body` as one batch: the fast loader queues every cached texture
+    /// it loads, and the batch completes before this returns.
+    public func batchLoads<Result>(_ body: () throws -> Result) rethrows -> Result {
+        batchDepth += 1
+        defer {
+            batchDepth -= 1
+            if batchDepth == 0 {
+                fastLoader?.flush()
+            }
+        }
+        return try body()
+    }
+
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
+        if
+            batchDepth > 0, let fastLoader, fastLoader.control.isEnabled,
+            let entry = assetCache?.entry(forPath: path, decoder: .readyTexture)
+        {
+            loadedCount += 1
+            if let texture = try? fastLoader.enqueue(entry, usage: usage, label: path) {
+                return texture
+            }
+            return loader.texture(ready: entry.value, usage: usage, label: path)
+        }
         if let ready = assetCache?.value(forPath: path, decoder: .readyTexture) {
             loadedCount += 1
             return loader.texture(ready: ready, usage: usage, label: path)

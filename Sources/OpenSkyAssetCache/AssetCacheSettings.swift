@@ -11,17 +11,21 @@ nonisolated public struct AssetCacheSettings: Equatable, Sendable {
     public var folder: URL?
     /// Nil uses the preset's default limit.
     public var limitBytes: UInt64?
+    /// Cached textures load with Metal fast resource loading during a cell build.
+    public var fastLoad: Bool
 
     public init(
         isEnabled: Bool = true,
         preset: AssetQualityPreset = .default,
         folder: URL? = nil,
-        limitBytes: UInt64? = nil
+        limitBytes: UInt64? = nil,
+        fastLoad: Bool = true
     ) {
         self.isEnabled = isEnabled
         self.preset = preset
         self.folder = folder
         self.limitBytes = limitBytes
+        self.fastLoad = fastLoad
     }
 
     public var effectiveLimitBytes: UInt64 {
@@ -42,7 +46,8 @@ extension AssetCacheSettings {
             isEnabled: store.bool(.assetCacheEnabled),
             preset: AssetQualityPreset(rawValue: UInt8(clamping: presetIndex)) ?? .default,
             folder: folder.map { URL(filePath: $0, directoryHint: .isDirectory) },
-            limitBytes: limit > 0 ? limit << 30 : nil
+            limitBytes: limit > 0 ? limit << 30 : nil,
+            fastLoad: store.bool(.assetCacheFastLoad)
         )
     }
 
@@ -52,6 +57,7 @@ extension AssetCacheSettings {
         store.set(.assetCachePreset, to: Double(preset.rawValue))
         store.setText(.assetCacheFolder, to: folder?.path(percentEncoded: false))
         store.set(.assetCacheLimitGiB, to: Double((limitBytes ?? 0) >> 30))
+        store.set(.assetCacheFastLoad, to: fastLoad ? 1 : 0)
     }
 }
 

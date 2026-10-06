@@ -225,11 +225,15 @@ extension OpenSkyCLI {
       asset-cache extract --paths <file> --out <dir>
                                   Write loose copies of the listed files, the
                                   baseline the cache is measured against
+      asset-cache io-bench --paths <file>
+                                  Load the listed cached textures as one batch:
+                                  archive, cache on the CPU, and Metal fast
+                                  resource loading raw and LZ4, cold and warm
       asset-cache compare <reference.png> <candidate.png>
                                   PSNR and largest channel error of two
                                   captures of the same view
       benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict]
-                [--preset best|balanced|highest] [--folder <dir>]
+                [--fast-load] [--preset best|balanced|highest] [--folder <dir>]
                 [--loose <dir>] [--record-paths <file>]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
@@ -237,6 +241,8 @@ extension OpenSkyCLI {
                                   JSON, --frame a PNG of the measured view;
                                   --asset-cache loads through the cache,
                                   --evict drops the files from the page cache,
+                                  --fast-load reads cached textures with
+                                  Metal fast resource loading,
                                   --loose reads extracted copies first,
                                   --record-paths lists the assets it read
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]

@@ -33,18 +33,21 @@ enum BenchmarkCommand {
             scene: RenderScene(instances: []),
             movementConfiguration: .synthetic
         )
+        var fastLoader: FastTextureLoader?
         let result = try PerformanceBenchmark.run(
             plan: plan,
             machine: .current(gpu: device.name),
             renderer: renderer
         ) { recorder in
-            try RenderCommand.makeBuilder(
+            let builder = try RenderCommand.makeBuilder(
                 context: context, device: device, recorder: recorder, assets: assets
             )
+            fastLoader = builder.textures.fastLoader
+            return builder
         }
         report(result)
         print("[INFO] GPU memory: \(device.currentAllocatedSize >> 20) MiB allocated")
-        try assets.report()
+        try assets.report(fastLoader: fastLoader)
         if let outPath {
             let url = URL(fileURLWithPath: outPath)
             try result.jsonData().write(to: url)

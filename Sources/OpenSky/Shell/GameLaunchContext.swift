@@ -8,6 +8,7 @@ import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
+import OpenSkyRendering
 import OpenSkyWorld
 
 final class GameLaunchContext {
@@ -166,6 +167,7 @@ final class GameLaunchContext {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
             return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
         }
+        let fastLoad = cache.map { _ in FastTextureLoadControl(isEnabled: cacheSettings.fastLoad) }
         do {
             let session = try await CellProviderIndexes.loadSession(
                 root: root,
@@ -174,7 +176,8 @@ final class GameLaunchContext {
                 localizationLanguage: language,
                 terrainLODConfigurationStore: configurationStore,
                 progress: progress,
-                assetCache: cache
+                assetCache: cache,
+                fastLoad: fastLoad
             )
             return LoadedWorld(fileSystem: vfs, session: session, assetCache: cache)
         } catch is CancellationError {

@@ -30,7 +30,8 @@ nonisolated extension CellProviderIndexes {
         localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore,
         progress: WorldLoadProgress = .silent,
-        assetCache: AssetCacheReader? = nil
+        assetCache: AssetCacheReader? = nil,
+        fastLoad: FastTextureLoadControl? = nil
     ) async throws -> sending CellSession {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try progress.measure(.masterFile) { try ESMFile(url: esmURL) }
@@ -52,7 +53,9 @@ nonisolated extension CellProviderIndexes {
         let (runner, formIDResolver) = try progress.measure(.assetLibraries) {
             try makeRunner(
                 file: file,
-                assets: RunnerAssets(fileSystem: fileSystem, device: device, cache: assetCache),
+                assets: RunnerAssets(
+                    fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad
+                ),
                 localizationLanguage: localizationLanguage,
                 terrainLODConfigurationStore: terrainLODConfigurationStore
             )
@@ -87,6 +90,8 @@ nonisolated extension CellProviderIndexes {
         let fileSystem: any GameFileSource
         let device: any MTLDevice
         let cache: AssetCacheReader?
+        /// Nil, or no cache, loads every texture on the CPU.
+        let fastLoad: FastTextureLoadControl?
     }
 
     /// Hands the new builder straight to the runner, so no other code holds it.
@@ -101,6 +106,9 @@ nonisolated extension CellProviderIndexes {
         let meshes = MeshLibrary(fileSystem: fileSystem, device: assets.device, textures: textures)
         textures.assetCache = assets.cache
         meshes.assetCache = assets.cache
+        if let control = assets.fastLoad, assets.cache != nil {
+            textures.fastLoader = try FastTextureLoader(device: assets.device, control: control)
+        }
         let builder = CellSceneBuilder(
             file: file,
             meshes: meshes,

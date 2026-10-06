@@ -37,6 +37,11 @@ cost of the parse. `--record-paths <file>` writes the asset paths the cache was 
 so `asset-cache build --paths` and `extract --paths` can work on just the benchmark's assets.
 The summary also prints the GPU memory allocated after the load.
 
+`--fast-load` loads the cached textures of each cell with Metal fast resource loading
+([asset cache](/engine/asset-cache.md)) and prints the batches, textures, and bytes it
+read. `bench --fly-path` and `bench --walk-path` take the same cache options, so the cell
+loads while streaming can be compared with and without it.
+
 The command exits 1 when a cell fails to build. Such a result does not compare with a
 clean run.
 
