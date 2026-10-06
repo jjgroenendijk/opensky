@@ -59,13 +59,11 @@ struct QuestRealDataTests {
     private func check(census: QuestCensus, quests: [Quest]) throws {
         checkExactSkyrimCounts(census)
 
-        // The only subrecords dropped are the three the Creation Kit wrote in
-        // an earlier version and xEdit marks unused (`wbUnused(SCHR/SCTX/QNAM)`
-        // under 'Log Entry', wbDefinitionsTES5.pas line 8820). Anything else in
-        // the tally is a layout the decoder does not really understand.
-        #expect(census.skipped.ranked.map(\.name).sorted() == [
-            "unknown QNAM", "unknown SCHR", "unknown SCTX"
-        ], "unexpected QUST subrecords were dropped: \(census.skipped.ranked)")
+        // Anything in the tally is a layout the decoder does not understand.
+        #expect(
+            census.skipped.ranked.isEmpty,
+            "QUST subrecords were dropped: \(census.skipped.ranked)"
+        )
         #expect(census.fragmentTailFailures == 0, "a QUST VMAD fragment tail failed to decode")
 
         // Every objective target names an alias its quest defines, and every

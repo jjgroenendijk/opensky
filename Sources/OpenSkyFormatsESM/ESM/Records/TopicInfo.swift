@@ -107,6 +107,7 @@ nonisolated public struct TopicInfo: Sendable {
     public private(set) var audioOutputOverride: FormID?
     /// VMAD's script list, including the decoded INFO fragment tail.
     public let script: ScriptData
+    public let legacyScriptBlocks: [LegacyScriptBlock]
     public let skipped: DialogueTally
 
     /// Result-script fragments, from the VMAD tail rather than from a field of
@@ -154,6 +155,7 @@ nonisolated public struct TopicInfo: Sendable {
         walkAwayTopic = contents.walkAwayTopic
         audioOutputOverride = contents.audioOutputOverride
         script = contents.script
+        legacyScriptBlocks = contents.legacyScriptBlocks
         skipped = contents.tally
     }
 }

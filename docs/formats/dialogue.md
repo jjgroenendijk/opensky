@@ -129,8 +129,8 @@ All five vanilla masters decode with no record errors.
 | HearthFires.esm | 482 | 1706 | 0 |
 | Dragonborn.esm | 2197 | 4421 | 19 |
 
-`Skyrim.esm` also has old script fields that OpenSky counts but does not read: `NEXT`,
-`QNAM`, and `SCHR`.
+`Skyrim.esm` also has old script fields that xEdit marks unused: `SCHR` and `QNAM`, closed by
+an empty `NEXT`. OpenSky keeps each run as one raw legacy script block.
 
 ## DLBR and DLVW
 

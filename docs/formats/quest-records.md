@@ -82,7 +82,8 @@ fields are present. The table uses the Creation Kit's order:
 
 A field of the wrong size is dropped. A field that arrives with no open group is dropped.
 An alias without `ALED` is kept. `SCHR`, `SCTX`, and `QNAM` inside a log entry are old
-fields that xEdit marks unused (`wbUnused(SCHR/SCTX/QNAM)`); they are skipped.
+fields that xEdit marks unused (`wbUnused(SCHR/SCTX/QNAM)`); the log entry keeps them as raw
+bytes.
 
 ## Vanilla quests
 
@@ -96,7 +97,7 @@ In `Skyrim.esm`:
 | objectives / objective targets | 1,452 / 1,808 |
 | aliases (reference / location) | 12,891 (11,999 / 892) |
 | fragment tables / stage fragments / alias script sections | 856 / 5,108 / 2,149 |
-| skipped fields | 53, all `SCHR`, `SCTX`, or `QNAM` |
+| legacy log entry fields | 53, all `SCHR`, `SCTX`, or `QNAM` |
 | conditions / different function indices | 11,427 / 90 |
 
 No quest repeats an alias ID. Every objective target names an alias of its own quest, every

@@ -174,6 +174,8 @@ nonisolated public struct MagicEffect: Equatable, Sendable {
     public let counterEffects: [FormID]
     public let sounds: [MagicEffectSound]
     public let conditions: ConditionList
+    /// VMAD — the Papyrus scripts a script-driven effect runs.
+    public let scriptData: ScriptData
     public let skipped: MagicEffectTally
 
     public init(record: ESMRecord, localized: Bool) throws {
@@ -194,6 +196,7 @@ nonisolated public struct MagicEffect: Equatable, Sendable {
         counterEffects = decoder.counterEffects
         sounds = decoder.sounds
         conditions = decoder.conditions
+        scriptData = decoder.scriptData
         skipped = decoder.skipped
     }
 }
@@ -209,6 +212,7 @@ nonisolated private struct MagicEffectFields {
     var counterEffects: [FormID] = []
     var sounds: [MagicEffectSound] = []
     var conditions = ConditionList()
+    var scriptData = ScriptData(ownerType: "MGEF")
     var skipped = MagicEffectTally()
 
     mutating func decode(_ field: ESMField) {
@@ -216,7 +220,7 @@ nonisolated private struct MagicEffectFields {
             if try keywords.decode(field: field) {
                 return
             }
-            if try conditions.decode(field: field) {
+            if try conditions.decode(field: field) || scriptData.decode(field: field) {
                 return
             }
             switch field.type {
@@ -227,7 +231,6 @@ nonisolated private struct MagicEffectFields {
             case "DATA": data = try MagicEffectData(field: field)
             case "ESCE": try appendCounterEffect(field)
             case "SNDD": try appendSound(field)
-            case "VMAD": skipped.note(.unknownField(field.type))
             default: skipped.note(.unknownField(field.type))
             }
         } catch {

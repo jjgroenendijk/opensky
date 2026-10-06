@@ -27,10 +27,7 @@ struct DialogueRealDataTests {
     ]
 
     private static let expectedSkips = [
-        "script alias object": 1365,
-        "unknown NEXT": 861,
-        "unknown QNAM": 1662,
-        "unknown SCHR": 1722
+        "script alias object": 1365
     ]
 
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))

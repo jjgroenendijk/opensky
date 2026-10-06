@@ -57,6 +57,9 @@ nonisolated extension Quest {
         public var text: LString?
         /// NAM0, a QUST this entry hands off to.
         public var nextQuest: FormID?
+        /// SCHR, SCTX, and QNAM left by older Creation Kit versions; xEdit
+        /// marks them unused. Raw bytes, in file order.
+        public var legacyFields: [Data] = []
     }
 
     /// One QOBJ group: an objective line in the journal and the map targets
