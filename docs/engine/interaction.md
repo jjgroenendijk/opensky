@@ -132,16 +132,30 @@ long as its session lasts, and only the session knows that.
 Activating a `FLOR` or `TREE` reference adds its `PFIG` produce to the player inventory and sets
 a harvested component on the reference. A produce that names an `LVLI` gives the list's
 deterministic pick, as container baselines do. A harvested reference shows `Harvested` in place
-of the action word, and activating it does nothing. The component is saved in the `HRVS` chunk
-([OpenSky save](/formats/opensky-save.md)).
+of the action word, and activating it does nothing. The component is saved in the `HRVS` and
+`HRVD` chunks ([OpenSky save](/formats/opensky-save.md)).
 
 OpenSky gives one produce item per harvest. The seasonal chances in `PFPC` show in the readout
 but do not change the yield yet. In the game a harvest can fail outside the right season, so a
 later change to the yield is deliberate, not a bug fix.
 
-Plants do not grow back. No cell-reset system exists yet. When one exists, clearing the
-harvested component is how a plant regrows. World > Inventory & Equipment > Harvest can clear
-it by hand.
+A plant grows back when its cell resets. In the game a cell resets after the player stays away
+for `iHoursToRespawnCell` game hours, read from the load order. The install has 240 hours, which
+is 10 game days ([UESP Respawning](https://en.uesp.net/wiki/Skyrim:Respawning)). The harvested
+component stores the game day of the harvest. A plant reads as harvested until that day plus the
+interval, then it can be harvested again. The rule is `HarvestRegrowth`, a pure function of the
+component and the game clock.
+
+OpenSky differs from the game in two ways:
+
+- The interval counts from the harvest, not from the player's last visit to the cell. OpenSky does
+  not track cell visits yet.
+- A cleared dungeon uses `iHoursToRespawnCellCleared` (720 hours) in the game. OpenSky does not
+  track cleared cells, so every plant uses the shorter interval.
+
+A harvest from a save written before regrowth has no day and never grows back on its own. World >
+Inventory & Equipment > Harvest shows when the plant under the crosshair grows back, and its
+`Grow back` button makes it grow back now.
 
 ## Where a drop lands
 

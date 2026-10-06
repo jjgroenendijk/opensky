@@ -34,7 +34,8 @@ extension FakeWorldProviders {
             stations: [Self.forgeEditorID],
             harvestTarget: HarvestTargetReadout(
                 name: "Mountain Flower", produce: "Blue Mountain Flower",
-                isHarvested: crafting.harvested
+                isHarvested: crafting.harvested,
+                daysUntilRegrowth: crafting.harvested ? 10 : nil
             ),
             lastCraftText: crafting.lastCraft,
             lastActionText: crafting.lastAction

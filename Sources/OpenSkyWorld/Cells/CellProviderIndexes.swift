@@ -53,6 +53,7 @@ nonisolated public struct CellProviderIndexes {
         let skillAdvancement: SkillAdvancementSettings
         let characterLevel: CharacterLevelSettings
         let level: ActorValueLevelSettings
+        let harvestRegrowth: HarvestRegrowth
         /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
         let store: GameSettingStore
 
@@ -70,6 +71,7 @@ nonisolated public struct CellProviderIndexes {
             skillAdvancement = SkillAdvancementSettings.resolve(store: settings)
             characterLevel = CharacterLevelSettings.resolve(store: settings)
             level = ActorValueLevelSettings.resolve(store: settings)
+            harvestRegrowth = HarvestRegrowth.resolve(store: settings)
             store = settings
         }
     }
@@ -178,6 +180,7 @@ nonisolated public struct CellProviderIndexes {
         stores.presentationRecords = records.loadOrder.presentation
         stores.menuRecords = records.loadOrder.menus
         stores.difficultySettings = tuning.difficulty
+        stores.harvestRegrowth = tuning.harvestRegrowth
         return stores
     }
 }

@@ -1,5 +1,5 @@
-// World > Inventory & Equipment > Harvest: the crosshair plant's produce and
-// harvested state, with a forced harvest and a reset.
+// World > Inventory & Equipment > Harvest: the crosshair plant's produce, harvested
+// state, and regrowth time, with a forced harvest and a forced regrowth.
 
 import AppKit
 import OpenSkyInventory
@@ -14,7 +14,7 @@ final class HarvestSection: PanelSectionViewController {
     }
 
     let harvestControl = NSButton(title: "Harvest", target: nil, action: nil)
-    let resetControl = NSButton(title: "Reset", target: nil, action: nil)
+    let resetControl = NSButton(title: "Grow back", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "HarvestStatsLabel")
 
@@ -36,7 +36,7 @@ final class HarvestSection: PanelSectionViewController {
             harvestControl, target: self, action: #selector(harvest),
             identifier: "HarvestForceControl"
         )
-        resetControl.toolTip = "Makes the plant under the crosshair harvestable again."
+        resetControl.toolTip = "Makes the plant under the crosshair grow back now."
         PanelComponents.configureButton(
             resetControl, target: self, action: #selector(reset),
             identifier: "HarvestResetControl"

@@ -38,7 +38,8 @@ final class InventoryWorldAdapter {
             inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
             references: streamer,
             catalog: items.equipmentCatalog,
-            pricing: (provider as? BarterDataProviding)?.barterPricing
+            pricing: (provider as? BarterDataProviding)?.barterPricing,
+            harvestRegrowth: items.harvestRegrowth
         )
         coordinator.wireCrafting(
             catalog: items.craftingCatalog, conditions: self, skills: game.progression
@@ -105,6 +106,10 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     var enchantmentCacheReadout: EnchantmentCacheReadout {
         game.magic.enchantmentCacheReadout
+    }
+
+    var gameDaysPassed: Float? {
+        game.renderer?.gameClock.daysPassed
     }
 
     /// Relabels the streamer's raw target. The HUD's copy is already labelled, and a

@@ -70,6 +70,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
         /// Absent `HRVS`: every plant is unharvested.
         public var harvests: [SaveHarvestEntry] = []
+        /// Absent `HRVD`: no harvest has a known day, so none grows back.
+        public var harvestDays: [SaveHarvestDayEntry] = []
         /// Absent `LOCK`: every lock is as its plugin placed it.
         public var locks: [SaveLockEntry] = []
         /// Absent `SCNS`: no scene is playing.

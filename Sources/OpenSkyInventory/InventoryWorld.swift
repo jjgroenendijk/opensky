@@ -31,6 +31,8 @@ public protocol InventoryWorld: AnyObject {
     /// The enchantment `item` carries, as worn by `owner`.
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String?
     var enchantmentCacheReadout: EnchantmentCacheReadout { get }
+    /// Game days passed, which harvest regrowth counts in. Nil without a clock.
+    var gameDaysPassed: Float? { get }
     /// Republishes the crosshair target, so a changed prompt label shows at once.
     func refreshInteractionTarget()
 }

@@ -67,6 +67,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var presentationRecords: PresentationRecordStore?
     /// The `fDiffMult*` GMSTs; the documented defaults on a synthetic scene.
     public var difficultySettings = DifficultySettings.synthetic
+    /// GMST-derived harvest regrowth, vanilla on a synthetic scene.
+    public var harvestRegrowth = HarvestRegrowth.vanilla
     /// The player record, races, and map markers; nil on a synthetic scene.
     public var menuRecords: MenuRecordData?
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic
