@@ -4,6 +4,7 @@
 
 import AppKit
 @testable import OpenSky
+import OpenSkyAssetCache
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
@@ -205,6 +206,8 @@ final class FakeWorldProviders: WorldControlProviders {
     /// FrameStatsProviding
     var frameStatsSnapshot = FrameStatsSnapshot.empty
     var worldLoadReport: WorldLoadReport?
+    var assetCache: AssetCacheReader?
+    var fastTextureLoad: FastTextureLoadControl?
     var sessionStartTiming = SessionStartTiming()
 
     /// SceneStatsProviding

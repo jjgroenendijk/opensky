@@ -159,7 +159,10 @@ entries written so far stay valid.
 A check reads only the entry headers. It reports the cache as current, partly built, not
 built, or stale. Stale wins, because a changed install or preset needs a rebuild.
 
-`openskycli asset-cache build` runs a build without the app ([CLI](/tools/cli.md)).
+`openskycli asset-cache build` runs a build without the app ([CLI](/tools/cli.md)). The app
+starts the same build from the launcher's Asset Cache page. In a running game, World > Asset
+Cache turns cache reads off and on, shows the hits and misses per kind, and shows the entries
+of one path.
 
 ## Fast resource loading
 
@@ -177,8 +180,9 @@ The fast loader runs only during a cell build:
 4. If the buffer fails, every texture of the batch is filled on the CPU from the same entry.
 
 A texture loaded outside a cell build, or a texture with no current entry, takes the CPU
-path. The setting "Fast texture loading" turns the fast loader on and off.
-`openskycli benchmark --asset-cache --fast-load` measures it.
+path. The setting "Fast texture loading" turns the fast loader on and off. In a running
+game, World > Asset Cache has the same switch and shows the textures, bytes, and time of
+the last cell load. `openskycli benchmark --asset-cache --fast-load` measures it.
 
 Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as

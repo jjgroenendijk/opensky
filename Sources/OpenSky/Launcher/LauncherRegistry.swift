@@ -2,7 +2,9 @@
 // page. A new page (mods, asset cache) is one descriptor in `LauncherRegistry`.
 
 import AppKit
+import OpenSkyGameData
 import OpenSkyLaunch
+import OpenSkyWorld
 
 /// What a launcher page may ask of the app.
 protocol LauncherActions: AnyObject {
@@ -54,6 +56,16 @@ enum LauncherRegistry {
             title: "Launch",
             symbolName: "play.circle",
             makeController: { LaunchPageViewController(actions: $0) }
+        ),
+        LauncherPageDescriptor(
+            id: "assetCache",
+            title: "Asset Cache",
+            symbolName: "internaldrive",
+            makeController: { _ in
+                AssetCachePageViewController(coordinator: AssetCacheCoordinator(
+                    store: AssetCachePageViewController.savedSettings()
+                ))
+            }
         ),
         LauncherPageDescriptor(
             id: "settings",

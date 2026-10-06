@@ -14,6 +14,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let firstPersonSection = FirstPersonSection()
     let frameSection = FrameStatsSection()
     let worldLoadSection = WorldLoadSection()
+    let assetCacheSection = AssetCacheSection()
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
     let trapSection = TrapSection()
@@ -50,6 +51,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { worldLoadSection.provider = worldLoadProvider }
     }
 
+    /// The cache the load read from, beside the load times it changes.
+    weak var assetCacheProvider: (any AssetCacheControlProviding)? {
+        didSet { assetCacheSection.provider = assetCacheProvider }
+    }
+
     weak var sceneStatsProvider: (any SceneStatsProviding)? {
         didSet { sceneSection.provider = sceneStatsProvider }
     }
@@ -74,7 +80,8 @@ final class WorldPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             cameraSection, cinematicSection, firstPersonSection, frameSection, worldLoadSection,
-            sceneSection, renderDebugSection, triggerSection, trapSection, loadingSection
+            assetCacheSection, sceneSection, renderDebugSection, triggerSection, trapSection,
+            loadingSection
         ]
     }
 

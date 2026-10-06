@@ -33,7 +33,7 @@ struct LauncherTests {
         ])
         #expect(LauncherRegistry.modes.map(\.mode) == LaunchMode.allCases)
         #expect(LauncherRegistry.pages.map(\.sidebarIdentifier) == [
-            "LauncherPage-launch", "LauncherPage-settings"
+            "LauncherPage-launch", "LauncherPage-assetCache", "LauncherPage-settings"
         ])
         #expect(LauncherRegistry.page(id: LauncherRegistry.defaultPageID) != nil)
     }
