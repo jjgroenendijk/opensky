@@ -181,6 +181,18 @@ nonisolated public struct RagdollWorld: Sendable {
         return excess
     }
 
+    /// Drops every ragdoll whose cell is not in `resident`, as a cell that leaves
+    /// residency drops its dynamic bodies.
+    /// - Returns: how many were dropped.
+    @discardableResult
+    public mutating func retainCells(_ resident: Set<CellSceneLocation>) -> Int {
+        let departing = cells.filter { !resident.contains($0.value) }.map(\.key)
+        for key in departing {
+            remove(key)
+        }
+        return departing.count
+    }
+
     public mutating func removeAll() {
         ragdolls.removeAll()
         cells.removeAll()

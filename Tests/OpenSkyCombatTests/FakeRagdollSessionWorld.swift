@@ -20,7 +20,10 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
         )
     )
 
+    static let cell = CellSceneLocation.interior(FormID(0x20))
+
     var ragdollResidents: [RagdollResident] = []
+    var residentRagdollCells: Set<CellSceneLocation> = [FakeRagdollSessionWorld.cell]
     var zeroHealth: Set<ReferenceKey> = []
     private(set) var murders: [ReferenceKey] = []
     var skeletonMeshPath = "meshes\\actors\\character\\character assets\\skeleton.nif"
@@ -46,7 +49,7 @@ final class FakeRagdollSessionWorld: RagdollSessionWorld {
         guard ragdollResidents.contains(where: { $0.key == key }) else { return nil }
         return RagdollActorPose(
             reference: Self.reference(of: key),
-            cell: .interior(FormID(0x20)),
+            cell: Self.cell,
             scale: scale,
             actorToWorld: matrix_identity_float4x4,
             skeletonMeshPath: skeletonMeshPath,

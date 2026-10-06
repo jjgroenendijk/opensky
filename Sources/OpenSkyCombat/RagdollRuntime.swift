@@ -270,6 +270,14 @@ public final class RagdollRuntime: DeathReporting {
         world.trim(to: limit)
     }
 
+    /// Stops simulating every corpse whose cell left `resident`. The death and its
+    /// resting transform stay in the store.
+    /// - Returns: how many stopped simulating.
+    @discardableResult
+    public func retainRagdolls(in resident: Set<CellSceneLocation>) -> Int {
+        world.retainCells(resident)
+    }
+
     /// Forgets every live ragdoll and every pending hand-off. The deaths
     /// themselves are the store's and survive.
     public func reset() {

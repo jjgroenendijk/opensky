@@ -54,6 +54,8 @@ nonisolated public struct RagdollActorPose: Sendable {
 public protocol RagdollSessionWorld: AnyObject {
     /// Resident actors in streaming order.
     var ragdollResidents: [RagdollResident] { get }
+    /// Every resident cell. A ragdoll in any other cell stops simulating.
+    var residentRagdollCells: Set<CellSceneLocation> { get }
     func hasZeroHealth(_ key: ReferenceKey) -> Bool
     func reportMurder(of key: ReferenceKey)
     /// Nil where the actor has no animation playback.

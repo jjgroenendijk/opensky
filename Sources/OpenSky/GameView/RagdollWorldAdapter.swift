@@ -61,6 +61,10 @@ extension RagdollWorldAdapter: RagdollSessionWorld {
         }
     }
 
+    var residentRagdollCells: Set<CellSceneLocation> {
+        game.streamer?.residentCellLocations ?? []
+    }
+
     func hasZeroHealth(_ key: ReferenceKey) -> Bool {
         guard
             let streamer = game.streamer,

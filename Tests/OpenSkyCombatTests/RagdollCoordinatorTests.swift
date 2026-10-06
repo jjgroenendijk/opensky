@@ -131,6 +131,26 @@ struct RagdollCoordinatorTests {
         #expect(coordinator.deathState(of: Self.near)?.isDead == true)
     }
 
+    /// A corpse whose cell unloads stops stepping; its death stays recorded.
+    @Test
+    func aRagdollInACellThatUnloadsStopsStepping() throws {
+        let session = Self.session()
+        let coordinator = session.coordinator
+        let world = session.world
+        world.selectedRagdollActor = Self.near
+        #expect(coordinator.triggerRagdoll())
+        let runtime = try #require(coordinator.runtime)
+        coordinator.advance(events: [], blendDuration: nil, delta: 1 / 60)
+        #expect(runtime.world.isRagdolling(Self.near))
+
+        world.residentRagdollCells = []
+        coordinator.advance(events: [], blendDuration: nil, delta: 1 / 60)
+
+        #expect(!runtime.world.isRagdolling(Self.near))
+        #expect(coordinator.ragdollStatsSnapshot.ragdollCount == 0)
+        #expect(coordinator.deathState(of: Self.near)?.isDead == true)
+    }
+
     @Test
     func thePanelSwitchesReachTheRuntime() throws {
         let session = Self.session()

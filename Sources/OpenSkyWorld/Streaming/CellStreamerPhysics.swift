@@ -63,6 +63,11 @@ extension CellStreamer {
         }
     }
 
+    /// Every resident cell: the interior, or the loaded exterior cells.
+    public var residentCellLocations: Set<CellSceneLocation> {
+        Set(residentDynamicBodyScenes().keys)
+    }
+
     private func residentDynamicBodyScenes() -> [CellSceneLocation: CellScene] {
         var resident: [CellSceneLocation: CellScene] = [:]
         if let interiorScene, let location = interiorScene.location {
