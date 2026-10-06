@@ -71,6 +71,11 @@
         },
         {
           "containerPath": "container:.",
+          "identifier": "OpenSkyAssetCache",
+          "name": "OpenSkyAssetCache"
+        },
+        {
+          "containerPath": "container:.",
           "identifier": "OpenSkyPhysics",
           "name": "OpenSkyPhysics"
         },
@@ -355,6 +360,14 @@
         "containerPath": "container:.",
         "identifier": "OpenSkyLaunchTests",
         "name": "OpenSkyLaunchTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
+        "identifier": "OpenSkyAssetCacheTests",
+        "name": "OpenSkyAssetCacheTests"
       }
     },
     {

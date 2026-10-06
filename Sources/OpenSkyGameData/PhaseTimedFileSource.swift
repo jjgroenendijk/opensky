@@ -27,4 +27,8 @@ nonisolated public struct PhaseTimedFileSource: GameFileSource {
     public func fileNames(inDirectory directory: String) -> [String] {
         base.fileNames(inDirectory: directory)
     }
+
+    public func provenance(forPath path: String) -> GameFileProvenance? {
+        base.provenance(forPath: path)
+    }
 }

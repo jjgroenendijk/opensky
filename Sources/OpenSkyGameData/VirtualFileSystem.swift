@@ -35,6 +35,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         let url: URL
         var archive: BSAArchive?
         var failedToOpen = false
+        var modified: Int64?
     }
 
     private struct Cache {
@@ -94,6 +95,36 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
             return try archive.contents(of: entry)
         }
         throw VFSError.fileNotFound(path: normalized)
+    }
+
+    /// A loose file reports its own size and time; an archive entry reports its
+    /// stored size and the archive's time.
+    public func provenance(forPath path: String) -> GameFileProvenance? {
+        guard let normalized = try? Self.normalize(path) else { return nil }
+        if let url = looseFileURL(for: normalized) {
+            let values = try? url.resourceValues(forKeys: [
+                .fileSizeKey,
+                .contentModificationDateKey
+            ])
+            return GameFileProvenance(
+                origin: GameFileProvenance.looseOrigin,
+                size: UInt64(values?.fileSize ?? 0),
+                modified: Int64(values?.contentModificationDate?.timeIntervalSince1970 ?? 0)
+            )
+        }
+        for index in 0 ..< archiveCount {
+            guard
+                let archive = openedArchive(at: index),
+                let entry = archive.entry(forPath: normalized)
+            else { continue }
+            let (name, modified) = archiveStamp(at: index)
+            return GameFileProvenance(
+                origin: name,
+                size: UInt64(entry.packedSize),
+                modified: modified
+            )
+        }
+        return nil
     }
 
     /// Every path any archive provides, one entry per path attributed to the
@@ -222,6 +253,20 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
             }
         }
         return nil
+    }
+
+    private func archiveStamp(at index: Int) -> (name: String, modified: Int64) {
+        cache.withLock { cache in
+            let slot = cache.archives[index]
+            if let modified = slot.modified {
+                return (slot.url.lastPathComponent, modified)
+            }
+            let date = try? slot.url.resourceValues(forKeys: [.contentModificationDateKey])
+                .contentModificationDate
+            let modified = Int64(date?.timeIntervalSince1970 ?? 0)
+            cache.archives[index].modified = modified
+            return (slot.url.lastPathComponent, modified)
+        }
     }
 
     /// Opens (parses tables of) the archive on first use. A failed open is

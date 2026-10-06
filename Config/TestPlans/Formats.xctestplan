@@ -71,6 +71,11 @@
         },
         {
           "containerPath": "container:.",
+          "identifier": "OpenSkyAssetCache",
+          "name": "OpenSkyAssetCache"
+        },
+        {
+          "containerPath": "container:.",
           "identifier": "OpenSkyPhysics",
           "name": "OpenSkyPhysics"
         },
