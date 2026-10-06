@@ -83,6 +83,15 @@ nonisolated public final class TextureLibrary {
         return texture
     }
 
+    /// Uploads DDS bytes made at runtime under `key`, so a material that names the
+    /// key finds them as if they came from an archive.
+    public func register(dds: Data, key: String, usage: TextureUsage) {
+        let normalized = (try? VirtualFileSystem.normalize(key)) ?? key
+        cache[CacheKey(path: normalized, usage: usage)] = loader.texture(
+            dds: dds, usage: usage, label: normalized
+        )
+    }
+
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1

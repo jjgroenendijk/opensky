@@ -151,10 +151,13 @@ These are Flash and Scaleform GFx built-ins with no spec behind them, rebuilt fr
 `Math.random` draws from a seeded xorshift64\* generator owned by the runtime, so a menu that animates
 on random values still draws the same frame twice.
 
-`MovieClipLoader` is a stub on purpose. It has the object and the listener protocol but never loads:
-there is no second movie to load, and vanilla never reaches outside the movie. `loadClip` reports
-`onLoadError` on the next tick, not at once, because Flash reports it later and a component that calls
-`loadClip` from its constructor must not be re-entered. CLIK's icon loader then gives up cleanly.
+`MovieClipLoader` loads only engine images. An image slot is a named blank bitmap that the engine
+adds to the movie before it starts, with a rectangle shape filled by it. `loadClip("img://name",
+target)` places that shape in the target at depth 0, then sends `onLoadStart`, `onLoadComplete`, and
+`onLoadInit` on the next tick. The engine paints the slot's texture later, so the picture can change
+without a reload. Any other URL, or a slot that does not exist, reports `onLoadError` on the next
+tick. Flash reports later too, and a component that calls `loadClip` from its constructor must not
+be re-entered. CLIK's icon loader then gives up cleanly.
 
 ## Left out on purpose
 
