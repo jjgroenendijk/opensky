@@ -40,7 +40,7 @@ nonisolated public struct ActorPresentationState: WorldStateComponent {
 }
 
 nonisolated extension WorldStateComponentKind {
-    public static let actorPresentation = Self(rawValue: "actorPresentation", order: 22)
+    public static let actorPresentation = Self(rawValue: "actorPresentation", order: 29)
 }
 
 @MainActor

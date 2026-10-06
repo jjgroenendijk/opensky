@@ -614,8 +614,8 @@ targets += feature(
         "OpenSkyFormatsMesh", "OpenSkyFormatsSWF", "OpenSkyGameData",
         "OpenSkyInventoryInterface", "OpenSkyMagicInterface", "OpenSkyPerceptionInterface",
         "OpenSkyPhysics", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
-        "OpenSkyRendering", "OpenSkyShaderTypes", "OpenSkyWorldFixtures",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyRendering", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
+        "OpenSkyWorldFixtures", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 
