@@ -104,6 +104,9 @@ nonisolated extension Quest {
                 try setDisplayTextOrDescription(field)
             case "QSTA":
                 try beginTarget(field)
+            case "SCHR", "SCTX", "QNAM":
+                guard openLogEntry != nil else { return false }
+                openLogEntry?.legacyFields.append(field.data)
             default:
                 return false
             }

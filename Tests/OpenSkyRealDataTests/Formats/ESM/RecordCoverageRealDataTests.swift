@@ -74,7 +74,7 @@ struct RecordCoverageRealDataTests {
 
     private static let pinnedTotal = 1_188_164
     /// Fields no decoder reads, summed over the install. docs/formats/records.md.
-    private static let pinnedUnknownFields = 4893
+    private static let pinnedUnknownFields = 0
 
     private static func writeReport(_ sweep: Sweep) {
         var lines = [

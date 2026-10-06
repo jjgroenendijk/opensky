@@ -5,6 +5,14 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated extension TopicInfo {
+    /// SCHR and QNAM, closed by NEXT: script leftovers from older Creation Kit
+    /// versions. xEdit marks them unused, so they stay raw.
+    public struct LegacyScriptBlock: Equatable, Sendable {
+        public var header: Data?
+        public var quest: Data?
+        public var isClosed = false
+    }
+
     public struct Contents: Sendable {
         public let localized: Bool
         public var editorID: String?
@@ -23,6 +31,7 @@ nonisolated extension TopicInfo {
         public var walkAwayTopic: FormID?
         public var audioOutputOverride: FormID?
         public var script = ScriptData(ownerType: "INFO")
+        public var legacyScriptBlocks: [LegacyScriptBlock] = []
         public var tally = DialogueTally()
         public var openResponse: Response?
 
@@ -71,9 +80,20 @@ nonisolated extension TopicInfo {
             case "ENAM": try decodeCurrentData(field)
             case "CNAM": favorLevel = try FavorLevel(rawValue: reader.readUInt8())
             case "RNAM": prompt = try LString(field: field, localized: localized)
+            case "SCHR": editLegacyBlock { $0.header = field.data }
+            case "QNAM": editLegacyBlock { $0.quest = field.data }
+            case "NEXT": editLegacyBlock { $0.isClosed = true }
             default: return false
             }
             return true
+        }
+
+        /// The open legacy block, or a new one when the last was closed by NEXT.
+        private mutating func editLegacyBlock(_ edit: (inout LegacyScriptBlock) -> Void) {
+            if legacyScriptBlocks.last?.isClosed ?? true {
+                legacyScriptBlocks.append(LegacyScriptBlock())
+            }
+            edit(&legacyScriptBlocks[legacyScriptBlocks.count - 1])
         }
 
         private mutating func decodeReference(_ field: ESMField) throws -> Bool {

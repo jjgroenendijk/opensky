@@ -39,7 +39,7 @@ All integers and floats are little-endian. A zero FormID means "no link".
 | `SNDD` | packed 8-byte entries | uint32 sound kind + `SNDR` link |
 | `DNAM` | lstring | magic-item description |
 | `CTDA`/`CITC`/`CIS1`/`CIS2` | condition run | the effect's own conditions |
-| `VMAD` | variable | script attachments; not read |
+| `VMAD` | variable | script attachments, decoded like other records ([scripts](/formats/vmad.md)) |
 
 `SNDD` holds 0 to 5 entries on the vanilla install (0, 8, 16, 24, 32, or 40 bytes). An empty
 `SNDD` is a valid empty list. A size that is not a multiple of 8 is malformed.
