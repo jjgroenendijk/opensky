@@ -13,12 +13,15 @@ nonisolated public struct MapMenuSnapshot: Equatable, Sendable {
     public let questTargets: [String]
     public let fastTravelEnabled: Bool
     public let lastResult: String?
+    public let inspectedMarker: String?
 
     public init(
         mode: String?, markerCount: Int, visibleCount: Int, discoveredCount: Int,
         selected: String?, cameraHeight: Float?, cameraPitch: Float?,
-        questTargets: [String], fastTravelEnabled: Bool, lastResult: String?
+        questTargets: [String], fastTravelEnabled: Bool, lastResult: String?,
+        inspectedMarker: String? = nil
     ) {
+        self.inspectedMarker = inspectedMarker
         self.mode = mode
         self.markerCount = markerCount
         self.visibleCount = visibleCount
@@ -43,6 +46,9 @@ public protocol MapMenuControlProviding: AnyObject {
     func sendMapInput(_ event: MenuInputEvent)
     func revealAllMapMarkers()
     func resetLocalMapFog()
+    func inspectMapWorldspace(offset: Int)
+    func inspectMapMarker(offset: Int)
+    func applyToInspectedMarker(_ action: MapMarkerAction)
 }
 
 /// Lets the app's provider object stand in for its `MapMenuCoordinator`.
@@ -81,5 +87,17 @@ extension MapMenuControlForwarding {
 
     public func resetLocalMapFog() {
         mapMenu.resetFog()
+    }
+
+    public func inspectMapWorldspace(offset: Int) {
+        mapMenu.inspectWorldspace(offset: offset)
+    }
+
+    public func inspectMapMarker(offset: Int) {
+        mapMenu.inspectMarker(offset: offset)
+    }
+
+    public func applyToInspectedMarker(_ action: MapMarkerAction) {
+        mapMenu.apply(action)
     }
 }

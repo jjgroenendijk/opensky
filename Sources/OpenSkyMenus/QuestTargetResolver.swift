@@ -4,8 +4,10 @@
 // See docs/engine/journal.md, quest markers.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyQuestsInterface
 
 /// One shown objective target, before its alias is resolved.
 nonisolated public struct QuestTargetRequest: Equatable, Sendable {
@@ -70,5 +72,46 @@ nonisolated public enum QuestTargetResolver {
             }
             return nil
         }
+    }
+}
+
+nonisolated extension QuestTargetResolver {
+    /// The targets of the shown, unfinished objectives. The game hides a target
+    /// whose `QSTA` conditions fail, so `conditionsPass` runs once per target.
+    public static func requests(
+        quest: Quest,
+        state: QuestRuntimeState,
+        text: (Quest.Objective) -> String,
+        conditionsPass: (Quest.Target) -> Bool
+    ) -> [QuestTargetRequest] {
+        quest.objectives.flatMap { objective in
+            let shown = state.objective(objective.index)
+            guard shown.isDisplayed, !shown.isCompleted else { return [QuestTargetRequest]() }
+            return objective.targets.map { target in
+                QuestTargetRequest(
+                    quest: quest.formID, text: text(objective),
+                    aliasID: target.aliasID, conditionsPass: conditionsPass(target)
+                )
+            }
+        }
+    }
+}
+
+nonisolated extension QuestTargetResolver {
+    /// A target's conditions run with its alias reference as the subject and the
+    /// player as the Target run-on: vanilla's most common check is `GetDead` on the
+    /// subject. No conditions pass. See docs/engine/world-map.md.
+    public static func conditionsPass(
+        _ target: Quest.Target,
+        quest: FormID,
+        evaluator: ConditionEvaluator,
+        alias: (Int32) -> ReferenceKey?
+    ) -> Bool {
+        guard !target.conditions.isEmpty else { return true }
+        var evaluator = evaluator
+        evaluator.context.aliasQuest = quest
+        evaluator.context.subject = alias(target.aliasID)
+        evaluator.context.target = .player
+        return evaluator.evaluate(target.conditions).isTrue
     }
 }

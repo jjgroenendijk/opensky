@@ -3,6 +3,7 @@
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyRendering
 import Testing
 
 @MainActor
@@ -28,8 +29,19 @@ private final class FakeRaceMenuWorld: RaceMenuWorld, MenuInputConsumer {
         closedCount += 1
     }
 
+    func racePresets(race: FormID, isFemale: Bool) -> [RacePreset] {
+        race == FormID(0x13746) ? [
+            RacePreset(name: "NordPreset01", face: PlayerFace(morphs: [0.5], weight: 20)),
+            RacePreset(name: "NordPreset02", face: PlayerFace(weight: 80))
+        ] : []
+    }
+
     var menuInputConsumer: (any MenuInputConsumer)? {
         self
+    }
+
+    var renderer: Renderer? {
+        nil
     }
 
     func handleMenuInput(_ event: MenuInputEvent) {}
@@ -102,6 +114,19 @@ struct RaceMenuCoordinatorTests {
     }
 
     @Test @MainActor
+    func aSliderStepReachesTheHeadAtOnce() {
+        let world = FakeRaceMenuWorld()
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: world)
+        menu.open(limited: true)
+        menu.route(.move(.down))
+        menu.route(.move(.right))
+        #expect(world.applied.count == 1, "the first slider applies while the menu is open")
+        menu.route(.move(.down))
+        #expect(world.applied.count == 1, "moving between rows changes nothing")
+    }
+
+    @Test @MainActor
     func openWithoutAnIdentityFails() {
         let world = FakeRaceMenuWorld()
         world.playerIdentity = nil
@@ -123,5 +148,42 @@ struct RaceMenuCoordinatorTests {
         menu.resetToRecord()
         #expect(world.applied.map(\.name) == ["Record"])
         #expect(menu.snapshot.lastResult == "Reset to the Player record")
+    }
+
+    @Test @MainActor
+    func presetsCycleTheRacesFacesAndTheReadoutShowsThem() {
+        let world = FakeRaceMenuWorld()
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: world)
+        menu.applyPreset(offset: 1)
+        #expect(world.applied.last?.face.weight == 20)
+        #expect(menu.lastResult == "Preset 1 of 2: NordPreset01")
+        world.playerIdentity = world.applied.last
+        #expect(menu.snapshot.face.contains("Sliders: Nose Length 0.50"))
+        menu.applyPreset(offset: 1)
+        #expect(world.applied.last?.face.weight == 80)
+        menu.applyPreset(offset: 1)
+        #expect(menu.lastResult == "Preset 1 of 2: NordPreset01", "the list wraps")
+        world.playerIdentity = PlayerIdentityState(race: FormID(0x1), isFemale: false, name: "A")
+        menu.applyPreset(offset: 1)
+        #expect(menu.lastResult == "No presets for this race")
+    }
+
+    @Test @MainActor
+    func movieRequestsReachTheHeadAndDoneCloses() throws {
+        let world = FakeRaceMenuWorld()
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: world)
+        menu.open(limited: false)
+        #expect(menu.snapshot.movie.error == "No game data located.")
+        let model = try #require(menu.model)
+        let morph = try #require(model.rows.firstIndex(of: .slider(0)))
+        menu.pendingMovieRequests = [.slider(id: morph, value: 0.5), .race(1)]
+        menu.applyMovieRequests(renderer: nil)
+        #expect(world.applied.last?.face.morphs.first == 0.5)
+        #expect(world.applied.last?.race == FormID(0x13748))
+        menu.pendingMovieRequests = [.done]
+        menu.applyMovieRequests(renderer: nil)
+        #expect(!menu.isOpen)
     }
 }

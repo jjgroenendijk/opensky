@@ -3,12 +3,14 @@
 // deaths and location changes into story events. The rules live in the
 // coordinators (docs/engine/scenes.md, docs/engine/story-manager.md).
 
+import Foundation
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMenus
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -56,6 +58,11 @@ final class StoryWorldAdapter {
         storyManager.story = data.storyManager
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
+        game.scripts.bridge?.logEntryEvaluator = { [weak self] in
+            ConditionEvaluator(
+                context: self?.conditionContext() ?? ConditionContext(), registry: .standard
+            )
+        }
         if let files = scripts?.scriptFileSystem {
             sessionStartLists = data.plugins.map {
                 PluginQuestList.load(plugin: $0.name, masters: $0.masters, files: files)
@@ -73,6 +80,19 @@ final class StoryWorldAdapter {
     /// A new game starts the same listed quests again over the cleared state.
     func rerunSessionStart() {
         runSessionStart(lists: sessionStartLists)
+    }
+
+    /// Its start-up stage moves the player to the opening, so it runs last.
+    func startOpeningQuest() {
+        guard let quest = questRuntime?.quests.formID(editorID: NewGameStart.openingQuest) else {
+            game.hud.showNotification("New game: no \(NewGameStart.openingQuest) quest")
+            return
+        }
+        do {
+            try startQuest(quest, event: nil)
+        } catch {
+            game.hud.showNotification("New game: \(NewGameStart.openingQuest) did not start")
+        }
     }
 
     /// Starts every listed quest, then attaches scripts once and runs the start-up stages.
@@ -173,6 +193,18 @@ extension StoryWorldAdapter: SceneWorld {
         return SceneCore.lineDuration(texts: info.responses.map { response in
             strings.flatMap { response.resolvedText(using: $0) }
         })
+    }
+
+    func sceneLineSpoken(_ line: SceneLine) {
+        guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { return }
+        let strings = game.dialogue.strings
+        let text = info.responses.compactMap { response in
+            strings.flatMap { response.resolvedText(using: $0) }
+        }.joined(separator: " ")
+        game.subtitles.say(
+            text, kind: .general, seconds: Double(lineDuration(of: info)),
+            now: Date().timeIntervalSinceReferenceDate
+        )
     }
 
     func stopQuest(_ quest: FormID) {

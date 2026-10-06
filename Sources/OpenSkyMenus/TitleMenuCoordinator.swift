@@ -10,9 +10,21 @@ public protocol TitleMenuWorld: AnyObject {
     var renderer: Renderer? { get }
     /// Shows the logo scene in place of the world, as the game does.
     func showTitleBackdrop(_ shown: Bool)
-    /// Clears the session, starts the opening quests, and opens the race menu.
-    func startNewGame()
+    /// Clears the session, starts the opening quests, and places the player.
+    func startNewGame(at start: NewGameStart)
     func quitApplication()
+}
+
+/// Where a new game puts the player.
+nonisolated public enum NewGameStart: Equatable, Sendable {
+    /// The vanilla opening: the opening quest moves the player and opens the race menu.
+    case vanilla
+    /// A cell by editor ID, for testing. The race menu opens at once.
+    case cell(String)
+
+    /// The game starts this quest on a new game by name: it is not start-game
+    /// enabled and no `.seq` file lists it (docs/engine/main-menu.md).
+    public static let openingQuest = "MQ101"
 }
 
 nonisolated public enum TitleMenuEntry: String, CaseIterable, Sendable {
@@ -70,6 +82,7 @@ public protocol TitleMenuControlProviding: AnyObject {
     func closeTitleMenu()
     func sendTitleMenuInput(_ event: MenuInputEvent)
     func setTitleMenuMovieEnabled(_ enabled: Bool)
+    func startNewGame(atCell editorID: String)
 }
 
 public final class TitleMenuCoordinator {
@@ -88,8 +101,15 @@ public final class TitleMenuCoordinator {
     public internal(set) var movieError: String?
     /// A row the movie picked during input, applied once the movie returns.
     var pendingRequest: TitleMenuMovieBridge.Request?
+    /// Load list calls from the movie, answered once its input event ends.
+    var pendingLoadCalls: [TitleMenuLoadBridge.Call] = []
+    var framePacer = MenuMovieFramePacer()
+    /// The saves of the character picked in the movie's Load list.
+    var loadListRows: [SaveSlotRow] = []
     /// The running load; one at a time.
     public private(set) var loadWork: Task<Void, Never>?
+    /// Reads the save list, then starts the movie.
+    private(set) var openWork: Task<Void, Never>?
     private let menuMode: MenuModeController
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
@@ -120,10 +140,20 @@ public final class TitleMenuCoordinator {
         loadPage = nil
         menuMode.inputConsumer = world?.menuInputConsumer
         menuMode.present(Self.identifier)
-        if movieEnabled {
-            startMovie()
+        guard let saves else {
+            if movieEnabled {
+                startMovie()
+            }
+            return
         }
-        refreshSaveRows()
+        // The movie reads Continue and Load from the save list once, at start.
+        openWork = Task {
+            let rows = await saves.refreshSaveRows()
+            self.loadPage?.replaceRows(rows)
+            if self.isOpen, self.movieEnabled, !self.movieLoaded {
+                self.startMovie()
+            }
+        }
     }
 
     public func close() {
@@ -173,14 +203,21 @@ public final class TitleMenuCoordinator {
             else { return }
             load(newest.slot)
         case .new:
-            close()
-            world?.startNewGame()
-            lastResult = "New game"
+            newGame(at: .vanilla)
         case .load:
             loadPage = SaveLoadPageModel(mode: .load, rows: saves?.saveRows ?? [])
             refreshSaveRows()
         case .quit:
             world?.quitApplication()
+        }
+    }
+
+    public func newGame(at start: NewGameStart) {
+        close()
+        world?.startNewGame(at: start)
+        switch start {
+        case .vanilla: lastResult = "New game"
+        case let .cell(editorID): lastResult = "New game at \(editorID)"
         }
     }
 
@@ -195,7 +232,7 @@ public final class TitleMenuCoordinator {
         }
     }
 
-    private func load(_ slot: String) {
+    func load(_ slot: String) {
         guard let saves, loadWork == nil else { return }
         lastResult = "Loading \(slot)"
         loadWork = Task {
@@ -261,5 +298,10 @@ extension TitleMenuControlForwarding {
 
     public func setTitleMenuMovieEnabled(_ enabled: Bool) {
         titleMenu.setMovieEnabled(enabled)
+    }
+
+    public func startNewGame(atCell editorID: String) {
+        let trimmed = editorID.trimmingCharacters(in: .whitespaces)
+        titleMenu.newGame(at: trimmed.isEmpty ? .vanilla : .cell(trimmed))
     }
 }

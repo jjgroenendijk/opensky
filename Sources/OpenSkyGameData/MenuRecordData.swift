@@ -9,16 +9,23 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
     public var revealDistance: Float
     public var visibleDistance: Float
     public var discoveryExperience: Int
+    /// `fFastTravelSpeedMult`. Skyrim.esm has no record of it, so the engine
+    /// default of 1 applies unless a plugin adds one.
+    public var fastTravelSpeedMultiplier: Float
 
     /// Measured in the install: 1000, 12500, and 10.
     public static let vanilla = Self(
         revealDistance: 1000, visibleDistance: 12500, discoveryExperience: 10
     )
 
-    public init(revealDistance: Float, visibleDistance: Float, discoveryExperience: Int) {
+    public init(
+        revealDistance: Float, visibleDistance: Float, discoveryExperience: Int,
+        fastTravelSpeedMultiplier: Float = 1
+    ) {
         self.revealDistance = revealDistance
         self.visibleDistance = visibleDistance
         self.discoveryExperience = discoveryExperience
+        self.fastTravelSpeedMultiplier = fastTravelSpeedMultiplier
     }
 
     public init(store: GameSettingStore) {
@@ -35,7 +42,10 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
             visibleDistance: number("iMapMarkerVisibleDistance", vanilla.visibleDistance),
             discoveryExperience: Int(number(
                 "iXPRewardDiscoverMapMarker", Float(vanilla.discoveryExperience)
-            ))
+            )),
+            fastTravelSpeedMultiplier: number(
+                "fFastTravelSpeedMult", vanilla.fastTravelSpeedMultiplier
+            )
         )
     }
 }
@@ -49,6 +59,8 @@ nonisolated public struct MenuRecordData: Sendable {
     public let playableRaces: [Race]
     public let markers: MapMarkerIndex
     public let tamriel: Worldspace?
+    /// Editor IDs of the master's WRLD records, for the marker inspector.
+    public let worldspaceEditorIDs: [UInt32: String]
     public let mapSettings: MenuMapSettings
     /// String GMSTs the menus show, such as `sNoFastTravelCombat`, by editor ID.
     public let menuTexts: [String: LString]
@@ -63,9 +75,13 @@ nonisolated public struct MenuRecordData: Sendable {
         let races = Self.records(in: file, of: "RACE").compactMap {
             try? Race(record: $0, localized: localized)
         }.filter { $0.flags.contains(.playable) }
-        let tamriel = Self.records(in: file, of: "WRLD").lazy.compactMap {
+        let worldspaces = Self.records(in: file, of: "WRLD").compactMap {
             try? Worldspace(record: $0, localized: localized)
-        }.first { $0.editorID == Self.tamrielEditorID }
+        }
+        let tamriel = worldspaces.first { $0.editorID == Self.tamrielEditorID }
+        worldspaceEditorIDs = worldspaces.reduce(into: [:]) { names, space in
+            names[space.formID.rawValue] = space.editorID
+        }
         self.player = player
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
         self.tamriel = tamriel

@@ -9,6 +9,10 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\startmenu.swf"
     public static let menuPath = "/MenuHolder/Menu_mc"
     public static let listPath = "\(menuPath)/MainListHolder/List_mc"
+    /// One panel lists the characters, then one character's saves.
+    public static let saveLoadPanelPath = "\(menuPath)/SaveLoadPanel_mc"
+    public static let saveLoadListPath = "\(saveLoadPanelPath)/List_mc"
+    static let saveLoadStates: Set = ["CharacterSelection", "SaveLoad"]
     public static let mainState = "Main"
     /// Ticks the list needs to lay out its rows after `sendMenuProperties`.
     public static let activationTicks = 20
@@ -23,7 +27,6 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
     public enum Request: String, CaseIterable, Sendable {
         case resume = "CONTINUE"
         case new = "NEW"
-        case load = "PopulateCharacterList"
         case credits = "OpenCreditsMenu"
         case quit = "QuitToDesktop"
     }
@@ -71,7 +74,23 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
         runtime.focusTarget = runtime.node(atPath: listPath, from: runtime.root)
     }
 
-    /// Leaves a row OpenSky does not draw yet, such as the save list.
+    /// The game moves key focus when the movie changes state; OpenSky owns the
+    /// focus target, so it follows the state here.
+    public static func followStateFocus(runtime: SWFMovieRuntime) {
+        let path: String
+        switch currentState(runtime: runtime) {
+        case mainState: path = listPath
+        case let state? where saveLoadStates.contains(state): path = saveLoadListPath
+        default: return
+        }
+        guard
+            let node = runtime.node(atPath: path, from: runtime.root),
+            runtime.focusTarget !== node
+        else { return }
+        runtime.focusTarget = node
+    }
+
+    /// Leaves a row OpenSky does not draw yet, such as the credits.
     public static func returnToMain(runtime: SWFMovieRuntime) {
         runtime.callMovie("StartState", atPath: menuPath, arguments: [.string(mainState)])
         runtime.focusTarget = runtime.node(atPath: listPath, from: runtime.root)

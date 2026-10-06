@@ -13,6 +13,8 @@ public protocol SceneWorld: SceneHost {
     var sceneFragments: (any SceneFragmentDispatching)? { get }
     /// Game seconds divided by the time scale.
     var sceneSeconds: Double { get }
+    /// A scene actor said a line, which the general subtitles may show.
+    func sceneLineSpoken(_ line: SceneLine)
 }
 
 @MainActor
@@ -106,7 +108,9 @@ public final class SceneCoordinator {
             switch event.step {
             case .began: playing.insert(event.scene)
             case .ended: playing.remove(event.scene)
-            case let .line(line): lines.append(line)
+            case let .line(line):
+                lines.append(line)
+                world?.sceneLineSpoken(line)
             default: break
             }
         }

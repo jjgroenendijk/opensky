@@ -35,7 +35,8 @@ the system that uses it at once.
 | Save on rest, wait, travel, pause | The autosave policy |
 | Start at title screen | Whether the session opens on the title menu |
 
-The two subtitle settings are stored but nothing shows subtitles yet.
+The two subtitle settings choose which lines the HUD shows
+([dialogue menu](/engine/dialogue-menu.md), "Subtitles").
 
 ## Autosaves
 

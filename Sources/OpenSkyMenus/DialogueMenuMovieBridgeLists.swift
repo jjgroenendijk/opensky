@@ -12,10 +12,14 @@ nonisolated extension DialogueMenuMovieBridge {
 
     /// Pushes the whole model into the movie. `InvalidateData` resets
     /// `iSelectedIndex` to -1, so the selection is written after it.
-    public static func publish(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
+    /// With `showsSubtitle` false, a line is said without its text, as the
+    /// dialogue subtitle setting asks.
+    public static func publish(
+        _ model: DialogueMenuModel, runtime: SWFMovieRuntime, showsSubtitle: Bool = true
+    ) {
         setSpeakerName(model.speaker, runtime: runtime)
         publishTopics(model, runtime: runtime)
-        publishLine(model, runtime: runtime)
+        publishLine(model, runtime: runtime, showsSubtitle: showsSubtitle)
         setMenuState(model.state, runtime: runtime)
     }
 
@@ -70,13 +74,15 @@ nonisolated extension DialogueMenuMovieBridge {
 
     /// Shows the line being said, or hides the subtitle and returns to the list.
     /// Both go through the movie's entry points so its own transition runs.
-    public static func publishLine(_ model: DialogueMenuModel, runtime: SWFMovieRuntime) {
+    public static func publishLine(
+        _ model: DialogueMenuModel, runtime: SWFMovieRuntime, showsSubtitle: Bool = true
+    ) {
         guard let line = model.line else {
             setSubtitle(nil, runtime: runtime)
             runtime.callMovie("ShowDialogueList", atPath: menuPath, arguments: [])
             return
         }
-        setSubtitle(line.text, runtime: runtime)
+        setSubtitle(showsSubtitle ? line.text : nil, runtime: runtime)
     }
 
     /// Writes the subtitle field and drives the movie's show/hide around it.

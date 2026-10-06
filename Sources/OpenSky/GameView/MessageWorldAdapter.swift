@@ -28,8 +28,10 @@ final class MessageWorldAdapter {
         cachedEditorIDs = nil
         game.messages.attach(world: self)
         // `onFrame` runs under a menu too, so notifications keep real time.
-        renderer.onFrame.add { [weak messages = game.messages] _ in
-            messages?.tick(time: Date().timeIntervalSinceReferenceDate)
+        renderer.onFrame.add { [weak messages = game.messages, weak subtitles = game.subtitles] _ in
+            let now = Date().timeIntervalSinceReferenceDate
+            messages?.tick(time: now)
+            subtitles?.advance(to: now)
         }
     }
 

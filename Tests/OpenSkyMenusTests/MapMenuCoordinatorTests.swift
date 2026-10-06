@@ -40,6 +40,17 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
         sites
     }
 
+    var mapMarkerWorldspaces = [
+        MapWorldspaceChoice(
+            formID: ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x3C),
+            name: "Tamriel"
+        )
+    ]
+
+    func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite] {
+        worldspace.objectID == 0x3C ? sites : []
+    }
+
     func storeMarkerState(_ state: MapMarkerState, for key: ReferenceKey) {
         if let index = sites.firstIndex(where: { $0.key == key }) {
             sites[index].state = state
@@ -103,6 +114,28 @@ struct MapMenuCoordinatorTests {
         #expect(world.localMapFog.exploredCount(.exterior(CellCoordinate(x: 0, y: 0))) > 0)
         menu.tick()
         #expect(world.notifications.count == 1, "no repeat before the player moves")
+    }
+
+    @Test @MainActor
+    func theInspectorRevealsDiscoversAndHidesOneMarker() {
+        let world = FakeMapWorld(sites: [
+            Self.site(1, "Riverwood", at: 900),
+            Self.site(2, "Whiterun", at: 5000)
+        ])
+        let menu = MapMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: world)
+        menu.inspectMarker(offset: -1)
+        menu.apply(.reveal)
+        #expect(world.sites[1].state == MapMarkerAction.reveal.state)
+        #expect(world.sites[0].state == Self.hidden, "only the inspected marker changes")
+        menu.apply(.discover)
+        #expect(world.sites[1].state.canTravelTo)
+        #expect(menu.snapshot
+            .inspectedMarker == "Whiterun (Tamriel, 2 of 2): shown, discovered, travel")
+        menu.apply(.hide)
+        #expect(world.sites[1].state == Self.hidden)
+        menu.inspectWorldspace(offset: 1)
+        #expect(menu.snapshot.inspectedMarker?.hasPrefix("Riverwood") == true)
     }
 
     @Test @MainActor
@@ -201,6 +234,18 @@ struct MapMenuCoordinatorTests {
             [request], alias: { _, _ in claw }, place: { _ in .heldBy(claw) }
         )
         #expect(loop.isEmpty)
+    }
+
+    @Test
+    func carryingMoreThanTheCapacityRefuses() {
+        #expect(FastTravelRule.isOverencumbered(carried: 300.5, capacity: 300))
+        #expect(!FastTravelRule.isOverencumbered(carried: 300, capacity: 300))
+        #expect(!FastTravelRule.isOverencumbered(carried: 999, capacity: nil))
+        var context = FastTravelContext()
+        context.overencumbered = true
+        #expect(FastTravelRule.refusal(context) == .overencumbered)
+        context.alarmed = true
+        #expect(FastTravelRule.refusal(context) == .alarm)
     }
 
     @Test

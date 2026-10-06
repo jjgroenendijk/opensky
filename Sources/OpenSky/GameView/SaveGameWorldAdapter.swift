@@ -124,9 +124,19 @@ final class SaveGameWorldAdapter: SaveGameService {
         let detail = summary.map {
             "Level \($0.level), \($0.locationName), \(playTimeText($0.playSeconds))"
         } ?? listing.error ?? ""
+        let thumbnail = listing.summary?.thumbnail
         return SaveSlotRow(
             slot: listing.slot, title: title, detail: detail, savedAt: savedAt,
-            hasThumbnail: listing.summary?.thumbnail != nil, error: listing.error
+            hasThumbnail: thumbnail != nil, error: listing.error,
+            character: summary.map {
+                SaveSlotCharacter(
+                    name: $0.characterName, race: $0.raceName, level: $0.level,
+                    playTime: playTimeText($0.playSeconds)
+                )
+            },
+            picture: thumbnail.map {
+                SaveSlotPicture(width: $0.width, height: $0.height, rgba: $0.rgba)
+            }
         )
     }
 

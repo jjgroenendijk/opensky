@@ -21,12 +21,17 @@ nonisolated public struct PlayerHUDSettings: Equatable, Sendable {
     public var compass: Bool
     public var floatingMarkers: Bool
     public var opacity: Float
+    public var subtitles: SubtitleSettings
 
-    public init(crosshair: Bool, compass: Bool, floatingMarkers: Bool, opacity: Float) {
+    public init(
+        crosshair: Bool, compass: Bool, floatingMarkers: Bool, opacity: Float,
+        subtitles: SubtitleSettings = SubtitleSettings(dialogue: false, general: false)
+    ) {
         self.crosshair = crosshair
         self.compass = compass
         self.floatingMarkers = floatingMarkers
         self.opacity = opacity
+        self.subtitles = subtitles
     }
 }
 
@@ -38,6 +43,8 @@ public final class PlayerSettingsCoordinator {
     /// The install's keys plus the player's remaps.
     public private(set) var bindings = InputBindings()
     private var controlMap: ControlMapFile?
+    /// The group the sidebar table shows.
+    public var inspectedGroup = PlayerSettingGroup.gameplay
 
     public init(store: PlayerSettingsStore) {
         self.store = store
@@ -109,7 +116,8 @@ public final class PlayerSettingsCoordinator {
                 sensitivity: Self.lookMultiplier(store.value(.lookSensitivity)),
                 inverted: store.bool(.invertLook)
             )
-        case .crosshair, .compass, .floatingMarkers, .hudOpacity:
+        case .crosshair, .compass, .floatingMarkers, .hudOpacity, .dialogueSubtitles,
+             .generalSubtitles:
             world.applyHUD(hud)
         case .difficulty:
             world.applyDifficulty(index: Int(store.value(.difficulty)))
@@ -124,7 +132,10 @@ public final class PlayerSettingsCoordinator {
         PlayerHUDSettings(
             crosshair: store.bool(.crosshair), compass: store.bool(.compass),
             floatingMarkers: store.bool(.floatingMarkers),
-            opacity: Float(store.value(.hudOpacity))
+            opacity: Float(store.value(.hudOpacity)),
+            subtitles: SubtitleSettings(
+                dialogue: store.bool(.dialogueSubtitles), general: store.bool(.generalSubtitles)
+            )
         )
     }
 

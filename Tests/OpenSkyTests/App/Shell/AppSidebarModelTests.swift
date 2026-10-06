@@ -17,7 +17,7 @@ struct AppSidebarModelTests {
                     "world", "playerLocomotion", "combatPhysics", "aiNavigation",
                     "environment",
                     "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
-                    "systemMenu", "characterMenus", "mapMenu",
+                    "systemMenu", "playerSettings", "characterMenus", "mapMenu",
                     "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
                     "runtimeState", "scripts", "journal"
                 ]

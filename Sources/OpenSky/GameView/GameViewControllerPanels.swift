@@ -23,6 +23,13 @@ import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 
+/// The Settings panel reads the settings coordinator, and combat for difficulty.
+extension GameViewController: PlayerSettingsControlForwarding {
+    var difficultyMultiplierLines: [String] {
+        combat.difficultyMultiplierLines
+    }
+}
+
 /// The Combat & Physics panel reads the coordinator.
 extension GameViewController: MeleeCombatControlProviding {
     var meleeCombatSnapshot: MeleeCombatSnapshot {

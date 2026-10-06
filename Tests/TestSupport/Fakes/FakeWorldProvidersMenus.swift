@@ -37,6 +37,11 @@ extension FakeWorldProviders {
         menuCalls.calls.append("title.close")
     }
 
+    func startNewGame(atCell editorID: String) {
+        menuCalls.titleOpen = false
+        menuCalls.calls.append("title.newGame(\(editorID))")
+    }
+
     func sendTitleMenuInput(_ event: MenuInputEvent) {
         menuCalls.calls.append("title.\(event)")
     }
@@ -64,8 +69,16 @@ extension FakeWorldProviders {
         menuCalls.calls.append("race.reset")
     }
 
+    func applyRacePreset(offset: Int) {
+        menuCalls.calls.append("race.preset(\(offset))")
+    }
+
     func setRaceMenuName(_ name: String) {
         menuCalls.calls.append("race.name(\(name))")
+    }
+
+    func setRaceMenuMovieEnabled(_ enabled: Bool) {
+        menuCalls.calls.append("race.movie(\(enabled))")
     }
 
     var mapMenuSnapshot: MapMenuSnapshot {
@@ -87,6 +100,18 @@ extension FakeWorldProviders {
 
     func resetLocalMapFog() {
         menuCalls.calls.append("map.resetFog")
+    }
+
+    func inspectMapWorldspace(offset: Int) {
+        menuCalls.calls.append("map.worldspace(\(offset))")
+    }
+
+    func inspectMapMarker(offset: Int) {
+        menuCalls.calls.append("map.marker(\(offset))")
+    }
+
+    func applyToInspectedMarker(_ action: MapMarkerAction) {
+        menuCalls.calls.append("map.\(action.rawValue)")
     }
 
     func closeMap() {

@@ -111,8 +111,15 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("display.specularityFade", .display, unit, "$Specularity Fade", 0.5),
         row("display.treeLODFade", .display, unit, "$Tree LOD Fade", 0.5),
         row("display.crosshair", .display, .toggle, "$Crosshair", 1, applied: true),
-        row("display.dialogueSubtitles", .display, .toggle, "$Dialogue Subtitles", 0),
-        row("display.generalSubtitles", .display, .toggle, "$General Subtitles", 0),
+        row(
+            "display.dialogueSubtitles",
+            .display,
+            .toggle,
+            "$Dialogue Subtitles",
+            0,
+            applied: true
+        ),
+        row("display.generalSubtitles", .display, .toggle, "$General Subtitles", 0, applied: true),
         row("display.ddofIntensity", .display, unit, "$DDOF Intensity", 1)
     ]
 

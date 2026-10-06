@@ -1,5 +1,5 @@
-// The vanilla main menu movie. A movie that does not load leaves the engine rows
-// in charge and a readout, never a thrown error.
+// The vanilla main menu movie, its Load list included. A movie that does not load
+// leaves the engine rows in charge and a readout, never a thrown error.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -34,12 +34,19 @@ extension TitleMenuCoordinator {
     func showMovie(_ result: Result<SWFMovieScene, AssetLoadFailure>) {
         guard let renderer = world?.renderer else { return }
         do {
-            try renderer.setSWFMovie(result.get())
+            try renderer.setSWFMovie(result.get().addingImageSlot(
+                TitleMenuLoadBridge.screenshotSlot,
+                width: TitleMenuLoadBridge.screenshotWidth,
+                height: TitleMenuLoadBridge.screenshotHeight
+            ))
             renderer.swfEnabled = true
             renderer.swfScale = 1
             let started = try renderer.startSWFRuntime { [weak self] runtime in
                 TitleMenuMovieBridge.prepare(runtime: runtime) { [weak self] request in
                     self?.pendingRequest = request
+                }
+                TitleMenuLoadBridge.prepare(runtime: runtime) { [weak self] call in
+                    self?.pendingLoadCalls.append(call)
                 }
             }
             guard started != nil else {
@@ -71,6 +78,7 @@ extension TitleMenuCoordinator {
         movieLoaded = false
         movieError = nil
         pendingRequest = nil
+        pendingLoadCalls = []
         world?.showTitleBackdrop(false)
         hud?.start()
     }
@@ -83,20 +91,21 @@ extension TitleMenuCoordinator {
         } catch {
             movieError = String(describing: error)
         }
+        answerLoadCalls(renderer: renderer)
         guard let request = pendingRequest else { return }
         pendingRequest = nil
         apply(request)
     }
 
-    /// The row the movie picked. Load and Credits have no vanilla screen yet,
-    /// so the movie goes back to its main rows.
+    /// The row the movie picked. Credits have no vanilla screen yet, so the movie
+    /// goes back to its main rows. Load runs in the movie (`answerLoadCalls`).
     func apply(_ request: TitleMenuMovieBridge.Request) {
         switch request {
         case .resume: activate(.resume)
         case .new: activate(.new)
         case .quit: activate(.quit)
-        case .load, .credits:
-            lastResult = request == .load ? "Load: use Continue" : "Credits: not shown"
+        case .credits:
+            lastResult = "Credits: not shown"
             try? world?.renderer?.updateSWFRuntime(TitleMenuMovieBridge.returnToMain(runtime:))
         }
     }

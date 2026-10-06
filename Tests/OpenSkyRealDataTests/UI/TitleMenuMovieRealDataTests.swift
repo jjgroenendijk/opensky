@@ -1,5 +1,6 @@
 // The main menu movie on the user's install: `startmenu.swf` still builds the
-// rows `TitleMenuMovieBridge` measured, and the keys reach the engine calls.
+// rows `TitleMenuMovieBridge` measured, and the keys reach the engine calls. Load
+// asks for the character list, and a picked character asks for its saves.
 
 import Foundation
 @testable import OpenSkyFormatsSWF
@@ -11,6 +12,7 @@ struct TitleMenuMovieRealDataTests {
     @MainActor
     private final class Requests {
         var seen: [TitleMenuMovieBridge.Request] = []
+        var loadCalls: [TitleMenuLoadBridge.Request] = []
     }
 
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot)) @MainActor
@@ -22,6 +24,7 @@ struct TitleMenuMovieRealDataTests {
         )
         let requests = Requests()
         TitleMenuMovieBridge.prepare(runtime: runtime) { requests.seen.append($0) }
+        TitleMenuLoadBridge.prepare(runtime: runtime) { requests.loadCalls.append($0.request) }
         runtime.start()
         TitleMenuMovieBridge.activate(runtime: runtime, hasSaves: true, version: "OpenSky")
         for _ in 0 ..< TitleMenuMovieBridge.activationTicks {
@@ -36,7 +39,16 @@ struct TitleMenuMovieRealDataTests {
             .button(.accept)
         ]
         press(keys, runtime: runtime)
-        #expect(requests.seen == [.resume, .new, .load])
+        #expect(requests.seen == [.resume, .new])
+        #expect(requests.loadCalls.first == .characters)
+        TitleMenuLoadBridge.fillCharacters(["Ada"], runtime: runtime)
+        for _ in 0 ..< TitleMenuMovieBridge.activationTicks {
+            runtime.advance()
+        }
+        TitleMenuMovieBridge.followStateFocus(runtime: runtime)
+        #expect(TitleMenuMovieBridge.currentState(runtime: runtime) == "CharacterSelection")
+        press([.button(.accept)], runtime: runtime)
+        #expect(requests.loadCalls.contains(.characterSelected))
         TitleMenuMovieBridge.returnToMain(runtime: runtime)
         #expect(TitleMenuMovieBridge.currentState(runtime: runtime) == "Main")
         let quit: [MenuInputEvent] = [

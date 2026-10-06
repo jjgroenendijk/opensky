@@ -90,8 +90,10 @@ one core busy the whole time.
 
 - References are named as `player`, `target` (the crosshair), or a hex FormID of a loaded
   reference. There is no editor-ID index for placed references.
-- `debug teleport --pos` and `--ref` stay in the current cell, because interior positions are
-  local to their cell. `--x --y` and `--cell` change cells.
+- `debug teleport --pos` stays in the current cell, because interior positions are local to
+  their cell. `--x --y` and `--cell` change cells.
+- `debug teleport --ref` with a loaded reference stays in the current cell. A form ID that is
+  not loaded is looked up in the exterior worldspaces of Skyrim.esm, and its cell loads first.
 - `debug teleport --cell` searches Skyrim.esm only. An interior is entered through one of its
   doors, so the player arrives at that door's marker.
 - `debug resurrect` clears the death record and refills the actor values; the ragdoll keeps

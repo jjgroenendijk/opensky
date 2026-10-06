@@ -1,9 +1,11 @@
 // Opens the race menu on the menu stack, routes keys and typed text to
-// `RaceMenuModel`, and hands the result to the world. The vanilla
-// `racesex_menu.swf` movie is not driven yet; see docs/engine/race-menu.md.
+// `RaceMenuModel`, and hands the result to the world. It shows the vanilla
+// `racesex_menu.swf` movie when it loads; see docs/engine/race-menu.md.
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyFormatsESM
+import OpenSkyRendering
 
 /// What the race menu reads from and writes to the running game.
 public protocol RaceMenuWorld: AnyObject {
@@ -16,7 +18,21 @@ public protocol RaceMenuWorld: AnyObject {
     func applyPlayerIdentity(_ identity: PlayerIdentityState)
     /// Fires `OnRaceSwitchComplete` on the player's scripts.
     func raceMenuClosed()
+    /// The race's preset faces (`RPRM` or `RPRF`), each read from its NPC_ record.
+    func racePresets(race: FormID, isFemale: Bool) -> [RacePreset]
     var menuInputConsumer: (any MenuInputConsumer)? { get }
+    var renderer: Renderer? { get }
+}
+
+/// One preset face a race offers in the race menu.
+nonisolated public struct RacePreset: Equatable, Sendable {
+    public let name: String
+    public let face: PlayerFace
+
+    public init(name: String, face: PlayerFace) {
+        self.name = name
+        self.face = face
+    }
 }
 
 nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
@@ -26,11 +42,16 @@ nonisolated public struct RaceMenuSnapshot: Equatable, Sendable {
     public let rows: [String]
     public let selectedIndex: Int
     public let lastResult: String?
+    /// The player's face now: weight, the slider values that are not 0, parts, and tints.
+    public let face: [String]
+    public let movie: TitleMenuMovieSnapshot
 
     public init(
         isOpen: Bool, isLimited: Bool, isEditingName: Bool, rows: [String], selectedIndex: Int,
-        lastResult: String?
+        lastResult: String?, face: [String] = [], movie: TitleMenuMovieSnapshot = .init()
     ) {
+        self.face = face
+        self.movie = movie
         self.isOpen = isOpen
         self.isLimited = isLimited
         self.isEditingName = isEditingName
@@ -47,20 +68,41 @@ public protocol RaceMenuControlProviding: AnyObject {
     func sendRaceMenuInput(_ event: MenuInputEvent)
     func setRaceMenuName(_ name: String)
     func resetPlayerIdentity()
+    func applyRacePreset(offset: Int)
+    func setRaceMenuMovieEnabled(_ enabled: Bool)
 }
 
 public final class RaceMenuCoordinator {
     public static let identifier: MenuIdentifier = "RaceSex Menu"
 
-    public private(set) var model: RaceMenuModel?
+    public internal(set) var model: RaceMenuModel?
     public private(set) var isEditingName = false
-    public private(set) var lastResult: String?
+    public internal(set) var lastResult: String?
+    /// The movie is the menu the player sees; the engine rows stay the fallback.
+    public private(set) var movieEnabled = true
+    public internal(set) var movieLoaded = false
+    public internal(set) var movieError: String?
+    /// Bumped by each open and close, so a movie decoded late opens only the newest.
+    var movieRequest = 0
+    /// Movie calls made during input, applied once the movie returns.
+    var pendingMovieRequests: [RaceMenuMovieBridge.Request] = []
+    var framePacer = MenuMovieFramePacer()
+    /// True from the HUD's suspension until it is started again.
+    var holdsLayer = false
+    let movies: SWFMovieSource?
+    let hud: HUDCoordinator?
     private var typedName = ""
+    /// The preset the sidebar applied last, so the next press moves on from it.
+    private var presetIndex: Int?
     private let menuMode: MenuModeController
-    private weak var world: (any RaceMenuWorld)?
+    private(set) weak var world: (any RaceMenuWorld)?
 
-    public init(menuMode: MenuModeController) {
+    public init(
+        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil
+    ) {
         self.menuMode = menuMode
+        self.movies = movies
+        self.hud = hud
     }
 
     public func attach(world: any RaceMenuWorld) {
@@ -79,10 +121,28 @@ public final class RaceMenuCoordinator {
         isEditingName = false
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
+        if movieEnabled {
+            startMovie()
+        }
         return true
     }
 
+    public func setMovieEnabled(_ enabled: Bool) {
+        guard enabled != movieEnabled else { return }
+        movieEnabled = enabled
+        guard isOpen else { return }
+        if enabled {
+            startMovie()
+        } else {
+            stopMovie()
+        }
+    }
+
     public func route(_ event: MenuInputEvent) {
+        if movieLoaded, let renderer = world?.renderer {
+            routeMovie(event, renderer: renderer)
+            return
+        }
         guard var model else { return }
         if isEditingName {
             switch event {
@@ -92,8 +152,13 @@ public final class RaceMenuCoordinator {
             }
             return
         }
+        let before = model.identity
         let action = model.handle(event)
         self.model = model
+        // A slider shows on the head at once, not only when the menu closes.
+        if model.identity != before, action != .done {
+            world?.applyPlayerIdentity(model.identity)
+        }
         switch action {
         case .done: close()
         case .editName: startName()
@@ -137,6 +202,7 @@ public final class RaceMenuCoordinator {
     public func close() {
         guard let model else { return }
         self.model = nil
+        stopMovie()
         isEditingName = false
         menuMode.dismiss(Self.identifier)
         world?.applyPlayerIdentity(model.identity)
@@ -152,6 +218,24 @@ public final class RaceMenuCoordinator {
         lastResult = "Reset to the Player record"
     }
 
+    /// Puts the next or previous preset face of the player's race on the player;
+    /// only while the menu is closed.
+    public func applyPreset(offset: Int) {
+        guard !isOpen, let world, var identity = world.playerIdentity else { return }
+        let presets = world.racePresets(race: identity.race, isFemale: identity.isFemale)
+        guard !presets.isEmpty else {
+            lastResult = "No presets for this race"
+            return
+        }
+        let index = presetIndex.map {
+            ($0 + offset % presets.count + presets.count) % presets.count
+        } ?? (offset < 0 ? presets.count - 1 : 0)
+        presetIndex = index
+        identity.face = presets[index].face
+        world.applyPlayerIdentity(identity)
+        lastResult = "Preset \(index + 1) of \(presets.count): \(presets[index].name)"
+    }
+
     public var snapshot: RaceMenuSnapshot {
         RaceMenuSnapshot(
             isOpen: isOpen,
@@ -164,7 +248,11 @@ public final class RaceMenuCoordinator {
                 }
             } ?? [],
             selectedIndex: model?.selectedIndex ?? 0,
-            lastResult: lastResult
+            lastResult: lastResult,
+            face: (model?.identity ?? world?.playerIdentity).map { Self.faceLines($0.face) } ?? [],
+            movie: TitleMenuMovieSnapshot(
+                isEnabled: movieEnabled, isLoaded: movieLoaded, error: movieError
+            )
         )
     }
 }
@@ -193,5 +281,35 @@ extension RaceMenuControlForwarding {
 
     public func setRaceMenuName(_ name: String) {
         raceMenu.setName(name)
+    }
+
+    public func applyRacePreset(offset: Int) {
+        raceMenu.applyPreset(offset: offset)
+    }
+
+    public func setRaceMenuMovieEnabled(_ enabled: Bool) {
+        raceMenu.setMovieEnabled(enabled)
+    }
+}
+
+extension RaceMenuCoordinator {
+    nonisolated static func faceLines(_ face: PlayerFace) -> [String] {
+        let labels = RaceMenuModel.sliderLabels + ["Vampire"]
+        let sliders = face.morphs.enumerated().filter { $0.element != 0 }.map { index, value in
+            let label = labels.indices.contains(index) ? labels[index] : "Slider \(index)"
+            return String(format: "%@ %.2f", label, value)
+        }
+        let tints = face.tints.map { tint in
+            String(
+                format: "mask %d rgb %d %d %d at %.2f", tint.maskIndex, tint.color.x, tint.color.y,
+                tint.color.z, tint.strength
+            )
+        }
+        return [
+            String(format: "Weight: %.0f", face.weight),
+            "Sliders: " + (sliders.isEmpty ? "all 0" : sliders.joined(separator: ", ")),
+            "Parts: " + face.parts.map(String.init).joined(separator: " "),
+            "Tints: " + (tints.isEmpty ? "none" : tints.joined(separator: "; "))
+        ]
     }
 }

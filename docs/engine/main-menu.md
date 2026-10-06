@@ -37,8 +37,8 @@ Differences from the game:
   OpenSky draws it through the loading screen's cover layer, so the world is hidden. The
   logo faces the camera with its +Y side, which was checked by eye in a capture. Any smoke
   or lighting effects of the original scene are not drawn.
-- Load needs the character list and save list callbacks, which OpenSky does not send yet.
-  Load and Credits return the movie to its main rows.
+- Credits returns the movie to its main rows. OpenSky has no credits roll.
+- Delete in the Load list does nothing. Saves are deleted in the System menu.
 - The movie has `ConfirmNewGame` and `ConfirmContinue` callbacks, so the game can ask a
   question before New and Continue. OpenSky does not call them and starts at once.
 
@@ -50,11 +50,57 @@ A new game:
 2. Sets the clock to the vanilla start time ([game clock](/engine/game-clock.md)).
 3. Starts the quests the load order's `.seq` files list
    ([story manager](/engine/story-manager.md)).
-4. Opens the race menu ([race menu](/engine/race-menu.md)).
+4. Starts `MQ101`, the opening quest, by its editor ID. Its record is not flagged to start
+   with the game, and no `.seq` file or default object names it. [WARNING] How the game
+   starts it is not confirmed; this is an observation of `Skyrim.esm`.
+5. Runs the quest's start-up stage. Its fragment moves the player to the reference in its
+   `PlayerStartMarker` alias, on the cart near Helgen, with `ObjectReference.MoveTo`. The
+   fragment reads each alias with `GetRef` ([quests](/engine/papyrus-quests.md)).
 
-In the game, the opening quest opens the race menu during the cart ride. OpenSky opens it
-right away, because the cart scene does not play yet. The player stays at OpenSky's start
-cell until a script moves them.
+The race menu then opens where `MQ101` calls `Game.ShowRaceMenu`
+([race menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart
+scene. OpenSky does not play that scene yet, so a new game waits in the cart. The race menu
+panel in the sidebar opens the menu by hand.
+
+`MoveTo` moves only the player, without the offset and rotation arguments. A target outside
+the loaded cells is looked up in the worldspace records of `Skyrim.esm`, off the main
+actor, and its cell loads before the player is placed. The title menu panel can also start
+a new game at a named cell; that test start opens the race menu at once.
+
+The `MQ101` fragment calls were read with the PEX disassembler into
+`.logs/probe-mq101/functions.txt`.
+
+## Load list
+
+Load opens two lists in the movie: the characters, then the saves of one character. The
+calls were read with the action disassembler.
+
+| Movie calls | Arguments | OpenSky answers |
+| --- | --- | --- |
+| `PopulateCharacterList` | list, batch size | Fills the list with `text`, `id`, `flags`, then calls `onFillCharacterListComplete(true)` |
+| `CharacterSelected` | id, flags, saving, list, batch size | Fills the list with the saves, then calls `onSaveLoadBatchComplete(true, n, n)` |
+| `PrepSaveGameScreenshot` | index | Paints the save's picture, then calls `ScreenshotReady` |
+| `IsOKtoLoad` | index | Calls `ConfirmOKToLoad` |
+| `LoadGame` | index | Loads the save |
+
+- Characters are sorted by their newest save. A save with no readable name is under
+  `Unknown`.
+- A save row has `text`, `fileNum`, `id`, `name`, `raceName`, `level`, `playTime`,
+  `dateString`, `corrupt`, `obsolete`, and `flags`.
+- The picture is an `img://BGSSaveLoadHeader_Screenshot` image of 192 by 108 pixels
+  ([SWF image slots](/engine/as2-display-runtime.md)). The save thumbnail is scaled to it by
+  nearest pixel. A save without one shows grey.
+- The menu opens after the save list is read, because the movie reads Continue and Load
+  once when it starts.
+- The movie advances once per frame at its own frame rate, at most 4 movie frames per
+  frame. A CLIK row press and a state change need these frames.
+- Key focus follows the movie state: the main rows in `Main`, and
+  `SaveLoadPanel_mc/List_mc` in `CharacterSelection` and `SaveLoad`. The characters and
+  the saves share that one list.
+- After a fill the list has no selected row, and a key does not move it. OpenSky selects
+  row 0, so Accept works at once.
+- The answers run after the movie event that asked, on the main actor. A list the movie
+  passed is read back from the runtime's last arguments of that call.
 
 ## Save list
 

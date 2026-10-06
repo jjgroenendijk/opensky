@@ -245,7 +245,9 @@ final class DialogueMenuController {
         }
         do {
             try renderer.updateSWFRuntime { runtime in
-                DialogueMenuMovieBridge.publish(model, runtime: runtime)
+                DialogueMenuMovieBridge.publish(
+                    model, runtime: runtime, showsSubtitle: game.subtitles.settings.dialogue
+                )
             }
         } catch {
             movieError = String(describing: error)
@@ -260,7 +262,7 @@ final class DialogueMenuController {
     /// `SubtitleText` carries the line.
     private func publishSubtitle() {
         guard game.hud.isLoaded, let renderer = game.renderer else { return }
-        let subtitle = isOpen ? model.subtitle : nil
+        let subtitle = isOpen && game.subtitles.settings.dialogue ? model.subtitle : nil
         do {
             try renderer.updateSWFRuntime { runtime in
                 HUDMovieBridge.setSubtitleText(subtitle, runtime: runtime)

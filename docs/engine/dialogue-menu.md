@@ -143,6 +143,10 @@ The renderer has one SWF layer, so the HUD and the dialogue menu never show toge
 conversation is open, the menu's own `SubtitleText` shows the line. A line is cleared when the
 player moves on and when the conversation ends.
 
+Two settings choose the lines. Dialogue subtitles cover the conversation the player is in.
+General subtitles cover lines that scene actors say nearby, shown on the HUD for the line's
+length.
+
 ## Input
 
 | Event | Effect |
