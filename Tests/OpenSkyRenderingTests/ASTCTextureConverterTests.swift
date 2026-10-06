@@ -17,7 +17,8 @@ struct ASTCTextureConverterTests {
     nonisolated private static let device: MTLDevice? = {
         guard
             let device = MTLCreateSystemDefaultDevice(),
-            device.supportsBCTextureCompression else { return nil }
+            device.supportsFamily(.metal4), device.supportsBCTextureCompression
+        else { return nil }
         return device
     }()
 
