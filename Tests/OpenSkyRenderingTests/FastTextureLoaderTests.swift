@@ -13,7 +13,13 @@ import Testing
 @MainActor
 @Suite(.tags(.gpu))
 struct FastTextureLoaderTests {
-    nonisolated private static let device: MTLDevice? = MTLCreateSystemDefaultDevice()
+    /// The readback runs on a Metal 4 queue, which the CI runner's virtual GPU lacks.
+    nonisolated private static let device: MTLDevice? = {
+        guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
+            return nil
+        }
+        return device
+    }()
 
     nonisolated private static var hasDevice: Bool {
         device != nil
