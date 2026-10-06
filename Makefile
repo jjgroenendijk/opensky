@@ -479,10 +479,13 @@ test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanit
 # milestone acceptance, never in CI. The RealData plan is the smoke set, the tests
 # tagged `.smoke`; ALL=1 runs the RealDataAll plan, every real-data test. PERF=1
 # runs the Perf plan, the tests tagged `.perf`, built optimized.
+# The checkout, for real-data tests that write into `.logs/`; the build cache is
+# outside it. Xcode passes TEST_RUNNER_ variables to the test process.
+real_env = TEST_RUNNER_OPENSKY_CHECKOUT="$(CURDIR)"
 test-real: link-shared ## Run the real-data smoke plan [ALL=1] [T='Suite/test()'] [CAP=MB] [PERF=1]
 	@$(call guarded,6144,$(if $(PERF), \
-		$(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
-		$(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan $(if $(ALL),RealDataAll,RealData)) \
+		$(real_env) $(XCB_RUN) test-perf $(XCB_PERF) $(call test_bundle,perf) -testPlan Perf, \
+		$(real_env) $(XCB_RUN) test-real $(XCB_TEST) $(call test_bundle,real) -testPlan $(if $(ALL),RealDataAll,RealData)) \
 		$(call only_testing,OpenSkyRealDataTests) $(coverage_flag),$(DERIVED_DATA)$(if $(PERF),-optimized))
 
 ##@ Test tools
