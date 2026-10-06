@@ -55,6 +55,8 @@ nonisolated public struct ResolvedBase: Sendable {
     public let modelPath: String?
     /// The base is flagged as a marker, so its model is not drawn either.
     public let isEditorMarker: Bool
+    /// MODS: the texture sets that replace single shapes of the model.
+    public let alternateTextures: [ModelData.AlternateTexture]
 }
 
 /// One resolved placement, sortable into instancing-ready order.
@@ -66,6 +68,8 @@ nonisolated public struct ResolvedInstance {
     /// Raw MODL path, for the bounds lookup in MeshLibrary.
     public let modelPath: String
     public let model: RenderModel
+    /// The base's MODS texture sets; empty for a model drawn as authored.
+    public let surface: ModelSurfaceOverride
     public let transform: float4x4
 }
 
@@ -110,6 +114,7 @@ nonisolated public final class CellSceneBuilder {
     public let distantLODBuilder: DistantLODBuilder?
     /// Built on first use, like every index below.
     public var statIndex: [UInt32: StaticObject]?
+    public var textureSetIndex: [UInt32: TextureSet]?
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
@@ -503,7 +508,12 @@ nonisolated extension CellSceneBuilder {
                 )
                 continue
             }
-            if let instance = loadInstance(ref: ref, modelPath: modelPath, counts: &counts) {
+            let surface = surface(for: resolved.alternateTextures)
+            if
+                let instance = loadInstance(
+                    ref: ref, modelPath: modelPath, surface: surface, counts: &counts
+                )
+            {
                 instances.append(instance)
             }
         }
@@ -514,6 +524,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated private func loadInstance(
         ref: PlacedReference,
         modelPath: String,
+        surface: ModelSurfaceOverride,
         counts: inout BuildCounts
     ) -> ResolvedInstance? {
         do {
@@ -521,7 +532,8 @@ nonisolated extension CellSceneBuilder {
                 sortKey: (try? VirtualFileSystem.normalize(modelPath)) ?? modelPath,
                 formID: ref.formID.rawValue,
                 modelPath: modelPath,
-                model: meshes.model(path: modelPath),
+                model: meshes.model(path: modelPath, surface: surface),
+                surface: surface,
                 transform: MatrixMath.placement(
                     position: ref.placement.position,
                     rotation: ref.placement.rotation,
