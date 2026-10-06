@@ -6,10 +6,18 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public enum ReferenceRecordSkipKind: Hashable, Sendable {
+nonisolated public enum ReferenceRecordSkipKind: SkipTallyKind {
     case unknownField(FourCC)
     case malformedField(FourCC)
     case unknownDefaultObjectTag(FourCC)
+
+    public var name: String {
+        switch self {
+        case let .unknownField(type): "unknown \(type)"
+        case let .malformedField(type): "malformed \(type)"
+        case let .unknownDefaultObjectTag(tag): "unknown default object tag \(tag)"
+        }
+    }
 }
 
 public typealias ReferenceRecordTally = SkipTally<ReferenceRecordSkipKind>

@@ -84,7 +84,9 @@ and the `0x01` flag decide what the cell is.
 | `EDID` | zstring | editor ID |
 | `MODL` | zstring | mesh path under `Data/`; absent for a marker |
 
-Not read: `MODT`, `DNAM` (maximum angle and material), `MNAM` (LOD models). `Skyrim.esm`
+The decoder also reads `OBND`, the `MODT` and `MODS` that follow `MODL`, `DNAM` (maximum
+angle, `MATO` material, and an SSE snow byte), and `MNAM` (four fixed 260-byte slots, each a
+zstring LOD mesh path followed by leftover bytes). `Skyrim.esm`
 has 9,720 STAT records; 9,712 have a model.
 
 Record-header bit 23 (`0x00800000`) means `Is Marker` on `ACTI`, `DOOR`, `FURN`, and `STAT`

@@ -26,6 +26,7 @@ nonisolated public struct SoundCategory: Sendable {
     public let parent: FormID?
     public let staticVolumeMultiplier: Float?
     public let defaultMenuValue: Float?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "SNCT" else {
@@ -43,6 +44,7 @@ nonisolated public struct SoundCategory: Sendable {
         // Field layouts:
         // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNCT
         // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -62,9 +64,10 @@ nonisolated public struct SoundCategory: Sendable {
             case "UNAM":
                 defaultMenuValue = try Self.readVolume(&reader, size: field.data.count)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
 
         self.editorID = editorID
         self.name = name
@@ -109,12 +112,19 @@ nonisolated public struct SoundDescriptor: Sendable {
     public let outputModel: FormID?
     public let looping: Looping?
     public let parameters: Parameters?
+    /// CTDA run that gates playback.
+    public let conditions: [Condition]
+    /// FNAM — flags written before form version 35; bit 4 is loop.
+    public let legacyFlags: UInt32?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "SNDR" else {
             throw ESMError.malformed("expected SNDR record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "SNDR")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var descriptorType: UInt32?
@@ -128,7 +138,7 @@ nonisolated public struct SoundDescriptor: Sendable {
         // Field layouts:
         // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SNDR
         // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -148,10 +158,13 @@ nonisolated public struct SoundDescriptor: Sendable {
             case "BNAM":
                 parameters = try Self.readParameters(&reader, size: field.data.count)
             default:
-                // Conditions and older-version fields do not affect playback here.
-                break
+                return false
             }
+            return true
         }
+        conditions = rest.conditions()
+        legacyFlags = rest.uint32("FNAM")
+        skipped = rest.finish()
 
         self.editorID = editorID
         self.descriptorType = descriptorType
@@ -225,6 +238,11 @@ nonisolated public struct SoundMarker: Sendable {
     public let formID: FormID
     public let editorID: String?
     public let descriptor: FormID?
+    public let bounds: ObjectBounds?
+    /// FNAM and SNDD: leftovers xEdit marks unused, kept raw.
+    public let legacyFNAM: Data?
+    public let legacySNDD: Data?
+    public let skipped: FieldTally
 
     /// Memberwise init for synthesized markers (e.g. when a SNDR FormID was
     /// stored directly on a DOOR/ACTI/CONT and the runtime resolves it
@@ -233,33 +251,43 @@ nonisolated public struct SoundMarker: Sendable {
         self.formID = formID
         self.editorID = editorID
         self.descriptor = descriptor
+        bounds = nil
+        legacyFNAM = nil
+        legacySNDD = nil
+        skipped = FieldTally()
     }
 
     public init(record: ESMRecord) throws {
         guard record.type == "SOUN" else {
             throw ESMError.malformed("expected SOUN record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "SOUN")
+        let recordID = rest.formID
+        formID = recordID
 
         var editorID: String?
         var descriptor: FormID?
         // Field layouts:
         // https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/SOUN
         // https://github.com/TES5Edit/TES5Edit/blob/dev-4.1.6/Core/wbDefinitionsTES5.pas
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
                 editorID = try reader.readZString()
             case "SDSC":
-                guard field.data.count == 4 else { continue }
+                guard field.data.count == 4 else { return true }
                 let formID = try FormID(reader.readUInt32())
                 descriptor = formID.isNull ? nil : formID
             default:
-                // FNAM and SNDD are obsolete, unused SOUN fields.
-                break
+                return false
             }
+            return true
         }
+        bounds = rest.bounds()
+        legacyFNAM = rest.bytes("FNAM")
+        legacySNDD = rest.bytes("SNDD")
+        skipped = rest.finish()
         self.editorID = editorID
         self.descriptor = descriptor
     }

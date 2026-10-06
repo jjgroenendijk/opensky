@@ -3,6 +3,27 @@ nonisolated public protocol SkipTallyKind: Hashable, Sendable {
     var name: String { get }
 }
 
+/// A tally a report can rank without knowing its reason type.
+nonisolated public protocol RankedSkipReport: Sendable {
+    /// Most frequent first; equal counts sort by name.
+    var ranked: [(name: String, count: Int)] { get }
+}
+
+nonisolated extension RankedSkipReport {
+    /// Ranks counts kept in separate per-reason maps, each name led by `prefix`.
+    public static func rank(
+        _ groups: [(prefix: String, counts: [some CustomStringConvertible: Int])]
+    ) -> [(name: String, count: Int)] {
+        var entries: [(name: String, count: Int)] = []
+        for group in groups {
+            for (key, count) in group.counts {
+                entries.append((name: "\(group.prefix) \(key)", count: count))
+            }
+        }
+        return entries.sorted { $0.count == $1.count ? $0.name < $1.name : $0.count > $1.count }
+    }
+}
+
 /// Reason-tagged count of what a decode or fill pass skipped. A census asserts
 /// against it, and a readout prints `ranked`.
 nonisolated public struct SkipTally<Kind: Hashable & Sendable>: Equatable, Sendable {
@@ -22,6 +43,12 @@ nonisolated public struct SkipTally<Kind: Hashable & Sendable>: Equatable, Senda
         counts[kind, default: 0] += count
     }
 
+    /// Takes one count back, for an item a second decoder read after all.
+    public mutating func unnote(_ kind: Kind) {
+        guard let count = counts[kind] else { return }
+        counts[kind] = count > 1 ? count - 1 : nil
+    }
+
     public mutating func merge(_ other: Self) {
         for (kind, count) in other.counts {
             note(kind, count: count)
@@ -29,7 +56,7 @@ nonisolated public struct SkipTally<Kind: Hashable & Sendable>: Equatable, Senda
     }
 }
 
-nonisolated extension SkipTally where Kind: SkipTallyKind {
+nonisolated extension SkipTally: RankedSkipReport where Kind: SkipTallyKind {
     /// Most frequent first; equal counts sort by name.
     public var ranked: [(name: String, count: Int)] {
         counts

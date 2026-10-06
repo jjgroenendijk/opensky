@@ -1,43 +1,56 @@
-// TXST texture set. Only the two maps terrain splatting needs are read.
+// TXST texture set: eight texture slots, decal data, and flags.
 // Layout and sources: docs/formats/land.md.
 
 import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct TextureSet: Sendable {
+    public struct Flags: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt16
+
+        public init(rawValue: UInt16) {
+            self.rawValue = rawValue
+        }
+
+        public static let noSpecularMap = Flags(rawValue: 0x0001)
+        public static let faceGenTextures = Flags(rawValue: 0x0002)
+        public static let modelSpaceNormalMap = Flags(rawValue: 0x0004)
+    }
+
+    /// The TX00-TX07 slot names, from xEdit dev-4.1.6.
+    public static let slotTypes: [FourCC] = [
+        "TX00", "TX01", "TX02", "TX03", "TX04", "TX05", "TX06", "TX07"
+    ]
+
     public let formID: FormID
     public let editorID: String?
-    /// TX00 — diffuse map path relative to Data/ (e.g. "textures\\...\\x.dds").
-    public let diffusePath: String?
+    public let bounds: ObjectBounds?
+    /// Texture paths relative to Data/, by slot: diffuse, normal/gloss,
+    /// environment mask or subsurface tint, glow or detail, height,
+    /// environment, multilayer, backlight or specular. Nil for an empty slot.
+    public let paths: [String?]
+    public let decal: DecalData?
+    public let flags: Flags
+    public let skipped: FieldTally
+
+    /// TX00 — diffuse map path (e.g. "textures\\...\\x.dds").
+    public var diffusePath: String? {
+        paths[0]
+    }
+
     /// TX01 — normal/gloss map path.
-    public let normalPath: String?
+    public var normalPath: String? {
+        paths[1]
+    }
 
     public init(record: ESMRecord) throws {
-        guard record.type == "TXST" else {
-            throw ESMError.malformed("expected TXST record, got \(record.type)")
-        }
-        formID = FormID(record.formID)
-
-        var editorID: String?
-        var diffusePath: String?
-        var normalPath: String?
-        for field in try record.fields() {
-            var reader = BinaryReader(field.data)
-            switch field.type {
-            case "EDID":
-                editorID = try reader.readZString()
-            case "TX00":
-                diffusePath = try reader.readZString()
-            case "TX01":
-                normalPath = try reader.readZString()
-            // Skipped for now: TX02-TX07 (specular/env/height/etc. maps),
-            // DODT (decal data), DNAM (texture set flags).
-            default:
-                break
-            }
-        }
-        self.editorID = editorID
-        self.diffusePath = diffusePath
-        self.normalPath = normalPath
+        var rest = try RecordFields(record: record, type: "TXST")
+        formID = rest.formID
+        editorID = rest.editorID()
+        bounds = rest.bounds()
+        paths = Self.slotTypes.map { rest.zstring($0) }
+        decal = rest.read("DODT") { try DecalData(&$0) }
+        flags = Flags(rawValue: rest.uint16("DNAM") ?? 0)
+        skipped = rest.finish()
     }
 }

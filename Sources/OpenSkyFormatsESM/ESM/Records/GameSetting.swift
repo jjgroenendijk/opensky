@@ -26,6 +26,7 @@ nonisolated public struct GameSetting: Equatable, Sendable {
 
     public let editorID: String
     public let value: Value
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "GMST" else {
@@ -36,6 +37,11 @@ nonisolated public struct GameSetting: Equatable, Sendable {
         let dataField = try Self.singleField("DATA", in: fields)
         editorID = try Self.decodeEditorID(editorField)
         value = try Self.decodeValue(dataField, editorID: editorID, localized: localized)
+        var skipped = FieldTally()
+        for field in fields where field.type != "EDID" && field.type != "DATA" {
+            skipped.note(.unknownField(field.type))
+        }
+        self.skipped = skipped
     }
 
     private static func singleField(_ type: FourCC, in fields: [ESMField]) throws -> ESMField {

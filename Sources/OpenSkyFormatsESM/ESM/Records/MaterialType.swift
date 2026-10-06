@@ -26,16 +26,25 @@ nonisolated public struct MaterialType: Equatable, Sendable {
         materialName.map(HavokMaterialHash.value(ofMaterialName:))
     }
 
+    /// CNAM — RGB the editor draws havok shapes of this material in, 0-1.
+    public let havokDisplayColor: SIMD3<Float>?
+    public let buoyancy: Float?
+    /// FNAM bit 0 stair material, bit 1 arrows stick.
+    public let flags: UInt32
+    public let skipped: FieldTally
+
     public init(record: ESMRecord) throws {
         guard record.type == "MATT" else {
             throw ESMError.malformed("expected MATT record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "MATT")
+        let recordID = rest.formID
+        formID = recordID
         var editorID: String?
         var materialName: String?
         var parent: FormID?
         var impactDataSet: FormID?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -51,9 +60,14 @@ nonisolated public struct MaterialType: Equatable, Sendable {
             // sticks arrows yet, and a field this decoder does not read cannot
             // go stale against the spec.
             default:
-                break
+                return false
             }
+            return true
         }
+        havokDisplayColor = rest.read("CNAM") { try $0.readFloat3() }
+        buoyancy = rest.float("BNAM")
+        flags = rest.uint32("FNAM") ?? 0
+        skipped = rest.finish()
         self.editorID = editorID
         self.materialName = materialName
         self.parent = parent
@@ -73,6 +87,10 @@ nonisolated public struct MaterialType: Equatable, Sendable {
         self.materialName = materialName
         self.parent = parent
         self.impactDataSet = impactDataSet
+        havokDisplayColor = nil
+        buoyancy = nil
+        flags = 0
+        skipped = FieldTally()
     }
 
     private static func readLink(

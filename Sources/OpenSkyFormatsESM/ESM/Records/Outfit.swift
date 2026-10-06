@@ -9,6 +9,7 @@ nonisolated public struct Outfit: Sendable {
     public let editorID: String?
     /// INAM — outfit contents, each an ARMO or LVLI FormID.
     public let items: [FormID]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "OTFT" else {
@@ -18,6 +19,7 @@ nonisolated public struct Outfit: Sendable {
 
         var editorID: String?
         var items: [FormID] = []
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -33,9 +35,10 @@ nonisolated public struct Outfit: Sendable {
                     try items.append(FormID(reader.readUInt32()))
                 }
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         self.items = items
     }

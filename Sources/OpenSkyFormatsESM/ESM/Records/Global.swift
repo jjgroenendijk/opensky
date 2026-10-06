@@ -63,6 +63,8 @@ nonisolated public struct Global: Equatable, Sendable {
         defaultValue.type
     }
 
+    public let skipped: FieldTally
+
     public init(record: ESMRecord) throws {
         guard record.type == "GLOB" else {
             throw ESMError.malformed("expected GLOB record, got \(record.type)")
@@ -73,6 +75,7 @@ nonisolated public struct Global: Equatable, Sendable {
         var editorID: String?
         var type = ValueType.float
         var rawValue: Float = 0
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -91,11 +94,10 @@ nonisolated public struct Global: Equatable, Sendable {
                 guard field.data.count == 4 else { continue }
                 rawValue = try reader.readFloat32()
             default:
-                // OBND and VMAD are listed by UESP as vestigial on GLOB —
-                // checked for by the game but never present in shipped data.
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         defaultValue = GlobalValue(type: type, rawValue: rawValue)
     }
@@ -107,6 +109,7 @@ nonisolated public struct Global: Equatable, Sendable {
         self.editorID = editorID
         self.isConstant = isConstant
         defaultValue = value
+        skipped = FieldTally()
     }
 }
 

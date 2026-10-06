@@ -79,21 +79,22 @@ nonisolated public struct Weapon: Sendable {
     /// BIDS — the IPDS a shield bash resolves through; nil when unset. Not the
     /// swing's set: UESP names the two separately and only bashing reads this.
     public let blockBashImpactDataSet: FormID?
+    /// The fields no game system reads yet: sounds, scope, first-person model.
+    public let details: WeaponDetails
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
-        guard record.type == "WEAP" else {
-            throw ESMError.malformed("expected WEAP record, got \(record.type)")
-        }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "WEAP", localized: localized)
+        formID = rest.formID
 
         var fields = InventoryItemFields()
         var payload = WeaponFields()
-        for field in try record.fields() {
-            if try fields.decode(field: field, localized: localized) {
-                continue
-            }
-            try payload.decode(field: field, localized: localized)
+        try rest.readEach { field in
+            try fields.decode(field: field, localized: localized)
+                || payload.decode(field: field, localized: localized)
         }
+        details = WeaponDetails(&rest)
+        skipped = rest.finish()
         self.fields = fields
         description = payload.description
         itemValue = payload.itemValue
@@ -134,7 +135,7 @@ nonisolated public struct Weapon: Sendable {
         var impactDataSet: FormID?
         var blockBashImpactDataSet: FormID?
 
-        mutating func decode(field: ESMField, localized: Bool) throws {
+        mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
             switch field.type {
             case "DESC":
                 description = try LString(field: field, localized: localized)
@@ -159,8 +160,9 @@ nonisolated public struct Weapon: Sendable {
             case "BIDS":
                 blockBashImpactDataSet = try InventoryItemFields.optionalFormID(field)
             default:
-                break
+                return false
             }
+            return true
         }
 
         /// DATA: uint32 value, float weight, uint16 damage.
@@ -220,5 +222,47 @@ nonisolated public struct Weapon: Sendable {
             onDeath: onDeath,
             effect: effect.isNull ? nil : effect
         )
+    }
+}
+
+/// WEAP fields beyond what combat reads. xEdit dev-4.1.6 names each one;
+/// docs/formats/item-records.md.
+nonisolated public struct WeaponDetails: Equatable, Sendable {
+    /// MOD3 group — the model shown while aiming through a scope.
+    public let scopeModel: ModelData?
+    /// EFSD — the EFSH shown while scoped.
+    public let scopeEffect: FormID?
+    /// NNAM — the node an embedded weapon attaches to.
+    public let embeddedWeaponNode: String?
+    /// WNAM — the STAT drawn in first person.
+    public let firstPersonModel: FormID?
+    /// BAMT — the MATT a block hits instead of the weapon's own.
+    public let alternateBlockMaterial: FormID?
+    public let attackSound: FormID?
+    public let attackSound2D: FormID?
+    public let attackLoopSound: FormID?
+    public let attackFailSound: FormID?
+    public let idleSound: FormID?
+    public let equipSound: FormID?
+    public let unequipSound: FormID?
+    /// VNAM — detection sound level: 0 loud, 1 normal, 2 silent, 3 very loud.
+    public let detectionSoundLevel: UInt32?
+    public let destructible: Destructible?
+
+    init(_ fields: inout RecordFields) {
+        scopeModel = fields.model(path: "MOD3", hashes: "MO3T", alternates: "MO3S")
+        scopeEffect = fields.formID("EFSD")
+        embeddedWeaponNode = fields.zstring("NNAM")
+        firstPersonModel = fields.formID("WNAM")
+        alternateBlockMaterial = fields.formID("BAMT")
+        attackSound = fields.formID("SNAM")
+        attackSound2D = fields.formID("XNAM")
+        attackLoopSound = fields.formID("NAM7")
+        attackFailSound = fields.formID("TNAM")
+        idleSound = fields.formID("UNAM")
+        equipSound = fields.formID("NAM9")
+        unequipSound = fields.formID("NAM8")
+        detectionSoundLevel = fields.uint32("VNAM")
+        destructible = fields.destructible()
     }
 }

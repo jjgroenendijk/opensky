@@ -36,7 +36,7 @@ struct MinorItemRecordTests {
         #expect(key.fields.keywords.keywords == [FormID(0x0009_14EF)])
         #expect(key.itemValue == .zero)
         #expect(key.isPlayable)
-        #expect(key.skipped.counts == [.unknownField("VMAD"): 1])
+        #expect(key.skipped.counts == [.malformedField("VMAD"): 1])
     }
 
     @Test func keyHeaderFlagMarksNonPlayable() throws {

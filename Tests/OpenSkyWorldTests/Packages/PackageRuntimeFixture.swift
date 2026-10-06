@@ -36,7 +36,8 @@ enum PackageRuntimeFixture {
             template: template.map(FormID.init),
             dataInputs: [],
             procedureTypes: procedureNames,
-            scriptData: ScriptData(ownerType: "PACK")
+            scriptData: ScriptData(ownerType: "PACK"),
+            skipped: FieldTally()
         )
     }
 

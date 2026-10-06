@@ -57,7 +57,9 @@ any other. Both sizes share these colors:
 | 44 | RGBX | Deep color |
 | 48 | RGBX | Reflection color |
 
-Each byte maps to 0...1. OpenSky does not read the other fields (fog, noise, displacement,
-textures). A cell with a missing or unknown `WATR` gets fixed fallback colors.
+Each byte maps to 0...1. The rest of `DNAM` (fog, noise, displacement) stays unread. The
+fields around it, such as opacity, flags, material, sounds, velocities, and noise texture
+paths, are read as xEdit dev-4.1.6 names them. The renderer does not use them yet. A cell
+with a missing or unknown `WATR` gets fixed fallback colors.
 
 Real data check: `WhiterunExterior17` (Tamriel 5,-4) has water and gives one plane.

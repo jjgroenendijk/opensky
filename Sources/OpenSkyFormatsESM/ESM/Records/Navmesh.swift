@@ -20,30 +20,51 @@ nonisolated public struct Navmesh: Sendable {
     /// NVNM. Required: a NAVM without geometry is structurally unusable, so
     /// its absence is a decode error rather than an empty mesh.
     public let geometry: NavmeshGeometry
+    /// ONAM — base objects whose placed references cut into the mesh.
+    public let baseObjects: [FormID]
+    /// PNAM/NNAM — vertex indices preferred, and refused, as connections to
+    /// neighbor meshes.
+    public let preferredConnectors: [UInt16]
+    public let nonConnectors: [UInt16]
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "NAVM" else {
             throw ESMError.malformed("expected NAVM record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "NAVM")
+        let recordID = rest.formID
+        formID = recordID
         var editorID: String?
         var geometry: NavmeshGeometry?
-        for field in try record.fields() {
+        try rest.readEach { field in
             switch field.type {
             case "EDID":
                 var reader = BinaryReader(field.data)
                 editorID = try reader.readZString()
             case "NVNM":
                 geometry = try NavmeshGeometry(data: field.data)
-            // Skipped: ONAM, PNAM, NNAM; path finding does not read them.
             default:
-                break
+                return false
             }
+            return true
         }
+        baseObjects = rest.formIDArray("ONAM")
+        preferredConnectors = rest.read("PNAM", Self.vertexIndices) ?? []
+        nonConnectors = rest.read("NNAM", Self.vertexIndices) ?? []
+        skipped = rest.finish()
         guard let geometry else {
             throw ESMError.malformed("NAVM \(FormID(record.formID)) has no NVNM field")
         }
         self.editorID = editorID
         self.geometry = geometry
+    }
+
+    private static func vertexIndices(_ reader: inout BinaryReader) throws -> [UInt16] {
+        var indices: [UInt16] = []
+        while reader.bytesRemaining >= 2 {
+            try indices.append(reader.readUInt16())
+        }
+        return indices
     }
 }

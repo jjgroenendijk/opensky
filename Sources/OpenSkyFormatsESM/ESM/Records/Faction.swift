@@ -6,7 +6,15 @@
 import Foundation
 import OpenSkyFormatsCore
 
-nonisolated public struct FactionDecodeTally: Equatable, Sendable {
+nonisolated public struct FactionDecodeTally: Equatable, RankedSkipReport {
+    public var ranked: [(name: String, count: Int)] {
+        Self.rank([
+            ("unknown", unknownFields),
+            ("malformed", malformedFields),
+            ("trailing bytes", trailingBytes)
+        ])
+    }
+
     public private(set) var malformedFields: [FourCC: Int] = [:]
     public private(set) var unknownFields: [FourCC: Int] = [:]
     /// Bytes past the last whole element of a packed array, or past the last

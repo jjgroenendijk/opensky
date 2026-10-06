@@ -26,6 +26,16 @@ nonisolated public struct PluginHeader: Sendable {
     public let description: String?
     /// MAST zstrings in file order; index order defines FormID master indices.
     public let masters: [String]
+    /// DATA after each MAST: 8 bytes xEdit leaves unexplained, kept raw.
+    public let masterData: [UInt64]
+    /// ONAM — the placed references and navmeshes this plugin overrides.
+    public let overriddenForms: [FormID]
+    /// SCRN screenshot and INTV, both unexplained, kept raw.
+    public let screenshot: Data?
+    public let intv: Data?
+    /// INCC — interior cell count.
+    public let interiorCellCount: UInt32?
+    public let skipped: FieldTally
 
     /// Whether FormIDs in strings-bearing fields point into lstring tables
     /// (`Strings/<plugin>_<lang>.strings` etc.) instead of inline text.
@@ -43,7 +53,8 @@ nonisolated public struct PluginHeader: Sendable {
         var author: String?
         var description: String?
         var masters: [String] = []
-        for field in try tes4.fields() {
+        var rest = try RecordFields(record: tes4, type: "TES4")
+        try rest.readEach { field in
             switch field.type {
             case "HEDR":
                 var reader = BinaryReader(field.data)
@@ -59,11 +70,16 @@ nonisolated public struct PluginHeader: Sendable {
             case "MAST":
                 try masters.append(Self.zstring(field, name: "MAST"))
             default:
-                // DATA (per-master uint64, always 0), ONAM, INTV, INCC, and
-                // any modder additions carry nothing OpenSky needs yet.
-                break
+                return false
             }
+            return true
         }
+        masterData = rest.readAll("DATA") { try $0.readUInt64() }
+        overriddenForms = rest.formIDArray("ONAM")
+        screenshot = rest.bytes("SCRN")
+        intv = rest.bytes("INTV")
+        interiorCellCount = rest.uint32("INCC")
+        skipped = rest.finish()
         guard let stats else {
             throw ESMError.malformed("TES4 record has no HEDR field")
         }

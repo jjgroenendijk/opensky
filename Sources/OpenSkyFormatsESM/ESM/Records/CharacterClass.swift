@@ -78,6 +78,9 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
     /// enters bleedout (CK "Class"). Decoded here so 15.6 does not have to
     /// re-open the record; nothing in this issue reads it.
     public let bleedoutDefault: Float
+    /// DESC — class description.
+    public let description: LString?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "CLAS" else {
@@ -88,6 +91,8 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         var editorID: String?
         var name: LString?
         var data = DecodedData()
+        var description: LString?
+        var skipped = FieldTally()
         for field in try record.fields() {
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -97,12 +102,16 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
                 name = try LString(field: field, localized: localized)
             case "DATA":
                 data = try Self.decodeDATA(field)
+            case "DESC":
+                description = try LString(field: field, localized: localized)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.editorID = editorID
         self.name = name
+        self.description = description
         attributeWeights = data.attributeWeights
         skillWeights = data.skillWeights
         bleedoutDefault = data.bleedoutDefault

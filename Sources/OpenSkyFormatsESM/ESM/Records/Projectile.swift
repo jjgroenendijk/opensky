@@ -105,17 +105,23 @@ nonisolated public struct Projectile: Equatable, Sendable {
         !flags.contains(.hitscan) && speed.isFinite && speed > 0
     }
 
-    public init(record: ESMRecord) throws {
+    /// FULL, model hashes, muzzle flash model, and destruction data.
+    public let details: ProjectileDetails
+    public let skipped: FieldTally
+
+    public init(record: ESMRecord, localized: Bool = false) throws {
         guard record.type == "PROJ" else {
             throw ESMError.malformed("expected PROJ record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "PROJ", localized: localized)
+        let recordID = rest.formID
+        formID = recordID
         var editorID: String?
         var bounds: ObjectBounds?
         var modelPath: String?
         var data = ProjectileData()
         var soundLevel: SoundLevel?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -130,9 +136,12 @@ nonisolated public struct Projectile: Equatable, Sendable {
                 guard field.data.count >= 4 else { break }
                 soundLevel = try SoundLevel(rawValue: reader.readUInt32())
             default:
-                break
+                return false
             }
+            return true
         }
+        details = ProjectileDetails(&rest)
+        skipped = rest.finish()
         self.editorID = editorID
         self.bounds = bounds
         self.modelPath = modelPath
@@ -189,6 +198,8 @@ nonisolated public struct Projectile: Equatable, Sendable {
         explosionTimer = 0
         self.collisionLayer = collisionLayer
         soundLevel = nil
+        details = ProjectileDetails()
+        skipped = FieldTally()
     }
 
     /// DATA decode kept out of `init` so the field switch stays inside the
@@ -264,5 +275,32 @@ nonisolated public struct Projectile: Equatable, Sendable {
             let id = try FormID(reader.readUInt32())
             return id.isNull ? nil : id
         }
+    }
+}
+
+/// PROJ fields flight does not read. xEdit dev-4.1.6 `PROJ`.
+nonisolated public struct ProjectileDetails: Equatable, Sendable {
+    public let name: LString?
+    /// MODT of the projectile model, raw.
+    public let modelTextureHashes: Data?
+    /// NAM1 — muzzle flash model path; NAM2 its texture hashes, raw.
+    public let muzzleFlashModelPath: String?
+    public let muzzleFlashTextureHashes: Data?
+    public let destructible: Destructible?
+
+    init() {
+        name = nil
+        modelTextureHashes = nil
+        muzzleFlashModelPath = nil
+        muzzleFlashTextureHashes = nil
+        destructible = nil
+    }
+
+    init(_ fields: inout RecordFields) {
+        name = fields.lstring("FULL")
+        modelTextureHashes = fields.bytes("MODT")
+        muzzleFlashModelPath = fields.zstring("NAM1")
+        muzzleFlashTextureHashes = fields.bytes("NAM2")
+        destructible = fields.destructible()
     }
 }

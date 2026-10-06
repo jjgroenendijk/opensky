@@ -42,6 +42,16 @@ nonisolated public struct RecordFields {
         return read(at: index, decode)
     }
 
+    /// Decodes the first unused field of `type` with a decoder that takes the whole field.
+    public mutating func field<Value>(
+        _ type: FourCC,
+        _ decode: (ESMField) throws -> Value
+    ) -> Value? {
+        guard let index = firstUnused(type) else { return nil }
+        let field = fields[index]
+        return read(at: index) { _ in try decode(field) }
+    }
+
     /// Decodes every unused field of `type`, in file order. A malformed one is left out.
     public mutating func readAll<Value>(
         _ type: FourCC,
@@ -63,6 +73,16 @@ nonisolated public struct RecordFields {
         } catch {
             tally.note(.malformedField(fields[index].type))
             return nil
+        }
+    }
+
+    /// Offers every unused field to `decode`, in file order, and marks the ones
+    /// it returns true for. A throw fails the whole record, as a required field does.
+    public mutating func readEach(_ decode: (ESMField) throws -> Bool) rethrows {
+        for index in fields.indices where !used[index] {
+            if try decode(fields[index]) {
+                used[index] = true
+            }
         }
     }
 

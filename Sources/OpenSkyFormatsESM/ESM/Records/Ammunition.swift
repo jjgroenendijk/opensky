@@ -29,6 +29,9 @@ nonisolated public struct Ammunition: Sendable {
     /// DATA base damage.
     public let damage: Float
     public let flags: Flags
+    /// DESC — inventory description.
+    public let description: LString?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "AMMO" else {
@@ -38,6 +41,8 @@ nonisolated public struct Ammunition: Sendable {
 
         var fields = InventoryItemFields()
         var data = AmmoData()
+        var description: LString?
+        var skipped = FieldTally()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
@@ -45,15 +50,19 @@ nonisolated public struct Ammunition: Sendable {
             switch field.type {
             case "DATA":
                 data = try AmmoData(field: field)
+            case "DESC":
+                description = try LString(field: field, localized: localized)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.fields = fields
         itemValue = ItemValue(value: data.value, weight: data.weight)
         projectile = data.projectile
         damage = data.damage
         flags = data.flags
+        self.description = description
     }
 
     /// DATA decode kept out of `init` so the field switch stays small.

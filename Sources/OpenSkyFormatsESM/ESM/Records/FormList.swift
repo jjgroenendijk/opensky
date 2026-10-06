@@ -15,6 +15,7 @@ nonisolated public struct FormList: Equatable, Sendable {
     public let entries: [FormID?]
     /// Number of LNAM payload tails shorter than one complete FormID.
     public let malformedEntryCount: Int
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "FLST" else {
@@ -24,6 +25,7 @@ nonisolated public struct FormList: Equatable, Sendable {
         var decodedEditorID: String?
         var decodedEntries: [FormID?] = []
         var malformedEntryCount = 0
+        var skipped = FieldTally()
         for field in try record.fields() {
             switch field.type {
             case "EDID":
@@ -39,9 +41,10 @@ nonisolated public struct FormList: Equatable, Sendable {
                     malformedEntryCount += 1
                 }
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         editorID = decodedEditorID
         entries = decodedEntries
         self.malformedEntryCount = malformedEntryCount

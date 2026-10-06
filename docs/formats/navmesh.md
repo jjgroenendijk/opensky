@@ -38,9 +38,9 @@ Where the two sources disagree, xEdit was right. See "The parent cell rule".
 | --- | --- | --- |
 | `EDID` | zstring | Editor ID. Rarely set |
 | `NVNM` | struct | Geometry. Required |
-| `ONAM` | FormID list | Base objects. Skipped |
-| `PNAM` | uint16 list | Preferred connector vertices. Skipped |
-| `NNAM` | uint16 list | Non-connector vertices. Skipped |
+| `ONAM` | FormID list | Base objects |
+| `PNAM` | uint16 list | Preferred connector vertices |
+| `NNAM` | uint16 list | Non-connector vertices |
 
 Header flags: bit 26 "AutoGen" and bit 31 "Navmesh Gen Cell". OpenSky reads neither.
 
@@ -160,7 +160,6 @@ mesh.
 
 | Skipped | Why |
 | --- | --- |
-| `NAVM ONAM`, `PNAM`, `NNAM` | Path finding does not use them |
 | The two CRC markers | Constant values. Nothing depends on them |
 | Cover triangle list | Checked, then dropped. Nothing uses cover yet |
 | Navmesh grid lists | A speed-up structure for a search OpenSky does not do. Size and bounds are kept |

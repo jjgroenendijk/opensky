@@ -73,16 +73,22 @@ nonisolated public struct MovementType: Equatable, Sendable {
     public let name: String?
     /// SPED. Nil when the record carries none or carries a truncated one.
     public let speeds: Speeds?
+    /// INAM anim change thresholds: directional and rotation speed in
+    /// radians, movement speed in units per second.
+    public let animChangeThresholds: SIMD3<Float>?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord) throws {
         guard record.type == "MOVT" else {
             throw ESMError.malformed("expected MOVT record, got \(record.type)")
         }
-        formID = FormID(record.formID)
+        var rest = try RecordFields(record: record, type: "MOVT")
+        let recordID = rest.formID
+        formID = recordID
         var editorID: String?
         var name: String?
         var speeds: Speeds?
-        for field in try record.fields() {
+        try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
             case "EDID":
@@ -92,12 +98,12 @@ nonisolated public struct MovementType: Equatable, Sendable {
             case "SPED":
                 speeds = Speeds(field: field.data)
             default:
-                // INAM is a float triple of directional-change thresholds that
-                // nothing in the engine reads yet, and is skipped rather than
-                // guessed at.
-                break
+                return false
             }
+            return true
         }
+        animChangeThresholds = rest.read("INAM") { try $0.readFloat3() }
+        skipped = rest.finish()
         self.editorID = editorID
         self.name = name
         self.speeds = speeds

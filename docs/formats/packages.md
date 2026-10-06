@@ -96,22 +96,31 @@ OpenSky does not guess its value.
 
 ## Procedure tree
 
-A template has `PNAM` procedure names (zstrings) after `XNAM`, in order. OpenSky
-recognizes travel, wander, sandbox, sleep, and eat. Patrol uses travel. OpenSky does not
-read the branch graph or the branch conditions yet.
+After `XNAM`, a template lists its branches. Each branch starts with an `ANAM` branch
+type. Its conditions, `PRCB` root data (branch count and flags), `PNAM` procedure type,
+`FNAM` success flag, `PKC2` data input indexes, `PFO2` flag overrides, and `PFOR` follow.
+`PFOR` has no explained layout, so it stays raw. OpenSky recognizes travel, wander,
+sandbox, sleep, and eat. Patrol uses travel.
+
+After the branches come the template's own data inputs. Each one is a `UNAM` index, a
+`BNAM` name, and a 4-byte `PNAM` public flag. The decoder tells this `PNAM` from a
+procedure `PNAM` by position, not by size, because a short procedure name such as `Sit`
+is also 4 bytes.
+
+## Events
+
+`POBA`, `POEA`, and `POCA` open the begin, end, and change events. Each has an `INAM`
+idle and a `PDTO` topic. `SCHR`, `SCDA`, `SCTX`, `QNAM`, and `TNAM` there are left over
+from older Creation Kit versions. xEdit marks them unused, so they stay raw.
 
 ## Errors and skipped fields
 
 A `PKDT`, `PSDT`, `PKCU`, `PLDT`, `PTDA`, or `PDTO` of the wrong size is an error. A `PACK`
 without `PKDT` or `PSDT` cannot be used and is an error.
 
-Not read yet:
-
-- Idle animations, combat style, and owner quest.
-- Template control fields `BNAM`, `PRCB`, `FNAM`, `PKC2`, `PFO2`, and `PFOR`.
-- The procedure branches and their conditions.
-- Public data details beyond type, value, and index.
-- Action fragments (`POBA`, `POEA`, `POCA`) beyond their `VMAD` data.
+The header also holds the idle animations (`IDLF`, `IDLC`, `IDLT`, `IDLA`), the combat
+style (`CNAM`), and the owner quest (`QNAM`). AI does not run the branch graph, the idle
+animations, or the events yet; the decoder only reads them.
 
 ## Whiterun example
 

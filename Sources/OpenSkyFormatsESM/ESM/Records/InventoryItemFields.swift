@@ -58,6 +58,8 @@ nonisolated public struct InventoryItemFields: Sendable {
     public var pickupSound: FormID?
     /// ZNAM — SNDR played on drop.
     public var dropSound: FormID?
+    /// VMAD — attached Papyrus scripts.
+    public var scriptData = ScriptData()
 
     public init() {}
 
@@ -66,7 +68,7 @@ nonisolated public struct InventoryItemFields: Sendable {
     /// layout is type-specific (8 bytes on MISC/INGR, 4 on ALCH, 10 on WEAP,
     /// 16 on BOOK, 16 or 20 on AMMO), so each record owns that case.
     public mutating func decode(field: ESMField, localized: Bool) throws -> Bool {
-        if try keywords.decode(field: field) {
+        if try keywords.decode(field: field) || scriptData.decode(field: field) {
             return true
         }
         var reader = BinaryReader(field.data)

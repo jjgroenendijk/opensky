@@ -11,6 +11,7 @@ nonisolated public struct MiscItem: Sendable {
     public let fields: InventoryItemFields
     /// DATA — gold value and carry weight.
     public let itemValue: ItemValue
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "MISC" else {
@@ -20,14 +21,18 @@ nonisolated public struct MiscItem: Sendable {
 
         var fields = InventoryItemFields()
         var itemValue = ItemValue.zero
+        var skipped = FieldTally()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
             }
             if field.type == "DATA" {
                 itemValue = try ItemValue(field: field)
+            } else {
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.fields = fields
         self.itemValue = itemValue
     }

@@ -55,6 +55,9 @@ nonisolated public struct Book: Sendable {
     public let teaches: Teaches
     /// DATA gold value and weight.
     public let itemValue: ItemValue
+    /// INAM — the STAT shown when the book is open in the inventory.
+    public let inventoryArt: FormID?
+    public let skipped: FieldTally
 
     public init(record: ESMRecord, localized: Bool) throws {
         guard record.type == "BOOK" else {
@@ -66,6 +69,8 @@ nonisolated public struct Book: Sendable {
         var text: LString?
         var inventoryDescription: LString?
         var data = BookData()
+        var inventoryArt: FormID?
+        var skipped = FieldTally()
         for field in try record.fields() {
             if try fields.decode(field: field, localized: localized) {
                 continue
@@ -77,10 +82,13 @@ nonisolated public struct Book: Sendable {
                 inventoryDescription = try LString(field: field, localized: localized)
             case "DATA":
                 data = try BookData(field: field)
+            case "INAM":
+                inventoryArt = try InventoryItemFields.optionalFormID(field)
             default:
-                break
+                skipped.note(.unknownField(field.type))
             }
         }
+        self.skipped = skipped
         self.fields = fields
         self.text = text
         self.inventoryDescription = inventoryDescription
@@ -88,6 +96,7 @@ nonisolated public struct Book: Sendable {
         kind = data.kind
         teaches = data.teaches
         itemValue = data.itemValue
+        self.inventoryArt = inventoryArt
     }
 
     /// DATA decode kept out of `init` so the field switch stays small.

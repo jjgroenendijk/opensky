@@ -3,7 +3,6 @@
 // session-stable `ReferenceKey`, which said-state is keyed by.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated public final class DialogueStore: Sendable {
