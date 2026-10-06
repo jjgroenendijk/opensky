@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
@@ -105,6 +106,31 @@ struct MagicCoordinatorTests {
         #expect(coordinator.selectedKnownSpell()?.displayName == known[1])
         coordinator.selectNextKnownSpell()
         #expect(coordinator.selectedKnownSpell()?.displayName == known[0])
+    }
+
+    /// The equip path: a spell readied in the right hand, then a one-handed sword
+    /// equipped there. The equip change takes the spell out of that hand.
+    @Test func equippingAWeaponReleasesTheSpellReadiedInItsHand() throws {
+        let world = FakeMagicWorld()
+        let equipment = FakeHandEquipment()
+        world.equipment = equipment
+        let coordinator = MagicCoordinator()
+        coordinator.attach(world: world)
+        try coordinator.wireCasting(
+            spellbook: SpellbookFixture.runtime(equipment: equipment).0,
+            values: FixedActorValues(),
+            spellPluginName: SpellbookFixture.pluginName,
+            baselines: nil
+        )
+        let spellbook = try #require(coordinator.caster).spellbook
+        let healing = SpellbookFixture.key(SpellbookFixture.Spell.healing)
+        spellbook.learn(healing, on: .player)
+        try spellbook.equip(healing, in: .right, on: .player)
+
+        equipment.worn = [FakeHandEquipment.oneHandedSword]
+        coordinator.equipmentChanged(on: .player)
+
+        #expect(spellbook.state(of: .player).rightHand == nil)
     }
 
     @Test func theConditionSeamCoversThePlayerAndResidents() throws {

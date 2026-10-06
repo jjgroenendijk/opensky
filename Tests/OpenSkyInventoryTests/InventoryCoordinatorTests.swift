@@ -46,7 +46,7 @@ struct InventoryCoordinatorTests {
             bounty
         }
 
-        func refreshWornEnchantments(on holder: InventoryHolder) {
+        func equipmentChanged(on holder: InventoryHolder) {
             refreshed.append(holder)
         }
 

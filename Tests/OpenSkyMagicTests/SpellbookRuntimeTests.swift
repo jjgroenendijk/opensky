@@ -5,6 +5,7 @@ import FeaturesTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
@@ -202,5 +203,32 @@ struct SpellbookRuntimeTests {
         spellbook.forget(healing, on: .player)
 
         #expect(spellbook.state(of: .player).rightHand == nil)
+    }
+
+    /// A sword equipped after a spell takes the right hand; the left keeps its spell.
+    @Test func aWornItemReleasesTheSpellInItsHand() throws {
+        let equipment = FakeHandEquipment()
+        let (spellbook, _) = try SpellbookFixture.runtime(equipment: equipment)
+        let healing = SpellbookFixture.key(SpellbookFixture.Spell.healing)
+        spellbook.learn(healing, on: .player)
+        try spellbook.equip(healing, in: .right, on: .player)
+        try spellbook.equip(healing, in: .left, on: .player)
+
+        equipment.worn = [FakeHandEquipment.oneHandedSword]
+        let released = spellbook.releaseHands(wornBy: .player, on: .player)
+
+        #expect(released == [healing])
+        #expect(spellbook.state(of: .player).rightHand == nil)
+        #expect(spellbook.state(of: .player).leftHand == healing)
+    }
+
+    @Test func nothingWornInAHandReleasesNothing() throws {
+        let (spellbook, _) = try SpellbookFixture.runtime(equipment: FakeHandEquipment())
+        let healing = SpellbookFixture.key(SpellbookFixture.Spell.healing)
+        spellbook.learn(healing, on: .player)
+        try spellbook.equip(healing, in: .right, on: .player)
+
+        #expect(spellbook.releaseHands(wornBy: .player, on: .player).isEmpty)
+        #expect(spellbook.state(of: .player).rightHand == healing)
     }
 }

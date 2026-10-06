@@ -205,6 +205,26 @@ public struct SpellbookRuntime: SpellbookAccess {
         return spell
     }
 
+    /// Empties every hand a worn item holds, so an item equipped after a spell
+    /// takes the hand. A no-op without an equipment runtime.
+    /// - Returns: the released spells, in key order.
+    @discardableResult
+    public func releaseHands(
+        wornBy inventory: InventoryHolder,
+        on holder: ActorValueHolder
+    ) -> [ReferenceKey] {
+        guard let equipment else { return [] }
+        let worn = equipment.equipped(on: inventory).reduce(into: HandSlots()) {
+            $0.formUnion(equipment.occupancy(of: $1).hands)
+        }
+        let state = state(of: holder)
+        let released = Set(SpellHand.allCases.compactMap { hand in
+            worn.contains(hand.slots) ? state.spell(in: hand) : nil
+        })
+        write(state.unequipping(worn), for: holder)
+        return released.sorted()
+    }
+
     // MARK: - Powers
 
     /// Marks `power` spent on whole game day `day`.

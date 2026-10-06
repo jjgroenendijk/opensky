@@ -129,7 +129,7 @@ The spellbook runtime owns readied spells in its own component. The two sides sh
 hands:
 
 - Readying a spell unequips the weapon or shield in that hand.
-- Equipping an item goes through the spellbook, which unequips a spell in the needed hand.
+- After an item is equipped, the spellbook empties every hand a worn item holds.
 
 A spell's `ETYP` needs one difference a weapon's never did. `BothHands` and `EitherHand` name the
 same two parents. They differ only in the "use all parents" byte of `DATA`, because the player

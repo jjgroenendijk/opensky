@@ -26,7 +26,7 @@ extension InventoryCoordinator {
         do {
             let change = try equipment.equip(chosen, on: holder)
             // After the write, so the refresh reads this equip's result.
-            world?.refreshWornEnchantments(on: holder)
+            world?.equipmentChanged(on: holder)
             return note(InventoryCore.equipSentence(
                 changed: change.changed,
                 item: name(of: chosen),
@@ -49,7 +49,7 @@ extension InventoryCoordinator {
             return note("\(label(target)) is wearing nothing.")
         }
         let changed = equipment.unequip(chosen, on: holder)
-        world?.refreshWornEnchantments(on: holder)
+        world?.equipmentChanged(on: holder)
         return note(changed
             ? "Unequipped \(name(of: chosen)) on \(label(target))."
             : "\(name(of: chosen)) was not equipped on \(label(target)).")
