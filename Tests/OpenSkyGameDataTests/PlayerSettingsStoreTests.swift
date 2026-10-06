@@ -33,6 +33,18 @@ struct PlayerSettingsStoreTests {
         #expect(second.model.keyBindings == ["Main Gameplay|Forward": 0x48])
     }
 
+    @Test func aTextValueSurvivesARestartAndUnknownTextIsIgnored() {
+        let disk = MemoryPersistence()
+        let first = PlayerSettingsStore(persistence: disk)
+        first.setText(.assetCacheFolder, to: "/Volumes/Fast/Cache")
+        first.setText(PlayerSettingID("unknown.text"), to: "x")
+        let second = PlayerSettingsStore(persistence: disk)
+        #expect(second.text(.assetCacheFolder) == "/Volumes/Fast/Cache")
+        #expect(second.text(PlayerSettingID("unknown.text")) == nil)
+        second.setText(.assetCacheFolder, to: "")
+        #expect(PlayerSettingsStore(persistence: disk).text(.assetCacheFolder) == nil)
+    }
+
     @Test func anUnreadableFileStartsFromDefaults() {
         let disk = MemoryPersistence()
         disk.data = Data("not json".utf8)

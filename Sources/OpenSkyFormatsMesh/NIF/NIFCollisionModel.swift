@@ -6,7 +6,7 @@ import Foundation
 import OpenSkyFormatsCore
 import simd
 
-nonisolated public struct NIFCollisionFilter: Equatable, Sendable {
+nonisolated public struct NIFCollisionFilter: Equatable, Sendable, BitwiseCopyable {
     /// NifTools SkyrimLayer raw value.
     public let layer: UInt8
     /// NifTools CollisionFilterFlags: biped part + MOPP/no-collision/link bits.
@@ -84,6 +84,29 @@ nonisolated public struct NIFCollisionBody: Sendable {
     public let transform: float4x4
     public let shapes: [NIFCollisionShape]
 
+    public init(
+        targetBlock: Int32, targetName: String?, bodyBlock: Int, carrier: NIFCollisionCarrier,
+        collisionObjectFlags: UInt16, worldFilter: NIFCollisionFilter,
+        rigidBodyFilter: NIFCollisionFilter, entityResponse: UInt8, rigidBodyResponse: UInt8,
+        dynamics: NIFRigidBodyDynamics, constraints: [NIFCollisionConstraint], bodyFlags: UInt16,
+        transform: float4x4, shapes: [NIFCollisionShape]
+    ) {
+        self.targetBlock = targetBlock
+        self.targetName = targetName
+        self.bodyBlock = bodyBlock
+        self.carrier = carrier
+        self.collisionObjectFlags = collisionObjectFlags
+        self.worldFilter = worldFilter
+        self.rigidBodyFilter = rigidBodyFilter
+        self.entityResponse = entityResponse
+        self.rigidBodyResponse = rigidBodyResponse
+        self.dynamics = dynamics
+        self.constraints = constraints
+        self.bodyFlags = bodyFlags
+        self.transform = transform
+        self.shapes = shapes
+    }
+
     /// Raw `hkMotionType` byte. `dynamics.motionSystem` names it.
     public var motionSystem: UInt8 {
         dynamics.rawMotionSystem
@@ -150,6 +173,11 @@ nonisolated public enum NIFCollisionGeometry: Sendable {
 nonisolated public struct NIFCollisionFailure: Equatable, Sendable {
     public let block: Int
     public let message: String
+
+    public init(block: Int, message: String) {
+        self.block = block
+        self.message = message
+    }
 }
 
 nonisolated public struct NIFCollisionModel: Sendable {
@@ -162,6 +190,15 @@ nonisolated public struct NIFCollisionModel: Sendable {
     public let unsupportedReachableBlocks: [String: Int]
     /// Per-root decode failures; other roots remain available.
     public let decodeFailures: [NIFCollisionFailure]
+
+    public init(
+        bodies: [NIFCollisionBody], unsupportedReachableBlocks: [String: Int],
+        decodeFailures: [NIFCollisionFailure]
+    ) {
+        self.bodies = bodies
+        self.unsupportedReachableBlocks = unsupportedReachableBlocks
+        self.decodeFailures = decodeFailures
+    }
 
     public var shapeCount: Int {
         bodies.reduce(0) { $0 + $1.shapes.count }

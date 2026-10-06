@@ -40,6 +40,9 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         "$5 Mins", "$10 Mins", "$15 Mins", "$30 Mins", "$45 Mins", "$60 Mins", "$Disabled"
     ]
 
+    /// Settings stored as text rather than as a number.
+    public static let textSettingIDs: Set<PlayerSettingID> = [.assetCacheFolder]
+
     public static let vanilla = PlayerSettingsCatalog(
         definitions: gameplay + display + audio + opensky
     )
@@ -142,6 +145,22 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Start at title screen",
             0,
             applied: true
+        ),
+        row("assetCache.enabled", .opensky, .toggle, "Use asset cache", 1, applied: true),
+        row(
+            "assetCache.limitGiB",
+            .opensky,
+            .slider(range: 0 ... 512, step: 1),
+            "Asset cache limit (GiB, 0 = preset)",
+            0,
+            applied: true
         )
     ]
+}
+
+nonisolated extension PlayerSettingID {
+    /// The asset cache folder path. No value means the default folder.
+    public static let assetCacheFolder = Self("assetCache.folder")
+    public static let assetCacheEnabled = Self("assetCache.enabled")
+    public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
 }

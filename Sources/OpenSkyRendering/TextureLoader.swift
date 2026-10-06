@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 
@@ -103,6 +104,91 @@ nonisolated public final class TextureLoader {
             }
         }
         return texture
+    }
+
+    /// A cached texture: the same levels the DDS path uploads, without the parse.
+    public func texture(ready: ReadyTexture, usage: TextureUsage, label: String) -> MTLTexture {
+        do {
+            return try upload(ready: ready, usage: usage, label: label)
+        } catch {
+            let reason = String(describing: error)
+            Self.logger.error(
+                "cached texture \(label, privacy: .public) failed (\(reason, privacy: .public))"
+            )
+            return placeholder(usage: usage)
+        }
+    }
+
+    public func upload(
+        ready: ReadyTexture,
+        usage: TextureUsage,
+        label: String
+    ) throws -> MTLTexture {
+        let texture = try Self.makeTexture(device: device, ready: ready, usage: usage, label: label)
+        Self.replaceLevels(of: texture, with: ready)
+        return texture
+    }
+
+    /// An empty shared texture with the format, size, and levels of `ready`.
+    static func makeTexture(
+        device: MTLDevice, ready: ReadyTexture, usage: TextureUsage, label: String
+    ) throws -> MTLTexture {
+        let isBC = !ready.format.isASTC && ready.format.blockDimension == 4
+        guard !isBC || device.supportsBCTextureCompression else {
+            throw TextureLoaderError.bcTextureCompressionUnsupported
+        }
+        let descriptor = MTLTextureDescriptor()
+        descriptor.textureType = .type2D
+        descriptor.pixelFormat = pixelFormat(for: ready.format, usage: usage)
+        descriptor.width = ready.width
+        descriptor.height = ready.height
+        descriptor.mipmapLevelCount = ready.mipCount
+        descriptor.usage = .shaderRead
+        descriptor.storageMode = .shared
+        guard let texture = device.makeTexture(descriptor: descriptor) else {
+            throw TextureLoaderError.textureAllocationFailed
+        }
+        texture.label = label
+        return texture
+    }
+
+    static func replaceLevels(of texture: MTLTexture, with ready: ReadyTexture) {
+        ready.bytes.withUnsafeBytes { bytes in
+            guard let base = bytes.baseAddress else { return }
+            for level in 0 ..< ready.mipCount {
+                texture.replace(
+                    region: MTLRegionMake2D(
+                        0,
+                        0,
+                        ready.width(level: level),
+                        ready.height(level: level)
+                    ),
+                    mipmapLevel: level,
+                    withBytes: base + ready.levelRange(level).lowerBound,
+                    bytesPerRow: ready.bytesPerRow(level: level)
+                )
+            }
+        }
+    }
+
+    public static func pixelFormat(
+        for format: ReadyTextureFormat,
+        usage: TextureUsage
+    ) -> MTLPixelFormat {
+        let srgb = usage == .color
+        switch format {
+        case .bc1: return srgb ? .bc1_rgba_srgb : .bc1_rgba
+        case .bc2: return srgb ? .bc2_rgba_srgb : .bc2_rgba
+        case .bc3: return srgb ? .bc3_rgba_srgb : .bc3_rgba
+        case .bc4: return .bc4_rUnorm
+        case .bc5: return .bc5_rgUnorm
+        case .bc7: return srgb ? .bc7_rgbaUnorm_srgb : .bc7_rgbaUnorm
+        case .rgba8: return srgb ? .rgba8Unorm_srgb : .rgba8Unorm
+        case .bgra8: return srgb ? .bgra8Unorm_srgb : .bgra8Unorm
+        case .astc4x4: return srgb ? .astc_4x4_srgb : .astc_4x4_ldr
+        case .astc6x6: return srgb ? .astc_6x6_srgb : .astc_6x6_ldr
+        case .astc8x8: return srgb ? .astc_8x8_srgb : .astc_8x8_ldr
+        }
     }
 
     /// xRGB stores B,G,R,X bytes per little-endian channel masks. Metal's

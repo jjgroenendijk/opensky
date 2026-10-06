@@ -3,6 +3,7 @@
 // collision caches without a second residency graph.
 
 import Foundation
+import OpenSkyAssetCache
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 
@@ -15,6 +16,8 @@ nonisolated public final class NIFCollisionLibrary {
     private let fileSystem: any GameFileSource
     private var cache: [String: NIFCollisionModel] = [:]
     private var touchedKeys: Set<String> = []
+    /// Converted collision models, read before the NIF when current.
+    public var assetCache: AssetCacheReader?
 
     public init(fileSystem: any GameFileSource) {
         self.fileSystem = fileSystem
@@ -25,6 +28,10 @@ nonisolated public final class NIFCollisionLibrary {
         touchedKeys.insert(key)
         if let cached = cache[key] {
             return cached
+        }
+        if let converted = assetCache?.value(forPath: key, decoder: .collision) {
+            cache[key] = converted
+            return converted
         }
         let data: Data
         do {

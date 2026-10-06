@@ -2,9 +2,11 @@
 // not depend on each other build in parallel child tasks.
 
 import Metal
+import OpenSkyAssetCache
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
 
@@ -27,7 +29,8 @@ nonisolated extension CellProviderIndexes {
         device: any MTLDevice,
         localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore,
-        progress: WorldLoadProgress = .silent
+        progress: WorldLoadProgress = .silent,
+        assetCache: AssetCacheReader? = nil
     ) async throws -> sending CellSession {
         let esmURL = root.dataURL.appending(path: "Skyrim.esm")
         let file = try progress.measure(.masterFile) { try ESMFile(url: esmURL) }
@@ -49,8 +52,7 @@ nonisolated extension CellProviderIndexes {
         let (runner, formIDResolver) = try progress.measure(.assetLibraries) {
             try makeRunner(
                 file: file,
-                fileSystem: fileSystem,
-                device: device,
+                assets: RunnerAssets(fileSystem: fileSystem, device: device, cache: assetCache),
                 localizationLanguage: localizationLanguage,
                 terrainLODConfigurationStore: terrainLODConfigurationStore
             )
@@ -80,16 +82,25 @@ nonisolated extension CellProviderIndexes {
         ).makeSession()
     }
 
+    /// Where the asset libraries read from.
+    private struct RunnerAssets {
+        let fileSystem: any GameFileSource
+        let device: any MTLDevice
+        let cache: AssetCacheReader?
+    }
+
     /// Hands the new builder straight to the runner, so no other code holds it.
     private static func makeRunner(
         file: ESMFile,
-        fileSystem: any GameFileSource,
-        device: any MTLDevice,
+        assets: RunnerAssets,
         localizationLanguage: String,
         terrainLODConfigurationStore: TerrainLODConfigurationStore
     ) throws -> (SerialCellBuildRunner, FormIDResolver) {
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
+        let fileSystem = assets.fileSystem
+        let textures = try TextureLibrary(fileSystem: fileSystem, device: assets.device)
+        let meshes = MeshLibrary(fileSystem: fileSystem, device: assets.device, textures: textures)
+        textures.assetCache = assets.cache
+        meshes.assetCache = assets.cache
         let builder = CellSceneBuilder(
             file: file,
             meshes: meshes,
@@ -98,6 +109,7 @@ nonisolated extension CellProviderIndexes {
             localizationLanguage: localizationLanguage,
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )
+        builder.collisionModels?.assetCache = assets.cache
         let formIDResolver = builder.formIDResolver
         let runner = SerialCellBuildRunner(provider: BuilderCellSceneProvider(
             builder: builder,

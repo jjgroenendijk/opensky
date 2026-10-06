@@ -82,6 +82,15 @@ public final class PlayerSettingsStore {
         commit([id])
     }
 
+    public func text(_ id: PlayerSettingID) -> String? {
+        model.text(id)
+    }
+
+    public func setText(_ id: PlayerSettingID, to text: String?) {
+        guard model.setText(id, to: text) else { return }
+        commit([id])
+    }
+
     public func step(_ id: PlayerSettingID, by direction: Int) {
         guard let definition = catalog.definition(id) else { return }
         set(id, to: definition.stepped(value(id), by: direction))
