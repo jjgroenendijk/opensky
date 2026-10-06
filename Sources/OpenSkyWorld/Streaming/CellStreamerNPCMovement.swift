@@ -61,13 +61,12 @@ extension CellStreamer {
 
     @discardableResult
     public func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
-        guard let entry = referenceEntry(key: actor), let placed = entry.placedActor else {
+        guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
         }
-        let startPosition = npcMovement.transform(for: actor)?.position
-            ?? placed.placement.position
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
         let result = findPath(NavigationPathQuery(
-            start: startPosition,
+            start: standing.position,
             target: point,
             capsuleRadius: PlayerCapsule.standard.radius
         ))
@@ -75,15 +74,11 @@ extension CellStreamer {
             guard case let .miss(reason) = result else { return .noPath(.disconnected) }
             return .noPath(reason)
         }
-        let placement = PlacedReference.Placement(
-            position: startPosition,
-            rotation: npcMovement.transform(for: actor)?.rotation ?? placed.placement.rotation
-        )
         let started = npcMovement.start(NPCMoveStart(
             actor: actor,
             formID: entry.formID,
-            placement: placement,
-            scale: placed.scale,
+            placement: standing.placement,
+            scale: standing.scale,
             capsule: .standard,
             configuration: npcMovementConfiguration,
             path: path
@@ -107,19 +102,16 @@ extension CellStreamer {
     /// authored.
     @discardableResult
     public func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
-        guard let entry = referenceEntry(key: actor), let placed = entry.placedActor else {
+        guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return false
         }
         bindNPCMovementCallbacks()
-        let override = npcMovement.transform(for: actor)
+        let standing = npcMovement.standingTransform(of: entry, in: stateSource())
         npcMovement.face(NPCFaceStart(
             actor: actor,
             formID: entry.formID,
-            placement: PlacedReference.Placement(
-                position: override?.position ?? placed.placement.position,
-                rotation: override?.rotation ?? placed.placement.rotation
-            ),
-            scale: placed.scale,
+            placement: standing.placement,
+            scale: standing.scale,
             target: point
         ))
         onNPCPosesChanged?(npcMovement.instanceDeltas())

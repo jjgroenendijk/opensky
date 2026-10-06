@@ -92,6 +92,10 @@ transform is written only at four moments: arrival, giving up, entering a new na
 just before a save. The cell builder applies saved transforms to actors too, so a rebuilt actor
 starts where it was. No fixed step writes it.
 
+A walk or a turn starts where the actor is drawn. That is the mover's own pose when it has one.
+After a load the movement runtime is empty, so it is the saved transform, and only then the
+placed `ACHR`.
+
 Each moving actor checks which trigger volumes it is in once per frame. The trigger event carries
 the actor when it is not the player, so scripts get that actor as `akActionRef`. When a move ends,
 the actor leaves any volumes it is still in.
