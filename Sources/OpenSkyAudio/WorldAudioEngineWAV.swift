@@ -23,35 +23,50 @@ extension WorldAudioEngine {
         wav file: WAVFile,
         downmixToMono: Bool
     ) throws -> AVAudioPCMBuffer {
-        let channels = downmixToMono ? 1 : file.format.channelCount
+        try makeBuffer(
+            decoded: DecodedAudio(
+                sampleRate: file.format.sampleRate, channelCount: file.format.channelCount,
+                samples: file.samples
+            ),
+            downmixToMono: downmixToMono
+        )
+    }
+
+    /// Builds a PCM buffer from interleaved samples, such as a cached ALAC file.
+    nonisolated public static func makeBuffer(
+        decoded audio: DecodedAudio,
+        downmixToMono: Bool
+    ) throws -> AVAudioPCMBuffer {
+        let sourceChannels = audio.channelCount
+        let frames = audio.frameCount
+        let channels = downmixToMono ? 1 : sourceChannels
         guard
             channels > 0,
-            file.frameCount > 0,
+            frames > 0,
             let format = AVAudioFormat(
-                standardFormatWithSampleRate: Double(file.format.sampleRate),
+                standardFormatWithSampleRate: Double(audio.sampleRate),
                 channels: AVAudioChannelCount(channels)
             ),
             let buffer = AVAudioPCMBuffer(
                 pcmFormat: format,
-                frameCapacity: AVAudioFrameCount(file.frameCount)
+                frameCapacity: AVAudioFrameCount(frames)
             ),
             let target = buffer.floatChannelData
         else {
             throw AudioEngineError.formatUnavailable
         }
-        buffer.frameLength = AVAudioFrameCount(file.frameCount)
-        let sourceChannels = file.format.channelCount
-        for frame in 0 ..< file.frameCount {
+        buffer.frameLength = AVAudioFrameCount(frames)
+        for frame in 0 ..< frames {
             let base = frame * sourceChannels
             if downmixToMono {
                 var sum: Float = 0
                 for channel in 0 ..< sourceChannels {
-                    sum += file.samples[base + channel]
+                    sum += audio.samples[base + channel]
                 }
                 target[0][frame] = sum / Float(sourceChannels)
             } else {
                 for channel in 0 ..< sourceChannels {
-                    target[channel][frame] = file.samples[base + channel]
+                    target[channel][frame] = audio.samples[base + channel]
                 }
             }
         }

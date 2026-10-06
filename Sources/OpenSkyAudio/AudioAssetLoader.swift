@@ -3,6 +3,7 @@
 // request it was made with. See docs/decisions/concurrency.md.
 
 import Foundation
+import OpenSkyAssetCache
 import OpenSkyFormatsAudio
 import OpenSkyGameData
 
@@ -10,6 +11,8 @@ import OpenSkyGameData
 nonisolated public enum AudioFileAsset: Sendable {
     case wav(WAVFile)
     case xwm(XWMFile)
+    /// A cached file, decoded whole by macOS. Only short sounds are cached.
+    case decoded(DecodedAudio)
 
     public init(data: Data) throws {
         self = WorldAudioEngine
@@ -20,6 +23,7 @@ nonisolated public enum AudioFileAsset: Sendable {
         switch self {
         case let .wav(file): file.format.channelCount
         case let .xwm(file): file.codec.channelCount
+        case let .decoded(audio): audio.channelCount
         }
     }
 }
@@ -38,9 +42,17 @@ public final class AudioAssetLoader {
     private var waiting: [(path: String, use: Use)] = []
 
     /// Reads from `files` on the shared play-time queue.
-    public init(files: any GameFileSource) {
+    public convenience init(files: any GameFileSource) {
+        self.init(files: files, cache: nil)
+    }
+
+    /// Reads from `cache` when it holds a current copy, else from `files`.
+    public init(files: any GameFileSource, cache: AssetCacheReader?) {
         source = .worker(AssetLoader { path in
-            try AudioFileAsset(data: files.contents(forPath: path))
+            if let audio = cache?.value(forPath: path, decoder: .cachedAudio) {
+                return .decoded(audio)
+            }
+            return try AudioFileAsset(data: files.contents(forPath: path))
         })
     }
 
@@ -91,6 +103,11 @@ extension WorldAudioEngine {
             )
         case let .xwm(file):
             try playPositional(file: file, request: request)
+        case let .decoded(audio):
+            try playPositional(
+                buffer: Self.makeBuffer(decoded: audio, downmixToMono: true),
+                request: request
+            )
         }
     }
 
@@ -103,6 +120,11 @@ extension WorldAudioEngine {
             )
         case let .xwm(file):
             try playNonPositional(file: file, request: request)
+        case let .decoded(audio):
+            try playNonPositional(
+                buffer: Self.makeBuffer(decoded: audio, downmixToMono: false),
+                request: request
+            )
         }
     }
 }

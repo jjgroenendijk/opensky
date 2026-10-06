@@ -12,7 +12,7 @@ import Testing
 struct WAVFileTests {
     @Test func decodesSixteenBitMono() throws {
         let file = try WAVFile(
-            data: Self.wav(channels: 1, sampleRate: 22050, bits: 16, samples: [
+            data: WAVFixture.file(channels: 1, sampleRate: 22050, bits: 16, samples: [
                 0, 32767, -32768, -1
             ])
         )
@@ -30,7 +30,7 @@ struct WAVFileTests {
 
     @Test func decodesStereoInterleaved() throws {
         let file = try WAVFile(
-            data: Self.wav(channels: 2, sampleRate: 44100, bits: 16, samples: [
+            data: WAVFixture.file(channels: 2, sampleRate: 44100, bits: 16, samples: [
                 16384, -16384, 0, 32767
             ])
         )
@@ -47,7 +47,7 @@ struct WAVFileTests {
         var payload = Data()
         payload.append(contentsOf: [0, 128, 255])
         let file = try WAVFile(
-            data: Self.wav(channels: 1, sampleRate: 8000, bits: 8, payload: payload)
+            data: WAVFixture.file(channels: 1, sampleRate: 8000, bits: 8, payload: payload)
         )
 
         #expect(file.samples[0] == -1)
@@ -60,7 +60,7 @@ struct WAVFileTests {
         extra.appendUInt32(3)
         extra.append(contentsOf: [1, 2, 3, 0]) // 3 bytes plus RIFF pad
         let file = try WAVFile(
-            data: Self.wav(
+            data: WAVFixture.file(
                 channels: 1, sampleRate: 8000, bits: 16, samples: [1234], extraChunks: extra
             )
         )
@@ -71,12 +71,12 @@ struct WAVFileTests {
     @Test func nonPCMTagIsDeclinedRatherThanGuessedAt() {
         #expect(throws: WAVError.self) {
             _ = try WAVFile(
-                data: Self.wav(channels: 1, sampleRate: 8000, bits: 16, samples: [0], tag: 3)
+                data: WAVFixture.file(channels: 1, sampleRate: 8000, bits: 16, samples: [0], tag: 3)
             )
         }
         #expect(throws: WAVError.self) {
             _ = try WAVFile(
-                data: Self.wav(
+                data: WAVFixture.file(
                     channels: 1, sampleRate: 8000, bits: 24, payload: Data(count: 3)
                 )
             )
@@ -95,73 +95,23 @@ struct WAVFileTests {
         #expect(throws: WAVError.self) { _ = try WAVFile(data: xwma) }
         // WAVE form with no `data` chunk.
         #expect(throws: WAVError.self) {
-            _ = try WAVFile(data: Self.wav(channels: 1, sampleRate: 8000, bits: 16, payload: nil))
+            _ = try WAVFile(data: WAVFixture.file(
+                channels: 1,
+                sampleRate: 8000,
+                bits: 16,
+                payload: nil
+            ))
         }
     }
 
     @Test func formSniffSeparatesWAVEFromXWMA() {
         #expect(WorldAudioEngine.isWAV(
-            Self.wav(channels: 1, sampleRate: 8000, bits: 16, samples: [0])
+            WAVFixture.file(channels: 1, sampleRate: 8000, bits: 16, samples: [0])
         ))
         var xwma = Data("RIFF".utf8)
         xwma.appendUInt32(4)
         xwma.append(Data("XWMA".utf8))
         #expect(!WorldAudioEngine.isWAV(xwma))
         #expect(!WorldAudioEngine.isWAV(Data(count: 4)))
-    }
-
-    // MARK: - Fixture
-
-    private static func wav(
-        channels: Int,
-        sampleRate: Int,
-        bits: Int,
-        samples: [Int16],
-        tag: UInt16 = 1,
-        extraChunks: Data = Data()
-    ) -> Data {
-        var payload = Data()
-        for sample in samples {
-            payload.appendUInt16(UInt16(bitPattern: sample))
-        }
-        return wav(
-            channels: channels, sampleRate: sampleRate, bits: bits,
-            payload: payload, tag: tag, extraChunks: extraChunks
-        )
-    }
-
-    private static func wav(
-        channels: Int,
-        sampleRate: Int,
-        bits: Int,
-        payload: Data?,
-        tag: UInt16 = 1,
-        extraChunks: Data = Data()
-    ) -> Data {
-        var format = Data()
-        format.appendUInt16(tag)
-        format.appendUInt16(UInt16(channels))
-        format.appendUInt32(UInt32(sampleRate))
-        format.appendUInt32(UInt32(sampleRate * channels * bits / 8))
-        format.appendUInt16(UInt16(channels * bits / 8))
-        format.appendUInt16(UInt16(bits))
-
-        var body = Data("WAVE".utf8)
-        body += Data("fmt ".utf8)
-        body.appendUInt32(UInt32(format.count))
-        body += format
-        body += extraChunks
-        if let payload {
-            body += Data("data".utf8)
-            body.appendUInt32(UInt32(payload.count))
-            body += payload
-            if payload.count % 2 == 1 {
-                body.append(0)
-            }
-        }
-        var out = Data("RIFF".utf8)
-        out.appendUInt32(UInt32(body.count))
-        out += body
-        return out
     }
 }

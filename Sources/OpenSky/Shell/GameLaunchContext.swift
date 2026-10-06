@@ -129,6 +129,7 @@ final class GameLaunchContext {
             }
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
+            controller.audio.assetCache = assetCache
             // UI text. Records from another plugin read through `scoped(to:)`.
             controller.localizedStringsLoader = {
                 LocalizedStrings(
