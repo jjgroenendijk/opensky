@@ -34,6 +34,12 @@ nonisolated public struct InMemoryFileSource: GameFileSource {
         return data
     }
 
+    /// Every file has the same time, so a changed size or hash tells a change.
+    public func provenance(forPath path: String) -> GameFileProvenance? {
+        guard let data = self[path] else { return nil }
+        return GameFileProvenance(origin: Self.archiveName, size: UInt64(data.count), modified: 0)
+    }
+
     public func archiveEntries() -> [VFSEntry] {
         files.keys.sorted().map { VFSEntry(path: $0, archive: Self.archiveName) }
     }

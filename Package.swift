@@ -302,6 +302,13 @@ targets += foundation(
     ]
 )
 
+// The asset cache folder: entries, staleness, and the size limit. Loaders above
+// it read converted assets from it (docs/engine/asset-cache.md).
+targets += foundation(
+    "OpenSkyAssetCache",
+    dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData"],
+    tests: ["OpenSkyFormatsCore", "OpenSkyFormatsMesh", "OpenSkyGameData", "FormatsTesting"]
+)
 targets += foundation(
     "OpenSkyLaunch",
     dependencies: ["OpenSkyGameData"],
