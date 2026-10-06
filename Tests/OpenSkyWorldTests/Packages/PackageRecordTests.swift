@@ -39,6 +39,7 @@ struct PackageRecordTests {
         fields += ESMFixture.field("UNAM", Data([3]))
         fields += ESMFixture.field("UNAM", Data([7]))
         fields += ESMFixture.field("XNAM", Data())
+        fields += ESMFixture.field("ANAM", ESMFixture.zstring("Procedure"))
         fields += ESMFixture.field("PNAM", ESMFixture.zstring("Travel"))
         fields += ESMFixture.field("POBA", Data())
 
