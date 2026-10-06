@@ -189,6 +189,34 @@ nonisolated public enum LZ4: Sendable {
         )
     }
 
+    /// Decompresses one raw LZ4 block whose output length is known up front, as the
+    /// Skyrim SE save body stores it (docs/formats/ess.md).
+    public static func decompressRawBlock(_ block: Data, decompressedSize: Int) throws -> Data {
+        guard decompressedSize >= 0, decompressedSize <= 1 << 30 else {
+            throw LZ4Error.outputOverflow(limit: decompressedSize)
+        }
+        guard decompressedSize > 0 else { return Data() }
+        var output = Data(count: decompressedSize)
+        let written = output.withUnsafeMutableBytes { destination in
+            block.withUnsafeBytes { source -> Int in
+                guard
+                    let destinationBase = destination.baseAddress,
+                    let sourceBase = source.baseAddress
+                else { return 0 }
+                return compression_decode_buffer(
+                    destinationBase.assumingMemoryBound(to: UInt8.self),
+                    decompressedSize,
+                    sourceBase.assumingMemoryBound(to: UInt8.self),
+                    source.count,
+                    nil,
+                    COMPRESSION_LZ4_RAW
+                )
+            }
+        }
+        guard written == decompressedSize else { throw LZ4Error.blockDecodeFailed }
+        return output
+    }
+
     /// Decompress one raw LZ4 block, appending to `output`. Matches may
     /// reference bytes already in `output` (linked blocks).
     public static func decompressBlock(

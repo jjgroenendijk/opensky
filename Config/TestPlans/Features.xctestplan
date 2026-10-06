@@ -51,6 +51,11 @@
         },
         {
           "containerPath": "container:.",
+          "identifier": "OpenSkyFormatsESS",
+          "name": "OpenSkyFormatsESS"
+        },
+        {
+          "containerPath": "container:.",
           "identifier": "OpenSkyGameData",
           "name": "OpenSkyGameData"
         },

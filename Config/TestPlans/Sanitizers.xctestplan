@@ -63,6 +63,11 @@
         },
         {
           "containerPath" : "container:.",
+          "identifier" : "OpenSkyFormatsESS",
+          "name" : "OpenSkyFormatsESS"
+        },
+        {
+          "containerPath" : "container:.",
           "identifier" : "OpenSkyGameData",
           "name" : "OpenSkyGameData"
         },
@@ -321,6 +326,14 @@
         "containerPath" : "container:.",
         "identifier" : "OpenSkyFormatsSWFTests",
         "name" : "OpenSkyFormatsSWFTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:.",
+        "identifier" : "OpenSkyFormatsESSTests",
+        "name" : "OpenSkyFormatsESSTests"
       }
     },
     {
