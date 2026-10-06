@@ -40,8 +40,6 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func selectedActor() -> ReferenceKey?
     /// The numbers of `key`'s resolved CSTY combat style, or nil when it has none.
     func combatStyle(of key: ReferenceKey) -> CombatStyleTuning?
-    /// The ground material under the player, for impact sounds.
-    var groundMaterial: FormID? { get }
 
     func hostility(of key: ReferenceKey) -> ActorHostility
     @discardableResult

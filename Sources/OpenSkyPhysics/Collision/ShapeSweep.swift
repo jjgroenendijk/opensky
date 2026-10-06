@@ -79,6 +79,8 @@ nonisolated public struct ShapeSweepHit: Equatable, Sendable {
     /// True when the start pose already overlapped, so `distance` is not a
     /// distance travelled. A tunneling guard treats this as "already stuck".
     public let startsOverlapping: Bool
+    /// The MATT type of the surface touched, or nil where the shape names none.
+    public var material: FormID?
 }
 
 /// One overlap of the swept shape at a sampled travel distance.
@@ -86,6 +88,7 @@ nonisolated private struct SweepOverlap {
     let reference: FormID
     let position: SIMD3<Float>
     let normal: SIMD3<Float>
+    let material: FormID?
 }
 
 nonisolated public enum ShapeSweeper: Sendable {
@@ -112,7 +115,8 @@ nonisolated public enum ShapeSweeper: Sendable {
                 distance: 0,
                 position: overlap.position,
                 normal: overlap.normal,
-                startsOverlapping: true
+                startsOverlapping: true,
+                material: overlap.material
             )
         }
         let step = query.maximumDistance / Float(sampleCount)
@@ -128,7 +132,8 @@ nonisolated public enum ShapeSweeper: Sendable {
                 distance: distance,
                 position: touch.position,
                 normal: touch.normal,
-                startsOverlapping: false
+                startsOverlapping: false,
+                material: touch.material
             )
         }
         return nil
@@ -184,7 +189,8 @@ nonisolated public enum ShapeSweeper: Sendable {
                 best = SweepOverlap(
                     reference: shape.reference,
                     position: sample - hit.normal * (query.radius - hit.depth),
-                    normal: hit.normal
+                    normal: hit.normal,
+                    material: shape.material
                 )
             }
         }

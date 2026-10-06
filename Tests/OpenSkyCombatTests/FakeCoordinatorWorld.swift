@@ -44,10 +44,6 @@ final class FakeCoordinatorWorld: CombatWorld {
         nil
     }
 
-    var groundMaterial: FormID? {
-        nil
-    }
-
     var equipment: (any EquipmentAccess)? {
         nil
     }

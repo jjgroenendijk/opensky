@@ -110,6 +110,8 @@ nonisolated public struct ProjectileTrace: Equatable, Sendable {
     public let appliedDamage: Float
     /// The SNDR the impact chain resolved, or nil where it named none.
     public let sound: FormID?
+    /// The MATT type of the surface struck, which the impact chain resolved against.
+    public var material: FormID?
     /// Whether the arrow was left in the world at the impact point.
     public let stuck: Bool
     /// What a landed spell applied, or nil for an arrow and for a spell that reached
@@ -154,10 +156,6 @@ public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHit
     /// First static-collision touch along `query`, or nil where it is clear.
     /// Normally `ShapeSweeper.firstHit` over the streamer's broadphase.
     func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit?
-
-    /// The MATT type an impact plays against, or nil where it names none. The
-    /// session reports the ground, as for a melee hit.
-    func projectileMaterial() -> FormID?
 
     /// Takes `amount` off `target`'s health.
     ///

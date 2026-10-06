@@ -90,10 +90,6 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// the runtime's, because only the session knows what is an ACHR.
     func meleeTargets() -> [MeleeTarget]
 
-    /// The MATT type a hit plays against, or nil where it names none. Actors
-    /// carry no per-body-part material yet, so the session reports the ground.
-    func meleeMaterial() -> FormID?
-
     /// What `target` is blocking with, or nil when it is not blocking.
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind?
 

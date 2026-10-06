@@ -255,10 +255,6 @@ final class GraphBackedMeleeWorld: MeleeCombatWorld {
         []
     }
 
-    func meleeMaterial() -> FormID? {
-        nil
-    }
-
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         nil
     }

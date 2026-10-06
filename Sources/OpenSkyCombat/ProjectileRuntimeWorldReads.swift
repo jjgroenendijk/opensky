@@ -9,17 +9,17 @@ extension ProjectileRuntime {
     /// The IPCT chain for a hit, played where the world can play it.
     /// Internal rather than private so it can live here while `resolve` in the
     /// main file calls it.
-    public func playImpact(at position: SIMD3<Float>) -> FormID? {
+    public func playImpact(of impact: ProjectileImpact) -> FormID? {
         guard let world, let impacts else { return nil }
         // An arrow resolves impact through the ammunition's chain. AMMO has no INAM, so
         // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
         // so an AMMO impact link is a one-line change.
         guard
             let resolved = impacts.resolve(
-                weapon: .unarmed, material: world.projectileMaterial()
+                weapon: .unarmed, material: impact.material
             )
         else { return nil }
-        world.playProjectileImpact(resolved, at: position)
+        world.playProjectileImpact(resolved, at: impact.position)
         return resolved.sound
     }
 

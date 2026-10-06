@@ -154,9 +154,9 @@ From `IPDS` on, the two are the same code ([footstep](/formats/footstep.md)). `W
 "Normal weapon swing impact set. Points to a IPDS" (UESP). `BIDS` is the block and bash set, read
 only by a bash ([item records](/formats/item-records.md)).
 
-The material is the ground under the player, not the body part that was hit. Actors have no Havok
-material per body part here. Every link is optional. A missing link ends the chain with a silent
-hit, not an error. Hit decals and visual effects are not done.
+A swing only strikes actors, and actors have no Havok material per body part here. So the hit uses
+the `IPDS` default entry, the most frequent `IPCT` in the table. Every link is optional. A missing
+link ends the chain with a silent hit, not an error. Hit decals and visual effects are not done.
 
 ## Input
 

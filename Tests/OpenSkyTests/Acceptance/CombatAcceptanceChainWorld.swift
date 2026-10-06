@@ -39,10 +39,6 @@ extension CombatAcceptanceChain: MeleeCombatWorld {
         [MeleeTarget(key: Self.opponent, feet: opponentFeet)]
     }
 
-    func meleeMaterial() -> FormID? {
-        nil
-    }
-
     func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         combatBlock(of: target)
     }
@@ -112,10 +108,6 @@ extension CombatAcceptanceChain: ProjectileWorld {
             query: query,
             shapes: streamer.staticCollisionCandidates(overlapping: query.bounds)
         )
-    }
-
-    func projectileMaterial() -> FormID? {
-        nil
     }
 
     @discardableResult

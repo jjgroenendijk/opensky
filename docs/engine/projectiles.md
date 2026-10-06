@@ -140,4 +140,5 @@ distance, because the first step starts inside the shooter's own capsule.
 
 The impact sound uses the same `IPCT` chain as footsteps and melee. `AMMO` has no impact link, so
 an arrow's impact is silent for now. The lookup stays, so giving `AMMO` an impact link is a small
-change. The material is the ground under the player, not the surface hit, as in melee.
+change. The material is the one the sweep hit reports: the `MATT` type of the static shape struck.
+An actor carries no material yet, so a hit on an actor uses the `IPDS` default entry.

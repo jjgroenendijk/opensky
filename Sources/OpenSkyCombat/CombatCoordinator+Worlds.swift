@@ -63,10 +63,6 @@ extension CombatCoordinator: MeleeCombatWorld {
         (world?.residentActors() ?? []).map { MeleeTarget(key: $0.key, feet: $0.feet) }
     }
 
-    public func meleeMaterial() -> FormID? {
-        world?.groundMaterial
-    }
-
     public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
         CombatCore.block(
             of: target,
@@ -121,10 +117,6 @@ extension CombatCoordinator: ProjectileWorld {
 
     public func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         world?.sweep(query)
-    }
-
-    public func projectileMaterial() -> FormID? {
-        world?.groundMaterial
     }
 
     @discardableResult
