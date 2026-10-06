@@ -146,3 +146,17 @@ the folder passes the location check. Each loader asks the cache first:
 A cached mesh or collision model must equal the direct decode exactly. So some files are not
 cached: skinned character meshes with skin data, meshes with particle systems, and collision
 with constraints. They always load from the archive.
+
+## Build
+
+A build plans one item per archive file that a converter accepts, then converts the items in
+parallel on a utility-priority task. It skips an item whose entry is already current. Each
+converted payload is written as one entry. When a converter does not store a file, the build
+writes an entry with an empty payload. That entry tells the engine to load the original, and
+it lets a check count the file as current. A build can be cancelled between items; the
+entries written so far stay valid.
+
+A check reads only the entry headers. It reports the cache as current, partly built, not
+built, or stale. Stale wins, because a changed install or preset needs a rebuild.
+
+`openskycli asset-cache build` runs a build without the app ([CLI](/tools/cli.md)).

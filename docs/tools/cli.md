@@ -81,7 +81,10 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |
 | `bench --walk-path [...]` | A fixed walk from Tamriel `(6,-2)` to Chillfurrow Farm `(7,-3)`, up stairs, through an interior, and back |
 | `launch-bench` | Times each stage of the world data load the app runs before its game window opens, slowest first, then the wall time. Stages run in parallel, so the wall time is less than their sum |
-| `benchmark [--out <file>] [--frame <png>]` | The shared benchmark: a cold and a warm load of fixed cells split into asset phases, then frame time on a fixed view. `--out` writes the JSON result, `--frame` a PNG of the view ([benchmark](/tools/benchmark.md)) |
+| `asset-cache build\|check\|clear\|status [--preset best\|balanced\|highest] [--folder] [--limit-gib] [--kinds] [--width] [--paths <file>]` | The asset cache without the app. `build` converts every source the cache does not hold yet, `check` counts current, stale, and missing entries per kind, `clear` empties the folder, and `status` prints the folder, size, and location warnings. The preset and folder come from the app settings unless an option overrides them. `--paths` limits a build or check to the files listed one per line ([asset cache](/engine/asset-cache.md)) |
+| `asset-cache extract --paths <file> --out <dir>` | Writes loose copies of the listed files, outside the repo and the install. The benchmark's `--loose` reads them, to time loose files apart from the archives |
+| `asset-cache compare <reference.png> <candidate.png>` | The PSNR and the largest channel error between two captures of the same view, such as the benchmark frame with the cache off and on. 100 dB means identical |
+| `benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict]` | The shared benchmark: a cold and a warm load of fixed cells split into asset phases, then frame time on a fixed view. `--out` writes the JSON result, `--frame` a PNG of the view. `--asset-cache` loads through the cache, `--evict` makes the cold load read from disk, `--loose <dir>` reads extracted copies first, and `--record-paths <file>` lists the assets the cache was asked for ([benchmark](/tools/benchmark.md)) |
 
 ## Notes on the probes
 
@@ -131,6 +134,8 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
   draws with no budget drops.
 - `--walk-path` rejects `--frames`, `--footprint-cap-mb`, and `--collision-build-budget-ms` with exit
   status 2, checked before touching game data.
+- `asset-cache build --kinds animation` into a temporary folder reports no failures, and
+  `check` then counts every entry as current.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.
 - `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.
   Both run without the app or an install.

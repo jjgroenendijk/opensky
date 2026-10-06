@@ -465,6 +465,18 @@ printf '%s\n' "$launch" | grep -q '^stage items [0-9.]* s$' \
   || fail "launch-bench did not time the items stage"
 printf '%s\n' "$launch" | grep '^total ' || fail "launch-bench printed no total"
 
+# Asset cache: a build of the animation kind into a temporary folder outside the
+# repo, then a check that counts every built entry as current.
+cache_dir="$(mktemp -d)/AssetCache"
+run "asset cache build" asset-cache build --folder "$cache_dir" --kinds animation --width 4
+grep -q '^failures 0$' "$log" || fail "asset-cache build reported failures"
+run "asset cache check" asset-cache check --folder "$cache_dir" --kinds animation
+awk '/^--- asset cache check/{f=1;next} /^--- /{f=0} f' "$log" \
+  | grep -qE '^animation[[:space:]]current [1-9][0-9]*[[:space:]]stale 0[[:space:]]missing 0$' \
+  || fail "asset-cache check found missing animation entries"
+rm -rf "$(dirname "$cache_dir")"
+echo "[ OK ] asset cache build + check"
+
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.
 run "sustained bench (360 frames @ 1280x720)" bench

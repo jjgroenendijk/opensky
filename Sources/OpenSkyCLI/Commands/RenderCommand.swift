@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
@@ -243,11 +244,16 @@ enum RenderCommand {
     static func makeBuilder(
         context: CLIContext,
         device: MTLDevice,
-        recorder: LoadPhaseRecorder? = nil
+        recorder: LoadPhaseRecorder? = nil,
+        assets: AssetLoadOptions? = nil
     ) throws -> CellSceneBuilder {
         let vfs = context.makeFileSystem()
+        var files: any GameFileSource = vfs
+        if let looseFolder = assets?.looseFolder {
+            files = FolderOverlayFileSource(base: vfs, folder: looseFolder)
+        }
         let fileSystem: any GameFileSource = recorder
-            .map { PhaseTimedFileSource(base: vfs, recorder: $0) } ?? vfs
+            .map { PhaseTimedFileSource(base: files, recorder: $0) } ?? files
         let file = try context.loadSkyrimESM()
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
@@ -259,6 +265,7 @@ enum RenderCommand {
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
         builder.loadPhases = recorder
+        assets?.configure(builder)
         return builder
     }
 }
