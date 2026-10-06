@@ -44,6 +44,16 @@ extension MagicCoordinator {
         return EnchantmentLedger(store: runtime.store).charge(of: profile, on: holder)
     }
 
+    /// Brings magic in line after `holder`'s worn set changed: readied spells
+    /// leave the hands a worn item holds, then worn enchantments are re-read.
+    @discardableResult
+    public func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport {
+        if let caster, let values = world?.actorValueHolder(for: holder.key) {
+            caster.spellbook.releaseHands(wornBy: holder, on: values)
+        }
+        return refreshWornEnchantments(on: holder)
+    }
+
     /// Brings `holder`'s worn constant effects in line with what it wears. An
     /// owner with no actor values, such as a container, changes nothing.
     @discardableResult

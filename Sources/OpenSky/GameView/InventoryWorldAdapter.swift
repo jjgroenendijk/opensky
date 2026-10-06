@@ -95,8 +95,8 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.crime.theftBounty(of: item, from: reference)
     }
 
-    func refreshWornEnchantments(on holder: InventoryHolder) {
-        game.magic.refreshWornEnchantments(on: holder)
+    func equipmentChanged(on holder: InventoryHolder) {
+        game.magic.equipmentChanged(on: holder)
     }
 
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String? {

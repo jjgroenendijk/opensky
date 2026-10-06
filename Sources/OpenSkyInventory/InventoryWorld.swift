@@ -26,8 +26,9 @@ public protocol InventoryWorld: AnyObject {
     /// The bounty taking one `item` from `reference` would accrue. Zero
     /// without a crime runtime.
     func theftBounty(of item: FormID, from reference: ReferenceKey) -> Int32
-    /// Re-reads worn enchantments after an equip change on `holder`.
-    func refreshWornEnchantments(on holder: InventoryHolder)
+    /// Brings magic in line after an equip change on `holder`: readied spells
+    /// leave the hands it now fills, and worn enchantments are re-read.
+    func equipmentChanged(on holder: InventoryHolder)
     /// The enchantment `item` carries, as worn by `owner`.
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String?
     var enchantmentCacheReadout: EnchantmentCacheReadout { get }
