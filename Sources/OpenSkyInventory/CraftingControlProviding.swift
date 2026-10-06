@@ -31,11 +31,22 @@ nonisolated public struct HarvestTargetReadout: Equatable, Sendable {
     public let name: String
     public let produce: String
     public let isHarvested: Bool
+    /// Game days until it grows back. Nil when not harvested, or when the
+    /// harvest time is unknown.
+    public let daysUntilRegrowth: Float?
 
-    public init(name: String, produce: String, isHarvested: Bool) {
+    public init(name: String, produce: String, isHarvested: Bool, daysUntilRegrowth: Float? = nil) {
         self.name = name
         self.produce = produce
         self.isHarvested = isHarvested
+        self.daysUntilRegrowth = daysUntilRegrowth
+    }
+
+    /// The regrowth line of the readout.
+    public var regrowthText: String {
+        guard isHarvested else { return "Grows back: -" }
+        guard let days = daysUntilRegrowth else { return "Grows back: never (time unknown)" }
+        return "Grows back: in \(String(format: "%.1f", days)) game days"
     }
 }
 
@@ -129,10 +140,17 @@ extension InventoryCoordinator: CraftingControlProviding {
     private func harvestTarget() -> HarvestTargetReadout? {
         guard let interaction = world?.crosshairInteraction, interaction.action == .harvest
         else { return nil }
+        let day = world?.gameDaysPassed
+        let isHarvested = runtime?.isHarvested(interaction, onDay: day) ?? false
+        var daysLeft: Float?
+        if isHarvested, let day, let regrowth = runtime?.regrowthDay(of: interaction) {
+            daysLeft = max(0, regrowth - day)
+        }
         return HarvestTargetReadout(
             name: interaction.name,
             produce: interaction.produce?.ingredient.map(name(of:)) ?? "none",
-            isHarvested: runtime?.isHarvested(interaction) ?? false
+            isHarvested: isHarvested,
+            daysUntilRegrowth: daysLeft
         )
     }
 
@@ -196,6 +214,7 @@ nonisolated public enum CraftingReadout {
             "Plant: \(target.name)",
             "Produce: \(target.produce)",
             "Harvested: \(target.isHarvested ? "yes" : "no")",
+            target.regrowthText,
             "Last: \(snapshot.lastActionText)"
         ].joined(separator: "\n")
     }

@@ -53,9 +53,11 @@ public final class InventoryCoordinator {
         inventory: InventoryRuntime,
         references: any PapyrusWorldReferenceSource,
         catalog: EquipmentCatalog?,
-        pricing: BarterPricing?
+        pricing: BarterPricing?,
+        harvestRegrowth: HarvestRegrowth = .vanilla
     ) {
         let items = WorldItemRuntime(inventory: inventory, references: references)
+        items.harvestRegrowth = harvestRegrowth
         runtime = items
         locks.wire(items: items)
         if let catalog {

@@ -75,6 +75,12 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         )
         entries = OpenSkySaveDeltaMerge.merge(ledgers, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.harvests, into: entries)
+        // After `HRVS`: a day only times a harvest `HRVS` already restored.
+        let harvested = Set(body.harvests.map(\.key))
+        entries = OpenSkySaveDeltaMerge.merge(
+            body.harvestDays.filter { harvested.contains($0.key) },
+            into: entries
+        )
         entries = OpenSkySaveDeltaMerge.merge(body.locks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.scenes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
@@ -270,6 +276,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.violentCrimeGold = try OpenSkySaveCrimeDecoder.decodeViolentGold(payload)
         case OpenSkySaveFormat.ChunkTag.harvests:
             body.harvests = try OpenSkySaveHarvestDecoder.decodeHarvests(payload)
+        case OpenSkySaveFormat.ChunkTag.harvestDays:
+            body.harvestDays = try OpenSkySaveHarvestDecoder.decodeHarvestDays(payload)
         case OpenSkySaveFormat.ChunkTag.locks:
             body.locks = try OpenSkySaveLockDecoder.decodeLocks(payload)
         default:

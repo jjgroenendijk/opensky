@@ -22,14 +22,14 @@ extension InventoryCoordinator {
 
     /// `interaction` with its runtime label: a harvested plant, or a locked target.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
-        locks.labelled(runtime?.labelled(interaction) ?? interaction)
+        locks.labelled(runtime?.labelled(interaction, onDay: world?.gameDaysPassed) ?? interaction)
     }
 
     @discardableResult
     public func harvest(_ interaction: PlacedInteraction) -> String {
         guard let runtime else { return InventoryCore.noRuntimeText }
         do {
-            let outcome = try runtime.harvest(interaction)
+            let outcome = try runtime.harvest(interaction, onDay: world?.gameDaysPassed)
             world?.refreshInteractionTarget()
             let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
             return note("Harvested \(interaction.name): \(items.joined(separator: ", ")).")
@@ -55,7 +55,7 @@ extension InventoryCoordinator {
         do {
             try runtime.resetHarvest(interaction)
             world?.refreshInteractionTarget()
-            return note("Reset the harvest of \(interaction.name).")
+            return note("\(interaction.name) grew back.")
         } catch {
             return note("Reset failed: \(String(describing: error))")
         }

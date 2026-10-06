@@ -97,6 +97,9 @@ public final class WorldItemRuntime {
     /// every take is honest.
     public var crime: (any CrimeReporting)?
 
+    /// When a harvested plant grows back: the load order's interval once wired.
+    public var harvestRegrowth = HarvestRegrowth.vanilla
+
     public var store: WorldStateStore {
         inventory.store
     }

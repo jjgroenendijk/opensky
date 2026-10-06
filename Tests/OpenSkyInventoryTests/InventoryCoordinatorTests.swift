@@ -25,6 +25,7 @@ struct InventoryCoordinatorTests {
         var bounty: Int32 = 0
         var refreshed: [InventoryHolder] = []
         var refreshCount = 0
+        var gameDaysPassed: Float?
 
         func dropPlacement() -> DropPlacement? {
             placement

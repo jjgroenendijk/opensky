@@ -115,6 +115,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
 
         /// Harvested flora and trees. Presence means harvested.
         public static let harvests = "HRVS"
+        /// The game day of each timed harvest. Additive beside `HRVS`, so an older
+        /// build skips it and keeps the plant harvested.
+        public static let harvestDays = "HRVD"
         /// Runtime lock state of doors and containers.
         public static let locks = "LOCK"
         /// Playing scenes: phase, started actions, and completed actions.

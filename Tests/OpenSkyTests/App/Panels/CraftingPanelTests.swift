@@ -71,6 +71,7 @@ struct CraftingPanelTests {
         tap(section.harvestControl)
         section.refreshReadout()
         #expect(section.readout.contains("Harvested: yes"))
+        #expect(section.readout.contains("Grows back: in 10.0 game days"))
         tap(section.resetControl)
         section.refreshReadout()
         #expect(section.readout.contains("Harvested: no"))

@@ -86,6 +86,8 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest `HRVS` entry: a plugin key with an empty name (1 + 2 + 4) and the
     /// "no cell" tag (1).
     public static let minimumHarvestEntrySize = 8
+    /// Smallest `HRVD` entry: a plugin key with an empty name (7) and the day (4).
+    public static let minimumHarvestDayEntrySize = 11
     /// Smallest `LOCK` entry: the smallest key and cell (8), the locked byte, the
     /// level byte, and the key FormID (4).
     public static let minimumLockEntrySize = 14

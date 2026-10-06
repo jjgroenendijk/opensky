@@ -74,11 +74,17 @@ nonisolated public protocol ItemDataProviding {
     var equipmentCatalog: EquipmentCatalog? { get }
     /// Recipes and stations for crafting sessions. Nil on a synthetic scene.
     var craftingCatalog: CraftingCatalog? { get }
+    /// `iHoursToRespawnCell`, for harvest regrowth. Vanilla on a synthetic scene.
+    var harvestRegrowth: HarvestRegrowth { get }
 }
 
 nonisolated extension ItemDataProviding {
     public var craftingCatalog: CraftingCatalog? {
         nil
+    }
+
+    public var harvestRegrowth: HarvestRegrowth {
+        .vanilla
     }
 }
 
