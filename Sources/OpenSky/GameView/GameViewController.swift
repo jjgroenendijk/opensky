@@ -5,6 +5,7 @@ import AppKit
 import MetalKit
 import OpenSkyActors
 import OpenSkyAgentControl
+import OpenSkyAssetCache
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCrime
@@ -37,6 +38,9 @@ final class GameViewController: NSViewController {
     var cellSession: CellSession?
     /// The stage times of the load that built `cellSession`, for World > World Load.
     var worldLoadReport: WorldLoadReport?
+    /// The session's asset cache, for World > Asset Cache.
+    var assetCache: AssetCacheReader?
+    var fastTextureLoad: FastTextureLoadControl?
     /// Times the work between the load and the first frame, for World > World Load.
     let sessionStart = SessionStartRecorder()
 
@@ -51,9 +55,6 @@ final class GameViewController: NSViewController {
 
     /// Only this file assigns it.
     private(set) var renderer: Renderer?
-    var canWriteScreenshot: Bool {
-        renderer != nil
-    }
 
     /// Holds the build runner and the provider for the window's lifetime.
     /// `WorldSessionWiring` assigns it.
@@ -496,7 +497,8 @@ extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
     HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
-    TitleMenuControlForwarding, MapMenuControlForwarding, WorldLoadReportProviding {}
+    TitleMenuControlForwarding, MapMenuControlForwarding, WorldLoadReportProviding,
+    AssetCacheControlProviding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
@@ -596,5 +598,11 @@ extension GameViewController: AudioControlForwarding, RuntimeStateControlForward
 
     func refocusGameView() {
         view.window?.makeFirstResponder(view)
+    }
+}
+
+extension GameViewController {
+    var canWriteScreenshot: Bool {
+        renderer != nil
     }
 }

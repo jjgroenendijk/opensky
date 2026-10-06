@@ -17,6 +17,7 @@ final class GameLaunchContext {
         let fileSystem: VirtualFileSystem
         let session: CellSession?
         let assetCache: AssetCacheReader?
+        var fastTextureLoad: FastTextureLoadControl?
     }
 
     nonisolated private static let logger = EngineLogger(
@@ -27,6 +28,7 @@ final class GameLaunchContext {
     private(set) var gameDataRoot: GameDataRoot?
     /// The asset cache the loaded world reads; nil without game data or a usable folder.
     private(set) var assetCache: AssetCacheReader?
+    private(set) var fastTextureLoad: FastTextureLoadControl?
     private(set) var virtualFileSystem: VirtualFileSystem?
     /// Built by `load`, handed to the next game view, which owns it from then on.
     private var cellSession: CellSession?
@@ -99,6 +101,7 @@ final class GameLaunchContext {
                 self?.virtualFileSystem = world.fileSystem
                 self?.cellSession = world.session
                 self?.assetCache = world.assetCache
+                self?.fastTextureLoad = world.fastTextureLoad
                 self?.worldLoadReport = loader.map {
                     WorldLoadReport(timeline: $0.timeline, total: $0.elapsed)
                 }
@@ -131,6 +134,8 @@ final class GameLaunchContext {
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
             controller.audio.assetCache = assetCache
+            controller.assetCache = assetCache
+            controller.fastTextureLoad = fastTextureLoad
             // UI text. Records from another plugin read through `scoped(to:)`.
             controller.localizedStringsLoader = {
                 LocalizedStrings(
@@ -167,6 +172,7 @@ final class GameLaunchContext {
         guard let device = MTLCreateSystemDefaultDevice(), device.supportsFamily(.metal4) else {
             return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
         }
+        // The control exists whenever the cache does, so the panel can turn it on later.
         let fastLoad = cache.map { _ in FastTextureLoadControl(isEnabled: cacheSettings.fastLoad) }
         do {
             let session = try await CellProviderIndexes.loadSession(
@@ -179,7 +185,9 @@ final class GameLaunchContext {
                 assetCache: cache,
                 fastLoad: fastLoad
             )
-            return LoadedWorld(fileSystem: vfs, session: session, assetCache: cache)
+            return LoadedWorld(
+                fileSystem: vfs, session: session, assetCache: cache, fastTextureLoad: fastLoad
+            )
         } catch is CancellationError {
             throw CancellationError()
         } catch {

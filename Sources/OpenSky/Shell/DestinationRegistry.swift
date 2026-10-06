@@ -42,8 +42,9 @@ enum SidebarSection: String, CaseIterable {
 /// The live-renderer bridges a world inspector panel may consume. The game
 /// controller conforms to all of them, so one value wires every panel.
 typealias WorldControlProviders = AINavigationControlProviding & AIOverlayControlProviding
-    & ActorValueControlProviding & AgentControlProviding & AnimationControlProviding
-    & ArcheryControlProviding & AudioControlProviding
+    & ActorValueControlProviding
+    & AgentControlProviding & AnimationControlProviding & ArcheryControlProviding
+    & AssetCacheControlProviding & AudioControlProviding
     & CameraControlProviding & CastingControlProviding & CinematicCameraControlProviding
     & CombatLoopControlProviding & ContainerMenuControlProviding
     & CraftingControlProviding
@@ -194,6 +195,7 @@ enum DestinationRegistry {
                 panel.firstPersonProvider = context.providers
                 panel.frameStatsProvider = context.providers
                 panel.worldLoadProvider = context.providers
+                panel.assetCacheProvider = context.providers
                 panel.sceneStatsProvider = context.providers
                 panel.triggerProvider = context.providers
                 panel.trapProvider = context.providers
