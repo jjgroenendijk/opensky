@@ -89,7 +89,7 @@ recently used entry.
 
 The default limit fits the whole base-game cache for the chosen preset with a tenth to spare.
 The estimates come from the format comparison census of the base game. The census counted
-audio in AAC for Best performance; every preset stores ALAC for now, so a Best
+audio in AAC for Best performance; every preset stores ALAC for now (see Audio), so a Best
 performance cache is larger than its estimate:
 
 | Preset | Estimated cache | Default limit |
@@ -98,6 +98,15 @@ performance cache is larger than its estimate:
 | Balanced | 22 GiB | 25 GiB |
 | Highest quality | 26 GiB | 29 GiB |
 
+## Audio
+
+A short sound effect is stored as ALAC (Apple Lossless) in a CAF file. ALAC is lossless, so a
+cached sound plays the same samples as the original. Sounds longer than 30 seconds, such as
+music, are not cached: they keep the streaming decode.
+
+AAC is smaller but lossy. It is used only after a listening check finds no audible
+difference. That check has not been done, so every preset stores ALAC.
+
 ## Read path
 
 The engine opens the cache when the game loads, if the cache is turned on in Settings and
@@ -105,7 +114,7 @@ the folder passes the location check. Each loader asks the cache first:
 
 1. Look up the entry for the providing file and path.
 2. On a hit, decode the payload. Textures upload their ready blocks, meshes and collision
-   rebuild their models, and animation returns the shipped file.
+   rebuild their models, animation returns the shipped file, and audio decodes the CAF.
 3. On a miss, load the original file.
 4. On a stale, unreadable, or undecodable entry, log a `[WARNING]`, delete the entry, load
    the original file, and mark the asset for a rebuild.

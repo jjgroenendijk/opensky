@@ -333,11 +333,11 @@ targets += foundation(
     "OpenSkyAudio",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAudio", "OpenSkyGameData",
-        "CFFmpeg"
+        "CFFmpeg", "OpenSkyAssetCache"
     ],
     tests: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAudio", "OpenSkyGameData",
-        "FormatsTesting"
+        "FormatsTesting", "OpenSkyAssetCache"
     ]
 )
 
