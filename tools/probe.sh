@@ -117,6 +117,16 @@ printf '%s\n' "$plugins" | grep -q '^plugins.txt: ' \
   || fail "plugins did not report where the load order came from"
 echo "[ OK ] plugins ($(printf '%s\n' "$plugins" | tail -n 1))"
 
+# Skyrim saves: read-only. Runs only when OPENSKY_SKYRIM_SAVES names a folder.
+if [ -n "${OPENSKY_SKYRIM_SAVES:-}" ]; then
+  saves="$("$cli" ess list "$OPENSKY_SKYRIM_SAVES" 2>>"$log")" \
+    || fail "ess list failed"
+  printf '%s\n' "$saves" | grep -q '^\[INFO\] ' || fail "ess list printed no folder status"
+  echo "[ OK ] ess list ($(printf '%s\n' "$saves" | head -n 1))"
+else
+  echo "[INFO] OPENSKY_SKYRIM_SAVES not set — skipping the ess probe"
+fi
+
 # Movement tuning resolves active GMST overrides and reports an explicit source
 # for every value. Do not pin numeric values here: an active user plugin may
 # intentionally override them.
