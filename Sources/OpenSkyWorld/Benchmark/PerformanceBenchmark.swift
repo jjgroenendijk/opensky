@@ -83,26 +83,31 @@ public enum PerformanceBenchmark {
         for cell in plan.exteriorCells {
             let label = "\(plan.worldspace) (\(cell.x),\(cell.y))"
             let built = timedBuild(label: label) {
-                try builder.buildScene(
-                    worldspaceEditorID: plan.worldspace, gridX: cell.x, gridY: cell.y
-                )
+                try builder.textures.batchLoads {
+                    try builder.buildScene(
+                        worldspaceEditorID: plan.worldspace, gridX: cell.x, gridY: cell.y
+                    )
+                }
             }
             output.cells.append(built.load)
             output.exteriorScenes += built.value.map { [$0] } ?? []
         }
         let lod = timedBuild(label: "distant LOD") {
-            try builder.buildDistantLOD(
-                worldspaceEditorID: plan.worldspace,
-                center: CellCoordinate(x: plan.centerCell.x, y: plan.centerCell.y),
-                hiddenCells: Set(plan.exteriorCells.map { CellCoordinate(x: $0.x, y: $0.y) })
-            )
+            try builder.textures.batchLoads {
+                try builder.buildDistantLOD(
+                    worldspaceEditorID: plan.worldspace,
+                    center: CellCoordinate(x: plan.centerCell.x, y: plan.centerCell.y),
+                    hiddenCells: Set(plan.exteriorCells.map { CellCoordinate(x: $0.x, y: $0.y) })
+                )
+            }
         }
         output.cells.append(lod.load)
         output.distantLOD = lod.value??.renderScene
         for formID in plan.interiorCellFormIDs {
             let label = "interior " + String(format: "%08X", formID)
             let built = timedBuild(label: label) {
-                try builder.buildInteriorScene(cellFormID: FormID(formID))
+                try builder.textures
+                    .batchLoads { try builder.buildInteriorScene(cellFormID: FormID(formID)) }
             }
             output.cells.append(built.load)
         }

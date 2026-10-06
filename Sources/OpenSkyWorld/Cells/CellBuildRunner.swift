@@ -77,12 +77,14 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         at coordinate: CellCoordinate,
         state: WorldStateSnapshot
     ) throws -> CellScene {
-        try builder.buildScene(
-            worldspaceEditorID: worldspaceEditorID,
-            gridX: coordinate.x,
-            gridY: coordinate.y,
-            state: state
-        )
+        try builder.textures.batchLoads {
+            try builder.buildScene(
+                worldspaceEditorID: worldspaceEditorID,
+                gridX: coordinate.x,
+                gridY: coordinate.y,
+                state: state
+            )
+        }
     }
 
     public func evict(
@@ -99,22 +101,26 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>
     ) throws -> DistantLODScene? {
-        try builder.buildDistantLOD(
-            worldspaceEditorID: worldspaceEditorID,
-            center: center,
-            hiddenCells: hiddenCells
-        )
+        try builder.textures.batchLoads {
+            try builder.buildDistantLOD(
+                worldspaceEditorID: worldspaceEditorID,
+                center: center,
+                hiddenCells: hiddenCells
+            )
+        }
     }
 
     public func buildDoorTransition(
         from sourceDoor: FormID,
         state: WorldStateSnapshot
     ) throws -> DoorTransition {
-        try builder.buildDoorTransition(
-            from: sourceDoor,
-            worldspaceEditorID: worldspaceEditorID,
-            state: state
-        )
+        try builder.textures.batchLoads {
+            try builder.buildDoorTransition(
+                from: sourceDoor,
+                worldspaceEditorID: worldspaceEditorID,
+                state: state
+            )
+        }
     }
 
     public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {

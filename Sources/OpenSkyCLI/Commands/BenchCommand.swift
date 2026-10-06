@@ -150,7 +150,7 @@ enum BenchCommand {
             device: device,
             assets: assets
         )
-        defer { try? assets.report() }
+        defer { try? assets.report(fastLoader: builder.textures.fastLoader) }
         let weather = WeatherSystem(file: builder.file, worldspaceEditorID: options.worldspace)
         let provider = BuilderCellSceneProvider(
             builder: builder,
@@ -205,7 +205,7 @@ enum BenchCommand {
             device: device,
             assets: assets
         )
-        defer { try? assets.report() }
+        defer { try? assets.report(fastLoader: builder.textures.fastLoader) }
         let provider = BuilderCellSceneProvider(
             builder: builder,
             worldspaceEditorID: options.worldspace

@@ -160,3 +160,75 @@ A check reads only the entry headers. It reports the cache as current, partly bu
 built, or stale. Stale wins, because a changed install or preset needs a rebuild.
 
 `openskycli asset-cache build` runs a build without the app ([CLI](/tools/cli.md)).
+
+## Fast resource loading
+
+Metal fast resource loading (MTLIO) reads file bytes straight into a texture on the GPU
+side. The CPU does not copy the bytes and does not wait for each read. A cached texture
+suits it: its mip levels sit in the entry file in the layout the texture needs.
+
+The fast loader runs only during a cell build:
+
+1. The cell build opens a batch.
+2. Each cached texture becomes an empty texture, and one IO command buffer queues a read of
+   each mip level from the entry file.
+3. At the end of the cell build, the batch commits the buffer and waits for it. Only then is
+   the cell handed to the renderer, so a frame never shows a texture that is still loading.
+4. If the buffer fails, every texture of the batch is filled on the CPU from the same entry.
+
+A texture loaded outside a cell build, or a texture with no current entry, takes the CPU
+path. The setting "Fast texture loading" turns the fast loader on and off.
+`openskycli benchmark --asset-cache --fast-load` measures it.
+
+Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
+below shows that it saves almost no time cold, needs twice the CPU time, and is twice as
+slow warm.
+
+## Measurements
+
+Measured on 2026-10-06 on an Apple Silicon Mac with macOS 27, with the Release `openskycli`.
+`make asset-cache-bench` runs the block measurement. Each cold run first drops the files
+from the page cache.
+
+The benchmark block, `openskycli benchmark`, reads 293 textures and 226 meshes. The caches
+are on the internal SSD:
+
+| Run | Cold load | GPU memory | Peak RSS | Image against archives |
+| --- | --- | --- | --- | --- |
+| Archives | 5350 ms | 442 MiB | 1194 MiB | - |
+| Loose copies | 3936 ms | 442 MiB | 878 MiB | - |
+| Highest quality | 4472 ms | 442 MiB | 897 MiB | identical |
+| Highest quality, fast loading | 4010 ms | 602 MiB | 690 MiB | identical |
+| Balanced | 4483 ms | 442 MiB | 897 MiB | identical |
+| Best performance | 4201 ms | 342 MiB | 768 MiB | PSNR 38.4 dB |
+
+The block holds no normal maps, so Balanced stores the same files as Highest quality. The
+loose copies cover every file, while the cache keeps skinned and particle meshes in the
+archives, so the two cold loads are not a fair pair.
+
+Loading the block's 293 textures (365 MiB) as one batch, `asset-cache io-bench`, wall time
+and CPU time:
+
+| Method | Cold, internal SSD | Warm | Cold, external USB disk |
+| --- | --- | --- | --- |
+| Archive | 1554 ms, 624 ms CPU | 486 ms | 1599 ms |
+| Cache, CPU upload | 610 ms, 153 ms CPU | 88 ms | 684 ms |
+| Cache, fast loading | 243 ms, 130 ms CPU | 74 ms | 705 ms |
+| Cache, fast loading of LZ4 copies | 228 ms, 242 ms CPU | 148 ms | 687 ms |
+
+Streaming, `bench --fly-path --footprint-cap-mb 4096`, median of three cold runs, with a
+cache of the route's assets on the internal SSD:
+
+| Run | Frames until the stream settles | Worst frame | Peak footprint |
+| --- | --- | --- | --- |
+| Archives | 484 | 11.8 ms | 1142 MB |
+| Highest quality | 430 | 16.4 ms | 1183 MB |
+| Highest quality, fast loading | 394 | 16.0 ms | 1266 MB |
+
+A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores:
+
+| Preset | Build time | Size |
+| --- | --- | --- |
+| Highest quality | 233 s | 21.3 GiB |
+| Balanced | 549 s | 21.2 GiB |
+| Best performance | 1186 s | 11.3 GiB |

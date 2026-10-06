@@ -162,7 +162,8 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Asset cache limit (GiB, 0 = preset)",
             0,
             applied: true
-        )
+        ),
+        row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true)
     ]
 
     /// In `AssetQualityPreset` raw-value order.
@@ -175,4 +176,5 @@ nonisolated extension PlayerSettingID {
     public static let assetCacheEnabled = Self("assetCache.enabled")
     public static let assetCachePreset = Self("assetCache.preset")
     public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
+    public static let assetCacheFastLoad = Self("assetCache.fastLoad")
 }

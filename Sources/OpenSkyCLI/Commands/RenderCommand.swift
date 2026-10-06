@@ -265,7 +265,7 @@ enum RenderCommand {
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
         builder.loadPhases = recorder
-        assets?.configure(builder)
+        try assets?.configure(builder, device: device)
         return builder
     }
 }
