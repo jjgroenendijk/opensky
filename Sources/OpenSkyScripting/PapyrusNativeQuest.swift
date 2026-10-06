@@ -107,6 +107,13 @@ extension PapyrusNativeFunctions {
             )
             return .returned(.none)
         }
+        // Completes the objectives the quest has shown; one never shown has no journal row.
+        registerMutation(&registry, ["CompleteAllObjectives"]) { _, world, key in
+            for objective in try world.questState(for: key).objectives.map(\.index) {
+                try world.setQuestObjectiveCompleted(objective, true, for: key)
+            }
+            return .returned(.none)
+        }
     }
 
     /// Registers a read that only needs the receiver's quest state, under

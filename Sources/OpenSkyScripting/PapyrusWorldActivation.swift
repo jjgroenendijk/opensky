@@ -64,12 +64,37 @@ extension PapyrusWorldRuntime {
 
     /// Lowest-script-name instance handle for a reference, matching
     /// `referenceHandleMap()`'s deterministic choice without building the
-    /// whole map.
+    /// whole map. Alias scripts are not `ObjectReference` scripts, so they never answer.
     private func instanceHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
-        instancesByKey.keys
-            .filter { $0.reference == key }
+        let aliasKeys = aliasInstanceKeys
+        return instancesByKey.keys
+            .filter { $0.reference == key && !aliasKeys.contains($0) }
             .min()
             .flatMap { instancesByKey[$0] }
+    }
+
+    /// The lowest-script-name alias script on a filled reference, which an alias-typed
+    /// property binds to, so the alias script's own functions resolve.
+    func aliasInstanceHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
+        aliasInstanceKeys.filter { $0.reference == key }.min().flatMap { instancesByKey[$0] }
+    }
+
+    /// The lowest-script-name instance on the same form as `handle` whose script is
+    /// `typeName` or extends it. An alias script and a form script never pair.
+    func sibling(of handle: PapyrusObjectHandle, as typeName: String) -> PapyrusObjectHandle? {
+        guard let source = keysByHandle[handle] else { return nil }
+        let aliasKeys = aliasInstanceKeys
+        let isAlias = aliasKeys.contains(source)
+        return instancesByKey.keys
+            .filter { $0.reference == source.reference && aliasKeys.contains($0) == isAlias }
+            .sorted()
+            .lazy
+            .compactMap { self.instancesByKey[$0] }
+            .first { self.runtime.resolvesObject($0, as: typeName) }
+    }
+
+    var aliasInstanceKeys: Set<PapyrusInstanceKey> {
+        questAliasInstanceKeys.values.reduce(into: []) { $0.formUnion($1) }
     }
 
     private func allocateOpaqueHandle() -> PapyrusObjectHandle {

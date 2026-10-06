@@ -576,9 +576,10 @@ targets += feature(
     ],
     interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
     tests: [
-        "FormatsTesting", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsPEX",
-        "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics", "FeaturesTesting",
-        "OpenSkyScriptingFixtures", "OpenSkyScriptingInterface", "OpenSkyWorldState"
+        "FormatsTesting", "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
+        "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics",
+        "FeaturesTesting", "OpenSkyScriptingFixtures", "OpenSkyScriptingInterface",
+        "OpenSkyWorldState"
     ]
 )
 
@@ -647,7 +648,7 @@ targets += feature(
     ],
     tests: [
         "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering",
+        "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
         "EngineTesting"
     ]

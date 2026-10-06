@@ -111,6 +111,29 @@ struct ScriptDataBindingTests {
         #expect(bound.binding.skipped.total == 0)
     }
 
+    @Test("an alias on a reference with no script binds through the alias seam")
+    func aliasHandleAnswersUnscriptedFills() throws {
+        let runtime = makeRuntime()
+        let key = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x1234)
+        let quest = try QuestFixture.quest(
+            formID: 0x0000_1200, fields: QuestFixture.editorID("AliasSeamQuest")
+        )
+        let aliases = QuestAliasFixture.resolution(
+            store: QuestStore(quests: [quest], resolver: resolver),
+            fills: [quest.formID: [3: key]]
+        )
+        let marker = PapyrusObjectHandle(77)
+        let binding = try script(properties: [
+            .init("Target", .object(VMADFixture.object(0x0000_1200, alias: 3)))
+        ]).binding(
+            in: runtime, formIDResolver: resolver, aliases: aliases,
+            aliasHandle: { $0 == key ? marker : nil },
+            objectHandle: { _ in nil }
+        )
+        #expect(binding.initialValues["::opaque_backing_17"] == .object(marker))
+        #expect(binding.skipped.total == 0)
+    }
+
     @Test("removed and unknown VMAD properties preserve PEX defaults")
     func preservesDefaultsForRemovedAndMissingProperties() throws {
         let runtime = makeRuntime()

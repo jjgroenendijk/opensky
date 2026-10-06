@@ -73,10 +73,14 @@ final class QuestRealDataSession {
             throw QuestRealDataError.questWouldNotStart
         }
         drain()
-        for stage in Set(quest.stages.map(\.index)).sorted() {
+        // The quest's own fragments may end it before the last stage, as in the game.
+        for stage in Set(quest.stages.map(\.index)).sorted()
+            where try state(of: quest.formID).isRunning
+        {
             _ = try bridge.setQuestStage(stage, for: key)
             drain()
         }
+        guard try state(of: quest.formID).isRunning else { return }
         for objective in quest.objectives.map(\.index) {
             try bridge.setQuestObjectiveDisplayed(objective, true, for: key)
             try bridge.setQuestObjectiveCompleted(objective, true, for: key)
@@ -88,11 +92,12 @@ final class QuestRealDataSession {
     /// The journal page as the player would see it, resolved through the
     /// plugin's own string tables and the quest's filled aliases — the same
     /// call `GameViewController` makes.
-    func journal() throws -> JournalMenuModel {
+    func journal(showsCompleted: Bool = false) throws -> JournalMenuModel {
         try JournalMenuModel.build(
             runtime: runtime,
             strings: LocalizedStrings(vfs: fileSystem, pluginName: "Skyrim.esm"),
-            aliases: .none
+            aliases: .none,
+            showsCompleted: showsCompleted
         )
     }
 
@@ -124,6 +129,8 @@ final class QuestRealDataSession {
             _ = try bridge.setQuestStage(index, for: key)
             drain()
         }
+        // A stage fragment may stop the quest; a stopped quest takes no objective change.
+        guard try state(of: quest.formID).isRunning else { return }
         for objective in quest.objectives.map(\.index) {
             try bridge.setQuestObjectiveDisplayed(objective, true, for: key)
         }
@@ -188,7 +195,8 @@ enum QuestRealDataReport {
         conditions: ConditionTally
     ) -> String {
         let world = session.world
-        let page = (try? session.journal().entries.first { $0.formID == quest.formID })
+        let page = try? session.journal(showsCompleted: true).entries
+            .first { $0.formID == quest.formID }
         var lines = [
             "OpenSky M13 acceptance (issue #185)",
             "quest: \(quest.editorID ?? "unnamed") type \(quest.kind.name) "

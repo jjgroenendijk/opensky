@@ -169,7 +169,11 @@ struct QuestAcceptanceRenderWalk {
         _ session: QuestRealDataSession,
         editorID: String
     ) throws -> JournalMenuModel {
+        // The last stage completes and stops the quest, which moves it to the completed tab.
         var model = try session.journal()
+        if !model.entries.contains(where: { $0.editorID == editorID }) {
+            model = try session.journal(showsCompleted: true)
+        }
         let row = try #require(
             model.entries.firstIndex { $0.editorID == editorID },
             "the target quest is not on the journal page"

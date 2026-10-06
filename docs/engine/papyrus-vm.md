@@ -196,8 +196,12 @@ The public references do not fully describe the VM. These are OpenSky's choices:
 - A malformed object can declare one variable name twice, or twice with different case. The
   references do not say what the game does then. The first declaration wins, because every lookup
   by name finds the first match. `PapyrusTally.duplicateVariableTotal` counts each skipped one.
+- A method call on `None` returns its declared default and the function goes on, as the game logs
+  "Cannot call ... on a None object" and continues. `PapyrusTally.noneReceiverTotal` counts them.
 - A failed cast faults the call. The wiki gives valid cast directions but no failure value. A handle
   with no instance is accepted as any object type, because this layer has no world type registry.
+  Before it faults, a cast tries another instance on the same form whose script has the target type,
+  because the game keeps all scripts of one form in one object.
 - Float equality allows four ULPs of relative difference. The wiki says the game uses a small
   epsilon but does not give it.
 - Division or modulo by zero is a fault. The wiki calls the result undefined and says the game logs

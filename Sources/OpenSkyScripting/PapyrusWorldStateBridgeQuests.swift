@@ -4,6 +4,7 @@
 // `SetStage` and `Start` do not wait (docs/engine/papyrus-quests.md).
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
@@ -56,7 +57,13 @@ extension PapyrusWorldStateBridge {
             attachQuestScripts(resolved.quest, key: key)
         }
         if !wasDone {
-            world?.queueQuestFragments(of: resolved.quest, stage: stage, key: key)
+            let logEntry = chosenLogEntry(of: resolved.quest, stage: stage)
+            if state.isRunning, Self.completes(resolved.quest, stage: stage, logEntry: logEntry) {
+                try resolved.runtime.completeQuest(id)
+            }
+            world?.queueQuestFragments(
+                of: resolved.quest, stage: stage, key: key, logEntry: logEntry
+            )
         }
         return true
     }
@@ -127,6 +134,25 @@ extension PapyrusWorldStateBridge {
             )
         }
         return ResolvedQuestBridge(quest: quest, runtime: questRuntime)
+    }
+
+    /// The first log entry whose conditions pass, as the game runs only that entry's
+    /// fragment. -1 when none passes; nil when there is no evaluator or no choice to make.
+    func chosenLogEntry(of quest: Quest, stage: UInt16) -> Int32? {
+        let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
+        guard entries.count > 1, var evaluator = logEntryEvaluator?() else { return nil }
+        evaluator.context.subject = .player
+        evaluator.context.aliasQuest = quest.formID
+        let index = entries.firstIndex { evaluator.evaluate($0.conditions).isTrue }
+        return index.map(Int32.init) ?? -1
+    }
+
+    /// True when the log entry the stage runs has the Complete Quest flag. With no
+    /// choice made, that is the first entry.
+    static func completes(_ quest: Quest, stage: UInt16, logEntry: Int32?) -> Bool {
+        let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
+        let index = Int(logEntry ?? 0)
+        return entries.indices.contains(index) && entries[index].flags.contains(.completeQuest)
     }
 
     /// A quest's scripts, bound with the master list of the plugin whose record won.

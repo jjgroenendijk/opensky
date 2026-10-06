@@ -212,6 +212,14 @@ struct PapyrusNativeQuestTests {
         #expect(objective.isCompleted)
         #expect(!objective.isFailed)
 
+        call(
+            "SetObjectiveCompleted", fixture, receiver: fixture.handle,
+            arguments: [.integer(index), .boolean(false)]
+        )
+        call("CompleteAllObjectives", fixture, receiver: fixture.handle, arguments: [])
+        #expect(try PapyrusQuestFixture.state(fixture.session)
+            .objective(PapyrusQuestFixture.objectiveIndex).isCompleted)
+
         #expect(PapyrusWorldFixture.isInvalidArguments(call(
             "SetObjectiveFailed", fixture, receiver: fixture.handle,
             arguments: [.integer(77)]
@@ -231,7 +239,7 @@ struct PapyrusNativeQuestTests {
             ("SetCurrentStageID", [.integer(10)]),
             ("SetObjectiveDisplayed", [.integer(10)]),
             ("SetObjectiveCompleted", [.integer(10)]),
-            ("SetObjectiveFailed", [.integer(10)])
+            ("SetObjectiveFailed", [.integer(10)]), ("CompleteAllObjectives", [])
         ]
         for (name, arguments) in calls {
             #expect(

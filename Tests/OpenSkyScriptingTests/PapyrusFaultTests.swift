@@ -58,6 +58,47 @@ struct PapyrusFaultTests {
         #expect(Support.fault(runtime.invoke("Run", on: handle))?.kind == "typeMismatch")
     }
 
+    @Test func aCallOnNoneReturnsTheDefaultAndGoesOn() {
+        let (runtime, handle) = runtime(
+            locals: [
+                PexTypedName(name: "target", typeName: "ObjectReference"),
+                PexTypedName(name: "result", typeName: "Int")
+            ],
+            instructions: [
+                op(.assign, .identifier("result"), .integer(7)),
+                op(
+                    .callMethod, .identifier("GetCount"), .identifier("target"),
+                    .identifier("result"), .integer(0)
+                ),
+                op(.returnValue, .identifier("result"))
+            ]
+        )
+        guard case let .completed(value) = runtime.invoke("Run", on: handle) else {
+            Issue.record("the call on None stopped the function")
+            return
+        }
+        #expect(value == .integer(0))
+        #expect(runtime.tally.noneReceiverTotal == 1)
+    }
+
+    @Test func aCastToAnotherScriptOnTheFormFindsItsSibling() {
+        let (runtime, handle) = runtime(
+            locals: [PexTypedName(name: "other", typeName: "OtherScript")],
+            instructions: [
+                op(.cast, .identifier("other"), .identifier("self")),
+                op(.returnValue, .identifier("other"))
+            ]
+        )
+        #expect(Support.fault(runtime.invoke("Run", on: handle))?.kind == "typeMismatch")
+        let sibling = PapyrusObjectHandle(99)
+        runtime.siblingInstance = { $1 == "OtherScript" ? sibling : nil }
+        guard case let .completed(value) = runtime.invoke("Run", on: handle) else {
+            Issue.record("the cast to a sibling script faulted")
+            return
+        }
+        #expect(value == .object(sibling))
+    }
+
     @Test func unknownOpcodeIsAFault() {
         let (runtime, handle) = runtime(
             instructions: [op(.unknown(0xFF))]

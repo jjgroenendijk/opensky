@@ -88,6 +88,8 @@ nonisolated public final class PapyrusTally {
     /// same case-folded name; the first declaration wins.
     public private(set) var duplicateVariableTotal = 0
     public private(set) var suspensionTotal = 0
+    /// Method calls on `None`, which return the declared default instead of faulting.
+    public private(set) var noneReceiverTotal = 0
     public private(set) var faultTotal = 0
     public private(set) var faultKindCounts: [String: Int] = [:]
     public private(set) var faults: [PapyrusFault] = []
@@ -181,6 +183,10 @@ nonisolated public final class PapyrusTally {
 
     public func noteSuspension() {
         suspensionTotal += 1
+    }
+
+    public func noteNoneReceiver() {
+        noneReceiverTotal += 1
     }
 
     public func noteFault(_ fault: PapyrusFault) {

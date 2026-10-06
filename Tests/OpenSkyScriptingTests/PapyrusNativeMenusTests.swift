@@ -3,6 +3,7 @@
 import Foundation
 import OpenSkyFormatsESM
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import OpenSkyWorldState
 import Testing
@@ -10,6 +11,7 @@ import Testing
 @MainActor
 private final class FakeMenuBridge: PapyrusMenuBridge {
     var calls: [String] = []
+    var races: [ReferenceKey: FormID] = [:]
 
     func showRaceMenu(limited: Bool) {
         calls.append("race(\(limited))")
@@ -30,7 +32,7 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
     }
 
     func race(of actor: ReferenceKey) -> FormID? {
-        nil
+        races[actor]
     }
 
     func sex(ofBase base: FormID) -> Int? {
@@ -39,6 +41,10 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
 
     func name(of form: FormID) -> String? {
         nil
+    }
+
+    func movePlayer(to target: ReferenceKey) {
+        calls.append("move(\(target))")
     }
 }
 
@@ -70,5 +76,35 @@ struct PapyrusNativeMenusTests {
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext())
         PapyrusNativeFunctions.installMenus(into: &registry)
         #expect(registry.invoke(Self.game("ShowRaceMenu")) != .returned(.none))
+    }
+
+    @Test func actorBaseAndRaceAnswerForAnyReference() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        menus.races[fixture.key] = FormID(0x100)
+        fixture.session.bridge.menus = menus
+        let actor = { (name: String) in
+            fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "Actor", name, receiver: fixture.receiver, returnType: .object("Form")
+            ))
+        }
+        let base = fixture.call("GetBaseObject", returnType: .object("Form"))
+        #expect(actor("GetActorBase") == base)
+        #expect(actor("GetLeveledActorBase") == base)
+        #expect(actor("GetRace") == base)
+        menus.races = [:]
+        #expect(actor("GetRace") == .returned(.none))
+    }
+
+    @Test func moveToMovesOnlyThePlayer() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let call = PapyrusWorldFixture.methodCall(
+            "ObjectReference", "MoveTo", receiver: fixture.receiver,
+            arguments: [.object(fixture.receiver)]
+        )
+        #expect(PapyrusWorldFixture.isInvalidArguments(fixture.registry.invoke(call)))
+        #expect(menus.calls.isEmpty)
     }
 }

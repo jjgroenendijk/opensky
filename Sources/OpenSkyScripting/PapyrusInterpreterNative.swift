@@ -84,7 +84,7 @@ extension PapyrusInterpreter {
         return result
     }
 
-    private func nativeReturnType(_ destination: PexValue) -> PapyrusType {
+    func nativeReturnType(_ destination: PexValue) -> PapyrusType {
         guard let frame = frames.last else { return .none }
         if
             case let .identifier(name) = destination,

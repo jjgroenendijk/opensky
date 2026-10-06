@@ -71,16 +71,17 @@ extension PapyrusWorldRuntime {
 
     private func drainQueue(dispatched: inout Int, faulted: inout Int) {
         let instructionFloor = runtime.tally.instructionsExecuted
-        var index = 0
+        drainCursor = 0
+        defer { drainCursor = nil }
         var retained: [PapyrusScriptEvent] = []
         while
-            index < eventQueue.count,
+            let index = drainCursor, index < eventQueue.count,
             dispatched < budget.events,
             runtime.tally.instructionsExecuted - instructionFloor
             < budget.instructions
         {
             let event = eventQueue[index]
-            index += 1
+            drainCursor = index + 1
             guard !busyInstances.contains(event.target) else {
                 retained.append(event)
                 continue
@@ -103,7 +104,7 @@ extension PapyrusWorldRuntime {
         }
         // Skipped busy-instance events keep their order ahead of the
         // untouched tail; both were behind the dispatched prefix.
-        eventQueue = retained + Array(eventQueue[index...])
+        eventQueue = retained + Array(eventQueue.dropFirst(drainCursor ?? 0))
     }
 
     /// Delivers one event. Returns nil for a counted no-op: a retired

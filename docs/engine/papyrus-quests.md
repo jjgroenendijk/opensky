@@ -34,10 +34,13 @@ so a later `Start` runs `OnInit` on fresh instances instead of resuming half a s
 ## The Quest natives
 
 `IsRunning`, `IsCompleted`, `GetCurrentStageID`, `IsStageDone`, `Start`, `Stop`, `CompleteQuest`,
-`SetCurrentStageID`, `SetObjectiveDisplayed`, `SetObjectiveCompleted`, and `SetObjectiveFailed` are
-registered, plus `GetStage`, `GetStageDone`, and `SetStage`, the wrapper names shipped `Quest.psc`
-declares around three of them. Each makes one call into the quest runtime, so the stage and objective
-rules live in one place.
+`SetCurrentStageID`, `SetObjectiveDisplayed`, `SetObjectiveCompleted`, `SetObjectiveFailed`, and
+`CompleteAllObjectives` are registered, plus `GetStage`, `GetStageDone`, and `SetStage`, the wrapper
+names shipped `Quest.psc` declares around three of them. Each makes one call into the quest runtime,
+so the stage and objective rules live in one place.
+
+`CompleteAllObjectives` completes the objectives the quest has shown. An objective never shown has
+no journal row, so leaving it out changes nothing the player sees.
 
 A refused change becomes a native failure, and the call returns its declared default. For
 `SetStage` that is false, which matches the documented "returns false and the stage is unchanged".
@@ -66,6 +69,19 @@ The Creation Kit compiles each stage fragment into a numbered function on the ge
 queued on the fragment script's instance through the ordinary queue. So the tick budget, one event
 at a time per instance, and global order apply to fragments as to `OnActivate`.
 
+Each fragment belongs to one log entry of its stage. A stage with several log entries runs only the
+fragment of the first entry whose conditions pass, with the player as Subject. For example, `MQ101`
+stage 0 has five entries keyed on one global's value; value 0 is the normal start, and the others
+are debug starts. A session without a condition evaluator runs every entry's fragment. That choice is
+an observation of `Skyrim.esm` data, not a documented rule.
+
+When the log entry that runs has the Complete Quest flag (`QSDT` bit 0), setting the stage also
+completes the quest. With no choice made, that is the stage's first entry.
+
+All scripts on one quest are one object in the game. Here each script is its own instance, so a cast
+from one to another, such as `self as MQ101QuestScript` in a fragment, finds the sibling instance on
+the same form ([Papyrus VM](/engine/papyrus-vm.md)).
+
 A fragment naming a script the quest has no instance of is counted as
 `missingQuestFragmentInstance`. A function the script does not define is counted as
 `undefinedEventFunction`. Neither is a fault.
@@ -73,7 +89,10 @@ A fragment naming a script the quest has no instance of is counted as
 ## Aliases in scripts
 
 A `VMAD` object property whose alias word is not -1 names an alias slot on the quest its form ID
-identifies. It binds to the filled reference's live handle, like a direct property. An empty alias,
+identifies. It binds to the filled reference's live handle, like a direct property. A filled
+reference with no scripts gets its opaque handle, so a marker alias is not `None`. The property holds
+the reference itself, not an alias object. So `GetRef`, `GetReference`, `GetActorRef`, and
+`GetActorReference` on `ReferenceAlias` return their receiver. An empty alias,
 because the quest is not running or its fill type is not implemented, keeps the compiler default and
 is counted as an unfilled quest alias. The world runtime holds the current alias answers, and the
 session refreshes them after every fill or stop. So binding stays nonisolated and never calls back
