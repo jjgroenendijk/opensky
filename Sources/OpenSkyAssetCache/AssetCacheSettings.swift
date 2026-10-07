@@ -13,19 +13,23 @@ nonisolated public struct AssetCacheSettings: Equatable, Sendable {
     public var limitBytes: UInt64?
     /// Cached textures load with Metal fast resource loading during a cell build.
     public var fastLoad: Bool
+    /// The kinds the cache builds and reads; the others load from the archives.
+    public var kinds: Set<AssetCacheKind>
 
     public init(
         isEnabled: Bool = true,
         preset: AssetQualityPreset = .default,
         folder: URL? = nil,
         limitBytes: UInt64? = nil,
-        fastLoad: Bool = true
+        fastLoad: Bool = true,
+        kinds: Set<AssetCacheKind> = Set(AssetCacheKind.built)
     ) {
         self.isEnabled = isEnabled
         self.preset = preset
         self.folder = folder
         self.limitBytes = limitBytes
         self.fastLoad = fastLoad
+        self.kinds = kinds
     }
 
     public var effectiveLimitBytes: UInt64 {
@@ -47,7 +51,10 @@ extension AssetCacheSettings {
             preset: AssetQualityPreset(rawValue: UInt8(clamping: presetIndex)) ?? .default,
             folder: folder.map { URL(filePath: $0, directoryHint: .isDirectory) },
             limitBytes: limit > 0 ? limit << 30 : nil,
-            fastLoad: store.bool(.assetCacheFastLoad)
+            fastLoad: store.bool(.assetCacheFastLoad),
+            kinds: Set(AssetCacheKind.built.filter {
+                store.bool(.assetCacheKind(folder: $0.folderName))
+            })
         )
     }
 
@@ -58,6 +65,9 @@ extension AssetCacheSettings {
         store.setText(.assetCacheFolder, to: folder?.path(percentEncoded: false))
         store.set(.assetCacheLimitGiB, to: Double((limitBytes ?? 0) >> 30))
         store.set(.assetCacheFastLoad, to: fastLoad ? 1 : 0)
+        for kind in AssetCacheKind.built {
+            store.set(.assetCacheKind(folder: kind.folderName), to: kinds.contains(kind) ? 1 : 0)
+        }
     }
 }
 
@@ -74,7 +84,8 @@ nonisolated extension AssetCacheReader {
             store: store,
             files: files,
             preset: settings.preset,
-            isEnabled: settings.isEnabled
+            isEnabled: settings.isEnabled,
+            kinds: settings.kinds
         )
     }
 }

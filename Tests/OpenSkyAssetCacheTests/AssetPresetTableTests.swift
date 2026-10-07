@@ -80,7 +80,8 @@ struct AssetPresetTableTests {
                 filePath: "/Volumes/Fast/Cache/",
                 directoryHint: .isDirectory
             ),
-            limitBytes: 40 << 30
+            limitBytes: 40 << 30,
+            kinds: [.texture, .mesh]
         )
         chosen.save(to: store)
         let reloaded = AssetCacheSettings(store: PlayerSettingsStore(persistence: disk))
@@ -88,5 +89,15 @@ struct AssetPresetTableTests {
         #expect(reloaded.preset == .bestPerformance)
         #expect(reloaded.folder?.path(percentEncoded: false) == "/Volumes/Fast/Cache/")
         #expect(reloaded.effectiveLimitBytes == 40 << 30)
+        #expect(reloaded.kinds == [.texture, .mesh])
+    }
+
+    @Test func everyKindHasASettingsRowThatDefaultsToOn() {
+        for kind in AssetCacheKind.built {
+            let row = PlayerSettingsCatalog.vanilla
+                .definition(.assetCacheKind(folder: kind.folderName))
+            #expect(row?.defaultValue == 1)
+            #expect(AssetCacheKind(folderName: kind.folderName) == kind)
+        }
     }
 }

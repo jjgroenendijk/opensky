@@ -99,6 +99,16 @@ struct AssetCacheReaderTests {
         #expect(reader.counts(for: .texture) == AssetCacheReadCounts())
     }
 
+    @Test func aKindTurnedOffLoadsTheOriginalAndKeepsItsEntry() throws {
+        let reader = try makeReader()
+        try store([1], in: reader)
+        reader.kinds = [.mesh]
+        #expect(reader.value(forPath: path, decoder: decoder) == nil)
+        #expect(reader.counts(for: .texture) == AssetCacheReadCounts())
+        reader.kinds.insert(.texture)
+        #expect(reader.value(forPath: path, decoder: decoder) == [1])
+    }
+
     @Test func anotherPresetMakesTheEntryStale() throws {
         let reader = try makeReader()
         try store([1], in: reader)

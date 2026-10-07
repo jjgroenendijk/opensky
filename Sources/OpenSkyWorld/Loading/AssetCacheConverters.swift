@@ -34,11 +34,4 @@ nonisolated public enum AssetCacheConverters {
         let device = MTLCreateSystemDefaultDevice()
         return try make(preset: preset, device: device, library: device?.makeDefaultLibrary())
     }
-
-    /// Converters limited to `kinds`, for a partial build.
-    public static func filter(
-        _ converters: [any AssetConverting], kinds: Set<AssetCacheKind>
-    ) -> [any AssetConverting] {
-        kinds.isEmpty ? converters : converters.filter { kinds.contains($0.kind) }
-    }
 }

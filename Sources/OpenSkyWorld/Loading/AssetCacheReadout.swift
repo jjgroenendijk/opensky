@@ -49,6 +49,28 @@ nonisolated public enum AssetCacheReadout {
         return "Build: \(outcome), \(progress.converted) converted, \(failed) failed"
     }
 
+    /// `Textures: 32918 entries, 4.1 GiB` for a kind's control on the cache page.
+    public static func kindTitle(_ kind: AssetCacheKind, usage: AssetCacheUsage?) -> String {
+        let kindUsage = usage?.kinds[kind] ?? AssetCacheKindUsage()
+        return "\(kind.title): \(kindUsage.entryCount) entries, "
+            + String(format: "%.1f GiB", Double(kindUsage.bytes) / Double(1 << 30))
+    }
+
+    /// The measured gain of caching `kind`, archive and cache on one disk
+    /// (docs/engine/asset-cache.md, "Where the cache helps").
+    public static func kindGain(_ kind: AssetCacheKind) -> String {
+        switch kind {
+        case .texture: "Measured: 5x faster warm, 2x faster cold"
+        case .mesh: "Measured: 6x faster warm, 2x faster cold"
+        case .collision: "Measured: 5x faster warm, 3x faster cold"
+        case .animation, .audio: "Measured: no faster than the archives"
+        }
+    }
+
+    /// Why the kinds the cache does not store have no switch.
+    public static let retiredKindsNote =
+        "Audio and animation load from the archives: the cache made them no faster."
+
     /// The fraction done, 0 to 1.
     public static func fraction(_ progress: AssetCacheBuildProgress?) -> Double {
         guard let progress, progress.totalBytes > 0 else { return 0 }

@@ -164,7 +164,16 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true)
-    ]
+    ] + assetCacheKindRows
+
+    /// One switch per cached asset kind; off reads that kind from the archives.
+    /// Audio and animation have none: the cache does not store them.
+    private static let assetCacheKindRows = [
+        ("textures", "Cache textures"), ("meshes", "Cache meshes"),
+        ("collision", "Cache collision")
+    ].map { folder, title in
+        row("assetCache.kind.\(folder)", .opensky, .toggle, title, 1, applied: true)
+    }
 
     /// In `AssetQualityPreset` raw-value order.
     public static let assetQualityOptions = ["Best performance", "Balanced", "Highest quality"]
@@ -177,4 +186,9 @@ nonisolated extension PlayerSettingID {
     public static let assetCachePreset = Self("assetCache.preset")
     public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
     public static let assetCacheFastLoad = Self("assetCache.fastLoad")
+
+    /// The switch of one cached asset kind, by its cache folder name.
+    public static func assetCacheKind(folder: String) -> Self {
+        Self("assetCache.kind.\(folder)")
+    }
 }

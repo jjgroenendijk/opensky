@@ -161,6 +161,24 @@ No category passes. The failing sounds fail on a few frames at a sharp attack, w
 spreads noise before the attack (pre-echo). At 128 kbps per channel the counts barely change
 (run `.logs/aac-check/20261007T021023Z`), so a higher rate is not the fix.
 
+## Per-kind settings
+
+Each kind the cache stores has its own switch in the shared settings store: "Cache textures",
+"Cache meshes", and "Cache collision", all on by default. A kind that is off:
+
+- is not converted by a build, and a check does not count it, so the cache reads as current
+  when every kind that is on is built;
+- is read from the archives, without a cache lookup;
+- keeps its entries on disk, so turning it on again needs no rebuild.
+
+The launcher's Asset Cache page shows each switch with the entry count and size of its kind,
+and its tooltip gives the measured gain from "Where the cache helps". In a running game,
+World > Asset Cache turns the reads of one kind off and on for a comparison, without a
+reload; that change is not saved. `openskycli asset-cache` and the benchmarks read the same
+settings, and `--kinds textures,meshes,collision` overrides them.
+
+Audio and animation have no switch, because the cache does not store them.
+
 ## Read path
 
 The engine opens the cache when the game loads, if the cache is turned on in Settings and

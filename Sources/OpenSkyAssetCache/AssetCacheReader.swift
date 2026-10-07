@@ -59,6 +59,7 @@ nonisolated public final class AssetCacheReader: Sendable {
     private struct State {
         var isEnabled: Bool
         var preset: AssetQualityPreset
+        var kinds: Set<AssetCacheKind>
         var counts: [AssetCacheKind: AssetCacheReadCounts] = [:]
         var rebuild: Set<AssetCacheRebuildItem> = []
         var requested: Set<String> = []
@@ -70,11 +71,12 @@ nonisolated public final class AssetCacheReader: Sendable {
         store: AssetCacheStore,
         files: any GameFileSource,
         preset: AssetQualityPreset,
-        isEnabled: Bool = true
+        isEnabled: Bool = true,
+        kinds: Set<AssetCacheKind> = Set(AssetCacheKind.built)
     ) {
         self.store = store
         self.files = files
-        state = Mutex(State(isEnabled: isEnabled, preset: preset))
+        state = Mutex(State(isEnabled: isEnabled, preset: preset, kinds: kinds))
     }
 
     /// Off means every load reads the original files, for comparison.
@@ -86,6 +88,12 @@ nonisolated public final class AssetCacheReader: Sendable {
     public var preset: AssetQualityPreset {
         get { state.withLock { $0.preset } }
         set { state.withLock { $0.preset = newValue } }
+    }
+
+    /// A kind left out reads the original files; its entries stay on disk.
+    public var kinds: Set<AssetCacheKind> {
+        get { state.withLock { $0.kinds } }
+        set { state.withLock { $0.kinds = newValue } }
     }
 
     public func counts(for kind: AssetCacheKind) -> AssetCacheReadCounts {
@@ -132,7 +140,9 @@ nonisolated public final class AssetCacheReader: Sendable {
     public func entry<Value>(
         forPath path: String, decoder: AssetCacheDecoder<Value>
     ) -> AssetCacheEntryRead<Value>? {
-        let (enabled, preset) = state.withLock { ($0.isEnabled, $0.preset) }
+        let (enabled, preset) = state.withLock {
+            ($0.isEnabled && $0.kinds.contains(decoder.kind), $0.preset)
+        }
         guard enabled, let source = stamp(forPath: path) else { return nil }
         state.withLock { _ = $0.requested.insert(source.path) }
         let request = AssetCacheRequest(

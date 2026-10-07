@@ -85,6 +85,22 @@ struct AssetCacheCoordinatorTests {
         #expect(coordinator.usage?.entryCount == 0)
     }
 
+    @Test func aKindTurnedOffIsNotBuiltOrCounted() async {
+        let coordinator = makeCoordinator()
+        await run(coordinator) { coordinator.setFolder(folder) }
+        await run(coordinator) { coordinator.setKind(.collision, stored: false) }
+        #expect(coordinator.check?.total.total == 0)
+        await run(coordinator) { coordinator.startBuild() }
+        #expect(coordinator.progress?.converted == 0)
+        #expect((coordinator.usage?.entryCount ?? 0) == 0)
+        await run(coordinator) { coordinator.setKind(.collision, stored: true) }
+        await run(coordinator) { coordinator.startBuild() }
+        #expect(coordinator.usage?.kinds[.collision]?.entryCount == 2)
+        #expect(AssetCacheReadout.kindTitle(.collision, usage: coordinator.usage)
+            .hasPrefix("Collision: 2 entries, "))
+        #expect(AssetCacheReadout.kindGain(.audio) == "Measured: no faster than the archives")
+    }
+
     @Test func aFolderInsideTheInstallIsRefused() async {
         let coordinator = makeCoordinator()
         await run(coordinator) { coordinator.setFolder(install.appending(path: "Cache")) }

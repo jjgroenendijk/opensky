@@ -16,6 +16,11 @@ final class AssetCachePageViewController: NSViewController {
         target: nil,
         action: nil
     )
+    let kindCheckboxes = AssetCacheKind.built.map { kind in
+        NSButton(checkboxWithTitle: kind.title, target: nil, action: nil)
+    }
+
+    let retiredKindsLabel = NSTextField(labelWithString: AssetCacheReadout.retiredKindsNote)
     let presetPopUp = NSPopUpButton()
     let presetLabel = NSTextField(labelWithString: "")
     let folderLabel = NSTextField(labelWithString: "")
@@ -56,6 +61,10 @@ final class AssetCachePageViewController: NSViewController {
             title,
             PanelComponents.group([enabledCheckbox]),
             PanelComponents.group([PanelComponents.caption("Quality"), presetPopUp, presetLabel]),
+            PanelComponents.group(
+                [PanelComponents.caption("Stored in the cache")] + kindCheckboxes
+                    + [retiredKindsLabel]
+            ),
             PanelComponents.group([
                 PanelComponents.caption("Folder"), folderLabel,
                 PanelComponents.buttonRow([chooseFolderButton, defaultFolderButton]),
@@ -95,6 +104,11 @@ final class AssetCachePageViewController: NSViewController {
         enabledCheckbox.state = settings.isEnabled ? .on : .off
         presetPopUp.selectItem(at: Int(settings.preset.rawValue))
         presetLabel.stringValue = settings.preset.values.summary
+        for (kind, checkbox) in zip(AssetCacheKind.built, kindCheckboxes) {
+            checkbox.state = settings.kinds.contains(kind) ? .on : .off
+            checkbox.title = AssetCacheReadout.kindTitle(kind, usage: coordinator.usage)
+            checkbox.isEnabled = isIdle
+        }
         let folder = (try? settings.effectiveFolder())?.path(percentEncoded: false) ?? "None"
         folderLabel.stringValue = folder
         folderLabel.toolTip = folder
