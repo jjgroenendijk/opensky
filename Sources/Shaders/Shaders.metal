@@ -1138,3 +1138,102 @@ kernel void cullInstances(
     uint slot = atomic_fetch_add_explicit(&arguments[countWord], 1, memory_order_relaxed);
     output[instance.outputBase + slot] = instance.transform;
 }
+
+// Temporal upscaling motion (docs/rendering/upscaling.md). Motion is last frame's
+// texture coordinate minus this frame's, both without the jitter.
+static float2 textureCoordinate(float4 clip)
+{
+    return clip.xy / clip.w * float2(0.5, -0.5) + 0.5;
+}
+
+static float2 motionBetween(float4 currentClip, float4 previousClip)
+{
+    return textureCoordinate(previousClip) - textureCoordinate(currentClip);
+}
+
+// Every pixel moved only by the camera: reproject its depth with last frame's camera.
+fragment float2 cameraMotionFragment(
+    TextureReadbackVertexOut in [[stage_in]],
+    constant UpscaleMotionUniforms &motion [[buffer(BufferIndexMotionUniforms)]],
+    depth2d<float, access::read> depth [[texture(TextureIndexDiffuse)]])
+{
+    uint2 pixel = uint2(in.position.xy);
+    float sceneDepth = depth.read(pixel);
+    if (sceneDepth < motion.nearDepthLimit) {
+        return float2(0.0);
+    }
+    float2 size = float2(depth.get_width(), depth.get_height());
+    float2 ndc = in.position.xy / size * float2(2.0, -2.0) + float2(-1.0, 1.0);
+    float4 world = motion.inverseJitteredViewProjection * float4(ndc, sceneDepth, 1.0);
+    world /= world.w;
+    return motionBetween(motion.viewProjection * world, motion.previousViewProjection * world);
+}
+
+struct MotionVertexOut
+{
+    float4 position [[position]];
+    float4 currentClip;
+    float4 previousClip;
+};
+
+static MotionVertexOut motionVertex(
+    float4 world,
+    float4 previousWorld,
+    constant FrameUniforms &frame,
+    constant UpscaleMotionUniforms &motion)
+{
+    MotionVertexOut out;
+    // The jittered matrix the scene pass used, so the depth test matches its surface.
+    out.position = frame.viewProjectionMatrix * world;
+    out.currentClip = motion.viewProjection * world;
+    out.previousClip = motion.previousViewProjection * previousWorld;
+    return out;
+}
+
+vertex MotionVertexOut staticMotionVertex(
+    StaticVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant UpscaleMotionUniforms &motion [[buffer(BufferIndexMotionUniforms)]],
+    const device MotionInstance *instances [[buffer(BufferIndexMotionInstances)]])
+{
+    const device MotionInstance &instance = instances[instanceID];
+    float4 local = float4(in.position, 1.0);
+    return motionVertex(instance.current * local, instance.previous * local, frame, motion);
+}
+
+vertex MotionVertexOut skinnedMotionVertex(
+    SkinnedVertexIn in [[stage_in]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant UpscaleMotionUniforms &motion [[buffer(BufferIndexMotionUniforms)]],
+    const device MotionInstance *instances [[buffer(BufferIndexMotionInstances)]],
+    const device matrix_float4x4 *bones [[buffer(BufferIndexBoneMatrices)]],
+    const device matrix_float4x4 *previousBones [[buffer(BufferIndexPreviousBoneMatrices)]])
+{
+    float4 local = float4(in.position, 1.0);
+    float4 skinned = 0.0;
+    float4 previousSkinned = 0.0;
+    for (uint influence = 0; influence < 4; ++influence) {
+        float weight = in.boneWeights[influence];
+        ushort bone = in.boneIndices[influence];
+        skinned += weight * (bones[bone] * local);
+        previousSkinned += weight * (previousBones[bone] * local);
+    }
+    const device MotionInstance &instance = instances[instanceID];
+    return motionVertex(
+        instance.current * skinned, instance.previous * previousSkinned, frame, motion);
+}
+
+fragment float2 objectMotionFragment(MotionVertexOut in [[stage_in]])
+{
+    return motionBetween(in.currentClip, in.previousClip);
+}
+
+// Copies the upscaled frame into the drawable before the menus and the HUD draw.
+fragment float4 upscaleCompositeFragment(
+    TextureReadbackVertexOut in [[stage_in]],
+    texture2d<float, access::read> upscaled [[texture(TextureIndexDiffuse)]])
+{
+    return float4(upscaled.read(uint2(in.position.xy)).rgb, 1.0);
+}

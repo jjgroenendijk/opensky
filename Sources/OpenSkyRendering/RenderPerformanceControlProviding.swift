@@ -16,6 +16,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
         reason: RayTracingAvailability.missingReason
     )
     public var rayTracedShadows = RayTracedShadowStats()
+    public var upscaling = UpscaleStatus()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -27,6 +28,30 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
         self.pipelineCache = pipelineCache
         self.cpuCulling = cpuCulling
         self.gpuCulling = gpuCulling
+    }
+}
+
+/// What MetalFX upscaling did in the last frame.
+nonisolated public struct UpscaleStatus: Equatable, Sendable {
+    /// Nil while upscaling is off.
+    public var inputSize: SIMD2<Int>?
+    public var outputSize: SIMD2<Int>?
+    /// History resets since launch: scene swaps, camera cuts, and size changes.
+    public var upscaler = UpscalerKind.temporal
+    public var historyResets = 0
+    /// Why this GPU cannot upscale; nil when it can.
+    public var unavailableReason: String?
+
+    public init(
+        inputSize: SIMD2<Int>? = nil, outputSize: SIMD2<Int>? = nil,
+        upscaler: UpscalerKind = .temporal, historyResets: Int = 0,
+        unavailableReason: String? = nil
+    ) {
+        self.upscaler = upscaler
+        self.inputSize = inputSize
+        self.outputSize = outputSize
+        self.historyResets = historyResets
+        self.unavailableReason = unavailableReason
     }
 }
 
@@ -50,6 +75,9 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     var rayTracedShadowsEnabled: Bool { get set }
     /// Draws the traced shadow alone. Not saved.
     var rayTracedShadowView: Bool { get set }
+    /// The share of the display size the scene renders at before MetalFX upscales it.
+    var renderScale: RenderScale { get set }
+    var upscaler: UpscalerKind { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
@@ -104,6 +132,20 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
         return """
         Meshes: \(stats.meshes)  Instances: \(stats.instances)
         Structures: \(megabytes(stats.bytes))
+        """
+    }
+
+    public static func upscalingText(scale: RenderScale, status: UpscaleStatus) -> String {
+        if let reason = status.unavailableReason {
+            return "Upscaling: unavailable\n\(reason)"
+        }
+        guard scale.isOn, let input = status.inputSize, let output = status.outputSize else {
+            return "Upscaling: off\nHistory resets: \(status.historyResets)"
+        }
+        return """
+        Upscaling: \(scale.percent)%, \(status.upscaler)
+        Scene: \(input.x) x \(input.y)  Output: \(output.x) x \(output.y)
+        History resets: \(status.historyResets)
         """
     }
 

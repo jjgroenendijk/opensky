@@ -10,6 +10,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
     let gpuCullingSection = GPUCullingSection()
     let textureStreamingSection = TextureStreamingSection()
     let rayTracedShadowsSection = RayTracedShadowsSection()
+    let upscalingSection = UpscalingSection()
 
     weak var provider: (any RenderPerformanceControlProviding)? {
         didSet {
@@ -18,13 +19,14 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
             gpuCullingSection.provider = provider
             textureStreamingSection.provider = provider
             rayTracedShadowsSection.provider = provider
+            upscalingSection.provider = provider
         }
     }
 
     override func makeSections() -> [PanelSectionViewController] {
         [
             renderTargetsSection, pipelineCacheSection, gpuCullingSection,
-            textureStreamingSection, rayTracedShadowsSection
+            textureStreamingSection, rayTracedShadowsSection, upscalingSection
         ]
     }
 }

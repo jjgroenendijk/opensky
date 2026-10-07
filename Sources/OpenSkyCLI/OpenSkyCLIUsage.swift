@@ -245,7 +245,8 @@ extension OpenSkyCLI {
                 [--fast-load] [--preset best|balanced|highest] [--folder <dir>]
                 [--loose <dir>] [--record-paths <file>] [--size WxH]
                 [--launch] [--launch-seconds <s>] [--route] [--cold-pipelines]
-                [--cpu-culling]
+                [--cpu-culling] [--render-scale <percent>]
+                [--upscaler temporal|spatial]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
@@ -262,7 +263,10 @@ extension OpenSkyCLI {
                                   route with live streaming,
                                   --cold-pipelines deletes the saved
                                   pipeline archive first, --cpu-culling
-                                  culls static groups on the CPU
+                                  culls static groups on the CPU,
+                                  --render-scale renders at 50 to 100
+                                  percent and upscales with MetalFX,
+                                  --upscaler picks the MetalFX scaler
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control

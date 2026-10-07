@@ -203,6 +203,16 @@ extension WorldRenderControlForwarding {
         set { renderControls.rayTracedShadowView = newValue }
     }
 
+    public var renderScale: RenderScale {
+        get { renderControls.renderScale }
+        set { renderControls.renderScale = newValue }
+    }
+
+    public var upscaler: UpscalerKind {
+        get { renderControls.upscaler }
+        set { renderControls.upscaler = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }

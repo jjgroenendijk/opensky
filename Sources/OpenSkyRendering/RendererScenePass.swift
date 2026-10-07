@@ -461,30 +461,71 @@ extension Renderer {
         slot: Int,
         projection: float4x4
     ) -> Bool {
-        let viewProjection = projection * freeFlyCamera.viewMatrix()
-        let frustum = Frustum(viewProjection: viewProjection)
-        let frameOffset = updateFrameUniforms(slot: slot, viewProjection: viewProjection)
-        let grade = imageSpaceGrade(descriptor: target)
+        let view = freeFlyCamera.viewMatrix()
+        // Upscaling renders the scene smaller with a jittered projection. Culling keeps
+        // the unjittered frustum, so both paths cull the same instances.
+        let upscaleFrame = beginUpscaleFrame(target: target, projection: projection, view: view)
+        let frustum = Frustum(viewProjection: projection * view)
+        let frameOffset = updateFrameUniforms(
+            slot: slot,
+            viewProjection: upscaleFrame?.jitteredViewProjection ?? projection * view
+        )
+        let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
+            ?? target
+        let grade = imageSpaceGrade(descriptor: sceneTarget)
         guard
-            let descriptor = scenePassDescriptor(target, grade: grade),
+            let descriptor = scenePassDescriptor(sceneTarget, grade: grade),
             let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
-        let layers = effectiveRenderLayers
-        if scene.sky != nil, layers.contains(.sky) {
+        var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
+        encodeSceneLayers(descriptor: descriptor, state: &state)
+        if let grade {
+            guard
+                encodeImageSpaceGrade(
+                    grade, descriptor: descriptor, state: &state, frameOffset: frameOffset
+                )
+            else { return false }
+        }
+        // World-space diagnostics remain depth-tested and sit below every
+        // screen-space layer.
+        encodeWorldOverlay(state: &state)
+        if let upscaleFrame {
+            guard
+                let sceneDepth = descriptor.depthAttachment.texture,
+                let upscaled = encodeUpscale(
+                    upscaleFrame, sceneDepth: sceneDepth, target: target, state: state,
+                    frameOffset: frameOffset
+                )
+            else { return false }
+            state = upscaled
+        }
+        // SWF layer before the dev UI overlay so stats/readouts stay on top. Both draw
+        // at the frame size, also when the scene was upscaled.
+        encodeSWF(descriptor: target, state: &state)
+        encodeUI(descriptor: target, state: &state)
+        lastDrawStats = state.stats
+        state.encoder.endEncoding()
+        return true
+    }
+
+    /// Sky, world geometry, effects, and the first-person arms.
+    private func encodeSceneLayers(
+        descriptor: MTL4RenderPassDescriptor,
+        state: inout ScenePassState
+    ) {
+        let encoder = state.encoder
+        if scene.sky != nil, effectiveRenderLayers.contains(.sky) {
             encoder.setRenderPipelineState(skyPipeline)
             encoder.setCullMode(.none)
             encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
         }
         encoder.setDepthStencilState(depthState)
         // Wireframe is a raster state rather than a channel, so it is set on the
-        // encoder here and reset before the screen-space layers below, which
-        // share this encoder and would otherwise wireframe the HUD.
-        let fillMode: MTLTriangleFillMode = renderDebug.mode == .wireframe ? .lines : .fill
-        encoder.setTriangleFillMode(fillMode)
-        var state = ScenePassState(
-            encoder: encoder, slot: slot, frustum: frustum, fillMode: fillMode
-        )
+        // encoder here and reset before the screen-space layers, which share this
+        // encoder and would otherwise wireframe the HUD.
+        state.fillMode = renderDebug.mode == .wireframe ? .lines : .fill
+        encoder.setTriangleFillMode(state.fillMode)
         encodeSceneGeometry(state: &state)
         encodeMembranes(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
@@ -496,25 +537,6 @@ extension Renderer {
             state: &state
         )
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
-        // Everything below is diagnosis or interface rather than world geometry,
-        // and `encodeSWF`/`encodeUI` reuse this encoder: a leaked `.lines` here
-        // would wireframe the HUD.
         encoder.setTriangleFillMode(.fill)
-        if let grade {
-            guard
-                encodeImageSpaceGrade(
-                    grade, descriptor: descriptor, state: &state, frameOffset: frameOffset
-                )
-            else { return false }
-        }
-        // World-space diagnostics remain depth-tested and sit below every
-        // screen-space layer.
-        encodeWorldOverlay(state: &state)
-        // SWF layer before the dev UI overlay so stats/readouts stay on top.
-        encodeSWF(descriptor: descriptor, state: &state)
-        encodeUI(descriptor: descriptor, state: &state)
-        lastDrawStats = state.stats
-        state.encoder.endEncoding()
-        return true
     }
 }

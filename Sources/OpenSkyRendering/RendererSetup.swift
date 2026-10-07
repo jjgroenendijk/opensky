@@ -139,7 +139,7 @@ extension Renderer {
     /// The image-space composite pass and the effect layer.
     static func makeEffectResources(
         view: MTKView, library: MTLLibrary, compiler: PipelineCache
-    ) throws -> ((ImageSpacePassResources, EffectLayer), GPUCullState) {
+    ) throws -> ((ImageSpacePassResources, EffectLayer), (GPUCullState, UpscaleState)) {
         let device = compiler.device
         return try (
             (
@@ -149,7 +149,12 @@ extension Renderer {
                 ),
                 EffectLayer(device: device, library: library, view: view, compiler: compiler)
             ),
-            GPUCullState(resources: GPUCullingResources(library: library, compiler: compiler))
+            (
+                GPUCullState(resources: GPUCullingResources(library: library, compiler: compiler)),
+                UpscaleState(
+                    resources: UpscaleResources(view: view, library: library, compiler: compiler)
+                )
+            )
         )
     }
 
@@ -187,8 +192,8 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the ray-traced scene.
-        descriptor.maxBufferBindCount = BufferIndex.rayScene.rawValue + 1
+        // Highest buffer index is the upscaler's motion instances.
+        descriptor.maxBufferBindCount = BufferIndex.motionInstances.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
         // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots + scene color.
         descriptor.maxTextureBindCount = TextureIndex.sceneColor.rawValue + 1

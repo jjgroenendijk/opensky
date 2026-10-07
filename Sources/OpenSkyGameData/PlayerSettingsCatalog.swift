@@ -178,6 +178,22 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row(
             "rendering.rayTracedShadows", .opensky, .toggle, "Ray-traced sun shadows", 0,
             applied: true
+        ),
+        row(
+            "rendering.renderScale",
+            .opensky,
+            .choice(options: renderScaleOptions),
+            "Render scale (MetalFX upscaling)",
+            0,
+            applied: true
+        ),
+        row(
+            "rendering.upscaler",
+            .opensky,
+            .choice(options: upscalerOptions),
+            "Upscaler",
+            0,
+            applied: true
         )
     ] + assetCacheKindRows
 
@@ -192,6 +208,12 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
 
     /// The texture streaming budget choices, in MiB.
     public static let textureBudgetOptions = [128, 256, 512, 1024, 2048]
+
+    /// In `RenderScale.percentOptions` order.
+    public static let renderScaleOptions = ["Off", "50%", "59%", "67%", "75%", "85%", "100%"]
+
+    /// In `UpscalerKind` raw-value order.
+    public static let upscalerOptions = ["Temporal", "Spatial"]
 
     /// In `AssetQualityPreset` raw-value order.
     public static let assetQualityOptions = ["Best performance", "Balanced", "Highest quality"]
@@ -214,6 +236,10 @@ nonisolated extension PlayerSettingID {
     public static let textureBudget = Self("rendering.textureBudget")
     /// Traces sun shadows on GPUs with hardware ray tracing; ignored elsewhere.
     public static let rayTracedShadows = Self("rendering.rayTracedShadows")
+    /// An index into `RenderScale.percentOptions`; 0 is off.
+    public static let renderScale = Self("rendering.renderScale")
+    /// An `UpscalerKind` raw value.
+    public static let upscaler = Self("rendering.upscaler")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

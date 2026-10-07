@@ -66,6 +66,16 @@ extension FakeWorldProviders {
         set { renderPerformance.rayTracedShadowView = newValue }
     }
 
+    var renderScale: RenderScale {
+        get { renderPerformance.renderScale }
+        set { renderPerformance.renderScale = newValue }
+    }
+
+    var upscaler: UpscalerKind {
+        get { renderPerformance.upscaler }
+        set { renderPerformance.upscaler = newValue }
+    }
+
     var pipelineCacheClears: Int {
         renderPerformance.pipelineCacheClears
     }
@@ -85,5 +95,7 @@ struct FakeRenderPerformanceState {
     var textureBudgetIndex = 2
     var rayTracedShadowsEnabled = false
     var rayTracedShadowView = false
+    var renderScale = RenderScale.off
+    var upscaler = UpscalerKind.temporal
     var pipelineCacheClears = 0
 }

@@ -27,4 +27,6 @@ nonisolated public enum RendererError: Error {
     case encoderUnavailable
     case gpuTimeout
     case offscreenPumpTimedOut(maxFrames: Int)
+    /// MetalFX could not make a temporal scaler or its targets for these sizes.
+    case upscalerUnavailable
 }

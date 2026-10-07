@@ -5,6 +5,7 @@ import AppKit
 @testable import OpenSky
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkyWorld
 import Testing
 
 @MainActor
@@ -92,5 +93,19 @@ struct GraphicsPageTests {
         page.rayTracedShadowsControl.state = .on
         page.rayTracedShadowsControl.sendAction(page.rayTracedShadowsControl.action, to: page)
         #expect(store.bool(.rayTracedShadows))
+    }
+
+    @Test func upscalingStartsOffAndSavesItsChoices() {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = makePage(store: store)
+        #expect(page.renderScaleControl.accessibilityIdentifier() == "GraphicsRenderScaleControl")
+        #expect(page.upscalerControl.accessibilityIdentifier() == "GraphicsUpscalerControl")
+        #expect(page.renderScaleControl.titleOfSelectedItem == "Render scale Off")
+        page.renderScaleControl.selectItem(withTitle: "Render scale 67%")
+        page.renderScaleControl.sendAction(page.renderScaleControl.action, to: page)
+        #expect(RenderScale(store: store) == RenderScale(percent: 67))
+        page.upscalerControl.selectItem(withTitle: "Spatial")
+        page.upscalerControl.sendAction(page.upscalerControl.action, to: page)
+        #expect(UpscalerKind(store: store) == .spatial)
     }
 }
