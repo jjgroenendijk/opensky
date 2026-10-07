@@ -46,11 +46,6 @@ nonisolated public enum AssetTextureStorage: Equatable, Sendable {
     }
 }
 
-nonisolated public enum AssetAudioStorage: Equatable, Sendable {
-    case alac
-    case aac
-}
-
 /// Which sound group a cached sound belongs to, from its folder. Dialogue ships
 /// as `.fuz` and is not cached, so `voice` holds the creature vocal sounds.
 nonisolated public enum AssetSoundCategory: String, CaseIterable, Sendable {
@@ -89,7 +84,6 @@ nonisolated public struct AssetPresetValues: Equatable, Sendable {
     public let maximumTextureSize: Int?
     /// Mip levels kept, or nil for every shipped level.
     public let mipLevels: Int?
-    public let audio: [AssetSoundCategory: AssetAudioStorage]
     public let imageLimit: AssetImageLimit
     /// Whole-install build time on one core, in minutes, at the fastest ASTC effort.
     public let buildMinutesOneCore: Double
@@ -98,38 +92,33 @@ nonisolated public struct AssetPresetValues: Equatable, Sendable {
     public func textureStorage(forPath path: String) -> AssetTextureStorage {
         textures[AssetTextureClass(path: path)] ?? .shipped
     }
-
-    public func audioStorage(forPath path: String) -> AssetAudioStorage {
-        audio[AssetSoundCategory(path: path)] ?? .alac
-    }
 }
 
 nonisolated extension AssetQualityPreset {
-    /// Meshes and collision are ready buffers and animation the shipped file in
-    /// every preset; only textures and audio differ.
+    /// Meshes and collision are ready buffers in every preset; only textures differ.
     public var values: AssetPresetValues {
         switch self {
         case .highestQuality:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .shipped, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil, audio: [:], imageLimit: .lossless,
-                buildMinutesOneCore: 15,
-                summary: "No loss. Shipped textures, ALAC audio. Fastest build."
+                maximumTextureSize: nil, mipLevels: nil, imageLimit: .lossless,
+                buildMinutesOneCore: 14,
+                summary: "No loss. Shipped textures. Fastest build."
             )
         case .balanced:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .astc4x4, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil, audio: [:],
+                maximumTextureSize: nil, mipLevels: nil,
                 imageLimit: AssetImageLimit(minimumPSNR: 40, maximumNormalDegrees: 2),
-                buildMinutesOneCore: 33,
+                buildMinutesOneCore: 32,
                 summary: "Normal maps in ASTC 4x4: less GPU memory, no visible loss."
             )
         case .bestPerformance:
             AssetPresetValues(
                 textures: [.color: .astc6x6, .normal: .astc6x6, .data: .astc8x8],
-                maximumTextureSize: nil, mipLevels: nil, audio: [:],
+                maximumTextureSize: nil, mipLevels: nil,
                 imageLimit: AssetImageLimit(minimumPSNR: 30, maximumNormalDegrees: nil),
-                buildMinutesOneCore: 120,
+                buildMinutesOneCore: 119,
                 summary: "Every texture in ASTC: least GPU memory, slight loss."
             )
         }

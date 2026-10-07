@@ -36,7 +36,7 @@ private struct MemoryFiles: GameFileSource {
 /// Reverses the bytes; fails on a file that starts with 0xFF; skips `.skip` files.
 private struct ReversingConverter: AssetConverting {
     var kind: AssetCacheKind {
-        .animation
+        .collision
     }
 
     var version: UInt32 {
@@ -126,7 +126,7 @@ struct AssetCacheBuilderTests {
         #expect(await builder.check(items).summary == .notBuilt)
         _ = await builder.build(items)
         let built = await builder.check(items)
-        #expect(built.kinds[.animation] == AssetCacheKindCheck(current: 3, stale: 0, missing: 1))
+        #expect(built.kinds[.collision] == AssetCacheKindCheck(current: 3, stale: 0, missing: 1))
         #expect(built.summary == .partlyBuilt)
         let other = AssetCacheBuilder(
             store: builder.store, files: files, converters: [ReversingConverter()],

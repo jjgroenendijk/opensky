@@ -179,8 +179,9 @@ enum AssetCacheCommand {
     private static func kinds(_ list: String?) throws -> Set<AssetCacheKind> {
         guard let list else { return [] }
         return try Set(list.split(separator: ",").map { name in
-            guard let kind = AssetCacheKind.allCases.first(where: { $0.folderName == name }) else {
-                let names = AssetCacheKind.allCases.map(\.folderName).joined(separator: ",")
+            let built = AssetCacheKind.allCases.filter { !AssetCacheKind.retired.contains($0) }
+            guard let kind = built.first(where: { $0.folderName == name }) else {
+                let names = built.map(\.folderName).joined(separator: ",")
                 throw CLIError.usage("--kinds takes \(names)")
             }
             return kind
