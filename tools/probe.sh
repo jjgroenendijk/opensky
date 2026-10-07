@@ -480,8 +480,11 @@ run "asset cache check" asset-cache check --folder "$cache_dir" --kinds animatio
 awk '/^--- asset cache check/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -qE '^animation[[:space:]]current [1-9][0-9]*[[:space:]]stale 0[[:space:]]missing 0$' \
   || fail "asset-cache check found missing animation entries"
+run "asset cache measure" asset-cache measure --folder "$cache_dir" --per-kind 5
+grep -qE '^textures[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
+  || fail "asset-cache measure printed no texture row"
 rm -rf "$(dirname "$cache_dir")"
-echo "[ OK ] asset cache build + check"
+echo "[ OK ] asset cache build + check + measure"
 
 # Sustained fps gate (todo 2.11): 360 frames at 720p via frame stats; the
 # command exits 1 when avg/p95 frame time misses the 33.3 ms (30 fps) budget.

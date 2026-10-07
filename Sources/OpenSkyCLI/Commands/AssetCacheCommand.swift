@@ -1,4 +1,5 @@
-// `asset-cache build|check|clear|status|extract|io-bench|compare`: builds the asset cache without
+// `asset-cache build|check|clear|status|extract|io-bench|measure|compare`: builds the asset cache
+// without
 // the app, with the preset and folder from the shared settings unless options override them. The
 // cache is game content and lives outside the repo (AGENTS.md Legal & IP); the location check
 // refuses a folder inside a git checkout or the install.
@@ -18,10 +19,12 @@ enum AssetCacheCommand {
         /// Only these paths, one per line in the `--paths` file, instead of the whole install.
         var paths: [String]?
         var out: URL?
+        var perKind: Int
     }
 
     static func run(context: CLIContext, scanner: inout ArgumentScanner) async throws {
-        let subcommand = try scanner.positional("build|check|clear|status|extract|io-bench|compare")
+        let subcommand = try scanner
+            .positional("build|check|clear|status|extract|io-bench|measure|compare")
         if subcommand == "compare" {
             return try compare(scanner: &scanner)
         }
@@ -30,7 +33,8 @@ enum AssetCacheCommand {
             kinds: kinds(scanner.option("--kinds")),
             width: scanner.option("--width").map { try int($0, "--width") },
             paths: scanner.option("--paths").map { try lines(ofFile: $0) },
-            out: scanner.option("--out").map { URL(filePath: $0, directoryHint: .isDirectory) }
+            out: scanner.option("--out").map { URL(filePath: $0, directoryHint: .isDirectory) },
+            perKind: scanner.option("--per-kind").map { try int($0, "--per-kind") } ?? 300
         )
         try scanner.finish()
         let files = context.makeFileSystem()
@@ -55,6 +59,11 @@ enum AssetCacheCommand {
                 files: files,
                 options: options,
                 dataURL: context.root.dataURL
+            )
+        case "measure":
+            try await AssetCacheMeasure.run(
+                reader: reader, files: files, settings: options.settings,
+                dataURL: context.root.dataURL, perKind: options.perKind
             )
         default:
             throw CLIError.usage("unknown asset-cache subcommand: \(subcommand)")

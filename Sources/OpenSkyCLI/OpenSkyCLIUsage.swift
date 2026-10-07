@@ -235,6 +235,9 @@ extension OpenSkyCLI {
                                   Load the listed cached textures as one batch:
                                   archive, cache on the CPU, and Metal fast
                                   resource loading raw and LZ4, cold and warm
+      asset-cache measure [--per-kind <n>]
+                                  Per asset kind, load a sample from the
+                                  archives and from the cache, cold and warm
       asset-cache compare <reference.png> <candidate.png>
                                   PSNR and largest channel error of two
                                   captures of the same view
