@@ -17,6 +17,9 @@ nonisolated public struct LocationStore: Sendable {
     private let index: RecordIndex
     private let keywordStore: KeywordStore
     private let table: ResolvedRecordTable<ResolvedLocation>
+    /// Each unique NPC base's placed reference, from the `LCUN` lists. The last
+    /// location that names an actor wins.
+    public let uniqueActorReferences: [ReferenceKey: ReferenceKey]
 
     public var locations: [ResolvedFormID: ResolvedLocation] {
         table.values
@@ -36,6 +39,26 @@ nonisolated public struct LocationStore: Sendable {
             editorID: \.editorID,
             resolve: { ResolvedLocation(id: $0, location: $1, sourcePlugin: $2) }
         )
+        uniqueActorReferences = Self.uniqueActors(in: table.values.values, index: index)
+    }
+
+    private static func uniqueActors(
+        in locations: some Sequence<ResolvedLocation>,
+        index: RecordIndex
+    ) -> [ReferenceKey: ReferenceKey] {
+        var references: [ReferenceKey: ReferenceKey] = [:]
+        for location in locations.sorted(by: { $0.id.description < $1.id.description }) {
+            for actor in location.location.uniqueActors {
+                guard
+                    let base = index.resolvedID(actor.actorBase, fromPlugin: location.sourcePlugin),
+                    let reference = index.resolvedID(
+                        actor.actorReference, fromPlugin: location.sourcePlugin
+                    )
+                else { continue }
+                references[ReferenceKey(resolved: base)] = ReferenceKey(resolved: reference)
+            }
+        }
+        return references
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {

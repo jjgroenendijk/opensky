@@ -58,16 +58,26 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 fillFromEvent(alias)
                 return
             }
-            guard case .specificReference = alias.fillType else {
+            let key: ReferenceKey?
+            switch alias.fillType {
+            case .specificReference:
+                key = alias.forcedReference
+                    .flatMap { ReferenceKey.resolve($0, using: resolver)?.namingPlayer }
+            case .uniqueActor where locations != nil:
+                // The `LCUN` lists miss some unique NPCs, such as Ralof. That gap
+                // is OpenSky's, so it never fails a start.
+                guard let unique = uniqueReference(of: alias) else {
+                    skipped.note(.unresolvedReference)
+                    return
+                }
+                key = unique
+            default:
                 skipped.note(.unsupportedFillType(alias.fillType))
                 // An unimplemented fill type is OpenSky's gap, not the quest's,
                 // so it never fails a start.
                 return
             }
-            guard
-                let id = alias.forcedReference,
-                let key = ReferenceKey.resolve(id, using: resolver)
-            else {
+            guard let key else {
                 skipped.note(.unresolvedReference)
                 note(unfilled: alias)
                 return
@@ -84,6 +94,15 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 // same target simply overwrites this.
                 store(UInt32(bitPattern: forced), key)
             }
+        }
+
+        /// `ALUA` names an NPC base; its one placed reference fills the alias.
+        private func uniqueReference(of alias: Quest.Alias) -> ReferenceKey? {
+            guard
+                let base = alias.uniqueActor
+                    .flatMap({ ReferenceKey.resolve($0, using: resolver) })
+            else { return nil }
+            return locations?.uniqueActorReferences[base]
         }
 
         /// ALFE names the event, ALFD the member that fills the alias

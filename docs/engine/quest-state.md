@@ -117,11 +117,16 @@ The fill follows four rules from the same page:
 Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. From Event fills when the
 [story manager](/engine/story-manager.md) starts the quest: `ALFD` names the event data member, and
 a reference alias takes a reference member while a location alias takes a location member. A quest
-started any other way has no event, so the alias is counted and left empty. Every other fill type is
-counted and left empty, and an unimplemented fill type never fails a quest start. Refusing a start because
-OpenSky cannot run a Find Matching Reference search would present an engine gap as game behavior.
-Only an implemented fill that finds nothing (an `ALFR` or `ALFL` naming no record) fails a required
-alias.
+started any other way has no event, so the alias is counted and left empty.
+
+Unique Actor (`ALUA`) names an `NPC_` base. The reference comes from the `LCUN` lists of the
+`LCTN` records, which pair each unique base with its placed actor. Those lists cover 2,741 of the
+2,900 Unique Actor aliases in `Skyrim.esm`. They miss some actors, such as `Ralof` and `Hadvar`,
+so a miss is counted and left empty and never fails the start, the same as an unimplemented
+fill. Every other fill type is counted and left empty, and an unimplemented fill type never
+fails a quest start. Refusing a start because OpenSky cannot run a Find Matching Reference
+search would present an engine gap as game behavior. Only an implemented fill that finds
+nothing (an `ALFR` or `ALFL` naming no record) fails a required alias.
 
 The reuse rule refuses the fill, not the start. The page says the rule "is not required for all fill
 types" and names one exception, so which types it covers is not documented. Failing the start would
@@ -130,10 +135,10 @@ refuse thirteen quests `Skyrim.esm` ships that way.
 Also not done: condition-driven and `ALFA` plus `ALRT` location searches, "Reserves Reference" (a rule
 across quests), and any check that a filled reference exists, is alive, enabled, or not destroyed.
 
-`Skyrim.esm` has 12,891 aliases across 1,607 quests. 2,850 fill (2,688 references and 162 direct
-locations), and no quest is blocked from starting. The largest gaps are Unique Actor (2,900 aliases,
-22.5%), Location Alias Reference (2,036, 15.8%), From Event (1,771, 13.7%), and aliases with no fill
-subrecord at all (1,678, 13.0%).
+`Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
+162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest
+gaps are Location Alias Reference (2,036, 15.8%), From Event (1,771, 13.7%), and aliases with no
+fill subrecord at all (1,678, 13.0%).
 
 ## Who reads aliases
 

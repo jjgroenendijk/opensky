@@ -92,6 +92,19 @@ struct QuestAliasTests {
         #expect(store.journalEntries.contains { $0.kind == .questAliases })
     }
 
+    /// `PlayerRef` fills an alias with the player identity, so alias scripts and
+    /// player natives reach the player.
+    @Test func anAliasForcedToPlayerRefHoldsThePlayer() throws {
+        let quests = try QuestStore(file: ESMFile(data: QuestFixture.plugin(QuestFixture.record(
+            formID: 0x0100,
+            fields: QuestFixture.editorID("MQ101") + QuestFixture.general(flags: 0, type: 1)
+                + forced(id: 0, name: "Player", reference: FormID(0x14))
+        ))), pluginName: "Skyrim.esm")
+        let runtime = QuestRuntime(store: WorldStateStore(), quests: quests)
+        try runtime.startQuest(quest)
+        #expect(runtime.aliasReference(alias: 0, in: quest) == .player)
+    }
+
     /// "Aliases are filled in order", and a forced-into target takes the value
     /// of the *last* source alias that fills it, not the first.
     @Test func fillOrderIsListOrderAndForceIntoAliasTakesTheLastWriter() throws {
@@ -301,5 +314,36 @@ struct QuestAliasTests {
         #expect(state.reference(forAlias: 5) == key(0x0502))
         #expect(state.holds(key(0x0501)))
         #expect(!state.holds(key(0x0500)))
+    }
+}
+
+extension QuestAliasTests {
+    /// A unique-actor alias holds the one reference the location records name
+    /// for that NPC base. A base no location names is a skip, not a failed start.
+    @Test func aUniqueActorAliasHoldsTheReferenceItsLocationNames() throws {
+        let quests = try runtime(
+            WorldStateStore(),
+            aliases: QuestFixture.alias(
+                id: 0, name: "Ralof", fill: QuestFixture.word("ALUA", 0x0700)
+            ) + QuestFixture.alias(
+                id: 1, name: "Hadvar", fill: QuestFixture.word("ALUA", 0x0799)
+            )
+        )
+        let locationFile = try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
+            "LCTN",
+            contents: LocationFixture.recordBytes(
+                0x0800, "Riverwood", uniqueActors: [0x0700, 0x0702, 0x0800]
+            )
+        ))
+        let locations = LocationStore(plugins: [("Test.esm", locationFile)])
+        let record = try #require(quests.quests.quest(quest))
+        let result = QuestAliasFiller.fill(
+            record, resolver: quests.quests.resolver, locations: locations
+        )
+
+        #expect(result.state.reference(forAlias: 0) == key(0x0702))
+        #expect(result.state.reference(forAlias: 1) == nil)
+        #expect(result.skipped.counts[.unresolvedReference] == 1)
+        #expect(result.canStartQuest)
     }
 }
