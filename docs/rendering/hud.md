@@ -44,6 +44,10 @@ The installed movie starts with authoring samples visible under
 `/HUDMovieBaseInstance/RolloverInfoInstance` and `/HUDMovieBaseInstance/SubtitleTextHolder`. Start-up
 hides both, so raw font markup and `Dialogue Line 1Dialogue Line 2` do not show in play.
 
+`/HUDMovieBaseInstance/GrayBarInstance` is the thin line between an item's name and its weight
+and value, just below the crosshair. It is visible from the first frame too, so start-up hides it
+with the item info until OpenSky publishes item info.
+
 The subtitle holder is also used for real. Writing a line sets
 `/HUDMovieBaseInstance/SubtitleTextHolder/textField` and shows the holder. Clearing the line hides the
 holder, so no empty box is left ([dialogue menu](/engine/dialogue-menu.md)).

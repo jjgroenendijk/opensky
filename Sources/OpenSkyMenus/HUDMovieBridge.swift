@@ -77,6 +77,7 @@ nonisolated public enum HUDMovieBridge: Sendable {
     ]
     private static let authoredPlaceholderPaths = [
         "/HUDMovieBaseInstance/RolloverInfoInstance",
+        "/HUDMovieBaseInstance/GrayBarInstance",
         "/HUDMovieBaseInstance/SubtitleTextHolder"
     ]
 
@@ -125,9 +126,9 @@ nonisolated public enum HUDMovieBridge: Sendable {
         }
     }
 
-    /// The vanilla movie ships visible authoring samples in two otherwise
-    /// engine-driven fields. Keep them inspectable without leaking them into
-    /// normal gameplay before OpenSky publishes item info and subtitles.
+    /// The vanilla movie ships visible authoring samples in the item info, its
+    /// divider bar, and the subtitles. Keep them inspectable without leaking them
+    /// into normal gameplay before OpenSky publishes item info and subtitles.
     public static func setAuthoredPlaceholderTextEnabled(
         _ enabled: Bool,
         runtime: SWFMovieRuntime
