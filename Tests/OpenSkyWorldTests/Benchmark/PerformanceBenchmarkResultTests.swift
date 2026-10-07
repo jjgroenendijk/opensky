@@ -3,11 +3,34 @@
 
 import Foundation
 import OpenSkyGameData
+import OpenSkyRendering
 import OpenSkyWorld
 import Testing
 
 struct PerformanceBenchmarkResultTests {
-    private static func result(cellError: String? = nil) -> PerformanceBenchmarkResult {
+    private static let timeStats = BenchmarkTimeStats(
+        frames: 600, averageMS: 4.5, percentile95MS: 6.25, worstMS: 9
+    )
+
+    private static func result(
+        cellError: String? = nil,
+        routeError: String? = nil
+    ) -> PerformanceBenchmarkResult {
+        var result = baseResult(cellError: cellError)
+        let sample = BenchmarkGPUMemorySample(totalMB: 900, renderTargetMB: 60, textureMB: 500)
+        result.gpuMemory = BenchmarkGPUMemory(peak: sample, last: sample)
+        result.launch = BenchmarkLaunch(
+            processToFirstFrameMS: 4200, firstFrameMS: 310, seconds: 60, frameTime: timeStats
+        )
+        result.route = BenchmarkRoute(
+            frameTime: timeStats,
+            gpuTime: timeStats,
+            cellLoads: [BenchmarkCellLoad(label: "Tamriel (8,-3)", totalMS: 180, error: routeError)]
+        )
+        return result
+    }
+
+    private static func baseResult(cellError: String?) -> PerformanceBenchmarkResult {
         let phases = LoadPhaseTimes(archiveMS: 40, textureMS: 120, meshMS: 80, collisionMS: 10)
         return PerformanceBenchmarkResult(
             startedAt: Date(timeIntervalSince1970: 1_790_000_000),
@@ -28,7 +51,9 @@ struct PerformanceBenchmarkResultTests {
             ),
             frameTime: BenchmarkFrameTime(
                 frames: 600, averageMS: 8.5, percentile95MS: 10.25, worstMS: 21,
-                drawCalls: 900, drawnInstances: 4000
+                drawCalls: 900, drawnInstances: 4000,
+                gpuTime: timeStats,
+                grass: BenchmarkGrass(sceneInstances: 3000, drawCalls: 12, drawnInstances: 2100)
             )
         )
     }
@@ -44,6 +69,51 @@ struct PerformanceBenchmarkResultTests {
         #expect(plan.centerCell == BenchmarkGridCell(x: 6, y: -2))
         #expect(plan.view.fromX == 28600)
         #expect(plan.view.fromY == -7600)
+        #expect(plan.frameWidth == 2560)
+        #expect(plan.frameHeight == 1600)
+    }
+
+    @Test
+    func resizedKeepsTheCellsAndTheView() {
+        let plan = PerformanceBenchmarkPlan.standard.resized(width: 1280, height: 720)
+        #expect(plan.frameWidth == 1280)
+        #expect(plan.frameHeight == 720)
+        #expect(plan.exteriorCells == PerformanceBenchmarkPlan.standard.exteriorCells)
+        #expect(plan.view == PerformanceBenchmarkPlan.standard.view)
+    }
+
+    @Test
+    func aResultWithoutTheOptionalSectionsStillDecodes() throws {
+        let original = Self.baseResult(cellError: nil)
+        var text = try #require(String(bytes: original.jsonData(), encoding: .utf8))
+        #expect(!text.contains("gpuMemory"))
+        text = text.replacingOccurrences(of: "\"gpuTime\"", with: "\"unknownField\"")
+        let decoded = try PerformanceBenchmarkResult.decode(json: Data(text.utf8))
+        #expect(decoded.frameTime.gpuTime == nil)
+        #expect(decoded.launch == nil)
+        #expect(decoded.route == nil)
+    }
+
+    @Test
+    func timeStatsUseNearestRankAndSkipEmptyRuns() throws {
+        #expect(BenchmarkTimeStats(milliseconds: []) == nil)
+        let stats = try #require(BenchmarkTimeStats(milliseconds: (1 ... 20).map(Double.init)))
+        #expect(stats.frames == 20)
+        #expect(stats.averageMS == 10.5)
+        #expect(stats.percentile95MS == 19)
+        #expect(stats.worstMS == 20)
+    }
+
+    @Test
+    func memoryPeakTakesTheLargestValueOfEachField() {
+        let first = GPUMemoryUsage(totalBytes: 10, renderTargetBytes: 5, textureBytes: 1)
+        let second = GPUMemoryUsage(totalBytes: 8, renderTargetBytes: 7, textureBytes: 3)
+        #expect(
+            first.fieldMaximum(second)
+                == GPUMemoryUsage(totalBytes: 10, renderTargetBytes: 7, textureBytes: 3)
+        )
+        let sample = BenchmarkGPUMemorySample(GPUMemoryUsage(totalBytes: 3 << 20))
+        #expect(sample.totalMB == 3)
     }
 
     @Test
@@ -72,5 +142,6 @@ struct PerformanceBenchmarkResultTests {
     func aFailedCellMakesTheResultNotComparable() {
         #expect(Self.result().isComparable)
         #expect(!Self.result(cellError: "cellNotFound").isComparable)
+        #expect(!Self.result(routeError: "malformedRecord").isComparable)
     }
 }

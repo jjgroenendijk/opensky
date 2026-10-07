@@ -21,8 +21,10 @@ extension Renderer {
     func commitFrame() {
         let options = MTL4CommitOptions()
         let spans = frameStats.gpuSpans
+        let log = gpuFrameLog
         options.addFeedbackHandler { feedback in
             spans.record(start: feedback.gpuStartTime, end: feedback.gpuEndTime)
+            log?.record(start: feedback.gpuStartTime, end: feedback.gpuEndTime)
         }
         commandQueue.commit([commandBuffer], options: options)
     }
