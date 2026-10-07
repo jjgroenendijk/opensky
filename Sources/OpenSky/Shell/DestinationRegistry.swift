@@ -68,7 +68,8 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & PlayerSettingsControlProviding
     & PrecipitationControlProviding & ProgressionControlProviding
     & RaceMenuControlProviding & RagdollControlProviding
-    & RenderDebugControlProviding & RuntimeStateControlProviding & SWFLabControlProviding
+    & RenderDebugControlProviding & RenderPerformanceControlProviding
+    & RuntimeStateControlProviding & SWFLabControlProviding
     & SceneControlProviding
     & SceneStatsProviding & ScriptControlProviding
     & ShadowControlProviding & StoryManagerControlProviding & SystemMenuControlProviding
@@ -403,6 +404,18 @@ enum DestinationRegistry {
                 return panel
             },
             overrides: uiLabOverrides
+        ),
+        DestinationDescriptor(
+            id: "renderingPerformance",
+            title: "Rendering Performance",
+            section: .developer,
+            symbolName: "gauge.with.dots.needle.67percent",
+            content: .worldInspector { context in
+                let panel = RenderingPerformancePanelViewController()
+                panel.provider = context.providers
+                return panel
+            },
+            overrides: renderingPerformanceOverrides
         )
     ]
 }

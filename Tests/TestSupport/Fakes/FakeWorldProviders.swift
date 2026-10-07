@@ -219,6 +219,9 @@ final class FakeWorldProviders: WorldControlProviders {
     var renderDebug = RenderDebugState()
     var renderDebugStats = SceneDrawStats()
 
+    /// RenderPerformanceControlProviding
+    var renderPerformanceSnapshot: RenderPerformanceSnapshot? = RenderPerformanceSnapshot()
+
     // AudioControlProviding
     var audioEnabled = false
     var audioMasterVolume: Float = 1

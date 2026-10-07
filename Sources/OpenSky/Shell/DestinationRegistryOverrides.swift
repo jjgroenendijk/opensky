@@ -247,4 +247,11 @@ extension DestinationRegistry {
             SWFMovieSection.resetToDefaults(provider: context.providers)
         }
     )
+
+    /// The panel's switches are added by the features that own them; the render-target
+    /// readout alone changes nothing.
+    static let renderingPerformanceOverrides = DestinationOverrideActions(
+        isOverridden: { _ in false },
+        resetToDefaults: { _ in }
+    )
 }

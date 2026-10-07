@@ -10,7 +10,7 @@ public protocol WorldRenderControlForwarding: ShadowControlProviding, TerrainLOD
     WeatherControlProviding, AnimationControlProviding, ParticleControlProviding,
     PrecipitationControlProviding, GrassControlProviding, RenderDebugControlProviding,
     CameraControlProviding, FrameStatsProviding, SceneStatsProviding, TriggerControlProviding,
-    PhysicsControlProviding
+    PhysicsControlProviding, RenderPerformanceControlProviding
 {
     var renderControls: WorldRenderControls { get }
 }
@@ -162,6 +162,10 @@ extension WorldRenderControlForwarding {
 
     public var renderDebugSnapshot: RenderDebugControlSnapshot {
         renderControls.renderDebugSnapshot
+    }
+
+    public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
+        renderControls.renderPerformanceSnapshot
     }
 
     public var cameraPose: CameraPoseSnapshot {
