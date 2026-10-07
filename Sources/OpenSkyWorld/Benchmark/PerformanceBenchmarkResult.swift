@@ -152,6 +152,8 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
     public var upscaler: String?
     /// Whether each frame also built a MetalFX interpolated frame. Nil in older results.
     public var frameInterpolation: Bool?
+    /// Whether grass drew through object and mesh shaders. Nil in older results.
+    public var meshShaderGrass: Bool?
 
     public init(
         frames: Int,

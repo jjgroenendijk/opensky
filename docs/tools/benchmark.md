@@ -96,6 +96,10 @@ every two real frames and draws the overlays on it
 says whether it ran. The GPU time then covers both frames, so the cost of the extra frame is
 the difference to the same run without the flag.
 
+`--mesh-shader-grass` draws grass with object and mesh shaders, which cull meshlets on the
+GPU ([mesh-shader grass](/rendering/mesh-shader-grass.md)). The `meshShaderGrass` field says
+whether the mesh path drew. Compare its GPU time to the same run without the flag.
+
 GPU memory is sampled after each load pass and after each measured frame:
 
 - total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;

@@ -109,6 +109,7 @@ public final class Renderer: NSObject {
             rayTracedShadows.isCurrent = false
             // A new cell shows other surfaces; old frames would ghost over them.
             upscale.resetPending = true
+            pruneGrassMeshlets(keeping: scene.grass)
         }
     }
 
@@ -251,6 +252,8 @@ public final class Renderer: NSObject {
     public var rayTracedShadows: RayTracedShadowState
     /// MetalFX temporal upscaling (RendererUpscale.swift).
     public var upscale: UpscaleState
+    /// Grass through object and mesh shaders (RendererMeshGrassPass.swift).
+    public var meshGrass: MeshShaderGrassState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
@@ -276,8 +279,7 @@ public final class Renderer: NSObject {
         wallClock: any WallClock = MediaWallClock()
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
-        self.device = device
-        self.wallClock = wallClock
+        (self.device, self.wallClock) = (device, wallClock)
 
         (commandQueue, commandBuffer) = try (
             Self.makeCommandQueue(device: device), Self.makeCommandBuffer(device: device)
@@ -313,6 +315,7 @@ public final class Renderer: NSObject {
             try Self.makeEffectResources(view: view, library: library, compiler: compiler)
         textureStreaming = TextureStreamingState(device: device)
         rayTracedShadows = Self.makeRayTracing(library: library, compiler: compiler, view: view)
+        meshGrass = MeshShaderGrassState(library: library, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))

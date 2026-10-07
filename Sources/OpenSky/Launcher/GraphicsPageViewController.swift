@@ -31,8 +31,12 @@ final class GraphicsPageViewController: NSViewController {
     let frameInterpolationControl = NSButton(
         checkboxWithTitle: "Frame interpolation", target: nil, action: nil
     )
+    let meshShaderGrassControl = NSButton(
+        checkboxWithTitle: "Draw grass with mesh shaders", target: nil, action: nil
+    )
     private let rayTracing: RayTracingAvailability
     private let interpolationUnsupportedReason: String?
+    private let meshShaderUnsupportedReason: String?
     let statusLabel = NSTextField(labelWithString: "")
 
     /// `reloadStore` reads the file again each time the page shows, because the game
@@ -41,11 +45,14 @@ final class GraphicsPageViewController: NSViewController {
         reloadStore: @escaping @MainActor () -> PlayerSettingsStore,
         rayTracing: RayTracingAvailability = .of(MTLCreateSystemDefaultDevice()),
         interpolationUnsupportedReason: String? = FrameInterpolationSupport
+            .unsupportedReason(MTLCreateSystemDefaultDevice()),
+        meshShaderUnsupportedReason: String? = MeshShaderSupport
             .unsupportedReason(MTLCreateSystemDefaultDevice())
     ) {
         self.reloadStore = reloadStore
         self.rayTracing = rayTracing
         self.interpolationUnsupportedReason = interpolationUnsupportedReason
+        self.meshShaderUnsupportedReason = meshShaderUnsupportedReason
         store = reloadStore()
         super.init(nibName: nil, bundle: nil)
     }
@@ -67,6 +74,7 @@ final class GraphicsPageViewController: NSViewController {
                 PanelComponents.buttonRow([clearPipelineCacheControl])
             ]),
             PanelComponents.group([PanelComponents.caption("Culling"), gpuCullingControl]),
+            PanelComponents.group([PanelComponents.caption("Grass"), meshShaderGrassControl]),
             PanelComponents.group([
                 PanelComponents.caption("Textures"), textureStreamingControl, textureBudgetControl
             ]),
@@ -104,6 +112,9 @@ final class GraphicsPageViewController: NSViewController {
         rayTracingLabel.stringValue = rayTracing.reason.map { "Unavailable: \($0)" } ?? ""
         renderScaleControl.selectItem(at: RenderScale(store: store).settingIndex)
         upscalerControl.selectItem(at: UpscalerKind(store: store).rawValue)
+        meshShaderGrassControl.isEnabled = meshShaderUnsupportedReason == nil
+        meshShaderGrassControl.state = meshShaderUnsupportedReason == nil
+            && store.bool(.meshShaderGrass) ? .on : .off
         frameInterpolationControl.isEnabled = interpolationUnsupportedReason == nil
         frameInterpolationControl.state = interpolationUnsupportedReason == nil
             && store.bool(.frameInterpolation) ? .on : .off
@@ -127,6 +138,7 @@ final class GraphicsPageViewController: NSViewController {
         gpuCullingControl.toolTip = "Cull the static scene in a compute pass, not on the CPU"
         configureTextureControls()
         configureUpscalingControls()
+        configureGrassControls()
         statusLabel.font = PanelMetrics.monoFont
         statusLabel.textColor = Theme.parchmentDim
         statusLabel.setAccessibilityIdentifier("GraphicsStatsLabel")
@@ -178,6 +190,19 @@ final class GraphicsPageViewController: NSViewController {
         )
         frameInterpolationControl.toolTip = interpolationUnsupportedReason
             ?? "Show a MetalFX frame between real frames; needs the temporal upscaler"
+    }
+
+    private func configureGrassControls() {
+        PanelComponents.configureCheckbox(
+            meshShaderGrassControl, target: self, action: #selector(meshShaderGrassChanged),
+            identifier: "GraphicsMeshShaderGrassControl"
+        )
+        meshShaderGrassControl.toolTip = meshShaderUnsupportedReason
+            ?? "Cull grass meshlets on the GPU with object and mesh shaders"
+    }
+
+    @objc private func meshShaderGrassChanged() {
+        store.set(.meshShaderGrass, to: meshShaderGrassControl.state == .on ? 1 : 0)
     }
 
     @objc private func frameInterpolationChanged() {

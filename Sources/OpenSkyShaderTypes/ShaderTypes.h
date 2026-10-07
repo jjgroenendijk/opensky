@@ -64,6 +64,16 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexPreviousBoneMatrices = 19,
     /// This frame's and last frame's model matrix per instance (MotionInstance).
     BufferIndexMotionInstances = 20,
+    /// Mesh-shader grass (docs/rendering/mesh-shader-grass.md): GrassMeshUniforms.
+    BufferIndexGrassMeshUniforms = 21,
+    /// The group mesh's MeshletBounds array.
+    BufferIndexMeshlets = 22,
+    /// Mesh vertex indices, per meshlet.
+    BufferIndexMeshletVertices = 23,
+    /// Three meshlet-local vertex indices (bytes) per triangle.
+    BufferIndexMeshletTriangles = 24,
+    /// Two atomic counters per frame slot: meshlets tested, meshlets drawn.
+    BufferIndexMeshletCounters = 25,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -290,6 +300,37 @@ typedef struct
     float inverseModelHeight;
     unsigned int receivesShadows;
 } GrassDrawUniforms;
+
+/// One meshlet of a grass mesh, in mesh space (48 bytes).
+typedef struct
+{
+    /// xyz bounding sphere center, w radius.
+    vector_float4 centerRadius;
+    /// xyz mean triangle facing, w cone cutoff; -1 never culls by facing.
+    vector_float4 coneAxisCutoff;
+    unsigned int vertexOffset;
+    unsigned int vertexCount;
+    unsigned int triangleOffset;
+    unsigned int triangleCount;
+} MeshletBounds;
+
+/// Per-GROUP object-stage culling inputs for mesh-shader grass.
+typedef struct
+{
+    /// The unjittered frustum: left, right, bottom, top, near, far; xyz normal, w distance.
+    vector_float4 frustumPlanes[6];
+    unsigned int meshletCount;
+    /// 1 when the material is one-sided, so the normal cone may cull.
+    unsigned int cullBackfaces;
+    /// World units the wind can move a blade; widens every sphere.
+    float swayPadding;
+    /// Index of this frame slot's first counter in BufferIndexMeshletCounters.
+    unsigned int counterBase;
+    /// The mesh's vertex count; the mesh stage clamps every index below it.
+    unsigned int vertexCount;
+    /// Instances in this draw; the object stage tests every instance-meshlet pair.
+    unsigned int instanceCount;
+} GrassMeshUniforms;
 
 typedef struct
 {

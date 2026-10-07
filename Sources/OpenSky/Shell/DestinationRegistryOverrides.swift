@@ -256,6 +256,7 @@ extension DestinationRegistry {
                 || RayTracedShadowsSection.isOverridden(provider: context.providers)
                 || UpscalingSection.isOverridden(provider: context.providers)
                 || FrameInterpolationSection.isOverridden(provider: context.providers)
+                || MeshShaderGrassSection.isOverridden(provider: context.providers)
         },
         resetToDefaults: { context in
             PipelineCacheSection.resetToDefaults(provider: context.providers)
@@ -264,6 +265,7 @@ extension DestinationRegistry {
             RayTracedShadowsSection.resetToDefaults(provider: context.providers)
             UpscalingSection.resetToDefaults(provider: context.providers)
             FrameInterpolationSection.resetToDefaults(provider: context.providers)
+            MeshShaderGrassSection.resetToDefaults(provider: context.providers)
         }
     )
 }

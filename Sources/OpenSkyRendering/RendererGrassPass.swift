@@ -8,9 +8,11 @@ import OpenSkyShaderTypes
 import simd
 
 extension Renderer {
+    /// The frame's density and distance limits, and the instances the budget has left.
     private struct GrassInstanceFilter {
         let density: Float
         let maximumDistanceSquared: Float
+        var remaining: Int
     }
 
     public func encodeGrass(groups: [GrassDrawGroup], state: inout ScenePassState) {
@@ -32,19 +34,17 @@ extension Renderer {
             return
         }
 
-        var remaining = min(
-            max(grassInstanceBudget, 0),
-            GrassRenderPolicy.maximumInstancesPerFrame
-        )
-        let filter = GrassInstanceFilter(
+        var filter = GrassInstanceFilter(
             density: density,
-            maximumDistanceSquared: distance * distance
+            maximumDistanceSquared: distance * distance,
+            remaining: min(max(grassInstanceBudget, 0), GrassRenderPolicy.maximumInstancesPerFrame)
         )
-        for group in groups {
+        beginMeshGrassFrame(slot: state.slot, groupCount: groups.count)
+        for (index, group) in groups.enumerated() {
             encodeGrassGroup(
                 group,
-                filter: filter,
-                remaining: &remaining,
+                index: index,
+                filter: &filter,
                 state: &state,
                 stats: &stats
             )
@@ -54,8 +54,7 @@ extension Renderer {
 
     private func writeGrassInstances(
         _ group: GrassDrawGroup,
-        filter: GrassInstanceFilter,
-        remaining: inout Int,
+        filter: inout GrassInstanceFilter,
         state: inout ScenePassState,
         stats: inout GrassDrawStats
     ) -> (written: Int, base: Int) {
@@ -77,26 +76,26 @@ extension Renderer {
                 state.stats.culledInstances += 1
                 continue
             }
-            guard remaining > 0 else {
+            guard filter.remaining > 0 else {
                 stats.budgetDroppedInstances += 1
                 continue
             }
             writeGrassTransform(instance, at: base + written, stride: stride)
             written += 1
-            remaining -= 1
+            filter.remaining -= 1
         }
         return (written, base)
     }
 
     private func encodeGrassGroup(
         _ group: GrassDrawGroup,
-        filter: GrassInstanceFilter,
-        remaining: inout Int,
+        index: Int,
+        filter: inout GrassInstanceFilter,
         state: inout ScenePassState,
         stats: inout GrassDrawStats
     ) {
         let upload = writeGrassInstances(
-            group, filter: filter, remaining: &remaining, state: &state, stats: &stats
+            group, filter: &filter, state: &state, stats: &stats
         )
         guard upload.written > 0 else { return }
         state.instanceCursor += upload.written
@@ -110,9 +109,6 @@ extension Renderer {
         stats.drawnInstances += upload.written
         state.stats.drawCalls += 1
         state.stats.drawnInstances += upload.written
-        state.encoder.setRenderPipelineState(
-            isRenderDebugActive ? debugPipelines.grass : grassPipeline
-        )
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         argumentTable.setAddress(
             group.mesh.vertexBuffer.gpuAddress,
@@ -130,6 +126,16 @@ extension Renderer {
         argumentTable.setTexture(
             streamedBinding(group.material.diffuse),
             index: TextureIndex.diffuse.rawValue
+        )
+        if
+            encodeMeshGrassGroup(
+                group, instanceCount: upload.written, groupIndex: index, state: state
+            )
+        {
+            return
+        }
+        state.encoder.setRenderPipelineState(
+            isRenderDebugActive ? debugPipelines.grass : grassPipeline
         )
         state.encoder.drawIndexedPrimitives(
             primitiveType: .triangle,

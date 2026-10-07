@@ -15,11 +15,13 @@ struct GraphicsPageTests {
         rayTracing: RayTracingAvailability = .unavailable(
             reason: RayTracingAvailability.softwareReason
         ),
-        interpolationUnsupportedReason: String? = nil
+        interpolationUnsupportedReason: String? = nil,
+        meshShaderUnsupportedReason: String? = nil
     ) -> GraphicsPageViewController {
         let page = GraphicsPageViewController(
             reloadStore: { store }, rayTracing: rayTracing,
-            interpolationUnsupportedReason: interpolationUnsupportedReason
+            interpolationUnsupportedReason: interpolationUnsupportedReason,
+            meshShaderUnsupportedReason: meshShaderUnsupportedReason
         )
         page.loadViewIfNeeded()
         return page
@@ -122,6 +124,20 @@ struct GraphicsPageTests {
         control.state = .on
         control.sendAction(control.action, to: page)
         #expect(store.bool(.frameInterpolation))
+    }
+
+    @Test func meshShaderGrassStartsOffAndSavesItsSwitch() {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = makePage(store: store)
+        let control = page.meshShaderGrassControl
+        #expect(control.accessibilityIdentifier() == "GraphicsMeshShaderGrassControl")
+        #expect(control.state == .off)
+        control.state = .on
+        control.sendAction(control.action, to: page)
+        #expect(store.bool(.meshShaderGrass))
+        let unsupported = makePage(store: store, meshShaderUnsupportedReason: "No mesh shaders")
+        #expect(!unsupported.meshShaderGrassControl.isEnabled)
+        #expect(unsupported.meshShaderGrassControl.state == .off)
     }
 
     @Test func anUnsupportedGPUDisablesFrameInterpolation() {

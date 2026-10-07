@@ -12,6 +12,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
     let rayTracedShadowsSection = RayTracedShadowsSection()
     let upscalingSection = UpscalingSection()
     let frameInterpolationSection = FrameInterpolationSection()
+    let meshShaderGrassSection = MeshShaderGrassSection()
 
     weak var provider: (any RenderPerformanceControlProviding)? {
         didSet {
@@ -22,6 +23,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
             rayTracedShadowsSection.provider = provider
             upscalingSection.provider = provider
             frameInterpolationSection.provider = provider
+            meshShaderGrassSection.provider = provider
         }
     }
 
@@ -29,7 +31,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
         [
             renderTargetsSection, pipelineCacheSection, gpuCullingSection,
             textureStreamingSection, rayTracedShadowsSection, upscalingSection,
-            frameInterpolationSection
+            frameInterpolationSection, meshShaderGrassSection
         ]
     }
 }

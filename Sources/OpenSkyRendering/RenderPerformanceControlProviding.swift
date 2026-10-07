@@ -18,6 +18,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public var rayTracedShadows = RayTracedShadowStats()
     public var upscaling = UpscaleStatus()
     public var frameInterpolation = FrameInterpolationStatus()
+    public var meshShaderGrass = MeshShaderGrassStatus()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -81,6 +82,8 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     var upscaler: UpscalerKind { get set }
     /// Runs only with the temporal upscaler, on a GPU MetalFX supports.
     var frameInterpolationEnabled: Bool { get set }
+    /// Draws grass through object and mesh shaders; off draws it the classic way.
+    var meshShaderGrassEnabled: Bool { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the

@@ -155,6 +155,38 @@ extension Renderer {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
+    /// The object, mesh, and fragment stages of mesh-shader grass. The fragment stage is the
+    /// classic grass fragment, so both paths shade alike.
+    static func makeMeshGrassPipeline(
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        colorFormat: MTLPixelFormat,
+        sampleCount: Int
+    ) throws -> MTLRenderPipelineState {
+        func function(_ name: String) -> MTL4LibraryFunctionDescriptor {
+            let function = MTL4LibraryFunctionDescriptor()
+            function.library = library
+            function.name = name
+            return function
+        }
+        let descriptor = MTL4MeshRenderPipelineDescriptor()
+        descriptor.label = "GrassMeshlets"
+        descriptor.rasterSampleCount = sampleCount
+        descriptor.objectFunctionDescriptor = function("grassMeshletObject")
+        descriptor.meshFunctionDescriptor = function("grassMeshletMesh")
+        descriptor.fragmentFunctionDescriptor = specializedFragment(
+            "grassFragment", library: library, debugView: false
+        )
+        descriptor.maxTotalThreadsPerObjectThreadgroup = meshGrassObjectThreads
+        descriptor.maxTotalThreadsPerMeshThreadgroup = meshGrassMeshThreads
+        // One mesh threadgroup per kept pair, so at most one per object thread.
+        descriptor.maxTotalThreadgroupsPerMeshGrid = meshGrassObjectThreads
+        // The object stage's `GrassMeshletPayload`: 32 instance-meshlet pairs.
+        descriptor.payloadMemoryLength = MemoryLayout<UInt32>.stride * meshGrassObjectThreads
+        descriptor.colorAttachments[0].pixelFormat = colorFormat
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
+    }
+
     public static func makeTerrainPipeline(
         library: MTLLibrary,
         compiler: PipelineCache,
