@@ -94,6 +94,24 @@ struct MagicCoordinatorTests {
         #expect(world.aimRequests.map(\.range) == [250])
     }
 
+    @Test func onlyThePlayersCastFiresTheCastEventAtTheAimedTarget() throws {
+        let world = FakeMagicWorld()
+        let coordinator = try Self.castingWired(world)
+        let recorder = StoryEventRecorder()
+        coordinator.storyEvents = recorder
+        let target = ReferenceKey.plugin(name: SpellbookFixture.pluginName, objectID: 0x900)
+        world.aim = SpellAim(target: target)
+        let flames = SpellbookFixture.key(SpellbookFixture.Spell.flames)
+
+        coordinator.spellWasCast(flames, by: target)
+        coordinator.spellWasCast(flames, by: .player)
+
+        let cast = recorder.events("CAST")
+        #expect(cast.map(\.actor1) == [.player])
+        #expect(cast.first?.actor2 == target)
+        #expect(cast.first?.form == StoryEventData.form(of: flames))
+    }
+
     @Test func selectionCyclesOverTheKnownSpells() throws {
         let coordinator = try Self.castingWired(FakeMagicWorld())
         #expect(coordinator.selectNextKnownSpell() == "The player knows no spells to select.")

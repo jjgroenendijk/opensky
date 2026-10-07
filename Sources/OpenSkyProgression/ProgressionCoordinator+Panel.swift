@@ -50,6 +50,7 @@ extension ProgressionCoordinator {
     public func awardCharacterExperience(_ amount: Float) -> String {
         guard let leveling else { return Self.noProgressionText }
         let report = leveling.award(characterExperience: amount)
+        reportLevel(report)
         lastActionText = report.didLevel
             ? String(
                 format: "Awarded %.0f character XP: level %d to %d, "

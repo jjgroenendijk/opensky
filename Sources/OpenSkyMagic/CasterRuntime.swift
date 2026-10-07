@@ -45,6 +45,13 @@ public protocol CasterWorld: SkillUseReporting, SpellHitApplying {
     /// - Parameter range: SPIT's range in world units; zero means the session
     ///   maximum applies.
     func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim
+
+    /// Called once per cast that spent its cost, for the `CAST` story event.
+    func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey)
+}
+
+extension CasterWorld {
+    public func spellWasCast(_: ReferenceKey, by _: ReferenceKey) {}
 }
 
 /// One cast in flight, identified by who is casting and in which hand.
@@ -288,6 +295,7 @@ public final class CasterRuntime {
         }
         state.beginConcentration()
         casts[slot(hand, caster)] = state
+        world?.spellWasCast(spell.key, by: caster.key)
         // The first application lands on entry rather than a second later, so a
         // maintained heal starts healing when it starts costing.
         applyOnce(hand, spell: spell, caster: caster)
@@ -310,6 +318,7 @@ public final class CasterRuntime {
         }
         values.damage(.magicka, by: cost, on: caster)
         noteSkillUse(of: spell, amount: baseSkillUseAmount(of: spell), caster: caster)
+        world?.spellWasCast(spell.key, by: caster.key)
         let stored = apply(spell, caster: caster)
         casts[slot(hand, caster)] = SpellCastState()
         notePowerSpent(spell, caster: caster)

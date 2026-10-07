@@ -1,11 +1,13 @@
 // Harvest and crafting actions of the inventory domain. The rules live in
 // `WorldItemRuntime+Harvest` and `CraftingSession`. See docs/engine/crafting.md.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 extension InventoryCoordinator {
     public func wireCrafting(
@@ -106,6 +108,13 @@ extension InventoryCoordinator {
         guard let crafting else { return noteCraft("No crafting station is open.") }
         do {
             let outcome = try crafting.craft(recipe)
+            storyEvents?.reportStoryEvent(.craft(
+                actor: .player,
+                workbench: runtime?.references?
+                    .referenceEntry(formID: crafting.interaction.reference)?.key,
+                location: nil,
+                created: outcome.created.item
+            ))
             return noteCraft(
                 "Crafted \(outcome.created.count) × \(name(of: outcome.created.item))."
             )

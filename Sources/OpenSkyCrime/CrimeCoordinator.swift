@@ -3,6 +3,7 @@
 // reporter's `CrimeWorld`. The rules live in `CrimeCore`, `CrimeRuntime`, and
 // `GuardResponseState`. See docs/engine/coordinators.md and docs/engine/crime.md.
 
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
@@ -35,6 +36,13 @@ public final class CrimeCoordinator {
     /// Actors the player struck first. A later death counts as murder. Session
     /// state: a reloaded save restarts every fight.
     var assaultedActors: Set<ReferenceKey> = []
+    /// Each murder's outcome, so a death reports once and `KILL` can read it.
+    var murders: [ReferenceKey: CrimeOutcome] = [:]
+    /// Takes `ARRT` and `JAIL`, and is passed on to the reporter.
+    public weak var storyEvents: (any StoryEventReporting)? {
+        didSet { reporter?.storyEvents = storyEvents }
+    }
+
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
     public internal(set) var guards = GuardResponseState()
@@ -66,6 +74,7 @@ public final class CrimeCoordinator {
         pluginName: String
     ) {
         reporter = CrimeReporter(runtime: runtime, world: self)
+        reporter?.storyEvents = storyEvents
         self.pluginName = pluginName
         // A new load order carries different factions for the panel to offer.
         panel.options = nil
@@ -134,8 +143,22 @@ public final class CrimeCoordinator {
     /// A death is murder when the player struck the victim first. A one-hit
     /// kill charges assault and murder (docs/engine/crime.md).
     public func reportMurder(of victim: ReferenceKey) {
-        guard victim != .player, assaultedActors.contains(victim), let reporter else { return }
-        note(reporter.reportMurder(of: victim), as: "Murder")
+        guard
+            victim != .player,
+            assaultedActors.contains(victim),
+            murders[victim] == nil,
+            let reporter
+        else { return }
+        let outcome = reporter.reportMurder(of: victim)
+        murders[victim] = outcome
+        note(outcome, as: "Murder")
+    }
+
+    /// The `KILL` crime status: murder when the player struck first, reported
+    /// when the murder cost gold.
+    public func killStatus(of victim: ReferenceKey, by killer: ReferenceKey?) -> StoryKillStatus {
+        guard killer == .player, assaultedActors.contains(victim) else { return .notMurder }
+        return (murders[victim]?.gold ?? 0) > 0 ? .reportedMurder : .murder
     }
 
     /// Runs every tick; the ownership lookup runs only when the cell changes.

@@ -2,6 +2,7 @@
 // use is reported, and an opened lock unlocks. See docs/engine/locks.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
@@ -65,6 +66,9 @@ extension LockCoordinator {
         write(target.state, locked: false, for: target.key)
         sessionExperience += report(uses: settings.successUses[target.state.difficulty] ?? 0)
         let rewarded = rewardKey(target)
+        if let items {
+            storyEvents?.reportStoryEvent(.lockPick(actor: items.player.key, lock: target.key))
+        }
         finish(opened: true, keyRewarded: rewarded)
         lastText = "Picked \(sessionTarget?.interaction.name ?? "the lock")."
     }

@@ -5,12 +5,16 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyCrime
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyMagic
 import OpenSkyMenus
+import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -28,6 +32,8 @@ final class StoryWorldAdapter {
     private var framesSinceLocationCheck = 0
     /// Frames between location checks, because each builds a condition context.
     static let locationCheckInterval = 30
+    /// Voice file lengths for scene lines. Nil without game data.
+    private var voiceTimer: SceneVoiceTimer?
 
     /// Scene playback over the dialogue runtime.
     lazy var scenes: SceneCoordinator = {
@@ -52,10 +58,24 @@ final class StoryWorldAdapter {
         let data = (provider as? StoryDataProviding)?.storyData ?? StoryData()
         let scripts = provider as? ScriptDataProviding
         // The quest store's space, so a DLC scene names its quest as the runtime does.
-        if let store = data.scenes, let quests = (provider as? QuestDataProviding)?.questStore {
+        let questStore = (provider as? QuestDataProviding)?.questStore
+        if let store = data.scenes, let quests = questStore {
             scenes.catalog = SceneCatalog(store: store, resolver: quests.resolver)
         }
+        if
+            let dialogue = (provider as? DialogueDataProviding)?.dialogueStore,
+            let files = game.audioFileSystem
+        {
+            voiceTimer = SceneVoiceTimer(
+                locator: VoiceLineLocator(dialogue: dialogue, quests: questStore),
+                read: { try files.contents(forPath: $0) }
+            )
+        }
         storyManager.story = data.storyManager
+        game.progression.storyEvents = self
+        game.inventory.storyEvents = self
+        game.crime.storyEvents = self
+        game.magic.storyEvents = self
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
         game.scripts.bridge?.logEntryEvaluator = { [weak self] in
@@ -72,6 +92,7 @@ final class StoryWorldAdapter {
         let advancePreviousSystems = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak self] delta in
             advancePreviousSystems?(delta)
+            self?.voiceTimer?.drain()
             self?.scenes.tick()
             self?.checkPlayerLocation()
         }
@@ -107,13 +128,26 @@ final class StoryWorldAdapter {
         }
     }
 
-    /// `KILL`: killer, victim, the victim's location. Crime status and rank stay 0.
+    /// `KILL`. The murder is settled first, so the crime status can say whether
+    /// it was reported. The rank is unchanged by the death.
     func reportKill(victim: ReferenceKey, killer: ReferenceKey?) {
-        var event = StoryEventData(event: "KILL")
-        event.actor1 = killer
-        event.actor2 = victim
-        event.location1 = game.runtimeState.conditionContext().data.currentLocation(of: victim)
-        storyManager.fire(event)
+        game.crime.reportMurder(of: victim)
+        var rank: Int8 = 0
+        if
+            let killer, let known = game.scripts.bridge?.relationshipRank(
+                of: victim,
+                toward: killer
+            )
+        {
+            rank = known ?? 0
+        }
+        storyManager.fire(.kill(
+            killer: killer,
+            victim: victim,
+            location: game.runtimeState.conditionContext().data.currentLocation(of: victim),
+            status: game.crime.killStatus(of: victim, by: killer),
+            rankBeforeDeath: rank
+        ))
     }
 
     /// `CLOC` when the player's location changes: actor, old location, new location.
@@ -163,9 +197,22 @@ extension StoryWorldAdapter: QuestStarting {
     }
 }
 
+extension StoryWorldAdapter: StoryEventReporting {
+    /// An event with no `L1` takes the location of its `R1`, or the player's.
+    func reportStoryEvent(_ event: StoryEventData) {
+        var event = event
+        if event.location1 == nil {
+            event.location1 = game.runtimeState.conditionContext().data
+                .currentLocation(of: event.actor1 ?? .player)
+        }
+        storyManager.fire(event)
+    }
+}
+
 extension StoryWorldAdapter: StoryManagerWorld {
+    /// With the dialogue facts, because event nodes such as `ADIA` test voice types.
     func conditionContext() -> ConditionContext {
-        game.runtimeState.conditionContext()
+        game.dialogueWorld.conditionContext()
     }
 
     var conditionRegistry: ConditionFunctionRegistry {
@@ -188,22 +235,51 @@ extension StoryWorldAdapter: SceneWorld {
         return clock.totalGameSeconds / Double(max(timescale, 1))
     }
 
-    func lineDuration(of info: TopicInfo) -> Float {
+    func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
+        let texts = responseTexts(of: info)
+        guard let voiceTimer else { return SceneCore.lineDuration(texts: texts) }
+        return voiceTimer.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
+    }
+
+    private func responseTexts(of info: TopicInfo) -> [String?] {
         let strings = game.dialogue.strings
-        return SceneCore.lineDuration(texts: info.responses.map { response in
+        return info.responses.map { response in
             strings.flatMap { response.resolvedText(using: $0) }
-        })
+        }
+    }
+
+    /// The `VTCK` editor ID, which names the voice folder.
+    private func voiceTypeName(of speaker: ReferenceKey) -> String? {
+        guard
+            let voice = game.dialogueWorld.residentVoiceTypes()[speaker],
+            let record = game.dialogue.index?.voiceType(voice)
+        else { return nil }
+        return record.editorID
     }
 
     func sceneLineSpoken(_ line: SceneLine) {
-        guard let info = game.dialogue.runtime?.dialogue.info(line.info) else { return }
-        let strings = game.dialogue.strings
-        let text = info.responses.compactMap { response in
-            strings.flatMap { response.resolvedText(using: $0) }
-        }.joined(separator: " ")
+        let text = game.dialogue.runtime?.dialogue.info(line.info)
+            .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(
-            text, kind: .general, seconds: Double(lineDuration(of: info)),
+            text, kind: .general, seconds: Double(line.seconds),
             now: Date().timeIntervalSinceReferenceDate
+        )
+    }
+
+    func runScenePackages(
+        _ packages: [FormID], actor: ReferenceKey, owner: ScenePackageOwner
+    ) -> ScenePackageState {
+        let override = PackageOverride(
+            packages: packages,
+            owner: PackageOverrideOwner(source: owner.scene, slot: owner.action),
+            aliasQuest: scenes.catalog.scene(owner.scene)?.quest
+        )
+        return game.packages.runOverride(override, actor: actor) == .done ? .done : .running
+    }
+
+    func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner) {
+        game.packages.clearOverride(
+            owner: PackageOverrideOwner(source: owner.scene, slot: owner.action), actor: actor
         )
     }
 

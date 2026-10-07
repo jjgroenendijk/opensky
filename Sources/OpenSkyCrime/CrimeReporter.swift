@@ -4,6 +4,7 @@
 // several hooks share one reporter and its witness source. See docs/engine/crime.md.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -18,6 +19,8 @@ public final class CrimeReporter: CrimeReporting {
     /// The session the facts come from. Weak because the controller that owns
     /// this owns the session too.
     public weak var world: (any CrimeWorld)?
+    /// Takes `ADCR` and `ASSU`.
+    public weak var storyEvents: (any StoryEventReporting)?
 
     public init(runtime: CrimeRuntime, world: (any CrimeWorld)? = nil) {
         self.runtime = runtime
@@ -81,7 +84,7 @@ public final class CrimeReporter: CrimeReporting {
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        runtime.reportWitnessed(
+        record(
             theftEvent(item, count: count, from: reference, by: actor, owner: owner)
         )
     }
@@ -94,7 +97,7 @@ public final class CrimeReporter: CrimeReporting {
         on victim: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        runtime.reportWitnessed(event(.assault, victim: victim, by: actor))
+        record(event(.assault, victim: victim, by: actor))
     }
 
     /// Reports a non-hostile actor dying.
@@ -103,7 +106,7 @@ public final class CrimeReporter: CrimeReporting {
         of victim: ReferenceKey,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        runtime.reportWitnessed(event(.murder, victim: victim, by: actor))
+        record(event(.murder, victim: victim, by: actor))
     }
 
     /// Reports being somewhere an owner has not let this actor be.
@@ -117,7 +120,7 @@ public final class CrimeReporter: CrimeReporting {
         owner: ReferenceOwner?,
         by actor: ReferenceKey = .player
     ) -> CrimeOutcome {
-        runtime.reportWitnessed(CrimeEvent(
+        record(CrimeEvent(
             kind: .trespass,
             perpetrator: actor,
             victim: owner.map(\.key),
@@ -127,6 +130,26 @@ public final class CrimeReporter: CrimeReporting {
     }
 
     // MARK: - Private
+
+    /// `ASSU` for every assault, `ADCR` when the crime cost gold.
+    private func record(_ event: CrimeEvent) -> CrimeOutcome {
+        let outcome = runtime.reportWitnessed(event)
+        if event.kind == .assault, let victim = event.victim {
+            storyEvents?.reportStoryEvent(.assault(
+                attacker: event.perpetrator, victim: victim, location: nil
+            ))
+        }
+        if outcome.gold > 0, let faction = outcome.faction {
+            storyEvents?.reportStoryEvent(.crimeGold(
+                criminal: event.perpetrator,
+                victim: event.victim,
+                crimeFaction: faction,
+                gold: outcome.gold,
+                crime: event.kind.storyCrimeType
+            ))
+        }
+        return outcome
+    }
 
     private func theftEvent(
         _ item: FormID,
@@ -186,5 +209,16 @@ extension CrimeReporter {
     @discardableResult
     public func setCrimeGold(_ gold: Int32, violent: Bool, of faction: ReferenceKey) -> Int32 {
         runtime.setCrimeGold(gold, violent: violent, of: faction)
+    }
+}
+
+extension CrimeKind {
+    var storyCrimeType: StoryCrimeType {
+        switch self {
+        case .theft: .steal
+        case .assault: .assault
+        case .murder: .murder
+        case .trespass: .trespass
+        }
     }
 }

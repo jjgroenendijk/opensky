@@ -4,6 +4,7 @@
 
 import FeaturesTesting
 import Foundation
+import OpenSkyConditions
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -179,6 +180,8 @@ struct InventoryCoordinatorTests {
         let coordinator = harness.coordinator
         let chest = try #require(coordinator.containerHolder(for: Self.chest))
         let inventory = try #require(coordinator.runtime?.inventory)
+        let recorder = StoryEventRecorder()
+        coordinator.storyEvents = recorder
         try inventory.add(Fixture.sword, count: 1, to: .player)
         let stored = try coordinator.transfer(
             .store, item: Fixture.sword, named: "Sword", container: chest, vendor: nil
@@ -191,6 +194,12 @@ struct InventoryCoordinatorTests {
         #expect(taken == "Took Sword.")
         #expect(inventory.count(of: Fixture.sword, in: .player) == 1)
         #expect(coordinator.takeAll(from: chest).hasPrefix("Took all:"))
+        let removed = try #require(recorder.events("REMP").first)
+        #expect(removed.form == Fixture.sword && removed.actor1 == chest.key)
+        #expect(removed.value1 == Float(StoryRemoveType.putInContainer.rawValue))
+        let added = recorder.events("AIPL")
+        #expect(added.first?.form == Fixture.sword)
+        #expect(added.allSatisfy { $0.value1 == Float(StoryAcquireType.container.rawValue) })
     }
 
     @Test func anUnresidentContainerHasNoHolder() throws {
