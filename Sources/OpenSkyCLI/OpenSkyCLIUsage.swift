@@ -173,6 +173,12 @@ extension OpenSkyCLI {
                                   framing walk (the report states how many
                                   entries it skipped); --names-only stops after
                                   the naming check
+      audio aac-check [--per-category <n>] [--out <file>]
+                                  Encode a fixed sample of each cached sound
+                                  category as AAC and measure its band
+                                  spectral distortion against the original;
+                                  print the AAC or ALAC verdict per category.
+                                  --out writes one row per sound
       screenshot --out <file> [--worldspace <edid>] [--x <n>] [--y <n>]
              [--size WxH] [--zoom <f>] [--time-of-day <0-24>] [--neighbors]
              [--ui-sample] [--image-space-off] [--imgs <edid>]

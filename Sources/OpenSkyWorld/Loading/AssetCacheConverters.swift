@@ -18,7 +18,7 @@ nonisolated public enum AssetCacheConverters {
     ) throws -> [any AssetConverting] {
         var converters: [any AssetConverting] = [
             ReadyMeshConverter(), ReadyCollisionConverter(), LooseAnimationConverter(),
-            ALACAudioConverter()
+            CachedAudioConverter()
         ]
         let needsASTC = preset.values.textures.values.contains { $0 != .shipped }
         if needsASTC {

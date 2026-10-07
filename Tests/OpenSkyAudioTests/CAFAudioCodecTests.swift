@@ -41,6 +41,25 @@ struct CAFAudioCodecTests {
         #expect(abs(decoded.frameCount - Self.tone.frameCount) < 2048)
     }
 
+    @Test func aacFollowsTheBitRate() throws {
+        var state: UInt32 = 1
+        let noise = (0 ..< 441_000).map { _ -> Float in
+            state = state &* 1_664_525 &+ 1_013_904_223
+            return (Float(state >> 8) / Float(1 << 24) - 0.5) * 0.5
+        }
+        let audio = DecodedAudio(sampleRate: 44100, channelCount: 1, samples: noise)
+        let sizes = try [32000, 128_000].map { rate in
+            let url = FileManager.default.temporaryDirectory
+                .appending(path: "opensky-caf-\(UUID().uuidString).caf")
+            defer { try? FileManager.default.removeItem(at: url) }
+            try CAFAudioCodec.write(audio, to: url, format: .aac, aacBitRatePerChannel: rate)
+            return try Data(contentsOf: url).count
+        }
+        // Ten seconds at 128 kbps is 160 KB of audio; the header adds about 28 KB.
+        #expect(sizes[1] > 140_000 && sizes[1] < 220_000, "\(sizes)")
+        #expect(sizes[1] > sizes[0] * 2, "\(sizes)")
+    }
+
     @Test func emptyAudioThrows() {
         let url = FileManager.default.temporaryDirectory.appending(path: "opensky-empty.caf")
         #expect(throws: CAFAudioCodecError.emptyAudio) {

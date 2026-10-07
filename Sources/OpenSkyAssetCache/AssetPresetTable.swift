@@ -51,6 +51,28 @@ nonisolated public enum AssetAudioStorage: Equatable, Sendable {
     case aac
 }
 
+/// Which sound group a cached sound belongs to, from its folder. Dialogue ships
+/// as `.fuz` and is not cached, so `voice` holds the creature vocal sounds.
+nonisolated public enum AssetSoundCategory: String, CaseIterable, Sendable {
+    case effects
+    case voice
+    case ambience
+    case music
+
+    public init(path: String) {
+        let folders = path.lowercased().split(whereSeparator: { $0 == "\\" || $0 == "/" })
+        if folders.first == "music" {
+            self = .music
+        } else if folders.contains("voice") || folders.dropFirst(2).first == "voc" {
+            self = .voice
+        } else if folders.dropFirst(2).first?.hasPrefix("amb") == true {
+            self = .ambience
+        } else {
+            self = .effects
+        }
+    }
+}
+
 /// The smallest image quality a converted texture may have. A color or data
 /// map compares by PSNR; a normal map also by its worst normal angle.
 nonisolated public struct AssetImageLimit: Equatable, Sendable {
@@ -67,7 +89,7 @@ nonisolated public struct AssetPresetValues: Equatable, Sendable {
     public let maximumTextureSize: Int?
     /// Mip levels kept, or nil for every shipped level.
     public let mipLevels: Int?
-    public let audio: AssetAudioStorage
+    public let audio: [AssetSoundCategory: AssetAudioStorage]
     public let imageLimit: AssetImageLimit
     /// Whole-install build time on one core, in minutes, at the fastest ASTC effort.
     public let buildMinutesOneCore: Double
@@ -75,6 +97,10 @@ nonisolated public struct AssetPresetValues: Equatable, Sendable {
 
     public func textureStorage(forPath path: String) -> AssetTextureStorage {
         textures[AssetTextureClass(path: path)] ?? .shipped
+    }
+
+    public func audioStorage(forPath path: String) -> AssetAudioStorage {
+        audio[AssetSoundCategory(path: path)] ?? .alac
     }
 }
 
@@ -86,14 +112,14 @@ nonisolated extension AssetQualityPreset {
         case .highestQuality:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .shipped, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil, audio: .alac, imageLimit: .lossless,
+                maximumTextureSize: nil, mipLevels: nil, audio: [:], imageLimit: .lossless,
                 buildMinutesOneCore: 15,
                 summary: "No loss. Shipped textures, ALAC audio. Fastest build."
             )
         case .balanced:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .astc4x4, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil, audio: .alac,
+                maximumTextureSize: nil, mipLevels: nil, audio: [:],
                 imageLimit: AssetImageLimit(minimumPSNR: 40, maximumNormalDegrees: 2),
                 buildMinutesOneCore: 33,
                 summary: "Normal maps in ASTC 4x4: less GPU memory, no visible loss."
@@ -101,7 +127,7 @@ nonisolated extension AssetQualityPreset {
         case .bestPerformance:
             AssetPresetValues(
                 textures: [.color: .astc6x6, .normal: .astc6x6, .data: .astc8x8],
-                maximumTextureSize: nil, mipLevels: nil, audio: .alac,
+                maximumTextureSize: nil, mipLevels: nil, audio: [:],
                 imageLimit: AssetImageLimit(minimumPSNR: 30, maximumNormalDegrees: nil),
                 buildMinutesOneCore: 120,
                 summary: "Every texture in ASTC: least GPU memory, slight loss."

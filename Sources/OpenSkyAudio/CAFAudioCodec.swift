@@ -1,6 +1,6 @@
 // Writes and reads decoded audio as Core Audio Format files, encoded by the
 // codecs built into macOS (AudioToolbox). PCM is exact, ALAC stores 16-bit
-// samples losslessly, and AAC is lossy.
+// samples losslessly, and AAC is lossy at a fixed bit rate per channel.
 
 import AudioToolbox
 import Foundation
@@ -17,7 +17,13 @@ nonisolated public enum CAFAudioCodecError: Error, Equatable, Sendable {
 }
 
 nonisolated public enum CAFAudioCodec {
-    public static func write(_ audio: DecodedAudio, to url: URL, format: CAFAudioFormat) throws {
+    /// AAC bit rate per channel, clamped to the rates the encoder offers.
+    public static let aacBitRatePerChannel = 96000
+
+    public static func write(
+        _ audio: DecodedAudio, to url: URL, format: CAFAudioFormat,
+        aacBitRatePerChannel: Int = aacBitRatePerChannel
+    ) throws {
         guard audio.frameCount > 0, audio.channelCount > 0 else {
             throw CAFAudioCodecError.emptyAudio
         }
@@ -30,6 +36,9 @@ nonisolated public enum CAFAudioCodec {
         guard let file else { throw CAFAudioCodecError.status(operation: "create", code: -1) }
         defer { ExtAudioFileDispose(file) }
         try setClientFormat(file, sampleRate: audio.sampleRate, channels: audio.channelCount)
+        if format == .aac {
+            try setAACBitRate(file, target: aacBitRatePerChannel * audio.channelCount)
+        }
         var samples = audio.samples
         try samples.withUnsafeMutableBytes { raw in
             var list = AudioBufferList(
@@ -167,6 +176,38 @@ nonisolated public enum CAFAudioCodec {
         try check("client format", ExtAudioFileSetProperty(
             file, kExtAudioFileProperty_ClientDataFormat,
             UInt32(MemoryLayout<AudioStreamBasicDescription>.size), &client
+        ))
+    }
+
+    /// Picks the offered rate nearest `target`, then reapplies the converter setup.
+    private static func setAACBitRate(_ file: ExtAudioFileRef, target: Int) throws {
+        var converter: AudioConverterRef?
+        var size = UInt32(MemoryLayout<AudioConverterRef?>.size)
+        try check("converter", ExtAudioFileGetProperty(
+            file, kExtAudioFileProperty_AudioConverter, &size, &converter
+        ))
+        guard let converter else { return }
+        try check("bit rates", AudioConverterGetPropertyInfo(
+            converter, kAudioConverterApplicableEncodeBitRates, &size, nil
+        ))
+        var ranges = [AudioValueRange](
+            repeating: AudioValueRange(), count: Int(size) / MemoryLayout<AudioValueRange>.size
+        )
+        try check("bit rates", AudioConverterGetProperty(
+            converter, kAudioConverterApplicableEncodeBitRates, &size, &ranges
+        ))
+        let offered = ranges.flatMap { [$0.mMinimum, $0.mMaximum] }
+        guard let nearest = offered.min(by: { abs($0 - Double(target)) < abs($1 - Double(target)) })
+        else { return }
+        var rate = UInt32(nearest)
+        try check("bit rate", AudioConverterSetProperty(
+            converter, kAudioConverterEncodeBitRate, UInt32(MemoryLayout<UInt32>.size), &rate
+        ))
+        // A null property list tells ExtAudioFile to reread the converter settings.
+        var noConfig: UnsafeRawPointer?
+        try check("converter config", ExtAudioFileSetProperty(
+            file, kExtAudioFileProperty_ConverterConfig,
+            UInt32(MemoryLayout<UnsafeRawPointer?>.size), &noConfig
         ))
     }
 
