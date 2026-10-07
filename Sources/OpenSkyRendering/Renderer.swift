@@ -194,6 +194,8 @@ public final class Renderer: NSObject {
     public var lastAnimationUpdatedBoneCount = 0
     /// CPU wall time of last shadow pass; idle/off frames record near-zero cost.
     public var lastShadowUpdateMS = 0.0
+    /// CPU time of the last frame's shadow and scene pass encoding.
+    public var lastEncodeMS = 0.0
     public let frameUniformBuffer: MTLBuffer
     /// Per-draw ring: maxFramesInFlight slots x drawUniformSlotCapacity
     /// aligned entries. Replaced (regrown) by setScene when a new scene's

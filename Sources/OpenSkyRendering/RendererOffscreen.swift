@@ -30,6 +30,8 @@ nonisolated public struct OffscreenBenchResult: Sendable {
     /// GPU time per frame from commit feedback. Feedback can arrive after the
     /// run ends, so this may hold one entry fewer than `frameMS`.
     public let gpuMS: [Double]
+    /// CPU time spent encoding the shadow and scene passes per frame.
+    public var encodeMS: [Double] = []
 
     public init(
         frameMS: [Double],
@@ -221,9 +223,11 @@ extension Renderer {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
         let encoded = shadowEncoded
             && encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
+        lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         commandBuffer.endCommandBuffer()
         guard encoded else { throw RendererError.encoderUnavailable }
 
@@ -376,6 +380,7 @@ extension Renderer {
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
         var scriptUpdateMS: [Double] = []
+        var encodeMS: [Double] = []
         let gpuLog = GPUFrameLog()
         gpuFrameLog = gpuLog
         defer { gpuFrameLog = nil }
@@ -393,9 +398,10 @@ extension Renderer {
             shadowMS.append(lastShadowUpdateMS)
             audioUpdateMS.append(frameDriver?.lastAudioUpdateMS ?? 0)
             scriptUpdateMS.append(frameDriver?.lastScriptUpdateMS ?? 0)
+            encodeMS.append(lastEncodeMS)
             afterFrame(frame)
         }
-        return OffscreenBenchResult(
+        var result = OffscreenBenchResult(
             frameMS: frameMS,
             windowSummaries: summaries,
             animationMS: animationMS,
@@ -404,5 +410,7 @@ extension Renderer {
             scriptUpdateMS: scriptUpdateMS,
             gpuMS: gpuLog.take()
         )
+        result.encodeMS = encodeMS
+        return result
     }
 }

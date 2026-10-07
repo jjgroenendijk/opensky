@@ -40,12 +40,14 @@ extension Renderer: MTKViewDelegate {
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
 
+        let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)
         let encoded = shadowEncoded && encodeScenePass(
             descriptor: passDescriptor,
             slot: slot,
             projection: projectionMatrix
         )
+        lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         guard encoded else {
             commandBuffer.endCommandBuffer()
             return

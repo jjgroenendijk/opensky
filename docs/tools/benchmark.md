@@ -78,6 +78,10 @@ gives the GPU start and end time of each commit, the same numbers the frame HUD 
 leaves out the CPU encode and the wait, so it shows GPU work apart from wall-clock time.
 Feedback can arrive after the last frame ends, so the GPU frame count can be one lower.
 
+CPU encode is the CPU time that the shadow and scene passes take to encode each frame. It
+holds culling, the per-draw uniform writes, and the draw calls, and leaves out the wait for the
+GPU.
+
 GPU memory is sampled after each load pass and after each measured frame:
 
 - total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;
@@ -161,7 +165,7 @@ dates, so two results diff line by line. It holds:
 - the build configuration: `debug`, `optimizedDebug`, or `release`;
 - the plan;
 - the cold and the warm load pass, each with its total, its phases, and each cell's time;
-- the frame time, with `gpuTime` and `grass`;
+- the frame time, with `gpuTime`, `encodeTime`, and `grass`;
 - `gpuMemory`, with `peak` and `last`, each holding `totalMB`, `renderTargetMB`, and
   `textureMB`;
 - `launch` and `route`, when their mode ran;
