@@ -7,6 +7,7 @@ import FormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
+import simd
 import Testing
 
 @MainActor
@@ -14,6 +15,23 @@ private final class FakePackageWorld: PackageWorld {
     var residents: [RuntimeReferenceEntry]? = []
     var packageClock: GameClock? = GameClock(hour: 9)
     private(set) var contextReads = 0
+    private(set) var moves: [SIMD3<Float>] = []
+    static let place = SIMD3<Float>(100, 0, 0)
+
+    func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
+        .zero
+    }
+
+    func packagePlace(
+        of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> PackagePlace? {
+        location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
+    }
+
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+        moves.append(point)
+        return true
+    }
 
     func packageResidents() -> [RuntimeReferenceEntry]? {
         residents
@@ -92,6 +110,32 @@ struct PackageCoordinatorTests {
         #expect(readout.editorID == "Fallback")
     }
 
+    /// A scene's travel package runs ahead of the schedule, walks the actor to its
+    /// place, and is done on arrival. Clearing it hands the actor back.
+    @Test func aScenePackageWalksTheActorAndEndsOnArrival() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let override = PackageOverride(
+            packages: [FormID(0x102)], owner: owner, aliasQuest: nil
+        )
+
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .running)
+        #expect(world.moves == [FakePackageWorld.place])
+        #expect(coordinator.readout(for: Self.guardKey)?.editorID == "WalkThere")
+        #expect(coordinator.readout(for: Self.guardKey)?.override == owner)
+
+        coordinator.movementSettled(actor: Self.guardKey, reason: .arrival)
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .done)
+        #expect(world.moves.count == 1, "a kept override does not start a second walk")
+
+        coordinator.clearOverride(owner: owner, actor: Self.guardKey)
+        #expect(coordinator.readout(for: Self.guardKey)?.editorID == "Morning")
+        #expect(coordinator.executions.isEmpty)
+        #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
+    }
+
     private static func coordinator() throws -> (PackageCoordinator, FakePackageWorld) {
         let morning = try PackageRuntimeFixture.package(
             id: 0x100,
@@ -99,10 +143,16 @@ struct PackageCoordinatorTests {
             schedule: PackageFixture.scheduleValue(hour: 8, duration: 240)
         )
         let fallback = try PackageRuntimeFixture.package(id: 0x101, editorID: "Fallback")
+        let walk = try PackageRuntimeFixture.package(
+            id: 0x102, editorID: "WalkThere", procedureNames: ["Travel"],
+            dataInputs: [Package.DataInput(index: 0, type: "PLDT", value: .location(
+                Package.Location(rawKind: 0, value: 0x700, radius: 0)
+            ))]
+        )
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let coordinator = PackageCoordinator()
         coordinator.wire(store: PackageStore(
-            packages: [morning, fallback],
+            packages: [morning, fallback, walk],
             actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
         ))
         let world = FakePackageWorld()

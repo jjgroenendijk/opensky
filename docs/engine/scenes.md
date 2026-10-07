@@ -52,16 +52,38 @@ the scene has phases, plus four, and repeats a scene at most once, so it cannot 
 | Type | What OpenSky does |
 | --- | --- |
 | 0, dialogue | The action's alias names the speaker. The topic's responses are selected for that speaker, the winner is marked said, and its result script runs. The action lasts as long as the line. |
-| 1, package | Not run. Noted as unsupported and done at once, so the scene goes on. |
+| 1, package | The actor in the action's alias runs the action's packages ahead of its own schedule. The action is done when the package reaches its Done state. |
 | 2, timer | Lasts the `SNAM` duration in seconds. |
 
 An action whose alias is empty is done at once. The Creation Kit says a scene goes on when an
 actor is dead or disabled, and an empty alias is the same case for OpenSky. A dialogue action
 whose topic has no passing response for the speaker is also done at once.
 
-A line lasts the time of its text: one second per 15 characters, at least 1.5 seconds per
-response, and 3 seconds when there is no text. This is OpenSky's estimate. The game uses the
-length of the voice file, which OpenSky does not read for scenes yet.
+### Package actions
+
+The Creation Kit says a scene's package overrides every other package of the actor. While a
+package action runs, the [package selector](/engine/package-schedules.md#scene-packages) picks
+from the action's packages instead of the actor's own list. When the action ends, the actor
+goes back to its own list. The runtime asks for the packages again on every tick, so a scene
+that a save restored gives them back.
+
+The Creation Kit says: "Package actions are completed when the package reaches the Done
+state. Actions with packages that have no Done state can never be completed." So a travel
+package is done when the actor arrives. Sandbox, wander, sleep, and eat never end; their
+phase needs completion conditions. A procedure that OpenSky cannot run yet counts as done at
+once. This is OpenSky's choice, so that a scene with such a package does not wait forever.
+
+### Line length
+
+A line lasts as long as its voice file, as in the game. The file is
+`sound\voice\<plugin>\<voice type>\<name>.fuz` ([voice files](/formats/fuz.md)). Its length
+is the playing time in the xWMA packet table. The voice type is the speaker's `VTCK`. The
+file is read off the main actor, and the line's clock starts when the length is known. So the
+next line starts in the tick this one ends: no gap and no overlap.
+
+A response with no voice file lasts the time of its text: one second per 15 characters, at
+least 1.5 seconds. A line with no text lasts 3 seconds. This is OpenSky's estimate. A save
+loaded while a line waits for its voice file ends that line at once.
 
 ## Time
 
@@ -101,9 +123,8 @@ its two speakers and ends.
 
 ## Not done yet
 
-- Package actions do not run.
-- Scenes do not move actors, play idles, or turn heads (`HTID`).
-- Line length comes from the text, not the voice file.
+- Scenes play no idles and turn no heads (`HTID`).
+- A scene line is timed by its voice file, but the voice is not played.
 - `ForceStart()` does not stop other scenes.
 - Actor behavior flags (`VNAM`, actor `DNAM`), such as "interrupt on combat", are decoded
   but not used.

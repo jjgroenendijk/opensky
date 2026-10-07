@@ -114,7 +114,8 @@ nonisolated public enum AIPackageReadout: Sendable {
         let evaluated = package.lastEvaluationGameSeconds.map {
             String(format: ", evaluated at %.0f game seconds", $0)
         } ?? ""
-        return "Package: \(name) (\(current)), \(procedure)\(evaluated)"
+        let held = package.override.map { ", held by scene \($0.source) action \($0.slot)" } ?? ""
+        return "Package: \(name) (\(current)), \(procedure)\(evaluated)\(held)"
     }
 
     public static func procedureText(for procedure: PackageProcedureKind) -> String {

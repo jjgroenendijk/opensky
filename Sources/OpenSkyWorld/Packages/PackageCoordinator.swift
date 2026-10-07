@@ -5,6 +5,7 @@
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorldState
+import simd
 
 /// What the package coordinator reads from the session.
 @MainActor
@@ -15,6 +16,14 @@ public protocol PackageWorld: AnyObject {
     var packageClock: GameClock? { get }
     /// The live quest, actor, detection and reference state one selection reads.
     func packageConditionContext(clock: GameClock) -> ConditionContext
+    /// Where the actor stands now. Nil when it is not loaded.
+    func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>?
+    /// The world point a package location names, or nil when OpenSky cannot place it.
+    func packagePlace(
+        of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> PackagePlace?
+    /// False when the move could not start.
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool
 }
 
 /// Which actors to drop from and add to the selector after a residency change.
@@ -52,6 +61,8 @@ public final class PackageCoordinator {
     public private(set) var runtime: ActorPackageRuntime?
     /// Each simulated actor and the base it registered with.
     public private(set) var registeredActors: [ReferenceKey: FormID] = [:]
+    /// The procedure of each actor a scene holds.
+    public private(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
 
     weak var world: (any PackageWorld)?
 
@@ -68,7 +79,7 @@ public final class PackageCoordinator {
 
     /// Reconciles residency, then evaluates scheduled boundaries. An actor
     /// that leaves residency stops being simulated.
-    public func advance() {
+    public func advance(by delta: Float = 0) {
         guard
             var runtime,
             let world,
@@ -82,6 +93,7 @@ public final class PackageCoordinator {
         for actor in change.departed {
             runtime.unregister(actor: actor)
             registeredActors.removeValue(forKey: actor)
+            executions.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
             guard (try? runtime.register(actor: arrival.actor, base: arrival.base)) != nil else {
@@ -100,6 +112,7 @@ public final class PackageCoordinator {
             return live
         }
         self.runtime = runtime
+        advanceOverrides(by: delta)
     }
 
     /// Holds `actor` out of scheduled selection, as a conversation does.
@@ -123,6 +136,91 @@ public final class PackageCoordinator {
             context: world.packageConditionContext(clock: clock)
         )
         self.runtime = runtime
+    }
+
+    // MARK: - Scene packages
+
+    /// Runs the packages ahead of the actor's schedule, or keeps them running.
+    public func runOverride(
+        _ override: PackageOverride, actor: ReferenceKey
+    ) -> PackageOverrideProgress {
+        guard var runtime, let world, let clock = world.packageClock else { return .notSimulated }
+        guard
+            runtime.setOverride(
+                override, actor: actor, clock: clock,
+                context: world.packageConditionContext(clock: clock)
+            ) else { return .notSimulated }
+        self.runtime = runtime
+        syncExecution(actor)
+        return executions[actor]?.isDone == true ? .done : .running
+    }
+
+    /// Hands the actor back to its schedule, when `owner` still holds it.
+    public func clearOverride(owner: PackageOverrideOwner, actor: ReferenceKey) {
+        guard
+            var runtime, let world, let clock = world.packageClock,
+            runtime.override(for: actor)?.owner == owner
+        else { return }
+        runtime.clearOverride(
+            owner: owner, actor: actor, clock: clock,
+            context: world.packageConditionContext(clock: clock)
+        )
+        self.runtime = runtime
+        executions.removeValue(forKey: actor)
+    }
+
+    /// A move the procedure asked for ended.
+    public func movementSettled(actor: ReferenceKey, reason: NPCMovementSettleReason) {
+        let event: PackageProcedureEvent
+        switch reason {
+        case .arrival: event = .arrived
+        case .giveUp: event = .movementFailed
+        default: return
+        }
+        guard var execution = executions[actor] else { return }
+        let commands = execution.handle(event)
+        executions[actor] = execution
+        apply(commands, actor: actor)
+    }
+
+    private func advanceOverrides(by delta: Float) {
+        for actor in executions.keys.sorted() {
+            syncExecution(actor)
+            guard var execution = executions[actor] else { continue }
+            let commands = execution.handle(.tick(delta))
+            executions[actor] = execution
+            apply(commands, actor: actor)
+        }
+    }
+
+    /// Starts a machine for the actor's current override package when it changed.
+    private func syncExecution(_ actor: ReferenceKey) {
+        guard
+            let runtime, let world,
+            let override = runtime.override(for: actor),
+            let current = runtime.currentPackage(for: actor)
+        else {
+            executions.removeValue(forKey: actor)
+            return
+        }
+        guard executions[actor]?.package != current.package.formID else { return }
+        guard let start = world.packageActorPosition(actor) else { return }
+        let place = PackageOverrideExecution.location(of: current.package).flatMap {
+            world.packagePlace(of: $0, actor: actor, aliasQuest: override.aliasQuest)
+        }
+        var execution = PackageOverrideExecution(package: current, start: start, place: place)
+        let commands = execution.start()
+        executions[actor] = execution
+        apply(commands, actor: actor)
+    }
+
+    private func apply(_ commands: [PackageProcedureCommand], actor: ReferenceKey) {
+        for command in commands {
+            guard case let .move(point) = command else { continue }
+            if world?.movePackageActor(actor, to: point) != true {
+                movementSettled(actor: actor, reason: .giveUp)
+            }
+        }
     }
 
     public func readouts() -> [PackageActorReadout] {

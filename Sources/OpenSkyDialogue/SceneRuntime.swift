@@ -11,10 +11,47 @@ import OpenSkyWorldState
 /// What the scene runtime asks of the running session.
 @MainActor
 public protocol SceneHost: AnyObject {
-    /// Seconds a selected line takes to say.
-    func lineDuration(of info: TopicInfo) -> Float
+    /// Seconds a selected line takes to say, or nil while its voice file loads.
+    func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float?
     /// Stops the quest, for a scene flagged to stop its quest on end.
     func stopQuest(_ quest: FormID)
+    /// Gives `actor` the action's packages ahead of its schedule, or keeps them.
+    /// Called again each tick while the action runs, so a loaded save picks them up.
+    func runScenePackages(
+        _ packages: [FormID], actor: ReferenceKey, owner: ScenePackageOwner
+    ) -> ScenePackageState
+    /// Hands `actor` back to its schedule, when `owner` still holds it.
+    func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner)
+}
+
+/// The scene action that holds an actor's packages.
+nonisolated public struct ScenePackageOwner: Hashable, Sendable {
+    public let scene: FormID
+    public let action: UInt32
+
+    public init(scene: FormID, action: UInt32) {
+        self.scene = scene
+        self.action = action
+    }
+}
+
+nonisolated public enum ScenePackageState: Equatable, Sendable {
+    case running
+    /// The package reached its Done state, which completes the action.
+    case done
+}
+
+/// Lines whose voice file still loads. Kept outside the saved scene state: a save
+/// loaded during the wait ends the line at once.
+@MainActor
+public final class ScenePendingLines {
+    var lines: [ScenePackageOwner: SceneLine] = [:]
+
+    public init() {}
+
+    public var isEmpty: Bool {
+        lines.isEmpty
+    }
 }
 
 @MainActor
@@ -24,6 +61,7 @@ public struct SceneRuntime {
     public let dialogue: DialogueRuntime
     public var fragments: (any SceneFragmentDispatching)?
     public weak var host: (any SceneHost)?
+    public let pendingLines: ScenePendingLines
     /// Scene seconds: game seconds divided by the time scale.
     public var now: Double
 
@@ -32,12 +70,14 @@ public struct SceneRuntime {
         dialogue: DialogueRuntime,
         fragments: (any SceneFragmentDispatching)? = nil,
         host: (any SceneHost)? = nil,
+        pendingLines: ScenePendingLines = ScenePendingLines(),
         now: Double = 0
     ) {
         self.catalog = catalog
         self.dialogue = dialogue
         self.fragments = fragments
         self.host = host
+        self.pendingLines = pendingLines
         self.now = now
     }
 

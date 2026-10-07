@@ -64,7 +64,9 @@ enum SceneFixture {
         gate value: Float = 0,
         now: Double = 0,
         filled: Bool = true,
-        questStopped: Bool = false
+        questStopped: Bool = false,
+        host: FakeSceneHost? = nil,
+        pendingLines: ScenePendingLines = ScenePendingLines()
     ) throws -> SceneRuntime {
         let quests = try DialogueRuntimeFixture.questStore()
         let questKey = try #require(quests.key(for: FormID(DialogueRuntimeFixture.runningQuest)))
@@ -88,6 +90,86 @@ enum SceneFixture {
             context: context,
             registry: .dialogueTests
         )
-        return SceneRuntime(catalog: SceneCatalog(scenes: [scene]), dialogue: dialogue, now: now)
+        return SceneRuntime(
+            catalog: SceneCatalog(scenes: [scene]), dialogue: dialogue,
+            host: host, pendingLines: pendingLines, now: now
+        )
+    }
+}
+
+extension SceneFixture {
+    static let packageSceneID: UInt32 = 0x4001
+    static let walkPackage: UInt32 = 0x5000
+
+    /// Three phases. A package action holds phase 1. Phase 2 says the ordinary
+    /// line, and phase 3 the scene line.
+    static func packageScene() throws -> CatalogScene {
+        func action(type: UInt16, index: UInt32, phase: UInt32, payload: [(String, Data)])
+            -> [(String, Data)]
+        {
+            [
+                ("ANAM", ESMFixture.u16(type)),
+                ("ALID", ESMFixture.i32(0)),
+                ("INAM", ESMFixture.u32(index)),
+                ("SNAM", ESMFixture.u32(phase)),
+                ("ENAM", ESMFixture.u32(phase))
+            ] + payload + [("ANAM", Data())]
+        }
+        func phase(_ name: String) -> [(String, Data)] {
+            [
+                ("HNAM", Data()),
+                ("NAM0", ESMFixture.zstring(name)),
+                ("NEXT", Data()),
+                ("NEXT", Data()),
+                ("HNAM", Data())
+            ]
+        }
+        let fields: [(String, Data)] = [("EDID", ESMFixture.zstring("WalkScene"))]
+            + phase("Walk") + phase("Ask") + phase("Answer") + [("ALID", ESMFixture.i32(0))]
+            + action(type: 1, index: 1, phase: 0, payload: [("PNAM", ESMFixture.u32(walkPackage))])
+            + action(type: 0, index: 2, phase: 1, payload: [
+                ("DATA", ESMFixture.u32(DialogueRuntimeFixture.ordinaryTopic))
+            ])
+            + action(type: 0, index: 3, phase: 2, payload: [
+                ("DATA", ESMFixture.u32(DialogueRuntimeFixture.sceneTopic))
+            ])
+            + [("PNAM", ESMFixture.u32(DialogueRuntimeFixture.runningQuest))]
+        let record = try Scene(
+            record: ESMFixture.record("SCEN", formID: packageSceneID, fields: fields)
+        )
+        return CatalogScene(
+            formID: FormID(packageSceneID),
+            key: .plugin(name: DialogueFixture.pluginName, objectID: packageSceneID),
+            scene: record
+        )
+    }
+}
+
+/// Answers the scene host from fixed values: line lengths, and a package that is
+/// done once `packageDone` is set.
+@MainActor
+final class FakeSceneHost: SceneHost {
+    /// Nil while the voice file "loads".
+    var lineSeconds: Float? = 2
+    var packageDone = false
+    private(set) var running: [ReferenceKey: [FormID]] = [:]
+    private(set) var released: [ReferenceKey] = []
+
+    func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
+        lineSeconds
+    }
+
+    func stopQuest(_ quest: FormID) {}
+
+    func runScenePackages(
+        _ packages: [FormID], actor: ReferenceKey, owner: ScenePackageOwner
+    ) -> ScenePackageState {
+        running[actor] = packages
+        return packageDone ? .done : .running
+    }
+
+    func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner) {
+        running[actor] = nil
+        released.append(actor)
     }
 }

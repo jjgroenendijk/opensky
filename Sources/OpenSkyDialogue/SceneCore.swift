@@ -6,7 +6,7 @@ import OpenSkyFormatsESM
 
 public enum SceneCore {
     /// Characters read per second, and the shortest a response lasts. OpenSky's
-    /// estimate: scenes do not read the voice file length yet.
+    /// estimate, for a response with no voice file.
     static let charactersPerSecond: Float = 15
     static let shortestResponse: Float = 1.5
 
@@ -68,6 +68,9 @@ public enum SceneCore {
         case let .actionStarted(action): "action \(action) started"
         case let .actionCompleted(action): "action \(action) done"
         case let .line(line): text(line: line)
+        case let .voiceLoading(action): "action \(action): voice file loading"
+        case let .packageStarted(action, actor): "action \(action): \(actor) runs its package"
+        case let .packageDone(action): "action \(action): package done"
         case let .noLine(action): "action \(action): no line passed"
         case let .emptyAlias(action): "action \(action): actor alias empty"
         case let .unsupportedAction(action, type): "action \(action): type \(type) not run"
@@ -76,7 +79,8 @@ public enum SceneCore {
     }
 
     public static func text(line: SceneLine) -> String {
-        "\(line.speaker) says \(line.info) in topic \(line.topic)"
+        "\(line.speaker) says \(line.info) in topic \(line.topic) for "
+            + String(format: "%.1f s", line.seconds)
     }
 
     static func text(reason: SceneEndReason) -> String {

@@ -16,6 +16,11 @@ nonisolated public struct SceneLine: Equatable, Sendable {
     public let speaker: ReferenceKey
     public let topic: FormID
     public let info: FormID
+    /// From the voice file when there is one, else from the text.
+    public var seconds: Float = Self.defaultSeconds
+
+    /// A line with no host to time it.
+    public static let defaultSeconds: Float = 3
 }
 
 nonisolated public enum SceneStep: Equatable, Sendable {
@@ -26,12 +31,19 @@ nonisolated public enum SceneStep: Equatable, Sendable {
     case phaseCompleted(UInt32, byConditions: Bool)
     case actionStarted(UInt32)
     case actionCompleted(UInt32)
+    /// The line's clock started: its voice file loaded, or it has none.
     case line(SceneLine)
+    /// The line waits for its voice file to load before its clock starts.
+    case voiceLoading(UInt32)
     /// The dialogue action's topic had no response that passed for the speaker.
     case noLine(UInt32)
     /// The action's alias is empty, so it counts as done at once, as for a dead actor.
     case emptyAlias(UInt32)
-    /// An action type OpenSky does not run yet, such as a package. Counted, done at once.
+    /// The actor runs the action's packages ahead of its schedule.
+    case packageStarted(UInt32, actor: ReferenceKey)
+    /// The package reached its Done state.
+    case packageDone(UInt32)
+    /// An action type the Creation Kit does not list. Counted, done at once.
     case unsupportedAction(UInt32, type: UInt16)
     case fragment(String)
     /// A declared fragment nothing ran.

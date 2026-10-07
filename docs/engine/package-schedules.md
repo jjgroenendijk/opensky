@@ -63,7 +63,8 @@ actors are picked against the live clock, quest and actor state, and enable stat
 
 Not done yet:
 
-- Sending procedure commands to movement and animation.
+- Sending procedure commands to movement and animation for packages the schedule picks. Only
+  scene packages run their machine.
 - Aliases and linked references as targets. They are decoded, but need their quest and
   reference runtime first.
 - The branch graph inside a procedure tree.
@@ -73,6 +74,21 @@ such a condition will not pick it. Example: Heimskr's jail package before the si
 
 When packages move actors, they will use the same movement path that already updates trigger
 volumes, so triggers see the actor with no extra code.
+
+## Scene packages
+
+A scene's package action holds an actor ([scenes](/engine/scenes.md#package-actions)). While
+it holds one, the selector picks from the action's packages, not from the actor's `PKID` list,
+and picks again at once. When the action ends, the actor picks from its own list again.
+
+Only a held actor runs its procedure machine. The machine's place is the package's first
+location input (`PLDT`). OpenSky can place these kinds: near a reference, in a cell (the cell
+reference), a reference alias of the scene's quest, near the actor itself, and the actor's
+editor location. The `move` command goes to the NPC mover. The mover's arrival or give-up ends
+the move. A move that cannot start fails the machine.
+
+The action is done when the machine completes or fails. Travel completes on arrival. Wander,
+sandbox, sleep, and eat never complete. An unsupported procedure fails at once.
 
 ## Controls
 

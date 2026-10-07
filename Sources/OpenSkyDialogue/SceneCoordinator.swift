@@ -34,6 +34,8 @@ public final class SceneCoordinator {
     /// Scenes known to be playing, so a frame with none builds no runtime.
     public private(set) var playing: Set<FormID> = []
     private var ticksSinceScan = 0
+    /// Lines that wait for their voice file, across the per-call runtimes.
+    let pendingLines = ScenePendingLines()
     let dialogue: DialogueCoordinator
     weak var world: (any SceneWorld)?
 
@@ -53,6 +55,7 @@ public final class SceneCoordinator {
             dialogue: dialogueRuntime,
             fragments: world?.sceneFragments,
             host: world,
+            pendingLines: pendingLines,
             now: world?.sceneSeconds ?? 0
         )
     }
