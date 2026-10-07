@@ -413,7 +413,8 @@ extension Renderer {
     ) {
         encoder.label = "Static Mesh Encoder"
         encoder.setFrontFacing(.counterClockwise)
-        encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment])
+        // The object and mesh stages draw mesh-shader grass.
+        encoder.setArgumentTable(argumentTable, stages: [.vertex, .fragment, .object, .mesh])
         argumentTable.setAddress(
             frameUniformBuffer.gpuAddress + UInt64(frameOffset),
             index: BufferIndex.frameUniforms.rawValue

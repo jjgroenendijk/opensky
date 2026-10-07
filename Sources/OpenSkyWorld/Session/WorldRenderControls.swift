@@ -147,6 +147,7 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         )
         snapshot.upscaling = renderer.upscale.status
         snapshot.frameInterpolation = renderer.frameInterpolationStatus
+        snapshot.meshShaderGrass = renderer.meshShaderGrassStatus
         snapshot.textureStreaming = renderer.textureStreaming.stats
         snapshot.rayTracing = renderer.rayTracedShadows.availability
         snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
@@ -215,6 +216,17 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         set {
             renderer?.upscaler = newValue
             world?.playerSettingsStore.set(.upscaler, to: Double(newValue.rawValue))
+        }
+    }
+
+    public var meshShaderGrassEnabled: Bool {
+        get {
+            renderer?.meshShaderGrassEnabled
+                ?? world?.playerSettingsStore.bool(.meshShaderGrass) ?? false
+        }
+        set {
+            renderer?.meshShaderGrassEnabled = newValue
+            world?.playerSettingsStore.set(.meshShaderGrass, to: newValue ? 1 : 0)
         }
     }
 

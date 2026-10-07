@@ -198,6 +198,9 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row(
             "rendering.frameInterpolation", .opensky, .toggle, "Frame interpolation (MetalFX)", 0,
             applied: true
+        ),
+        row(
+            "rendering.meshShaderGrass", .opensky, .toggle, "Mesh-shader grass", 0, applied: true
         )
     ] + assetCacheKindRows
 
@@ -246,6 +249,8 @@ nonisolated extension PlayerSettingID {
     public static let upscaler = Self("rendering.upscaler")
     /// Builds a MetalFX frame between real frames; runs only with the temporal upscaler.
     public static let frameInterpolation = Self("rendering.frameInterpolation")
+    /// Draws grass with object and mesh shaders that cull meshlets on the GPU.
+    public static let meshShaderGrass = Self("rendering.meshShaderGrass")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

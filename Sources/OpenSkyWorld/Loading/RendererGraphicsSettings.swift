@@ -25,6 +25,7 @@ extension Renderer {
         renderScale = RenderScale(store: store)
         upscaler = UpscalerKind(store: store)
         frameInterpolationEnabled = store.bool(.frameInterpolation)
+        meshShaderGrassEnabled = store.bool(.meshShaderGrass)
     }
 
     public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {

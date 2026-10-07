@@ -76,8 +76,9 @@ public final class PipelineCache {
         return (archive, .loaded)
     }
 
+    /// A classic or a mesh render pipeline.
     public func makeRenderPipelineState(
-        descriptor: MTL4RenderPipelineDescriptor
+        descriptor: MTL4PipelineDescriptor
     ) throws -> MTLRenderPipelineState {
         if let archive, let state = try? archive.makeRenderPipelineState(descriptor: descriptor) {
             stats.hits += 1

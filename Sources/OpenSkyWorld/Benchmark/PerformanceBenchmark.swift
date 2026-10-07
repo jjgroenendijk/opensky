@@ -183,6 +183,7 @@ public enum PerformanceBenchmark {
         frameTime.renderScale = renderer.renderScale.percent
         frameTime.upscaler = renderer.renderScale.isOn ? "\(renderer.upscaler)" : nil
         frameTime.frameInterpolation = renderer.isFrameInterpolationRunning
+        frameTime.meshShaderGrass = renderer.drawsGrassWithMeshShaders
         return frameTime
     }
 

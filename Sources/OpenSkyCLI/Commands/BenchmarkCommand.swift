@@ -24,6 +24,7 @@ enum BenchmarkCommand {
         let renderScale: RenderScale
         let upscaler: UpscalerKind
         let frameInterpolation: Bool
+        let meshShaderGrass: Bool
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -48,6 +49,7 @@ enum BenchmarkCommand {
             renderScale = try scanner.option("--render-scale").map(Self.renderScale) ?? .off
             upscaler = try scanner.option("--upscaler").map(Self.upscaler) ?? .temporal
             frameInterpolation = scanner.flag("--frame-interpolation")
+            meshShaderGrass = scanner.flag("--mesh-shader-grass")
         }
 
         func apply(to renderer: Renderer) {
@@ -59,6 +61,7 @@ enum BenchmarkCommand {
             renderer.renderScale = renderScale
             renderer.upscaler = upscaler
             renderer.frameInterpolationEnabled = frameInterpolation
+            renderer.meshShaderGrassEnabled = meshShaderGrass
         }
 
         /// The view loads on the main actor, so the library reads levels again inline.

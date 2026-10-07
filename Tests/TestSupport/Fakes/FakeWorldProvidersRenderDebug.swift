@@ -81,6 +81,11 @@ extension FakeWorldProviders {
         set { renderPerformance.frameInterpolationEnabled = newValue }
     }
 
+    var meshShaderGrassEnabled: Bool {
+        get { renderPerformance.meshShaderGrassEnabled }
+        set { renderPerformance.meshShaderGrassEnabled = newValue }
+    }
+
     var pipelineCacheClears: Int {
         renderPerformance.pipelineCacheClears
     }
@@ -103,5 +108,6 @@ struct FakeRenderPerformanceState {
     var renderScale = RenderScale.off
     var upscaler = UpscalerKind.temporal
     var frameInterpolationEnabled = false
+    var meshShaderGrassEnabled = false
     var pipelineCacheClears = 0
 }

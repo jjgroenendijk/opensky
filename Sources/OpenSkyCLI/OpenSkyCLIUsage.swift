@@ -247,6 +247,7 @@ extension OpenSkyCLI {
                 [--launch] [--launch-seconds <s>] [--route] [--cold-pipelines]
                 [--cpu-culling] [--render-scale <percent>]
                 [--upscaler temporal|spatial] [--frame-interpolation]
+                [--mesh-shader-grass]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
@@ -268,7 +269,9 @@ extension OpenSkyCLI {
                                   percent and upscales with MetalFX,
                                   --upscaler picks the MetalFX scaler,
                                   --frame-interpolation also builds a
-                                  MetalFX frame between real frames
+                                  MetalFX frame between real frames,
+                                  --mesh-shader-grass draws grass with
+                                  object and mesh shaders
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control

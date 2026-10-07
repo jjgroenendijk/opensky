@@ -218,6 +218,11 @@ extension WorldRenderControlForwarding {
         set { renderControls.frameInterpolationEnabled = newValue }
     }
 
+    public var meshShaderGrassEnabled: Bool {
+        get { renderControls.meshShaderGrassEnabled }
+        set { renderControls.meshShaderGrassEnabled = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }
