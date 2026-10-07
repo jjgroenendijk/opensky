@@ -109,9 +109,11 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 - `bench` waits for the GPU each frame, so its times are an upper bound. The default budget is
   33.33 ms, which is 30 frames per second.
 - `bench --fly-path` moves one cell east, then north. The two 5 by 5 blocks overlap, so exactly 35
-  unique cells must build. It fails on a missing or extra cell, a failed build, no unload, memory
-  growing past 1.6 times the start or past the cap, any budget miss, an actor failure without a
-  reason, or a missing living system (rain, animated bones, particles, shadow casters, or grass).
+  unique cells must build. A waypoint settles when its cells and its distant LOD ring are in, so
+  every run measures the same scene swaps. It fails on a missing or extra cell, a failed build, no
+  unload, memory growing past 1.6 times the start or past the cap, any budget miss, an actor
+  failure without a reason, or a missing living system (rain, animated bones, particles, shadow
+  casters, or grass).
   The first cell with actors also pays for building the resolver indexes, which shows in the
   maximum, not the 95th percentile.
 - `bench --walk-path` uses only observed form IDs and positions. Short sidesteps avoid small

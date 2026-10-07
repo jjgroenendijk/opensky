@@ -385,9 +385,12 @@ public enum CellStreamingFlyBenchmark {
     }
 }
 
+/// The distant ring counts too, as on the start screen, so every run measures
+/// the same scene swaps however fast its cells build.
 @MainActor
 private func isSettled(_ streamer: CellStreamer) -> Bool {
-    streamer.resolvedCellCount == streamer.desiredCellCount
+    streamer.startAreaReady
+        && streamer.resolvedCellCount == streamer.desiredCellCount
         && streamer.inFlightCellCount == 0
         && streamer.pendingCompletionCount == 0
         && streamer.queuedRequestCount == 0

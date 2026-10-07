@@ -23,7 +23,7 @@ extension Renderer {
         )
         // Old scene allocations retire as a whole; anything the new scene
         // shares is filtered out at purge time (live-set check), not here.
-        var retiring = scene.residencyAllocations
+        var retiring = sceneAllocations
         scene = newScene
         if let newCamera {
             camera = newCamera
@@ -35,7 +35,7 @@ extension Renderer {
         if let newInstance {
             adoptInstanceRing(newInstance, retiring: &retiring)
         }
-        residencySet.addAllocations(newScene.residencyAllocations)
+        residencySet.addAllocations(sceneAllocations)
         residencySet.commit()
         // Frames < frameIndex are committed; the newest (frameIndex - 1) is the
         // last that can reference the old resources.
@@ -170,7 +170,7 @@ extension Renderer {
             return true
         }
         guard !ready.isEmpty else { return }
-        var live = Set(scene.residencyAllocations.map(ObjectIdentifier.init))
+        var live = Set(sceneAllocations.map(ObjectIdentifier.init))
         live.formUnion(effects.scene.residencyAllocations.map(ObjectIdentifier.init))
         live
             .formUnion((effects.loadingCover?.residencyAllocations ?? [])

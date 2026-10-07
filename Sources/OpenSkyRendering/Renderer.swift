@@ -104,8 +104,13 @@ public final class Renderer: NSObject {
         didSet {
             shadowCasters = ShadowCasterBounds(scene: scene)
             actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
+            sceneAllocations = scene.residencyAllocations
         }
     }
+
+    /// The scene's GPU allocations, gathered once per scene: a swap needs the old
+    /// and the new list, and gathering walks every draw group.
+    public private(set) lazy var sceneAllocations = scene.residencyAllocations
 
     /// The scene's caster bounds, built once per scene for the shadow pass.
     public private(set) lazy var shadowCasters = ShadowCasterBounds(scene: scene)
