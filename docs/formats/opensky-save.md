@@ -95,6 +95,7 @@ chunk cannot read into the next.
 | `RDLT` | reference deltas: enable, transform, activation, deletion | below |
 | `GVAR` | global variable values | world |
 | `CLOK` | game clock | world |
+| `PLOC` | the player's cell, position, and facing | world |
 | `PSCR` | Papyrus script instance state | world |
 | `PTMR` | pending Papyrus update timers | world |
 | `INVN` | inventories | world |

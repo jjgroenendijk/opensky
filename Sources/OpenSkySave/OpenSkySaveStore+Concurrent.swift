@@ -15,6 +15,7 @@ nonisolated public struct OpenSkySaveContents: Sendable {
     public let timers: [PapyrusTimerState]
     public let summary: SaveSummary?
     public let thumbnail: SaveThumbnail?
+    public let playerPlace: SavePlayerPlace?
 
     public init(
         snapshot: WorldStateSnapshot,
@@ -23,7 +24,8 @@ nonisolated public struct OpenSkySaveContents: Sendable {
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
         summary: SaveSummary? = nil,
-        thumbnail: SaveThumbnail? = nil
+        thumbnail: SaveThumbnail? = nil,
+        playerPlace: SavePlayerPlace? = nil
     ) {
         self.snapshot = snapshot
         self.metadata = metadata
@@ -32,6 +34,7 @@ nonisolated public struct OpenSkySaveContents: Sendable {
         self.timers = timers
         self.summary = summary
         self.thumbnail = thumbnail
+        self.playerPlace = playerPlace
     }
 }
 
@@ -61,6 +64,7 @@ nonisolated extension OpenSkySaveStore {
             timers: contents.timers,
             summary: contents.summary,
             thumbnail: contents.thumbnail,
+            playerPlace: contents.playerPlace,
             toSlot: slot
         )
     }

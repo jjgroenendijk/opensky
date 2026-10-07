@@ -33,7 +33,8 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             allocator: GeneratedReferenceAllocator(nextSequence: body.nextGeneratedSequence),
             clock: body.clock,
             scripts: body.scripts,
-            timers: body.timers
+            timers: body.timers,
+            playerPlace: body.playerPlace
         )
     }
 

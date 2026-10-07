@@ -23,6 +23,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var nextGeneratedSequence: UInt64 = 1
         /// Absent `CLOK`: the vanilla-start clock.
         public var clock: GameClock?
+        /// Absent `PLOC`: the load leaves the player where they stand.
+        public var playerPlace: SavePlayerPlace?
         /// Absent `PSCR`: every script starts from its compiled defaults.
         public var scripts: [PapyrusInstanceState] = []
         /// Absent `PTMR`: no update timer was pending.
