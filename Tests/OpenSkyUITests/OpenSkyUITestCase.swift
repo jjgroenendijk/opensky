@@ -63,5 +63,30 @@ class OpenSkyUITestCase: XCTestCase {
             }
         }
         row.click()
+        expandCollapsedSections(in: app)
+    }
+
+    /// The app restores each section's collapse state from the user's saved
+    /// preferences, so a test opens every section before it reads one. Bottom
+    /// up, so opening one section does not move the ones still to open.
+    @MainActor
+    func expandCollapsedSections(in app: XCUIApplication) {
+        let collapsed = app.disclosureTriangles.matching(
+            NSPredicate(format: "identifier ENDSWITH '-Disclosure' AND value == 0")
+        )
+        // Read the ids once: a value read just after a click can be stale, and
+        // a second click would close the section again.
+        let ids = collapsed.allElementsBoundByIndex.map(\.identifier)
+        for id in ids.reversed() {
+            let disclosure = app.disclosureTriangles[id]
+            let panel = app.scrollViews.containing(.disclosureTriangle, identifier: id).firstMatch
+            // XCUI does not scroll a panel to reach a click target.
+            for _ in 0 ..< 20 where !panel.frame.contains(disclosure.frame) {
+                let below = disclosure.frame.minY > panel.frame.midY
+                panel.scroll(byDeltaX: 0, deltaY: below ? -200 : 200)
+            }
+            disclosure.click()
+        }
+        XCTAssertTrue(collapsed.firstMatch.waitForNonExistence(timeout: 5))
     }
 }

@@ -193,6 +193,8 @@ struct PanelFrameworkTests {
         // A fresh view with the same id restores the stored collapsed state.
         let restored = CollapsibleSectionView(title: "Grass", identifier: id, content: NSView())
         #expect(!restored.isExpanded)
+        // UI tests open a restored collapsed section through this id.
+        #expect(Self.view(identified: "PanelSection-\(id)-Disclosure", in: restored) is NSButton)
     }
 
     @Test @MainActor
