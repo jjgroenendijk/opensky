@@ -306,49 +306,59 @@ so the answer holds on any Mac and there is no per-Mac advice.
 
 ## Measurements
 
-Measured on 2026-10-06 on an Apple Silicon Mac with macOS 27, with the Release `openskycli`.
-`make asset-cache-bench` runs the block measurement. Each cold run first drops the files
-from the page cache.
+Measured on 2026-10-07 on an Apple M1 with 16 GB and macOS 27, with the Release `openskycli`.
+The game data and every cache are on the same external USB SSD, so each table compares the
+archives with the cache and not two disks. Each cold run first drops the files from the page
+cache.
 
-The benchmark block, `openskycli benchmark`, reads 293 textures and 226 meshes. The caches
-are on the internal SSD:
+The benchmark block, `openskycli benchmark`, reads 293 textures and makes 378 mesh loads. One
+run each,
+from `make asset-cache-bench CACHE=<folder on the game data disk>` (run directory
+`.logs/asset-cache-bench/20261007T042624Z`):
 
 | Run | Cold load | GPU memory | Peak RSS | Image against archives |
 | --- | --- | --- | --- | --- |
-| Archives | 5350 ms | 442 MiB | 1194 MiB | - |
-| Loose copies | 3936 ms | 442 MiB | 878 MiB | - |
-| Highest quality | 4472 ms | 442 MiB | 897 MiB | identical |
-| Highest quality, fast loading | 4010 ms | 602 MiB | 690 MiB | identical |
-| Balanced | 4483 ms | 442 MiB | 897 MiB | identical |
-| Best performance | 4201 ms | 342 MiB | 768 MiB | PSNR 38.4 dB |
+| Archives | 5383 ms | 563 MiB | 1194 MiB | - |
+| Loose copies | 4658 ms | 563 MiB | 878 MiB | - |
+| Highest quality | 4566 ms | 563 MiB | 925 MiB | identical |
+| Highest quality, fast loading | 4644 ms | 940 MiB | 1080 MiB | identical |
+| Balanced | 4637 ms | 563 MiB | 925 MiB | identical |
+| Best performance | 4224 ms | 442 MiB | 772 MiB | PSNR 38.9 dB |
 
-The block holds no normal maps, so Balanced stores the same files as Highest quality. The
-loose copies cover every file, while the cache keeps skinned and particle meshes in the
-archives, so the two cold loads are not a fair pair.
+GPU memory counts all allocations at 2560x1600, render targets included. The block holds no
+normal maps, so Balanced stores the same files as Highest quality. The loose copies cover
+every file, while the cache keeps skinned and particle meshes (125 of the 378 loads) in
+the archives, so the two cold loads are not a fair pair. On this disk, fast loading does
+not make the block's cold load faster, and it holds 377 MiB more GPU memory at its peak.
 
 Loading the block's 293 textures (365 MiB) as one batch, `asset-cache io-bench`, wall time
-and CPU time:
+and CPU time, same run:
 
-| Method | Cold, internal SSD | Warm | Cold, external USB disk |
-| --- | --- | --- | --- |
-| Archive | 1554 ms, 624 ms CPU | 486 ms | 1599 ms |
-| Cache, CPU upload | 610 ms, 153 ms CPU | 88 ms | 684 ms |
-| Cache, fast loading | 243 ms, 130 ms CPU | 74 ms | 705 ms |
-| Cache, fast loading of LZ4 copies | 228 ms, 242 ms CPU | 148 ms | 687 ms |
+| Method | Cold | Warm |
+| --- | --- | --- |
+| Archive | 1619 ms, 638 ms CPU | 487 ms |
+| Cache, CPU upload | 698 ms, 220 ms CPU | 105 ms |
+| Cache, fast loading | 721 ms, 342 ms CPU | 92 ms |
+| Cache, fast loading of LZ4 copies | 697 ms, 464 ms CPU | 153 ms |
+
+Cold, the disk limits every cache method, so fast loading gains nothing over the CPU
+upload. Warm, it is 12% faster.
 
 Streaming, `bench --fly-path --footprint-cap-mb 4096`, median of three cold runs, with a
-cache of the route's assets on the internal SSD (2026-10-07, run directory
-`.logs/stream-worst-frame/20261007T023809Z`):
+cache of the route's assets (run directory `.logs/stream-worst-frame/20261007T042841Z`):
 
 | Run | Frames until the stream settles | Worst frame | Peak footprint |
 | --- | --- | --- | --- |
-| Archives | 524 | 17.4 ms | 1270 MB |
-| Highest quality | 482 | 17.7 ms | 1200 MB |
-| Highest quality, fast loading | 432 | 16.0 ms | 1242 MB |
+| Archives | 538 | 19.4 ms | 1270 MB |
+| Highest quality | 484 | 16.5 ms | 1229 MB |
+| Highest quality, fast loading | 481 | 16.0 ms | 1362 MB |
 
 The worst frame is the distant LOD swap in every run. A waypoint settles only when its distant
 ring is in. Without that rule, a slow archive run ended its legs before the ring arrived, so it
 never measured the swap and its worst frame looked 5 ms better than the cache's.
+
+With the cache on the internal SSD, the fast loader's peak footprint matched the CPU upload
+(see Fast resource loading). On the slower external disk it is 133 MB higher.
 
 A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores. These
 builds still held audio and animation (0.87 GiB, 66 s of CPU time):
