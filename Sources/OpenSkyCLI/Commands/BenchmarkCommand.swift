@@ -23,6 +23,7 @@ enum BenchmarkCommand {
         let textureBudgetMB: Int?
         let renderScale: RenderScale
         let upscaler: UpscalerKind
+        let frameInterpolation: Bool
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -46,6 +47,7 @@ enum BenchmarkCommand {
             textureStreaming = scanner.flag("--texture-streaming") || textureBudgetMB != nil
             renderScale = try scanner.option("--render-scale").map(Self.renderScale) ?? .off
             upscaler = try scanner.option("--upscaler").map(Self.upscaler) ?? .temporal
+            frameInterpolation = scanner.flag("--frame-interpolation")
         }
 
         func apply(to renderer: Renderer) {
@@ -56,6 +58,7 @@ enum BenchmarkCommand {
             }
             renderer.renderScale = renderScale
             renderer.upscaler = upscaler
+            renderer.frameInterpolationEnabled = frameInterpolation
         }
 
         /// The view loads on the main actor, so the library reads levels again inline.

@@ -19,6 +19,7 @@ public final class UpscaleResources {
     /// Nil when the GPU has no Metal 4 temporal scaler.
     let temporalUnavailableReason: String?
     let spatialUnavailableReason: String?
+    let interpolatorUnavailableReason: String?
 
     static let motionFormat = MTLPixelFormat.rg16Float
     static let outputFormat = MTLPixelFormat.rgba16Float
@@ -78,6 +79,7 @@ public final class UpscaleResources {
             ? nil : "This GPU has no MetalFX temporal scaler"
         spatialUnavailableReason = MTLFXSpatialScalerDescriptor.supportsMetal4FX(device)
             ? nil : "This GPU has no MetalFX spatial scaler"
+        interpolatorUnavailableReason = FrameInterpolationSupport.unsupportedReason(device)
     }
 }
 
@@ -93,8 +95,10 @@ final class UpscaleTargets {
     let depth: MTLTexture
     /// Only the temporal scaler reads motion.
     let motion: MTLTexture?
-    let output: MTLTexture
+    /// The scaler writes here; with interpolation it swaps with `interpolation.history`.
+    private(set) var output: MTLTexture
     let scaler: UpscaleScaler
+    let interpolation: InterpolationTargets?
 
     var kind: UpscalerKind {
         if case .spatial = scaler {
@@ -112,7 +116,14 @@ final class UpscaleTargets {
     }
 
     var allocations: [MTLAllocation] {
-        [color, depth, motion, output].compactMap(\.self)
+        [color, depth, motion, output].compactMap(\.self) + (interpolation?.allocations ?? [])
+    }
+
+    /// Keeps this frame's scaler output as the interpolator's previous frame.
+    func swapInterpolationHistory() {
+        guard let interpolation else { return }
+        (output, interpolation.history) = (interpolation.history, output)
+        interpolation.historyValid = true
     }
 
     init(
@@ -120,11 +131,13 @@ final class UpscaleTargets {
         output outputSize: SIMD2<Int>,
         colorFormat: MTLPixelFormat,
         kind: UpscalerKind,
+        interpolates: Bool,
         compiler: PipelineCache
     ) throws {
         let device = compiler.device
         let usage: (color: MTLTextureUsage, output: MTLTextureUsage)
         var readUsage = MTLTextureUsage.shaderRead
+        var interpolator: (any MTL4FXFrameInterpolator)?
         switch kind {
         case .temporal:
             let scaler = try Self.temporalScaler(
@@ -133,6 +146,13 @@ final class UpscaleTargets {
             self.scaler = .temporal(scaler)
             usage = (scaler.colorTextureUsage, scaler.outputTextureUsage)
             readUsage = scaler.depthTextureUsage.union(scaler.motionTextureUsage)
+            if interpolates {
+                let made = try InterpolationTargets.interpolator(
+                    input: input, output: outputSize, compiler: compiler
+                )
+                readUsage.formUnion(made.depthTextureUsage.union(made.motionTextureUsage))
+                interpolator = made
+            }
         case .spatial:
             let scaler = try Self.spatialScaler(
                 input: input, output: outputSize, colorFormat: colorFormat, compiler: compiler
@@ -143,16 +163,9 @@ final class UpscaleTargets {
         func texture(
             _ format: MTLPixelFormat, _ size: SIMD2<Int>, _ usage: MTLTextureUsage, _ label: String
         ) throws -> MTLTexture {
-            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-                pixelFormat: format, width: size.x, height: size.y, mipmapped: false
+            try Self.privateTexture(
+                device: device, format: format, size: size, usage: usage, label: label
             )
-            descriptor.usage = usage
-            descriptor.storageMode = .private
-            guard let texture = device.makeTexture(descriptor: descriptor) else {
-                throw RendererError.upscalerUnavailable
-            }
-            texture.label = label
-            return texture
         }
         color = try texture(colorFormat, input, [.renderTarget, usage.color], "UpscaleInputColor")
         depth = try texture(
@@ -163,10 +176,36 @@ final class UpscaleTargets {
                 UpscaleResources.motionFormat, input, [.renderTarget, readUsage], "UpscaleMotion"
             )
             : nil
-        output = try texture(
-            kind == .spatial ? colorFormat : UpscaleResources.outputFormat, outputSize,
-            [usage.output, .shaderRead], "UpscaleOutput"
+        let outputFormat = kind == .spatial ? colorFormat : UpscaleResources.outputFormat
+        let outputUsage = usage.output.union(.shaderRead)
+            .union(interpolator?.colorTextureUsage ?? [])
+        output = try texture(outputFormat, outputSize, outputUsage, "UpscaleOutput")
+        interpolation = try interpolator.map { interpolator in
+            try InterpolationTargets(
+                interpolator: interpolator,
+                history: texture(outputFormat, outputSize, outputUsage, "UpscaleOutputHistory"),
+                frame: texture(
+                    outputFormat, outputSize, interpolator.outputTextureUsage.union(.shaderRead),
+                    "InterpolatedFrame"
+                )
+            )
+        }
+    }
+
+    static func privateTexture(
+        device: MTLDevice, format: MTLPixelFormat, size: SIMD2<Int>, usage: MTLTextureUsage,
+        label: String
+    ) throws -> MTLTexture {
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: format, width: size.x, height: size.y, mipmapped: false
         )
+        descriptor.usage = usage
+        descriptor.storageMode = .private
+        guard let texture = device.makeTexture(descriptor: descriptor) else {
+            throw RendererError.upscalerUnavailable
+        }
+        texture.label = label
+        return texture
     }
 
     private static func temporalScaler(

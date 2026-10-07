@@ -459,12 +459,16 @@ extension Renderer {
     public func encodeScenePass(
         descriptor target: MTL4RenderPassDescriptor,
         slot: Int,
-        projection: float4x4
+        projection: float4x4,
+        interpolatedTarget: MTL4RenderPassDescriptor? = nil
     ) -> Bool {
         let view = freeFlyCamera.viewMatrix()
         // Upscaling renders the scene smaller with a jittered projection. Culling keeps
         // the unjittered frustum, so both paths cull the same instances.
-        let upscaleFrame = beginUpscaleFrame(target: target, projection: projection, view: view)
+        let upscaleFrame = beginUpscaleFrame(
+            target: target, interpolatedTarget: interpolatedTarget, projection: projection,
+            view: view
+        )
         let frustum = Frustum(viewProjection: projection * view)
         let frameOffset = updateFrameUniforms(
             slot: slot,

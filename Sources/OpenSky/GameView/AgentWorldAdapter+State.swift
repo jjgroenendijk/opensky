@@ -206,7 +206,19 @@ extension AgentWorldAdapter {
             "fps": .number(stats.fps), "frameMS": .number(stats.frameMS),
             "maxFrameMS": .number(stats.maxFrameMS),
             "gpuMS": stats.gpuMS.map(AgentJSON.number) ?? .null,
-            "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null
+            "memoryMB": MemoryFootprint.physFootprintMB().map(AgentJSON.number) ?? .null,
+            "interpolation": interpolationState()
+        ]
+    }
+
+    private func interpolationState() -> AgentJSON {
+        guard let status = game.renderControls.renderPerformanceSnapshot?.frameInterpolation
+        else { return .null }
+        return [
+            "enabled": .bool(status.enabled), "running": .bool(status.isRunning),
+            "shownFPS": .number(status.shownFPS),
+            "builtFrames": .init(status.interpolatedFrames),
+            "presentLatencyMS": status.presentLatencyMS.map(AgentJSON.number) ?? .null
         ]
     }
 }

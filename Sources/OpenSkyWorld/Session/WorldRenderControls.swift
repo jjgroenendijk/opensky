@@ -146,6 +146,7 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
             gpuCulling: renderer.lastGPUCullCounts
         )
         snapshot.upscaling = renderer.upscale.status
+        snapshot.frameInterpolation = renderer.frameInterpolationStatus
         snapshot.textureStreaming = renderer.textureStreaming.stats
         snapshot.rayTracing = renderer.rayTracedShadows.availability
         snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
@@ -214,6 +215,17 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         set {
             renderer?.upscaler = newValue
             world?.playerSettingsStore.set(.upscaler, to: Double(newValue.rawValue))
+        }
+    }
+
+    public var frameInterpolationEnabled: Bool {
+        get {
+            renderer?.frameInterpolationEnabled
+                ?? world?.playerSettingsStore.bool(.frameInterpolation) ?? false
+        }
+        set {
+            renderer?.frameInterpolationEnabled = newValue
+            world?.playerSettingsStore.set(.frameInterpolation, to: newValue ? 1 : 0)
         }
     }
 

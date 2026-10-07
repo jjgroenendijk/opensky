@@ -150,6 +150,8 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
     public var renderScale: Int?
     /// `temporal` or `spatial` when `renderScale` is above 0.
     public var upscaler: String?
+    /// Whether each frame also built a MetalFX interpolated frame. Nil in older results.
+    public var frameInterpolation: Bool?
 
     public init(
         frames: Int,
