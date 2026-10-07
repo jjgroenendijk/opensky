@@ -29,6 +29,26 @@ struct DDSDecoderTests {
         #expect(Array(image.rgba[0 ..< 4]) == [0, 0, 0, 0])
     }
 
+    @Test func placesEachBlockAndClipsTheEdgeBlocks() throws {
+        // A 6x6 image is 2x2 blocks: solid red, green, blue, and white.
+        let ends: [(UInt8, UInt8)] = [(0x00, 0xF8), (0xE0, 0x07), (0x1F, 0x00), (0xFF, 0xFF)]
+        var payload = Data()
+        for (low, high) in ends {
+            payload.append(contentsOf: [low, high, 0, 0, 0, 0, 0, 0])
+        }
+        let image = try DDSDecoder.topLevel(DDSFixture.file(
+            width: 6, height: 6, fourCC: "DXT1", payload: payload
+        ))
+        func texel(_ x: Int, _ y: Int) -> [UInt8] {
+            Array(image.rgba[(y * 6 + x) * 4 ..< (y * 6 + x) * 4 + 4])
+        }
+        #expect(image.rgba.count == 6 * 6 * 4)
+        #expect(texel(3, 3) == [255, 0, 0, 255])
+        #expect(texel(4, 0) == [0, 255, 0, 255])
+        #expect(texel(0, 5) == [0, 0, 255, 255])
+        #expect(texel(5, 5) == [255, 255, 255, 255])
+    }
+
     @Test func decodesBC3Alpha() throws {
         // Alpha end points 255 and 0, every index 1; color block all white.
         var block = Data([255, 0])

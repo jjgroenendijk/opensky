@@ -309,6 +309,9 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         var pending: Set<CellCoordinate> = []
         var pendingLOD: Set<CellCoordinate> = []
         var pendingDoorTransitions: Set<FormID> = []
+        /// The newest rig generation per kind (first person or not). Older queued
+        /// requests are skipped, because their result would be dropped anyway.
+        var newestRigGeneration: [Bool: Int] = [:]
     }
 
     nonisolated private struct Results {
@@ -452,7 +455,14 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
     }
 
     public func enqueuePlayerRig(_ request: PlayerRigRequest) {
+        bookkeeping.withLock {
+            $0.newestRigGeneration[request.firstPerson] = max(
+                $0.newestRigGeneration[request.firstPerson] ?? .min, request.generation
+            )
+        }
         queue.async { [self] in
+            let newest = bookkeeping.withLock { $0.newestRigGeneration[request.firstPerson] }
+            guard newest == request.generation else { return }
             let result = provider.withLock { $0.assemblePlayerRig(request) }
             let entry = PlayerRigLoadResult(request: request, result: result)
             results.withLock { $0.playerRigs.append(entry) }
