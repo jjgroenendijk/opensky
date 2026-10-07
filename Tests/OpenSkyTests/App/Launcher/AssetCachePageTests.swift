@@ -38,7 +38,9 @@ struct AssetCachePageTests {
             "AssetCacheLimitControl", "AssetCacheSizeStatsLabel", "AssetCacheStateStatsLabel",
             "AssetCacheBuildStatsLabel", "AssetCacheBuildProgressIndicator",
             "AssetCacheBuildControl",
-            "AssetCacheCancelControl", "AssetCacheCheckControl", "AssetCacheClearControl"
+            "AssetCacheCancelControl", "AssetCacheCheckControl", "AssetCacheClearControl",
+            "AssetCacheKindTexturesControl", "AssetCacheKindMeshesControl",
+            "AssetCacheKindCollisionControl", "AssetCacheRetiredKindsStatsLabel"
         ] {
             #expect(find(identifier, in: page.view) != nil, "\(identifier)")
         }
@@ -61,5 +63,18 @@ struct AssetCachePageTests {
         page.presetPopUp.selectItem(at: Int(AssetQualityPreset.highestQuality.rawValue))
         page.presetPopUp.sendAction(page.presetPopUp.action, to: page.presetPopUp.target)
         #expect(page.coordinator.settings.preset == .highestQuality)
+    }
+
+    @Test func aKindSwitchSavesItAndAudioHasNone() throws {
+        let page = makePage()
+        page.loadViewIfNeeded()
+        #expect(page.kindCheckboxes.count == 3)
+        #expect(find("AssetCacheKindAudioControl", in: page.view) == nil)
+        let textures = try #require(
+            find("AssetCacheKindTexturesControl", in: page.view) as? NSButton
+        )
+        #expect(textures.state == .on)
+        textures.performClick(nil)
+        #expect(page.coordinator.settings.kinds == [.mesh, .collision])
     }
 }

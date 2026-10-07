@@ -73,6 +73,19 @@ public final class AssetCacheCoordinator {
         startCheck()
     }
 
+    /// The check runs again, because it counts only the kinds that are on.
+    public func setKind(_ kind: AssetCacheKind, stored: Bool) {
+        guard settings.kinds.contains(kind) != stored else { return }
+        update { settings in
+            if stored {
+                settings.kinds.insert(kind)
+            } else {
+                settings.kinds.remove(kind)
+            }
+        }
+        startCheck()
+    }
+
     /// Nil goes back to the default folder.
     public func setFolder(_ folder: URL?) {
         update { $0.folder = folder }
@@ -189,6 +202,7 @@ public final class AssetCacheCoordinator {
         try AssetCacheLocation.validate(folder, gameInstall: install)
         let store = try AssetCacheStore(root: folder, limitBytes: settings.effectiveLimitBytes)
         let converters = try environment.makeConverters(settings.preset)
+            .filter { settings.kinds.contains($0.kind) }
         return AssetCacheBuilder(
             store: store,
             files: files,

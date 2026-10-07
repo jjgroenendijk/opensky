@@ -68,7 +68,9 @@ struct AssetCacheSectionTests {
         for identifier in [
             "AssetCacheReadControl", "AssetCacheStatsLabel", "AssetCachePathControl",
             "AssetCacheInspectControl", "AssetCacheEntryStatsLabel",
-            "AssetCacheFastLoadControl", "AssetCacheFastLoadStatsLabel"
+            "AssetCacheFastLoadControl", "AssetCacheFastLoadStatsLabel",
+            "AssetCacheReadKindTexturesControl", "AssetCacheReadKindMeshesControl",
+            "AssetCacheReadKindCollisionControl"
         ] {
             #expect(find(identifier, in: section.view) != nil, "\(identifier)")
         }
@@ -85,6 +87,21 @@ struct AssetCacheSectionTests {
         #expect(toggle.state == .on)
         toggle.performClick(nil)
         #expect(provider.assetCache?.isEnabled == false)
+    }
+
+    @Test func aKindToggleTurnsThatKindsReadsOff() throws {
+        let provider = FakeProvider()
+        provider.assetCache = try reader()
+        let section = AssetCacheSection()
+        section.loadViewIfNeeded()
+        section.provider = provider
+        #expect(find("AssetCacheReadKindAudioControl", in: section.view) == nil)
+        let toggle = try #require(
+            find("AssetCacheReadKindMeshesControl", in: section.view) as? NSButton
+        )
+        #expect(toggle.state == .on)
+        toggle.performClick(nil)
+        #expect(provider.assetCache?.kinds == [.texture, .collision])
     }
 
     @Test func theFastLoadToggleFlipsTheSessionControl() throws {

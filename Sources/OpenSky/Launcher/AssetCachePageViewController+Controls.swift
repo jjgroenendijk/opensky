@@ -11,6 +11,15 @@ extension AssetCachePageViewController {
             identifier: "AssetCacheEnabledControl"
         )
         enabledCheckbox.toolTip = "Load converted assets from the cache, not the game archives"
+        for (kind, checkbox) in zip(AssetCacheKind.built, kindCheckboxes) {
+            PanelComponents.configureCheckbox(
+                checkbox, target: self, action: #selector(toggleKind(_:)),
+                identifier: "AssetCacheKind\(kind.title)Control"
+            )
+            checkbox.tag = Int(kind.rawValue)
+            checkbox.toolTip = AssetCacheReadout.kindGain(kind)
+                + ". Off reads \(kind.folderName) from the game archives; a build skips them"
+        }
         let cores = ProcessInfo.processInfo.activeProcessorCount
         presetPopUp.addItems(withTitles: AssetQualityPreset.allCases.map {
             AssetCacheReadout.presetTitle($0, cores: cores)
@@ -52,6 +61,9 @@ extension AssetCachePageViewController {
             label.setAccessibilityIdentifier(identifier)
         }
         presetLabel.font = PanelMetrics.captionFont
+        retiredKindsLabel.font = PanelMetrics.captionFont
+        retiredKindsLabel.textColor = Theme.parchmentDim
+        retiredKindsLabel.setAccessibilityIdentifier("AssetCacheRetiredKindsStatsLabel")
         problemLabel.textColor = .systemOrange
     }
 
@@ -99,6 +111,11 @@ extension AssetCachePageViewController {
 
     @objc private func toggleEnabled() {
         coordinator.setEnabled(enabledCheckbox.state == .on)
+    }
+
+    @objc private func toggleKind(_ sender: NSButton) {
+        guard let kind = AssetCacheKind(rawValue: UInt8(clamping: sender.tag)) else { return }
+        coordinator.setKind(kind, stored: sender.state == .on)
     }
 
     @objc private func choosePreset() {

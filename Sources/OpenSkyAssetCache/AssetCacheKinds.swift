@@ -21,6 +21,16 @@ nonisolated public enum AssetCacheKind: UInt8, CaseIterable, Sendable, CustomStr
         }
     }
 
+    public var title: String {
+        switch self {
+        case .texture: "Textures"
+        case .mesh: "Meshes"
+        case .collision: "Collision"
+        case .animation: "Animation"
+        case .audio: "Audio"
+        }
+    }
+
     public var description: String {
         folderName
     }
@@ -28,6 +38,16 @@ nonisolated public enum AssetCacheKind: UInt8, CaseIterable, Sendable, CustomStr
     /// Kinds the cache no longer builds or reads, because they loaded no faster
     /// from it (docs/engine/asset-cache.md, "Where the cache helps").
     public static let retired: Set<Self> = [.animation, .audio]
+
+    /// The kinds a build converts and the settings offer, in declaration order.
+    public static let built = allCases.filter { !retired.contains($0) }
+
+    public init?(folderName: String) {
+        guard let kind = Self.allCases.first(where: { $0.folderName == folderName }) else {
+            return nil
+        }
+        self = kind
+    }
 }
 
 /// How converted assets trade build time, GPU memory, and disk size against looks.

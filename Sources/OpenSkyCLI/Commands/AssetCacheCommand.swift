@@ -14,7 +14,6 @@ import OpenSkyWorld
 enum AssetCacheCommand {
     private struct Options {
         var settings: AssetCacheSettings
-        var kinds: Set<AssetCacheKind>
         var width: Int?
         /// Only these paths, one per line in the `--paths` file, instead of the whole install.
         var paths: [String]?
@@ -30,7 +29,6 @@ enum AssetCacheCommand {
         }
         let options = try Options(
             settings: settings(scanner: &scanner),
-            kinds: kinds(scanner.option("--kinds")),
             width: scanner.option("--width").map { try int($0, "--width") },
             paths: scanner.option("--paths").map { try lines(ofFile: $0) },
             out: scanner.option("--out").map { URL(filePath: $0, directoryHint: .isDirectory) },
@@ -154,7 +152,7 @@ enum AssetCacheCommand {
         }
     }
 
-    /// The shared settings, with `--preset`, `--folder`, and `--limit-gib` on top.
+    /// The shared settings, with `--preset`, `--folder`, `--limit-gib`, and `--kinds` on top.
     @MainActor
     static func settings(scanner: inout ArgumentScanner) throws -> AssetCacheSettings {
         var settings =
@@ -173,15 +171,19 @@ enum AssetCacheCommand {
         if let limit = try scanner.option("--limit-gib") {
             settings.limitBytes = try UInt64(int(limit, "--limit-gib")) << 30
         }
+        if let list = try scanner.option("--kinds") {
+            settings.kinds = try kinds(list)
+        }
         return settings
     }
 
-    private static func kinds(_ list: String?) throws -> Set<AssetCacheKind> {
-        guard let list else { return [] }
-        return try Set(list.split(separator: ",").map { name in
-            let built = AssetCacheKind.allCases.filter { !AssetCacheKind.retired.contains($0) }
-            guard let kind = built.first(where: { $0.folderName == name }) else {
-                let names = built.map(\.folderName).joined(separator: ",")
+    private static func kinds(_ list: String) throws -> Set<AssetCacheKind> {
+        try Set(list.split(separator: ",").map { name in
+            guard
+                let kind = AssetCacheKind(folderName: String(name)),
+                AssetCacheKind.built.contains(kind)
+            else {
+                let names = AssetCacheKind.built.map(\.folderName).joined(separator: ",")
                 throw CLIError.usage("--kinds takes \(names)")
             }
             return kind
@@ -201,7 +203,7 @@ enum AssetCacheCommand {
         let converters = try AssetCacheConverters.make(preset: options.settings.preset)
         return AssetCacheBuilder(
             store: reader.store, files: files,
-            converters: AssetCacheConverters.filter(converters, kinds: options.kinds),
+            converters: converters.filter { options.settings.kinds.contains($0.kind) },
             preset: options.settings.preset
         )
     }
@@ -254,7 +256,7 @@ enum AssetCacheCommand {
     ) async throws {
         let builder = try builder(reader: reader, files: files, options: options)
         let check = await builder.check(items(builder, options: options))
-        for kind in AssetCacheKind.allCases {
+        for kind in AssetCacheKind.built {
             let counts = check.kinds[kind] ?? AssetCacheKindCheck()
             let line = "current \(counts.current)\tstale \(counts.stale)\tmissing \(counts.missing)"
             print("\(kind)\t\(line)")
@@ -267,6 +269,13 @@ enum AssetCacheCommand {
         print("preset\t\(settings.preset.title)")
         print("entries\t\(usage.entryCount)")
         print("size\t\(usage.bytes >> 20) MiB of \(reader.store.limitBytes >> 30) GiB")
+        for kind in AssetCacheKind.built {
+            let kindUsage = usage.kinds[kind] ?? AssetCacheKindUsage()
+            let stored = settings.kinds.contains(kind) ? "cached" : "archives"
+            print(
+                "\(kind)\t\(stored), \(kindUsage.entryCount) entries, \(kindUsage.bytes >> 20) MiB"
+            )
+        }
         for warning in reader.store.locationWarnings(neededBytes: 0) {
             print("warning\t\(warning.message)")
         }

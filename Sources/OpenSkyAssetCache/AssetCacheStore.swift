@@ -65,13 +65,29 @@ nonisolated public enum AssetCacheEntryState: Equatable, Sendable {
     case missing
 }
 
+nonisolated public struct AssetCacheKindUsage: Equatable, Sendable {
+    public var entryCount = 0
+    public var bytes: UInt64 = 0
+
+    public init(entryCount: Int = 0, bytes: UInt64 = 0) {
+        self.entryCount = entryCount
+        self.bytes = bytes
+    }
+}
+
 nonisolated public struct AssetCacheUsage: Equatable, Sendable {
     public let entryCount: Int
     public let bytes: UInt64
+    public let kinds: [AssetCacheKind: AssetCacheKindUsage]
 
-    public init(entryCount: Int, bytes: UInt64) {
+    public init(
+        entryCount: Int,
+        bytes: UInt64,
+        kinds: [AssetCacheKind: AssetCacheKindUsage] = [:]
+    ) {
         self.entryCount = entryCount
         self.bytes = bytes
+        self.kinds = kinds
     }
 }
 
@@ -190,9 +206,15 @@ nonisolated public final class AssetCacheStore: Sendable {
 
     public func usage() -> AssetCacheUsage {
         let entries = entryFiles()
+        var kinds: [AssetCacheKind: AssetCacheKindUsage] = [:]
+        for entry in entries {
+            kinds[entry.kind, default: AssetCacheKindUsage()].entryCount += 1
+            kinds[entry.kind, default: AssetCacheKindUsage()].bytes += entry.bytes
+        }
         return AssetCacheUsage(
             entryCount: entries.count,
-            bytes: entries.reduce(0) { $0 + $1.bytes }
+            bytes: entries.reduce(0) { $0 + $1.bytes },
+            kinds: kinds
         )
     }
 
@@ -260,6 +282,7 @@ nonisolated public final class AssetCacheStore: Sendable {
     }
 
     private struct EntryFile {
+        let kind: AssetCacheKind
         let url: URL
         let bytes: UInt64
         let lastUse: Date
@@ -286,7 +309,7 @@ nonisolated public final class AssetCacheStore: Sendable {
                     continue
                 }
                 result.append(EntryFile(
-                    url: url, bytes: UInt64(values.fileSize ?? 0),
+                    kind: kind, url: url, bytes: UInt64(values.fileSize ?? 0),
                     lastUse: values.contentModificationDate ?? .distantPast
                 ))
             }
