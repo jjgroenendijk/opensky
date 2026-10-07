@@ -301,6 +301,47 @@ typedef struct
     vector_float4 grassParameters;
 } InstanceTransform;
 
+/// GPU frustum culling (docs/rendering/gpu-culling.md): compute buffer slots.
+typedef NS_ENUM(EnumBackingType, CullBufferIndex)
+{
+    CullBufferIndexInstances = 0,
+    CullBufferIndexParameters = 1,
+    CullBufferIndexOutput = 2,
+    CullBufferIndexArguments = 3,
+};
+
+typedef NS_ENUM(EnumBackingType, CullConstant)
+{
+    /// 32-bit words in one MTLDrawIndexedPrimitivesIndirectArguments; instance count is word 1.
+    CullConstantArgumentWords = 5,
+    CullConstantThreadgroupWidth = 64,
+};
+
+/// One static instance the cull pass tests, written once per scene.
+typedef struct
+{
+    InstanceTransform transform;
+    /// World AABB. boundsMax.w is 1 when the instance has bounds, 0 when it is never culled.
+    vector_float4 boundsMin;
+    vector_float4 boundsMax;
+    /// Indirect-argument entry the survivor counts into.
+    unsigned int group;
+    /// First output slot of the group.
+    unsigned int outputBase;
+    unsigned int padding0;
+    unsigned int padding1;
+} CullInstance;
+
+/// One view's frustum planes, inward-facing, as `Frustum` builds them.
+typedef struct
+{
+    vector_float4 planes[6];
+    unsigned int instanceCount;
+    unsigned int padding0;
+    unsigned int padding1;
+    unsigned int padding2;
+} CullParameters;
+
 /// Terrain splat path (docs/rendering/scene-drawing.md): one draw per quadrant blends the
 /// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex
 /// VTXT weights. Shares the DrawUniforms ring (both fit one 256-byte slot).

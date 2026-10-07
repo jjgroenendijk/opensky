@@ -22,6 +22,9 @@ extension Renderer {
         public var drawCursor = 0
         public var instanceCursor = 0
         public var stats = SceneDrawStats()
+        /// The scene list `encode(groups:)` draws, so the GPU-culled groups take the
+        /// indirect path. Nil for lists outside the scene.
+        var cullList: GPUCullList?
     }
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
@@ -219,9 +222,9 @@ extension Renderer {
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
         var boundPipeline: ObjectIdentifier?
-        for group in groups where layers.contains(group.layer) {
-            let visible = writeVisibleInstances(of: group, state: &state)
-            guard visible.written > 0 else { continue }
+        for (index, group) in groups.enumerated() where layers.contains(group.layer) {
+            guard let visible = visibleInstances(of: group, at: index, state: &state)
+            else { continue }
             let pipeline = group.faceMorph != nil ? morphedSkinnedPipeline
                 : (group.mesh.isSkinned ? skinnedPipeline : staticPipeline)
             if boundPipeline != ObjectIdentifier(pipeline) {
@@ -254,7 +257,7 @@ extension Renderer {
                 index: BufferIndex.drawUniforms.rawValue
             )
             argumentTable.setAddress(
-                instanceTransformBuffer.gpuAddress + UInt64(visible.byteOffset),
+                visible.address,
                 index: BufferIndex.instanceTransforms.rawValue
             )
             argumentTable.setAddress(
@@ -266,13 +269,29 @@ extension Renderer {
                 index: TextureIndex.diffuse.rawValue
             )
             state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
-            state.encoder.drawIndexedPrimitives(
-                primitiveType: .triangle,
-                indexCount: group.mesh.indexCount,
-                indexType: .uint16,
-                indexBuffer: group.mesh.indexBuffer.gpuAddress,
-                indexBufferLength: group.mesh.indexBuffer.length,
-                instanceCount: visible.written
+            state.encoder.drawInstances(of: group.mesh, visible)
+        }
+    }
+
+    /// The group's surviving instances for the camera, or nil when none survive.
+    private func visibleInstances(
+        of group: DrawGroup,
+        at index: Int,
+        state: inout ScenePassState
+    ) -> VisibleInstances? {
+        switch gpuVisibility(
+            of: index, in: state.cullList, view: 0, slot: state.slot, frustum: state.frustum
+        ) {
+        case .skipped:
+            return nil
+        case let .drawn(visible):
+            return visible
+        case .cpu:
+            let run = writeVisibleInstances(of: group, state: &state)
+            guard run.written > 0 else { return nil }
+            return .packed(
+                count: run.written,
+                address: instanceTransformBuffer.gpuAddress + UInt64(run.byteOffset)
             )
         }
     }
@@ -412,6 +431,28 @@ extension Renderer {
         )
     }
 
+    /// The opaque groups, the terrain, and the alpha-tested groups, in that order.
+    private func encodeSceneGeometry(state: inout ScenePassState) {
+        state.cullList = .opaque
+        encode(
+            groups: opaqueDrawGroups,
+            staticPipeline: opaquePipeline,
+            skinnedPipeline: skinnedOpaquePipeline,
+            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
+            state: &state
+        )
+        encodeTerrain(items: scene.terrain, state: &state)
+        state.cullList = .alphaTested
+        encode(
+            groups: alphaTestedDrawGroups,
+            staticPipeline: alphaTestPipeline,
+            skinnedPipeline: skinnedAlphaTestPipeline,
+            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
+            state: &state
+        )
+        state.cullList = nil
+    }
+
     public func encodeScenePass(
         descriptor target: MTL4RenderPassDescriptor,
         slot: Int,
@@ -441,21 +482,7 @@ extension Renderer {
         var state = ScenePassState(
             encoder: encoder, slot: slot, frustum: frustum, fillMode: fillMode
         )
-        encode(
-            groups: opaqueDrawGroups,
-            staticPipeline: opaquePipeline,
-            skinnedPipeline: skinnedOpaquePipeline,
-            morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
-            state: &state
-        )
-        encodeTerrain(items: scene.terrain, state: &state)
-        encode(
-            groups: alphaTestedDrawGroups,
-            staticPipeline: alphaTestPipeline,
-            skinnedPipeline: skinnedAlphaTestPipeline,
-            morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
-            state: &state
-        )
+        encodeSceneGeometry(state: &state)
         encodeMembranes(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
         encodeWater(items: scene.water, state: &state)

@@ -7,15 +7,17 @@ import OpenSkyRendering
 final class RenderingPerformancePanelViewController: InspectorPanelViewController {
     let renderTargetsSection = RenderTargetsSection()
     let pipelineCacheSection = PipelineCacheSection()
+    let gpuCullingSection = GPUCullingSection()
 
     weak var provider: (any RenderPerformanceControlProviding)? {
         didSet {
             renderTargetsSection.provider = provider
             pipelineCacheSection.provider = provider
+            gpuCullingSection.provider = provider
         }
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [renderTargetsSection, pipelineCacheSection]
+        [renderTargetsSection, pipelineCacheSection, gpuCullingSection]
     }
 }

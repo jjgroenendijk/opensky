@@ -18,6 +18,7 @@ enum BenchmarkCommand {
         let launch: BenchmarkLaunchRequest?
         let route: Bool
         let coldPipelines: Bool
+        let gpuCulling: Bool
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -36,6 +37,7 @@ enum BenchmarkCommand {
             }
             route = scanner.flag("--route")
             coldPipelines = scanner.flag("--cold-pipelines")
+            gpuCulling = scanner.flag("--gpu-culling")
         }
 
         private static func seconds(_ value: String) throws -> Double {
@@ -76,6 +78,7 @@ enum BenchmarkCommand {
             device: device, plan: plan, coldPipelines: options.coldPipelines
         )
         let setupMS = Double(DispatchTime.now().uptimeNanoseconds - setupStart) / 1e6
+        renderer.gpuCullingEnabled = options.gpuCulling
         var fastLoader: FastTextureLoader?
         var result = try PerformanceBenchmark.run(
             plan: plan,

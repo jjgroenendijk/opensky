@@ -178,6 +178,11 @@ extension WorldRenderControlForwarding {
         renderControls.clearPipelineCache()
     }
 
+    public var gpuCullingEnabled: Bool {
+        get { renderControls.gpuCullingEnabled }
+        set { renderControls.gpuCullingEnabled = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }

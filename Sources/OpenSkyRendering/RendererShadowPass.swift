@@ -59,6 +59,8 @@ extension Renderer {
         let cascade: ShadowCascade
         let frustum: Frustum
         let encoder: MTL4RenderCommandEncoder
+        /// The cull view: 0 is the camera, so cascade `i` is `1 + i`.
+        let cullView: Int
     }
 
     /// Running cursors + stats threaded through one frame's cascade encodes.
@@ -160,14 +162,32 @@ extension Renderer {
         shadowsActiveThisFrame = false
         lastShadowDrawStats = ShadowDrawStats()
 
-        guard shadowRenders else { return true }
+        let cascades = frameCascades(projection: projection)
+        // The cull runs here, before any pass draws, for the camera and each cascade.
+        encodeGPUCulling(
+            slot: slot,
+            viewProjections: [projection * freeFlyCamera.viewMatrix()]
+                + cascades.map(\.viewProjection)
+        )
+        guard !cascades.isEmpty else { return true }
+
+        var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)
+        guard encodeCascades(cascades, state: &state) else { return false }
+        lastShadowDrawStats = state.stats
+        shadowCascades = cascades
+        shadowsActiveThisFrame = true
+        return true
+    }
+
+    /// This frame's cascades; empty when shadows are off or nothing casts.
+    private func frameCascades(projection: float4x4) -> [ShadowCascade] {
+        guard shadowRenders else { return [] }
         let hasCasters = shadowOpaqueDrawGroups.contains(where: \.castsShadows)
             || shadowAlphaTestedDrawGroups.contains(where: \.castsShadows)
             || !scene.terrain.isEmpty
-        guard hasCasters else { return true }
-
+        guard hasCasters else { return [] }
         let (fovY, aspect) = Self.fovAspect(from: projection)
-        let cascades = ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
+        return ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
             cameraToWorld: freeFlyCamera.viewMatrix().inverse,
             fovYRadians: fovY,
             aspectRatio: aspect,
@@ -180,13 +200,6 @@ extension Renderer {
             casterBackup: Self.shadowCasterBackup,
             residentBounds: residentCasterBounds()
         ))
-
-        var state = ShadowPassState(slot: slot, base: slot * shadowInstanceSlotCapacity)
-        guard encodeCascades(cascades, state: &state) else { return false }
-        lastShadowDrawStats = state.stats
-        shadowCascades = cascades
-        shadowsActiveThisFrame = true
-        return true
     }
 
     /// One depth encoder per cascade; each renders the frustum-surviving
@@ -209,15 +222,16 @@ extension Renderer {
             let context = ShadowCascadeContext(
                 cascade: cascade,
                 frustum: Frustum(viewProjection: cascade.viewProjection),
-                encoder: encoder
+                encoder: encoder,
+                cullView: 1 + index
             )
             // The shadow lists, not the camera lists: a first-person player
             // is hidden from the eye and still casts (RendererPlayerBody).
             encodeCasterGroups(
-                shadowOpaqueDrawGroups, alphaTested: false, in: context, state: &state
+                shadowOpaqueDrawGroups, list: .opaque, in: context, state: &state
             )
             encodeCasterGroups(
-                shadowAlphaTestedDrawGroups, alphaTested: true, in: context, state: &state
+                shadowAlphaTestedDrawGroups, list: .alphaTested, in: context, state: &state
             )
             encodeShadowTerrain(in: context, state: &state)
             // MTL4 does not auto-track cross-encoder hazards: without a barrier
@@ -260,18 +274,24 @@ extension Renderer {
     /// surviving instanceCount. Pipeline switches lazily on caster kind.
     private func encodeCasterGroups(
         _ groups: [DrawGroup],
-        alphaTested: Bool,
+        list: GPUCullList,
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
+        let alphaTested = list == .alphaTested
         var boundPipeline: ObjectIdentifier?
         // The same mask the scene pass uses. Hiding the statics while their
         // shadows still fell on the terrain would make the tool actively
         // misleading — the frame would show a shadow with no caster.
         let layers = effectiveRenderLayers
-        for group in groups where group.castsShadows && layers.contains(group.layer) {
-            let visible = writeVisibleShadowInstances(of: group, in: context, state: &state)
-            guard visible.written > 0 else { continue }
+        for (index, group) in groups.enumerated()
+            where group.castsShadows && layers.contains(group.layer)
+        {
+            guard
+                let visible = visibleCasters(
+                    of: group, at: index, list: list, in: context, state: &state
+                )
+            else { continue }
             let pipeline = shadowPipeline(group: group, alphaTested: alphaTested)
             if boundPipeline != ObjectIdentifier(pipeline) {
                 context.encoder.setRenderPipelineState(pipeline)
@@ -283,6 +303,32 @@ extension Renderer {
                 visible: visible,
                 in: context,
                 state: &state
+            )
+        }
+    }
+
+    /// The group's surviving casters for this cascade, or nil when none survive.
+    private func visibleCasters(
+        of group: DrawGroup,
+        at index: Int,
+        list: GPUCullList,
+        in context: ShadowCascadeContext,
+        state: inout ShadowPassState
+    ) -> VisibleInstances? {
+        switch gpuVisibility(
+            of: index, in: list, view: context.cullView, slot: state.slot,
+            frustum: context.frustum
+        ) {
+        case .skipped:
+            return nil
+        case let .drawn(visible):
+            return visible
+        case .cpu:
+            let run = writeVisibleShadowInstances(of: group, in: context, state: &state)
+            guard run.written > 0 else { return nil }
+            return .packed(
+                count: run.written,
+                address: shadowInstanceBuffer.gpuAddress + UInt64(run.byteOffset)
             )
         }
     }
@@ -328,7 +374,7 @@ extension Renderer {
     private func drawCasterGroup(
         _ group: DrawGroup,
         alphaTested: Bool,
-        visible: (written: Int, byteOffset: Int),
+        visible: VisibleInstances,
         in context: ShadowCascadeContext,
         state: inout ShadowPassState
     ) {
@@ -350,7 +396,7 @@ extension Renderer {
             index: BufferIndex.drawUniforms.rawValue
         )
         argumentTable.setAddress(
-            shadowInstanceBuffer.gpuAddress + UInt64(visible.byteOffset),
+            visible.address,
             index: BufferIndex.instanceTransforms.rawValue
         )
         if group.mesh.isSkinned {
@@ -364,14 +410,7 @@ extension Renderer {
             )
         }
         context.encoder.setCullMode(group.material.doubleSided ? .none : .back)
-        context.encoder.drawIndexedPrimitives(
-            primitiveType: .triangle,
-            indexCount: group.mesh.indexCount,
-            indexType: .uint16,
-            indexBuffer: group.mesh.indexBuffer.gpuAddress,
-            indexBufferLength: group.mesh.indexBuffer.length,
-            instanceCount: visible.written
-        )
+        context.encoder.drawInstances(of: group.mesh, visible)
     }
 
     private func encodeShadowTerrain(

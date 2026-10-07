@@ -7,13 +7,21 @@ import Foundation
 nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public let renderTargets: RenderTargetMemory
     public let pipelineCache: PipelineCacheStats
+    /// What the CPU path culled in the last frame.
+    public let cpuCulling: CullCounts
+    /// What the GPU path culled, a few frames late.
+    public let gpuCulling: CullCounts
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
-        pipelineCache: PipelineCacheStats = PipelineCacheStats()
+        pipelineCache: PipelineCacheStats = PipelineCacheStats(),
+        cpuCulling: CullCounts = CullCounts(),
+        gpuCulling: CullCounts = CullCounts()
     ) {
         self.renderTargets = renderTargets
         self.pipelineCache = pipelineCache
+        self.cpuCulling = cpuCulling
+        self.gpuCulling = gpuCulling
     }
 }
 
@@ -26,6 +34,8 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     /// Deletes the saved archives. Returns how many files it deleted.
     @discardableResult
     func clearPipelineCache() -> Int
+    /// Culls the scene's static groups on the GPU. Off culls them on the CPU.
+    var gpuCullingEnabled: Bool { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
@@ -50,6 +60,15 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
         return """
         Archive: \(archive)\(stats.saved ? ", saved" : "")
         Loaded: \(stats.hits)  Compiled: \(stats.misses)
+        """
+    }
+
+    public static func cullingText(cpu: CullCounts, gpu: CullCounts) -> String {
+        """
+        Camera CPU: \(cpu.cameraVisible) drawn, \(cpu.cameraCulled) culled
+        Camera GPU: \(gpu.cameraVisible) drawn, \(gpu.cameraCulled) culled
+        Shadows CPU: \(cpu.shadowVisible) drawn, \(cpu.shadowCulled) culled
+        Shadows GPU: \(gpu.shadowVisible) drawn, \(gpu.shadowCulled) culled
         """
     }
 

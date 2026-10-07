@@ -105,6 +105,7 @@ public final class Renderer: NSObject {
             shadowCasters = ShadowCasterBounds(scene: scene)
             actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
             sceneAllocations = scene.residencyAllocations
+            gpuCull.isCurrent = false
         }
     }
 
@@ -240,6 +241,8 @@ public final class Renderer: NSObject {
     public let pipelineCache: PipelineCache
     /// The depth target of the last scene pass, for the render-target readout.
     var lastSceneDepth: RenderTargetEntry?
+    /// GPU frustum culling for the scene's static groups (RendererGPUCulling.swift).
+    public var gpuCull: GPUCullState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
@@ -299,7 +302,7 @@ public final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
             try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)
-        (imageSpacePass, effects) =
+        ((imageSpacePass, effects), gpuCull) =
             try Self.makeEffectResources(view: view, library: library, compiler: compiler)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)

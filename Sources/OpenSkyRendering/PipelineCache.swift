@@ -87,6 +87,19 @@ public final class PipelineCache {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
+    public func makeComputePipelineState(
+        descriptor: MTL4ComputePipelineDescriptor
+    ) throws -> MTLComputePipelineState {
+        if let archive, let state = try? archive.makeComputePipelineState(descriptor: descriptor) {
+            stats.hits += 1
+            return state
+        }
+        stats.misses += 1
+        return try compiler.makeComputePipelineState(
+            descriptor: descriptor, compilerTaskOptions: nil
+        )
+    }
+
     /// Writes the archive when every pipeline of this launch was compiled. The serializer
     /// holds only compiled pipelines, so an archive that missed some is deleted instead,
     /// and the next launch compiles and saves them all.

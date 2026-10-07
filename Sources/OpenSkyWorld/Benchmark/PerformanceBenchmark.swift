@@ -173,11 +173,14 @@ public enum PerformanceBenchmark {
             percentile95MS: measured.percentileMS(95),
             worstMS: measured.frameMS.max() ?? 0,
             drawCalls: renderer.lastDrawStats.drawCalls,
-            drawnInstances: renderer.lastDrawStats.drawnInstances,
+            // The GPU path's count is read a few frames late; the view does not move.
+            drawnInstances: renderer.lastDrawStats.drawnInstances
+                + renderer.lastGPUCullCounts.cameraVisible,
             gpuTime: BenchmarkTimeStats(milliseconds: measured.gpuMS),
             grass: BenchmarkGrass(renderer.lastGrassDrawStats)
         )
         frameTime.encodeTime = BenchmarkTimeStats(milliseconds: measured.encodeMS)
+        frameTime.gpuCulling = renderer.gpuCullingEnabled
         return frameTime
     }
 

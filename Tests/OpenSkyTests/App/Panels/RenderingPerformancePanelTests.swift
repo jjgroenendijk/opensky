@@ -32,7 +32,8 @@ struct RenderingPerformancePanelTests {
     func theSectionsCarryTheirPinnedIdentifiers() throws {
         let panel = try makePanel(FakeWorldProviders())
         #expect(
-            panel.sections.map(\.sectionIdentifier) == ["renderTargets", "pipelineCache"]
+            panel.sections.map(\.sectionIdentifier)
+                == ["renderTargets", "pipelineCache", "gpuCulling"]
         )
         #expect(
             panel.renderTargetsSection.statsLabelIdentifier == "RenderTargetsStatsLabel"
@@ -94,6 +95,51 @@ struct PipelineCacheSectionTests {
         section.loadViewIfNeeded()
         section.refreshReadout()
         #expect(section.statsReadout == "Archive: loaded\nLoaded: 40  Compiled: 0")
+    }
+}
+
+@MainActor
+struct GPUCullingSectionTests {
+    @Test
+    func theSwitchReachesTheProviderAndCountsAsAnOverride() {
+        let providers = FakeWorldProviders()
+        let section = GPUCullingSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        #expect(section.enabledControl.accessibilityIdentifier() == "GPUCullingEnabledControl")
+        #expect(!GPUCullingSection.isOverridden(provider: providers))
+
+        section.enabledControl.state = .on
+        section.enabledControl.sendAction(section.enabledControl.action, to: section)
+        #expect(providers.gpuCullingEnabled)
+        #expect(GPUCullingSection.isOverridden(provider: providers))
+        GPUCullingSection.resetToDefaults(provider: providers)
+        #expect(!providers.gpuCullingEnabled)
+    }
+
+    @Test
+    func theReadoutShowsBothPaths() {
+        let providers = FakeWorldProviders()
+        providers.renderPerformanceSnapshot = RenderPerformanceSnapshot(
+            cpuCulling: CullCounts(cameraVisible: 1, cameraCulled: 2),
+            gpuCulling: CullCounts(
+                cameraVisible: 30, cameraCulled: 40, shadowVisible: 50, shadowCulled: 60
+            )
+        )
+        let section = GPUCullingSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        section.refreshReadout()
+        #expect(section.statsReadout == """
+        Camera CPU: 1 drawn, 2 culled
+        Camera GPU: 30 drawn, 40 culled
+        Shadows CPU: 0 drawn, 0 culled
+        Shadows GPU: 50 drawn, 60 culled
+        """)
+
+        providers.renderPerformanceSnapshot = nil
+        section.refreshReadout()
+        #expect(section.statsReadout == "Culling: unavailable")
     }
 }
 

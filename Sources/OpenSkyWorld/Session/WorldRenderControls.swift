@@ -132,10 +132,24 @@ extension WorldRenderControls: RenderDebugControlProviding {
 extension WorldRenderControls: RenderPerformanceControlProviding {
     public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
         guard let renderer else { return nil }
+        let camera = renderer.lastDrawStats
+        let shadow = renderer.lastShadowDrawStats
         return RenderPerformanceSnapshot(
             renderTargets: renderer.renderTargetMemory(),
-            pipelineCache: renderer.pipelineCache.stats
+            pipelineCache: renderer.pipelineCache.stats,
+            cpuCulling: CullCounts(
+                cameraVisible: camera.drawnInstances,
+                cameraCulled: camera.culledInstances,
+                shadowVisible: shadow.drawnInstances,
+                shadowCulled: shadow.culledInstances
+            ),
+            gpuCulling: renderer.lastGPUCullCounts
         )
+    }
+
+    public var gpuCullingEnabled: Bool {
+        get { renderer?.gpuCullingEnabled ?? false }
+        set { renderer?.gpuCullingEnabled = newValue }
     }
 
     /// Read at renderer setup, so a change applies on the next launch.
