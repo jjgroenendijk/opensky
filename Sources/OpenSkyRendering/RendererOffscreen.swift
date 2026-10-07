@@ -96,14 +96,6 @@ nonisolated public struct OffscreenBenchResult: Sendable {
         Self.percentile(scriptUpdateMS, percentile: percentile)
     }
 
-    public var gpuAverageMS: Double {
-        gpuMS.isEmpty ? 0 : gpuMS.reduce(0, +) / Double(gpuMS.count)
-    }
-
-    public func gpuPercentileMS(_ percentile: Double) -> Double {
-        Self.percentile(gpuMS, percentile: percentile)
-    }
-
     private static func percentile(_ values: [Double], percentile: Double) -> Double {
         guard !values.isEmpty else { return 0 }
         let sorted = values.sorted()

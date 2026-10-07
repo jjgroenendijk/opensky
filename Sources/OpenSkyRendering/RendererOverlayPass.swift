@@ -54,9 +54,7 @@ extension Renderer {
     ) throws -> WorldOverlayResources {
         let verticesPerSlot = worldOverlayPrimitiveBudget * 3
         return try WorldOverlayResources(
-            pipeline: makeWorldOverlayPipeline(
-                device: device, view: view, library: library, compiler: compiler
-            ),
+            pipeline: makeWorldOverlayPipeline(view: view, library: library, compiler: compiler),
             depthState: makeWorldOverlayDepthState(device: device),
             vertexBuffer: makeUniformBuffer(
                 device: device,
@@ -67,7 +65,6 @@ extension Renderer {
     }
 
     private static func makeWorldOverlayPipeline(
-        device: MTLDevice,
         view: MTKView,
         library: MTLLibrary,
         compiler: PipelineCache

@@ -45,9 +45,7 @@ extension Renderer {
             label: "UIFrameUniforms"
         )
         return try UIResources(
-            pipeline: makeUIPipeline(
-                device: device, view: view, library: library, compiler: compiler
-            ),
+            pipeline: makeUIPipeline(view: view, library: library, compiler: compiler),
             depthState: makeUIDepthState(device: device),
             sampler: makeUISampler(device: device),
             atlasTexture: makeUIAtlasTexture(device: device, atlas: atlas),
@@ -58,7 +56,6 @@ extension Renderer {
     }
 
     private static func makeUIPipeline(
-        device: MTLDevice,
         view: MTKView,
         library: MTLLibrary,
         compiler: PipelineCache

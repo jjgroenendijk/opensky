@@ -75,7 +75,6 @@ public struct TextureStreamingState {
     /// The frame target's height, for the distance rule.
     var viewHeight = 1080
     var staging: [(frame: UInt64, buffers: [MTLBuffer])] = []
-    var emptiedHeaps: [MTLHeap] = []
     public internal(set) var stats = TextureStreamingStats()
 
     init(device: MTLDevice) {
