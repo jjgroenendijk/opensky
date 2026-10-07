@@ -24,6 +24,8 @@ import simd
 /// Answers `DialogueWorld` from the session systems `game` owns.
 final class DialogueWorldAdapter {
     unowned let game: GameViewController
+    /// `VTCK` by actor base. A template walk per actor per condition context costs too much.
+    private var voiceTypesByBase: [FormID: FormID?] = [:]
 
     init(game: GameViewController) {
         self.game = game
@@ -98,6 +100,24 @@ final class DialogueWorldAdapter {
             ?? speaker.description
     }
 
+    /// The voice type of each loaded actor, for `GetIsVoiceType` and voice file paths.
+    func residentVoiceTypes() -> [ReferenceKey: FormID] {
+        guard
+            let entries = game.streamer?.residentActorEntries(),
+            let resolver = (game.worldData as? ActorValueDataProviding)?
+                .actorValueBaselines?.resolver
+        else { return [:] }
+        let records = ActorIdentityRecords(resolver: resolver)
+        var voices: [ReferenceKey: FormID] = [:]
+        for entry in entries {
+            guard let base = entry.placedActor?.base else { continue }
+            let voice = voiceTypesByBase[base] ?? records.voiceType(ofBase: base)
+            voiceTypesByBase[base] = voice
+            voices[entry.key] = voice
+        }
+        return voices
+    }
+
     /// The posed `NPC Head [Head]` bone, or the capsule eye height when the
     /// actor has no rig.
     func headPosition(of actor: ReferenceKey) -> SIMD3<Float>? {
@@ -130,7 +150,9 @@ extension DialogueWorldAdapter: DialogueWorld {
     }
 
     func conditionContext() -> ConditionContext {
-        game.runtimeState.conditionContext()
+        var context = game.runtimeState.conditionContext()
+        context.dialogue = DialogueResolution(voiceTypes: residentVoiceTypes())
+        return context
     }
 
     var conditionRegistry: ConditionFunctionRegistry {

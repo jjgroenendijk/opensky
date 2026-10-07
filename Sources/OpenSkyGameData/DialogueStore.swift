@@ -207,6 +207,10 @@ nonisolated public final class DialogueStore: Sendable {
         infoSources[id.rawValue].map { FormIDTranslation(source: $0, target: resolver) }
     }
 
+    public func voiceType(_ id: FormID) -> VoiceType? {
+        voicesByFormID[id.rawValue]
+    }
+
     public func voiceType(editorID: String) -> VoiceType? {
         voiceFormIDsByEditorID[editorID.lowercased()].flatMap { voicesByFormID[$0] }
     }

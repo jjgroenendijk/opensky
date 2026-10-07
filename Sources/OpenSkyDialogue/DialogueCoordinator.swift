@@ -24,6 +24,8 @@ public final class DialogueCoordinator {
     public private(set) var followUp: DialogueChoice?
     /// Turned, stopped, and with its package suspended.
     public private(set) var heldSpeaker: ReferenceKey?
+    /// The actor the player talks to, which `IsInDialogueWithPlayer` reads.
+    public private(set) var conversationSpeaker: ReferenceKey?
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
     private var cachedStrings: LocalizedStrings?
@@ -51,11 +53,13 @@ public final class DialogueCoordinator {
     /// Built per call, because every input is a live read. It is a cheap struct.
     public var runtime: DialogueRuntime? {
         guard let index, let world, let quests = world.questStates() else { return nil }
+        var context = world.conditionContext()
+        context.dialogue = context.dialogue.talking(to: conversationSpeaker)
         return DialogueRuntime(
             store: store,
             dialogue: index,
             questStates: quests,
-            context: world.conditionContext(),
+            context: context,
             registry: world.conditionRegistry,
             fragments: world.fragments
         )
@@ -66,7 +70,9 @@ public final class DialogueCoordinator {
     /// Selects what `speaker` offers. Nil, with the reason in `lastOutcome`,
     /// when no conversation can run.
     public func begin(with speaker: ReferenceKey) -> DialogueRuntime? {
+        conversationSpeaker = speaker
         guard let runtime else {
+            conversationSpeaker = nil
             lastOutcome = "no dialogue index loaded"
             return nil
         }
@@ -129,6 +135,7 @@ public final class DialogueCoordinator {
 
     public func endConversation() {
         followUp = nil
+        conversationSpeaker = nil
     }
 
     // MARK: - Speaker focus

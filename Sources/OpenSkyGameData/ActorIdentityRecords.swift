@@ -1,4 +1,4 @@
-// The race, sex, and name of an actor base after template inheritance, as the
+// The race, sex, voice type, and name of an actor base after template inheritance, as the
 // Papyrus identity natives answer them. Pure: built over the record indexes.
 
 import OpenSkyFormatsESM
@@ -23,6 +23,11 @@ nonisolated public struct ActorIdentityRecords: Sendable {
 
     public func isFemale(ofBase base: FormID) -> Bool? {
         (try? templates.resolve(base: base))?.isFemale.value
+    }
+
+    /// `VTCK` after `useTraits` inheritance.
+    public func voiceType(ofBase base: FormID) -> FormID? {
+        (try? templates.resolve(base: base))?.voiceType.value
     }
 
     /// The `FULL` of an actor base, after `useBaseData`, or of a race.
