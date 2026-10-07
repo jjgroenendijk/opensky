@@ -39,6 +39,7 @@ extension Renderer: MTKViewDelegate {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        encodeTextureStreaming(target: passDescriptor)
 
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)

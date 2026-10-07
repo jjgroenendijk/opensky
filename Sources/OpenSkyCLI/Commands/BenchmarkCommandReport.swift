@@ -33,6 +33,14 @@ extension BenchmarkCommand {
                 pipelines.compiled, pipelines.saved ? ", saved" : ""
             ))
         }
+        if let streaming = result.textureStreaming {
+            print(String(
+                format: "[INFO] texture streaming: %d textures, %.0f MiB mapped of "
+                    + "%.0f MiB heaps, budget %.0f MiB; %d levels loaded, %d dropped",
+                streaming.streamedTextures, streaming.usedMB, streaming.reservedMB,
+                streaming.budgetMB, streaming.levelsLoaded, streaming.levelsDropped
+            ))
+        }
         if let launch = result.launch {
             print(String(
                 format: "[INFO] launch: %.0f ms from process start to the first frame, "

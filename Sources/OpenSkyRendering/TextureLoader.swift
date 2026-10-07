@@ -32,7 +32,7 @@ nonisolated public final class TextureLoader {
         category: "TextureLoader"
     )
 
-    private let device: MTLDevice
+    let device: MTLDevice
     private let colorPlaceholder: MTLTexture
     private let dataPlaceholder: MTLTexture
 

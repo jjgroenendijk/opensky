@@ -57,6 +57,11 @@ extension Renderer {
     public func gpuMemoryUsage() -> GPUMemoryUsage {
         var usage = GPUMemoryUsage(totalBytes: device.currentAllocatedSize)
         for allocation in residencySet.allAllocations {
+            // Streamed textures keep their levels in placement heaps.
+            if let heap = allocation as? MTLHeap, heap.type == .placement {
+                usage.textureBytes += heap.size
+                continue
+            }
             guard let texture = allocation as? MTLTexture else { continue }
             if texture.usage.contains(.renderTarget) {
                 usage.renderTargetBytes += texture.allocatedSize

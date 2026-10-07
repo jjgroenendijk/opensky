@@ -265,7 +265,7 @@ extension Renderer {
                 index: BufferIndex.pointLights.rawValue
             )
             argumentTable.setTexture(
-                group.material.diffuse.gpuResourceID,
+                streamedBinding(group.material.diffuse),
                 index: TextureIndex.diffuse.rawValue
             )
             state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
@@ -389,7 +389,7 @@ extension Renderer {
 
     private func bindTerrainTextures(for item: TerrainDrawItem) {
         argumentTable.setTexture(
-            item.material.diffuse.gpuResourceID,
+            streamedBinding(item.material.diffuse),
             index: TextureIndex.diffuse.rawValue
         )
         for layerSlot in 0 ..< TerrainConstant.maxLayers.rawValue {
@@ -397,7 +397,7 @@ extension Renderer {
                 ? item.layerTextures[layerSlot]
                 : item.material.diffuse
             argumentTable.setTexture(
-                texture.gpuResourceID,
+                streamedBinding(texture),
                 index: TextureIndex.terrainLayer0.rawValue + layerSlot
             )
         }

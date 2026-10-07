@@ -94,6 +94,12 @@ GPU memory is sampled after each load pass and after each measured frame:
 The result keeps the peak of each value and the last sample. The two parts come from the
 renderer's residency set, so buffers and short-lived staging memory count only in the total.
 
+`--texture-streaming` streams the large textures of the view and the route
+([texture streaming](/rendering/texture-streaming.md)), and `--texture-budget <MiB>` sets its
+budget; either flag turns streaming on. Without them, streaming is off whatever the player
+settings say. The `textureStreaming` field and its line hold the streamed textures, the mapped
+and heap memory at the end of the run, and the levels loaded and dropped.
+
 The grass line gives the grass draws and instances in the last measured frame. Zero draws
 means the view shows no grass, so a grass change cannot show a win there.
 

@@ -194,6 +194,8 @@ nonisolated public final class RenderMesh: Sendable {
     public let localBounds: ModelBounds
     /// Index into the owning model's materials.
     public let materialSlot: Int
+    /// UV units per mesh-local unit, for texture streaming.
+    public let uvPerUnit: Float
 
     public init(device: MTLDevice, mesh: Mesh) throws {
         guard !mesh.positions.isEmpty, !mesh.indices.isEmpty else {
@@ -237,6 +239,9 @@ nonisolated public final class RenderMesh: Sendable {
         localTransform = mesh.transform
         self.localBounds = localBounds
         materialSlot = mesh.materialSlot
+        uvPerUnit = MeshUVDensity.uvPerUnit(
+            positions: mesh.positions, uvs: mesh.uvs, indices: mesh.indices
+        )
     }
 
     private struct SkinBuffers {

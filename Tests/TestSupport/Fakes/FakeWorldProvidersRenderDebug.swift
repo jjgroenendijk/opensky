@@ -31,8 +31,47 @@ extension FakeWorldProviders {
         )
     }
 
+    var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
+        get { renderPerformance.snapshot }
+        set { renderPerformance.snapshot = newValue }
+    }
+
+    var pipelineCacheEnabled: Bool {
+        get { renderPerformance.pipelineCacheEnabled }
+        set { renderPerformance.pipelineCacheEnabled = newValue }
+    }
+
+    var gpuCullingEnabled: Bool {
+        get { renderPerformance.gpuCullingEnabled }
+        set { renderPerformance.gpuCullingEnabled = newValue }
+    }
+
+    var textureStreamingEnabled: Bool {
+        get { renderPerformance.textureStreamingEnabled }
+        set { renderPerformance.textureStreamingEnabled = newValue }
+    }
+
+    var textureBudgetIndex: Int {
+        get { renderPerformance.textureBudgetIndex }
+        set { renderPerformance.textureBudgetIndex = newValue }
+    }
+
+    var pipelineCacheClears: Int {
+        renderPerformance.pipelineCacheClears
+    }
+
     func clearPipelineCache() -> Int {
-        pipelineCacheClears += 1
+        renderPerformance.pipelineCacheClears += 1
         return 1
     }
+}
+
+/// The `RenderPerformanceControlProviding` state of the fake.
+struct FakeRenderPerformanceState {
+    var snapshot: RenderPerformanceSnapshot? = RenderPerformanceSnapshot()
+    var pipelineCacheEnabled = true
+    var gpuCullingEnabled = true
+    var textureStreamingEnabled = true
+    var textureBudgetIndex = 2
+    var pipelineCacheClears = 0
 }

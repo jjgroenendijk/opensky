@@ -134,7 +134,7 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         guard let renderer else { return nil }
         let camera = renderer.lastDrawStats
         let shadow = renderer.lastShadowDrawStats
-        return RenderPerformanceSnapshot(
+        var snapshot = RenderPerformanceSnapshot(
             renderTargets: renderer.renderTargetMemory(),
             pipelineCache: renderer.pipelineCache.stats,
             cpuCulling: CullCounts(
@@ -145,6 +145,29 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
             ),
             gpuCulling: renderer.lastGPUCullCounts
         )
+        snapshot.textureStreaming = renderer.textureStreaming.stats
+        return snapshot
+    }
+
+    /// Applies at once to textures loaded from now on, and is saved.
+    public var textureStreamingEnabled: Bool {
+        get {
+            renderer?.textureStreaming.enabled
+                ?? world?.playerSettingsStore.bool(.textureStreaming) ?? true
+        }
+        set {
+            renderer?.textureStreaming.enabled = newValue
+            world?.playerSettingsStore.set(.textureStreaming, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var textureBudgetIndex: Int {
+        get { Int(world?.playerSettingsStore.value(.textureBudget) ?? 2) }
+        set {
+            guard let store = world?.playerSettingsStore else { return }
+            store.set(.textureBudget, to: Double(newValue))
+            renderer?.textureStreaming.budgetBytes = Renderer.textureBudgetBytes(store: store)
+        }
     }
 
     /// Applies at once and is saved, so the next launch starts with it.

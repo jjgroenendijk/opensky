@@ -31,8 +31,8 @@ nonisolated public final class TextureLibrary {
         keyString(path: key.path, usage: key.usage)
     }
 
-    private let fileSystem: any GameFileSource
-    private let loader: TextureLoader
+    let fileSystem: any GameFileSource
+    let loader: TextureLoader
     private var cache: [CacheKey: MTLTexture] = [:]
 
     /// Keys resolved since the last drain, so a cell build can record exactly
@@ -52,6 +52,8 @@ nonisolated public final class TextureLibrary {
     public var assetCache: AssetCacheReader?
     /// Reads cached textures inside `batchLoads` without the CPU, when set and on.
     public var fastLoader: FastTextureLoader?
+    /// Large textures become streamed textures while its settings say so.
+    public var streaming: TextureStreamMailbox?
     private var batchDepth = 0
 
     public init(fileSystem: any GameFileSource, loader: TextureLoader) {
@@ -112,6 +114,10 @@ nonisolated public final class TextureLibrary {
     }
 
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
+        if let streamed = streamedTexture(path: path, usage: usage) {
+            loadedCount += 1
+            return streamed
+        }
         if
             batchDepth > 0, let fastLoader, fastLoader.control.isEnabled,
             let entry = assetCache?.entry(forPath: path, decoder: .readyTexture)

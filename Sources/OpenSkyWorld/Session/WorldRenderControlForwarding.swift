@@ -183,6 +183,16 @@ extension WorldRenderControlForwarding {
         set { renderControls.gpuCullingEnabled = newValue }
     }
 
+    public var textureStreamingEnabled: Bool {
+        get { renderControls.textureStreamingEnabled }
+        set { renderControls.textureStreamingEnabled = newValue }
+    }
+
+    public var textureBudgetIndex: Int {
+        get { renderControls.textureBudgetIndex }
+        set { renderControls.textureBudgetIndex = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }

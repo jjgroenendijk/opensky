@@ -19,6 +19,8 @@ enum BenchmarkCommand {
         let route: Bool
         let coldPipelines: Bool
         let gpuCulling: Bool
+        let textureStreaming: Bool
+        let textureBudgetMB: Int?
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -38,6 +40,30 @@ enum BenchmarkCommand {
             route = scanner.flag("--route")
             coldPipelines = scanner.flag("--cold-pipelines")
             gpuCulling = !scanner.flag("--cpu-culling")
+            textureBudgetMB = try scanner.option("--texture-budget").map(Self.mebibytes)
+            textureStreaming = scanner.flag("--texture-streaming") || textureBudgetMB != nil
+        }
+
+        func apply(to renderer: Renderer) {
+            renderer.gpuCullingEnabled = gpuCulling
+            renderer.textureStreaming.enabled = textureStreaming
+            if let textureBudgetMB {
+                renderer.textureStreaming.budgetBytes = textureBudgetMB << 20
+            }
+        }
+
+        /// The view loads on the main actor, so the library reads levels again inline.
+        func attachStreaming(textures: TextureLibrary, to renderer: Renderer) {
+            guard textureStreaming else { return }
+            textures.streaming = renderer.textureStreaming.mailbox
+            renderer.textureStreaming.reader = InlineTextureLevelReader(library: textures)
+        }
+
+        private static func mebibytes(_ value: String) throws -> Int {
+            guard let mebibytes = Int(value), mebibytes > 0 else {
+                throw CLIError.usage("--texture-budget expects a MiB count, got \(value)")
+            }
+            return mebibytes
         }
 
         private static func seconds(_ value: String) throws -> Double {
@@ -78,7 +104,7 @@ enum BenchmarkCommand {
             device: device, plan: plan, coldPipelines: options.coldPipelines
         )
         let setupMS = Double(DispatchTime.now().uptimeNanoseconds - setupStart) / 1e6
-        renderer.gpuCullingEnabled = options.gpuCulling
+        options.apply(to: renderer)
         var fastLoader: FastTextureLoader?
         var result = try PerformanceBenchmark.run(
             plan: plan,
@@ -90,6 +116,7 @@ enum BenchmarkCommand {
                 context: context, device: device, recorder: recorder, assets: assets
             )
             fastLoader = builder.textures.fastLoader
+            options.attachStreaming(textures: builder.textures, to: renderer)
             return builder
         }
         result.pipelines = BenchmarkPipelines(
@@ -98,18 +125,15 @@ enum BenchmarkCommand {
         if let framePath = options.framePath {
             try writeView(renderer: renderer, plan: plan, to: framePath)
         }
-        if options.route {
-            let builder = try RenderCommand.makeBuilder(
-                context: context, device: device, assets: assets
+        if options.textureStreaming {
+            result.textureStreaming = BenchmarkTextureStreaming(
+                stats: renderer.textureStreaming.stats
             )
-            result.route = try PerformanceBenchmarkRoute.run(
-                renderer: renderer,
-                provider: BuilderCellSceneProvider(
-                    builder: builder,
-                    worldspaceEditorID: plan.worldspace
-                ),
-                worldspace: plan.worldspace,
-                plan: plan
+        }
+        if options.route {
+            result.route = try runRoute(
+                renderer: renderer, plan: plan,
+                builder: RenderCommand.makeBuilder(context: context, device: device, assets: assets)
             )
         }
         report(result)
@@ -122,6 +146,21 @@ enum BenchmarkCommand {
         guard result.isComparable else {
             throw CLIError.failure("a cell failed to build; this result does not compare")
         }
+    }
+
+    /// The walk route. Its cell build worker reads streamed texture levels again.
+    private static func runRoute(
+        renderer: Renderer, plan: PerformanceBenchmarkPlan, builder: CellSceneBuilder
+    ) throws -> BenchmarkRoute {
+        try PerformanceBenchmarkRoute.run(
+            renderer: renderer,
+            provider: BuilderCellSceneProvider(
+                builder: builder,
+                worldspaceEditorID: plan.worldspace
+            ),
+            worldspace: plan.worldspace,
+            plan: plan
+        )
     }
 
     /// A paused offscreen renderer; the view only carries the pixel formats. Its

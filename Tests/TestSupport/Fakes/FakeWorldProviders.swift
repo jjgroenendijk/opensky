@@ -220,10 +220,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var renderDebugStats = SceneDrawStats()
 
     /// RenderPerformanceControlProviding
-    var renderPerformanceSnapshot: RenderPerformanceSnapshot? = RenderPerformanceSnapshot()
-    var pipelineCacheEnabled = true
-    var gpuCullingEnabled = true
-    var pipelineCacheClears = 0
+    var renderPerformance = FakeRenderPerformanceState()
 
     // AudioControlProviding
     var audioEnabled = false

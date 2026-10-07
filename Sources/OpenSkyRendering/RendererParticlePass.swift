@@ -34,7 +34,7 @@ extension Renderer {
                 index: BufferIndex.particleInstances.rawValue
             )
             argumentTable.setTexture(
-                item.texture.gpuResourceID,
+                streamedBinding(item.texture),
                 index: TextureIndex.diffuse.rawValue
             )
             state.encoder.setCullMode(.none)

@@ -11,6 +11,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public let cpuCulling: CullCounts
     /// What the GPU path culled, a few frames late.
     public let gpuCulling: CullCounts
+    public var textureStreaming = TextureStreamingStats()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -36,6 +37,11 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     func clearPipelineCache() -> Int
     /// Culls the scene's static groups on the GPU. Off culls them on the CPU.
     var gpuCullingEnabled: Bool { get set }
+    /// Large textures loaded from now on keep only the levels the camera needs. Off
+    /// raises every streamed texture to its full size.
+    var textureStreamingEnabled: Bool { get set }
+    /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
+    var textureBudgetIndex: Int { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
@@ -69,6 +75,15 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
         Camera GPU: \(gpu.cameraVisible) drawn, \(gpu.cameraCulled) culled
         Shadows CPU: \(cpu.shadowVisible) drawn, \(cpu.shadowCulled) culled
         Shadows GPU: \(gpu.shadowVisible) drawn, \(gpu.shadowCulled) culled
+        """
+    }
+
+    public static func textureStreamingText(_ stats: TextureStreamingStats) -> String {
+        """
+        Streamed: \(stats.streamedTextures) textures, \(stats.pendingReads) reads pending
+        Mapped: \(megabytes(stats.usedBytes)) of \(megabytes(stats.budgetBytes))
+        Heaps: \(megabytes(stats.reservedBytes))
+        Levels: \(stats.levelsLoaded) loaded, \(stats.levelsDropped) dropped
         """
     }
 

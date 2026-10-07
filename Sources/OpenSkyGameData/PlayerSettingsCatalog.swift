@@ -165,7 +165,16 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         ),
         row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
-        row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true)
+        row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
+        row("rendering.textureStreaming", .opensky, .toggle, "Stream textures", 1, applied: true),
+        row(
+            "rendering.textureBudget",
+            .opensky,
+            .choice(options: textureBudgetOptions.map { "\($0) MiB" }),
+            "Texture streaming budget",
+            2,
+            applied: true
+        )
     ] + assetCacheKindRows
 
     /// One switch per cached asset kind; off reads that kind from the archives.
@@ -176,6 +185,9 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     ].map { folder, title in
         row("assetCache.kind.\(folder)", .opensky, .toggle, title, 1, applied: true)
     }
+
+    /// The texture streaming budget choices, in MiB.
+    public static let textureBudgetOptions = [128, 256, 512, 1024, 2048]
 
     /// In `AssetQualityPreset` raw-value order.
     public static let assetQualityOptions = ["Best performance", "Balanced", "Highest quality"]
@@ -192,6 +204,10 @@ nonisolated extension PlayerSettingID {
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
     /// The static scene culls in a compute pass; off culls it on the CPU.
     public static let gpuCulling = Self("rendering.gpuCulling")
+    /// Large textures keep only the mip levels the camera needs.
+    public static let textureStreaming = Self("rendering.textureStreaming")
+    /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
+    public static let textureBudget = Self("rendering.textureBudget")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

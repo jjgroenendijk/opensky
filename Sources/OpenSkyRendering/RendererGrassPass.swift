@@ -128,7 +128,7 @@ extension Renderer {
             index: BufferIndex.instanceTransforms.rawValue
         )
         argumentTable.setTexture(
-            group.material.diffuse.gpuResourceID,
+            streamedBinding(group.material.diffuse),
             index: TextureIndex.diffuse.rawValue
         )
         state.encoder.drawIndexedPrimitives(

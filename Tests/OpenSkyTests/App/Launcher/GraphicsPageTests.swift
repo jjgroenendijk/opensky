@@ -25,13 +25,22 @@ struct GraphicsPageTests {
                 == "GraphicsPipelineCacheClearControl"
         )
         #expect(page.gpuCullingControl.accessibilityIdentifier() == "GraphicsGPUCullingControl")
+        #expect(
+            page.textureStreamingControl.accessibilityIdentifier()
+                == "GraphicsTextureStreamingControl"
+        )
+        #expect(
+            page.textureBudgetControl.accessibilityIdentifier() == "GraphicsTextureBudgetControl"
+        )
         #expect(page.statusLabel.accessibilityIdentifier() == "GraphicsStatsLabel")
     }
 
-    @Test func bothFeaturesStartOn() {
+    @Test func everyFeatureStartsOn() {
         let page = makePage()
         #expect(page.pipelineCacheControl.state == .on)
         #expect(page.gpuCullingControl.state == .on)
+        #expect(page.textureStreamingControl.state == .on)
+        #expect(page.textureBudgetControl.titleOfSelectedItem == "Budget 512 MiB")
     }
 
     @Test func eachSwitchSavesItsSetting() {
@@ -43,6 +52,12 @@ struct GraphicsPageTests {
         page.pipelineCacheControl.state = .off
         page.pipelineCacheControl.sendAction(page.pipelineCacheControl.action, to: page)
         #expect(!store.bool(.pipelineCacheEnabled))
+        page.textureStreamingControl.state = .off
+        page.textureStreamingControl.sendAction(page.textureStreamingControl.action, to: page)
+        #expect(!store.bool(.textureStreaming))
+        page.textureBudgetControl.selectItem(at: 4)
+        page.textureBudgetControl.sendAction(page.textureBudgetControl.action, to: page)
+        #expect(store.value(.textureBudget) == 4)
     }
 
     @Test func showingThePageReadsTheSettingsAgain() {
