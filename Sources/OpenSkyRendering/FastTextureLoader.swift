@@ -1,7 +1,8 @@
 // Loads cached textures with Metal fast resource loading: one IO command buffer
 // per batch reads the level bytes from the cache entry files straight into the
 // textures, and `flush` waits for it. A batch is one cell build, so the cell
-// is handed over only after its textures are complete.
+// is handed over only after its textures are complete. Scratch memory for the
+// texture copies is freed per command, not pooled by the queue.
 // See docs/engine/asset-cache.md, "Fast resource loading".
 
 import Foundation
@@ -66,6 +67,7 @@ nonisolated public final class FastTextureLoader {
         self.control = control
         let descriptor = MTLIOCommandQueueDescriptor()
         descriptor.type = .concurrent
+        descriptor.scratchBufferAllocator = TransientScratchAllocator(device: device)
         queue = try device.makeIOCommandQueue(descriptor: descriptor)
     }
 
@@ -151,6 +153,29 @@ nonisolated public final class FastTextureLoader {
         let handle = try device.makeIOFileHandle(url: file)
         handles[file] = handle
         return handle
+    }
+}
+
+/// The queue's own allocator keeps its scratch buffers, up to 8 MiB each, for
+/// the life of the queue. This one lets each buffer go when its command ends.
+nonisolated final class TransientScratchAllocator: NSObject, MTLIOScratchBufferAllocator, Sendable {
+    private let device: any MTLDevice
+
+    init(device: any MTLDevice) {
+        self.device = device
+    }
+
+    func makeScratchBuffer(minimumSize: Int) -> (any MTLIOScratchBuffer)? {
+        device.makeBuffer(length: minimumSize, options: .storageModeShared)
+            .map(TransientScratchBuffer.init)
+    }
+}
+
+nonisolated final class TransientScratchBuffer: NSObject, MTLIOScratchBuffer {
+    let buffer: any MTLBuffer
+
+    init(buffer: any MTLBuffer) {
+        self.buffer = buffer
     }
 }
 
