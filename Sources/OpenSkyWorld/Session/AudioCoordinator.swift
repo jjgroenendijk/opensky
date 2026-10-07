@@ -47,8 +47,6 @@ public final class AudioCoordinator {
     /// Set once the list is requested; a test awaits it.
     var musicListing: Task<Void, Never>?
     var voice = VoiceLabState()
-    /// Cached sounds in ALAC, read before the archives when current.
-    public var assetCache: AssetCacheReader?
 
     public init() {}
 
@@ -136,7 +134,7 @@ public final class AudioCoordinator {
         let audioData = provider as? AudioDataProviding
         let weatherStore = (provider as? WeatherProviding)?.weatherSystem?.store
         let fileSystem = world?.audioFileSystem
-        let assets = fileSystem.map { AudioAssetLoader(files: $0, cache: assetCache) }
+        let assets = fileSystem.map { AudioAssetLoader(files: $0) }
             ?? AudioAssetLoader(immediate: { throw VFSError.fileNotFound(path: $0) })
         self.assets = assets
         voiceFiles = fileSystem.map { files in

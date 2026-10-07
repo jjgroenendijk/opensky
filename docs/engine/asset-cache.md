@@ -35,10 +35,11 @@ can choose another folder in Settings. OpenSky warns before a build when:
 
 ## Entries
 
-Each entry is one file: `<kind>/<xx>/<hash>.osac`. `<kind>` is `textures`, `meshes`,
-`collision`, `animation`, or `audio`. `<hash>` is the 64-bit FNV-1a hash of the source's
-origin and VFS path, and `<xx>` is its first two hex digits, so no folder gets too many
-files.
+Each entry is one file: `<kind>/<xx>/<hash>.osac`. `<kind>` is `textures`, `meshes`, or
+`collision`. The `animation` and `audio` kinds are retired: their folder names and kind
+numbers stay reserved, and `asset-cache measure` still writes them. `<hash>` is the 64-bit
+FNV-1a hash of the source's origin and VFS path, and `<xx>` is its first two hex digits, so no
+folder gets too many files.
 
 The origin is the file that provides the asset: an archive name, or `loose` for a file
 under `Data/`. A mod that overrides a file has another origin, so it gets its own entry.
@@ -88,20 +89,20 @@ the entry file's modification date to now, so the oldest modification date is th
 recently used entry.
 
 The default limit fits the whole base-game cache for the chosen preset with a tenth to spare.
-The estimates come from the format comparison census of the base game. The census counted
-audio in AAC for Best performance; every preset stores ALAC for now (see Audio), so a Best
-performance cache is larger than its estimate:
+The estimates are the full base-game builds in "Measurements", without the 0.75 GiB of audio
+and the 0.12 GiB of animation they held, rounded up. Building those two kinds took 66 s of
+CPU time, so each preset's build estimate is one core-minute lower:
 
 | Preset | Estimated cache | Default limit |
 | --- | --- | --- |
-| Best performance | 13 GiB | 15 GiB |
-| Balanced | 22 GiB | 25 GiB |
-| Highest quality | 26 GiB | 29 GiB |
+| Best performance | 11 GiB | 13 GiB |
+| Balanced | 21 GiB | 24 GiB |
+| Highest quality | 21 GiB | 24 GiB |
 
 ## Presets
 
-The preset sets how each texture group is stored. Meshes, collision, and animation are the
-same in every preset. A texture's group comes from its file name: `_n` and `_msn` are normal
+The preset sets how each texture group is stored. Meshes and collision are the same in every
+preset. A texture's group comes from its file name: `_n` and `_msn` are normal
 maps; `_s`, `_g`, `_e`, `_em`, `_m`, `_p`, `_b`, and `_sk` are data maps; the rest are color.
 
 | Preset | Color | Normal | Data | Quality limit |
@@ -124,12 +125,14 @@ it is its own setting.
 
 ## Audio
 
-A short sound effect is stored as ALAC (Apple Lossless) in a CAF file. ALAC is lossless, so a
-cached sound plays the same samples as the original. Sounds longer than 30 seconds, such as
-music, are not cached: they keep the streaming decode.
+The cache does not store audio. A lossless ALAC copy decodes at the same CPU cost as the
+shipped xWMA, so it loads no faster ("Where the cache helps"). The game reads every sound from
+the archives, and a cache opened after an earlier build deletes its `audio` folder. The same
+holds for animation: the `animation` folder is deleted too.
 
-AAC is smaller but lossy, so it may only be used where it makes no audible difference.
-`openskycli audio aac-check` measures that per sound category instead of a listening test:
+AAC is smaller but lossy, so a lossy copy could only be used where it makes no audible
+difference. `openskycli audio aac-check` measures that per sound category instead of a
+listening test:
 
 - Categories, from the folder: `music`, `voice` (`sound\fx\voc`; dialogue is `.fuz` and is
   not cached), `ambience` (`sound\fx\amb*`), and `effects` (the rest).
@@ -154,11 +157,9 @@ Result, 400 sounds per category at most (2026-10-07, run directory
 | Ambience | 387 | 269 | 0.47 dB | 2.47 dB |
 | Music | 116 | 115 | 0.10 dB | 0.35 dB |
 
-No category passes, so every preset stores ALAC. The failing sounds fail on a few frames at
-a sharp attack, where AAC spreads noise before the attack (pre-echo). At 128 kbps per channel
-the counts barely change (run `.logs/aac-check/20261007T021023Z`), so a higher rate is not
-the fix. The preset table sets the storage per category, so a later pass needs only a table
-change.
+No category passes. The failing sounds fail on a few frames at a sharp attack, where AAC
+spreads noise before the attack (pre-echo). At 128 kbps per channel the counts barely change
+(run `.logs/aac-check/20261007T021023Z`), so a higher rate is not the fix.
 
 ## Read path
 
@@ -167,7 +168,7 @@ the folder passes the location check. Each loader asks the cache first:
 
 1. Look up the entry for the providing file and path.
 2. On a hit, decode the payload. Textures upload their ready blocks, meshes and collision
-   rebuild their models, animation returns the shipped file, and audio decodes the CAF.
+   rebuild their models.
 3. On a miss, load the original file.
 4. On a stale, unreadable, or undecodable entry, log a `[WARNING]`, delete the entry, load
    the original file, and mark the asset for a rebuild.
@@ -258,16 +259,17 @@ Warm CPU time equals warm wall time within 1 ms, so the warm columns are also th
 
 - Textures, meshes, and collision load 5 to 7 times faster warm and about 2 to 3 times
   faster cold. The cache removes the parse and the decompression.
-- Animation is the shipped file, copied out of the archive. Reading it from the archive
+- Animation was the shipped file, copied out of the archive. Reading it from the archive
   costs 0.03 ms per file warm, less than the cache's lookup of an entry file. Cold, the two
   are even.
-- Audio is stored as ALAC, and decoding ALAC costs as much CPU time as decoding the shipped
+- Audio was stored as ALAC, and decoding ALAC costs as much CPU time as decoding the shipped
   xWMA. Warm, the cache is slower. Cold, it saves about 0.8 ms per sound, only because the
   ALAC files of the shipped WAV sounds are smaller.
 
 The rule: a kind is worth caching when the cache at least halves its warm load time and is
 not slower cold, or when it feeds a Metal 4 path. Textures, meshes, and collision pass.
-Animation and audio fail both tests: no gain, and the GPU never reads them.
+Animation and audio fail both tests: no gain, and the GPU never reads them. So the cache no
+longer stores them, and the settings offer no switch for them.
 
 A warm load reads from memory, so the warm result does not depend on the disk. A faster or
 slower disk changes only the cold numbers. The two kinds that fail, fail on the warm test,
@@ -330,7 +332,8 @@ The worst frame is the distant LOD swap in every run. A waypoint settles only wh
 ring is in. Without that rule, a slow archive run ended its legs before the ring arrived, so it
 never measured the swap and its worst frame looked 5 ms better than the cache's.
 
-A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores:
+A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores. These
+builds still held audio and animation (0.87 GiB, 66 s of CPU time):
 
 | Preset | Build time | Size |
 | --- | --- | --- |

@@ -139,8 +139,8 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
   draws with no budget drops.
 - `--walk-path` rejects `--frames`, `--footprint-cap-mb`, and `--collision-build-budget-ms` with exit
   status 2, checked before touching game data.
-- `asset-cache build --kinds animation` into a temporary folder reports no failures, and
-  `check` then counts every entry as current.
+- `asset-cache build --kinds collision` of 20 clutter meshes into a temporary folder reports no
+  failures, and `check` then counts every entry as current.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.
 - `audio aac-check --per-category 5` prints a verdict for the effects category.
 - `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.

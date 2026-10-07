@@ -133,7 +133,6 @@ final class GameLaunchContext {
             }
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
-            controller.audio.assetCache = assetCache
             controller.assetCache = assetCache
             controller.fastTextureLoad = fastTextureLoad
             // UI text. Records from another plugin read through `scoped(to:)`.
@@ -177,7 +176,7 @@ final class GameLaunchContext {
         do {
             let session = try await CellProviderIndexes.loadSession(
                 root: root,
-                fileSystem: cache.map { AssetCacheFileSource(base: vfs, reader: $0) } ?? vfs,
+                fileSystem: vfs,
                 device: device,
                 localizationLanguage: language,
                 terrainLODConfigurationStore: configurationStore,

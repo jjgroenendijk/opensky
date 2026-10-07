@@ -24,6 +24,10 @@ nonisolated public enum AssetCacheKind: UInt8, CaseIterable, Sendable, CustomStr
     public var description: String {
         folderName
     }
+
+    /// Kinds the cache no longer builds or reads, because they loaded no faster
+    /// from it (docs/engine/asset-cache.md, "Where the cache helps").
+    public static let retired: Set<Self> = [.animation, .audio]
 }
 
 /// How converted assets trade build time, GPU memory, and disk size against looks.
@@ -50,13 +54,13 @@ nonisolated public enum AssetQualityPreset: UInt8, CaseIterable, Sendable, Custo
 nonisolated extension AssetQualityPreset {
     private static let gibibyte: UInt64 = 1 << 30
 
-    /// The whole base-game cache for this preset, from the format comparison census:
-    /// textures, meshes, collision, animation, and ALAC audio.
+    /// The whole base-game cache for this preset, rounded up from a full build:
+    /// textures, meshes, and collision.
     public var estimatedBaseGameCacheBytes: UInt64 {
         switch self {
-        case .bestPerformance: 13 * Self.gibibyte
-        case .balanced: 22 * Self.gibibyte
-        case .highestQuality: 26 * Self.gibibyte
+        case .bestPerformance: 11 * Self.gibibyte
+        case .balanced: 21 * Self.gibibyte
+        case .highestQuality: 21 * Self.gibibyte
         }
     }
 

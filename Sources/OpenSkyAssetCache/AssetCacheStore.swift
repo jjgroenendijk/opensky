@@ -89,6 +89,11 @@ nonisolated public final class AssetCacheStore: Sendable {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let temporary = root.appending(path: Self.temporaryFolder, directoryHint: .isDirectory)
         try? FileManager.default.removeItem(at: temporary)
+        for kind in AssetCacheKind.retired {
+            try? FileManager.default.removeItem(
+                at: root.appending(path: kind.folderName, directoryHint: .isDirectory)
+            )
+        }
     }
 
     public var limitBytes: UInt64 {

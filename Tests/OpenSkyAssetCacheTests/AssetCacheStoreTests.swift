@@ -134,6 +134,20 @@ struct AssetCacheStoreTests {
         #expect(!FileManager.default.fileExists(atPath: temporary.path(percentEncoded: false)))
     }
 
+    @Test func entriesOfRetiredKindsAreRemovedWhenTheStoreOpens() throws {
+        let store = try makeStore()
+        let sound = source("sound\\fx\\a.wav")
+        try store.store(Data([1, 2]), for: AssetCacheRequest(
+            kind: .audio, source: sound, converterVersion: 1, preset: .balanced
+        ))
+        try store.store(Data([3]), for: request(source()))
+        #expect(store.usage().entryCount == 2)
+        let reopened = try makeStore()
+        #expect(reopened.usage().entryCount == 1)
+        let audioFolder = root.appending(path: "audio", directoryHint: .isDirectory)
+        #expect(!FileManager.default.fileExists(atPath: audioFolder.path(percentEncoded: false)))
+    }
+
     @Test func theLeastRecentlyUsedEntriesLeaveFirstOverTheLimit() throws {
         let store = try makeStore()
         let paths = ["a.dds", "b.dds", "c.dds"]

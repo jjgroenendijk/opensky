@@ -42,14 +42,6 @@ struct AssetPresetTableTests {
         #expect(AssetSoundCategory(path: path) == expected)
     }
 
-    @Test(arguments: AssetQualityPreset.allCases)
-    func noSoundCategoryPassedTheAACCheck(preset: AssetQualityPreset) {
-        let values = preset.values
-        #expect(AssetSoundCategory.allCases
-            .allSatisfy { values.audio[$0, default: .alac] == .alac })
-        #expect(values.audioStorage(forPath: "sound\\fx\\a.wav") == .alac)
-    }
-
     @Test func highestQualityKeepsEveryShippedTextureLossless() {
         let values = AssetQualityPreset.highestQuality.values
         #expect(AssetTextureClass.allCases.allSatisfy { values.textures[$0] == .shipped })
@@ -75,7 +67,7 @@ struct AssetPresetTableTests {
     @Test func aFasterPresetBuildsLonger() {
         let times = AssetQualityPreset.allCases.map { $0.estimatedBuildSeconds(cores: 8) }
         #expect(times == times.sorted(by: >))
-        #expect(AssetQualityPreset.highestQuality.estimatedBuildSeconds(cores: 2) == 450)
+        #expect(AssetQualityPreset.highestQuality.estimatedBuildSeconds(cores: 2) == 420)
     }
 
     @MainActor

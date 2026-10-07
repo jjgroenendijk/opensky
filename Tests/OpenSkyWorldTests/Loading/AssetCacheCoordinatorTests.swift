@@ -11,7 +11,7 @@ import Testing
 /// Stores each `.hkx` file as it is.
 private struct CopyConverter: AssetConverting {
     var kind: AssetCacheKind {
-        .animation
+        .collision
     }
 
     var version: UInt32 {
@@ -118,7 +118,7 @@ struct AssetCacheCoordinatorTests {
         #expect(AssetCacheReadout
             .buildLine(progress, isBuilding: false) == "Build: cancelled, 4 converted, 0 failed")
         #expect(AssetCacheReadout
-            .presetTitle(.balanced, cores: 4) == "Balanced: about 22 GiB, 8 min to build")
+            .presetTitle(.balanced, cores: 4) == "Balanced: about 21 GiB, 8 min to build")
         #expect(AssetCacheReadout.sizeLine(
             AssetCacheUsage(entryCount: 2, bytes: 3 << 29),
             limitBytes: 25 << 30

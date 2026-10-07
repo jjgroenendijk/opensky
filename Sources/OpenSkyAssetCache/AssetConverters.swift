@@ -98,8 +98,8 @@ nonisolated public struct ReadyCollisionConverter: AssetConverting {
     }
 }
 
-/// Animation stays the shipped file, extracted loose. Ready poses loaded faster
-/// in the format comparison, but took many times the memory.
+/// The shipped animation file, copied out. Builds no longer use it: a copy loads no
+/// faster than the archive. `asset-cache measure` keeps measuring it.
 nonisolated public struct LooseAnimationConverter: AssetConverting {
     public init() {}
 
@@ -123,7 +123,6 @@ nonisolated public struct LooseAnimationConverter: AssetConverting {
 nonisolated public enum AssetConverters {
     /// The extract converters every preset uses.
     public static let extract: [any AssetConverting] = [
-        ShippedTextureConverter(), ReadyMeshConverter(), ReadyCollisionConverter(),
-        LooseAnimationConverter()
+        ShippedTextureConverter(), ReadyMeshConverter(), ReadyCollisionConverter()
     ]
 }

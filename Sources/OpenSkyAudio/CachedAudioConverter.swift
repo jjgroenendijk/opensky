@@ -1,8 +1,6 @@
-// The audio cache converter: a shipped `.wav` or `.xwm` sound decoded and stored
-// in CAF as ALAC, or AAC where the preset allows it for the sound's category.
-// macOS decodes both natively, so a cached play needs no ffmpeg.
-// Long files (music, ambience) keep streaming from the original, because a
-// cached file is decoded whole. See docs/engine/asset-cache.md, "Audio".
+// A shipped `.wav` or `.xwm` sound decoded and stored in CAF as ALAC. Builds no
+// longer use it: ALAC decodes no faster than the shipped files. `asset-cache
+// measure` and `audio aac-check` keep using it (docs/engine/asset-cache.md, "Audio").
 
 import Foundation
 import OpenSkyAssetCache
@@ -26,12 +24,10 @@ nonisolated public struct CachedAudioConverter: AssetConverting {
         path.hasSuffix(".wav") || path.hasSuffix(".xwm")
     }
 
-    public func convert(path: String, bytes: Data, preset: AssetQualityPreset) throws -> Data? {
+    public func convert(path _: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
         let audio = try Self.decode(bytes)
         guard audio.frameCount > 0, audio.duration <= Self.maximumSeconds else { return nil }
-        let storage = preset.values.audioStorage(forPath: path)
-        let useAAC = storage == .aac && Self.aacSampleRates.contains(audio.sampleRate)
-        return try Self.encode(audio, format: useAAC ? .aac : .alac)
+        return try Self.encode(audio, format: .alac)
     }
 
     /// The sampling rates AAC defines (ISO/IEC 14496-3). Some vanilla sounds use
