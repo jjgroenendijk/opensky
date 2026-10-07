@@ -77,6 +77,7 @@ enum AssetCacheMeasure {
         let built = try AssetCacheConverters.make(preset: settings.preset)
         let retired: [any AssetConverting] = [LooseAnimationConverter(), CachedAudioConverter()]
         let converters = built + retired.filter { old in !built.contains { $0.kind == old.kind } }
+        reader.kinds = Set(AssetCacheKind.allCases)
         let context = Context(files: files, reader: reader, evict: [dataURL, reader.store.root])
         let builder = AssetCacheBuilder(
             store: reader.store, files: files, converters: converters, preset: settings.preset
