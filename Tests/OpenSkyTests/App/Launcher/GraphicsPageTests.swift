@@ -14,9 +14,13 @@ struct GraphicsPageTests {
         store: PlayerSettingsStore = PlayerSettingsStore(persistence: nil),
         rayTracing: RayTracingAvailability = .unavailable(
             reason: RayTracingAvailability.softwareReason
-        )
+        ),
+        interpolationUnsupportedReason: String? = nil
     ) -> GraphicsPageViewController {
-        let page = GraphicsPageViewController(reloadStore: { store }, rayTracing: rayTracing)
+        let page = GraphicsPageViewController(
+            reloadStore: { store }, rayTracing: rayTracing,
+            interpolationUnsupportedReason: interpolationUnsupportedReason
+        )
         page.loadViewIfNeeded()
         return page
     }
@@ -107,5 +111,25 @@ struct GraphicsPageTests {
         page.upscalerControl.selectItem(withTitle: "Spatial")
         page.upscalerControl.sendAction(page.upscalerControl.action, to: page)
         #expect(UpscalerKind(store: store) == .spatial)
+    }
+
+    @Test func frameInterpolationStartsOffAndSavesItsSwitch() {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = makePage(store: store)
+        let control = page.frameInterpolationControl
+        #expect(control.accessibilityIdentifier() == "GraphicsFrameInterpolationControl")
+        #expect(control.state == .off)
+        control.state = .on
+        control.sendAction(control.action, to: page)
+        #expect(store.bool(.frameInterpolation))
+    }
+
+    @Test func anUnsupportedGPUDisablesFrameInterpolation() {
+        let store = PlayerSettingsStore(persistence: nil)
+        store.set(.frameInterpolation, to: 1)
+        let page = makePage(store: store, interpolationUnsupportedReason: "No interpolator")
+        #expect(!page.frameInterpolationControl.isEnabled)
+        #expect(page.frameInterpolationControl.state == .off)
+        #expect(page.frameInterpolationControl.toolTip == "No interpolator")
     }
 }

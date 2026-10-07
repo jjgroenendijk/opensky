@@ -27,6 +27,7 @@ public struct UpscaleState {
     var motionInstanceCapacity = 0
     /// Off leaves moving objects with camera motion only, so a test can see the pass work.
     var objectMotionEnabled = true
+    public var interpolation = FrameInterpolationState()
 
     init(resources: UpscaleResources) {
         self.resources = resources
@@ -68,6 +69,8 @@ struct UpscaleFrame {
     let jitteredViewProjection: float4x4
     let viewProjection: float4x4
     let reset: Bool
+    /// Where the interpolated frame goes; nil builds none.
+    let interpolatedTarget: MTL4RenderPassDescriptor?
 }
 
 extension Renderer {
@@ -104,9 +107,11 @@ extension Renderer {
     /// Prepares this frame's targets and jitter; nil draws at full size.
     func beginUpscaleFrame(
         target: MTL4RenderPassDescriptor,
+        interpolatedTarget: MTL4RenderPassDescriptor?,
         projection: float4x4,
         view: float4x4
     ) -> UpscaleFrame? {
+        upscale.interpolation.lastFrameInterpolated = false
         guard
             upscale.renderScale.isOn, upscale.unavailableReason == nil,
             let color = target.colorAttachments[0].texture,
@@ -128,7 +133,8 @@ extension Renderer {
             jitter: jitter,
             jitteredViewProjection: jittered * view,
             viewProjection: projection * view,
-            reset: reset
+            reset: reset,
+            interpolatedTarget: targets.interpolation == nil ? nil : interpolatedTarget
         )
     }
 
@@ -170,6 +176,11 @@ extension Renderer {
                 encodeObjectMotion(frame, sceneDepth: sceneDepth, state: state, uniforms: uniforms)
             else { return nil }
             encodeScaler(scaler, frame: frame, sceneDepth: sceneDepth)
+            guard
+                encodeInterpolatedFrame(
+                    frame, sceneDepth: sceneDepth, state: state, frameOffset: frameOffset
+                )
+            else { return nil }
         case let .spatial(scaler):
             state.encoder.barrier(
                 afterStages: .fragment, beforeQueueStages: Self.upscaleStages,
@@ -188,18 +199,7 @@ extension Renderer {
             )
         else { return nil }
         encoder.label = "Upscale Composite"
-        encoder.barrier(
-            afterQueueStages: Self.upscaleStages, beforeStages: .fragment,
-            visibilityOptions: .device
-        )
-        bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
-        argumentTable.setTexture(
-            frame.targets.output.gpuResourceID, index: TextureIndex.diffuse.rawValue
-        )
-        encoder.setRenderPipelineState(upscale.resources.composite)
-        encoder.setDepthStencilState(uiResources.depthState)
-        encoder.setCullMode(.none)
-        encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
+        encodeComposite(frame.targets.output, encoder: encoder, frameOffset: frameOffset)
         finishUpscaleFrame(frame)
         var next = ScenePassState(encoder: encoder, slot: state.slot, frustum: state.frustum)
         next.drawCursor = state.drawCursor
@@ -231,14 +231,31 @@ extension Renderer {
         scaler.encode(commandBuffer: commandBuffer)
     }
 
+    /// Draws `texture`, at the frame size, as the first draw of `encoder`.
+    func encodeComposite(
+        _ texture: MTLTexture, encoder: MTL4RenderCommandEncoder, frameOffset: Int
+    ) {
+        encoder.barrier(
+            afterQueueStages: Self.upscaleStages, beforeStages: .fragment,
+            visibilityOptions: .device
+        )
+        bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
+        argumentTable.setTexture(texture.gpuResourceID, index: TextureIndex.diffuse.rawValue)
+        encoder.setRenderPipelineState(upscale.resources.composite)
+        encoder.setDepthStencilState(uiResources.depthState)
+        encoder.setCullMode(.none)
+        encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
+    }
+
     private func finishUpscaleFrame(_ frame: UpscaleFrame) {
+        frame.targets.swapInterpolationHistory()
         upscale.previousViewProjection = frame.viewProjection
         upscale.previousView = freeFlyCamera.viewMatrix()
         upscale.previousBonePrepared = frameBonePrepared
         upscale.resetPending = false
     }
 
-    private static func upscaleCompositeDescriptor(
+    static func upscaleCompositeDescriptor(
         _ target: MTL4RenderPassDescriptor
     ) -> MTL4RenderPassDescriptor {
         let descriptor = MTL4RenderPassDescriptor()
@@ -272,19 +289,27 @@ extension Renderer {
         if
             let targets = upscale.targets, targets.inputSize == input,
             targets.outputSize == output, targets.color.pixelFormat == color.pixelFormat,
-            targets.kind == upscale.upscaler
+            targets.kind == upscale.upscaler,
+            (targets.interpolation != nil) == wantsFrameInterpolation
         {
             return targets
         }
         releaseUpscaleTargets()
-        guard
-            let targets = try? UpscaleTargets(
+        func make(interpolates: Bool) -> UpscaleTargets? {
+            try? UpscaleTargets(
                 input: input, output: output, colorFormat: color.pixelFormat,
-                kind: upscale.upscaler, compiler: pipelineCache
+                kind: upscale.upscaler, interpolates: interpolates, compiler: pipelineCache
             )
-        else {
-            upscale.creationFailure = "MetalFX refused a \(upscale.upscaler) scaler"
-                + " for \(input.x) x \(input.y) to \(output.x) x \(output.y)"
+        }
+        let sizes = "\(input.x) x \(input.y) to \(output.x) x \(output.y)"
+        var made = make(interpolates: wantsFrameInterpolation)
+        if made == nil, wantsFrameInterpolation {
+            upscale.interpolation.creationFailure =
+                "MetalFX refused a frame interpolator for \(sizes)"
+            made = make(interpolates: false)
+        }
+        guard let targets = made else {
+            upscale.creationFailure = "MetalFX refused a \(upscale.upscaler) scaler for \(sizes)"
             return nil
         }
         upscale.targets = targets

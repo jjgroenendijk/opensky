@@ -24,6 +24,7 @@ extension Renderer {
         rayTracedShadows.enabled = store.bool(.rayTracedShadows)
         renderScale = RenderScale(store: store)
         upscaler = UpscalerKind(store: store)
+        frameInterpolationEnabled = store.bool(.frameInterpolation)
     }
 
     public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {

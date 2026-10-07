@@ -182,6 +182,7 @@ public enum PerformanceBenchmark {
         frameTime.gpuCulling = renderer.gpuCullingEnabled
         frameTime.renderScale = renderer.renderScale.percent
         frameTime.upscaler = renderer.renderScale.isOn ? "\(renderer.upscaler)" : nil
+        frameTime.frameInterpolation = renderer.isFrameInterpolationRunning
         return frameTime
     }
 

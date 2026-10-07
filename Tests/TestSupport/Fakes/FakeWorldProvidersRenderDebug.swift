@@ -76,6 +76,11 @@ extension FakeWorldProviders {
         set { renderPerformance.upscaler = newValue }
     }
 
+    var frameInterpolationEnabled: Bool {
+        get { renderPerformance.frameInterpolationEnabled }
+        set { renderPerformance.frameInterpolationEnabled = newValue }
+    }
+
     var pipelineCacheClears: Int {
         renderPerformance.pipelineCacheClears
     }
@@ -97,5 +102,6 @@ struct FakeRenderPerformanceState {
     var rayTracedShadowView = false
     var renderScale = RenderScale.off
     var upscaler = UpscalerKind.temporal
+    var frameInterpolationEnabled = false
     var pipelineCacheClears = 0
 }

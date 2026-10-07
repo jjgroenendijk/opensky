@@ -28,17 +28,24 @@ final class GraphicsPageViewController: NSViewController {
     let rayTracingLabel = NSTextField(labelWithString: "")
     let renderScaleControl = NSPopUpButton()
     let upscalerControl = NSPopUpButton()
+    let frameInterpolationControl = NSButton(
+        checkboxWithTitle: "Frame interpolation", target: nil, action: nil
+    )
     private let rayTracing: RayTracingAvailability
+    private let interpolationUnsupportedReason: String?
     let statusLabel = NSTextField(labelWithString: "")
 
     /// `reloadStore` reads the file again each time the page shows, because the game
     /// window may have changed it.
     init(
         reloadStore: @escaping @MainActor () -> PlayerSettingsStore,
-        rayTracing: RayTracingAvailability = .of(MTLCreateSystemDefaultDevice())
+        rayTracing: RayTracingAvailability = .of(MTLCreateSystemDefaultDevice()),
+        interpolationUnsupportedReason: String? = FrameInterpolationSupport
+            .unsupportedReason(MTLCreateSystemDefaultDevice())
     ) {
         self.reloadStore = reloadStore
         self.rayTracing = rayTracing
+        self.interpolationUnsupportedReason = interpolationUnsupportedReason
         store = reloadStore()
         super.init(nibName: nil, bundle: nil)
     }
@@ -67,7 +74,8 @@ final class GraphicsPageViewController: NSViewController {
                 PanelComponents.caption("Ray tracing"), rayTracedShadowsControl, rayTracingLabel
             ]),
             PanelComponents.group([
-                PanelComponents.caption("Upscaling"), renderScaleControl, upscalerControl
+                PanelComponents.caption("Upscaling"), renderScaleControl, upscalerControl,
+                frameInterpolationControl
             ]),
             statusLabel
         ])
@@ -96,6 +104,9 @@ final class GraphicsPageViewController: NSViewController {
         rayTracingLabel.stringValue = rayTracing.reason.map { "Unavailable: \($0)" } ?? ""
         renderScaleControl.selectItem(at: RenderScale(store: store).settingIndex)
         upscalerControl.selectItem(at: UpscalerKind(store: store).rawValue)
+        frameInterpolationControl.isEnabled = interpolationUnsupportedReason == nil
+        frameInterpolationControl.state = interpolationUnsupportedReason == nil
+            && store.bool(.frameInterpolation) ? .on : .off
     }
 
     private func configureControls() {
@@ -161,6 +172,16 @@ final class GraphicsPageViewController: NSViewController {
             identifier: "GraphicsUpscalerControl"
         )
         upscalerControl.toolTip = "Temporal also smooths edges; spatial costs less GPU time"
+        PanelComponents.configureCheckbox(
+            frameInterpolationControl, target: self, action: #selector(frameInterpolationChanged),
+            identifier: "GraphicsFrameInterpolationControl"
+        )
+        frameInterpolationControl.toolTip = interpolationUnsupportedReason
+            ?? "Show a MetalFX frame between real frames; needs the temporal upscaler"
+    }
+
+    @objc private func frameInterpolationChanged() {
+        store.set(.frameInterpolation, to: frameInterpolationControl.state == .on ? 1 : 0)
     }
 
     @objc private func renderScaleChanged() {

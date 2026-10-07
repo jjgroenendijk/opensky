@@ -194,6 +194,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Upscaler",
             0,
             applied: true
+        ),
+        row(
+            "rendering.frameInterpolation", .opensky, .toggle, "Frame interpolation (MetalFX)", 0,
+            applied: true
         )
     ] + assetCacheKindRows
 
@@ -240,6 +244,8 @@ nonisolated extension PlayerSettingID {
     public static let renderScale = Self("rendering.renderScale")
     /// An `UpscalerKind` raw value.
     public static let upscaler = Self("rendering.upscaler")
+    /// Builds a MetalFX frame between real frames; runs only with the temporal upscaler.
+    public static let frameInterpolation = Self("rendering.frameInterpolation")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

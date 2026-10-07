@@ -17,6 +17,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     )
     public var rayTracedShadows = RayTracedShadowStats()
     public var upscaling = UpscaleStatus()
+    public var frameInterpolation = FrameInterpolationStatus()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -78,6 +79,8 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     /// The share of the display size the scene renders at before MetalFX upscales it.
     var renderScale: RenderScale { get set }
     var upscaler: UpscalerKind { get set }
+    /// Runs only with the temporal upscaler, on a GPU MetalFX supports.
+    var frameInterpolationEnabled: Bool { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the

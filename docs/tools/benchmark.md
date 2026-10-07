@@ -90,6 +90,12 @@ holds the percent, and 0 means native. `--upscaler temporal|spatial` picks the s
 `upscaler` field records it. GPU time is the number to compare: the CPU encode
 barely changes.
 
+`--frame-interpolation`, with the temporal scaler, also builds one MetalFX frame between
+every two real frames and draws the overlays on it
+([frame interpolation](/rendering/frame-interpolation.md)). The `frameInterpolation` field
+says whether it ran. The GPU time then covers both frames, so the cost of the extra frame is
+the difference to the same run without the flag.
+
 GPU memory is sampled after each load pass and after each measured frame:
 
 - total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;

@@ -228,7 +228,10 @@ extension Renderer {
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
         let encoded = shadowEncoded
-            && encodeScenePass(descriptor: descriptor, slot: slot, projection: projection)
+            && encodeScenePass(
+                descriptor: descriptor, slot: slot, projection: projection,
+                interpolatedTarget: offscreenInterpolatedTarget(matching: descriptor)
+            )
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         commandBuffer.endCommandBuffer()
         guard encoded else { throw RendererError.encoderUnavailable }

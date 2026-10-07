@@ -213,6 +213,11 @@ extension WorldRenderControlForwarding {
         set { renderControls.upscaler = newValue }
     }
 
+    public var frameInterpolationEnabled: Bool {
+        get { renderControls.frameInterpolationEnabled }
+        set { renderControls.frameInterpolationEnabled = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }
