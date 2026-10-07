@@ -143,6 +143,11 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
             row.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
             row.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
+        // A plain cell view is not an accessibility element, so its id would not reach
+        // UI tests; expose the row as one element named by its title.
+        cell.setAccessibilityElement(true)
+        cell.setAccessibilityRole(.cell)
+        cell.setAccessibilityLabel(label.stringValue)
         cell.setAccessibilityIdentifier(page.sidebarIdentifier)
         return cell
     }
