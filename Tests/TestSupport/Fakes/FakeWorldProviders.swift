@@ -221,6 +221,8 @@ final class FakeWorldProviders: WorldControlProviders {
 
     /// RenderPerformanceControlProviding
     var renderPerformanceSnapshot: RenderPerformanceSnapshot? = RenderPerformanceSnapshot()
+    var pipelineCacheEnabled = true
+    var pipelineCacheClears = 0
 
     // AudioControlProviding
     var audioEnabled = false

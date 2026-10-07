@@ -168,6 +168,16 @@ extension WorldRenderControlForwarding {
         renderControls.renderPerformanceSnapshot
     }
 
+    public var pipelineCacheEnabled: Bool {
+        get { renderControls.pipelineCacheEnabled }
+        set { renderControls.pipelineCacheEnabled = newValue }
+    }
+
+    @discardableResult
+    public func clearPipelineCache() -> Int {
+        renderControls.clearPipelineCache()
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }

@@ -133,3 +133,28 @@ nonisolated public struct BenchmarkRoute: Codable, Equatable, Sendable {
         BenchmarkTimeStats(milliseconds: cellLoads.map(\.totalMS))
     }
 }
+
+/// The renderer's pipeline setup: its time, and how many pipelines came from the
+/// archive an earlier run saved.
+nonisolated public struct BenchmarkPipelines: Codable, Equatable, Sendable {
+    /// The renderer's setup, pipeline creation included.
+    public let rendererSetupMS: Double
+    /// `none`, `missing`, `loaded`, or `unreadable`.
+    public let archive: String
+    public let loaded: Int
+    public let compiled: Int
+    public let saved: Bool
+
+    public init(rendererSetupMS: Double, stats: PipelineCacheStats) {
+        self.rendererSetupMS = rendererSetupMS
+        archive = switch stats.archive {
+        case .none: "none"
+        case .missing: "missing"
+        case .loaded: "loaded"
+        case .unreadable: "unreadable"
+        }
+        loaded = stats.hits
+        compiled = stats.misses
+        saved = stats.saved
+    }
+}

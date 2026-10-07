@@ -15,6 +15,8 @@ public protocol RenderControlWorld: AnyObject {
     /// Nil without game data.
     var streamer: CellStreamer? { get }
     var terrainLODConfigurationStore: TerrainLODConfigurationStore { get }
+    /// The player settings, for the switches that apply on the next launch.
+    var playerSettingsStore: PlayerSettingsStore { get }
     func refocusGameView()
 }
 
@@ -130,7 +132,25 @@ extension WorldRenderControls: RenderDebugControlProviding {
 extension WorldRenderControls: RenderPerformanceControlProviding {
     public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
         guard let renderer else { return nil }
-        return RenderPerformanceSnapshot(renderTargets: renderer.renderTargetMemory())
+        return RenderPerformanceSnapshot(
+            renderTargets: renderer.renderTargetMemory(),
+            pipelineCache: renderer.pipelineCache.stats
+        )
+    }
+
+    /// Read at renderer setup, so a change applies on the next launch.
+    public var pipelineCacheEnabled: Bool {
+        get { world?.playerSettingsStore.bool(.pipelineCacheEnabled) ?? true }
+        set { world?.playerSettingsStore.set(.pipelineCacheEnabled, to: newValue ? 1 : 0) }
+    }
+
+    @discardableResult
+    public func clearPipelineCache() -> Int {
+        guard
+            let store = world?.playerSettingsStore,
+            let folder = PipelineCache.archiveFolder(store: store)
+        else { return 0 }
+        return (try? PipelineCacheFolder.clear(folder: folder)) ?? 0
     }
 }
 

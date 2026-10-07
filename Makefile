@@ -507,9 +507,9 @@ profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MOD
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
 	@./tools/profile.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(or $(MODE),walk) $(ARGS)
 
-benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI
+benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI [ARGS=...]
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
-	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli"
+	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(ARGS)
 
 asset-cache-bench: link-shared ## Measure the asset cache on the benchmark block [CACHE=<dir>] [EXTERNAL=<dir>]
 	@test -n "$(CACHE)" || { echo "[ERROR] usage: make asset-cache-bench CACHE=<dir outside the repo> [EXTERNAL=<dir>]" >&2; exit 2; }

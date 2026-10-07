@@ -248,10 +248,12 @@ extension DestinationRegistry {
         }
     )
 
-    /// The panel's switches are added by the features that own them; the render-target
-    /// readout alone changes nothing.
     static let renderingPerformanceOverrides = DestinationOverrideActions(
-        isOverridden: { _ in false },
-        resetToDefaults: { _ in }
+        isOverridden: { context in
+            PipelineCacheSection.isOverridden(provider: context.providers)
+        },
+        resetToDefaults: { context in
+            PipelineCacheSection.resetToDefaults(provider: context.providers)
+        }
     )
 }

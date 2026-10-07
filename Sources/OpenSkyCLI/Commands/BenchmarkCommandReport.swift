@@ -25,6 +25,14 @@ extension BenchmarkCommand {
             reportCells(pass.cells)
         }
         reportFrameTime(result)
+        if let pipelines = result.pipelines {
+            print(String(
+                format: "[INFO] pipelines: renderer setup %.1f ms; archive %@, "
+                    + "%d loaded, %d compiled%@",
+                pipelines.rendererSetupMS, pipelines.archive, pipelines.loaded,
+                pipelines.compiled, pipelines.saved ? ", saved" : ""
+            ))
+        }
         if let launch = result.launch {
             print(String(
                 format: "[INFO] launch: %.0f ms from process start to the first frame, "
