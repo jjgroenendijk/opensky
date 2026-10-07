@@ -129,7 +129,13 @@ extension AgentWorldAdapter {
             throw AgentFailure(.invalidArgument, "stage must be 0 to 65535")
         }
         do {
-            let state = try quests.setStage(index, on: quest.formID)
+            // Through the script bridge, as `SetStage` does, so the stage fragment runs.
+            if let bridge = game.scripts.bridge, let key = quests.quests.key(for: quest.formID) {
+                _ = try bridge.setQuestStage(index, for: key)
+            } else {
+                _ = try quests.setStage(index, on: quest.formID)
+            }
+            let state = try quests.state(of: quest.formID)
             return [
                 "id": .string(editorID), "stage": .init(Int(index)),
                 "running": .bool(state.isRunning), "completed": .bool(state.isCompleted)
