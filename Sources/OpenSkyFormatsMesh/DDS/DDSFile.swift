@@ -1,6 +1,6 @@
 // DDS texture container: magic, DDS_HEADER, optional DXT10 header, then the
-// mip chain. Reads 2D BC1-BC5/BC7 and 32-bit RGB formats; cubemaps, volumes,
-// and arrays throw `unsupported`. Layout and sources: docs/formats/dds.md.
+// mip chain. Reads 2D BC1-BC5/BC7, 32-bit RGB, and 24-bit RGB; cubemaps,
+// volumes, and arrays throw `unsupported`. Layout and sources: docs/formats/dds.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -57,11 +57,15 @@ nonisolated public struct DDSFile: Sendable {
         /// DDS_HEADER.dwFlags
         static let flagMipMapCount: UInt32 = 0x20000 // DDSD_MIPMAPCOUNT
         static let flagPitch: UInt32 = 0x8 // DDSD_PITCH
+        static let flagLinearSize: UInt32 = 0x80000 // DDSD_LINEARSIZE
         /// DDS_PIXELFORMAT.dwFlags
         static let flagFourCC: UInt32 = 0x4 // DDPF_FOURCC
         static let flagAlphaPixels: UInt32 = 0x1 // DDPF_ALPHAPIXELS
         static let flagRGB: UInt32 = 0x40 // DDPF_RGB
         static let xrgbBitCount: UInt32 = 32
+        static let rgb24BitCount: UInt32 = 24
+        /// One channel mask per byte of a 24-bit texel, in file order.
+        static let rgb24ByteMasks: [UInt32] = [0x0000_00FF, 0x0000_FF00, 0x00FF_0000]
         static let xrgbRedMask: UInt32 = 0x00FF_0000
         static let xrgbGreenMask: UInt32 = 0x0000_FF00
         static let xrgbBlueMask: UInt32 = 0x0000_00FF
@@ -94,6 +98,14 @@ nonisolated public struct DDSFile: Sendable {
         let alphaMask: UInt32
     }
 
+    /// How uncompressed texels sit in the file. 24-bit texels widen to the
+    /// 4-byte `xrgb8888` layout on read, because Metal has no 24-bit format.
+    private enum TexelPacking: Equatable {
+        case native
+        /// Byte position of red, green, and blue inside one 3-byte texel.
+        case rgb24(red: Int, green: Int, blue: Int)
+    }
+
     private struct Header {
         let flags: UInt32
         let width: Int
@@ -112,6 +124,7 @@ nonisolated public struct DDSFile: Sendable {
     public let declaresSRGB: Bool
 
     private let data: Data
+    private let packing: TexelPacking
     /// Byte range of each mip level within `data`, largest level first.
     private let mipRanges: [Range<Int>]
 
@@ -127,12 +140,15 @@ nonisolated public struct DDSFile: Sendable {
                 fourCC: header.pixelFormat.fourCC,
                 reader: &reader
             )
+            packing = .native
         } else {
             // DDS_PIXELFORMAT defines channel masks over the little-endian pixel
             // word. Masks identify on-disk channel order; no host byte-order
             // assumption enters mip slicing. Microsoft DDS_PIXELFORMAT:
             // https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dds-pixelformat
-            format = try Self.resolveUncompressedFormat(header: header)
+            (format, packing) = try header.pixelFormat.bitCount == Layout.rgb24BitCount
+                ? Self.resolveRGB24(header: header)
+                : (Self.resolveUncompressedFormat(header: header), .native)
             declaresSRGB = false
         }
 
@@ -146,10 +162,10 @@ nonisolated public struct DDSFile: Sendable {
         mipCount = claimedMips
 
         mipRanges = try Self.mipRanges(
-            width: width,
-            height: height,
+            header: header,
             mipCount: mipCount,
-            format: format,
+            bytesPerBlock: packing == .native ? format.bytesPerBlock : 3,
+            blockDimension: format.blockDimension,
             bytes: reader.offset ..< data.count
         )
     }
@@ -244,23 +260,48 @@ nonisolated extension DDSFile {
             throw DDSError.unsupported("uncompressed RGB channel masks")
         }
 
-        // Supported layouts are 32-bit, so scan lines need no padding.
-        // Validate the declared top-level pitch, then derive every mip stride.
-        // Microsoft DDS_HEADER:
-        // https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dds-header
-        let expectedPitch = UInt32(header.width) * 4
-        guard
-            header.flags & Layout.flagPitch != 0,
-            header.pitchOrLinearSize == expectedPitch
-        else {
-            throw DDSError.malformed(
-                "uncompressed pitch \(header.pitchOrLinearSize) != expected \(expectedPitch)"
-            )
-        }
+        try checkSizeField(header: header, bytesPerTexel: 4)
         if isXRGB {
             return .xrgb8888
         }
         return isBGRA ? .bgra8888 : .rgba8888
+    }
+
+    /// Rows are unpadded, so the declared top-level size must match the texel
+    /// size. Some vanilla files set `DDSD_LINEARSIZE` instead of `DDSD_PITCH`.
+    private static func checkSizeField(header: Header, bytesPerTexel: UInt32) throws {
+        let pitch = UInt32(header.width) * bytesPerTexel
+        let declared = header.pitchOrLinearSize
+        let expected: UInt32? = if header.flags & Layout.flagPitch != 0 {
+            pitch
+        } else if header.flags & Layout.flagLinearSize != 0 {
+            pitch * UInt32(header.height)
+        } else {
+            nil
+        }
+        if let expected, declared != expected {
+            throw DDSError.malformed("uncompressed pitch \(declared) != expected \(expected)")
+        }
+    }
+
+    /// Legacy 24-bit `DDPF_RGB`, used by the tint masks.
+    private static func resolveRGB24(header: Header) throws -> (DDSPixelFormat, TexelPacking) {
+        let pixelFormat = header.pixelFormat
+        guard pixelFormat.flags == Layout.flagRGB, pixelFormat.alphaMask == 0 else {
+            throw DDSError.unsupported(
+                "24-bit RGB pixel flags 0x\(String(pixelFormat.flags, radix: 16))"
+            )
+        }
+        let positions = [pixelFormat.redMask, pixelFormat.greenMask, pixelFormat.blueMask]
+            .map { Layout.rgb24ByteMasks.firstIndex(of: $0) }
+        guard
+            let red = positions[0], let green = positions[1], let blue = positions[2],
+            Set([red, green, blue]).count == 3
+        else {
+            throw DDSError.unsupported("24-bit RGB channel masks")
+        }
+        try checkSizeField(header: header, bytesPerTexel: 3)
+        return (.xrgb8888, .rgb24(red: red, green: green, blue: blue))
     }
 
     /// FourCC -> format; "DX10" pulls the format out of DDS_HEADER_DXT10 and
@@ -326,19 +367,18 @@ nonisolated extension DDSFile {
     /// Tightly packed chain inside `bytes` (payload start ..< file end): each
     /// level is ceil(w/4) * ceil(h/4) blocks (DDS guide block-size math).
     private static func mipRanges(
-        width: Int,
-        height: Int,
+        header: Header,
         mipCount: Int,
-        format: DDSPixelFormat,
+        bytesPerBlock: Int,
+        blockDimension: Int,
         bytes: Range<Int>
     ) throws -> [Range<Int>] {
         var ranges: [Range<Int>] = []
         var offset = bytes.lowerBound
         for level in 0 ..< mipCount {
-            let blockDimension = format.blockDimension
-            let blocksWide = (max(1, width >> level) + blockDimension - 1) / blockDimension
-            let blocksHigh = (max(1, height >> level) + blockDimension - 1) / blockDimension
-            let size = blocksWide * blocksHigh * format.bytesPerBlock
+            let blocksWide = (max(1, header.width >> level) + blockDimension - 1) / blockDimension
+            let blocksHigh = (max(1, header.height >> level) + blockDimension - 1) / blockDimension
+            let size = blocksWide * blocksHigh * bytesPerBlock
             guard offset + size <= bytes.upperBound else {
                 throw DDSError.malformed(
                     "mip \(level) needs \(size) bytes at \(offset), "
@@ -361,12 +401,30 @@ nonisolated extension DDSFile {
         max(1, height >> level)
     }
 
-    /// Payload bytes of one mip level.
+    /// Payload bytes of one mip level, in the layout `format` names.
     public func mipData(level: Int) -> Data {
-        data.subdata(
+        let stored = data.subdata(
             in: (data.startIndex + mipRanges[level].lowerBound)
                 ..< (data.startIndex + mipRanges[level].upperBound)
         )
+        guard case let .rgb24(red, green, blue) = packing else { return stored }
+        return Self.widenRGB24(stored, channels: [blue, green, red])
+    }
+
+    /// 3-byte texels to B, G, R, 255, the `xrgb8888` byte order.
+    private static func widenRGB24(_ stored: Data, channels: [Int]) -> Data {
+        let texelCount = stored.count / 3
+        var out = Data(repeating: 255, count: texelCount * 4)
+        stored.withUnsafeBytes { source in
+            out.withUnsafeMutableBytes { target in
+                for texel in 0 ..< texelCount {
+                    for (slot, channel) in channels.enumerated() {
+                        target[texel * 4 + slot] = source[texel * 3 + channel]
+                    }
+                }
+            }
+        }
+        return out
     }
 
     /// Bytes per row — `MTLTexture.replace` stride.
