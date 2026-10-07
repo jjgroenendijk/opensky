@@ -190,7 +190,7 @@ nonisolated extension CellSceneBuilder {
         let particles = makeParticlePlaybacks(instances: instances)
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
-        let placed = instances.map { instance in
+        let placed = instances.filter { !$0.model.meshes.isEmpty }.map { instance in
             RenderPlacement(
                 model: instance.model,
                 transform: instance.transform,
@@ -255,6 +255,7 @@ nonisolated extension CellSceneBuilder {
             do {
                 result += try meshes.particlePlaybacks(
                     path: instance.modelPath,
+                    surface: instance.surface,
                     placementTransform: instance.transform,
                     formID: instance.formID
                 )

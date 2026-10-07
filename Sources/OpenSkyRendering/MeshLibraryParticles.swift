@@ -1,17 +1,19 @@
 // Particle playback construction split from MeshLibrary to keep cache code
 // compact. Definitions + textures are shared; every REFR gets fresh sim state.
 
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 
 nonisolated extension MeshLibrary {
     nonisolated public func particlePlaybacks(
         path: String,
+        surface: ModelSurfaceOverride? = nil,
         placementTransform: float4x4,
         formID: UInt32
     ) throws -> [ParticlePlayback] {
         let pathKey = try meshKey(for: path)
-        let key = cacheKey(path: pathKey, terrainLODClipMask: nil)
+        let key = cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)
         guard let definitions = particleDefinitions[key] else { return [] }
         var playbacks: [ParticlePlayback] = []
         for (index, definition) in definitions.enumerated() {
