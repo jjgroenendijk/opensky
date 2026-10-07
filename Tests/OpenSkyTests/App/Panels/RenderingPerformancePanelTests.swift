@@ -107,14 +107,15 @@ struct GPUCullingSectionTests {
         section.provider = providers
         section.loadViewIfNeeded()
         #expect(section.enabledControl.accessibilityIdentifier() == "GPUCullingEnabledControl")
+        #expect(section.enabledControl.state == .on)
         #expect(!GPUCullingSection.isOverridden(provider: providers))
 
-        section.enabledControl.state = .on
+        section.enabledControl.state = .off
         section.enabledControl.sendAction(section.enabledControl.action, to: section)
-        #expect(providers.gpuCullingEnabled)
+        #expect(!providers.gpuCullingEnabled)
         #expect(GPUCullingSection.isOverridden(provider: providers))
         GPUCullingSection.resetToDefaults(provider: providers)
-        #expect(!providers.gpuCullingEnabled)
+        #expect(providers.gpuCullingEnabled)
     }
 
     @Test

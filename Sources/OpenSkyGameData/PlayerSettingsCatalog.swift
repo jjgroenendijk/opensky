@@ -164,7 +164,8 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true),
-        row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true)
+        row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
+        row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true)
     ] + assetCacheKindRows
 
     /// One switch per cached asset kind; off reads that kind from the archives.
@@ -189,6 +190,8 @@ nonisolated extension PlayerSettingID {
     public static let assetCacheFastLoad = Self("assetCache.fastLoad")
     /// Pipelines load from the archive an earlier launch saved.
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
+    /// The static scene culls in a compute pass; off culls it on the CPU.
+    public static let gpuCulling = Self("rendering.gpuCulling")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

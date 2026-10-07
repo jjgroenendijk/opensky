@@ -37,7 +37,7 @@ enum BenchmarkCommand {
             }
             route = scanner.flag("--route")
             coldPipelines = scanner.flag("--cold-pipelines")
-            gpuCulling = scanner.flag("--gpu-culling")
+            gpuCulling = !scanner.flag("--cpu-culling")
         }
 
         private static func seconds(_ value: String) throws -> Double {

@@ -33,11 +33,11 @@ final class GPUCullingSection: PanelSectionViewController {
     }
 
     static func isOverridden(provider: (any RenderPerformanceControlProviding)?) -> Bool {
-        provider?.gpuCullingEnabled == true
+        provider?.gpuCullingEnabled == false
     }
 
     static func resetToDefaults(provider: (any RenderPerformanceControlProviding)?) {
-        provider?.gpuCullingEnabled = false
+        provider?.gpuCullingEnabled = true
     }
 
     var statsReadout: String {

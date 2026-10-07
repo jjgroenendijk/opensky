@@ -174,8 +174,7 @@ public enum PerformanceBenchmark {
             worstMS: measured.frameMS.max() ?? 0,
             drawCalls: renderer.lastDrawStats.drawCalls,
             // The GPU path's count is read a few frames late; the view does not move.
-            drawnInstances: renderer.lastDrawStats.drawnInstances
-                + renderer.lastGPUCullCounts.cameraVisible,
+            drawnInstances: renderer.combinedDrawStats().drawnInstances,
             gpuTime: BenchmarkTimeStats(milliseconds: measured.gpuMS),
             grass: BenchmarkGrass(renderer.lastGrassDrawStats)
         )

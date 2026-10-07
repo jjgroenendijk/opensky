@@ -15,7 +15,7 @@ nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
     @MainActor
     public mutating func capture(_ renderer: Renderer) {
         grassDrawStats.formMaximum(renderer.lastGrassDrawStats)
-        shadowDrawStats.formMaximum(renderer.lastShadowDrawStats)
+        shadowDrawStats.formMaximum(renderer.combinedShadowDrawStats)
         animationUpdatedBoneCount = max(
             animationUpdatedBoneCount,
             renderer.lastAnimationUpdatedBoneCount
