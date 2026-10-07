@@ -215,7 +215,7 @@ struct CapsuleCollisionTests {
         }
     }
 
-    private static func camera(feet: SIMD3<Float>) -> FreeFlyCamera {
+    static func camera(feet: SIMD3<Float>) -> FreeFlyCamera {
         FreeFlyCamera(
             position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             yaw: 0,
@@ -223,7 +223,7 @@ struct CapsuleCollisionTests {
         )
     }
 
-    private static func mesh(
+    static func mesh(
         vertices: [SIMD3<Float>],
         indices: [UInt32]
     ) -> StaticCollisionShape {
@@ -233,5 +233,34 @@ struct CapsuleCollisionTests {
             geometry: .triangleSoup(vertices: vertices, indices: indices),
             bounds: ModelBounds.containing(vertices) ?? ModelBounds(min: .zero, max: .zero)
         )
+    }
+}
+
+extension CapsuleCollisionTests {
+    /// Gravity pushes straight down, so a standing player must not creep downhill
+    /// on a walkable mesh slope.
+    @Test
+    func standingOnAWalkableSlopeDoesNotCreep() {
+        let ramp = Self.mesh(
+            vertices: [
+                SIMD3(-200, -100, -40), SIMD3(200, -100, 40),
+                SIMD3(200, 100, 40), SIMD3(-200, 100, -40)
+            ],
+            indices: [0, 1, 2, 0, 2, 3]
+        )
+        var camera = Self.camera(feet: SIMD3(0, 0, 2))
+        var controller = WalkController(cameraPosition: camera.position)
+        for _ in 0 ..< 300 {
+            controller.update(
+                camera: &camera,
+                input: CameraInput(dt: WalkController.fixedTimeStep),
+                sampleGround: { _ in nil },
+                collisionQuery: DynamicBodyScene.candidateQuery([ramp])
+            )
+        }
+
+        #expect(controller.isGrounded)
+        #expect(abs(controller.feetPosition.x) < 0.05)
+        #expect(abs(controller.feetPosition.y) < 0.05)
     }
 }
