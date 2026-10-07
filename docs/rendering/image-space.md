@@ -22,6 +22,11 @@ the current place: saturation, brightness, contrast, tint, and fade. The record 
    shader can show, and draws. A neutral result skips the pass, so a frame without an image
    space costs nothing.
 
+Most grades read only the pixel they change. Those draw one fullscreen triangle inside the scene
+pass, and the shader reads the pixel from tile memory, so the frame needs no copy and keeps its
+depth [memoryless](/rendering/metal4-renderer.md). Blur and double vision read other pixels. For
+them the scene pass ends, the color is copied, and a second pass grades the copy.
+
 At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own limit.
 
 ## Triggers

@@ -47,6 +47,23 @@ Metal 4 does not track hazards between encoders. So the last cascade encoder iss
 barrier (`barrier(afterStages: .fragment, beforeQueueStages: .fragment, visibilityOptions:
 .device)`), and the scene pass never samples the shadow array before its depth writes land.
 
+## Render targets
+
+Apple GPUs render the screen in tiles held in on-chip memory. A target that no later pass reads
+can stay in that tile memory: it is memoryless, and it costs no GPU memory and no bandwidth.
+
+| Target | Storage | Why |
+| --- | --- | --- |
+| Scene depth and stencil, live view and offscreen | memoryless | only the scene pass reads it |
+| Shadow cascades | private | the scene pass samples them |
+| Offscreen color | shared | the CPU reads it back |
+| Grade copy and grade depth | private, made on first use | only a split grade needs them |
+
+The [image space pass](/rendering/image-space.md) grades in tile memory, so most frames keep
+depth memoryless. A grade with blur or double vision reads other pixels, so it splits the scene
+pass in two. The first half then stores depth into the grade depth target. `Developer > Rendering
+Performance > Render Targets` shows what each target costs.
+
 ## Pipelines and shading
 
 Static and skinned meshes each have an opaque and an alpha-test pipeline. All four share one

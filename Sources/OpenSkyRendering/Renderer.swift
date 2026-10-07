@@ -234,6 +234,10 @@ public final class Renderer: NSObject {
     /// Written only by encodeScenePass (RendererScenePass.swift).
     public var lastDrawStats = SceneDrawStats()
     public var lastGrassDrawStats = GrassDrawStats()
+    /// The depth target of the last scene pass, for the render-target readout.
+    var lastSceneDepth: RenderTargetEntry?
+    /// Grades every frame through the copy, so a test can compare it with the tile grade.
+    var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).

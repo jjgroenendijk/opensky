@@ -127,6 +127,13 @@ extension WorldRenderControls: RenderDebugControlProviding {
     }
 }
 
+extension WorldRenderControls: RenderPerformanceControlProviding {
+    public var renderPerformanceSnapshot: RenderPerformanceSnapshot? {
+        guard let renderer else { return nil }
+        return RenderPerformanceSnapshot(renderTargets: renderer.renderTargetMemory())
+    }
+}
+
 extension WorldRenderControls: CameraControlProviding {
     public var cameraPose: CameraPoseSnapshot {
         guard let renderer else { return .unavailable }

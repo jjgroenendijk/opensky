@@ -134,7 +134,8 @@ extension Renderer {
             mipmapped: false
         )
         depthDescriptor.usage = .renderTarget
-        depthDescriptor.storageMode = .private
+        // Depth lives only inside the scene pass, so it stays in tile memory.
+        depthDescriptor.storageMode = .memoryless
         guard
             let color = device.makeTexture(descriptor: colorDescriptor),
             let depth = device.makeTexture(descriptor: depthDescriptor)
@@ -242,10 +243,10 @@ extension Renderer {
     /// screenshots without a drawable.
     public func renderOffscreen(width: Int, height: Int) throws -> MTLTexture {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
-        residencySet.addAllocations([color, depth])
+        residencySet.addAllocation(color)
         residencySet.commit()
         defer {
-            residencySet.removeAllocations([color, depth])
+            residencySet.removeAllocation(color)
             residencySet.commit()
         }
         try renderOffscreenFrame(
@@ -266,10 +267,10 @@ extension Renderer {
         frameDriver?.updateWeather(deltaTime: 0)
         seekParticles(to: animationTime)
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
-        residencySet.addAllocations([color, depth])
+        residencySet.addAllocation(color)
         residencySet.commit()
         defer {
-            residencySet.removeAllocations([color, depth])
+            residencySet.removeAllocation(color)
             residencySet.commit()
         }
         try renderOffscreenFrame(
@@ -294,10 +295,10 @@ extension Renderer {
         step: () throws -> Bool
     ) throws -> OffscreenBenchResult {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
-        residencySet.addAllocations([color, depth])
+        residencySet.addAllocation(color)
         residencySet.commit()
         defer {
-            residencySet.removeAllocations([color, depth])
+            residencySet.removeAllocation(color)
             residencySet.commit()
         }
         let descriptor = Self.offscreenPassDescriptor(color: color, depth: depth)
@@ -359,10 +360,10 @@ extension Renderer {
         afterFrame: (Int) -> Void = { _ in }
     ) throws -> OffscreenBenchResult {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
-        residencySet.addAllocations([color, depth])
+        residencySet.addAllocation(color)
         residencySet.commit()
         defer {
-            residencySet.removeAllocations([color, depth])
+            residencySet.removeAllocation(color)
             residencySet.commit()
         }
         let descriptor = Self.offscreenPassDescriptor(color: color, depth: depth)

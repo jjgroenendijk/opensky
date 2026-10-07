@@ -969,6 +969,20 @@ static float3 imageSpaceBlur(
     return sum / count;
 }
 
+static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniforms)
+{
+    float luminance = dot(color, imageSpaceLuminance);
+    color = mix(float3(luminance), color, uniforms.grading.x);
+    color *= uniforms.grading.y;
+    float3 encoded = pow(max(color, 0.0), 1.0 / 2.2);
+    encoded = (encoded - 0.5) * uniforms.grading.z + 0.5;
+    color = pow(max(encoded, 0.0), 2.2);
+    float tinted = dot(color, imageSpaceLuminance);
+    color = mix(color, tinted * uniforms.tint.rgb, uniforms.tint.a);
+    color = mix(color, uniforms.fade.rgb, uniforms.fade.a);
+    return float4(saturate(color), 1.0);
+}
+
 fragment float4 imageSpaceFragment(
     SkyVertexOut in [[stage_in]],
     constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
@@ -987,16 +1001,17 @@ fragment float4 imageSpaceFragment(
         float3 ghost = scene.sample(linearClamp, uv + float2(0.02 * doubleVision, 0.0)).rgb;
         color = mix(color, ghost, 0.5 * doubleVision);
     }
-    float luminance = dot(color, imageSpaceLuminance);
-    color = mix(float3(luminance), color, uniforms.grading.x);
-    color *= uniforms.grading.y;
-    float3 encoded = pow(max(color, 0.0), 1.0 / 2.2);
-    encoded = (encoded - 0.5) * uniforms.grading.z + 0.5;
-    color = pow(max(encoded, 0.0), 2.2);
-    float tinted = dot(color, imageSpaceLuminance);
-    color = mix(color, tinted * uniforms.tint.rgb, uniforms.tint.a);
-    color = mix(color, uniforms.fade.rgb, uniforms.fade.a);
-    return float4(saturate(color), 1.0);
+    return imageSpaceGrade(color, uniforms);
+}
+
+/// The same grade without the copy: it reads the pixel from tile memory, so it serves
+/// frames with no blur and no double vision, which need neighbor pixels.
+fragment float4 imageSpaceTileFragment(
+    SkyVertexOut in [[stage_in]],
+    constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
+    float4 scene [[color(0)]])
+{
+    return imageSpaceGrade(scene.rgb, uniforms);
 }
 
 // Effect-shader membrane: an additive glow over the target's meshes, brighter at

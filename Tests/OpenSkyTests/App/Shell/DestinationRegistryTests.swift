@@ -24,8 +24,8 @@ struct DestinationRegistryTests {
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu", "playerSettings", "characterMenus", "mapMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "journal", "uiLab", "assetBrowser", "loadOrder",
-            "skyrimSaves", "agentControl"
+            "runtimeState", "scripts", "journal", "uiLab", "renderingPerformance",
+            "assetBrowser", "loadOrder", "skyrimSaves", "agentControl"
         ])
         // Accessibility identifiers are the UI-test contract; pin them literally.
         #expect(DestinationRegistry.all.map(\.sidebarIdentifier) == [
@@ -39,7 +39,8 @@ struct DestinationRegistryTests {
             "Destination-inventoryMenu", "Destination-containerMenu",
             "Destination-inventoryEquipment", "Destination-audio",
             "Destination-runtimeState", "Destination-scripts",
-            "Destination-journal", "Destination-uiLab", "Destination-assetBrowser",
+            "Destination-journal", "Destination-uiLab",
+            "Destination-renderingPerformance", "Destination-assetBrowser",
             "Destination-loadOrder", "Destination-skyrimSaves", "Destination-agentControl"
         ])
         #expect(DestinationRegistry.worldInspectors.map(\.id) == [
@@ -47,7 +48,8 @@ struct DestinationRegistryTests {
             "hudInteraction", "dialogueVoice", "effects", "progression", "crimeFactions",
             "systemMenu", "playerSettings", "characterMenus", "mapMenu",
             "inventoryMenu", "containerMenu", "inventoryEquipment", "audio",
-            "runtimeState", "scripts", "journal", "uiLab", "agentControl"
+            "runtimeState", "scripts", "journal", "uiLab", "renderingPerformance",
+            "agentControl"
         ])
         #expect(DestinationRegistry.defaultDestinationID == "world")
     }

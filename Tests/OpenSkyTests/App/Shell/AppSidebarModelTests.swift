@@ -22,7 +22,9 @@ struct AppSidebarModelTests {
                     "runtimeState", "scripts", "journal"
                 ]
         )
-        #expect(groups[1].destinations.map(\.id) == ["uiLab", "agentControl"])
+        #expect(
+            groups[1].destinations.map(\.id) == ["uiLab", "renderingPerformance", "agentControl"]
+        )
         #expect(groups[2].destinations.map(\.id) == ["assetBrowser", "loadOrder", "skyrimSaves"])
     }
 
