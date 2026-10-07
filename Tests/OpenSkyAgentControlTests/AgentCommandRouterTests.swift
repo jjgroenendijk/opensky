@@ -79,6 +79,14 @@ struct AgentCommandRouterTests {
         #expect(world.inputLog == ["press forward", "release forward"])
     }
 
+    @Test func textTypesIntoTheOpenMenu() throws {
+        let request = try AgentCommandLine.request(["input", "text", "Brynja"])
+        #expect(request.command == "input.text")
+        let typed = try #require(result(run(request.command, request.args)))
+        #expect(try typed.get()["typed"] == "Brynja")
+        #expect(world.inputLog == ["text Brynja"])
+    }
+
     @Test func holdWhileRunningCountsDrawnFrames() throws {
         let start = world.agentTimeline.frame
         _ = try #require(finish(run("input.hold", ["action": "back", "frames": 3])))

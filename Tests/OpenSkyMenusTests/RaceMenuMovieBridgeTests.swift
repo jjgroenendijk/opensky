@@ -75,3 +75,10 @@ struct RaceMenuMovieBridgeTests {
         #expect(model.identity.race == FormID(0x13748))
     }
 }
+
+extension RaceMenuMovieBridgeTests {
+    @Test func aMovieWithoutItsPanelListsLeavesTheEngineRowsInCharge() throws {
+        let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
+        #expect(!RaceMenuMovieBridge.listsBuilt(runtime: runtime))
+    }
+}

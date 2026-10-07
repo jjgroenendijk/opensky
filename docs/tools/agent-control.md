@@ -72,7 +72,9 @@ step then ends in `timeout`.
 agent both go through one dispatcher: in the world an action reaches the camera input; while a
 menu owns input, movement becomes menu navigation and other actions are swallowed. So an
 injected press does exactly what the key does. `input select <label>` moves the open menu's
-selection with the same up and down events, one row at a time.
+selection with the same up and down events, one row at a time. `input text <text>` sends
+characters the way typed keys do, to the menu that takes text now, such as the race menu's
+name row.
 
 ## Events
 

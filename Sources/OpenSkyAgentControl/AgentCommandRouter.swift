@@ -212,6 +212,8 @@ public final class AgentCommandRouter {
             return .done(.success(["dx": .init(yaw), "dy": .init(pitch)]))
         case "select":
             return try .done(.success(world.selectMenuRow(label: args.string("label"))))
+        case "text":
+            return try .done(.success(world.typeText(args.string("text"))))
         default:
             throw AgentFailure(.unknownCommand, "unknown input command: \(name)")
         }
