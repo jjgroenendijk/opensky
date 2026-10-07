@@ -115,7 +115,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
         for index in 0 ..< archiveCount {
             guard
                 let archive = openedArchive(at: index),
-                let entry = archive.entry(forPath: normalized)
+                let entry = archive.entry(forNormalizedPath: normalized)
             else { continue }
             let (name, modified) = archiveStamp(at: index)
             return GameFileProvenance(
@@ -248,7 +248,7 @@ nonisolated public final class VirtualFileSystem: GameFileSource {
     private func archiveEntry(for normalized: String) -> (BSAArchive, BSAArchive.Entry)? {
         for index in 0 ..< archiveCount {
             guard let archive = openedArchive(at: index) else { continue }
-            if let entry = archive.entry(forPath: normalized) {
+            if let entry = archive.entry(forNormalizedPath: normalized) {
                 return (archive, entry)
             }
         }
