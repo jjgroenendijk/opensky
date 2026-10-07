@@ -26,6 +26,8 @@ final class GraphicsPageViewController: NSViewController {
         checkboxWithTitle: "Ray-traced sun shadows", target: nil, action: nil
     )
     let rayTracingLabel = NSTextField(labelWithString: "")
+    let renderScaleControl = NSPopUpButton()
+    let upscalerControl = NSPopUpButton()
     private let rayTracing: RayTracingAvailability
     let statusLabel = NSTextField(labelWithString: "")
 
@@ -64,6 +66,9 @@ final class GraphicsPageViewController: NSViewController {
             PanelComponents.group([
                 PanelComponents.caption("Ray tracing"), rayTracedShadowsControl, rayTracingLabel
             ]),
+            PanelComponents.group([
+                PanelComponents.caption("Upscaling"), renderScaleControl, upscalerControl
+            ]),
             statusLabel
         ])
         stack.orientation = .vertical
@@ -89,6 +94,8 @@ final class GraphicsPageViewController: NSViewController {
         rayTracedShadowsControl.state = rayTracing.isAvailable && store.bool(.rayTracedShadows)
             ? .on : .off
         rayTracingLabel.stringValue = rayTracing.reason.map { "Unavailable: \($0)" } ?? ""
+        renderScaleControl.selectItem(at: RenderScale(store: store).settingIndex)
+        upscalerControl.selectItem(at: UpscalerKind(store: store).rawValue)
     }
 
     private func configureControls() {
@@ -108,6 +115,7 @@ final class GraphicsPageViewController: NSViewController {
         )
         gpuCullingControl.toolTip = "Cull the static scene in a compute pass, not on the CPU"
         configureTextureControls()
+        configureUpscalingControls()
         statusLabel.font = PanelMetrics.monoFont
         statusLabel.textColor = Theme.parchmentDim
         statusLabel.setAccessibilityIdentifier("GraphicsStatsLabel")
@@ -136,6 +144,31 @@ final class GraphicsPageViewController: NSViewController {
         rayTracingLabel.font = PanelMetrics.monoFont
         rayTracingLabel.textColor = Theme.parchmentDim
         rayTracingLabel.setAccessibilityIdentifier("GraphicsRayTracingLabel")
+    }
+
+    private func configureUpscalingControls() {
+        renderScaleControl.addItems(
+            withTitles: PlayerSettingsCatalog.renderScaleOptions.map { "Render scale \($0)" }
+        )
+        PanelComponents.configurePopUp(
+            renderScaleControl, target: self, action: #selector(renderScaleChanged),
+            identifier: "GraphicsRenderScaleControl"
+        )
+        renderScaleControl.toolTip = "Render the scene smaller and let MetalFX upscale it"
+        upscalerControl.addItems(withTitles: PlayerSettingsCatalog.upscalerOptions)
+        PanelComponents.configurePopUp(
+            upscalerControl, target: self, action: #selector(upscalerChanged),
+            identifier: "GraphicsUpscalerControl"
+        )
+        upscalerControl.toolTip = "Temporal also smooths edges; spatial costs less GPU time"
+    }
+
+    @objc private func renderScaleChanged() {
+        store.set(.renderScale, to: Double(max(renderScaleControl.indexOfSelectedItem, 0)))
+    }
+
+    @objc private func upscalerChanged() {
+        store.set(.upscaler, to: Double(max(upscalerControl.indexOfSelectedItem, 0)))
     }
 
     @objc private func rayTracedShadowsChanged() {

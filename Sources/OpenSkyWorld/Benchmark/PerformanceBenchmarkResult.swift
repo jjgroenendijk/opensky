@@ -146,6 +146,10 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
     public var encodeTime: BenchmarkTimeStats?
     /// Whether the GPU culled the scene's static groups. Nil in older results.
     public var gpuCulling: Bool?
+    /// The render scale in percent MetalFX upscaled from; 0 is native. Nil in older results.
+    public var renderScale: Int?
+    /// `temporal` or `spatial` when `renderScale` is above 0.
+    public var upscaler: String?
 
     public init(
         frames: Int,

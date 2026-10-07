@@ -58,6 +58,12 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexMembraneUniforms = 16,
     /// The scene's instance acceleration structure, for ray-traced sun shadows.
     BufferIndexRayScene = 17,
+    /// Temporal upscaling motion pass (UpscaleMotionUniforms).
+    BufferIndexMotionUniforms = 18,
+    /// Last frame's bone palette, for the motion of a skinned mesh.
+    BufferIndexPreviousBoneMatrices = 19,
+    /// This frame's and last frame's model matrix per instance (MotionInstance).
+    BufferIndexMotionInstances = 20,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -347,6 +353,27 @@ typedef struct
     unsigned int padding1;
     unsigned int padding2;
 } CullParameters;
+
+/// Temporal upscaling (docs/rendering/upscaling.md). Motion is last frame's screen
+/// position minus this frame's, in texture coordinates, with the jitter removed.
+typedef struct
+{
+    /// Undoes this frame's jittered view-projection, from depth to world.
+    matrix_float4x4 inverseJitteredViewProjection;
+    matrix_float4x4 viewProjection;
+    matrix_float4x4 previousViewProjection;
+    /// Depth below this is the first-person arms, which move with the camera.
+    float nearDepthLimit;
+    float padding0;
+    float padding1;
+    float padding2;
+} UpscaleMotionUniforms;
+
+typedef struct
+{
+    matrix_float4x4 current;
+    matrix_float4x4 previous;
+} MotionInstance;
 
 /// Terrain splat path (docs/rendering/scene-drawing.md): one draw per quadrant blends the
 /// BTXT base with up to TerrainConstantMaxLayers ATXT diffuses by per-vertex

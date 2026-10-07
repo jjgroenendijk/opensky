@@ -186,6 +186,10 @@ extension Renderer {
             live.formUnion(movie.residencyAllocations.map(ObjectIdentifier.init))
         }
         live.formUnion((gpuCull.scene?.allocations ?? []).map(ObjectIdentifier.init))
+        live.formUnion((upscale.targets?.allocations ?? []).map(ObjectIdentifier.init))
+        if let motion = upscale.motionInstances {
+            live.insert(ObjectIdentifier(motion))
+        }
         // A drained A entry may share an allocation with undrained B. Keep that
         // allocation resident until every retired frame using it drains.
         for entry in retired {

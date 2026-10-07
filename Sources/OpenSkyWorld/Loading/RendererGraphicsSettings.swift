@@ -4,12 +4,26 @@
 import OpenSkyGameData
 import OpenSkyRendering
 
+extension RenderScale {
+    public init(store: PlayerSettingsStore) {
+        self.init(settingIndex: Int(store.value(.renderScale)))
+    }
+}
+
+extension UpscalerKind {
+    public init(store: PlayerSettingsStore) {
+        self.init(settingIndex: Int(store.value(.upscaler)))
+    }
+}
+
 extension Renderer {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         gpuCullingEnabled = store.bool(.gpuCulling)
         textureStreaming.enabled = store.bool(.textureStreaming)
         textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store)
         rayTracedShadows.enabled = store.bool(.rayTracedShadows)
+        renderScale = RenderScale(store: store)
+        upscaler = UpscalerKind(store: store)
     }
 
     public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {

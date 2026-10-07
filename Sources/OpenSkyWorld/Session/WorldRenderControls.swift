@@ -145,6 +145,7 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
             ),
             gpuCulling: renderer.lastGPUCullCounts
         )
+        snapshot.upscaling = renderer.upscale.status
         snapshot.textureStreaming = renderer.textureStreaming.stats
         snapshot.rayTracing = renderer.rayTracedShadows.availability
         snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
@@ -190,6 +191,32 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
     }
 
     /// Applies at once and is saved, so the next launch starts with it.
+    public var renderScale: RenderScale {
+        get {
+            if let renderer {
+                return renderer.renderScale
+            }
+            return world.map { RenderScale(store: $0.playerSettingsStore) } ?? .off
+        }
+        set {
+            renderer?.renderScale = newValue
+            world?.playerSettingsStore.set(.renderScale, to: Double(newValue.settingIndex))
+        }
+    }
+
+    public var upscaler: UpscalerKind {
+        get {
+            if let renderer {
+                return renderer.upscaler
+            }
+            return world.map { UpscalerKind(store: $0.playerSettingsStore) } ?? .temporal
+        }
+        set {
+            renderer?.upscaler = newValue
+            world?.playerSettingsStore.set(.upscaler, to: Double(newValue.rawValue))
+        }
+    }
+
     public var gpuCullingEnabled: Bool {
         get { renderer?.gpuCullingEnabled ?? world?.playerSettingsStore.bool(.gpuCulling) ?? true }
         set {

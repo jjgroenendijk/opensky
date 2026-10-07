@@ -107,6 +107,8 @@ public final class Renderer: NSObject {
             sceneAllocations = scene.residencyAllocations
             gpuCull.isCurrent = false
             rayTracedShadows.isCurrent = false
+            // A new cell shows other surfaces; old frames would ghost over them.
+            upscale.resetPending = true
         }
     }
 
@@ -247,6 +249,8 @@ public final class Renderer: NSObject {
     /// Large textures keep only the levels the camera needs (TextureStreaming/).
     public var textureStreaming: TextureStreamingState
     public var rayTracedShadows: RayTracedShadowState
+    /// MetalFX temporal upscaling (RendererUpscale.swift).
+    public var upscale: UpscaleState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
@@ -305,7 +309,7 @@ public final class Renderer: NSObject {
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
             try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)
-        ((imageSpacePass, effects), gpuCull) =
+        ((imageSpacePass, effects), (gpuCull, upscale)) =
             try Self.makeEffectResources(view: view, library: library, compiler: compiler)
         textureStreaming = TextureStreamingState(device: device)
         rayTracedShadows = Self.makeRayTracing(library: library, compiler: compiler, view: view)

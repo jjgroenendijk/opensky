@@ -21,6 +21,8 @@ enum BenchmarkCommand {
         let gpuCulling: Bool
         let textureStreaming: Bool
         let textureBudgetMB: Int?
+        let renderScale: RenderScale
+        let upscaler: UpscalerKind
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -42,6 +44,8 @@ enum BenchmarkCommand {
             gpuCulling = !scanner.flag("--cpu-culling")
             textureBudgetMB = try scanner.option("--texture-budget").map(Self.mebibytes)
             textureStreaming = scanner.flag("--texture-streaming") || textureBudgetMB != nil
+            renderScale = try scanner.option("--render-scale").map(Self.renderScale) ?? .off
+            upscaler = try scanner.option("--upscaler").map(Self.upscaler) ?? .temporal
         }
 
         func apply(to renderer: Renderer) {
@@ -50,6 +54,8 @@ enum BenchmarkCommand {
             if let textureBudgetMB {
                 renderer.textureStreaming.budgetBytes = textureBudgetMB << 20
             }
+            renderer.renderScale = renderScale
+            renderer.upscaler = upscaler
         }
 
         /// The view loads on the main actor, so the library reads levels again inline.
@@ -64,6 +70,22 @@ enum BenchmarkCommand {
                 throw CLIError.usage("--texture-budget expects a MiB count, got \(value)")
             }
             return mebibytes
+        }
+
+        private static func upscaler(_ value: String) throws -> UpscalerKind {
+            switch value {
+            case "temporal": .temporal
+            case "spatial": .spatial
+            default: throw CLIError.usage("--upscaler expects temporal or spatial, got \(value)")
+            }
+        }
+
+        private static func renderScale(_ value: String) throws -> RenderScale {
+            guard let percent = Int(value), (50 ... 100).contains(percent) else {
+                throw CLIError
+                    .usage("--render-scale expects a percent from 50 to 100, got \(value)")
+            }
+            return RenderScale(percent: percent)
         }
 
         private static func seconds(_ value: String) throws -> Double {

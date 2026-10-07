@@ -180,6 +180,8 @@ public enum PerformanceBenchmark {
         )
         frameTime.encodeTime = BenchmarkTimeStats(milliseconds: measured.encodeMS)
         frameTime.gpuCulling = renderer.gpuCullingEnabled
+        frameTime.renderScale = renderer.renderScale.percent
+        frameTime.upscaler = renderer.renderScale.isOn ? "\(renderer.upscaler)" : nil
         return frameTime
     }
 

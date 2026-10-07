@@ -34,7 +34,7 @@ public final class PipelineCache {
     public let device: MTLDevice
     public let fileURL: URL?
     public private(set) var stats = PipelineCacheStats()
-    private let compiler: MTL4Compiler
+    let compiler: MTL4Compiler
     private let archive: (any MTL4Archive)?
     private let serializer: (any MTL4PipelineDataSetSerializer)?
 

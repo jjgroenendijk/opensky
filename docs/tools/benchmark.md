@@ -84,6 +84,12 @@ GPU. The static scene culls on the GPU, as in the app ([GPU culling](/rendering/
 `--cpu-culling` culls it on the CPU instead, and the `gpuCulling` field says which path ran.
 The drawn instance count adds the GPU's camera count, so the two paths compare.
 
+`--render-scale <percent>` renders the scene at 50 to 100 percent of the frame size and
+upscales it with MetalFX ([upscaling](/rendering/upscaling.md)). The `renderScale` field
+holds the percent, and 0 means native. `--upscaler temporal|spatial` picks the scaler, and the
+`upscaler` field records it. GPU time is the number to compare: the CPU encode
+barely changes.
+
 GPU memory is sampled after each load pass and after each measured frame:
 
 - total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;
