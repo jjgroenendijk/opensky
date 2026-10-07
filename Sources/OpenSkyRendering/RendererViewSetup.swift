@@ -10,6 +10,8 @@ extension Renderer {
         // Depth plus stencil: SWF clip masks need a stencil attachment; the 3D passes
         // ignore it.
         view.depthStencilPixelFormat = .depth32Float_stencil8
+        // Depth lives only inside the scene pass, so it stays in tile memory.
+        view.depthStencilStorageMode = .memoryless
         view.sampleCount = 1
         // The image-space pass copies the drawable's color, which needs a non-framebuffer-only
         // texture.
