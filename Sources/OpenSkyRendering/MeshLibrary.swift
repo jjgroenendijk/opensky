@@ -151,7 +151,8 @@ nonisolated public final class MeshLibrary {
                         .transform(forBoneNamed: attachmentBone) ?? matrix_identity_float4x4
                 )
             }
-            guard !model.meshes.isEmpty else {
+            // A fire effect can hold only particles beside its editor marker.
+            guard !model.meshes.isEmpty || !decodedParticles.isEmpty else {
                 throw model.editorMarkerShapeCount > 0
                     ? MeshLibraryError.editorMarkerOnly(path: key)
                     : MeshLibraryError.emptyModel(path: key)

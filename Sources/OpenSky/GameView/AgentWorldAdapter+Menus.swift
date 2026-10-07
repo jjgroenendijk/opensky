@@ -43,6 +43,13 @@ extension AgentWorldAdapter {
                 rows: snapshot.rows.map(\.text),
                 selected: snapshot.selectedIndex
             )
+        case RaceMenuCoordinator.identifier:
+            let snapshot = game.raceMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows,
+                selected: snapshot.selectedIndex
+            )
         default:
             return nil
         }
@@ -84,6 +91,13 @@ extension AgentWorldAdapter {
             "index": .init(target),
             "label": .string(start.rows[target])
         ]
+    }
+
+    func typeText(_ text: String) throws(AgentFailure) -> AgentJSON {
+        guard game.raceMenu.type(text) else {
+            throw AgentFailure(.notFound, "no open menu takes text now")
+        }
+        return ["typed": .string(text)]
     }
 
     /// An exact match wins, then a row that starts with the label, then one that

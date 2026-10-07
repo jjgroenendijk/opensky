@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkySave
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
@@ -24,6 +25,9 @@ final class MenuWorldAdapter {
     /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
     private var raceMenuAfterTeleport = false
     private var startTickerInstalled = false
+    /// The opening quest's player `MoveTo` loads a far cell, so it gets a loading screen.
+    private var coverNextTeleport = false
+    private var teleportCovered = false
     /// The camera the logo was placed for, while the title backdrop shows.
     var titleLogoView: (eye: SIMD3<Float>, forward: SIMD3<Float>)?
 
@@ -150,7 +154,9 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
         game.saveGames.resetPlayTime()
         game.player.refreshBody()
         switch start {
-        case .vanilla: game.storyWorld.startOpeningQuest()
+        case .vanilla:
+            coverNextTeleport = true
+            game.storyWorld.startOpeningQuest()
         case let .cell(editorID): teleportPlayer(.cell(editorID), openingRaceMenu: true)
         }
     }
@@ -223,11 +229,34 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
 extension MenuWorldAdapter {
     /// Moves the player the way `debug.teleport` does.
     func teleportPlayer(_ target: AgentTeleportTarget, openingRaceMenu: Bool) {
+        movePlayer(openingRaceMenu: openingRaceMenu) { [game] () throws(AgentFailure) in
+            try AgentTeleportJob(adapter: game.agentWorld, target: target)
+        }
+    }
+
+    /// A load puts the player back where the save was made, behind the loading screen.
+    func restorePlayerPlace(_ place: SavePlayerPlace) {
+        coverNextTeleport = true
+        movePlayer(openingRaceMenu: false) { [game] () throws(AgentFailure) in
+            try AgentTeleportJob(adapter: game.agentWorld, place: place)
+        }
+    }
+
+    private func movePlayer(
+        openingRaceMenu: Bool,
+        job: () throws(AgentFailure) -> AgentTeleportJob
+    ) {
         raceMenuAfterTeleport = openingRaceMenu
+        if coverNextTeleport {
+            coverNextTeleport = false
+            teleportCovered = true
+            game.loadingScreens.beginLoad(at: Date().timeIntervalSinceReferenceDate)
+        }
         do {
-            newGameTeleport = try AgentTeleportJob(adapter: game.agentWorld, target: target).wait
+            newGameTeleport = try job().wait
         } catch {
             game.hud.showNotification("Move: \(error.message)")
+            liftTeleportCover(at: Date().timeIntervalSinceReferenceDate)
             openRaceMenuIfAsked()
             return
         }
@@ -245,7 +274,16 @@ extension MenuWorldAdapter {
         if case let .failure(error) = result {
             game.hud.showNotification("Move: \(error.message)")
         }
+        liftTeleportCover(at: now)
         openRaceMenuIfAsked()
+    }
+
+    /// A new or loaded game is played, so the player walks rather than flies.
+    private func liftTeleportCover(at now: Double) {
+        guard teleportCovered else { return }
+        teleportCovered = false
+        game.loadingScreens.loadFinished(at: now)
+        game.renderer?.setMovementMode(.walk)
     }
 
     private func openRaceMenuIfAsked() {

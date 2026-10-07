@@ -155,7 +155,9 @@ adds 4096.
 
 `GetIsVoiceType` reads an actor's `VTCK`. An actor with no resolved voice type fails with a
 reason, instead of a false "no match". `IsInDialogueWithPlayer` reads who the player talks to.
-Nobody talking is a real 0. `GetIsAliasRef` compares the run-on reference with the filled alias
+Nobody talking is a real 0. Every condition context the session builds carries both facts: the
+voice type of each loaded actor after template inheritance, and the speaker from the moment the
+conversation opens. `GetIsAliasRef` compares the run-on reference with the filled alias
 table of the alias quest.
 
 The faction functions that guard and vendor lines depend on are on the

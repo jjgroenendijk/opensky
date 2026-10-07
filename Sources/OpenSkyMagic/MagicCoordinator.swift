@@ -33,6 +33,8 @@ public final class MagicCoordinator {
     }
 
     weak var world: (any MagicWorld)?
+    /// Takes `CAST`.
+    public weak var storyEvents: (any StoryEventReporting)?
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
@@ -212,6 +214,17 @@ extension MagicCoordinator: CasterWorld {
 
     public func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
         world?.aimedSpellTarget(within: range, for: caster) ?? .none
+    }
+
+    /// The wiki says only the player's casts count.
+    public func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
+        guard caster == .player, let storyEvents else { return }
+        storyEvents.reportStoryEvent(.castMagic(
+            caster: caster,
+            target: aimedSpellTarget(within: 0, for: caster).target,
+            location: nil,
+            spell: StoryEventData.form(of: spell)
+        ))
     }
 
     /// A projectile hit and a direct cast take this one path, so the effects

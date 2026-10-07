@@ -11,6 +11,12 @@ nonisolated private func capsuleResponseNormal(
     motion: SIMD3<Float>
 ) -> SIMD3<Float> {
     let minimumUp = cosf(MatrixMath.radians(fromDegrees: PhysicsStep.maximumSlopeDegrees))
+    let isVertical = simd_length_squared(SIMD2(motion.x, motion.y)) <= Float.ulpOfOne
+    // A floor pushes a vertical move straight back up, scaled to clear the same depth;
+    // the slope normal would add a small downhill step every frame.
+    if isVertical, normal.z >= minimumUp {
+        return SIMD3(0, 0, 1 / normal.z)
+    }
     guard
         normal.z > 0,
         normal.z < minimumUp,

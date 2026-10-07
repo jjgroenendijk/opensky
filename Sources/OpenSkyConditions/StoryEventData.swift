@@ -26,7 +26,8 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
     public var event: FourCC
     public var actor1: ReferenceKey?
     public var actor2: ReferenceKey?
-    public var createdObject: ReferenceKey?
+    /// `O1` names a base object, such as the item a recipe made.
+    public var createdObject: FormID?
     public var form: FormID?
     public var keyword: FormID?
     public var location1: ResolvedFormID?
@@ -44,14 +45,14 @@ nonisolated public struct StoryEventData: Equatable, Sendable {
         switch member {
         case .actor1: actor1
         case .actor2: actor2
-        case .createdObject: createdObject
         default: nil
         }
     }
 
-    /// A form member as a FormID: the keyword, form, or quest.
+    /// A form member as a FormID: the created object, keyword, form, or quest.
     public func formID(_ member: Member) -> FormID? {
         switch member {
+        case .createdObject: createdObject
         case .form: form
         case .keyword: keyword
         case .quest: quest

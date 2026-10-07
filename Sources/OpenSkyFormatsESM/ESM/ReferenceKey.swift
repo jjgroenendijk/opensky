@@ -24,6 +24,15 @@ nonisolated public enum ReferenceKey: Hashable, Sendable {
     /// See docs/engine/reference-identity.md.
     public static let player = ReferenceKey.generated(0)
 
+    /// `PlayerRef`, the player's placed reference in `Skyrim.esm` (UESP "Skyrim Mod:FormIDs").
+    public static let playerReference = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x14)
+
+    /// `.player` for `PlayerRef`, else this key. A record that names the player
+    /// by its reference means the one player identity the engine uses.
+    public var namingPlayer: ReferenceKey {
+        self == Self.playerReference ? .player : self
+    }
+
     /// Normalizes the resolved plugin name to lowercase.
     public init(resolved: ResolvedFormID) {
         self = .plugin(name: resolved.plugin.lowercased(), objectID: resolved.objectID)

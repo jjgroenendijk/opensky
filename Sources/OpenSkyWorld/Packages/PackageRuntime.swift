@@ -18,6 +18,8 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
     /// True while something outside the schedule holds this actor, such as a
     /// conversation. It keeps its package and is not re-evaluated until released.
     public var isSuspended = false
+    /// The scene action whose packages run ahead of the schedule, if any.
+    public var override: PackageOverrideOwner?
 
     public init(
         actor: ReferenceKey,
@@ -27,7 +29,8 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         schedule: Package.Schedule?,
         procedure: PackageProcedureKind?,
         lastEvaluationGameSeconds: Double?,
-        isSuspended: Bool = false
+        isSuspended: Bool = false,
+        override: PackageOverrideOwner? = nil
     ) {
         self.actor = actor
         self.actorBase = actorBase
@@ -37,6 +40,33 @@ nonisolated public struct PackageActorReadout: Equatable, Sendable {
         self.procedure = procedure
         self.lastEvaluationGameSeconds = lastEvaluationGameSeconds
         self.isSuspended = isSuspended
+        self.override = override
+    }
+}
+
+/// What holds an actor's packages ahead of its schedule: a scene action.
+nonisolated public struct PackageOverrideOwner: Hashable, Sendable {
+    public let source: FormID
+    public let slot: UInt32
+
+    public init(source: FormID, slot: UInt32) {
+        self.source = source
+        self.slot = slot
+    }
+}
+
+/// Packages that override an actor's own stack, as a scene package action does
+/// (<https://ck.uesp.net/wiki/Category:Scenes>, "Actors in Scenes").
+nonisolated public struct PackageOverride: Equatable, Sendable {
+    public let packages: [FormID]
+    public let owner: PackageOverrideOwner
+    /// The quest whose aliases the package locations name.
+    public let aliasQuest: FormID?
+
+    public init(packages: [FormID], owner: PackageOverrideOwner, aliasQuest: FormID?) {
+        self.packages = packages
+        self.owner = owner
+        self.aliasQuest = aliasQuest
     }
 }
 
@@ -100,6 +130,38 @@ nonisolated public struct ActorPackageRuntime {
         actors[actor]?.isSuspended ?? false
     }
 
+    /// Runs `override`'s packages ahead of the actor's stack and picks one now.
+    /// False when the actor is not simulated.
+    @discardableResult
+    public mutating func setOverride(
+        _ override: PackageOverride,
+        actor: ReferenceKey,
+        clock: GameClock,
+        context: ConditionContext
+    ) -> Bool {
+        guard actors[actor] != nil else { return false }
+        guard actors[actor]?.override != override else { return true }
+        actors[actor]?.override = override
+        reevaluate(actor: actor, clock: clock, context: context)
+        return true
+    }
+
+    /// Hands the actor back to its stack, when `owner` still holds it.
+    public mutating func clearOverride(
+        owner: PackageOverrideOwner,
+        actor: ReferenceKey,
+        clock: GameClock,
+        context: ConditionContext
+    ) {
+        guard actors[actor]?.override?.owner == owner else { return }
+        actors[actor]?.override = nil
+        reevaluate(actor: actor, clock: clock, context: context)
+    }
+
+    public func override(for actor: ReferenceKey) -> PackageOverride? {
+        actors[actor]?.override
+    }
+
     /// On-demand seam for the AI gate panel.
     public mutating func forceReevaluate(
         actor: ReferenceKey,
@@ -127,9 +189,10 @@ nonisolated public struct ActorPackageRuntime {
         evaluationContext.subject = actor
         evaluationContext.clock = clock
         let previous = state.current?.package.formID
-        state.current = select(stack: state.stack, clock: clock, context: &evaluationContext)
+        let stack = state.override?.packages ?? state.stack
+        state.current = select(stack: stack, clock: clock, context: &evaluationContext)
         state.lastEvaluationGameSeconds = clock.totalGameSeconds
-        state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: state.stack)
+        state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: stack)
         actors[actor] = state
         if previous != state.current?.package.formID {
             onSelectionChanged?(state.readout(actor: actor))
@@ -170,6 +233,7 @@ nonisolated public struct ActorPackageRuntime {
         var lastEvaluationGameSeconds: Double?
         var nextEvaluationGameSeconds: Double?
         var isSuspended = false
+        var override: PackageOverride?
 
         func needsEvaluation(at clock: GameClock) -> Bool {
             guard
@@ -188,7 +252,8 @@ nonisolated public struct ActorPackageRuntime {
                 schedule: current?.package.schedule,
                 procedure: current?.procedure,
                 lastEvaluationGameSeconds: lastEvaluationGameSeconds,
-                isSuspended: isSuspended
+                isSuspended: isSuspended,
+                override: override?.owner
             )
         }
     }

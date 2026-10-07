@@ -63,6 +63,17 @@ struct DialogueCoordinatorTests {
         })
     }
 
+    /// `IsInDialogueWithPlayer` reads the open conversation, from its first selection on.
+    @Test func theSpeakerIsInDialogueOnlyWhileTheConversationRuns() throws {
+        let world = try world()
+        let coordinator = try coordinator(world: world)
+        let opened = try #require(coordinator.begin(with: speaker))
+        #expect(opened.context.dialogue.isInDialogueWithPlayer(speaker))
+        coordinator.endConversation()
+        let closed = try #require(coordinator.runtime)
+        #expect(!closed.context.dialogue.isInDialogueWithPlayer(speaker))
+    }
+
     @Test func aRecordedGreetingIsSaid() throws {
         let world = try world()
         let store = WorldStateStore()

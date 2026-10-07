@@ -31,8 +31,10 @@ nonisolated public struct ActorSourcedField<Value: Equatable>: Equatable {
     public let source: FormID
 }
 
+nonisolated extension ActorSourcedField: Sendable where Value: Sendable {}
+
 /// Appearance-relevant fields of one actor after template resolution.
-nonisolated public struct ResolvedActorAppearance: Equatable {
+nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     public let base: FormID
     public let chain: [ActorChainLink]
     public let isFemale: ActorSourcedField<Bool>

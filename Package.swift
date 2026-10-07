@@ -511,10 +511,10 @@ targets += feature(
         "OpenSkyInventoryInterface"
     ],
     tests: [
-        "FeaturesTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyCrimeFixtures",
-        "OpenSkyCrimeInterface", "OpenSkyFactionsInterface", "OpenSkyFormatsESM",
-        "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyWorldInterface",
-        "OpenSkyWorldState"
+        "FeaturesTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyConditions",
+        "OpenSkyCrimeFixtures", "OpenSkyCrimeInterface", "OpenSkyFactionsInterface",
+        "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 targets += feature(
@@ -522,10 +522,10 @@ targets += feature(
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
         "OpenSkyFactionsInterface", "OpenSkyCrimeInterface", "OpenSkyMagicInterface",
-        "OpenSkyProgressionInterface", "OpenSkyWorldInterface"
+        "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyConditions"
     ],
     tests: [
-        "FeaturesTesting", "FormatsTesting", "OpenSkyCrimeInterface",
+        "FeaturesTesting", "FormatsTesting", "OpenSkyConditions", "OpenSkyCrimeInterface",
         "OpenSkyFactionsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
@@ -571,8 +571,8 @@ targets += feature(
 targets += feature(
     "OpenSkyDialogue",
     dependencies: [
-        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",
-        "OpenSkyConditions", "OpenSkyQuestsInterface"
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsAudio", "OpenSkyGameData",
+        "OpenSkyWorldState", "OpenSkyConditions", "OpenSkyQuestsInterface"
     ],
     interface: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData", "OpenSkyWorldState",

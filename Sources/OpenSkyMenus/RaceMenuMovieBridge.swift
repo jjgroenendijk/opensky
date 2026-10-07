@@ -65,6 +65,22 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         forward("ConfirmDone") { _, _ in .done }
     }
 
+    /// The panel path that holds the movie's lists in the vanilla race menu.
+    static let panelsPath = "RaceSexMenuBaseInstance.RaceSexPanelsInstance"
+
+    /// False when the movie's category list did not build, so the movie cannot show
+    /// what `publish` sends and the engine rows must stay in charge.
+    public static func listsBuilt(runtime: SWFMovieRuntime) -> Bool {
+        guard
+            let panels = runtime.node(atPath: panelsPath, from: runtime.root),
+            let list = panels.object.lookup("_CategoriesList")?.property.value
+        else { return false }
+        switch list {
+        case .undefined, .null: return false
+        default: return true
+        }
+    }
+
     /// Sends the categories, races, sliders, and name the model holds.
     public static func publish(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
         runtime.callMovie("SetCategoriesList", arguments: [

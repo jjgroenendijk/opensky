@@ -62,7 +62,7 @@ final class WorldSessionWiring {
         game.inventoryWorld.wireWorldItems(provider: provider, streamer: streamer)
         game.lockWorld.wireLocks(provider: provider, streamer: streamer, renderer: renderer)
         // After the item runtime, which owns the equipped set of the body.
-        game.playerWorld.wirePlayerBody(provider: provider, renderer: renderer)
+        game.playerWorld.wirePlayerBody(session: session, renderer: renderer)
         // After `wirePapyrus`, whose `onWorldUpdate` closure these chain onto.
         wireActorSystems(provider: provider, renderer: renderer)
         game.hazardWorld.wireHazards(provider: provider, streamer: streamer, renderer: renderer)

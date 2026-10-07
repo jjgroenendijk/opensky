@@ -34,38 +34,37 @@ final class FakePlayerWorld: PlayerWorld {
     }
 }
 
-/// Assembles nothing, so every build records its reason.
-nonisolated final class FakePlayerBodyProvider: WorldDataProviding, PlayerBodyProviding {
+/// Assembles nothing: each request answers with a failure on the next drain.
+final class FakePlayerRigSource: PlayerRigSource {
     let playerAssetFileSystem: (any GameFileSource)?
-    private(set) var bodyRequests: [[FormID]?] = []
-    private(set) var rigRequests = 0
+    private(set) var requests: [PlayerRigRequest] = []
+    private var pending: [PlayerRigLoadResult] = []
 
     init(fileSystem: (any GameFileSource)? = nil) {
         playerAssetFileSystem = fileSystem
     }
 
-    func makePlayerBody(
-        skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
-        equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
-    ) -> Result<PlayerBody, PlayerBodyError> {
-        bodyRequests.append(equipped)
-        return .failure(.noRenderableGeometry(["no skin"]))
+    var bodyRequests: [[FormID]?] {
+        requests.filter { !$0.firstPerson }.map(\.equipped)
     }
 
-    func makePlayerFirstPersonRig(
-        skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
-        equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
-    ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {
-        rigRequests += 1
-        return .failure(.noRenderableGeometry(["no arms"]))
+    var rigRequests: Int {
+        requests.filter(\.firstPerson).count
+    }
+
+    func requestPlayerRig(_ request: PlayerRigRequest) {
+        requests.append(request)
+        let reason = request.firstPerson ? "no arms" : "no skin"
+        pending.append(PlayerRigLoadResult(
+            request: request, result: .failure(.noRenderableGeometry([reason]))
+        ))
+    }
+
+    func drainPlayerRigs() -> [PlayerRigLoadResult] {
+        defer { pending = [] }
+        return pending
     }
 }
-
-nonisolated struct NoBodyProvider: WorldDataProviding {}
 
 extension PlayerBehaviorGraph {
     /// A graph over one idle clip and the fixture rig, with no install behind it.

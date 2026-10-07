@@ -95,6 +95,10 @@ nonisolated public struct ActorAssembly<Asset> {
     }
 }
 
+nonisolated extension AssembledActorModel: Sendable where Asset: Sendable {}
+
+nonisolated extension ActorAssembly: Sendable where Asset: Sendable {}
+
 nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     public let provider: Provider
 

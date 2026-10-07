@@ -3,6 +3,7 @@
 
 import FeaturesTesting
 import Foundation
+import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
@@ -165,6 +166,8 @@ struct LockCoordinatorTests {
         let world = FakeLockWorld()
         let rig = try Self.coordinator(picks: 2, world: world)
         let locks = rig.locks
+        let recorder = StoryEventRecorder()
+        locks.storyEvents = recorder
         let target = Self.door(level: .novice)
         try locks.beginLockpicking(target)
         let center = try #require(locks.session?.sweetSpotCenter)
@@ -185,6 +188,7 @@ struct LockCoordinatorTests {
         #expect(world.uses.map(\.action) == [.lockpick])
         #expect(world.uses.first?.amount == 2)
         #expect(locks.lastOutcome?.opened == true)
+        #expect(recorder.events("LOCK").map(\.actor1) == [.player])
         locks.closeLockpicking()
         #expect(locks.session == nil)
         withExtendedLifetime(rig) {}

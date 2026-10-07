@@ -1,4 +1,5 @@
-// Finds a cell by editor ID for a console-style `coc`. An exterior cell gives
+// Finds a cell by editor ID for a console-style `coc`, or by FormID for a save. An exterior cell
+// gives
 // its grid. An interior gives a door elsewhere that leads in, because the door
 // transition path is how an interior is built and entered. Pure: file in,
 // value out, so it runs off the main actor.
@@ -17,11 +18,22 @@ nonisolated public enum CellDirectory {
     /// Interior cells live under the CELL top group, exterior ones under WRLD.
     public static func find(editorID: String, in file: ESMFile) -> CellDirectoryEntry? {
         let wanted = editorID.lowercased()
+        return find(in: file) { ESMWalk.editorID(of: $0)?.lowercased() == wanted }
+    }
+
+    /// A save names its cell by FormID, not by editor ID.
+    public static func find(formID: FormID, in file: ESMFile) -> CellDirectoryEntry? {
+        find(in: file) { $0.formID == formID.rawValue }
+    }
+
+    private static func find(
+        in file: ESMFile, matching: (ESMRecord) -> Bool
+    ) -> CellDirectoryEntry? {
         for type: FourCC in ["CELL", "WRLD"] {
             guard let top = file.topGroup(of: type), let children = try? top.children() else {
                 continue
             }
-            if let entry = search(children, wanted: wanted, localized: file.isLocalized) {
+            if let entry = search(children, matching: matching, localized: file.isLocalized) {
                 return entry
             }
         }
@@ -60,20 +72,20 @@ nonisolated public enum CellDirectory {
 
     private static func search(
         _ children: [ESMGroup.Child],
-        wanted: String,
+        matching: (ESMRecord) -> Bool,
         localized: Bool
     ) -> CellDirectoryEntry? {
         for (index, child) in children.enumerated() {
             switch child {
             case let .record(record) where record.type == "CELL":
                 guard
-                    ESMWalk.editorID(of: record)?.lowercased() == wanted,
+                    matching(record),
                     let cell = try? Cell(record: record, localized: localized)
                 else { continue }
                 return entry(for: cell, childrenAfter: index, in: children)
             case let .group(group):
                 guard let nested = try? group.children() else { continue }
-                if let entry = search(nested, wanted: wanted, localized: localized) {
+                if let entry = search(nested, matching: matching, localized: localized) {
                     return entry
                 }
             case .record:

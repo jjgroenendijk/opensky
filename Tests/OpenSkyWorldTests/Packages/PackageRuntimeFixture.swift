@@ -15,7 +15,8 @@ enum PackageRuntimeFixture {
         schedule: Package.Schedule = .anytime,
         condition: ESMField? = nil,
         template: UInt32? = nil,
-        procedureNames: [String] = []
+        procedureNames: [String] = [],
+        dataInputs: [Package.DataInput] = []
     ) throws -> Package {
         var conditions = ConditionList()
         if let condition {
@@ -34,7 +35,7 @@ enum PackageRuntimeFixture {
             schedule: schedule,
             conditions: conditions,
             template: template.map(FormID.init),
-            dataInputs: [],
+            dataInputs: dataInputs,
             procedureTypes: procedureNames,
             scriptData: ScriptData(ownerType: "PACK"),
             skipped: FieldTally()

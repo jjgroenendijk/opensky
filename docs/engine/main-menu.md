@@ -57,9 +57,16 @@ A new game:
    `PlayerStartMarker` alias, on the cart near Helgen, with `ObjectReference.MoveTo`. The
    fragment reads each alias with `GetRef` ([quests](/engine/papyrus-quests.md)).
 
+The loading screen covers the world from the choice of New until the player stands at the
+marker, and the player is then put back into walk mode. The `MQ101` aliases that name unique
+actors fill from the location records ([quest state](/engine/quest-state.md), "What does not
+fill yet").
+
 The race menu then opens where `MQ101` calls `Game.ShowRaceMenu`
 ([race menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart
-scene. OpenSky does not play that scene yet, so a new game waits in the cart. The race menu
+scene. OpenSky does not play that scene yet, so a new game waits beside the carts: the riders
+live in other cells, and `MoveTo` cannot move an actor yet. `debug quest MQ101 75` in the
+[agent control](/tools/agent-control.md) runs the stage that opens the race menu. The race menu
 panel in the sidebar opens the menu by hand.
 
 `MoveTo` moves only the player, without the offset and rotation arguments. A target outside

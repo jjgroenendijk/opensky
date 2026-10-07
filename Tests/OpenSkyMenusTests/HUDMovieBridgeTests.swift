@@ -128,6 +128,9 @@ struct HUDMovieBridgeTests {
         let subtitles = SWFDisplayObject(content: .clip(nil))
         subtitles.name = "SubtitleTextHolder"
         harness.target.addChild(subtitles, atDepth: 11)
+        let grayBar = SWFDisplayObject(content: .clip(nil))
+        grayBar.name = "GrayBarInstance"
+        harness.target.addChild(grayBar, atDepth: 12)
 
         HUDMovieBridge.setCrosshairEnabled(false, runtime: harness.runtime)
         HUDMovieBridge.setCompassHeading(
@@ -147,10 +150,12 @@ struct HUDMovieBridgeTests {
         }
         #expect(!rollover.isVisible)
         #expect(!subtitles.isVisible)
+        #expect(!grayBar.isVisible)
 
         HUDMovieBridge.setAuthoredPlaceholderTextEnabled(true, runtime: harness.runtime)
         #expect(rollover.isVisible)
         #expect(subtitles.isVisible)
+        #expect(grayBar.isVisible)
     }
 
     @Test func activationPromptMapsToTheVanillaTenArgumentCall() throws {

@@ -9,6 +9,7 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import simd
 import TagsTesting
 import Testing
 
@@ -71,6 +72,59 @@ struct MeshLibraryTests {
             .init("NiNode", NIFFixture.niNode(children: [1])),
             .init("BSTriShape", shape())
         ])
+    }
+
+    /// A fire emitter, with a drawable shape like a campfire static or without one.
+    private func fireNIF(withShape: Bool = true) -> Data {
+        let emitter = NIFParticleFixture.boxEmitter(
+            base: NIFParticleFixture.modifierBase(),
+            emitter: NIFParticleFixture.emitterBase(),
+            width: 10, height: 10, depth: 10
+        )
+        let system = NIFParticleFixture.particleSystemSSE(
+            shaderPropertyRef: 4, dataRef: 2, modifierRefs: [3]
+        )
+        let shader = NIFParticleFixture.effectShaderProperty(sourceTexture: "textures/fire.dds")
+        let blocks: [NIFFixture.Block] = [
+            .init("NiNode", NIFFixture.niNode(children: withShape ? [1, 5] : [1])),
+            .init("NiParticleSystem", system),
+            .init("NiPSysData", NIFParticleFixture.psysData(maxParticles: 16)),
+            .init("NiPSysBoxEmitter", emitter),
+            .init("BSEffectShaderProperty", shader)
+        ]
+        return NIFFixture.file(blocks: blocks + (withShape ? [.init("BSTriShape", shape())] : []))
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func aRetexturedModelKeepsItsParticles() throws {
+        let device = try #require(Self.device)
+        try writeLooseFile("meshes/fx/campfire.nif", fireNIF())
+        let library = try library(device: device)
+        let surface = ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil,
+            shapes: [.init(
+                shapeName: "Logs",
+                diffuseTexture: "textures/ash.dds",
+                normalTexture: nil
+            )]
+        )
+        _ = try library.model(path: "meshes\\fx\\campfire.nif", surface: surface)
+        let playbacks = try library.particlePlaybacks(
+            path: "meshes\\fx\\campfire.nif", surface: surface,
+            placementTransform: matrix_identity_float4x4, formID: 1
+        )
+        #expect(playbacks.count == 1)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func aParticleOnlyModelKeepsItsParticles() throws {
+        let device = try #require(Self.device)
+        try writeLooseFile("meshes/fx/flames.nif", fireNIF(withShape: false))
+        let library = try library(device: device)
+        let model = try library.model(path: "meshes\\fx\\flames.nif")
+        let playbacks = try library.particlePlaybacks(
+            path: "meshes\\fx\\flames.nif", placementTransform: matrix_identity_float4x4, formID: 1
+        )
+        #expect(model.meshes.isEmpty)
+        #expect(playbacks.count == 1)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func cachesModelByKey() throws {

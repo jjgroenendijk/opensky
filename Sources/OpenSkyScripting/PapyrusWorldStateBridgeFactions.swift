@@ -56,13 +56,19 @@ extension PapyrusWorldStateBridge {
         toward other: ReferenceKey
     ) -> Bool? {
         guard let runtime = relationshipRuntime?() else { return nil }
-        return runtime.setRank(
+        let old = runtime.rank(of: actor, toward: other, bases: actorBaseIdentity)
+        let changed = runtime.setRank(
             rank,
             of: actor,
             toward: other,
             in: cellLocation(of: actor),
             targetCell: cellLocation(of: other)
         )
+        // A pair no layer named counts as acquaintances (rank 0).
+        if changed, old != rank {
+            _ = story?.sendStoryEvent(.relationshipRank(actor, other, old: old ?? 0, new: rank))
+        }
+        return changed
     }
 
     public func factionReaction(of actor: ReferenceKey, toward other: ReferenceKey) -> Int? {

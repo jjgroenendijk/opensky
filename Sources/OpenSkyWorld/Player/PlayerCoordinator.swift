@@ -16,12 +16,14 @@ public final class PlayerCoordinator {
 
     let input: CameraInputState
     weak var world: (any PlayerWorld)?
-    private var provider: (any PlayerBodyProviding)?
+    private var source: (any PlayerRigSource)?
+    /// Bumped by each rebuild, so a rig assembled for an older set is dropped.
+    private var generation = 0
     /// Held so it stays alive for the session.
     public private(set) var graph: PlayerBehaviorGraph?
     /// Runs beside the third-person graph; the camera mode decides which is drawn.
     public private(set) var firstPersonGraph: PlayerBehaviorGraph?
-    /// The set the current body was assembled from, to detect a change.
+    /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
     private var appearance: PlayerAppearanceOverride?
     /// Why there is no body, when there is none.
@@ -41,12 +43,8 @@ public final class PlayerCoordinator {
     /// Loads both graphs and assembles the body.
     /// - Returns: true when the third-person graph is attached, so the caller
     ///   should call `refreshBody()` every frame.
-    public func wireBody(provider: any WorldDataProviding) -> Bool {
-        guard let bodyProvider = provider as? PlayerBodyProviding else {
-            failureReason = "the scene provider cannot assemble actors"
-            return false
-        }
-        guard let fileSystem = bodyProvider.playerAssetFileSystem else {
+    public func wireBody(source: any PlayerRigSource) -> Bool {
+        guard let fileSystem = source.playerAssetFileSystem else {
             failureReason = PlayerBodyError.noFileSystem.localizedDescription
             return false
         }
@@ -73,7 +71,7 @@ public final class PlayerCoordinator {
                 clipWorker: Self.clipWorker(fileSystem)
             )
         }
-        attach(graph: loaded, firstPerson: firstPerson, provider: bodyProvider)
+        attach(graph: loaded, firstPerson: firstPerson, source: source)
         return true
     }
 
@@ -85,20 +83,21 @@ public final class PlayerCoordinator {
         SerialAssetLoadWorker(load: InstallBehaviorClipSource.load(fileSystem: fileSystem))
     }
 
-    /// Moves finished clip loads into both graphs. Runs at the frame's drain point.
+    /// Moves finished clip loads and rigs in. Runs at the frame's drain point.
     public func drainClipLoads() {
         graph?.clips.drain()
         firstPersonGraph?.clips.drain()
+        drainRigs()
     }
 
     /// The locomotion bridge drops every write until a graph is attached.
     func attach(
         graph: PlayerBehaviorGraph,
         firstPerson: Result<PlayerBehaviorGraph, any Error>,
-        provider: any PlayerBodyProviding
+        source: any PlayerRigSource
     ) {
         self.graph = graph
-        self.provider = provider
+        self.source = source
         world?.playerLocomotion?.attach(graph: graph.instance)
         switch firstPerson {
         case let .success(firstPersonGraph):
@@ -127,24 +126,40 @@ public final class PlayerCoordinator {
 
     /// Both rigs are built from one equipped set, so an equip change reaches both.
     func rebuildBody() {
-        guard
-            let graph,
-            let provider,
-            let world,
-            let locomotion = world.playerLocomotion
-        else { return }
+        guard let source, let world, graph != nil else { return }
         let equipped = world.playerEquippedSet
         let appearance = world.playerAppearanceOverride
-        switch provider.makePlayerBody(
-            skeleton: graph.skeleton, pose: locomotion.pose, equipped: equipped,
-            appearance: appearance
-        ) {
-        case let .success(body):
-            self.equipped = equipped
-            self.appearance = appearance
+        self.equipped = equipped
+        self.appearance = appearance
+        generation += 1
+        for firstPerson in firstPersonGraph == nil ? [false] : [false, true] {
+            source.requestPlayerRig(PlayerRigRequest(
+                generation: generation, firstPerson: firstPerson,
+                equipped: equipped, appearance: appearance
+            ))
+        }
+    }
+
+    func drainRigs() {
+        guard let source else { return }
+        for loaded in source.drainPlayerRigs() where loaded.request.generation == generation {
+            if loaded.request.firstPerson {
+                showFirstPersonRig(loaded.result)
+            } else {
+                showBody(loaded.result)
+            }
+        }
+    }
+
+    private func showBody(_ result: Result<PlayerRigAssembly, PlayerBodyError>) {
+        guard let graph, let world, let locomotion = world.playerLocomotion else { return }
+        switch result {
+        case let .success(rig):
             failureReason = nil
             do {
-                try world.showPlayerBody(body)
+                try world.showPlayerBody(
+                    PlayerBody(rig: rig, skeleton: graph.skeleton, pose: locomotion.pose)
+                )
             } catch {
                 failureReason = String(describing: error)
                 Self.logger.error(
@@ -155,26 +170,19 @@ public final class PlayerCoordinator {
             failureReason = error.localizedDescription
             Self.logger.warning("player body: \(String(describing: error), privacy: .public)")
         }
-        rebuildFirstPersonRig(
-            provider: provider, world: world, equipped: equipped, appearance: appearance
-        )
     }
 
-    private func rebuildFirstPersonRig(
-        provider: any PlayerBodyProviding,
-        world: any PlayerWorld,
-        equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
-    ) {
-        guard let firstPersonGraph, let locomotion = world.playerLocomotion else { return }
-        switch provider.makePlayerFirstPersonRig(
-            skeleton: firstPersonGraph.skeleton,
-            pose: locomotion.firstPersonPose,
-            equipped: equipped,
-            appearance: appearance
-        ) {
-        case let .success(rig):
+    private func showFirstPersonRig(_ result: Result<PlayerRigAssembly, PlayerBodyError>) {
+        guard let firstPersonGraph, let world, let locomotion = world.playerLocomotion else {
+            return
+        }
+        switch result {
+        case let .success(assembly):
             firstPersonFailureReason = nil
+            let rig = PlayerFirstPersonRig(
+                rig: assembly, skeleton: firstPersonGraph.skeleton,
+                pose: locomotion.firstPersonPose
+            )
             do {
                 try world.showFirstPersonRig(rig)
             } catch {

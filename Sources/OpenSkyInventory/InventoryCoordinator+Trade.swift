@@ -1,6 +1,8 @@
 // The container and barter menu transactions. The menu owns the selection;
 // these move the items and the gold. See docs/engine/barter.md.
 
+import OpenSkyConditions
+import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -51,16 +53,27 @@ extension InventoryCoordinator {
         case .take:
             // Through the session, so a single take marks theft the same way
             // "take all" does.
-            let bounty = try ContainerSession(runtime: runtime, container: container).take(item)
+            let session = ContainerSession(runtime: runtime, container: container)
+            let bounty = try session.take(item)
+            reportTaken([InventoryStack(item: item, count: 1)], from: session)
             return InventoryCore.takeSentence(item: name, bounty: bounty)
         case .store:
             try runtime.inventory.transfer(item, count: 1, from: .player, to: container)
+            storyEvents?.reportStoryEvent(.removeItem(
+                item, reference: container.key, owner: nil, how: .putInContainer
+            ))
             return "Stored \(name)."
         case .buy:
             let bought = try barterSession(runtime, container, vendor).buy(item)
+            storyEvents?.reportStoryEvent(.addItem(
+                item, from: container.key, owner: nil, how: .buy
+            ))
             return "Bought \(name) for \(bought.gold) gold."
         case .sell:
             let sold = try barterSession(runtime, container, vendor).sell(item)
+            storyEvents?.reportStoryEvent(.removeItem(
+                item, reference: container.key, owner: nil, how: .given
+            ))
             return "Sold \(name) for \(sold.gold) gold."
         }
     }
@@ -68,7 +81,9 @@ extension InventoryCoordinator {
     public func takeAll(from container: InventoryHolder) -> String {
         guard let runtime else { return InventoryCore.noRuntimeText }
         do {
-            let moved = try ContainerSession(runtime: runtime, container: container).takeAll()
+            let session = ContainerSession(runtime: runtime, container: container)
+            let moved = try session.takeAll()
+            reportTaken(moved, from: session)
             return InventoryCore.takeAllSentence(moved)
         } catch {
             return "Take all failed: \(String(describing: error))"
@@ -86,5 +101,22 @@ extension InventoryCoordinator {
             pricing: barterPricing,
             rules: vendors?.rules(for: vendor) ?? .unrestricted
         )
+    }
+}
+
+extension InventoryCoordinator {
+    /// `AIPL` per stack taken. A container that is an actor is a dead body here,
+    /// because pickpocketing does not use this path.
+    func reportTaken(_ stacks: [InventoryStack], from session: ContainerSession) {
+        let how: StoryAcquireType = switch (session.ownership.isTheft, session.container.owner) {
+        case (true, _): .steal
+        case (false, .actor): .deadBody
+        default: .container
+        }
+        for stack in stacks {
+            storyEvents?.reportStoryEvent(.addItem(
+                stack.item, from: session.container.key, owner: nil, how: how
+            ))
+        }
     }
 }

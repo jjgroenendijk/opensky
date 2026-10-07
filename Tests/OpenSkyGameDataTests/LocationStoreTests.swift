@@ -28,6 +28,23 @@ struct LocationStoreTests {
     }
 
     @Test
+    func uniqueActorsMapEachBaseToItsReference() throws {
+        let file = try plugin(locations: [
+            LocationFixture.recordBytes(
+                0x10,
+                "Town",
+                uniqueActors: [0x50, 0x51, 0x10, 0x60, 0x61, 0x10]
+            )
+        ])
+        let store = LocationStore(plugins: [("Base.esm", file)])
+
+        #expect(store.uniqueActorReferences == [
+            .plugin(name: "base.esm", objectID: 0x50): .plugin(name: "base.esm", objectID: 0x51),
+            .plugin(name: "base.esm", objectID: 0x60): .plugin(name: "base.esm", objectID: 0x61)
+        ])
+    }
+
+    @Test
     func laterPluginWinsByIdentityAndEditorID() throws {
         let base = try plugin(locations: [LocationFixture.recordBytes(0x10, "OldName")])
         let patch = try plugin(

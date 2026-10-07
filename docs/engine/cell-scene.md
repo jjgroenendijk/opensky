@@ -61,10 +61,13 @@ skipped, and counted. It never crashes or stops the build.
 | --- | --- |
 | malformed | The `REFR` does not decode (no `NAME` or `DATA`) |
 | unsupported-base | The base is in neither index, such as `NPC_`, `MISC`, `FLOR`, or `SOUN` |
-| marker | The base has no model, has the `Is Marker` flag, or its mesh is only `EditorMarker` geometry ([world records](/formats/world-records.md#stat), [NIF](/formats/nif.md#from-scene-graph-to-meshes)) |
+| marker | The base has no model, has the `Is Marker` flag, or its mesh is only `EditorMarker` geometry with no particle system ([world records](/formats/world-records.md#stat), [NIF](/formats/nif.md#from-scene-graph-to-meshes)) |
 | load-failed | The mesh is missing, does not parse, or is empty |
 | runtime-disabled | The world state disabled it ([runtime state](/engine/runtime-state.md)) |
 | runtime-deleted | The world state deleted it |
+
+A mesh with particle systems but no drawn shape, such as a siege fire, is not a marker. It
+builds particle playbacks and adds no draw placement.
 
 Not counted: other records in the cell group, such as `NAVM` and `PGRE`, and deleted `REFR`
 records. Actors (`ACHR`) have their own pass and count (see

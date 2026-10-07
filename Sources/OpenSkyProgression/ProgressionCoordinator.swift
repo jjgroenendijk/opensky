@@ -35,6 +35,8 @@ public final class ProgressionCoordinator {
     public internal(set) var lastActionText = "No leveling action yet."
 
     weak var world: (any ProgressionWorld)?
+    /// Takes `SKIL` and `LEVL`.
+    public weak var storyEvents: (any StoryEventReporting)?
 
     public init(perks: PerkCoordinator) {
         self.perks = perks
@@ -168,9 +170,19 @@ public final class ProgressionCoordinator {
 
     private func store(_ runtime: SkillAdvancementRuntime, report: SkillAdvanceReport?) {
         skills = runtime
-        if let report {
-            lastAdvance = report
+        guard let report else { return }
+        lastAdvance = report
+        if report.didAdvance {
+            storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
         }
+        if let levelUp = report.levelUp {
+            reportLevel(levelUp)
+        }
+    }
+
+    func reportLevel(_ report: PlayerLevelUpReport) {
+        guard report.didLevel else { return }
+        storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
     }
 }
 

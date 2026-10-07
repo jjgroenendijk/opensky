@@ -2,6 +2,7 @@
 // settle the ledger, the inventory, the clock, and the player's placement.
 // See docs/engine/guard-response.md.
 
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -32,6 +33,7 @@ extension CrimeCoordinator: CrimeArrestSession {
         }
         switch result {
         case let .success(settlement):
+            reportArrest(settlement)
             serve(settlement)
         case let .failure(refusal):
             lastGuardText = "Arrest with \(factionName(faction)) refused: \(refusal)."
@@ -79,5 +81,21 @@ extension CrimeCoordinator: CrimeArrestSession {
         lastGuardText = CrimeCore.settlementText(
             settlement, factionName: factionName(settlement.faction), moved: moved
         )
+    }
+
+    /// `ARRT`, and `JAIL` when the player serves time. The location is left for
+    /// the story manager to fill. `ARRT` names no crime type yet.
+    private func reportArrest(_ settlement: ArrestSettlement) {
+        guard
+            case let .confront(guardKey, faction, _) = guards.active,
+            faction == settlement.faction
+        else { return }
+        storyEvents?.reportStoryEvent(.arrest(
+            guardActor: guardKey, criminal: .player, location: nil, crime: .steal
+        ))
+        guard settlement.sentenceDays > 0 else { return }
+        storyEvents?.reportStoryEvent(.jail(
+            location: nil, guardActor: guardKey, crimeFaction: faction, gold: settlement.bounty
+        ))
     }
 }

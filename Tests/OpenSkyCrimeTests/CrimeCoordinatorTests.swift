@@ -3,6 +3,7 @@
 // sentences and lists are tested in `CrimeCoreTests`.
 
 import FeaturesTesting
+import OpenSkyConditions
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
@@ -69,6 +70,26 @@ struct CrimeCoordinatorTests {
 
         #expect(coordinator.crimeGold(of: Self.hold) > assault)
         #expect(coordinator.lastActionText.hasPrefix("Murder:"))
+    }
+
+    @Test func aReportedMurderFiresTheCrimeEventsAndSetsTheKillStatus() throws {
+        let world = FakeCrimeSessionWorld()
+        let coordinator = try Self.coordinator(world)
+        let recorder = StoryEventRecorder()
+        coordinator.storyEvents = recorder
+        #expect(coordinator.killStatus(of: Self.victim, by: .player) == .notMurder)
+        coordinator.reportAssault(on: Self.victim, wasHostile: false)
+        coordinator.reportMurder(of: Self.victim)
+        coordinator.reportMurder(of: Self.victim)
+
+        #expect(recorder.events("ASSU").map(\.actor2) == [Self.victim])
+        let gold = recorder.events("ADCR")
+        #expect(gold.map(\.value2) == [
+            Float(StoryCrimeType.assault.rawValue), Float(StoryCrimeType.murder.rawValue)
+        ])
+        #expect(gold.allSatisfy { $0.actor1 == .player && $0.value1 > 0 && $0.form != nil })
+        #expect(coordinator.killStatus(of: Self.victim, by: .player) == .reportedMurder)
+        #expect(coordinator.killStatus(of: Self.victim, by: Self.guardKey) == .notMurder)
     }
 
     @Test func trespassIsNoticedOnceOnArrival() throws {

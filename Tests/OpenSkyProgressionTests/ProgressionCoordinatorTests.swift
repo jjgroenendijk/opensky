@@ -161,4 +161,20 @@ struct ProgressionCoordinatorTests {
 
         #expect(world.wornArmorReads == [target])
     }
+
+    // MARK: - Story events
+
+    @Test func aSkillPointAndALevelUpFireTheirStoryEvents() throws {
+        let coordinator = try coordinator(world: FakeProgressionWorld())
+        let recorder = StoryEventRecorder()
+        coordinator.storyEvents = recorder
+
+        #expect(coordinator.incrementSkill(oneHanded))
+        coordinator.awardCharacterExperience(100_000)
+
+        #expect(recorder.events("SKIL").map(\.value1) == [Float(oneHanded)])
+        let level = try #require(coordinator.leveling?.level)
+        #expect(level > 1)
+        #expect(recorder.events("LEVL").last?.value1 == Float(level))
+    }
 }

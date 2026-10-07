@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
@@ -38,9 +37,14 @@ extension RaceMenuCoordinator {
                     self?.pendingMovieRequests.append(request)
                 }
             }
-            guard started != nil else {
+            guard let started else {
                 movieLoaded = false
                 movieError = "SWF runtime unavailable."
+                return
+            }
+            guard RaceMenuMovieBridge.listsBuilt(runtime: started) else {
+                stopMovie()
+                movieError = "The movie's lists did not build; the engine rows are in charge."
                 return
             }
             try renderer.updateSWFRuntime { RaceMenuMovieBridge.publish(model, runtime: $0) }

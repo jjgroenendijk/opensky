@@ -37,10 +37,14 @@ final class AgentWorldAdapter {
 
     /// True once a cell is in the scene and no door transition is loading.
     var isWorldReady: Bool {
+        isWorldLoaded && !game.loadingScreens.isCovering
+    }
+
+    /// Cells are in, whether or not a loading screen still covers them. A teleport
+    /// that put up the cover waits for this, because it lifts the cover itself.
+    var isWorldLoaded: Bool {
         guard game.renderer != nil, let streamer = game.streamer else { return false }
-        guard streamer.transitionInFlight == nil, !game.loadingScreens.isCovering else {
-            return false
-        }
+        guard streamer.transitionInFlight == nil else { return false }
         return streamer.interiorScene != nil || !streamer.composition.cells.isEmpty
     }
 

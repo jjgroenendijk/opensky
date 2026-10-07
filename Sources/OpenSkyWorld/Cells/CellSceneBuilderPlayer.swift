@@ -34,33 +34,24 @@ nonisolated public enum PlayerBodyError: LocalizedError, Equatable {
     }
 }
 
-/// What a scene provider has to answer for the app to draw a player.
-nonisolated public protocol PlayerBodyProviding {
-    /// The mounted archives, for loading the behavior graph and its clips.
-    var playerAssetFileSystem: (any GameFileSource)? { get }
-
-    /// Assembles the body and binds it to `pose`, the buffer the locomotion
-    /// bridge publishes graph poses into.
-    func makePlayerBody(
-        skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
-        equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
-    ) -> Result<PlayerBody, PlayerBodyError>
-
-    /// Assembles the first-person arms from the same equipped set, over the
-    /// first-person rig and the first-person graph's pose.
-    func makePlayerFirstPersonRig(
-        skeleton: HKASkeleton,
-        pose: PlayerPoseBuffer,
-        equipped: [FormID]?,
-        appearance: PlayerAppearanceOverride?
-    ) -> Result<PlayerFirstPersonRig, PlayerBodyError>
-}
-
-nonisolated extension CellSceneBuilder: PlayerBodyProviding {
-    public var playerAssetFileSystem: (any GameFileSource)? {
-        fileSystem
+nonisolated extension CellSceneBuilder {
+    /// Runs on the build queue; the main actor binds the result to the live pose.
+    public func assemblePlayerRig(
+        _ request: PlayerRigRequest
+    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+        assemblePlayer(
+            equipped: request.equipped,
+            appearance: request.appearance,
+            firstPerson: request.firstPerson,
+            label: request.firstPerson ? "player arms" : "player body"
+        )
+        .map { assembly in
+            let morphs = request.firstPerson ? nil : request.appearance
+            return PlayerRigAssembly(
+                assembly: assembly,
+                faceMorphs: morphs.map { chargenMorphs(assembly: assembly, appearance: $0) } ?? [:]
+            )
+        }
     }
 
     public func makePlayerBody(
@@ -69,20 +60,11 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
         equipped: [FormID]?,
         appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerBody, PlayerBodyError> {
-        assemblePlayer(
-            equipped: equipped, appearance: appearance, firstPerson: false, label: "player body"
+        let request = PlayerRigRequest(
+            generation: 0, firstPerson: false, equipped: equipped, appearance: appearance
         )
-        .map { assembly in
-            PlayerBody(
-                assembly: assembly,
-                animation: PlayerAnimationPlayback(
-                    skeleton: skeleton,
-                    pose: pose,
-                    models: assembly.models.map(\.asset.model)
-                ),
-                faceMorphs: appearance
-                    .map { chargenMorphs(assembly: assembly, appearance: $0) } ?? [:]
-            )
+        return assemblePlayerRig(request).map {
+            PlayerBody(rig: $0, skeleton: skeleton, pose: pose)
         }
     }
 
@@ -92,18 +74,11 @@ nonisolated extension CellSceneBuilder: PlayerBodyProviding {
         equipped: [FormID]?,
         appearance: PlayerAppearanceOverride?
     ) -> Result<PlayerFirstPersonRig, PlayerBodyError> {
-        assemblePlayer(
-            equipped: equipped, appearance: appearance, firstPerson: true, label: "player arms"
+        let request = PlayerRigRequest(
+            generation: 0, firstPerson: true, equipped: equipped, appearance: appearance
         )
-        .map { assembly in
-            PlayerFirstPersonRig(
-                assembly: assembly,
-                animation: PlayerAnimationPlayback(
-                    skeleton: skeleton,
-                    pose: pose,
-                    models: assembly.models.map(\.asset.model)
-                )
-            )
+        return assemblePlayerRig(request).map {
+            PlayerFirstPersonRig(rig: $0, skeleton: skeleton, pose: pose)
         }
     }
 

@@ -226,7 +226,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             scripts: game.scripts.runtime?.instanceStates() ?? [],
             timers: game.scripts.runtime?.timerStates() ?? [],
             summary: summary,
-            thumbnail: thumbnail
+            thumbnail: thumbnail,
+            playerPlace: playerPlace()
         )
         let store = try await store()
         try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
@@ -264,5 +265,19 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // them. Player only: other actors have no holder until their cells
         // stream back in (docs/engine/magic.md).
         game.magic.withEffects { $0.reestablishModifiers(on: .player) }
+        if let place = file.playerPlace {
+            game.menuWorld.restorePlayerPlace(place)
+        }
+    }
+
+    /// Interior coordinates are local to the cell, as the camera holds them there.
+    /// The restore stands the player at these feet, so fly mode saves the camera.
+    private func playerPlace() -> SavePlayerPlace? {
+        guard let cell = game.streamer?.currentCellLocation, let renderer = game.renderer else {
+            return nil
+        }
+        let feet = renderer.movementMode.isPlayerControlled
+            ? renderer.walkController.feetPosition : renderer.freeFlyCamera.position
+        return SavePlayerPlace(cell: cell, feet: feet, yaw: renderer.freeFlyCamera.yaw)
     }
 }

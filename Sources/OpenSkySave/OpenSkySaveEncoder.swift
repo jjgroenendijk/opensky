@@ -11,7 +11,8 @@ import OpenSkyWorldState
 nonisolated public enum OpenSkySaveEncoder: Sendable {
     /// Serializes a snapshot, its fingerprint and header metadata, byte-deterministic:
     /// key order, ascending tags, no clock or hash seed. Only the header depends on
-    /// `metadata`. A nil `clock`, `summary`, or `thumbnail`, or empty `scripts`/`timers`,
+    /// `metadata`. A nil `clock`, `summary`, `thumbnail`, or `playerPlace`, or empty
+    /// `scripts`/`timers`,
     /// writes no chunk.
     public static func encode(
         snapshot: WorldStateSnapshot,
@@ -21,7 +22,8 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         scripts: [PapyrusInstanceState] = [],
         timers: [PapyrusTimerState] = [],
         summary: SaveSummary? = nil,
-        thumbnail: SaveThumbnail? = nil
+        thumbnail: SaveThumbnail? = nil,
+        playerPlace: SavePlayerPlace? = nil
     ) -> Data {
         var writer = BinaryWriter()
         writeHeader(metadata: metadata, into: &writer)
@@ -74,6 +76,9 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
                     writeTimer(state, into: &payload)
                 }
             }
+        }
+        if let playerPlace {
+            writePlayerPlace(playerPlace, into: &writer)
         }
         writeComponentChunks(snapshot.entries, into: &writer)
         return writer.data

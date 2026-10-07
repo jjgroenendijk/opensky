@@ -1,6 +1,6 @@
 // One scene's step through its phases. Start and end phases are 0-based indices
-// into the phase list, as the SCEN records store them. Actions on an empty alias
-// are done at once, as the Creation Kit says of dead or disabled actors.
+// into the phase list, as the SCEN records store them. The actions are in
+// `SceneRuntimePlaybackActions.swift`.
 
 import Foundation
 import OpenSkyConditions
@@ -13,7 +13,7 @@ import OpenSkyWorldState
 @MainActor
 extension SceneRuntime {
     /// Seconds a line lasts when no host says otherwise.
-    static let defaultLineDuration: Float = 3
+    static let defaultLineDuration = SceneLine.defaultSeconds
 
     struct Playback {
         let runtime: SceneRuntime
@@ -23,7 +23,7 @@ extension SceneRuntime {
         private let initial: SceneRuntimeState?
         private var events: [SceneEvent] = []
         private var ended = false
-        private var evaluator: ConditionEvaluator
+        var evaluator: ConditionEvaluator
 
         init(runtime: SceneRuntime, entry: CatalogScene, state: SceneRuntimeState, isNew: Bool) {
             self.runtime = runtime
@@ -40,7 +40,7 @@ extension SceneRuntime {
             )
         }
 
-        private var scene: Scene {
+        var scene: Scene {
             entry.scene
         }
 
@@ -120,82 +120,12 @@ extension SceneRuntime {
             action.endPhase ?? action.startPhase ?? 0
         }
 
-        private mutating func start(_ index: UInt32, _ action: SceneAction) {
-            note(.actionStarted(index))
-            switch action.payload {
-            case let .timer(seconds):
-                run(index, duration: seconds ?? 0)
-            case let .dialogue(dialogue):
-                guard let speaker = actor(of: action) else {
-                    note(.emptyAlias(index))
-                    complete(index)
-                    return
-                }
-                let topic = entry.translation?(dialogue.topic) ?? dialogue.topic
-                say(index, topic: topic, speaker: speaker)
-            case .package, .unknown:
-                note(.unsupportedAction(index, type: action.type))
-                complete(index)
-            }
-        }
-
-        private mutating func say(_ index: UInt32, topic id: FormID?, speaker: ReferenceKey) {
-            let dialogue = runtime.dialogue
-            guard
-                let topic = id.flatMap({ dialogue.dialogue.topic($0) }),
-                let offer = dialogue.selectTopics([topic], speaker: speaker).offers.first,
-                (try? dialogue.choose(offer.info, speaker: speaker)) != nil
-            else {
-                note(.noLine(index))
-                complete(index)
-                return
-            }
-            let line = SceneLine(speaker: speaker, topic: topic.formID, info: offer.info)
-            note(.line(line))
-            let duration = dialogue.dialogue.info(offer.info)
-                .map { runtime.host?.lineDuration(of: $0) ?? SceneRuntime.defaultLineDuration }
-            run(index, duration: duration ?? SceneRuntime.defaultLineDuration)
-        }
-
-        private func actor(of action: SceneAction) -> ReferenceKey? {
-            guard let alias = action.aliasID, alias >= 0, let quest = entry.quest else {
-                return nil
-            }
-            return evaluator.context.aliases.reference(alias: UInt32(alias), in: quest)
-        }
-
-        private mutating func run(_ index: UInt32, duration: Float) {
-            var running = state.running
-            let progress = SceneActionProgress(
-                action: index,
-                startedAt: runtime.now,
-                duration: duration
-            )
-            running.append(progress)
-            state = SceneRuntimeState(
-                phase: state.phase, phaseEntered: state.phaseEntered,
-                running: running, completed: state.completed
-            )
-        }
-
-        private mutating func complete(_ index: UInt32) {
-            state = SceneRuntimeState(
-                phase: state.phase, phaseEntered: state.phaseEntered,
-                running: state.running.filter { $0.action != index },
-                completed: state.completed + [index]
-            )
-            note(.actionCompleted(index))
-        }
-
-        private mutating func completeDoneActions() {
-            for progress in state.running where progress.isDone(at: runtime.now) {
-                complete(progress.action)
-            }
-        }
-
         mutating func end(_ reason: SceneEndReason) {
             guard !ended else { return }
             ended = true
+            for progress in state.running {
+                releaseAction(progress.action)
+            }
             runFragment(slot: 0x02)
             note(.ended(reason))
             let stopsQuest = scene.flags.contains(.stopQuestOnEnd)

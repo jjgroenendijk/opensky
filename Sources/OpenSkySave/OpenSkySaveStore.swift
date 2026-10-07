@@ -114,6 +114,7 @@ nonisolated public struct OpenSkySaveStore: Sendable {
         timers: [PapyrusTimerState] = [],
         summary: SaveSummary? = nil,
         thumbnail: SaveThumbnail? = nil,
+        playerPlace: SavePlayerPlace? = nil,
         toSlot slot: String
     ) throws -> URL {
         let destination = try url(forSlot: slot)
@@ -125,7 +126,8 @@ nonisolated public struct OpenSkySaveStore: Sendable {
             scripts: scripts,
             timers: timers,
             summary: summary,
-            thumbnail: thumbnail
+            thumbnail: thumbnail,
+            playerPlace: playerPlace
         )
         try OpenSkySaveIO.writeAtomically(data, to: destination)
         return destination

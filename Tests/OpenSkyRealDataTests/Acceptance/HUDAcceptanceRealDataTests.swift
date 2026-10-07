@@ -90,6 +90,7 @@ struct HUDAcceptanceRealDataTests {
     ) throws {
         for path in [
             "/HUDMovieBaseInstance/RolloverInfoInstance",
+            "/HUDMovieBaseInstance/GrayBarInstance",
             "/HUDMovieBaseInstance/SubtitleTextHolder"
         ] {
             let node = try #require(runtime.node(atPath: path, from: runtime.root))

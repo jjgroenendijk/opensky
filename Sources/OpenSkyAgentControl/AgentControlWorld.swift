@@ -60,6 +60,8 @@ public protocol AgentControlWorld: AnyObject {
     func look(yawDegrees: Float, pitchDegrees: Float) throws(AgentFailure)
     /// Moves the top menu's selection to the row with this visible label.
     func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON
+    /// Types into the open menu that takes text, such as the race menu's name row.
+    func typeText(_ text: String) throws(AgentFailure) -> AgentJSON
 
     /// A window capture waits for the next presented frame, so it may return a wait.
     func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure) -> AgentHandling

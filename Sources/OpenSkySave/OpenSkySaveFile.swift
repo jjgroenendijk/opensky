@@ -26,6 +26,8 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
     /// Pending Papyrus update timers at save time; empty without a `PTMR` chunk, so no
     /// `OnUpdate` is pending.
     public let timers: [PapyrusTimerState]
+    /// Where the player stood; nil without a `PLOC` chunk.
+    public let playerPlace: SavePlayerPlace?
 
     public init(
         formatVersion: UInt32,
@@ -35,7 +37,8 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
         allocator: GeneratedReferenceAllocator,
         clock: GameClock? = nil,
         scripts: [PapyrusInstanceState] = [],
-        timers: [PapyrusTimerState] = []
+        timers: [PapyrusTimerState] = [],
+        playerPlace: SavePlayerPlace? = nil
     ) {
         self.formatVersion = formatVersion
         self.metadata = metadata
@@ -45,6 +48,7 @@ nonisolated public struct OpenSkySaveFile: Equatable, Sendable {
         self.clock = clock
         self.scripts = scripts
         self.timers = timers
+        self.playerPlace = playerPlace
     }
 
     /// Checks the saved load order against the installed one. A reorder is a mismatch,

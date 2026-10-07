@@ -255,3 +255,36 @@ struct CellBuildRunnerTests {
         #expect(!metric.actorAnimationFailuresAreExplained)
     }
 }
+
+extension CellBuildRunnerTests {
+    @Test
+    func aPlayerRigIsAssembledOnTheQueueAndDrainedOnce() throws {
+        let runner = SerialCellBuildRunner(provider: FakeProvider())
+        let request = PlayerRigRequest(
+            generation: 3, firstPerson: false, equipped: [FormID(0x12EB7)], appearance: nil
+        )
+        runner.enqueuePlayerRig(request)
+        runner.waitUntilIdle()
+        let drained = runner.drainCompletedPlayerRigs()
+        #expect(drained.map(\.request) == [request])
+        let result = try #require(drained.first?.result)
+        #expect(throws: PlayerBodyError.noFileSystem) { try result.get() }
+        #expect(runner.drainCompletedPlayerRigs().isEmpty)
+    }
+
+    /// A slider drag queues many rebuilds; only the newest of each kind is built.
+    @Test
+    func aReplacedRigRequestIsSkippedBeforeItIsBuilt() {
+        let runner = SerialCellBuildRunner(provider: FakeProvider())
+        let gate = DispatchSemaphore(value: 0)
+        runner.queue.async { gate.wait() }
+        let requests = [(1, false), (1, true), (2, false), (2, true), (3, false)].map {
+            PlayerRigRequest(generation: $0.0, firstPerson: $0.1, equipped: nil, appearance: nil)
+        }
+        requests.forEach(runner.enqueuePlayerRig)
+        gate.signal()
+        runner.waitUntilIdle()
+        let built = runner.drainCompletedPlayerRigs().map(\.request)
+        #expect(built == [requests[3], requests[4]])
+    }
+}

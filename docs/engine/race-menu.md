@@ -125,7 +125,14 @@ measured with `openskycli swf movie-probe`.
 Each change goes through the same model as the panel rows, so the head updates the same way.
 Sound and camera calls are accepted and ignored.
 
+Before it sends the lists, the engine checks that the movie built its category list. When
+it did not, the movie closes and the engine rows stay in charge. The sidebar race menu panel
+shows those rows, and the arrow keys move them.
+
 ## Not done yet
 
+- The movie's panel lists stay `undefined` in OpenSky's AS2 runtime, so the movie falls
+  back to the engine rows every time. The movie also names its slider call
+  `SetOptionSliders`, not `SetSliders`.
 - The `racesex_menu.swf` movie shows OpenSky's own rows. The movie's camera, zoom, and
   preset buttons are not answered.

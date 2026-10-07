@@ -58,6 +58,11 @@ final class FakeAgentWorld: AgentControlWorld {
         ["selected": .string(label)]
     }
 
+    func typeText(_ text: String) throws(AgentFailure) -> AgentJSON {
+        inputLog.append("text \(text)")
+        return ["typed": .string(text)]
+    }
+
     func captureScreenshot(_ request: AgentScreenshotRequest) throws(AgentFailure)
         -> AgentHandling
     {

@@ -2,6 +2,7 @@
 // runtimes, the open container session, and the panel readout lines. The
 // rules live in `InventoryCore`. See docs/engine/coordinators.md.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -42,6 +43,10 @@ public final class InventoryCoordinator {
     weak var skillUses: (any SkillUseReporting)?
 
     weak var world: (any InventoryWorld)?
+    /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.
+    public weak var storyEvents: (any StoryEventReporting)? {
+        didSet { locks.storyEvents = storyEvents }
+    }
 
     public init() {}
 
@@ -97,6 +102,9 @@ public final class InventoryCoordinator {
         }
         do {
             let outcome = try runtime.take(interaction)
+            storyEvents?.reportStoryEvent(.addItem(
+                outcome.item, from: nil, owner: nil, how: outcome.stolen ? .steal : .pickUp
+            ))
             return note("Took \(outcome.count) × \(interaction.name).")
         } catch {
             return note("Take failed: \(String(describing: error))")
@@ -129,7 +137,9 @@ public final class InventoryCoordinator {
         guard runtime != nil else { return InventoryCore.noRuntimeText }
         guard let session else { return InventoryCore.noContainerText }
         do {
-            return try note(InventoryCore.takeAllSentence(session.takeAll()))
+            let moved = try session.takeAll()
+            reportTaken(moved, from: session)
+            return note(InventoryCore.takeAllSentence(moved))
         } catch {
             return note("Take all failed: \(String(describing: error))")
         }
@@ -157,6 +167,9 @@ public final class InventoryCoordinator {
         }
         do {
             try runtime.drop(target, count: count, at: placement)
+            storyEvents?.reportStoryEvent(.removeItem(
+                target, reference: nil, owner: nil, how: .dropped
+            ))
             return note("Dropped \(count) × \(name(of: target)) in front of the player.")
         } catch {
             return note("Drop failed: \(String(describing: error))")

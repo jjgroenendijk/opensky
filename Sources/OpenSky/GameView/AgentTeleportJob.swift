@@ -8,6 +8,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
+import OpenSkySave
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -31,6 +32,8 @@ final class AgentTeleportJob {
     private var referenceLookup: Result<PlacedReference.Placement?, AgentFailure>?
     /// Where a reference outside the loaded cells stands, once its cell has loaded.
     private var exactFeet: SIMD3<Float>?
+    /// A saved facing; other moves keep the current one.
+    private var exactYaw: Float?
 
     private var game: GameViewController {
         adapter.game
@@ -78,7 +81,27 @@ final class AgentTeleportJob {
             enterGrid(CellCoordinate(x: x, y: y))
         case let .cell(editorID):
             phase = .lookingUp
-            try startLookup(editorID)
+            try startLookup { CellDirectory.find(editorID: editorID, in: $0) }
+        }
+    }
+
+    /// A loaded save's place: its cell loads first, then the player stands where the save was made.
+    init(adapter: AgentWorldAdapter, place: SavePlayerPlace) throws(AgentFailure) {
+        self.adapter = adapter
+        guard let streamer = adapter.game.streamer, adapter.game.renderer != nil else {
+            throw adapter.notReady()
+        }
+        guard streamer.transitionInFlight == nil else {
+            throw AgentFailure(.notReady, "a door transition is still loading")
+        }
+        exactFeet = place.feet
+        exactYaw = place.yaw
+        phase = .lookingUp
+        switch place.cell {
+        case .exterior:
+            enterGrid(CellCoordinate(containing: place.feet))
+        case let .interior(cell):
+            try startLookup { CellDirectory.find(formID: cell, in: $0) }
         }
     }
 
@@ -110,7 +133,7 @@ final class AgentTeleportJob {
         case let .loadingGrid(grid):
             guard
                 streamer.composition.cells[grid] != nil,
-                adapter.isWorldReady else { return .wait }
+                adapter.isWorldLoaded else { return .wait }
             snapToGround(in: grid)
             phase = settling()
         case let .loadingInterior(cell):
@@ -118,10 +141,13 @@ final class AgentTeleportJob {
                 streamer.transitionInFlight == nil,
                 streamer.interiorScene?.location == .interior(cell)
             else { return .wait }
+            if let exactFeet, let renderer = game.renderer {
+                place(at: exactFeet, renderer: renderer, streamer: streamer, leavingInterior: false)
+            }
             phase = settling()
         case let .settling(untilFrame):
             guard
-                adapter.isWorldReady,
+                adapter.isWorldLoaded,
                 game.simulationClock.frame >= untilFrame else { return .wait }
             return try .done(.success(adapter.query(.player)))
         }
@@ -134,13 +160,15 @@ final class AgentTeleportJob {
 
     // MARK: - Cells by editor ID
 
-    private func startLookup(_ editorID: String) throws(AgentFailure) {
+    private func startLookup(
+        _ find: @escaping @Sendable (ESMFile) -> CellDirectoryEntry?
+    ) throws(AgentFailure) {
         guard let root = adapter.dataRoot else {
             throw AgentFailure(.notReady, "no game data is loaded")
         }
         let url = root.dataURL.appending(path: "Skyrim.esm")
         Task { [weak self] in
-            let result = await Self.findCell(editorID, in: url)
+            let result = await Self.findCell(find, in: url)
             self?.lookup = result
         }
     }
@@ -159,7 +187,7 @@ final class AgentTeleportJob {
         }
         guard let lookup else { return }
         guard let entry = try lookup.get() else {
-            throw AgentFailure(.notFound, "no cell with that editor ID in Skyrim.esm")
+            throw AgentFailure(.notFound, "no such cell in Skyrim.esm")
         }
         switch entry {
         case let .exterior(_, grid):
@@ -177,12 +205,12 @@ final class AgentTeleportJob {
 
     @concurrent
     nonisolated private static func findCell(
-        _ editorID: String,
+        _ find: @Sendable (ESMFile) -> CellDirectoryEntry?,
         in url: URL
     ) async -> Result<CellDirectoryEntry?, AgentFailure> {
         do {
             let file = try ESMFile(url: url)
-            return .success(CellDirectory.find(editorID: editorID, in: file))
+            return .success(find(file))
         } catch {
             return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
         }
@@ -250,7 +278,7 @@ final class AgentTeleportJob {
         streamer: CellStreamer,
         leavingInterior: Bool = true
     ) {
-        let rotation = SIMD3<Float>(0, 0, renderer.freeFlyCamera.yaw)
+        let rotation = SIMD3<Float>(0, 0, exactYaw ?? renderer.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(position: feet, rotation: rotation))
         if leavingInterior, streamer.interiorScene != nil {
             streamer.leaveInterior(camera: camera)

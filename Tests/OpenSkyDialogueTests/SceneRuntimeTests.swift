@@ -148,4 +148,97 @@ struct SceneRuntimeTests {
         #expect(SceneCore.lineDuration(texts: ["Hi"]) == 1.5)
         #expect(SceneCore.lineDuration(texts: [String(repeating: "a", count: 30), nil]) == 5)
     }
+
+    // MARK: - Package actions and line timing
+
+    private let walk = FormID(SceneFixture.packageSceneID)
+
+    /// The actor runs the package until it is done; then the lines play.
+    @Test func aPackageActionRunsUntilItsPackageIsDone() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.packageScene()
+        let host = FakeSceneHost()
+        let speaker = DialogueRuntimeFixture.speakerKey
+        let started = try SceneFixture.runtime(store: store, scene: scene, host: host).start(walk)
+        #expect(steps(started).contains(.packageStarted(0, actor: speaker)))
+        #expect(!steps(started)
+            .contains {
+                if case .unsupportedAction = $0 {
+                    true
+                } else {
+                    false
+                }
+            })
+        #expect(host.running[speaker] == [FormID(SceneFixture.walkPackage)])
+        #expect(try SceneFixture.runtime(store: store, scene: scene, now: 30, host: host)
+            .tick().isEmpty)
+
+        host.packageDone = true
+        let events = try SceneFixture.runtime(store: store, scene: scene, now: 31, host: host)
+            .tick()
+        #expect(Array(steps(events).prefix(4)) == [
+            .packageDone(0), .actionCompleted(0), .phaseCompleted(0, byConditions: false),
+            .phaseStarted(1)
+        ])
+        #expect(host.running[speaker] == nil)
+        #expect(host.released == [speaker])
+    }
+
+    /// Stopping a scene hands the package actor back to its schedule.
+    @Test func stoppingASceneReleasesItsPackageActor() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.packageScene()
+        let host = FakeSceneHost()
+        let runtime = try SceneFixture.runtime(store: store, scene: scene, host: host)
+        try runtime.start(walk)
+        runtime.stop(walk)
+        #expect(host.released == [DialogueRuntimeFixture.speakerKey])
+    }
+
+    /// A line waits for its voice file, then lasts as long as the file. The next
+    /// phase's line starts in the tick the first one ends.
+    @Test func linesLastTheirVoiceFileWithNoGap() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.packageScene()
+        let host = FakeSceneHost()
+        let pending = ScenePendingLines()
+        func tick(_ now: Double) throws -> [SceneStep] {
+            try steps(SceneFixture.runtime(
+                store: store, scene: scene, now: now, host: host, pendingLines: pending
+            ).tick())
+        }
+        host.packageDone = true
+        host.lineSeconds = nil
+        let started = try steps(SceneFixture.runtime(
+            store: store, scene: scene, host: host, pendingLines: pending
+        ).start(walk))
+        #expect(started.contains(.voiceLoading(1)))
+        #expect(try tick(10).isEmpty)
+
+        host.lineSeconds = 4
+        #expect(try lines(tick(20)) == [4])
+        #expect(pending.isEmpty)
+        #expect(try tick(23.9).isEmpty)
+        let next = try tick(24)
+        #expect(next.prefix(3) == [
+            .actionCompleted(1),
+            .phaseCompleted(1, byConditions: false),
+            .phaseStarted(2)
+        ])
+        #expect(lines(next) == [4])
+        #expect(try tick(28).suffix(2) == [
+            .phaseCompleted(2, byConditions: false),
+            .ended(.finished)
+        ])
+    }
+
+    private func lines(_ steps: [SceneStep]) -> [Float] {
+        steps.compactMap {
+            if case let .line(line) = $0 {
+                line.seconds
+            } else {
+                nil
+            }
+        }
+    }
 }

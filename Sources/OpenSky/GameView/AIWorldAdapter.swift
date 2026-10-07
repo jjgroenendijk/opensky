@@ -39,8 +39,10 @@ final class AIWorldAdapter {
     func wireNPCMovement(renderer: Renderer, streamer: CellStreamer) {
         streamer.npcMovementConfiguration = renderer.locomotion.configuration
         let worldState = game.worldState
-        streamer.onNPCMovementPersist = { persistence in
+        let packages = game.packages
+        streamer.onNPCMovementPersist = { [weak packages] persistence in
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
+            packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
         streamer.onNPCPosesChanged = { [weak renderer] deltas in
             renderer?.npcInstanceDeltas = deltas
@@ -60,7 +62,7 @@ final class AIWorldAdapter {
         let advancePreviousSystems = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak packages] delta in
             advancePreviousSystems?(delta)
-            packages?.advance()
+            packages?.advance(by: Float(delta))
         }
     }
 
@@ -111,6 +113,51 @@ extension AIWorldAdapter: PackageWorld {
             references: game.streamer?.residentReferenceIndex()
                 ?? RuntimeReferenceIndex(entries: [])
         )
+    }
+}
+
+extension AIWorldAdapter {
+    func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
+        guard actor != .player else { return game.renderer?.locomotion.status.feetPosition }
+        guard let streamer = game.streamer else { return nil }
+        if let live = streamer.npcTransform(for: actor) {
+            return live.position
+        }
+        return streamer.referenceEntry(key: actor).flatMap(Self.placedPosition)
+    }
+
+    /// Places OpenSky can name: a reference, a reference alias, and the actor itself.
+    func packagePlace(
+        of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> PackagePlace? {
+        let point: SIMD3<Float>? = switch location.kind {
+        case .nearReference, .inCell:
+            location.formID
+                .flatMap { game.streamer?.residentReferenceIndex().entry(for: $0) }
+                .flatMap(Self.placedPosition)
+        case .referenceAlias:
+            aliasQuest
+                .flatMap {
+                    game.scripts.bridge?.questRuntime?.aliasResolution()
+                        .reference(alias: location.value, in: $0)
+                }
+                .flatMap(packageActorPosition)
+        case .nearSelf, .nearPackageStart:
+            packageActorPosition(actor)
+        case .nearEditorLocation:
+            game.streamer?.referenceEntry(key: actor).flatMap(Self.placedPosition)
+        default:
+            nil
+        }
+        return point.map { PackagePlace(point: $0, radius: location.radius) }
+    }
+
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+        game.streamer?.moveActor(actor, to: point) == .started
+    }
+
+    private static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
+        entry.placedActor?.placement.position ?? entry.placedReference?.placement.position
     }
 }
 
