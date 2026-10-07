@@ -35,6 +35,27 @@ nonisolated public enum ReferenceKey: Hashable, Sendable {
         guard let resolved = resolver.resolve(id) else { return nil }
         return ReferenceKey(resolved: resolved)
     }
+
+    /// Like `resolve(_:using:)`, but the vanilla player reference
+    /// (`Skyrim.esm` object `0x14`) becomes `.player`, the identity scripts use.
+    public static func resolveNamingPlayer(
+        _ id: FormID,
+        using resolver: FormIDResolver
+    ) -> ReferenceKey? {
+        guard let resolved = resolver.resolve(id) else { return nil }
+        return resolved
+            .isVanilla(objectID: playerReferenceObjectID) ? .player :
+            ReferenceKey(resolved: resolved)
+    }
+
+    static let playerReferenceObjectID: UInt32 = 0x14
+}
+
+nonisolated extension ResolvedFormID {
+    /// True for `objectID` defined by `Skyrim.esm`. Plugin names compare without case.
+    public func isVanilla(objectID: UInt32) -> Bool {
+        self.objectID == objectID && plugin.lowercased() == "skyrim.esm"
+    }
 }
 
 nonisolated extension ReferenceKey: Comparable {

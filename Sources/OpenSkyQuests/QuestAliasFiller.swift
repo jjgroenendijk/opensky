@@ -58,6 +58,10 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 fillFromEvent(alias)
                 return
             }
+            if case .uniqueActor = alias.fillType, isPlayerBase(alias.uniqueActor) {
+                fillReference(alias, with: .player)
+                return
+            }
             guard case .specificReference = alias.fillType else {
                 skipped.note(.unsupportedFillType(alias.fillType))
                 // An unimplemented fill type is OpenSky's gap, not the quest's,
@@ -66,12 +70,25 @@ nonisolated public enum QuestAliasFiller: Sendable {
             }
             guard
                 let id = alias.forcedReference,
-                let key = ReferenceKey.resolve(id, using: resolver)
+                let key = ReferenceKey.resolveNamingPlayer(id, using: resolver)
             else {
                 skipped.note(.unresolvedReference)
                 note(unfilled: alias)
                 return
             }
+            fillReference(alias, with: key)
+        }
+
+        /// The player's unique instance is the player, so this one unique-actor
+        /// fill needs no actor search.
+        private func isPlayerBase(_ id: FormID?) -> Bool {
+            guard let id, let resolved = resolver.resolve(id) else { return false }
+            return resolved.isVanilla(objectID: Self.playerBaseObjectID)
+        }
+
+        private static let playerBaseObjectID: UInt32 = 0x7
+
+        private mutating func fillReference(_ alias: Quest.Alias, with key: ReferenceKey) {
             guard alias.flags.contains(.allowReuseInQuest) || !state.holds(key) else {
                 // Refused, but never a start failure: the wiki does not say
                 // which fill types the reuse rule covers.

@@ -117,7 +117,13 @@ The fill follows four rules from the same page:
 Specific Reference (`ALFR`) and Specific Location (`ALFL`) fill. From Event fills when the
 [story manager](/engine/story-manager.md) starts the quest: `ALFD` names the event data member, and
 a reference alias takes a reference member while a location alias takes a location member. A quest
-started any other way has no event, so the alias is counted and left empty. Every other fill type is
+started any other way has no event, so the alias is counted and left empty.
+
+An alias that names the player fills with the player key (`.player`), the key `Game.GetPlayer()`
+returns ([reference identity](/engine/reference-identity.md)). Two cases name the player: an `ALFR`
+that resolves to `Skyrim.esm` object `0x14`, and a Unique Actor `ALUA` that names the player base,
+`Skyrim.esm` object `0x7`. Without this, an alias script on the player would never get the
+player's events. Every other fill type is
 counted and left empty, and an unimplemented fill type never fails a quest start. Refusing a start because
 OpenSky cannot run a Find Matching Reference search would present an engine gap as game behavior.
 Only an implemented fill that finds nothing (an `ALFR` or `ALFL` naming no record) fails a required
