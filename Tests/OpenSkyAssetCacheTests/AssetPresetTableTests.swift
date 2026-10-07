@@ -30,11 +30,30 @@ struct AssetPresetTableTests {
         #expect(AssetTextureClass(path: path) == expected)
     }
 
+    @Test(arguments: [
+        ("sound\\fx\\wpn\\swing\\a.wav", AssetSoundCategory.effects),
+        ("sound\\fx\\voc\\shout\\a.wav", .voice),
+        ("sound\\voice\\skyrim.esm\\a.fuz", .voice),
+        ("sound\\fx\\ambr\\birds\\a.wav", .ambience),
+        ("sound\\fx\\amb\\wind\\a.wav", .ambience),
+        ("music\\stinger\\a.xwm", .music)
+    ])
+    func soundsAreGroupedByTheirFolder(path: String, expected: AssetSoundCategory) {
+        #expect(AssetSoundCategory(path: path) == expected)
+    }
+
+    @Test(arguments: AssetQualityPreset.allCases)
+    func noSoundCategoryPassedTheAACCheck(preset: AssetQualityPreset) {
+        let values = preset.values
+        #expect(AssetSoundCategory.allCases
+            .allSatisfy { values.audio[$0, default: .alac] == .alac })
+        #expect(values.audioStorage(forPath: "sound\\fx\\a.wav") == .alac)
+    }
+
     @Test func highestQualityKeepsEveryShippedTextureLossless() {
         let values = AssetQualityPreset.highestQuality.values
         #expect(AssetTextureClass.allCases.allSatisfy { values.textures[$0] == .shipped })
         #expect(values.imageLimit == .lossless)
-        #expect(values.audio == .alac)
     }
 
     @Test func balancedOnlyCompressesNormalMaps() {

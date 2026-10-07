@@ -291,6 +291,12 @@ grep 'voice names total:' "$log" | tail -1 | grep -qE '\(9[89]\.[0-9]+%\)' \
 grep 'voice framing:' "$log" | tail -1 | grep -q ' 0 failed' \
   || fail "fuz voice sweep reported framing failures"
 
+# AAC check for the audio cache: a small sample per category still encodes,
+# decodes, and gets a verdict (docs/engine/asset-cache.md, "Audio").
+run "aac audio check (small sample)" audio aac-check --per-category 5
+grep -q '^\[INFO\] effects: ' "$log" \
+  || fail "aac check printed no verdict for the effects category"
+
 # M5.1/5.2 actor gate: every discovered ACHR around the first-render cell
 # must resolve its template chain AND its visuals (skeleton, skin/outfit
 # parts, FaceGen) — the summary line reports "N failed".

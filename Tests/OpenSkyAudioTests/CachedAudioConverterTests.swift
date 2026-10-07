@@ -9,7 +9,7 @@ import OpenSkyAssetCache
 import OpenSkyFormatsAudio
 import Testing
 
-struct ALACAudioConverterTests {
+struct CachedAudioConverterTests {
     private static func ramp(frames: Int, channels: Int) -> [Int16] {
         (0 ..< frames * channels).map { Int16(truncatingIfNeeded: ($0 * 977) % 65536 - 32768) }
     }
@@ -18,7 +18,7 @@ struct ALACAudioConverterTests {
     func alacDecodesToTheExactSourceSamples(channels: Int) throws {
         let samples = Self.ramp(frames: 5000, channels: channels)
         let wav = WAVFixture.file(channels: channels, sampleRate: 22050, bits: 16, samples: samples)
-        let payload = try #require(try ALACAudioConverter().convert(
+        let payload = try #require(try CachedAudioConverter().convert(
             path: "sound\\fx\\a.wav",
             bytes: wav,
             preset: .balanced
@@ -32,14 +32,14 @@ struct ALACAudioConverterTests {
 
     @Test func aSoundLongerThanTheLimitIsNotStored() throws {
         let rate = 1000
-        let frames = Int(ALACAudioConverter.maximumSeconds) * rate + 1
+        let frames = Int(CachedAudioConverter.maximumSeconds) * rate + 1
         let wav = WAVFixture.file(
             channels: 1,
             sampleRate: rate,
             bits: 16,
             samples: Self.ramp(frames: frames, channels: 1)
         )
-        #expect(try ALACAudioConverter().convert(
+        #expect(try CachedAudioConverter().convert(
             path: "music\\a.wav",
             bytes: wav,
             preset: .balanced
@@ -47,7 +47,7 @@ struct ALACAudioConverterTests {
     }
 
     @Test func theConverterReadsWavAndXwmOnly() {
-        let converter = ALACAudioConverter()
+        let converter = CachedAudioConverter()
         #expect(converter.accepts(path: "sound\\fx\\a.wav"))
         #expect(converter.accepts(path: "sound\\fx\\a.xwm"))
         #expect(!converter.accepts(path: "sound\\voice\\a.fuz"))

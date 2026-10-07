@@ -10,7 +10,7 @@ import OpenSkyGameData
 enum AudioCommand {
     static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
         guard let sub = scanner.next() else {
-            throw CLIError.usage("audio: missing subcommand (info|sweep|voice-sweep)")
+            throw CLIError.usage("audio: missing subcommand (info|sweep|voice-sweep|aac-check)")
         }
         switch sub {
         case "info":
@@ -22,6 +22,8 @@ enum AudioCommand {
             try AudioSweep.run(context: context)
         case "voice-sweep":
             try AudioVoiceSweep.run(context: context, scanner: &scanner)
+        case "aac-check":
+            try AudioAACCheck.run(context: context, scanner: &scanner)
         default:
             throw CLIError.usage("audio: unknown subcommand \(sub)")
         }

@@ -74,6 +74,7 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
 | `audio info <key>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |
 | `audio voice-sweep [--limit n] [--names-only]` | Checks the voice file naming rule against the archive listing, and frames every `.fuz` ([FUZ](/formats/fuz.md)) |
+| `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](/engine/asset-cache.md)) |
 | `effects census`, `effects imad <edid> [--at seconds]` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions. `imad` samples one modifier ([image space](/rendering/image-space.md)) |
 | `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
 | `bench [...]` | A sustained offscreen render with a frame time budget |
@@ -138,6 +139,7 @@ and exits 0, so CI is safe. It runs most commands above and checks their output,
 - `asset-cache build --kinds animation` into a temporary folder reports no failures, and
   `check` then counts every entry as current.
 - `audio voice-sweep` runs with `--limit 2000`, and the report states how many it skipped.
+- `audio aac-check --per-category 5` prints a verdict for the effects category.
 - `game status` against an unused socket path exits 1 with `notRunning`, and `game dance` exits 2.
   Both run without the app or an install.
 

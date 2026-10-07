@@ -50,8 +50,8 @@ nonisolated public enum AssetQualityPreset: UInt8, CaseIterable, Sendable, Custo
 nonisolated extension AssetQualityPreset {
     private static let gibibyte: UInt64 = 1 << 30
 
-    /// The whole base-game cache for this preset, from the format comparison census, with audio
-    /// in ALAC, or AAC for Best performance: textures, meshes, collision, animation.
+    /// The whole base-game cache for this preset, from the format comparison census:
+    /// textures, meshes, collision, animation, and ALAC audio.
     public var estimatedBaseGameCacheBytes: UInt64 {
         switch self {
         case .bestPerformance: 13 * Self.gibibyte
