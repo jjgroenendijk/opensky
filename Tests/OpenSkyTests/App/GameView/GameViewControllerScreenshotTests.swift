@@ -31,8 +31,14 @@ struct GameViewControllerScreenshotTests {
             .appending(path: "opensky-app-\(UUID().uuidString).png")
         defer { try? FileManager.default.removeItem(at: url) }
 
-        let save = Task { try await controller.writeScreenshot(to: url) }
-        for _ in 0 ..< 10 {
+        // Draws until the save ends, because under load the save can ask for its frame
+        // after any fixed number of draws. Its own deadline ends the loop.
+        let saving = SaveState()
+        let save = Task {
+            defer { saving.isDone = true }
+            try await controller.writeScreenshot(to: url)
+        }
+        while !saving.isDone {
             try await Task.sleep(for: .milliseconds(20))
             view.draw()
         }
@@ -42,4 +48,9 @@ struct GameViewControllerScreenshotTests {
         #expect(data.starts(with: [0x89, 0x50, 0x4E, 0x47]))
         #expect(data.count > 1024)
     }
+}
+
+@MainActor
+private final class SaveState {
+    var isDone = false
 }
