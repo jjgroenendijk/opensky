@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 
 nonisolated public enum AssetConverterVersion {
-    public static let texture: UInt32 = 1
+    public static let texture: UInt32 = 2
     public static let mesh: UInt32 = 1
     public static let collision: UInt32 = 1
     public static let animation: UInt32 = 1

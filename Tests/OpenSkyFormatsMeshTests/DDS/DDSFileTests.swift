@@ -272,11 +272,62 @@ struct DDSUncompressedFileTests {
             width: 4,
             height: 4,
             mipCount: 1,
-            bitCount: 24
+            bitCount: 16
         )
-        #expect(throws: DDSError.unsupported("uncompressed RGB bit count 24")) {
+        #expect(throws: DDSError.unsupported("uncompressed RGB bit count 16")) {
             try DDSFile(data: data)
         }
+    }
+
+    @Test func widensTwentyFourBitBGRToOpaqueXRGB() throws {
+        let file = try DDSFile(data: rgb24File(
+            width: 2, height: 1, flags: 0x100F, size: 6, payload: Data([3, 2, 1, 30, 20, 10])
+        ))
+        #expect(file.format == .xrgb8888)
+        #expect(file.bytesPerRow(level: 0) == 8)
+        #expect([UInt8](file.mipData(level: 0)) == [3, 2, 1, 255, 30, 20, 10, 255])
+    }
+
+    @Test func widensTwentyFourBitRGBWithLinearSizeAndMips() throws {
+        let file = try DDSFile(data: rgb24File(
+            width: 2, height: 2, flags: 0x81007, size: 12, mipCount: 2,
+            redMask: 0x0000_00FF, blueMask: 0x00FF_0000,
+            payload: Data(repeating: 0, count: 12) + Data([1, 2, 3])
+        ))
+        #expect(file.mipCount == 2)
+        #expect(file.mipData(level: 0).count == 16)
+        #expect([UInt8](file.mipData(level: 1)) == [3, 2, 1, 255])
+    }
+
+    @Test func rejectsTwentyFourBitWithWrongSizeOrMasks() {
+        let wrongSize = rgb24File(
+            width: 2,
+            height: 1,
+            flags: 0x100F,
+            size: 8,
+            payload: Data(count: 6)
+        )
+        #expect(throws: DDSError.malformed("uncompressed pitch 8 != expected 6")) {
+            try DDSFile(data: wrongSize)
+        }
+        let sharedByte = rgb24File(
+            width: 2, height: 1, flags: 0x1007, size: 0, blueMask: 0x00FF_0000,
+            payload: Data(count: 6)
+        )
+        #expect(throws: DDSError.unsupported("24-bit RGB channel masks")) {
+            try DDSFile(data: sharedByte)
+        }
+    }
+
+    private func rgb24File(
+        width: UInt32, height: UInt32, flags: UInt32, size: UInt32, mipCount: UInt32 = 0,
+        redMask: UInt32 = 0x00FF_0000, blueMask: UInt32 = 0x0000_00FF, payload: Data
+    ) -> Data {
+        DDSFixture.file(
+            flags: flags, width: width, height: height, pitchOrLinearSize: size,
+            mipCount: mipCount, pixelFlags: 0x40, fourCC: "\0\0\0\0", rgbBitCount: 24,
+            redMask: redMask, greenMask: 0x0000_FF00, blueMask: blueMask, payload: payload
+        )
     }
 
     @Test(arguments: [
@@ -305,14 +356,27 @@ struct DDSUncompressedFileTests {
         }
     }
 
-    @Test func rejectsMissingUncompressedPitchFlag() {
+    @Test(arguments: [(UInt32(0x81007), UInt32(64)), (0x1007, 0)])
+    func acceptsLinearSizeOrNoSizeField(flags: UInt32, size: UInt32) throws {
         let data = DDSFixture.xrgb8888File(
             width: 4,
             height: 4,
             mipCount: 1,
-            flags: 0x1007
+            flags: flags,
+            pitch: size
         )
-        #expect(throws: DDSError.malformed("uncompressed pitch 16 != expected 16")) {
+        #expect(try DDSFile(data: data).format == .xrgb8888)
+    }
+
+    @Test func rejectsWrongUncompressedLinearSize() {
+        let data = DDSFixture.xrgb8888File(
+            width: 4,
+            height: 4,
+            mipCount: 1,
+            flags: 0x81007,
+            pitch: 16
+        )
+        #expect(throws: DDSError.malformed("uncompressed pitch 16 != expected 64")) {
             try DDSFile(data: data)
         }
     }

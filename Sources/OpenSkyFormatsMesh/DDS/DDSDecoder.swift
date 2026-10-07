@@ -3,7 +3,6 @@
 // Layout and sources: docs/formats/dds.md, "CPU decode".
 
 import Foundation
-import OpenSkyFormatsCore
 
 /// Top mip level as straight RGBA8, row-major from the top-left texel.
 nonisolated public struct DecodedImage: Equatable, Sendable {
@@ -21,9 +20,6 @@ nonisolated public struct DecodedImage: Equatable, Sendable {
 nonisolated public enum DDSDecoder {
     /// BC1, BC3, 32-bit RGB, and 24-bit RGB. Other formats throw `unsupported`.
     public static func topLevel(_ data: Data) throws -> DecodedImage {
-        if let header = try RGB24Header(data: data) {
-            return try header.decode(data)
-        }
         let file = try DDSFile(data: data)
         let level = file.mipData(level: 0)
         let width = file.width
@@ -148,60 +144,5 @@ nonisolated public enum DDSDecoder {
             }
         }
         return bytes
-    }
-}
-
-/// The legacy 24-bit `DDPF_RGB` layout that `DDSFile` does not read; the tint
-/// masks use it. Nil for any other header.
-nonisolated private struct RGB24Header {
-    let width: Int
-    let height: Int
-    let pitch: Int
-    /// Byte position of red, green, and blue inside one 3-byte texel.
-    let channels: SIMD3<Int>
-
-    init?(data: Data) throws {
-        var reader = BinaryReader(data)
-        guard data.count >= 128, try reader.readFourCC() == "DDS " else { return nil }
-        reader = BinaryReader(data, offset: 8)
-        let flags = try reader.readUInt32()
-        let height = try Int(reader.readUInt32())
-        let width = try Int(reader.readUInt32())
-        let pitch = try Int(reader.readUInt32())
-        reader = BinaryReader(data, offset: 80)
-        let formatFlags = try reader.readUInt32()
-        _ = try reader.readUInt32()
-        let bitCount = try reader.readUInt32()
-        let masks = try [reader.readUInt32(), reader.readUInt32(), reader.readUInt32()]
-        guard formatFlags & 0x4 == 0, formatFlags & 0x40 != 0, bitCount == 24 else { return nil }
-        let positions = masks.map { [0x0000FF, 0x00FF00, 0xFF0000].firstIndex(of: $0) }
-        guard let red = positions[0], let green = positions[1], let blue = positions[2] else {
-            throw DDSError.unsupported("24-bit RGB channel masks")
-        }
-        guard width > 0, height > 0, width <= 16384, height <= 16384 else {
-            throw DDSError.malformed("24-bit RGB size \(width)x\(height)")
-        }
-        self.width = width
-        self.height = height
-        self.pitch = flags & 0x8 != 0 && pitch >= width * 3 ? pitch : width * 3
-        channels = SIMD3(red, green, blue)
-    }
-
-    func decode(_ data: Data) throws -> DecodedImage {
-        let bytes = [UInt8](data)
-        guard 128 + pitch * (height - 1) + width * 3 <= bytes.count else {
-            throw DDSError.malformed("24-bit RGB payload shorter than \(width)x\(height)")
-        }
-        var rgba = [UInt8](repeating: 255, count: width * height * 4)
-        for row in 0 ..< height {
-            for column in 0 ..< width {
-                let source = 128 + row * pitch + column * 3
-                let target = (row * width + column) * 4
-                for channel in 0 ..< 3 {
-                    rgba[target + channel] = bytes[source + channels[channel]]
-                }
-            }
-        }
-        return DecodedImage(width: width, height: height, rgba: rgba)
     }
 }
