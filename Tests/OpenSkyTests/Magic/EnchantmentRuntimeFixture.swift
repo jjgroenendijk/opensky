@@ -34,12 +34,15 @@ enum EnchantmentRuntimeFixture {
     static let ringEnchantment: UInt32 = 0x43
     /// The constant-effect enchantment the shield carries, unrestricted.
     static let shieldEnchantment: UInt32 = 0x44
+    /// A contact enchantment with one point entry and one area entry.
+    static let burstEnchantment: UInt32 = 0x45
 
     static let restrictionList: UInt32 = 0x91
     static let ringKeyword: UInt32 = 0x800
     static let shieldKeyword: UInt32 = 0x801
 
     static let enchantedBlade: UInt32 = 0x500
+    static let burstBlade: UInt32 = 0x501
     static let plainBlade: UInt32 = 0x600
     static let enchantedRing: UInt32 = 0x700
     static let enchantedShield: UInt32 = 0x701
@@ -52,6 +55,9 @@ enum EnchantmentRuntimeFixture {
 
     /// Magnitude of the blade's damage-health entry.
     static let bladeDamage: Float = 5
+    /// The burst enchantment's area entry: its magnitude and EFIT area.
+    static let burstDamage: Float = 3
+    static let burstArea: UInt32 = 10
     /// Magnitude of the ring's Fortify One-Handed entry, in percentage points.
     static let ringFortifyPoints: Float = 20
     /// Magnitude of the shield's Fortify Block entry.
@@ -161,6 +167,24 @@ enum EnchantmentRuntimeFixture {
                 effects: [.init(damageHealth, magnitude: bladeDamage)]
             ),
             EnchantmentFixture.record(
+                formID: burstEnchantment,
+                editorID: "TestEnchWeaponBurst",
+                name: "Burst",
+                enit: EnchantmentFixture.enit(
+                    cost: bladeCostPerUse,
+                    flags: EnchantmentFlags.manualCostCalc.rawValue,
+                    castingType: 1,
+                    amount: Int32(bladeCharge),
+                    delivery: 1,
+                    type: 6,
+                    wornRestrictions: 0
+                ),
+                effects: [
+                    .init(damageHealth, magnitude: bladeDamage),
+                    .init(damageHealth, magnitude: burstDamage, area: burstArea)
+                ]
+            ),
+            EnchantmentFixture.record(
                 formID: ringEnchantment,
                 editorID: "TestEnchRingOneHanded",
                 name: "Wielding",
@@ -204,6 +228,17 @@ enum EnchantmentRuntimeFixture {
                 formID: enchantedBlade,
                 data: ESMFixture.field("EDID", ESMFixture.zstring("TestEnchantedBlade"))
                     + InventoryFixture.formIDField("EITM", weaponEnchantment)
+                    + ESMFixture.field("EAMT", EnchantmentFixture.chargeField(bladeCharge))
+                    + ESMFixture.field("DATA", InventoryFixture.weaponData(
+                        value: 100, weight: 12, damage: 10
+                    ))
+                    + ESMFixture.field("DNAM", oneHandedDNAM)
+            ),
+            ESMFixture.record(
+                "WEAP",
+                formID: burstBlade,
+                data: ESMFixture.field("EDID", ESMFixture.zstring("TestBurstBlade"))
+                    + InventoryFixture.formIDField("EITM", burstEnchantment)
                     + ESMFixture.field("EAMT", EnchantmentFixture.chargeField(bladeCharge))
                     + ESMFixture.field("DATA", InventoryFixture.weaponData(
                         value: 100, weight: 12, damage: 10

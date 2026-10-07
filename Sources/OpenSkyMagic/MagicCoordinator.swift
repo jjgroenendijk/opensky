@@ -231,10 +231,7 @@ extension MagicCoordinator: CasterWorld {
     /// panel's tally counts both.
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        var holders: [ReferenceKey: ActorValueHolder] = [:]
-        for target in hit.targets {
-            holders[target.key] = world?.actorValueHolder(for: target.key)
-        }
+        let holders = residentHolders(of: hit.targets)
         guard
             let report = withEffects({ runtime in
                 SpellHitApplication.apply(hit, holders: holders, using: &runtime)
@@ -245,5 +242,14 @@ extension MagicCoordinator: CasterWorld {
             onSpellHit(SpellHitEvent(hit: hit, links: store.hitEffectLinks(of: hit.payload)))
         }
         return report
+    }
+
+    /// The holder of each target still resident. A target that left is absent.
+    func residentHolders(of targets: [SpellHitTarget]) -> [ReferenceKey: ActorValueHolder] {
+        var holders: [ReferenceKey: ActorValueHolder] = [:]
+        for target in targets {
+            holders[target.key] = world?.actorValueHolder(for: target.key)
+        }
+        return holders
     }
 }

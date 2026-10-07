@@ -345,7 +345,7 @@ public final class MeleeCombatRuntime {
         ))
     }
 
-    /// Fires the weapon's enchantment on the actor the swing struck. Only a contact
+    /// Fires the weapon's enchantment at the contact point. Only a contact
     /// enchantment fires. The world seam owns the charge, so a dry weapon returns a
     /// report that says so.
     private func applyEnchantment(
@@ -356,7 +356,9 @@ public final class MeleeCombatRuntime {
         return world.applyWeaponEnchantment(WeaponEnchantmentHit(
             profile: profile,
             attacker: world.meleeAttacker.key,
-            target: hit.target
+            struck: hit.target,
+            at: hit.position,
+            candidates: world.meleeTargets()
         ))
     }
 

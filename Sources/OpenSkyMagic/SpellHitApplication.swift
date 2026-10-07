@@ -66,8 +66,17 @@ public enum SpellHitApplication {
         reaching target: SpellHitTarget,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> [MagicItemEffect] {
-        guard !target.isDirect else { return payload.entries }
-        return payload.entries.filter { entry in
+        entries(payload.entries, reaching: target, settings: settings)
+    }
+
+    /// The same rule for an entry list without a payload.
+    public static func entries(
+        _ entries: [MagicItemEffect],
+        reaching target: SpellHitTarget,
+        settings: MagicAreaSettings = .documentedDefaults
+    ) -> [MagicItemEffect] {
+        guard !target.isDirect else { return entries }
+        return entries.filter { entry in
             entry.area > 0 && target.distance <= settings.radius(ofArea: entry.area)
         }
     }

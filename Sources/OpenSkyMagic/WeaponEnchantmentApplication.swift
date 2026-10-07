@@ -4,7 +4,7 @@ import OpenSkyGameData
 import OpenSkyMagicInterface
 import simd
 
-/// Applying one enchanted hit to the actor it struck.
+/// Applying one enchanted hit to the actors it reached.
 ///
 /// A free enum over an `inout ActiveEffectRuntime` rather than a type of its own,
 /// for the reason `SpellHitApplication` is one: the effect runtime is a value over
@@ -12,17 +12,18 @@ import simd
 /// a tally the panel never sees.
 @MainActor
 public enum WeaponEnchantmentApplication {
-    /// Spends `hit`'s charge and applies its effects to the struck actor. The charge
-    /// is spent first and once, even when no entry is implemented.
+    /// Spends `hit`'s charge and applies its effects to every actor it reached. The
+    /// charge is spent first and once, even when no entry is implemented.
     /// - Parameters:
     ///   - owner: the holder of whoever swung, whose component holds the charge.
-    ///   - target: the struck actor's holder, or nil when it stopped being resident.
-    ///     The charge is still spent.
+    ///   - holders: the holder of each target. A target with no holder stopped
+    ///     being resident and is skipped. The charge is still spent.
     public static func apply(
         _ hit: WeaponEnchantmentHit,
         owner: ActorValueHolder,
-        target: ActorValueHolder?,
+        holders: [ReferenceKey: ActorValueHolder],
         using runtime: inout ActiveEffectRuntime,
+        settings: MagicAreaSettings = .documentedDefaults,
         resistances: ActorResistanceSettings = .documentedDefaults
     ) -> WeaponEnchantmentReport {
         let profile = hit.profile
@@ -37,38 +38,58 @@ public enum WeaponEnchantmentApplication {
                 adjustments: []
             )
         }
-        guard let target else {
-            return WeaponEnchantmentReport(
-                name: profile.name,
-                charge: charge,
-                didFire: true,
-                entryCount: 0,
-                storedCount: 0,
-                adjustments: []
+        var tally = SpellHitReport()
+        for target in hit.targets {
+            guard let holder = holders[target.key] else { continue }
+            let reaching = SpellHitApplication.entries(
+                profile.entries, reaching: target, settings: settings
+            )
+            guard !reaching.isEmpty else { continue }
+            let scaled = SpellHitApplication.scale(
+                reaching,
+                fromPlugin: profile.sourcePlugin,
+                ignoresResistance: false,
+                on: holder,
+                using: runtime,
+                resistances: resistances
+            )
+            let stored = runtime.apply(
+                scaled.entries,
+                fromPlugin: profile.sourcePlugin,
+                source: profile.source,
+                caster: hit.attacker,
+                on: holder
+            )
+            tally.note(
+                target: scaled.adjustments,
+                entries: scaled.entries.count,
+                stored: stored.count
             )
         }
-        let scaled = SpellHitApplication.scale(
-            profile.entries,
-            fromPlugin: profile.sourcePlugin,
-            ignoresResistance: false,
-            on: target,
-            using: runtime,
-            resistances: resistances
-        )
-        let stored = runtime.apply(
-            scaled.entries,
-            fromPlugin: profile.sourcePlugin,
-            source: profile.source,
-            caster: hit.attacker,
-            on: target
-        )
         return WeaponEnchantmentReport(
             name: profile.name,
             charge: charge,
             didFire: true,
-            entryCount: scaled.entries.count,
-            storedCount: stored.count,
-            adjustments: scaled.adjustments
+            entryCount: tally.entryCount,
+            storedCount: tally.storedCount,
+            adjustments: tally.adjustments
+        )
+    }
+
+    /// Applies a hit that reached only `target`, or nothing when it is nil.
+    public static func apply(
+        _ hit: WeaponEnchantmentHit,
+        owner: ActorValueHolder,
+        target: ActorValueHolder?,
+        using runtime: inout ActiveEffectRuntime,
+        resistances: ActorResistanceSettings = .documentedDefaults
+    ) -> WeaponEnchantmentReport {
+        apply(
+            hit,
+            owner: owner,
+            holders: target.map { [$0.key: $0] } ?? [:],
+            using: &runtime,
+            resistances: resistances
         )
     }
 }

@@ -41,7 +41,7 @@ extension ProjectileRuntime {
         return arrow.damage.applied
     }
 
-    /// Fires the bow's enchantment on the actor an arrow struck. Only a contact
+    /// Fires the bow's enchantment where an arrow struck an actor. Only a contact
     /// enchantment fires. An arrow that hit geometry applies and spends nothing.
     /// - Returns: what the enchantment did; discardable, because the readout shows it.
     @discardableResult
@@ -58,7 +58,10 @@ extension ProjectileRuntime {
         return world.applyWeaponEnchantment(WeaponEnchantmentHit(
             profile: profile,
             attacker: projectile.shooter,
-            target: target
+            struck: target,
+            at: impact.position,
+            candidates: world.projectileTargets(),
+            settings: areaSettings
         ))
     }
 

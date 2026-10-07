@@ -89,6 +89,11 @@ A contact enchantment applies through the same code as a landed spell
 ([spell delivery](/engine/spell-delivery.md)): each hostile entry is scaled by the target's
 resistances and handed to the effect runtime. Only the charge is added.
 
+The area rule is the spell rule too. The struck actor gets every entry. An entry with an `EFIT`
+area also reaches each other actor within that radius of the contact point: the blade's contact
+point for a swing, the impact point for an arrow. One hit spends one charge, however many actors it
+reaches.
+
 So resistances apply to weapon enchantments. `ENIT` has no "ignore resistance" flag like `SPIT`
 does. Its two documented bits are manual cost and extend duration on recast. So there is no way to
 skip the step, and none is invented.

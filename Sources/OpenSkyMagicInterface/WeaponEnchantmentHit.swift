@@ -6,6 +6,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import simd
 
 /// One enchanted weapon's hit, as the world seam receives it.
@@ -15,17 +16,43 @@ nonisolated public struct WeaponEnchantmentHit: Equatable, Sendable {
     public let profile: ItemEnchantmentProfile
     /// Who swung or shot. The charge comes off this owner's copy of the item.
     public let attacker: ReferenceKey
-    /// The actor that was struck.
-    public let target: ReferenceKey
+    /// Every actor the hit reached, the struck one first. A bystander gets only
+    /// the entries whose area covers its distance from the contact point.
+    public let targets: [SpellHitTarget]
 
     public init(
         profile: ItemEnchantmentProfile,
         attacker: ReferenceKey,
-        target: ReferenceKey
+        targets: [SpellHitTarget]
     ) {
         self.profile = profile
         self.attacker = attacker
-        self.target = target
+        self.targets = targets
+    }
+
+    /// A hit that reaches only the struck actor.
+    public init(profile: ItemEnchantmentProfile, attacker: ReferenceKey, target: ReferenceKey) {
+        self.init(profile: profile, attacker: attacker, targets: [SpellHitTarget(key: target)])
+    }
+
+    /// A hit at the contact point `position`. `candidates` is read only when
+    /// an entry has an area.
+    public init(
+        profile: ItemEnchantmentProfile,
+        attacker: ReferenceKey,
+        struck: ReferenceKey,
+        at position: SIMD3<Float>,
+        candidates: @autoclosure () -> [MeleeTarget],
+        settings: MagicAreaSettings = .documentedDefaults
+    ) {
+        self.init(profile: profile, attacker: attacker, targets: SpellHitTargeting.targets(
+            of: profile.entries,
+            at: position,
+            struck: struck,
+            candidates: candidates(),
+            excluding: attacker,
+            settings: settings
+        ))
     }
 }
 
