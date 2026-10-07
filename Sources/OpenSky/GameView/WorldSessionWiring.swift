@@ -40,6 +40,7 @@ final class WorldSessionWiring {
                 }
             }
         )
+        renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(renderer: renderer)
         wireMenuMovies(renderer: renderer)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)

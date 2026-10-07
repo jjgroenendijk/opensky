@@ -158,3 +158,23 @@ nonisolated public struct BenchmarkPipelines: Codable, Equatable, Sendable {
         saved = stats.saved
     }
 }
+
+/// Texture streaming at the end of the run. Set by `benchmark --texture-streaming`.
+nonisolated public struct BenchmarkTextureStreaming: Codable, Equatable, Sendable {
+    public let streamedTextures: Int
+    public let reservedMB: Double
+    public let usedMB: Double
+    public let budgetMB: Double
+    public let levelsLoaded: Int
+    public let levelsDropped: Int
+
+    public init(stats: TextureStreamingStats) {
+        let mebibyte = Double(1 << 20)
+        streamedTextures = stats.streamedTextures
+        reservedMB = Double(stats.reservedBytes) / mebibyte
+        usedMB = Double(stats.usedBytes) / mebibyte
+        budgetMB = Double(stats.budgetBytes) / mebibyte
+        levelsLoaded = stats.levelsLoaded
+        levelsDropped = stats.levelsDropped
+    }
+}

@@ -45,6 +45,7 @@ public final class CellStreamingWalkDriver {
             }
         }
         renderer.movementMode = .walk
+        renderer.attachTextureStreaming(to: runner)
     }
 
     public func step() throws -> Bool {

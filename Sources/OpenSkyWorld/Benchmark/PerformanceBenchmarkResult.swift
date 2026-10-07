@@ -204,6 +204,8 @@ nonisolated public struct PerformanceBenchmarkResult: Codable, Equatable, Sendab
     public var route: BenchmarkRoute?
     /// The renderer's pipeline setup.
     public var pipelines: BenchmarkPipelines?
+    /// Set by `benchmark --texture-streaming`.
+    public var textureStreaming: BenchmarkTextureStreaming?
 
     public init(
         startedAt: Date,

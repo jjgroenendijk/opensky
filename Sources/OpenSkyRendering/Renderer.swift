@@ -243,6 +243,8 @@ public final class Renderer: NSObject {
     var lastSceneDepth: RenderTargetEntry?
     /// GPU frustum culling for the scene's static groups (RendererGPUCulling.swift).
     public var gpuCull: GPUCullState
+    /// Large textures keep only the levels the camera needs (TextureStreaming/).
+    public var textureStreaming: TextureStreamingState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
@@ -304,6 +306,7 @@ public final class Renderer: NSObject {
             try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)
         ((imageSpacePass, effects), gpuCull) =
             try Self.makeEffectResources(view: view, library: library, compiler: compiler)
+        textureStreaming = TextureStreamingState(device: device)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))

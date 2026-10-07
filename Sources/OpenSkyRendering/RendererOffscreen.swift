@@ -223,6 +223,7 @@ extension Renderer {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        encodeTextureStreaming(target: descriptor)
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
         let encoded = shadowEncoded

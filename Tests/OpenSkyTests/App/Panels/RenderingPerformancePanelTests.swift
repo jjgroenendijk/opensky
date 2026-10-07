@@ -33,7 +33,7 @@ struct RenderingPerformancePanelTests {
         let panel = try makePanel(FakeWorldProviders())
         #expect(
             panel.sections.map(\.sectionIdentifier)
-                == ["renderTargets", "pipelineCache", "gpuCulling"]
+                == ["renderTargets", "pipelineCache", "gpuCulling", "textureStreaming"]
         )
         #expect(
             panel.renderTargetsSection.statsLabelIdentifier == "RenderTargetsStatsLabel"
@@ -146,4 +146,55 @@ struct GPUCullingSectionTests {
 
 private enum RenderingPerformancePanelTestError: Error {
     case notAWorldInspector
+}
+
+@MainActor
+struct TextureStreamingSectionTests {
+    @Test
+    func theControlsReachTheProviderAndCountAsOverrides() {
+        let providers = FakeWorldProviders()
+        let section = TextureStreamingSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        #expect(
+            section.enabledControl.accessibilityIdentifier() == "TextureStreamingEnabledControl"
+        )
+        #expect(section.budgetControl.accessibilityIdentifier() == "TextureBudgetControl")
+        #expect(section.enabledControl.state == .on)
+        #expect(section.budgetControl.titleOfSelectedItem == "Budget 512 MiB")
+        #expect(!TextureStreamingSection.isOverridden(provider: providers))
+
+        section.enabledControl.state = .off
+        section.enabledControl.sendAction(section.enabledControl.action, to: section)
+        section.budgetControl.selectItem(at: 0)
+        section.budgetControl.sendAction(section.budgetControl.action, to: section)
+        #expect(!providers.textureStreamingEnabled)
+        #expect(providers.textureBudgetIndex == 0)
+        #expect(TextureStreamingSection.isOverridden(provider: providers))
+        TextureStreamingSection.resetToDefaults(provider: providers)
+        #expect(providers.textureStreamingEnabled)
+        #expect(providers.textureBudgetIndex == 2)
+    }
+
+    @Test
+    func theReadoutShowsTheMemory() {
+        let providers = FakeWorldProviders()
+        var snapshot = RenderPerformanceSnapshot()
+        snapshot.textureStreaming.streamedTextures = 3
+        snapshot.textureStreaming.usedBytes = 2 << 20
+        snapshot.textureStreaming.budgetBytes = 512 << 20
+        snapshot.textureStreaming.reservedBytes = 16 << 20
+        snapshot.textureStreaming.levelsLoaded = 4
+        providers.renderPerformanceSnapshot = snapshot
+        let section = TextureStreamingSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        section.refreshReadout()
+        #expect(section.statsReadout == """
+        Streamed: 3 textures, 0 reads pending
+        Mapped: 2.0 MB of 512.0 MB
+        Heaps: 16.0 MB
+        Levels: 4 loaded, 0 dropped
+        """)
+    }
 }

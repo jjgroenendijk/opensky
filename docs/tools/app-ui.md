@@ -29,9 +29,10 @@ The app opens on the launcher, not on the developer shell. The launcher holds:
   view as the Cmd+, window. Asset Cache picks the quality preset, the folder, and the size
   limit, and builds, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules
   live in `AssetCacheCoordinator` in `OpenSkyWorld`. Graphics holds the switches of the GPU
-  performance features, such as the [pipeline cache](/rendering/pipeline-cache.md) and
-  [GPU culling](/rendering/gpu-culling.md). It writes the player settings file, which the game
-  reads when it starts.
+  performance features, such as the [pipeline cache](/rendering/pipeline-cache.md),
+  [GPU culling](/rendering/gpu-culling.md), and
+  [texture streaming](/rendering/texture-streaming.md). It writes the player settings file,
+  which the game reads when it starts.
 
 The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
 `LaunchMode`, the remembered mode, and `GameFolderStatus`. The app only draws them.

@@ -405,7 +405,7 @@ extension Renderer {
         bindShadowMorph(group.faceMorph, slot: state.slot)
         if alphaTested {
             argumentTable.setTexture(
-                group.material.diffuse.gpuResourceID,
+                streamedBinding(group.material.diffuse),
                 index: TextureIndex.diffuse.rawValue
             )
         }

@@ -39,6 +39,11 @@ nonisolated public protocol CellSceneProvider {
 
     /// Loads an idle prop bound to its bone of the rig at `request.skeletonPath`.
     func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel
+
+    /// Lets the texture library create streamed textures that post to `mailbox`.
+    func attachTextureStreaming(_ mailbox: TextureStreamMailbox)
+    /// Reads a streamed texture's levels again.
+    func readTextureLevels(_ request: TextureLevelRequest) -> TextureLevelBytes?
 }
 
 nonisolated extension CellSceneProvider {
@@ -58,6 +63,12 @@ nonisolated extension CellSceneProvider {
 
     public func loadActorProp(_: ActorPropRequest) throws -> RenderModel {
         throw ActorAssetFailure.missing
+    }
+
+    public func attachTextureStreaming(_: TextureStreamMailbox) {}
+
+    public func readTextureLevels(_: TextureLevelRequest) -> TextureLevelBytes? {
+        nil
     }
 }
 
@@ -121,6 +132,14 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
                 state: state
             )
         }
+    }
+
+    public func attachTextureStreaming(_ mailbox: TextureStreamMailbox) {
+        builder.textures.streaming = mailbox
+    }
+
+    public func readTextureLevels(_ request: TextureLevelRequest) -> TextureLevelBytes? {
+        builder.textures.readLevels(request)
     }
 
     public func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel {
@@ -276,8 +295,8 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         var actorProps: [ActorPropLoadResult] = []
     }
 
-    private let provider: Mutex<any CellSceneProvider>
-    private let queue: DispatchQueue
+    let provider: Mutex<any CellSceneProvider>
+    let queue: DispatchQueue
     private let bookkeeping = Mutex(Bookkeeping())
     private let results = Mutex(Results())
 
