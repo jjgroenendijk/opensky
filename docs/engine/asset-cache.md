@@ -221,13 +221,18 @@ and CPU time:
 | Cache, fast loading of LZ4 copies | 228 ms, 242 ms CPU | 148 ms | 687 ms |
 
 Streaming, `bench --fly-path --footprint-cap-mb 4096`, median of three cold runs, with a
-cache of the route's assets on the internal SSD:
+cache of the route's assets on the internal SSD (2026-10-07, run directory
+`.logs/stream-worst-frame/20261007T023809Z`):
 
 | Run | Frames until the stream settles | Worst frame | Peak footprint |
 | --- | --- | --- | --- |
-| Archives | 484 | 11.8 ms | 1142 MB |
-| Highest quality | 430 | 16.4 ms | 1183 MB |
-| Highest quality, fast loading | 394 | 16.0 ms | 1266 MB |
+| Archives | 524 | 17.4 ms | 1270 MB |
+| Highest quality | 482 | 17.7 ms | 1200 MB |
+| Highest quality, fast loading | 432 | 16.0 ms | 1242 MB |
+
+The worst frame is the distant LOD swap in every run. A waypoint settles only when its distant
+ring is in. Without that rule, a slow archive run ended its legs before the ring arrived, so it
+never measured the swap and its worst frame looked 5 ms better than the cache's.
 
 A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores:
 
