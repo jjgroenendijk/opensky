@@ -29,6 +29,11 @@ final class AssetCacheSection: PanelSectionViewController {
         target: nil,
         action: nil
     )
+    private let fastMeshLoadControl = NSButton(
+        checkboxWithTitle: "Fast mesh loading",
+        target: nil,
+        action: nil
+    )
     private let fastLoadLabel = PanelComponents.statsLabel(
         identifier: "AssetCacheFastLoadStatsLabel"
     )
@@ -78,7 +83,12 @@ final class AssetCacheSection: PanelSectionViewController {
             identifier: "AssetCacheFastLoadControl"
         )
         fastLoadControl.toolTip = "Read cached textures straight into GPU memory during a cell load"
-        fastLoadLabel.toolTip = "Textures read by fast loading, and the last cell's load time"
+        PanelComponents.configureCheckbox(
+            fastMeshLoadControl, target: self, action: #selector(toggleFastMeshLoad),
+            identifier: "AssetCacheFastMeshLoadControl"
+        )
+        fastMeshLoadControl.toolTip = "Read cached meshes straight into GPU buffers on a cell load"
+        fastLoadLabel.toolTip = "Assets read by fast loading, and the last cell's load time"
         PanelComponents.configureTextField(
             pathControl, identifier: "AssetCachePathControl", width: 200,
             placeholder: "meshes\\clutter\\bucket01.nif"
@@ -93,7 +103,7 @@ final class AssetCacheSection: PanelSectionViewController {
         inspectRow.spacing = PanelMetrics.rowGap
         return [
             PanelComponents.group([enabledControl] + kindControls + [statsLabel]),
-            PanelComponents.group([fastLoadControl, fastLoadLabel]),
+            PanelComponents.group([fastLoadControl, fastMeshLoadControl, fastLoadLabel]),
             PanelComponents.group([inspectRow, entryLabel])
         ]
     }
@@ -128,19 +138,28 @@ final class AssetCacheSection: PanelSectionViewController {
 
     private func refreshFastLoad() {
         guard let control = provider?.fastTextureLoad else {
-            fastLoadControl.isEnabled = false
-            fastLoadControl.state = .off
+            for control in [fastLoadControl, fastMeshLoadControl] {
+                control.isEnabled = false
+                control.state = .off
+            }
             fastLoadLabel.stringValue = "Fast load: off for this session"
             return
         }
         fastLoadControl.isEnabled = true
         fastLoadControl.state = control.isEnabled ? .on : .off
+        fastMeshLoadControl.isEnabled = true
+        fastMeshLoadControl.state = control.loadsMeshes ? .on : .off
         fastLoadLabel.stringValue = AssetCacheReadout.fastLoadLines(control.snapshot)
             .joined(separator: "\n")
     }
 
     @objc private func toggleFastLoad() {
         provider?.fastTextureLoad?.isEnabled = fastLoadControl.state == .on
+        refreshReadout()
+    }
+
+    @objc private func toggleFastMeshLoad() {
+        provider?.fastTextureLoad?.loadsMeshes = fastMeshLoadControl.state == .on
         refreshReadout()
     }
 

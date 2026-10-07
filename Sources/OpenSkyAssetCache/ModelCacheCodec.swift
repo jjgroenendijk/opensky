@@ -1,12 +1,77 @@
-// A flattened model as cache bytes: every mesh's vertex arrays, indices, and
-// skin streams, and the materials. Loading it skips the NIF parse and flatten.
+// A flattened model as cache bytes. The payload starts with a small layout block, then
+// each mesh's vertices and indices ready for a GPU buffer, then the whole model: every
+// mesh's arrays, skin streams, and materials. See docs/engine/fast-mesh-loading.md.
 
 import Foundation
 import OpenSkyFormatsCore
 import simd
 
 nonisolated public enum ModelCacheCodec {
+    /// GPU blocks start on this boundary inside the payload, which starts on one too.
+    static let blockAlignment = 16
+
     public static func encode(_ model: Model) -> Data {
+        var blocks = Data()
+        var ranges: [ReadyMeshRanges] = []
+        for mesh in model.meshes {
+            let vertices = append(InterleavedVertexLayout.interleave(mesh), to: &blocks)
+            let indices = append(mesh.indices, to: &blocks)
+            ranges.append(ReadyMeshRanges(vertices: vertices, indices: indices))
+        }
+        let whole = encodeModel(model)
+        let layout = ReadyModelLayoutCodec.encode(
+            model, ranges: ranges, modelRange: blocks.count ..< blocks.count + whole.count
+        )
+        var out = BinaryWriter()
+        out.writeUInt64(UInt64(layout.count))
+        out.write(layout)
+        out.write(Data(count: padding(after: out.count)))
+        out.write(blocks)
+        out.write(whole)
+        return out.data
+    }
+
+    public static func decode(_ data: Data) throws -> Model {
+        let layout = try decodeLayout(data)
+        let (base, range) = (data.startIndex, layout.modelRange)
+        guard range.upperBound <= data.count else { throw CachePayloadError.truncated }
+        return try decodeModel(data[(base + range.lowerBound) ..< (base + range.upperBound)])
+    }
+
+    /// The layout block, from the first `layoutByteCount(head:)` bytes of the payload.
+    public static func decodeLayout(_ head: Data) throws -> ReadyModelLayout {
+        guard let count = layoutByteCount(head: head), count <= head.count else {
+            throw CachePayloadError.truncated
+        }
+        let block = head[(head.startIndex + 8) ..< (head.startIndex + count)]
+        return try ReadyModelLayoutCodec.decode(block, dataStart: count + padding(after: count))
+    }
+
+    /// Payload bytes from its start to the end of the layout block; nil before 8 bytes.
+    public static func layoutByteCount(head: Data) -> Int? {
+        var reader = BinaryReader(head)
+        guard let length = try? reader.readUInt64(), length <= UInt64(Int32.max) else {
+            return nil
+        }
+        return 8 + Int(length)
+    }
+
+    static func padding(after count: Int) -> Int {
+        (blockAlignment - count % blockAlignment) % blockAlignment
+    }
+
+    private static func append(
+        _ values: [some BitwiseCopyable],
+        to data: inout Data
+    ) -> Range<Int> {
+        let start = data.count
+        values.withUnsafeBytes { data.append(contentsOf: $0) }
+        let end = data.count
+        data.append(Data(count: padding(after: end)))
+        return start ..< end
+    }
+
+    private static func encodeModel(_ model: Model) -> Data {
         var out = CachePayloadWriter()
         out.int(model.skippedShapeCount)
         out.int(model.editorMarkerShapeCount)
@@ -17,7 +82,7 @@ nonisolated public enum ModelCacheCodec {
         return out.data
     }
 
-    public static func decode(_ data: Data) throws -> Model {
+    private static func decodeModel(_ data: Data) throws -> Model {
         var input = CachePayloadReader(data)
         let skipped = try input.int()
         let markers = try input.int()
@@ -36,7 +101,7 @@ nonisolated public enum ModelCacheCodec {
         return value
     }
 
-    private static func encode(_ material: Material, into out: inout CachePayloadWriter) {
+    static func encode(_ material: Material, into out: inout CachePayloadWriter) {
         out.string(material.diffuseTexture)
         out.string(material.normalTexture)
         out.value(material.uvOffset)
@@ -50,7 +115,7 @@ nonisolated public enum ModelCacheCodec {
         out.array(material.alphaTestThreshold.map { [$0] } ?? [])
     }
 
-    private static func material(_ input: inout CachePayloadReader) throws -> Material {
+    static func material(_ input: inout CachePayloadReader) throws -> Material {
         let diffuse = try input.string()
         let normal = try input.string()
         let uvOffset = try input.value(SIMD2<Float>.self)

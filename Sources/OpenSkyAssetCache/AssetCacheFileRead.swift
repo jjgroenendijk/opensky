@@ -27,6 +27,27 @@ nonisolated enum AssetCacheFileRead {
         return .success(bytes)
     }
 
+    /// The first `count` bytes of the file, or fewer when it is shorter, and its size.
+    static func readHead(
+        _ url: URL, count: Int, touching: Bool
+    ) -> Result<(bytes: Data, size: Int), POSIXError> {
+        let descriptor = open(url.path(percentEncoded: false), O_RDONLY | O_CLOEXEC)
+        guard descriptor >= 0 else { return .failure(currentError()) }
+        defer { close(descriptor) }
+        var info = stat()
+        guard fstat(descriptor, &info) == 0 else { return .failure(currentError()) }
+        let size = Int(info.st_size)
+        var bytes = Data(count: min(count, size))
+        let read = bytes.withUnsafeMutableBytes { readFully(descriptor, into: $0) }
+        guard read == bytes.count else {
+            return .failure(read < 0 ? currentError() : POSIXError(.EIO))
+        }
+        if touching, time(nil) - info.st_mtimespec.tv_sec >= touchInterval {
+            _ = futimens(descriptor, nil)
+        }
+        return .success((bytes, size))
+    }
+
     private static func readFully(
         _ descriptor: Int32, into buffer: UnsafeMutableRawBufferPointer
     ) -> Int {

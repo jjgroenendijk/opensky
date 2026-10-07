@@ -69,6 +69,7 @@ struct AssetCacheSectionTests {
             "AssetCacheReadControl", "AssetCacheStatsLabel", "AssetCachePathControl",
             "AssetCacheInspectControl", "AssetCacheEntryStatsLabel",
             "AssetCacheFastLoadControl", "AssetCacheFastLoadStatsLabel",
+            "AssetCacheFastMeshLoadControl",
             "AssetCacheReadKindTexturesControl", "AssetCacheReadKindMeshesControl",
             "AssetCacheReadKindCollisionControl"
         ] {
@@ -116,6 +117,12 @@ struct AssetCacheSectionTests {
         #expect(toggle.state == .on)
         toggle.performClick(nil)
         #expect(provider.fastTextureLoad?.isEnabled == false)
+        let meshes = try #require(
+            find("AssetCacheFastMeshLoadControl", in: section.view) as? NSButton
+        )
+        #expect(meshes.state == .off)
+        meshes.performClick(nil)
+        #expect(provider.fastTextureLoad?.loadsMeshes == true)
     }
 
     @Test func inspectingAPathNoFileHasSaysSo() throws {

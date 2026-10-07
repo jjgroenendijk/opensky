@@ -14,12 +14,16 @@ nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
     public var batches = 0
     public var textures = 0
     public var bytes = 0
-    /// Textures that fell back to the CPU upload because the IO buffer failed.
+    /// Textures and mesh buffers that fell back to the CPU because the IO buffer failed.
     public var fallbacks = 0
     /// From the first load of the last batch to its completion.
     public var lastBatchMS = 0.0
     public var lastBatchTextures = 0
     public var lastBatchBytes = 0
+    /// Cached meshes read into GPU buffers, and their bytes.
+    public var meshes = 0
+    public var meshBytes = 0
+    public var lastBatchMeshes = 0
 
     public init() {}
 }
@@ -27,15 +31,23 @@ nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
 /// The on/off switch and the counters, shared between the build queue and the panel.
 nonisolated public final class FastTextureLoadControl: Sendable {
     private let enabled: Atomic<Bool>
+    private let meshesEnabled: Atomic<Bool>
     private let stats = Mutex(FastTextureLoadStats())
 
-    public init(isEnabled: Bool) {
+    public init(isEnabled: Bool, loadsMeshes: Bool = false) {
         enabled = Atomic(isEnabled)
+        meshesEnabled = Atomic(loadsMeshes)
     }
 
     public var isEnabled: Bool {
         get { enabled.load(ordering: .relaxed) }
         set { enabled.store(newValue, ordering: .relaxed) }
+    }
+
+    /// Cached meshes also load this way. Off by default: see docs/engine/asset-cache.md.
+    public var loadsMeshes: Bool {
+        get { meshesEnabled.load(ordering: .relaxed) }
+        set { meshesEnabled.store(newValue, ordering: .relaxed) }
     }
 
     public var snapshot: FastTextureLoadStats {
@@ -54,12 +66,20 @@ nonisolated public final class FastTextureLoader {
         let ready: ReadyTexture
     }
 
+    /// A buffer the batch fills from a file range.
+    private struct PendingBytes {
+        let buffer: MTLBuffer
+        let file: URL
+        let offset: Int
+    }
+
     public let control: FastTextureLoadControl
     private let device: MTLDevice
     private let queue: MTLIOCommandQueue
     private var buffer: MTLIOCommandBuffer?
     private var handles: [URL: MTLIOFileHandle] = [:]
     private var pending: [Pending] = []
+    private var pendingMeshBytes: [PendingBytes] = []
     private var batchStart: ContinuousClock.Instant?
 
     public init(device: MTLDevice, control: FastTextureLoadControl) throws {
@@ -105,6 +125,51 @@ nonisolated public final class FastTextureLoader {
         return texture
     }
 
+    /// Queues the ready bytes of every mesh of `entry` into new buffers. The buffers hold
+    /// no data until `flush` returns. `entry.value.isReady` must hold.
+    public func enqueue(
+        _ entry: AssetCacheEntryRead<ReadyModelLayout>, label: String
+    ) throws -> [RenderMesh] {
+        let handle = try handle(for: entry.file)
+        let meshes = try entry.value.meshes.map { layout in
+            guard layout.isReady, let bounds = layout.bounds else {
+                throw RenderMeshError.emptyMesh
+            }
+            let name = layout.name ?? label
+            return try RenderMesh(
+                layout: layout, bounds: bounds,
+                vertexBuffer: queueBuffer(
+                    layout.vertexRange, of: entry, handle: handle, label: "\(name).vertices"
+                ),
+                indexBuffer: queueBuffer(
+                    layout.indexRange, of: entry, handle: handle, label: "\(name).indices"
+                )
+            )
+        }
+        let bytes = entry.value.meshes.reduce(0) { $0 + $1.vertexRange.count + $1.indexRange.count }
+        control.record { stats in
+            stats.meshes += meshes.count
+            stats.meshBytes += bytes
+        }
+        return meshes
+    }
+
+    private func queueBuffer(
+        _ range: Range<Int>, of entry: AssetCacheEntryRead<ReadyModelLayout>,
+        handle: MTLIOFileHandle, label: String
+    ) throws -> MTLBuffer {
+        guard let buffer = device.makeBuffer(length: range.count, options: .storageModeShared)
+        else { throw RenderMeshError.bufferAllocationFailed }
+        buffer.label = label
+        let offset = entry.payloadOffset + range.lowerBound
+        currentBuffer().load(
+            buffer, offset: 0, size: range.count, sourceHandle: handle,
+            sourceHandleOffset: offset
+        )
+        pendingMeshBytes.append(PendingBytes(buffer: buffer, file: entry.file, offset: offset))
+        return buffer
+    }
+
     /// Commits the batch and waits for it. On an IO failure every texture of
     /// the batch is uploaded on the CPU from the mapped entry instead.
     public func flush() {
@@ -116,8 +181,10 @@ nonisolated public final class FastTextureLoader {
             for item in pending {
                 TextureLoader.replaceLevels(of: item.texture, with: item.ready)
             }
-            fallbacks = pending.count
+            pendingMeshBytes.forEach(Self.fillFromFile)
+            fallbacks = pending.count + pendingMeshBytes.count
         }
+        let meshBuffers = pendingMeshBytes.count
         let bytes = pending.reduce(0) { $0 + $1.ready.expectedByteCount }
         let milliseconds = (ContinuousClock.now - start).milliseconds
         let count = pending.count
@@ -129,11 +196,27 @@ nonisolated public final class FastTextureLoader {
             stats.lastBatchMS = milliseconds
             stats.lastBatchTextures = count
             stats.lastBatchBytes = bytes
+            stats.lastBatchMeshes = meshBuffers / 2
         }
         self.buffer = nil
         batchStart = nil
         pending.removeAll()
+        pendingMeshBytes.removeAll()
         handles.removeAll()
+    }
+
+    /// The CPU fallback for a failed batch. A short read leaves zeros, which draw nothing.
+    private static func fillFromFile(_ item: PendingBytes) {
+        guard let file = try? FileHandle(forReadingFrom: item.file) else { return }
+        defer { try? file.close() }
+        guard
+            (try? file.seek(toOffset: UInt64(item.offset))) != nil,
+            let bytes = try? file.read(upToCount: item.buffer.length)
+        else { return }
+        bytes.withUnsafeBytes { raw in
+            guard let base = raw.baseAddress else { return }
+            item.buffer.contents().copyMemory(from: base, byteCount: raw.count)
+        }
     }
 
     private func currentBuffer() -> MTLIOCommandBuffer {

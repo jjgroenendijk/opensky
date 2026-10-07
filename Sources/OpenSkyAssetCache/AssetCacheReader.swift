@@ -140,6 +140,21 @@ nonisolated public final class AssetCacheReader: Sendable {
     public func entry<Value>(
         forPath path: String, decoder: AssetCacheDecoder<Value>
     ) -> AssetCacheEntryRead<Value>? {
+        resolve(path: path, decoder: decoder) { store.lookup($0) }
+    }
+
+    /// The layout block of the cached model for `path`, read without the rest of the
+    /// entry, for a loader that reads the mesh bytes itself.
+    public func modelLayout(forPath path: String) -> AssetCacheEntryRead<ReadyModelLayout>? {
+        resolve(path: path, decoder: .modelLayout) { request in
+            store.lookupHead(request) { ModelCacheCodec.layoutByteCount(head: $0) }
+        }
+    }
+
+    private func resolve<Value>(
+        path: String, decoder: AssetCacheDecoder<Value>,
+        lookup: (AssetCacheRequest) -> AssetCacheLookup
+    ) -> AssetCacheEntryRead<Value>? {
         let (enabled, preset) = state.withLock {
             ($0.isEnabled && $0.kinds.contains(decoder.kind), $0.preset)
         }
@@ -149,7 +164,7 @@ nonisolated public final class AssetCacheReader: Sendable {
             kind: decoder.kind, source: source, converterVersion: decoder.converterVersion,
             preset: preset
         )
-        switch store.lookup(request) {
+        switch lookup(request) {
         case let .hit(hit) where hit.payload.isEmpty:
             count(decoder.kind) { $0.original += 1 }
         case let .hit(hit):

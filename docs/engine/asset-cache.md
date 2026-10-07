@@ -298,8 +298,8 @@ so the answer holds on any Mac and there is no per-Mac advice.
 - Textures: each entry holds the mip levels in the layout a texture needs, so Metal fast
   resource loading reads them straight into GPU memory ("Fast resource loading" above).
   Sparse texture streaming (#881) can map single mip levels from the same layout.
-- Meshes: an entry holds ready vertex and index arrays, so fast resource loading could read
-  them straight into GPU buffers too. The engine does not do this yet.
+- Meshes: an entry holds ready vertex and index blocks, so fast resource loading can read
+  them straight into GPU buffers ([fast mesh loading](/engine/fast-mesh-loading.md)).
 - Collision, animation, and audio are CPU data.
 - Compiled render pipelines (#875) are the Metal compiler's output, not a game asset. They
   may share the cache folder, but the asset kinds and their settings do not cover them.

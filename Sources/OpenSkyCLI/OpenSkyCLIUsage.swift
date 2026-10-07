@@ -242,8 +242,8 @@ extension OpenSkyCLI {
                                   PSNR and largest channel error of two
                                   captures of the same view
       benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict]
-                [--fast-load] [--preset best|balanced|highest] [--folder <dir>]
-                [--loose <dir>] [--record-paths <file>] [--size WxH]
+                [--fast-load] [--fast-mesh-load] [--preset best|balanced|highest]
+                [--folder <dir>] [--loose <dir>] [--record-paths <file>] [--size WxH]
                 [--launch] [--launch-seconds <s>] [--route] [--cold-pipelines]
                 [--cpu-culling] [--render-scale <percent>]
                 [--upscaler temporal|spatial] [--frame-interpolation]
@@ -256,6 +256,7 @@ extension OpenSkyCLI {
                                   --evict drops the files from the page cache,
                                   --fast-load reads cached textures with
                                   Metal fast resource loading,
+                                  --fast-mesh-load reads cached meshes so,
                                   --loose reads extracted copies first,
                                   --record-paths lists the assets it read,
                                   --size sets the frame (default 2560x1600),

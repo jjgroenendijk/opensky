@@ -2,6 +2,7 @@
 
 import Foundation
 @testable import OpenSkyAssetCache
+import OpenSkyFormatsCore
 import OpenSkyGameData
 import Testing
 
@@ -31,6 +32,7 @@ private struct StampedFiles: GameFileSource {
 
 struct AssetCacheReaderTests {
     private let path = "textures\\rock.dds"
+    private let meshPath = "meshes\\rock.nif"
     private let provenance = GameFileProvenance(origin: "a.bsa", size: 10, modified: 5)
     private let decoder = AssetCacheDecoder(kind: .texture, converterVersion: 2) { data in
         guard data.first != 0xFF else { throw CachePayloadError.truncated }
@@ -44,7 +46,8 @@ struct AssetCacheReaderTests {
                 directoryHint: .isDirectory
             )
         let store = try AssetCacheStore(root: root, limitBytes: 1 << 30)
-        let files = StampedFiles(stamps: [path: provenance ?? self.provenance])
+        let stamp = provenance ?? self.provenance
+        let files = StampedFiles(stamps: [path: stamp, meshPath: stamp])
         return AssetCacheReader(store: store, files: files, preset: .balanced)
     }
 
@@ -123,6 +126,38 @@ struct AssetCacheReaderTests {
         #expect(reader.value(forPath: path, decoder: decoder) == nil)
         #expect(reader.counts(for: .texture).original == 1)
         #expect(reader.takeRebuildItems().isEmpty)
+    }
+
+    @Test func aModelLayoutReadsOnlyTheEntryHead() throws {
+        let reader = try makeReader()
+        let meshes = (0 ..< 3).map {
+            ReadyModelLayoutTests.quad(name: "M\($0)", offset: Float($0), vertices: 2000)
+        }
+        let model = Model(meshes: meshes, materials: [.fallback], skippedShapeCount: 0)
+        let payload = ModelCacheCodec.encode(model)
+        let source = try #require(reader.stamp(forPath: meshPath))
+        let request = AssetCacheRequest(
+            kind: .mesh, source: source, converterVersion: AssetConverterVersion.mesh,
+            preset: .balanced
+        )
+        try reader.store.store(payload, for: request)
+
+        let entry = try #require(reader.modelLayout(forPath: meshPath))
+        #expect(try entry.value == (ModelCacheCodec.decodeLayout(payload)))
+        let file = try Data(contentsOf: entry.file)
+        let first = try #require(entry.value.meshes.first)
+        let start = entry.payloadOffset + first.vertexRange.lowerBound
+        #expect(file[start ..< start + first.vertexRange.count] == payload[first.vertexRange])
+        guard
+            case let .hit(hit) = reader.store.lookupHead(request, payloadHead: {
+                ModelCacheCodec.layoutByteCount(head: $0)
+            })
+        else {
+            Issue.record("no hit")
+            return
+        }
+        #expect(hit.file.count < file.count)
+        #expect(reader.counts(for: .mesh).hits == 1)
     }
 
     @Test func inspectionReportsEachEntryState() throws {

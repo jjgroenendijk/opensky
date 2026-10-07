@@ -89,6 +89,21 @@ nonisolated public final class MeshLibrary {
         try loadModel(path: path, terrainLODClipMask: terrainLODClipMask)
     }
 
+    /// Records the textures the model asked for, so a cache hit can mark them touched.
+    private func makeRenderModel(_ model: Model, key: String) throws -> RenderModel {
+        textures.beginKeyCapture()
+        do {
+            let render = try RenderModel(
+                device: device, model: model, textureProvider: textures.provider
+            )
+            modelTextureKeys[key] = textures.endKeyCapture()
+            return render
+        } catch {
+            _ = textures.endKeyCapture()
+            throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
+        }
+    }
+
     public func loadModel(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
@@ -112,6 +127,11 @@ nonisolated public final class MeshLibrary {
         }
 
         return try loadPhases.measure(.mesh) {
+            let plain = terrainLODClipMask == nil && surface == nil && attachmentBone == nil
+                && !explicitActorSkeleton
+            if plain, let ready = readyModel(key: key, pathKey: pathKey) {
+                return ready
+            }
             let decoded = try decode(
                 pathKey: pathKey,
                 actorSkeleton: actorSkeleton,
@@ -137,19 +157,7 @@ nonisolated public final class MeshLibrary {
                     : MeshLibraryError.emptyModel(path: key)
             }
 
-            let render: RenderModel
-            textures.beginKeyCapture()
-            do {
-                render = try RenderModel(
-                    device: device,
-                    model: model,
-                    textureProvider: textures.provider
-                )
-            } catch {
-                _ = textures.endKeyCapture()
-                throw MeshLibraryError.parseFailed(path: key, reason: String(describing: error))
-            }
-            modelTextureKeys[key] = textures.endKeyCapture()
+            let render = try makeRenderModel(model, key: key)
             cache[key] = render
             particleDefinitions[key] = decodedParticles
             skippedShapes[key] = model.skippedShapeCount
@@ -157,6 +165,28 @@ nonisolated public final class MeshLibrary {
             loadedCount += 1
             return render
         }
+    }
+
+    /// A cached model whose mesh bytes the fast loader reads straight into GPU buffers.
+    /// Nil sends the load down the decode path.
+    private func readyModel(key: String, pathKey: String) -> RenderModel? {
+        guard
+            let loader = textures.fastMeshLoader,
+            let entry = assetCache?.modelLayout(forPath: pathKey), entry.value.isReady,
+            let meshes = try? loader.enqueue(entry, label: pathKey)
+        else { return nil }
+        let layout = entry.value
+        textures.beginKeyCapture()
+        let render = RenderModel(
+            meshes: meshes, materials: layout.materials, textureProvider: textures.provider
+        )
+        modelTextureKeys[key] = textures.endKeyCapture()
+        cache[key] = render
+        particleDefinitions[key] = []
+        skippedShapes[key] = layout.skippedShapeCount
+        modelBounds[key] = layout.bounds
+        loadedCount += 1
+        return render
     }
 
     /// Uploads a LAND terrain patch: the quadrant mesh and its splat-weight stream (two
