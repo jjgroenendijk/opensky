@@ -234,6 +234,8 @@ public final class Renderer: NSObject {
     /// Written only by encodeScenePass (RendererScenePass.swift).
     public var lastDrawStats = SceneDrawStats()
     public var lastGrassDrawStats = GrassDrawStats()
+    /// Set by a benchmark to get each frame's GPU time; nil in normal play.
+    public var gpuFrameLog: GPUFrameLog?
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
     var windowCapture = WindowCaptureState.idle
     /// Shadow-pass culling/draw counts of the last encoded frame (see

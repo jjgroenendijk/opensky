@@ -90,6 +90,7 @@ public final class CellStreamingWalkDriver {
             throw CellStreamingWalkBenchmarkError.interiorNotCrossed(interiorDistance)
         }
         return CellStreamingWalkBenchmarkResult(
+            render: render,
             physicsRender: CellStreamingWalkBenchmark.activePhysicsResult(
                 render: render,
                 frameMask: physicsFrameMask

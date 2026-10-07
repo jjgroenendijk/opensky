@@ -20,6 +20,18 @@ nonisolated public enum PerformanceBenchmarkError: LocalizedError {
     }
 }
 
+/// Asks the benchmark to time the start of the process: its cold load, then
+/// `seconds` of frames on the view before the warm load.
+nonisolated public struct BenchmarkLaunchRequest: Sendable {
+    public let processStart: Date
+    public let seconds: Double
+
+    public init(processStart: Date, seconds: Double = 60) {
+        self.processStart = processStart
+        self.seconds = seconds
+    }
+}
+
 @MainActor
 public enum PerformanceBenchmark {
     /// - Parameters:
@@ -30,8 +42,10 @@ public enum PerformanceBenchmark {
         plan: PerformanceBenchmarkPlan = .standard,
         machine: BenchmarkMachine,
         renderer: Renderer,
+        launch: BenchmarkLaunchRequest? = nil,
         makeBuilder: (LoadPhaseRecorder) throws -> CellSceneBuilder
     ) throws -> PerformanceBenchmarkResult {
+        var memory = GPUMemoryTracker(renderer: renderer)
         let startedAt = Date()
         let recorder = LoadPhaseRecorder()
 
@@ -46,6 +60,10 @@ public enum PerformanceBenchmark {
             phases: recorder.snapshot().completed(totalMS: coldMS),
             cells: cold.cells
         )
+        memory.sample()
+        let launchResult = try launch.map { request in
+            try launchFrames(request: request, plan: plan, loaded: cold, renderer: renderer)
+        }
 
         recorder.reset()
         let warmStart = nanoseconds()
@@ -57,16 +75,20 @@ public enum PerformanceBenchmark {
             phases: recorder.snapshot().completed(totalMS: warmMS),
             cells: warm.cells
         )
+        memory.sample()
 
-        return try PerformanceBenchmarkResult(
+        var result = try PerformanceBenchmarkResult(
             startedAt: startedAt,
             machine: machine,
             buildConfiguration: .current,
             plan: plan,
             coldLoad: coldLoad,
             warmLoad: warmLoad,
-            frameTime: frameTime(plan: plan, loaded: warm, renderer: renderer)
+            frameTime: frameTime(plan: plan, loaded: warm, renderer: renderer, memory: &memory)
         )
+        result.gpuMemory = memory.result
+        result.launch = launchResult
+        return result
     }
 
     private struct LoadPassOutput {
@@ -135,8 +157,64 @@ public enum PerformanceBenchmark {
     private static func frameTime(
         plan: PerformanceBenchmarkPlan,
         loaded: LoadPassOutput,
-        renderer: Renderer
+        renderer: Renderer,
+        memory: inout GPUMemoryTracker
     ) throws -> BenchmarkFrameTime {
+        try show(loaded: loaded, plan: plan, renderer: renderer)
+        _ = try renderer.renderOffscreenSustained(
+            width: plan.frameWidth, height: plan.frameHeight, frames: plan.warmupFrames
+        )
+        let measured = try renderer.renderOffscreenSustained(
+            width: plan.frameWidth, height: plan.frameHeight, frames: plan.measuredFrames
+        ) { _ in memory.sample() }
+        return BenchmarkFrameTime(
+            frames: measured.frameMS.count,
+            averageMS: measured.averageMS,
+            percentile95MS: measured.percentileMS(95),
+            worstMS: measured.frameMS.max() ?? 0,
+            drawCalls: renderer.lastDrawStats.drawCalls,
+            drawnInstances: renderer.lastDrawStats.drawnInstances,
+            gpuTime: BenchmarkTimeStats(milliseconds: measured.gpuMS),
+            grass: BenchmarkGrass(renderer.lastGrassDrawStats)
+        )
+    }
+
+    /// Frames on the cold-loaded view until `request.seconds` pass after the first one.
+    private static func launchFrames(
+        request: BenchmarkLaunchRequest,
+        plan: PerformanceBenchmarkPlan,
+        loaded: LoadPassOutput,
+        renderer: Renderer
+    ) throws -> BenchmarkLaunch {
+        try show(loaded: loaded, plan: plan, renderer: renderer)
+        let started = Date()
+        var firstFrameStart: UInt64?
+        let render = try renderer.pumpOffscreen(
+            width: plan.frameWidth,
+            height: plan.frameHeight,
+            maxFrames: Int(request.seconds * 1000)
+        ) {
+            let now = nanoseconds()
+            let first = firstFrameStart ?? now
+            firstFrameStart = first
+            return Double(now - first) / 1e9 >= request.seconds
+        }
+        let firstFrameMS = render.frameMS.first ?? 0
+        return BenchmarkLaunch(
+            processToFirstFrameMS: started.timeIntervalSince(request.processStart) * 1000
+                + firstFrameMS,
+            firstFrameMS: firstFrameMS,
+            seconds: request.seconds,
+            frameTime: BenchmarkTimeStats(milliseconds: render.frameMS)
+                ?? BenchmarkTimeStats(frames: 0, averageMS: 0, percentile95MS: 0, worstMS: 0)
+        )
+    }
+
+    private static func show(
+        loaded: LoadPassOutput,
+        plan: PerformanceBenchmarkPlan,
+        renderer: Renderer
+    ) throws {
         let view = plan.view
         let from = SIMD2(view.fromX, view.fromY)
         guard
@@ -160,27 +238,39 @@ public enum PerformanceBenchmark {
                 ambientColor: DemoScene.ambientColor
             )
         )
-        _ = try renderer.renderOffscreenSustained(
-            width: plan.frameWidth, height: plan.frameHeight, frames: plan.warmupFrames
-        )
-        let measured = try renderer.renderOffscreenSustained(
-            width: plan.frameWidth, height: plan.frameHeight, frames: plan.measuredFrames
-        )
-        return BenchmarkFrameTime(
-            frames: measured.frameMS.count,
-            averageMS: measured.averageMS,
-            percentile95MS: measured.percentileMS(95),
-            worstMS: measured.frameMS.max() ?? 0,
-            drawCalls: renderer.lastDrawStats.drawCalls,
-            drawnInstances: renderer.lastDrawStats.drawnInstances
-        )
     }
 
-    private static func nanoseconds() -> UInt64 {
+    static func nanoseconds() -> UInt64 {
         DispatchTime.now().uptimeNanoseconds
     }
 
-    private static func milliseconds(since started: UInt64) -> Double {
+    static func milliseconds(since started: UInt64) -> Double {
         Double(nanoseconds() - started) / 1_000_000
+    }
+}
+
+/// The peak of each memory field over the samples, and the last sample.
+@MainActor
+struct GPUMemoryTracker {
+    let renderer: Renderer
+    private var peak = GPUMemoryUsage()
+    private var last: GPUMemoryUsage?
+
+    init(renderer: Renderer) {
+        self.renderer = renderer
+    }
+
+    mutating func sample() {
+        let usage = renderer.gpuMemoryUsage()
+        peak = peak.fieldMaximum(usage)
+        last = usage
+    }
+
+    var result: BenchmarkGPUMemory? {
+        guard let last else { return nil }
+        return BenchmarkGPUMemory(
+            peak: BenchmarkGPUMemorySample(peak),
+            last: BenchmarkGPUMemorySample(last)
+        )
     }
 }

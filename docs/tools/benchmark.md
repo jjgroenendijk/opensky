@@ -1,8 +1,9 @@
 ---
 type: Tool
 title: Shared performance benchmark
-description: The one repeatable benchmark for load time and frame time - what it measures, how
-  load time splits into asset phases, the result shape, and how to run it.
+description: The one repeatable benchmark for load time, frame time, GPU time, and GPU memory -
+  what it measures, its launch and route modes, how load time splits into asset phases, the
+  result shape, and how to run it.
 tags: [tool, performance, benchmark]
 ---
 
@@ -14,7 +15,8 @@ benchmark definition would give numbers that do not compare, so callers reuse th
 
 ## Run it
 
-`make benchmark` builds a Release `openskycli` and runs `openskycli benchmark`. It writes
+`make benchmark` builds a Release `openskycli` and runs
+`openskycli benchmark --launch --route`. It writes
 `.logs/benchmark/<UTC timestamp>/` ([run output](/tools/run-output.md)):
 
 - `benchmark.log`: the printed summary.
@@ -42,6 +44,11 @@ The summary also prints the GPU memory allocated after the load.
 read. `bench --fly-path` and `bench --walk-path` take the same cache options, so the cell
 loads while streaming can be compared with and without it.
 
+`--size WxH` sets the frame size. The default is 2560 by 1600, the size of a Retina
+display, because upscaling and other per-pixel work only show their cost at display sizes.
+`--launch` and `--route` add the two modes below; `--launch-seconds <s>` changes the 60
+seconds of the launch mode.
+
 The command exits 1 when a cell fails to build. Such a result does not compare with a
 clean run.
 
@@ -54,7 +61,7 @@ The plan is fixed, so every run loads the same cells and renders the same view:
    farmhouse interior the walk benchmark enters.
 2. A warm load: the same builder builds the same cells again, with its caches full.
 3. Frame time: the nine exterior cells and the distant LOD from the warm load render
-   offscreen at 1280 by 720. 60 frames warm up; 600 frames are measured.
+   offscreen at the frame size. 60 frames warm up; 600 frames are measured.
 
 The camera stands at the walk benchmark's start point, at player eye height over the
 terrain, and looks level toward the farm. A camera that frames the cell bounds does not
@@ -65,6 +72,59 @@ Each frame waits for the GPU, so frame times are an upper bound on the pipelined
 The result reports the average, the 95th percentile, and the worst frame. It also reports the
 last frame's draw calls and drawn instances: two runs with different counts drew different
 views.
+
+GPU time is the time the GPU spent on each frame's command buffer. Metal's commit feedback
+gives the GPU start and end time of each commit, the same numbers the frame HUD shows. It
+leaves out the CPU encode and the wait, so it shows GPU work apart from wall-clock time.
+Feedback can arrive after the last frame ends, so the GPU frame count can be one lower.
+
+GPU memory is sampled after each load pass and after each measured frame:
+
+- total: `MTLDevice.currentAllocatedSize`, every GPU allocation of the process;
+- render targets: resident textures that a pass renders into, such as the color and depth
+  targets and the shadow maps;
+- textures: resident textures that shaders only read.
+
+The result keeps the peak of each value and the last sample. The two parts come from the
+renderer's residency set, so buffers and short-lived staging memory count only in the total.
+
+The grass line gives the grass draws and instances in the last measured frame. Zero draws
+means the view shows no grass, so a grass change cannot show a win there.
+
+## Launch mode
+
+`--launch` times the start of a fresh process. After the cold load, the cold-loaded view
+renders frames for 60 seconds before the warm load starts. The result holds:
+
+- `processToFirstFrameMS`: from the process start, as the kernel records it, to the end of
+  the first frame. It holds Metal setup, the cold load, and the first frame.
+- `firstFrameMS`: the first frame alone. Pipeline creation and first uploads land here.
+- `frameTime`: every frame of the 60 seconds, so its worst frame is the worst frame of the
+  first minute.
+
+OpenSky keeps no pipeline cache of its own; macOS caches compiled shaders between runs. The
+first run after a build or a reboot measures a cold shader cache, and a second run measures
+a warm one. Run `make benchmark` twice and compare the second runs, or the first run with
+the second, to see the cost of shader compilation.
+
+## Route mode
+
+`--route` walks the shared route of `bench --walk-path` at the frame size: across a cell
+border, up stairs, through a door into the farmhouse, and back. Cells stream in while it
+walks. One route serves both tools, so their numbers compare.
+
+The route uses a new cell builder with empty caches; the file cache of the operating system
+may still be warm. The result holds:
+
+- `frameTime`: every frame of the route, the frames that wait for a cell included. Its worst
+  frame is the worst frame while streaming.
+- `gpuTime`: GPU time over the same frames.
+- `cellLoads`: each cell, distant LOD, and door build, with its time and any error. Builds
+  run off the main thread, so a slow build shows as a wait, not as a long frame.
+
+The walk gates still apply: a route that does not climb the stairs or cross the interior
+fails the command. The route runs without the audio engine of `bench --walk-path`, so its frame times
+are a little lower than that command's.
 
 The cold load runs in the same process as the first file access, but the operating system
 may still hold the archive bytes in its file cache from an earlier run. A cold load here
@@ -99,10 +159,17 @@ dates, so two results diff line by line. It holds:
 - the build configuration: `debug`, `optimizedDebug`, or `release`;
 - the plan;
 - the cold and the warm load pass, each with its total, its phases, and each cell's time;
-- the frame time.
+- the frame time, with `gpuTime` and `grass`;
+- `gpuMemory`, with `peak` and `last`, each holding `totalMB`, `renderTargetMB`, and
+  `textureMB`;
+- `launch` and `route`, when their mode ran.
+
+A field added after the first version is optional, so an older result still decodes with that
+field empty.
 
 `schemaVersion` changes when a field changes meaning or goes away. A new field does not
-need a new version.
+need a new version. The frame size is part of the plan, so a result at another size says so
+in its own plan.
 
 ## Calling it from the app
 

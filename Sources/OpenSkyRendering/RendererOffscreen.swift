@@ -27,6 +27,9 @@ nonisolated public struct OffscreenBenchResult: Sendable {
     /// CPU wall time of the world-simulation callback per frame. The callback
     /// owns the Papyrus VM advance; every entry is zero when none is attached.
     public let scriptUpdateMS: [Double]
+    /// GPU time per frame from commit feedback. Feedback can arrive after the
+    /// run ends, so this may hold one entry fewer than `frameMS`.
+    public let gpuMS: [Double]
 
     public init(
         frameMS: [Double],
@@ -34,7 +37,8 @@ nonisolated public struct OffscreenBenchResult: Sendable {
         animationMS: [Double] = [],
         shadowMS: [Double] = [],
         audioUpdateMS: [Double] = [],
-        scriptUpdateMS: [Double] = []
+        scriptUpdateMS: [Double] = [],
+        gpuMS: [Double] = []
     ) {
         self.frameMS = frameMS
         self.windowSummaries = windowSummaries
@@ -42,6 +46,7 @@ nonisolated public struct OffscreenBenchResult: Sendable {
         self.shadowMS = shadowMS
         self.audioUpdateMS = audioUpdateMS
         self.scriptUpdateMS = scriptUpdateMS
+        self.gpuMS = gpuMS
     }
 
     public var averageMS: Double {
@@ -87,6 +92,14 @@ nonisolated public struct OffscreenBenchResult: Sendable {
 
     public func scriptUpdatePercentileMS(_ percentile: Double) -> Double {
         Self.percentile(scriptUpdateMS, percentile: percentile)
+    }
+
+    public var gpuAverageMS: Double {
+        gpuMS.isEmpty ? 0 : gpuMS.reduce(0, +) / Double(gpuMS.count)
+    }
+
+    public func gpuPercentileMS(_ percentile: Double) -> Double {
+        Self.percentile(gpuMS, percentile: percentile)
     }
 
     private static func percentile(_ values: [Double], percentile: Double) -> Double {
@@ -296,6 +309,9 @@ extension Renderer {
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
         var scriptUpdateMS: [Double] = []
+        let gpuLog = GPUFrameLog()
+        gpuFrameLog = gpuLog
+        defer { gpuFrameLog = nil }
 
         for _ in 1 ... maxFrames {
             if minimumFrameInterval > 0 {
@@ -322,7 +338,8 @@ extension Renderer {
                     animationMS: animationMS,
                     shadowMS: shadowMS,
                     audioUpdateMS: audioUpdateMS,
-                    scriptUpdateMS: scriptUpdateMS
+                    scriptUpdateMS: scriptUpdateMS,
+                    gpuMS: gpuLog.take()
                 )
             }
         }
@@ -333,10 +350,13 @@ extension Renderer {
     /// target and reports per-frame wall times + FrameStats window
     /// summaries. Synchronous frames make the numbers conservative: each
     /// includes the full CPU-GPU round trip a pipelined loop overlaps.
+    /// `afterFrame` runs after each frame's timing stops, so a caller can sample
+    /// state without adding to the frame time.
     public func renderOffscreenSustained(
         width: Int,
         height: Int,
-        frames: Int
+        frames: Int,
+        afterFrame: (Int) -> Void = { _ in }
     ) throws -> OffscreenBenchResult {
         let (color, depth) = try makeOffscreenTargets(width: width, height: height)
         residencySet.addAllocations([color, depth])
@@ -355,7 +375,10 @@ extension Renderer {
         var shadowMS: [Double] = []
         var audioUpdateMS: [Double] = []
         var scriptUpdateMS: [Double] = []
-        for _ in 0 ..< frames {
+        let gpuLog = GPUFrameLog()
+        gpuFrameLog = gpuLog
+        defer { gpuFrameLog = nil }
+        for frame in 0 ..< frames {
             let start = DispatchTime.now().uptimeNanoseconds
             let summary = try renderOffscreenFrame(
                 descriptor: descriptor,
@@ -369,6 +392,7 @@ extension Renderer {
             shadowMS.append(lastShadowUpdateMS)
             audioUpdateMS.append(frameDriver?.lastAudioUpdateMS ?? 0)
             scriptUpdateMS.append(frameDriver?.lastScriptUpdateMS ?? 0)
+            afterFrame(frame)
         }
         return OffscreenBenchResult(
             frameMS: frameMS,
@@ -376,7 +400,8 @@ extension Renderer {
             animationMS: animationMS,
             shadowMS: shadowMS,
             audioUpdateMS: audioUpdateMS,
-            scriptUpdateMS: scriptUpdateMS
+            scriptUpdateMS: scriptUpdateMS,
+            gpuMS: gpuLog.take()
         )
     }
 }

@@ -67,11 +67,26 @@ nonisolated public struct PerformanceBenchmarkPlan: Codable, Equatable, Sendable
             towardY: WalkPathRoute.exteriorReturn.y,
             eyeHeight: PlayerCapsule.standard.eyeHeight
         ),
-        frameWidth: 1280,
-        frameHeight: 720,
+        frameWidth: 2560,
+        frameHeight: 1600,
         warmupFrames: 60,
         measuredFrames: 600
     )
+
+    /// The same cells and view at another frame size.
+    public func resized(width: Int, height: Int) -> Self {
+        Self(
+            worldspace: worldspace,
+            centerCell: centerCell,
+            exteriorCells: exteriorCells,
+            interiorCellFormIDs: interiorCellFormIDs,
+            view: view,
+            frameWidth: width,
+            frameHeight: height,
+            warmupFrames: warmupFrames,
+            measuredFrames: measuredFrames
+        )
+    }
 }
 
 nonisolated public struct BenchmarkCellLoad: Codable, Equatable, Sendable {
@@ -124,6 +139,9 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
     /// The last frame's draw counts. Two runs with different counts drew different views.
     public let drawCalls: Int
     public let drawnInstances: Int
+    /// GPU time per frame, from the command buffer's GPU start and end times.
+    public let gpuTime: BenchmarkTimeStats?
+    public let grass: BenchmarkGrass?
 
     public init(
         frames: Int,
@@ -131,7 +149,9 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
         percentile95MS: Double,
         worstMS: Double,
         drawCalls: Int,
-        drawnInstances: Int
+        drawnInstances: Int,
+        gpuTime: BenchmarkTimeStats? = nil,
+        grass: BenchmarkGrass? = nil
     ) {
         self.frames = frames
         self.averageMS = averageMS
@@ -139,6 +159,8 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
         self.worstMS = worstMS
         self.drawCalls = drawCalls
         self.drawnInstances = drawnInstances
+        self.gpuTime = gpuTime
+        self.grass = grass
     }
 }
 
@@ -170,6 +192,12 @@ nonisolated public struct PerformanceBenchmarkResult: Codable, Equatable, Sendab
     public let coldLoad: BenchmarkLoadPass
     public let warmLoad: BenchmarkLoadPass
     public let frameTime: BenchmarkFrameTime
+    /// Sampled after each load pass and each measured frame.
+    public var gpuMemory: BenchmarkGPUMemory?
+    /// Set by `benchmark --launch`.
+    public var launch: BenchmarkLaunch?
+    /// Set by `benchmark --route`.
+    public var route: BenchmarkRoute?
 
     public init(
         startedAt: Date,
@@ -192,7 +220,7 @@ nonisolated public struct PerformanceBenchmarkResult: Codable, Equatable, Sendab
 
     /// True when every cell built, so the numbers compare with another clean run.
     public var isComparable: Bool {
-        (coldLoad.cells + warmLoad.cells).allSatisfy { $0.error == nil }
+        (coldLoad.cells + warmLoad.cells + (route?.cellLoads ?? [])).allSatisfy { $0.error == nil }
     }
 
     /// Pretty, key-sorted JSON with ISO 8601 dates, so two results diff cleanly.

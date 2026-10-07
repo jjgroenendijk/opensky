@@ -240,7 +240,8 @@ extension OpenSkyCLI {
                                   captures of the same view
       benchmark [--out <file>] [--frame <png>] [--asset-cache] [--evict]
                 [--fast-load] [--preset best|balanced|highest] [--folder <dir>]
-                [--loose <dir>] [--record-paths <file>]
+                [--loose <dir>] [--record-paths <file>] [--size WxH]
+                [--launch] [--launch-seconds <s>] [--route]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
@@ -250,7 +251,11 @@ extension OpenSkyCLI {
                                   --fast-load reads cached textures with
                                   Metal fast resource loading,
                                   --loose reads extracted copies first,
-                                  --record-paths lists the assets it read
+                                  --record-paths lists the assets it read,
+                                  --size sets the frame (default 2560x1600),
+                                  --launch times the process start and its
+                                  first 60 s, --route walks the shared
+                                  route with live streaming
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control
