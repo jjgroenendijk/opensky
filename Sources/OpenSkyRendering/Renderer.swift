@@ -234,6 +234,8 @@ public final class Renderer: NSObject {
     /// Written only by encodeScenePass (RendererScenePass.swift).
     public var lastDrawStats = SceneDrawStats()
     public var lastGrassDrawStats = GrassDrawStats()
+    /// Every pipeline the renderer made, and how many came from the saved archive.
+    public let pipelineCache: PipelineCache
     /// The depth target of the last scene pass, for the render-target readout.
     var lastSceneDepth: RenderTargetEntry?
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
@@ -257,6 +259,7 @@ public final class Renderer: NSObject {
         scene: RenderScene? = nil,
         camera: SceneCamera? = nil,
         shaderLibrary: MTLLibrary? = nil,
+        pipelineCache: PipelineCache? = nil,
         wallClock: any WallClock = MediaWallClock()
     ) throws {
         guard let device = view.device else { throw RendererError.deviceUnavailable }
@@ -269,17 +272,16 @@ public final class Renderer: NSObject {
         commandAllocators = try Self.makeCommandAllocators(device: device)
         argumentTable = try Self.makeArgumentTable(device: device)
 
-        guard let event = device.makeSharedEvent() else {
-            throw RendererError.sharedEventUnavailable
-        }
-        endFrameEvent = event
+        endFrameEvent = try Self.makeEndFrameEvent(device: device)
         frameIndex = Self.maxFramesInFlight
         endFrameEvent.signaledValue = UInt64(frameIndex - 1)
 
         Self.configure(view: view)
 
         let library = try shaderLibrary ?? Self.makeBundledShaderLibrary(device: device)
-        let pipelines = try Self.makePipelines(device: device, view: view, library: library)
+        let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)
+        self.pipelineCache = compiler
+        let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
         (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
         (alphaTestPipeline, skinnedOpaquePipeline) = (
             pipelines.alphaTest, pipelines.skinnedOpaque
@@ -294,9 +296,9 @@ public final class Renderer: NSObject {
         waterDepthState = try Self.makeWaterDepthState(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
-            try Self.makeAuxiliaryResources(device: device, view: view, library: library)
+            try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)
         (imageSpacePass, effects) =
-            try Self.makeEffectResources(device: device, view: view, library: library)
+            try Self.makeEffectResources(view: view, library: library, compiler: compiler)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))
@@ -326,5 +328,7 @@ public final class Renderer: NSObject {
         frameStats = FrameStats()
 
         super.init()
+        // A failed save only costs the next launch a compile.
+        try? compiler.saveIfNeeded()
     }
 }

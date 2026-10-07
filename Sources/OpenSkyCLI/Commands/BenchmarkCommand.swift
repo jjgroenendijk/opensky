@@ -17,6 +17,7 @@ enum BenchmarkCommand {
         let plan: PerformanceBenchmarkPlan
         let launch: BenchmarkLaunchRequest?
         let route: Bool
+        let coldPipelines: Bool
 
         init(scanner: inout ArgumentScanner) throws {
             outPath = try scanner.option("--out")
@@ -34,6 +35,7 @@ enum BenchmarkCommand {
                 launch = nil
             }
             route = scanner.flag("--route")
+            coldPipelines = scanner.flag("--cold-pipelines")
         }
 
         private static func seconds(_ value: String) throws -> Double {
@@ -69,7 +71,11 @@ enum BenchmarkCommand {
             throw CLIError.failure("no Metal 4 GPU available")
         }
         let plan = options.plan
-        let renderer = try makeRenderer(device: device, plan: plan)
+        let setupStart = DispatchTime.now().uptimeNanoseconds
+        let renderer = try makeRenderer(
+            device: device, plan: plan, coldPipelines: options.coldPipelines
+        )
+        let setupMS = Double(DispatchTime.now().uptimeNanoseconds - setupStart) / 1e6
         var fastLoader: FastTextureLoader?
         var result = try PerformanceBenchmark.run(
             plan: plan,
@@ -83,6 +89,9 @@ enum BenchmarkCommand {
             fastLoader = builder.textures.fastLoader
             return builder
         }
+        result.pipelines = BenchmarkPipelines(
+            rendererSetupMS: setupMS, stats: renderer.pipelineCache.stats
+        )
         if let framePath = options.framePath {
             try writeView(renderer: renderer, plan: plan, to: framePath)
         }
@@ -112,11 +121,17 @@ enum BenchmarkCommand {
         }
     }
 
-    /// A paused offscreen renderer; the view only carries the pixel formats.
+    /// A paused offscreen renderer; the view only carries the pixel formats. Its
+    /// pipelines use the cache the settings ask for; `coldPipelines` clears it first.
     private static func makeRenderer(
         device: MTLDevice,
-        plan: PerformanceBenchmarkPlan
+        plan: PerformanceBenchmarkPlan,
+        coldPipelines: Bool
     ) throws -> Renderer {
+        let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
+        if coldPipelines, let folder = PipelineCache.archiveFolder(store: store) {
+            try PipelineCacheFolder.clear(folder: folder)
+        }
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: plan.frameWidth, height: plan.frameHeight),
             device: device
@@ -126,7 +141,8 @@ enum BenchmarkCommand {
         return try Renderer(
             view: view,
             scene: RenderScene(instances: []),
-            movementConfiguration: .synthetic
+            movementConfiguration: .synthetic,
+            pipelineCache: PipelineCache.fromSettings(device: device, store: store)
         )
     }
 

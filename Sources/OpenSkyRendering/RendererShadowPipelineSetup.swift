@@ -10,10 +10,13 @@ extension Renderer {
     /// Builds the shadow pipelines + compare sampler + cascade array together.
     public static func makeShadowResources(
         device: MTLDevice,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> ShadowResources {
         try ShadowResources(
-            pipelines: makeShadowPipelines(device: device, library: library),
+            pipelines: makeShadowPipelines(
+                device: device, library: library, compiler: compiler
+            ),
             sampler: makeShadowSampler(device: device),
             map: makeShadowMap(device: device)
         )
@@ -24,10 +27,9 @@ extension Renderer {
     /// unlike the scene pipelines which carry a color attachment).
     private static func makeShadowPipelines(
         device: MTLDevice,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> ShadowPipelines {
-        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
-
         func make(
             label: String,
             vertex: String,

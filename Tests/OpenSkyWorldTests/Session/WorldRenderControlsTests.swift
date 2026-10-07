@@ -99,6 +99,7 @@ private final class EmptyRenderControlWorld: RenderControlWorld {
     let renderer: Renderer? = nil
     let streamer: CellStreamer? = nil
     let terrainLODConfigurationStore = TerrainLODConfigurationStore.fallback()
+    let playerSettingsStore = PlayerSettingsStore(persistence: nil)
     private(set) var refocusCount = 0
 
     func refocusGameView() {

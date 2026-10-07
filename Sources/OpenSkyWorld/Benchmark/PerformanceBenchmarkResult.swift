@@ -198,6 +198,8 @@ nonisolated public struct PerformanceBenchmarkResult: Codable, Equatable, Sendab
     public var launch: BenchmarkLaunch?
     /// Set by `benchmark --route`.
     public var route: BenchmarkRoute?
+    /// The renderer's pipeline setup.
+    public var pipelines: BenchmarkPipelines?
 
     public init(
         startedAt: Date,

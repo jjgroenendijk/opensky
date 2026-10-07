@@ -102,10 +102,12 @@ renders frames for 60 seconds before the warm load starts. The result holds:
 - `frameTime`: every frame of the 60 seconds, so its worst frame is the worst frame of the
   first minute.
 
-OpenSky keeps no pipeline cache of its own; macOS caches compiled shaders between runs. The
-first run after a build or a reboot measures a cold shader cache, and a second run measures
-a warm one. Run `make benchmark` twice and compare the second runs, or the first run with
-the second, to see the cost of shader compilation.
+The [pipeline cache](/rendering/pipeline-cache.md) saves compiled pipelines in the asset
+cache folder. `--cold-pipelines` (`make benchmark ARGS=--cold-pipelines`) deletes the archive
+first, so the run compiles every pipeline and saves a new archive. A second run without it
+then loads them. The `pipelines` field holds the renderer setup time, the archive state, and
+how many pipelines were loaded and compiled. macOS also caches compiled shaders between runs,
+so the first run after a build or a reboot can be slower for that reason too.
 
 ## Route mode
 
@@ -162,7 +164,8 @@ dates, so two results diff line by line. It holds:
 - the frame time, with `gpuTime` and `grass`;
 - `gpuMemory`, with `peak` and `last`, each holding `totalMB`, `renderTargetMB`, and
   `textureMB`;
-- `launch` and `route`, when their mode ran.
+- `launch` and `route`, when their mode ran;
+- `pipelines`: the renderer setup time and the pipeline cache counts.
 
 A field added after the first version is optional, so an older result still decodes with that
 field empty.

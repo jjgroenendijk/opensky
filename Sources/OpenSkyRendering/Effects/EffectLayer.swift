@@ -57,8 +57,9 @@ public final class EffectLayer {
     let depthState: MTLDepthStencilState
     let uniformBuffer: MTLBuffer
 
-    init(device: MTLDevice, library: MTLLibrary, view: MTKView) throws {
-        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
+    init(
+        device: MTLDevice, library: MTLLibrary, view: MTKView, compiler: PipelineCache
+    ) throws {
         func make(
             _ vertex: String,
             _ layout: MTLVertexDescriptor
@@ -95,7 +96,7 @@ public final class EffectLayer {
         vertex: String,
         layout: MTLVertexDescriptor,
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()

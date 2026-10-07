@@ -31,7 +31,9 @@ struct RenderingPerformancePanelTests {
     @Test
     func theSectionsCarryTheirPinnedIdentifiers() throws {
         let panel = try makePanel(FakeWorldProviders())
-        #expect(panel.sections.map(\.sectionIdentifier) == ["renderTargets"])
+        #expect(
+            panel.sections.map(\.sectionIdentifier) == ["renderTargets", "pipelineCache"]
+        )
         #expect(
             panel.renderTargetsSection.statsLabelIdentifier == "RenderTargetsStatsLabel"
         )
@@ -54,6 +56,44 @@ struct RenderingPerformancePanelTests {
         providers.renderPerformanceSnapshot = nil
         panel.renderTargetsSection.refreshReadout()
         #expect(panel.renderTargetsSection.statsReadout == "Render targets: unavailable")
+    }
+}
+
+@MainActor
+struct PipelineCacheSectionTests {
+    @Test
+    func theSwitchAndClearReachTheProvider() {
+        let providers = FakeWorldProviders()
+        let section = PipelineCacheSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        #expect(section.enabledControl.accessibilityIdentifier() == "PipelineCacheEnabledControl")
+        #expect(section.clearControl.accessibilityIdentifier() == "PipelineCacheClearControl")
+
+        section.enabledControl.state = .off
+        section.enabledControl.sendAction(section.enabledControl.action, to: section)
+        #expect(!providers.pipelineCacheEnabled)
+        #expect(PipelineCacheSection.isOverridden(provider: providers))
+        PipelineCacheSection.resetToDefaults(provider: providers)
+        #expect(providers.pipelineCacheEnabled)
+
+        section.clearControl.sendAction(section.clearControl.action, to: section)
+        #expect(providers.pipelineCacheClears == 1)
+        #expect(section.statsReadout.contains("Cleared: 1 files"))
+    }
+
+    @Test
+    func theReadoutShowsHitsAndMisses() {
+        let providers = FakeWorldProviders()
+        var stats = PipelineCacheStats()
+        stats.archive = .loaded
+        stats.hits = 40
+        providers.renderPerformanceSnapshot = RenderPerformanceSnapshot(pipelineCache: stats)
+        let section = PipelineCacheSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        section.refreshReadout()
+        #expect(section.statsReadout == "Archive: loaded\nLoaded: 40  Compiled: 0")
     }
 }
 

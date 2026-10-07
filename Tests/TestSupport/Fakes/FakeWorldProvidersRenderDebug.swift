@@ -1,4 +1,4 @@
-// The render-debug part of the shared provider fake, split from
+// The render-debug and render-performance part of the shared provider fake, split from
 // `FakeWorldProviders.swift`, which keeps only the stored state.
 
 @testable import OpenSkyRendering
@@ -29,5 +29,10 @@ extension FakeWorldProviders {
             stats: renderDebugStats,
             shadowStats: shadowDrawStats
         )
+    }
+
+    func clearPipelineCache() -> Int {
+        pipelineCacheClears += 1
+        return 1
     }
 }

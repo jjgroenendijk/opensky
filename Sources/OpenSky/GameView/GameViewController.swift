@@ -355,6 +355,7 @@ final class GameViewController: NSViewController {
                     input: cameraInput,
                     movementConfiguration: (provider as? MovementConfigurationProviding)?
                         .movementConfiguration ?? .synthetic,
+                    pipelineCache: makePipelineCache(device: device),
                     wallClock: simulationClock
                 )
             }
@@ -580,6 +581,14 @@ extension GameViewController: AudioControlForwarding, RuntimeStateControlForward
     EffectsControlForwarding, ExplosionControlForwarding, CinematicCameraControlForwarding,
     LoadingScreenControlForwarding, MessageControlForwarding
 {
+    var playerSettingsStore: PlayerSettingsStore {
+        playerSettings.store
+    }
+
+    func makePipelineCache(device: MTLDevice) throws -> PipelineCache {
+        try PipelineCache.fromSettings(device: device, store: playerSettings.store)
+    }
+
     var cinematicSelectedActor: ReferenceKey? {
         actorWorld.nearestActorValueHolder()?.key
     }

@@ -62,7 +62,7 @@ extension Renderer {
     /// leave it undefined, which is what keeps their compiled code unchanged.
     public static func makeDebugPipelines(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> DebugRenderPipelines {
         func make(_ recipe: DebugPipelineRecipe) throws -> MTLRenderPipelineState {
@@ -111,7 +111,7 @@ extension Renderer {
     private static func makeDebugPipeline(
         _ recipe: DebugPipelineRecipe,
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
@@ -131,7 +131,7 @@ extension Renderer {
 
     public static func makeGrassPipeline(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
@@ -151,7 +151,7 @@ extension Renderer {
 
     public static func makeTerrainPipeline(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
