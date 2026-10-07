@@ -54,7 +54,26 @@ extension Renderer {
 
     /// The counts of the last encoded frame, for a caller that waited for its GPU work.
     public func lastFrameGPUCullCounts() -> CullCounts {
-        gpuCull.scene?.counts(slot: (frameIndex - 1) % Self.maxFramesInFlight) ?? CullCounts()
+        guard gpuCull.enabled else { return CullCounts() }
+        return gpuCull.scene?.counts(slot: (frameIndex - 1) % Self.maxFramesInFlight)
+            ?? CullCounts()
+    }
+
+    /// The camera draw counts of both culling paths, for readouts that show one number.
+    public func combinedDrawStats(gpu: CullCounts? = nil) -> SceneDrawStats {
+        let gpu = gpu ?? lastGPUCullCounts
+        var stats = lastDrawStats
+        stats.drawnInstances += gpu.cameraVisible
+        stats.culledInstances += gpu.cameraCulled
+        return stats
+    }
+
+    /// The shadow draw counts of both culling paths, summed over the cascades.
+    public var combinedShadowDrawStats: ShadowDrawStats {
+        var stats = lastShadowDrawStats
+        stats.drawnInstances += lastGPUCullCounts.shadowVisible
+        stats.culledInstances += lastGPUCullCounts.shadowCulled
+        return stats
     }
 
     private func currentGPUCullScene() -> GPUCullScene? {

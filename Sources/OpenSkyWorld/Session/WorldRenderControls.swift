@@ -61,7 +61,7 @@ extension WorldRenderControls: ShadowControlProviding {
     }
 
     public var shadowDrawStats: ShadowDrawStats {
-        renderer?.lastShadowDrawStats ?? ShadowDrawStats()
+        renderer?.combinedShadowDrawStats ?? ShadowDrawStats()
     }
 
     public var shadowUpdateMS: Double {
@@ -123,8 +123,8 @@ extension WorldRenderControls: RenderDebugControlProviding {
             mode: renderDebugMode,
             layers: renderDebugLayers,
             effectiveLayers: renderer?.effectiveRenderLayers ?? .all,
-            stats: renderer?.lastDrawStats ?? SceneDrawStats(),
-            shadowStats: renderer?.lastShadowDrawStats ?? ShadowDrawStats()
+            stats: renderer?.combinedDrawStats() ?? SceneDrawStats(),
+            shadowStats: renderer?.combinedShadowDrawStats ?? ShadowDrawStats()
         )
     }
 }
@@ -147,9 +147,13 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         )
     }
 
+    /// Applies at once and is saved, so the next launch starts with it.
     public var gpuCullingEnabled: Bool {
-        get { renderer?.gpuCullingEnabled ?? false }
-        set { renderer?.gpuCullingEnabled = newValue }
+        get { renderer?.gpuCullingEnabled ?? world?.playerSettingsStore.bool(.gpuCulling) ?? true }
+        set {
+            renderer?.gpuCullingEnabled = newValue
+            world?.playerSettingsStore.set(.gpuCulling, to: newValue ? 1 : 0)
+        }
     }
 
     /// Read at renderer setup, so a change applies on the next launch.
@@ -197,7 +201,7 @@ extension WorldRenderControls: FrameStatsProviding, SceneStatsProviding {
     }
 
     public var sceneStatsSnapshot: SceneStatsSnapshot {
-        let draw = renderer?.lastDrawStats ?? SceneDrawStats()
+        let draw = renderer?.combinedDrawStats() ?? SceneDrawStats()
         return SceneStatsSnapshot(
             drawCalls: draw.drawCalls,
             drawnInstances: draw.drawnInstances,

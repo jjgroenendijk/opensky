@@ -43,14 +43,23 @@ box once. A group outside the view gets no draw, and its instances count as cull
 Survivors of one group land in any order, because threads finish in any order. Opaque and
 alpha-tested draws use a depth test, so the order does not change the image.
 
+## Default and settings
+
+The app culls on the GPU by default. The player setting `rendering.gpuCulling` turns it off,
+and the next launch reads it. The launcher's Graphics page and the switch below both write
+it. The `Renderer` type itself starts on the CPU path, so a render test that builds one tests
+the CPU path unless it turns the GPU path on.
+
+The frame HUD, the render debug panel, and the shadow readout show one count per view: the
+CPU path's count plus the GPU path's count. The GPU part is a few frames old.
+
 ## Checking it
 
 `Developer > Rendering Performance > GPU Culling` has the switch
-(`GPUCullingEnabledControl`) and the counts of both paths (`GPUCullingStatsLabel`): instances
-drawn and culled for the camera and for all cascades together. The GPU counts are read when a
-frame slot comes back, so they are a few frames old. With the switch on, the CPU counts cover
-only the groups that stay on the CPU.
+(`GPUCullingEnabledControl`) and the counts of both paths apart (`GPUCullingStatsLabel`):
+instances drawn and culled for the camera and for all cascades together. With the switch on,
+the CPU counts cover only the groups that stay on the CPU.
 
-`make benchmark ARGS=--gpu-culling` measures the GPU path. The `encodeTime` field of the
-result holds the CPU time of the shadow and scene pass encoding
+`make benchmark` measures the GPU path, and `make benchmark ARGS=--cpu-culling` the CPU path.
+The `encodeTime` field of the result holds the CPU time of the shadow and scene pass encoding
 ([benchmark](/tools/benchmark.md)).

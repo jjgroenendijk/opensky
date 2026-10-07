@@ -80,9 +80,9 @@ Feedback can arrive after the last frame ends, so the GPU frame count can be one
 
 CPU encode is the CPU time that the shadow and scene passes take to encode each frame. It
 holds culling, the per-draw uniform writes, and the draw calls, and leaves out the wait for the
-GPU. `--gpu-culling` moves the culling of the static scene to the GPU
-([GPU culling](/rendering/gpu-culling.md)); the `gpuCulling` field says which path ran. With
-it, the drawn instance count adds the GPU's camera count, so the two paths compare.
+GPU. The static scene culls on the GPU, as in the app ([GPU culling](/rendering/gpu-culling.md)).
+`--cpu-culling` culls it on the CPU instead, and the `gpuCulling` field says which path ran.
+The drawn instance count adds the GPU's camera count, so the two paths compare.
 
 GPU memory is sampled after each load pass and after each measured frame:
 

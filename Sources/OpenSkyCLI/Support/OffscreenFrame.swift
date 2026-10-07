@@ -88,7 +88,7 @@ extension RenderCommand {
         inspect(renderer)
         return OffscreenFrame(
             texture: texture,
-            stats: renderer.lastDrawStats,
+            stats: renderer.combinedDrawStats(gpu: renderer.lastFrameGPUCullCounts()),
             uiStats: renderer.lastUIDrawStats,
             worldOverlayStats: renderer.lastWorldOverlayDrawStats
         )

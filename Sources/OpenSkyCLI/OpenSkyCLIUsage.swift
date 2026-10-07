@@ -245,7 +245,7 @@ extension OpenSkyCLI {
                 [--fast-load] [--preset best|balanced|highest] [--folder <dir>]
                 [--loose <dir>] [--record-paths <file>] [--size WxH]
                 [--launch] [--launch-seconds <s>] [--route] [--cold-pipelines]
-                [--gpu-culling]
+                [--cpu-culling]
                                   Shared benchmark: cold + warm load of fixed
                                   cells split into asset phases, then frame
                                   time on a fixed view; --out writes stable
@@ -261,8 +261,8 @@ extension OpenSkyCLI {
                                   first 60 s, --route walks the shared
                                   route with live streaming,
                                   --cold-pipelines deletes the saved
-                                  pipeline archive first, --gpu-culling
-                                  culls static groups on the GPU
+                                  pipeline archive first, --cpu-culling
+                                  culls static groups on the CPU
       game <command> [--text] [--socket <path>] [--reply-timeout <s>]
            [--record <file>]
                                   Drive the running app over its agent control

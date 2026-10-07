@@ -360,6 +360,7 @@ final class GameViewController: NSViewController {
                 )
             }
             newRenderer.shadowQuality = ShadowQualitySettings.load()
+            newRenderer.applyGraphicsSettings(playerSettings.store)
             newRenderer.timeOfDay = TimeOfDaySettings.load()
             // Without weather data the renderer keeps its procedural sky.
             newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
