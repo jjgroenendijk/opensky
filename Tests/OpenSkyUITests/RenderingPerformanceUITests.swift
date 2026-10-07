@@ -13,15 +13,18 @@ final class RenderingPerformanceUITests: OpenSkyUITestCase {
         for checkbox in [
             "PipelineCacheEnabledControl", "GPUCullingEnabledControl",
             "TextureStreamingEnabledControl", "RayTracedShadowsEnabledControl",
-            "RayTracedShadowsViewControl"
+            "RayTracedShadowsViewControl", "FrameInterpolationControl", "MeshShaderGrassControl"
         ] {
             XCTAssertTrue(app.checkBoxes[checkbox].exists, checkbox)
         }
         XCTAssertTrue(app.buttons["PipelineCacheClearControl"].exists)
-        XCTAssertTrue(app.popUpButtons["TextureBudgetControl"].exists)
+        for popUp in ["TextureBudgetControl", "RenderScaleControl", "UpscalerControl"] {
+            XCTAssertTrue(app.popUpButtons[popUp].exists, popUp)
+        }
         for label in [
             "PipelineCacheStatsLabel", "GPUCullingStatsLabel", "TextureStreamingStatsLabel",
-            "RayTracedShadowsStatsLabel"
+            "RayTracedShadowsStatsLabel", "UpscalingStatsLabel", "FrameInterpolationStatsLabel",
+            "MeshShaderGrassStatsLabel"
         ] {
             XCTAssertTrue(app.staticTexts[label].exists, label)
         }
@@ -40,12 +43,17 @@ final class RenderingPerformanceUITests: OpenSkyUITestCase {
         )
         for checkbox in [
             "GraphicsGPUCullingControl", "GraphicsTextureStreamingControl",
-            "GraphicsRayTracedShadowsControl"
+            "GraphicsRayTracedShadowsControl", "GraphicsFrameInterpolationControl",
+            "GraphicsMeshShaderGrassControl"
         ] {
             XCTAssertTrue(app.checkBoxes[checkbox].exists, checkbox)
         }
         XCTAssertTrue(app.buttons["GraphicsPipelineCacheClearControl"].exists)
-        XCTAssertTrue(app.popUpButtons["GraphicsTextureBudgetControl"].exists)
+        for popUp in [
+            "GraphicsTextureBudgetControl", "GraphicsRenderScaleControl", "GraphicsUpscalerControl"
+        ] {
+            XCTAssertTrue(app.popUpButtons[popUp].exists, popUp)
+        }
         XCTAssertTrue(app.staticTexts["GraphicsStatsLabel"].exists)
     }
 }
