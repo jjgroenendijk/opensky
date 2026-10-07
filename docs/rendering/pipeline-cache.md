@@ -49,7 +49,7 @@ A process without a `default.metallib` in its bundle, such as a package test, ge
 (`PipelineCacheEnabledControl`), a clear button (`PipelineCacheClearControl`), and the counts
 of this launch (`PipelineCacheStatsLabel`): pipelines loaded from the archive and pipelines
 compiled. The switch is the `pipelineCache.enabled` player setting and applies on the next
-launch.
+launch. The launcher's Graphics page has the same switch and clear button.
 
 `make benchmark ARGS=--cold-pipelines` deletes the archive first; the `pipelines` field of the
 result holds the renderer setup time and the counts ([benchmark](/tools/benchmark.md)).

@@ -25,10 +25,13 @@ The app opens on the launcher, not on the developer shell. The launcher holds:
   inspector, or frame HUD. Developer Mode opens the shell this page describes. Play needs a
   valid game folder; Developer Mode does not, because the shell shows a demo scene without one.
   Return chooses the mode the user picked last.
-- A page list on the left: Launch, Asset Cache, and Settings. Settings is the same view as the
-  Cmd+, window. Asset Cache picks the quality preset, the folder, and the size limit, and builds,
-  checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
-  `AssetCacheCoordinator` in `OpenSkyWorld`.
+- A page list on the left: Launch, Asset Cache, Graphics, and Settings. Settings is the same
+  view as the Cmd+, window. Asset Cache picks the quality preset, the folder, and the size
+  limit, and builds, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules
+  live in `AssetCacheCoordinator` in `OpenSkyWorld`. Graphics holds the switches of the GPU
+  performance features, such as the [pipeline cache](/rendering/pipeline-cache.md) and
+  [GPU culling](/rendering/gpu-culling.md). It writes the player settings file, which the game
+  reads when it starts.
 
 The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
 `LaunchMode`, the remembered mode, and `GameFolderStatus`. The app only draws them.
@@ -240,6 +243,7 @@ Accessibility ids are the UI test API and never change silently.
 | Reset all menu item | `ResetAllOverridesCommand` |
 | Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
 | Launcher Asset Cache page | `AssetCache<Thing>Control` and `AssetCache<Thing>StatsLabel`, `AssetCacheBuildProgressIndicator` |
+| Launcher Graphics page | `Graphics<Thing>Control` and `GraphicsStatsLabel` |
 | Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
 | Toolbar | `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
 | Frame HUD | `FrameHUDStatsLabel` |

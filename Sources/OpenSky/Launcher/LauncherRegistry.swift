@@ -68,6 +68,14 @@ enum LauncherRegistry {
             }
         ),
         LauncherPageDescriptor(
+            id: "graphics",
+            title: "Graphics",
+            symbolName: "cpu",
+            makeController: { _ in
+                GraphicsPageViewController(reloadStore: AssetCachePageViewController.savedSettings)
+            }
+        ),
+        LauncherPageDescriptor(
             id: "settings",
             title: "Settings",
             symbolName: "gearshape",
