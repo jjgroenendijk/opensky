@@ -182,7 +182,13 @@ nonisolated public struct BSAArchive: Sendable {
     /// Case-insensitive lookup; accepts `/` or `\` separators.
     public func entry(forPath path: String) -> Entry? {
         let key = path.lowercased().replacingOccurrences(of: "/", with: "\\")
-        return entriesByPath[key].map { entries[$0] }
+        return entry(forNormalizedPath: key)
+    }
+
+    /// Lookup by a path that is already lowercase with `\` separators. The VFS
+    /// asks every archive in turn, so it skips the per-archive copy.
+    public func entry(forNormalizedPath key: String) -> Entry? {
+        entriesByPath[key].map { entries[$0] }
     }
 
     /// Extracts and (if needed) decompresses one file's payload.

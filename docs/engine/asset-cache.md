@@ -86,7 +86,8 @@ Opening the cache deletes `tmp/`, which removes the leftovers of an interrupted 
 
 The cache keeps the least recently used entries out when it grows past its limit. A hit sets
 the entry file's modification date to now, so the oldest modification date is the least
-recently used entry.
+recently used entry. A date less than an hour old is not written again: each write is a disk
+update, and it made up a quarter of a warm lookup. The removal order only needs coarse ages.
 
 The default limit fits the whole base-game cache for the chosen preset with a tenth to spare.
 The estimates are the full base-game builds in "Measurements", without the 0.75 GiB of audio
@@ -261,27 +262,26 @@ it.
 Both sides must read from the same disk, or the result measures the disks and not the
 cache. So the cache folder sits on the same external USB SSD as the game data.
 
-Result on an Apple M1 with 16 GB, lossless preset, three runs (2026-10-07, run directories
-`.logs/asset-cache-measure/20261007T034431Z`, files `external-1.log` and `external-2.log`,
-and `.logs/asset-cache-measure/20261007T035008Z`). Times are for the whole sample, in ms:
+Result on an Apple M1 with 16 GB, lossless preset, two runs (2026-10-07, run directory
+`.logs/asset-cache-measure/20261007T045926Z`). Times are for the whole sample, in ms:
 
 | Kind | Files | Archive cold | Cache cold | Archive warm | Cache warm | Advice |
 | --- | --- | --- | --- | --- | --- | --- |
-| Textures | 299 | 693-719 | 357-404 | 186-190 | 37-40 | cache |
-| Meshes | 243 | 344-392 | 185-198 | 179 | 27-28 | cache |
-| Collision | 297 | 333-343 | 88-112 | 131 | 23-24 | cache |
-| Animation | 300 | 113-140 | 113-129 | 8 | 23-24 | archives |
-| Audio | 291 | 1087-1111 | 835-878 | 676-680 | 692-699 | archives |
+| Textures | 299 | 702-705 | 398-402 | 181-182 | 34 | cache |
+| Meshes | 243 | 346-348 | 185-187 | 175 | 19 | cache |
+| Collision | 297 | 337-338 | 89-92 | 126 | 12 | cache |
+| Animation | 300 | 104-111 | 99-102 | 4 | 12 | archives |
+| Audio | 291 | 1130-1210 | 863-872 | 679-772 | 687-688 | archives |
 
 Warm CPU time equals warm wall time within 1 ms, so the warm columns are also the CPU cost.
 
-- Textures, meshes, and collision load 5 to 7 times faster warm and about 2 to 3 times
+- Textures, meshes, and collision load 5 to 11 times faster warm and about 2 to 4 times
   faster cold. The cache removes the parse and the decompression.
 - Animation was the shipped file, copied out of the archive. Reading it from the archive
-  costs 0.03 ms per file warm, less than the cache's lookup of an entry file. Cold, the two
+  costs 0.01 ms per file warm, less than the cache's lookup of an entry file (0.04 ms). Cold, the two
   are even.
 - Audio was stored as ALAC, and decoding ALAC costs as much CPU time as decoding the shipped
-  xWMA. Warm, the cache is slower. Cold, it saves about 0.8 ms per sound, only because the
+  xWMA. Warm, the two are even. Cold, it saves about 0.8 ms per sound, only because the
   ALAC files of the shipped WAV sounds are smaller.
 
 The rule: a kind is worth caching when the cache at least halves its warm load time and is

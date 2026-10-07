@@ -1,7 +1,8 @@
 // The cache folder on disk. Each entry is one file named by its kind and source,
 // written atomically through a temporary file and a rename, so a crash leaves
-// either the old entry or the new one, never half of one. A hit touches the
-// file's modification date, which orders the least-recently-used removal.
+// either the old entry or the new one, never half of one. A hit refreshes the
+// file's modification date when it is over an hour old; that date orders the
+// least-recently-used removal.
 
 import Foundation
 import Synchronization
@@ -40,9 +41,10 @@ nonisolated public enum AssetCacheStaleness: Equatable, Sendable {
 
 nonisolated public struct AssetCacheHit: Sendable {
     public let header: AssetCacheEntryHeader
-    /// The whole mapped file. `payload` is a slice of it.
+    /// The whole entry file. `payload` is a slice of it.
     public let file: Data
     public let payloadRange: Range<Int>
+    public let url: URL
 
     /// A slice: its indices start at `payloadRange.lowerBound`, not at zero.
     public var payload: Data {
@@ -127,15 +129,17 @@ nonisolated public final class AssetCacheStore: Sendable {
             .appending(path: "\(name).\(Self.entryExtension)")
     }
 
-    /// A hit sets the entry's use date unless `touching` is false.
+    /// A hit refreshes an old use date unless `touching` is false.
     public func lookup(_ request: AssetCacheRequest, touching: Bool = true) -> AssetCacheLookup {
         let url = entryURL(kind: request.kind, source: request.source)
         let file: Data
-        do {
-            file = try Data(contentsOf: url, options: .mappedIfSafe)
-        } catch {
-            return FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
-                ? .unreadable(reason: String(describing: error)) : .miss
+        switch AssetCacheFileRead.read(url, touching: touching) {
+        case let .success(bytes):
+            file = bytes
+        case let .failure(error) where error.code == .ENOENT:
+            return .miss
+        case let .failure(error):
+            return .unreadable(reason: String(describing: error))
         }
         let header: AssetCacheEntryHeader
         let range: Range<Int>
@@ -147,10 +151,7 @@ nonisolated public final class AssetCacheStore: Sendable {
         if let staleness = Self.staleness(of: header, for: request) {
             return .stale(staleness)
         }
-        if touching {
-            touch(url)
-        }
-        return .hit(AssetCacheHit(header: header, file: file, payloadRange: range))
+        return .hit(AssetCacheHit(header: header, file: file, payloadRange: range, url: url))
     }
 
     /// Writes the entry atomically, then removes the oldest entries over the limit.
@@ -272,13 +273,6 @@ nonisolated public final class AssetCacheStore: Sendable {
                 userInfo: [NSUnderlyingErrorKey: POSIXError(POSIXErrorCode(rawValue: code) ?? .EIO)]
             )
         }
-    }
-
-    private func touch(_ url: URL) {
-        try? FileManager.default.setAttributes(
-            [.modificationDate: Date()],
-            ofItemAtPath: url.path(percentEncoded: false)
-        )
     }
 
     private struct EntryFile {

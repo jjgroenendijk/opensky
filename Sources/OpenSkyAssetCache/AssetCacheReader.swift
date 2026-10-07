@@ -157,7 +157,7 @@ nonisolated public final class AssetCacheReader: Sendable {
                 let value = try decoder.decode(hit.payload)
                 count(decoder.kind) { $0.hits += 1 }
                 return AssetCacheEntryRead(
-                    value: value, file: store.entryURL(kind: decoder.kind, source: source),
+                    value: value, file: hit.url,
                     payloadOffset: hit.payloadRange.lowerBound - hit.file.startIndex
                 )
             } catch {

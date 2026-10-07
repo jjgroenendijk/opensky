@@ -173,6 +173,23 @@ struct AssetCacheStoreTests {
         #expect(payload(of: store.lookup(request(source("c.dds")))) != nil)
     }
 
+    @Test func aHitRefreshesAnOldUseDateButNotARecentOne() throws {
+        let store = try makeStore()
+        try store.store(Data([1]), for: request(source()))
+        let path = store.entryURL(kind: .texture, source: source()).path(percentEncoded: false)
+        func useDate() throws -> Date? {
+            try FileManager.default.attributesOfItem(atPath: path)[.modificationDate] as? Date
+        }
+        let recent = Date(timeIntervalSince1970: (Date().timeIntervalSince1970 - 60).rounded())
+        try FileManager.default.setAttributes([.modificationDate: recent], ofItemAtPath: path)
+        _ = store.lookup(request(source()))
+        #expect(try useDate() == recent)
+        let old = Date(timeIntervalSinceNow: -7200)
+        try FileManager.default.setAttributes([.modificationDate: old], ofItemAtPath: path)
+        _ = store.lookup(request(source()))
+        #expect(try #require(try useDate()) > Date(timeIntervalSinceNow: -60))
+    }
+
     @Test func clearRemovesEveryEntry() throws {
         let store = try makeStore()
         try store.store(Data([1]), for: request(source("a.dds")))

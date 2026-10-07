@@ -40,6 +40,7 @@ struct BSAArchiveTests {
         ])
         let entry = try #require(archive.entry(forPath: "MESHES/Clutter/Cup.nif"))
         #expect(try archive.contents(of: entry) == Data("mesh-bytes".utf8))
+        #expect(archive.entry(forNormalizedPath: "meshes\\clutter\\cup.nif")?.path == entry.path)
     }
 
     @Test func extractsLZ4CompressedFile() throws {
