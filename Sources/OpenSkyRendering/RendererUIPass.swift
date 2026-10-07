@@ -29,7 +29,8 @@ extension Renderer {
     public static func makeUIResources(
         device: MTLDevice,
         view: MTKView,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> UIResources {
         let atlas = UIGlyphAtlas()
         let vertexCapacity = uiQuadBudget * UIDrawList.verticesPerQuad * maxFramesInFlight
@@ -44,7 +45,9 @@ extension Renderer {
             label: "UIFrameUniforms"
         )
         return try UIResources(
-            pipeline: makeUIPipeline(device: device, view: view, library: library),
+            pipeline: makeUIPipeline(
+                device: device, view: view, library: library, compiler: compiler
+            ),
             depthState: makeUIDepthState(device: device),
             sampler: makeUISampler(device: device),
             atlasTexture: makeUIAtlasTexture(device: device, atlas: atlas),
@@ -57,9 +60,9 @@ extension Renderer {
     private static func makeUIPipeline(
         device: MTLDevice,
         view: MTKView,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> MTLRenderPipelineState {
-        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
         vertexFunction.name = "uiVertex"

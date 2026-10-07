@@ -20,6 +20,7 @@ extension Renderer {
         timeOfDay: Float = Renderer.defaultTimeOfDay,
         movementConfiguration: PlayerMovementConfiguration = .synthetic,
         shaderLibrary: MTLLibrary? = nil,
+        pipelineCache: PipelineCache? = nil,
         wallClock: any WallClock = MediaWallClock()
     ) throws {
         try self.init(
@@ -27,6 +28,7 @@ extension Renderer {
             scene: scene,
             camera: camera,
             shaderLibrary: shaderLibrary,
+            pipelineCache: pipelineCache,
             wallClock: wallClock
         )
         frameDriver = GameSession(

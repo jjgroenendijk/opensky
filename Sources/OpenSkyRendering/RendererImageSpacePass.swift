@@ -24,8 +24,12 @@ public final class ImageSpacePassResources {
 
     static let uniformStride = (MemoryLayout<ImageSpaceUniforms>.size + 0xFF) & -0x100
 
-    init(device: MTLDevice, library: MTLLibrary, pixelFormat: MTLPixelFormat) throws {
-        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
+    init(
+        device: MTLDevice,
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        pixelFormat: MTLPixelFormat
+    ) throws {
         pipeline = try Self.makePipeline(
             compiler: compiler, library: library, pixelFormat: pixelFormat,
             fragment: "imageSpaceFragment"
@@ -45,7 +49,7 @@ public final class ImageSpacePassResources {
     }
 
     private static func makePipeline(
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         library: MTLLibrary,
         pixelFormat: MTLPixelFormat,
         fragment: String

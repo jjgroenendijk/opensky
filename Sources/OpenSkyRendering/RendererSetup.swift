@@ -120,6 +120,13 @@ extension Renderer {
         3
     }
 
+    static func makeEndFrameEvent(device: MTLDevice) throws -> MTLSharedEvent {
+        guard let event = device.makeSharedEvent() else {
+            throw RendererError.sharedEventUnavailable
+        }
+        return event
+    }
+
     public static func makeCommandAllocators(device: MTLDevice) throws -> [MTL4CommandAllocator] {
         try (0 ..< maxFramesInFlight).map { _ in
             guard let allocator = device.makeCommandAllocator() else {
@@ -131,34 +138,43 @@ extension Renderer {
 
     /// The image-space composite pass and the effect layer.
     static func makeEffectResources(
-        device: MTLDevice, view: MTKView, library: MTLLibrary
+        view: MTKView, library: MTLLibrary, compiler: PipelineCache
     ) throws -> (ImageSpacePassResources, EffectLayer) {
-        try (
+        let device = compiler.device
+        return try (
             ImageSpacePassResources(
-                device: device, library: library, pixelFormat: view.colorPixelFormat
+                device: device, library: library, compiler: compiler,
+                pixelFormat: view.colorPixelFormat
             ),
-            EffectLayer(device: device, library: library, view: view)
+            EffectLayer(device: device, library: library, view: view, compiler: compiler)
         )
     }
 
     /// Long-lived resources for passes outside the base scene pipelines.
     /// Grouping their factories keeps Renderer.init below the strict body cap.
     public static func makeAuxiliaryResources(
-        device: MTLDevice,
         view: MTKView,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> (
         shadowAndUI: (ShadowResources, UIResources),
         overlayAndSWF: (WorldOverlayResources, SWFPassResources)
     ) {
-        try (
+        let device = compiler.device
+        return try (
             (
-                makeShadowResources(device: device, library: library),
-                makeUIResources(device: device, view: view, library: library)
+                makeShadowResources(device: device, library: library, compiler: compiler),
+                makeUIResources(
+                    device: device, view: view, library: library, compiler: compiler
+                )
             ),
             (
-                makeWorldOverlayResources(device: device, view: view, library: library),
-                makeSWFPassResources(device: device, view: view, library: library)
+                makeWorldOverlayResources(
+                    device: device, view: view, library: library, compiler: compiler
+                ),
+                makeSWFPassResources(
+                    device: device, view: view, library: library, compiler: compiler
+                )
             )
         )
     }
@@ -208,12 +224,10 @@ extension Renderer {
     }
 
     public static func makePipelines(
-        device: MTLDevice,
         view: MTKView,
-        library: MTLLibrary
+        library: MTLLibrary,
+        compiler: PipelineCache
     ) throws -> RenderPipelines {
-        let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
-
         func makeVariant(
             alphaTest: Bool,
             skinned: Bool = false,
@@ -266,7 +280,7 @@ extension Renderer {
 
     private static func makeParticlePipelines(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> ParticlePipelines {
         try ParticlePipelines(
@@ -287,7 +301,7 @@ extension Renderer {
 
     private static func makeSkyPipeline(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
@@ -307,7 +321,7 @@ extension Renderer {
 
     private static func makeWaterPipeline(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
@@ -337,7 +351,7 @@ extension Renderer {
 
     private static func makeParticlePipeline(
         library: MTLLibrary,
-        compiler: MTL4Compiler,
+        compiler: PipelineCache,
         view: MTKView,
         mode: ParticleBlendMode
     ) throws -> MTLRenderPipelineState {
