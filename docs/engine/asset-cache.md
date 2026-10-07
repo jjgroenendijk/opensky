@@ -225,6 +225,61 @@ Each entry is read without compression. An LZ4 copy is 30% smaller, but the meas
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as
 slow warm.
 
+## Where the cache helps
+
+The cache stores a kind only when it makes that kind faster to load, or when it serves a
+Metal 4 loading path. A kind that does neither costs build time and disk space and gives
+nothing back, so the game reads it from the archives and offers no setting for it.
+
+`openskycli asset-cache measure` checks this per kind. It takes up to 300 archive files of
+each kind, spread evenly over the sorted paths, builds their entries, and loads them twice
+each way: cold (the files dropped from the page cache) and warm. The archive path is the
+engine's own read and parse: archive read and decompression, then DDS parse, NIF parse and
+model or collision build, the shipped animation bytes, or the full audio decode. The cache
+path is entry lookup, read, and decode. A GPU upload is the same for both, so neither times
+it.
+
+Result on an Apple M1 with 16 GB, the game data on an external USB SSD, lossless preset,
+two runs each (2026-10-07, run directories `.logs/asset-cache-measure/20261007T034352Z` and
+`.logs/asset-cache-measure/20261007T034431Z`). Times are for the whole sample, in ms:
+
+| Kind | Files | Archive cold | Cache cold, internal SSD | Cache cold, same USB disk | Archive warm | Cache warm |
+| --- | --- | --- | --- | --- | --- | --- |
+| Textures | 299 | 658-719 | 59 | 399-404 | 186-188 | 26-39 |
+| Meshes | 243 | 340-392 | 124-130 | 185-187 | 179-180 | 27-31 |
+| Collision | 297 | 332-338 | 45-47 | 88-98 | 131 | 23-31 |
+| Animation | 300 | 99-140 | 51-58 | 113-122 | 8 | 23-30 |
+| Audio | 291 | 1086-1107 | 831-835 | 835-872 | 676 | 692-722 |
+
+Warm CPU time equals warm wall time within 1 ms, so the warm columns are also the CPU cost.
+
+- Textures, meshes, and collision load 4 to 7 times faster warm, and faster cold on both
+  disks. The cache removes the parse and the decompression.
+- Animation is the shipped file, copied out of the archive. Reading it from the archive
+  costs 0.03 ms per file warm, less than the cache's lookup of an entry file. Cold, the two
+  are even when the cache sits on the same disk as the game.
+- Audio is stored as ALAC, and decoding ALAC costs as much CPU time as decoding the shipped
+  xWMA. Warm, the cache is slower. Cold, it saves about 0.9 ms per sound, only because the
+  ALAC files of the shipped WAV sounds are smaller.
+
+The rule: a kind is worth caching when the cache at least halves its warm load time and is
+not slower cold on either disk, or when it feeds a Metal 4 path. Textures, meshes, and
+collision pass. Animation and audio fail both tests: no gain, and the GPU never reads them.
+
+The answer is the same on the internal SSD and on the USB disk, so it does not depend on
+the Mac, and there is no per-Mac advice. The disk changes only how large the cold gain is.
+
+### Metal 4 paths
+
+- Textures: each entry holds the mip levels in the layout a texture needs, so Metal fast
+  resource loading reads them straight into GPU memory ("Fast resource loading" above).
+  Sparse texture streaming (#881) can map single mip levels from the same layout.
+- Meshes: an entry holds ready vertex and index arrays, so fast resource loading could read
+  them straight into GPU buffers too. The engine does not do this yet.
+- Collision, animation, and audio are CPU data.
+- Compiled render pipelines (#875) are the Metal compiler's output, not a game asset. They
+  may share the cache folder, but the asset kinds and their settings do not cover them.
+
 ## Measurements
 
 Measured on 2026-10-06 on an Apple Silicon Mac with macOS 27, with the Release `openskycli`.
