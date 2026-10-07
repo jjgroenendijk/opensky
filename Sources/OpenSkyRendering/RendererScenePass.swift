@@ -339,7 +339,8 @@ extension Renderer {
             }
             if !pipelineBound {
                 state.encoder.setRenderPipelineState(
-                    isRenderDebugActive ? debugPipelines.terrain : terrainPipeline
+                    isRenderDebugActive
+                        ? debugPipelines.terrain : (rayTracedPipelines?.terrain ?? terrainPipeline)
                 )
                 pipelineBound = true
             }
@@ -429,14 +430,16 @@ extension Renderer {
             shadow.sampler.gpuResourceID,
             index: SamplerIndex.shadowCompare.rawValue
         )
+        bindRayTracedScene(argumentTable)
     }
 
     /// The opaque groups, the terrain, and the alpha-tested groups, in that order.
     private func encodeSceneGeometry(state: inout ScenePassState) {
         state.cullList = .opaque
+        let rayTraced = rayTracedPipelines
         encode(
             groups: opaqueDrawGroups,
-            staticPipeline: opaquePipeline,
+            staticPipeline: rayTraced?.opaque ?? opaquePipeline,
             skinnedPipeline: skinnedOpaquePipeline,
             morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
             state: &state
@@ -445,7 +448,7 @@ extension Renderer {
         state.cullList = .alphaTested
         encode(
             groups: alphaTestedDrawGroups,
-            staticPipeline: alphaTestPipeline,
+            staticPipeline: rayTraced?.alphaTest ?? alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state

@@ -36,7 +36,8 @@ extension Renderer {
         _ name: String,
         library: MTLLibrary,
         debugView: Bool,
-        alphaTest: Bool? = nil
+        alphaTest: Bool? = nil,
+        enabling optional: [FunctionConstantIndex] = []
     ) -> MTL4SpecializedFunctionDescriptor {
         let function = MTL4LibraryFunctionDescriptor()
         function.library = library
@@ -50,6 +51,11 @@ extension Renderer {
             constants.setConstantValue(
                 &alphaTest, type: .bool, index: FunctionConstantIndex.alphaTest.rawValue
             )
+        }
+        // Optional constants: a pipeline that leaves one out compiles as before.
+        var enabled = true
+        for index in optional {
+            constants.setConstantValue(&enabled, type: .bool, index: index.rawValue)
         }
         let specialized = MTL4SpecializedFunctionDescriptor()
         specialized.functionDescriptor = function
@@ -152,19 +158,65 @@ extension Renderer {
     public static func makeTerrainPipeline(
         library: MTLLibrary,
         compiler: PipelineCache,
-        view: MTKView
+        view: MTKView,
+        enabling optional: [FunctionConstantIndex] = []
     ) throws -> MTLRenderPipelineState {
         let vertex = MTL4LibraryFunctionDescriptor()
         vertex.library = library
         vertex.name = "terrainVertex"
         let descriptor = MTL4RenderPipelineDescriptor()
-        descriptor.label = "TerrainSplat"
+        descriptor.label = optional.isEmpty ? "TerrainSplat" : "TerrainSplatRayTraced"
         descriptor.rasterSampleCount = view.sampleCount
         descriptor.vertexFunctionDescriptor = vertex
         descriptor.fragmentFunctionDescriptor = specializedFragment(
-            "terrainFragment", library: library, debugView: false
+            "terrainFragment", library: library, debugView: false, enabling: optional
         )
         descriptor.vertexDescriptor = TerrainVertexLayout.vertexDescriptor()
+        descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
+    }
+}
+
+/// Which static-mesh fragment a mesh pipeline draws with.
+nonisolated public struct MeshPipelineVariant: Sendable {
+    public var alphaTest: Bool
+    public var skinned = false
+    public var morphed = false
+    /// Optional constants the variant defines as true.
+    public var enabling: [FunctionConstantIndex] = []
+
+    public init(alphaTest: Bool, skinned: Bool = false, morphed: Bool = false) {
+        self.alphaTest = alphaTest
+        self.skinned = skinned
+        self.morphed = morphed
+    }
+}
+
+extension Renderer {
+    public static func makeMeshPipeline(
+        _ variant: MeshPipelineVariant,
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = variant.morphed ? "morphedSkinnedMeshVertex"
+            : (variant.skinned ? "skinnedMeshVertex" : "staticMeshVertex")
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = (variant.morphed ? "MorphedSkinnedMesh"
+            : (variant.skinned ? "SkinnedMesh" : "StaticMesh"))
+            + (variant.alphaTest ? "AlphaTest" : "Opaque")
+            + (variant.enabling.isEmpty ? "" : "RayTraced")
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = specializedFragment(
+            "staticMeshFragment", library: library, debugView: false,
+            alphaTest: variant.alphaTest, enabling: variant.enabling
+        )
+        descriptor.vertexDescriptor = variant.morphed ? MorphVertexLayout.vertexDescriptor()
+            : (variant.skinned
+                ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor())
         descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }

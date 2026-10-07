@@ -56,6 +56,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexImageSpaceUniforms = 15,
     /// One membrane overlay's colors (MembraneUniforms).
     BufferIndexMembraneUniforms = 16,
+    /// The scene's instance acceleration structure, for ray-traced sun shadows.
+    BufferIndexRayScene = 17,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -134,6 +136,10 @@ typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
     /// the branch folds away; debug pipelines define it as true and pick a
     /// channel per frame from FrameUniforms.debugMode.
     FunctionConstantDebugView = 1,
+    /// Optional: only the ray-traced shadow pipelines define it, as true.
+    FunctionConstantRayTracedShadows = 2,
+    /// Optional: the ray-traced pipelines that draw the traced shadow alone.
+    FunctionConstantRayShadowView = 3,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.

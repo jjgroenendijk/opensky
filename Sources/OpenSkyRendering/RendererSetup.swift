@@ -187,8 +187,8 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the membrane overlay uniforms.
-        descriptor.maxBufferBindCount = BufferIndex.membraneUniforms.rawValue + 1
+        // Highest buffer index is the ray-traced scene.
+        descriptor.maxBufferBindCount = BufferIndex.rayScene.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
         // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots + scene color.
         descriptor.maxTextureBindCount = TextureIndex.sceneColor.rawValue + 1
@@ -236,29 +236,11 @@ extension Renderer {
             skinned: Bool = false,
             morphed: Bool = false
         ) throws -> MTLRenderPipelineState {
-            let vertexFunction = MTL4LibraryFunctionDescriptor()
-            vertexFunction.library = library
-            vertexFunction.name = morphed ? "morphedSkinnedMeshVertex"
-                : (skinned ? "skinnedMeshVertex" : "staticMeshVertex")
-
-            let specialized = specializedFragment(
-                "staticMeshFragment", library: library, debugView: false, alphaTest: alphaTest
+            try makeMeshPipeline(
+                MeshPipelineVariant(alphaTest: alphaTest, skinned: skinned, morphed: morphed),
+                library: library, compiler: compiler, view: view
             )
-
-            let descriptor = MTL4RenderPipelineDescriptor()
-            descriptor.label = (morphed ? "MorphedSkinnedMesh"
-                : (skinned ? "SkinnedMesh" : "StaticMesh"))
-                + (alphaTest ? "AlphaTest" : "Opaque")
-            descriptor.rasterSampleCount = view.sampleCount
-            descriptor.vertexFunctionDescriptor = vertexFunction
-            descriptor.fragmentFunctionDescriptor = specialized
-            descriptor.vertexDescriptor = morphed ? MorphVertexLayout.vertexDescriptor()
-                : (skinned
-                    ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor())
-            descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
-            return try compiler.makeRenderPipelineState(descriptor: descriptor)
         }
-
         return try RenderPipelines(
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
@@ -407,6 +389,13 @@ extension Renderer {
             throw RendererError.depthStateAllocationFailed
         }
         return state
+    }
+
+    /// The scene depth state, then the water one.
+    static func makeDepthStates(
+        device: MTLDevice
+    ) throws -> (MTLDepthStencilState, MTLDepthStencilState) {
+        try (makeDepthState(device: device), makeWaterDepthState(device: device))
     }
 
     /// Water tests opaque depth but does not write depth while blending.

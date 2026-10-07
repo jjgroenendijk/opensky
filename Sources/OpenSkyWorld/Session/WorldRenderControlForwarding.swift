@@ -193,6 +193,16 @@ extension WorldRenderControlForwarding {
         set { renderControls.textureBudgetIndex = newValue }
     }
 
+    public var rayTracedShadowsEnabled: Bool {
+        get { renderControls.rayTracedShadowsEnabled }
+        set { renderControls.rayTracedShadowsEnabled = newValue }
+    }
+
+    public var rayTracedShadowView: Bool {
+        get { renderControls.rayTracedShadowView }
+        set { renderControls.rayTracedShadowView = newValue }
+    }
+
     public var cameraPose: CameraPoseSnapshot {
         renderControls.cameraPose
     }

@@ -56,6 +56,16 @@ extension FakeWorldProviders {
         set { renderPerformance.textureBudgetIndex = newValue }
     }
 
+    var rayTracedShadowsEnabled: Bool {
+        get { renderPerformance.rayTracedShadowsEnabled }
+        set { renderPerformance.rayTracedShadowsEnabled = newValue }
+    }
+
+    var rayTracedShadowView: Bool {
+        get { renderPerformance.rayTracedShadowView }
+        set { renderPerformance.rayTracedShadowView = newValue }
+    }
+
     var pipelineCacheClears: Int {
         renderPerformance.pipelineCacheClears
     }
@@ -73,5 +83,7 @@ struct FakeRenderPerformanceState {
     var gpuCullingEnabled = true
     var textureStreamingEnabled = true
     var textureBudgetIndex = 2
+    var rayTracedShadowsEnabled = false
+    var rayTracedShadowView = false
     var pipelineCacheClears = 0
 }

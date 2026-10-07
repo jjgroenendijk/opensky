@@ -3,6 +3,7 @@
 // settings while the game runs.
 
 import AppKit
+import Metal
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
@@ -21,12 +22,21 @@ final class GraphicsPageViewController: NSViewController {
         checkboxWithTitle: "Stream textures", target: nil, action: nil
     )
     let textureBudgetControl = NSPopUpButton()
+    let rayTracedShadowsControl = NSButton(
+        checkboxWithTitle: "Ray-traced sun shadows", target: nil, action: nil
+    )
+    let rayTracingLabel = NSTextField(labelWithString: "")
+    private let rayTracing: RayTracingAvailability
     let statusLabel = NSTextField(labelWithString: "")
 
     /// `reloadStore` reads the file again each time the page shows, because the game
     /// window may have changed it.
-    init(reloadStore: @escaping @MainActor () -> PlayerSettingsStore) {
+    init(
+        reloadStore: @escaping @MainActor () -> PlayerSettingsStore,
+        rayTracing: RayTracingAvailability = .of(MTLCreateSystemDefaultDevice())
+    ) {
         self.reloadStore = reloadStore
+        self.rayTracing = rayTracing
         store = reloadStore()
         super.init(nibName: nil, bundle: nil)
     }
@@ -51,6 +61,9 @@ final class GraphicsPageViewController: NSViewController {
             PanelComponents.group([
                 PanelComponents.caption("Textures"), textureStreamingControl, textureBudgetControl
             ]),
+            PanelComponents.group([
+                PanelComponents.caption("Ray tracing"), rayTracedShadowsControl, rayTracingLabel
+            ]),
             statusLabel
         ])
         stack.orientation = .vertical
@@ -72,6 +85,10 @@ final class GraphicsPageViewController: NSViewController {
         gpuCullingControl.state = store.bool(.gpuCulling) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))
+        rayTracedShadowsControl.isEnabled = rayTracing.isAvailable
+        rayTracedShadowsControl.state = rayTracing.isAvailable && store.bool(.rayTracedShadows)
+            ? .on : .off
+        rayTracingLabel.stringValue = rayTracing.reason.map { "Unavailable: \($0)" } ?? ""
     }
 
     private func configureControls() {
@@ -111,6 +128,18 @@ final class GraphicsPageViewController: NSViewController {
             identifier: "GraphicsTextureBudgetControl"
         )
         textureBudgetControl.toolTip = "Far textures drop detail when the levels pass this size"
+        PanelComponents.configureCheckbox(
+            rayTracedShadowsControl, target: self, action: #selector(rayTracedShadowsChanged),
+            identifier: "GraphicsRayTracedShadowsControl"
+        )
+        rayTracedShadowsControl.toolTip = "Trace one ray to the sun per pixel; needs an M3 or later"
+        rayTracingLabel.font = PanelMetrics.monoFont
+        rayTracingLabel.textColor = Theme.parchmentDim
+        rayTracingLabel.setAccessibilityIdentifier("GraphicsRayTracingLabel")
+    }
+
+    @objc private func rayTracedShadowsChanged() {
+        store.set(.rayTracedShadows, to: rayTracedShadowsControl.state == .on ? 1 : 0)
     }
 
     @objc private func textureStreamingChanged() {

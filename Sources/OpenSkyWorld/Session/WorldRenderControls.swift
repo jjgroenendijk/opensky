@@ -146,7 +146,26 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
             gpuCulling: renderer.lastGPUCullCounts
         )
         snapshot.textureStreaming = renderer.textureStreaming.stats
+        snapshot.rayTracing = renderer.rayTracedShadows.availability
+        snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
         return snapshot
+    }
+
+    /// Applies at once and is saved, so the next launch starts with it.
+    public var rayTracedShadowsEnabled: Bool {
+        get {
+            renderer?.rayTracedShadows.enabled
+                ?? world?.playerSettingsStore.bool(.rayTracedShadows) ?? false
+        }
+        set {
+            renderer?.rayTracedShadows.enabled = newValue
+            world?.playerSettingsStore.set(.rayTracedShadows, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var rayTracedShadowView: Bool {
+        get { renderer?.rayTracedShadows.showOnly ?? false }
+        set { renderer?.rayTracedShadows.showOnly = newValue }
     }
 
     /// Applies at once to textures loaded from now on, and is saved.
