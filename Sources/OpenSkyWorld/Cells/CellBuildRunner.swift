@@ -40,6 +40,10 @@ nonisolated public protocol CellSceneProvider {
     /// Loads an idle prop bound to its bone of the rig at `request.skeletonPath`.
     func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel
 
+    /// Assembles one of the player's rigs from the same libraries the cells use.
+    func assemblePlayerRig(_ request: PlayerRigRequest)
+        -> Result<PlayerRigAssembly, PlayerBodyError>
+
     /// Lets the texture library create streamed textures that post to `mailbox`.
     func attachTextureStreaming(_ mailbox: TextureStreamMailbox)
     /// Reads a streamed texture's levels again.
@@ -63,6 +67,12 @@ nonisolated extension CellSceneProvider {
 
     public func loadActorProp(_: ActorPropRequest) throws -> RenderModel {
         throw ActorAssetFailure.missing
+    }
+
+    public func assemblePlayerRig(
+        _: PlayerRigRequest
+    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+        .failure(.noFileSystem)
     }
 
     public func attachTextureStreaming(_: TextureStreamMailbox) {}
@@ -147,6 +157,12 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
         return try builder.meshes.loadActorAttachment(
             path: request.prop.modelPath, bone: request.prop.bone, skeleton: skeleton
         ).get().model
+    }
+
+    public func assemblePlayerRig(
+        _ request: PlayerRigRequest
+    ) -> Result<PlayerRigAssembly, PlayerBodyError> {
+        builder.assemblePlayerRig(request)
     }
 }
 
@@ -247,6 +263,8 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
     func enqueueActorProp(_ request: ActorPropRequest)
     func drainCompletedActorProps() -> [ActorPropLoadResult]
+    func enqueuePlayerRig(_ request: PlayerRigRequest)
+    func drainCompletedPlayerRigs() -> [PlayerRigLoadResult]
 }
 
 nonisolated extension CellBuildRunning {
@@ -271,6 +289,11 @@ nonisolated extension CellBuildRunning {
     public func drainCompletedActorProps() -> [ActorPropLoadResult] {
         []
     }
+
+    public func enqueuePlayerRig(_: PlayerRigRequest) {}
+    public func drainCompletedPlayerRigs() -> [PlayerRigLoadResult] {
+        []
+    }
 }
 
 /// Builds cells one at a time on one serial queue, off the main thread.
@@ -293,6 +316,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         var distantLOD: [DistantLODBuildResult] = []
         var doorTransitions: [DoorTransitionBuildResult] = []
         var actorProps: [ActorPropLoadResult] = []
+        var playerRigs: [PlayerRigLoadResult] = []
     }
 
     let provider: Mutex<any CellSceneProvider>
@@ -424,6 +448,21 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         results.withLock { state in
             defer { state.actorProps.removeAll(keepingCapacity: true) }
             return state.actorProps
+        }
+    }
+
+    public func enqueuePlayerRig(_ request: PlayerRigRequest) {
+        queue.async { [self] in
+            let result = provider.withLock { $0.assemblePlayerRig(request) }
+            let entry = PlayerRigLoadResult(request: request, result: result)
+            results.withLock { $0.playerRigs.append(entry) }
+        }
+    }
+
+    public func drainCompletedPlayerRigs() -> [PlayerRigLoadResult] {
+        results.withLock { state in
+            defer { state.playerRigs.removeAll(keepingCapacity: true) }
+            return state.playerRigs
         }
     }
 

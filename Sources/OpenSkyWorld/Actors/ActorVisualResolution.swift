@@ -89,7 +89,7 @@ nonisolated public struct ResolvedAttachment: Equatable, Sendable {
 }
 
 /// Everything milestone 5.2 resolves for one placed actor.
-nonisolated public struct ResolvedActorVisual: Equatable {
+nonisolated public struct ResolvedActorVisual: Equatable, Sendable {
     public let appearance: ResolvedActorAppearance
     /// RACE ANAM for the resolved gender; nil -> reason-tagged skip.
     public let skeletonPath: String?

@@ -255,3 +255,20 @@ struct CellBuildRunnerTests {
         #expect(!metric.actorAnimationFailuresAreExplained)
     }
 }
+
+extension CellBuildRunnerTests {
+    @Test
+    func aPlayerRigIsAssembledOnTheQueueAndDrainedOnce() throws {
+        let runner = SerialCellBuildRunner(provider: FakeProvider())
+        let request = PlayerRigRequest(
+            generation: 3, firstPerson: false, equipped: [FormID(0x12EB7)], appearance: nil
+        )
+        runner.enqueuePlayerRig(request)
+        runner.waitUntilIdle()
+        let drained = runner.drainCompletedPlayerRigs()
+        #expect(drained.map(\.request) == [request])
+        let result = try #require(drained.first?.result)
+        #expect(throws: PlayerBodyError.noFileSystem) { try result.get() }
+        #expect(runner.drainCompletedPlayerRigs().isEmpty)
+    }
+}

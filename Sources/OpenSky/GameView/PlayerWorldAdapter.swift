@@ -20,15 +20,38 @@ final class PlayerWorldAdapter {
     }
 
     /// The graph and the body outlive every cell, so this is not streaming.
-    func wirePlayerBody(provider: any WorldDataProviding, renderer: Renderer) {
+    func wirePlayerBody(session: CellSession, renderer: Renderer) {
         let player = game.player
-        guard player.wireBody(provider: provider) else { return }
+        let source = PlayerRigQueue(
+            runner: session.runner,
+            fileSystem: (session.data as? ScriptDataProviding)?.scriptFileSystem
+        )
+        guard player.wireBody(source: source) else { return }
         renderer.session.assetDrains.add { [weak player] _ in
             player?.drainClipLoads()
         }
         renderer.onFrame.add { [weak player] _ in
             player?.refreshBody()
         }
+    }
+}
+
+/// The player's rigs assemble on the session's build queue, beside the cells.
+final class PlayerRigQueue: PlayerRigSource {
+    let playerAssetFileSystem: (any GameFileSource)?
+    private let runner: SerialCellBuildRunner
+
+    init(runner: SerialCellBuildRunner, fileSystem: (any GameFileSource)?) {
+        self.runner = runner
+        playerAssetFileSystem = fileSystem
+    }
+
+    func requestPlayerRig(_ request: PlayerRigRequest) {
+        runner.enqueuePlayerRig(request)
+    }
+
+    func drainPlayerRigs() -> [PlayerRigLoadResult] {
+        runner.drainCompletedPlayerRigs()
     }
 }
 

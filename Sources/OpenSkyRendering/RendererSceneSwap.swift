@@ -190,6 +190,10 @@ extension Renderer {
         if let motion = upscale.motionInstances {
             live.insert(ObjectIdentifier(motion))
         }
+        // The player's rigs share meshes and textures with the cell's actors.
+        for rig in [frameDriver?.playerBodyRig, frameDriver?.firstPersonRig].compactMap(\.self) {
+            live.formUnion(rig.render.residencyAllocations.map(ObjectIdentifier.init))
+        }
         // A drained A entry may share an allocation with undrained B. Keep that
         // allocation resident until every retired frame using it drains.
         for entry in retired {

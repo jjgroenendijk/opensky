@@ -14,7 +14,7 @@ nonisolated public struct ActorSkeletonAsset: Sendable {
     public let skeleton: NIFSkeleton
 }
 
-nonisolated public struct ActorRenderAsset {
+nonisolated public struct ActorRenderAsset: Sendable {
     public let model: RenderModel
     public let bounds: ModelBounds?
 }

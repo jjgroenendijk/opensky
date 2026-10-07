@@ -91,7 +91,8 @@ extension AgentWorldAdapter {
             "yaw": .init(remainder(camera.yaw * 180 / .pi, 360)),
             "pitch": .init(camera.pitch * 180 / .pi),
             "movementMode": .string(String(describing: renderer.movementMode)),
-            "cell": cellState(at: camera.position)
+            "cell": cellState(at: camera.position),
+            "bodyFailure": .init(game.player.failureReason)
         ]
         if let values = game.actorValues.runtime {
             let current = values.current(of: .player)

@@ -79,6 +79,12 @@ no second copy. Two things differ:
   outfit, and a FaceGen head.
 - The transform comes from the character controller, not from a record.
 
+The meshes are assembled on the cell build queue, because the builder and its mesh and texture
+caches live there ([concurrency](/decisions/concurrency.md)). An equipment or face change sends a
+request with a new generation number. The frame drains the finished assembly, binds it to the
+graph's skeleton and pose, and shows it. A result for an older generation is dropped, so moving a
+race menu slider quickly shows only the last face.
+
 The body does not belong to a cell. Scene changes replace every cell's draw list several times a
 minute, and the player is what the cells move around. So the renderer holds the body itself, adds
 its draw groups to the scene pass and the shadow pass at encode time, and adds its GPU memory to the

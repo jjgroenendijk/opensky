@@ -21,24 +21,17 @@ struct PlayerCoordinatorTests {
     }
 
     @Test
-    func aProviderThatCannotAssembleActorsIsReported() {
-        let (player, _) = Self.session()
-        #expect(!player.wireBody(provider: NoBodyProvider()))
-        #expect(player.failureReason == "the scene provider cannot assemble actors")
-    }
-
-    @Test
     func noMountedArchivesIsReported() {
         let (player, _) = Self.session()
-        #expect(!player.wireBody(provider: FakePlayerBodyProvider()))
+        #expect(!player.wireBody(source: FakePlayerRigSource()))
         #expect(player.failureReason == PlayerBodyError.noFileSystem.localizedDescription)
     }
 
     @Test
     func aMissingBehaviorFileIsReportedAndNothingAttaches() {
         let (player, world) = Self.session()
-        let provider = FakePlayerBodyProvider(fileSystem: InMemoryFileSource())
-        #expect(!player.wireBody(provider: provider))
+        let provider = FakePlayerRigSource(fileSystem: InMemoryFileSource())
+        #expect(!player.wireBody(source: provider))
         let expected = PlayerBodyError.behavior(.missing(PlayerBehaviorGraph.behaviorPath))
         #expect(player.failureReason == expected.localizedDescription)
         #expect(player.graph == nil)
@@ -49,13 +42,15 @@ struct PlayerCoordinatorTests {
     @Test
     func attachingAGraphBuildsTheBodyAndRecordsBothFailures() {
         let (player, world) = Self.session()
-        let provider = FakePlayerBodyProvider()
+        let provider = FakePlayerRigSource()
         let graph = PlayerBehaviorGraph.fixture()
         player.attach(
             graph: graph,
             firstPerson: .failure(PlayerBehaviorGraphError.noGraph("first")),
-            provider: provider
+            source: provider
         )
+        #expect(player.failureReason == nil, "the body is still assembling")
+        player.drainClipLoads()
         #expect(world.playerLocomotion?.graph === graph.instance)
         #expect(world.playerLocomotion?.firstPersonGraph == nil)
         #expect(provider.bodyRequests.count == 1)
@@ -69,9 +64,9 @@ struct PlayerCoordinatorTests {
     @Test
     func bothRigsRebuildOnlyWhenTheEquippedSetChanges() {
         let (player, world) = Self.session()
-        let provider = FakePlayerBodyProvider()
+        let provider = FakePlayerRigSource()
         player.attach(
-            graph: .fixture(), firstPerson: .success(.fixture()), provider: provider
+            graph: .fixture(), firstPerson: .success(.fixture()), source: provider
         )
         #expect(world.playerLocomotion?.firstPersonGraph != nil)
         player.refreshBody()
@@ -80,6 +75,8 @@ struct PlayerCoordinatorTests {
         player.refreshBody()
         #expect(provider.bodyRequests.last == [FormID(0x12EB7)])
         #expect(provider.rigRequests == 2)
+        #expect(provider.requests.map(\.generation) == [1, 1, 2, 2])
+        player.drainClipLoads()
         #expect(player.firstPersonFailureReason != nil)
     }
 
