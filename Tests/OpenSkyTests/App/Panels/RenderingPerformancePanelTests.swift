@@ -33,7 +33,10 @@ struct RenderingPerformancePanelTests {
         let panel = try makePanel(FakeWorldProviders())
         #expect(
             panel.sections.map(\.sectionIdentifier)
-                == ["renderTargets", "pipelineCache", "gpuCulling", "textureStreaming"]
+                == [
+                    "renderTargets", "pipelineCache", "gpuCulling", "textureStreaming",
+                    "rayTracedShadows"
+                ]
         )
         #expect(
             panel.renderTargetsSection.statsLabelIdentifier == "RenderTargetsStatsLabel"
@@ -196,5 +199,53 @@ struct TextureStreamingSectionTests {
         Heaps: 16.0 MB
         Levels: 4 loaded, 0 dropped
         """)
+    }
+}
+
+@MainActor
+struct RayTracedShadowsSectionTests {
+    @Test
+    func anM1ShowsTheReasonAndDisablesTheSwitch() {
+        let providers = FakeWorldProviders()
+        var snapshot = RenderPerformanceSnapshot()
+        snapshot.rayTracing = .unavailable(reason: RayTracingAvailability.softwareReason)
+        providers.renderPerformanceSnapshot = snapshot
+        let section = RayTracedShadowsSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        section.refreshReadout()
+        #expect(
+            section.enabledControl.accessibilityIdentifier() == "RayTracedShadowsEnabledControl"
+        )
+        #expect(section.viewControl.accessibilityIdentifier() == "RayTracedShadowsViewControl")
+        #expect(!section.enabledControl.isEnabled)
+        #expect(!section.viewControl.isEnabled)
+        #expect(section.statsReadout == "Unavailable: " + RayTracingAvailability.softwareReason)
+        #expect(!RayTracedShadowsSection.isOverridden(provider: providers))
+    }
+
+    @Test
+    func anAvailableGPUTakesTheSwitchAndShowsTheStructures() {
+        let providers = FakeWorldProviders()
+        var snapshot = RenderPerformanceSnapshot()
+        snapshot.rayTracing = .available
+        snapshot.rayTracedShadows.meshes = 3
+        snapshot.rayTracedShadows.instances = 12
+        snapshot.rayTracedShadows.bytes = 1 << 20
+        providers.renderPerformanceSnapshot = snapshot
+        let section = RayTracedShadowsSection()
+        section.provider = providers
+        section.loadViewIfNeeded()
+        section.refreshReadout()
+        #expect(section.enabledControl.isEnabled)
+        #expect(!section.viewControl.isEnabled)
+        section.enabledControl.state = .on
+        section.enabledControl.sendAction(section.enabledControl.action, to: section)
+        #expect(providers.rayTracedShadowsEnabled)
+        #expect(section.viewControl.isEnabled)
+        #expect(RayTracedShadowsSection.isOverridden(provider: providers))
+        #expect(section.statsReadout == "Meshes: 3  Instances: 12\nStructures: 1.0 MB")
+        RayTracedShadowsSection.resetToDefaults(provider: providers)
+        #expect(!providers.rayTracedShadowsEnabled)
     }
 }

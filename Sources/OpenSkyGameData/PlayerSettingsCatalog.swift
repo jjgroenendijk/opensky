@@ -174,6 +174,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Texture streaming budget",
             2,
             applied: true
+        ),
+        row(
+            "rendering.rayTracedShadows", .opensky, .toggle, "Ray-traced sun shadows", 0,
+            applied: true
         )
     ] + assetCacheKindRows
 
@@ -208,6 +212,8 @@ nonisolated extension PlayerSettingID {
     public static let textureStreaming = Self("rendering.textureStreaming")
     /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
     public static let textureBudget = Self("rendering.textureBudget")
+    /// Traces sun shadows on GPUs with hardware ray tracing; ignored elsewhere.
+    public static let rayTracedShadows = Self("rendering.rayTracedShadows")
 
     /// The switch of one cached asset kind, by its cache folder name.
     public static func assetCacheKind(folder: String) -> Self {

@@ -12,6 +12,10 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     /// What the GPU path culled, a few frames late.
     public let gpuCulling: CullCounts
     public var textureStreaming = TextureStreamingStats()
+    public var rayTracing = RayTracingAvailability.unavailable(
+        reason: RayTracingAvailability.missingReason
+    )
+    public var rayTracedShadows = RayTracedShadowStats()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -42,6 +46,10 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     var textureStreamingEnabled: Bool { get set }
     /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
     var textureBudgetIndex: Int { get set }
+    /// Applies at once where the GPU traces rays in hardware; elsewhere it stays off.
+    var rayTracedShadowsEnabled: Bool { get set }
+    /// Draws the traced shadow alone. Not saved.
+    var rayTracedShadowView: Bool { get set }
 }
 
 /// Readout text for the Rendering Performance sections, kept apart from AppKit so the
@@ -84,6 +92,18 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
         Mapped: \(megabytes(stats.usedBytes)) of \(megabytes(stats.budgetBytes))
         Heaps: \(megabytes(stats.reservedBytes))
         Levels: \(stats.levelsLoaded) loaded, \(stats.levelsDropped) dropped
+        """
+    }
+
+    public static func rayTracedShadowText(
+        _ availability: RayTracingAvailability, stats: RayTracedShadowStats
+    ) -> String {
+        if let reason = availability.reason {
+            return "Unavailable: \(reason)"
+        }
+        return """
+        Meshes: \(stats.meshes)  Instances: \(stats.instances)
+        Structures: \(megabytes(stats.bytes))
         """
     }
 

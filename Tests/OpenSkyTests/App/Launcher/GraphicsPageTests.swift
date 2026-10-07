@@ -4,14 +4,18 @@
 import AppKit
 @testable import OpenSky
 import OpenSkyGameData
+import OpenSkyRendering
 import Testing
 
 @MainActor
 struct GraphicsPageTests {
-    private func makePage(store: PlayerSettingsStore = PlayerSettingsStore(persistence: nil))
-        -> GraphicsPageViewController
-    {
-        let page = GraphicsPageViewController(reloadStore: { store })
+    private func makePage(
+        store: PlayerSettingsStore = PlayerSettingsStore(persistence: nil),
+        rayTracing: RayTracingAvailability = .unavailable(
+            reason: RayTracingAvailability.softwareReason
+        )
+    ) -> GraphicsPageViewController {
+        let page = GraphicsPageViewController(reloadStore: { store }, rayTracing: rayTracing)
         page.loadViewIfNeeded()
         return page
     }
@@ -66,5 +70,27 @@ struct GraphicsPageTests {
         store.set(.gpuCulling, to: 0)
         page.viewWillAppear()
         #expect(page.gpuCullingControl.state == .off)
+    }
+
+    @Test func rayTracingShowsWhyItIsOff() {
+        let page = makePage()
+        #expect(
+            page.rayTracedShadowsControl.accessibilityIdentifier()
+                == "GraphicsRayTracedShadowsControl"
+        )
+        #expect(page.rayTracingLabel.accessibilityIdentifier() == "GraphicsRayTracingLabel")
+        #expect(!page.rayTracedShadowsControl.isEnabled)
+        #expect(page.rayTracedShadowsControl.state == .off)
+        #expect(page.rayTracingLabel.stringValue.hasPrefix("Unavailable: "))
+    }
+
+    @Test func anAvailableGPUSavesTheRayTracingSwitch() {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = makePage(store: store, rayTracing: .available)
+        #expect(page.rayTracedShadowsControl.isEnabled)
+        #expect(page.rayTracingLabel.stringValue.isEmpty)
+        page.rayTracedShadowsControl.state = .on
+        page.rayTracedShadowsControl.sendAction(page.rayTracedShadowsControl.action, to: page)
+        #expect(store.bool(.rayTracedShadows))
     }
 }

@@ -9,6 +9,7 @@ extension Renderer {
         gpuCullingEnabled = store.bool(.gpuCulling)
         textureStreaming.enabled = store.bool(.textureStreaming)
         textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store)
+        rayTracedShadows.enabled = store.bool(.rayTracedShadows)
     }
 
     public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {

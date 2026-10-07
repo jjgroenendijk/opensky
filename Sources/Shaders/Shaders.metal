@@ -1,6 +1,7 @@
 // Static-mesh shaders. Vertex layout comes from ShaderTypes.h attribute
 // enums and StaticVertexLayout.vertexDescriptor() (Rendering/RenderMesh.swift).
 
+#include <metal_raytracing>
 #include <metal_stdlib>
 #include <simd/simd.h>
 
@@ -35,6 +36,33 @@ static float3 pointLighting(
         sum += lights[index].colorFalloff.rgb * attenuation * lambert;
     }
     return sum;
+}
+
+// Ray-traced sun shadows (docs/rendering/ray-traced-shadows.md). Both constants are
+// optional, so every pipeline that does not define them compiles as before.
+constant bool rayTracedShadowsValue [[function_constant(FunctionConstantRayTracedShadows)]];
+constant bool rayTracedShadows =
+    is_function_constant_defined(rayTracedShadowsValue) && rayTracedShadowsValue;
+constant bool rayShadowViewValue [[function_constant(FunctionConstantRayShadowView)]];
+constant bool rayShadowView =
+    is_function_constant_defined(rayShadowViewValue) && rayShadowViewValue;
+constant float rayShadowMaxDistance = 16384.0;
+constant float rayShadowOriginOffset = 2.0;
+
+// 1 when nothing lies between the point and the sun, else 0.
+static float rayTracedSunShadow(
+    float3 worldPosition,
+    float3 normal,
+    constant FrameUniforms &frame,
+    raytracing::instance_acceleration_structure scene)
+{
+    raytracing::ray ray(
+        worldPosition + normal * rayShadowOriginOffset, -frame.sunDirection, 0.0,
+        rayShadowMaxDistance);
+    raytracing::intersector<raytracing::instancing> intersector;
+    intersector.accept_any_intersection(true);
+    auto hit = intersector.intersect(ray, scene);
+    return hit.type == raytracing::intersection_type::none ? 1.0 : 0.0;
 }
 
 // Receiver-side depth-compare bias (NDC z). Trims residual self-shadow acne
@@ -415,7 +443,9 @@ fragment float4 staticMeshFragment(
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
-    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
+    raytracing::instance_acceleration_structure rayScene
+    [[buffer(BufferIndexRayScene), function_constant(rayTracedShadows)]])
 {
     float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
     float alpha = diffuse.a * in.color.a * draw.materialAlpha;
@@ -433,6 +463,15 @@ fragment float4 staticMeshFragment(
     float shadow = draw.receivesShadows != 0
                        ? sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler)
                        : 1.0;
+    if (rayTracedShadows) {
+        float traced = draw.receivesShadows != 0
+                           ? rayTracedSunShadow(in.worldPosition, normal, frame, rayScene)
+                           : 1.0;
+        if (rayShadowView) {
+            return float4(float3(traced), 1.0);
+        }
+        shadow = min(shadow, traced);
+    }
     float3 illumination =
         frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
@@ -573,7 +612,9 @@ fragment float4 terrainFragment(
     [[texture(TextureIndexTerrainLayer0)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
-    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
+    raytracing::instance_acceleration_structure rayScene
+    [[buffer(BufferIndexRayScene), function_constant(rayTracedShadows)]])
 {
     if (debugViewActive) {
         DebugSurface surface = {
@@ -596,6 +637,13 @@ fragment float4 terrainFragment(
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    if (rayTracedShadows) {
+        float traced = rayTracedSunShadow(in.worldPosition, normal, frame, rayScene);
+        if (rayShadowView) {
+            return float4(float3(traced), 1.0);
+        }
+        shadow = min(shadow, traced);
+    }
     float3 illumination =
         frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);

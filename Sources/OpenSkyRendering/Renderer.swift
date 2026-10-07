@@ -106,6 +106,7 @@ public final class Renderer: NSObject {
             actorGroupsByOwner = DrawGroup.actorGroupsByOwner(in: scene)
             sceneAllocations = scene.residencyAllocations
             gpuCull.isCurrent = false
+            rayTracedShadows.isCurrent = false
         }
     }
 
@@ -245,6 +246,7 @@ public final class Renderer: NSObject {
     public var gpuCull: GPUCullState
     /// Large textures keep only the levels the camera needs (TextureStreaming/).
     public var textureStreaming: TextureStreamingState
+    public var rayTracedShadows: RayTracedShadowState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
@@ -299,14 +301,14 @@ public final class Renderer: NSObject {
         )
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
         (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
-        depthState = try Self.makeDepthState(device: device)
-        waterDepthState = try Self.makeWaterDepthState(device: device)
+        (depthState, waterDepthState) = try Self.makeDepthStates(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
             try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)
         ((imageSpacePass, effects), gpuCull) =
             try Self.makeEffectResources(view: view, library: library, compiler: compiler)
         textureStreaming = TextureStreamingState(device: device)
+        rayTracedShadows = Self.makeRayTracing(library: library, compiler: compiler, view: view)
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))
