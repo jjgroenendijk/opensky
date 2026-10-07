@@ -1,8 +1,10 @@
 // The UV density of a mesh: how many texture repeats one world unit holds.
 
-import OpenSkyRendering
+import OpenSkyFormatsCore
+import TagsTesting
 import Testing
 
+@Suite(.tags(.parser))
 struct MeshUVDensityTests {
     /// A 64 x 64 quad in two triangles.
     private let positions: [SIMD3<Float>] = [[0, 0, 0], [64, 0, 0], [64, 64, 0], [0, 64, 0]]

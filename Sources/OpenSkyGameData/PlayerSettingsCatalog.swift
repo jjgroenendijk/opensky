@@ -164,6 +164,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true),
+        row("assetCache.fastMeshLoad", .opensky, .toggle, "Fast mesh loading", 0, applied: true),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
         row("rendering.textureStreaming", .opensky, .toggle, "Stream textures", 1, applied: true),
@@ -233,6 +234,8 @@ nonisolated extension PlayerSettingID {
     public static let assetCachePreset = Self("assetCache.preset")
     public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
     public static let assetCacheFastLoad = Self("assetCache.fastLoad")
+    /// Cached meshes read straight into GPU buffers during a cell build.
+    public static let assetCacheFastMeshLoad = Self("assetCache.fastMeshLoad")
     /// Pipelines load from the archive an earlier launch saved.
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
     /// The static scene culls in a compute pass; off culls it on the CPU.

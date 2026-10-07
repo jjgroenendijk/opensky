@@ -47,6 +47,13 @@ nonisolated public final class RenderModel: Sendable {
             RenderMaterial(material: $0, textureProvider: textureProvider)
         }
     }
+
+    init(meshes: [RenderMesh], materials: [Material], textureProvider: TextureProvider) {
+        self.meshes = meshes
+        self.materials = materials.map {
+            RenderMaterial(material: $0, textureProvider: textureProvider)
+        }
+    }
 }
 
 /// One placed model going into a RenderScene: instance transform plus the

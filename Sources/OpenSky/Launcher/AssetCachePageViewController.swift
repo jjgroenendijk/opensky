@@ -20,6 +20,16 @@ final class AssetCachePageViewController: NSViewController {
         NSButton(checkboxWithTitle: kind.title, target: nil, action: nil)
     }
 
+    let fastLoadCheckbox = NSButton(
+        checkboxWithTitle: "Fast texture loading",
+        target: nil,
+        action: nil
+    )
+    let fastMeshLoadCheckbox = NSButton(
+        checkboxWithTitle: "Fast mesh loading",
+        target: nil,
+        action: nil
+    )
     let retiredKindsLabel = NSTextField(labelWithString: AssetCacheReadout.retiredKindsNote)
     let presetPopUp = NSPopUpButton()
     let presetLabel = NSTextField(labelWithString: "")
@@ -66,6 +76,9 @@ final class AssetCachePageViewController: NSViewController {
                     + [retiredKindsLabel]
             ),
             PanelComponents.group([
+                PanelComponents.caption("Loading"), fastLoadCheckbox, fastMeshLoadCheckbox
+            ]),
+            PanelComponents.group([
                 PanelComponents.caption("Folder"), folderLabel,
                 PanelComponents.buttonRow([chooseFolderButton, defaultFolderButton]),
                 PanelComponents.labeledFieldRow(
@@ -104,6 +117,8 @@ final class AssetCachePageViewController: NSViewController {
         enabledCheckbox.state = settings.isEnabled ? .on : .off
         presetPopUp.selectItem(at: Int(settings.preset.rawValue))
         presetLabel.stringValue = settings.preset.values.summary
+        fastLoadCheckbox.state = settings.fastLoad ? .on : .off
+        fastMeshLoadCheckbox.state = settings.fastMeshLoad ? .on : .off
         for (kind, checkbox) in zip(AssetCacheKind.built, kindCheckboxes) {
             checkbox.state = settings.kinds.contains(kind) ? .on : .off
             checkbox.title = AssetCacheReadout.kindTitle(kind, usage: coordinator.usage)

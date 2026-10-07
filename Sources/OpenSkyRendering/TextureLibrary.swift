@@ -100,6 +100,12 @@ nonisolated public final class TextureLibrary {
         )
     }
 
+    /// The fast loader, when it reads cached meshes and a batch is open.
+    public var fastMeshLoader: FastTextureLoader? {
+        guard batchDepth > 0, let fastLoader, fastLoader.control.loadsMeshes else { return nil }
+        return fastLoader
+    }
+
     /// Runs `body` as one batch: the fast loader queues every cached texture
     /// it loads, and the batch completes before this returns.
     public func batchLoads<Result>(_ body: () throws -> Result) rethrows -> Result {

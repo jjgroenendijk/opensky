@@ -154,6 +154,52 @@ nonisolated public final class AssetCacheStore: Sendable {
         return .hit(AssetCacheHit(header: header, file: file, payloadRange: range, url: url))
     }
 
+    /// Like `lookup`, but reads only the header and the payload's first bytes, as many as
+    /// `payloadHead` asks for after seeing them. The hit's file holds just those bytes.
+    public func lookupHead(
+        _ request: AssetCacheRequest, payloadHead: (Data) -> Int?
+    ) -> AssetCacheLookup {
+        let url = entryURL(kind: request.kind, source: request.source)
+        var wanted = Self.headReadSize
+        while true {
+            let read: (bytes: Data, size: Int)
+            switch AssetCacheFileRead.readHead(url, count: wanted, touching: true) {
+            case let .success(head):
+                read = head
+            case let .failure(error) where error.code == .ENOENT:
+                return .miss
+            case let .failure(error):
+                return .unreadable(reason: String(describing: error))
+            }
+            let header: AssetCacheEntryHeader
+            let range: Range<Int>
+            do {
+                (header, range) = try AssetCacheEntryCodec.decodeHead(read.bytes)
+            } catch {
+                return .unreadable(reason: String(describing: error))
+            }
+            guard range.upperBound == read.size else {
+                return .unreadable(reason: String(describing: AssetCacheEntryError.truncated))
+            }
+            if let staleness = Self.staleness(of: header, for: request) {
+                return .stale(staleness)
+            }
+            let available = read.bytes[range.lowerBound ..< min(range.upperBound, read.bytes.count)]
+            let needed = range.lowerBound + (payloadHead(available) ?? range.count)
+            guard needed > read.bytes.count, wanted < read.size else {
+                return .hit(AssetCacheHit(
+                    header: header, file: read.bytes,
+                    payloadRange: range.lowerBound ..< min(range.upperBound, read.bytes.count),
+                    url: url
+                ))
+            }
+            wanted = min(needed, read.size)
+        }
+    }
+
+    /// One read holds the header and a model's layout block for almost every entry.
+    static let headReadSize = 64 * 1024
+
     /// Writes the entry atomically, then removes the oldest entries over the limit.
     /// A bulk build passes `enforcingLimit: false` and enforces it once at the end.
     public func store(

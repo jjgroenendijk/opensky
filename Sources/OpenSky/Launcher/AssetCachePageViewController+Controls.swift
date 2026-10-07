@@ -20,6 +20,7 @@ extension AssetCachePageViewController {
             checkbox.toolTip = AssetCacheReadout.kindGain(kind)
                 + ". Off reads \(kind.folderName) from the game archives; a build skips them"
         }
+        configureFastLoad()
         let cores = ProcessInfo.processInfo.activeProcessorCount
         presetPopUp.addItems(withTitles: AssetQualityPreset.allCases.map {
             AssetCacheReadout.presetTitle($0, cores: cores)
@@ -42,6 +43,18 @@ extension AssetCachePageViewController {
         progressBar.maxValue = 1
         progressBar.widthAnchor.constraint(equalToConstant: 440).isActive = true
         progressBar.setAccessibilityIdentifier("AssetCacheBuildProgressIndicator")
+    }
+
+    private func configureFastLoad() {
+        let checkboxes = [(fastLoadCheckbox, "FastLoad"), (fastMeshLoadCheckbox, "FastMeshLoad")]
+        for (checkbox, name) in checkboxes {
+            PanelComponents.configureCheckbox(
+                checkbox, target: self, action: #selector(toggleFastLoad),
+                identifier: "AssetCacheLaunch\(name)Control"
+            )
+        }
+        fastLoadCheckbox.toolTip = "Read cached textures straight into GPU memory on a cell load"
+        fastMeshLoadCheckbox.toolTip = "Read cached meshes straight into GPU buffers on a cell load"
     }
 
     private func configureLabels() {
@@ -111,6 +124,12 @@ extension AssetCachePageViewController {
 
     @objc private func toggleEnabled() {
         coordinator.setEnabled(enabledCheckbox.state == .on)
+    }
+
+    @objc private func toggleFastLoad() {
+        coordinator.setFastLoad(
+            textures: fastLoadCheckbox.state == .on, meshes: fastMeshLoadCheckbox.state == .on
+        )
     }
 
     @objc private func toggleKind(_ sender: NSButton) {

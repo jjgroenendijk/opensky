@@ -4,6 +4,7 @@
 
 import Foundation
 @preconcurrency import Metal
+import OpenSkyAssetCache
 import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
@@ -76,21 +77,15 @@ nonisolated public enum MorphVertexLayout: Sendable {
     }
 }
 
-/// Interleaved layout of one static-mesh vertex: float3 position, float3
-/// normal, float2 texcoord, float4 color — 48 bytes, tightly packed floats
-/// (not simd-aligned; the vertex descriptor below is the single source of
-/// truth for the shader's view of it).
+/// The interleaved static-mesh vertex (`InterleavedVertexLayout`) as the shaders see it.
 nonisolated public enum StaticVertexLayout: Sendable {
-    public static let positionOffset = 0
-    public static let normalOffset = 12
-    public static let texcoordOffset = 24
-    public static let colorOffset = 32
-    public static let stride = 48
-
-    /// Attribute defaults for meshes that omit an array: +Z normal (world
-    /// up, docs/decisions/coordinates.md), origin UV, opaque white color.
-    public static let defaultNormal = SIMD3<Float>(0, 0, 1)
-    public static let defaultColor = SIMD4<Float>(1, 1, 1, 1)
+    public static let positionOffset = InterleavedVertexLayout.positionOffset
+    public static let normalOffset = InterleavedVertexLayout.normalOffset
+    public static let texcoordOffset = InterleavedVertexLayout.texcoordOffset
+    public static let colorOffset = InterleavedVertexLayout.colorOffset
+    public static let stride = InterleavedVertexLayout.stride
+    public static let defaultNormal = InterleavedVertexLayout.defaultNormal
+    public static let defaultColor = InterleavedVertexLayout.defaultColor
 
     public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = MTLVertexDescriptor()
@@ -112,24 +107,8 @@ nonisolated public enum StaticVertexLayout: Sendable {
         return descriptor
     }
 
-    /// Packs a mesh's attribute arrays into the interleaved layout above.
-    /// Mesh contract: attribute arrays are empty or vertex-count sized.
     public static func interleave(_ mesh: Mesh) -> [Float] {
-        var floats: [Float] = []
-        floats.reserveCapacity(mesh.positions.count * stride / MemoryLayout<Float>.size)
-        for index in mesh.positions.indices {
-            let position = mesh.positions[index]
-            let normal = index < mesh.normals.count ? mesh.normals[index] : defaultNormal
-            let uv = index < mesh.uvs.count ? mesh.uvs[index] : .zero
-            let color = index < mesh.colors.count ? mesh.colors[index] : defaultColor
-            floats.append(contentsOf: [
-                position.x, position.y, position.z,
-                normal.x, normal.y, normal.z,
-                uv.x, uv.y,
-                color.x, color.y, color.z, color.w
-            ])
-        }
-        return floats
+        InterleavedVertexLayout.interleave(mesh)
     }
 }
 
@@ -242,6 +221,26 @@ nonisolated public final class RenderMesh: Sendable {
         uvPerUnit = MeshUVDensity.uvPerUnit(
             positions: mesh.positions, uvs: mesh.uvs, indices: mesh.indices
         )
+    }
+
+    /// A static mesh whose buffers a loader fills from a cached model's ready bytes.
+    init(
+        layout: ReadyMeshLayout, bounds: ModelBounds, vertexBuffer: MTLBuffer,
+        indexBuffer: MTLBuffer
+    ) {
+        name = layout.name
+        vertexCount = layout.vertexCount
+        self.vertexBuffer = vertexBuffer
+        self.indexBuffer = indexBuffer
+        indexCount = layout.indexCount
+        skinningBuffer = nil
+        boneMatrixBuffer = nil
+        skinningPalette = nil
+        boneMatrices = Mutex([])
+        localTransform = layout.transform
+        localBounds = bounds
+        materialSlot = layout.materialSlot
+        uvPerUnit = layout.uvPerUnit
     }
 
     private struct SkinBuffers {

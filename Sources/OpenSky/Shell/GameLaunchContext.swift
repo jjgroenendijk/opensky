@@ -172,7 +172,11 @@ final class GameLaunchContext {
             return LoadedWorld(fileSystem: vfs, session: nil, assetCache: cache)
         }
         // The control exists whenever the cache does, so the panel can turn it on later.
-        let fastLoad = cache.map { _ in FastTextureLoadControl(isEnabled: cacheSettings.fastLoad) }
+        let fastLoad = cache.map { _ in
+            FastTextureLoadControl(
+                isEnabled: cacheSettings.fastLoad, loadsMeshes: cacheSettings.fastMeshLoad
+            )
+        }
         do {
             let session = try await CellProviderIndexes.loadSession(
                 root: root,

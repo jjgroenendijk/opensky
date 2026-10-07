@@ -40,7 +40,8 @@ struct AssetCachePageTests {
             "AssetCacheBuildControl",
             "AssetCacheCancelControl", "AssetCacheCheckControl", "AssetCacheClearControl",
             "AssetCacheKindTexturesControl", "AssetCacheKindMeshesControl",
-            "AssetCacheKindCollisionControl", "AssetCacheRetiredKindsStatsLabel"
+            "AssetCacheKindCollisionControl", "AssetCacheRetiredKindsStatsLabel",
+            "AssetCacheLaunchFastLoadControl", "AssetCacheLaunchFastMeshLoadControl"
         ] {
             #expect(find(identifier, in: page.view) != nil, "\(identifier)")
         }
@@ -76,5 +77,15 @@ struct AssetCachePageTests {
         #expect(textures.state == .on)
         textures.performClick(nil)
         #expect(page.coordinator.settings.kinds == [.mesh, .collision])
+    }
+
+    @Test func fastMeshLoadingStartsOffAndSaves() {
+        let page = makePage()
+        page.loadViewIfNeeded()
+        #expect(page.fastLoadCheckbox.state == .on)
+        #expect(page.fastMeshLoadCheckbox.state == .off)
+        page.fastMeshLoadCheckbox.performClick(nil)
+        #expect(page.coordinator.settings.fastMeshLoad)
+        #expect(page.coordinator.settings.fastLoad)
     }
 }

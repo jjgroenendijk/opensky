@@ -76,6 +76,12 @@ nonisolated public enum AssetCacheEntryCodec {
         return (decoded.header, decoded.payload.upperBound)
     }
 
+    /// The header and the payload range a whole entry has, from its first bytes.
+    static func decodeHead(_ prefix: Data) throws -> (AssetCacheEntryHeader, Range<Int>) {
+        let decoded = try decodePrefix(prefix)
+        return (decoded.header, decoded.payload)
+    }
+
     /// The header and the payload's offsets from the start of the file.
     private struct Prefix {
         let header: AssetCacheEntryHeader

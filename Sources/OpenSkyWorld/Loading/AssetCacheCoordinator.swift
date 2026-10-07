@@ -66,6 +66,14 @@ public final class AssetCacheCoordinator {
         update { $0.isEnabled = enabled }
     }
 
+    /// Takes effect at the next game launch, like the in-game switch's start value.
+    public func setFastLoad(textures: Bool, meshes: Bool) {
+        update { settings in
+            settings.fastLoad = textures
+            settings.fastMeshLoad = meshes
+        }
+    }
+
     /// A new preset makes every entry stale, so the check runs again.
     public func setPreset(_ preset: AssetQualityPreset) {
         guard preset != settings.preset else { return }

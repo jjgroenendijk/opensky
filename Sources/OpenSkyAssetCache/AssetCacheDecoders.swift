@@ -8,7 +8,7 @@ import OpenSkyFormatsMesh
 
 nonisolated public enum AssetConverterVersion {
     public static let texture: UInt32 = 2
-    public static let mesh: UInt32 = 1
+    public static let mesh: UInt32 = 2
     public static let collision: UInt32 = 1
     public static let animation: UInt32 = 1
     public static let audio: UInt32 = 1
@@ -26,6 +26,15 @@ nonisolated extension AssetCacheDecoder where Value == Model {
     public static var model: Self {
         Self(kind: .mesh, converterVersion: AssetConverterVersion.mesh) {
             try ModelCacheCodec.decode($0)
+        }
+    }
+}
+
+nonisolated extension AssetCacheDecoder where Value == ReadyModelLayout {
+    /// Decodes a payload head that holds at least the layout block.
+    public static var modelLayout: Self {
+        Self(kind: .mesh, converterVersion: AssetConverterVersion.mesh) {
+            try ModelCacheCodec.decodeLayout($0)
         }
     }
 }

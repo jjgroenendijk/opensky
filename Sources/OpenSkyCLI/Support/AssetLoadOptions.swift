@@ -1,5 +1,6 @@
 // The asset cache, loose file, and fast loading options the benchmarks share:
-// `--asset-cache`, `--fast-load`, `--evict`, `--loose <dir>`, `--record-paths <file>`,
+// `--asset-cache`, `--fast-load`, `--fast-mesh-load`, `--evict`, `--loose <dir>`, `--record-paths
+// <file>`,
 // and the cache settings options of `asset-cache`.
 
 import Foundation
@@ -15,16 +16,20 @@ struct AssetLoadOptions {
     let looseFolder: URL?
     let recordPath: String?
     let fastLoad: Bool
+    let fastMeshLoad: Bool
 
     init(scanner: inout ArgumentScanner, context: CLIContext) throws {
         let useCache = scanner.flag("--asset-cache")
         let evict = scanner.flag("--evict")
         fastLoad = scanner.flag("--fast-load")
+        fastMeshLoad = scanner.flag("--fast-mesh-load")
         let loose = try scanner.option("--loose")
         looseFolder = loose.map { URL(filePath: $0, directoryHint: .isDirectory) }
         recordPath = try scanner.option("--record-paths")
         let settings = try AssetCacheCommand.settings(scanner: &scanner)
-        guard useCache || !fastLoad else { throw CLIError.usage("--fast-load needs --asset-cache") }
+        guard useCache || !(fastLoad || fastMeshLoad) else {
+            throw CLIError.usage("--fast-load and --fast-mesh-load need --asset-cache")
+        }
         cache = try useCache ? AssetCacheReader.open(
             settings: settings, files: context.makeFileSystem(),
             gameInstall: context.root.installURL
@@ -42,9 +47,10 @@ struct AssetLoadOptions {
         builder.textures.assetCache = cache
         builder.meshes.assetCache = cache
         builder.collisionModels?.assetCache = cache
-        if fastLoad {
+        if fastLoad || fastMeshLoad {
             builder.textures.fastLoader = try FastTextureLoader(
-                device: device, control: FastTextureLoadControl(isEnabled: true)
+                device: device,
+                control: FastTextureLoadControl(isEnabled: fastLoad, loadsMeshes: fastMeshLoad)
             )
         }
     }
@@ -58,7 +64,8 @@ struct AssetLoadOptions {
         }
         if let stats = fastLoader?.control.snapshot {
             print("[INFO] fast load: \(stats.batches) batches, \(stats.textures) textures, "
-                + "\(stats.bytes >> 20) MiB, \(stats.fallbacks) fallbacks")
+                + "\(stats.bytes >> 20) MiB, \(stats.meshes) meshes, "
+                + "\(stats.meshBytes >> 20) MiB, \(stats.fallbacks) fallbacks")
         }
         guard let recordPath else { return }
         try (cache.requestedPaths.sorted().joined(separator: "\n") + "\n")
