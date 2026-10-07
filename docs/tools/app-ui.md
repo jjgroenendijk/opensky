@@ -241,6 +241,7 @@ Accessibility ids are the UI test API and never change silently.
 | Control and readout | `<Thing>Control` and `<Thing>StatsLabel` |
 | Destination and section override dots | `Destination-<id>-OverrideIndicator`, `PanelSection-<sectionIdentifier>-OverrideIndicator` |
 | Section reset | `PanelSection-<sectionIdentifier>-ResetControl` |
+| Section disclosure | `PanelSection-<sectionIdentifier>-Disclosure` |
 | Reset all menu item | `ResetAllOverridesCommand` |
 | Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
 | Launcher Asset Cache page | `AssetCache<Thing>Control` and `AssetCache<Thing>StatsLabel`, `AssetCacheBuildProgressIndicator` |

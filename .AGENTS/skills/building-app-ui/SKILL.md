@@ -124,7 +124,8 @@ The reasons are in "Layout invariants" and "Interaction rules" in `docs/tools/ap
 Ids are the UI-test API, so never change one silently. The patterns: `AppSidebar` outline,
 `Destination-<id>` rows, `PanelSection-<id>` headers, `<Thing>Control` and
 `<Thing>StatsLabel`, `PanelSection-<id>-OverrideIndicator` and
-`PanelSection-<id>-ResetControl`, `Destination-<id>-OverrideIndicator`, the menu item
+`PanelSection-<id>-ResetControl`, `PanelSection-<id>-Disclosure`,
+`Destination-<id>-OverrideIndicator`, the menu item
 `ResetAllOverridesCommand`, and the toolbar `ScreenshotButton`.
 
 - Pin new ids as literals in the panel test, and destination ids in

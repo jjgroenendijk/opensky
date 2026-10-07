@@ -34,6 +34,7 @@ final class CollapsibleSectionView: NSStackView {
         disclosure.target = self
         disclosure.action = #selector(toggle)
         disclosure.translatesAutoresizingMaskIntoConstraints = false
+        disclosure.setAccessibilityIdentifier("PanelSection-\(sectionID)-Disclosure")
 
         let titleLabel = NSTextField(labelWithString: title)
         titleLabel.attributedStringValue = Theme.headingAttributed(
