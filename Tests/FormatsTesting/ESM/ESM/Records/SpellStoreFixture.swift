@@ -10,11 +10,13 @@ public enum SpellStoreFixture: Sendable {
         public let effect: UInt32
         public let magnitude: Float
         public let duration: UInt32
+        public let area: UInt32
 
-        public init(_ effect: UInt32, magnitude: Float, duration: UInt32 = 0) {
+        public init(_ effect: UInt32, magnitude: Float, duration: UInt32 = 0, area: UInt32 = 0) {
             self.effect = effect
             self.magnitude = magnitude
             self.duration = duration
+            self.area = area
         }
     }
 
@@ -40,7 +42,7 @@ public enum SpellStoreFixture: Sendable {
             fields += InventoryFixture.effectFields(
                 effect: effect.effect,
                 magnitude: effect.magnitude,
-                area: 0,
+                area: effect.area,
                 duration: effect.duration
             )
         }

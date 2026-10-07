@@ -11,9 +11,9 @@ extension MagicCoordinator: WeaponEnchantmentApplying {
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         guard let owner = world?.actorValueHolder(for: hit.attacker) else { return nil }
-        let target = world?.actorValueHolder(for: hit.target)
+        let holders = residentHolders(of: hit.targets)
         return withEffects { runtime in
-            WeaponEnchantmentApplication.apply(hit, owner: owner, target: target, using: &runtime)
+            WeaponEnchantmentApplication.apply(hit, owner: owner, holders: holders, using: &runtime)
         }.flatMap(\.self)
     }
 }

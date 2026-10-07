@@ -183,7 +183,14 @@ nonisolated public enum SpellHitTargeting: Sendable {
         of payload: SpellPayload,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> Float {
-        payload.entries.map { settings.radius(ofArea: $0.area) }.max() ?? 0
+        widestRadius(of: payload.entries, settings: settings)
+    }
+
+    public static func widestRadius(
+        of entries: [MagicItemEffect],
+        settings: MagicAreaSettings = .documentedDefaults
+    ) -> Float {
+        entries.map { settings.radius(ofArea: $0.area) }.max() ?? 0
     }
 
     /// Every actor `payload` reaches when it lands at `position`. The struck actor
@@ -198,13 +205,33 @@ nonisolated public enum SpellHitTargeting: Sendable {
         excluding shooter: ReferenceKey?,
         settings: MagicAreaSettings = .documentedDefaults
     ) -> [SpellHitTarget] {
+        targets(
+            of: payload.entries,
+            at: position,
+            struck: struck,
+            candidates: candidates,
+            excluding: shooter,
+            settings: settings
+        )
+    }
+
+    /// The same rule for an entry list without a payload, such as a weapon's
+    /// contact enchantment.
+    public static func targets(
+        of entries: [MagicItemEffect],
+        at position: SIMD3<Float>,
+        struck: ReferenceKey?,
+        candidates: @autoclosure () -> [MeleeTarget],
+        excluding shooter: ReferenceKey?,
+        settings: MagicAreaSettings = .documentedDefaults
+    ) -> [SpellHitTarget] {
         var targets: [SpellHitTarget] = []
         if let struck, struck != shooter {
             targets.append(SpellHitTarget(key: struck, distance: 0, isDirect: true))
         }
-        let radius = widestRadius(of: payload, settings: settings)
+        let radius = widestRadius(of: entries, settings: settings)
         guard radius > 0 else { return targets }
-        let bystanders = candidates
+        let bystanders = candidates()
             .filter { $0.key != shooter && $0.key != struck }
             .map { (key: $0.key, distance: distance(from: position, to: $0)) }
             .filter { $0.distance <= radius }

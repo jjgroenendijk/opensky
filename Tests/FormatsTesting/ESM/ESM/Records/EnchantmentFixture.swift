@@ -107,7 +107,7 @@ public enum EnchantmentFixture: Sendable {
             fields += InventoryFixture.effectFields(
                 effect: effect.effect,
                 magnitude: effect.magnitude,
-                area: 0,
+                area: effect.area,
                 duration: effect.duration
             )
         }
