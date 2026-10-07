@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering

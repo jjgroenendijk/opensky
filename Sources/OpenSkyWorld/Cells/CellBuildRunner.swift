@@ -263,8 +263,6 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
     func enqueueActorProp(_ request: ActorPropRequest)
     func drainCompletedActorProps() -> [ActorPropLoadResult]
-    func enqueuePlayerRig(_ request: PlayerRigRequest)
-    func drainCompletedPlayerRigs() -> [PlayerRigLoadResult]
 }
 
 nonisolated extension CellBuildRunning {
@@ -287,11 +285,6 @@ nonisolated extension CellBuildRunning {
 
     public func enqueueActorProp(_: ActorPropRequest) {}
     public func drainCompletedActorProps() -> [ActorPropLoadResult] {
-        []
-    }
-
-    public func enqueuePlayerRig(_: PlayerRigRequest) {}
-    public func drainCompletedPlayerRigs() -> [PlayerRigLoadResult] {
         []
     }
 }
