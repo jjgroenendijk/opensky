@@ -139,14 +139,17 @@ extension Renderer {
     /// The image-space composite pass and the effect layer.
     static func makeEffectResources(
         view: MTKView, library: MTLLibrary, compiler: PipelineCache
-    ) throws -> (ImageSpacePassResources, EffectLayer) {
+    ) throws -> ((ImageSpacePassResources, EffectLayer), GPUCullState) {
         let device = compiler.device
         return try (
-            ImageSpacePassResources(
-                device: device, library: library, compiler: compiler,
-                pixelFormat: view.colorPixelFormat
+            (
+                ImageSpacePassResources(
+                    device: device, library: library, compiler: compiler,
+                    pixelFormat: view.colorPixelFormat
+                ),
+                EffectLayer(device: device, library: library, view: view, compiler: compiler)
             ),
-            EffectLayer(device: device, library: library, view: view, compiler: compiler)
+            GPUCullState(resources: GPUCullingResources(library: library, compiler: compiler))
         )
     }
 

@@ -142,6 +142,10 @@ nonisolated public struct BenchmarkFrameTime: Codable, Equatable, Sendable {
     /// GPU time per frame, from the command buffer's GPU start and end times.
     public let gpuTime: BenchmarkTimeStats?
     public let grass: BenchmarkGrass?
+    /// CPU time of the shadow and scene pass encoding per frame.
+    public var encodeTime: BenchmarkTimeStats?
+    /// Whether the GPU culled the scene's static groups. Nil in older results.
+    public var gpuCulling: Bool?
 
     public init(
         frames: Int,

@@ -17,7 +17,7 @@ binaries in a Metal 4 archive, and later launches load them from it.
 1. The renderer compiles through one Metal 4 compiler. A pipeline data set serializer is
    attached to it with the `captureBinaries` configuration, so it keeps each compiled binary.
 2. After setup, a launch that compiled every pipeline writes them to the archive with
-   `serializeAsArchiveAndFlush(to:)`.
+   `serializeAsArchiveAndFlush(url:)`.
 3. A later launch opens the archive with `makeArchive(url:)`. Each pipeline is looked up there
    first. A pipeline the archive lacks is compiled.
 

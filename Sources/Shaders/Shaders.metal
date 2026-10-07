@@ -1058,3 +1058,35 @@ fragment float4 textureReadbackScaled(
     constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
     return source.sample(bilinear, in.uv, level(0.0));
 }
+
+// GPU frustum culling (docs/rendering/gpu-culling.md). The p-vertex test matches
+// `Frustum.intersects`, so the CPU and GPU paths keep the same instances.
+static bool cullPlaneKeeps(float4 plane, float3 lower, float3 upper)
+{
+    float3 farthest = select(lower, upper, plane.xyz >= 0.0);
+    return !(dot(plane.xyz, farthest) + plane.w < 0.0);
+}
+
+kernel void cullInstances(
+    device const CullInstance *instances [[buffer(CullBufferIndexInstances)]],
+    constant CullParameters &parameters [[buffer(CullBufferIndexParameters)]],
+    device InstanceTransform *output [[buffer(CullBufferIndexOutput)]],
+    device atomic_uint *arguments [[buffer(CullBufferIndexArguments)]],
+    uint index [[thread_position_in_grid]])
+{
+    if (index >= parameters.instanceCount) {
+        return;
+    }
+    device const CullInstance &instance = instances[index];
+    if (instance.boundsMax.w > 0.0) {
+        for (uint plane = 0; plane < 6; plane++) {
+            if (!cullPlaneKeeps(
+                    parameters.planes[plane], instance.boundsMin.xyz, instance.boundsMax.xyz)) {
+                return;
+            }
+        }
+    }
+    uint countWord = instance.group * CullConstantArgumentWords + 1;
+    uint slot = atomic_fetch_add_explicit(&arguments[countWord], 1, memory_order_relaxed);
+    output[instance.outputBase + slot] = instance.transform;
+}

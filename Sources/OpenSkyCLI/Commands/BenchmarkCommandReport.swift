@@ -68,6 +68,10 @@ extension BenchmarkCommand {
         if let gpu = frame.gpuTime {
             print("[INFO] GPU time: " + describe(gpu, over: "the measured frames"))
         }
+        if let encode = frame.encodeTime {
+            let path = frame.gpuCulling == true ? "GPU culling" : "CPU culling"
+            print("[INFO] CPU encode (\(path)): " + describe(encode, over: "the measured frames"))
+        }
         if let grass = frame.grass {
             print(
                 "[INFO] grass: \(grass.drawCalls) draw calls, "

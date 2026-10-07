@@ -251,9 +251,11 @@ extension DestinationRegistry {
     static let renderingPerformanceOverrides = DestinationOverrideActions(
         isOverridden: { context in
             PipelineCacheSection.isOverridden(provider: context.providers)
+                || GPUCullingSection.isOverridden(provider: context.providers)
         },
         resetToDefaults: { context in
             PipelineCacheSection.resetToDefaults(provider: context.providers)
+            GPUCullingSection.resetToDefaults(provider: context.providers)
         }
     )
 }

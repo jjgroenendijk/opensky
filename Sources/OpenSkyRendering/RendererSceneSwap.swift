@@ -185,6 +185,7 @@ extension Renderer {
         if let movie = swf.movie {
             live.formUnion(movie.residencyAllocations.map(ObjectIdentifier.init))
         }
+        live.formUnion((gpuCull.scene?.allocations ?? []).map(ObjectIdentifier.init))
         // A drained A entry may share an allocation with undrained B. Keep that
         // allocation resident until every retired frame using it drains.
         for entry in retired {
