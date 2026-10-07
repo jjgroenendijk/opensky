@@ -213,6 +213,14 @@ path. The setting "Fast texture loading" turns the fast loader on and off. In a 
 game, World > Asset Cache has the same switch and shows the textures, bytes, and time of
 the last cell load. `openskycli benchmark --asset-cache --fast-load` measures it.
 
+A texture read needs scratch memory, in requests from 16 KiB to 8 MiB. The queue's own
+allocator keeps that memory for the life of the queue, which added about 80 MB to the peak
+footprint of the fly route. The fast loader passes its own allocator, which frees each
+scratch buffer when its read ends. Median of three cold `bench --fly-path --fast-load` runs
+(2026-10-07, run directory `.logs/fast-load-footprint/20261007T024924Z`): peak 1269 MB with
+the queue's allocator, 1189 MB with ours, and 1186 MB for the CPU upload. The frames until
+the stream settles did not change (391 and 393).
+
 Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as
 slow warm.

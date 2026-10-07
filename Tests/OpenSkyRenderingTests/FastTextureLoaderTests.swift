@@ -105,4 +105,13 @@ struct FastTextureLoaderTests {
         try FastTextureLoader(device: device, control: control).flush()
         #expect(control.snapshot.batches == 0)
     }
+
+    @Test(.enabled(if: Self.hasDevice)) func eachScratchRequestGetsItsOwnBuffer() throws {
+        let device = try #require(Self.device)
+        let allocator = TransientScratchAllocator(device: device)
+        let first = try #require(allocator.makeScratchBuffer(minimumSize: 64 << 10))
+        let second = try #require(allocator.makeScratchBuffer(minimumSize: 64 << 10))
+        #expect(first.buffer.length >= 64 << 10)
+        #expect(first.buffer !== second.buffer)
+    }
 }
