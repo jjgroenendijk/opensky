@@ -485,6 +485,8 @@ awk '/^--- asset cache check/{f=1;next} /^--- /{f=0} f' "$log" \
 run "asset cache measure" asset-cache measure --folder "$cache_dir" --per-kind 5
 grep -qE '^textures[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
   || fail "asset-cache measure printed no texture row"
+grep -qE '^animation[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
+  || fail "asset-cache measure printed no animation row: retired kinds must still measure"
 rm -rf "$(dirname "$cache_dir")"
 echo "[ OK ] asset cache build + check + measure"
 
