@@ -14,9 +14,7 @@ extension Renderer {
         compiler: PipelineCache
     ) throws -> ShadowResources {
         try ShadowResources(
-            pipelines: makeShadowPipelines(
-                device: device, library: library, compiler: compiler
-            ),
+            pipelines: makeShadowPipelines(library: library, compiler: compiler),
             sampler: makeShadowSampler(device: device),
             map: makeShadowMap(device: device)
         )
@@ -26,7 +24,6 @@ extension Renderer {
     /// binds at pass time (the pass has nothing else to infer the target from,
     /// unlike the scene pipelines which carry a color attachment).
     private static func makeShadowPipelines(
-        device: MTLDevice,
         library: MTLLibrary,
         compiler: PipelineCache
     ) throws -> ShadowPipelines {

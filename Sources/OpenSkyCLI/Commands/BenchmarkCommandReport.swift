@@ -76,6 +76,7 @@ extension BenchmarkCommand {
         if let gpu = frame.gpuTime {
             print("[INFO] GPU time: " + describe(gpu, over: "the measured frames"))
         }
+        reportRenderPath(frame)
         if let encode = frame.encodeTime {
             let path = frame.gpuCulling == true ? "GPU culling" : "CPU culling"
             print("[INFO] CPU encode (\(path)): " + describe(encode, over: "the measured frames"))
@@ -95,6 +96,22 @@ extension BenchmarkCommand {
                 ))
             }
         }
+    }
+
+    /// The render options the frames ran with, so two summaries show what differed.
+    private static func reportRenderPath(_ frame: BenchmarkFrameTime) {
+        var parts: [String] = []
+        if let scale = frame.renderScale {
+            parts.append(scale > 0 ? "\(frame.upscaler ?? "?") upscale from \(scale)%" : "native")
+        }
+        if let interpolation = frame.frameInterpolation {
+            parts.append(interpolation ? "frame interpolation" : "no frame interpolation")
+        }
+        if let meshShaders = frame.meshShaderGrass {
+            parts.append(meshShaders ? "mesh-shader grass" : "classic grass")
+        }
+        guard !parts.isEmpty else { return }
+        print("[INFO] render path: " + parts.joined(separator: ", "))
     }
 
     private static func reportCells(_ cells: [BenchmarkCellLoad]) {

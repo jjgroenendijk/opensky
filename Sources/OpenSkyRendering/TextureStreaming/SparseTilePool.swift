@@ -30,10 +30,6 @@ final class SparseTilePool {
         Self.heapBytes / tileBytes
     }
 
-    var heapCount: Int {
-        heaps.count
-    }
-
     var reservedBytes: Int {
         heaps.count * Self.heapBytes
     }
