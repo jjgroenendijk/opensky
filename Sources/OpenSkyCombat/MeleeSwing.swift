@@ -6,6 +6,7 @@
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
@@ -60,6 +61,20 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
     /// A hand holding a readied spell. It only carries `CombatHandType.spell` into
     /// `iRightHandType` for `magicbehavior.hkx`; that hand's button goes to the cast loop.
     public static let readiedSpell = MeleeWeaponProfile(damage: 1, reach: 1, handType: .spell)
+
+    /// This profile with the tempering bonus of a copy at `level` added.
+    public func tempered(level: Int32) -> MeleeWeaponProfile {
+        MeleeWeaponProfile(
+            damage: damage + Tempering.bonus(level: level, isBodyArmor: false),
+            reach: reach,
+            speed: speed,
+            stagger: stagger,
+            weapon: weapon,
+            impactDataSet: impactDataSet,
+            handType: handType,
+            enchantment: enchantment
+        )
+    }
 
     /// One decoded WEAP as a swing profile.
     public init(weapon record: Weapon, enchantment: ItemEnchantmentProfile? = nil) {

@@ -20,7 +20,7 @@ struct WorldStateComponentKindOrderTests {
         .questAliases, .actorValues, .death, .combat, .dialogue, .activeEffects, .spellbook,
         .enchantedItems, .perks, .factions, .relationships, .playerProgress, .crimeLedger,
         .harvest, .lock, .scene, .storyManager, .dialogueBranch, .helpMessages,
-        .playerIdentity, .mapMarker, .localMapFog, .actorPresentation
+        .playerIdentity, .mapMarker, .localMapFog, .actorPresentation, .temperedItems
     ]
 
     @Test func everyKindHasItsOwnOrder() {

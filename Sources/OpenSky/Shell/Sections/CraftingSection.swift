@@ -53,7 +53,7 @@ final class CraftingSection: PanelSectionViewController {
             closeControl, target: self, action: #selector(closeStation),
             identifier: "CraftingCloseControl"
         )
-        craftControl.toolTip = "Uses up the parts and makes the item."
+        craftControl.toolTip = "Uses up the parts and makes the item, or improves a held one."
         PanelComponents.configureButton(
             craftControl, target: self, action: #selector(craft),
             identifier: "CraftingCraftControl"

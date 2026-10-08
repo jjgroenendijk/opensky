@@ -2,7 +2,7 @@
 type: File Format
 title: OpenSky save chunks — actors
 description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, AEFF, ECHG, FCTN, RELS,
-  CRIM, STOL, and CRVG chunks in an .osav save.
+  CRIM, STOL, TMPR, and CRVG chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
 
@@ -147,6 +147,14 @@ Key (the owner), uint32 row count, then rows of uint32 item FormID and int32 sto
 No cell. `STOL` is applied after `INVN`, because it splits the totals `INVN` holds. A row
 for an owner with no inventory is dropped, and a stolen count above the total is cut to the
 total. Sizes: 11 bytes minimum per entry, 8 per row.
+
+## TMPR: tempered copies
+
+Key, cell, uint32 item count, then per item: uint32 FormID, uint32 level count, and one
+int32 quality level per improved copy. Items ascend and levels descend. A level of 0 or
+less is dropped. More levels than the owner holds copies is kept; a reader uses only as
+many levels as there are copies ([crafting](/engine/crafting.md)). An older build skips the
+chunk and every copy reads plain. Sizes: 12 bytes minimum per entry, 8 per item, 4 per level.
 
 ## CRVG: violent crime gold
 

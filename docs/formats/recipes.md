@@ -90,7 +90,7 @@ them:
 | --- | --- | --- | --- |
 | `GetItemCount` | 47 | 1,005 | yes |
 | `HasPerk` | 448 | 728 | yes |
-| `EPTemperingItemIsEnchanted` | 659 | 523 | no |
+| `EPTemperingItemIsEnchanted` | 659 | 523 | yes |
 | `GetGlobalValue` | 74 | 67 | yes |
 | `HasSpell` | 264 | 43 | yes |
 | `GetVMQuestVariable` | 629 | 38 | no |

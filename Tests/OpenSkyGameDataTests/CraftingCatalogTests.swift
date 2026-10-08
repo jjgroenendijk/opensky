@@ -106,11 +106,13 @@ struct CraftingCatalogTests {
 }
 
 extension CraftingCatalogTests {
-    @Test func aTemperingBenchListsNothing() throws {
+    @Test func aTemperingBenchOffersItsRecipesAsImprovements() throws {
         let station = try Self.catalog().station(
             workbench: Workbench(benchType: .smithingWeapon, skillIndex: 10),
             keywords: [FormID(Self.forge)]
         )
-        #expect(station.keywords.isEmpty)
+        #expect(!station.keywords.isEmpty)
+        #expect(station.improves)
+        #expect(try !Self.forgeStation().improves)
     }
 }

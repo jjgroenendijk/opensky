@@ -70,6 +70,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
+| 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 

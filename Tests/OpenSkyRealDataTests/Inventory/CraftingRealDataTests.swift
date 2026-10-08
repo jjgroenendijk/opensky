@@ -23,8 +23,13 @@ struct CraftingRealDataTests {
             self.inventory = inventory
         }
 
-        func failingFunction(in conditions: ConditionList, sourcePlugin _: String) -> String? {
+        func failingFunction(
+            in conditions: ConditionList,
+            sourcePlugin _: String,
+            temperingEnchanted: Bool?
+        ) -> String? {
             var context = ConditionContext(subject: .player)
+            context.tempering = TemperingConditionResolution(isEnchanted: temperingEnchanted)
             let stacks = inventory.inventory(of: .player).stacks
             context.inventory = InventoryConditionResolution(counts: [
                 .player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
@@ -33,10 +38,21 @@ struct CraftingRealDataTests {
             return evaluator.firstFailure(in: conditions.conditions)
                 .map(evaluator.functionName(of:))
         }
+
+        func skillLevel(at _: Int32) -> Float? {
+            15
+        }
     }
 
-    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
-    func aForgeCraftsAnIronSwordFromItsParts() throws {
+    private struct Bench {
+        let session: CraftingSession
+        let inventory: InventoryRuntime
+        let recipe: CraftingRecipe
+        let stationName: String
+    }
+
+    /// A session at the first vanilla station that offers the recipe `editorID`.
+    private func bench(offering editorID: String) throws -> Bench {
         let root = try #require(RealDataEnvironment.dataRoot)
         let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         let catalog = CraftingCatalog(
@@ -44,17 +60,15 @@ struct CraftingRealDataTests {
             itemPlugin: FormIDResolver(pluginName: "Skyrim.esm", masters: []),
             file: file
         )
-        let sword = try #require(catalog.recipes.recipe(editorID: "RecipeWeaponIronSword"))
-        let forgeKeyword = try #require(sword.workbenchKeyword)
+        let wanted = try #require(catalog.recipes.recipe(editorID: editorID))
+        let keyword = try #require(wanted.workbenchKeyword)
         let station = try #require(catalog.stations.first { choice in
             catalog.station(workbench: choice.workbench, keywords: choice.keywords)
-                .keywords.contains(forgeKeyword)
+                .keywords.contains(keyword)
         })
-
         let inventory = InventoryRuntime(
             store: WorldStateStore(), baselines: InventoryBaselineResolver.build(from: file)
         )
-        let conditions = PlayerConditions(inventory: inventory)
         let interaction = PlacedInteraction(
             reference: station.base, base: station.base, position: .zero,
             name: station.editorID, action: .use, actionLabel: "Activate", sounds: nil,
@@ -64,26 +78,58 @@ struct CraftingRealDataTests {
             event: #require(CraftingActivationEvent(interaction: interaction)),
             catalog: catalog,
             inventory: inventory,
-            conditions: conditions,
+            conditions: PlayerConditions(inventory: inventory),
             skills: nil
         )
-        #expect(!session.recipes.isEmpty)
-        let recipe = try #require(session.recipes.first { $0.id == sword.id })
-        #expect(!session.eligibility(of: recipe).isEligible)
+        let recipe = try #require(session.recipes.first { $0.id == wanted.id })
+        return Bench(
+            session: session, inventory: inventory, recipe: recipe, stationName: station.editorID
+        )
+    }
 
-        let parts = CraftingCatalog.required(recipe)
-        for part in parts {
+    private func addParts(of recipe: CraftingRecipe, to inventory: InventoryRuntime) throws {
+        for part in CraftingCatalog.required(recipe) {
             try inventory.add(#require(part.item), count: part.count, to: .player)
         }
-        let verdict = session.eligibility(of: recipe)
+    }
+
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func aForgeCraftsAnIronSwordFromItsParts() throws {
+        let bench = try bench(offering: "RecipeWeaponIronSword")
+        let recipe = bench.recipe
+        #expect(!bench.session.recipes.isEmpty)
+        #expect(!bench.session.eligibility(of: recipe).isEligible)
+        try addParts(of: recipe, to: bench.inventory)
+        let verdict = bench.session.eligibility(of: recipe)
         #expect(verdict.isEligible, "verdict: \(verdict)")
 
-        let outcome = try session.craft(recipe.id)
+        let parts = CraftingCatalog.required(recipe)
+        let outcome = try bench.session.craft(recipe.id)
         #expect(outcome.consumed.map(\.item) == parts.compactMap(\.item))
         #expect(outcome.consumed.map(\.count) == parts.map(\.count))
-        #expect(inventory.inventory(of: .player).stacks == [outcome.created])
+        #expect(bench.inventory.inventory(of: .player).stacks == [outcome.created])
         #expect(outcome.created.item == recipe.created)
-        try writeReport(station: station.editorID, recipes: session.statuses)
+        try writeReport(station: bench.stationName, recipes: bench.session.statuses)
+    }
+
+    /// `TemperArmorIronCuirass`: one iron ingot, gated by `EPTemperingItemIsEnchanted != 1`
+    /// or `HasPerk`. A plain cuirass passes the first condition.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    func anArmorTableImprovesACarriedIronCuirass() throws {
+        let bench = try bench(offering: "TemperArmorIronCuirass")
+        let cuirass = try #require(bench.recipe.created)
+        #expect(bench.session.station.improves)
+        #expect(bench.session.statuses.isEmpty)
+        try bench.inventory.add(cuirass, count: 1, to: .player)
+        try addParts(of: bench.recipe, to: bench.inventory)
+        let status = try #require(bench.session.statuses.first { $0.recipe.id == bench.recipe.id })
+        #expect(status.isReady, "verdict: \(status.eligibility)")
+
+        let outcome = try bench.session.craft(bench.recipe.id)
+        #expect(outcome.improved == TemperStep(from: 0, to: 1))
+        #expect(bench.inventory.count(of: cuirass, in: .player) == 1)
+        #expect(bench.inventory.temperLevel(of: cuirass, in: .player) == 1)
+        #expect(bench.inventory.inventory(of: .player).stacks.map(\.item) == [cuirass])
     }
 
     private func writeReport(station: String, recipes: [CraftingRecipeStatus]) throws {

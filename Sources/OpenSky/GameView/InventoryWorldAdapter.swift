@@ -3,6 +3,7 @@
 // `VendorWorld` from the session systems. The rules live in the coordinators
 // (docs/engine/coordinators.md).
 
+import OpenSkyActors
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyFactions
@@ -132,9 +133,14 @@ extension InventoryWorldAdapter: InventoryWorld {
 
 extension InventoryWorldAdapter: RecipeConditionChecking {
     /// Recipes run on the player, who also answers `GetItemCount`.
-    func failingFunction(in conditions: ConditionList, sourcePlugin _: String) -> String? {
+    func failingFunction(
+        in conditions: ConditionList,
+        sourcePlugin _: String,
+        temperingEnchanted: Bool?
+    ) -> String? {
         var context = game.runtimeState.conditionContext()
         context.subject = .player
+        context.tempering = TemperingConditionResolution(isEnchanted: temperingEnchanted)
         if let runtime = game.inventory.runtime {
             let stacks = runtime.inventory.inventory(of: runtime.player).stacks
             context.inventory = InventoryConditionResolution(counts: [
@@ -143,6 +149,14 @@ extension InventoryWorldAdapter: RecipeConditionChecking {
         }
         var evaluator = ConditionEvaluator(context: context)
         return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
+    }
+
+    func skillLevel(at index: Int32) -> Float? {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: .player)
+        else { return nil }
+        return runtime.value(at: index, on: holder)
     }
 }
 

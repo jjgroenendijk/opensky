@@ -149,6 +149,11 @@ extension CombatWorldAdapter: CombatWorld {
         game.magic.enchantmentProfile(of: item)
     }
 
+    func temperLevel(of item: FormID) -> Int32 {
+        guard let runtime = game.inventory.runtime else { return 0 }
+        return runtime.inventory.temperLevel(of: item, in: runtime.player)
+    }
+
     func hasReadiedSpell(in hand: SpellHand) -> Bool {
         game.magic.hasReadiedSpell(in: hand)
     }

@@ -28,14 +28,14 @@ struct ConditionFunctionTests {
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
         // The measured keyword, form-list, location, magic, perk, level, base-actor-value,
-        // crime-gold, faction, item-count, lock, actor-body, and camera functions.
+        // crime-gold, faction, item-count, tempering, lock, actor-body, and camera functions.
         #expect(registry.indices == [
             1, 14, 18, 27, 35, 45, 46, 47, 56, 58, 59, 60, 65, 69, 71, 72, 73, 74, 77, 80, 102,
             103, 170, 180, 181, 214, 223, 249, 263, 264, 277, 313, 323, 359, 360, 365, 372, 375,
             376, 391, 403, 407, 426, 444, 448, 449, 459, 515, 516, 517, 518, 522, 523, 543, 560,
-            562, 565, 566, 567, 570, 571, 572, 576, 594, 603, 604, 605, 610, 632, 640, 699, 719
+            562, 565, 566, 567, 570, 571, 572, 576, 594, 603, 604, 605, 610, 632, 640, 659, 699, 719
         ])
-        #expect(registry.count == 72)
+        #expect(registry.count == 73)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight", "GetDisabled",
             "GetDetected", "GetDead", "GetItemCount", "GetQuestRunning", "GetStage",
@@ -54,7 +54,8 @@ struct ConditionFunctionTests {
             "GetIsAliasRef", "GetIsEditorLocAlias", "HasEquippedSpell", "GetCurrentCastingType",
             "GetCurrentDeliveryType", "GetEventData", "GetIsFlying", "IsInSameCurrentLocAsRef",
             "IsInSameCurrentLocAsRefAlias", "LocAliasIsLocation", "LocAliasHasKeyword",
-            "IsCasting", "GetActorValuePercent", "HasMagicEffectKeyword", "IsHostileToActor"
+            "IsCasting", "GetActorValuePercent", "EPTemperingItemIsEnchanted",
+            "HasMagicEffectKeyword", "IsHostileToActor"
         ])
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == [
@@ -63,7 +64,7 @@ struct ConditionFunctionTests {
             4359, 4360, 4373, 4409, 4419, 4455, 4456, 4461, 4468, 4471, 4472, 4487, 4499, 4503,
             4522, 4540, 4544, 4545, 4555, 4611, 4612, 4613, 4614, 4618, 4619, 4639, 4656, 4658,
             4661, 4662, 4663, 4666, 4667, 4668, 4672, 4690, 4699, 4700, 4701, 4706, 4728, 4736,
-            4795, 4815
+            4755, 4795, 4815
         ])
         #expect(registry[Self.getIsID]?.parameter1 == .formID)
         #expect(registry[Self.getIsID]?.parameter2 == .unused)
