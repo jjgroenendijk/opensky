@@ -41,8 +41,10 @@ so without a minimum the screen would flash for one frame and the tip could not 
   its up axis, back and forth across the `ONAM` range, at 6 degrees per second. A screen with
   no range does not turn.
 - The camera distance is 2.5 times the model's radius times its scale, and at least 48 units,
-  so the whole object fits on screen. `XNAM` moves the object to the right, forward, and up
-  from that point. The game's camera placement is not known; this is OpenSky's.
+  so the whole object fits on screen. The object sits on the view axis and tilts with the
+  camera pitch, so it stays centered when the camera looks up or down. `XNAM` moves the
+  object to the right, forward, and up of the view from that point. The game's camera
+  placement is not known; this is OpenSky's.
 - The tip, the `DESC` text, is drawn at the bottom in the UI overlay.
 - During the fade, the world draws again under a black panel whose opacity falls to zero.
 - A screen with no model shows the tip on black.

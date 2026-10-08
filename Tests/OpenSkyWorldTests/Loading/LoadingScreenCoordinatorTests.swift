@@ -119,8 +119,25 @@ struct LoadingScreenCoordinatorTests {
             model: "a.nif", scale: 1, rotationDegrees: .zero, translation: .zero,
             text: nil, opacity: 1, drawsObject: true
         )
-        let transform = frame.objectTransform(eye: .zero, yaw: 0, radius: 40)
+        let transform = frame.objectTransform(eye: .zero, yaw: 0, pitch: 0, radius: 40)
         #expect(transform.columns.3.x == 100)
         #expect(transform.columns.3.y == 0)
+    }
+
+    @Test func objectStaysOnTheViewAxisWhenLookingDown() {
+        let frame = LoadingCoverFrame(
+            model: "a.nif", scale: 1, rotationDegrees: .zero, translation: .zero,
+            text: nil, opacity: 1, drawsObject: true
+        )
+        let pitch: Float = -0.6
+        let transform = frame.objectTransform(eye: .zero, yaw: 0.3, pitch: pitch, radius: 40)
+        let center = SIMD3<Float>(
+            transform.columns.3.x,
+            transform.columns.3.y,
+            transform.columns.3.z
+        )
+        let forward = SIMD3<Float>(cosf(pitch) * cosf(0.3), cosf(pitch) * sinf(0.3), sinf(pitch))
+        #expect(simd_length(simd_cross(simd_normalize(center), forward)) < 1e-4)
+        #expect(simd_dot(center, forward) > 0)
     }
 }

@@ -34,16 +34,22 @@ nonisolated extension LoadingCoverFrame {
 }
 
 nonisolated extension LoadingCoverFrame {
-    /// The object stands in front of the eye, far enough that a model of
-    /// `radius` fits the view. XNAM moves it in view axes: right, forward, up.
-    public func objectTransform(eye: SIMD3<Float>, yaw: Float, radius: Float) -> float4x4 {
-        let forward = SIMD3<Float>(cosf(yaw), sinf(yaw), 0)
+    /// The object stands on the view axis, far enough that a model of `radius`
+    /// fits the view, and tilts with `pitch` so it stays centered.
+    /// XNAM moves it in view axes: right, forward, up.
+    public func objectTransform(
+        eye: SIMD3<Float>, yaw: Float, pitch: Float, radius: Float
+    ) -> float4x4 {
         let right = SIMD3<Float>(sinf(yaw), -cosf(yaw), 0)
+        let tilt = simd_quatf(angle: pitch, axis: right)
+        let forward = tilt.act(SIMD3(cosf(yaw), sinf(yaw), 0))
+        let up = tilt.act(SIMD3(0, 0, 1))
         let distance = max(48, radius * scale * 2.5)
         let center = eye + forward * distance
-            + right * translation.x + forward * translation.y + SIMD3(0, 0, translation.z)
+            + right * translation.x + forward * translation.y + up * translation.z
         let radians = rotationDegrees * (.pi / 180)
-        let spin = simd_quatf(angle: yaw + .pi + radians.z, axis: SIMD3(0, 0, 1))
+        let spin = tilt
+            * simd_quatf(angle: yaw + .pi + radians.z, axis: SIMD3(0, 0, 1))
             * simd_quatf(angle: radians.y, axis: SIMD3(0, 1, 0))
             * simd_quatf(angle: radians.x, axis: SIMD3(1, 0, 0))
         var matrix = float4x4(spin) * float4x4(diagonal: SIMD4(scale, scale, scale, 1))
