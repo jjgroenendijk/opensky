@@ -112,7 +112,7 @@ measured with `openskycli swf movie-probe`.
 | --- | --- |
 | `SetCategoriesList` | Race, body, and head pages, with flags 1, 2, and 4 |
 | `SetRaceList` | Per race: name, description, and 1 for the current race |
-| `SetSliders` | Per slider: 8 values, the name, page flag, callback, minimum, maximum, value, step, and id |
+| `SetOptionSliders` | Per slider: 8 values, the name, page flag, callback, minimum, maximum, value, step, and id |
 | `SetNameText` | The character's name |
 
 | Movie calls | Effect |
@@ -131,8 +131,5 @@ shows those rows, and the arrow keys move them.
 
 ## Not done yet
 
-- The movie's panel lists stay `undefined` in OpenSky's AS2 runtime, so the movie falls
-  back to the engine rows every time. The movie also names its slider call
-  `SetOptionSliders`, not `SetSliders`.
 - The `racesex_menu.swf` movie shows OpenSky's own rows. The movie's camera, zoom, and
   preset buttons are not answered.

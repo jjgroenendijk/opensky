@@ -55,8 +55,13 @@ Bring-up runs in the order the vanilla menus need, because they are class librar
 
 Placing a sprite is where a movie comes alive. If the character has a linkage name
 (`ExportAssets`) and a class was registered against it (`Object.registerClass`), the constructor runs
-with the clip as `this`, and the class prototype becomes the clip's `__proto__`. The clip's own frame
-1 is applied before the constructor, so a CLIK component's constructor sees the children it expects.
+with the clip as `this`, and the class prototype becomes the clip's `__proto__`. A frame's
+constructors run after all of the frame's placements, children before parents. So a constructor sees
+its own children and also the siblings the same frame places after it. The order is inferred from
+the race menu: its panel constructor reads the category list from a sibling clip placed later, and
+the game shows that list, so the sibling must exist when the constructor runs. A clip a script
+makes, with `attachMovie` or `duplicateMovieClip`, is constructed before the call returns,
+because the script uses it next.
 A registered class may not extend `MovieClip`, so the built-in clip methods are also reachable
 through the host after the prototype chain misses. Flash resolves those natively too.
 

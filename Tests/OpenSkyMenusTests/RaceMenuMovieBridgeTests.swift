@@ -28,7 +28,7 @@ struct RaceMenuMovieBridgeTests {
     @Test func publishSendsRacesSlidersAndTheName() throws {
         let runtime = try SWFRuntimeFixture.started(tags: [SWFDisplayFixture.showFrameTag])
         var sent: [String: [AS2Value]] = [:]
-        for name in ["SetCategoriesList", "SetRaceList", "SetSliders", "SetNameText"] {
+        for name in ["SetCategoriesList", "SetRaceList", "SetOptionSliders", "SetNameText"] {
             AS2Natives.method(runtime.runtime, on: runtime.root.object, name: name) { context in
                 sent[name] = context.arguments
                 return .undefined
@@ -38,7 +38,7 @@ struct RaceMenuMovieBridgeTests {
         #expect(sent["SetRaceList"] == [
             .string("Nord"), .string(""), .integer(1), .string("Redguard"), .string(""), .integer(0)
         ])
-        let sliders = try #require(sent["SetSliders"])
+        let sliders = try #require(sent["SetOptionSliders"])
         let sliderRows = Self.model.rows.filter {
             switch $0 {
             case .weight, .slider, .part: true
