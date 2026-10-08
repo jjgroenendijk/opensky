@@ -480,6 +480,14 @@ nonisolated extension CellSceneBuilder {
         let statIndex = statIndexBuildingIfNeeded()
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
         let lightIndex = lightIndexBuildingIfNeeded()
+        meshes.predecode(paths: refs.lazy.compactMap { ref -> String? in
+            guard lightIndex[ref.base.rawValue] == nil else { return nil }
+            let resolved = self.resolveBase(
+                formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
+            )
+            return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
+        })
+        defer { meshes.dropPredecoded() }
         var instances: [ResolvedInstance] = []
         for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description

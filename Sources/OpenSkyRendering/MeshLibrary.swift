@@ -58,6 +58,8 @@ nonisolated public final class MeshLibrary {
     /// Converted models. The converter stores only models that need no skeleton
     /// and have no particles, so a hit equals the direct decode.
     public var assetCache: AssetCacheReader?
+    /// Decodes `predecode(paths:)` made for the current build; a load takes its entry.
+    var predecoded: [String: PredecodedMesh] = [:]
 
     public init(fileSystem: any GameFileSource, device: MTLDevice, textures: TextureLibrary) {
         self.fileSystem = fileSystem
@@ -361,6 +363,9 @@ nonisolated extension MeshLibrary {
         actorSkeleton: ActorSkeletonAsset?,
         explicitActorSkeleton: Bool
     ) throws -> (model: Model, particles: [ParticleSystemDefinition]) {
+        if !explicitActorSkeleton, let ready = takePredecoded(pathKey: pathKey) {
+            return try ready.get()
+        }
         if
             !explicitActorSkeleton,
             let model = assetCache?.value(forPath: pathKey, decoder: .model)
@@ -370,21 +375,22 @@ nonisolated extension MeshLibrary {
         guard let data = try? fileSystem.contents(forPath: pathKey) else {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
+        guard explicitActorSkeleton else {
+            let skeleton = pathKey.hasPrefix(Self.characterMeshPrefix) ? characterSkeleton() : nil
+            return try Self.parse(data, pathKey: pathKey, characterSkeleton: skeleton).get()
+        }
         do {
             let file = try NIFFile(data: data)
-            let skeleton: NIFSkeleton?
-            if explicitActorSkeleton {
-                skeleton = actorSkeleton?.skeleton
-            } else {
-                let usesCharacterSkeleton = pathKey.hasPrefix("meshes\\actors\\character\\")
-                    && file.blocks.contains { $0.typeName == "NiSkinData" }
-                skeleton = usesCharacterSkeleton ? characterSkeleton() : nil
-            }
-            return try (file.model(skeleton: skeleton), file.particleSystems())
-        } catch let error as MeshLibraryError {
-            throw error
+            return try (file.model(skeleton: actorSkeleton?.skeleton), file.particleSystems())
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
+    }
+}
+
+nonisolated extension MeshLibrary {
+    /// Whether the plain model of a normalized path is already uploaded.
+    func isLoaded(pathKey: String) -> Bool {
+        cache[cacheKey(path: pathKey, terrainLODClipMask: nil)] != nil
     }
 }
