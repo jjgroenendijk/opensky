@@ -93,6 +93,8 @@ nonisolated public final class PapyrusTally {
     public private(set) var faultTotal = 0
     public private(set) var faultKindCounts: [String: Int] = [:]
     public private(set) var faults: [PapyrusFault] = []
+    /// Kept past the `faults` cap, so an event can name the newest fault.
+    public private(set) var lastFault: String?
 
     public init(limits: PapyrusLimits = .standard) {
         self.limits = limits
@@ -189,8 +191,9 @@ nonisolated public final class PapyrusTally {
         noneReceiverTotal += 1
     }
 
-    public func noteFault(_ fault: PapyrusFault) {
+    public func noteFault(_ fault: PapyrusFault, in script: String? = nil) {
         faultTotal += 1
+        lastFault = script.map { "\($0): \(fault)" } ?? "\(fault)"
         faultKindCounts[fault.kind, default: 0] += 1
         if faults.count < limits.faultRecords {
             faults.append(fault)

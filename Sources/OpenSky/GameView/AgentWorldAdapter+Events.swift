@@ -171,7 +171,8 @@ extension AgentWorldAdapter {
         let scripts = game.scripts.scriptsSnapshot
         if scripts.tickCount != tap.scriptTick, scripts.lastTickFaulted > 0, tap.seeded {
             tap.append(AgentEventKind.scriptError, [
-                "faulted": .init(scripts.lastTickFaulted), "tick": .init(scripts.tickCount)
+                "faulted": .init(scripts.lastTickFaulted), "tick": .init(scripts.tickCount),
+                "fault": .init(scripts.lastFault)
             ])
         }
         tap.scriptTick = scripts.tickCount

@@ -152,6 +152,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     /// The most-called unimplemented natives, at most
     /// `topUnimplementedNativeLimit` of them.
     public let topUnimplementedNatives: [ScriptsNativeCount]
+    /// The newest VM fault, as text, or nil when none happened.
+    public var lastFault: String?
 }
 
 /// Live-renderer seam for the World > Scripts panel.
