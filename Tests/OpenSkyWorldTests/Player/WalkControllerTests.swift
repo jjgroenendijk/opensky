@@ -212,6 +212,34 @@ struct WalkControllerTests {
         #expect(CellGridManager.cellCoordinate(for: camera.position).x >= 2)
     }
 
+    @Test
+    func aKnockbackPushesThePlayerAndFadesOnTheGround() {
+        var camera = Self.camera()
+        var controller = WalkController(cameraPosition: camera.position)
+        Self.settle(&controller, camera: &camera)
+        controller.knock(SIMD3(300, 0, 0))
+        controller.update(
+            camera: &camera, input: CameraInput(dt: 0.1), sampleGround: Self.flatGround
+        )
+        let pushed = controller.feetPosition.x
+        #expect(pushed > 10)
+        for _ in 0 ..< 30 {
+            controller.update(
+                camera: &camera, input: CameraInput(dt: 0.1), sampleGround: Self.flatGround
+            )
+        }
+        #expect(simd_length(controller.knockback) < 1)
+        #expect(controller.feetPosition.x < pushed + 300)
+    }
+
+    @Test
+    func aHugeKnockbackIsCapped() {
+        var controller = WalkController(cameraPosition: Self.camera().position)
+        controller.knock(SIMD3(1e9, 0, 1e9))
+        #expect(simd_length(controller.knockback) <= WalkController.maximumKnockbackSpeed)
+        #expect(controller.verticalVelocity <= WalkController.maximumKnockbackSpeed)
+    }
+
     private static func camera(pitch: Float = 0, z: Float? = nil) -> FreeFlyCamera {
         FreeFlyCamera(
             position: SIMD3<Float>(0, 0, z ?? PlayerCapsule.standard.eyeHeight),

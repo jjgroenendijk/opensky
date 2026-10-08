@@ -35,8 +35,10 @@ nonisolated public struct WalkController: Sendable {
     public let capsule: PlayerCapsule
     public let configuration: PlayerMovementConfiguration
     public private(set) var feetPosition: SIMD3<Float>
-    public private(set) var verticalVelocity: Float = 0
-    public private(set) var isGrounded = false
+    public internal(set) var verticalVelocity: Float = 0
+    /// Horizontal speed from a trap or a push, units per second. It fades on the ground.
+    public internal(set) var knockback = SIMD2<Float>()
+    public internal(set) var isGrounded = false
     public private(set) var hasUnresolvedPenetration = false
     /// True while the last step resolved in water deep enough to swim. Gravity,
     /// ground snap, and step support are all suspended there.
@@ -78,6 +80,7 @@ nonisolated public struct WalkController: Sendable {
         groundMaterial = nil
         accumulatedTime = 0
         activeStepSupport = nil
+        knockback = SIMD2<Float>()
     }
 
     /// Integrates look once per frame, then translation through fixed 120 Hz
@@ -131,7 +134,7 @@ nonisolated public struct WalkController: Sendable {
         let direction = simd_length(plan.horizontalDisplacement) > 0
             ? simd_normalize(plan.horizontalDisplacement)
             : SIMD2<Float>()
-        var candidateXY = currentXY + plan.horizontalDisplacement
+        var candidateXY = currentXY + plan.horizontalDisplacement + knockbackStep(dt: dt)
         if
             !plan.isSwimming,
             isBlockedSlope(at: candidateXY, direction: direction, sampleGround: sampleGround)

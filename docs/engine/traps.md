@@ -51,27 +51,56 @@ Implemented for traps:
 | Native | Behavior |
 | --- | --- |
 | `ObjectReference.GetTriggerObjectCount` | Actors standing in the volume, from the trigger enter and leave events |
-| `ObjectReference.ProcessTrapHit` | Takes the damage argument off the receiver's Health. Pushback and stagger are dropped |
+| `ObjectReference.ProcessTrapHit` | Takes the damage off the receiver's Health and knocks it back. Stagger is dropped |
+| `ObjectReference.PlaceAtMe` | Spawns a hazard or detonates an explosion, see below |
+| `ObjectReference.ApplyHavokImpulse` | Pushes the receiver's simulated body |
+| `ObjectReference.PushActorAway` | Knocks the actor argument back, away from the receiver |
 | `ObjectReference.GetBaseObject` | The base form |
 | `ObjectReference.GetNthLinkedRef` | Follows the untagged `XLKR` link n times |
 | `ObjectReference.GetAngleZ` | Rotation about Z, in degrees |
 | `ObjectReference.IsLockBroken` | Always false: OpenSky never breaks a lock |
 | `Utility.GetCurrentRealTime` | Seconds since the first call |
 
+Without a running game (the CLI and the package tests) the four world natives above are
+traced stubs too.
+
 Traced stubs answer the type's empty value and count as stubbed in the Papyrus tally, so the
 script runs on:
 
-- Havok and motion: `SetMotionType`, `ApplyHavokImpulse`, `Reset`.
+- Havok and motion: `SetMotionType`, `Reset`.
 - Destruction: `ClearDestruction`, `DamageObject`, `SetDestroyed`.
 - Effects and feedback: `Game.ShakeCamera`, `Game.ShakeController`, `Sound.Play`,
   `EffectShader.Play`, `Say`, `Message.Show`, `Weapon.Fire`, `InterruptCast`.
 - Animation: `WaitForAnimationEvent` (true), `SetAnimationVariableFloat`,
   `GetAnimationVariableFloat` (0), `Form.RegisterForAnimationEvent` (true),
   `Form.UnregisterForAnimationEvent`.
-- Records and world: `PlaceAtMe` (None), `AddItem`, `BlockActivation`, `CreateDetectionEvent`,
+- Records and world: `AddItem`, `BlockActivation`, `CreateDetectionEvent`,
   `SetActorCause`, `CalculateEncounterLevel` (1), `GetActorOwner`, `GetFactionOwner`,
   `GetParentCell` (None), `Form.HasKeyword` (false), `FormList.HasForm` (false),
   `Actor.GetEquippedItemType` (0), `Cell.IsAttached` (true).
+
+## Placing with PlaceAtMe
+
+`ObjectReference.PlaceAtMe(form, count)` places `count` copies of `form` at the receiver.
+OpenSky places two kinds of base form. A `HAZD` hazard spawns at the receiver and lives out
+its lifetime; the call answers the last spawned hazard. An `EXPL` explosion detonates at the
+receiver; the call answers None, because an explosion leaves no reference a script can hold.
+The placed object takes the receiver's position, not its rotation.
+
+## Impulses and pushback
+
+`ApplyHavokImpulse(x, y, z, magnitude)` pushes the receiver's dynamic body with the unit
+direction times the magnitude. Papyrus gives the impulse in Havok units, so OpenSky scales it
+by 69.99 game units per metre. A reference with no dynamic body does not move.
+
+`ProcessTrapHit(trap, damage, pushback, xVel, yVel, zVel, ...)` knocks the hit actor back at
+`pushback` units per second, along the trap's velocity. With no velocity it pushes away
+from the trap. `PushActorAway(actor, force)` pushes away from the receiver at 100 units per
+second per point of force. The knockback is horizontal, is capped at 1500 units per second,
+and fades on the ground in about one second.
+
+[WARNING] Neither scale is confirmed against the game. The game also ragdolls an actor that
+`PushActorAway` hits; OpenSky only moves the player and does not push NPCs.
 
 ## Hazards
 
@@ -135,5 +164,9 @@ and `PHZD`.
 
 ## Not done
 
-Swinging blades, battering rams, and pushback need Havok impulses and stay stubbed. Hazards
-that a script places with `PlaceAtMe` need runtime-spawned references and are not placed yet.
+Swinging blades and battering rams move through their behavior graph, which scripts start
+with `PlayAnimation`. OpenSky does not play object behavior graphs yet, so these traps do not
+swing. `SetMotionType` stays stubbed: OpenSky cannot turn a static object into a dynamic
+body at runtime. `Weapon.Fire` stays stubbed: projectiles fire only from actors.
+`PlaceAtMe` of any base other than a hazard or an explosion answers None: OpenSky has no
+runtime-spawned references for other forms yet.
