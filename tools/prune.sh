@@ -6,7 +6,7 @@
 #      $OPENSKY_CACHE_ROOT, the DerivedData older checkouts kept inside the
 #      worktree, and its SwiftPM .build. Each one runs to tens of gigabytes and
 #      outlives the branch it was built for, which is what fills a volume
-#      mid-session.
+#      mid-session. The app's AssetCache shares the cache root and is kept.
 #   2. build/install, the separate Release tree older checkouts installed from.
 #   3. Result bundles and log run directories past the retention age, keeping
 #      the newest run of each script so `latest` always resolves.
@@ -132,6 +132,7 @@ if [ -d "$cache_root" ]; then
     for tree in "$cache_root"/*; do
         [ -d "$tree" ] || continue
         name="$(basename "$tree")"
+        [ "$name" != "AssetCache" ] || continue
         case "$name" in *-optimized | *-index) name="${name%-*}" ;; esac
         if grep -q "/$name\$" "$live"; then continue; fi
         add "stale worktree cache" "$tree"
