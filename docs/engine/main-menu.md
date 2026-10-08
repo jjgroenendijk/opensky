@@ -68,15 +68,21 @@ fill yet").
 
 The race menu then opens where `MQ101` calls `Game.ShowRaceMenu`
 ([race menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart
-scene. OpenSky does not play that scene yet, so a new game waits beside the carts: the riders
-live in other cells, and `MoveTo` cannot move an actor yet. `debug quest MQ101 75` in the
+scene. OpenSky does not play that scene yet, so a new game waits beside the carts. The riders
+who live in other cells, such as `Ulfric` and `Lokir`, stay there, because `MoveTo` moves a
+reference only inside the loaded cells. `debug quest MQ101 75` in the
 [agent control](/tools/agent-control.md) runs the stage that opens the race menu. The race menu
 panel in the sidebar opens the menu by hand.
 
-`MoveTo` moves only the player, without the offset and rotation arguments. A target outside
-the loaded cells is looked up in the worldspace records of `Skyrim.esm`, off the main
+`MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded
+cells is looked up in the worldspace records of `Skyrim.esm`, off the main
 actor, and its cell loads before the player is placed. The title menu panel can also start
 a new game at a named cell; that test start opens the race menu at once.
+
+`MoveTo` on any other reference needs that reference and its target in the loaded cells. It
+stores the target's position plus the offsets, and the target's rotation unless
+`abMatchRotation` is false, as a transform change. The reference stays in the cell that owns
+its record, so it draws at the new place only while that cell is loaded.
 
 The `MQ101` fragment calls were read with the PEX disassembler into
 `.logs/probe-mq101/functions.txt`.
