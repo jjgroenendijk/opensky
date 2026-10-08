@@ -113,5 +113,5 @@ of being deleted. Sources, `Config/Build/Local.xcconfig`, and the shared `.vendo
 are out of scope.
 
 `make clean` remains the way to empty the current checkout: it deletes this checkout's
-`build/` and its build cache outright, retention age irrelevant. `prune` is for what no
-checkout owns any more.
+`build/`, its SwiftPM `.build/`, and its build cache outright, retention age irrelevant.
+`prune` is for what no checkout owns any more.
