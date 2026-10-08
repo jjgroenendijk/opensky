@@ -129,6 +129,10 @@ nonisolated public final class TextureLibrary {
             let entry = assetCache?.entry(forPath: path, decoder: .readyTexture)
         {
             loadedCount += 1
+            guard fastLoader.reads(from: entry.file) else {
+                fastLoader.recordExternalSkip()
+                return loader.texture(ready: entry.value, usage: usage, label: path)
+            }
             if let texture = try? fastLoader.enqueue(entry, usage: usage, label: path) {
                 return texture
             }

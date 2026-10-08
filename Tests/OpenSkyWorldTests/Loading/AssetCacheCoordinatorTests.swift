@@ -5,6 +5,7 @@ import EngineTesting
 import Foundation
 import OpenSkyAssetCache
 import OpenSkyGameData
+import OpenSkyRendering
 @testable import OpenSkyWorld
 import Testing
 
@@ -140,5 +141,13 @@ struct AssetCacheCoordinatorTests {
             limitBytes: 25 << 30
         )
             == "Size: 1.5 GiB of 25 GiB, 2 entries")
+    }
+
+    @Test func texturesFromAnExternalDiskShowAsCPULoads() {
+        var stats = FastTextureLoadStats()
+        #expect(AssetCacheReadout.fastLoadLines(stats) == ["Fast load: no cell loaded yet"])
+        stats.externalSkips = 12
+        #expect(AssetCacheReadout.fastLoadLines(stats)
+            .last == "External disk: 12 loaded on the CPU")
     }
 }

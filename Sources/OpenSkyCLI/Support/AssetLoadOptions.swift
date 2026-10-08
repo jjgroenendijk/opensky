@@ -65,7 +65,8 @@ struct AssetLoadOptions {
         if let stats = fastLoader?.control.snapshot {
             print("[INFO] fast load: \(stats.batches) batches, \(stats.textures) textures, "
                 + "\(stats.bytes >> 20) MiB, \(stats.meshes) meshes, "
-                + "\(stats.meshBytes >> 20) MiB, \(stats.fallbacks) fallbacks")
+                + "\(stats.meshBytes >> 20) MiB, \(stats.fallbacks) fallbacks, "
+                + "\(stats.externalSkips) on the CPU from an external disk")
         }
         guard let recordPath else { return }
         try (cache.requestedPaths.sorted().joined(separator: "\n") + "\n")
