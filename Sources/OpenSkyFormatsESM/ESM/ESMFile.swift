@@ -10,6 +10,8 @@ nonisolated public struct ESMFile: Sendable {
     public let tes4: ESMRecord
     /// Top-level groups in file order (~118 in Skyrim.esm).
     public let topGroups: [ESMGroup]
+    /// The whole plugin, so an index can reparse a record at a stored offset.
+    public let data: Data
 
     /// Memory-maps the plugin; nothing beyond top-level headers is read.
     public init(url: URL) throws {
@@ -19,6 +21,7 @@ nonisolated public struct ESMFile: Sendable {
     }
 
     public init(data: Data) throws {
+        self.data = data
         let children = try ESMGroup.parseChildren(in: data, range: 0 ..< data.count)
         guard case let .record(first)? = children.first, first.type == "TES4" else {
             throw ESMError.missingTES4

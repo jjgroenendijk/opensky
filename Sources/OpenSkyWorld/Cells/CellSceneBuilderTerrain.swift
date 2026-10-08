@@ -209,14 +209,12 @@ nonisolated extension CellSceneBuilder {
         return key
     }
 
-    /// The TXST lookup walks the whole file, so `terrainDiffuseKey(for:)` keeps the result.
     /// A null LTEX resolves to the default ground texture (docs/formats/land.md).
     nonisolated private func uncachedTerrainDiffuseKey(for ltexID: FormID) -> String? {
         guard
             let ltex = landTextureIndexBuildingIfNeeded()[ltexID.rawValue],
             let textureSet = ltex.textureSet,
-            let txstRecord = ESMWalk.record(withFormID: textureSet.rawValue, in: file),
-            let txst = decodeOrSkip(txstRecord, using: TextureSet.init(record:))
+            let txst = textureSetIndexBuildingIfNeeded()[textureSet.rawValue]
         else { return nil }
         return txst.diffusePath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) }
     }
