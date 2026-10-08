@@ -7,7 +7,6 @@
 import Foundation
 import Metal
 import MetalKit
-import OpenSkyAssetCache
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData

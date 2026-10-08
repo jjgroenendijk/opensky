@@ -40,7 +40,6 @@ nonisolated public enum AssetCacheStaleness: Equatable, Sendable {
 }
 
 nonisolated public struct AssetCacheHit: Sendable {
-    public let header: AssetCacheEntryHeader
     /// The whole entry file. `payload` is a slice of it.
     public let file: Data
     public let payloadRange: Range<Int>
@@ -151,7 +150,7 @@ nonisolated public final class AssetCacheStore: Sendable {
         if let staleness = Self.staleness(of: header, for: request) {
             return .stale(staleness)
         }
-        return .hit(AssetCacheHit(header: header, file: file, payloadRange: range, url: url))
+        return .hit(AssetCacheHit(file: file, payloadRange: range, url: url))
     }
 
     /// Like `lookup`, but reads only the header and the payload's first bytes, as many as
@@ -188,7 +187,7 @@ nonisolated public final class AssetCacheStore: Sendable {
             let needed = range.lowerBound + (payloadHead(available) ?? range.count)
             guard needed > read.bytes.count, wanted < read.size else {
                 return .hit(AssetCacheHit(
-                    header: header, file: read.bytes,
+                    file: read.bytes,
                     payloadRange: range.lowerBound ..< min(range.upperBound, read.bytes.count),
                     url: url
                 ))

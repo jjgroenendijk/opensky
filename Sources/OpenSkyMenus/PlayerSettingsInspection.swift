@@ -17,7 +17,6 @@ nonisolated public struct PlayerSettingRow: Equatable, Sendable {
 
 nonisolated public struct KeyBindingRow: Equatable, Sendable {
     public let event: String
-    public let context: InputContext
     public let key: String
     public let isOverride: Bool
 }
@@ -55,7 +54,7 @@ nonisolated public enum PlayerSettingsInspection {
     public static func bindingRows(_ bindings: InputBindings) -> [KeyBindingRow] {
         InputBindings.slots.map { slot in
             KeyBindingRow(
-                event: slot.event, context: slot.context,
+                event: slot.event,
                 key: bindings.scanCode(for: slot.action).map(DirectInputKeyCodes.fallbackName)
                     ?? "none",
                 isOverride: bindings.isRemapped(slot.action)

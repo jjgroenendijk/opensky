@@ -25,7 +25,7 @@ struct ReadyModelLayoutTests {
     static var plainModel: Model {
         Model(
             meshes: [quad(name: "A", offset: 0), quad(name: "B", offset: 5)],
-            materials: [.fallback], skippedShapeCount: 1
+            materials: [.fallback], skippedShapeCount: 1, editorMarkerShapeCount: 2
         )
     }
 
@@ -40,6 +40,7 @@ struct ReadyModelLayoutTests {
         #expect(layout.isReady)
         #expect(layout.materials == model.materials)
         #expect(layout.skippedShapeCount == 1)
+        #expect(layout.editorMarkerShapeCount == 2)
         #expect(layout.bounds == ModelBounds.containing(model: model))
         for (ready, mesh) in zip(layout.meshes, model.meshes) {
             #expect(ready.name == mesh.name)

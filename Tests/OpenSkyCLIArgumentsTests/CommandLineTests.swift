@@ -1,5 +1,6 @@
 // The command line keeps the names, options, and exit codes scripts rely on.
 
+import ArgumentParser
 import OpenSkyCLIArguments
 import Testing
 
@@ -22,6 +23,11 @@ struct CommandLineTests {
         let after = try command(["cell", "--data-root", "/b"], as: CellArguments.self)
         #expect(before.global.dataRoot == "/a")
         #expect(after.global.dataRoot == "/b")
+    }
+
+    @Test func theRootKeepsADataRootGivenWithoutACommand() throws {
+        let root = try OpenSkyCommandLine.parseAsRoot(["--data-root", "/a"])
+        #expect((root as? OpenSkyCommandLine)?.global.dataRoot == "/a")
     }
 
     @Test func aNegativeGridValueIsAValueNotAnOption() throws {

@@ -3,7 +3,6 @@
 // (docs/engine/coordinators.md).
 
 import Foundation
-import OpenSkyAssetCache
 import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData

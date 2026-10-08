@@ -60,7 +60,6 @@ struct PlayerSettingsPanelTests {
             ],
             bindings: [KeyBindingRow(
                 event: "Jump",
-                context: .gameplay,
                 key: "J",
                 isOverride: true
             )],

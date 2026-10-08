@@ -177,15 +177,8 @@ nonisolated public struct MagicAreaSettings: Equatable, Sendable {
 /// plain arithmetic assertion in a test rather than something only a running
 /// session can show.
 nonisolated public enum SpellHitTargeting: Sendable {
-    /// The widest radius any entry of `payload` covers, world units. Zero when
+    /// The widest radius any of `entries` covers, world units. Zero when
     /// every entry is a point effect.
-    public static func widestRadius(
-        of payload: SpellPayload,
-        settings: MagicAreaSettings = .documentedDefaults
-    ) -> Float {
-        widestRadius(of: payload.entries, settings: settings)
-    }
-
     public static func widestRadius(
         of entries: [MagicItemEffect],
         settings: MagicAreaSettings = .documentedDefaults

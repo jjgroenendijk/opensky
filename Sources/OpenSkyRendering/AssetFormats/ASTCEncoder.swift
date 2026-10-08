@@ -15,9 +15,6 @@ nonisolated public struct ASTCBlockSize: Codable, Hashable, Sendable {
         self.height = height
     }
 
-    /// The square sizes the comparison uses, 8 down to 0.89 bits per texel.
-    public static let square: [Self] = [4, 5, 6, 8, 10, 12].map { Self(width: $0, height: $0) }
-
     /// The linear LDR pixel format, or nil for a footprint Metal does not sample.
     public var pixelFormat: MTLPixelFormat? {
         Self.formats[[width, height]]
@@ -87,10 +84,5 @@ nonisolated public enum ASTCEncoder {
             throw ASTCEncoderError.encodeFailed(text)
         }
         return blocks
-    }
-
-    /// Bytes in one row of blocks.
-    public static func bytesPerRow(width: Int, block: ASTCBlockSize) -> Int {
-        (width + block.width - 1) / block.width * 16
     }
 }

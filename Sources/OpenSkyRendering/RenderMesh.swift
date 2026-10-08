@@ -84,8 +84,6 @@ nonisolated public enum StaticVertexLayout: Sendable {
     public static let texcoordOffset = InterleavedVertexLayout.texcoordOffset
     public static let colorOffset = InterleavedVertexLayout.colorOffset
     public static let stride = InterleavedVertexLayout.stride
-    public static let defaultNormal = InterleavedVertexLayout.defaultNormal
-    public static let defaultColor = InterleavedVertexLayout.defaultColor
 
     public static func vertexDescriptor() -> MTLVertexDescriptor {
         let descriptor = MTLVertexDescriptor()

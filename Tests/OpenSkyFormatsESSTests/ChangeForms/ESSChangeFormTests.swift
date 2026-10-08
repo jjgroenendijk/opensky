@@ -1,5 +1,5 @@
-// Change form envelopes and the typed reference, actor base, quest, and topic decoders,
-// over bytes built in code.
+// Change form envelopes and the typed reference, quest, and topic decoders, over bytes
+// built in code.
 
 import FormatsTesting
 import Foundation
@@ -50,6 +50,7 @@ struct ESSChangeFormTests {
         var reader = ESSReader(writer.data)
         let forms = try ESSChangeForm.read(&reader, count: 1)
         #expect(forms.first?.lengthSize == size)
+        #expect(forms.first?.version == 74)
         #expect(forms.first?.storedData == Data([7, 8, 9]))
         #expect(reader.isAtEnd)
     }
@@ -75,6 +76,7 @@ struct ESSChangeFormTests {
             version: 74, data: ESSChangeFormData(stored: data)
         ))
         #expect(change.status == .complete)
+        #expect(change.form == ESSRefID(kind: .default, value: 0x1000))
         #expect(change.placement?.position == SIMD3(100, 200, 300))
         #expect(change.isDisabled == true)
         #expect(change.isDeleted == false)
@@ -143,55 +145,14 @@ struct ESSChangeFormTests {
         #expect(change.placement?.createdBase == ESSRefID(kind: .default, value: 0xF))
     }
 
-    @Test func actorBaseDecodesIdentityFields() throws {
-        typealias Base = ESSChangeFlag.ActorBase
-        var acbs = Data(count: 24)
-        acbs[8] = 12
-        let data = ESSBytes.build { writer in
-            writer.write(acbs)
-            ESSBytes.vsval(1, into: &writer)
-            ESSBytes.refID(kind: 1, value: 0x13794, into: &writer)
-            writer.writeUInt8(2)
-            for count: UInt32 in [1, 0, 1] {
-                ESSBytes.vsval(count, into: &writer)
-                if count == 1 {
-                    ESSBytes.refID(kind: 1, value: 0x12FCD, into: &writer)
-                }
-            }
-            ESSBytes.wstring("Lydia", into: &writer)
-            writer.write(Data((0 ..< 52).map { UInt8($0) }))
-            ESSBytes.refID(kind: 1, value: 0x13746, into: &writer)
-            ESSBytes.refID(kind: 1, value: 0x13746, into: &writer)
-            writer.writeUInt8(0)
-            writer.writeUInt8(1)
-        }
-        let flags = Base.baseData | Base.factions | Base.spellList | Base.fullName | Base.skills
-            | Base.race | Base.face | Base.gender
-        let change = try ESSActorBaseChange(ESSChangeForm(
-            form: ESSActorBaseChange.playerBase, flags: flags, typeIndex: 9, version: 74,
-            data: ESSChangeFormData(stored: data)
+    @Test func referenceReadsAChangedBaseObject() throws {
+        let data = ESSBytes.build { ESSBytes.refID(kind: 1, value: 0x12EB7, into: &$0) }
+        let change = try ESSReferenceChange(ESSChangeForm(
+            form: ESSRefID(kind: .default, value: 0x1000), flags: Ref.baseObject, typeIndex: 0,
+            version: 74, data: ESSChangeFormData(stored: data)
         ))
         #expect(change.status == .complete)
-        #expect(change.level == 12)
-        #expect(change.factions?.map(\.rank) == [2])
-        #expect(change.spells?.count == 1)
-        #expect(change.shouts?.count == 1)
-        #expect(change.name == "Lydia")
-        #expect(change.skillValues?.count == 18)
-        #expect(change.race == ESSRefID(kind: .default, value: 0x13746))
-        #expect(change.face == nil)
-        #expect(change.isFemale == true)
-    }
-
-    @Test func actorBaseAttributesBlockLaterFields() throws {
-        typealias Base = ESSChangeFlag.ActorBase
-        let change = try ESSActorBaseChange(ESSChangeForm(
-            form: ESSActorBaseChange.playerBase, flags: Base.baseData | Base.attributes | Base.race,
-            typeIndex: 9, version: 74, data: ESSChangeFormData(stored: Data(count: 40))
-        ))
-        #expect(change.status == .partial(blockedBy: "ACTOR_BASE_ATTRIBUTES"))
-        #expect(change.race == nil)
-        #expect(change.level == 0)
+        #expect(change.baseObject == ESSRefID(kind: .default, value: 0x12EB7))
     }
 
     @Test func questDecodesStagesObjectivesAndFlags() throws {

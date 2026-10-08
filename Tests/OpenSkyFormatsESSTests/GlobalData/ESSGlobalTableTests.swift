@@ -102,6 +102,10 @@ struct ESSGlobalTableTests {
         #expect(objects[0].form.kind == .created)
         #expect(objects[0].effects.map(\.magnitude) == [25])
         #expect(objects[0].effects.map(\.duration) == [60])
+        #expect(objects[0].timesUsed == 1)
+        #expect(objects[0].effects.map(\.effect) == [ESSRefID(kind: .default, value: 0x3EB15)])
+        #expect(objects[0].effects.map(\.area) == [0])
+        #expect(objects[0].effects.map(\.price) == [40])
     }
 
     @Test func decodesWeatherHead() throws {
@@ -115,7 +119,9 @@ struct ESSGlobalTableTests {
             writer.write(Data(count: 33))
         }
         let weather = try ESSWeather.decode(data)
+        #expect(weather.climate == ESSRefID(kind: .default, value: 0x0001_2345))
         #expect(weather.weather == ESSRefID(kind: .default, value: 0x0001_2346))
+        #expect(weather.regionWeather == ESSRefID(kind: .default, value: 0x0001_2347))
         #expect(weather.previousWeather.isNull == false)
         #expect(weather.currentHour == 13.25)
         #expect(weather.transition == 0.5)
@@ -133,5 +139,6 @@ struct ESSGlobalTableTests {
         #expect(try file.globalVariables().map(\.value) == [9])
         #expect(try file.miscStats().isEmpty)
         #expect(try file.playerLocation() == nil)
+        #expect(try file.weather() == nil)
     }
 }

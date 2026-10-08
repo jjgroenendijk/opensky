@@ -45,10 +45,6 @@ nonisolated public struct TextureImageDifference: Codable, Equatable, Sendable {
         self.meanNormalAngleDegrees = meanNormalAngleDegrees
     }
 
-    public var isLossless: Bool {
-        maxChannelError == 0
-    }
-
     /// Compares two same-size images. `normals` decodes RGB as `rgb * 2 - 1` vectors.
     public static func compare(
         reference: TexturePixels,

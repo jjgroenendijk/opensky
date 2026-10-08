@@ -42,12 +42,6 @@ nonisolated public struct VoiceLineLocator: Sendable {
         self.questStores = questStores
     }
 
-    /// The store's own plugin. A line's directory under `sound\voice\` is the
-    /// plugin of its INFO, which differs in a load-order store.
-    public var pluginName: String {
-        dialogue.resolver.pluginName
-    }
-
     /// Editor ID of the quest that owns `topic`, or nil when the topic names
     /// no quest or the owning plugin is not loaded.
     public func questEditorID(ofTopic topic: DialogueTopic) -> String? {

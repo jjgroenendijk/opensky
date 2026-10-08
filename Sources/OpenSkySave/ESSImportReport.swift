@@ -3,7 +3,6 @@
 // See docs/engine/ess-import.md.
 
 import Foundation
-import OpenSkyFormatsESS
 
 nonisolated public struct ESSImportCategory: Equatable, Sendable {
     public let name: String

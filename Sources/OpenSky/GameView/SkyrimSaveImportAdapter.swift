@@ -49,7 +49,7 @@ enum SkyrimSaveImportAdapter {
     }
 
     /// The written slot is named for the save, so importing it again replaces it.
-    static func load(slot: String, game: GameViewController) async throws -> ESSImportReport {
+    static func load(slot: String, game: GameViewController) async throws {
         let url = URL(filePath: String(slot.dropFirst(slotPrefix.count)))
         let file = try await ESSSaveFolder.readFile(at: url)
         let index = try await ESSPluginIndex.load(for: file, root: GameDataLocator.locate())
@@ -66,7 +66,6 @@ enum SkyrimSaveImportAdapter {
             game.menuWorld.teleportPlayer(target, openingRaceMenu: false)
         }
         game.hud.showNotification("Imported \(url.lastPathComponent): \(result.report.summary)")
-        return result.report
     }
 
     /// An interior by its editor ID; an exterior by position, in the current worldspace.

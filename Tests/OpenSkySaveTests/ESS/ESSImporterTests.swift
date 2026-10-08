@@ -61,6 +61,7 @@ struct ESSImporterTests {
         #expect(inventory.stacks.first { $0.item == FormID(0xF) }?.count == 250)
         #expect(inventory.equipped == [FormID(Fixture.sword)])
         let placement = try #require(result.placement)
+        #expect(placement.space == ResolvedFormID(plugin: "Skyrim.esm", objectID: 0x3C))
         #expect(placement.spaceEditorID == "Tamriel")
         #expect(!placement.isInterior)
         #expect(placement.position == SIMD3(-12000, 30000, 512))

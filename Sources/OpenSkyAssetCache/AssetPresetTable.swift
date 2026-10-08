@@ -80,10 +80,6 @@ nonisolated public struct AssetImageLimit: Equatable, Sendable {
 
 nonisolated public struct AssetPresetValues: Equatable, Sendable {
     public let textures: [AssetTextureClass: AssetTextureStorage]
-    /// Largest texture edge kept, or nil for the shipped size.
-    public let maximumTextureSize: Int?
-    /// Mip levels kept, or nil for every shipped level.
-    public let mipLevels: Int?
     public let imageLimit: AssetImageLimit
     /// Whole-install build time on one core, in minutes, at the fastest ASTC effort.
     public let buildMinutesOneCore: Double
@@ -101,14 +97,13 @@ nonisolated extension AssetQualityPreset {
         case .highestQuality:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .shipped, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil, imageLimit: .lossless,
+                imageLimit: .lossless,
                 buildMinutesOneCore: 14,
                 summary: "No loss. Shipped textures. Fastest build."
             )
         case .balanced:
             AssetPresetValues(
                 textures: [.color: .shipped, .normal: .astc4x4, .data: .shipped],
-                maximumTextureSize: nil, mipLevels: nil,
                 imageLimit: AssetImageLimit(minimumPSNR: 40, maximumNormalDegrees: 2),
                 buildMinutesOneCore: 32,
                 summary: "Normal maps in ASTC 4x4: less GPU memory, no visible loss."
@@ -116,7 +111,6 @@ nonisolated extension AssetQualityPreset {
         case .bestPerformance:
             AssetPresetValues(
                 textures: [.color: .astc6x6, .normal: .astc6x6, .data: .astc8x8],
-                maximumTextureSize: nil, mipLevels: nil,
                 imageLimit: AssetImageLimit(minimumPSNR: 30, maximumNormalDegrees: nil),
                 buildMinutesOneCore: 119,
                 summary: "Every texture in ASTC: least GPU memory, slight loss."

@@ -7,9 +7,6 @@ nonisolated public struct ESSFileLocationTable: Equatable, Sendable {
     public let offsets: ESSSectionOffsets
     public let counts: ESSSectionCounts
 
-    /// Six offsets, four counts, and fifteen unused words.
-    public static let byteCount = 100
-
     public init(offsets: ESSSectionOffsets, counts: ESSSectionCounts) {
         self.offsets = offsets
         self.counts = counts
