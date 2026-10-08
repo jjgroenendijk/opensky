@@ -31,10 +31,15 @@ extension Renderer {
     /// identity check skips the map lookup, and a body at rest is absent from the map.
     public func drawn(_ instance: DrawInstance) -> DrawInstance {
         guard
-            instance.referenceFormID != 0,
-            let delta = npcInstanceDeltas[instance.referenceFormID]
-            ?? dynamicInstanceDeltas[instance.referenceFormID]
+            instance.referenceFormID != 0, !instanceDeltas.isEmpty,
+            let delta = instanceDeltas[instance.referenceFormID]
         else { return instance }
         return instance.moved(by: delta)
+    }
+
+    func mergeInstanceDeltas() {
+        instanceDeltas = npcInstanceDeltas.isEmpty
+            ? dynamicInstanceDeltas
+            : dynamicInstanceDeltas.merging(npcInstanceDeltas) { _, npc in npc }
     }
 }

@@ -160,8 +160,9 @@ nonisolated extension CellSceneBuilder {
         worldspaceEditorID: String,
         state: WorldStateSnapshot = .empty
     ) throws -> DoorTransition {
+        let index = formIDIndexBuildingIfNeeded()
         guard
-            let sourceRecord = ESMWalk.record(withFormID: sourceDoor.rawValue, in: file),
+            let sourceRecord = index.record(withFormID: sourceDoor.rawValue),
             sourceRecord.type == "REFR"
         else {
             throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
@@ -172,23 +173,19 @@ nonisolated extension CellSceneBuilder {
         }
         let destinationID = teleport.door
         guard
-            let destinationRecord = ESMWalk.record(withFormID: destinationID.rawValue, in: file),
+            let destinationRecord = index.record(withFormID: destinationID.rawValue),
             destinationRecord.type == "REFR"
         else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
         let destination = try Self.placedReference(destinationRecord)
-        guard ESMWalk.record(withFormID: destination.base.rawValue, in: file)?.type == "DOOR" else {
+        guard index.record(withFormID: destination.base.rawValue)?.type == "DOOR" else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
 
-        let localized = file.isLocalized
-        let interior = findInteriorCell(
-            containingReference: destinationID, localized: localized
-        )
         let scene: CellScene
-        if let interior {
-            scene = try buildInteriorScene(cellFormID: FormID(interior.formID), state: state)
+        if let interior = interiorCell(holding: destinationRecord, index: index) {
+            scene = try buildInteriorScene(cellFormID: interior, state: state)
         } else {
             let grid = CellGridManager.cellCoordinate(for: destination.placement.position)
             scene = try buildScene(
@@ -306,77 +303,30 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    nonisolated private func findInteriorCell(
-        containingReference formID: FormID,
-        localized: Bool
-    ) -> FoundCell? {
-        guard let top = file.topGroup(of: "CELL") else { return nil }
-        return findCell(
-            in: top,
-            containingReference: formID.rawValue,
-            allowedGroups: [.interiorCellBlock, .interiorCellSubBlock],
-            localized: localized,
-            requireInterior: true
-        )
+    /// The interior CELL whose children hold a live reference; nil for an exterior one.
+    nonisolated private func interiorCell(
+        holding reference: ESMRecord,
+        index: ESMFormIDIndex
+    ) -> FormID? {
+        guard
+            !reference.isDeleted,
+            let cellID = index.cellFormID(containing: reference.formID),
+            let record = index.record(withFormID: cellID), record.type == "CELL",
+            let cell = decodeOrSkip(
+                record,
+                using: { try Cell(record: $0, localized: file.isLocalized) }
+            ),
+            cell.isInterior
+        else { return nil }
+        return FormID(cellID)
     }
 
-    nonisolated private func findCell(
-        in group: ESMGroup,
-        containingReference formID: UInt32,
-        allowedGroups: Set<ESMGroup.Kind>,
-        localized: Bool,
-        requireInterior: Bool
-    ) -> FoundCell? {
-        guard let children = childrenOrSkip(group) else { return nil }
-        for (index, child) in children.enumerated() {
-            guard
-                case let .record(record) = child, record.type == "CELL",
-                let cell = decodeOrSkip(record, using: {
-                    try Cell(record: $0, localized: localized)
-                }),
-                cell.isInterior == requireInterior
-            else { continue }
-            let cellChildren = cellChildrenGroup(
-                following: index, in: children, cellFormID: record.formID
-            )
-            if cellChildrenContains(reference: formID, group: cellChildren) {
-                return FoundCell(cell: cell, formID: record.formID, children: cellChildren)
-            }
+    nonisolated func formIDIndexBuildingIfNeeded() -> ESMFormIDIndex {
+        if let formIDIndex {
+            return formIDIndex
         }
-        for case let .group(child) in children {
-            guard child.kind.map(allowedGroups.contains) == true else { continue }
-            let found = findCell(
-                in: child,
-                containingReference: formID,
-                allowedGroups: allowedGroups,
-                localized: localized,
-                requireInterior: requireInterior
-            )
-            if let found {
-                return found
-            }
-        }
-        return nil
-    }
-
-    nonisolated private func cellChildrenContains(
-        reference formID: UInt32,
-        group: ESMGroup?
-    ) -> Bool {
-        guard let group, let children = childrenOrSkip(group) else { return false }
-        for case let .group(child) in children {
-            guard
-                child.kind == .cellPersistentChildren || child.kind == .cellTemporaryChildren,
-                let records = childrenOrSkip(child)
-            else { continue }
-            let contains = records.contains { entry in
-                guard case let .record(record) = entry else { return false }
-                return record.type == "REFR" && record.formID == formID && !record.isDeleted
-            }
-            if contains {
-                return true
-            }
-        }
-        return false
+        let index = ESMFormIDIndex(file: file)
+        formIDIndex = index
+        return index
     }
 }

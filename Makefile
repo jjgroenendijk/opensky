@@ -534,7 +534,7 @@ prune: ## Delete stale worktree caches and old run output [PRUNE_DAYS=1] [DRY_RU
 # timing a truly cold build; every worktree then starts cold.
 clean: ## Remove build output and caches [DEEP=1 also drops the shared compile cache]
 	@rm -rf build "$(DERIVED_DATA)" "$(DERIVED_DATA)-optimized" "$(INDEX_DATA)"
-	@rm -rf DerivedData DerivedData-optimized DerivedData-index
+	@rm -rf DerivedData DerivedData-optimized DerivedData-index .build
 	@[ -z "$(DEEP)" ] || rm -rf "$(COMPILATION_CACHE)"
 	@if [ -d "$(XCODE_DERIVED_DATA)" ]; then \
 		find "$(XCODE_DERIVED_DATA)" -mindepth 1 -maxdepth 1 \

@@ -3,9 +3,10 @@
 # (issue #347). Four kinds of garbage, all of them gitignored:
 #
 #   1. The build cache of a checkout whose worktree is gone: its tree under
-#      $OPENSKY_CACHE_ROOT, and the DerivedData older checkouts kept inside the
-#      worktree. Each one runs to tens of gigabytes and outlives the branch it was
-#      built for, which is what fills a volume mid-session.
+#      $OPENSKY_CACHE_ROOT, the DerivedData older checkouts kept inside the
+#      worktree, and its SwiftPM .build. Each one runs to tens of gigabytes and
+#      outlives the branch it was built for, which is what fills a volume
+#      mid-session. The app's AssetCache shares the cache root and is kept.
 #   2. build/install, the separate Release tree older checkouts installed from.
 #   3. Result bundles and log run directories past the retention age, keeping
 #      the newest run of each script so `latest` always resolves.
@@ -131,6 +132,7 @@ if [ -d "$cache_root" ]; then
     for tree in "$cache_root"/*; do
         [ -d "$tree" ] || continue
         name="$(basename "$tree")"
+        [ "$name" != "AssetCache" ] || continue
         case "$name" in *-optimized | *-index) name="${name%-*}" ;; esac
         if grep -q "/$name\$" "$live"; then continue; fi
         add "stale worktree cache" "$tree"
@@ -143,6 +145,7 @@ if [ -d "$worktree_home" ]; then
         add "stale worktree cache" "$checkout/DerivedData"
         add "stale worktree cache" "$checkout/DerivedData-optimized"
         add "stale worktree cache" "$checkout/DerivedData-index"
+        add "stale worktree cache" "$checkout/.build"
         add "stale worktree output" "$checkout/build"
         add "stale worktree output" "$checkout/.logs"
         add "stale worktree output" "$checkout/logs"

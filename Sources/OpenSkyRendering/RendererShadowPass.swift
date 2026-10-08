@@ -182,8 +182,8 @@ extension Renderer {
     /// This frame's cascades; empty when shadows are off or nothing casts.
     private func frameCascades(projection: float4x4) -> [ShadowCascade] {
         guard shadowRenders else { return [] }
-        let hasCasters = shadowOpaqueDrawGroups.contains(where: \.castsShadows)
-            || shadowAlphaTestedDrawGroups.contains(where: \.castsShadows)
+        let hasCasters = frameDrawGroups.shadowOpaque.contains(where: \.castsShadows)
+            || frameDrawGroups.shadowAlphaTested.contains(where: \.castsShadows)
             || !scene.terrain.isEmpty
         guard hasCasters else { return [] }
         let (fovY, aspect) = Self.fovAspect(from: projection)
@@ -228,10 +228,10 @@ extension Renderer {
             // The shadow lists, not the camera lists: a first-person player
             // is hidden from the eye and still casts (RendererPlayerBody).
             encodeCasterGroups(
-                shadowOpaqueDrawGroups, list: .opaque, in: context, state: &state
+                frameDrawGroups.shadowOpaque, list: .opaque, in: context, state: &state
             )
             encodeCasterGroups(
-                shadowAlphaTestedDrawGroups, list: .alphaTested, in: context, state: &state
+                frameDrawGroups.shadowAlphaTested, list: .alphaTested, in: context, state: &state
             )
             encodeShadowTerrain(in: context, state: &state)
             // MTL4 does not auto-track cross-encoder hazards: without a barrier

@@ -115,6 +115,8 @@ nonisolated public final class CellSceneBuilder {
     /// Built on first use, like every index below.
     public var statIndex: [UInt32: StaticObject]?
     public var textureSetIndex: [UInt32: TextureSet]?
+    /// Door transitions look up references and their cells by FormID through it.
+    var formIDIndex: ESMFormIDIndex?
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
@@ -478,6 +480,14 @@ nonisolated extension CellSceneBuilder {
         let statIndex = statIndexBuildingIfNeeded()
         let modelBaseIndex = modelBaseIndexBuildingIfNeeded()
         let lightIndex = lightIndexBuildingIfNeeded()
+        meshes.predecode(paths: refs.lazy.compactMap { ref -> String? in
+            guard lightIndex[ref.base.rawValue] == nil else { return nil }
+            let resolved = self.resolveBase(
+                formID: ref.base.rawValue, statIndex: statIndex, modelBaseIndex: modelBaseIndex
+            )
+            return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
+        })
+        defer { meshes.dropPredecoded() }
         var instances: [ResolvedInstance] = []
         for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description

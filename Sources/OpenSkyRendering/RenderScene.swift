@@ -166,6 +166,14 @@ nonisolated public struct DrawGroup: Sendable {
         originSum += SIMD3(origin.x, origin.y, origin.z)
     }
 
+    /// Adds in the same order as one `append` each, so the lighting center is bit-equal.
+    fileprivate mutating func append(contentsOf added: [DrawInstance]) {
+        instances.reserveCapacity(instances.count + added.count)
+        for instance in added {
+            append(instance)
+        }
+    }
+
     /// Mean instance origin at the baked pose: the point the nearest lights are
     /// picked for.
     public var lightingCenter: SIMD3<Float> {
@@ -228,15 +236,43 @@ nonisolated private struct GroupAccumulator {
         }
     }
 
+    /// A group built by an accumulator shares one key, so it is looked up once. A
+    /// group that mixes flags falls back to one lookup per instance.
     mutating func add(group: DrawGroup) {
-        for instance in group.instances {
-            add(
-                mesh: group.mesh,
-                material: group.material,
-                faceMorph: group.faceMorph,
-                instance: instance
-            )
+        guard
+            let first = group.instances.first,
+            group.instances.allSatisfy({ Self.sharesKey($0, first) })
+        else {
+            for instance in group.instances {
+                add(
+                    mesh: group.mesh,
+                    material: group.material,
+                    faceMorph: group.faceMorph,
+                    instance: instance
+                )
+            }
+            return
         }
+        let key = Key(
+            mesh: ObjectIdentifier(group.mesh),
+            diffuse: ObjectIdentifier(group.material.diffuse),
+            castsShadows: first.castsShadows,
+            receivesPointLights: first.receivesPointLights,
+            receivesShadows: first.receivesShadows,
+            faceMorph: group.faceMorph.map(ObjectIdentifier.init),
+            layer: first.layer
+        )
+        if let index = indexByKey[key] {
+            groups[index].append(contentsOf: group.instances)
+        } else {
+            indexByKey[key] = groups.count
+            groups.append(group)
+        }
+    }
+
+    private static func sharesKey(_ lhs: DrawInstance, _ rhs: DrawInstance) -> Bool {
+        lhs.castsShadows == rhs.castsShadows && lhs.receivesPointLights == rhs.receivesPointLights
+            && lhs.receivesShadows == rhs.receivesShadows && lhs.layer == rhs.layer
     }
 }
 
@@ -469,14 +505,10 @@ nonisolated public struct RenderScene: Sendable {
     }
 
     /// CPU light culling: stable distance order, original scene order as
-    /// tie-break. The renderer calls this once per visible draw.
+    /// tie-break. The renderer reads `nearestPointLightPick` instead.
     public func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {
-        guard limit > 0, pointLights.count > limit else { return Array(pointLights.prefix(limit)) }
-        return pointLights.enumerated().sorted { lhs, rhs in
-            let lhsDistance = simd_length_squared(lhs.element.position - position)
-            let rhsDistance = simd_length_squared(rhs.element.position - position)
-            return lhsDistance == rhsDistance ? lhs.offset < rhs.offset : lhsDistance < rhsDistance
-        }.prefix(limit).map(\.element)
+        let pick = nearestPointLightPick(to: position, limit: limit)
+        return (0 ..< pick.count).map { pointLights[Int(pick.indices[$0])] }
     }
 
     /// Per-draw uniform ring slots one frame can need: one per group +

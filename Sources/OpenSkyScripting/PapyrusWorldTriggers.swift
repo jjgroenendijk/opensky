@@ -22,7 +22,7 @@ extension PapyrusWorldRuntime {
         queueTriggerEvent(Self.onTriggerLeaveEventName, volume: volume, actor: actor)
     }
 
-    /// Instance iteration is `instancesByKey.keys.sorted()`, the same
+    /// Instance iteration is in `PapyrusInstanceKey` order, the same
     /// deterministic order `queueOnActivate` uses, so a reference carrying
     /// several scripts always queues them the same way.
     private func queueTriggerEvent(
@@ -32,7 +32,7 @@ extension PapyrusWorldRuntime {
     ) -> Int {
         let handle = objectHandle(for: actor)
         var queued = 0
-        for key in instancesByKey.keys.sorted() where key.reference == volume {
+        for key in instanceKeys(on: volume) {
             enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: functionName,

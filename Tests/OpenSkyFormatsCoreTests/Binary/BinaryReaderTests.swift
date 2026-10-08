@@ -31,6 +31,39 @@ struct BinaryReaderTests {
         }
     }
 
+    @Test func readsFromASliceWithAnOffsetStartIndex() throws {
+        let parent = Data([0xAA, 0xBB, 0x01, 0x02, 0x03, 0x04, 0x05])
+        var reader = BinaryReader(parent[2...])
+        #expect(try reader.readUInt8() == 0x01)
+        #expect(try reader.readUInt32() == 0x0504_0302)
+        #expect(reader.bytesRemaining == 0)
+    }
+
+    @Test func readsIntegerArraysInOneCall() throws {
+        var reader = BinaryReader(Data([0x01, 0x00, 0x02, 0x00, 0xFF, 0xFF, 0x09]))
+        #expect(try reader.readIntegers(UInt16.self, count: 3) == [1, 2, 0xFFFF])
+        #expect(throws: BinaryReaderError.outOfBounds(offset: 6, count: 2, available: 1)) {
+            try reader.readIntegers(UInt16.self, count: 1)
+        }
+        #expect(try reader.readUInt8() == 0x09)
+    }
+
+    @Test func readsFloatArrays() throws {
+        var data = Data()
+        data.appendFloat32(2)
+        data.appendFloat32(-3.5)
+        var reader = BinaryReader(data)
+        #expect(try reader.readFloat32s(count: 2) == [2, -3.5])
+    }
+
+    @Test func readAfterSeekingPastEndThrows() {
+        var reader = BinaryReader(Data([0x01, 0x02]))
+        reader.seek(to: 5)
+        #expect(throws: BinaryReaderError.outOfBounds(offset: 5, count: 1, available: 0)) {
+            try reader.readUInt8()
+        }
+    }
+
     @Test func readsZString() throws {
         var reader = BinaryReader(Data("abc\0def\0".utf8))
         #expect(try reader.readZString() == "abc")

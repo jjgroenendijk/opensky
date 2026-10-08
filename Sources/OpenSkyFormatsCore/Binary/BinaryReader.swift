@@ -37,13 +37,7 @@ nonisolated public struct BinaryReader: Sendable {
     }
 
     public mutating func read(count: Int) throws -> Data {
-        guard count >= 0, offset >= 0, offset + count <= data.count else {
-            throw BinaryReaderError.outOfBounds(
-                offset: offset,
-                count: count,
-                available: bytesRemaining
-            )
-        }
+        try requireBytes(count)
         // Data slices keep the parent's indices; rebase via subdata for safety.
         let slice = data
             .subdata(in: (data.startIndex + offset) ..< (data.startIndex + offset + count))
@@ -52,7 +46,10 @@ nonisolated public struct BinaryReader: Sendable {
     }
 
     public mutating func readUInt8() throws -> UInt8 {
-        try read(count: 1)[0]
+        try requireBytes(1)
+        let value = data[data.startIndex + offset]
+        offset += 1
+        return value
     }
 
     public mutating func readUInt16() throws -> UInt16 {
@@ -72,11 +69,53 @@ nonisolated public struct BinaryReader: Sendable {
         try Float(bitPattern: readUInt32())
     }
 
+    /// `count` little-endian integers in one bounds check, for index and vertex arrays.
+    public mutating func readIntegers<T: FixedWidthInteger>(
+        _: T.Type = T.self,
+        count: Int
+    ) throws -> [T] {
+        let size = MemoryLayout<T>.size
+        guard count >= 0, count <= Int.max / size else {
+            throw BinaryReaderError.outOfBounds(
+                offset: offset,
+                count: count,
+                available: bytesRemaining
+            )
+        }
+        try requireBytes(count * size)
+        let start = offset
+        offset += count * size
+        return data.withUnsafeBytes { raw in
+            (0 ..< count).map { index in
+                let offset = start + index * size
+                return T(littleEndian: raw.loadUnaligned(fromByteOffset: offset, as: T.self))
+            }
+        }
+    }
+
+    /// `count` little-endian floats in one bounds check.
+    public mutating func readFloat32s(count: Int) throws -> [Float] {
+        try readIntegers(UInt32.self, count: count).map(Float.init(bitPattern:))
+    }
+
+    /// Loads straight from the buffer: a `Data` per scalar dominated NIF parsing.
     private mutating func readInteger<T: FixedWidthInteger>() throws -> T {
-        let bytes = try read(count: MemoryLayout<T>.size)
-        var value: T = 0
-        withUnsafeMutableBytes(of: &value) { $0.copyBytes(from: bytes) }
+        let size = MemoryLayout<T>.size
+        try requireBytes(size)
+        let start = offset
+        offset += size
+        let value = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: start, as: T.self) }
         return T(littleEndian: value)
+    }
+
+    private func requireBytes(_ count: Int) throws {
+        guard count >= 0, offset >= 0, count <= data.count - offset else {
+            throw BinaryReaderError.outOfBounds(
+                offset: offset,
+                count: count,
+                available: bytesRemaining
+            )
+        }
     }
 
     /// Raw bytes of a zero-terminated string, terminator excluded. Cursor ends

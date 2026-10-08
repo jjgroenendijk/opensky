@@ -90,7 +90,7 @@ extension Renderer {
                 nearest[key] = use
             }
         }
-        for group in opaqueDrawGroups + alphaTestedDrawGroups {
+        for group in [frameDrawGroups.opaque, frameDrawGroups.alphaTested].joined() {
             let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
             for instance in group.instances {
                 guard let bounds = instance.bounds else { continue }

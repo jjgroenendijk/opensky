@@ -41,12 +41,16 @@ extension Renderer: MTKViewDelegate {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        refreshFrameDrawGroups()
         encodeTextureStreaming(target: passDescriptor)
         encodeRayTracedShadows()
         let interpolated = interpolatedDrawable(layer: metalLayer, matching: passDescriptor)
 
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)
+        if shadowEncoded {
+            commitEarlyFrameWork(allocator: allocator)
+        }
         let encoded = shadowEncoded && encodeScenePass(
             descriptor: passDescriptor,
             slot: slot,
@@ -56,6 +60,7 @@ extension Renderer: MTKViewDelegate {
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         guard encoded else {
             commandBuffer.endCommandBuffer()
+            finishFailedFrame(afterEarlyCommit: shadowEncoded)
             return
         }
 

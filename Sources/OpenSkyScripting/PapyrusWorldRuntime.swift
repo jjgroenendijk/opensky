@@ -303,6 +303,12 @@ public final class PapyrusWorldRuntime {
         }
         return map
     }
+
+    /// One reference's instances in key order. Filtering first keeps an event from
+    /// sorting every instance in the world.
+    func instanceKeys(on reference: ReferenceKey) -> [PapyrusInstanceKey] {
+        instancesByKey.keys.filter { $0.reference == reference }.sorted()
+    }
 }
 
 /// Nonisolated bookkeeping shared between `PapyrusScheduler.onResume` (a

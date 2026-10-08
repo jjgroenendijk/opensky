@@ -210,48 +210,43 @@ nonisolated public enum DynamicBodySolver: Sendable {
         world: DynamicStepWorld,
         selfCollision: RagdollSelfCollision? = nil
     ) -> [DynamicContact] {
-        // Sampling a body's collider allocates, and every body is asked for its
-        // samples once against the static world and once per neighbour. Doing it
-        // once per substep is the difference between an affordable step and an
-        // unaffordable one in a room full of clutter.
-        let samples = bodies.map { $0.contactSamples() }
+        // Sampling a body's collider allocates, so each body is sampled at most once
+        // per substep, and a sleeping body only when an awake one may touch it.
+        let pairs = DynamicBodyBroadPhase.candidatePairs(bodies) { first, second in
+            selfCollision?.admits(first, second) ?? true
+        }
+        var samples = [[(point: SIMD3<Float>, radius: Float)]?](repeating: nil, count: bodies.count)
+        func sampled(_ index: Int) -> [(point: SIMD3<Float>, radius: Float)] {
+            if let cached = samples[index] {
+                return cached
+            }
+            let taken = bodies[index].contactSamples()
+            samples[index] = taken
+            return taken
+        }
         var contacts: [DynamicContact] = []
         for index in bodies.indices where !bodies[index].isSleeping {
             let body = bodies[index]
             contacts += DynamicBodyContacts.staticContacts(
                 body: body,
                 index: index,
-                samples: samples[index],
+                samples: sampled(index),
                 shapes: world.staticCandidates(body.worldBounds)
             )
         }
-        for first in bodies.indices {
-            for second in bodies.indices where second > first {
-                if let selfCollision, !selfCollision.admits(first, second) {
-                    continue
-                }
-                guard !bodies[first].isSleeping || !bodies[second].isSleeping else { continue }
-                // Bounding spheres reject a pair before any AABB is built, which
-                // is most pairs in a scene where clutter is spread around a room.
-                let reach = bodies[first].definition.boundingRadius
-                    + bodies[second].definition.boundingRadius
-                let separation = simd_distance_squared(
-                    bodies[first].position, bodies[second].position
+        for (first, second) in pairs {
+            contacts += DynamicBodyContacts.pairContacts(
+                first: DynamicBodySamples(
+                    body: bodies[first],
+                    index: first,
+                    samples: sampled(first)
+                ),
+                second: DynamicBodySamples(
+                    body: bodies[second],
+                    index: second,
+                    samples: sampled(second)
                 )
-                guard separation <= reach * reach else { continue }
-                contacts += DynamicBodyContacts.pairContacts(
-                    first: DynamicBodySamples(
-                        body: bodies[first],
-                        index: first,
-                        samples: samples[first]
-                    ),
-                    second: DynamicBodySamples(
-                        body: bodies[second],
-                        index: second,
-                        samples: samples[second]
-                    )
-                )
-            }
+            )
         }
         return contacts
     }

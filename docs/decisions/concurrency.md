@@ -113,7 +113,7 @@ numbers are an upper bound.
 | --- | --- | --- |
 | Cell streaming (grid, scheduling, scene swap) | Main actor | Simulation. It decides what to build and swaps finished scenes into the renderer |
 | Cell builds | Serial worker, `Mutex` mailbox | Collision: average 81 ms, maximum 949 ms per cell. Actors: average 336 ms, 95th percentile 1532 ms. Many frames each |
-| Asset decode for cells (NIF, DDS, meshes, textures) | Inside the cell build worker | Loading. It fills the same caches as the cell build |
+| Asset decode for cells (NIF, DDS, meshes, textures) | Inside the cell build worker | Loading. It fills the same caches as the cell build. A build parses its new meshes on every core first, as described below |
 | Distant LOD and door transitions | Inside the cell build worker | Loading. Same caches and same queue as cell builds |
 | Animation clips, behavior graphs, camera tracks | Serial worker, `Mutex` mailbox | Loading during play |
 | Player behavior graph clips | Serial worker, `Mutex` mailbox | Loading during play. The clips the start states reach are prefetched when the graph is built. While a clip loads, the graph keeps its last full pose |
@@ -142,6 +142,23 @@ The cell build worker hands its scenes over in a checked `Mutex`, because `CellS
 The render encode grew with the loaded cells in the same run: 0.6 ms at the start and up to 24 ms
 with 25 cells loaded. That is a data layout question for the per-frame profile, not a reason to
 leave the main actor.
+
+## Parallel mesh decode inside a cell build
+
+A cell build is one task on one serial queue, so a build used one core. Before a build loads
+its meshes, it decodes the meshes it has not loaded yet with `DispatchQueue.concurrentPerform`.
+The worker threads only parse: an asset cache lookup or a NIF parse, from `Sendable` values to
+`Sendable` values. The results meet in a `Mutex`, and the build thread waits for the whole
+batch before it goes on.
+
+The parts that are not safe across threads stay on the build thread:
+
+- The archive reads. The file source and the load phase recorder expect one thread.
+- The GPU upload and every cache write of the mesh and texture libraries.
+
+So the caches keep the one-thread rule, and no new queue or lock goes into them.
+`concurrentPerform` runs on the system's shared threads and returns only when every decode is
+done, so no work outlives the build that started it.
 
 ## The world data load
 

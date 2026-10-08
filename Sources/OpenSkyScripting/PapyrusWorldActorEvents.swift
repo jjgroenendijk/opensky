@@ -50,7 +50,7 @@ extension PapyrusWorldRuntime {
         queueActorEvent("OnRaceSwitchComplete", on: actor, arguments: [])
     }
 
-    /// Instance iteration is `instancesByKey.keys.sorted()`, the same
+    /// Instance iteration is in `PapyrusInstanceKey` order, the same
     /// deterministic order `queueOnActivate` uses, so a reference carrying
     /// several scripts always queues them the same way.
     private func queueActorEvent(
@@ -59,7 +59,7 @@ extension PapyrusWorldRuntime {
         arguments: [PapyrusValue]
     ) -> Int {
         var queued = 0
-        for key in instancesByKey.keys.sorted() where key.reference == reference {
+        for key in instanceKeys(on: reference) {
             enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: functionName,
