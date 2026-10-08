@@ -60,8 +60,8 @@ extension PapyrusInterpreter {
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(2, instruction: instruction)
-        let array = try array(operands[1], frame: frame)
-        try write(.integer(Int32(array.count)), to: operands[0], frame: frame)
+        let count = try noneOrArray(operands[1], frame: frame)?.count ?? 0
+        try write(.integer(Int32(count)), to: operands[0], frame: frame)
         return .next
     }
 
@@ -70,7 +70,10 @@ extension PapyrusInterpreter {
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
-        let array = try array(operands[1], frame: frame)
+        guard let array = try noneOrArray(operands[1], frame: frame) else {
+            try write(nativeReturnType(operands[0]).defaultValue, to: operands[0], frame: frame)
+            return .next
+        }
         let index = try arrayIndex(operands[2], frame: frame)
         let elements = array.elements
         guard elements.indices.contains(index) else {
@@ -89,7 +92,7 @@ extension PapyrusInterpreter {
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
-        let array = try array(operands[0], frame: frame)
+        guard let array = try noneOrArray(operands[0], frame: frame) else { return .next }
         let index = try arrayIndex(operands[1], frame: frame)
         let count = array.count
         guard (0 ..< count).contains(index) else {
@@ -113,7 +116,10 @@ extension PapyrusInterpreter {
         reverse: Bool
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(4, instruction: instruction)
-        let array = try array(operands[1], frame: frame)
+        guard let array = try noneOrArray(operands[1], frame: frame) else {
+            try write(.integer(-1), to: operands[0], frame: frame)
+            return .next
+        }
         let needle = try cast(
             read(operands[2], frame: frame),
             to: array.elementType
@@ -126,11 +132,17 @@ extension PapyrusInterpreter {
         return .next
     }
 
-    private func array(
+    /// A `None` array has length 0 (CK wiki, "Arrays (Papyrus)"). The game logs an
+    /// element access on it and goes on, so this returns nil instead of faulting.
+    private func noneOrArray(
         _ operand: PexValue,
         frame: PapyrusFrame
-    ) throws(PapyrusFault) -> PapyrusArray {
+    ) throws(PapyrusFault) -> PapyrusArray? {
         let value = try read(operand, frame: frame)
+        if value == .none {
+            runtime.tally.noteNoneReceiver()
+            return nil
+        }
         guard case let .array(array) = value else {
             throw .typeMismatch(
                 instruction: instructionIndex,
