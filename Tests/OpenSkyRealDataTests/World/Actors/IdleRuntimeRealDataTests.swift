@@ -54,6 +54,7 @@ struct IdleRuntimeRealDataTests {
             atomically: true, encoding: .utf8
         )
         #expect(paths["graph event", default: 0] >= 780, "\(paths)")
+        #expect(paths["nothing (event not in the graph)", default: 0] < 25, "\(paths)")
         #expect(attached.values.reduce(0, +) >= 45, "\(attached)")
         #expect(unboundBones.isEmpty)
     }

@@ -71,14 +71,25 @@ run a behavior graph for NPCs, so it resolves the clip statically:
    project folder (`meshes\actors\character\`). Paired idles use `..\` in the path, which
    is resolved before the lookup.
 
-When the event is not in the graph, OpenSky tries a clip named after the event. The
-sidebar reports which path served the idle: "graph event", "clip named after the event",
+When the event is not in the graph, OpenSky tries a clip named after the event. It tries two
+names, relative to the project folder:
+
+1. `Animations\<event>.hkx`. For example, `IdlePray` plays `Animations\IdlePray.hkx`.
+2. `Animations\male\MT_<stem>.hkx`, where the stem is the event without a trailing `Trans`.
+   `idlebehavior.hkx` has a state and a clip of that name for each such event. For example,
+   `idle_A_sway_fastTrans` of the drunk marker plays `Animations\male\MT_idle_A_sway_fast.hkx`.
+
+[WARNING] The second rule is a naming pattern observed on the install, not a confirmed engine
+rule. `0_master.hkx` lists these events, but no state machine transition in `0_master.hkx`,
+`idlebehavior.hkx`, or `mt_behavior.hkx` fires on them. How the game routes them is unknown.
+
+The sidebar reports which path served the idle: "graph event", "clip named after the event",
 or "nothing" with the reason.
 
-On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip this way, and 213 have
-no event because they only group other idles. 25 name an event that the walk does not find,
-such as `idle_A_sway_fastTrans` of the drunk marker, so they do not play.
-For example, `IdlePray` plays `Animations\IdlePray.hkx`.
+On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through the graph, and
+213 have no event because they only group other idles. 10 play through the second name rule.
+15 still name an event that neither the walk nor a name finds, such as `idle_A_pull_pants`,
+`TG05_KnockOut`, and the kill moves, so they do not play.
 
 The loop count comes from the idle's `DATA`: a random count between the loop minimum and
 maximum. A zero maximum plays the clip once.
