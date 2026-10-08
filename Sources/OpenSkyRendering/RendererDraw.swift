@@ -48,6 +48,9 @@ extension Renderer: MTKViewDelegate {
 
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projectionMatrix)
+        if shadowEncoded {
+            commitEarlyFrameWork(allocator: allocator)
+        }
         let encoded = shadowEncoded && encodeScenePass(
             descriptor: passDescriptor,
             slot: slot,
@@ -57,6 +60,7 @@ extension Renderer: MTKViewDelegate {
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         guard encoded else {
             commandBuffer.endCommandBuffer()
+            finishFailedFrame(afterEarlyCommit: shadowEncoded)
             return
         }
 

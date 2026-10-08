@@ -114,6 +114,8 @@ public final class Renderer: NSObject {
         }
     }
 
+    /// Set while a frame's culling and shadow work is committed ahead of its scene pass.
+    var earlyFrameParts: GPUFrameParts?
     /// Joined once per frame, before the first pass.
     var frameDrawGroups = FrameDrawGroups()
     /// Nearest point lights by lighting center, valid for the current scene.

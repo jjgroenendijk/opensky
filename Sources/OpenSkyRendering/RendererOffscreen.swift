@@ -220,6 +220,9 @@ extension Renderer {
         encodeRayTracedShadows()
         let encodeStart = DispatchTime.now().uptimeNanoseconds
         let shadowEncoded = encodeShadowPass(slot: slot, projection: projection)
+        if shadowEncoded {
+            commitEarlyFrameWork(allocator: allocator)
+        }
         let encoded = shadowEncoded
             && encodeScenePass(
                 descriptor: descriptor, slot: slot, projection: projection,
@@ -227,7 +230,10 @@ extension Renderer {
             )
         lastEncodeMS = Double(DispatchTime.now().uptimeNanoseconds - encodeStart) / 1e6
         commandBuffer.endCommandBuffer()
-        guard encoded else { throw RendererError.encoderUnavailable }
+        guard encoded else {
+            finishFailedFrame(afterEarlyCommit: shadowEncoded)
+            throw RendererError.encoderUnavailable
+        }
 
         commitFrame()
         commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
