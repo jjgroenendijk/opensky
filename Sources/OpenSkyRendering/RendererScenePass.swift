@@ -130,10 +130,11 @@ extension Renderer {
         draw: Int
     ) -> (count: Int, byteOffset: Int) {
         let limit = LightingConstant.maxPointLights.rawValue
-        let lights = scene.nearestPointLights(to: position, limit: limit)
+        let pick = pointLightPick(near: position, limit: limit)
         let stride = MemoryLayout<PointLightUniform>.stride
         let first = (slot * drawUniformSlotCapacity + draw) * limit
-        for (index, light) in lights.enumerated() {
+        for index in 0 ..< pick.count {
+            let light = scene.pointLights[Int(pick.indices[index])]
             var uniform = PointLightUniform(
                 positionRadius: SIMD4(light.position, light.radius),
                 colorFalloff: SIMD4(light.color, light.falloffExponent)
@@ -141,7 +142,21 @@ extension Renderer {
             pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
         }
-        return (lights.count, first * stride)
+        return (pick.count, first * stride)
+    }
+
+    /// Group and terrain centers repeat every frame, so their picks are kept per scene.
+    /// Moving centers, such as the player body, would grow the cache, so it has a cap.
+    private func pointLightPick(near position: SIMD3<Float>, limit: Int) -> PointLightPick {
+        if let cached = pointLightPicks[position] {
+            return cached
+        }
+        if pointLightPicks.count >= Self.pointLightPickCacheLimit {
+            pointLightPicks.removeAll(keepingCapacity: true)
+        }
+        let pick = scene.nearestPointLightPick(to: position, limit: limit)
+        pointLightPicks[position] = pick
+        return pick
     }
 
     /// Writes the group's frustum-surviving instance transforms tightly

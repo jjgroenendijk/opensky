@@ -469,14 +469,10 @@ nonisolated public struct RenderScene: Sendable {
     }
 
     /// CPU light culling: stable distance order, original scene order as
-    /// tie-break. The renderer calls this once per visible draw.
+    /// tie-break. The renderer reads `nearestPointLightPick` instead.
     public func nearestPointLights(to position: SIMD3<Float>, limit: Int) -> [RenderPointLight] {
-        guard limit > 0, pointLights.count > limit else { return Array(pointLights.prefix(limit)) }
-        return pointLights.enumerated().sorted { lhs, rhs in
-            let lhsDistance = simd_length_squared(lhs.element.position - position)
-            let rhsDistance = simd_length_squared(rhs.element.position - position)
-            return lhsDistance == rhsDistance ? lhs.offset < rhs.offset : lhsDistance < rhsDistance
-        }.prefix(limit).map(\.element)
+        let pick = nearestPointLightPick(to: position, limit: limit)
+        return (0 ..< pick.count).map { pointLights[Int(pick.indices[$0])] }
     }
 
     /// Per-draw uniform ring slots one frame can need: one per group +

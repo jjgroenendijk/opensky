@@ -110,8 +110,13 @@ public final class Renderer: NSObject {
             // A new cell shows other surfaces; old frames would ghost over them.
             upscale.resetPending = true
             pruneGrassMeshlets(keeping: scene.grass)
+            pointLightPicks.removeAll(keepingCapacity: true)
         }
     }
+
+    /// Nearest point lights by lighting center, valid for the current scene.
+    var pointLightPicks: [SIMD3<Float>: PointLightPick] = [:]
+    static let pointLightPickCacheLimit = 16384
 
     /// The scene's GPU allocations, gathered once per scene: a swap needs the old
     /// and the new list, and gathering walks every draw group.
