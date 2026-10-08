@@ -33,8 +33,9 @@ jobs:
             command: make test-sanitize SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
           - name: Address sanitizer
             command: make test-sanitize SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
+          # Periphery reads the index store, so this job keeps it on.
           - name: Unused code
-            command: make health XCODEBUILD_FLAGS="$BUILD_FLAGS"
+            command: make health XCODEBUILD_FLAGS="${BUILD_FLAGS/COMPILER_INDEX_STORE_ENABLE=NO/}"
     steps:
       - uses: actions/checkout@v7
       - name: Start Metal Toolchain download
