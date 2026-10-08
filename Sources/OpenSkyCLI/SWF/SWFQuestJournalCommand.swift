@@ -5,6 +5,7 @@
 // missing-name delta, which is how the row field names were measured.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
@@ -19,14 +20,13 @@ enum SWFQuestJournalCommand {
     private static let defaultQuest = "MGRArniel01"
     private static let defaultTicks = 20
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let editorID = try scanner.option("--quest") ?? defaultQuest
-        let ticks = try positive(scanner.option("--ticks"), name: "--ticks") ?? defaultTicks
-        let downCount = try positive(scanner.option("--down"), name: "--down") ?? 0
-        let wantsText = scanner.flag("--text")
-        let objectiveState = try scanner.option("--objective-state")
-        let probeRows = try positive(scanner.option("--probe-rows"), name: "--probe-rows")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: SWFArguments.QuestJournal) throws {
+        let editorID = arguments.quest ?? defaultQuest
+        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
+        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
+        let wantsText = arguments.text
+        let objectiveState = arguments.objectiveState
+        let probeRows = try positive(arguments.probeRows, name: "--probe-rows")
 
         let session = try Session(
             context: context, editorID: editorID, objectiveState: objectiveState

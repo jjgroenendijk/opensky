@@ -3,6 +3,7 @@
 // multiplier over world gravity near one. `--census` prints the distribution.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsCore
@@ -15,10 +16,9 @@ enum ArcheryCommand {
     /// `fVisibleNavmeshMoveDist`, so a real shot can travel it.
     static let dropDistance: Float = 1000
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let census = scanner.flag("--census")
-        let filter = try scanner.option("--ammo")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: ArcheryArguments) throws {
+        let census = arguments.census
+        let filter = arguments.ammo
         let file = try context.loadSkyrimESM()
         let localized = file.isLocalized
         let projectiles = Self.projectiles(in: file)

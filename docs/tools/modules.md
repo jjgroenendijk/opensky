@@ -156,6 +156,8 @@ OpenSkyProgression        perk, skill, and level runtimes, perk entry-point eval
 OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
 OpenSky app, OpenSkyCLI   composition roots
+
+OpenSkyCLIArguments       the openskycli command line; only the CLI links it
 ```
 
 The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
@@ -166,6 +168,11 @@ uses `OpenSkyImageKernels` for its CPU DDS decode.
 well, because a Debug build of these loops is about 100 times slower: one 1024 x 1024 BC1 face
 took about 1.2 seconds, and a face with many tint layers held up a save load for minutes. A
 module that needs such a loop moves it here instead of turning on optimization for itself.
+
+`OpenSkyCLIArguments` declares every `openskycli` command and option with swift-argument-parser
+([decision](/decisions/swift-argument-parser.md)). It sits in the lowest layer and imports no
+engine module. It has its own product, so the app does not link it. It keeps the nonisolated
+default, because the parser's property wrappers do not build in a main-actor module.
 
 Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
 ([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg

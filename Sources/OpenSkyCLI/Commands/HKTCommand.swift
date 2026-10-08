@@ -3,13 +3,13 @@
 // See docs/formats/hkt-tagfile.md.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
 enum HKTCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let target = try scanner.positional("key or sweep")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: HKTArguments) throws {
+        let target = arguments.target
         let fileSystem = context.makeFileSystem()
         if target == "sweep" {
             try sweep(fileSystem)

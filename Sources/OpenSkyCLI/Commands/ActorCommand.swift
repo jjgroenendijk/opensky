@@ -4,23 +4,23 @@
 // this file parses arguments and prints.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorld
 
 enum ActorCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let npc = try scanner.option("--npc")
-        let worldspace = try scanner.option("--worldspace")
+    static func run(context: CLIContext, arguments: ActorArguments) throws {
+        let npc = arguments.npc
+        let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY
-        let radius = try int32(scanner.option("--radius"), name: "--radius") ?? 1
+        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
+        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
+        let radius = try int32(arguments.radius, name: "--radius") ?? 1
         guard radius >= 0 else {
             throw CLIError.usage("--radius expects a non-negative integer")
         }
-        try scanner.finish()
 
         let file = try context.loadSkyrimESM()
         let localized = file.isLocalized

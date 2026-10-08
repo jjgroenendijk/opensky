@@ -4,16 +4,19 @@
 // See docs/formats/image-spaces.md and docs/formats/sound-output-reverb.md.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
 
 enum EffectsCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let mode = try scanner.positional("census or imad")
-        let editorID = mode == "imad" ? try scanner.positional("IMAD editor ID") : nil
-        let time = try scanner.option("--at").flatMap(Float.init) ?? 0
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: EffectsArguments) throws {
+        let mode = arguments.mode
+        let editorID = arguments.editorID
+        let time = arguments.at
+        guard (mode == "imad") == (editorID != nil) else {
+            throw CLIError.usage("effects takes census, or imad <edid>")
+        }
         let file = try context.loadSkyrimESM()
         let store = EffectRecordStore(plugins: ActivePluginFiles.load(
             root: context.root,

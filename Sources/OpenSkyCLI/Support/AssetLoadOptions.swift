@@ -6,6 +6,7 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -18,15 +19,15 @@ struct AssetLoadOptions {
     let fastLoad: Bool
     let fastMeshLoad: Bool
 
-    init(scanner: inout ArgumentScanner, context: CLIContext) throws {
-        let useCache = scanner.flag("--asset-cache")
-        let evict = scanner.flag("--evict")
-        fastLoad = scanner.flag("--fast-load")
-        fastMeshLoad = scanner.flag("--fast-mesh-load")
-        let loose = try scanner.option("--loose")
+    init(arguments: AssetLoadArguments, context: CLIContext) throws {
+        let useCache = arguments.assetCache
+        let evict = arguments.evict
+        fastLoad = arguments.fastLoad
+        fastMeshLoad = arguments.fastMeshLoad
+        let loose = arguments.loose
         looseFolder = loose.map { URL(filePath: $0, directoryHint: .isDirectory) }
-        recordPath = try scanner.option("--record-paths")
-        let settings = try AssetCacheCommand.settings(scanner: &scanner)
+        recordPath = arguments.recordPaths
+        let settings = try AssetCacheCommand.settings(arguments.cache)
         guard useCache || !(fastLoad || fastMeshLoad) else {
             throw CLIError.usage("--fast-load and --fast-mesh-load need --asset-cache")
         }

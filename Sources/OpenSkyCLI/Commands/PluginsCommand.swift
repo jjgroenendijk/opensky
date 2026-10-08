@@ -5,8 +5,7 @@ import Foundation
 import OpenSkyGameData
 
 enum PluginsCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        try scanner.finish()
+    static func run(context: CLIContext) throws {
         let report = PluginLoadOrderReport(
             resolution: PluginLoadOrder.resolve(root: context.root)
         )

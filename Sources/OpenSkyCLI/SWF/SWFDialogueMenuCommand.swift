@@ -6,6 +6,7 @@
 // which missing-name counts moved.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
@@ -16,15 +17,14 @@ enum SWFDialogueMenuCommand {
     private static let defaultTicks = 20
     private static let defaultRowCount = 6
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let ticks = try positive(scanner.option("--ticks"), name: "--ticks") ?? defaultTicks
-        let downCount = try positive(scanner.option("--down"), name: "--down") ?? 0
-        let rowCount = try positive(scanner.option("--rows"), name: "--rows")
+    static func run(context: CLIContext, arguments: SWFArguments.DialogueMenu) throws {
+        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
+        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
+        let rowCount = try positive(arguments.rows, name: "--rows")
             ?? defaultRowCount
-        let probeRows = try positive(scanner.option("--probe-rows"), name: "--probe-rows")
-        let wantsText = scanner.flag("--text")
-        let speak = scanner.flag("--speak")
-        try scanner.finish()
+        let probeRows = try positive(arguments.probeRows, name: "--probe-rows")
+        let wantsText = arguments.text
+        let speak = arguments.speak
 
         let session = try Session(context: context, rowCount: rowCount)
         if wantsText {

@@ -3,6 +3,7 @@
 // `docs/decisions/swf-as2-census.md` cites. Tallying is in `SWFActionInventory`.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 
@@ -17,11 +18,10 @@ enum SWFActionSweep {
         "keyPress", "construct"
     ]
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
+    static func run(context: CLIContext, arguments: SWFArguments.ActionSweep) throws {
         // Substring filter mirrors `swf render-sweep --movie`.
-        let filter = try scanner.option("--movie")?.lowercased()
-        let limit = try parseLimit(scanner.option("--limit"))
-        try scanner.finish()
+        let filter = arguments.movie?.lowercased()
+        let limit = try parseLimit(arguments.limit)
 
         let vfs = context.makeFileSystem()
         let paths = SWFMovieLoader(fileSystem: vfs).moviePaths()

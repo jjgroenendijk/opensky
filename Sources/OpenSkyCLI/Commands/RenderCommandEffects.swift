@@ -3,6 +3,7 @@
 // the A/B captures of docs/rendering/image-space.md and visual-effects.md.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyRendering
@@ -22,15 +23,15 @@ struct EffectCaptureOptions {
         imageSpace != nil || modifier != nil || membrane != nil || weather != nil
     }
 
-    static func parse(_ scanner: inout ArgumentScanner) throws -> Self {
+    static func parse(_ arguments: EffectCaptureArguments) throws -> Self {
         var options = Self()
-        options.imageSpaceOff = scanner.flag("--image-space-off")
-        options.imageSpace = try scanner.option("--imgs")
-        options.modifier = try scanner.option("--imad")
-        options.modifierAt = try number(scanner.option("--imad-at"), name: "--imad-at") ?? 0
-        options.membrane = try scanner.option("--membrane")
-        options.weather = try scanner.option("--weather")
-        let frames = try number(scanner.option("--frames"), name: "--frames") ?? 1
+        options.imageSpaceOff = arguments.imageSpaceOff
+        options.imageSpace = arguments.imgs
+        options.modifier = arguments.imad
+        options.modifierAt = try number(arguments.imadAt, name: "--imad-at") ?? 0
+        options.membrane = arguments.membrane
+        options.weather = arguments.weather
+        let frames = try number(arguments.frames, name: "--frames") ?? 1
         guard (1 ... 600).contains(frames) else {
             throw CLIError.usage("--frames expects 1-600")
         }

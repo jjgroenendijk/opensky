@@ -5,15 +5,15 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyPhysics
 
 enum FootstepCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let setName = try scanner.option("--set")
-        let armature = try scanner.option("--armature")
-        let materialName = try scanner.option("--material")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: FootstepArguments) throws {
+        let setName = arguments.set
+        let armature = arguments.armature
+        let materialName = arguments.material
         let file = try context.loadSkyrimESM()
         let store = FootstepStore(file: file)
         let sounds = SoundRecordStore(file: file)

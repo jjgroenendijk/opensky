@@ -502,6 +502,14 @@
       "parallelizable": true,
       "target": {
         "containerPath": "container:.",
+        "identifier": "OpenSkyCLIArgumentsTests",
+        "name": "OpenSkyCLIArgumentsTests"
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
         "identifier": "OpenSkyWorldTests",
         "name": "OpenSkyWorldTests"
       }

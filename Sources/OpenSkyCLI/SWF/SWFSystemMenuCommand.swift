@@ -4,20 +4,20 @@
 // Settings, Controls, and Save pages' host calls were measured.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
 
 enum SWFSystemMenuCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let state = try scanner.option("--state") ?? "SETTINGS_CATEGORY_STATE"
-        let row = try scanner.option("--row").flatMap(Int.init)
-        let ticks = try scanner.option("--ticks").flatMap(Int.init) ?? 20
-        let focus = try scanner.option("--focus")
-        let captures = try scanner.option("--capture")?.split(separator: ",").map(String.init) ?? []
-        let then = try scanner.option("--then")?.split(separator: ",").map(String.init) ?? []
-        let dumps = try scanner.option("--dump")?.split(separator: ",").map(String.init) ?? []
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: SWFArguments.SystemMenu) throws {
+        let state = arguments.state
+        let row = arguments.row
+        let ticks = arguments.ticks
+        let focus = arguments.focus
+        let captures = arguments.probe.capture?.split(separator: ",").map(String.init) ?? []
+        let then = arguments.probe.then?.split(separator: ",").map(String.init) ?? []
+        let dumps = arguments.probe.dump?.split(separator: ",").map(String.init) ?? []
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(

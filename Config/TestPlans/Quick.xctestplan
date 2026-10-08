@@ -668,6 +668,20 @@
       "parallelizable": true,
       "target": {
         "containerPath": "container:.",
+        "identifier": "OpenSkyCLIArgumentsTests",
+        "name": "OpenSkyCLIArgumentsTests"
+      },
+      "skippedTags": {
+        "tags": [
+          "slow",
+          "gpu"
+        ]
+      }
+    },
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:.",
         "identifier": "OpenSkyWorldTests",
         "name": "OpenSkyWorldTests"
       },

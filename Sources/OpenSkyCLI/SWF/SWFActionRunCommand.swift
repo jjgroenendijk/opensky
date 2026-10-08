@@ -3,6 +3,7 @@
 // and the display tree. Every menu bring-up uses it.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 
@@ -11,19 +12,18 @@ enum SWFActionRunCommand {
     private static let defaultMissingLimit = 40
     private static let defaultTreeDepth = 4
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let filter = try scanner.option("--movie")?.lowercased()
-        let ticks = try positiveOption(scanner.option("--ticks"), name: "--ticks")
+    static func run(context: CLIContext, arguments: SWFArguments.ActionRun) throws {
+        let filter = arguments.movie?.lowercased()
+        let ticks = try positiveOption(arguments.ticks, name: "--ticks")
             ?? defaultTicks
-        let missingLimit = try positiveOption(scanner.option("--limit"), name: "--limit")
+        let missingLimit = try positiveOption(arguments.limit, name: "--limit")
             ?? defaultMissingLimit
-        let treeDepth = try positiveOption(scanner.option("--tree-depth"), name: "--tree-depth")
+        let treeDepth = try positiveOption(arguments.treeDepth, name: "--tree-depth")
             ?? defaultTreeDepth
-        let callName = try scanner.option("--call")
-        let dumpPath = try scanner.option("--dump")
-        let dumpClass = try scanner.option("--dump-class")
-        let dumpProto = try scanner.option("--dump-proto")
-        try scanner.finish()
+        let callName = arguments.call
+        let dumpPath = arguments.dump
+        let dumpClass = arguments.dumpClass
+        let dumpProto = arguments.dumpProto
 
         let vfs = context.makeFileSystem()
         let loader = SWFMovieLoader(fileSystem: vfs)

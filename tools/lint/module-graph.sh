@@ -23,7 +23,8 @@ import sys
 # Rule 1. The lower modules, lowest layer first. A lower module depends only on
 # a module in a lower layer.
 LAYERS = [
-    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels"],
+    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels",
+     "OpenSkyCLIArguments"],
     ["OpenSkyFormatsCore"],
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
      "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
@@ -34,7 +35,7 @@ LAYERS = [
     ["OpenSkyConditions"],
 ]
 # Products of external packages. They sit below every layer.
-EXTERNAL = {"HeapModule", "DequeModule"}
+EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
 COMPOSITION = {"OpenSkyPreview"}
 # Rule 6. A feature without one of its targets, and why.

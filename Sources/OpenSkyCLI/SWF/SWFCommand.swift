@@ -7,57 +7,7 @@ import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        guard let sub = scanner.next() else {
-            throw CLIError.usage("swf: missing subcommand (sweep|render-sweep|action-sweep|info)")
-        }
-        switch sub {
-        case "sweep":
-            try scanner.finish()
-            try runSweep(context: context)
-        case "render-sweep":
-            try SWFRenderSweep.run(context: context, scanner: &scanner)
-        case "action-sweep":
-            try SWFActionSweep.run(context: context, scanner: &scanner)
-        case "action-run":
-            try SWFActionRunCommand.run(context: context, scanner: &scanner)
-        case "action-list":
-            try SWFActionListCommand.run(context: context, scanner: &scanner)
-        case "info":
-            let path = try scanner.positional("path")
-            try scanner.finish()
-            try runInfo(context: context, path: path)
-        default:
-            guard try runMenu(sub, context: context, scanner: &scanner) else {
-                throw CLIError.usage("swf: unknown subcommand \(sub)")
-            }
-        }
-    }
-
-    /// The menu movie drivers; false when `sub` names none of them.
-    private static func runMenu(
-        _ sub: String, context: CLIContext, scanner: inout ArgumentScanner
-    ) throws -> Bool {
-        switch sub {
-        case "inventory-menu":
-            try SWFInventoryMenuCommand.run(context: context, scanner: &scanner)
-        case "quest-journal":
-            try SWFQuestJournalCommand.run(context: context, scanner: &scanner)
-        case "container-menu":
-            try SWFContainerMenuCommand.run(context: context, scanner: &scanner)
-        case "system-menu":
-            try SWFSystemMenuCommand.run(context: context, scanner: &scanner)
-        case "movie-probe":
-            try SWFMovieProbeCommand.run(context: context, scanner: &scanner)
-        case "dialogue-menu":
-            try SWFDialogueMenuCommand.run(context: context, scanner: &scanner)
-        default:
-            return false
-        }
-        return true
-    }
-
-    private static func runInfo(context: CLIContext, path: String) throws {
+    static func runInfo(context: CLIContext, path: String) throws {
         let vfs = context.makeFileSystem()
         let file = try SWFFile(data: vfs.contents(forPath: path))
         print("[INFO] \(path): \(summaryLine(for: file))")
@@ -72,7 +22,7 @@ enum SWFCommand {
     /// counted as accounted-but-unsupported (`SWFError.unsupportedCompression`
     /// is the documented, expected outcome for LZMA bodies at this stage);
     /// any other thrown error is an unexpected failure and fails the sweep.
-    private static func runSweep(context: CLIContext) throws {
+    static func runSweep(context: CLIContext) throws {
         let vfs = context.makeFileSystem()
         let paths = vfs.archiveEntries().map(\.path)
             .filter { $0.hasPrefix("interface\\") && $0.hasSuffix(".swf") }

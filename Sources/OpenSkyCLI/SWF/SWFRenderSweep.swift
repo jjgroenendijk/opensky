@@ -7,6 +7,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyRendering
@@ -19,14 +20,13 @@ enum SWFRenderSweep {
     /// Per-channel delta above which a pixel counts as changed.
     private static let channelThreshold = 8
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let size = try RenderCommand.parseSize(scanner.option("--size"))
-        let outputDirectory = try scanner.option("--out")
+    static func run(context: CLIContext, arguments: SWFArguments.RenderSweep) throws {
+        let size = try RenderCommand.parseSize(arguments.size)
+        let outputDirectory = arguments.out
         // Substring filter so one movie can be captured on its own; the
         // shared glyph atlas fills up over a 53-movie run, so a single-movie
         // pass is the honest per-movie glyph count.
-        let filter = try scanner.option("--movie")?.lowercased()
-        try scanner.finish()
+        let filter = arguments.movie?.lowercased()
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)

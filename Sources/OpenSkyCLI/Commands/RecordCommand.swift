@@ -5,15 +5,15 @@
 // by full-file EDID scan.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPreview
 
 enum RecordCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let token = try scanner.positional("formid-or-editorid")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: RecordArguments) throws {
+        let token = arguments.token
         let file = try context.loadSkyrimESM()
         let record = try find(token: token, in: file)
         let localized = file.isLocalized

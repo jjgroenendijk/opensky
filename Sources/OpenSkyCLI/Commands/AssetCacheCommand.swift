@@ -1,12 +1,13 @@
-// `asset-cache build|check|clear|status|extract|io-bench|measure|compare`: builds the asset cache
-// without
-// the app, with the preset and folder from the shared settings unless options override them. The
+// `asset-cache build|check|clear|status|extract|io-bench|measure|compare`: builds the asset
+// cache without the app, with the preset and folder from the shared settings unless options
+// override them. The
 // cache is game content and lives outside the repo (AGENTS.md Legal & IP); the location check
 // refuses a folder inside a git checkout or the install.
 
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
@@ -21,50 +22,46 @@ enum AssetCacheCommand {
         var perKind: Int
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) async throws {
-        let subcommand = try scanner
-            .positional("build|check|clear|status|extract|io-bench|measure|compare")
-        if subcommand == "compare" {
-            return try compare(scanner: &scanner)
-        }
+    static func run(
+        context: CLIContext,
+        action: AssetCacheAction,
+        arguments: AssetCacheActionOptions
+    ) async throws {
         let options = try Options(
-            settings: settings(scanner: &scanner),
-            width: scanner.option("--width").map { try int($0, "--width") },
-            paths: scanner.option("--paths").map { try lines(ofFile: $0) },
-            out: scanner.option("--out").map { URL(filePath: $0, directoryHint: .isDirectory) },
-            perKind: scanner.option("--per-kind").map { try int($0, "--per-kind") } ?? 300
+            settings: settings(arguments.settings),
+            width: arguments.width.map { try int($0, "--width") },
+            paths: arguments.paths.map { try lines(ofFile: $0) },
+            out: arguments.out.map { URL(filePath: $0, directoryHint: .isDirectory) },
+            perKind: arguments.perKind.map { try int($0, "--per-kind") } ?? 300
         )
-        try scanner.finish()
         let files = context.makeFileSystem()
         let reader = try AssetCacheReader.open(
             settings: options.settings, files: files, gameInstall: context.root.installURL
         )
-        switch subcommand {
-        case "build":
+        switch action {
+        case .build:
             try await build(reader: reader, files: files, options: options)
-        case "check":
+        case .check:
             try await check(reader: reader, files: files, options: options)
-        case "clear":
+        case .clear:
             try reader.store.clear()
             print("cleared \(reader.store.root.path(percentEncoded: false))")
-        case "status":
+        case .status:
             status(reader: reader, settings: options.settings)
-        case "extract":
+        case .extract:
             try extract(files: files, options: options, install: context.root.installURL)
-        case "io-bench":
+        case .ioBench:
             try ioBench(
                 reader: reader,
                 files: files,
                 options: options,
                 dataURL: context.root.dataURL
             )
-        case "measure":
+        case .measure:
             try await AssetCacheMeasure.run(
                 reader: reader, files: files, settings: options.settings,
                 dataURL: context.root.dataURL, perKind: options.perKind
             )
-        default:
-            throw CLIError.usage("unknown asset-cache subcommand: \(subcommand)")
         }
     }
 
@@ -97,10 +94,9 @@ enum AssetCacheCommand {
 
     /// Compares two captures of the same view, such as the benchmark frame with the cache off and
     /// on.
-    private static func compare(scanner: inout ArgumentScanner) throws {
-        let reference = try scanner.positional("reference.png")
-        let candidate = try scanner.positional("candidate.png")
-        try scanner.finish()
+    static func compare(arguments: AssetCacheArguments.Compare) throws {
+        let reference = arguments.reference
+        let candidate = arguments.candidate
         let difference = try TextureImageDifference.compare(
             reference: TexturePixels(contentsOf: URL(filePath: reference)),
             candidate: TexturePixels(contentsOf: URL(filePath: candidate)), normals: false
@@ -154,24 +150,24 @@ enum AssetCacheCommand {
 
     /// The shared settings, with `--preset`, `--folder`, `--limit-gib`, and `--kinds` on top.
     @MainActor
-    static func settings(scanner: inout ArgumentScanner) throws -> AssetCacheSettings {
+    static func settings(_ arguments: AssetCacheSettingsOptions) throws -> AssetCacheSettings {
         var settings =
             AssetCacheSettings(store: PlayerSettingsStore(persistence: try? PlayerSettingsFile
                     .defaultFile()))
-        if let name = try scanner.option("--preset") {
+        if let name = arguments.preset {
             guard let preset = AssetQualityPreset.allCases.first(where: { $0.cliName == name })
             else {
                 throw CLIError.usage("--preset is best, balanced, or highest")
             }
             settings.preset = preset
         }
-        if let folder = try scanner.option("--folder") {
+        if let folder = arguments.folder {
             settings.folder = URL(filePath: folder, directoryHint: .isDirectory)
         }
-        if let limit = try scanner.option("--limit-gib") {
+        if let limit = arguments.limitGib {
             settings.limitBytes = try UInt64(int(limit, "--limit-gib")) << 30
         }
-        if let list = try scanner.option("--kinds") {
+        if let list = arguments.kinds {
             settings.kinds = try kinds(list)
         }
         return settings

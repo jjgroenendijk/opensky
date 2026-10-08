@@ -3,14 +3,14 @@
 // Any malformed, NaN/inf, or unbounded transform exits 1.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 import simd
 
 enum AnimationCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let key = try scanner.positional("hkx-key")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: AnimationArguments) throws {
+        let key = arguments.key
         let file: HKXFile
         let animations: [HKASplineCompressedAnimation]
         let bindings: [HKAAnimationBinding]

@@ -3,19 +3,19 @@
 // and the nodes asked for. This is how the race menu and map contracts were measured.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyMenus
 
 enum SWFMovieProbeCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let movie = try scanner.option("--movie") ?? ""
+    static func run(context: CLIContext, arguments: SWFArguments.MovieProbe) throws {
+        let movie = arguments.movie
         guard !movie.isEmpty else { throw CLIError.usage("swf movie-probe needs --movie <path>") }
-        let ticks = try scanner.option("--ticks").flatMap(Int.init) ?? 10
-        let captures = try scanner.option("--capture")?.split(separator: ",").map(String.init) ?? []
-        let steps = try scanner.option("--then")?.split(separator: ";").map(String.init) ?? []
-        let dumps = try scanner.option("--dump")?.split(separator: ",").map(String.init) ?? []
-        try scanner.finish()
+        let ticks = arguments.ticks
+        let captures = arguments.probe.capture?.split(separator: ",").map(String.init) ?? []
+        let steps = arguments.probe.then?.split(separator: ";").map(String.init) ?? []
+        let dumps = arguments.probe.dump?.split(separator: ",").map(String.init) ?? []
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(movieScene: SWFMovieLoader(fileSystem: vfs)

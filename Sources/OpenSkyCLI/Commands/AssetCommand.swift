@@ -4,14 +4,14 @@
 // failure here reproduces a renderer skip exactly.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 enum AssetCommand {
-    static func runNIF(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let key = try scanner.positional("key")
-        try scanner.finish()
+    static func runNIF(context: CLIContext, arguments: NIFArguments) throws {
+        let key = arguments.key
         let file: NIFFile
         do {
             file = try NIFFile(data: context.makeFileSystem().contents(forPath: key))
@@ -94,9 +94,8 @@ enum AssetCommand {
         }
     }
 
-    static func runDDS(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let key = try scanner.positional("key")
-        try scanner.finish()
+    static func runDDS(context: CLIContext, arguments: DDSArguments) throws {
+        let key = arguments.key
         let data: Data
         let file: DDSFile
         do {

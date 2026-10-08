@@ -21,9 +21,12 @@ through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md))
 `Shaders.metal` compiles into `default.metallib` next to the binary, so
 `device.makeDefaultLibrary()` works without an app bundle. Build it with `make build-cli`.
 
-There is no swift-argument-parser. The options are positionals and `--name value`, and a small
-standard library scanner covers them, which keeps the build free of dependencies. Revisit this if
-the command set outgrows it.
+The command line is declared with swift-argument-parser in the `OpenSkyCLIArguments` module
+([decision](/decisions/swift-argument-parser.md)). `openskycli --help` and
+`openskycli help <command>` print help generated from those declarations, so the help cannot
+drift from the real options. Options are order-free, and an option value may start with `-`, so
+`--y -2` works. `--data-root` goes before or after the command name. `game` passes every word it
+does not know to the app.
 
 ## Data root and load order
 
@@ -36,7 +39,8 @@ The load order comes from `OPENSKY_PLUGINS_TXT`, then the `OpenSkyPluginsText` u
 searched locations ([plugins.txt](/formats/plugins-txt.md)). There is no `--plugins-txt` flag,
 because the environment variable already covers a one-off run.
 
-Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `render` default to the
+Exit codes: 0 success, 1 failure, 2 usage error. A group without its subcommand, such as `swf`,
+prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 [first render cell](/decisions/first-render-cell.md).
 
 ## Subcommands

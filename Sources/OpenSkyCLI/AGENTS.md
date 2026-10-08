@@ -19,14 +19,15 @@ socket. Load the `driving-the-running-game` skill before using it.
 
 ## Rules
 
-- One file per subcommand (`<Name>Command.swift`). Args parsed with stdlib
-  `ArgumentScanner` — no swift-argument-parser (decision in `docs/tools/cli.md`).
-  User-facing failures -> throw `CLIError`.
+- One file per subcommand (`<Name>Command.swift`). Its options are declared in the
+  `OpenSkyCLIArguments` module with swift-argument-parser
+  (`docs/decisions/swift-argument-parser.md`); `CommandRunners.swift` runs each parsed
+  command. User-facing failures -> throw `CLIError`; `CLIError.usage` exits 2.
 - CLI files only parse args + print. Reusable logic -> the package module of its domain,
   unit-tested there.
 - Output is plain text, stable enough for `tools/probe.sh` to grep. Output format
   change -> update probe same commit.
-- New/changed subcommand -> same commit updates `docs/tools/cli.md`, probe coverage,
-  and the usage text in `OpenSkyCLIUsage.swift` (split out of `OpenSkyCLI.swift`, which
-  now holds only dispatch).
+- New/changed subcommand -> same commit updates `docs/tools/cli.md`, probe coverage, its
+  declaration and help text in `OpenSkyCLIArguments`, and a parse test in
+  `OpenSkyCLIArgumentsTests` when it adds a name scripts use.
 - Install is read-only. Writes go only where `--out` points; logs -> `.logs/`.

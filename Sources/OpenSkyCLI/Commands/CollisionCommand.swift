@@ -4,19 +4,19 @@
 
 import Foundation
 import Metal
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyPhysics
 import OpenSkyWorld
 
 enum CollisionCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try scanner.option("--worldspace")
+    static func run(context: CLIContext, arguments: CollisionArguments) throws {
+        let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY
-        let radius = try gridRadius(scanner.option("--radius"))
-        try scanner.finish()
+        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
+        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
+        let radius = try gridRadius(arguments.radius)
 
         let esm = try context.loadSkyrimESM()
         let materials = MaterialTypeIndex(file: esm)

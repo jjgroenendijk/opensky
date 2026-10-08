@@ -4,6 +4,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyAudio
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyRendering
 import OpenSkyScripting
@@ -62,9 +63,9 @@ enum BenchCommand {
         let scriptUpdateBudgetMS: Double
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let assets = try AssetLoadOptions(scanner: &scanner, context: context)
-        let options = try parseOptions(scanner: &scanner)
+    static func run(context: CLIContext, arguments: BenchArguments) throws {
+        let assets = try AssetLoadOptions(arguments: arguments.assets, context: context)
+        let options = try parseOptions(arguments: arguments)
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)
@@ -318,20 +319,21 @@ extension BenchCommand {
         }
     }
 
-    private static func parseOptions(scanner: inout ArgumentScanner) throws -> Options {
-        let worldspace = try scanner.option("--worldspace")
+    private static func parseOptions(arguments: BenchArguments) throws -> Options {
+        let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try RenderCommand.int32(scanner.option("--x"), name: "--x")
+        let gridX = try RenderCommand.int32(arguments.grid.x, name: "--x")
             ?? FirstRenderCell.gridX
-        let gridY = try RenderCommand.int32(scanner.option("--y"), name: "--y")
+        let gridY = try RenderCommand.int32(arguments.grid.y, name: "--y")
             ?? FirstRenderCell.gridY
-        let flyPath = scanner.flag("--fly-path")
-        let walkPath = scanner.flag("--walk-path")
-        guard !flyPath || !walkPath else {
+        guard !arguments.flyPath || !arguments.walkPath else {
             throw CLIError.usage("choose one of --fly-path or --walk-path")
         }
-        let pathSpecific = try BenchPathSpecificOptions(scanner: &scanner, walkPath: walkPath)
-        let budgetOption = try scanner.option("--budget-ms")
+        let pathSpecific = try BenchPathSpecificOptions(
+            arguments: arguments.budgets,
+            walkPath: arguments.walkPath
+        )
+        let budgetOption = arguments.budgetMs
         let budgetMS = try positiveDouble(
             budgetOption,
             flag: "--budget-ms",
@@ -340,18 +342,18 @@ extension BenchCommand {
         let options = try Options(
             worldspace: worldspace,
             start: CellCoordinate(x: gridX, y: gridY),
-            size: RenderCommand.parseSize(scanner.option("--size")),
+            size: RenderCommand.parseSize(arguments.size),
             frames: frameCount(pathSpecific.frames),
             budgetMS: budgetMS,
             walkFrameBudget: walkFrameBudget(
                 budgetMS: budgetMS,
                 wasExplicit: budgetOption != nil
             ),
-            flyPath: flyPath,
-            walkPath: walkPath,
-            lodPrebuild: !scanner.flag("--no-lod-prebuild"),
-            output: scanner.option("--out"),
-            maxFrames: maxFrameCount(scanner.option("--max-frames")),
+            flyPath: arguments.flyPath,
+            walkPath: arguments.walkPath,
+            lodPrebuild: !arguments.noLodPrebuild,
+            output: arguments.out,
+            maxFrames: maxFrameCount(arguments.maxFrames),
             footprintCapMB: positiveDouble(
                 pathSpecific.footprintCapMB,
                 flag: "--footprint-cap-mb", fallback: defaultFootprintCapMB
@@ -372,11 +374,10 @@ extension BenchCommand {
                 pathSpecific.shadowUpdateBudgetMS,
                 flag: "--shadow-budget-ms", fallback: defaultShadowUpdateBudgetMS
             ),
-            audioUpdateBudgetMS: audioUpdateBudget(scanner.option("--audio-budget-ms")),
+            audioUpdateBudgetMS: audioUpdateBudget(arguments.audioBudgetMs),
             scriptUpdateBudgetMS: scriptUpdateBudget(pathSpecific.scriptUpdateBudgetMS)
         )
         try validateCombination(options)
-        try scanner.finish()
         return options
     }
 
