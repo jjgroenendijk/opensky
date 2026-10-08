@@ -18,7 +18,8 @@ nonisolated public struct LocationStore: Sendable {
     private let keywordStore: KeywordStore
     private let table: ResolvedRecordTable<ResolvedLocation>
     /// Each unique NPC base's placed reference, from the `LCUN` lists. The last
-    /// location that names an actor wins.
+    /// location that names an actor wins. A base the lists miss, such as `Ralof`,
+    /// falls back to its one persistent placed actor.
     public let uniqueActorReferences: [ReferenceKey: ReferenceKey]
 
     public var locations: [ResolvedFormID: ResolvedLocation] {
@@ -29,7 +30,7 @@ nonisolated public struct LocationStore: Sendable {
         table.skipped
     }
 
-    public init(index: RecordIndex) {
+    public init(index: RecordIndex, persistentActors: [ReferenceKey: ReferenceKey] = [:]) {
         self.index = index
         keywordStore = KeywordStore(index: index)
         table = ResolvedRecordTable(
@@ -39,7 +40,9 @@ nonisolated public struct LocationStore: Sendable {
             editorID: \.editorID,
             resolve: { ResolvedLocation(id: $0, location: $1, sourcePlugin: $2) }
         )
-        uniqueActorReferences = Self.uniqueActors(in: table.values.values, index: index)
+        uniqueActorReferences = persistentActors.merging(
+            Self.uniqueActors(in: table.values.values, index: index)
+        ) { _, listed in listed }
     }
 
     private static func uniqueActors(
@@ -62,10 +65,11 @@ nonisolated public struct LocationStore: Sendable {
     }
 
     public init(plugins: [(name: String, file: ESMFile)]) {
-        self.init(index: RecordIndex(
-            plugins: plugins,
-            recordTypes: RecordIndex.referenceRecordTypes
-        ))
+        let index = RecordIndex(plugins: plugins, recordTypes: RecordIndex.referenceRecordTypes)
+        self.init(
+            index: index,
+            persistentActors: PersistentActorIndex.singleReferences(plugins: plugins, index: index)
+        )
     }
 
     public func location(_ id: ResolvedFormID) -> ResolvedLocation? {
