@@ -50,6 +50,8 @@ nonisolated public struct WalkController: Sendable {
     /// was missing — the impact table is keyed by it.
     public private(set) var groundMaterial: FormID?
     private var accumulatedTime: Float = 0
+    /// The feet one fixed step before `feetPosition`; drawing blends from here.
+    private var previousFeetPosition: SIMD3<Float>
     public var activeStepSupport: CapsuleStepSupport?
 
     public struct HorizontalMove: Sendable {
@@ -65,6 +67,7 @@ nonisolated public struct WalkController: Sendable {
         self.capsule = capsule
         self.configuration = configuration
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
+        previousFeetPosition = feetPosition
     }
 
     public var cameraPosition: SIMD3<Float> {
@@ -73,6 +76,7 @@ nonisolated public struct WalkController: Sendable {
 
     public mutating func reset(cameraPosition: SIMD3<Float>) {
         feetPosition = cameraPosition - SIMD3<Float>(0, 0, capsule.eyeHeight)
+        previousFeetPosition = feetPosition
         verticalVelocity = 0
         isGrounded = false
         hasUnresolvedPenetration = false
@@ -105,6 +109,7 @@ nonisolated public struct WalkController: Sendable {
                     sampleGround: ground, collisionQuery: query, plan: plan
                 )
                 while accumulatedTime + Float.ulpOfOne >= Self.fixedTimeStep {
+                    previousFeetPosition = feetPosition
                     step(yaw: camera.yaw, input: input, dt: Self.fixedTimeStep, world: world)
                     accumulatedTime -= Self.fixedTimeStep
                 }
@@ -297,5 +302,19 @@ nonisolated public struct WalkController: Sendable {
         }
         isGrounded = grounded
         groundMaterial = grounded ? material : nil
+    }
+}
+
+nonisolated extension WalkController {
+    /// Where to draw the feet: between the last two steps, by the time left
+    /// over. A display frame rarely holds a whole number of steps, so drawing
+    /// the last step alone makes the view jump by a step now and then.
+    public var drawnFeetPosition: SIMD3<Float> {
+        let blend = min(max(accumulatedTime / Self.fixedTimeStep, 0), 1)
+        return simd_mix(previousFeetPosition, feetPosition, SIMD3(repeating: blend))
+    }
+
+    public var drawnCameraPosition: SIMD3<Float> {
+        drawnFeetPosition + SIMD3<Float>(0, 0, capsule.eyeHeight)
     }
 }
