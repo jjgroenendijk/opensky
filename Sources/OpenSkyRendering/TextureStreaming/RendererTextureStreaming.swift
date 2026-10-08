@@ -75,6 +75,8 @@ public struct TextureStreamingState {
     /// The frame target's height, for the distance rule.
     var viewHeight = 1080
     var staging: [(frame: UInt64, buffers: [MTLBuffer])] = []
+    /// Staging buffers the GPU has finished with, kept resident for the next upload.
+    var freeStaging: [MTLBuffer] = []
     public internal(set) var stats = TextureStreamingStats()
 
     init(device: MTLDevice) {
@@ -256,6 +258,10 @@ extension Renderer {
         retireAllocations(emptied)
     }
 
+    /// The smallest staging buffer, and the most free staging memory kept for reuse.
+    static let minimumStagingBytes = 64 << 10
+    static let stagingPoolBytes = 64 << 20
+
     private func encodeStreamingUploads(_ uploads: [StreamedTextureUpload]) {
         guard !uploads.isEmpty, let encoder = commandBuffer.makeComputeCommandEncoder() else {
             return
@@ -265,27 +271,54 @@ extension Renderer {
             afterQueueStages: .resourceState, beforeStages: .blit, visibilityOptions: .device
         )
         var buffers: [MTLBuffer] = []
+        var created: [MTLBuffer] = []
         for upload in uploads {
-            guard let buffer = stagingBuffer(upload.levels) else { continue }
-            buffers.append(buffer)
-            copy(upload, from: buffer, encoder: encoder)
+            guard let staged = stagingBuffer(upload.levels) else { continue }
+            buffers.append(staged.buffer)
+            if staged.isNew {
+                created.append(staged.buffer)
+            }
+            copy(upload, from: staged.buffer, encoder: encoder)
         }
         encoder.barrier(
             afterStages: .blit, beforeQueueStages: [.vertex, .fragment, .dispatch],
             visibilityOptions: .device
         )
         encoder.endEncoding()
-        residencySet.addAllocations(buffers)
-        residencySet.commit()
+        if !created.isEmpty {
+            residencySet.addAllocations(created)
+            residencySet.commit()
+        }
         textureStreaming.staging.append((UInt64(frameIndex), buffers))
     }
 
-    private func stagingBuffer(_ levels: TextureLevelBytes) -> MTLBuffer? {
-        levels.ready.bytes.withUnsafeBytes { bytes in
-            bytes.baseAddress.flatMap {
-                device.makeBuffer(bytes: $0, length: bytes.count, options: .storageModeShared)
+    /// The smallest free staging buffer that fits, or a new one sized to a power of two
+    /// so later uploads can reuse it. Only a new buffer changes the residency set.
+    private func stagingBuffer(_ levels: TextureLevelBytes) -> (buffer: MTLBuffer, isNew: Bool)? {
+        levels.ready.bytes.withUnsafeBytes { bytes -> (buffer: MTLBuffer, isNew: Bool)? in
+            guard let source = bytes.baseAddress else { return nil }
+            let fitting = textureStreaming.freeStaging.indices
+                .filter { textureStreaming.freeStaging[$0].length >= bytes.count }
+                .min {
+                    textureStreaming.freeStaging[$0].length < textureStreaming.freeStaging[$1]
+                        .length
+                }
+            if let fitting {
+                let buffer = textureStreaming.freeStaging.remove(at: fitting)
+                buffer.contents().copyMemory(from: source, byteCount: bytes.count)
+                return (buffer, false)
             }
+            let length = max(Self.minimumStagingBytes, Self.powerOfTwo(atLeast: bytes.count))
+            guard let buffer = device.makeBuffer(length: length, options: .storageModeShared) else {
+                return nil
+            }
+            buffer.contents().copyMemory(from: source, byteCount: bytes.count)
+            return (buffer, true)
         }
+    }
+
+    private static func powerOfTwo(atLeast count: Int) -> Int {
+        count <= 1 ? 1 : 1 << (Int.bitWidth - (count - 1).leadingZeroBitCount)
     }
 
     private func copy(
@@ -314,12 +347,19 @@ extension Renderer {
         let finished = textureStreaming.staging.filter { $0.frame <= drained }
         guard !finished.isEmpty else { return }
         textureStreaming.staging.removeAll { $0.frame <= drained }
-        for entry in finished {
-            for buffer in entry.buffers {
-                residencySet.removeAllocation(buffer)
-            }
+        var pool = textureStreaming.freeStaging + finished.flatMap(\.buffers)
+        pool.sort { $0.length < $1.length }
+        var pooledBytes = pool.reduce(0) { $0 + $1.length }
+        var dropped = false
+        while pooledBytes > Self.stagingPoolBytes, let largest = pool.popLast() {
+            pooledBytes -= largest.length
+            residencySet.removeAllocation(largest)
+            dropped = true
         }
-        residencySet.commit()
+        textureStreaming.freeStaging = pool
+        if dropped {
+            residencySet.commit()
+        }
     }
 
     private func refreshTextureStreamingStats() {
