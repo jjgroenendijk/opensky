@@ -41,11 +41,14 @@ nonisolated public struct ThirdPersonCamera: Equatable, Sendable {
     /// centre, so the body sits left of frame and the crosshair looks past it.
     public static let shoulderOffset = PlayerCapsule.standard.radius
 
-    /// The radius the zoom sweep collides with. A third of the capsule radius
-    /// keeps a thin probe that can follow the camera into a doorway, while
-    /// still being wide enough that a wall corner pushes it out before the near
-    /// plane (10 units, docs/decisions/coordinates.md) clips through.
-    public static let collisionRadius = PlayerCapsule.standard.radius / 3
+    /// The radius the zoom sweep collides with: the distance from the eye to a
+    /// corner of the near plane at 16:9, so no wall the probe clears can cut the view.
+    public static let collisionRadius: Float = {
+        let near = Renderer.nearPlane
+        let halfHeight = near * tanf(fovYRadians / 2)
+        let halfWidth = halfHeight * 16 / 9
+        return (near * near + halfHeight * halfHeight + halfWidth * halfWidth).squareRoot()
+    }()
 
     /// How close the eye may be pulled before third person is no longer worth
     /// the name. Set to the shoulder offset so a fully collapsed camera still

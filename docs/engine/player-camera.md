@@ -52,7 +52,7 @@ view:
 | Fill fraction | 0.6 | Chosen, not measured: the one taste decision, made once |
 | Orbit distance | about 167 units | `(height / 2 / fill) / tan(fov / 2)` for a 128-unit capsule at a 65 degree vertical field of view |
 | Shoulder offset | 24 units | One capsule radius, the shoulder line |
-| Collision radius | 8 units | A third of the capsule radius: thin enough for a doorway, wide enough to clear the 10-unit near plane |
+| Collision radius | about 16.4 units | The distance from the eye to a corner of the 10-unit near plane at 16:9, so the near plane never cuts a wall the probe cleared |
 | Minimum distance | 24 units | The shoulder offset, so a squeezed camera still sits outside the capsule |
 
 Sharing the pivot with first person means both modes agree on what is in the middle of the screen.
@@ -61,9 +61,10 @@ The orbit is a sphere: pitch raises the eye and shortens its horizontal reach at
 ## Collision zoom
 
 The camera collides through the same collider the capsule uses, so it sees exactly the shapes the
-player does. A small probe capsule is swept from the pivot along the offset line. The result is read
-as a distance and applied along the original direction. Collide-and-slide can push the probe
-sideways, but the camera only moves along its own line. A teleport resets the zoom.
+player does. A small probe capsule moves from the pivot along the offset line in steps of half its
+radius. It stops before the first step the collider pushes off the line. The probe does not slide:
+a slide along a slanted wall, read back as a distance on the line, would put the eye behind the
+wall. A teleport resets the zoom.
 
 The dialogue camera uses the same probe. Two copies would sooner or later disagree about what a
 wall does to an eye.

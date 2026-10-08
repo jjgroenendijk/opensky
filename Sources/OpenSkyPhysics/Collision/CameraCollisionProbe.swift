@@ -28,12 +28,10 @@ nonisolated public struct CameraCollisionProbe: Equatable, Sendable {
         public let isCollisionLimited: Bool
     }
 
+    /// How far a step may be pushed off its line before it counts as a hit.
+    static let deflectionTolerance: Float = 0.01
+
     /// Sweeps from `pivot` along `offset` and reports where the eye may sit.
-    ///
-    /// Collide-and-slide can push the probe sideways as well as short; a camera
-    /// only ever moves along its own offset line, so the sweep's answer is read
-    /// as a distance and re-applied to the original direction. A sideways slide
-    /// that ends up further out than asked for is clamped back to the ideal.
     public func resolve(
         pivot: SIMD3<Float>,
         offset: SIMD3<Float>,
@@ -43,23 +41,44 @@ nonisolated public struct CameraCollisionProbe: Equatable, Sendable {
         guard wanted > .ulpOfOne else {
             return Result(position: pivot, distance: 0, isCollisionLimited: false)
         }
-        let capsule = PlayerCapsule(radius: radius, height: radius * 2, eyeHeight: radius)
-        // `CapsuleWorldCollider` positions a capsule by its bottom, so the
-        // probe's centre is its eye height above the position it is given.
-        let bottom = SIMD3<Float>(0, 0, -radius)
-        let swept = CapsuleWorldCollider(capsule: capsule).move(
-            from: pivot + bottom,
-            displacement: offset,
-            query: collisionQuery
+        let direction = offset / wanted
+        let clear = clearDistance(
+            pivot: pivot, direction: direction, wanted: wanted, query: collisionQuery
         )
-        let travelled = simd_length((swept.position - bottom) - pivot)
-        let limited = min(travelled, wanted)
-        let distance = max(limited, min(minimumDistance, wanted))
+        let distance = max(clear, min(minimumDistance, wanted))
         return Result(
-            position: pivot + offset / wanted * distance,
+            position: pivot + direction * distance,
             distance: distance,
-            isCollisionLimited: limited < wanted - Self.limitSlack
+            isCollisionLimited: clear < wanted - Self.limitSlack
         )
+    }
+
+    /// The probe moves in steps of half its radius and stops before the first step
+    /// the collider pushes off the line. A collide-and-slide sweep would slide along
+    /// an oblique wall, and its length read back along the line passes the wall.
+    private func clearDistance(
+        pivot: SIMD3<Float>,
+        direction: SIMD3<Float>,
+        wanted: Float,
+        query: CapsuleWorldCollider.CandidateQuery
+    ) -> Float {
+        let capsule = PlayerCapsule(radius: radius, height: radius * 2, eyeHeight: radius)
+        let collider = CapsuleWorldCollider(capsule: capsule)
+        // The collider places a capsule by its bottom; the probe's centre is one radius up.
+        let bottom = pivot - SIMD3<Float>(0, 0, radius)
+        let stepLength = max(radius * 0.5, 1)
+        var travelled: Float = 0
+        while travelled < wanted {
+            let step = min(stepLength, wanted - travelled)
+            let start = bottom + direction * travelled
+            let target = start + direction * step
+            let moved = collider.move(from: start, displacement: direction * step, query: query)
+            if simd_length(moved.position - target) > Self.deflectionTolerance {
+                return travelled
+            }
+            travelled += step
+        }
+        return wanted
     }
 
     public init(radius: Float, minimumDistance: Float) {

@@ -141,6 +141,35 @@ struct ThirdPersonCameraTests {
         #expect(simd_length(eye - (pivot + direction * camera.resolvedDistance)) < 0.001)
     }
 
+    /// A wall at a slant to the orbit line stops the camera on the near side.
+    /// A slide along the wall must not carry the eye through it.
+    @Test
+    func aSlantedWallIsNotPassedBySliding() {
+        var camera = ThirdPersonCamera()
+        let wall = DynamicBodyScene.quad(
+            SIMD3(-460, -400, -400), SIMD3(340, 400, -400),
+            SIMD3(340, 400, 400), SIMD3(-460, -400, 400)
+        )
+        let eye = camera.resolve(
+            feetPosition: .zero,
+            yaw: 0,
+            pitch: 0,
+            collisionQuery: DynamicBodyScene.candidateQuery([wall])
+        )
+        // The wall is the line x = y - 60; the pivot's side has x - y above -60.
+        #expect(eye.x - eye.y > -60)
+        #expect(camera.isCollisionLimited)
+    }
+
+    /// The probe is wide enough that the near plane never reaches a wall it cleared.
+    @Test
+    func theProbeCoversTheNearPlane() {
+        let near = Renderer.nearPlane
+        let halfHeight = near * tanf(ThirdPersonCamera.fovYRadians / 2)
+        let corner = SIMD3<Float>(near, halfHeight * 16 / 9, halfHeight)
+        #expect(ThirdPersonCamera.collisionRadius >= simd_length(corner) - 0.001)
+    }
+
     /// Standing with a wall pressed against the player's back never collapses
     /// the eye into the head: the pull-in stops at `minimumDistance`.
     @Test
