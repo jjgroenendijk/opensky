@@ -1,8 +1,6 @@
 // Paints race tint layers (skin tone, war paint, dirt) over a face color map on
 // the CPU. Each mask is one byte per pixel; see docs/engine/race-menu.md.
 
-import Foundation
-
 nonisolated public struct ChargenTintLayer: Equatable, Sendable {
     /// One coverage byte per pixel, the same size as the base picture.
     public let mask: [UInt8]

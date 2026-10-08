@@ -98,13 +98,14 @@ func foundation(
     _ name: String,
     dependencies: [String] = [],
     exclude: [String] = [],
+    swiftSettings extraSettings: [SwiftSetting] = [],
     tests: [String]? = nil
 ) -> [Target] {
     let library = Target.target(
         name: name,
         dependencies: checked(name, dependencies),
         exclude: exclude,
-        swiftSettings: librarySettings
+        swiftSettings: librarySettings + extraSettings
     )
     declared.append(name)
     libraryTargets.append(name)
@@ -272,13 +273,20 @@ targets += testing("TagsTesting", dependencies: [])
 targets += foundation("OpenSkyFormatsCore", tests: [
     "FormatsTesting"
 ])
+// Pixel loops the engine runs on the CPU, such as the chargen face paint. Unoptimized
+// they are about 100 times slower, so Debug builds them optimized too.
+targets += foundation(
+    "OpenSkyImageKernels",
+    swiftSettings: [.unsafeFlags(["-O"], .when(configuration: .debug))]
+)
 let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF", "ESS"]
 for family in formatFamilies {
     let module = "OpenSkyFormats\(family)"
+    let kernels = family == "Mesh" ? ["OpenSkyImageKernels"] : []
     targets += foundation(
         module,
-        dependencies: ["OpenSkyFormatsCore"],
-        tests: ["FormatsTesting", "OpenSkyFormatsCore"]
+        dependencies: ["OpenSkyFormatsCore"] + kernels,
+        tests: ["FormatsTesting", "OpenSkyFormatsCore"] + kernels
     )
 }
 
@@ -625,10 +633,11 @@ targets += feature(
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
         "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache"
+        "OpenSkyAssetCache", "OpenSkyImageKernels"
     ],
     tests: [
         "EngineTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyAudio",
+        "OpenSkyImageKernels",
         "OpenSkyBehavior", "OpenSkyConditions", "OpenSkyCrimeInterface", "FeaturesTesting",
         "OpenSkyDiagnostics", "OpenSkyDialogueInterface", "OpenSkyFactionsInterface",
         "OpenSkyFormatsAnimation", "OpenSkyFormatsCore", "OpenSkyFormatsESM",

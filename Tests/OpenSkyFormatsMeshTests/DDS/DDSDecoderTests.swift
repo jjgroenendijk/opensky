@@ -3,6 +3,7 @@
 import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyImageKernels
 import TagsTesting
 import Testing
 

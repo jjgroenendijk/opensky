@@ -23,7 +23,7 @@ import sys
 # Rule 1. The lower modules, lowest layer first. A lower module depends only on
 # a module in a lower layer.
 LAYERS = [
-    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder"],
+    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels"],
     ["OpenSkyFormatsCore"],
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
      "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
