@@ -401,11 +401,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         center: CellCoordinate,
         hiddenCells: Set<CellCoordinate>
     ) -> Bool {
-        let isNew = bookkeeping.withLock { state in
-            guard !state.prebuildStarted else { return false }
-            state.prebuildStarted = true
-            return state.pendingLOD.insert(center).inserted
-        }
+        let isNew = bookkeeping.withLock { $0.pendingLOD.insert(center).inserted }
         guard isNew else { return false }
         queue.async { [self] in
             let result = provider.withLock { provider in
@@ -422,7 +418,11 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         hiddenCells: Set<CellCoordinate>
     ) -> Bool {
         guard let lodPrebuild else { return false }
-        let isNew = bookkeeping.withLock { $0.pendingLOD.insert(center).inserted }
+        let isNew = bookkeeping.withLock { state in
+            guard !state.prebuildStarted else { return false }
+            state.prebuildStarted = true
+            return state.pendingLOD.insert(center).inserted
+        }
         guard isNew else { return false }
         // Not background priority: its throttled reads made the ring arrive last.
         Task { [self] in
