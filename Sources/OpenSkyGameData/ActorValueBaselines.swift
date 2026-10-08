@@ -57,19 +57,23 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public let level: Int
     /// The race's `DATA` child flag, which `IsChild` reports.
     public let isChild: Bool
+    /// The race the derivation used, which `GetIsRace` reports.
+    public let race: FormID?
 
     public init(
         maximums: ActorValues,
         regenPercentPerSecond: ActorValues,
         general: [Int32: Float] = [:],
         level: Int = PlayerLevelSource.startingLevel,
-        isChild: Bool = false
+        isChild: Bool = false,
+        race: FormID? = nil
     ) {
         self.maximums = maximums
         self.regenPercentPerSecond = regenPercentPerSecond
         self.general = general
         self.level = max(PlayerLevelSource.startingLevel, level)
         self.isChild = isChild
+        self.race = race
     }
 
     /// The base value `index` starts from: what the records author, or the vanilla
@@ -203,7 +207,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             // `PC Level Mult` actor scales against has to be the same number
             // `GetLevel` reports for them.
             level: playerLevel.level,
-            isChild: race.flags.contains(.child)
+            isChild: race.flags.contains(.child),
+            race: playerRace
         )
     }
 
@@ -220,7 +225,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             general: resolved.generalBaseValues,
             level: resolved.level,
             isChild: resolved.race
-                .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false
+                .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false,
+            race: resolved.race
         )
     }
 }

@@ -1,5 +1,5 @@
-// The VATS camera condition functions that CPTH camera paths test: 407
-// `GetVATSValue`, 515 to 518 `GetVATS...AreaFree`, and 522 and 523
+// The camera condition functions that CPTH camera paths test: 391 `IsPC1stPerson`,
+// 407 `GetVATSValue`, 515 to 518 `GetVATS...AreaFree`, and 522 and 523
 // `GetVATS...TargetVisible`, from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
 // They read the shot being chosen, not a reference. See docs/formats/camera-records.md.
 
@@ -31,6 +31,8 @@ nonisolated public struct CameraConditionResolution: Equatable, Sendable {
     public var targetDistance: Float?
     /// The sides from which the target can be seen past the attacker.
     public var targetVisibleSides: Set<Side> = []
+    /// Whether the player looks through the first-person camera.
+    public var playerIsFirstPerson = false
     /// False in a context with no shot request, so every function fails honestly.
     public var isAvailable = false
 
@@ -75,6 +77,11 @@ nonisolated extension ConditionFunctions {
             }
             return .success(isTrue(vatsValue(selector, camera) == call.condition.parameter2
                     .rawValue))
+        })
+        registry.register(ConditionFunction(index: 391, name: "IsPC1stPerson") { call in
+            let camera = call.context.camera
+            guard camera.isAvailable else { return .failure(.unavailableData(.camera)) }
+            return .success(isTrue(camera.playerIsFirstPerson))
         })
         for function in SideFunction.areaFree {
             register(function, &registry) { .success($0.freeDistance[$1] ?? 0) }

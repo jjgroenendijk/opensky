@@ -126,8 +126,22 @@ For a kill, the coordinator fills these facts:
   OpenSky measures room around the attacker only.
 
 With these facts, a bow kill on the real install picks `PlayerActionShot01RBasic02` and plays
-its shoot, fly, and hit stages. A melee kill still ends at `ExitWeRanOutOfCams`: the melee
-paths sit under `PairedKillTest`, whose `function 4409` belongs to paired kill moves, which
-OpenSky does not play. Other functions the paths use, such as 4165 and 4690, are not known
-yet. An unknown function fails its condition, so the walk goes on to a later sibling. The
-`World > Kill Cam` panel lists the first failing function of each path.
+its shoot, fly, and hit stages. The `World > Kill Cam` panel lists the first failing function
+of each path.
+
+The other functions the vanilla paths use, named by the same xEdit table. The Creation Kit
+number is the index plus 4096:
+
+| Index | Creation Kit number | Function | Vanilla use | OpenSky |
+| --- | --- | --- | --- | --- |
+| 36 | 4132 | `MenuMode` | `ShowAttacker`, `== 1` | Not supported. The condition context holds no menu state. `ShowAttacker` also needs `GetRandomPercent < 0`, which is never true |
+| 69 | 4165 | `GetIsRace` | Run on the target, `!= 1` for each large race | Evaluated from the target's race |
+| 313 | 4409 | `GetPairedAnimation` | `PairedKillTest`, `== 1` | Evaluated, always 0: OpenSky plays no paired animation |
+| 391 | 4487 | `IsPC1stPerson` | `1stPRandom`, `1stPFailsafeCam`, `== 1` | Evaluated from the player's camera mode |
+| 594 | 4690 | `GetIsFlying` | `ExitDontShootFlyingDragons`, `== 1` | Evaluated, always 0: no actor flies yet |
+| 675 | 4771 | `GetGraphVariableInt` | `bShortKillMove`, `Is3rdPKillOnly` on the attacker | Not supported. The condition context does not read behavior graph variables. Every use sits under `PairedKillTest` |
+
+So a melee kill still ends at `ExitWeRanOutOfCams`. The melee paths sit under
+`PairedKillTest`, and its `GetPairedAnimation` is 1 only during a paired kill move. Melee kill
+cams play once kill moves exist: that work sets the paired animation flag of the actor state,
+and adds `GetGraphVariableInt` for the kill-move variables.
