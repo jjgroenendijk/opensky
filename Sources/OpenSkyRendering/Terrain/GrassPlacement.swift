@@ -197,7 +197,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         row: Int,
         context: PlacementContext
     ) -> GrassPlacement? {
-        var random = StableRandom(seed: candidateSeed(
+        var random = SplitMix64(seed: candidateSeed(
             coordinate: context.heightField.coordinate,
             land: context.land.formID,
             grass: context.source.grass.formID,
@@ -251,7 +251,7 @@ nonisolated public enum GrassPlacementBuilder: Sendable {
         row: Int,
         spacing: Float,
         jitter: Float,
-        random: inout StableRandom
+        random: inout SplitMix64
     ) -> SIMD2<Float> {
         let center = SIMD2<Float>(
             (Float(column) + 0.5) * spacing,
@@ -348,7 +348,7 @@ nonisolated extension GrassPlacementBuilder {
 
     private static func instanceScale(
         data: Grass.PlacementData,
-        random: inout StableRandom
+        random: inout SplitMix64
     ) -> SIMD3<Float> {
         let variation = abs(data.heightRange)
         let heightScale = max(0.05, 1 + (random.unitFloat() * 2 - 1) * variation)
@@ -360,7 +360,7 @@ nonisolated extension GrassPlacementBuilder {
 
     private static func colorMultiplier(
         range: Float,
-        random: inout StableRandom
+        random: inout SplitMix64
     ) -> Float {
         1 - random.unitFloat() * min(max(range, 0), 1)
     }
@@ -465,24 +465,5 @@ nonisolated extension GrassPlacementBuilder {
             return lhs.quadrant < rhs.quadrant
         }
         return lhs.layer < rhs.layer
-    }
-}
-
-/// SplitMix64: compact, platform-stable stream. Swift's Hasher is deliberately
-/// randomized per process and cannot seed persistent cell placement.
-nonisolated private struct StableRandom {
-    private var state: UInt64
-
-    init(seed: UInt64) {
-        state = seed
-    }
-
-    mutating func unitFloat() -> Float {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var value = state
-        value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        value = (value ^ (value >> 27)) &* 0x94D0_49BB_1331_11EB
-        value ^= value >> 31
-        return Float(value >> 40) / Float(1 << 24)
     }
 }

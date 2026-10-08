@@ -6,6 +6,7 @@
 // (`wbCTDA`).
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 
@@ -114,24 +115,17 @@ nonisolated public struct ConditionOutcome: Equatable, Sendable {
 }
 
 /// Deterministic 0-99 source for `GetRandomPercent`, seeded per session or per test.
-/// SplitMix64 (Steele, Lea and Flood, OOPSLA 2014): one mixing step, no warm-up, no table.
 nonisolated public struct ConditionRandom: Equatable, Sendable {
-    /// SplitMix64's golden-ratio increment, also this generator's default seed.
-    public static let defaultSeed: UInt64 = 0x9E37_79B9_7F4A_7C15
+    public static let defaultSeed: UInt64 = SplitMix64.increment
 
-    private var state: UInt64
+    private var generator: SplitMix64
 
     public init(seed: UInt64 = ConditionRandom.defaultSeed) {
-        state = seed
+        generator = SplitMix64(seed: seed)
     }
 
-    /// Next raw 64-bit draw.
     public mutating func next() -> UInt64 {
-        state &+= Self.defaultSeed
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
+        generator.next()
     }
 
     /// Next integer in 0...99 **inclusive** — `GetRandomPercent` never returns

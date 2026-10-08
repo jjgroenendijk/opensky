@@ -39,7 +39,7 @@ nonisolated public struct GrassRenderPlacement {
         color = placement.flags.contains(.vertexLighting)
             ? placement.color : SIMD3(repeating: 1)
         wavePeriod = max(abs(placement.wavePeriod), 0.1)
-        var random = GrassStableRandom(seed: Self.seed(for: placement))
+        var random = SplitMix64(seed: Self.seed(for: placement))
         phase = random.unitFloat()
         densityKey = random.unitFloat()
         bounds = modelBounds.map {
@@ -160,23 +160,5 @@ nonisolated public enum GrassTransform: Sendable {
         let length = simd_length(value)
         guard length.isFinite, length > .ulpOfOne else { return SIMD3(0, 0, 1) }
         return value / length
-    }
-}
-
-/// Local SplitMix64 stream: platform-stable density selection + motion phase.
-nonisolated private struct GrassStableRandom {
-    private var state: UInt64
-
-    init(seed: UInt64) {
-        state = seed
-    }
-
-    mutating func unitFloat() -> Float {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var value = state
-        value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        value = (value ^ (value >> 27)) &* 0x94D0_49BB_1331_11EB
-        value ^= value >> 31
-        return Float(value >> 40) / Float(1 << 24)
     }
 }

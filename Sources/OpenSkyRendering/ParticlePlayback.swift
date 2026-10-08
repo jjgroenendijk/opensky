@@ -3,6 +3,7 @@
 // NifTools nif.xml (https://github.com/niftools/nifxml/blob/develop/nif.xml).
 
 @preconcurrency import Metal
+import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyShaderTypes
 import simd
@@ -47,19 +48,15 @@ nonisolated public struct SimulatedParticle: Equatable, Sendable {
 
 /// Deterministic generator: stable frames/tests across processes and machines.
 nonisolated private struct ParticleRandom {
-    private var state: UInt64
+    private var generator: SplitMix64
 
     init(seed: UInt64) {
-        state = seed == 0 ? 0x9E37_79B9_7F4A_7C15 : seed
+        generator = SplitMix64(seed: seed == 0 ? SplitMix64.increment : seed)
     }
 
+    /// Uses the low 24 bits, unlike `SplitMix64.unitFloat()`, to keep existing streams.
     mutating func unit() -> Float {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var value = state
-        value = (value ^ (value >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        value = (value ^ (value >> 27)) &* 0x94D0_49BB_1331_11EB
-        value ^= value >> 31
-        return Float(value & 0x00FF_FFFF) / Float(0x0100_0000)
+        Float(generator.next() & 0x00FF_FFFF) / Float(0x0100_0000)
     }
 
     mutating func signed() -> Float {
