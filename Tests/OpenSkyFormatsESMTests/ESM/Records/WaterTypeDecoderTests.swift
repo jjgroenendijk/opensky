@@ -30,6 +30,46 @@ struct WaterTypeDecoderTests {
         }
     }
 
+    @Test func decodesSurfaceFieldsAtTheirOffsets() throws {
+        var dnam = Data(count: 228)
+        func put(_ value: Float, at offset: Int) {
+            withUnsafeBytes(of: value.bitPattern.littleEndian) {
+                dnam.replaceSubrange(offset ..< offset + 4, with: $0)
+            }
+        }
+        let singles: [(Int, Float)] = [
+            (16, 1021), (20, 0.8), (24, 0.1), (32, -10), (36, 150),
+            (196, 0.42), (200, 2.89), (204, 4.65), (224, 3521)
+        ]
+        for (offset, value) in singles {
+            put(value, at: offset)
+        }
+        for (base, values) in [
+            (100, [233, 267, 252]),
+            (112, [0.09, 0.04, 0.3]),
+            (172, [1667, 4855, 580]),
+            (184, [0.9, 0.92, 0.65])
+        ] {
+            for (index, value) in values.enumerated() {
+                put(Float(value), at: base + index * 4)
+            }
+        }
+        let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(
+            "WATR", data: ESMFixture.field("DNAM", dnam)
+        )))
+        let surface = try #require(water.surface)
+        #expect(surface.sunSpecularPower == 1021)
+        #expect(surface.fresnelAmount == 0.1)
+        #expect(surface.fogNear == -10)
+        #expect(surface.fogFar == 150)
+        #expect(surface.windDirections == SIMD3(233, 267, 252))
+        #expect(surface.windSpeeds == SIMD3(0.09, 0.04, 0.3))
+        #expect(surface.uvScales == SIMD3(1667, 4855, 580))
+        #expect(surface.amplitudes == SIMD3(0.9, 0.92, 0.65))
+        #expect(surface.sunSpecularMagnitude == 4.65)
+        #expect(surface.sunSparklePower == 3521)
+    }
+
     @Test func skipsUnknownDNAMVariant() throws {
         let fields = ESMFixture.field("DNAM", Data(count: 52))
         let water = try WaterType(record: ESMFixture.parseRecord(ESMFixture.record(
@@ -37,5 +77,6 @@ struct WaterTypeDecoderTests {
             data: fields
         )))
         #expect(water.colors == nil)
+        #expect(water.surface == nil)
     }
 }

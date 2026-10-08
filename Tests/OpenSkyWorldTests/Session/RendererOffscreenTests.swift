@@ -127,18 +127,34 @@ struct RendererOffscreenTests {
             bounds: bounds
         )
         let camera = SceneCamera.framing(bounds: (min: bounds.min, max: bounds.max))
+        // With no scene depth the water takes a middle depth, so the sky shows through.
+        let shallow = try underlayDifference(water: water, camera: camera, waterDepth: false)
+        #expect(shallow.drawCalls == 1)
+        #expect(shallow.difference > 10, "water did not blend with sky underlay")
+        // Over empty space the scene depth is the far plane: deep water hides the sky.
+        let deep = try underlayDifference(water: water, camera: camera, waterDepth: true)
+        #expect(deep.drawCalls == 1)
+        #expect(deep.difference < shallow.difference)
+    }
+
+    @MainActor
+    private func underlayDifference(
+        water: WaterDrawItem,
+        camera: SceneCamera,
+        waterDepth: Bool
+    ) throws -> (difference: Int, drawCalls: Int) {
         let clearUnderlay = try renderEnvironment(
             scene: RenderScene(instances: [], water: [water]),
             camera: camera,
-            timeOfDay: 13
+            timeOfDay: 13,
+            waterDepth: waterDepth
         )
         let skyUnderlay = try renderEnvironment(
             scene: RenderScene(instances: [], water: [water], sky: SkyParameters()),
             camera: camera,
-            timeOfDay: 13
+            timeOfDay: 13,
+            waterDepth: waterDepth
         )
-        #expect(clearUnderlay.stats.drawCalls == 1)
-        #expect(skyUnderlay.stats.drawCalls == 1)
         let center = ((skyUnderlay.height / 2) * skyUnderlay.width + skyUnderlay.width / 2) * 4
         let difference = (0 ..< 3).reduce(0) { total, channel in
             total + abs(
@@ -146,14 +162,15 @@ struct RendererOffscreenTests {
                     - Int(skyUnderlay.pixels[center + channel])
             )
         }
-        #expect(difference > 10, "water did not blend with sky underlay")
+        return (difference, skyUnderlay.stats.drawCalls)
     }
 
     @MainActor
     private func renderEnvironment(
         scene: RenderScene,
         camera: SceneCamera = .demo,
-        timeOfDay: Float
+        timeOfDay: Float,
+        waterDepth: Bool = true
     ) throws -> EnvironmentRender {
         let device = try #require(Self.device)
         let width = 320
@@ -171,6 +188,7 @@ struct RendererOffscreenTests {
             timeOfDay: timeOfDay,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
+        renderer.waterDepth.enabled = waterDepth
         let texture = try renderer.renderOffscreen(width: width, height: height)
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
         pixels.withUnsafeMutableBytes { bytes in

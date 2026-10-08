@@ -215,8 +215,9 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// Resolves a shape's property refs into an engine Material. A ref to a
-    /// water or sky shader, an undecodable effect, or no ref falls back to `Material.fallback`.
+    /// Resolves a shape's property refs into an engine Material. A water shader gives
+    /// `Material.waterSurface`. A sky shader, an undecodable effect, or no ref gives
+    /// `Material.fallback`.
     /// Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
@@ -232,6 +233,9 @@ nonisolated extension NIFFile.Flattener {
                 )
             {
                 return material
+            }
+            if block.typeName == NIFFile.waterShaderType {
+                return .waterSurface
             }
             if block.typeName == "BSLightingShaderProperty" {
                 let property = try NIFLightingShaderProperty(
@@ -273,6 +277,7 @@ nonisolated extension NIFFile.Flattener {
 
 nonisolated extension NIFFile {
     static let effectShaderType = "BSEffectShaderProperty"
+    static let waterShaderType = "BSWaterShaderProperty"
 }
 
 nonisolated extension NIFFile.Flattener {

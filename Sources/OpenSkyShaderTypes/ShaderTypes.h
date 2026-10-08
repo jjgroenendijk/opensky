@@ -112,6 +112,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexSceneColor = 13,
     /// Greyscale palette of an effect shape; the diffuse stands in when it has none.
     TextureIndexEffectPalette = 14,
+    /// The scene depth copied before the water draws, for its see-through depth.
+    TextureIndexWaterDepth = 15,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -453,13 +455,25 @@ typedef struct
     unsigned int pointLightCount;
 } TerrainDrawUniforms;
 
-/// One flat CELL water plane. Colors decode from WATR DNAM RGBX entries.
+/// One water surface. Colors and shading decode from WATR DNAM (docs/formats/water.md).
 typedef struct
 {
     matrix_float4x4 modelMatrix;
     vector_float3 shallowColor;
     vector_float3 deepColor;
     vector_float3 reflectionColor;
+    /// x=opacity, y=fresnel amount, z=reflectivity, w=sun specular power.
+    vector_float4 surface;
+    /// x=sun specular magnitude, y=fog near, z=fog far, w=1 when scene depth is bound.
+    vector_float4 depthAndSun;
+    /// Per noise layer: direction in radians, speed in tiles per second, tile size, slope.
+    vector_float4 windDirections;
+    vector_float4 windSpeeds;
+    vector_float4 uvScales;
+    vector_float4 amplitudes;
+    vector_float2 flowVelocity;
+    /// Projection terms (m22, m32): view depth = y / (ndcDepth + x).
+    vector_float2 depthUnproject;
 } WaterDrawUniforms;
 
 /// Per-draw slot for the sun-shadow depth pre-pass; fits one 256-byte uniform

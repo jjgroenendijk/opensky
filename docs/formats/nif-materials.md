@@ -81,6 +81,12 @@ Flag bits OpenSky uses:
 | 1 | 30 | Soft effect |
 | 1 | 31 | Z buffer test. It is in flags 1, not flags 2 |
 
+## BSWaterShaderProperty
+
+A shape with this shader is a piece of placed water, such as a pool under a waterfall. OpenSky
+does not decode the block. The shape gets the engine water-surface material, and the
+[water pass](/rendering/water.md) draws it with the `WATR` look of its cell.
+
 ## BSShaderTextureSet
 
 A uint32 count, then one SizedString per slot. Slot 0 is diffuse, slot 1 normal and gloss.

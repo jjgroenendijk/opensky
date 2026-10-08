@@ -41,13 +41,15 @@ nonisolated public struct RenderTargetMemory: Equatable, Sendable {
 
 extension Renderer {
     /// The last scene depth, the shadow cascades, the scratch targets of a split
-    /// image-space grade, and the upscaler's and interpolator's targets. The drawables belong
+    /// image-space grade, the water depth copy, and the upscaler's and interpolator's targets. The
+    /// drawables belong
     /// to the view and are not counted.
     public func renderTargetMemory() -> RenderTargetMemory {
         let owned: [(String, MTLTexture?)] = [
             ("Shadow maps", shadow.map),
             ("Grade copy", imageSpacePass.sceneCopy),
             ("Grade depth", imageSpacePass.storedDepth),
+            ("Water depth copy", waterDepth.copy),
             ("Upscale color", upscale.targets?.color),
             ("Upscale depth", upscale.targets?.depth),
             ("Upscale motion", upscale.targets?.motion),

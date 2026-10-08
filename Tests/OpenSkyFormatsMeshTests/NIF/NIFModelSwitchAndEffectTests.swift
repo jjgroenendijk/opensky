@@ -37,6 +37,19 @@ struct NIFModelSwitchAndEffectTests {
         #expect(try file.model().meshes.isEmpty)
     }
 
+    @Test func waterShaderShapeGetsTheWaterSurfaceMaterial() throws {
+        // The block body is not decoded: the cell's WATR gives the look.
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1])),
+            .init("BSTriShape", shape(shaderPropertyRef: 2)),
+            .init("BSWaterShaderProperty", Data(count: 16))
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.materials[0] == .waterSurface)
+        #expect(model.materials[0].waterSurface)
+    }
+
     @Test func effectShapeDrawsItsSourceTextureBlended() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),

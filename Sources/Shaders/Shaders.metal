@@ -834,8 +834,9 @@ fragment float4 terrainFragment(
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
-// Cell water: flat geometry, animated interference ripples in color, WATR
-// shallow/deep/reflection palette, camera-angle Fresnel, straight alpha.
+// Water: WATR colors and shading over three scrolling noise layers. The game samples
+// noise textures; OpenSky sums sine waves with the same wind, tile size, and slope
+// (docs/rendering/water.md). Scene depth, when bound, sets the see-through depth.
 
 typedef struct
 {
@@ -855,10 +856,32 @@ vertex WaterVertexOut waterVertex(
     return out;
 }
 
+// Three waves per layer, spread around the wind direction, so no single crest repeats.
+static float3 waterNormal(float2 xy, float time, constant WaterDrawUniforms &draw)
+{
+    constexpr float tau = 6.2831853;
+    float2 slope = 0.0;
+    float2 flowing = xy - draw.flowVelocity * time;
+    for (int layer = 0; layer < 3; ++layer) {
+        float tile = max(draw.uvScales[layer], 50.0);
+        float strength = draw.amplitudes[layer] * 0.08;
+        for (int wave = 0; wave < 3; ++wave) {
+            float angle = draw.windDirections[layer] + (float(wave) - 1.0) * 0.6;
+            float2 direction = float2(cos(angle), sin(angle));
+            float waveLength = tile * (1.0 - 0.3 * float(wave));
+            float phase = tau * (dot(direction, flowing) / waveLength -
+                                 draw.windSpeeds[layer] * time * (1.0 + 0.4 * float(wave)));
+            slope += direction * (strength * cos(phase));
+        }
+    }
+    return normalize(float3(-slope, 1.0));
+}
+
 fragment float4 waterFragment(
     WaterVertexOut in [[stage_in]],
     constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
-    constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]])
+    constant WaterDrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
+    depth2d<float> sceneDepth [[texture(TextureIndexWaterDepth)]])
 {
     if (debugViewActive) {
         // A water plane is flat and untextured, so the normal is the plane's
@@ -867,17 +890,45 @@ fragment float4 waterFragment(
             in.worldPosition, float3(0.0, 0.0, 1.0), float2(0.0), 0.0, uint(RenderLayerBitWater)};
         return debugViewColor(frame, surface);
     }
-    float2 phase = in.worldPosition.xy * 0.006;
-    float ripple =
-        sin(phase.x + frame.animationTime * 1.3) * cos(phase.y - frame.animationTime * 0.9);
-    float distanceMix =
-        smoothstep(1000.0, 12000.0, distance(in.worldPosition.xy, frame.cameraPosition.xy));
-    float3 base = mix(draw.shallowColor, draw.deepColor, distanceMix * 0.65 + 0.15);
-    float3 viewDirection = normalize(frame.cameraPosition - in.worldPosition);
-    float fresnel = pow(1.0 - saturate(abs(viewDirection.z)), 3.0);
-    float3 color = mix(base, draw.reflectionColor, saturate(0.18 + fresnel * 0.55));
-    color *= 0.94 + ripple * 0.06;
-    return float4(color, 0.64);
+    float3 toCamera = frame.cameraPosition - in.worldPosition;
+    float3 view = normalize(toCamera);
+    float3 normal = waterNormal(in.worldPosition.xy, frame.animationTime, draw);
+    if (view.z < 0.0) {
+        normal = -normal;
+    }
+
+    // Water column under this pixel, straight down and along the view ray. With no
+    // scene depth, a middle depth keeps the surface half see-through.
+    float columnDepth = draw.depthAndSun.z * 0.7;
+    float rayDepth = columnDepth;
+    if (draw.depthAndSun.w > 0.5) {
+        float stored = sceneDepth.read(uint2(in.position.xy));
+        float behind = draw.depthUnproject.y / (stored + draw.depthUnproject.x);
+        float facing = max(dot(-view, frame.cameraForward), 0.05);
+        float surfaceDepth = dot(-toCamera, frame.cameraForward);
+        rayDepth = max(behind - surfaceDepth, 0.0) / facing;
+        columnDepth = rayDepth * abs(view.z);
+    }
+    float deepness = smoothstep(
+        draw.depthAndSun.y, max(draw.depthAndSun.z, draw.depthAndSun.y + 1.0), columnDepth);
+    float3 body = mix(draw.shallowColor, draw.deepColor, deepness);
+
+    float baseReflect = clamp(draw.surface.y, 0.02, 1.0);
+    float fresnel = baseReflect + (1.0 - baseReflect) * pow(1.0 - saturate(dot(normal, view)), 5.0);
+    float reflection = saturate(fresnel * draw.surface.z);
+    float3 sky = mix(draw.reflectionColor, frame.fogFarColor, 0.35);
+    float3 color = mix(body * (frame.ambientColor + frame.sunColor * 0.6), sky, reflection);
+
+    float3 mirrored = reflect(-view, normal);
+    float sunAlign = saturate(dot(mirrored, -frame.sunDirection));
+    float specular = pow(sunAlign, max(draw.surface.w * 0.25, 8.0)) * draw.depthAndSun.x;
+    color += frame.sunColor * specular;
+
+    // Shallow water shows the ground through it; deep or edge-on water hides it.
+    float seeThrough = 1.0 - smoothstep(0.0, max(draw.depthAndSun.z, 1.0) * 2.0, rayDepth);
+    float bodyAlpha = mix(1.0, draw.surface.x, seeThrough);
+    float alpha = saturate(max(bodyAlpha, reflection) + specular);
+    return float4(applyFog(color, in.worldPosition, frame), alpha);
 }
 
 // CPU particle path: six vertex_id corners per instance. Camera basis comes

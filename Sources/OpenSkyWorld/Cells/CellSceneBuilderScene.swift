@@ -211,7 +211,8 @@ nonisolated extension CellSceneBuilder {
             lighting: geometry.lighting,
             pointLights: geometry.pointLights,
             grass: geometry.grass?.renderPlacements ?? [],
-            particles: particles
+            particles: particles,
+            placedWaterLook: geometry.water?.item.look ?? .fallback
         )
         let summary = makeSummary(
             found: found,

@@ -117,6 +117,7 @@ nonisolated public enum ModelCacheCodec {
         if let effect = material.effect {
             encode(effect, into: &out)
         }
+        out.bool(material.waterSurface)
     }
 
     private static func encode(_ effect: EffectShading, into out: inout CachePayloadWriter) {
@@ -156,11 +157,12 @@ nonisolated public enum ModelCacheCodec {
         let alphaBlend = try input.bool()
         let threshold = try input.array(Float.self).first
         let shading = try input.bool() ? effect(&input) : nil
+        let waterSurface = try input.bool()
         return Material(
             diffuseTexture: diffuse, normalTexture: normal, uvOffset: uvOffset, uvScale: uvScale,
             alpha: alpha, glossiness: glossiness, specularColor: specularColor,
             specularStrength: specularStrength, doubleSided: doubleSided, alphaBlend: alphaBlend,
-            alphaTestThreshold: threshold, effect: shading
+            alphaTestThreshold: threshold, effect: shading, waterSurface: waterSurface
         )
     }
 

@@ -55,7 +55,7 @@ struct AssetPayloadCodecTests {
         )
         return Model(
             meshes: [mesh, plain],
-            materials: [.fallback, cutout, foam],
+            materials: [.fallback, cutout, foam, .waterSurface],
             skippedShapeCount: 2,
             editorMarkerShapeCount: 1
         )

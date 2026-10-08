@@ -167,6 +167,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("assetCache.fastMeshLoad", .opensky, .toggle, "Fast mesh loading", 0, applied: true),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
+        row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
         row("rendering.textureStreaming", .opensky, .toggle, "Stream textures", 1, applied: true),
         row(
             "rendering.textureBudget",
@@ -240,6 +241,8 @@ nonisolated extension PlayerSettingID {
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
     /// The static scene culls in a compute pass; off culls it on the CPU.
     public static let gpuCulling = Self("rendering.gpuCulling")
+    /// Water reads the scene depth, so shallow water shows the ground below it.
+    public static let waterDepth = Self("rendering.waterDepth")
     /// Large textures keep only the mip levels the camera needs.
     public static let textureStreaming = Self("rendering.textureStreaming")
     /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.

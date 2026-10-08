@@ -64,6 +64,7 @@ struct EnvironmentPanelTests {
             panel.snowWeatherControl,
             panel.weatherTransitionsPausedControl,
             panel.precipitationEnabledControl,
+            panel.waterDepthControl,
             panel.grassEnabledControl,
             panel.grassDensityControl,
             panel.grassDistanceControl,
@@ -121,5 +122,34 @@ struct EnvironmentPanelTests {
             panel.grassEnabledControl.action, to: panel.grassEnabledControl.target
         )
         #expect(fake.grassEnabled == true)
+    }
+
+    @Test @MainActor
+    func waterDepthToggleWritesTheProviderAndShowsAsOverride() {
+        let provider = FakeWorldProviders()
+        provider.waterSurfaceCount = 3
+        let section = WaterSection()
+        _ = section.view
+        section.provider = provider
+        #expect(section.depthControl.accessibilityIdentifier() == "WaterDepthControl")
+        #expect(section.depthControl.state == .on)
+        #expect(!WaterSection.isOverridden(provider: provider))
+
+        section.depthControl.performClick(nil)
+        #expect(!provider.waterDepthEnabled)
+        #expect(WaterSection.isOverridden(provider: provider))
+
+        WaterSection.resetToDefaults(provider: provider)
+        #expect(provider.waterDepthEnabled)
+        section.refreshReadout()
+        #expect(Self.label("WaterStatsLabel", in: section.view)?.stringValue == "Water surfaces: 3")
+    }
+
+    @MainActor
+    private static func label(_ identifier: String, in view: NSView) -> NSTextField? {
+        if let label = view as? NSTextField, label.accessibilityIdentifier() == identifier {
+            return label
+        }
+        return view.subviews.lazy.compactMap { label(identifier, in: $0) }.first
     }
 }

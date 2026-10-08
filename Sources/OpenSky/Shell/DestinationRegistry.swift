@@ -76,7 +76,7 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & TerrainLODControlProviding
     & TitleMenuControlProviding & TrapControlProviding & TriggerControlProviding
     & UILabControlProviding
-    & VisualEffectControlProviding
+    & VisualEffectControlProviding & WaterControlProviding
     & WeatherControlProviding & WorldLoadReportProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
@@ -276,6 +276,7 @@ enum DestinationRegistry {
                 panel.animationProvider = context.providers
                 panel.particleProvider = context.providers
                 panel.precipitationProvider = context.providers
+                panel.waterProvider = context.providers
                 panel.grassProvider = context.providers
                 return panel
             },

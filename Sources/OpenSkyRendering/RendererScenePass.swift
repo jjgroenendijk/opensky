@@ -536,13 +536,21 @@ extension Renderer {
         let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
             ?? target
         let grade = imageSpaceGrade(descriptor: sceneTarget)
+        let waterDepth = waterReadsDepth(projection: projection)
         guard
-            let descriptor = scenePassDescriptor(sceneTarget, grade: grade),
+            let descriptor = scenePassDescriptor(
+                sceneTarget, grade: grade, storesDepth: waterDepth
+            ),
             let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
-        encodeSceneLayers(descriptor: descriptor, state: &state)
+        guard
+            encodeSceneLayers(
+                descriptor: descriptor, waterDepth: waterDepth, frameOffset: frameOffset,
+                state: &state
+            )
+        else { return false }
         if let grade {
             guard
                 encodeImageSpaceGrade(
@@ -572,11 +580,14 @@ extension Renderer {
         return true
     }
 
-    /// Sky, world geometry, effects, and the first-person arms.
+    /// Sky, world geometry, effects, and the first-person arms. False when the water
+    /// split cannot open its encoder.
     private func encodeSceneLayers(
         descriptor: MTL4RenderPassDescriptor,
+        waterDepth: Bool,
+        frameOffset: Int,
         state: inout ScenePassState
-    ) {
+    ) -> Bool {
         let encoder = state.encoder
         if scene.sky != nil, effectiveRenderLayers.contains(.sky) {
             encoder.setRenderPipelineState(skyPipeline)
@@ -592,7 +603,13 @@ extension Renderer {
         encodeSceneGeometry(state: &state)
         encodeMembranes(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
-        encodeWater(items: scene.water, state: &state)
+        // The water split replaces the encoder, so later layers use `state.encoder`.
+        guard
+            encodeWater(
+                items: scene.water, depthFrom: waterDepth ? descriptor : nil,
+                frameOffset: frameOffset, state: &state
+            )
+        else { return false }
         encodeBlendedGroups(state: &state)
         encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
         encodeParticles(
@@ -601,6 +618,7 @@ extension Renderer {
             state: &state
         )
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
-        encoder.setTriangleFillMode(.fill)
+        state.encoder.setTriangleFillMode(.fill)
+        return true
     }
 }

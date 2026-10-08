@@ -26,6 +26,8 @@ nonisolated public struct RenderMaterial: Sendable {
     public let alphaBlend: Bool
     /// Set for an effect shape, which draws unlit.
     public let effect: RenderEffectMaterial?
+    /// A water-shader shape: the water pass draws it, not a draw group.
+    public let waterSurface: Bool
 
     public init(material: Material, textureProvider: TextureProvider) {
         diffuse = textureProvider(material.diffuseTexture, .color)
@@ -38,6 +40,7 @@ nonisolated public struct RenderMaterial: Sendable {
         effect = material.effect.map {
             RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
         }
+        waterSurface = material.waterSurface
     }
 }
 
@@ -344,15 +347,20 @@ nonisolated public struct SkyParameters: Equatable, Sendable {
     public init() {}
 }
 
-/// One exterior-cell water plane. Geometry is a reusable 4096-unit quad;
-/// modelMatrix places it at CELL/WRLD water height. Colors come from WATR.
+/// One water surface: a cell plane at the CELL/WRLD water height, or a placed
+/// mesh with a water shader. `look` comes from WATR.
 nonisolated public struct WaterDrawItem: Sendable {
     public let mesh: RenderMesh
     public let modelMatrix: float4x4
-    public let shallowColor: SIMD3<Float>
-    public let deepColor: SIMD3<Float>
-    public let reflectionColor: SIMD3<Float>
+    public let look: WaterLook
     public let bounds: ModelBounds?
+
+    public init(mesh: RenderMesh, modelMatrix: float4x4, look: WaterLook, bounds: ModelBounds?) {
+        self.mesh = mesh
+        self.modelMatrix = modelMatrix
+        self.look = look
+        self.bounds = bounds
+    }
 
     public init(
         mesh: RenderMesh,
@@ -362,12 +370,13 @@ nonisolated public struct WaterDrawItem: Sendable {
         reflectionColor: SIMD3<Float>,
         bounds: ModelBounds?
     ) {
-        self.mesh = mesh
-        self.modelMatrix = modelMatrix
-        self.shallowColor = shallowColor
-        self.deepColor = deepColor
-        self.reflectionColor = reflectionColor
-        self.bounds = bounds
+        self.init(
+            mesh: mesh, modelMatrix: modelMatrix,
+            look: WaterLook(
+                shallowColor: shallowColor, deepColor: deepColor, reflectionColor: reflectionColor
+            ),
+            bounds: bounds
+        )
     }
 }
 
@@ -402,10 +411,12 @@ nonisolated public struct RenderScene: Sendable {
         lighting: RenderLighting? = nil,
         pointLights: [RenderPointLight] = [],
         grass: [GrassRenderPlacement] = [],
-        particles: [ParticlePlayback] = []
+        particles: [ParticlePlayback] = [],
+        placedWaterLook: WaterLook = .fallback
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
+        var water = water
         for placement in instances {
             let model = placement.model
             for mesh in model.meshes {
@@ -413,6 +424,13 @@ nonisolated public struct RenderScene: Sendable {
                 // construction order; guard anyway — external data upstream.
                 guard mesh.materialSlot < model.materials.count else { continue }
                 let material = model.materials[mesh.materialSlot]
+                if material.waterSurface {
+                    water.append(WaterDrawItem(
+                        mesh: mesh, modelMatrix: placement.transform * mesh.localTransform,
+                        look: placedWaterLook, bounds: placement.bounds
+                    ))
+                    continue
+                }
                 let faceMorph = placement.faceMorphs[ObjectIdentifier(mesh)]
                 let blended = DrawGroup.drawsBlended(
                     mesh: mesh, material: material, faceMorph: faceMorph
