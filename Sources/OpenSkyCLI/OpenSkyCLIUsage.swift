@@ -206,6 +206,7 @@ extension OpenSkyCLI {
             [--actor-build-budget-ms <f>]
             [--animation-budget-ms <f>] [--shadow-budget-ms <f>]
             [--audio-budget-ms <f>] [--script-budget-ms <f>]
+            [--no-lod-prebuild]
                                   Script east + north cell crossings; require
                                   settlement, unload, one build/cell, bounded
                                   physical footprint, collision-build p95,

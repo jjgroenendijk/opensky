@@ -35,6 +35,15 @@ extension CellStreamer {
     /// Requests the distant ring for the current center once the near grid has
     /// settled.
     public func requestDistantLODIfNeeded() {
+        // The first ring may start beside the near grid, so the start area does
+        // not wait for both builds in a row. It hides the whole desired grid.
+        if
+            requestedLODCenter == nil, settledLODCenter == nil,
+            runner.startDistantLODPrebuild(center: grid.center, hiddenCells: grid.desiredCells)
+        {
+            requestedLODCenter = grid.center
+            return
+        }
         // Cell + LOD work share one serial cache-confined queue. Let every
         // desired full cell reach resident/void/failed first so first-time
         // loading 100+ distant assets cannot starve the near grid.

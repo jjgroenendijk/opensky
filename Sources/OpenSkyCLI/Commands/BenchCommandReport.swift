@@ -64,6 +64,7 @@ extension BenchCommand {
                 + "\(result.finalResidentCellCount) resident, "
                 + "\(result.finalVoidCellCount) void"
         )
+        print(String(format: "[INFO] start area ready: %.0f ms", result.startAreaReadyMS))
         reportFlyMetrics(result)
         reportFlyActors(result)
         print(String(

@@ -116,7 +116,9 @@ Exit codes: 0 success, 1 failure, 2 usage error. `cell`, `screenshot`, and `rend
   failure without a reason, or a missing living system (rain, animated bones, particles, shadow
   casters, or grass).
   The first cell with actors also pays for building the resolver indexes, which shows in the
-  maximum, not the 95th percentile.
+  maximum, not the 95th percentile. It prints "start area ready" in milliseconds.
+  `--no-lod-prebuild` builds the first distant LOD ring after the near grid, as a baseline for
+  that number.
 - `bench --walk-path` uses only observed form IDs and positions. Short sidesteps avoid small
   obstacles without clipping. Its average budget is one 30 fps frame. The 95th percentile budget is
   one frame in Release and two in Debug, for synchronous offscreen scheduling. `--budget-ms` applies

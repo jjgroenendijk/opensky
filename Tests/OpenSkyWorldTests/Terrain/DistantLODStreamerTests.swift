@@ -10,6 +10,8 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
     private var readyLOD: [DistantLODBuildResult] = []
     private(set) var lodRequests: [CellCoordinate] = []
     private(set) var lodHiddenCells: [Set<CellCoordinate>] = []
+    var prebuilds = false
+    private(set) var prebuildRequests: [(CellCoordinate, Set<CellCoordinate>)] = []
 
     func enqueue(_: CellCoordinate, state _: WorldStateSnapshot) {}
 
@@ -29,6 +31,12 @@ nonisolated private final class LODManualRunner: CellBuildRunning {
     func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool {
         lodRequests.append(center)
         lodHiddenCells.append(hiddenCells)
+        return true
+    }
+
+    func startDistantLODPrebuild(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool {
+        guard prebuilds else { return false }
+        prebuildRequests.append((center, hiddenCells))
         return true
     }
 
@@ -65,6 +73,38 @@ struct DistantLODStreamerTests {
             ),
             bounds: (SIMD3(0, 0, 0), SIMD3(1, 1, 1))
         )
+    }
+
+    @Test func thePrebuiltFirstRingStartsWithTheGridAndIsNotBuiltTwice() {
+        let runner = LODManualRunner()
+        runner.prebuilds = true
+        let streamer = CellStreamer(center: Self.center, radius: 1, runner: runner) { _, _ in }
+        let position = CellGridManager.cellCenter(of: Self.center)
+        streamer.update(cameraPosition: position)
+        let cells = Set((-1 ... 1).flatMap { x in
+            (-1 ... 1).map { CellCoordinate(x: Int32(x), y: Int32($0)) }
+        })
+        #expect(runner.prebuildRequests.map(\.0) == [Self.center])
+        #expect(runner.prebuildRequests.first?.1 == cells)
+
+        runner.completeLOD(Self.center, scene: DistantLODScene(
+            renderScene: RenderScene(instances: []),
+            assets: CellAssets(),
+            blockCount: 5,
+            missingBlockCount: 0
+        ))
+        streamer.update(cameraPosition: position)
+        #expect(!streamer.startAreaReady)
+        for cell in cells {
+            runner.complete(cell, scene: cellScene())
+        }
+        for _ in cells {
+            streamer.update(cameraPosition: position)
+        }
+        #expect(streamer.startAreaReady)
+        #expect(streamer.distantLODBlockCount == 5)
+        #expect(runner.lodRequests.isEmpty)
+        #expect(runner.prebuildRequests.count == 1)
     }
 
     @Test func waitsForFullGridThenComposesLOD() {

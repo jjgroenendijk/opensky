@@ -48,12 +48,14 @@ level 4 LOD stays visible there.
 
 ## Building without holes
 
-LOD scenes are built on the same serial queue as cells:
+LOD scenes are built on the same serial queue as cells, except the first ring:
 
-1. The 5 x 5 near grid finishes first: every cell loaded, empty, or failed.
-2. Then the LOD build is queued, so first-load LOD cannot hold up near cells. At the session
-   start, the loading screen stays up until this first ring is in
-   ([loading screens](/engine/loading-screens.md)).
+1. At the session start, the first ring is built beside the near grid, in a `@concurrent`
+   function with its own mesh and texture libraries, so it never touches the build queue's
+   caches. It hides the whole desired 5 x 5 grid. The loading screen stays up until the near
+   grid has finished and this ring is in ([loading screens](/engine/loading-screens.md)).
+2. Every later ring waits for the near grid to finish (every cell loaded, empty, or failed),
+   so a LOD build cannot hold up near cells.
 3. After the first ring, a move keeps the old grid and old LOD visible.
 4. New full cells are collected off-screen.
 5. When the matching new LOD is ready, the new cells and new LOD swap in together. There is no
@@ -64,8 +66,19 @@ LOD scenes are built on the same serial queue as cells:
 Camera framing uses only full cell bounds. Otherwise distant LOD would pull the start camera out
 to see the whole world.
 
-LOD models and textures use the same caches as normal NIF and DDS files. Terrain blocks (`.btr`)
+LOD models and textures use the same caches as normal NIF and DDS files. The first ring keeps
+its own copies until a later ring replaces it. Terrain blocks (`.btr`)
 are moved to their south-west corner. Object blocks (`.bto`) are already in world space.
+
+### Start time
+
+Measured with `openskycli bench --fly-path --evict` on a Release build, game data and cache on
+the same external USB SSD (2026-10-08, `.logs/lod-prebuild/20261008T060617Z`). The first ring
+takes about 0.9 s cold and now finishes within about 1.1 s of the start, long before the near
+grid. But both builds read from the same disk, so the near grid gets slower by almost the same
+time. "Start area ready" went from 6.2 s to 6.1 s with the asset cache, and stayed at about
+6.7 s from the archives. Background priority made it worse: its throttled reads finished the
+ring last.
 
 ## Tree LOD
 

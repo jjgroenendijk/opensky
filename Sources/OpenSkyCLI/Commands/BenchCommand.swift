@@ -50,6 +50,7 @@ enum BenchCommand {
         let walkFrameBudget: WalkBenchmarkFrameBudget
         let flyPath: Bool
         let walkPath: Bool
+        let lodPrebuild: Bool
         let output: String?
         let maxFrames: Int
         let footprintCapMB: Double
@@ -153,6 +154,8 @@ enum BenchCommand {
         )
         defer { try? assets.report(fastLoader: builder.textures.fastLoader) }
         let weather = WeatherSystem(file: builder.file, worldspaceEditorID: options.worldspace)
+        let lodPrebuild = options.lodPrebuild
+            ? builder.distantLODBuilder?.prebuild(worldspace: options.worldspace) : nil
         let provider = BuilderCellSceneProvider(
             builder: builder,
             worldspaceEditorID: options.worldspace
@@ -162,6 +165,7 @@ enum BenchCommand {
         let result = try CellStreamingFlyBenchmark.run(
             renderer: renderer,
             provider: provider,
+            lodPrebuild: lodPrebuild,
             weather: weather,
             configuration: CellStreamingFlyBenchmarkConfiguration(
                 start: options.start,
@@ -345,6 +349,7 @@ extension BenchCommand {
             ),
             flyPath: flyPath,
             walkPath: walkPath,
+            lodPrebuild: !scanner.flag("--no-lod-prebuild"),
             output: scanner.option("--out"),
             maxFrames: maxFrameCount(scanner.option("--max-frames")),
             footprintCapMB: positiveDouble(

@@ -119,10 +119,16 @@ nonisolated extension CellProviderIndexes {
         )
         builder.collisionModels?.assetCache = assets.cache
         let formIDResolver = builder.formIDResolver
-        let runner = SerialCellBuildRunner(provider: BuilderCellSceneProvider(
-            builder: builder,
-            worldspaceEditorID: FirstRenderCell.worldspaceEditorID
-        ))
+        let lodPrebuild = builder.distantLODBuilder?.prebuild(
+            worldspace: FirstRenderCell.worldspaceEditorID
+        )
+        let runner = SerialCellBuildRunner(
+            provider: BuilderCellSceneProvider(
+                builder: builder,
+                worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+            ),
+            lodPrebuild: lodPrebuild
+        )
         return (runner, formIDResolver)
     }
 

@@ -220,6 +220,7 @@ struct CellStreamingFlyPathTests {
         CellStreamingFlyBenchmarkResult(
             render: OffscreenBenchResult(frameMS: [8], windowSummaries: []),
             settledFootprintsMB: [100],
+            startAreaReadyMS: 0,
             peakFootprintMB: 100,
             uniqueBuildCount: 35,
             unloadedCellCount: 5,

@@ -65,6 +65,9 @@ nonisolated public struct ActorCellReport: Equatable, Sendable {
 nonisolated public struct CellStreamingFlyBenchmarkResult: Sendable {
     public let render: OffscreenBenchResult
     public let settledFootprintsMB: [Double]
+    /// From the first streamer update to the start area being ready, as the loading
+    /// screen waits for it: near grid resolved and its distant ring in.
+    public let startAreaReadyMS: Double
     public let peakFootprintMB: Double
     public let uniqueBuildCount: Int
     public let unloadedCellCount: Int
@@ -154,6 +157,7 @@ public enum CellStreamingFlyBenchmark {
     public static func run(
         renderer: Renderer,
         provider: sending any CellSceneProvider,
+        lodPrebuild: DistantLODPrebuild? = nil,
         weather: WeatherSystem?,
         configuration: CellStreamingFlyBenchmarkConfiguration
     ) throws -> CellStreamingFlyBenchmarkResult {
@@ -169,6 +173,7 @@ public enum CellStreamingFlyBenchmark {
         let driver = Driver(
             renderer: renderer,
             provider: provider,
+            lodPrebuild: lodPrebuild,
             configuration: configuration
         )
         let render = try renderer.pumpOffscreen(
@@ -197,15 +202,18 @@ public enum CellStreamingFlyBenchmark {
         private var environmentEvidence = LivingEnvironmentFlyEvidence()
         private var initialResidents = Set<CellCoordinate>()
         private var currentPosition: SIMD3<Float>
+        private var firstUpdate: ContinuousClock.Instant?
+        private var startAreaReadyMS = 0.0
 
         init(
             renderer: Renderer,
             provider: sending any CellSceneProvider,
+            lodPrebuild: DistantLODPrebuild?,
             configuration: CellStreamingFlyBenchmarkConfiguration
         ) {
             self.renderer = renderer
             self.configuration = configuration
-            runner = SerialCellBuildRunner(provider: provider)
+            runner = SerialCellBuildRunner(provider: provider, lodPrebuild: lodPrebuild)
             swapError = SceneSwapErrorBox()
             streamer = CellStreamer(
                 center: configuration.start,
@@ -239,7 +247,15 @@ public enum CellStreamingFlyBenchmark {
                 _ = try sampleFootprint()
                 return false
             }
+            if firstUpdate == nil {
+                firstUpdate = .now
+            }
             streamer.update(cameraPosition: currentPosition)
+            if legIndex == -1, startAreaReadyMS == 0, streamer.startAreaReady, let firstUpdate {
+                let elapsed = ContinuousClock.now - firstUpdate
+                startAreaReadyMS = Double(elapsed.components.seconds) * 1000
+                    + Double(elapsed.components.attoseconds) / 1e15
+            }
             let footprint = try sampleFootprint()
             guard isSettled(streamer) else { return false }
             settledFootprints.append(footprint)
@@ -251,6 +267,14 @@ public enum CellStreamingFlyBenchmark {
             sampleIndex = 0
             moving = true
             return false
+        }
+
+        private func validatedUnloadCount() throws -> Int {
+            let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
+            guard unloaded > 0 else {
+                throw CellStreamingFlyBenchmarkError.noCellsUnloaded
+            }
+            return unloaded
         }
 
         private func sampleFootprint() throws -> Double {
@@ -276,14 +300,12 @@ public enum CellStreamingFlyBenchmark {
             let environment = try environmentEvidence.validated(
                 animatedActorCount: actors.animated
             )
-            let unloaded = initialResidents.subtracting(streamer.residentCoordinates).count
-            guard unloaded > 0 else {
-                throw CellStreamingFlyBenchmarkError.noCellsUnloaded
-            }
+            let unloaded = try validatedUnloadCount()
             try validatePlateau()
             return CellStreamingFlyBenchmarkResult(
                 render: render,
                 settledFootprintsMB: settledFootprints,
+                startAreaReadyMS: startAreaReadyMS,
                 peakFootprintMB: peakFootprint,
                 uniqueBuildCount: counts.count,
                 unloadedCellCount: unloaded,
