@@ -53,6 +53,9 @@ nonisolated public struct CellSceneComposition {
     /// Per-reference draw data detached from the placing cell's bulk scene.
     /// It can therefore outlive that cell while its occupied cell is resident.
     private var dynamicDraws: [UInt32: DynamicDraw] = [:]
+    /// Each cell's scene without the references it hands to dynamic draws, kept with
+    /// that reference set, so a recompose does not filter every cell again.
+    private var detachedScenes: [CellCoordinate: (detached: Set<UInt32>, scene: RenderScene)] = [:]
 
     public var cellCount: Int {
         cells.count
@@ -78,12 +81,16 @@ nonisolated public struct CellSceneComposition {
                 scene: scene.renderScene.dynamicReferenceScene(reference)
             )
         }
-        return cells.updateValue(scene, forKey: coordinate)
+        detachedScenes.removeValue(forKey: coordinate)
+        let replaced = cells.updateValue(scene, forKey: coordinate)
+        refreshDetachedScenes()
+        return replaced
     }
 
     @discardableResult
     public mutating func removeCell(at coordinate: CellCoordinate) -> CellScene? {
         let removed = cells.removeValue(forKey: coordinate)
+        detachedScenes.removeValue(forKey: coordinate)
         for reference in dynamicDraws.keys.sorted() {
             guard var draw = dynamicDraws[reference] else { continue }
             if draw.occupiedCell == coordinate {
@@ -95,6 +102,7 @@ nonisolated public struct CellSceneComposition {
                 dynamicDraws[reference] = draw
             }
         }
+        refreshDetachedScenes()
         return removed
     }
 
@@ -123,13 +131,11 @@ nonisolated public struct CellSceneComposition {
         let ordered = cells.sorted { lhs, rhs in
             (lhs.key.x, lhs.key.y) < (rhs.key.x, rhs.key.y)
         }
+        let draws = dynamicDraws.sorted { $0.key < $1.key }
         var scenes: [RenderScene] = []
         for (coordinate, cell) in ordered {
-            let detached = Set(dynamicDraws.compactMap { reference, draw in
-                draw.placingCell == coordinate ? reference : nil
-            })
-            scenes.append(cell.renderScene.excludingDynamicReferences(detached))
-            scenes.append(contentsOf: dynamicDraws.sorted { $0.key < $1.key }.compactMap {
+            scenes.append(detachedScenes[coordinate]?.scene ?? cell.renderScene)
+            scenes.append(contentsOf: draws.compactMap {
                 $0.value.occupiedCell == coordinate ? $0.value.scene : nil
             })
         }
@@ -341,5 +347,24 @@ nonisolated public struct CellSceneComposition {
             )
         }
         return result
+    }
+}
+
+nonisolated extension CellSceneComposition {
+    /// Rebuilds only the cells whose scene or detached reference set changed.
+    private mutating func refreshDetachedScenes() {
+        var detachedByCell: [CellCoordinate: Set<UInt32>] = [:]
+        for (reference, draw) in dynamicDraws {
+            detachedByCell[draw.placingCell, default: []].insert(reference)
+        }
+        for (coordinate, cell) in cells {
+            let detached = detachedByCell[coordinate] ?? []
+            if detachedScenes[coordinate]?.detached == detached {
+                continue
+            }
+            let scene = detached.isEmpty
+                ? cell.renderScene : cell.renderScene.excludingDynamicReferences(detached)
+            detachedScenes[coordinate] = (detached, scene)
+        }
     }
 }
