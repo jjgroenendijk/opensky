@@ -177,6 +177,8 @@ long explanation. Keep code comments short.
   abbreviate them.
 - No emojis. Where a severity marker is needed use bracket tags: `[ERROR]`, `[WARNING]`,
   `[INFO]`. Headings are unnumbered.
+- British spelling: "colour", "behaviour", "optimise". New names in our code follow it too.
+  Names from Apple APIs, Havok, and the game keep their own spelling (`NSColor`).
 
 Code documents itself through names and types. A comment holds only the why that the code
 cannot show. `docs/` holds only what neither the code nor a short comment can hold, such as
