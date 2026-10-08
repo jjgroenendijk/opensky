@@ -25,7 +25,7 @@ extension PapyrusWorldRuntime {
         }
         let handle = objectHandle(for: activator)
         var queued = 0
-        for key in instancesByKey.keys.sorted() where key.reference == target {
+        for key in instanceKeys(on: target) {
             enqueue(PapyrusScriptEvent(
                 target: key,
                 functionName: Self.onActivateEventName,

@@ -17,12 +17,18 @@ public final class PapyrusRuntime {
     public let tally: PapyrusTally
     public let coercion = PapyrusCoercion()
 
-    public var scripts: [String: PexObject] = [:]
+    public var scripts: [String: PexObject] = [:] {
+        didSet { scriptChains.removeAll() }
+    }
+
     public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
     /// Another script instance on the same form that is of the named type. The game keeps
     /// all scripts of one form in one object, so a cast between them succeeds.
     public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
 
+    /// Each script's inheritance chain by folded name. A new script can complete a
+    /// chain that stopped at a missing parent, so any change to `scripts` clears it.
+    private var scriptChains: [String: [PexObject]] = [:]
     private var nextHandleValue: UInt64 = 1
     private var nextSuspensionValue: UInt64 = 1
 
@@ -133,6 +139,16 @@ public final class PapyrusRuntime {
     }
 
     public func scriptChain(from scriptName: String) throws(PapyrusFault) -> [PexObject] {
+        let key = Self.key(scriptName)
+        if let cached = scriptChains[key] {
+            return cached
+        }
+        let chain = try uncachedScriptChain(from: scriptName)
+        scriptChains[key] = chain
+        return chain
+    }
+
+    private func uncachedScriptChain(from scriptName: String) throws(PapyrusFault) -> [PexObject] {
         var result: [PexObject] = []
         var visited: Set<String> = []
         var currentName = scriptName
@@ -200,7 +216,7 @@ public final class PapyrusRuntime {
     }
 
     nonisolated public static func matches(_ left: String, _ right: String) -> Bool {
-        key(left) == key(right)
+        PapyrusName.matches(left, right)
     }
 
     private func allocateHandle() -> PapyrusObjectHandle {
