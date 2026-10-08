@@ -142,8 +142,16 @@ public final class Renderer: NSObject {
     public var dialogueCameraOverlayEnabled = false
     /// How far simulated bodies moved since their cells were built, by REFR FormID.
     /// Published once per frame by the physics tick; empty without physics.
-    public var dynamicInstanceDeltas: [UInt32: float4x4] = [:]
-    public var npcInstanceDeltas: [UInt32: float4x4] = [:]
+    public var dynamicInstanceDeltas: [UInt32: float4x4] = [:] {
+        didSet { mergeInstanceDeltas() }
+    }
+
+    public var npcInstanceDeltas: [UInt32: float4x4] = [:] {
+        didSet { mergeInstanceDeltas() }
+    }
+
+    /// Both maps in one, an NPC winning a shared key, so a drawn instance costs one lookup.
+    var instanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public var currentResolvedWeather: ResolvedWeather?
     /// The post-process values and running modifiers the composite pass applies.
