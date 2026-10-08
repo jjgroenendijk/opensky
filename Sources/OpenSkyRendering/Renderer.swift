@@ -114,6 +114,8 @@ public final class Renderer: NSObject {
         }
     }
 
+    /// Joined once per frame, before the first pass.
+    var frameDrawGroups = FrameDrawGroups()
     /// Nearest point lights by lighting center, valid for the current scene.
     var pointLightPicks: [SIMD3<Float>: PointLightPick] = [:]
     static let pointLightPickCacheLimit = 16384

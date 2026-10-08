@@ -41,6 +41,7 @@ extension Renderer: MTKViewDelegate {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        refreshFrameDrawGroups()
         encodeTextureStreaming(target: passDescriptor)
         encodeRayTracedShadows()
         let interpolated = interpolatedDrawable(layer: metalLayer, matching: passDescriptor)

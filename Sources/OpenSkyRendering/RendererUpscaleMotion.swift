@@ -58,7 +58,10 @@ extension Renderer {
         uniforms: UInt64
     ) -> Bool {
         let groups = upscale.objectMotionEnabled
-            ? (opaqueDrawGroups + alphaTestedDrawGroups).filter(\.isMoving) : []
+            ?
+            (frameDrawGroups.opaque.filter(\.isMoving) + frameDrawGroups.alphaTested
+                .filter(\.isMoving))
+            : []
         var models: [MotionKey: float4x4] = [:]
         defer { upscale.previousModels = models }
         let count = groups.reduce(0) { $0 + $1.instances.count }

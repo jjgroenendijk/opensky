@@ -11,37 +11,54 @@ extension Renderer {
     /// Order is for stable grouping only; depth decides visibility. The first-person arms
     /// are drawn separately (`RendererFirstPersonArms.swift`).
     public var opaqueDrawGroups: [DrawGroup] {
-        guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
-            return scene.opaque + effects.scene.opaque + (effects.loadingCover?.opaque ?? [])
-        }
-        return scene.opaque + playerBody.render.opaque + effects.scene.opaque
-            + (effects.loadingCover?.opaque ?? [])
+        let body = isPlayerBodyVisible ? frameDriver?.playerBodyRig?.render.opaque : nil
+        return Self.joined(
+            scene.opaque, body ?? [], effects.scene.opaque, effects.loadingCover?.opaque ?? []
+        )
     }
 
     public var alphaTestedDrawGroups: [DrawGroup] {
-        guard let playerBody = frameDriver?.playerBodyRig, isPlayerBodyVisible else {
-            return scene.alphaTested + effects.scene.alphaTested
-                + (effects.loadingCover?.alphaTested ?? [])
-        }
-        return scene.alphaTested + playerBody.render.alphaTested + effects.scene.alphaTested
-            + (effects.loadingCover?.alphaTested ?? [])
+        let body = isPlayerBodyVisible ? frameDriver?.playerBodyRig?.render.alphaTested : nil
+        return Self.joined(
+            scene.alphaTested, body ?? [], effects.scene.alphaTested,
+            effects.loadingCover?.alphaTested ?? []
+        )
     }
 
     /// What the shadow pass rasterizes: the scene plus the player's body in
     /// every mode a player exists in, whether or not the eye can see it. The
     /// reasoning is on `PlayerRigVisibility`.
     public var shadowOpaqueDrawGroups: [DrawGroup] {
-        guard let playerBody = frameDriver?.playerBodyRig, rigVisibility.castsBodyShadow else {
-            return scene.opaque
-        }
-        return scene.opaque + playerBody.render.opaque
+        let body = rigVisibility.castsBodyShadow ? frameDriver?.playerBodyRig?.render.opaque : nil
+        return Self.joined(scene.opaque, body ?? [])
     }
 
     public var shadowAlphaTestedDrawGroups: [DrawGroup] {
-        guard let playerBody = frameDriver?.playerBodyRig, rigVisibility.castsBodyShadow else {
-            return scene.alphaTested
+        let body = rigVisibility.castsBodyShadow
+            ? frameDriver?.playerBodyRig?.render.alphaTested : nil
+        return Self.joined(scene.alphaTested, body ?? [])
+    }
+
+    /// Joins the lists once per frame, before the first pass reads them. The shadow
+    /// pass reads them once per cascade, so joining on each read copied the scene lists.
+    func refreshFrameDrawGroups() {
+        frameDrawGroups = FrameDrawGroups(
+            opaque: opaqueDrawGroups,
+            alphaTested: alphaTestedDrawGroups,
+            shadowOpaque: shadowOpaqueDrawGroups,
+            shadowAlphaTested: shadowAlphaTestedDrawGroups
+        )
+    }
+
+    /// The scene list shares its storage when nothing joins it.
+    private static func joined(_ base: [DrawGroup], _ extras: [DrawGroup]...) -> [DrawGroup] {
+        guard extras.contains(where: { !$0.isEmpty }) else { return base }
+        var result = base
+        result.reserveCapacity(base.count + extras.reduce(0) { $0 + $1.count })
+        for extra in extras {
+            result += extra
         }
-        return scene.alphaTested + playerBody.render.alphaTested
+        return result
     }
 
     /// Whether the third-person body is drawn to the camera this frame.
@@ -59,4 +76,12 @@ extension Renderer {
                 + effects.scene.instanceCount
         )
     }
+}
+
+/// The draw-group lists of one frame, as `refreshFrameDrawGroups()` joined them.
+struct FrameDrawGroups {
+    var opaque: [DrawGroup] = []
+    var alphaTested: [DrawGroup] = []
+    var shadowOpaque: [DrawGroup] = []
+    var shadowAlphaTested: [DrawGroup] = []
 }

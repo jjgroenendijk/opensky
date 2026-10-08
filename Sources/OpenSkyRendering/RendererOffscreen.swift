@@ -215,6 +215,7 @@ extension Renderer {
         let allocator = commandAllocators[slot]
         allocator.reset()
         commandBuffer.beginCommandBuffer(allocator: allocator)
+        refreshFrameDrawGroups()
         encodeTextureStreaming(target: descriptor)
         encodeRayTracedShadows()
         let encodeStart = DispatchTime.now().uptimeNanoseconds

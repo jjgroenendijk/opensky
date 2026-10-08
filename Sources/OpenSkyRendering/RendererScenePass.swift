@@ -454,7 +454,7 @@ extension Renderer {
         state.cullList = .opaque
         let rayTraced = rayTracedPipelines
         encode(
-            groups: opaqueDrawGroups,
+            groups: frameDrawGroups.opaque,
             staticPipeline: rayTraced?.opaque ?? opaquePipeline,
             skinnedPipeline: skinnedOpaquePipeline,
             morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
@@ -463,7 +463,7 @@ extension Renderer {
         encodeTerrain(items: scene.terrain, state: &state)
         state.cullList = .alphaTested
         encode(
-            groups: alphaTestedDrawGroups,
+            groups: frameDrawGroups.alphaTested,
             staticPipeline: rayTraced?.alphaTest ?? alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
