@@ -109,7 +109,9 @@ nonisolated public enum AssetCacheReadout {
 
     /// `Fast load: 412 textures, 380 MiB`, the meshes, then the last cell load.
     public static func fastLoadLines(_ stats: FastTextureLoadStats) -> [String] {
-        guard stats.batches > 0 else { return ["Fast load: no cell loaded yet"] }
+        guard stats.batches > 0 || stats.externalSkips > 0 else {
+            return ["Fast load: no cell loaded yet"]
+        }
         var lines = [
             "Fast load: \(stats.textures) textures, \(stats.bytes >> 20) MiB",
             "Meshes: \(stats.meshes), \(stats.meshBytes >> 20) MiB",
@@ -118,6 +120,9 @@ nonisolated public enum AssetCacheReadout {
         ]
         if stats.fallbacks > 0 {
             lines.append("Fallbacks: \(stats.fallbacks) loaded on the CPU")
+        }
+        if stats.externalSkips > 0 {
+            lines.append("External disk: \(stats.externalSkips) loaded on the CPU")
         }
         return lines
     }

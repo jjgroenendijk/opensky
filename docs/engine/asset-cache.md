@@ -241,6 +241,16 @@ scratch buffer when its read ends. Median of three cold `bench --fly-path --fast
 the queue's allocator, 1189 MB with ours, and 1186 MB for the CPU upload. The frames until
 the stream settles did not change (391 and 393).
 
+On a slow external disk this does not hold. More reads wait at once, so the queue asks for
+more scratch buffers. The device keeps the memory of every scratch buffer the queue used, even
+after our allocator released it: `currentAllocatedSize` grows by the total scratch size, and
+the benchmark block ended 377 MiB above the CPU upload. Neither a cap on reads in flight, a new
+queue per batch, private textures, nor scratch memory that OpenSky owns changed this. On that
+disk the fast loader also saved no time: 4.62 s cold against 4.60 s for the CPU upload
+(2026-10-08, USB SSD, run directories under `.logs/fast-load-*`). So the fast loader reads
+only from a cache folder on an internal volume. From an external volume each texture takes
+the CPU path, and World > Asset Cache counts it under "External disk".
+
 Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as
 slow warm.

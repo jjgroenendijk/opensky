@@ -4,6 +4,7 @@
 // parse failure here reproduces what later animation/skeleton loading sees.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
@@ -15,9 +16,8 @@ enum HKXCommand {
     /// entries on the master behavior graph.
     private static let nameListLimit = 12
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let key = try scanner.positional("key")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: HKXArguments) throws {
+        let key = arguments.key
         let file: HKXFile
         do {
             file = try HKXFile(data: context.makeFileSystem().contents(forPath: key))

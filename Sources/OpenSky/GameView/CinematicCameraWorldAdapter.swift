@@ -102,7 +102,7 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         }
         let targetDistance = target.flatMap { cinematicAnchor(of: $0) }
             .map { simd_distance($0.position, anchor.position) }
-        return CameraShotFacts.resolution(
+        var facts = CameraShotFacts.resolution(
             weapon: attacker == .player ? game.combat.playerWeapon() : nil,
             targetBase: targetBase,
             targetDistance: targetDistance,
@@ -114,6 +114,8 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
                 collisionQuery: query
             ).distance
         }
+        facts.playerIsFirstPerson = renderer.movementMode == .walk
+        return facts
     }
 
     func cameraTrack(model: String) -> NIFCameraTrack? {

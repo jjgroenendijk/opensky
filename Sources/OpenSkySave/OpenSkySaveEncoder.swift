@@ -110,6 +110,7 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writePlayerProgress(entries, into: &writer)
         writeCrimeLedgers(entries, into: &writer)
         writeStolenGoods(entries, into: &writer)
+        OpenSkySaveTemperedItems.write(entries, into: &writer)
         writeViolentCrimeGold(entries, into: &writer)
         writeHarvests(entries, into: &writer)
         writeLocks(entries, into: &writer)

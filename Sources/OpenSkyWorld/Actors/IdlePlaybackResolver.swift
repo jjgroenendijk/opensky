@@ -107,13 +107,28 @@ nonisolated public final class IdlePlaybackResolver {
                 prop: prop(payloads: clip.payloads, project: project)
             )
         }
-        let named = Self.normalized(project + "animations\\" + event + ".hkx")
-        guard files.exists(named) else {
+        guard
+            let named = Self.namedClipPaths(event: event, project: project)
+                .first(where: files.exists)
+        else {
             return IdlePlaybackPlan(
                 event: event, path: .none(.eventNotInGraph), clipPath: nil, prop: .none
             )
         }
         return IdlePlaybackPlan(event: event, path: .namedClip, clipPath: named, prop: .none)
+    }
+
+    /// Clips named after an event no transition takes. The second form is the clip of the
+    /// `MT_<stem>` state in `idlebehavior.hkx`, for events such as `idle_A_sway_fastTrans`.
+    static func namedClipPaths(event: String, project: String) -> [String] {
+        var stem = event.lowercased()
+        if stem.hasSuffix("trans") {
+            stem.removeLast("trans".count)
+        }
+        return [
+            normalized(project + "animations\\" + event + ".hkx"),
+            normalized(project + "animations\\male\\mt_" + stem + ".hkx")
+        ]
     }
 
     /// The first payload that names an ANIO record.

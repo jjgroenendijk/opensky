@@ -3,6 +3,7 @@
 // docs/formats/explosions.md, section "Runtime".
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd

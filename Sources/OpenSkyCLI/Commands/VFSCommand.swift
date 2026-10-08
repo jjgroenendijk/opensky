@@ -5,28 +5,16 @@
 // data, their disk — nothing lands in the repo (AGENTS.md Legal & IP).
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyGameData
 
 enum VFSCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let subcommand = try scanner.positional("ls|cat")
-        switch subcommand {
-        case "ls":
-            try list(context: context, scanner: &scanner)
-        case "cat":
-            try cat(context: context, scanner: &scanner)
-        default:
-            throw CLIError.usage("unknown vfs subcommand: \(subcommand)")
-        }
-    }
-
     /// Prints "path<tab>archive" per entry. Optional pattern: fnmatch(3)
     /// wildcards (* ? [...]) when present, else substring match. Patterns
     /// are matched against canonical keys (lowercase, backslashes); "/" in
     /// the pattern is accepted and converted.
-    private static func list(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let pattern = scanner.next()
-        try scanner.finish()
+    static func list(context: CLIContext, arguments: VFSArguments.List) throws {
+        let pattern = arguments.pattern
         let entries = context.makeFileSystem().archiveEntries()
         guard !entries.isEmpty else {
             throw CLIError.failure("no archive entries — no readable .bsa in Data/?")
@@ -49,10 +37,9 @@ enum VFSCommand {
         return fnmatch(canonical, path, FNM_NOESCAPE) == 0
     }
 
-    private static func cat(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let output = try scanner.requiredOption("--out")
-        let key = try scanner.positional("key")
-        try scanner.finish()
+    static func cat(context: CLIContext, arguments: VFSArguments.Cat) throws {
+        let output = arguments.out
+        let key = arguments.key
         let data: Data
         do {
             data = try context.makeFileSystem().contents(forPath: key)

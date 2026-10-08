@@ -78,6 +78,7 @@ final class StoryWorldAdapter {
         game.magic.storyEvents = self
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
+        game.scripts.bridge?.trapWorld = game.effectsWorld
         game.scripts.bridge?.logEntryEvaluator = { [weak self] in
             ConditionEvaluator(
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard

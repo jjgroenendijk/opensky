@@ -8,6 +8,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyAssetCache
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyMenus
@@ -28,8 +29,8 @@ enum RenderCommand {
         (-2 ... 2).map { x in (Int32(x), Int32(y)) }
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let options = try parseOptions(&scanner)
+    static func run(context: CLIContext, arguments: ScreenshotArguments) throws {
+        let options = try parseOptions(arguments)
 
         guard
             let device = MTLCreateSystemDefaultDevice(),

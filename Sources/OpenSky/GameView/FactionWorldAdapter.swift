@@ -9,7 +9,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyWorld
-import OpenSkyWorldState
 
 /// Answers `FactionWorld` from the session systems `game` owns.
 final class FactionWorldAdapter {

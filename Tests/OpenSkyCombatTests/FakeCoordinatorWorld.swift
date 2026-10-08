@@ -95,6 +95,10 @@ final class FakeCoordinatorWorld: CombatWorld {
         nil
     }
 
+    func temperLevel(of _: FormID) -> Int32 {
+        0
+    }
+
     func hasReadiedSpell(in _: SpellHand) -> Bool {
         false
     }

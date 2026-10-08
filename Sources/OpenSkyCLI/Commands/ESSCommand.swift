@@ -2,27 +2,31 @@
 // root the inspection also runs the import against the current load order.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsESS
 import OpenSkyGameData
 import OpenSkySave
 
 enum ESSCommand {
-    static func run(dataRoot: String?, scanner: inout ArgumentScanner) async throws {
-        let target = try scanner.positional("<save.ess> or list <folder>")
+    static func run(arguments: ESSArguments) async throws {
+        let target = arguments.target
         if target == "list" {
-            let folder = try scanner.positional("<folder>")
-            try scanner.finish()
+            guard let folder = arguments.folder, !arguments.offline else {
+                throw CLIError.usage("ess list takes one <folder>")
+            }
             try list(URL(filePath: folder))
             return
         }
-        let offline = scanner.flag("--offline")
-        try scanner.finish()
+        if let folder = arguments.folder {
+            throw CLIError.usage("unexpected argument: \(folder)")
+        }
+        let offline = arguments.offline
         let file = try await ESSSaveFolder.readFile(at: URL(filePath: target))
         guard !offline else {
             print(ESSInspection(file: file, currentPlugins: []).text)
             return
         }
-        let context = try CLIContext.resolve(dataRootOverride: dataRoot)
+        let context = try CLIContext.resolve(dataRootOverride: arguments.global.dataRoot)
         let records = await ESSPluginRecords(index: ESSPluginIndex.load(
             for: file,
             root: context.root

@@ -149,7 +149,8 @@ public final class CombatCoordinator {
         return equipment.equipped(on: .player).map { item in
             if let weapon = items.weapon(item) {
                 let enchantment = world?.enchantmentProfile(of: item)
-                return .weapon(MeleeWeaponProfile(weapon: weapon, enchantment: enchantment))
+                return .weapon(MeleeWeaponProfile(weapon: weapon, enchantment: enchantment)
+                    .tempered(level: world?.temperLevel(of: item) ?? 0))
             }
             return equipment.occupancy(of: item).slots.contains(.shield) ? .shield : .other
         }

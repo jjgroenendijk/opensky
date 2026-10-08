@@ -93,6 +93,9 @@ has no `OTHER_LDFLAGS`. Change the settings in `Package.swift` and the xcconfig 
 ## Modules
 
 ```text
+OpenSkyImageKernels       CPU pixel loops: BC block decode, tint paint, mip halving; built
+                          optimized in Debug too
+  ^
 OpenSkyFormatsCore        binary readers, compression, geometry values, BSA, string tables
   ^
 OpenSkyFormatsESM         plugin records          OpenSkyFormatsMesh    NIF, TRI, LOD, DDS
@@ -153,10 +156,23 @@ OpenSkyProgression        perk, skill, and level runtimes, perk entry-point eval
 OpenSkyPreview            asset catalog, record text dumps, reference inspector (composition)
   ^
 OpenSky app, OpenSkyCLI   composition roots
+
+OpenSkyCLIArguments       the openskycli command line; only the CLI links it
 ```
 
 The format families depend only on `OpenSkyFormatsCore`, never on each other. A parser change
-rebuilds its family and the modules that import it, not every format.
+rebuilds its family and the modules that import it, not every format. `OpenSkyFormatsMesh` also
+uses `OpenSkyImageKernels` for its CPU DDS decode.
+
+`OpenSkyImageKernels` holds pixel loops only. `Package.swift` builds it with `-O` in Debug as
+well, because a Debug build of these loops is about 100 times slower: one 1024 x 1024 BC1 face
+took about 1.2 seconds, and a face with many tint layers held up a save load for minutes. A
+module that needs such a loop moves it here instead of turning on optimization for itself.
+
+`OpenSkyCLIArguments` declares every `openskycli` command and option with swift-argument-parser
+([decision](/decisions/swift-argument-parser.md)). It sits in the lowest layer and imports no
+engine module. It has its own product, so the app does not link it. It keeps the nonisolated
+default, because the parser's property wrappers do not build in a main-actor module.
 
 Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared with Metal
 ([build system](/tools/build-system.md)). `CFFmpeg` is the clang module over the vendored ffmpeg

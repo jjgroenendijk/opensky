@@ -1,6 +1,7 @@
 // Race menu face values to chargen TRI weights, vertex positions, and tints.
 
 import OpenSkyFormatsMesh
+import OpenSkyImageKernels
 @testable import OpenSkyWorld
 import Testing
 

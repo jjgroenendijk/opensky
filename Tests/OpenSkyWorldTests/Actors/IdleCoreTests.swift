@@ -82,6 +82,15 @@ struct IdleCoreTests {
         #expect(IdlePlaybackResolver.behaviorPath("notes.txt", project: "") == nil)
     }
 
+    @Test func aTransEventFallsBackToTheIdleBehaviorClipOfItsStem() {
+        #expect(IdlePlaybackResolver.namedClipPaths(
+            event: "idle_A_sway_fastTrans", project: "meshes\\actors\\character\\"
+        ) == [
+            "meshes\\actors\\character\\animations\\idle_a_sway_fasttrans.hkx",
+            "meshes\\actors\\character\\animations\\male\\mt_idle_a_sway_fast.hkx"
+        ])
+    }
+
     @Test func aPropBoneWithoutItsTagFindsTheTaggedSkeletonBone() {
         let bones = ["NPC Root [Root]", "NPC R Hand [RHnd]", "AnimObjectR"]
         #expect(IdlePlaybackResolver.skeletonBone("NPC R Hand", in: bones) == "NPC R Hand [RHnd]")

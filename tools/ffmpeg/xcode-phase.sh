@@ -41,7 +41,7 @@ mkdir -p "$dest"
 
 # The file list holds the resolved, version-numbered dylibs, which is also the only form
 # the build sandbox grants read access to. Each is embedded under its own install name
-# (@rpath/libavcodec.62.dylib), which is what the executable's load command asks for.
+# (@rpath/libavcodec.63.dylib), which is what the executable's load command asks for.
 list="$prefix/embed-inputs.xcfilelist"
 [ -f "$list" ] || {
   echo "error: $list missing — run 'make ffmpeg' to rebuild the vendored ffmpeg." >&2

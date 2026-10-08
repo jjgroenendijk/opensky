@@ -259,6 +259,9 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     @discardableResult
     func enqueueDistantLOD(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
     func drainCompletedDistantLOD() -> [DistantLODBuildResult]
+    /// Builds the first ring beside the cell builds, at most once; its result
+    /// arrives through `drainCompletedDistantLOD`. False when the runner cannot.
+    func startDistantLODPrebuild(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
     func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot)
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
     func enqueueActorProp(_ request: ActorPropRequest)
@@ -276,6 +279,13 @@ nonisolated extension CellBuildRunning {
 
     public func drainCompletedDistantLOD() -> [DistantLODBuildResult] {
         []
+    }
+
+    public func startDistantLODPrebuild(
+        center _: CellCoordinate,
+        hiddenCells _: Set<CellCoordinate>
+    ) -> Bool {
+        false
     }
 
     public func enqueueDoorTransition(from _: FormID, state _: WorldStateSnapshot) {}
@@ -301,6 +311,7 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         /// queue depth to the grid size even if the streamer has a bug.
         var pending: Set<CellCoordinate> = []
         var pendingLOD: Set<CellCoordinate> = []
+        var prebuildStarted = false
         var pendingDoorTransitions: Set<FormID> = []
         /// The newest rig generation per kind (first person or not). Older queued
         /// requests are skipped, because their result would be dropped anyway.
@@ -317,13 +328,16 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
 
     let provider: Mutex<any CellSceneProvider>
     let queue: DispatchQueue
+    private let lodPrebuild: DistantLODPrebuild?
     private let bookkeeping = Mutex(Bookkeeping())
     private let results = Mutex(Results())
 
     public init(
         provider: sending any CellSceneProvider,
+        lodPrebuild: DistantLODPrebuild? = nil,
         label: String = "nl.jjgroenendijk.opensky.cellbuild"
     ) {
+        self.lodPrebuild = lodPrebuild
         self.provider = Mutex(provider)
         queue = DispatchQueue(label: label, qos: .utility)
     }
@@ -393,6 +407,26 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
             let result = provider.withLock { provider in
                 Result { try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells) }
             }
+            let entry = DistantLODBuildResult(center: center, result: result)
+            results.withLock { $0.distantLOD.append(entry) }
+        }
+        return true
+    }
+
+    public func startDistantLODPrebuild(
+        center: CellCoordinate,
+        hiddenCells: Set<CellCoordinate>
+    ) -> Bool {
+        guard let lodPrebuild else { return false }
+        let isNew = bookkeeping.withLock { state in
+            guard !state.prebuildStarted else { return false }
+            state.prebuildStarted = true
+            return state.pendingLOD.insert(center).inserted
+        }
+        guard isNew else { return false }
+        // Not background priority: its throttled reads made the ring arrive last.
+        Task { [self] in
+            let result = await lodPrebuild.build(center: center, hiddenCells: hiddenCells)
             let entry = DistantLODBuildResult(center: center, result: result)
             results.withLock { $0.distantLOD.append(entry) }
         }

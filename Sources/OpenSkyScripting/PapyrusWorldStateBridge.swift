@@ -116,6 +116,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var story: (any PapyrusStoryBridge)?
     /// The race menu, map markers, fast travel, and the player's identity.
     public weak var menus: (any PapyrusMenuBridge)?
+    /// Hazards and explosions that `PlaceAtMe` places.
+    public weak var trapWorld: (any PapyrusTrapWorldBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
 

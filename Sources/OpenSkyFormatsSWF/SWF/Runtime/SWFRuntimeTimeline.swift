@@ -20,10 +20,12 @@ nonisolated extension SWFMovieRuntime {
             return
         }
         let target = min(max(0, index), frames.count - 1)
-        if target == node.currentFrame + 1 {
-            apply(frame: frames[target], to: node)
-        } else if target != node.currentFrame {
-            reconcile(to: target, of: node, frames: frames)
+        inPlacementBatch {
+            if target == node.currentFrame + 1 {
+                apply(frame: frames[target], to: node)
+            } else if target != node.currentFrame {
+                reconcile(to: target, of: node, frames: frames)
+            }
         }
         node.currentFrame = target
         markDirty()
@@ -130,7 +132,7 @@ nonisolated extension SWFMovieRuntime {
             dispatchPlacementLifecycle(replaced, phase: .unloaded)
         }
         parent.addChild(node, atDepth: placement.depth)
-        bringUp(node)
+        placeSubtree(node)
     }
 
     public func apply(_ placement: SWFPlacement, to node: SWFDisplayObject) {
@@ -156,22 +158,41 @@ nonisolated extension SWFMovieRuntime {
         }
     }
 
-    /// A newly placed instance: build its own frame 1, dispatch `initialize`,
-    /// run the class its linkage name registered, then dispatch `construct` and
-    /// `load` and run the frame's actions. The constructor sees a clip whose
-    /// children already exist, which is what CLIK components expect, and the
-    /// event order is the one the `ClipEventFlags` table implies.
+    /// A script-made instance, such as `attachMovie`: placed and constructed before
+    /// the call returns, because the script uses it next.
     public func bringUp(_ node: SWFDisplayObject) {
+        inPlacementBatch {
+            placeSubtree(node)
+        }
+    }
+
+    /// Builds a placed instance's own frame 1 and queues its constructor. A frame's
+    /// constructors run after all its placements, so a constructor that reads a
+    /// sibling placed later, as the race menu's panels do, finds it.
+    func placeSubtree(_ node: SWFDisplayObject) {
         let frames = frames(of: node)
         if node.isClip, !frames.isEmpty {
             apply(frame: frames[0], to: node)
             node.currentFrame = 0
         }
-        dispatchPlacementLifecycle(node, phase: .initialize)
-        constructRegisteredClass(for: node)
-        dispatchPlacementLifecycle(node, phase: .constructed)
-        if let first = frames.first {
-            runActions(of: first, on: node)
+        pendingConstructions.append(node)
+    }
+
+    /// Runs `body`, then constructs what it placed, children before parents. The
+    /// event order is the one the `ClipEventFlags` table implies.
+    func inPlacementBatch(_ body: () -> Void) {
+        let outer = pendingConstructions
+        pendingConstructions = []
+        body()
+        let placed = pendingConstructions
+        pendingConstructions = outer
+        for node in placed {
+            dispatchPlacementLifecycle(node, phase: .initialize)
+            constructRegisteredClass(for: node)
+            dispatchPlacementLifecycle(node, phase: .constructed)
+            if let first = frames(of: node).first {
+                runActions(of: first, on: node)
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ import Foundation
 import Metal
 import MetalKit
 import OpenSkyAssetCache
+import OpenSkyCLIArguments
 import OpenSkyGameData
 import OpenSkyRendering
 import OpenSkyWorld
@@ -26,30 +27,30 @@ enum BenchmarkCommand {
         let frameInterpolation: Bool
         let meshShaderGrass: Bool
 
-        init(scanner: inout ArgumentScanner) throws {
-            outPath = try scanner.option("--out")
-            framePath = try scanner.option("--frame")
+        init(arguments: BenchmarkArguments) throws {
+            outPath = arguments.out
+            framePath = arguments.frame
             let standard = PerformanceBenchmarkPlan.standard
-            let size = try scanner.option("--size").map { try RenderCommand.parseSize($0) }
+            let size = try arguments.size.map { try RenderCommand.parseSize($0) }
                 ?? (width: standard.frameWidth, height: standard.frameHeight)
             plan = standard.resized(width: size.width, height: size.height)
-            let seconds = try scanner.option("--launch-seconds").map(Self.seconds)
-            if scanner.flag("--launch") || seconds != nil {
+            let seconds = try arguments.launchSeconds.map(Self.seconds)
+            if arguments.launch || seconds != nil {
                 launch = try BenchmarkLaunchRequest(
                     processStart: Self.processStart(), seconds: seconds ?? 60
                 )
             } else {
                 launch = nil
             }
-            route = scanner.flag("--route")
-            coldPipelines = scanner.flag("--cold-pipelines")
-            gpuCulling = !scanner.flag("--cpu-culling")
-            textureBudgetMB = try scanner.option("--texture-budget").map(Self.mebibytes)
-            textureStreaming = scanner.flag("--texture-streaming") || textureBudgetMB != nil
-            renderScale = try scanner.option("--render-scale").map(Self.renderScale) ?? .off
-            upscaler = try scanner.option("--upscaler").map(Self.upscaler) ?? .temporal
-            frameInterpolation = scanner.flag("--frame-interpolation")
-            meshShaderGrass = scanner.flag("--mesh-shader-grass")
+            route = arguments.route
+            coldPipelines = arguments.coldPipelines
+            gpuCulling = !arguments.cpuCulling
+            textureBudgetMB = try arguments.textureBudget.map(Self.mebibytes)
+            textureStreaming = arguments.textureStreaming || textureBudgetMB != nil
+            renderScale = try arguments.renderScale.map(Self.renderScale) ?? .off
+            upscaler = try arguments.upscaler.map(Self.upscaler) ?? .temporal
+            frameInterpolation = arguments.frameInterpolation
+            meshShaderGrass = arguments.meshShaderGrass
         }
 
         func apply(to renderer: Renderer) {
@@ -116,10 +117,9 @@ enum BenchmarkCommand {
         }
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let options = try Options(scanner: &scanner)
-        let assets = try AssetLoadOptions(scanner: &scanner, context: context)
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: BenchmarkArguments) throws {
+        let options = try Options(arguments: arguments)
+        let assets = try AssetLoadOptions(arguments: arguments.assets, context: context)
         guard
             let device = MTLCreateSystemDefaultDevice(),
             device.supportsFamily(.metal4)

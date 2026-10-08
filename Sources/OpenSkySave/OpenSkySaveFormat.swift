@@ -109,6 +109,10 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// `INVN`, which keeps the summed totals so older builds read a full inventory.
         public static let stolenGoods = "STOL"
 
+        /// Tempered copies: per owner and item, one quality level per improved copy.
+        /// A sibling of `INVN`, whose rows have no room for a quality.
+        public static let temperedItems = "TMPR"
+
         /// Violent crime gold: per faction, the violent part of the `CRIM` row. A sibling,
         /// because `CRIM` rows have a fixed layout; `CRIM` keeps the total.
         public static let violentCrimeGold = "CRVG"

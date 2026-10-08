@@ -38,6 +38,8 @@ nonisolated public final class SWFMovieRuntime {
     public var focusChanges = 0
     /// Nesting guard for a frame action that jumps the same clip again.
     public var gotoDepth = 0
+    /// Instances placed in the current batch, waiting for their constructors.
+    var pendingConstructions: [SWFDisplayObject] = []
     /// Live pointer and key state.
     public let input = SWFRuntimeInputState()
     /// `setInterval` / `setTimeout` callbacks, fired from `advance()`.

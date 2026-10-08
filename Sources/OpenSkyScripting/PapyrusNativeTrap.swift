@@ -14,6 +14,7 @@ extension PapyrusNativeFunctions {
     public static func installTrap(into registry: inout PapyrusNativeRegistry) {
         installTrapReads(into: &registry)
         installTrapHit(into: &registry)
+        installTrapWorld(into: &registry)
         installTrapStubs(into: &registry)
     }
 
@@ -73,7 +74,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// `ProcessTrapHit(akTrap, afDamage, afPushback, ...)` on the actor hit: the
-    /// damage comes off Health. Pushback and stagger need physics and are dropped.
+    /// damage comes off Health and the pushback knocks the actor back. Stagger is dropped.
     private static func installTrapHit(into registry: inout PapyrusNativeRegistry) {
         reference("ProcessTrapHit", into: &registry) { call, target in
             guard let damage = float(call, at: 1), damage.isFinite else {
@@ -90,6 +91,7 @@ extension PapyrusNativeFunctions {
             else {
                 return failure(call, "ProcessTrapHit needs an actor receiver")
             }
+            pushBack(call, world: target.world, actor: target.key)
             return .returned(.none)
         }
     }

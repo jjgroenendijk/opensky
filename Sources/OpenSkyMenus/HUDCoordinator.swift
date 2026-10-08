@@ -15,6 +15,8 @@ public final class HUDCoordinator {
     public private(set) var interactionTarget: InteractionTarget?
     public private(set) var sync = HUDSyncState()
     public private(set) var settings = HUDSettings()
+    /// A loading screen hides the HUD, as `LoadingMenu` does in the game.
+    public private(set) var isCovered = false
 
     private let movies: SWFMovieSource
     /// Bumped by each start and suspend, so only the newest start shows the HUD.
@@ -31,6 +33,17 @@ public final class HUDCoordinator {
 
     private var renderer: Renderer? {
         world?.renderer
+    }
+
+    /// Hides the HUD while a loading screen is up, and shows it again after.
+    public func setCovered(_ covered: Bool) {
+        isCovered = covered
+        guard isLoaded, let renderer else { return }
+        renderer.swfEnabled = layerVisible
+    }
+
+    private var layerVisible: Bool {
+        settings.layerEnabled && !isCovered
     }
 
     /// Takes the HUD off the SWF layer, so a menu that owns the layer next can
@@ -62,7 +75,7 @@ public final class HUDCoordinator {
         do {
             let scene = try result.get()
             try renderer.setSWFMovie(scene)
-            renderer.swfEnabled = settings.layerEnabled
+            renderer.swfEnabled = layerVisible
             renderer.swfScale = settings.scale
             guard let runtime = try renderer.startSWFRuntime() else {
                 return
@@ -180,7 +193,7 @@ public final class HUDCoordinator {
         change(&settings)
         settings.scale = HUDCore.clampedScale(settings.scale)
         guard isLoaded, let renderer else { return }
-        renderer.swfEnabled = settings.layerEnabled
+        renderer.swfEnabled = layerVisible
         renderer.swfScale = settings.scale
         var presentation = settings
         presentation.layerEnabled = old.layerEnabled

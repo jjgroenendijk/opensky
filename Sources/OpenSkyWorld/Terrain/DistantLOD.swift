@@ -293,6 +293,17 @@ nonisolated public final class DistantLODBuilder {
         self.configurationStore = configurationStore
     }
 
+    /// What a second builder needs to build the first ring off the build queue.
+    public func prebuild(worldspace: String) -> DistantLODPrebuild {
+        DistantLODPrebuild(
+            fileSystem: fileSystem,
+            device: meshes.device,
+            cache: textures.assetCache,
+            configurationStore: configurationStore,
+            worldspace: worldspace
+        )
+    }
+
     public func build(
         worldspace: String,
         center: CellCoordinate,

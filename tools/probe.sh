@@ -87,11 +87,15 @@ expect_usage "walk path rejects fly collision budget" \
 # Agent control offline paths (docs/tools/agent-control.md): an unknown game
 # command is a usage error, and no server at the socket is notRunning, exit 1.
 expect_usage "game rejects an unknown command" "unknown game command" game dance
-if output="$(OPENSKY_AGENT_SOCKET="$log_dir/no-server.sock" "$cli" game status 2>&1)"; then
+# A Unix socket path holds at most 103 bytes, and a worktree's run directory can be
+# longer, so the socket goes in a short temporary folder.
+socket_dir="$(mktemp -d /tmp/opensky-probe.XXXXXX)"
+if output="$(OPENSKY_AGENT_SOCKET="$socket_dir/no-server.sock" "$cli" game status 2>&1)"; then
   fail "game status succeeded with no app running"
 else
   exit_status="$?"
 fi
+rmdir "$socket_dir"
 printf -- '--- game status without an app\n%s\n' "$output" >>"$log"
 [ "$exit_status" -eq 1 ] || fail "game status without an app exited $exit_status instead of 1"
 printf '%s\n' "$output" | grep -Fq "notRunning" || fail "game status did not report notRunning"

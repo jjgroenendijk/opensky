@@ -36,8 +36,13 @@ let testLinkerSettings: [LinkerSetting] = [
 
 // MARK: - Module helpers
 
+/// Products of external packages (docs/decisions/), keyed by product name. They sit
+/// below every module.
+let externalProducts = ["ArgumentParser": "swift-argument-parser"]
+    .merging(["HeapModule", "DequeModule"].map { ($0, "swift-collections") }) { $1 }
+
 /// Every declared module, in declaration order. The layering checks read it.
-nonisolated(unsafe) var declared: [String] = []
+nonisolated(unsafe) var declared: [String] = externalProducts.keys.sorted()
 /// Feature implementations. Nothing but the composition roots may depend on one.
 nonisolated(unsafe) var featureImplementations: Set<String> = []
 /// Targets the umbrella products export.
@@ -72,7 +77,10 @@ func checked(
             "\(module) depends on \(dependency); only that feature's tests may"
         )
     }
-    return dependencies.map { .target(name: $0) }
+    return dependencies.map { dependency in
+        externalProducts[dependency].map { .product(name: dependency, package: $0) }
+            ?? .target(name: dependency)
+    }
 }
 
 func testTarget(_ name: String, dependencies: [String]) -> Target {
@@ -98,13 +106,14 @@ func foundation(
     _ name: String,
     dependencies: [String] = [],
     exclude: [String] = [],
+    swiftSettings extraSettings: [SwiftSetting] = [],
     tests: [String]? = nil
 ) -> [Target] {
     let library = Target.target(
         name: name,
         dependencies: checked(name, dependencies),
         exclude: exclude,
-        swiftSettings: librarySettings
+        swiftSettings: librarySettings + extraSettings
     )
     declared.append(name)
     libraryTargets.append(name)
@@ -225,10 +234,7 @@ func composition(_ name: String, dependencies: [String], tests: [String]? = nil)
 // MARK: - Modules, bottom-up
 
 /// The structs shared with Metal. Shaders.metal includes the same header.
-let shaderTypes = Target.target(
-    name: "OpenSkyShaderTypes",
-    publicHeadersPath: "."
-)
+let shaderTypes = Target.target(name: "OpenSkyShaderTypes", publicHeadersPath: ".")
 /// The vendored ffmpeg as a clang module (Sources/CFFmpeg/include/module.modulemap).
 /// A C target, not a system library: when a testing library shares OpenSkyAudio
 /// with the app, Xcode builds OpenSkyAudio as a dynamic framework, and a framework
@@ -240,9 +246,7 @@ let cffmpeg = Target.target(
     cSettings: [.unsafeFlags(["-I\(ffmpeg)/include"])],
     linkerSettings: [
         .unsafeFlags(["-L\(ffmpeg)/lib"]),
-        .linkedLibrary("avcodec"),
-        .linkedLibrary("avutil"),
-        .linkedLibrary("swresample")
+        .linkedLibrary("avcodec"), .linkedLibrary("avutil"), .linkedLibrary("swresample")
     ]
 )
 /// The vendored astcenc (make astcenc), a static library behind a C shim. Like
@@ -269,16 +273,21 @@ targets += testing("TagsTesting", dependencies: [])
 // Formats: a core of binary readers, compression, geometry values, archives and
 // string tables, then one module per format family. A family depends only on the
 // core, so a parser change rebuilds one family and the modules that use it.
-targets += foundation("OpenSkyFormatsCore", tests: [
-    "FormatsTesting"
-])
+targets += foundation("OpenSkyFormatsCore", tests: ["FormatsTesting"])
+// Pixel loops the engine runs on the CPU, such as the chargen face paint. Unoptimized
+// they are about 100 times slower, so Debug builds them optimized too.
+targets += foundation(
+    "OpenSkyImageKernels",
+    swiftSettings: [.unsafeFlags(["-O"], .when(configuration: .debug))]
+)
 let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF", "ESS"]
 for family in formatFamilies {
     let module = "OpenSkyFormats\(family)"
+    let kernels = family == "Mesh" ? ["OpenSkyImageKernels"] : []
     targets += foundation(
         module,
-        dependencies: ["OpenSkyFormatsCore"],
-        tests: ["FormatsTesting", "OpenSkyFormatsCore"]
+        dependencies: ["OpenSkyFormatsCore"] + kernels,
+        tests: ["FormatsTesting", "OpenSkyFormatsCore"] + kernels
     )
 }
 
@@ -592,7 +601,7 @@ targets += feature(
         "OpenSkyCombatInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
-        "OpenSkyWorldInterface"
+        "OpenSkyWorldInterface", "DequeModule"
     ],
     interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
     tests: [
@@ -625,10 +634,11 @@ targets += feature(
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
         "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache"
+        "OpenSkyAssetCache", "OpenSkyImageKernels", "HeapModule"
     ],
     tests: [
         "EngineTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyAudio",
+        "OpenSkyImageKernels",
         "OpenSkyBehavior", "OpenSkyConditions", "OpenSkyCrimeInterface", "FeaturesTesting",
         "OpenSkyDiagnostics", "OpenSkyDialogueInterface", "OpenSkyFactionsInterface",
         "OpenSkyFormatsAnimation", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
@@ -761,6 +771,13 @@ targets += composition(
     ]
 )
 
+// The openskycli command line (docs/tools/modules.md): nonisolated, linked by the CLI only.
+targets.append(.target(
+    name: "OpenSkyCLIArguments", dependencies: checked("OpenSkyCLIArguments", ["ArgumentParser"]),
+    swiftSettings: languageSettings
+))
+deferTests("OpenSkyCLIArgumentsTests", dependencies: ["OpenSkyCLIArguments"])
+
 targets += deferredTests
 
 let package = Package(
@@ -771,7 +788,12 @@ let package = Package(
             name: "OpenSkyModules",
             targets: ["OpenSkyShaderTypes", "CASTCEncoder"] + libraryTargets
         ),
-        .library(name: "OpenSkyTestSupport", targets: testingTargets + fixtureTargets)
+        .library(name: "OpenSkyTestSupport", targets: testingTargets + fixtureTargets),
+        .library(name: "OpenSkyCLIArguments", targets: ["OpenSkyCLIArguments"])
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-collections", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.6.0")
     ],
     targets: targets,
     swiftLanguageModes: [.v6]

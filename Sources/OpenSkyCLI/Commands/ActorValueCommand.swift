@@ -4,15 +4,15 @@
 // Derivation and resolution live in their modules; this file parses and prints.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
 enum ActorValueCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let npc = try scanner.option("--npc")
-        let race = try scanner.option("--race")
-        let playerLevel = try int(scanner.option("--player-level"), name: "--player-level") ?? 1
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: ActorValuesArguments) throws {
+        let npc = arguments.npc
+        let race = arguments.race
+        let playerLevel = try int(arguments.playerLevel, name: "--player-level") ?? 1
 
         let file = try context.loadSkyrimESM()
         let localized = file.isLocalized

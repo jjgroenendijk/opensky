@@ -35,6 +35,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 58 | `GetStage` | `QUST` | highest stage reached, 0 for none |
 | 59 | `GetStageDone` | `QUST`, stage | 1 when that stage was visited |
 | 60 | `GetFactionRankDifference` | `FACT`, actor | own rank minus the parameter actor's rank |
+| 69 | `GetIsRace` | `RACE` | 1 when the actor's race matches |
 | 71 | `GetInFaction` | `FACT` | 1 when a member |
 | 72 | `GetIsID` | base object | 1 when the reference's base form matches |
 | 73 | `GetFactionRank` | `FACT` | rank, -1 when not a member |
@@ -50,8 +51,10 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 263 | `IsWeaponOut` | none | 0 nothing drawn, 2 weapon in a hand |
 | 264 | `HasSpell` | `SPEL` | 1 when the actor knows the spell |
 | 277 | `GetBaseActorValue` | actor-value index | base value, without modifiers |
+| 313 | `GetPairedAnimation` | none | 1 while the actor plays a paired animation; always 0 |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
 | 365 | `IsChild` | none | 1 when the actor's race has the child flag |
+| 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
 | 375 | `GetCrimeGoldViolent` | `FACT` or null | violent part of the bounty |
 | 376 | `GetCrimeGoldNonviolent` | `FACT` or null | non-violent part of the bounty |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
@@ -64,8 +67,10 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 570 | `HasEquippedSpell` | casting source | 1 when that source holds a spell |
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
+| 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
+| 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 
@@ -117,6 +122,10 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
   in a fight has no tracked draw state, so both fail as unavailable. Vanilla idle markers
   test these two, for example the sweeping and warm-hands idles.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
+- `GetIsRace` compares the race the actor's values were derived from. An actor whose race
+  is not known fails as unavailable.
+- `GetPairedAnimation` and `GetIsFlying` return 0. OpenSky plays no paired animation, such
+  as a kill move, and no actor flies yet. The systems that add them set the actor state.
 - `GetDead` reads the death flag, not health. The Creation Kit says: "This is more accurate
   than checking the actor's health because there are circumstances when the actor can die
   without losing all of their health."

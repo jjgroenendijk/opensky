@@ -3,6 +3,7 @@
 // real-data XCTest host is unreliable here (docs/tools/environment.md).
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -13,11 +14,10 @@ import OpenSkyWorldState
 enum SWFInventoryMenuCommand {
     private static let defaultTicks = 20
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let ticks = try positive(scanner.option("--ticks"), name: "--ticks") ?? defaultTicks
-        let downCount = try positive(scanner.option("--down"), name: "--down") ?? 0
-        let rightCount = try positive(scanner.option("--right"), name: "--right") ?? 0
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: SWFArguments.InventoryMenu) throws {
+        let ticks = try positive(arguments.drive.ticks, name: "--ticks") ?? defaultTicks
+        let downCount = try positive(arguments.drive.down, name: "--down") ?? 0
+        let rightCount = try positive(arguments.right, name: "--right") ?? 0
 
         let vfs = context.makeFileSystem()
         let runtime = try SWFMovieRuntime(

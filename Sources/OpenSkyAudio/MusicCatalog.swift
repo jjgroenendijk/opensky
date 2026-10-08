@@ -5,6 +5,7 @@
 // authored (docs/engine/music.md).
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -358,21 +359,5 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
             out.swapAt(index, pick)
         }
         return out
-    }
-}
-
-nonisolated extension SplitMix64 {
-    /// Unbiased draw in `0 ..< upperBound` by rejection sampling. Shared
-    /// generator (weather rolls use the same one) so a "random" music pick has
-    /// the same platform-stable, reproducible stream the rest of the engine
-    /// relies on.
-    public mutating func next(upperBound: UInt64) -> UInt64 {
-        guard upperBound > 1 else { return 0 }
-        let limit = UInt64.max - (UInt64.max % upperBound)
-        var value = next()
-        while value >= limit {
-            value = next()
-        }
-        return value % upperBound
     }
 }

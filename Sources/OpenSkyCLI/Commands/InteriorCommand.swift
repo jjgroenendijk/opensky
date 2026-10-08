@@ -4,6 +4,7 @@
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyGameData
 import OpenSkyRendering
@@ -16,16 +17,15 @@ enum InteriorCommand {
         let transition: DoorTransition
     }
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try scanner.option("--worldspace")
+    static func run(context: CLIContext, arguments: InteriorArguments) throws {
+        let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try RenderCommand.int32(scanner.option("--x"), name: "--x")
+        let gridX = try RenderCommand.int32(arguments.grid.x, name: "--x")
             ?? FirstRenderCell.gridX
-        let gridY = try RenderCommand.int32(scanner.option("--y"), name: "--y")
+        let gridY = try RenderCommand.int32(arguments.grid.y, name: "--y")
             ?? FirstRenderCell.gridY
-        let radius = try parseRadius(scanner.option("--radius"))
-        let output = try scanner.requiredOption("--out")
-        try scanner.finish()
+        let radius = try parseRadius(arguments.radius)
+        let output = arguments.out
 
         guard
             let device = MTLCreateSystemDefaultDevice(),

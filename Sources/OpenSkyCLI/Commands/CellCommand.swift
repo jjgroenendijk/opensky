@@ -5,18 +5,18 @@
 // cell (docs/decisions/first-render-cell.md).
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorld
 
 enum CellCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try scanner.option("--worldspace")
+    static func run(context: CLIContext, arguments: CellArguments) throws {
+        let worldspace = arguments.grid.worldspace
             ?? FirstRenderCell.worldspaceEditorID
-        let gridX = try int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX
-        let gridY = try int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY
-        let listRefs = scanner.flag("--refs")
-        try scanner.finish()
+        let gridX = try int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX
+        let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
+        let listRefs = arguments.refs
 
         let file = try context.loadSkyrimESM()
         let localized = file.isLocalized

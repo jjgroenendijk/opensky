@@ -8,7 +8,7 @@ import simd
 
 /// What set an explosion off, for the readout.
 nonisolated public enum ExplosionCause: String, Equatable, Sendable {
-    case projectile, spell, debug
+    case projectile, spell, script, debug
 }
 
 /// What an explosion leaves behind through its placed-object link.

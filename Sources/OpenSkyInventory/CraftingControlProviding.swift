@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 
 /// One recipe row: what it makes and whether the player can make it now.
@@ -156,12 +157,52 @@ extension InventoryCoordinator: CraftingControlProviding {
 
     private func recipeReadout(_ status: CraftingRecipeStatus) -> CraftingRecipeReadout {
         let recipe = status.recipe
+        let itemName = recipe.created.map(name(of:)) ?? recipe.editorID ?? recipe.id.description
+        guard let temper = status.temper else {
+            return CraftingRecipeReadout(
+                id: recipe.id,
+                name: itemName,
+                verdict: verdict(status.eligibility),
+                isEligible: status.isReady
+            )
+        }
+        let copies = temper.copies.map(Tempering.name(level:)).joined(separator: ", ")
         return CraftingRecipeReadout(
             id: recipe.id,
-            name: recipe.created.map(name(of:)) ?? recipe.editorID ?? recipe.id.description,
-            verdict: verdict(status.eligibility),
-            isEligible: status.eligibility.isEligible
+            name: "\(itemName) (\(copies))",
+            verdict: temperVerdict(status, temper),
+            isEligible: status.isReady
         )
+    }
+
+    private func temperVerdict(_ status: CraftingRecipeStatus, _ temper: TemperTarget) -> String {
+        guard let from = temper.from else {
+            return "best quality for this skill (\(Tempering.name(level: temper.maximum)))"
+        }
+        guard status.eligibility.isEligible else { return verdict(status.eligibility) }
+        let step = "\(Tempering.name(level: from)) -> \(Tempering.name(level: temper.maximum))"
+        return temperStat(temper.item, from: from, to: temper.maximum).map {
+            "ready: \(step), \($0)"
+        } ?? "ready: \(step)"
+    }
+
+    /// Damage for a weapon, armor rating for armor, before and after the temper.
+    func temperStat(_ item: FormID, from: Int32, to: Int32) -> String? {
+        guard let items = runtime?.inventory.baselines.items else { return nil }
+        let base: Float
+        let label: String
+        var isBody = false
+        if let weapon = items.weapon(item) {
+            (base, label) = (Float(weapon.damage), "damage")
+        } else if let armor = items.armor[item.rawValue] {
+            (base, label) = (Float(armor.armorRating & 0xFFFF) / 100, "rating")
+            isBody = armor.bodyTemplate?.slots.contains(.body) ?? false
+        } else {
+            return nil
+        }
+        let before = base + Tempering.bonus(level: from, isBodyArmor: isBody)
+        let after = base + Tempering.bonus(level: to, isBodyArmor: isBody)
+        return String(format: "%@ %.1f -> %.1f", label, before, after)
     }
 
     private func verdict(_ eligibility: RecipeEligibility) -> String {

@@ -4,6 +4,7 @@
 // through `FUZFile` and `XWMFile`, one file at a time, so memory stays flat.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyDialogue
 import OpenSkyFormatsAudio
 import OpenSkyFormatsESM
@@ -16,15 +17,14 @@ enum AudioVoiceSweep {
         "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm"
     ]
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let limit = try scanner.option("--limit").map {
+    static func run(context: CLIContext, arguments: AudioArguments.VoiceSweep) throws {
+        let limit = try arguments.limit.map {
             guard let value = Int($0), value > 0 else {
                 throw CLIError.usage("--limit needs a positive integer")
             }
             return value
         }
-        let namesOnly = scanner.flag("--names-only")
-        try scanner.finish()
+        let namesOnly = arguments.namesOnly
 
         let vfs = context.makeFileSystem()
         let paths = vfs.archiveEntries().map(\.path)

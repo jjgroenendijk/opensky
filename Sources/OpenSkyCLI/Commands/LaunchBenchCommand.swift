@@ -8,8 +8,7 @@ import OpenSkyWorld
 import Synchronization
 
 enum LaunchBenchCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) async throws {
-        try scanner.finish()
+    static func run(context: CLIContext) async throws {
         guard let device = MTLCreateSystemDefaultDevice() else {
             throw CLIError.failure("no Metal device")
         }

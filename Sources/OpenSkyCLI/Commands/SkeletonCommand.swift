@@ -3,6 +3,7 @@
 // Uses the engine's own parsers, so a mismatch here is what animation sees.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsMesh
 import OpenSkyGameData
@@ -11,10 +12,9 @@ enum SkeletonCommand {
     /// Cap the per-skeleton bone dump so a 99-bone rig stays greppable.
     private static let boneListLimit = 12
 
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let nifKey = try scanner.option("--nif")
-        let key = try scanner.positional("key")
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: SkeletonArguments) throws {
+        let nifKey = arguments.nif
+        let key = arguments.key
 
         let fileSystem = context.makeFileSystem()
         let skeletons: [HKASkeleton]

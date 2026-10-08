@@ -4,32 +4,12 @@
 // tools/probe.sh).
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsAudio
 import OpenSkyGameData
 
 enum AudioCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        guard let sub = scanner.next() else {
-            throw CLIError.usage("audio: missing subcommand (info|sweep|voice-sweep|aac-check)")
-        }
-        switch sub {
-        case "info":
-            let path = try scanner.positional("path")
-            try scanner.finish()
-            try runInfo(context: context, path: path)
-        case "sweep":
-            try scanner.finish()
-            try AudioSweep.run(context: context)
-        case "voice-sweep":
-            try AudioVoiceSweep.run(context: context, scanner: &scanner)
-        case "aac-check":
-            try AudioAACCheck.run(context: context, scanner: &scanner)
-        default:
-            throw CLIError.usage("audio: unknown subcommand \(sub)")
-        }
-    }
-
-    private static func runInfo(context: CLIContext, path: String) throws {
+    static func runInfo(context: CLIContext, path: String) throws {
         let vfs = context.makeFileSystem()
         let data = try vfs.contents(forPath: path)
         // A voice line is an xWMA stream inside a FUZE container: report the

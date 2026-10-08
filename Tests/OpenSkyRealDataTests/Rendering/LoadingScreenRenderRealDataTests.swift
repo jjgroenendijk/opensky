@@ -57,7 +57,9 @@ struct LoadingScreenRenderRealDataTests {
         let view = renderer.freeFlyCamera
         try renderer.setLoadingCover([RenderPlacement(
             model: renderModel,
-            transform: frame.objectTransform(eye: view.position, yaw: view.yaw, radius: radius),
+            transform: frame.objectTransform(
+                eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius
+            ),
             castsShadows: false,
             layer: .loadingCover
         )])

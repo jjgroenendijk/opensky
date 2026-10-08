@@ -2,6 +2,7 @@
 // surprising value traces to the plugin that set it.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -10,10 +11,9 @@ import OpenSkyPhysics
 import OpenSkyWorld
 
 enum GMSTCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let subject = try scanner.positional("subject")
-        let prefix = try scanner.option("--prefix") ?? ""
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: GMSTArguments) throws {
+        let subject = arguments.subject
+        let prefix = arguments.prefix
         switch subject {
         case "movement":
             try runMovement(context: context)

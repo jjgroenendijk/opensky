@@ -58,6 +58,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// The player's equipment. Nil without an equipment runtime.
     var equipment: (any EquipmentAccess)? { get }
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile?
+    /// The quality level of the player's best copy of `item`. Zero when plain.
+    func temperLevel(of item: FormID) -> Int32
     func hasReadiedSpell(in hand: SpellHand) -> Bool
     /// The items the player carries, in the inventory's stable stack order.
     func playerCarriedItems() -> [FormID]

@@ -24,9 +24,20 @@ struct CraftingSessionTests {
 
     final class FakeConditions: RecipeConditionChecking {
         var failing: String?
+        var smithing: Float = 15
+        var temperingEnchanted: [Bool?] = []
 
-        func failingFunction(in _: ConditionList, sourcePlugin _: String) -> String? {
-            failing
+        func failingFunction(
+            in _: ConditionList,
+            sourcePlugin _: String,
+            temperingEnchanted: Bool?
+        ) -> String? {
+            self.temperingEnchanted.append(temperingEnchanted)
+            return failing
+        }
+
+        func skillLevel(at _: Int32) -> Float? {
+            smithing
         }
     }
 
@@ -46,7 +57,7 @@ struct CraftingSessionTests {
         let skills: FakeSkills
     }
 
-    static func harness() throws -> Harness {
+    static func harness(bench: WorkbenchType = .createObject) throws -> Harness {
         let file = try ESMFixture.plugin(records: [
             RecipeFixture.recordBytes(
                 formID: 0x10, editorID: "RecipeSword",
@@ -77,7 +88,7 @@ struct CraftingSessionTests {
             reference: FormID(0x8000), base: FormID(0x8001), position: .zero, name: "Forge",
             action: .use, actionLabel: "Activate", sounds: nil,
             station: CraftingStation(
-                workbench: Workbench(benchType: .createObject, skillIndex: 10),
+                workbench: Workbench(benchType: bench, skillIndex: 10),
                 keywords: [FormID(forge)]
             )
         )

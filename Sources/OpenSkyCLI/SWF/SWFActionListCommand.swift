@@ -3,13 +3,13 @@
 // The listing names game code, so redirect it into `.logs/`, never the repo.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 
 enum SWFActionListCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let filter = try scanner.option("--movie")?.lowercased() ?? ""
-        try scanner.finish()
+    static func run(context: CLIContext, arguments: SWFArguments.ActionList) throws {
+        let filter = arguments.movie.lowercased()
         let vfs = context.makeFileSystem()
         let loader = SWFMovieLoader(fileSystem: vfs)
         let paths = loader.moviePaths().filter { $0.contains(filter) }

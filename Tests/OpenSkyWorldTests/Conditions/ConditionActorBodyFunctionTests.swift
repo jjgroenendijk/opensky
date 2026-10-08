@@ -5,6 +5,7 @@ import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyConditions
+import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing
@@ -53,6 +54,32 @@ struct ConditionActorBodyFunctionTests {
     @Test func anUnobservedHandFailsWithAReason() throws {
         let outcome = try Self.outcome(Self.isTorchOut, equals: 0, state: Self.state(hand: nil))
         #expect(outcome.failures == [.unavailableActorState])
+    }
+
+    @Test func getIsRaceComparesTheActorsRace() throws {
+        var state = Self.state(hand: .nothing)
+        state.race = FormID(0x13746)
+        let nord = try ConditionEvaluatorFixture.comparing(
+            functionIndex: 69, 0, 1, parameter1: 0x13746
+        )
+        let other = try ConditionEvaluatorFixture.comparing(
+            functionIndex: 69, 0, 1, parameter1: 0x13740
+        )
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.actors = ActorStateResolution(states: [Self.subject: state])
+        var evaluator = ConditionEvaluator(context: context)
+        #expect(evaluator.evaluate(nord) == .true)
+        #expect(evaluator.evaluate(other).isTrue == false)
+        state.race = nil
+        context.actors = ActorStateResolution(states: [Self.subject: state])
+        evaluator = ConditionEvaluator(context: context)
+        #expect(evaluator.evaluate(nord).failures == [.unavailableActorState])
+    }
+
+    @Test func noActorIsInAPairedAnimationOrFlying() throws {
+        let state = Self.state(hand: .nothing)
+        #expect(try Self.outcome(313, equals: 0, state: state) == .true)
+        #expect(try Self.outcome(594, equals: 0, state: state) == .true)
     }
 
     @Test func isChildReadsTheRaceFlag() throws {

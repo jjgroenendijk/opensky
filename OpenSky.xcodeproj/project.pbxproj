@@ -129,6 +129,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				5AF000033000109300170015 /* OpenSkyModules in Frameworks */,
+				5AF00003300010930017001D /* OpenSkyCLIArguments in Frameworks */,
 			);
 		};
 		5AD1000130001093001700A4 /* Frameworks */ = {
@@ -317,6 +318,7 @@
 			name = OpenSkyCLI;
 			packageProductDependencies = (
 				5AF000033000109300170014 /* OpenSkyModules */,
+				5AF00003300010930017001C /* OpenSkyCLIArguments */,
 			);
 			productName = openskycli;
 			productReference = 5AC1000130001093001700A2 /* openskycli */;
@@ -666,6 +668,10 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = OpenSkyModules;
 		};
+		5AF00003300010930017001C /* OpenSkyCLIArguments */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = OpenSkyCLIArguments;
+		};
 		5AF000033000109300170018 /* OpenSkyTestSupport */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = OpenSkyTestSupport;
@@ -679,6 +685,7 @@
 /* Begin PBXBuildFile section */
 		5AF000033000109300170011 /* OpenSkyModules in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170010 /* OpenSkyModules */; };
 		5AF000033000109300170015 /* OpenSkyModules in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170014 /* OpenSkyModules */; };
+		5AF00003300010930017001D /* OpenSkyCLIArguments in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF00003300010930017001C /* OpenSkyCLIArguments */; };
 		5AF000033000109300170019 /* OpenSkyTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF000033000109300170018 /* OpenSkyTestSupport */; };
 		5AF00003300010930017001B /* OpenSkyTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 5AF00003300010930017001A /* OpenSkyTestSupport */; };
 /* End PBXBuildFile section */

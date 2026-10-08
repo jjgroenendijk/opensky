@@ -96,7 +96,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         let sliders = model.rows.enumerated().flatMap { item in
             slider(id: item.offset, row: item.element, model: model)
         }
-        runtime.callMovie("SetSliders", arguments: sliders)
+        runtime.callMovie("SetOptionSliders", arguments: sliders)
         runtime.callMovie("SetNameText", arguments: [.string(model.identity.name)])
     }
 

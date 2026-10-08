@@ -68,6 +68,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var crimeLedgers: [SaveCrimeLedgerEntry] = []
         /// Absent `STOL`: every `INVN` item is honest.
         public var stolenGoods: [SaveStolenGoodsEntry] = []
+        /// Absent `TMPR`: every held copy is plain.
+        public var temperedItems: [SaveTemperedItemEntry] = []
         /// Absent `CRVG`: every `CRIM` row is non-violent gold.
         public var violentCrimeGold: [SaveViolentCrimeGoldEntry] = []
         /// Absent `HRVS`: every plant is unharvested.

@@ -39,6 +39,12 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isChild: Bool
     /// What the left hand holds out, or nil when nothing observes it.
     public var leftHandOut: ActorLeftHandOut?
+    /// The actor's race, which `GetIsRace` compares, or nil when it is not known.
+    public var race: FormID?
+    /// OpenSky plays no paired animation (kill moves) and moves no actor in flight
+    /// yet, so both stay false until those systems set them.
+    public var isInPairedAnimation = false
+    public var isFlying = false
 
     public init(
         current: ActorValues,
@@ -51,7 +57,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
         generalBaseline: [Int32: Float] = [:],
         level: Int = PlayerLevelSource.startingLevel,
         isChild: Bool = false,
-        leftHandOut: ActorLeftHandOut? = nil
+        leftHandOut: ActorLeftHandOut? = nil,
+        race: FormID? = nil
     ) {
         self.current = current
         self.maximums = maximums
@@ -64,6 +71,7 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
         self.level = max(PlayerLevelSource.startingLevel, level)
         self.isChild = isChild
         self.leftHandOut = leftHandOut
+        self.race = race
     }
 
     /// This actor's combat state as `GetCombatState` spells it: 0 "Not in combat",

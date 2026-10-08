@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyCLIArguments
 
 struct GameCommandOptions {
     var socketPath: String
@@ -15,43 +16,32 @@ struct GameCommandOptions {
     static let defaultTimeout = 60.0
     static let connectTimeout = 5.0
 
-    static func scan(_ scanner: inout ArgumentScanner) throws -> Self {
-        let socket = try scanner.option("--socket")
-        let timeout = try scanner.option("--reply-timeout").map { text in
+    init(_ arguments: GameOptions) throws {
+        timeout = try arguments.replyTimeout.map { text in
             guard let value = Double(text), value > 0 else {
                 throw CLIError.usage("--reply-timeout needs a positive number of seconds")
             }
             return value
         }
-        return try GameCommandOptions(
-            socketPath: socket ?? AgentSocketLocation.path(),
-            text: scanner.flag("--text"),
-            timeout: timeout,
-            recordPath: scanner.option("--record")
-        )
+        socketPath = arguments.socket ?? AgentSocketLocation.path()
+        text = arguments.text
+        recordPath = arguments.record
     }
 }
 
 enum GameCommand {
-    static func run(dataRoot: String?, scanner: inout ArgumentScanner) throws {
-        let options = try GameCommandOptions.scan(&scanner)
-        var words: [String] = []
-        while let word = scanner.next() {
-            words.append(word)
-        }
-        switch words.first {
-        case nil:
+    static func send(arguments: GameArguments.Send) throws {
+        let options = try GameCommandOptions(arguments.game)
+        guard !arguments.words.isEmpty else {
             throw CLIError.usage("game needs a command, such as status")
-        case "launch":
-            try GameLaunch.run(Array(words.dropFirst()), dataRoot: dataRoot, options: options)
-        case "attach":
-            let session = try connect(options)
-            print(output(AgentJSON.object(helloFields(session.hello)), options: options))
-        case "run":
-            try GameScriptRun.run(Array(words.dropFirst()), options: options)
-        default:
-            try send(words, options: options)
         }
+        try send(arguments.words, options: options)
+    }
+
+    static func attach(arguments: GameArguments.Attach) throws {
+        let options = try GameCommandOptions(arguments.game)
+        let session = try connect(options)
+        print(output(AgentJSON.object(helloFields(session.hello)), options: options))
     }
 
     static func connect(_ options: GameCommandOptions) throws -> AgentClientSession {
@@ -73,7 +63,7 @@ enum GameCommand {
         ]
     }
 
-    private static func send(_ words: [String], options: GameCommandOptions) throws {
+    static func send(_ words: [String], options: GameCommandOptions) throws {
         var request: AgentRequest
         do {
             request = try AgentCommandLine.request(words)

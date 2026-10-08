@@ -4,6 +4,7 @@
 
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 import Testing
 
@@ -19,6 +20,15 @@ struct MeleeDamageTests {
         #expect(result.applied == 24)
         #expect(result.blockedFraction == 0)
         #expect(result.wasBlocked == false)
+    }
+
+    @Test func aTemperedWeaponHitsHarder() {
+        let fine = MeleeWeaponProfile(damage: 7, reach: 1, weapon: FormID(0x12EB7))
+            .tempered(level: 1)
+        #expect(fine.damage == 8)
+        #expect(fine.weapon == FormID(0x12EB7))
+        #expect(MeleeDamage.resolve(weapon: fine, block: nil, settings: settings).applied == 8)
+        #expect(fine.tempered(level: 0) == fine)
     }
 
     @Test func aWeaponBlockFollowsThePinnedFormula() {

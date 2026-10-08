@@ -88,10 +88,13 @@ nonisolated public struct CraftingStationInfo: Equatable, Sendable {
     public let keywords: [ResolvedFormID]
     /// Actor-value index of the `WBDT` skill. Nil when the bench trains none.
     public let skill: Int32?
+    /// A grindstone or armor table: its recipes improve a held item.
+    public let improves: Bool
 
-    public init(keywords: [ResolvedFormID], skill: Int32?) {
+    public init(keywords: [ResolvedFormID], skill: Int32?, improves: Bool = false) {
         self.keywords = keywords
         self.skill = skill
+        self.improves = improves
     }
 }
 
@@ -136,15 +139,14 @@ nonisolated public struct CraftingCatalog: Sendable {
         self.init(recipes: recipes, itemPlugin: itemPlugin, stations: offering)
     }
 
-    /// The station query. A bench whose keywords name no recipe gets empty `keywords`,
-    /// and so does a tempering bench: improving an item needs per-instance data.
+    /// The station query. A bench whose keywords name no recipe gets empty `keywords`.
     public func station(workbench: Workbench, keywords: [FormID]) -> CraftingStationInfo {
-        let improves = [.smithingWeapon, .smithingArmor].contains(workbench.benchType)
-        return CraftingStationInfo(
-            keywords: improves ? [] : keywords.compactMap(itemPlugin.resolve).filter {
+        CraftingStationInfo(
+            keywords: keywords.compactMap(itemPlugin.resolve).filter {
                 !recipes.recipes(workbenchKeyword: $0).isEmpty
             },
-            skill: workbench.skillName.flatMap(ActorValueIdentity.index(named:))
+            skill: workbench.skillName.flatMap(ActorValueIdentity.index(named:)),
+            improves: [.smithingWeapon, .smithingArmor].contains(workbench.benchType)
         )
     }
 

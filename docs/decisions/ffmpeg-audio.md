@@ -15,7 +15,7 @@ linked, and what happens when it is missing.
 
 ## Decision
 
-- Build ffmpeg 8.1.2 from source with `tools/vendor-ffmpeg.sh`, run by `make bootstrap` or alone as
+- Build ffmpeg 9.0.2 from source with `tools/vendor-ffmpeg.sh`, run by `make bootstrap` or alone as
   `make ffmpeg`. The prefix is `.vendor/ffmpeg`, which is gitignored: the tarball, build tree, and
   dylibs never enter the repository.
 - Configure it decode-only and LGPL-only. The result is three libraries, `libavutil`,

@@ -213,6 +213,8 @@ nonisolated extension OpenSkySaveDecoder {
             body.fog = try OpenSkySaveStoryDecoder.decodeFog(payload)
         case OpenSkySaveFormat.ChunkTag.playerPlace:
             body.playerPlace = try decodePlayerPlace(payload)
+        case OpenSkySaveFormat.ChunkTag.temperedItems:
+            body.temperedItems = try OpenSkySaveTemperedItems.decode(payload)
         default:
             break
         }

@@ -104,7 +104,9 @@ final class LoadingScreenWorldAdapter {
                 .map { simd_length($0.max - $0.min) / 2 } ?? 64
             return [RenderPlacement(
                 model: model,
-                transform: frame.objectTransform(eye: view.position, yaw: view.yaw, radius: radius),
+                transform: frame.objectTransform(
+                    eye: view.position, yaw: view.yaw, pitch: view.pitch, radius: radius
+                ),
                 castsShadows: false,
                 layer: .loadingCover
             )]
@@ -159,6 +161,7 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
                 )
         }
         renderer.uiScene = frame?.overlay ?? .empty
+        game.hud.setCovered(frame != nil)
     }
 
     var currentLocation: ResolvedFormID? {

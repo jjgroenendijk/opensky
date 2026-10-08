@@ -23,7 +23,8 @@ import sys
 # Rule 1. The lower modules, lowest layer first. A lower module depends only on
 # a module in a lower layer.
 LAYERS = [
-    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder"],
+    ["OpenSkyShaderTypes", "CFFmpeg", "CASTCEncoder", "OpenSkyImageKernels",
+     "OpenSkyCLIArguments"],
     ["OpenSkyFormatsCore"],
     ["OpenSkyFormatsESM", "OpenSkyFormatsMesh", "OpenSkyFormatsAnimation",
      "OpenSkyFormatsAudio", "OpenSkyFormatsPEX", "OpenSkyFormatsSWF", "OpenSkyFormatsESS"],
@@ -33,6 +34,8 @@ LAYERS = [
     ["OpenSkyRendering", "OpenSkyAudio", "OpenSkyWorldState"],
     ["OpenSkyConditions"],
 ]
+# Products of external packages. They sit below every layer.
+EXTERNAL = {"HeapModule", "DequeModule", "ArgumentParser"}
 # Rule 8. Shared by the app and OpenSkyCLI; may depend on anything.
 COMPOSITION = {"OpenSkyPreview"}
 # Rule 6. A feature without one of its targets, and why.
@@ -42,10 +45,11 @@ MISSING = {
 }
 
 layer = {name: index for index, names in enumerate(LAYERS) for name in names}
+layer.update({name: -1 for name in EXTERNAL})
 targets = json.loads(pathlib.Path(os.environ["MODULE_GRAPH"]).read_text())["targets"]
 names = {target["name"] for target in targets}
 deps = {
-    target["name"]: [dep.get("target", dep.get("byName", [None]))[0]
+    target["name"]: [(dep.get("target") or dep.get("byName") or dep.get("product") or [None])[0]
                      for dep in target["dependencies"]]
     for target in targets
 }

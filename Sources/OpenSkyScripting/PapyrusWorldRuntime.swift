@@ -4,6 +4,7 @@
 // `PapyrusWorldPersistence.swift`. Persistent instances live until the session
 // ends; a latent call on a retired instance faults when it wakes and is counted.
 
+import DequeModule
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -121,7 +122,11 @@ public final class PapyrusWorldRuntime {
     /// Preformatted names of the most recently dispatched events, oldest
     /// first, at most `recentEventLimit` of them. `eventQueue` holds what is
     /// still pending, so this is the only record of what already ran.
-    public private(set) var recentEvents: [String] = []
+    public var recentEvents: [String] {
+        Array(recentEventRing)
+    }
+
+    private var recentEventRing: Deque<String> = []
     /// Recent-event entries pushed out of the ring by newer ones.
     public private(set) var droppedRecentEventCount = 0
 
@@ -196,11 +201,11 @@ public final class PapyrusWorldRuntime {
     /// Appends `event` to the recent-event ring, evicting the oldest entry
     /// and counting it once the ring is full.
     public func recordDispatchedEvent(_ event: PapyrusScriptEvent) {
-        recentEvents.append(
+        recentEventRing.append(
             "\(event.functionName) -> \(event.target.scriptName)"
         )
-        while recentEvents.count > Self.recentEventLimit {
-            recentEvents.removeFirst()
+        while recentEventRing.count > Self.recentEventLimit {
+            recentEventRing.removeFirst()
             droppedRecentEventCount += 1
         }
     }

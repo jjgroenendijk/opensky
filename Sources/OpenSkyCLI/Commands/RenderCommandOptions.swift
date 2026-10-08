@@ -1,5 +1,6 @@
 // `render` options: the parsed command line and the camera and clock parsers.
 
+import OpenSkyCLIArguments
 import OpenSkyRendering
 import OpenSkyWorld
 
@@ -22,24 +23,22 @@ extension RenderCommand {
         let effects: EffectCaptureOptions
     }
 
-    static func parseOptions(_ scanner: inout ArgumentScanner) throws -> Options {
-        let options = try Options(
-            worldspace: scanner.option("--worldspace")
+    static func parseOptions(_ arguments: ScreenshotArguments) throws -> Options {
+        try Options(
+            worldspace: arguments.grid.worldspace
                 ?? FirstRenderCell.worldspaceEditorID,
-            gridX: int32(scanner.option("--x"), name: "--x") ?? FirstRenderCell.gridX,
-            gridY: int32(scanner.option("--y"), name: "--y") ?? FirstRenderCell.gridY,
-            output: scanner.requiredOption("--out"),
-            size: parseSize(scanner.option("--size")),
-            zoom: parseZoom(scanner.option("--zoom")),
-            timeOfDay: parseTimeOfDay(scanner.option("--time-of-day")),
-            neighbors: scanner.flag("--neighbors"),
-            uiSample: scanner.flag("--ui-sample"),
-            navmeshOverlay: scanner.flag("--navmesh-overlay"),
-            detectionOverlay: scanner.flag("--detection-overlay"),
-            effects: EffectCaptureOptions.parse(&scanner)
+            gridX: int32(arguments.grid.x, name: "--x") ?? FirstRenderCell.gridX,
+            gridY: int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY,
+            output: arguments.out,
+            size: parseSize(arguments.size),
+            zoom: parseZoom(arguments.zoom),
+            timeOfDay: parseTimeOfDay(arguments.timeOfDay),
+            neighbors: arguments.neighbors,
+            uiSample: arguments.uiSample,
+            navmeshOverlay: arguments.navmeshOverlay,
+            detectionOverlay: arguments.detectionOverlay,
+            effects: EffectCaptureOptions.parse(arguments.effects)
         )
-        try scanner.finish()
-        return options
     }
 
     /// The whole-cell framing camera is conservative (enclosing sphere +

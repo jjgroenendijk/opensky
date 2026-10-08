@@ -5,22 +5,46 @@
 // resolution chain. Subcommands + target layout: docs/tools/cli.md.
 
 import Foundation
+import OpenSkyCLIArguments
 
-/// CLI failure modes: `usage` prints the usage text and exits 2; `failure`
+/// CLI failure modes: `usage` prints the command's help and exits 2; `failure`
 /// prints the message and exits 1. Engine errors pass through as exit 1.
 enum CLIError: Error {
     case usage(String)
     case failure(String)
 }
 
+/// A parsed command this target runs. `CommandRunners.swift` conforms each one.
+protocol CLIRunnable {
+    func execute() async throws
+}
+
 @main
 enum OpenSkyCLI {
     static func main() async {
+        switch OpenSkyCommandLine.outcome(Array(CommandLine.arguments.dropFirst())) {
+        case let .exit(code, message):
+            if code != 0 {
+                printError(message)
+            } else if !message.isEmpty {
+                print(message)
+            }
+            exit(code)
+        case let .run(command):
+            await run(command)
+        }
+    }
+
+    private static func run(_ command: any CLICommandArguments) async {
         do {
-            try await run(arguments: Array(CommandLine.arguments.dropFirst()))
+            guard let runnable = command as? any CLIRunnable else {
+                throw CLIError.failure("no runner for \(type(of: command))")
+            }
+            try await runnable.execute()
         } catch let CLIError.usage(message) {
-            printError("[ERROR] \(message)\n\n\(usage)")
-            exit(2)
+            let help = OpenSkyCommandLine.help(for: type(of: command))
+            printError("[ERROR] \(message)\n\n\(help)")
+            exit(OpenSkyCommandLine.usageExitCode)
         } catch let CLIError.failure(message) {
             printError("[ERROR] \(message)")
             exit(1)
@@ -30,184 +54,6 @@ enum OpenSkyCLI {
             printError("[ERROR] \(message)")
             exit(1)
         }
-    }
-
-    private static func run(arguments: [String]) async throws {
-        var scanner = ArgumentScanner(arguments)
-        let dataRoot = try scanner.option("--data-root")
-        guard let command = scanner.next() else {
-            throw CLIError.usage("no command given")
-        }
-        if try await runEngineCommand(command, dataRoot: dataRoot, scanner: &scanner) {
-            return
-        }
-        switch command {
-        case "help", "--help", "-h":
-            print(usage)
-        case "nif":
-            try AssetCommand.runNIF(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "dds":
-            try AssetCommand.runDDS(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "hkx":
-            try HKXCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "skeleton":
-            try SkeletonCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "lod":
-            try LODCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "render":
-            try RenderCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "screenshot":
-            try ScreenshotCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        case "bench":
-            try BenchCommand.run(
-                context: .resolve(dataRootOverride: dataRoot),
-                scanner: &scanner
-            )
-        default:
-            throw CLIError.usage("unknown command: \(command)")
-        }
-    }
-
-    private static func runEngineCommand(
-        _ command: String,
-        dataRoot: String?,
-        scanner: inout ArgumentScanner
-    ) async throws -> Bool {
-        switch command {
-        case "vfs":
-            try VFSCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "record":
-            try RecordCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "plugins":
-            try PluginsCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "footstep":
-            try FootstepCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "gmst":
-            try GMSTCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "archery":
-            try ArcheryCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "cell":
-            try CellCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "actor":
-            try ActorCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "actor-values":
-            try ActorValueCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        default:
-            // The scene and media commands, in their own pass: this switch is at
-            // the strict cyclomatic-complexity limit, and a new command belongs
-            // beside its siblings rather than pushing it over.
-            return try await runSceneCommand(command, dataRoot: dataRoot, scanner: &scanner)
-        }
-        return true
-    }
-
-    private static func runSceneCommand(
-        _ command: String,
-        dataRoot: String?,
-        scanner: inout ArgumentScanner
-    ) async throws -> Bool {
-        switch command {
-        case "collision":
-            try CollisionCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "interior":
-            try InteriorCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "animation":
-            try AnimationCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "swf":
-            try SWFCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "audio":
-            try AudioCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "hkt":
-            try HKTCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "effects":
-            try EffectsCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "game":
-            try GameCommand.run(dataRoot: dataRoot, scanner: &scanner)
-        case "ess":
-            try await ESSCommand.run(dataRoot: dataRoot, scanner: &scanner)
-        default:
-            return try await runLoadCommand(command, dataRoot: dataRoot, scanner: &scanner)
-        }
-        return true
-    }
-
-    /// The commands that measure or prepare asset loading.
-    private static func runLoadCommand(
-        _ command: String,
-        dataRoot: String?,
-        scanner: inout ArgumentScanner
-    ) async throws -> Bool {
-        switch command {
-        case "benchmark":
-            try BenchmarkCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "asset-cache":
-            try await AssetCacheCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        case "launch-bench":
-            // Async: it awaits the same off-main loader the app runs.
-            try await LaunchBenchCommand.run(
-                context: .resolve(dataRootOverride: dataRoot), scanner: &scanner
-            )
-        default:
-            return false
-        }
-        return true
     }
 }
 

@@ -1,5 +1,5 @@
-// `GetItemCount` through the whole-game registry, and the first failing group
-// that a crafting verdict names.
+// `GetItemCount` and `EPTemperingItemIsEnchanted` through the whole-game registry,
+// and the first failing group that a crafting verdict names.
 
 import FeaturesTesting
 import Foundation
@@ -66,5 +66,22 @@ struct ConditionInventoryFunctionTests {
         #expect(perkFailure.map(evaluator.functionName(of:)) == "HasPerk")
         #expect(grouped == nil)
         #expect(bothFalse.map(evaluator.functionName(of:)) == "GetItemCount")
+    }
+
+    @Test func temperingAsksWhetherTheImprovedItemIsEnchanted() throws {
+        // `EPTemperingItemIsEnchanted != 1`, as the vanilla tempering recipes write it.
+        let plainOnly = try ConditionEvaluatorFixture.condition(
+            operatorBits: 1, comparisonValue: Float(1).bitPattern, functionIndex: 659
+        )
+        var context = ConditionContext(subject: .player)
+        var unknown = ConditionEvaluator(context: context)
+        #expect(unknown.evaluate(plainOnly).failures == [.unavailableData(.inventory)])
+        context.tempering = TemperingConditionResolution(isEnchanted: false)
+        var plain = ConditionEvaluator(context: context)
+        #expect(plain.evaluate(plainOnly).isTrue)
+        context.tempering = TemperingConditionResolution(isEnchanted: true)
+        var enchanted = ConditionEvaluator(context: context)
+        #expect(!enchanted.evaluate(plainOnly).isTrue)
+        #expect(enchanted.functionName(of: plainOnly) == "EPTemperingItemIsEnchanted")
     }
 }

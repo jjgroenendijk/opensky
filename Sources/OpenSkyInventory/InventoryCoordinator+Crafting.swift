@@ -108,6 +108,11 @@ extension InventoryCoordinator {
         guard let crafting else { return noteCraft("No crafting station is open.") }
         do {
             let outcome = try crafting.craft(recipe)
+            if let step = outcome.improved {
+                let from = Tempering.name(level: step.from)
+                let to = Tempering.name(level: step.to)
+                return noteCraft("Improved \(name(of: outcome.created.item)): \(from) -> \(to).")
+            }
             storyEvents?.reportStoryEvent(.craft(
                 actor: .player,
                 workbench: runtime?.references?

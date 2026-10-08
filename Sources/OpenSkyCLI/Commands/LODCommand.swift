@@ -2,16 +2,16 @@
 // and object LOD NIF for one worldspace through production decoders.
 
 import Foundation
+import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyWorld
 
 enum LODCommand {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let worldspace = try (scanner.option("--worldspace")
+    static func run(context: CLIContext, arguments: LODArguments) throws {
+        let worldspace = (arguments.worldspace
             ?? FirstRenderCell.worldspaceEditorID).lowercased()
-        try scanner.finish()
         let vfs = context.makeFileSystem()
         let settingsPath = "lodsettings\\\(worldspace).lod"
         let settings = try LODSettings(data: vfs.contents(forPath: settingsPath))

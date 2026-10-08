@@ -5,18 +5,18 @@
 import Foundation
 import OpenSkyAssetCache
 import OpenSkyAudio
+import OpenSkyCLIArguments
 import OpenSkyGameData
 
 enum AudioAACCheck {
-    static func run(context: CLIContext, scanner: inout ArgumentScanner) throws {
-        let perCategory = try scanner.option("--per-category").map { text in
+    static func run(context: CLIContext, arguments: AudioArguments.AACCheck) throws {
+        let perCategory = try arguments.perCategory.map { text in
             guard let value = Int(text), value > 0 else {
                 throw CLIError.usage("--per-category needs a positive whole number")
             }
             return value
         } ?? 40
-        let out = try scanner.option("--out")
-        try scanner.finish()
+        let out = arguments.out
         let files = context.makeFileSystem()
         let converter = CachedAudioConverter()
         let paths = files.archiveEntries().map(\.path).filter { converter.accepts(path: $0) }

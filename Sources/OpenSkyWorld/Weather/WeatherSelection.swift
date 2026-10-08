@@ -3,6 +3,7 @@
 // worldspace CLMT (WRLD CNAM) as fallback; see docs/engine/weather.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorldState

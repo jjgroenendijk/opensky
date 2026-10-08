@@ -85,7 +85,8 @@ final class RuntimeStateWorldAdapter {
             generalBaseline: baseline.basesByIndex,
             level: baseline.level,
             isChild: baseline.isChild,
-            leftHandOut: handIsEmpty ? .nothing : nil
+            leftHandOut: handIsEmpty ? .nothing : nil,
+            race: baseline.race
         )
     }
 

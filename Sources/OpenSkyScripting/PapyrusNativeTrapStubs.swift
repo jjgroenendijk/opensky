@@ -21,9 +21,7 @@ extension PapyrusNativeFunctions {
 
     private static let trapStubs: [TrapStub] = [
         TrapStub("ObjectReference", "SetMotionType", .none),
-        TrapStub("ObjectReference", "ApplyHavokImpulse", .none),
         TrapStub("ObjectReference", "Reset", .none),
-        TrapStub("ObjectReference", "PlaceAtMe", .none),
         TrapStub("ObjectReference", "BlockActivation", .none),
         TrapStub("ObjectReference", "WaitForAnimationEvent", .boolean(true)),
         TrapStub("ObjectReference", "SetAnimationVariableFloat", .none),

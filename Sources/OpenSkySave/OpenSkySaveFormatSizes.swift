@@ -208,4 +208,11 @@ nonisolated extension OpenSkySaveFormat {
     /// Smallest number of bytes one `CRVG` row can occupy: a plugin key with an
     /// empty name (7) and the violent gold (4).
     public static let minimumViolentCrimeGoldRowSize = 11
+    /// Smallest `TMPR` entry: a plugin key with an empty name (7), the "no cell"
+    /// tag (1), and a zero item count (4).
+    public static let minimumTemperedEntrySize = 12
+    /// Smallest `TMPR` item: the FormID and a zero level count.
+    public static let minimumTemperedItemSize = 8
+    /// Bytes one `TMPR` level occupies.
+    public static let temperedLevelSize = 4
 }

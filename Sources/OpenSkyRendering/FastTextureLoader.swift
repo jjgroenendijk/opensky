@@ -24,6 +24,8 @@ nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
     public var meshes = 0
     public var meshBytes = 0
     public var lastBatchMeshes = 0
+    /// Textures loaded on the CPU because their cache entry is on an external volume.
+    public var externalSkips = 0
 
     public init() {}
 }
@@ -78,6 +80,7 @@ nonisolated public final class FastTextureLoader {
     private let queue: MTLIOCommandQueue
     private var buffer: MTLIOCommandBuffer?
     private var handles: [URL: MTLIOFileHandle] = [:]
+    private var internalFolders: [URL: Bool] = [:]
     private var pending: [Pending] = []
     private var pendingMeshBytes: [PendingBytes] = []
     private var batchStart: ContinuousClock.Instant?
@@ -89,6 +92,24 @@ nonisolated public final class FastTextureLoader {
         descriptor.type = .concurrent
         descriptor.scratchBufferAllocator = TransientScratchAllocator(device: device)
         queue = try device.makeIOCommandQueue(descriptor: descriptor)
+    }
+
+    /// The IO queue keeps the memory of each scratch buffer it used. From an
+    /// external disk it saves no time, so it reads only from internal volumes.
+    /// See docs/engine/asset-cache.md, "Fast resource loading".
+    public func reads(from file: URL) -> Bool {
+        let folder = file.deletingLastPathComponent()
+        if let known = internalFolders[folder] {
+            return known
+        }
+        let isInternal = (try? folder.resourceValues(forKeys: [.volumeIsInternalKey]))?
+            .volumeIsInternal ?? false
+        internalFolders[folder] = isInternal
+        return isInternal
+    }
+
+    func recordExternalSkip() {
+        control.record { $0.externalSkips += 1 }
     }
 
     /// Queues the levels of `entry` into a new texture. The texture holds no

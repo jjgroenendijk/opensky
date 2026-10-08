@@ -3,22 +3,23 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyCLIArguments
 
 enum GameLaunch {
     static let defaultWaitSeconds = 180.0
     static let retrySeconds = 0.5
     static let modes = ["play", "developer"]
 
-    static func run(_ words: [String], dataRoot: String?, options: GameCommandOptions) throws {
-        var scanner = ArgumentScanner(words)
-        let mode = try scanner.option("--mode") ?? "play"
+    static func run(arguments: GameArguments.Launch) throws {
+        let options = try GameCommandOptions(arguments.game)
+        let dataRoot = arguments.global.dataRoot
+        let mode = arguments.mode
         guard modes.contains(mode) else {
             throw CLIError.usage("--mode must be play or developer")
         }
-        let appPath = try scanner.option("--app")
-        let wait = try scanner.option("--wait").flatMap(Double.init) ?? defaultWaitSeconds
-        let title = scanner.flag("--title")
-        try scanner.finish()
+        let appPath = arguments.app
+        let wait = arguments.wait ?? defaultWaitSeconds
+        let title = arguments.title
         // An app already serving the socket is attached to, not launched twice.
         if (try? AgentClientSession(path: options.socketPath, connectTimeout: 2)) == nil {
             try open(
@@ -100,10 +101,9 @@ enum GameLaunch {
 }
 
 enum GameScriptRun {
-    static func run(_ words: [String], options: GameCommandOptions) throws {
-        guard words.count == 1, let path = words.first else {
-            throw CLIError.usage("game run needs one <script.jsonl>")
-        }
+    static func run(arguments: GameArguments.Run) throws {
+        let options = try GameCommandOptions(arguments.game)
+        let path = arguments.script
         let text = try String(contentsOf: URL(filePath: path), encoding: .utf8)
         let steps: [AgentScriptStep]
         do {

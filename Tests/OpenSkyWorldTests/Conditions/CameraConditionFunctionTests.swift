@@ -74,7 +74,14 @@ struct CameraConditionFunctionTests {
         #expect(try !Self.isTrue(523, camera: Self.rangedShot).isTrue)
     }
 
-    @Test(arguments: [UInt16(407), 515, 516, 517, 518, 522, 523])
+    @Test func firstPersonReadsThePlayerCamera() throws {
+        var camera = Self.rangedShot
+        #expect(try Self.returns(391, value: 0, camera: camera))
+        camera.playerIsFirstPerson = true
+        #expect(try Self.returns(391, value: 1, camera: camera))
+    }
+
+    @Test(arguments: [UInt16(391), 407, 515, 516, 517, 518, 522, 523])
     func failsHonestlyWithoutAShotRequest(function: UInt16) throws {
         let outcome = try Self.isTrue(function, 6, 4, camera: .empty)
         #expect(outcome.failures == [.unavailableData(.camera)])
