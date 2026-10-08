@@ -1,10 +1,11 @@
-// The race menu, map marker, fast travel, identity, and player MoveTo natives. The menus answer
+// The race menu, map marker, fast travel, identity, and MoveTo natives. The menus answer
 // through `PapyrusMenuBridge`, which the app sets. Signatures follow the Creation
 // Kit wiki pages for `Game`, `ObjectReference`, `Actor`, `ActorBase`, and `Form`.
 
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
+import OpenSkyWorldState
 
 /// What the menu natives reach. The app answers it.
 @MainActor
@@ -55,21 +56,48 @@ extension PapyrusNativeFunctions {
         installMoveTo(into: &registry)
     }
 
-    /// `MoveTo(akTarget, ...)` moves only the player for now. The opening quest
-    /// places the player this way, through an `Actor`-typed variable, so both names
-    /// are registered. Offsets and rotation are not applied.
+    /// `MoveTo(akTarget, afX, afY, afZ, abMatchRotation)`. The opening quest moves the
+    /// player through an `Actor`-typed variable, so both names are registered. Another
+    /// reference moves only inside the resident cells; the player ignores the offsets.
     private static func installMoveTo(into registry: inout PapyrusNativeRegistry) {
         for script in ["ObjectReference", "Actor"] {
             withReference(script, "MoveTo", into: &registry) { call, world, menus, key in
-                guard key == .player else { return failure(call, "MoveTo moves only the player") }
                 guard
                     let handle = objectArgument(call, at: 0),
                     let target = world.referenceKey(for: handle)
                 else { return failure(call, "MoveTo needs a target reference") }
-                menus.movePlayer(to: target)
-                return .returned(.none)
+                guard key != .player else {
+                    menus.movePlayer(to: target)
+                    return .returned(.none)
+                }
+                return moveReference(key, to: target, call, world)
             }
         }
+    }
+
+    private static func moveReference(
+        _ key: ReferenceKey, to target: ReferenceKey,
+        _ call: PapyrusNativeCall, _ world: PapyrusWorldStateBridge
+    ) -> PapyrusNativeResult {
+        guard
+            let moved = world.referenceState(for: key)?.transform,
+            let place = world.referenceState(for: target)?.transform
+        else { return needsResidentReference(call) }
+        let offsets = (1 ... 3).map { float(call, at: $0) ?? 0 }
+        guard offsets.allSatisfy(\.isFinite) else { return failure(
+            call,
+            "MoveTo needs finite offsets"
+        ) }
+        let matchRotation = boolean(call, at: 4, default: true)
+        world.write(
+            ReferenceTransformOverride(
+                position: place.position + SIMD3<Float>(offsets),
+                rotation: matchRotation ? place.rotation : moved.rotation,
+                scale: moved.scale
+            ).erased,
+            for: key
+        )
+        return .returned(.none)
     }
 
     private static func installMarkerNatives(into registry: inout PapyrusNativeRegistry) {

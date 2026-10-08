@@ -25,7 +25,10 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         let propertyName = try propertyName(operands[0])
-        let instance = try propertyInstance(operands[1], frame: frame)
+        guard let instance = try propertyInstance(operands[1], frame: frame) else {
+            try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
+            return .next
+        }
         guard let resolved = try resolveProperty(propertyName, instance: instance) else {
             throw .missingProperty(
                 instruction: instructionIndex,
@@ -71,7 +74,7 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         let propertyName = try propertyName(operands[0])
-        let instance = try propertyInstance(operands[1], frame: frame)
+        guard let instance = try propertyInstance(operands[1], frame: frame) else { return .next }
         let value = try read(operands[2], frame: frame)
         guard let resolved = try resolveProperty(propertyName, instance: instance) else {
             throw .missingProperty(
@@ -118,11 +121,17 @@ extension PapyrusInterpreter {
         return .next
     }
 
+    /// A property on `None` reads as its default and ignores a write, as the game logs
+    /// the access and goes on.
     private func propertyInstance(
         _ operand: PexValue,
         frame: PapyrusFrame
-    ) throws(PapyrusFault) -> PapyrusInstance {
+    ) throws(PapyrusFault) -> PapyrusInstance? {
         let value = try read(operand, frame: frame)
+        if value == .none {
+            runtime.tally.noteNoneReceiver()
+            return nil
+        }
         guard case let .object(handle) = value else {
             throw .typeMismatch(
                 instruction: instructionIndex,

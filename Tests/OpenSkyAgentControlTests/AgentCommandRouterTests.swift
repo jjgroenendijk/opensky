@@ -87,6 +87,15 @@ struct AgentCommandRouterTests {
         #expect(world.inputLog == ["text Brynja"])
     }
 
+    @Test func clickTakesAPointAsFractionsOfTheView() throws {
+        let request = try AgentCommandLine.request(["input", "click", "--x", "0.5", "--y", "0.25"])
+        #expect(request.command == "input.click")
+        let clicked = try #require(result(run(request.command, request.args)))
+        #expect(try clicked.get()["clicked"] == true)
+        #expect(world.inputLog == ["click 0.5 0.25"])
+        #expect(failureCode(run("input.point", ["x": 1.5, "y": 0])) == .invalidArgument)
+    }
+
     @Test func holdWhileRunningCountsDrawnFrames() throws {
         let start = world.agentTimeline.frame
         _ = try #require(finish(run("input.hold", ["action": "back", "frames": 3])))

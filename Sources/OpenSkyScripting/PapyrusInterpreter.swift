@@ -262,8 +262,9 @@ public final class PapyrusInterpreter {
     }
 
     private func fault(_ fault: PapyrusFault) -> PapyrusRunOutcome {
+        let place = frames.last?.ownerScript.name
         frames.removeAll()
-        runtime.tally.noteFault(fault)
+        runtime.tally.noteFault(fault, in: place)
         return .faulted(fault)
     }
 }

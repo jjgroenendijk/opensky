@@ -84,10 +84,19 @@ extension TitleMenuCoordinator {
     }
 
     func routeMovie(_ event: MenuInputEvent, renderer: Renderer) {
+        routeMovie(renderer: renderer) { TitleMenuMovieBridge.handle(event, runtime: $0) }
+    }
+
+    /// The movie hit tests the pointer itself. The engine rows have no layout to
+    /// hit, so without the movie a pointer event does nothing.
+    public func route(_ event: MenuPointerEvent) {
+        guard isOpen, loadPage == nil, movieLoaded, let renderer = world?.renderer else { return }
+        routeMovie(renderer: renderer) { TitleMenuMovieBridge.handle(event, runtime: $0) }
+    }
+
+    private func routeMovie(renderer: Renderer, _ inject: (SWFMovieRuntime) -> Void) {
         do {
-            try renderer.updateSWFRuntime { runtime in
-                TitleMenuMovieBridge.handle(event, runtime: runtime)
-            }
+            try renderer.updateSWFRuntime(inject)
         } catch {
             movieError = String(describing: error)
         }

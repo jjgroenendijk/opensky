@@ -96,15 +96,24 @@ struct PapyrusNativeMenusTests {
         #expect(actor("GetRace") == .returned(.none))
     }
 
-    @Test func moveToMovesOnlyThePlayer() throws {
+    @Test func moveToPlacesAResidentReferenceAtItsTarget() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
         fixture.session.bridge.menus = menus
-        let call = PapyrusWorldFixture.methodCall(
-            "ObjectReference", "MoveTo", receiver: fixture.receiver,
-            arguments: [.object(fixture.receiver)]
-        )
-        #expect(PapyrusWorldFixture.isInvalidArguments(fixture.registry.invoke(call)))
+        let move = { (target: PapyrusObjectHandle, offset: PapyrusValue) in
+            fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "ObjectReference", "MoveTo", receiver: fixture.receiver,
+                arguments: [.object(target), offset, .float(0), .float(5)]
+            ))
+        }
+        #expect(move(fixture.receiver, .integer(10)) == .returned(.none))
+        let written = try #require(fixture.session.worldState.component(
+            ReferenceTransformOverride.self, for: fixture.key
+        ))
+        #expect(written.position == SIMD3<Float>(11, 2, 8))
         #expect(menus.calls.isEmpty)
+        #expect(PapyrusWorldFixture.isInvalidArguments(move(fixture.receiver, .float(.infinity))))
+        let absent = fixture.handle(PapyrusNativeReferenceFixture.doorID)
+        #expect(PapyrusWorldFixture.isInvalidArguments(move(absent, .float(0))))
     }
 }

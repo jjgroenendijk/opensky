@@ -60,16 +60,18 @@ nonisolated public struct TitleMenuMovieSnapshot: Equatable, Sendable {
     public let isLoaded: Bool
     public let error: String?
     public let rows: [String]
+    public let selectedIndex: Int?
     public let state: String?
 
     public init(
         isEnabled: Bool = false, isLoaded: Bool = false, error: String? = nil,
-        rows: [String] = [], state: String? = nil
+        rows: [String] = [], selectedIndex: Int? = nil, state: String? = nil
     ) {
         self.isEnabled = isEnabled
         self.isLoaded = isLoaded
         self.error = error
         self.rows = rows
+        self.selectedIndex = selectedIndex
         self.state = state
     }
 }
@@ -271,6 +273,7 @@ public final class TitleMenuCoordinator {
                 isLoaded: movieLoaded,
                 error: movieError,
                 rows: runtime.map(TitleMenuMovieBridge.entryLabels(runtime:)) ?? [],
+                selectedIndex: runtime.flatMap(TitleMenuMovieBridge.selectedIndex(runtime:)),
                 state: runtime.flatMap(TitleMenuMovieBridge.currentState(runtime:))
             )
         )

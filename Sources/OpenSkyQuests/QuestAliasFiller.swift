@@ -64,8 +64,8 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 key = alias.forcedReference
                     .flatMap { ReferenceKey.resolve($0, using: resolver)?.namingPlayer }
             case .uniqueActor where locations != nil:
-                // The `LCUN` lists miss some unique NPCs, such as Ralof. That gap
-                // is OpenSky's, so it never fails a start.
+                // A base with no single persistent actor is OpenSky's gap, so it
+                // never fails a start.
                 guard let unique = uniqueReference(of: alias) else {
                     skipped.note(.unresolvedReference)
                     return

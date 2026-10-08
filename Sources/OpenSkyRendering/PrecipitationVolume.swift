@@ -45,7 +45,7 @@ nonisolated public struct PrecipitationBase: Equatable, Sendable {
 
 nonisolated public final class PrecipitationVolume {
     public static let rainBase = PrecipitationBase(speed: 1900, radius: 12, emission: 6)
-    public static let snowBase = PrecipitationBase(speed: 360, radius: 18, emission: 4)
+    public static let snowBase = PrecipitationBase(speed: 360, radius: 5, emission: 4)
 
     private let rain: ParticlePlayback
     private let snow: ParticlePlayback
@@ -183,9 +183,10 @@ nonisolated extension PrecipitationVolume {
         speed: snowBase.speed,
         speedVariation: 90,
         declinationVariation: 0.22,
-        color: SIMD4(1, 1, 1, 0.88),
+        // The sprite is unlit, so a grey tint keeps a near flake below the sky's brightness.
+        color: SIMD4(0.8, 0.82, 0.86, 0.8),
         radius: snowBase.radius,
-        radiusVariation: 6,
+        radiusVariation: 2,
         lifeSpan: 3.2,
         lifeVariation: 0.5,
         volume: SIMD3(2400, 2400, 900),

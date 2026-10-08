@@ -58,6 +58,11 @@ final class FakeAgentWorld: AgentControlWorld {
         ["selected": .string(label)]
     }
 
+    func pointMenu(x: Float, y: Float, click: Bool) throws(AgentFailure) -> AgentJSON {
+        inputLog.append("\(click ? "click" : "point") \(x) \(y)")
+        return ["clicked": .bool(click)]
+    }
+
     func typeText(_ text: String) throws(AgentFailure) -> AgentJSON {
         inputLog.append("text \(text)")
         return ["typed": .string(text)]

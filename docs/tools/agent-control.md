@@ -74,7 +74,8 @@ menu owns input, movement becomes menu navigation and other actions are swallowe
 injected press does exactly what the key does. `input select <label>` moves the open menu's
 selection with the same up and down events, one row at a time. `input text <text>` sends
 characters the way typed keys do, to the menu that takes text now, such as the race menu's
-name row.
+name row. `input point` and `input click` take `--x` and `--y` as fractions of the game view,
+origin top left, and send the pointer events a real cursor sends. They reach only a menu.
 
 ## Events
 

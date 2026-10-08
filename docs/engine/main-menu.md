@@ -22,6 +22,10 @@ the two. These facts were measured on the install with `openskycli swf movie-pro
 
 - The menu clip is `/MenuHolder/Menu_mc`, with class `StartMenuObj`. Its row list is
   `MainListHolder/List_mc`. The list reacts to keys only while it has focus.
+- Each row clip (`Entry0` and up) has its own `onRollOver`, which selects the row, and
+  `onPress`, which picks it. So the cursor goes to the movie as a stage point, and the
+  movie's hit test finds the row ([AS2 input](/engine/as2-input.md)). The rows sit at the
+  right edge of the 1280 x 720 stage.
 - The engine fills the rows by calling the `sendMenuProperties` callback with 14 values.
   Flag 0 shows Quit. Flag 1 shows Continue and enables Load. Value 2 is the version text.
   Flag 3 starts on the Press Start screen. Flag 9 skips the Bethesda.net login screen.
@@ -64,15 +68,21 @@ fill yet").
 
 The race menu then opens where `MQ101` calls `Game.ShowRaceMenu`
 ([race menu](/engine/race-menu.md)). In the game that call comes in Helgen, after the cart
-scene. OpenSky does not play that scene yet, so a new game waits beside the carts: the riders
-live in other cells, and `MoveTo` cannot move an actor yet. `debug quest MQ101 75` in the
+scene. OpenSky does not play that scene yet, so a new game waits beside the carts. The riders
+who live in other cells, such as `Ulfric` and `Lokir`, stay there, because `MoveTo` moves a
+reference only inside the loaded cells. `debug quest MQ101 75` in the
 [agent control](/tools/agent-control.md) runs the stage that opens the race menu. The race menu
 panel in the sidebar opens the menu by hand.
 
-`MoveTo` moves only the player, without the offset and rotation arguments. A target outside
-the loaded cells is looked up in the worldspace records of `Skyrim.esm`, off the main
+`MoveTo` on the player ignores the offset and rotation arguments. A target outside the loaded
+cells is looked up in the worldspace records of `Skyrim.esm`, off the main
 actor, and its cell loads before the player is placed. The title menu panel can also start
 a new game at a named cell; that test start opens the race menu at once.
+
+`MoveTo` on any other reference needs that reference and its target in the loaded cells. It
+stores the target's position plus the offsets, and the target's rotation unless
+`abMatchRotation` is false, as a transform change. The reference stays in the cell that owns
+its record, so it draws at the new place only while that cell is loaded.
 
 The `MQ101` fragment calls were read with the PEX disassembler into
 `.logs/probe-mq101/functions.txt`.

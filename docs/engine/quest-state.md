@@ -121,12 +121,15 @@ started any other way has no event, so the alias is counted and left empty.
 
 Unique Actor (`ALUA`) names an `NPC_` base. The reference comes from the `LCUN` lists of the
 `LCTN` records, which pair each unique base with its placed actor. Those lists cover 2,741 of the
-2,900 Unique Actor aliases in `Skyrim.esm`. They miss some actors, such as `Ralof` and `Hadvar`,
-so a miss is counted and left empty and never fails the start, the same as an unimplemented
-fill. Every other fill type is counted and left empty, and an unimplemented fill type never
-fails a quest start. Refusing a start because OpenSky cannot run a Find Matching Reference
-search would present an engine gap as game behavior. Only an implemented fill that finds
-nothing (an `ALFR` or `ALFL` naming no record) fails a required alias.
+2,900 Unique Actor aliases in `Skyrim.esm`. They miss some actors, such as `Ralof` and `Hadvar`.
+For a base the lists miss, OpenSky takes the one placed actor of that base in the persistent
+cell children of the load order. `Ralof` and `Hadvar` each have exactly one, in the `Tamriel`
+persistent cell. A base with no persistent actor, or with more than one, is still counted and
+left empty and never fails the start, the same as an unimplemented fill. Every other fill type
+is counted and left empty, and an unimplemented fill type never fails a quest start.
+Refusing a start because OpenSky cannot run a Find Matching Reference search would present
+an engine gap as game behavior. Only an implemented fill that finds nothing (an `ALFR` or
+`ALFL` naming no record) fails a required alias.
 
 The reuse rule refuses the fill, not the start. The page says the rule "is not required for all fill
 types" and names one exception, so which types it covers is not documented. Failing the start would

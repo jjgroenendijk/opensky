@@ -575,6 +575,16 @@ extension GameViewController: @MainActor SystemMenuWorld {
             systemMenu.route(event)
         }
     }
+
+    /// The main menu movie hit tests the cursor. The other menus still take a
+    /// press as their accept button.
+    func handleMenuPointer(_ event: MenuPointerEvent) {
+        if menuMode.topMenu == TitleMenuCoordinator.identifier {
+            titleMenu.route(event)
+        } else if event.phase == .pressed {
+            handleMenuInput(.button(.accept))
+        }
+    }
 }
 
 extension GameViewController: AudioControlForwarding, RuntimeStateControlForwarding,
