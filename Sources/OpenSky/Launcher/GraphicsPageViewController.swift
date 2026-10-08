@@ -18,6 +18,9 @@ final class GraphicsPageViewController: NSViewController {
         title: "Clear Saved Pipelines", target: nil, action: nil
     )
     let gpuCullingControl = NSButton(checkboxWithTitle: "Cull on the GPU", target: nil, action: nil)
+    let waterDepthControl = NSButton(
+        checkboxWithTitle: "See into shallow water", target: nil, action: nil
+    )
     let textureStreamingControl = NSButton(
         checkboxWithTitle: "Stream textures", target: nil, action: nil
     )
@@ -75,6 +78,7 @@ final class GraphicsPageViewController: NSViewController {
             ]),
             PanelComponents.group([PanelComponents.caption("Culling"), gpuCullingControl]),
             PanelComponents.group([PanelComponents.caption("Grass"), meshShaderGrassControl]),
+            PanelComponents.group([PanelComponents.caption("Water"), waterDepthControl]),
             PanelComponents.group([
                 PanelComponents.caption("Textures"), textureStreamingControl, textureBudgetControl
             ]),
@@ -104,6 +108,7 @@ final class GraphicsPageViewController: NSViewController {
     func refresh() {
         pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
         gpuCullingControl.state = store.bool(.gpuCulling) ? .on : .off
+        waterDepthControl.state = store.bool(.waterDepth) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))
         rayTracedShadowsControl.isEnabled = rayTracing.isAvailable
@@ -136,6 +141,11 @@ final class GraphicsPageViewController: NSViewController {
             identifier: "GraphicsGPUCullingControl"
         )
         gpuCullingControl.toolTip = "Cull the static scene in a compute pass, not on the CPU"
+        PanelComponents.configureCheckbox(
+            waterDepthControl, target: self, action: #selector(waterDepthChanged),
+            identifier: "GraphicsWaterDepthControl"
+        )
+        waterDepthControl.toolTip = "Shallow water shows the ground below; costs one depth copy"
         configureTextureControls()
         configureUpscalingControls()
         configureGrassControls()
@@ -235,6 +245,10 @@ final class GraphicsPageViewController: NSViewController {
 
     @objc private func gpuCullingChanged() {
         store.set(.gpuCulling, to: gpuCullingControl.state == .on ? 1 : 0)
+    }
+
+    @objc private func waterDepthChanged() {
+        store.set(.waterDepth, to: waterDepthControl.state == .on ? 1 : 0)
     }
 
     @objc private func clearPipelineCache() {

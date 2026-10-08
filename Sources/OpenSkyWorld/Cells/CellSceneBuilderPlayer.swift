@@ -98,6 +98,9 @@ nonisolated extension CellSceneBuilder {
                 appearance = appearance.applying(override)
             }
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)
+            // The install bakes no FaceGen head for the player base, so the
+            // player's head is always built from its head parts.
+            visual.headSource = .assembled
             if let override, !firstPerson {
                 visual = chargenVisual(visual, appearance: override)
             }

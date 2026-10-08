@@ -87,6 +87,7 @@ nonisolated extension NIFFile {
                     || block.typeName == NIFSwitchNode.typeName
                 {
                     guard let node = try drawableNode(block) else { continue }
+                    guard !node.object.isHidden else { continue }
                     guard !Self.isEditorMarker(node.object.name) else {
                         editorMarkerShapeCount += 1
                         continue
@@ -137,7 +138,7 @@ nonisolated extension NIFFile {
                 editorMarkerShapeCount += 1
                 return
             }
-            guard try !isUndrawableEffect(shape) else {
+            guard !shape.object.isHidden, try !isUndrawableEffect(shape) else {
                 skippedShapeCount += 1
                 return
             }
@@ -214,8 +215,9 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// Resolves a shape's property refs into an engine Material. A ref to a
-    /// water or sky shader, an undecodable effect, or no ref falls back to `Material.fallback`.
+    /// Resolves a shape's property refs into an engine Material. A water shader gives
+    /// `Material.waterSurface`. A sky shader, an undecodable effect, or no ref gives
+    /// `Material.fallback`.
     /// Out-of-range refs are malformed, same as the walk.
     private func resolveMaterial(key: SlotKey) throws -> Material {
         var shader: NIFLightingShaderProperty?
@@ -231,6 +233,9 @@ nonisolated extension NIFFile.Flattener {
                 )
             {
                 return material
+            }
+            if block.typeName == NIFFile.waterShaderType {
+                return .waterSurface
             }
             if block.typeName == "BSLightingShaderProperty" {
                 let property = try NIFLightingShaderProperty(
@@ -272,6 +277,7 @@ nonisolated extension NIFFile.Flattener {
 
 nonisolated extension NIFFile {
     static let effectShaderType = "BSEffectShaderProperty"
+    static let waterShaderType = "BSWaterShaderProperty"
 }
 
 nonisolated extension NIFFile.Flattener {
@@ -290,12 +296,25 @@ nonisolated extension NIFFile.Flattener {
         return effect.sourceTexturePath == nil || isAdditive
     }
 
-    /// The static path draws an effect shape lit, with its source texture
-    /// and alpha property. The effect shader's blend modes are not modeled.
+    /// The static path draws an effect shape unlit, with its source texture,
+    /// palette, and alpha property. Additive blending is not modeled.
     func effectMaterial(block: NIFFile.Block, alphaBlock: Int?) throws -> Material {
         let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
         let alpha = try alphaProperty(at: alphaBlock)
         let fallback = Material.fallback
+        let shading = EffectShading(
+            baseColor: effect.baseColor,
+            baseColorScale: effect.baseColorScale,
+            paletteTexture: effect.greyscaleTexturePath,
+            paletteColor: effect.usesGreyscaleToPaletteColor,
+            paletteAlpha: effect.usesGreyscaleToPaletteAlpha,
+            falloff: effect.usesFalloff ? SIMD4(
+                effect.falloffStartAngle, effect.falloffStopAngle,
+                effect.falloffStartOpacity, effect.falloffStopOpacity
+            ) : nil,
+            vertexColors: effect.hasVertexColors,
+            vertexAlpha: effect.hasVertexAlpha
+        )
         return Material(
             diffuseTexture: effect.sourceTexturePath,
             normalTexture: nil,
@@ -307,7 +326,8 @@ nonisolated extension NIFFile.Flattener {
             specularStrength: 0,
             doubleSided: effect.isDoubleSided,
             alphaBlend: alpha?.blendEnabled ?? false,
-            alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil
+            alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil,
+            effect: shading
         )
     }
 

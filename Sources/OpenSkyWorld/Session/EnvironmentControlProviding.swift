@@ -84,6 +84,14 @@ public protocol ParticleControlProviding: AnyObject {
 }
 
 @MainActor
+public protocol WaterControlProviding: AnyObject {
+    /// Water reads the scene depth; off gives every surface a fixed middle depth.
+    var waterDepthEnabled: Bool { get set }
+    /// Water surfaces in the scene: cell planes and placed water meshes.
+    var waterSurfaceCount: Int { get }
+}
+
+@MainActor
 public protocol PrecipitationControlProviding: AnyObject {
     var precipitationEnabled: Bool { get set }
     var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }

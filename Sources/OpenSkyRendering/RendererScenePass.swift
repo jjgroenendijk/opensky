@@ -108,6 +108,7 @@ extension Renderer {
     ) -> Int {
         let offset = Self.alignedDrawUniformsSize * (slot * drawUniformSlotCapacity + draw)
         let material = group.material
+        let effect = material.effect
         var uniforms = DrawUniforms(
             uvOffset: material.uvOffset,
             uvScale: material.uvScale,
@@ -115,7 +116,11 @@ extension Renderer {
             alphaThreshold: material.alphaTestThreshold ?? 0,
             pointLightCount: UInt32(pointLightCount),
             receivesShadows: group.receivesShadows ? 1 : 0,
-            layerCategory: group.layer.rawValue
+            layerCategory: group.layer.rawValue,
+            effectFlags: effect?.flags ?? 0,
+            effectBaseColor: effect?.baseColor ?? .zero,
+            effectFalloff: effect?.falloff ?? .zero,
+            effectBaseColorScale: effect?.baseColorScale ?? 1
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<DrawUniforms>.size)
@@ -216,76 +221,113 @@ extension Renderer {
         return offset
     }
 
+    /// The pipelines one `encode(groups:)` call picks from, by mesh kind.
+    public struct GroupPipelines {
+        public let staticMesh: MTLRenderPipelineState
+        public let skinned: MTLRenderPipelineState
+        public let morphedSkinned: MTLRenderPipelineState
+
+        /// Debug channels replace the shaded surface for every geometry path at
+        /// once, so the shipping set is swapped here rather than at each caller.
+        func resolved(debug: DebugRenderPipelines?) -> Self {
+            guard let debug else { return self }
+            return Self(
+                staticMesh: debug.staticMesh, skinned: debug.skinned,
+                morphedSkinned: debug.morphedSkinned
+            )
+        }
+
+        func pipeline(for group: DrawGroup) -> MTLRenderPipelineState {
+            group.faceMorph != nil ? morphedSkinned
+                : (group.mesh.isSkinned ? skinned : staticMesh)
+        }
+    }
+
     /// Encodes instanced draw groups: cull per instance, write visible transforms, bind
     /// the ring at the group offset, draw once. Empty groups encode nothing. Internal,
-    /// so the first-person arms use the same path.
+    /// so the first-person arms use the same path. `skippingBlended` leaves the
+    /// blended groups to `encodeBlendedGroups`.
     public func encode(
         groups: [DrawGroup],
         staticPipeline: MTLRenderPipelineState,
         skinnedPipeline: MTLRenderPipelineState,
         morphedSkinnedPipeline: MTLRenderPipelineState,
+        skippingBlended: Bool = false,
         state: inout ScenePassState
     ) {
-        // Debug channels replace the shaded surface for every geometry path at
-        // once, so the caller's shipping pair is swapped here rather than at
-        // each of the four call sites.
-        let staticPipeline = isRenderDebugActive ? debugPipelines.staticMesh : staticPipeline
-        let skinnedPipeline = isRenderDebugActive ? debugPipelines.skinned : skinnedPipeline
-        let morphedSkinnedPipeline = isRenderDebugActive
-            ? debugPipelines.morphedSkinned : morphedSkinnedPipeline
+        let pipelines = GroupPipelines(
+            staticMesh: staticPipeline, skinned: skinnedPipeline,
+            morphedSkinned: morphedSkinnedPipeline
+        ).resolved(debug: isRenderDebugActive ? debugPipelines : nil)
         let layers = effectiveRenderLayers
         // Pipeline bound lazily: an all-culled list encodes nothing. Model
         // ordering is retained, so switch only when rigid/skinned kind does.
         var boundPipeline: ObjectIdentifier?
         for (index, group) in groups.enumerated() where layers.contains(group.layer) {
-            guard let visible = visibleInstances(of: group, at: index, state: &state)
-            else { continue }
-            let pipeline = group.faceMorph != nil ? morphedSkinnedPipeline
-                : (group.mesh.isSkinned ? skinnedPipeline : staticPipeline)
-            if boundPipeline != ObjectIdentifier(pipeline) {
-                state.encoder.setRenderPipelineState(pipeline)
-                boundPipeline = ObjectIdentifier(pipeline)
-            }
-            // Running visible-group cursor indexes the uniform ring:
-            // visible groups <= scene.drawCount <= ring capacity.
-            let lightOffset = group.instances.first?.receivesPointLights == true
-                ? writePointLights(
-                    near: group.lightingCenter, slot: state.slot, draw: state.drawCursor
-                )
-                : (count: 0, byteOffset: 0)
-            let uniformOffset = updateDrawUniforms(
-                slot: state.slot,
-                draw: state.drawCursor,
-                group: group,
-                pointLightCount: lightOffset.count
+            guard !skippingBlended || !group.drawsBlended else { continue }
+            encode(
+                group: group, at: index, pipelines: pipelines,
+                boundPipeline: &boundPipeline, state: &state
             )
-            state.drawCursor += 1
-            state.stats.drawCalls += 1
-            argumentTable.setAddress(
-                group.mesh.vertexBuffer.gpuAddress,
-                index: BufferIndex.vertices.rawValue
-            )
-            bindSkinningBuffers(for: group.mesh, slot: state.slot)
-            bindFaceMorph(group.faceMorph, slot: state.slot)
-            argumentTable.setAddress(
-                drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
-                index: BufferIndex.drawUniforms.rawValue
-            )
-            argumentTable.setAddress(
-                visible.address,
-                index: BufferIndex.instanceTransforms.rawValue
-            )
-            argumentTable.setAddress(
-                pointLightBuffer.gpuAddress + UInt64(lightOffset.byteOffset),
-                index: BufferIndex.pointLights.rawValue
-            )
-            argumentTable.setTexture(
-                streamedBinding(group.material.diffuse),
-                index: TextureIndex.diffuse.rawValue
-            )
-            state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
-            state.encoder.drawInstances(of: group.mesh, visible)
         }
+    }
+
+    /// Draws one group; `index` is its place in the list the cull pass saw.
+    func encode(
+        group: DrawGroup,
+        at index: Int,
+        pipelines: GroupPipelines,
+        boundPipeline: inout ObjectIdentifier?,
+        state: inout ScenePassState
+    ) {
+        guard let visible = visibleInstances(of: group, at: index, state: &state) else { return }
+        let pipeline = pipelines.pipeline(for: group)
+        if boundPipeline != ObjectIdentifier(pipeline) {
+            state.encoder.setRenderPipelineState(pipeline)
+            boundPipeline = ObjectIdentifier(pipeline)
+        }
+        // Running visible-group cursor indexes the uniform ring:
+        // visible groups <= scene.drawCount <= ring capacity.
+        let lightOffset = group.instances.first?.receivesPointLights == true
+            ? writePointLights(near: group.lightingCenter, slot: state.slot, draw: state.drawCursor)
+            : (count: 0, byteOffset: 0)
+        let uniformOffset = updateDrawUniforms(
+            slot: state.slot,
+            draw: state.drawCursor,
+            group: group,
+            pointLightCount: lightOffset.count
+        )
+        state.drawCursor += 1
+        state.stats.drawCalls += 1
+        argumentTable.setAddress(
+            group.mesh.vertexBuffer.gpuAddress,
+            index: BufferIndex.vertices.rawValue
+        )
+        bindSkinningBuffers(for: group.mesh, slot: state.slot)
+        bindFaceMorph(group.faceMorph, slot: state.slot)
+        argumentTable.setAddress(
+            drawUniformBuffer.gpuAddress + UInt64(uniformOffset),
+            index: BufferIndex.drawUniforms.rawValue
+        )
+        argumentTable.setAddress(visible.address, index: BufferIndex.instanceTransforms.rawValue)
+        argumentTable.setAddress(
+            pointLightBuffer.gpuAddress + UInt64(lightOffset.byteOffset),
+            index: BufferIndex.pointLights.rawValue
+        )
+        bindMaterialTextures(group.material)
+        state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
+        state.encoder.drawInstances(of: group.mesh, visible)
+    }
+
+    /// The fragment declares the palette slot, so the diffuse fills it when a
+    /// material has no palette.
+    private func bindMaterialTextures(_ material: RenderMaterial) {
+        let diffuse = streamedBinding(material.diffuse)
+        argumentTable.setTexture(diffuse, index: TextureIndex.diffuse.rawValue)
+        argumentTable.setTexture(
+            material.effect?.palette?.gpuResourceID ?? diffuse,
+            index: TextureIndex.effectPalette.rawValue
+        )
     }
 
     /// The group's surviving instances for the camera, or nil when none survive.
@@ -467,6 +509,7 @@ extension Renderer {
             staticPipeline: rayTraced?.alphaTest ?? alphaTestPipeline,
             skinnedPipeline: skinnedAlphaTestPipeline,
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
+            skippingBlended: true,
             state: &state
         )
         state.cullList = nil
@@ -493,13 +536,21 @@ extension Renderer {
         let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
             ?? target
         let grade = imageSpaceGrade(descriptor: sceneTarget)
+        let waterDepth = waterReadsDepth(projection: projection)
         guard
-            let descriptor = scenePassDescriptor(sceneTarget, grade: grade),
+            let descriptor = scenePassDescriptor(
+                sceneTarget, grade: grade, storesDepth: waterDepth
+            ),
             let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
         bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
         var state = ScenePassState(encoder: encoder, slot: slot, frustum: frustum)
-        encodeSceneLayers(descriptor: descriptor, state: &state)
+        guard
+            encodeSceneLayers(
+                descriptor: descriptor, waterDepth: waterDepth, frameOffset: frameOffset,
+                state: &state
+            )
+        else { return false }
         if let grade {
             guard
                 encodeImageSpaceGrade(
@@ -529,11 +580,14 @@ extension Renderer {
         return true
     }
 
-    /// Sky, world geometry, effects, and the first-person arms.
+    /// Sky, world geometry, effects, and the first-person arms. False when the water
+    /// split cannot open its encoder.
     private func encodeSceneLayers(
         descriptor: MTL4RenderPassDescriptor,
+        waterDepth: Bool,
+        frameOffset: Int,
         state: inout ScenePassState
-    ) {
+    ) -> Bool {
         let encoder = state.encoder
         if scene.sky != nil, effectiveRenderLayers.contains(.sky) {
             encoder.setRenderPipelineState(skyPipeline)
@@ -549,7 +603,14 @@ extension Renderer {
         encodeSceneGeometry(state: &state)
         encodeMembranes(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
-        encodeWater(items: scene.water, state: &state)
+        // The water split replaces the encoder, so later layers use `state.encoder`.
+        guard
+            encodeWater(
+                items: scene.water, depthFrom: waterDepth ? descriptor : nil,
+                frameOffset: frameOffset, state: &state
+            )
+        else { return false }
+        encodeBlendedGroups(state: &state)
         encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
         encodeParticles(
             items: precipitation.drawItems,
@@ -557,6 +618,7 @@ extension Renderer {
             state: &state
         )
         encodeFirstPersonArms(descriptor: descriptor, state: &state)
-        encoder.setTriangleFillMode(.fill)
+        state.encoder.setTriangleFillMode(.fill)
+        return true
     }
 }

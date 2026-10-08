@@ -37,6 +37,19 @@ struct NIFModelSwitchAndEffectTests {
         #expect(try file.model().meshes.isEmpty)
     }
 
+    @Test func waterShaderShapeGetsTheWaterSurfaceMaterial() throws {
+        // The block body is not decoded: the cell's WATR gives the look.
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1])),
+            .init("BSTriShape", shape(shaderPropertyRef: 2)),
+            .init("BSWaterShaderProperty", Data(count: 16))
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.materials[0] == .waterSurface)
+        #expect(model.materials[0].waterSurface)
+    }
+
     @Test func effectShapeDrawsItsSourceTextureBlended() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
@@ -59,5 +72,52 @@ struct NIFModelSwitchAndEffectTests {
         #expect(material.diffuseTexture == "textures/effects/cloudtile.dds")
         #expect(material.alphaBlend)
         #expect(material.doubleSided)
+    }
+
+    /// Particle emitter source meshes set the hidden bit; the game never draws them.
+    @Test func hiddenShapesAndHiddenNodesDoNotDraw() throws {
+        let hidden = NIFFixture.avObjectPrefix(flags: 0xF)
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2, 3])),
+            .init("BSTriShape", shape()),
+            .init("BSTriShape", NIFFixture.staticTriangleShape(prefix: hidden)),
+            .init("NiNode", NIFFixture.niNode(prefix: hidden, children: [4])),
+            .init("BSTriShape", shape())
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.skippedShapeCount == 1)
+    }
+
+    @Test func effectShapeCarriesItsUnlitShading() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 1, alphaPropertyRef: 2)),
+            // Flags 1: vertex alpha, palette color and alpha, falloff.
+            // Flags 2: vertex colors.
+            .init("BSEffectShaderProperty", NIFParticleFixture.effectShaderProperty(
+                flags1: 0x78,
+                flags2: 0x20,
+                sourceTexture: "textures\\effects\\fxwhitewater01.dds",
+                baseColor: SIMD4(0.5, 0.25, 1, 0.75),
+                baseColorScale: 2,
+                falloff: SIMD4(0.9, 0.1, 1, 0.2),
+                greyscaleTexture: "textures\\effects\\gradients\\gradwhitewater.dds"
+            )),
+            .init("NiAlphaProperty", NIFFixture.niAlphaProperty(flags: 0xED, threshold: 0))
+        ]))
+        let effect = try #require(try file.model().materials.first?.effect)
+        #expect(effect.baseColor == SIMD4(0.5, 0.25, 1, 0.75))
+        #expect(effect.baseColorScale == 2)
+        #expect(effect.paletteTexture == "textures/effects/gradients/gradwhitewater.dds")
+        #expect(effect.paletteColor && effect.paletteAlpha)
+        #expect(effect.falloff == SIMD4(0.9, 0.1, 1, 0.2))
+        #expect(effect.vertexColors && effect.vertexAlpha)
+    }
+
+    @Test func litShapeHasNoEffectShading() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape())
+        ]))
+        #expect(try file.model().materials.first?.effect == nil)
     }
 }

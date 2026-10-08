@@ -103,6 +103,20 @@ extension WorldRenderControls: ParticleControlProviding {
     }
 }
 
+extension WorldRenderControls: WaterControlProviding {
+    public var waterDepthEnabled: Bool {
+        get { renderer?.waterDepth.enabled ?? world?.playerSettingsStore.bool(.waterDepth) ?? true }
+        set {
+            renderer?.waterDepth.enabled = newValue
+            world?.playerSettingsStore.set(.waterDepth, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var waterSurfaceCount: Int {
+        renderer?.scene.water.count ?? 0
+    }
+}
+
 extension WorldRenderControls: PrecipitationControlProviding {
     public var precipitationEnabled: Bool {
         get { renderer?.precipitationEnabled ?? true }

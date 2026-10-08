@@ -167,6 +167,7 @@ extension DestinationRegistry {
                 || WeatherSection.isOverridden(provider: providers)
                 || ParticlesSection.isOverridden(provider: providers)
                 || PrecipitationSection.isOverridden(provider: providers)
+                || WaterSection.isOverridden(provider: providers)
                 || GrassSection.isOverridden(provider: providers)
                 || TerrainLODSection.isOverridden(provider: providers)
         },
@@ -177,6 +178,7 @@ extension DestinationRegistry {
             WeatherSection.resetToDefaults(provider: providers)
             ParticlesSection.resetToDefaults(provider: providers)
             PrecipitationSection.resetToDefaults(provider: providers)
+            WaterSection.resetToDefaults(provider: providers)
             GrassSection.resetToDefaults(provider: providers)
             TerrainLODSection.resetToDefaults(provider: providers)
         }

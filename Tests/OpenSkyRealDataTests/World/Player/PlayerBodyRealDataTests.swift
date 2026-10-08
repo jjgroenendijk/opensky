@@ -30,10 +30,18 @@ struct PlayerBodyRealDataTests {
         let assembled = try PlayerBodyFixture.assemble(device: device, root: root)
         let body = assembled.body
 
-        // The body is a real actor: a skeleton, skinned body parts, and a
-        // FaceGen head all resolved through the same path an ACHR takes.
+        // The body is a real actor: a skeleton and skinned body parts resolved
+        // through the same path an ACHR takes. The install bakes no FaceGen head
+        // for the player, so the head comes from head parts even without chargen data.
         #expect(body.assembly.isRenderable)
         #expect(body.assembly.visual.skeletonPath != nil)
+        #expect(body.assembly.models.contains {
+            if case .headPart = $0.role {
+                true
+            } else {
+                false
+            }
+        })
         #expect(!body.render.opaque.isEmpty || !body.render.alphaTested.isEmpty)
 
         let terrain = try #require(LocomotionRealTerrain.terrainField(root: root))

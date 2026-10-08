@@ -8,7 +8,8 @@ import OpenSkyRendering
 
 public protocol WorldRenderControlForwarding: ShadowControlProviding, TerrainLODControlProviding,
     WeatherControlProviding, AnimationControlProviding, ParticleControlProviding,
-    PrecipitationControlProviding, GrassControlProviding, RenderDebugControlProviding,
+    PrecipitationControlProviding, WaterControlProviding, GrassControlProviding,
+    RenderDebugControlProviding,
     CameraControlProviding, FrameStatsProviding, SceneStatsProviding, TriggerControlProviding,
     PhysicsControlProviding, RenderPerformanceControlProviding
 {
@@ -112,6 +113,15 @@ extension WorldRenderControlForwarding {
     public var precipitationEnabled: Bool {
         get { renderControls.precipitationEnabled }
         set { renderControls.precipitationEnabled = newValue }
+    }
+
+    public var waterDepthEnabled: Bool {
+        get { renderControls.waterDepthEnabled }
+        set { renderControls.waterDepthEnabled = newValue }
+    }
+
+    public var waterSurfaceCount: Int {
+        renderControls.waterSurfaceCount
     }
 
     public var precipitationSnapshot: PrecipitationRuntimeSnapshot {

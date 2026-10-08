@@ -13,6 +13,8 @@ nonisolated public struct RenderPipelines: Sendable {
     public let sky: MTLRenderPipelineState
     public let opaque: MTLRenderPipelineState
     public let alphaTest: MTLRenderPipelineState
+    /// Rigid shapes with a blending alpha property, drawn after water.
+    public let blended: MTLRenderPipelineState
     public let skinnedOpaque: MTLRenderPipelineState
     public let skinnedAlphaTest: MTLRenderPipelineState
     public let morphedSkinnedOpaque: MTLRenderPipelineState
@@ -195,8 +197,9 @@ extension Renderer {
         // Highest buffer index is the mesh-shader grass counters.
         descriptor.maxBufferBindCount = BufferIndex.meshletCounters.rawValue + 1
         // Base diffuse + terrain layer array + sun-shadow cascade array + the
-        // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots + scene color.
-        descriptor.maxTextureBindCount = TextureIndex.sceneColor.rawValue + 1
+        // UI glyph/solid atlas + the SWF bitmap and gradient-ramp slots + scene
+        // color + the effect palette, the highest slot.
+        descriptor.maxTextureBindCount = TextureIndex.effectPalette.rawValue + 1
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
         descriptor.maxSamplerStateBindCount = 4
         return try device.makeArgumentTable(descriptor: descriptor)
@@ -250,6 +253,10 @@ extension Renderer {
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
+            blended: makeMeshPipeline(
+                MeshPipelineVariant(alphaTest: true, blended: true),
+                library: library, compiler: compiler, view: view
+            ),
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),
             morphedSkinnedOpaque: makeVariant(

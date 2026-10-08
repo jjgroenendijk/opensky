@@ -26,6 +26,7 @@ extension Renderer {
         upscaler = UpscalerKind(store: store)
         frameInterpolationEnabled = store.bool(.frameInterpolation)
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
+        waterDepth.enabled = store.bool(.waterDepth)
     }
 
     public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {

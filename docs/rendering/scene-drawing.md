@@ -20,6 +20,19 @@ would turn a lit pixel pure white, and alpha 0 would turn it black. Vanilla mesh
 ground skirt of `MountainCliffSlope.nif` has vertex alpha from 0 to 0.5 and no `NiAlphaProperty`,
 because the game fades it into the terrain.
 
+## Blended shapes
+
+A rigid shape whose `NiAlphaProperty` blends and does not alpha-test draws in its own pass,
+after the cell water plane: stream water, foam, and waterfalls such as
+`Effects\FXCreekFlatLong01.nif`. The pass sorts its groups farthest first, tests depth
+without writing it, and blends straight alpha. These shapes cast no sun shadow. They ride
+the alpha-test list, so culling and texture streaming treat them like any other group.
+
+A shape that both blends and alpha-tests stays in the alpha-test pass, because foliage and
+hair often set both and need depth writes and shadows. A skinned blended shape stays there
+too, because only rigid shapes have a blended pipeline. Instances inside one group are not
+sorted.
+
 ## Terrain splat
 
 Terrain has its own pipeline. It draws one item per `LAND` quadrant ([terrain](/engine/terrain.md)),

@@ -29,7 +29,7 @@ extension Renderer {
     public func updatePlayerBodyPose() {
         guard let playerBody, movementMode.isPlayerControlled else { return }
         playerBody.place(
-            feetPosition: walkController.feetPosition,
+            feetPosition: walkController.drawnFeetPosition,
             yaw: freeFlyCamera.yaw
         )
     }

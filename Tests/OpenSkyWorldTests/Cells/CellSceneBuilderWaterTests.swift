@@ -27,11 +27,23 @@ extension CellSceneBuilderTests {
         let translation = water.modelMatrix.columns.3
         let expected = SIMD3<Float>(24576, -8192, -14000)
         #expect(SIMD3(translation.x, translation.y, translation.z) == expected)
-        #expect(water.shallowColor == SIMD3<Float>(10, 20, 30) / 255)
-        #expect(water.deepColor == SIMD3<Float>(40, 50, 60) / 255)
-        #expect(water.reflectionColor == SIMD3<Float>(70, 80, 90) / 255)
+        #expect(water.look.shallowColor == SIMD3<Float>(10, 20, 30) / 255)
+        #expect(water.look.deepColor == SIMD3<Float>(40, 50, 60) / 255)
+        #expect(water.look.reflectionColor == SIMD3<Float>(70, 80, 90) / 255)
         #expect(scene.summary.waterPlaneCount == 1)
         #expect(scene.renderScene.drawCount == 2) // WRLD fallback terrain + water
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func waterLookCarriesWATROpacity() throws {
+        let scene = try build(pluginData: plugin(
+            cellFlags: 0x0002,
+            worldDefaultWaterHeight: -14000,
+            worldWaterType: 0x18,
+            waterRecords: waterRecord(formID: 0x18, opacity: 50)
+        ))
+        let water = try #require(scene.renderScene.water.first)
+        #expect(water.look.shading.opacity == 0.5)
+        #expect(water.look.shading.windSpeeds == .zero)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func cellWaterOverridesWRLD() throws {
@@ -51,7 +63,7 @@ extension CellSceneBuilderTests {
         ))
         let water = try #require(scene.renderScene.water.first)
         #expect(water.modelMatrix.columns.3.z == -12345)
-        #expect(water.shallowColor == SIMD3<Float>(200, 100, 50) / 255)
+        #expect(water.look.shallowColor == SIMD3<Float>(200, 100, 50) / 255)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func inheritsParentWorldWaterData() throws {
@@ -77,7 +89,7 @@ extension CellSceneBuilderTests {
         ))
         let water = try #require(scene.renderScene.water.first)
         #expect(water.modelMatrix.columns.3.z == -9000)
-        #expect(water.shallowColor == SIMD3<Float>(12, 34, 56) / 255)
+        #expect(water.look.shallowColor == SIMD3<Float>(12, 34, 56) / 255)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func noWaterSentinelSuppressesWRLDFallback() throws {
@@ -99,17 +111,19 @@ extension CellSceneBuilderTests {
         formID: UInt32,
         shallow: SIMD3<UInt8> = SIMD3(20, 80, 110),
         deep: SIMD3<UInt8> = SIMD3(5, 20, 40),
-        reflection: SIMD3<UInt8> = SIMD3(100, 150, 190)
+        reflection: SIMD3<UInt8> = SIMD3(100, 150, 190),
+        opacity: UInt8? = nil
     ) -> Data {
         var dnam = Data(count: 40)
         for color in [shallow, deep, reflection] {
             dnam.append(contentsOf: [color.x, color.y, color.z, 0])
         }
         dnam.append(Data(count: 228 - dnam.count))
+        let anam = opacity.map { ESMFixture.field("ANAM", Data([$0])) } ?? Data()
         return ESMFixture.record(
             "WATR",
             formID: formID,
-            data: ESMFixture.field("DNAM", dnam)
+            data: anam + ESMFixture.field("DNAM", dnam)
         )
     }
 }

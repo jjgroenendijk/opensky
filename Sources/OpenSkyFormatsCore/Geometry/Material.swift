@@ -24,6 +24,10 @@ nonisolated public struct Material: Hashable, Sendable {
     public let alphaBlend: Bool
     /// Alpha-test cutoff in [0, 1]; nil = no test. Foliage cutouts set this.
     public let alphaTestThreshold: Float?
+    /// Set for an effect shape: drawn unlit with this shading.
+    public let effect: EffectShading?
+    /// A water-shader shape: the water pass draws it with the cell's water look.
+    public let waterSurface: Bool
 
     public init(
         diffuseTexture: String?,
@@ -36,7 +40,9 @@ nonisolated public struct Material: Hashable, Sendable {
         specularStrength: Float,
         doubleSided: Bool,
         alphaBlend: Bool,
-        alphaTestThreshold: Float?
+        alphaTestThreshold: Float?,
+        effect: EffectShading? = nil,
+        waterSurface: Bool = false
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
@@ -49,11 +55,12 @@ nonisolated public struct Material: Hashable, Sendable {
         self.doubleSided = doubleSided
         self.alphaBlend = alphaBlend
         self.alphaTestThreshold = alphaTestThreshold
+        self.effect = effect
+        self.waterSurface = waterSurface
     }
 
-    /// Neutral stand-in for shapes without a lighting shader (effect, water,
-    /// and sky shaders have their own paths): untextured, opaque, defaults
-    /// from nif.xml.
+    /// Neutral stand-in for shapes without a lighting shader: untextured,
+    /// opaque, defaults from nif.xml.
     public static let fallback = Material(
         diffuseTexture: nil,
         normalTexture: nil,
@@ -66,5 +73,21 @@ nonisolated public struct Material: Hashable, Sendable {
         doubleSided: false,
         alphaBlend: false,
         alphaTestThreshold: nil
+    )
+
+    /// A `BSWaterShaderProperty` shape. Its look comes from the cell's WATR, not the NIF.
+    public static let waterSurface = Material(
+        diffuseTexture: nil,
+        normalTexture: nil,
+        uvOffset: .zero,
+        uvScale: SIMD2(1, 1),
+        alpha: 1,
+        glossiness: 80,
+        specularColor: SIMD3(1, 1, 1),
+        specularStrength: 0,
+        doubleSided: true,
+        alphaBlend: true,
+        alphaTestThreshold: nil,
+        waterSurface: true
     )
 }

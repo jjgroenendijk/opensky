@@ -39,6 +39,7 @@ public final class Renderer: NSObject {
     public let skyPipeline: MTLRenderPipelineState
     public let opaquePipeline: MTLRenderPipelineState
     public let alphaTestPipeline: MTLRenderPipelineState
+    public let blendedPipeline: MTLRenderPipelineState
     public let skinnedOpaquePipeline: MTLRenderPipelineState
     public let skinnedAlphaTestPipeline: MTLRenderPipelineState
     public let morphedSkinnedOpaquePipeline: MTLRenderPipelineState
@@ -273,6 +274,8 @@ public final class Renderer: NSObject {
     public var meshGrass: MeshShaderGrassState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
+    /// Scene depth under the water surface (RendererWaterPass.swift).
+    public var waterDepth = WaterDepthState()
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
@@ -315,9 +318,8 @@ public final class Renderer: NSObject {
         self.pipelineCache = compiler
         let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
         (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
-        (alphaTestPipeline, skinnedOpaquePipeline) = (
-            pipelines.alphaTest, pipelines.skinnedOpaque
-        )
+        (alphaTestPipeline, blendedPipeline) = (pipelines.alphaTest, pipelines.blended)
+        skinnedOpaquePipeline = pipelines.skinnedOpaque
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
         (morphedSkinnedOpaquePipeline, morphedSkinnedAlphaTestPipeline) = (
             pipelines.morphedSkinnedOpaque, pipelines.morphedSkinnedAlphaTest

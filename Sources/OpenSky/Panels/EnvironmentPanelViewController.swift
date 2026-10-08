@@ -1,5 +1,5 @@
 // World > Environment: a composition of self-contained sections (shadows,
-// animation, weather, particles, precipitation, grass, distant LOD). Each
+// animation, weather, particles, precipitation, water, grass, distant LOD). Each
 // section reaches the renderer through its own narrow provider protocol.
 
 import AppKit
@@ -11,6 +11,7 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
     let weatherSection = WeatherSection()
     let particlesSection = ParticlesSection()
     let precipitationSection = PrecipitationSection()
+    let waterSection = WaterSection()
     let grassSection = GrassSection()
     let terrainLODSection = TerrainLODSection()
 
@@ -40,6 +41,10 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
         didSet { precipitationSection.provider = precipitationProvider }
     }
 
+    weak var waterProvider: (any WaterControlProviding)? {
+        didSet { waterSection.provider = waterProvider }
+    }
+
     weak var grassProvider: (any GrassControlProviding)? {
         didSet { grassSection.provider = grassProvider }
     }
@@ -47,7 +52,7 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             shadowSection, animationSection, weatherSection, particlesSection,
-            precipitationSection, grassSection, terrainLODSection
+            precipitationSection, waterSection, grassSection, terrainLODSection
         ]
     }
 
@@ -83,6 +88,10 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
 
     var precipitationEnabledControl: NSButton {
         precipitationSection.enabledControl
+    }
+
+    var waterDepthControl: NSButton {
+        waterSection.depthControl
     }
 
     var grassEnabledControl: NSButton {

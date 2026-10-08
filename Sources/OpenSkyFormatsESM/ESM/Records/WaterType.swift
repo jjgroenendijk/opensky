@@ -1,5 +1,5 @@
-// WATR water. Of DNAM only the three color fields are read; the rest stays
-// opaque. Layout and sources: docs/formats/water.md.
+// WATR water. DNAM gives the colors and the surface fields the water shader reads;
+// the rest stays opaque. Layout and sources: docs/formats/water.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -22,6 +22,8 @@ nonisolated public struct WaterType: Sendable {
     public let editorID: String?
     /// DNAM colors. nil for absent or unknown-size DNAM variants.
     public let colors: Colors?
+    /// DNAM surface fields. nil exactly when `colors` is nil.
+    public let surface: WaterSurfaceFields?
     /// The fields the water renderer does not read yet.
     public let details: WaterDetails
     public let skipped: FieldTally
@@ -41,6 +43,7 @@ nonisolated public struct WaterType: Sendable {
 
         var editorID: String?
         var colors: Colors?
+        var surface: WaterSurfaceFields?
         try rest.readEach { field in
             var reader = BinaryReader(field.data)
             switch field.type {
@@ -57,6 +60,7 @@ nonisolated public struct WaterType: Sendable {
                     deep: Self.readColor(&reader),
                     reflection: Self.readColor(&reader)
                 )
+                surface = try WaterSurfaceFields(dnam: field.data)
             default:
                 return false
             }
@@ -66,6 +70,7 @@ nonisolated public struct WaterType: Sendable {
         skipped = rest.finish()
         self.editorID = editorID
         self.colors = colors
+        self.surface = surface
     }
 
     private static func readColor(_ reader: inout BinaryReader) throws -> SIMD3<Float> {

@@ -160,23 +160,24 @@ extension Renderer {
     }
 
     /// The descriptor the scene pass begins with, and its depth recorded for the readout.
-    /// A split grade moves depth and stencil to a stored target, because the second
-    /// encoder loads the depth the first one wrote.
+    /// A split grade or a water depth read moves depth and stencil to a stored target,
+    /// because the second encoder loads the depth the first one wrote.
     func scenePassDescriptor(
         _ descriptor: MTL4RenderPassDescriptor,
-        grade: ImageSpaceGrade?
+        grade: ImageSpaceGrade?,
+        storesDepth: Bool = false
     ) -> MTL4RenderPassDescriptor? {
         lastSceneDepth = descriptor.depthAttachment.texture.map {
             RenderTargetEntry(texture: $0, name: "Scene depth")
         }
-        return splitPassDescriptor(descriptor, grade: grade)
+        return splitPassDescriptor(descriptor, splits: grade?.splitsPass == true || storesDepth)
     }
 
     private func splitPassDescriptor(
         _ descriptor: MTL4RenderPassDescriptor,
-        grade: ImageSpaceGrade?
+        splits: Bool
     ) -> MTL4RenderPassDescriptor? {
-        guard grade?.splitsPass == true else { return descriptor }
+        guard splits else { return descriptor }
         guard
             let target = descriptor.colorAttachments[0].texture,
             let depth = imageSpacePass.depthTarget(matching: target, residency: residencySet)

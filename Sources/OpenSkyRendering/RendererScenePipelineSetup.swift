@@ -214,13 +214,18 @@ nonisolated public struct MeshPipelineVariant: Sendable {
     public var alphaTest: Bool
     public var skinned = false
     public var morphed = false
+    /// Straight-alpha blending over the frame, with the fragment's alpha written.
+    public var blended = false
     /// Optional constants the variant defines as true.
     public var enabling: [FunctionConstantIndex] = []
 
-    public init(alphaTest: Bool, skinned: Bool = false, morphed: Bool = false) {
+    public init(
+        alphaTest: Bool, skinned: Bool = false, morphed: Bool = false, blended: Bool = false
+    ) {
         self.alphaTest = alphaTest
         self.skinned = skinned
         self.morphed = morphed
+        self.blended = blended
     }
 }
 
@@ -238,18 +243,32 @@ extension Renderer {
         let descriptor = MTL4RenderPipelineDescriptor()
         descriptor.label = (variant.morphed ? "MorphedSkinnedMesh"
             : (variant.skinned ? "SkinnedMesh" : "StaticMesh"))
-            + (variant.alphaTest ? "AlphaTest" : "Opaque")
+            + (variant.blended ? "Blended" : (variant.alphaTest ? "AlphaTest" : "Opaque"))
             + (variant.enabling.isEmpty ? "" : "RayTraced")
         descriptor.rasterSampleCount = view.sampleCount
         descriptor.vertexFunctionDescriptor = vertexFunction
         descriptor.fragmentFunctionDescriptor = specializedFragment(
             "staticMeshFragment", library: library, debugView: false,
-            alphaTest: variant.alphaTest, enabling: variant.enabling
+            alphaTest: variant.alphaTest,
+            enabling: variant.enabling + (variant.blended ? [.alphaBlend] : [])
         )
         descriptor.vertexDescriptor = variant.morphed ? MorphVertexLayout.vertexDescriptor()
             : (variant.skinned
                 ? SkinVertexLayout.vertexDescriptor() : StaticVertexLayout.vertexDescriptor())
-        descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+        guard let color = descriptor.colorAttachments[0] else {
+            throw RendererError.pipelineAttachmentMissing
+        }
+        color.pixelFormat = view.colorPixelFormat
+        if variant.blended {
+            // The same straight-alpha blend as the cell water plane.
+            color.blendingState = .enabled
+            color.sourceRGBBlendFactor = .sourceAlpha
+            color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+            color.rgbBlendOperation = .add
+            color.sourceAlphaBlendFactor = .one
+            color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
+            color.alphaBlendOperation = .add
+        }
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 }

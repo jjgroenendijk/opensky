@@ -59,7 +59,7 @@ nonisolated extension CellSceneBuilder {
         }
         guard let height, height.isFinite else { return nil }
 
-        let colors = resolvedColors(for: found.cell.waterType ?? worldWater.type)
+        let look = resolvedWaterLook(for: found.cell.waterType ?? worldWater.type)
         let mesh: RenderMesh
         do {
             if let waterPlaneMesh {
@@ -88,9 +88,7 @@ nonisolated extension CellSceneBuilder {
             item: WaterDrawItem(
                 mesh: mesh,
                 modelMatrix: transform,
-                shallowColor: colors.shallow,
-                deepColor: colors.deep,
-                reflectionColor: colors.reflection,
+                look: look,
                 bounds: localBounds.transformed(by: transform)
             ),
             height: height
@@ -167,19 +165,38 @@ nonisolated extension CellSceneBuilder {
 
     /// Plausible fallback keeps water visible when XCWT/NAM2 is absent or a
     /// mod carries an unknown WATR DNAM variant.
-    nonisolated private func resolvedColors(for formID: FormID?) -> WaterType.Colors {
-        guard let formID else { return fallbackWaterColors() }
-        guard let colors = waterTypeIndexBuildingIfNeeded()[formID.rawValue]?.colors else {
-            return fallbackWaterColors()
-        }
-        return colors
+    nonisolated private func resolvedWaterLook(for formID: FormID?) -> WaterLook {
+        guard
+            let formID,
+            let water = waterTypeIndexBuildingIfNeeded()[formID.rawValue],
+            let colors = water.colors
+        else { return .fallback }
+        return WaterLook(
+            shallowColor: colors.shallow,
+            deepColor: colors.deep,
+            reflectionColor: colors.reflection,
+            shading: water.surface.map { Self.shading($0, details: water.details) } ?? .standard
+        )
     }
 
-    nonisolated private func fallbackWaterColors() -> WaterType.Colors {
-        WaterType.Colors(
-            shallow: SIMD3(0.08, 0.32, 0.42),
-            deep: SIMD3(0.015, 0.08, 0.16),
-            reflection: SIMD3(0.42, 0.62, 0.78)
+    nonisolated private static func shading(
+        _ surface: WaterSurfaceFields,
+        details: WaterDetails
+    ) -> WaterShading {
+        let velocity = details.linearVelocity ?? .zero
+        return WaterShading(
+            opacity: Float(min(details.opacity ?? 30, 100)) / 100,
+            fresnelAmount: surface.fresnelAmount,
+            reflectivity: surface.reflectivity,
+            sunSpecularPower: surface.sunSpecularPower,
+            sunSpecularMagnitude: surface.sunSpecularMagnitude,
+            fogNear: surface.fogNear,
+            fogFar: surface.fogFar,
+            windDirections: surface.windDirections,
+            windSpeeds: surface.windSpeeds,
+            uvScales: surface.uvScales,
+            amplitudes: surface.amplitudes,
+            flowVelocity: SIMD2(velocity.x, velocity.y)
         )
     }
 }

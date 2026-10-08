@@ -13,8 +13,7 @@ import simd
 public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
 
 /// GPU-side material: resolved diffuse texture + the scalar parameters the
-/// shader consumes. Static NIF alpha blending remains deferred; milestone
-/// 3.5 water uses its dedicated blend pipeline instead.
+/// shader consumes. A blended static shape draws in the blended pass after water.
 nonisolated public struct RenderMaterial: Sendable {
     public let diffuse: MTLTexture
     public let uvOffset: SIMD2<Float>
@@ -24,6 +23,11 @@ nonisolated public struct RenderMaterial: Sendable {
     public let alphaTestThreshold: Float?
     /// Render both faces (cull mode none for this draw).
     public let doubleSided: Bool
+    public let alphaBlend: Bool
+    /// Set for an effect shape, which draws unlit.
+    public let effect: RenderEffectMaterial?
+    /// A water-shader shape: the water pass draws it, not a draw group.
+    public let waterSurface: Bool
 
     public init(material: Material, textureProvider: TextureProvider) {
         diffuse = textureProvider(material.diffuseTexture, .color)
@@ -32,6 +36,11 @@ nonisolated public struct RenderMaterial: Sendable {
         alpha = material.alpha
         alphaTestThreshold = material.alphaTestThreshold
         doubleSided = material.doubleSided
+        alphaBlend = material.alphaBlend
+        effect = material.effect.map {
+            RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
+        }
+        waterSurface = material.waterSurface
     }
 }
 
@@ -193,6 +202,20 @@ nonisolated public struct DrawGroup: Sendable {
     public var layer: RenderLayer {
         instances.first?.layer ?? .statics
     }
+
+    public var drawsBlended: Bool {
+        Self.drawsBlended(mesh: mesh, material: material, faceMorph: faceMorph)
+    }
+
+    /// Blend without an alpha test, on a rigid shape. Foliage and hair often
+    /// set both, and keep the depth-writing alpha-test pass; only rigid shapes
+    /// have a blended pipeline.
+    static func drawsBlended(
+        mesh: RenderMesh, material: RenderMaterial, faceMorph: FaceMorphBuffer?
+    ) -> Bool {
+        material.alphaBlend && material.alphaTestThreshold == nil && !mesh.isSkinned
+            && faceMorph == nil
+    }
 }
 
 /// Ordered mesh+material grouping: first appearance fixes group order so
@@ -206,6 +229,8 @@ nonisolated private struct GroupAccumulator {
         let receivesShadows: Bool
         let faceMorph: ObjectIdentifier?
         let layer: RenderLayer
+        let alphaBlend: Bool
+        let isEffect: Bool
     }
 
     private var indexByKey: [Key: Int] = [:]
@@ -224,7 +249,9 @@ nonisolated private struct GroupAccumulator {
             receivesPointLights: instance.receivesPointLights,
             receivesShadows: instance.receivesShadows,
             faceMorph: faceMorph.map(ObjectIdentifier.init),
-            layer: instance.layer
+            layer: instance.layer,
+            alphaBlend: material.alphaBlend,
+            isEffect: material.effect != nil
         )
         if let index = indexByKey[key] {
             groups[index].append(instance)
@@ -260,7 +287,9 @@ nonisolated private struct GroupAccumulator {
             receivesPointLights: first.receivesPointLights,
             receivesShadows: first.receivesShadows,
             faceMorph: group.faceMorph.map(ObjectIdentifier.init),
-            layer: first.layer
+            layer: first.layer,
+            alphaBlend: group.material.alphaBlend,
+            isEffect: group.material.effect != nil
         )
         if let index = indexByKey[key] {
             groups[index].append(contentsOf: group.instances)
@@ -318,15 +347,20 @@ nonisolated public struct SkyParameters: Equatable, Sendable {
     public init() {}
 }
 
-/// One exterior-cell water plane. Geometry is a reusable 4096-unit quad;
-/// modelMatrix places it at CELL/WRLD water height. Colors come from WATR.
+/// One water surface: a cell plane at the CELL/WRLD water height, or a placed
+/// mesh with a water shader. `look` comes from WATR.
 nonisolated public struct WaterDrawItem: Sendable {
     public let mesh: RenderMesh
     public let modelMatrix: float4x4
-    public let shallowColor: SIMD3<Float>
-    public let deepColor: SIMD3<Float>
-    public let reflectionColor: SIMD3<Float>
+    public let look: WaterLook
     public let bounds: ModelBounds?
+
+    public init(mesh: RenderMesh, modelMatrix: float4x4, look: WaterLook, bounds: ModelBounds?) {
+        self.mesh = mesh
+        self.modelMatrix = modelMatrix
+        self.look = look
+        self.bounds = bounds
+    }
 
     public init(
         mesh: RenderMesh,
@@ -336,12 +370,13 @@ nonisolated public struct WaterDrawItem: Sendable {
         reflectionColor: SIMD3<Float>,
         bounds: ModelBounds?
     ) {
-        self.mesh = mesh
-        self.modelMatrix = modelMatrix
-        self.shallowColor = shallowColor
-        self.deepColor = deepColor
-        self.reflectionColor = reflectionColor
-        self.bounds = bounds
+        self.init(
+            mesh: mesh, modelMatrix: modelMatrix,
+            look: WaterLook(
+                shallowColor: shallowColor, deepColor: deepColor, reflectionColor: reflectionColor
+            ),
+            bounds: bounds
+        )
     }
 }
 
@@ -376,10 +411,12 @@ nonisolated public struct RenderScene: Sendable {
         lighting: RenderLighting? = nil,
         pointLights: [RenderPointLight] = [],
         grass: [GrassRenderPlacement] = [],
-        particles: [ParticlePlayback] = []
+        particles: [ParticlePlayback] = [],
+        placedWaterLook: WaterLook = .fallback
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
+        var water = water
         for placement in instances {
             let model = placement.model
             for mesh in model.meshes {
@@ -387,31 +424,39 @@ nonisolated public struct RenderScene: Sendable {
                 // construction order; guard anyway — external data upstream.
                 guard mesh.materialSlot < model.materials.count else { continue }
                 let material = model.materials[mesh.materialSlot]
+                if material.waterSurface {
+                    water.append(WaterDrawItem(
+                        mesh: mesh, modelMatrix: placement.transform * mesh.localTransform,
+                        look: placedWaterLook, bounds: placement.bounds
+                    ))
+                    continue
+                }
+                let faceMorph = placement.faceMorphs[ObjectIdentifier(mesh)]
+                let blended = DrawGroup.drawsBlended(
+                    mesh: mesh, material: material, faceMorph: faceMorph
+                )
                 let modelMatrix = placement.transform * mesh.localTransform
                 let instance = DrawInstance(
                     modelMatrix: modelMatrix,
                     normalMatrix: MatrixMath.normalMatrix(modelMatrix),
                     bounds: placement.bounds,
-                    castsShadows: placement.castsShadows,
+                    // A see-through surface casts no sun shadow.
+                    castsShadows: placement.castsShadows && !blended,
                     receivesPointLights: placement.receivesPointLights,
                     receivesShadows: placement.receivesShadows,
                     referenceFormID: placement.referenceFormID,
                     layer: placement.layer,
                     owner: placement.owner
                 )
-                if material.alphaTestThreshold == nil {
+                // Blended groups ride the alpha-tested list, so culling and
+                // streaming need no third list; the scene pass draws them last.
+                if material.alphaTestThreshold == nil, !blended {
                     opaque.add(
-                        mesh: mesh,
-                        material: material,
-                        faceMorph: placement.faceMorphs[ObjectIdentifier(mesh)],
-                        instance: instance
+                        mesh: mesh, material: material, faceMorph: faceMorph, instance: instance
                     )
                 } else {
                     alphaTested.add(
-                        mesh: mesh,
-                        material: material,
-                        faceMorph: placement.faceMorphs[ObjectIdentifier(mesh)],
-                        instance: instance
+                        mesh: mesh, material: material, faceMorph: faceMorph, instance: instance
                     )
                 }
             }

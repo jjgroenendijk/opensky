@@ -286,7 +286,9 @@ extension NIFParticleFixture {
         sourceTexture: String = "",
         baseColor: SIMD4<Float> = SIMD4(1, 1, 1, 1),
         baseColorScale: Float = 1,
-        softFalloffDepth: Float = 0
+        softFalloffDepth: Float = 0,
+        falloff: SIMD4<Float> = SIMD4(1, 0, 1, 0),
+        greyscaleTexture: String = ""
     ) -> Data {
         var out = Data()
         out.appendUInt32(0xFFFF_FFFF) // name: none
@@ -300,15 +302,15 @@ extension NIFParticleFixture {
         out.append(NIFFixture.sizedString(sourceTexture))
         out.append(0) // texture clamp mode
         out.append(Data(count: 3)) // lighting influence + env-map LOD + unused
-        for value: Float in [1, 0, 1, 0] { // falloff angles + opacities
-            out.appendFloat32(value)
+        for lane in 0 ..< 4 { // falloff angles + opacities
+            out.appendFloat32(falloff[lane])
         }
         for lane in 0 ..< 4 {
             out.appendFloat32(baseColor[lane])
         }
         out.appendFloat32(baseColorScale)
         out.appendFloat32(softFalloffDepth)
-        out.append(NIFFixture.sizedString("")) // greyscale texture: none
+        out.append(NIFFixture.sizedString(greyscaleTexture))
         return out
     }
 

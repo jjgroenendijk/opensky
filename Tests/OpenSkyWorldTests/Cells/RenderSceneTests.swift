@@ -102,6 +102,28 @@ struct RenderSceneTests {
         #expect(scene.opaque[0].instances[0].normalMatrix == MatrixMath.normalMatrix(expected))
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func placedWaterMeshDrawsInTheWaterPass() throws {
+        let device = try #require(Self.device)
+        let model = Model(
+            meshes: [Self.mesh(slot: 0), Self.mesh(slot: 1)],
+            materials: [.waterSurface, Self.material()],
+            skippedShapeCount: 0
+        )
+        let shared = try Self.texture(device: device)
+        let render = try RenderModel(device: device, model: model) { _, _ in shared }
+        let look = WaterLook(
+            shallowColor: SIMD3(1, 0, 0), deepColor: .zero, reflectionColor: SIMD3(0, 0, 1)
+        )
+        let scene = RenderScene(
+            instances: [RenderPlacement(model: render, transform: matrix_identity_float4x4)],
+            placedWaterLook: look
+        )
+        #expect(scene.opaque.count == 1)
+        #expect(scene.alphaTested.isEmpty)
+        #expect(scene.water.count == 1)
+        #expect(scene.water.first?.look == look)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func skipsMeshWithBadMaterialSlot() throws {
         let device = try #require(Self.device)
         let model = Model(
