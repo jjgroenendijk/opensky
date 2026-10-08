@@ -221,3 +221,13 @@ The [ESS](/formats/ess.md) layouts are checked only against synthetic saves, and
 
 Retires when a real save has been read and the "Confirmed on real data" section of the ESS
 pages is filled in.
+
+## Periphery comes from the Homebrew core formula
+
+Observed 2026-10-08. The cask in the `peripheryapp/periphery` tap no longer installs:
+Homebrew stopped `depends_on macos: :catalina`. The weekly workflow installs the core
+formula (`brew install periphery`) instead. Homebrew marks that formula deprecated, because
+the upstream repository is archived, and plans to disable it on 2027-08-12.
+
+Retires when Periphery has a maintained install path again, or when `make health` moves to
+another tool.

@@ -45,6 +45,19 @@ public struct ESSPapyrusFixtureInstance {
     }
 }
 
+/// A struct-like VM object, such as a quest alias.
+public struct ESSPapyrusFixtureReference {
+    public var id: UInt64
+    public var type: String
+    public var variables: [ESSPapyrusFixtureValue]
+
+    public init(id: UInt64, type: String, variables: [ESSPapyrusFixtureValue]) {
+        self.id = id
+        self.type = type
+        self.variables = variables
+    }
+}
+
 public struct ESSPapyrusFixtureArray {
     public var id: UInt64
     /// 1 object, 2 string, 3 int, 4 float, 5 bool.
@@ -69,6 +82,7 @@ public struct ESSPapyrusFixture {
     public var idWidth = 4
     public var scripts: [ESSPapyrusFixtureScript] = []
     public var instances: [ESSPapyrusFixtureInstance] = []
+    public var references: [ESSPapyrusFixtureReference] = []
     public var arrays: [ESSPapyrusFixtureArray] = []
     /// Active stack ids. Each has one frame running `script` with no instructions.
     public var activeStacks: [(id: UInt32, script: String)] = []
@@ -113,7 +127,11 @@ public struct ESSPapyrusFixture {
             ESSBytes.refID(kind: instance.form.kind, value: instance.form.value, into: &writer)
             writer.writeUInt8(0)
         }
-        writer.writeUInt32(0)
+        writer.writeUInt32(UInt32(references.count))
+        for reference in references {
+            writeID(reference.id, &writer)
+            writeString(reference.type, &writer)
+        }
         writeArrayInfo(&writer)
         writer.writeUInt32(1)
         writer.writeUInt32(UInt32(activeStacks.count))
@@ -140,17 +158,27 @@ public struct ESSPapyrusFixture {
 
     private mutating func writeData(_ writer: inout BinaryWriter) {
         for instance in instances {
-            writeID(instance.id, &writer)
-            writer.writeUInt8(0)
-            writeString(instance.script, &writer)
-            writer.writeUInt32(0)
-            writer.writeUInt32(UInt32(instance.variables.count))
-            instance.variables.forEach { writeValue($0, &writer) }
+            writeObjectData(instance.id, instance.script, instance.variables, &writer)
+        }
+        for reference in references {
+            writeObjectData(reference.id, reference.type, reference.variables, &writer)
         }
         for array in arrays {
             writeID(array.id, &writer)
             array.values.forEach { writeValue($0, &writer) }
         }
+    }
+
+    private mutating func writeObjectData(
+        _ id: UInt64, _ type: String, _ variables: [ESSPapyrusFixtureValue],
+        _ writer: inout BinaryWriter
+    ) {
+        writeID(id, &writer)
+        writer.writeUInt8(0)
+        writeString(type, &writer)
+        writer.writeUInt32(0)
+        writer.writeUInt32(UInt32(variables.count))
+        variables.forEach { writeValue($0, &writer) }
     }
 
     private mutating func writeStacks(_ writer: inout BinaryWriter) {

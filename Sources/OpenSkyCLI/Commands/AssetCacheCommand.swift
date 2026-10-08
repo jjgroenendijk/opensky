@@ -141,7 +141,8 @@ enum AssetCacheCommand {
                 }
                 let timing = try bench.run(method)
                 print(String(
-                    format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", method.rawValue, pass, timing.textures,
+                    format: "%@\t%@\t%d\t%d\t%.1f\t%.1f", timing.method.rawValue, pass,
+                    timing.textures,
                     timing.bytes >> 20, timing.wallMS, timing.cpuMS
                 ))
             }

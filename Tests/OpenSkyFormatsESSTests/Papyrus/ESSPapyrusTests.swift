@@ -40,7 +40,9 @@ struct ESSPapyrusTests {
         var fixture = Self.fixture()
         let papyrus = try ESSPapyrus(data: fixture.build())
         #expect(papyrus.idWidth == 4)
+        #expect(papyrus.vmVersion == 4)
         #expect(papyrus.scripts.first?.members.map(\.name) == ["::Count_var", "::Name_var"])
+        #expect(papyrus.scripts.first?.members.map(\.type) == ["Int", "String"])
         #expect(papyrus.scripts.first?.parent == "Quest")
         let instance = try #require(papyrus.instances.first)
         #expect(instance.scriptName == "MQ101Script")
@@ -51,8 +53,22 @@ struct ESSPapyrusTests {
             .array(element: .integer, type: nil, id: 0x21)
         ])
         #expect(papyrus.arrays.map(\.length) == [1, 2])
+        #expect(papyrus.arrays.map(\.element) == [.object, .integer])
         #expect(papyrus.arrays[1].elements == [.integer(1), .integer(2)])
         #expect(papyrus.instances(on: instance.form).count == 1)
+    }
+
+    @Test func decodesReferencesWithTheirVariables() throws {
+        var fixture = Self.fixture()
+        fixture.references = [
+            ESSPapyrusFixtureReference(id: 0x30, type: "ReferenceAlias", variables: [.integer(7)])
+        ]
+        let papyrus = try ESSPapyrus(data: fixture.build())
+        let reference = try #require(papyrus.references.first)
+        #expect(reference.id == 0x30)
+        #expect(reference.type == "ReferenceAlias")
+        #expect(reference.variables == [.integer(7)])
+        #expect(papyrus.arrays[1].elements == [.integer(1), .integer(2)])
     }
 
     @Test func fallsBackToWideIDs() throws {
@@ -69,7 +85,9 @@ struct ESSPapyrusTests {
         let papyrus = try ESSPapyrus(data: fixture.build())
         #expect(papyrus.stackStatus == .complete)
         #expect(papyrus.activeScripts.map(\.id) == [7])
+        #expect(papyrus.activeScripts.map(\.type) == [0])
         #expect(papyrus.activeScriptNames[7] == "MQ101Script")
+        #expect(papyrus.suspendedStacks.map(\.id) == [9])
         #expect(papyrus.suspendedStacks == [ESSPapyrusSuspendedStack(
             id: 9,
             scriptName: "DefaultOnEnter"

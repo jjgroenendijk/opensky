@@ -146,6 +146,7 @@ struct CraftingSessionTests {
         #expect(try use
             .action == .craft(skill: #require(ActorValueIdentity.index(named: "Smithing"))))
         #expect(use.actor == .player)
+        #expect(outcome.experience == use.amount)
     }
 
     @Test func theCreatedCountIsHonored() throws {

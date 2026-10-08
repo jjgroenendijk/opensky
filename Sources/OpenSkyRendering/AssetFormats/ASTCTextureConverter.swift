@@ -6,7 +6,6 @@
 import Foundation
 import Metal
 import OpenSkyAssetCache
-import OpenSkyFormatsMesh
 import Synchronization
 
 nonisolated public final class ASTCTextureConverter: AssetConverting, Sendable {

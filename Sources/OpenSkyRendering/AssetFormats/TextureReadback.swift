@@ -7,7 +7,6 @@ import Metal
 nonisolated public final class TextureReadback {
     private let device: MTLDevice
     private let copyPipeline: MTLRenderPipelineState
-    private let scaledPipeline: MTLRenderPipelineState
     private let queue: MTL4CommandQueue
     private let allocator: MTL4CommandAllocator
     private let commandBuffer: MTL4CommandBuffer
@@ -20,7 +19,6 @@ nonisolated public final class TextureReadback {
         self.device = device
         let compiler = try device.makeCompiler(descriptor: MTL4CompilerDescriptor())
         copyPipeline = try Self.pipeline("textureReadbackCopy", library, compiler)
-        scaledPipeline = try Self.pipeline("textureReadbackScaled", library, compiler)
         queue = try Renderer.makeCommandQueue(device: device)
         commandBuffer = try Renderer.makeCommandBuffer(device: device)
         guard let allocator = device.makeCommandAllocator() else {
@@ -53,11 +51,6 @@ nonisolated public final class TextureReadback {
             width: max(1, texture.width >> level),
             height: max(1, texture.height >> level)
         )
-    }
-
-    /// Level 0 resampled bilinearly to `width` by `height`.
-    public func pixels(of texture: MTLTexture, width: Int, height: Int) throws -> TexturePixels {
-        try run(scaledPipeline, source: texture, width: width, height: height)
     }
 
     private func run(

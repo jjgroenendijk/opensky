@@ -33,8 +33,9 @@ jobs:
             command: make test-sanitize SAN=thread XCODEBUILD_FLAGS="$BUILD_FLAGS"
           - name: Address sanitizer
             command: make test-sanitize SAN=address XCODEBUILD_FLAGS="$BUILD_FLAGS"
+          # Periphery reads the index store, so this job keeps it on.
           - name: Unused code
-            command: make health XCODEBUILD_FLAGS="$BUILD_FLAGS"
+            command: make health XCODEBUILD_FLAGS="${BUILD_FLAGS/COMPILER_INDEX_STORE_ENABLE=NO/}"
     steps:
       - uses: actions/checkout@v7
       - name: Start Metal Toolchain download
@@ -46,9 +47,17 @@ jobs:
           path: .vendor/ffmpeg
           key: ffmpeg-${{ runner.arch }}-${{ hashFiles('tools/vendor-ffmpeg.sh') }}
       - run: make ffmpeg
-      # Periphery is the one tool the CI image does not ship.
+      - uses: actions/cache/restore@v6
+        id: astcenc
+        with:
+          path: .vendor/astcenc
+          key: astcenc-${{ runner.arch }}-${{ hashFiles('tools/vendor-astcenc.sh') }}
+      # The ASTC texture encoder links the vendored astcenc static library.
+      - run: make astcenc
+      # Periphery is the one tool the CI image does not ship. The cask in the
+      # periphery tap no longer installs, so take the Homebrew core formula.
       - if: matrix.name == 'Unused code'
-        run: brew install peripheryapp/periphery/periphery
+        run: brew install periphery
       - name: Wait for the Metal Toolchain
         run: tools/ci/metal-toolchain.sh wait
       - run: ${{ matrix.command }}

@@ -1213,7 +1213,6 @@ fragment float4 membraneFragment(
 struct TextureReadbackVertexOut
 {
     float4 position [[position]];
-    float2 uv;
 };
 
 vertex TextureReadbackVertexOut textureReadbackVertex(uint vertexID [[vertex_id]])
@@ -1221,7 +1220,6 @@ vertex TextureReadbackVertexOut textureReadbackVertex(uint vertexID [[vertex_id]
     float2 corner = float2((vertexID << 1) & 2, vertexID & 2);
     TextureReadbackVertexOut out;
     out.position = float4(corner * 2.0 - 1.0, 0.0, 1.0);
-    out.uv = float2(corner.x, 1.0 - corner.y);
     return out;
 }
 
@@ -1229,15 +1227,6 @@ fragment float4 textureReadbackCopy(
     TextureReadbackVertexOut in [[stage_in]], texture2d<float, access::read> source [[texture(0)]])
 {
     return source.read(uint2(in.position.xy));
-}
-
-// Same, resampled bilinearly to the target size, for a texture stored smaller.
-fragment float4 textureReadbackScaled(
-    TextureReadbackVertexOut in [[stage_in]],
-    texture2d<float, access::sample> source [[texture(0)]])
-{
-    constexpr sampler bilinear(filter::linear, address::clamp_to_edge);
-    return source.sample(bilinear, in.uv, level(0.0));
 }
 
 // GPU frustum culling (docs/rendering/gpu-culling.md). The p-vertex test matches

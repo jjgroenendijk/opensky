@@ -46,6 +46,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
         ]
     )
 
+    /// Lets the parser accept `--data-root` before the command name.
     @OptionGroup public var global: GlobalOptions
 
     public init() {}

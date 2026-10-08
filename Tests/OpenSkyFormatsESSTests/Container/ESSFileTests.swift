@@ -32,6 +32,20 @@ struct ESSFileTests {
         #expect(file.offsetBase == file.expectedOffsetBase)
     }
 
+    @Test func sectionPositionsCountFromTheFirstGlobalTable() throws {
+        let table = ESSFileLocationTable(
+            offsets: ESSSectionOffsets(
+                formIDArrayCount: 400, unknownTable3: 500, globalData1: 100, globalData2: 200,
+                changeForms: 250, globalData3: 300
+            ),
+            counts: ESSSectionCounts(globalData1: 0, globalData2: 0, globalData3: 0, changeForms: 0)
+        )
+        let positions = try table.sections(tableEnd: 40, bodyLength: 600)
+        #expect(positions.base == 60)
+        #expect(positions.formIDArray == 340)
+        #expect(positions.unknownTable3 == 440)
+    }
+
     @Test func readsLegendaryEditionWithRGBScreenshot() throws {
         var fixture = ESSFixture()
         fixture.version = 9

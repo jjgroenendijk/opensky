@@ -119,10 +119,3 @@ nonisolated public struct LooseAnimationConverter: AssetConverting {
         bytes
     }
 }
-
-nonisolated public enum AssetConverters {
-    /// The extract converters every preset uses.
-    public static let extract: [any AssetConverting] = [
-        ShippedTextureConverter(), ReadyMeshConverter(), ReadyCollisionConverter()
-    ]
-}

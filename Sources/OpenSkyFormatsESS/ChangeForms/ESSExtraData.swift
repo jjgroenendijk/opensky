@@ -42,8 +42,6 @@ nonisolated public struct ESSExtraDataList: Equatable, Sendable {
     /// The first entry type with no known layout. Every byte after it is unread.
     public let blockedBy: UInt8?
 
-    public static let empty = ESSExtraDataList(entries: [], blockedBy: nil)
-
     public var isComplete: Bool {
         blockedBy == nil
     }

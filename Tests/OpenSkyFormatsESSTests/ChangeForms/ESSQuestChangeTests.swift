@@ -59,9 +59,29 @@ struct ESSQuestChangeTests {
             writer.writeUInt8(0)
         }
         #expect(change.status == .complete)
+        #expect(change.form == ESSRefID(kind: .default, value: 0x3372B))
         #expect(change.formFlags == 0x20)
         #expect(change.scriptDelay == 5)
         #expect(change.alreadyRun == false)
+    }
+
+    @Test func objectivesKeepBothStoredWords() throws {
+        let change = try Self.quest(flags: Quest.objectives) { writer in
+            ESSBytes.vsval(1, into: &writer)
+            writer.writeUInt32(10)
+            writer.writeUInt32(3)
+        }
+        #expect(change.objectives?.first?.first == 10)
+        #expect(change.objectives?.first?.second == 3)
+    }
+
+    @Test func aSaidOnceTopicKeepsItsFormAndFlag() throws {
+        let topic = try ESSTopicChange(ESSChangeForm(
+            form: ESSRefID(kind: .default, value: 0x2), flags: ESSChangeFlag.Topic.saidOnce,
+            typeIndex: 7, version: 74, data: ESSChangeFormData(stored: Data())
+        ))
+        #expect(topic.form == ESSRefID(kind: .default, value: 0x2))
+        #expect(topic.saidOnce)
     }
 
     @Test func unknownRunDataItemThrows() {

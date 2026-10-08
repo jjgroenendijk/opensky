@@ -4,7 +4,6 @@ import Foundation
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyDialogueInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus

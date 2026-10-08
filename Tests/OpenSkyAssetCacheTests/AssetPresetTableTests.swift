@@ -53,7 +53,8 @@ struct AssetPresetTableTests {
         #expect(values.textureStorage(forPath: "a_n.dds") == .astc4x4)
         #expect(values.textureStorage(forPath: "a.dds") == .shipped)
         #expect(values.textureStorage(forPath: "a_s.dds") == .shipped)
-        #expect(values.imageLimit == AssetImageLimit(minimumPSNR: 40, maximumNormalDegrees: 2))
+        #expect(values.imageLimit.minimumPSNR == 40)
+        #expect(values.imageLimit.maximumNormalDegrees == 2)
     }
 
     @Test func bestPerformanceUsesASTCEverywhereAndStaysAboveThirtyDecibels() {
@@ -62,6 +63,7 @@ struct AssetPresetTableTests {
         #expect(values.textureStorage(forPath: "a_n.dds") == .astc6x6)
         #expect(values.textureStorage(forPath: "a_g.dds") == .astc8x8)
         #expect(values.imageLimit.minimumPSNR == 30)
+        #expect(values.imageLimit.maximumNormalDegrees == nil)
     }
 
     @Test func aFasterPresetBuildsLonger() {

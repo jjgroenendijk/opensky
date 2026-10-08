@@ -32,6 +32,15 @@ struct HUDCoordinatorTests {
     }
 
     @Test @MainActor
+    func aPresentedSubtitleStaysUntilItIsCleared() {
+        let hud = HUDCoordinator(movies: SWFMovieSource())
+        hud.presentSubtitle("Hello there.")
+        #expect(hud.shownSubtitle == "Hello there.")
+        hud.presentSubtitle(nil)
+        #expect(hud.shownSubtitle == nil)
+    }
+
+    @Test @MainActor
     func sameTargetAgainChangesNothing() {
         let hud = HUDCoordinator(movies: SWFMovieSource())
         hud.updateTarget(HUDCoreTests.target())

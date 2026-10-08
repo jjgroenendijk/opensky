@@ -24,8 +24,6 @@ final class SaveGameWorldAdapter: SaveGameService {
     /// The newest listing, so menus and autosave dates need no disk read.
     private var listings: [OpenSkySaveSlotListing] = []
     private(set) var saveRows: [SaveSlotRow] = []
-    /// What the last Skyrim save import brought over.
-    private(set) var lastImportReport: ESSImportReport?
     private var hasListed = false
 
     init(game: GameViewController) {
@@ -61,7 +59,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     /// Play time continues from the loaded save. A Skyrim save starts it from zero.
     func loadGame(slot: String) async throws {
         if SkyrimSaveImportAdapter.isImport(slot) {
-            lastImportReport = try await SkyrimSaveImportAdapter.load(slot: slot, game: game)
+            try await SkyrimSaveImportAdapter.load(slot: slot, game: game)
             await refreshSaveRows()
             resetPlayTime()
             lastSaveDate = Date()

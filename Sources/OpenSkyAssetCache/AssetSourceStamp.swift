@@ -30,17 +30,6 @@ nonisolated public struct AssetSourceStamp: Hashable, Sendable {
         self.contentHash = contentHash
     }
 
-    /// The same source with a content hash, for a caller that holds the bytes.
-    public func hashing(_ bytes: Data) -> Self {
-        Self(
-            origin: origin,
-            path: path,
-            size: size,
-            modified: modified,
-            contentHash: AssetContentHash.of(bytes)
-        )
-    }
-
     /// True when `other` names the same file in the same state. A zero hash on
     /// either side means "unknown" and does not count.
     public func matches(_ other: Self) -> Bool {

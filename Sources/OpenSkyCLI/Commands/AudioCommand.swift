@@ -4,7 +4,6 @@
 // tools/probe.sh).
 
 import Foundation
-import OpenSkyCLIArguments
 import OpenSkyFormatsAudio
 import OpenSkyGameData
 

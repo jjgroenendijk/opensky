@@ -12,7 +12,7 @@ extension FakeWorldProviders {
                 title: "Invert Y", value: "off", defaultValue: "off", isApplied: true
             )],
             bindings: [KeyBindingRow(
-                event: "Jump", context: .gameplay, key: "Space", isOverride: false
+                event: "Jump", key: "Space", isOverride: false
             )],
             conflicts: [], difficulty: "Adept", multipliers: ["Damage dealt: 1.00 (UESP)"]
         )
