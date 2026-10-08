@@ -14,10 +14,10 @@
 # reach it through the symlink tools/link-shared.sh creates.
 set -eu
 
-FFMPEG_VERSION=8.1.2
+FFMPEG_VERSION=9.0.2
 # Cross-checked against the sha256 Homebrew pins for the same tarball, since ffmpeg.org
 # publishes only detached GPG signatures and no checksum file.
-FFMPEG_SHA256=464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c
+FFMPEG_SHA256=8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e
 # Bump when the configure flags below change, so existing prefixes rebuild.
 FLAGS_REVISION=1
 
