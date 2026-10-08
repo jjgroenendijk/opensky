@@ -1,6 +1,7 @@
 // The open menu as rows an agent can read and select by label. Selection moves
 // through the same menu input path as the arrow keys.
 
+import AppKit
 import OpenSkyAgentControl
 import OpenSkyMenus
 
@@ -42,6 +43,18 @@ extension AgentWorldAdapter {
                 menu: top.name,
                 rows: snapshot.rows.map(\.text),
                 selected: snapshot.selectedIndex
+            )
+        case TitleMenuCoordinator.identifier:
+            let snapshot = game.titleMenu.snapshot
+            guard snapshot.movie.isLoaded, !snapshot.isLoadPageOpen else {
+                return AgentMenuRows(
+                    menu: top.name, rows: snapshot.rows, selected: snapshot.selectedIndex
+                )
+            }
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.movie.rows,
+                selected: snapshot.movie.selectedIndex ?? -1
             )
         case RaceMenuCoordinator.identifier:
             let snapshot = game.raceMenu.snapshot
@@ -91,6 +104,25 @@ extension AgentWorldAdapter {
             "index": .init(target),
             "label": .string(start.rows[target])
         ]
+    }
+
+    /// The same pointer events the view sends for a real cursor.
+    func pointMenu(x: Float, y: Float, click: Bool) throws(AgentFailure) -> AgentJSON {
+        guard game.menuMode.isMenuMode else {
+            throw AgentFailure(.invalidArgument, "no menu is open")
+        }
+        let bounds = game.view.bounds
+        let size = SIMD2(Float(bounds.width), Float(bounds.height))
+        let location = SIMD2(x, y) * size
+        let phases: [MenuPointerEvent.Phase] = click ? [.moved, .pressed, .released] : [.moved]
+        for phase in phases {
+            game.menuMode.routeMenuPointer(MenuPointerEvent(
+                phase,
+                location: location,
+                viewSize: size
+            ))
+        }
+        return ["x": .init(x), "y": .init(y), "clicked": .bool(click)]
     }
 
     func typeText(_ text: String) throws(AgentFailure) -> AgentJSON {

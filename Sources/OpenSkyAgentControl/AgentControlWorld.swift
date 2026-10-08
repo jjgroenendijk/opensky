@@ -60,6 +60,9 @@ public protocol AgentControlWorld: AnyObject {
     func look(yawDegrees: Float, pitchDegrees: Float) throws(AgentFailure)
     /// Moves the top menu's selection to the row with this visible label.
     func selectMenuRow(label: String) throws(AgentFailure) -> AgentJSON
+    /// Moves the menu cursor to a point given as fractions of the view, origin
+    /// top left. With `click`, it also presses and releases there.
+    func pointMenu(x: Float, y: Float, click: Bool) throws(AgentFailure) -> AgentJSON
     /// Types into the open menu that takes text, such as the race menu's name row.
     func typeText(_ text: String) throws(AgentFailure) -> AgentJSON
 

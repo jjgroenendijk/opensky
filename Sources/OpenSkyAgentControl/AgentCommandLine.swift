@@ -9,6 +9,7 @@ nonisolated public enum AgentCommandLine {
         "status": [], "quit": [], "screenshot": [], "events": [],
         "input.press": ["action"], "input.release": ["action"], "input.hold": ["action"],
         "input.look": [], "input.select": ["label"], "input.text": ["text"],
+        "input.point": [], "input.click": [],
         "time.pause": [], "time.resume": [], "time.step": ["n"], "time.scale": ["x"],
         "state.player": [], "state.target": [], "state.actors": [], "state.menu": [],
         "state.quest": ["id"], "state.av": ["name"], "state.global": ["id"],

@@ -214,9 +214,22 @@ public final class AgentCommandRouter {
             return try .done(.success(world.selectMenuRow(label: args.string("label"))))
         case "text":
             return try .done(.success(world.typeText(args.string("text"))))
+        case "point", "click":
+            return try .done(.success(world.pointMenu(
+                x: viewFraction("x", args), y: viewFraction("y", args), click: name == "click"
+            )))
         default:
             throw AgentFailure(.unknownCommand, "unknown input command: \(name)")
         }
+    }
+
+    private func viewFraction(
+        _ name: String,
+        _ args: AgentArguments
+    ) throws(AgentFailure) -> Float {
+        let value = try args.float(name)
+        guard (0 ... 1).contains(value) else { throw args.invalid(name, "0 to 1") }
+        return value
     }
 
     /// Holds an action for a number of frames or seconds, then releases it.

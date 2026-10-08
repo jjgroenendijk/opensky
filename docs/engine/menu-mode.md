@@ -36,7 +36,8 @@ In menu mode, an input event goes to the attached menu consumer. With no consume
 event is swallowed, but still kept from the world.
 
 Menu events are small and know no toolkit: move in a direction, accept, cancel, and pointer
-movement.
+movement. A separate pointer event carries where the visible cursor is, as a point and the view
+size, and whether it moved, pressed, or released.
 
 ## Pause per menu
 
@@ -61,12 +62,18 @@ camera and sends menu events instead:
 | Input | Menu event |
 | --- | --- |
 | WASD, arrow keys | Move |
-| Return, keypad Enter, mouse click | Accept |
+| Return, keypad Enter | Accept |
 | Escape | Cancel |
-| Mouse movement | Pointer |
+| Mouse movement | Pointer, plus the cursor position |
+| Mouse button down and up | The cursor position, pressed and released |
 
 Key releases and other keys are swallowed, so no world key sticks. The pointer is left free,
 because a menu wants a visible cursor. Entering menu mode also releases all held camera keys.
+
+The main menu movie hit tests the cursor itself: the row under it highlights, and a click picks
+that row. A click outside every row does nothing. The other menus do not hit test yet, so for
+them a press is the accept button. A menu opened while the cursor is captured gets the same
+accept, because a hidden cursor has no place on screen.
 
 ## World pause
 

@@ -94,6 +94,8 @@ final class GameMetalView: MTKView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        // A menu highlights the row under a free cursor, so motion arrives uncaptured too.
+        window?.acceptsMouseMovedEvents = true
         window?.makeFirstResponder(self)
     }
 
@@ -179,10 +181,14 @@ final class GameMetalView: MTKView {
     // MARK: - Pointer
 
     override func mouseDown(with event: NSEvent) {
-        // Menu mode keeps the pointer free (a menu wants a visible cursor); a
-        // click is the accept button for the menu layer.
-        if menuMode?.isMenuMode == true {
-            menuMode?.routeMenuInput(.button(.accept))
+        // A captured cursor is hidden and has no place on screen, so a click
+        // there is the accept button.
+        if inMenu {
+            if captured {
+                menuMode?.routeMenuInput(.button(.accept))
+            } else {
+                menuMode?.routeMenuPointer(menuPointer(.pressed, event))
+            }
             return
         }
         // The first click captures the cursor; every later click attacks, as
@@ -199,6 +205,9 @@ final class GameMetalView: MTKView {
         // that went down inside the view and came up outside it must not leave
         // a bow drawn forever.
         input?.setAttackHeld(false)
+        if inMenu, !captured {
+            menuMode?.routeMenuPointer(menuPointer(.released, event))
+        }
     }
 
     override func rightMouseDown(with event: NSEvent) {
@@ -230,10 +239,13 @@ final class GameMetalView: MTKView {
     private func handleLook(_ event: NSEvent) {
         // Menu mode routes pointer motion to the menu layer instead of camera
         // look; capture state is irrelevant there.
-        if menuMode?.isMenuMode == true {
+        if inMenu {
             menuMode?.routeMenuInput(
                 .pointer(deltaX: Float(event.deltaX), deltaY: Float(event.deltaY))
             )
+            if !captured {
+                menuMode?.routeMenuPointer(menuPointer(.moved, event))
+            }
             return
         }
         guard captured else { return }
@@ -242,12 +254,24 @@ final class GameMetalView: MTKView {
         input?.addLook(right: Float(event.deltaX), up: Float(-event.deltaY))
     }
 
+    private func menuPointer(
+        _ phase: MenuPointerEvent.Phase,
+        _ event: NSEvent
+    ) -> MenuPointerEvent {
+        let point = convert(event.locationInWindow, from: nil)
+        let top = isFlipped ? point.y : bounds.height - point.y
+        return MenuPointerEvent(
+            phase,
+            location: SIMD2(Float(point.x), Float(top)),
+            viewSize: SIMD2(Float(bounds.width), Float(bounds.height))
+        )
+    }
+
     // MARK: - Capture
 
     private func captureCursor() {
         guard !captured else { return }
         captured = true
-        window?.acceptsMouseMovedEvents = true
         window?.makeFirstResponder(self)
         // Hides the cursor and detaches it from the pointer so we read pure
         // deltas and the cursor cannot leave the window.
@@ -258,7 +282,6 @@ final class GameMetalView: MTKView {
         guard captured else { return }
         captured = false
         pointerCapture.release()
-        window?.acceptsMouseMovedEvents = false
         // Drop held keys/deltas so nothing sticks while uncaptured.
         input?.releaseAll()
     }

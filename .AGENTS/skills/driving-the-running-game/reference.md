@@ -33,6 +33,8 @@ arrow keys.
 - `input hold <action> --frames <n>` or `--seconds <s>`; held actions only
 - `input look --dx <deg> --dy <deg>`; positive dx turns right, dy looks up
 - `input select <label>`: moves the open menu's selection to the row with that label
+- `input point --x <0..1> --y <0..1>`, `input click --x <0..1> --y <0..1>`: moves the cursor
+  over the open menu, or clicks there; fractions of the game view, origin top left
 - `input text <text>`: types into the open menu that takes text, such as the race menu's
   name row after `menuAccept` on it
 

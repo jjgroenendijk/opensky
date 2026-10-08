@@ -22,6 +22,10 @@ the two. These facts were measured on the install with `openskycli swf movie-pro
 
 - The menu clip is `/MenuHolder/Menu_mc`, with class `StartMenuObj`. Its row list is
   `MainListHolder/List_mc`. The list reacts to keys only while it has focus.
+- Each row clip (`Entry0` and up) has its own `onRollOver`, which selects the row, and
+  `onPress`, which picks it. So the cursor goes to the movie as a stage point, and the
+  movie's hit test finds the row ([AS2 input](/engine/as2-input.md)). The rows sit at the
+  right edge of the 1280 x 720 stage.
 - The engine fills the rows by calling the `sendMenuProperties` callback with 14 values.
   Flag 0 shows Quit. Flag 1 shows Continue and enables Load. Value 2 is the version text.
   Flag 3 starts on the Press Start screen. Flag 9 skips the Bethesda.net login screen.

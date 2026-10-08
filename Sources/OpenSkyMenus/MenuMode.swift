@@ -26,9 +26,35 @@ nonisolated public enum MenuInputEvent: Equatable, Sendable {
     case release(Direction)
 }
 
+/// Where the visible cursor is, for a menu that picks rows by hit testing.
+/// `location` and `viewSize` are view points with the origin at the top left.
+nonisolated public struct MenuPointerEvent: Equatable, Sendable {
+    public enum Phase: Sendable { case moved, pressed, released }
+
+    public let phase: Phase
+    public let location: SIMD2<Float>
+    public let viewSize: SIMD2<Float>
+
+    public init(_ phase: Phase, location: SIMD2<Float>, viewSize: SIMD2<Float>) {
+        self.phase = phase
+        self.location = location
+        self.viewSize = viewSize
+    }
+}
+
 /// Implemented by the menu layer (none yet) to receive routed input.
 public protocol MenuInputConsumer: AnyObject {
     func handleMenuInput(_ event: MenuInputEvent)
+    func handleMenuPointer(_ event: MenuPointerEvent)
+}
+
+extension MenuInputConsumer {
+    /// A menu that does not hit test takes a press as its accept button.
+    public func handleMenuPointer(_ event: MenuPointerEvent) {
+        if event.phase == .pressed {
+            handleMenuInput(.button(.accept))
+        }
+    }
 }
 
 /// What one open menu does to the world simulation. Dialogue leaves it
@@ -146,6 +172,14 @@ public final class MenuModeController {
     public func routeMenuInput(_ event: MenuInputEvent) -> Bool {
         guard stack.isMenuMode else { return false }
         inputConsumer?.handleMenuInput(event)
+        return true
+    }
+
+    /// The pointer twin of `routeMenuInput`.
+    @discardableResult
+    public func routeMenuPointer(_ event: MenuPointerEvent) -> Bool {
+        guard stack.isMenuMode else { return false }
+        inputConsumer?.handleMenuPointer(event)
         return true
     }
 

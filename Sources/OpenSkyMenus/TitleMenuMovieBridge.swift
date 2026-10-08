@@ -104,6 +104,34 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
         return down || up
     }
 
+    /// Hover and click go to the movie's own row clips, which select a row on
+    /// rollover and pick it on press. A point in the letterbox bars hits nothing.
+    @discardableResult
+    public static func handle(_ event: MenuPointerEvent, runtime: SWFMovieRuntime) -> Bool {
+        guard
+            let stage = SWFInputMapping.stagePoint(
+                viewportPoint: event.location,
+                frameSize: runtime.movie.frameSize,
+                viewportPixels: event.viewSize
+            )
+        else { return false }
+        return switch event.phase {
+        case .moved: runtime.handle(.pointerMoved(x: stage.x, y: stage.y))
+        case .pressed: runtime.handle(.pointerPressed(x: stage.x, y: stage.y))
+        case .released: runtime.handle(.pointerReleased(x: stage.x, y: stage.y))
+        }
+    }
+
+    /// The main row the movie has selected, or nil when it has none.
+    public static func selectedIndex(runtime: SWFMovieRuntime) -> Int? {
+        guard
+            let list = runtime.node(atPath: listPath, from: runtime.root),
+            case let .number(index) = list.object.lookup("iSelectedIndex")?.property.value,
+            index.isFinite, index >= 0
+        else { return nil }
+        return Int(index)
+    }
+
     public static func entryLabels(runtime: SWFMovieRuntime) -> [String] {
         MenuMovieEntryList.labels(atPath: listPath, runtime: runtime)
     }

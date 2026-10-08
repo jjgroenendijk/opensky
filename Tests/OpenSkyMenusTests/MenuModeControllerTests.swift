@@ -216,4 +216,27 @@ struct MenuModeControllerTests {
         // (captures) it, so world input must not see it.
         #expect(controller.routeMenuInput(.move(.up)))
     }
+
+    @Test
+    func aMenuThatDoesNotHitTestTakesAPressAsAccept() {
+        let controller = MenuModeController()
+        let consumer = SpyMenuConsumer()
+        controller.inputConsumer = consumer
+        let size = SIMD2<Float>(800, 600)
+        let point = SIMD2<Float>(10, 20)
+        #expect(!controller.routeMenuPointer(MenuPointerEvent(
+            .pressed,
+            location: point,
+            viewSize: size
+        )))
+        controller.present("InventoryMenu")
+        for phase in [MenuPointerEvent.Phase.moved, .pressed, .released] {
+            #expect(controller.routeMenuPointer(MenuPointerEvent(
+                phase,
+                location: point,
+                viewSize: size
+            )))
+        }
+        #expect(consumer.events == [.button(.accept)])
+    }
 }
