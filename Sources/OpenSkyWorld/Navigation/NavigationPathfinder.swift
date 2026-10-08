@@ -4,6 +4,7 @@
 // centroid distance, or zero when a resident teleport can make world-space
 // distance non-admissible.
 
+import HeapModule
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
@@ -23,12 +24,14 @@ nonisolated public struct NavigationCameFrom: Sendable {
     public let portal: NavigationPortal
 }
 
-nonisolated public struct NavigationOpenEntry: Sendable {
+nonisolated public struct NavigationOpenEntry: Comparable, Sendable {
     public let node: NavigationTriangleID
     public let cost: Float
     public let heuristic: Float
 
-    public static func precedes(_ lhs: Self, _ rhs: Self) -> Bool {
+    /// Cost, then heuristic, then triangle: a strict total order, so equal
+    /// inputs always expand triangles in the same order.
+    public static func < (lhs: Self, rhs: Self) -> Bool {
         if lhs.cost != rhs.cost {
             return lhs.cost < rhs.cost
         }
@@ -40,7 +43,7 @@ nonisolated public struct NavigationOpenEntry: Sendable {
 }
 
 nonisolated public struct NavigationQueryScratch: Sendable {
-    public var openHeap: [NavigationOpenEntry] = []
+    public var openHeap = Heap<NavigationOpenEntry>()
     public var transitions: [NavigationTransition] = []
     public var cameFrom: [NavigationTriangleID: NavigationCameFrom] = [:]
     public var costs: [NavigationTriangleID: Float] = [:]
@@ -51,7 +54,8 @@ nonisolated public struct NavigationQueryScratch: Sendable {
     public init() {}
 
     public mutating func reset() {
-        openHeap.removeAll(keepingCapacity: true)
+        // Heap has no removeAll(keepingCapacity:); this form keeps the storage.
+        openHeap.removeAll { _ in true }
         transitions.removeAll(keepingCapacity: true)
         cameFrom.removeAll(keepingCapacity: true)
         costs.removeAll(keepingCapacity: true)
@@ -61,35 +65,11 @@ nonisolated public struct NavigationQueryScratch: Sendable {
     }
 
     public mutating func push(_ entry: NavigationOpenEntry) {
-        openHeap.append(entry)
-        var child = openHeap.count - 1
-        while child > 0 {
-            let parent = (child - 1) / 2
-            guard NavigationOpenEntry.precedes(openHeap[child], openHeap[parent]) else { break }
-            openHeap.swapAt(child, parent)
-            child = parent
-        }
+        openHeap.insert(entry)
     }
 
     public mutating func pop() -> NavigationOpenEntry? {
-        guard !openHeap.isEmpty else { return nil }
-        if openHeap.count == 1 {
-            return openHeap.removeLast()
-        }
-        let result = openHeap[0]
-        openHeap[0] = openHeap.removeLast()
-        var parent = 0
-        while true {
-            let left = parent * 2 + 1
-            guard left < openHeap.count else { break }
-            let right = left + 1
-            let child = right < openHeap.count
-                && NavigationOpenEntry.precedes(openHeap[right], openHeap[left]) ? right : left
-            guard NavigationOpenEntry.precedes(openHeap[child], openHeap[parent]) else { break }
-            openHeap.swapAt(parent, child)
-            parent = child
-        }
-        return result
+        openHeap.popMin()
     }
 }
 

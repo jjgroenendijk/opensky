@@ -1,5 +1,6 @@
 // Native-call seam for the headless Papyrus interpreter.
 
+import DequeModule
 import Foundation
 import OpenSkyScriptingInterface
 
@@ -81,27 +82,30 @@ public protocol PapyrusNativeDispatch {
 
 public final class PapyrusRecordingNativeDispatch: PapyrusNativeDispatch {
     public let callLimit: Int
-    public var queuedResults: [PapyrusNativeResult]
+    public var queuedResults: Deque<PapyrusNativeResult>
 
-    public private(set) var calls: [PapyrusNativeCall] = []
+    /// Oldest first, at most `callLimit` of them.
+    public var calls: [PapyrusNativeCall] {
+        Array(callRing)
+    }
+
     public private(set) var callTotal = 0
+    private var callRing: Deque<PapyrusNativeCall> = []
 
     public init(
         callLimit: Int = PapyrusLimits.standard.nativeCallRecords,
         queuedResults: [PapyrusNativeResult] = []
     ) {
         self.callLimit = max(1, callLimit)
-        self.queuedResults = queuedResults
+        self.queuedResults = Deque(queuedResults)
     }
 
     public func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         callTotal += 1
-        calls.append(call)
-        if calls.count > callLimit {
-            calls.removeFirst(calls.count - callLimit)
+        callRing.append(call)
+        if callRing.count > callLimit {
+            callRing.removeFirst(callRing.count - callLimit)
         }
-        return queuedResults.isEmpty
-            ? .returned(call.returnType.defaultValue)
-            : queuedResults.removeFirst()
+        return queuedResults.popFirst() ?? .returned(call.returnType.defaultValue)
     }
 }

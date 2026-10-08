@@ -36,8 +36,12 @@ let testLinkerSettings: [LinkerSetting] = [
 
 // MARK: - Module helpers
 
+/// Products of external packages (docs/decisions/swift-collections.md), keyed by
+/// product name. They sit below every module.
+let externalProducts = ["HeapModule": "swift-collections", "DequeModule": "swift-collections"]
+
 /// Every declared module, in declaration order. The layering checks read it.
-nonisolated(unsafe) var declared: [String] = []
+nonisolated(unsafe) var declared: [String] = externalProducts.keys.sorted()
 /// Feature implementations. Nothing but the composition roots may depend on one.
 nonisolated(unsafe) var featureImplementations: Set<String> = []
 /// Targets the umbrella products export.
@@ -72,7 +76,10 @@ func checked(
             "\(module) depends on \(dependency); only that feature's tests may"
         )
     }
-    return dependencies.map { .target(name: $0) }
+    return dependencies.map { dependency in
+        externalProducts[dependency].map { .product(name: dependency, package: $0) }
+            ?? .target(name: dependency)
+    }
 }
 
 func testTarget(_ name: String, dependencies: [String]) -> Target {
@@ -600,7 +607,7 @@ targets += feature(
         "OpenSkyCombatInterface", "OpenSkyCrimeInterface", "OpenSkyDialogueInterface",
         "OpenSkyFactionsInterface", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
-        "OpenSkyWorldInterface"
+        "OpenSkyWorldInterface", "DequeModule"
     ],
     interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
     tests: [
@@ -633,7 +640,7 @@ targets += feature(
         "OpenSkyProgressionInterface", "OpenSkyCrimeInterface", "OpenSkyInventoryInterface",
         "OpenSkyMagicInterface", "OpenSkyCombatInterface", "OpenSkyQuestsInterface",
         "OpenSkyDialogueInterface", "OpenSkyScriptingInterface", "OpenSkyShaderTypes",
-        "OpenSkyAssetCache", "OpenSkyImageKernels"
+        "OpenSkyAssetCache", "OpenSkyImageKernels", "HeapModule"
     ],
     tests: [
         "EngineTesting", "FormatsTesting", "OpenSkyActorsInterface", "OpenSkyAudio",
@@ -781,6 +788,9 @@ let package = Package(
             targets: ["OpenSkyShaderTypes", "CASTCEncoder"] + libraryTargets
         ),
         .library(name: "OpenSkyTestSupport", targets: testingTargets + fixtureTargets)
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-collections", from: "1.3.0")
     ],
     targets: targets,
     swiftLanguageModes: [.v6]
