@@ -24,6 +24,8 @@ nonisolated public struct Material: Hashable, Sendable {
     public let alphaBlend: Bool
     /// Alpha-test cutoff in [0, 1]; nil = no test. Foliage cutouts set this.
     public let alphaTestThreshold: Float?
+    /// Set for an effect shape: drawn unlit with this shading.
+    public let effect: EffectShading?
 
     public init(
         diffuseTexture: String?,
@@ -36,7 +38,8 @@ nonisolated public struct Material: Hashable, Sendable {
         specularStrength: Float,
         doubleSided: Bool,
         alphaBlend: Bool,
-        alphaTestThreshold: Float?
+        alphaTestThreshold: Float?,
+        effect: EffectShading? = nil
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
@@ -49,6 +52,7 @@ nonisolated public struct Material: Hashable, Sendable {
         self.doubleSided = doubleSided
         self.alphaBlend = alphaBlend
         self.alphaTestThreshold = alphaTestThreshold
+        self.effect = effect
     }
 
     /// Neutral stand-in for shapes without a lighting shader (effect, water,

@@ -110,6 +110,8 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexSWFGradient = 12,
     /// The scene color copied before the image-space composite reads it.
     TextureIndexSceneColor = 13,
+    /// Greyscale palette of an effect shape; the diffuse stands in when it has none.
+    TextureIndexEffectPalette = 14,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -156,6 +158,19 @@ typedef NS_ENUM(EnumBackingType, FunctionConstantIndex)
     FunctionConstantRayTracedShadows = 2,
     /// Optional: the ray-traced pipelines that draw the traced shadow alone.
     FunctionConstantRayShadowView = 3,
+    /// Optional: the blended static pipeline, which writes the fragment's alpha.
+    FunctionConstantAlphaBlend = 4,
+};
+
+/// DrawUniforms.effectFlags bits. Zero draws the lit static-mesh path.
+typedef NS_ENUM(EnumBackingType, EffectFlag)
+{
+    EffectFlagEnabled = 1 << 0,
+    EffectFlagPaletteColor = 1 << 1,
+    EffectFlagPaletteAlpha = 1 << 2,
+    EffectFlagFalloff = 1 << 3,
+    EffectFlagVertexColors = 1 << 4,
+    EffectFlagVertexAlpha = 1 << 5,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.
@@ -286,6 +301,13 @@ typedef struct
     /// RenderLayerBit of this draw's group. Statics, actors, and distant LOD
     /// share one pipeline pair, so the role cannot be a shader constant there.
     unsigned int layerCategory;
+    /// EffectFlag bits; the effect fields below are read only when set.
+    unsigned int effectFlags;
+    /// BSEffectShaderProperty base color; its scale is effectBaseColorScale.
+    vector_float4 effectBaseColor;
+    /// Falloff start and stop cosines, then start and stop opacity.
+    vector_float4 effectFalloff;
+    float effectBaseColorScale;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;

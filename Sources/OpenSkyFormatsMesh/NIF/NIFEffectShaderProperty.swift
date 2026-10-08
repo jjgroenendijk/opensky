@@ -76,6 +76,11 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
         shaderFlags1 & 0x08 != 0
     }
 
+    /// SLSF2 bit 5 Vertex_Colors -> vertex color tints the effect.
+    public var hasVertexColors: Bool {
+        shaderFlags2 & 0x20 != 0
+    }
+
     /// SLSF1 bit 31 ZBuffer_Test (nif.xml places ZBuffer_Test in flags 1, not
     /// flags 2) -> depth test enabled.
     public var isZBufferTest: Bool {

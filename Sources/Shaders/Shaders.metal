@@ -313,6 +313,44 @@ fragment float4 skyFragment(
 // selected via function constant so opaque draws pay nothing for it.
 
 constant bool alphaTestEnabled [[function_constant(FunctionConstantAlphaTest)]];
+// Optional: only the blended static pipeline defines it. The others write alpha 1.
+constant bool alphaBlendValue [[function_constant(FunctionConstantAlphaBlend)]];
+constant bool alphaBlendEnabled = is_function_constant_defined(alphaBlendValue) && alphaBlendValue;
+
+// BSEffectShaderProperty shading: unlit, base color, palette, and falloff. The
+// model follows NifSkope's open-source effect shader (sk_effectshader.frag).
+static float4 effectShade(
+    float4 base,
+    float4 vertexColor,
+    float3 normal,
+    float3 toEye,
+    constant DrawUniforms &draw,
+    texture2d<float> palette)
+{
+    constexpr sampler paletteSampler(filter::linear, address::clamp_to_edge);
+    uint flags = draw.effectFlags;
+    float4 tint = (flags & EffectFlagVertexColors) != 0 ? vertexColor : float4(1.0);
+    tint.a = (flags & EffectFlagVertexAlpha) != 0 ? vertexColor.a : 1.0;
+    float falloff = 1.0;
+    if ((flags & EffectFlagFalloff) != 0) {
+        float4 range = draw.effectFalloff;
+        float facing = smoothstep(range.y, range.x, abs(dot(normal, toEye)));
+        falloff = mix(max(range.w, 0.0), min(range.z, 1.0), facing);
+    }
+    float4 glow = draw.effectBaseColor;
+    float alphaScale = glow.a * glow.a;
+    float3 rgb = base.rgb * tint.rgb * glow.rgb;
+    float alpha = base.a * tint.a * falloff * alphaScale;
+    if ((flags & EffectFlagPaletteColor) != 0) {
+        float2 at = saturate(float2(base.g, tint.g * falloff * glow.r));
+        rgb = palette.sample(paletteSampler, at).rgb;
+    }
+    if ((flags & EffectFlagPaletteAlpha) != 0) {
+        float2 at = saturate(float2(base.a, tint.a * falloff * alphaScale));
+        alpha = palette.sample(paletteSampler, at).a;
+    }
+    return float4(rgb * draw.effectBaseColorScale, alpha);
+}
 
 typedef struct
 {
@@ -441,6 +479,7 @@ fragment float4 staticMeshFragment(
     constant DrawUniforms &draw [[buffer(BufferIndexDrawUniforms)]],
     const device PointLightUniform *pointLights [[buffer(BufferIndexPointLights)]],
     texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    texture2d<float> effectPalette [[texture(TextureIndexEffectPalette)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -448,7 +487,14 @@ fragment float4 staticMeshFragment(
     [[buffer(BufferIndexRayScene), function_constant(rayTracedShadows)]])
 {
     float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
+    bool isEffect = (draw.effectFlags & EffectFlagEnabled) != 0;
+    float4 effect = 0.0;
     float alpha = diffuse.a * in.color.a * draw.materialAlpha;
+    if (isEffect) {
+        float3 toEye = normalize(frame.cameraPosition - in.worldPosition);
+        effect = effectShade(diffuse, in.color, normalize(in.normal), toEye, draw, effectPalette);
+        alpha = effect.a * draw.materialAlpha;
+    }
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {
         discard_fragment();
     }
@@ -457,6 +503,10 @@ fragment float4 staticMeshFragment(
             in.worldPosition, in.normal, in.texcoord,
             diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), draw.layerCategory};
         return debugViewColor(frame, surface);
+    }
+    if (isEffect) {
+        float3 shaded = applyFog(effect.rgb, in.worldPosition, frame);
+        return float4(shaded, alphaBlendEnabled ? alpha : 1.0);
     }
     float3 normal = normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
@@ -477,8 +527,8 @@ fragment float4 staticMeshFragment(
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
     float3 lit = diffuse.rgb * in.color.rgb * illumination;
     // Opaque: alpha only gates the test above. The frame is premultiplied, so
-    // a lower alpha would show as white or black.
-    return float4(applyFog(lit, in.worldPosition, frame), 1.0);
+    // a lower alpha would show as white or black. The blended pass blends it.
+    return float4(applyFog(lit, in.worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
 }
 
 // GRAS path: same material/lighting model as cutout static meshes, with one

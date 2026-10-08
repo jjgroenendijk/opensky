@@ -60,6 +60,12 @@ nonisolated public struct NIFObjectPrefix: Sendable {
     /// bhk collision object ref; -1 = none.
     public let collisionRef: Int32
 
+    /// NiAVObject flags bit 0. The game never draws a hidden object or its
+    /// children; particle emitter source meshes set it.
+    public var isHidden: Bool {
+        flags & 1 != 0
+    }
+
     /// Local transform `T * R * S` (column vectors, matches
     /// docs/decisions/coordinates.md).
     public var localTransform: float4x4 {

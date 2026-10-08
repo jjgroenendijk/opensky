@@ -126,10 +126,17 @@ plain fallback material, untextured but drawn. Effect shaders used by particles 
 particle path instead (see [NIF particle systems](/formats/nif-particles.md)).
 
 A mesh shape with an effect shader, such as a smoke disc, a fire card, or waterfall foam,
-draws with the effect's source texture, UV transform, and double-sided flag, plus its
-`NiAlphaProperty`. This differs from the game: the static path lights the shape, and it
-does not model the effect's base color, falloff, or greyscale palette. Two kinds of effect
-shape are skipped, because drawn this way they show as flat cards:
+draws unlit with the effect's source texture, UV transform, double-sided flag, base color,
+falloff, and greyscale palette, plus its `NiAlphaProperty`. The palette lookup follows the
+open-source NifSkope effect shader (`sk_effectshader.frag`):
+
+- Palette color: the color at (texture green, vertex green x falloff x base red).
+- Palette alpha: the alpha at (texture alpha, vertex alpha x falloff x base alpha squared).
+- Falloff: `smoothstep(stop, start, |N . V|)` mixes the stop opacity into the start opacity.
+
+Vanilla palettes are 2D, for example `textures\effects\gradients\GradWhiteWater.dds` is
+512 x 128, so the second coordinate matters. Two kinds of effect shape are skipped,
+because the static path cannot draw them:
 
 - An effect shape with no source texture.
 - An additive one: `NiAlphaProperty` blends with destination factor `ONE`, so it only adds

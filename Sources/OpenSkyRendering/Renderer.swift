@@ -39,6 +39,7 @@ public final class Renderer: NSObject {
     public let skyPipeline: MTLRenderPipelineState
     public let opaquePipeline: MTLRenderPipelineState
     public let alphaTestPipeline: MTLRenderPipelineState
+    public let blendedPipeline: MTLRenderPipelineState
     public let skinnedOpaquePipeline: MTLRenderPipelineState
     public let skinnedAlphaTestPipeline: MTLRenderPipelineState
     public let morphedSkinnedOpaquePipeline: MTLRenderPipelineState
@@ -315,9 +316,8 @@ public final class Renderer: NSObject {
         self.pipelineCache = compiler
         let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
         (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
-        (alphaTestPipeline, skinnedOpaquePipeline) = (
-            pipelines.alphaTest, pipelines.skinnedOpaque
-        )
+        (alphaTestPipeline, blendedPipeline) = (pipelines.alphaTest, pipelines.blended)
+        skinnedOpaquePipeline = pipelines.skinnedOpaque
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)
         (morphedSkinnedOpaquePipeline, morphedSkinnedAlphaTestPipeline) = (
             pipelines.morphedSkinnedOpaque, pipelines.morphedSkinnedAlphaTest

@@ -217,6 +217,9 @@ index. A wrong byte count, bad values, or a different vertex count rejects the s
   editor-marker geometry has nothing to draw. Some marker meshes, such as `MarkerX.nif` and
   `MarkerXHeading.nif`, have no such shape; the record flag below hides them
   ([world records](/formats/world-records.md#stat)).
+- A shape or node with the `NiAVObject` hidden flag (flags bit 0) is dropped with its
+  subtree, because the game does not draw it. Particle emitter source meshes set it, for
+  example `SPLASHeMIT:0` in `Effects\FXCreekFlatLong01.nif` (flags `0xF`).
 - A ref out of range, a loop, or depth above 64 is an error. A subtree used under two
   parents is allowed; only a loop on the current path is an error.
 - Every scene walk (bind pose, meshes, particles, collision targets) uses one explicit work
