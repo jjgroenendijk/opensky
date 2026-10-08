@@ -45,6 +45,7 @@ so without a minimum the screen would flash for one frame and the tip could not 
   camera pitch, so it stays centered when the camera looks up or down. `XNAM` moves the
   object to the right, forward, and up of the view from that point. The game's camera
   placement is not known; this is OpenSky's.
+- The HUD is hidden while the cover shows, and returns when the cover is gone.
 - The tip, the `DESC` text, is drawn at the bottom in the UI overlay.
 - During the fade, the world draws again under a black panel whose opacity falls to zero.
 - A screen with no model shows the tip on black.

@@ -161,6 +161,7 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
                 )
         }
         renderer.uiScene = frame?.overlay ?? .empty
+        game.hud.setCovered(frame != nil)
     }
 
     var currentLocation: ResolvedFormID? {
