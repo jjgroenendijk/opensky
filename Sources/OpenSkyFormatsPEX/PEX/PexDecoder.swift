@@ -133,22 +133,19 @@ nonisolated public struct PexReader: Sendable {
     }
 
     public mutating func readUInt8() throws -> UInt8 {
-        try read(count: 1)[0]
+        try readBigEndian()
     }
 
     public mutating func readUInt16() throws -> UInt16 {
-        let bytes = try read(count: 2)
-        return UInt16(bytes[0]) << 8 | UInt16(bytes[1])
+        try readBigEndian()
     }
 
     public mutating func readUInt32() throws -> UInt32 {
-        let bytes = try read(count: 4)
-        return bytes.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
+        try readBigEndian()
     }
 
     public mutating func readUInt64() throws -> UInt64 {
-        let bytes = try read(count: 8)
-        return bytes.reduce(UInt64(0)) { ($0 << 8) | UInt64($1) }
+        try readBigEndian()
     }
 
     public mutating func readInt32() throws -> Int32 {
@@ -172,16 +169,29 @@ nonisolated public struct PexReader: Sendable {
     }
 
     private mutating func read(count: Int) throws -> Data {
-        guard count >= 0, offset >= 0, offset + count <= data.count else {
+        try requireBytes(count)
+        let start = data.startIndex + offset
+        let result = data.subdata(in: start ..< start + count)
+        offset += count
+        return result
+    }
+
+    private mutating func readBigEndian<T: FixedWidthInteger>() throws -> T {
+        let size = MemoryLayout<T>.size
+        try requireBytes(size)
+        let start = offset
+        offset += size
+        let raw = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: start, as: T.self) }
+        return T(bigEndian: raw)
+    }
+
+    private func requireBytes(_ count: Int) throws {
+        guard count >= 0, offset >= 0, count <= data.count - offset else {
             throw PexError.truncated(
                 offset: offset,
                 expected: count,
                 available: bytesRemaining
             )
         }
-        let start = data.startIndex + offset
-        let result = data.subdata(in: start ..< start + count)
-        offset += count
-        return result
     }
 }

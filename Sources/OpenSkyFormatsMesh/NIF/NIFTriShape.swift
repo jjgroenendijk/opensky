@@ -235,16 +235,11 @@ nonisolated public struct NIFTriShape: Sendable {
         triangleCount: Int,
         vertexCount: Int
     ) throws -> [UInt16] {
-        var indices: [UInt16] = []
-        indices.reserveCapacity(triangleCount * 3)
-        for _ in 0 ..< triangleCount * 3 {
-            let index = try reader.readUInt16()
-            guard Int(index) < vertexCount else {
-                throw NIFError.malformed(
-                    "triangle index \(index) out of range (\(vertexCount) vertices)"
-                )
-            }
-            indices.append(index)
+        let indices = try reader.readIntegers(UInt16.self, count: triangleCount * 3)
+        if let index = indices.first(where: { Int($0) >= vertexCount }) {
+            throw NIFError.malformed(
+                "triangle index \(index) out of range (\(vertexCount) vertices)"
+            )
         }
         return indices
     }
@@ -304,12 +299,12 @@ nonisolated extension NIFTriShape {
     private static func readByteColor4(
         _ reader: inout BinaryReader
     ) throws -> SIMD4<Float> {
-        let bytes = try reader.read(count: 4)
+        let packed = try reader.readUInt32()
         return SIMD4(
-            Float(bytes[bytes.startIndex]) / 255,
-            Float(bytes[bytes.startIndex + 1]) / 255,
-            Float(bytes[bytes.startIndex + 2]) / 255,
-            Float(bytes[bytes.startIndex + 3]) / 255
+            Float(packed & 0xFF) / 255,
+            Float(packed >> 8 & 0xFF) / 255,
+            Float(packed >> 16 & 0xFF) / 255,
+            Float(packed >> 24) / 255
         )
     }
 
