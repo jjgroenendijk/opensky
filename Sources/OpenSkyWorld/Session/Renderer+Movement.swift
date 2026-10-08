@@ -102,12 +102,13 @@ extension Renderer {
             collisionQuery: collisionQuery ?? { _ in [] },
             plan: { [locomotion] state in locomotion.plan(state) }
         )
+        // The view follows the drawn capsule, blended between steps.
+        freeFlyCamera.position = walkController.drawnCameraPosition
         guard movementMode == .thirdPerson else { return }
-        // `WalkController.update` has just put the eye at the capsule's own eye
-        // height; third person pulls it back out to the orbit position from
-        // there, so the look angles it integrated are the ones used here.
+        // Third person pulls the eye back out to the orbit position, so the
+        // look angles `WalkController.update` integrated are the ones used here.
         freeFlyCamera.position = thirdPersonCamera.resolve(
-            feetPosition: walkController.feetPosition,
+            feetPosition: walkController.drawnFeetPosition,
             yaw: freeFlyCamera.yaw,
             pitch: freeFlyCamera.pitch,
             collisionQuery: collisionQuery ?? { _ in [] }
