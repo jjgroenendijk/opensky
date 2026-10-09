@@ -37,7 +37,7 @@ nonisolated public struct Cell: Sendable {
         public let quadFlags: UInt32
     }
 
-    public let formID: FormID
+    public internal(set) var formID: FormID
     public let editorID: String?
     /// FULL — interior cells only in vanilla.
     public let name: LString?
@@ -47,38 +47,38 @@ nonisolated public struct Cell: Sendable {
     /// XCLW. nil = inherit WRLD DNAM default water height.
     public let waterHeight: WaterHeight?
     /// XCWT per-cell WATR override. nil = use WRLD NAM2.
-    public let waterType: FormID?
+    public internal(set) var waterType: FormID?
     /// XCLL cell-local lighting values; nil when absent or too truncated.
     public let lighting: CellLightingValues?
     /// LTMP -> LGTM lighting template.
-    public let lightingTemplate: FormID?
+    public internal(set) var lightingTemplate: FormID?
     /// XCLR — REGN regions overlapping this exterior cell (empty on interiors
     /// and cells without XCLR). Feeds region weather and
     /// ambient sound selection.
-    public let regions: [FormID]
+    public internal(set) var regions: [FormID]
     /// XCAS — acoustic space (ASPC) reference, the interior-ambience hook.
     /// Exterior cells generally carry none; interiors point at an ASPC whose SNAM/RDAT drive the
     /// per-cell ambient bed. nil when absent.
-    public let acousticSpace: FormID?
+    public internal(set) var acousticSpace: FormID?
     /// XCMO — music type (MUSC) override for this cell. nil when
     /// absent or null; the music director then falls back to the worldspace
     /// or region music.
-    public let musicType: FormID?
+    public internal(set) var musicType: FormID?
     /// XLCN — the LCTN containing this cell.
-    public let location: FormID?
+    public internal(set) var location: FormID?
     /// XEZN — the ECZN governing this cell's encounter level and reset data.
-    public let encounterZone: FormID?
+    public internal(set) var encounterZone: FormID?
     /// XOWN — the NPC_ or FACT that owns everything in this cell, which is what
     /// a reference with no `XOWN` of its own inherits. nil when
     /// the cell is unowned, which is the normal state for a dungeon and for the
     /// player's own house.
-    public let owner: FormID?
+    public internal(set) var owner: FormID?
     /// XRNK — the faction rank a member needs before the cell's contents are
     /// theirs to use. Meaningful only when `owner` names a FACT; nil when the
     /// field is absent, which is every vanilla cell observed on this install.
     public let ownerFactionRank: Int32?
     /// The fields that rarely matter to the engine: water extras, occlusion, height data.
-    public let extras: CellExtras
+    public internal(set) var extras: CellExtras
     public let skipped: FieldTally
 
     public var isInterior: Bool {

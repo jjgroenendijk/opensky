@@ -22,7 +22,7 @@ nonisolated public struct TextureSet: Sendable {
         "TX00", "TX01", "TX02", "TX03", "TX04", "TX05", "TX06", "TX07"
     ]
 
-    public let formID: FormID
+    public internal(set) var formID: FormID
     public let editorID: String?
     public let bounds: ObjectBounds?
     /// Texture paths relative to Data/, by slot: diffuse, normal/gloss,
