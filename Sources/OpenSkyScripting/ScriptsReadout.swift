@@ -92,7 +92,9 @@ nonisolated public enum ScriptsReadout: Sendable {
                 + "dispatched \(snapshot.lastTickDispatched) · "
                 + "queued \(snapshot.lastTickQueued) · "
                 + "resumed \(snapshot.lastTickResumed) · "
-                + "faulted \(snapshot.lastTickFaulted)"
+                + "faulted \(snapshot.lastTickFaulted)",
+            "Last step instructions: \(snapshot.lastStepInstructions)"
+                + " of \(snapshot.budgetInstructions)"
         ].joined(separator: "\n")
     }
 

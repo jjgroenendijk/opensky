@@ -24,6 +24,8 @@ public final class PapyrusWorldRuntime {
     public let fixedStepSeconds: Double
     /// Per-tick dispatch ceiling; tests lower it to force carry-over.
     public var budget: PapyrusTickBudget = .standard
+    /// Instructions all scripts ran in the latest fixed step.
+    public internal(set) var lastStepInstructions = 0
     /// Freezes the VM's own clock. While true, `advance(delta:gameClock:)` does
     /// nothing, and `stepFixed(gameClock:)` still steps one tick. Separate from
     /// `Renderer.worldSimPaused`, which pauses the whole simulation.

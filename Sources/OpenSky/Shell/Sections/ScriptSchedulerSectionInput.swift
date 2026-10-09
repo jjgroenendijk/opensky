@@ -21,6 +21,14 @@ extension ScriptSchedulerSection {
             burstControl, target: self, action: #selector(burstPressed),
             identifier: "ScriptBurstControl"
         )
+        PanelComponents.configurePopUp(
+            budgetControl, target: self, action: #selector(budgetChanged),
+            identifier: "ScriptBudgetControl"
+        )
+        for instructions in ScriptSchedulerSection.budgetChoices {
+            budgetControl.addItem(withTitle: "\(instructions) instructions")
+            budgetControl.lastItem?.tag = instructions
+        }
     }
 
     @objc func pauseToggled() {
@@ -31,6 +39,13 @@ extension ScriptSchedulerSection {
 
     @objc func stepPressed() {
         provider?.stepScripts(ticks: 1)
+        syncControls()
+        finishInteraction()
+    }
+
+    @objc func budgetChanged() {
+        guard let instructions = budgetControl.selectedItem?.tag else { return }
+        provider?.setScriptInstructionBudget(instructions)
         syncControls()
         finishInteraction()
     }

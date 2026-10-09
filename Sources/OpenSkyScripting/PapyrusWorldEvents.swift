@@ -9,8 +9,15 @@ import OpenSkyWorldState
 extension PapyrusWorldRuntime {
     /// Runs one fixed step: resumes due latent calls, then drains events up to
     /// the budget. It ignores `isPaused`, so the sidebar can step a paused VM.
+    /// All scripts share `budget.instructions`; once it is spent, a new event
+    /// yields before its first instruction and waits its turn in the scheduler.
     @discardableResult
     public func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
+        runtime.stepInstructionsLeft = max(0, budget.instructions)
+        defer {
+            lastStepInstructions = max(0, budget.instructions) - runtime.stepInstructionsLeft
+            runtime.stepInstructionsLeft = .max
+        }
         _ = scheduler.tick(gameClock: gameClock)
         let resumes = suspensionTracker.drainStep()
         advanceUpdateTimers(gameClock: gameClock)
@@ -67,16 +74,10 @@ extension PapyrusWorldRuntime {
     }
 
     private func drainQueue(dispatched: inout Int, faulted: inout Int) {
-        let instructionFloor = runtime.tally.instructionsExecuted
         drainCursor = 0
         defer { drainCursor = nil }
         var retained: [PapyrusScriptEvent] = []
-        while
-            let index = drainCursor, index < eventQueue.count,
-            dispatched < budget.events,
-            runtime.tally.instructionsExecuted - instructionFloor
-            < budget.instructions
-        {
+        while let index = drainCursor, index < eventQueue.count, dispatched < budget.events {
             let event = eventQueue[index]
             drainCursor = index + 1
             guard !busyInstances.contains(event.target) else {

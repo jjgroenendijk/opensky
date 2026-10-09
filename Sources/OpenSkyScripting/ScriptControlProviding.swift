@@ -154,6 +154,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public let topUnimplementedNatives: [ScriptsNativeCount]
     /// The newest VM fault, as text, or nil when none happened.
     public var lastFault: String?
+    /// Instructions all scripts ran in the latest fixed step, out of `budgetInstructions`.
+    public var lastStepInstructions = 0
 }
 
 /// Live-renderer seam for the World > Scripts panel.
@@ -172,6 +174,10 @@ public protocol ScriptControlProviding: AnyObject {
     /// so resuming never replays the pause as catch-up steps. No-op when the
     /// session has no VM.
     func setScriptsPaused(_ paused: Bool)
+
+    /// Sets the instructions all scripts share per fixed step. Values below one
+    /// become one, so scripts always move. No-op when the session has no VM.
+    func setScriptInstructionBudget(_ instructions: Int)
 
     /// Runs `ticks` fixed steps immediately, whether or not the VM is paused.
     /// Values below one do nothing; the implementation caps the count so a

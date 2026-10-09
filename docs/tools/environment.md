@@ -44,6 +44,9 @@ Quirks that cost time in every format parser session. Each retires when the host
   (`https://web.archive.org/web/2023/https://ck.uesp.net/wiki/<Page>`). Pages the Wayback Machine
   never saved cannot be reached from here. For a Papyrus signature, the install's own compiled
   script is the better source anyway ([actor natives](/engine/papyrus-actor-natives.md)).
+- Observed 2026-10-09: `skyrimck.uesp.net` also answers `curl` with the Cloudflare page, and the
+  Wayback Machine has no snapshot of `ck.uesp.net/wiki/Papyrus_INI_Settings`. A web search still
+  returns the page's text in its summary.
 - Observed 2026-08-07: `www.creationkit.com` serves a "down for backend maintenance" page for every
   path, and its Wayback snapshots redirect to that page. Use the `ck.uesp.net` snapshots above.
 

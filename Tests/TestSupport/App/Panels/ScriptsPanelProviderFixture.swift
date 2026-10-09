@@ -41,12 +41,19 @@ final class FakeScriptProvider: ScriptControlProviding {
     private(set) var setPausedCalls: [Bool] = []
     /// Tick counts every step request carried, in order.
     private(set) var stepCalls: [Int] = []
+    /// Every budget the panel set, in order.
+    private(set) var budgetCalls: [Int] = []
 
     /// Mirrors the engine: the pause write is observable in the next snapshot,
     /// which is what clears or sets the destination's override indicator.
     func setScriptsPaused(_ paused: Bool) {
         setPausedCalls.append(paused)
-        scriptsSnapshot = Self.withPaused(scriptsSnapshot, paused)
+        scriptsSnapshot = Self.copy(scriptsSnapshot, paused: paused)
+    }
+
+    func setScriptInstructionBudget(_ instructions: Int) {
+        budgetCalls.append(instructions)
+        scriptsSnapshot = Self.copy(scriptsSnapshot, budgetInstructions: instructions)
     }
 
     func stepScripts(ticks: Int) {
@@ -64,9 +71,11 @@ final class FakeScriptProvider: ScriptControlProviding {
         questAliasTables[editorID]
     }
 
-    /// Rebuilds a snapshot with a new pause flag, keeping everything else.
-    private static func withPaused(
-        _ snapshot: ScriptsSnapshot, _ paused: Bool
+    /// Rebuilds a snapshot with a new pause flag or budget, keeping everything else.
+    private static func copy(
+        _ snapshot: ScriptsSnapshot,
+        paused: Bool? = nil,
+        budgetInstructions: Int? = nil
     ) -> ScriptsSnapshot {
         makeScriptsSnapshot(
             instanceCount: snapshot.instanceCount,
@@ -75,7 +84,7 @@ final class FakeScriptProvider: ScriptControlProviding {
             recentEvents: snapshot.recentEvents,
             droppedRecentEventCount: snapshot.droppedRecentEventCount,
             pendingEventCount: snapshot.pendingEventCount,
-            isPaused: paused,
+            isPaused: paused ?? snapshot.isPaused,
             questInstanceCount: snapshot.questInstanceCount,
             questCount: snapshot.questCount,
             runningQuestCount: snapshot.runningQuestCount,
@@ -90,7 +99,7 @@ final class FakeScriptProvider: ScriptControlProviding {
             pendingTimerCount: snapshot.pendingTimerCount,
             tickCount: snapshot.tickCount,
             budgetEvents: snapshot.budgetEvents,
-            budgetInstructions: snapshot.budgetInstructions,
+            budgetInstructions: budgetInstructions ?? snapshot.budgetInstructions,
             lastTickSteps: snapshot.lastTickSteps,
             lastTickDispatched: snapshot.lastTickDispatched,
             lastTickQueued: snapshot.lastTickQueued,

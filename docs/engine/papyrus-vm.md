@@ -166,9 +166,32 @@ again and takes its new place. A wait lasts at least one tick, so `Utility.Wait(
 a frame, as in the game.
 
 A call that runs through its instruction slice yields as if it called `Utility.Wait(0)`, and goes
-on with a new slice in the next tick. The game's VM also gives each script a time slice
-(`fUpdateBudgetMS` on the Creation Kit wiki page "Papyrus INI Settings"), so a busy loop keeps
-running without a fault and costs at most one slice per frame. The scheduler never reads the wall clock.
+on with a new slice in the next tick. So a busy loop keeps running without a fault.
+
+### The step budget
+
+The game gives all of Papyrus a time budget per frame, `fUpdateBudgetMS` in the `[Papyrus]` section
+of `Skyrim.ini`. When the budget is spent, scripts go on in the next frame. The default is 1.2 ms
+(Creation Kit wiki, "INI Settings (Papyrus)"). The install's `Skyrim_Default.ini` does not set it,
+so the default applies.
+
+OpenSky counts instructions instead of time, because the scheduler never reads the wall clock and
+a test must give the same result on every machine. In the world runtime all scripts share
+`PapyrusTickBudget.instructions` per fixed step:
+
+- Due calls resume oldest first while instructions are left. A call that is not reached keeps its
+  place. A call that runs out yields and goes to the back, so every busy loop gets a turn within a
+  few steps.
+- An event that starts after the budget is spent yields before its first instruction and waits its
+  turn in the same queue. So busy loops cannot starve new events.
+- A loop that waits, like `CritterSpawn` in `Utility.Wait`, costs a few instructions per wake.
+  `CWArrowVolleyParentScript` checks a battle-phase value in a loop with no wait, so it spends
+  instructions every step.
+
+The default is 4,000 instructions per 1/30 s step. At 60 frames per second a step holds two game
+frames, so 2.4 ms of the game's budget. On Apple Silicon a Release build runs about that many
+instructions in that time. Outside a world step, for example while VMAD binding runs a property
+setter, nothing limits a call.
 
 ## Properties and arrays
 
@@ -202,6 +225,7 @@ empty state's. Trap scripts fire from these hooks: a pressure plate activates it
 | Limit | Default | Bounds |
 | --- | ---: | --- |
 | Instruction slice | 100,000 | Loops and all nested calls, per resume |
+| Step budget | 4,000 | Every script together, per fixed step of the world runtime |
 | Call depth | 256 | The frame stack |
 | Inheritance depth | 64 | Parent walks, and finds cycles |
 | Array length | 100,000 | Allocation and linear search |
