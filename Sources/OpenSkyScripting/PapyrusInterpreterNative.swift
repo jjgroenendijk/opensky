@@ -8,7 +8,8 @@ extension PapyrusInterpreter {
     public func suspend(
         call: PapyrusNativeCall,
         request: PapyrusNativeSuspension,
-        target: PapyrusResumeTarget
+        target: PapyrusResumeTarget,
+        holdsInstance: Bool = false
     ) -> SuspendedCall {
         let id = runtime.allocateSuspensionID()
         pendingResume = (id, target)
@@ -17,7 +18,8 @@ extension PapyrusInterpreter {
             id: id,
             nativeCall: call,
             request: request,
-            continuation: PapyrusContinuation(interpreter: self)
+            continuation: PapyrusContinuation(interpreter: self),
+            holdsInstance: holdsInstance
         )
     }
 
@@ -32,7 +34,9 @@ extension PapyrusInterpreter {
             arguments: [.float(0)],
             returnType: .none
         )
-        return suspend(call: call, request: .realSeconds(0), target: .assign(.null))
+        return suspend(
+            call: call, request: .realSeconds(0), target: .assign(.null), holdsInstance: true
+        )
     }
 
     public func nativeFlow(

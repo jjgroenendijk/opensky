@@ -258,7 +258,6 @@ extension PapyrusWorldRuntime {
         eventQueue.removeAll { $0.target == key }
         updateTimers.removeAll(for: key)
         pendingOnInit.remove(key)
-        busyInstances.remove(key)
         scheduler.cancel(suspensionTracker.forget(instance: key))
     }
 }
