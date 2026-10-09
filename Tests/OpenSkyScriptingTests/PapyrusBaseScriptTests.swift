@@ -36,4 +36,25 @@ struct PapyrusBaseScriptTests {
         let names = world.instanceKeys(on: entry.key).map(\.scriptName)
         #expect(names == ["ascript", "bscript"])
     }
+
+    @Test("a reference's VMAD value reaches a full property's setter on attach")
+    func fullPropertySetterRunsOnAttach() throws {
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [PapyrusWorldFixture.setterScript("LimitScript")],
+            nativeDispatch: PapyrusWorldProbeDispatch()
+        )
+        let entry = try PapyrusWorldFixture.referenceEntry(
+            objectID: 1, scripts: [.init("LimitScript", properties: [.init("Limit", .integer(2))])]
+        )
+        world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: PapyrusWorldFixture.index([entry]),
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: true
+        )
+        let key = try #require(world.instanceKeys(on: entry.key).first)
+        let handle = try #require(world.instancesByKey[key])
+        let instance = try #require(world.runtime.instance(for: handle))
+        #expect(instance.value(named: "limitStore", declaredBy: "LimitScript") == .integer(2))
+    }
 }

@@ -101,6 +101,38 @@ public final class PapyrusInterpreter {
         }
     }
 
+    /// Runs the `Set` function of the full property `name` with `value`.
+    public func setProperty(
+        _ name: String,
+        on handle: PapyrusObjectHandle,
+        to value: PapyrusValue
+    ) -> PapyrusRunOutcome {
+        do {
+            guard let instance = runtime.instance(for: handle) else {
+                throw PapyrusFault.missingInstance(handle)
+            }
+            guard
+                let resolved = try resolveProperty(name, instance: instance),
+                let setter = resolved.property.writeHandler
+            else {
+                throw PapyrusFault.missingProperty(
+                    instruction: 0, script: instance.rootScriptName, property: name
+                )
+            }
+            try pushFrame(
+                PapyrusResolvedFunction(script: resolved.script, function: setter),
+                instanceHandle: handle,
+                arguments: [value],
+                completion: .root
+            )
+            return run()
+        } catch let error as PapyrusFault {
+            return fault(error)
+        } catch {
+            return fault(.invalidOperand(instruction: 0, detail: String(describing: error)))
+        }
+    }
+
     public func invokeStatic(
         _ functionName: String,
         on scriptName: String,

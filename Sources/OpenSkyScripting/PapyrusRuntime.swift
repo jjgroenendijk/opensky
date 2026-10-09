@@ -27,6 +27,9 @@ public final class PapyrusRuntime {
     public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
     /// The world identity behind a handle, for fault text.
     public var describeHandle: ((PapyrusObjectHandle) -> String?)?
+    /// Registers a script no attached script has named yet, such as the global script of a
+    /// static call. False when it is missing or still loading.
+    public var loadScript: ((String) -> Bool)?
 
     /// Each script's inheritance chain by folded name. A new script can complete a
     /// chain that stopped at a missing parent, so any change to `scripts` clears it.
@@ -109,6 +112,15 @@ public final class PapyrusRuntime {
         return PapyrusInterpreter(runtime: self).invoke(
             functionName, on: handle, arguments: arguments
         )
+    }
+
+    public func setProperty(
+        _ name: String,
+        on handle: PapyrusObjectHandle,
+        to value: PapyrusValue
+    ) -> PapyrusRunOutcome {
+        tally.noteRun()
+        return PapyrusInterpreter(runtime: self).setProperty(name, on: handle, to: value)
     }
 
     public func invokeStatic(

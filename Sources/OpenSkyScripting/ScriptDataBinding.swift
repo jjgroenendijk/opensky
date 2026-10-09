@@ -16,6 +16,7 @@ nonisolated public enum ScriptBindingError: Error, Equatable {
 nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
     case removedProperty
     case missingProperty
+    /// A full property with no `Set` function, so a VMAD value cannot reach it.
     case manualProperty
     case missingBackingVariable
     /// An alias-typed object property whose alias holds nothing: the quest is
@@ -30,7 +31,7 @@ nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
         switch self {
         case .removedProperty: "removed property"
         case .missingProperty: "property missing from PEX"
-        case .manualProperty: "non-automatic property"
+        case .manualProperty: "full property without a setter"
         case .missingBackingVariable: "automatic property without backing variable"
         case .aliasObject: "unfilled quest alias"
         case .unresolvedReference: "unresolved object reference"
@@ -41,8 +42,17 @@ nonisolated public enum ScriptBindingSkipReason: SkipTallyKind {
 
 public typealias ScriptBindingTally = SkipTally<ScriptBindingSkipReason>
 
+/// A VMAD value for a full property. Its `Set` function runs once on the new instance,
+/// before `OnInit`, because the function may write other variables.
+nonisolated public struct PapyrusPropertySetting: Sendable {
+    public let propertyName: String
+    public let value: PapyrusValue
+}
+
 nonisolated public struct ScriptBinding: Sendable {
     public let initialValues: [String: PapyrusValue]
+    /// In VMAD order, applied after `initialValues`.
+    public let propertySettings: [PapyrusPropertySetting]
     /// Direct VMAD FormIDs that resolved all the way through
     /// `FormIDResolver` -> `ReferenceKey` -> caller-owned opaque handle.
     public let resolvedReferences: [ReferenceKey]
@@ -55,9 +65,9 @@ nonisolated public struct BoundScriptInstance: Sendable {
 }
 
 extension AttachedScript {
-    /// Creates one instance with its bound initial values. An unfilled alias
-    /// and a reference with no live handle keep the PEX compiler default. The
-    /// caller allocates world-reference handles.
+    /// Creates one instance with its bound values; a suspended setter is dropped. An
+    /// unfilled alias and a reference with no live handle keep the PEX compiler default.
+    /// The caller allocates world-reference handles.
     public func makeInstance(
         in runtime: PapyrusRuntime,
         handle: PapyrusObjectHandle? = nil,
@@ -76,6 +86,9 @@ extension AttachedScript {
             handle: handle,
             initialValues: binding.initialValues
         )
+        for setting in binding.propertySettings {
+            _ = runtime.setProperty(setting.propertyName, on: instanceHandle, to: setting.value)
+        }
         return BoundScriptInstance(handle: instanceHandle, binding: binding)
     }
 
@@ -122,12 +135,14 @@ private struct ScriptBindingBuilder {
     let objectHandle: (ReferenceKey) -> PapyrusObjectHandle?
     let aliasHandle: (ReferenceKey) -> PapyrusObjectHandle?
     var initialValues: [String: PapyrusValue] = [:]
+    var propertySettings: [PapyrusPropertySetting] = []
     var resolvedReferences: [ReferenceKey] = []
     var skipped = ScriptBindingTally()
 
     var result: ScriptBinding {
         ScriptBinding(
             initialValues: initialValues,
+            propertySettings: propertySettings,
             resolvedReferences: resolvedReferences,
             skipped: skipped
         )
@@ -146,11 +161,13 @@ private struct ScriptBindingBuilder {
             skip(.missingProperty, property: property.name)
             return
         }
-        guard resolved.property.flags.contains(.automatic) else {
+        let isAutomatic = resolved.property.flags.contains(.automatic)
+        guard isAutomatic || resolved.property.writeHandler != nil else {
             skip(.manualProperty, property: property.name)
             return
         }
-        guard let backingName = resolved.property.automaticVariableName else {
+        let backingName = resolved.property.automaticVariableName
+        guard !isAutomatic || backingName != nil else {
             skip(.missingBackingVariable, property: property.name)
             return
         }
@@ -168,7 +185,13 @@ private struct ScriptBindingBuilder {
             skip(.typeMismatch, property: property.name)
             return
         }
-        initialValues[backingName] = converted.value
+        if let backingName, isAutomatic {
+            initialValues[backingName] = converted.value
+        } else {
+            propertySettings.append(
+                PapyrusPropertySetting(propertyName: property.name, value: converted.value)
+            )
+        }
         resolvedReferences.append(contentsOf: converted.references)
     }
 

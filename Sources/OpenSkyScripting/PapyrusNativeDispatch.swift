@@ -57,6 +57,8 @@ nonisolated public enum PapyrusNativeFailure: Equatable, Sendable {
 
 nonisolated public enum PapyrusNativeSuspension: Equatable, Sendable {
     case realSeconds(Double)
+    /// Waits like `realSeconds`, then returns the value instead of the type's default.
+    case realSecondsAnswering(Double, PapyrusValue)
     case gameHours(Double)
     /// Waits until the engine answers `token` through
     /// `PapyrusScheduler.answer(_:returning:)`, such as a message box closing.

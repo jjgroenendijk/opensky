@@ -23,12 +23,12 @@ extension PapyrusNativeFunctions {
         TrapStub("ObjectReference", "SetMotionType", .none),
         TrapStub("ObjectReference", "Reset", .none),
         TrapStub("ObjectReference", "BlockActivation", .none),
-        TrapStub("ObjectReference", "WaitForAnimationEvent", .boolean(true)),
         TrapStub("ObjectReference", "SetAnimationVariableFloat", .none),
         TrapStub("ObjectReference", "GetAnimationVariableFloat", .float(0)),
         TrapStub("ObjectReference", "ClearDestruction", .none),
         TrapStub("ObjectReference", "DamageObject", .none),
         TrapStub("ObjectReference", "SetDestroyed", .none),
+        TrapStub("ObjectReference", "GetCurrentDestructionStage", .integer(0)),
         TrapStub("ObjectReference", "CreateDetectionEvent", .none),
         TrapStub("ObjectReference", "SetActorCause", .none),
         TrapStub("ObjectReference", "CalculateEncounterLevel", .integer(1)),
@@ -48,7 +48,18 @@ extension PapyrusNativeFunctions {
         TrapStub("Cell", "IsAttached", .boolean(true))
     ]
 
+    /// OpenSky plays no object behavior graph, so no animation event arrives. A trap loops
+    /// on this wait while its cell is loaded; an instant answer would spin that loop.
+    static let animationEventWaitSeconds = 1.0
+
     static func installTrapStubs(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "ObjectReference",
+            functionName: "WaitForAnimationEvent"
+        ) { call, context in
+            context.log.append("Paced \(call.qualifiedName)")
+            return .suspended(.realSecondsAnswering(animationEventWaitSeconds, .boolean(true)))
+        })
         for stub in trapStubs {
             registry.register(PapyrusNativeFunction(
                 scriptName: stub.scriptName,

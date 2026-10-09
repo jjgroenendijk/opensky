@@ -69,6 +69,10 @@ public protocol PapyrusWorldBridge:
     /// How many actors stand in the trigger volume of `key`.
     func triggerObjectCount(for key: ReferenceKey) -> Int
 
+    /// The direct entries of the FLST `key`, nested lists unexpanded; nil entries are null
+    /// FormIDs. Nil when `key` is no form list or the session has no FLST data.
+    func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]?
+
     /// Writes one component through `WorldStateStore.set(_:for:in:)`,
     /// attributing it to the reference's resident cell when there is one.
     ///

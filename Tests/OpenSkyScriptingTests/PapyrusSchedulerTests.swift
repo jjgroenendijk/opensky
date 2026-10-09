@@ -82,6 +82,38 @@ struct PapyrusSchedulerTests {
         #expect(scheduler.elapsedGameHours == 30)
     }
 
+    @Test func aPacedWaitResumesWithItsAnswer() {
+        let dispatch = PapyrusRecordingNativeDispatch(
+            queuedResults: [.suspended(.realSecondsAnswering(0.5, .boolean(true)))]
+        )
+        let run = PexFixture.runtimeFunction(
+            returnType: "Bool",
+            locals: [PexTypedName(name: "result", typeName: "Bool")],
+            instructions: [
+                PapyrusTestSupport.instruction(
+                    .callStatic,
+                    .identifier("SyntheticLatent"),
+                    .identifier("WaitForEvent"),
+                    .identifier("result"),
+                    .integer(0)
+                ),
+                PapyrusTestSupport.instruction(.returnValue, .identifier("result"))
+            ]
+        )
+        let script = PexFixture.runtimeObject(
+            name: "PacedWait",
+            states: [PapyrusTestSupport.state(functions: [("Run", run)])]
+        )
+        let (runtime, handle) = PapyrusTestSupport.runtime(
+            objects: [script], nativeDispatch: dispatch
+        )
+        let scheduler = PapyrusScheduler(runtime: runtime, fixedStepSeconds: 0.25)
+        scheduler.schedule(runtime.invoke("Run", on: handle))
+        #expect(scheduler.tick().isEmpty)
+        let outcomes = scheduler.tick()
+        #expect(PapyrusTestSupport.value(outcomes.first ?? .completed(.none)) == .boolean(true))
+    }
+
     private func waitRuntime(
         scriptName: String,
         utilityFunction: String,

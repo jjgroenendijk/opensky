@@ -155,9 +155,8 @@ extension PapyrusInterpreter {
         if let type = frame.localType(named: name) {
             return type
         }
-        return frame.ownerScript.variables.first(where: {
-            PapyrusRuntime.matches($0.name, name)
-        }).map { PapyrusType(name: $0.typeName) }
+        let declared = try? declaredVariable(name, frame: frame)
+        return declared.map { PapyrusType(name: $0.variable.typeName) }
     }
 
     public func resolveMethod(

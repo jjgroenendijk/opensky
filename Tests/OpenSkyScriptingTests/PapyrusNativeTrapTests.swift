@@ -98,6 +98,16 @@ struct PapyrusNativeTrapTests {
         #expect(fixture.call("IsLockBroken", returnType: .boolean) == .returned(.boolean(false)))
     }
 
+    @Test func animationEventWaitIsPacedAndAnswersTrue() throws {
+        let fixture = try Fixture.make()
+        let result = fixture.call(
+            "WaitForAnimationEvent", arguments: [.string("EndLoop")], returnType: .boolean
+        )
+        #expect(result == .suspended(.realSecondsAnswering(
+            PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
+        )))
+    }
+
     @Test func processTrapHitNeedsAnActor() throws {
         let fixture = try Fixture.make()
         let result = fixture.call(

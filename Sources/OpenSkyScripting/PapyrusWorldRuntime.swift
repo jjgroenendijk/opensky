@@ -197,6 +197,7 @@ public final class PapyrusWorldRuntime {
         }
         runtime.siblingInstance = { [weak self] in self?.sibling(of: $0, as: $1) }
         runtime.describeHandle = { [weak self] in self?.referenceKey(for: $0)?.description }
+        runtime.loadScript = { [weak self] in self?.resolveScript(named: $0) ?? false }
     }
 
     /// Keeps the attach's master-list resolver for later event arguments.

@@ -16,7 +16,7 @@ public final class PapyrusScheduler {
     /// rounding step, so `Utility.Wait(1.0)` at a 1/30 step wakes after exactly
     /// 30 ticks, where an accumulated `realSeconds` drifts past 31.
     private enum Wake: Equatable {
-        case realSteps(startTick: Int, duration: Double)
+        case realSteps(startTick: Int, duration: Double, answer: PapyrusValue?)
         case gameHours(Double)
         case external(UInt64)
     }
@@ -101,7 +101,9 @@ public final class PapyrusScheduler {
     private func enqueue(_ call: SuspendedCall) {
         let wake: Wake = switch call.request {
         case let .realSeconds(seconds):
-            .realSteps(startTick: tickCount, duration: max(0, seconds))
+            .realSteps(startTick: tickCount, duration: max(0, seconds), answer: nil)
+        case let .realSecondsAnswering(seconds, value):
+            .realSteps(startTick: tickCount, duration: max(0, seconds), answer: value)
         case let .gameHours(hours):
             .gameHours(elapsedGameHours + max(0, hours))
         case let .external(token):
@@ -140,15 +142,18 @@ public final class PapyrusScheduler {
     }
 
     private func answer(for wake: Wake) -> PapyrusValue? {
-        guard case let .external(token) = wake else { return nil }
-        return answers.removeValue(forKey: token)
+        switch wake {
+        case let .external(token): answers.removeValue(forKey: token)
+        case let .realSteps(_, _, answer): answer
+        case .gameHours: nil
+        }
     }
 
     private func isDue(_ wake: Wake) -> Bool {
         switch wake {
         case let .external(token):
             answers[token] != nil
-        case let .realSteps(startTick, duration):
+        case let .realSteps(startTick, duration, _):
             tickCount > startTick && Double(tickCount - startTick) * fixedStepSeconds >= duration
         case let .gameHours(value):
             elapsedGameHours >= value

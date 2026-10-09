@@ -60,18 +60,25 @@ Implemented for traps:
 | `ObjectReference.GetAngleZ` | Rotation about Z, in degrees |
 | `ObjectReference.IsLockBroken` | Always false: OpenSky never breaks a lock |
 | `Utility.GetCurrentRealTime` | Seconds since the first call |
+| `FormList.GetSize`, `FormList.GetAt` | The list's plugin entries. A nested list is one entry, and a runtime `AddForm` is not seen |
 
 Without a running game (the CLI and the package tests) the four world natives above are
 traced stubs too.
+
+`WaitForAnimationEvent` waits one second of real time, then answers true. No animation event
+arrives, because OpenSky plays no object behavior graph. A thresher repeats
+`PlayAnimation` and `WaitForAnimationEvent` while its cell is loaded. An instant answer
+would run that loop thousands of times in each frame.
 
 Traced stubs answer the type's empty value and count as stubbed in the Papyrus tally, so the
 script runs on:
 
 - Havok and motion: `SetMotionType`, `Reset`.
-- Destruction: `ClearDestruction`, `DamageObject`, `SetDestroyed`.
+- Destruction: `ClearDestruction`, `DamageObject`, `SetDestroyed`,
+  `GetCurrentDestructionStage` (0, intact).
 - Effects and feedback: `Game.ShakeCamera`, `Game.ShakeController`, `Sound.Play`,
   `EffectShader.Play`, `Say`, `Message.Show`, `Weapon.Fire`, `InterruptCast`.
-- Animation: `WaitForAnimationEvent` (true), `SetAnimationVariableFloat`,
+- Animation: `SetAnimationVariableFloat`,
   `GetAnimationVariableFloat` (0), `Form.RegisterForAnimationEvent` (true),
   `Form.UnregisterForAnimationEvent`.
 - Records and world: `AddItem`, `BlockActivation`, `CreateDetectionEvent`,

@@ -207,6 +207,14 @@ extension PapyrusWorldRuntime {
             {
                 skips.note(.bindingFailed)
             }
+            for setting in binding.propertySettings {
+                let outcome = runtime.setProperty(
+                    setting.propertyName, on: handle, to: setting.value
+                )
+                if settle(outcome, target: item.key) {
+                    skips.note(.bindingFailed)
+                }
+            }
         } catch {
             skips.note(.bindingFailed)
         }
