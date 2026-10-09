@@ -12,7 +12,8 @@ nonisolated extension CellSceneBuilder {
     nonisolated public var placedRecords: PlacedRecordLookup {
         PlacedRecordLookup(
             index: formIDIndexBuildingIfNeeded(), resolver: formIDResolver,
-            localized: pluginLocalized
+            localized: pluginLocalized,
+            templates: actorResolversBuildingIfNeeded(localized: pluginLocalized).template
         )
     }
 

@@ -39,6 +39,8 @@ Creation Kit page "Template Data".
 - Base data (`0x0080`): the name and the essential, protected, and respawn flags.
 - Inventory (`0x0100`): the default outfit (`DOFT`) and carried items, but not the death
   item.
+- Script (`0x0200`): the `VMAD` scripts. A placed actor runs them as well as the scripts in its
+  own `ACHR` ([Papyrus world](/engine/papyrus-world.md)).
 
 The walk rules:
 

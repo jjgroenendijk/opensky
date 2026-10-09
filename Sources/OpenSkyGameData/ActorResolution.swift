@@ -284,7 +284,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
 
     /// Walks TPLT links from `base`, expanding LVLN hops via the
     /// deterministic entry policy, until a record without a template.
-    private func resolveChain(
+    func resolveChain(
         base: FormID
     ) throws -> (npcs: [ActorBase], chain: [ActorChainLink]) {
         var npcs: [ActorBase] = []
@@ -322,7 +322,7 @@ nonisolated public struct ActorTemplateResolver: Sendable {
     /// A record delegates a field upward only while it has a template and its
     /// governing flag is set; a set flag without a template is inert. The
     /// last chain record always provides the field.
-    private func resolveField<Value>(
+    func resolveField<Value>(
         in npcs: [ActorBase],
         flag: ActorBase.TemplateFlags,
         _ extract: (ActorBase) -> ActorSourcedField<Value>

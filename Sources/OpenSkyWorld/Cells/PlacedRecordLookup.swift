@@ -13,11 +13,18 @@ nonisolated public struct PlacedRecordLookup: Sendable {
     private let index: ESMFormIDIndex
     private let resolver: FormIDResolver
     private let localized: Bool
+    private let templates: ActorTemplateResolver?
 
-    public init(index: ESMFormIDIndex, resolver: FormIDResolver, localized: Bool) {
+    public init(
+        index: ESMFormIDIndex,
+        resolver: FormIDResolver,
+        localized: Bool,
+        templates: ActorTemplateResolver? = nil
+    ) {
         self.index = index
         self.resolver = resolver
         self.localized = localized
+        self.templates = templates
     }
 
     /// The decoded record behind `key`, or nil for a key of another plugin, a
@@ -46,6 +53,9 @@ nonisolated public struct PlacedRecordLookup: Sendable {
     }
 
     private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
+        if case let .actor(actor) = record {
+            return (try? templates?.resolveScripts(base: actor.base).value) ?? []
+        }
         guard
             case let .reference(reference) = record,
             let base = index.record(withFormID: reference.base.rawValue),
