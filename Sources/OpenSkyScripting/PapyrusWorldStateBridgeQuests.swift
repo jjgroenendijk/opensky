@@ -183,9 +183,7 @@ extension PapyrusWorldStateBridge {
         else {
             return []
         }
-        let scripts = entry.placedReference?.scriptData.scripts ?? entry.placedActor?.scriptData
-            .scripts ?? []
-        return scripts.filter { !$0.isRemoved }.map(\.name)
+        return entry.scripts.filter { !$0.isRemoved }.map(\.name)
     }
 
     private func attachIdleQuest(_ key: ReferenceKey) -> Bool {

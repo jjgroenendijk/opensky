@@ -103,7 +103,13 @@ nonisolated extension CellSceneBuilder {
             return nil
         }
         return RuntimeReferenceEntry(
-            key: key, formID: formID, isPersistent: isPersistent, record: record
+            key: key, formID: formID, isPersistent: isPersistent, record: record,
+            baseScripts: baseScripts(of: record)
         )
+    }
+
+    nonisolated private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
+        guard case let .reference(reference) = record else { return [] }
+        return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData.scripts ?? []
     }
 }
