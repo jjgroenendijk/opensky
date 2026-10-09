@@ -14,7 +14,6 @@ nonisolated extension TextureLoader {
         guard
             settings.enabled, ready.mipCount > 1,
             max(ready.width, ready.height) >= settings.minimumSize,
-            !ready.format.isASTC,
             device.supportsFamily(.apple6)
         else { return nil }
         let pixelFormat = Self.pixelFormat(for: ready.format, usage: usage)

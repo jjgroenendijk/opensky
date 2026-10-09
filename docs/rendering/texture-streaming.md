@@ -27,13 +27,17 @@ with sparse tier 2, so a missing tile draws black and never faults.
   the split.
 - One tile is 16 KB (`MTLSparsePageSize.size16`). Observed on an M1 through
   `MTLDevice.sparseTileSize`: a BC1 tile is 256 x 128 texels, a BC3, BC5, or BC7 tile is
-  128 x 128, and an RGBA8 tile is 64 x 64.
+  128 x 128, and an RGBA8 tile is 64 x 64. An ASTC tile holds 32 x 32 blocks, so ASTC 4x4
+  is 128 x 128 texels, 5x5 is 160 x 160, 6x6 is 192 x 192, and 8x8 is 256 x 256. All four
+  ASTC formats made placement-sparse textures on the M1 (2026-10-09).
 - The tiles come from a pool of 16 MB placement heaps. The pool adds a heap when it runs
   out and drops a heap when all its tiles are free, so its size follows what is mapped.
 - The draw binds a texture view whose base level is the first resident level, so the
   sampler never picks an unmapped level.
 
-Only a texture with mip levels, at least 512 texels on its long side, and not ASTC streams.
+Only a texture with mip levels and at least 512 texels on its long side streams, in a BC or
+an ASTC format. A level is copied whole, row by row of blocks, so the block size does not
+change the copy.
 A smaller texture fits in its tail and gains nothing. A GPU without sparse tier 2 loads
 every texture whole.
 
@@ -65,7 +69,12 @@ every texture whole.
 
 If the wanted levels pass the budget, the farthest textures drop one level at a time until
 the levels fit. A texture never drops below its tail, so the floors alone can pass the
-budget. The budget has five choices from 128 MiB to 2 GiB; 512 MiB is the default.
+budget. The Graphics page calls the budget "Memory for close-up detail". Automatic, the
+default, takes a quarter of what the GPU can still use: Metal's
+`recommendedMaxWorkingSetSize` minus `currentAllocatedSize` when the renderer starts,
+rounded down to 64 MiB and held between 256 MiB and 4 GiB. A quarter leaves room for meshes,
+render targets, and the next cells. Five fixed choices from 128 MiB to 2 GiB stay for
+measurements.
 
 ## Settings and checking it
 
@@ -73,7 +82,8 @@ The app streams textures by default. The player setting `rendering.textureStream
 it off; off raises every streamed texture to its full size, and on applies to textures
 loaded from then on. The `Renderer` type itself starts with streaming off, so a render test
 that builds one loads textures whole unless it turns streaming on. `rendering.textureBudget`
-picks the budget. The launcher's Graphics page and
+picks the budget, with 0 for Automatic. The launcher's Graphics page ("Full detail only near
+the camera") and
 `Developer > Rendering Performance > Texture Streaming` write both
 (`TextureStreamingEnabledControl`, `TextureBudgetControl`). The readout
 (`TextureStreamingStatsLabel`) shows the streamed textures, the mapped memory against the
