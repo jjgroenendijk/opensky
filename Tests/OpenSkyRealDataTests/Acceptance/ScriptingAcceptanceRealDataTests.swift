@@ -40,12 +40,12 @@ struct ScriptingAcceptanceRealDataTests {
         )
         try drainEvents(setup.world)
         #expect(setup.sweptCellCount == 25)
-        // Persistent references merge into the exterior cell they stand in,
-        // so two scripted persistent references in the grid attach too.
-        #expect(setup.world.instancesByKey.count == 30)
+        // Persistent references merge into the exterior cell they stand in, and each
+        // reference also runs its base object's scripts.
+        #expect(setup.world.instancesByKey.count == 129)
         let gridTally = setup.world.runtime.tally
-        #expect(gridTally.faultTotal == 4)
-        #expect(gridTally.unimplementedNativeTotal == 4)
+        #expect(gridTally.faultTotal == 1)
+        #expect(gridTally.unimplementedNativeTotal == 32)
         #expect(gridTally.deferredAnimationTotal == 0)
 
         let candidate = try candidate(in: setup.initialScene, file: setup.file)
@@ -170,11 +170,15 @@ extension ScriptingAcceptanceRealDataTests {
         return try (#require(candidate), count)
     }
 
+    /// Vanilla scripts in this grid loop for as long as their cell is loaded, such as
+    /// `CritterSpawn` and `CWArrowVolleyParentScript`. Their instances never settle, so
+    /// the drain stops once only their held events are left.
     private func drainEvents(_ world: PapyrusWorldRuntime) throws {
-        for _ in 0 ..< 10000 where !world.eventQueue.isEmpty {
+        let isHeld = { (event: PapyrusScriptEvent) in world.busyInstances.contains(event.target) }
+        for _ in 0 ..< 10000 where !world.eventQueue.allSatisfy(isHeld) {
             _ = world.stepFixed()
         }
-        #expect(world.eventQueue.isEmpty, "attached-script event queue did not drain")
+        #expect(world.eventQueue.allSatisfy(isHeld), "attached-script event queue did not drain")
     }
 
     private func candidate(in scene: CellScene, file: ESMFile) throws -> Candidate {
@@ -265,7 +269,10 @@ extension ScriptingAcceptanceRealDataTests {
         world-state deltas\t\(chain.session.worldState.journalEntries.count)
         runtime-disabled references\t\(runtimeDisabled)
         changed pixels\t\(changedPixels)
-        """
+        """ + (
+            gridTally.rankedUnimplementedNatives.map { "\nunknown native\t\($0.name) \($0.count)" }
+                + gridTally.rankedFaultKinds.map { "\nfault kind\t\($0.name) \($0.count)" }
+        ).joined()
         try FileManager.default.createDirectory(
             at: logsDirectory,
             withIntermediateDirectories: true
