@@ -57,8 +57,7 @@ skipped event goes back ahead of the rest of the queue, so the queue never reord
 A drain stops when the tick has run 32 events, or when it has run 100,000 instructions. The rest
 waits for the next tick. 32 events drains a ten-script cell in one step, because an attach queues
 three events per instance, and a mass attach carries over instead of stalling a frame. 100,000
-instructions is a tenth of one call's budget, so one runaway handler cannot take more of a frame
-than one whole call may.
+instructions is one call's slice, so one runaway handler cannot take more of a frame than one slice.
 
 `OnInit` fires once ever per instance. The fired set is saved. A pending set covers the gap between
 queuing and running, so a rebuild in between cannot queue a second one. Whether a function exists is
@@ -114,7 +113,7 @@ reference's flags win, so a removed flag drops the base script. Source: the Crea
 ([actor resolution](/engine/actor-resolution.md)).
 
 Detach retires the cell's instances in sorted order: the instance leaves, its queued events drop, and
-its suspension records are forgotten.
+its waiting calls leave the scheduler, so none of them resumes on a missing instance.
 
 ## Script state in a save
 

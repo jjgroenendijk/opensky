@@ -41,26 +41,25 @@ struct PapyrusAcceptanceRealDataTests {
         // Pinned so a new native shows up here. The SKSE perk-point functions add
         // nothing, because the vanilla corpus never calls them. The six scene and
         // story natives are all called, and 8 of the 9 menu and map natives.
-        #expect(coverage == PexNativeCoverage(implemented: 164, referenced: 508))
+        #expect(coverage == PexNativeCoverage(implemented: 179, referenced: 508))
         #expect(run.entryPoints == 577)
-        // Nine entry points still sit in `Utility.Wait` when the tick cap ends the run.
-        #expect(run.pending == 9)
-        #expect(run.terminalOutcomes == 568)
-        #expect(run.completed == 476)
-        // A call on `None` returns its default and the script goes on, so more code
-        // runs. Three entry points then loop on a default until the instruction budget.
-        #expect(runtime.tally.faultTotal == 92)
-        #expect(runtime.tally.nativeCallTotal == 6812)
-        #expect(runtime.tally.unimplementedNativeTotal == 724)
+        // 21 entry points still wait, or yield each tick in a loop with no wait, when
+        // the tick cap ends the run. A yielding loop calls its natives every tick.
+        #expect(run.pending == 21)
+        #expect(run.terminalOutcomes == 556)
+        #expect(run.completed == 556)
+        // A call on `None` returns its default, and a failed cast gives `None`, so no
+        // entry point faults.
+        #expect(runtime.tally.faultTotal == 0)
+        #expect(runtime.tally.nativeCallTotal == 814_881)
+        #expect(runtime.tally.unimplementedNativeTotal == 260)
         // World natives refuse in this headless run, so their calls count as
         // failures rather than unimplemented natives.
-        #expect(runtime.tally.nativeFailureTotal == 2431)
-        #expect(runtime.tally.deferredAnimationTotal == 235)
-        #expect(runtime.tally.rankedFaultKinds.map(\.name) == ["typeMismatch", "budgetExhausted"])
-        #expect(runtime.tally.rankedFaultKinds.map(\.count) == [89, 3])
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.name
-            == "ObjectReference.is3Dloaded")
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 260)
+        #expect(runtime.tally.nativeFailureTotal == 592_742)
+        #expect(runtime.tally.deferredAnimationTotal == 236)
+        #expect(runtime.tally.rankedFaultKinds.isEmpty)
+        #expect(runtime.tally.rankedUnimplementedNatives.first?.name == "game.GetForm")
+        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 78)
 
         let report = Self.report(
             paths: paths,

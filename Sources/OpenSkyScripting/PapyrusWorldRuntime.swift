@@ -346,9 +346,12 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
         instanceByID[id] = instance
     }
 
-    /// Drops every suspension owned by a retired instance.
-    public func forget(instance key: PapyrusInstanceKey) {
+    /// Drops every suspension owned by a retired instance and returns their ids.
+    @discardableResult
+    public func forget(instance key: PapyrusInstanceKey) -> Set<UInt64> {
+        let ids = Set(instanceByID.filter { $0.value == key }.keys)
         instanceByID = instanceByID.filter { $0.value != key }
+        return ids
     }
 
     /// Follows one woken call: a re-suspension moves the busy marker to the

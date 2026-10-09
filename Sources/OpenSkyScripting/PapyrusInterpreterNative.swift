@@ -21,6 +21,20 @@ extension PapyrusInterpreter {
         )
     }
 
+    /// A used-up slice waits one tick and goes on, as the game's VM time-slices scripts
+    /// (CK wiki "Papyrus INI Settings", `fUpdateBudgetMS`).
+    func yieldSlice() -> SuspendedCall {
+        let call = PapyrusNativeCall(
+            kind: .staticFunction,
+            scriptName: "Utility",
+            functionName: "Wait",
+            receiver: nil,
+            arguments: [.float(0)],
+            returnType: .none
+        )
+        return suspend(call: call, request: .realSeconds(0), target: .assign(.null))
+    }
+
     public func nativeFlow(
         _ call: PapyrusNativeCall,
         destination: PexValue

@@ -139,6 +139,22 @@ extension PapyrusInterpreter {
 
     /// A property on `None` reads as its default and ignores a write, as the game logs
     /// the access and goes on.
+    /// A form with several scripts maps to one instance. A member used through a typed
+    /// variable belongs to the script of that type, so it goes to that sibling.
+    func declaredReceiver(
+        _ handle: PapyrusObjectHandle,
+        operand: PexValue,
+        frame: PapyrusFrame
+    ) -> PapyrusObjectHandle {
+        guard
+            runtime.instance(for: handle) != nil,
+            case let .object(typeName) = declaredType(of: operand, frame: frame),
+            !runtime.resolvesObject(handle, as: typeName),
+            let sibling = runtime.siblingInstance?(handle, typeName)
+        else { return handle }
+        return sibling
+    }
+
     private func propertyInstance(
         _ operand: PexValue,
         frame: PapyrusFrame
@@ -155,7 +171,13 @@ extension PapyrusInterpreter {
                 actual: value.typeName
             )
         }
-        if let instance = runtime.instance(for: handle) {
+        if
+            let instance = runtime.instance(for: declaredReceiver(
+                handle,
+                operand: operand,
+                frame: frame
+            ))
+        {
             return instance
         }
         // A stopped quest's scripts attach on first use (`siblingInstance`).

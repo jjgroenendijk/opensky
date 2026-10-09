@@ -98,8 +98,8 @@ unknown `(script, function)` pair is logged and tallied, and the call returns it
 A native failure does the same and keeps its reason. This keeps vanilla scripts moving without
 inventing world state, and without treating an unknown native as a success.
 
-A suspension keeps the request, the frames, where the result goes, and the remaining budget. It can
-be resumed once. With no value given, the declared default is assigned. A second resume is a fault.
+A suspension keeps the request, the frames, and where the result goes. It can be resumed once. With
+no value given, the declared default is assigned. A second resume is a fault.
 
 ## Native registry
 
@@ -142,7 +142,13 @@ baseline. A backward jump adds zero. A forward jump adds at most 24 game hours p
 scrub cannot release an unbounded queue.
 
 Calls due on the same tick resume in the order they were registered. A resumed call may suspend
-again and takes its new place. The scheduler never reads the wall clock.
+again and takes its new place. A wait lasts at least one tick, so `Utility.Wait(0)` in a loop yields
+a frame, as in the game.
+
+A call that runs through its instruction slice yields as if it called `Utility.Wait(0)`, and goes
+on with a new slice in the next tick. The game's VM also gives each script a time slice
+(`fUpdateBudgetMS` on the Creation Kit wiki page "Papyrus INI Settings"), so a busy loop keeps
+running without a fault and costs at most one slice per frame. The scheduler never reads the wall clock.
 
 ## Properties and arrays
 
@@ -175,7 +181,7 @@ empty state's. Trap scripts fire from these hooks: a pressure plate activates it
 
 | Limit | Default | Bounds |
 | --- | ---: | --- |
-| Instruction budget | 1,000,000 | Loops and all nested calls |
+| Instruction slice | 100,000 | Loops and all nested calls, per resume |
 | Call depth | 256 | The frame stack |
 | Inheritance depth | 64 | Parent walks, and finds cycles |
 | Array length | 100,000 | Allocation and linear search |
