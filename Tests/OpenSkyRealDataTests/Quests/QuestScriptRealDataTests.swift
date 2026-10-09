@@ -65,12 +65,12 @@ struct QuestScriptRealDataTests {
         #expect(world.eventQueue.isEmpty)
 
         // The one attach skip is an `OnInit` the fragment script does not declare.
-        // Binding skips are `unresolvedReference`: no cell is loaded, so no handle
-        // exists yet, and the compiler defaults stay. The one filled alias binds to its
-        // reference's handle. The fragment still runs.
+        // No cell is loaded, but each object property still binds: a reference in an
+        // unloaded cell gets a handle when a script first uses it. The one filled alias
+        // binds to its reference's handle.
         #expect(world.skips.total == 1)
         #expect(world.skips.counts[.undefinedEventFunction] == 1)
-        #expect(world.bindingSkips.counts[.unresolvedReference] == 4)
+        #expect(world.bindingSkips.counts[.unresolvedReference] == nil)
         #expect(world.bindingSkips.counts[.aliasObject] == nil)
         #expect(world.aliasResolution.filledAliasCount == 1)
 
