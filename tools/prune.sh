@@ -172,8 +172,9 @@ done
 
 # 4. Loose files directly under .logs/, from before the convention. Aged the
 #    same way, by modification time since they carry no timestamp in the name.
+#    .gitkeep is tracked and keeps the folder in the repository.
 if [ -d "$root/.logs" ]; then
-    find "$root/.logs" -mindepth 1 -maxdepth 1 -type f -mtime "+$days" \
+    find "$root/.logs" -mindepth 1 -maxdepth 1 -type f ! -name .gitkeep -mtime "+$days" \
         >"$scratch" 2>/dev/null || : >"$scratch"
     while IFS= read -r loose; do
         [ -n "$loose" ] || continue
