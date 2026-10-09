@@ -1,6 +1,6 @@
 // `audio aac-check`: the objective listening check for AAC in the audio cache.
 // Measures a fixed sample of each sound category and prints the verdict per
-// category (docs/engine/asset-cache.md, "Audio").
+// category (docs/engine/asset-cache-audio.md).
 
 import Foundation
 import OpenSkyAssetCache

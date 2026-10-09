@@ -1,14 +1,16 @@
 ---
 type: Subsystem
 title: Asset cache
-description: How OpenSky stores converted copies of the base game's assets outside the
-  archives, how an entry is keyed and goes stale, and the legal limits on the cache folder.
+description: How OpenSky stores optimised copies of the base game's assets outside the
+  archives, how an entry is keyed and goes stale, the texture quality search, and the
+  legal limits on the folder.
 tags: [engine, assets, cache, loading]
 ---
 
 # Asset cache
 
-The asset cache is a folder of converted copies of the game's assets. A converted copy loads
+The app calls this feature "Asset Optimisation", and the code calls it the asset cache. It
+is a folder of converted copies of the game's assets. A converted copy loads
 with almost no work: it is not inside an archive, and it is already in the layout the
 engine uses. The engine reads the cache when an entry is current, and the original file
 otherwise. So the cache can always be deleted.
@@ -26,12 +28,14 @@ The cache holds content derived from the user's install, so it is game content.
 ## Location
 
 The default folder is `~/Library/Caches/OpenSky/AssetCache`, on the internal disk. The user
-can choose another folder in Settings. OpenSky warns before a build when:
+can choose another folder on the launcher's Asset Optimisation page. The page warns before a
+conversion when:
 
 - the folder is on an external disk, because reads from it may be slower than from the
   internal SSD, and that takes away part of the cache's gain;
 - the folder is on a network disk;
-- the disk has less free space than the preset's estimated cache size.
+- the disk has less free space than the conversion needs. The estimate is the source bytes
+  of the files that wait, times the output ratio of their kind ("Texture quality").
 
 ## Entries
 
@@ -53,7 +57,7 @@ All integers are little-endian.
 | magic | 4 | `OSAC` |
 | header version | 2 | 1 |
 | kind | 1 | 1 texture, 2 mesh, 3 collision, 4 animation, 5 audio |
-| preset | 1 | 0 Best performance, 1 Balanced, 2 Highest quality |
+| output | 1 | Textures only: how the texture was stored (below). 0 for other kinds |
 | converter version | 4 | The version of the converter that built the payload |
 | source size | 8 | Size of the source asset in bytes |
 | source time | 8 | Modification time of the providing file, seconds since 1970 |
@@ -64,6 +68,10 @@ All integers are little-endian.
 | padding | 0 to 15 | Zeros, so the payload starts on a 16-byte boundary |
 | payload | n | The converted asset |
 
+The output byte of a texture: 0 keeps the shipped blocks, 1 to 3 is the quality target of
+High, Medium, or Low, and `0x10` plus a format number is a forced format. The top three
+bits hold the size limit as `log2(side) - 7`, or 0 for no limit.
+
 ### When an entry is stale
 
 A stale entry is never used. The engine loads the original file instead. An entry is stale
@@ -71,7 +79,8 @@ when:
 
 - the source's size, modification time, or hash changed (a hash of 0 counts as unknown);
 - the converter that would build it now has a newer version;
-- it was built for another quality preset.
+- it is a texture built for another texture output. A quality change leaves meshes and
+  collision current.
 
 A file that is shorter or longer than its header says is unreadable, and is treated like a
 stale entry.
@@ -82,101 +91,80 @@ A write goes to a temporary file in `tmp/` and is then renamed onto the entry pa
 on one disk is atomic, so a crash leaves the old entry or the new one, never half of one.
 Opening the cache deletes `tmp/`, which removes the leftovers of an interrupted write.
 
-## Size limit
+## Size
 
-The cache keeps the least recently used entries out when it grows past its limit. A hit sets
-the entry file's modification date to now, so the oldest modification date is the least
-recently used entry. A date less than an hour old is not written again: each write is a disk
-update, and it made up a quarter of a warm lookup. The removal order only needs coarse ages.
+The folder has no size limit: it holds at most one entry per archive file, so its size
+follows from the install and the texture quality. A conversion checks the free space first.
+The store can still drop the least recently used entries past a limit, for tools that set
+one. A hit sets the entry file's modification date to now, but not again within an hour,
+because each write is a disk update and it made up a quarter of a warm lookup.
 
-The default limit fits the whole base-game cache for the chosen preset with a tenth to spare.
-The estimates are the full base-game builds in "Measurements", without the 0.75 GiB of audio
-and the 0.12 GiB of animation they held, rounded up. Building those two kinds took 66 s of
-CPU time, so each preset's build estimate is one core-minute lower:
+## Texture quality
 
-| Preset | Estimated cache | Default limit |
-| --- | --- | --- |
-| Best performance | 11 GiB | 13 GiB |
-| Balanced | 21 GiB | 24 GiB |
-| Highest quality | 21 GiB | 24 GiB |
+The texture quality sets how each texture is stored. Meshes and collision are always stored
+ready to use and identical to the game. A texture's group comes from its file name: `_n` and
+`_msn` are normal maps; `_s`, `_g`, `_e`, `_em`, `_m`, `_p`, `_b`, and `_sk` are data maps;
+the rest are colour.
 
-## Presets
+| Quality | Colour PSNR | Normal angle | Cut-out alpha PSNR |
+| --- | --- | --- | --- |
+| Original | shipped blocks | shipped blocks | shipped blocks |
+| High | 42 dB | 2 degrees | 46 dB |
+| Medium | 38 dB | 3.5 degrees | 42 dB |
+| Low | 34 dB | 6 degrees | 38 dB |
 
-The preset sets how each texture group is stored. Meshes and collision are the same in every
-preset. A texture's group comes from its file name: `_n` and `_msn` are normal
-maps; `_s`, `_g`, `_e`, `_em`, `_m`, `_p`, `_b`, and `_sk` are data maps; the rest are color.
-
-| Preset | Color | Normal | Data | Quality limit |
-| --- | --- | --- | --- | --- |
-| Highest quality | shipped | shipped | shipped | lossless |
-| Balanced | shipped | ASTC 4x4 | shipped | PSNR 40 dB, normal angle 2 degrees |
-| Best performance | ASTC 6x6 | ASTC 6x6 | ASTC 8x8 | PSNR 30 dB |
+Each quality other than Original is a target, not a format. For one texture the conversion
+tries ASTC 8x8, 6x6, 5x5, and 4x4, smallest first, and keeps the first that meets the target.
+When none does, the texture keeps its shipped blocks. The search never tries a format with
+more bits per pixel than the shipped one, so a BC1 texture (4 bits per pixel) never becomes
+ASTC 4x4 (8 bits per pixel). A texture of 256 pixels or less on its long side keeps its
+shipped blocks: the saving is too small to pay for the search.
 
 ASTC (Adaptive Scalable Texture Compression) is a block format that Apple GPUs read
-directly. A 4x4 block keeps more detail than a 6x6 or 8x8 block, and uses more memory.
-"Shipped" keeps the BC blocks and mip levels from the archive.
+directly. A larger block keeps less detail and uses less memory.
 
-A texture that is converted is first decoded by the GPU, one mip level at a time, and then
-encoded with astcenc ([astcenc decision](/decisions/astcenc.md)) at its fastest effort. The
-GPU decode is the reference because it is the image the renderer shows. The CPU DDS decoder
-cannot read BC5 and BC7, so it cannot be the reference.
+The measure compares the top mip level. The GPU decodes every shipped level once; that image
+is the reference, because it is the image the renderer shows. The CPU DDS decoder cannot read
+BC5 and BC7, so it cannot be the reference. A candidate is encoded with astcenc
+([astcenc decision](/decisions/astcenc.md)) at its fastest effort and decoded again by
+astcenc on the CPU, which matches the GPU decode to within one step. Colour uses the RGB
+PSNR. A normal map uses the mean angle between the decoded normals. A colour texture with
+transparent texels has cut-out alpha, where a wrong edge shows as holes, so its alpha uses
+the stricter target. The winning format then encodes every level.
 
-The preset lives in the shared settings store. The graphics presets set it later; until then
-it is its own setting.
+"Show details" on the page has a format menu for each group: Automatic follows the quality,
+Shipped keeps the BC blocks, and an ASTC size forces that format. It also shows a size limit,
+which drops the top mip levels of larger textures.
+
+The output ratios that the space check uses, in optimised bytes per source byte, are
+estimates until a whole base-game conversion per quality measures them: textures 1.0
+(Original), 0.8 (High), 0.6 (Medium), 0.45 (Low); meshes 1.6; collision 0.9.
+
+A graphics preset on the Graphics page also sets the texture quality: Ultra is Original,
+High is High, Medium is Medium, and Low is Low.
 
 ## Audio
 
-The cache does not store audio. A lossless ALAC copy decodes at the same CPU cost as the
-shipped xWMA, so it loads no faster ("Where the cache helps"). The game reads every sound from
-the archives, and a cache opened after an earlier build deletes its `audio` folder. The same
-holds for animation: the `animation` folder is deleted too.
-
-AAC is smaller but lossy, so a lossy copy could only be used where it makes no audible
-difference. `openskycli audio aac-check` measures that per sound category instead of a
-listening test:
-
-- Categories, from the folder: `music`, `voice` (`sound\fx\voc`; dialogue is `.fuz` and is
-  not cached), `ambience` (`sound\fx\amb*`), and `effects` (the rest).
-- Each sampled sound is encoded as AAC at 96 kbps per channel, decoded, and compared with
-  the original. The measure is the band spectral distortion (SD): per 1024-sample frame, the
-  root mean square of the level difference in the 24 Bark critical bands (Zwicker 1961).
-  Frames quieter than -50 dBFS are skipped, and a band more than 60 dB below the loudest
-  band of its frame is masked.
-- A sound is transparent by the Paliwal and Atal (1993) rule: mean SD under 1 dB, under 2 %
-  of frames from 2 to 4 dB, and no frame over 4 dB. A category may use AAC only when every
-  sampled sound is transparent.
-- AAC defines a fixed set of sampling rates. A few vanilla sounds use 22000 Hz, so they stay
-  ALAC in any category.
-
-Result, 400 sounds per category at most (2026-10-07, run directory
-`.logs/aac-check/20261007T020728Z`):
-
-| Category | Sounds | Transparent | Mean SD | Worst sound |
-| --- | --- | --- | --- | --- |
-| Effects | 399 | 387 | 0.33 dB | 1.23 dB |
-| Voice | 122 | 120 | 0.28 dB | 0.51 dB |
-| Ambience | 387 | 269 | 0.47 dB | 2.47 dB |
-| Music | 116 | 115 | 0.10 dB | 0.35 dB |
-
-No category passes. The failing sounds fail on a few frames at a sharp attack, where AAC
-spreads noise before the attack (pre-echo). At 128 kbps per channel the counts barely change
-(run `.logs/aac-check/20261007T021023Z`), so a higher rate is not the fix.
+The cache does not store audio or animation. A lossless ALAC copy decodes at the same CPU
+cost as the shipped xWMA, so it loads no faster ("Where the cache helps"). The game reads every
+sound and animation from the archives, and a cache opened after an earlier build deletes the
+`audio` and `animation` folders. [Asset cache audio](/engine/asset-cache-audio.md) has the
+measurement that rules out lossy AAC copies.
 
 ## Per-kind settings
 
-Each kind the cache stores has its own switch in the shared settings store: "Cache textures",
-"Cache meshes", and "Cache collision", all on by default. A kind that is off:
+Each kind the cache stores has its own setting in the shared settings store, all on by
+default. A kind that is off:
 
 - is not converted by a build, and a check does not count it, so the cache reads as current
   when every kind that is on is built;
 - is read from the archives, without a cache lookup;
 - keeps its entries on disk, so turning it on again needs no rebuild.
 
-The launcher's Asset Cache page shows each switch with the entry count and size of its kind,
-and its tooltip gives the measured gain from "Where the cache helps". In a running game,
-World > Asset Cache turns the reads of one kind off and on for a comparison, without a
-reload; that change is not saved. `openskycli asset-cache` and the benchmarks read the same
-settings, and `--kinds textures,meshes,collision` overrides them.
+In a running game, World > Asset Optimisation turns the reads of one kind off and on for a
+comparison, without a reload; that change is not saved. `openskycli asset-optimisation` and
+the benchmarks read the same settings, and `--kinds textures,meshes,collision` overrides
+them.
 
 Audio and animation have no switch, because the cache does not store them.
 
@@ -202,18 +190,20 @@ A build plans one item per archive file that a converter accepts, then converts 
 parallel on a utility-priority task. It skips an item whose entry is already current. Each
 converted payload is written as one entry. When a converter does not store a file, the build
 writes an entry with an empty payload. That entry tells the engine to load the original, and
-it lets a check count the file as current. A build can be cancelled between items; the
-entries written so far stay valid.
+it lets a check count the file as current. A conversion can be cancelled between items; the
+entries written so far stay valid. The game starts while files wait: a waiting file loads
+from the archives.
 
 A check reads only the entry headers. It reports the cache as current, partly built, not
-built, or stale. Stale wins, because a changed install or preset needs a rebuild.
+built, or stale. Stale wins, because a changed install or texture output needs a new
+conversion. The launcher shows the result as Ready, Needs conversion, or Not converted.
 
-`openskycli asset-cache build` runs a build without the app ([CLI](/tools/cli.md)). The app
-starts the same build from the launcher's Asset Cache page. In a running game, World > Asset
-Cache turns cache reads off and on, shows the hits and misses per kind, and shows the entries
-of one path.
+`openskycli asset-optimisation build` runs a conversion without the app
+([CLI](/tools/cli.md)). The app starts the same conversion from the launcher's Asset
+Optimisation page. In a running game, World > Asset Optimisation turns reads off and on,
+shows the hits and misses per kind, and shows the entries of one path.
 
-## Fast resource loading
+## Direct GPU loading
 
 Metal fast resource loading (MTLIO) reads file bytes straight into a texture on the GPU
 side. The CPU does not copy the bytes and does not wait for each read. A cached texture
@@ -229,9 +219,10 @@ The fast loader runs only during a cell build:
 4. If the buffer fails, every texture of the batch is filled on the CPU from the same entry.
 
 A texture loaded outside a cell build, or a texture with no current entry, takes the CPU
-path. The setting "Fast texture loading" turns the fast loader on and off. In a running
-game, World > Asset Cache has the same switch and shows the textures, bytes, and time of
-the last cell load. `openskycli benchmark --asset-cache --fast-load` measures it.
+path. The page calls this "Direct GPU loading", with one switch for textures, one for
+meshes, and one for "All disks". In a running game, World > Asset Optimisation has the same
+switches and shows the textures, bytes, and time of the last cell load.
+`openskycli benchmark --asset-optimisation --direct-load` measures it.
 
 A texture read needs scratch memory, in requests from 16 KiB to 8 MiB. The queue's own
 allocator keeps that memory for the life of the queue, which added about 80 MB to the peak
@@ -249,7 +240,8 @@ queue per batch, private textures, nor scratch memory that OpenSky owns changed 
 disk the fast loader also saved no time: 4.62 s cold against 4.60 s for the CPU upload
 (2026-10-08, USB SSD, run directories under `.logs/fast-load-*`). So the fast loader reads
 only from a cache folder on an internal volume. From an external volume each texture takes
-the CPU path, and World > Asset Cache counts it under "External disk".
+the CPU path, and World > Asset Optimisation counts it under "External disk". "All disks"
+turns this rule off for a measurement.
 
 Each entry is read without compression. An LZ4 copy is 30% smaller, but the measurement
 below shows that it saves almost no time cold, needs twice the CPU time, and is twice as
@@ -272,7 +264,7 @@ it.
 Both sides must read from the same disk, or the result measures the disks and not the
 cache. So the cache folder sits on the same external USB SSD as the game data.
 
-Result on an Apple M1 with 16 GB, lossless preset, two runs (2026-10-07, run directory
+Result on an Apple M1 with 16 GB, shipped texture blocks, two runs (2026-10-07, run directory
 `.logs/asset-cache-measure/20261007T045926Z`). Times are for the whole sample, in ms:
 
 | Kind | Files | Archive cold | Cache cold | Archive warm | Cache warm | Advice |
@@ -306,7 +298,7 @@ so the answer holds on any Mac and there is no per-Mac advice.
 ### Metal 4 paths
 
 - Textures: each entry holds the mip levels in the layout a texture needs, so Metal fast
-  resource loading reads them straight into GPU memory ("Fast resource loading" above).
+  resource loading reads them straight into GPU memory ("Direct GPU loading" above).
   Sparse texture streaming (#881) can map single mip levels from the same layout.
 - Meshes: an entry holds ready vertex and index blocks, so fast resource loading can read
   them straight into GPU buffers ([fast mesh loading](/engine/fast-mesh-loading.md)).
@@ -326,19 +318,20 @@ run each,
 from `make asset-cache-bench CACHE=<folder on the game data disk>` (run directory
 `.logs/asset-cache-bench/20261007T042624Z`):
 
+"Fixed ASTC" forces colour and normal maps to ASTC 6x6 and data maps to ASTC 8x8, with the
+format menus under "Show details".
+
 | Run | Cold load | GPU memory | Peak RSS | Image against archives |
 | --- | --- | --- | --- | --- |
 | Archives | 5383 ms | 563 MiB | 1194 MiB | - |
 | Loose copies | 4658 ms | 563 MiB | 878 MiB | - |
-| Highest quality | 4566 ms | 563 MiB | 925 MiB | identical |
-| Highest quality, fast loading | 4644 ms | 940 MiB | 1080 MiB | identical |
-| Balanced | 4637 ms | 563 MiB | 925 MiB | identical |
-| Best performance | 4224 ms | 442 MiB | 772 MiB | PSNR 38.9 dB |
+| Original | 4566 ms | 563 MiB | 925 MiB | identical |
+| Original, direct GPU loading | 4644 ms | 940 MiB | 1080 MiB | identical |
+| Fixed ASTC | 4224 ms | 442 MiB | 772 MiB | PSNR 38.9 dB |
 
-GPU memory counts all allocations at 2560x1600, render targets included. The block holds no
-normal maps, so Balanced stores the same files as Highest quality. The loose copies cover
+GPU memory counts all allocations at 2560x1600, render targets included. The loose copies cover
 every file, while the cache keeps skinned and particle meshes (125 of the 378 loads) in
-the archives, so the two cold loads are not a fair pair. On this disk, fast loading does
+the archives, so the two cold loads are not a fair pair. On this disk, direct GPU loading does
 not make the block's cold load faster, and it holds 377 MiB more GPU memory at its peak.
 
 Loading the block's 293 textures (365 MiB) as one batch, `asset-cache io-bench`, wall time
@@ -360,21 +353,20 @@ cache of the route's assets (run directory `.logs/stream-worst-frame/20261007T04
 | Run | Frames until the stream settles | Worst frame | Peak footprint |
 | --- | --- | --- | --- |
 | Archives | 538 | 19.4 ms | 1270 MB |
-| Highest quality | 484 | 16.5 ms | 1229 MB |
-| Highest quality, fast loading | 481 | 16.0 ms | 1362 MB |
+| Original | 484 | 16.5 ms | 1229 MB |
+| Original, direct GPU loading | 481 | 16.0 ms | 1362 MB |
 
 The worst frame is the distant LOD swap in every run. A waypoint settles only when its distant
 ring is in. Without that rule, a slow archive run ended its legs before the ring arrived, so it
 never measured the swap and its worst frame looked 5 ms better than the cache's.
 
 With the cache on the internal SSD, the fast loader's peak footprint matched the CPU upload
-(see Fast resource loading). On the slower external disk it is 133 MB higher.
+(see Direct GPU loading). On the slower external disk it is 133 MB higher.
 
 A full base game build, 92392 files, to the external disk, with 8 build tasks on 8 cores. These
 builds still held audio and animation (0.87 GiB, 66 s of CPU time):
 
-| Preset | Build time | Size |
+| Texture output | Build time | Size |
 | --- | --- | --- |
-| Highest quality | 233 s | 21.3 GiB |
-| Balanced | 549 s | 21.2 GiB |
-| Best performance | 1186 s | 11.3 GiB |
+| Original | 233 s | 21.3 GiB |
+| Fixed ASTC | 1186 s | 11.3 GiB |

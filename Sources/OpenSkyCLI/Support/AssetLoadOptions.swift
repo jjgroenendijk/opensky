@@ -1,7 +1,6 @@
-// The asset cache, loose file, and fast loading options the benchmarks share:
-// `--asset-cache`, `--fast-load`, `--fast-mesh-load`, `--evict`, `--loose <dir>`, `--record-paths
-// <file>`,
-// and the cache settings options of `asset-cache`.
+// The optimised file, loose file, and direct GPU loading options the benchmarks share:
+// `--asset-optimisation`, `--direct-load`, `--direct-mesh-load`, `--evict`, `--loose <dir>`,
+// `--record-paths <file>`, and the settings options of `asset-optimisation`.
 
 import Foundation
 import Metal
@@ -29,7 +28,7 @@ struct AssetLoadOptions {
         recordPath = arguments.recordPaths
         let settings = try AssetCacheCommand.settings(arguments.cache)
         guard useCache || !(fastLoad || fastMeshLoad) else {
-            throw CLIError.usage("--fast-load and --fast-mesh-load need --asset-cache")
+            throw CLIError.usage("--direct-load and --direct-mesh-load need --asset-optimisation")
         }
         cache = try useCache ? AssetCacheReader.open(
             settings: settings, files: context.makeFileSystem(),

@@ -1,6 +1,6 @@
 // A shipped `.wav` or `.xwm` sound decoded and stored in CAF as ALAC. Builds no
 // longer use it: ALAC decodes no faster than the shipped files. `asset-cache
-// measure` and `audio aac-check` keep using it (docs/engine/asset-cache.md, "Audio").
+// measure` and `audio aac-check` keep using it (docs/engine/asset-cache-audio.md).
 
 import Foundation
 import OpenSkyAssetCache
@@ -24,7 +24,7 @@ nonisolated public struct CachedAudioConverter: AssetConverting {
         path.hasSuffix(".wav") || path.hasSuffix(".xwm")
     }
 
-    public func convert(path _: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
+    public func convert(path _: String, bytes: Data, output _: AssetTextureOutput) throws -> Data? {
         let audio = try Self.decode(bytes)
         guard audio.frameCount > 0, audio.duration <= Self.maximumSeconds else { return nil }
         return try Self.encode(audio, format: .alac)

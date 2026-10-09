@@ -1,6 +1,6 @@
-// The Asset Cache page's logic: the settings, a build with cancel, a check of
-// what the cache holds, and clear. File work runs off the main actor; results
-// come back here, and `onChange` tells the page to redraw.
+// The Asset Optimisation logic: the settings, a conversion with cancel, a check
+// of what the folder holds, and clear. File work runs off the main actor; results
+// come back here, and each observer redraws its page.
 
 import Foundation
 import OpenSkyAssetCache
@@ -17,11 +17,11 @@ public final class AssetCacheCoordinator {
     /// What one build or check needs from outside, so a test can pass fakes.
     public struct Environment: Sendable {
         public let locate: @Sendable () throws -> (files: any GameFileSource, install: URL)
-        public let makeConverters: @Sendable (AssetQualityPreset) throws -> [any AssetConverting]
+        public let makeConverters: @Sendable (AssetTextureOutput) throws -> [any AssetConverting]
 
         public init(
             locate: @escaping @Sendable () throws -> (files: any GameFileSource, install: URL),
-            makeConverters: @escaping @Sendable (AssetQualityPreset) throws -> [any AssetConverting]
+            makeConverters: @escaping @Sendable (AssetTextureOutput) throws -> [any AssetConverting]
         ) {
             self.locate = locate
             self.makeConverters = makeConverters
@@ -33,7 +33,7 @@ public final class AssetCacheCoordinator {
                 let root = try GameDataLocator.locate()
                 return (VirtualFileSystem(root: root), root.installURL)
             },
-            makeConverters: { try AssetCacheConverters.make(preset: $0) }
+            makeConverters: { try AssetCacheConverters.make(textureOutput: $0) }
         )
     }
 
@@ -43,7 +43,14 @@ public final class AssetCacheCoordinator {
     public private(set) var check: AssetCacheCheck?
     public private(set) var usage: AssetCacheUsage?
     public private(set) var problem: String?
-    public var onChange: (() -> Void)?
+    /// The disk of the folder, read with each check.
+    public private(set) var volume: AssetCacheVolume?
+    /// The page that owns the coordinator. Other pages use `observe`.
+    public var onChange: (() -> Void)? {
+        didSet { notify() }
+    }
+
+    private var observers: [() -> Void] = []
 
     private var store: PlayerSettingsStore
     private let environment: Environment
@@ -59,25 +66,34 @@ public final class AssetCacheCoordinator {
     public func reloadSettings(from store: PlayerSettingsStore) {
         self.store = store
         settings = AssetCacheSettings(store: store)
-        onChange?()
+        notify()
     }
 
     public func setEnabled(_ enabled: Bool) {
         update { $0.isEnabled = enabled }
     }
 
-    /// Takes effect at the next game launch, like the in-game switch's start value.
-    public func setFastLoad(textures: Bool, meshes: Bool) {
-        update { settings in
-            settings.fastLoad = textures
-            settings.fastMeshLoad = meshes
-        }
+    /// Adds a redraw handler, such as the Launch page's status line.
+    public func observe(_ handler: @escaping () -> Void) {
+        observers.append(handler)
     }
 
-    /// A new preset makes every entry stale, so the check runs again.
-    public func setPreset(_ preset: AssetQualityPreset) {
-        guard preset != settings.preset else { return }
-        update { $0.preset = preset }
+    /// Takes effect at the next game launch, like the in-game switch's start value.
+    public func setDirectLoad(_ directLoad: DirectGPULoading) {
+        guard directLoad != settings.directLoad else { return }
+        update { $0.directLoad = directLoad }
+    }
+
+    /// A new quality marks only the textures stale, so the check runs again.
+    public func setTextureQuality(_ quality: TextureQuality) {
+        guard quality != settings.textureOutput.quality else { return }
+        update { $0.textureOutput.quality = quality }
+        startCheck()
+    }
+
+    public func setTextureFormat(_ choice: TextureFormatChoice, for group: AssetTextureClass) {
+        guard (settings.textureOutput.formats[group] ?? .automatic) != choice else { return }
+        update { $0.textureOutput.formats[group] = choice == .automatic ? nil : choice }
         startCheck()
     }
 
@@ -100,15 +116,14 @@ public final class AssetCacheCoordinator {
         startCheck()
     }
 
-    /// Zero uses the preset's default limit.
-    public func setLimitGiB(_ gib: Int) {
-        update { $0.limitBytes = gib > 0 ? UInt64(gib) << 30 : nil }
-    }
-
     public func startCheck() {
         run(.checking) { builder in
             let check = await builder.check(builder.planInstall())
-            return { coordinator in coordinator.check = check }
+            let volume = AssetCacheVolume.of(builder.store.root)
+            return { coordinator in
+                coordinator.check = check
+                coordinator.volume = volume
+            }
         }
     }
 
@@ -125,9 +140,11 @@ public final class AssetCacheCoordinator {
                 Task { @MainActor in self?.receive(progress) }
             }
             let check = await builder.check(items)
+            let volume = AssetCacheVolume.of(builder.store.root)
             return { coordinator in
                 coordinator.progress = result
                 coordinator.check = check
+                coordinator.volume = volume
             }
         }
     }
@@ -139,9 +156,10 @@ public final class AssetCacheCoordinator {
     public func clear() {
         run(.clearing) { builder in
             try builder.store.clear()
+            let check = await builder.check(builder.planInstall())
             return { coordinator in
                 coordinator.progress = nil
-                coordinator.check = nil
+                coordinator.check = check
             }
         }
     }
@@ -150,7 +168,14 @@ public final class AssetCacheCoordinator {
         change(&settings)
         settings.save(to: store)
         problem = nil
+        notify()
+    }
+
+    private func notify() {
         onChange?()
+        for observer in observers {
+            observer()
+        }
     }
 
     private func receive(_ progress: AssetCacheBuildProgress) {
@@ -158,7 +183,7 @@ public final class AssetCacheCoordinator {
             activity == .building,
             progress.doneFiles >= (self.progress?.doneFiles ?? 0) else { return }
         self.progress = progress
-        onChange?()
+        notify()
     }
 
     /// Runs `work` off the main actor with a builder for the current settings,
@@ -171,7 +196,7 @@ public final class AssetCacheCoordinator {
         guard self.activity == .idle else { return }
         self.activity = activity
         problem = nil
-        onChange?()
+        notify()
         let settings = settings
         let environment = environment
         Task(priority: .utility) { [weak self] in
@@ -198,7 +223,7 @@ public final class AssetCacheCoordinator {
         self.usage = usage
         activity = .idle
         control = nil
-        onChange?()
+        notify()
     }
 
     @concurrent
@@ -208,14 +233,14 @@ public final class AssetCacheCoordinator {
         let (files, install) = try environment.locate()
         let folder = try settings.effectiveFolder()
         try AssetCacheLocation.validate(folder, gameInstall: install)
-        let store = try AssetCacheStore(root: folder, limitBytes: settings.effectiveLimitBytes)
-        let converters = try environment.makeConverters(settings.preset)
+        let store = try AssetCacheStore(root: folder, limitBytes: AssetCacheStore.noLimit)
+        let converters = try environment.makeConverters(settings.textureOutput)
             .filter { settings.kinds.contains($0.kind) }
         return AssetCacheBuilder(
             store: store,
             files: files,
             converters: converters,
-            preset: settings.preset
+            textureOutput: settings.textureOutput
         )
     }
 
@@ -225,7 +250,7 @@ public final class AssetCacheCoordinator {
             let folder = try? settings.effectiveFolder(),
             FileManager.default.fileExists(atPath: folder.path(percentEncoded: false))
         else { return nil }
-        return try? AssetCacheStore(root: folder, limitBytes: settings.effectiveLimitBytes).usage()
+        return try? AssetCacheStore(root: folder, limitBytes: AssetCacheStore.noLimit).usage()
     }
 
     nonisolated static func message(for error: any Error) -> String {
@@ -237,7 +262,7 @@ public final class AssetCacheCoordinator {
         case AssetCacheLocationError.insideRepository:
             "The folder is inside a git checkout. Choose another folder."
         case AssetCacheConvertersError.metalUnavailable:
-            "This preset needs a Metal GPU to convert textures."
+            "This texture quality needs a Metal GPU to convert textures."
         default:
             error.localizedDescription
         }

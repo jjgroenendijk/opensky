@@ -4,6 +4,7 @@
 
 import AppKit
 import OpenSkyGameData
+import OpenSkyLaunch
 
 final class LoadOrderViewController: NSViewController {
     /// Located install, set by the shell before the view loads; nil -> the
@@ -17,6 +18,10 @@ final class LoadOrderViewController: NSViewController {
     let pathLabel = NSTextField(labelWithString: "")
     let sourceLabel = NSTextField(labelWithString: "")
     let summaryLabel = NSTextField(labelWithString: "")
+    /// The launcher's game folder check, so both show the same install state.
+    let installLabel = NSTextField(labelWithString: "")
+    let installProblemsLabel = NSTextField(labelWithString: "")
+    private var installCheck: Task<Void, Never>?
     let tableView = NSTableView()
     let chooseControl = NSButton()
     let useDefaultControl = NSButton()
@@ -80,8 +85,20 @@ final class LoadOrderViewController: NSViewController {
         summaryLabel.lineBreakMode = .byTruncatingTail
         summaryLabel.setAccessibilityIdentifier("LoadOrderStatsLabel")
 
+        for (label, identifier) in [
+            (installLabel, "LoadOrderInstallStatsLabel"),
+            (installProblemsLabel, "LoadOrderInstallProblemsStatsLabel")
+        ] {
+            label.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+            label.textColor = Theme.parchmentDim
+            label.lineBreakMode = .byTruncatingTail
+            label.setAccessibilityIdentifier(identifier)
+        }
+        installProblemsLabel.textColor = .systemOrange
+        installProblemsLabel.maximumNumberOfLines = 0
         let stack = NSStackView(views: [
-            heading, pathLabel, sourceLabel, makeButtonRow(), makeTable(), summaryLabel
+            heading, installLabel, installProblemsLabel, pathLabel, sourceLabel,
+            makeButtonRow(), makeTable(), summaryLabel
         ])
         stack.orientation = .vertical
         stack.alignment = .width
@@ -169,6 +186,7 @@ final class LoadOrderViewController: NSViewController {
             summaryLabel.stringValue = ""
             return
         }
+        checkInstall(gameDataRoot)
         let report = PluginLoadOrderReport(
             resolution: PluginLoadOrder.resolve(root: gameDataRoot)
         )
@@ -183,6 +201,19 @@ final class LoadOrderViewController: NSViewController {
             ? Theme.parchmentDim
             : .systemOrange
         summaryLabel.stringValue = report.summary
+    }
+
+    private func checkInstall(_ root: GameDataRoot) {
+        installCheck?.cancel()
+        installLabel.stringValue = "Install: checking"
+        installCheck = Task { [weak self] in
+            let summary = await GameInstallCheck.check(installURL: root.installURL)
+            guard !Task.isCancelled, let self else { return }
+            installLabel.stringValue = "\(summary.headline); \(summary.countLine)"
+            installProblemsLabel.stringValue = summary.problemLines
+                .map { "Problem: \($0)" }.joined(separator: "\n")
+            installProblemsLabel.isHidden = summary.isComplete
+        }
     }
 
     // MARK: - Actions

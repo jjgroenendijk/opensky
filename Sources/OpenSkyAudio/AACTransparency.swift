@@ -1,5 +1,5 @@
 // The AAC check for the audio cache: encode a sound as the cache would, decode
-// it, and measure it against the original. See docs/engine/asset-cache.md, "Audio".
+// it, and measure it against the original. See docs/engine/asset-cache-audio.md.
 
 import Foundation
 import OpenSkyAssetCache

@@ -47,7 +47,7 @@ private struct ReversingConverter: AssetConverting {
         path.hasSuffix(".hkx") || path.hasSuffix(".skip")
     }
 
-    func convert(path: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
+    func convert(path: String, bytes: Data, output _: AssetTextureOutput) throws -> Data? {
         guard !path.hasSuffix(".skip") else { return nil }
         guard bytes.first != 0xFF else { throw CachePayloadError.badTag(0xFF) }
         return Data(bytes.reversed())
@@ -68,7 +68,7 @@ struct AssetCacheBuilderTests {
             )
         return try AssetCacheBuilder(
             store: AssetCacheStore(root: root, limitBytes: 1 << 30), files: files,
-            converters: [ReversingConverter()], preset: .balanced
+            converters: [ReversingConverter()]
         )
     }
 
@@ -126,13 +126,16 @@ struct AssetCacheBuilderTests {
         #expect(await builder.check(items).summary == .notBuilt)
         _ = await builder.build(items)
         let built = await builder.check(items)
-        #expect(built.kinds[.collision] == AssetCacheKindCheck(current: 3, stale: 0, missing: 1))
+        #expect(built.kinds[.collision] == AssetCacheKindCheck(
+            current: 3, stale: 0, missing: 1, pendingSourceBytes: 2
+        ))
         #expect(built.summary == .partlyBuilt)
+        // A texture output change leaves the other kinds current.
         let other = AssetCacheBuilder(
             store: builder.store, files: files, converters: [ReversingConverter()],
-            preset: .highestQuality
+            textureOutput: AssetTextureOutput(quality: .medium)
         )
-        #expect(await other.check(items).summary == .stale)
+        #expect(await other.check(items).summary == .partlyBuilt)
     }
 
     @Test func theThrottleLetsTheFirstAndTheFinalReportThrough() {

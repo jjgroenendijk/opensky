@@ -27,21 +27,23 @@ benchmark definition would give numbers that do not compare, so callers reuse th
 `openskycli benchmark --out <file>` runs the same steps from any build. A Debug build is
 much slower, and the result says which build ran it.
 
-`--asset-cache` loads textures and meshes through the [asset cache](/engine/asset-cache.md),
-with the preset and folder from the app settings unless `--preset` or `--folder` overrides
-them. The summary then prints the cache hits and misses. `--evict` first drops the game data
-and the cache folder from the page cache, so the cold load reads from disk. It uses `msync`
-with `MS_INVALIDATE`, the method of `vmtouch -e`, and needs no `sudo`.
+`--asset-optimisation` (or the old `--asset-cache`) loads textures and meshes through the
+[asset cache](/engine/asset-cache.md), with the texture quality and folder from the app
+settings unless `--texture-quality` or `--folder` overrides them. The summary then prints
+the cache hits and misses. `--evict` first drops the game data and the cache folder from the
+page cache, so the cold load reads from disk. It uses `msync` with `MS_INVALIDATE`, the
+method of `vmtouch -e`, and needs no `sudo`.
 
-`--loose <dir>` reads the files that `asset-cache extract` copied there before the archives.
+`--loose <dir>` reads the files that `asset-optimisation extract` copied there before the
+archives.
 Comparing a run with it against a run without it separates the cost of the archive from the
 cost of the parse. `--record-paths <file>` writes the asset paths the cache was asked for,
-so `asset-cache build --paths` and `extract --paths` can work on just the benchmark's assets.
+so `asset-optimisation build --paths` and `extract --paths` can work on just the benchmark's assets.
 The summary also prints the GPU memory allocated after the load.
 
-`--fast-load` loads the cached textures of each cell with Metal fast resource loading
-([asset cache](/engine/asset-cache.md)) and prints the batches, textures, and bytes it
-read. `--fast-mesh-load` adds the cached meshes to the same batches
+`--direct-load` (or `--fast-load`) loads the cached textures of each cell with Metal fast
+resource loading ([asset cache](/engine/asset-cache.md)) and prints the batches, textures,
+and bytes it read. `--direct-mesh-load` (or `--fast-mesh-load`) adds the cached meshes to the same batches
 ([fast mesh loading](/engine/fast-mesh-loading.md)). `bench --fly-path` and
 `bench --walk-path` take the same cache options, so the cell
 loads while streaming can be compared with and without it.

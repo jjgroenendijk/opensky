@@ -37,6 +37,11 @@ struct CommandLineTests {
         #expect(cell.refs)
     }
 
+    @Test func installChecksTheGivenFolder() throws {
+        let install = try command(["install", "--data-root", "/game"], as: InstallArguments.self)
+        #expect(install.global.dataRoot == "/game")
+    }
+
     @Test func renderIsAnAliasOfScreenshot() throws {
         let shot = try command(
             ["render", "--out", "a.png", "--time-of-day", "6", "--imad-at", "1"],
@@ -51,7 +56,7 @@ struct CommandLineTests {
         let bench = try command(
             [
                 "bench", "--fly-path", "--footprint-cap-mb", "900", "--budget-ms", "20",
-                "--asset-cache", "--limit-gib", "8", "--no-lod-prebuild"
+                "--asset-cache", "--texture-quality", "low", "--fast-load", "--no-lod-prebuild"
             ],
             as: BenchArguments.self
         )
@@ -59,8 +64,37 @@ struct CommandLineTests {
         #expect(bench.budgets.footprintCapMb == "900")
         #expect(bench.budgetMs == "20")
         #expect(bench.assets.assetCache)
-        #expect(bench.assets.cache.limitGib == "8")
+        #expect(bench.assets.fastLoad)
+        #expect(bench.assets.cache.textureQuality == "low")
         #expect(bench.noLodPrebuild)
+    }
+
+    @Test func assetOptimisationKeepsTheOldNameAsAnAlias() throws {
+        let build = try command(
+            [
+                "asset-optimisation",
+                "build",
+                "--texture-quality",
+                "medium",
+                "--max-texture-side",
+                "2048"
+            ],
+            as: AssetCacheArguments.Build.self
+        )
+        #expect(build.options.settings.textureQuality == "medium")
+        #expect(build.options.settings.maxTextureSide == "2048")
+        _ = try command(["asset-cache", "status"], as: AssetCacheArguments.Status.self)
+        let load = try command(
+            ["bench", "--asset-optimisation", "--direct-load", "--direct-mesh-load"],
+            as: BenchArguments.self
+        )
+        #expect(load.assets.assetCache && load.assets.fastLoad && load.assets.fastMeshLoad)
+    }
+
+    @Test func graphicsPresetNamesThePreset() throws {
+        let preset = try command(["graphics", "preset", "ultra"], as: GraphicsArguments.Preset.self)
+        #expect(preset.name == "ultra")
+        _ = try command(["graphics", "status"], as: GraphicsArguments.Status.self)
     }
 
     @Test func gameWordsPassThroughToTheApp() throws {

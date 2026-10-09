@@ -102,7 +102,9 @@ extension WorldRenderControls: TerrainLODControlProviding {
     public func resetTerrainLODConfiguration() {
         TerrainLODSettings.clearOverride()
         let root = try? GameDataLocator.locate()
-        world?.terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: root))
+        world?.terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(
+            root: root, settings: PlayerSettingsFile.savedData()
+        ))
         streamer?.invalidateDistantLOD()
     }
 }
@@ -184,11 +186,13 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
     }
 
     public var textureBudgetIndex: Int {
-        get { Int(world?.playerSettingsStore.value(.textureBudget) ?? 2) }
+        get { Int(world?.playerSettingsStore.value(.textureBudget) ?? 0) }
         set {
             guard let store = world?.playerSettingsStore else { return }
             store.set(.textureBudget, to: Double(newValue))
-            renderer?.textureStreaming.budgetBytes = Renderer.textureBudgetBytes(store: store)
+            renderer?.textureStreaming.budgetBytes = Renderer.textureBudgetBytes(
+                store: store, device: renderer?.device
+            )
         }
     }
 

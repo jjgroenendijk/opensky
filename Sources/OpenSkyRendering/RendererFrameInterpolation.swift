@@ -165,7 +165,10 @@ extension Renderer {
     /// display, and records the time since the last real frame.
     func paceLiveFrame(view: MTKView, now: CFTimeInterval) {
         let refresh = view.window?.screen?.maximumFramesPerSecond ?? Self.liveFramesPerSecond
-        let wanted = isFrameInterpolationRunning ? max(refresh / 2, 1) : Self.liveFramesPerSecond
+        var wanted = isFrameInterpolationRunning ? max(refresh / 2, 1) : Self.liveFramesPerSecond
+        if frameRateCap > 0 {
+            wanted = min(wanted, frameRateCap)
+        }
         if view.preferredFramesPerSecond != wanted {
             view.preferredFramesPerSecond = wanted
         }

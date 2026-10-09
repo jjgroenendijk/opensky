@@ -102,7 +102,7 @@ struct FakeRenderPerformanceState {
     var pipelineCacheEnabled = true
     var gpuCullingEnabled = true
     var textureStreamingEnabled = true
-    var textureBudgetIndex = 2
+    var textureBudgetIndex = 0
     var rayTracedShadowsEnabled = false
     var rayTracedShadowView = false
     var renderScale = RenderScale.off

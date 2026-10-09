@@ -252,20 +252,10 @@ enum RenderCommand {
         if let looseFolder = assets?.looseFolder {
             files = FolderOverlayFileSource(base: vfs, folder: looseFolder)
         }
-        let fileSystem: any GameFileSource = recorder
-            .map { PhaseTimedFileSource(base: files, recorder: $0) } ?? files
-        let file = try context.loadSkyrimESM()
-        let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
-        let meshes = MeshLibrary(fileSystem: fileSystem, device: device, textures: textures)
-        let builder = CellSceneBuilder(
-            file: file,
-            meshes: meshes,
-            textures: textures,
-            fileSystem: fileSystem,
-            plugins: ActivePluginFiles.load(root: context.root, baseFile: file),
-            terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
+        let builder = try StandardBenchmark.makeBuilder(
+            root: context.root, file: context.loadSkyrimESM(), files: files, device: device,
+            recorder: recorder
         )
-        builder.loadPhases = recorder
         try assets?.configure(builder, device: device)
         return builder
     }

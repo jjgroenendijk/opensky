@@ -21,7 +21,7 @@ struct CachedAudioConverterTests {
         let payload = try #require(try CachedAudioConverter().convert(
             path: "sound\\fx\\a.wav",
             bytes: wav,
-            preset: .balanced
+            output: AssetTextureOutput()
         ))
         let decoded = try AssetCacheDecoder.cachedAudio.decode(payload)
         let source = try WAVFile(data: wav)
@@ -42,7 +42,7 @@ struct CachedAudioConverterTests {
         #expect(try CachedAudioConverter().convert(
             path: "music\\a.wav",
             bytes: wav,
-            preset: .balanced
+            output: AssetTextureOutput()
         ) == nil)
     }
 

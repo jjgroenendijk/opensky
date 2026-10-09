@@ -1,6 +1,6 @@
 // Objective stand-in for a listening check of a lossy copy: band spectral
 // distortion against the original, judged by the Paliwal-Atal transparency
-// rule. See docs/engine/asset-cache.md, "Audio".
+// rule. See docs/engine/asset-cache-audio.md.
 
 import Accelerate
 import Foundation

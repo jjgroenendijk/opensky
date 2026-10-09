@@ -5,7 +5,7 @@
 import Foundation
 
 nonisolated public struct PlayerSettingsModel: Equatable, Sendable {
-    public static let schemaVersion = 2
+    public static let schemaVersion = 3
 
     /// Only values that differ from their default are kept.
     public private(set) var values: [PlayerSettingID: Double] = [:]
@@ -91,7 +91,8 @@ nonisolated extension PlayerSettingsModel {
         guard schema <= Self.schemaVersion else {
             throw PlayerSettingsCodecError.newerSchema(schema)
         }
-        let migrated = schema == 1 ? Self.migrateFromSchema1(document) : document
+        let current = schema == 1 ? Self.migrateFromSchema1(document) : document
+        let migrated = schema < 3 ? Self.migrateFromSchema2(current) : current
         for (key, raw) in migrated["values"] as? [String: Any] ?? [:] {
             guard let number = (raw as? NSNumber)?.doubleValue else { continue }
             set(PlayerSettingID(key), to: number, in: catalog)
@@ -104,6 +105,33 @@ nonisolated extension PlayerSettingsModel {
             guard let text = raw as? String else { continue }
             setText(PlayerSettingID(key), to: text)
         }
+    }
+
+    /// Schema 2 named the asset optimisation settings `assetCache`. Its three presets
+    /// become texture qualities: Best performance is Medium; Balanced and Highest
+    /// quality are Original, because Balanced saved no space. The size limit is gone.
+    /// The texture budget gained Automatic at index 0, so a fixed choice moves up one.
+    static func migrateFromSchema2(_ document: [String: Any]) -> [String: Any] {
+        var result = document
+        var values: [String: Any] = [:]
+        for (key, value) in document["values"] as? [String: Any] ?? [:] {
+            if key == "assetCache.preset" {
+                let preset = (value as? NSNumber)?.intValue
+                values["assetOptimisation.textureQuality"] = preset == 0 ? 2 : 0
+            } else if key == "rendering.textureBudget", let index = (value as? NSNumber)?.intValue {
+                values[key] = index + 1
+            } else if key != "assetCache.limitGiB" {
+                values[PlayerSettingsCatalog.renamedIDs[key] ?? key] = value
+            }
+        }
+        var texts: [String: Any] = [:]
+        for (key, value) in document["texts"] as? [String: Any] ?? [:] {
+            texts[PlayerSettingsCatalog.renamedIDs[key] ?? key] = value
+        }
+        result["values"] = values
+        result["texts"] = texts
+        result["schema"] = schemaVersion
+        return result
     }
 
     /// Schema 1 kept every value at the top level, with no key bindings.

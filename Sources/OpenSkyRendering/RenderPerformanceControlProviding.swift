@@ -71,7 +71,7 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     /// Large textures loaded from now on keep only the levels the camera needs. Off
     /// raises every streamed texture to its full size.
     var textureStreamingEnabled: Bool { get set }
-    /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
+    /// An index into `TextureBudget.choiceTitles`: 0 is Automatic.
     var textureBudgetIndex: Int { get set }
     /// Applies at once where the GPU traces rays in hardware; elsewhere it stays off.
     var rayTracedShadowsEnabled: Bool { get set }

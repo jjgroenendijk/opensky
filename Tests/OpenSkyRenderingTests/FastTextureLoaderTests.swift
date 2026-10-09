@@ -67,12 +67,12 @@ struct FastTextureLoaderTests {
             )
         let files = OneFile()
         let reader = try AssetCacheReader(
-            store: AssetCacheStore(root: root, limitBytes: 1 << 30), files: files, preset: .balanced
+            store: AssetCacheStore(root: root, limitBytes: 1 << 30), files: files
         )
         let source = try #require(reader.stamp(forPath: files.path))
         try reader.store.store(ReadyTextureCodec.encode(texture()), for: AssetCacheRequest(
             kind: .texture, source: source,
-            converterVersion: AssetConverterVersion.texture, preset: .balanced
+            converterVersion: AssetConverterVersion.texture
         ))
         return try #require(reader.entry(forPath: files.path, decoder: .readyTexture))
     }

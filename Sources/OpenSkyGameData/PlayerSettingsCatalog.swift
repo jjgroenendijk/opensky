@@ -41,10 +41,10 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     ]
 
     /// Settings stored as text rather than as a number.
-    public static let textSettingIDs: Set<PlayerSettingID> = [.assetCacheFolder]
+    public static let textSettingIDs: Set<PlayerSettingID> = [.assetOptimisationFolder]
 
     public static let vanilla = PlayerSettingsCatalog(
-        definitions: gameplay + display + audio + opensky
+        definitions: gameplay + display + audio + opensky + GraphicsOptions.definitions
     )
 
     private static let unit = PlayerSettingKind.slider(range: 0 ... 1, step: 0.05)
@@ -146,35 +146,55 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             0,
             applied: true
         ),
-        row("assetCache.enabled", .opensky, .toggle, "Use asset cache", 1, applied: true),
         row(
-            "assetCache.preset",
+            "assetOptimisation.enabled", .opensky, .toggle, "Use optimised files", 1,
+            applied: true
+        ),
+        row(
+            "assetOptimisation.textureQuality",
             .opensky,
-            .choice(options: assetQualityOptions),
-            "Asset quality",
+            .choice(options: textureQualityOptions),
+            "Texture quality",
+            0,
+            applied: true
+        ),
+        row(
+            "assetOptimisation.directLoad",
+            .opensky,
+            .toggle,
+            "Direct GPU loading",
             1,
             applied: true
         ),
         row(
-            "assetCache.limitGiB",
-            .opensky,
-            .slider(range: 0 ... 512, step: 1),
-            "Asset cache limit (GiB, 0 = preset)",
-            0,
-            applied: true
+            "assetOptimisation.directLoad.textures", .opensky, .toggle,
+            "Direct GPU loading: textures", 1, applied: true
         ),
-        row("assetCache.fastLoad", .opensky, .toggle, "Fast texture loading", 1, applied: true),
-        row("assetCache.fastMeshLoad", .opensky, .toggle, "Fast mesh loading", 0, applied: true),
+        row(
+            "assetOptimisation.directLoad.meshes", .opensky, .toggle,
+            "Direct GPU loading: meshes", 0, applied: true
+        ),
+        row(
+            "assetOptimisation.directLoad.allDisks", .opensky, .toggle,
+            "Direct GPU loading: all disks", 0, applied: true
+        ),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
         row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
-        row("rendering.textureStreaming", .opensky, .toggle, "Stream textures", 1, applied: true),
+        row(
+            "rendering.textureStreaming",
+            .opensky,
+            .toggle,
+            "Full detail only near the camera",
+            1,
+            applied: true
+        ),
         row(
             "rendering.textureBudget",
             .opensky,
-            .choice(options: textureBudgetOptions.map { "\($0) MiB" }),
-            "Texture streaming budget",
-            2,
+            .choice(options: TextureBudget.choiceTitles),
+            "Memory for close-up detail",
+            0,
             applied: true
         ),
         row(
@@ -203,16 +223,41 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         ),
         row(
             "rendering.meshShaderGrass", .opensky, .toggle, "Mesh-shader grass", 0, applied: true
+        ),
+        row("window.fullScreen", .opensky, .toggle, "Full screen", 0, applied: true),
+        row(
+            "window.frameRateCap", .opensky,
+            .choice(options: frameRateCapOptions.map(frameRateCapTitle)),
+            "Frame rate cap", 0, applied: true
         )
-    ] + assetCacheKindRows
+    ] + assetKindRows + textureFormatRows
 
-    /// One switch per cached asset kind; off reads that kind from the archives.
-    /// Audio and animation have none: the cache does not store them.
-    private static let assetCacheKindRows = [
-        ("textures", "Cache textures"), ("meshes", "Cache meshes"),
-        ("collision", "Cache collision")
+    /// The frame rate caps in menu order; 0 is no cap.
+    public static let frameRateCapOptions = [0, 30, 60, 120]
+
+    /// `Off` or `60 fps`.
+    public static func frameRateCapTitle(_ cap: Int) -> String {
+        cap == 0 ? "Off" : "\(cap) fps"
+    }
+
+    /// One switch per optimised asset kind; off reads that kind from the archives.
+    /// Audio and animation have none: they are not optimised.
+    private static let assetKindRows = [
+        ("textures", "Optimise textures"), ("meshes", "Optimise meshes"),
+        ("collision", "Optimise collision")
     ].map { folder, title in
-        row("assetCache.kind.\(folder)", .opensky, .toggle, title, 1, applied: true)
+        row("assetOptimisation.kind.\(folder)", .opensky, .toggle, title, 1, applied: true)
+    }
+
+    /// A format forced per texture group, in `TextureFormatChoice` raw-value order.
+    private static let textureFormatRows = [
+        ("color", "Colour texture format"), ("normal", "Normal map format"),
+        ("data", "Data map format")
+    ].map { group, title in
+        row(
+            "assetOptimisation.textureFormat.\(group)", .opensky,
+            .choice(options: textureFormatOptions), title, 0, applied: true
+        )
     }
 
     /// The texture streaming budget choices, in MiB.
@@ -224,19 +269,37 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     /// In `UpscalerKind` raw-value order.
     public static let upscalerOptions = ["Temporal", "Spatial"]
 
-    /// In `AssetQualityPreset` raw-value order.
-    public static let assetQualityOptions = ["Best performance", "Balanced", "Highest quality"]
+    /// In `TextureQuality` raw-value order.
+    public static let textureQualityOptions = ["Original", "High", "Medium", "Low"]
+
+    /// In `TextureFormatChoice` raw-value order.
+    public static let textureFormatOptions = [
+        "Automatic", "Shipped", "ASTC 4x4", "ASTC 5x5", "ASTC 6x6", "ASTC 8x8"
+    ]
+
+    /// Ids a later version renamed. Old files are read with the new names.
+    public static let renamedIDs: [String: String] = [
+        "assetCache.enabled": "assetOptimisation.enabled",
+        "assetCache.folder": "assetOptimisation.folder",
+        "assetCache.fastLoad": "assetOptimisation.directLoad.textures",
+        "assetCache.fastMeshLoad": "assetOptimisation.directLoad.meshes",
+        "assetCache.kind.textures": "assetOptimisation.kind.textures",
+        "assetCache.kind.meshes": "assetOptimisation.kind.meshes",
+        "assetCache.kind.collision": "assetOptimisation.kind.collision"
+    ]
 }
 
 nonisolated extension PlayerSettingID {
-    /// The asset cache folder path. No value means the default folder.
-    public static let assetCacheFolder = Self("assetCache.folder")
-    public static let assetCacheEnabled = Self("assetCache.enabled")
-    public static let assetCachePreset = Self("assetCache.preset")
-    public static let assetCacheLimitGiB = Self("assetCache.limitGiB")
-    public static let assetCacheFastLoad = Self("assetCache.fastLoad")
-    /// Cached meshes read straight into GPU buffers during a cell build.
-    public static let assetCacheFastMeshLoad = Self("assetCache.fastMeshLoad")
+    /// The optimised files folder. No value means the default folder.
+    public static let assetOptimisationFolder = Self("assetOptimisation.folder")
+    public static let assetOptimisationEnabled = Self("assetOptimisation.enabled")
+    /// A `TextureQuality` raw value.
+    public static let textureQuality = Self("assetOptimisation.textureQuality")
+    /// Optimised files read straight into GPU memory during a cell build.
+    public static let directGPULoading = Self("assetOptimisation.directLoad")
+    public static let directGPULoadingTextures = Self("assetOptimisation.directLoad.textures")
+    public static let directGPULoadingMeshes = Self("assetOptimisation.directLoad.meshes")
+    public static let directGPULoadingAllDisks = Self("assetOptimisation.directLoad.allDisks")
     /// Pipelines load from the archive an earlier launch saved.
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
     /// The static scene culls in a compute pass; off culls it on the CPU.
@@ -245,7 +308,7 @@ nonisolated extension PlayerSettingID {
     public static let waterDepth = Self("rendering.waterDepth")
     /// Large textures keep only the mip levels the camera needs.
     public static let textureStreaming = Self("rendering.textureStreaming")
-    /// An index into `PlayerSettingsCatalog.textureBudgetOptions`.
+    /// An index into `TextureBudget.choiceTitles`: 0 is Automatic.
     public static let textureBudget = Self("rendering.textureBudget")
     /// Traces sun shadows on GPUs with hardware ray tracing; ignored elsewhere.
     public static let rayTracedShadows = Self("rendering.rayTracedShadows")
@@ -257,9 +320,17 @@ nonisolated extension PlayerSettingID {
     public static let frameInterpolation = Self("rendering.frameInterpolation")
     /// Draws grass with object and mesh shaders that cull meshlets on the GPU.
     public static let meshShaderGrass = Self("rendering.meshShaderGrass")
+    public static let fullScreen = Self("window.fullScreen")
+    /// An index into `PlayerSettingsCatalog.frameRateCapOptions`.
+    public static let frameRateCap = Self("window.frameRateCap")
 
-    /// The switch of one cached asset kind, by its cache folder name.
-    public static func assetCacheKind(folder: String) -> Self {
-        Self("assetCache.kind.\(folder)")
+    /// The switch of one optimised asset kind, by its folder name.
+    public static func assetKind(folder: String) -> Self {
+        Self("assetOptimisation.kind.\(folder)")
+    }
+
+    /// The forced format of one texture group: `color`, `normal`, or `data`.
+    public static func textureFormat(group: String) -> Self {
+        Self("assetOptimisation.textureFormat.\(group)")
     }
 }

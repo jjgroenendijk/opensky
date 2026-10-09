@@ -15,7 +15,7 @@ struct AssetCacheEntryCodecTests {
             contentHash: 99
         ),
         converterVersion: 3,
-        preset: .highestQuality
+        output: 0x42
     )
 
     @Test func theHeaderAndPayloadRoundTrip() throws {
@@ -42,13 +42,6 @@ struct AssetCacheEntryCodecTests {
         }
         #expect(throws: AssetCacheEntryError.truncated) {
             try AssetCacheEntryCodec.decode(file + Data([0]))
-        }
-    }
-
-    @Test func eachPresetHasALimitThatFitsItsEstimate() {
-        for preset in AssetQualityPreset.allCases {
-            #expect(preset.defaultLimitBytes > preset.estimatedBaseGameCacheBytes)
-            #expect(preset.defaultLimitBytes % (1 << 30) == 0)
         }
     }
 }

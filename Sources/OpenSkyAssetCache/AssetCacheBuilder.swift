@@ -71,16 +71,16 @@ nonisolated public final class AssetCacheBuilder: Sendable {
     public let store: AssetCacheStore
     let files: any GameFileSource
     private let converters: [any AssetConverting]
-    public let preset: AssetQualityPreset
+    public let textureOutput: AssetTextureOutput
 
     public init(
         store: AssetCacheStore, files: any GameFileSource, converters: [any AssetConverting],
-        preset: AssetQualityPreset
+        textureOutput: AssetTextureOutput = AssetTextureOutput()
     ) {
         self.store = store
         self.files = files
         self.converters = converters
-        self.preset = preset
+        self.textureOutput = textureOutput
     }
 
     /// One item per path and converter that accepts it, in path order.
@@ -149,7 +149,7 @@ nonisolated public final class AssetCacheBuilder: Sendable {
         )
         return AssetCacheRequest(
             kind: item.converter.kind, source: source, converterVersion: item.converter.version,
-            preset: preset
+            output: item.converter.kind == .texture ? textureOutput.variant(forPath: item.path) : 0
         )
     }
 
@@ -174,7 +174,7 @@ nonisolated public final class AssetCacheBuilder: Sendable {
                 let payload = try item.converter.convert(
                     path: item.path,
                     bytes: bytes,
-                    preset: preset
+                    output: textureOutput
                 )
             else {
                 // An empty entry records that the original loads, so a check counts it as current.

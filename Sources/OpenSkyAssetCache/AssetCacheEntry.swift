@@ -9,7 +9,6 @@ nonisolated public enum AssetCacheEntryError: Error, Equatable, Sendable {
     case badMagic
     case unsupportedHeaderVersion(UInt16)
     case unknownKind(UInt8)
-    case unknownPreset(UInt8)
     case truncated
 }
 
@@ -18,16 +17,17 @@ nonisolated public struct AssetCacheEntryHeader: Equatable, Sendable {
     public let kind: AssetCacheKind
     public let source: AssetSourceStamp
     public let converterVersion: UInt32
-    public let preset: AssetQualityPreset
+    /// Which texture output built it (`AssetTextureOutput.variant`); 0 for other kinds.
+    public let output: UInt8
 
     public init(
         kind: AssetCacheKind, source: AssetSourceStamp, converterVersion: UInt32,
-        preset: AssetQualityPreset
+        output: UInt8
     ) {
         self.kind = kind
         self.source = source
         self.converterVersion = converterVersion
-        self.preset = preset
+        self.output = output
     }
 }
 
@@ -42,7 +42,7 @@ nonisolated public enum AssetCacheEntryCodec {
         writer.write(magic)
         writer.writeUInt16(headerVersion)
         writer.writeUInt8(header.kind.rawValue)
-        writer.writeUInt8(header.preset.rawValue)
+        writer.writeUInt8(header.output)
         writer.writeUInt32(header.converterVersion)
         writer.writeUInt64(header.source.size)
         writer.writeUInt64(UInt64(bitPattern: header.source.modified))
@@ -113,10 +113,7 @@ nonisolated public enum AssetCacheEntryCodec {
         guard let kind = AssetCacheKind(rawValue: kindRaw) else {
             throw AssetCacheEntryError.unknownKind(kindRaw)
         }
-        let presetRaw = try reader.readUInt8()
-        guard let preset = AssetQualityPreset(rawValue: presetRaw) else {
-            throw AssetCacheEntryError.unknownPreset(presetRaw)
-        }
+        let output = try reader.readUInt8()
         let converterVersion = try reader.readUInt32()
         let size = try reader.readUInt64()
         let modified = try Int64(bitPattern: reader.readUInt64())
@@ -127,7 +124,7 @@ nonisolated public enum AssetCacheEntryCodec {
             origin: origin, path: path, size: size, modified: modified, contentHash: hash
         )
         return AssetCacheEntryHeader(
-            kind: kind, source: source, converterVersion: converterVersion, preset: preset
+            kind: kind, source: source, converterVersion: converterVersion, output: output
         )
     }
 

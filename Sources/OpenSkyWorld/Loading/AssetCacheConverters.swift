@@ -1,4 +1,4 @@
-// The converters one cache build runs, picked by preset. The app and openskycli
+// The converters one conversion runs, picked by texture output. The app and openskycli
 // build with the same set, so their caches match.
 
 import Foundation
@@ -11,15 +11,14 @@ nonisolated public enum AssetCacheConvertersError: Error, Equatable {
 }
 
 nonisolated public enum AssetCacheConverters {
-    /// A preset with ASTC textures needs a Metal device to decode the shipped blocks.
+    /// An output that re-encodes textures needs a Metal device to decode the shipped blocks.
     public static func make(
-        preset: AssetQualityPreset, device: (any MTLDevice)?, library: (any MTLLibrary)?
+        textureOutput: AssetTextureOutput, device: (any MTLDevice)?, library: (any MTLLibrary)?
     ) throws -> [any AssetConverting] {
         var converters: [any AssetConverting] = [
             ReadyMeshConverter(), ReadyCollisionConverter()
         ]
-        let needsASTC = preset.values.textures.values.contains { $0 != .shipped }
-        if needsASTC {
+        if textureOutput.needsEncoder {
             guard let device, let library else { throw AssetCacheConvertersError.metalUnavailable }
             try converters.insert(ASTCTextureConverter(device: device, library: library), at: 0)
         } else {
@@ -28,9 +27,13 @@ nonisolated public enum AssetCacheConverters {
         return converters
     }
 
-    /// The converters for `preset` on the system GPU, with the bundled shaders.
-    public static func make(preset: AssetQualityPreset) throws -> [any AssetConverting] {
+    /// The converters for `textureOutput` on the system GPU, with the bundled shaders.
+    public static func make(textureOutput: AssetTextureOutput) throws -> [any AssetConverting] {
         let device = MTLCreateSystemDefaultDevice()
-        return try make(preset: preset, device: device, library: device?.makeDefaultLibrary())
+        return try make(
+            textureOutput: textureOutput,
+            device: device,
+            library: device?.makeDefaultLibrary()
+        )
     }
 }

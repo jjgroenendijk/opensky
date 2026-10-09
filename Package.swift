@@ -331,8 +331,8 @@ targets += foundation(
 )
 targets += foundation(
     "OpenSkyLaunch",
-    dependencies: ["OpenSkyGameData"],
-    tests: ["OpenSkyGameData"]
+    dependencies: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyGameData"],
+    tests: ["OpenSkyFormatsCore", "OpenSkyGameData", "FormatsTesting"]
 )
 targets += foundation("OpenSkyDiagnostics", dependencies: ["OpenSkyShaderTypes"])
 // The agent control protocol, socket, and router; the app and openskycli both link it.

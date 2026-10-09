@@ -58,7 +58,7 @@ nonisolated public final class AssetCacheReader: Sendable {
     private let files: any GameFileSource
     private struct State {
         var isEnabled: Bool
-        var preset: AssetQualityPreset
+        var textureOutput: AssetTextureOutput
         var kinds: Set<AssetCacheKind>
         var counts: [AssetCacheKind: AssetCacheReadCounts] = [:]
         var rebuild: Set<AssetCacheRebuildItem> = []
@@ -70,13 +70,13 @@ nonisolated public final class AssetCacheReader: Sendable {
     public init(
         store: AssetCacheStore,
         files: any GameFileSource,
-        preset: AssetQualityPreset,
+        textureOutput: AssetTextureOutput = AssetTextureOutput(),
         isEnabled: Bool = true,
         kinds: Set<AssetCacheKind> = Set(AssetCacheKind.built)
     ) {
         self.store = store
         self.files = files
-        state = Mutex(State(isEnabled: isEnabled, preset: preset, kinds: kinds))
+        state = Mutex(State(isEnabled: isEnabled, textureOutput: textureOutput, kinds: kinds))
     }
 
     /// Off means every load reads the original files, for comparison.
@@ -85,9 +85,9 @@ nonisolated public final class AssetCacheReader: Sendable {
         set { state.withLock { $0.isEnabled = newValue } }
     }
 
-    public var preset: AssetQualityPreset {
-        get { state.withLock { $0.preset } }
-        set { state.withLock { $0.preset = newValue } }
+    public var textureOutput: AssetTextureOutput {
+        get { state.withLock { $0.textureOutput } }
+        set { state.withLock { $0.textureOutput = newValue } }
     }
 
     /// A kind left out reads the original files; its entries stay on disk.
@@ -155,14 +155,14 @@ nonisolated public final class AssetCacheReader: Sendable {
         path: String, decoder: AssetCacheDecoder<Value>,
         lookup: (AssetCacheRequest) -> AssetCacheLookup
     ) -> AssetCacheEntryRead<Value>? {
-        let (enabled, preset) = state.withLock {
-            ($0.isEnabled && $0.kinds.contains(decoder.kind), $0.preset)
+        let (enabled, output) = state.withLock {
+            ($0.isEnabled && $0.kinds.contains(decoder.kind), $0.textureOutput)
         }
         guard enabled, let source = stamp(forPath: path) else { return nil }
         state.withLock { _ = $0.requested.insert(source.path) }
         let request = AssetCacheRequest(
             kind: decoder.kind, source: source, converterVersion: decoder.converterVersion,
-            preset: preset
+            output: decoder.kind == .texture ? output.variant(forPath: source.path) : 0
         )
         switch lookup(request) {
         case let .hit(hit) where hit.payload.isEmpty:

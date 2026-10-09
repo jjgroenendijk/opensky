@@ -1,15 +1,21 @@
-// `asset-cache` and the cache options the benchmarks share.
+// `asset-optimisation` and the options the benchmarks share.
 
 import ArgumentParser
 
-/// The cache settings. Each one the user leaves out comes from the app's settings.
+/// The optimisation settings. Each one the user leaves out comes from the app's settings.
 public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {
-    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "best|balanced|highest"))
-    public var preset: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp("The cache folder.", valueName: "dir"))
+    @Option(parsing: .unconditional, help: ArgumentHelp(valueName: "original|high|medium|low"))
+    public var textureQuality: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("Drop texture levels larger than this side.", valueName: "pixels")
+    )
+    public var maxTextureSide: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("The optimised files folder.", valueName: "dir")
+    )
     public var folder: String?
-    @Option(parsing: .unconditional, help: ArgumentHelp("The size limit.", valueName: "n"))
-    public var limitGib: String?
     @Option(
         parsing: .unconditional,
         help: ArgumentHelp("Asset kinds, separated by commas.", valueName: "list")
@@ -19,15 +25,24 @@ public struct AssetCacheSettingsOptions: ParsableArguments, Sendable {
     public init() {}
 }
 
-/// How the benchmarks load assets: through the cache, fast loading, or loose copies.
+/// How the benchmarks load assets: optimised files, direct GPU loading, or loose copies.
 public struct AssetLoadArguments: ParsableArguments, Sendable {
-    @Flag(help: "Load through the asset cache.")
+    @Flag(
+        name: [.customLong("asset-optimisation"), .customLong("asset-cache")],
+        help: "Load the optimised files."
+    )
     public var assetCache = false
     @Flag(help: "Drop the files from the page cache first.")
     public var evict = false
-    @Flag(help: "Read cached textures with Metal fast resource loading.")
+    @Flag(
+        name: [.customLong("direct-load"), .customLong("fast-load")],
+        help: "Read optimised textures straight into GPU memory."
+    )
     public var fastLoad = false
-    @Flag(help: "Read cached meshes with Metal fast resource loading.")
+    @Flag(
+        name: [.customLong("direct-mesh-load"), .customLong("fast-mesh-load")],
+        help: "Read optimised meshes straight into GPU memory."
+    )
     public var fastMeshLoad = false
     @Option(
         parsing: .unconditional,
@@ -69,7 +84,7 @@ public enum AssetCacheAction: String, Sendable {
     case build, check, clear, status, extract, ioBench = "io-bench", measure
 }
 
-/// One `asset-cache` action except `compare`.
+/// One `asset-optimisation` action except `compare`.
 public protocol AssetCacheActionArguments: CLICommandArguments {
     static var action: AssetCacheAction { get }
     var options: AssetCacheActionOptions { get }
@@ -77,12 +92,13 @@ public protocol AssetCacheActionArguments: CLICommandArguments {
 
 public struct AssetCacheArguments: ParsableCommand, Sendable {
     public static let configuration = CommandConfiguration(
-        commandName: "asset-cache",
-        abstract: "Build, check, clear, show, or measure the asset cache.",
+        commandName: "asset-optimisation",
+        abstract: "Convert, check, clear, show, or measure the optimised asset files.",
         subcommands: [
             Build.self, Check.self, Clear.self, Status.self, Extract.self, IOBench.self,
             Measure.self, Compare.self
-        ]
+        ],
+        aliases: ["asset-cache"]
     )
 
     public init() {}
@@ -90,7 +106,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
     public struct Build: AssetCacheActionArguments {
         public static let configuration = CommandConfiguration(
             commandName: "build",
-            abstract: "Build the cache."
+            abstract: "Convert the files that wait."
         )
         public static let action = AssetCacheAction.build
         @OptionGroup public var global: GlobalOptions
@@ -102,7 +118,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
     public struct Check: AssetCacheActionArguments {
         public static let configuration = CommandConfiguration(
             commandName: "check",
-            abstract: "Check every cache entry against its source."
+            abstract: "Count the files that are current, stale, or missing."
         )
         public static let action = AssetCacheAction.check
         @OptionGroup public var global: GlobalOptions
@@ -114,7 +130,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
     public struct Clear: AssetCacheActionArguments {
         public static let configuration = CommandConfiguration(
             commandName: "clear",
-            abstract: "Delete the cache."
+            abstract: "Delete the optimised files."
         )
         public static let action = AssetCacheAction.clear
         @OptionGroup public var global: GlobalOptions
@@ -126,7 +142,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
     public struct Status: AssetCacheActionArguments {
         public static let configuration = CommandConfiguration(
             commandName: "status",
-            abstract: "Show the cache settings and contents."
+            abstract: "Show the settings and the folder contents."
         )
         public static let action = AssetCacheAction.status
         @OptionGroup public var global: GlobalOptions
@@ -162,7 +178,7 @@ public struct AssetCacheArguments: ParsableCommand, Sendable {
     public struct Measure: AssetCacheActionArguments {
         public static let configuration = CommandConfiguration(
             commandName: "measure",
-            abstract: "Per asset kind, load a sample from the archives and the cache."
+            abstract: "Per asset kind, load a sample from the archives and the optimised files."
         )
         public static let action = AssetCacheAction.measure
         @OptionGroup public var global: GlobalOptions

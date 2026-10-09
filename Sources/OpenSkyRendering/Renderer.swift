@@ -85,6 +85,8 @@ public final class Renderer: NSObject {
     /// A/B toggle from `World > Environment > Sun shadows`. Default on; ANDed
     /// with `shadowQuality` so it flips shadows without discarding the tier.
     public var sunShadowsEnabled = true
+    /// The most real frames a second the live view draws; 0 is no cap.
+    public var frameRateCap = 0
     /// Sun-shadow quality. `.off` skips the pass; `.low` and `.high` differ in cascades,
     /// range and PCF taps. Set on the main thread between frames.
     public var shadowQuality = ShadowQuality.high

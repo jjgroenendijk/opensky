@@ -9,6 +9,7 @@ import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyLaunch
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkySave
@@ -232,6 +233,19 @@ extension MenuWorldAdapter {
         movePlayer(openingRaceMenu: openingRaceMenu) { [game] () throws(AgentFailure) in
             try AgentTeleportJob(adapter: game.agentWorld, target: target)
         }
+    }
+
+    /// A launcher start option: the player moves there behind the loading screen,
+    /// with no new game and no race menu.
+    func startPlayer(at start: LaunchStart) {
+        let target: AgentTeleportTarget
+        switch start {
+        case .normal: return
+        case let .cell(editorID): target = .cell(editorID)
+        case let .exterior(_, x, y): target = .grid(x: x, y: y)
+        }
+        coverNextTeleport = true
+        teleportPlayer(target, openingRaceMenu: false)
     }
 
     /// A load puts the player back where the save was made, behind the loading screen.

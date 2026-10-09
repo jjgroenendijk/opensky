@@ -1,21 +1,20 @@
-// The text the Asset Cache page shows, built from values so tests can pin it.
+// The text the Asset Optimisation page shows, built from values so tests can pin it.
 
 import Foundation
 import OpenSkyAssetCache
 import OpenSkyRendering
 
 nonisolated public enum AssetCacheReadout {
-    /// `Balanced: about 22 GiB, 4 min to build`.
-    public static func presetTitle(_ preset: AssetQualityPreset, cores: Int) -> String {
-        "\(preset.title): about \(preset.estimatedBaseGameCacheBytes >> 30) GiB, "
-            + "\(duration(preset.estimatedBuildSeconds(cores: cores))) to build"
+    /// `High: no visible loss`, for the texture quality menu.
+    public static func qualityTitle(_ quality: TextureQuality) -> String {
+        "\(quality.title): \(quality.label.prefix(1).lowercased())\(quality.label.dropFirst())"
     }
 
-    /// `Size: 3.2 GiB of 25 GiB, 1200 entries`.
-    public static func sizeLine(_ usage: AssetCacheUsage?, limitBytes: UInt64) -> String {
-        guard let usage else { return "Size: empty, limit \(limitBytes >> 30) GiB" }
+    /// `Size: 3.2 GiB, 1200 files`.
+    public static func sizeLine(_ usage: AssetCacheUsage?) -> String {
+        guard let usage else { return "Size: empty" }
         return "Size: " + String(format: "%.1f", Double(usage.bytes) / Double(1 << 30))
-            + " GiB of \(limitBytes >> 30) GiB, \(usage.entryCount) entries"
+            + " GiB, \(usage.entryCount) files"
     }
 
     public static func stateLine(
@@ -37,16 +36,16 @@ nonisolated public enum AssetCacheReadout {
         }
     }
 
-    /// `Build: 1200 of 98000 files, about 3 min left` or the outcome of the last build.
+    /// `Conversion: 1200 of 98000 files, about 3 min left`, or how the last one ended.
     public static func buildLine(_ progress: AssetCacheBuildProgress?, isBuilding: Bool) -> String {
-        guard let progress else { return "Build: none" }
+        guard let progress else { return "Conversion: none" }
         if isBuilding {
             let left = progress.estimatedSecondsLeft.map { ", about \(duration($0)) left" } ?? ""
-            return "Build: \(progress.doneFiles) of \(progress.totalFiles) files\(left)"
+            return "Conversion: \(progress.doneFiles) of \(progress.totalFiles) files\(left)"
         }
         let outcome = progress.isCancelled ? "cancelled" : "done"
         let failed = progress.failures.count
-        return "Build: \(outcome), \(progress.converted) converted, \(failed) failed"
+        return "Conversion: \(outcome), \(progress.converted) converted, \(failed) failed"
     }
 
     /// `Textures: 32918 entries, 4.1 GiB` for a kind's control on the cache page.
@@ -107,13 +106,13 @@ nonisolated public enum AssetCacheReadout {
         }
     }
 
-    /// `Fast load: 412 textures, 380 MiB`, the meshes, then the last cell load.
-    public static func fastLoadLines(_ stats: FastTextureLoadStats) -> [String] {
+    /// `Direct GPU loading: 412 textures, 380 MiB`, the meshes, then the last cell load.
+    public static func directLoadLines(_ stats: FastTextureLoadStats) -> [String] {
         guard stats.batches > 0 || stats.externalSkips > 0 else {
-            return ["Fast load: no cell loaded yet"]
+            return ["Direct GPU loading: no cell loaded yet"]
         }
         var lines = [
-            "Fast load: \(stats.textures) textures, \(stats.bytes >> 20) MiB",
+            "Direct GPU loading: \(stats.textures) textures, \(stats.bytes >> 20) MiB",
             "Meshes: \(stats.meshes), \(stats.meshBytes >> 20) MiB",
             "Last cell: \(stats.lastBatchTextures) textures, \(stats.lastBatchMeshes) meshes, "
                 + String(format: "%.0f ms", stats.lastBatchMS)

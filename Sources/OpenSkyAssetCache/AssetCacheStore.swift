@@ -8,26 +8,26 @@ import Foundation
 import Synchronization
 
 /// What one lookup asks for: a kind of asset from one source, built by one
-/// converter version for one preset.
+/// converter version for one texture output.
 nonisolated public struct AssetCacheRequest: Hashable, Sendable {
     public let kind: AssetCacheKind
     public let source: AssetSourceStamp
     public let converterVersion: UInt32
-    public let preset: AssetQualityPreset
+    public let output: UInt8
 
     public init(
         kind: AssetCacheKind, source: AssetSourceStamp, converterVersion: UInt32,
-        preset: AssetQualityPreset
+        output: UInt8 = 0
     ) {
         self.kind = kind
         self.source = source
         self.converterVersion = converterVersion
-        self.preset = preset
+        self.output = output
     }
 
     var header: AssetCacheEntryHeader {
         AssetCacheEntryHeader(
-            kind: kind, source: source, converterVersion: converterVersion, preset: preset
+            kind: kind, source: source, converterVersion: converterVersion, output: output
         )
     }
 }
@@ -36,7 +36,8 @@ nonisolated public struct AssetCacheRequest: Hashable, Sendable {
 nonisolated public enum AssetCacheStaleness: Equatable, Sendable {
     case sourceChanged
     case converterChanged(built: UInt32)
-    case presetChanged(built: AssetQualityPreset)
+    /// Only textures have outputs, so meshes and collision never read as this.
+    case outputChanged(built: UInt8)
 }
 
 nonisolated public struct AssetCacheHit: Sendable {
@@ -61,7 +62,7 @@ nonisolated public enum AssetCacheLookup: Sendable {
 
 nonisolated public enum AssetCacheEntryState: Equatable, Sendable {
     case current
-    /// Built from another source, converter, or preset, or broken.
+    /// Built from another source, converter, or texture output, or broken.
     case stale
     case missing
 }
@@ -100,6 +101,9 @@ nonisolated public final class AssetCacheStore: Sendable {
     private let limit: Mutex<UInt64>
 
     /// Creates the folder when needed and removes leftovers of interrupted writes.
+    /// The player sets no limit; the space check before a conversion guards the disk.
+    public static let noLimit = UInt64.max
+
     public init(root: URL, limitBytes: UInt64) throws {
         self.root = root
         limit = Mutex(limitBytes)
@@ -290,8 +294,8 @@ nonisolated public final class AssetCacheStore: Sendable {
         if header.converterVersion != request.converterVersion {
             return .converterChanged(built: header.converterVersion)
         }
-        if header.preset != request.preset {
-            return .presetChanged(built: header.preset)
+        if request.kind == .texture, header.output != request.output {
+            return .outputChanged(built: header.output)
         }
         return nil
     }

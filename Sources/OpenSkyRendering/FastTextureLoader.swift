@@ -3,7 +3,7 @@
 // textures, and `flush` waits for it. A batch is one cell build, so the cell
 // is handed over only after its textures are complete. Scratch memory for the
 // texture copies is freed per command, not pooled by the queue.
-// See docs/engine/asset-cache.md, "Fast resource loading".
+// See docs/engine/asset-cache.md, "Direct GPU loading".
 
 import Foundation
 import Metal
@@ -34,11 +34,19 @@ nonisolated public struct FastTextureLoadStats: Equatable, Sendable {
 nonisolated public final class FastTextureLoadControl: Sendable {
     private let enabled: Atomic<Bool>
     private let meshesEnabled: Atomic<Bool>
+    private let externalEnabled: Atomic<Bool>
     private let stats = Mutex(FastTextureLoadStats())
 
-    public init(isEnabled: Bool, loadsMeshes: Bool = false) {
+    public init(isEnabled: Bool, loadsMeshes: Bool = false, readsExternalDisks: Bool = false) {
         enabled = Atomic(isEnabled)
         meshesEnabled = Atomic(loadsMeshes)
+        externalEnabled = Atomic(readsExternalDisks)
+    }
+
+    /// External disks too. Off by default: there it saves no time and keeps scratch memory.
+    public var readsExternalDisks: Bool {
+        get { externalEnabled.load(ordering: .relaxed) }
+        set { externalEnabled.store(newValue, ordering: .relaxed) }
     }
 
     public var isEnabled: Bool {
@@ -96,8 +104,11 @@ nonisolated public final class FastTextureLoader {
 
     /// The IO queue keeps the memory of each scratch buffer it used. From an
     /// external disk it saves no time, so it reads only from internal volumes.
-    /// See docs/engine/asset-cache.md, "Fast resource loading".
+    /// See docs/engine/asset-cache.md, "Direct GPU loading".
     public func reads(from file: URL) -> Bool {
+        if control.readsExternalDisks {
+            return true
+        }
         let folder = file.deletingLastPathComponent()
         if let known = internalFolders[folder] {
             return known

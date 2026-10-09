@@ -4,6 +4,7 @@
 
 import AppKit
 import MetalKit
+import OpenSkyGameData
 import OpenSkyLaunch
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -18,6 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The running mode, or nil while the launcher is up.
     private(set) var activeMode: LaunchMode?
+    /// Where the next Play window starts: a launcher start option or a save to continue.
+    private var pendingStart = LaunchStart.normal
+    private var pendingContinueSlot: String?
 
     func applicationDidFinishLaunching(_: Notification) {
         // The shell is a committed dark design (Theme.swift): forcing dark
@@ -67,6 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func makeModeWindow(for mode: LaunchMode, atTitleScreen: Bool) -> NSWindow {
         let game = makeGame(for: mode)
         game.startsAtTitleScreen = atTitleScreen
+        if mode == .play {
+            game.launchStart = pendingStart
+            game.continueSlot = pendingContinueSlot
+        }
+        pendingStart = .normal
+        pendingContinueSlot = nil
         switch mode {
         case .play:
             shellViewController = nil
@@ -144,7 +154,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension AppDelegate: LauncherActions {
     func start(_ mode: LaunchMode) {
-        begin(mode, atTitleScreen: mode.opensAtTitleScreen)
+        pendingStart = mode == .play ? LaunchPreferences.savedStart() : .normal
+        pendingContinueSlot = nil
+        begin(mode, atTitleScreen: mode.opensAtTitleScreen && pendingStart == .normal)
+    }
+
+    func continueGame(slot: String) {
+        pendingStart = .normal
+        pendingContinueSlot = slot
+        begin(.play, atTitleScreen: false)
     }
 
     func gameFolderDidChange() {
@@ -198,6 +216,16 @@ extension AppDelegate: LauncherActions {
         activeMode = mode
         window.makeKeyAndOrderFront(nil)
         launcherWindow?.orderOut(nil)
+        if
+            mode == .play, Self.savedSettings().bool(.fullScreen),
+            !window.styleMask.contains(.fullScreen)
+        {
+            window.toggleFullScreen(nil)
+        }
+    }
+
+    private static func savedSettings() -> PlayerSettingsStore {
+        PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
     }
 }
 

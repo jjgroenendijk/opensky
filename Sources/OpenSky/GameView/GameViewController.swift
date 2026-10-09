@@ -15,6 +15,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyLaunch
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
@@ -32,6 +33,10 @@ final class GameViewController: NSViewController {
     var startupErrorMessage: String?
     /// Set by the launch mode; the player setting can also ask for it.
     var startsAtTitleScreen = false
+    /// Where Play starts, from the launcher. Ignored when `continueSlot` is set.
+    var launchStart = LaunchStart.normal
+    /// The save the launcher's Continue loads.
+    var continueSlot: String?
 
     /// Loaded off the main actor before the view loads, on the system default
     /// device the view also uses. Nil falls back to `DemoScene`.
@@ -396,7 +401,12 @@ extension GameViewController {
             sessionWiring.wireStreaming(session: session, renderer: newRenderer)
         }
         // After the world data, because the title's logo loads through it.
-        if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
+        if let continueSlot {
+            loadingWorld.coverSessionStart()
+            titleMenu.load(continueSlot)
+        } else if launchStart != .normal {
+            menuWorld.startPlayer(at: launchStart)
+        } else if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
             titleMenu.open()
         } else {
             loadingWorld.coverSessionStart()

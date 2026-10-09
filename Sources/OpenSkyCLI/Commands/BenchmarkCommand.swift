@@ -201,18 +201,7 @@ enum BenchmarkCommand {
         if coldPipelines, let folder = PipelineCache.archiveFolder(store: store) {
             try PipelineCacheFolder.clear(folder: folder)
         }
-        let view = MTKView(
-            frame: CGRect(x: 0, y: 0, width: plan.frameWidth, height: plan.frameHeight),
-            device: device
-        )
-        view.isPaused = true
-        view.enableSetNeedsDisplay = false
-        return try Renderer(
-            view: view,
-            scene: RenderScene(instances: []),
-            movementConfiguration: .synthetic,
-            pipelineCache: PipelineCache.fromSettings(device: device, store: store)
-        )
+        return try StandardBenchmark.makeRenderer(device: device, plan: plan, store: store)
     }
 
     private static func writeView(

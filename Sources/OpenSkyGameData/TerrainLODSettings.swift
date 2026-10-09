@@ -71,18 +71,20 @@ nonisolated public enum TerrainLODSettings: Sendable {
         ]
     }
 
+    /// `settings`, the player settings file's bytes, adds the Graphics page's view
+    /// distances over the INI files. The developer sidebar override wins over both.
     public static func load(
         root: GameDataRoot?,
         defaults: UserDefaults = GameDataLocator.settingsDefaults,
+        settings: Data? = nil,
         fileManager: FileManager = .default
     ) -> TerrainLODConfigurationSnapshot {
         let base = root.map {
-            resolve(
-                INISettings.load(
-                    candidates: iniCandidates(installURL: $0.installURL),
-                    fileManager: fileManager
-                )
+            let ini = INISettings.load(
+                candidates: iniCandidates(installURL: $0.installURL),
+                fileManager: fileManager
             )
+            return applyingGraphics(resolve(ini), ini: ini, settings: settings)
         } ?? TerrainLODConfigurationSnapshot(
             configuration: .fallback,
             source: "safe defaults"
@@ -94,6 +96,36 @@ nonisolated public enum TerrainLODSettings: Sendable {
             )
         }
         return base
+    }
+
+    /// The store's defaults come from the same INI files, so an unchanged store keeps them.
+    static func applyingGraphics(
+        _ snapshot: TerrainLODConfigurationSnapshot, ini: INISettings,
+        settings: Data?
+    ) -> TerrainLODConfigurationSnapshot {
+        let catalog = PlayerSettingsCatalog.vanilla.applyingINIDefaults(ini)
+        guard
+            let settings, let model = try? PlayerSettingsModel(
+                decoding: settings,
+                catalog: catalog
+            )
+        else { return snapshot }
+        func distance(_ key: String) -> Float {
+            Float(model.value(PlayerSettingID("graphics.\(key)"), in: catalog))
+        }
+        let configuration = TerrainLODConfiguration(
+            level0Distance: distance("fBlockLevel0Distance"),
+            level1Distance: distance("fBlockLevel1Distance"),
+            maximumDistance: distance("fBlockMaximumDistance"),
+            treeLoadDistance: distance("fTreeLoadDistance")
+        )
+        guard
+            configuration != snapshot.configuration,
+            configuration.isValid else { return snapshot }
+        return TerrainLODConfigurationSnapshot(
+            configuration: configuration,
+            source: "OpenSky Graphics page"
+        )
     }
 
     public static func resolve(_ ini: INISettings) -> TerrainLODConfigurationSnapshot {

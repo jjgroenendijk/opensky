@@ -67,7 +67,9 @@ final class GameLaunchContext {
             gameDataErrorMessage = message
         }
         localizationLanguage = LocalizationLanguageSettings.load(root: gameDataRoot)
-        terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(root: gameDataRoot))
+        terrainLODConfigurationStore.replace(with: TerrainLODSettings.load(
+            root: gameDataRoot, settings: PlayerSettingsFile.savedData()
+        ))
     }
 
     /// Opens the archives and builds the world data of the resolved root off the
@@ -174,7 +176,9 @@ final class GameLaunchContext {
         // The control exists whenever the cache does, so the panel can turn it on later.
         let fastLoad = cache.map { _ in
             FastTextureLoadControl(
-                isEnabled: cacheSettings.fastLoad, loadsMeshes: cacheSettings.fastMeshLoad
+                isEnabled: cacheSettings.directLoad.loadsTextures,
+                loadsMeshes: cacheSettings.directLoad.loadsMeshes,
+                readsExternalDisks: cacheSettings.directLoad.allDisks
             )
         }
         do {
@@ -213,10 +217,8 @@ final class GameLaunchContext {
                 gameInstall: root.installURL
             )
         } catch {
-            logger
-                .error(
-                    "[ERROR] asset cache not opened: \(String(describing: error), privacy: .public)"
-                )
+            let reason = String(describing: error)
+            logger.error("[ERROR] optimised files not opened: \(reason, privacy: .public)")
             return nil
         }
     }

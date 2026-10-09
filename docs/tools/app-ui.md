@@ -25,22 +25,32 @@ The app opens on the launcher, not on the developer shell. The launcher holds:
   inspector, or frame HUD. Developer Mode opens the shell this page describes. Play needs a
   valid game folder; Developer Mode does not, because the shell shows a demo scene without one.
   Return chooses the mode the user picked last.
-- A page list on the left: Launch, Asset Cache, Graphics, and Settings. Settings is the same
-  view as the Cmd+, window. Asset Cache picks the quality preset, the folder, and the size
-  limit, and builds, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules
-  live in `AssetCacheCoordinator` in `OpenSkyWorld`. Graphics holds the switches of the GPU
-  performance features, such as the [pipeline cache](/rendering/pipeline-cache.md),
-  [GPU culling](/rendering/gpu-culling.md), and
-  [texture streaming](/rendering/texture-streaming.md). It writes the player settings file,
-  which the game reads when it starts.
+- A page list on the left: Launch, Asset Optimisation, Graphics, Diagnostics, and Settings.
+  Settings is the same view as the Cmd+, window.
+  - Launch checks the install, offers Continue and the start of Play, and shows the asset
+    optimisation status with a link to its page.
+  - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
+    converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
+    `AssetCacheCoordinator` in `OpenSkyWorld`, shared by the pages through `LauncherContext`.
+  - Graphics holds a preset, the base game's options, and the GPU features, such as the
+    [pipeline cache](/rendering/pipeline-cache.md) and
+    [texture streaming](/rendering/texture-streaming.md)
+    ([graphics options](/engine/graphics-options.md)). It writes the player settings file,
+    which the game reads when it starts.
+  - Diagnostics opens the logs folder, copies a system report, and runs the benchmark.
 
 The rules live in `OpenSkyLaunch`, a package module, so they are tested without AppKit:
 `LaunchMode`, the remembered mode, and `GameFolderStatus`. The app only draws them.
 
 To add a launch mode, add a case to `LaunchMode` and a descriptor to `LauncherRegistry.modes`.
-To add a page, such as a mods list or an asset cache, add one descriptor to
-`LauncherRegistry.pages`. Put the page's rules in its own package module, not in the view
-controller.
+To add a page, such as a mods list, add one descriptor to `LauncherRegistry.pages`. Put the
+page's rules in its own package module, not in the view controller.
+
+A launcher page is built with `LauncherPageLayout`: a title, an optional status line
+(`LauncherStatusView`) with a symbol, a word, and one line of detail, then titled groups. A
+row that only a curious player needs is wrapped in `layout.detail(_:)`, and the "Show
+details" switch at the top of every page shows those rows. The switch is one setting for all
+pages, so the launcher stays short by default.
 
 A launch mode first loads the world data off the main actor. While it runs, the launch page
 shows a load panel instead of the mode buttons: a progress bar, the stages that run now, one row
@@ -244,8 +254,10 @@ Accessibility ids are the UI test API and never change silently.
 | Section disclosure | `PanelSection-<sectionIdentifier>-Disclosure` |
 | Reset all menu item | `ResetAllOverridesCommand` |
 | Launcher | `LauncherSidebar`, `LauncherPage-<id>` rows, `Launch<Mode>Control`, `ReturnToLauncherCommand` |
-| Launcher Asset Cache page | `AssetCache<Thing>Control` and `AssetCache<Thing>StatsLabel`, `AssetCacheBuildProgressIndicator` |
-| Launcher Graphics page | `Graphics<Thing>Control` and `GraphicsStatsLabel` |
+| Launcher Asset Optimisation page | `AssetOptimisation<Thing>Control` and `AssetOptimisation<Thing>StatsLabel`, `AssetOptimisationProgressIndicator` |
+| Launcher Graphics page | `Graphics<Thing>Control`, `GraphicsOption<key>Control`, and `GraphicsStatsLabel` |
+| Launcher Diagnostics page | `Diagnostics<Thing>Control` and `Diagnostics<Thing>StatsLabel` |
+| Launcher page details | `<Page>ShowDetailsControl`, `<Name>StatusStatsLabel` |
 | Launcher load panel | `LauncherLoadProgressIndicator`, `LauncherLoadStatusStatsLabel`, `LauncherLoadStageList`, `LauncherLoadStage-<stage>` rows, `LauncherCancelLoadControl` |
 | Toolbar | `ScreenshotButton`, `SidebarToggleButton` (window chrome, the one exception to the suffix rule) |
 | Frame HUD | `FrameHUDStatsLabel` |

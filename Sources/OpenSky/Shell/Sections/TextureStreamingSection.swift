@@ -6,7 +6,7 @@ import OpenSkyGameData
 import OpenSkyRendering
 
 final class TextureStreamingSection: PanelSectionViewController {
-    static let defaultBudgetIndex = 2
+    static let defaultBudgetIndex = 0
 
     weak var provider: (any RenderPerformanceControlProviding)? {
         didSet {
@@ -58,7 +58,7 @@ final class TextureStreamingSection: PanelSectionViewController {
             identifier: "TextureStreamingEnabledControl"
         )
         budgetControl.addItems(
-            withTitles: PlayerSettingsCatalog.textureBudgetOptions.map { "Budget \($0) MiB" }
+            withTitles: TextureBudget.choiceTitles.map { "Budget: \($0)" }
         )
         budgetControl.toolTip = "Far textures drop detail when the levels pass this size."
         PanelComponents.configurePopUp(

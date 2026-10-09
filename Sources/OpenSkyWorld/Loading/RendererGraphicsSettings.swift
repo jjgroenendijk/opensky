@@ -1,6 +1,7 @@
 // The GPU features the player settings ask for. The launcher's Graphics page and the
 // Rendering Performance panel write the same settings.
 
+import Metal
 import OpenSkyGameData
 import OpenSkyRendering
 
@@ -20,19 +21,28 @@ extension Renderer {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         gpuCullingEnabled = store.bool(.gpuCulling)
         textureStreaming.enabled = store.bool(.textureStreaming)
-        textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store)
+        textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store, device: device)
         rayTracedShadows.enabled = store.bool(.rayTracedShadows)
         renderScale = RenderScale(store: store)
         upscaler = UpscalerKind(store: store)
         frameInterpolationEnabled = store.bool(.frameInterpolation)
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)
+        let caps = PlayerSettingsCatalog.frameRateCapOptions
+        frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]
     }
 
-    public static func textureBudgetBytes(store: PlayerSettingsStore) -> Int {
-        let options = PlayerSettingsCatalog.textureBudgetOptions
-        let index = min(max(Int(store.value(.textureBudget)), 0), options.count - 1)
-        return options[index] << 20
+    /// Automatic reads the device now, so it counts what is already allocated.
+    public static func textureBudgetBytes(
+        store: PlayerSettingsStore,
+        device: (any MTLDevice)? = nil
+    ) -> Int {
+        let device = device ?? MTLCreateSystemDefaultDevice()
+        return TextureBudget.bytes(
+            choice: Int(store.value(.textureBudget)),
+            workingSetBytes: device?.recommendedMaxWorkingSetSize ?? 0,
+            allocatedBytes: UInt64(device?.currentAllocatedSize ?? 0)
+        )
     }
 
     /// Streams the textures of the cells `runner` builds from now on.

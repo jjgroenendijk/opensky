@@ -1,7 +1,7 @@
 // Loads one batch of textures, such as the benchmark block's, four ways and
 // times each: the archive path, the cache read on the CPU, and Metal fast
 // resource loading (an IO command queue) from the raw cache entries and from
-// LZ4 copies of them. See docs/engine/asset-cache.md, "Fast resource loading".
+// LZ4 copies of them. See docs/engine/asset-cache.md, "Direct GPU loading".
 
 import Darwin
 import Foundation
@@ -197,7 +197,7 @@ public final class TextureBatchLoadBenchmark {
             source.path.hasSuffix(".dds") else { return nil }
         let request = AssetCacheRequest(
             kind: .texture, source: source, converterVersion: AssetConverterVersion.texture,
-            preset: reader.preset
+            output: reader.textureOutput.variant(forPath: source.path)
         )
         guard
             case let .hit(hit) = reader.store.lookup(request, touching: false),

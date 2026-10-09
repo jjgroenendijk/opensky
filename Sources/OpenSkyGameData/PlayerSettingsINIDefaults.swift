@@ -46,6 +46,9 @@ nonisolated extension PlayerSettingsCatalog {
             let minutes = ini.float(section: "SaveGame", key: "fAutosaveEveryXMins")?.value ?? 15
             overrides[.saveOnPause] = pause == "0" ? 6 : Self.saveOnPauseIndex(minutes: minutes)
         }
+        for option in GraphicsOptions.all {
+            overrides[option.id] = GraphicsOptions.value(option, in: ini)
+        }
         return PlayerSettingsCatalog(definitions: definitions.map { definition in
             guard
                 let raw = overrides[definition.id],

@@ -32,6 +32,11 @@ public final class PlayerSettingsFile: PlayerSettingsPersistence {
         return PlayerSettingsFile(url: directory.appending(path: "Settings.json"))
     }
 
+    /// The saved settings' bytes, or nil when there are none yet.
+    public static func savedData() -> Data? {
+        try? defaultFile().loadSettings()
+    }
+
     public func loadSettings() throws -> Data? {
         guard FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) else {
             return nil
