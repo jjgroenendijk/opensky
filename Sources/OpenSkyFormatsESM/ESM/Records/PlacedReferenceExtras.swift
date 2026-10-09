@@ -73,7 +73,7 @@ nonisolated public struct LockData: Equatable, Sendable {
 
 /// XESP: the reference whose enable state this one follows.
 nonisolated public struct EnableParent: Equatable, Sendable {
-    public let parent: FormID
+    public internal(set) var parent: FormID
     public let flags: UInt8
 
     /// Flag bit 0x01: enabled while the parent is disabled.

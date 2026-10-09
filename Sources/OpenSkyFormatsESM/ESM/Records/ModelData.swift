@@ -18,7 +18,7 @@ nonisolated public struct ModelData: Equatable, Sendable {
     public let path: String
     /// MODT. Its layout changes with the form version, so the bytes stay raw.
     public let textureHashes: Data?
-    public let alternateTextures: [AlternateTexture]
+    public internal(set) var alternateTextures: [AlternateTexture]
 
     public init(
         path: String,

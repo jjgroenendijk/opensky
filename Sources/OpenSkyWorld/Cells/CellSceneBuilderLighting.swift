@@ -155,14 +155,7 @@ nonisolated extension CellSceneBuilder {
         if let lightIndex {
             return lightIndex
         }
-        var index: [UInt32: LightRecord] = [:]
-        if let top = file.topGroup(of: "LIGH"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "LIGH" {
-                if let light = decodeOrSkip(record, using: LightRecord.init(record:)) {
-                    index[record.formID] = light
-                }
-            }
-        }
+        let index = loadOrderRecords(of: "LIGH") { record, _ in try LightRecord(record: record) }
         lightIndex = index
         return index
     }

@@ -262,6 +262,7 @@ enum RenderCommand {
             meshes: meshes,
             textures: textures,
             fileSystem: fileSystem,
+            plugins: ActivePluginFiles.load(root: context.root, baseFile: file),
             terrainLODConfigurationStore: context.makeTerrainLODConfigurationStore()
         )
         builder.loadPhases = recorder

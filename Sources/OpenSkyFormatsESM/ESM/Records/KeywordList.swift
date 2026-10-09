@@ -7,7 +7,7 @@ import OpenSkyFormatsCore
 
 nonisolated public struct KeywordList: Equatable, Sendable {
     /// KWDA entries in file order. Empty when the record carries no keywords.
-    public private(set) var keywords: [FormID] = []
+    public internal(set) var keywords: [FormID] = []
     /// KSIZ as written, kept for diagnostics only. Nil when KSIZ is absent —
     /// which is legal, since a KWDA can appear without one in modded data.
     public private(set) var declaredCount: UInt32?

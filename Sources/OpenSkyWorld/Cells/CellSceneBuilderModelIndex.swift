@@ -21,12 +21,13 @@ nonisolated extension CellSceneBuilder {
             localized: pluginLocalized
         )
         guard
-            let cell = findCell(
+            let found = findCell(
                 in: world.children,
                 gridX: gridX,
                 gridY: gridY,
                 localized: pluginLocalized
-            )
+            ),
+            let cell = loadOrderCell(formID: FormID(found.formID), base: found)
         else {
             throw CellSceneError.cellNotFound(
                 worldspaceEditorID: worldspaceEditorID,
@@ -37,20 +38,12 @@ nonisolated extension CellSceneBuilder {
         return ExteriorBuildSource(world: world, cell: cell)
     }
 
-    /// One plugin means REFR and base IDs share a FormID space for now.
+    /// Keyed in the load-order space, like the references that place them.
     nonisolated public func statIndexBuildingIfNeeded() -> [UInt32: StaticObject] {
         if let statIndex {
             return statIndex
         }
-        var index: [UInt32: StaticObject] = [:]
-        if let top = file.topGroup(of: "STAT"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "STAT" {
-                guard let stat = decodeOrSkip(record, using: StaticObject.init(record:)) else {
-                    continue
-                }
-                index[record.formID] = stat
-            }
-        }
+        let index = loadOrderRecords(of: "STAT") { record, _ in try StaticObject(record: record) }
         statIndex = index
         return index
     }
@@ -60,15 +53,7 @@ nonisolated extension CellSceneBuilder {
         if let textureSetIndex {
             return textureSetIndex
         }
-        var index: [UInt32: TextureSet] = [:]
-        if let top = file.topGroup(of: "TXST"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "TXST" {
-                guard let set = decodeOrSkip(record, using: TextureSet.init(record:)) else {
-                    continue
-                }
-                index[record.formID] = set
-            }
-        }
+        let index = loadOrderRecords(of: "TXST") { record, _ in try TextureSet(record: record) }
         textureSetIndex = index
         return index
     }
@@ -103,17 +88,9 @@ nonisolated extension CellSceneBuilder {
         }
         var index: [UInt32: ModelBase] = [:]
         for type in ModelBase.supportedTypes {
-            guard let top = file.topGroup(of: type), let children = childrenOrSkip(top) else {
-                continue
-            }
-            for case let .record(record) in children where record.type == type {
-                guard
-                    let base = decodeOrSkip(record, using: {
-                        try ModelBase(record: $0, localized: pluginLocalized)
-                    })
-                else { continue }
-                index[record.formID] = base
-            }
+            index.merge(loadOrderRecords(of: type) { record, localized in
+                try ModelBase(record: record, localized: localized)
+            }) { _, later in later }
         }
         modelBaseIndex = index
         return index

@@ -239,7 +239,7 @@ nonisolated extension CellSceneBuilder {
             )
         }
         var counts = BuildCounts()
-        let localRefs = collectReferences(in: found.children, counts: &counts)
+        let localRefs = collectReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
             local: localRefs,

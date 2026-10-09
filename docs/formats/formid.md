@@ -52,12 +52,20 @@ In vanilla, the highest index used is exactly the number of masters. For example
 `Update.esm` and 2 in `Dawnguard.esm`. Vanilla masters: `Update.esm` has `Skyrim.esm`.
 `Dawnguard.esm`, `HearthFires.esm`, and `Dragonborn.esm` have `Skyrim.esm` and `Update.esm`.
 
+## Load-order space
+
 The index the game console shows is different. It depends on the user's full load order.
 OpenSky names a record by (plugin file name, object ID) instead, which does not depend on
-load order. The quest and dialogue stores are the exception: they number records in the
-load-order space, as the console does, so `Skyrim.esm` FormIDs keep their value and a DLC
-record gets its load position as top byte. The links of a dialogue record, such as its quest
-and topic, are renumbered with it.
+load order. The quest and dialogue stores and the cell builder are the exception: they number
+records in the load-order space, as the console does, so `Skyrim.esm` FormIDs keep their
+value and a DLC record gets its load position as top byte. Every FormID a record holds, such
+as a reference's base, its linked references, and its script properties, is renumbered with
+it.
+
+A plugin that lists its masters in load order and loads right after them keeps every FormID
+unchanged, so no renumbering is needed. Every official plugin does: `Update.esm` lists
+`Skyrim.esm`, the DLCs list both, and the Creation Club plugins checked
+list all five official masters.
 
 Conditions stay as their plugin wrote them. The evaluator translates each FormID word into
 the load-order space when it runs. For example, `Dragonborn.esm` writes its own quests as

@@ -145,7 +145,7 @@ that draws the reference now. A build then follows one rule:
 
 - a reference whose relocation names another cell is left out of its plugin cell;
 - a reference whose relocation names this cell joins this cell's build, with the record read
-  from a FormID index over the whole plugin, because its plugin cell may not be loaded.
+  from a FormID index over the whole load order, because its plugin cell may not be loaded.
 
 Moving a reference back to its plugin cell drops the relocation. The same index answers `MoveTo`
 for a reference no loaded cell holds: its state is the plugin record with this session's deltas on
