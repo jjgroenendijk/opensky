@@ -110,7 +110,8 @@ A reference runs the `VMAD` scripts of its base object as well as its own. When 
 script, the reference's property values override the base's, one property at a time, and the
 reference's flags win, so a removed flag drops the base script. Source: the Creation Kit wiki pages
 "Script" and "Reference". OpenSky reads base scripts from the model-base records, such as `ACTI`,
-`CONT`, and `DOOR`. Scripts on an `NPC_` base are not attached yet.
+`CONT`, and `DOOR`, and from an actor's `NPC_` base after its template chain
+([actor resolution](/engine/actor-resolution.md)).
 
 Detach retires the cell's instances in sorted order: the instance leaves, its queued events drop, and
 its suspension records are forgotten.

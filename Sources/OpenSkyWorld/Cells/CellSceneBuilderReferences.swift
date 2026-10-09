@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// A decoded REFR plus the children group it was stored in.
@@ -109,7 +110,13 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
-        guard case let .reference(reference) = record else { return [] }
-        return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData.scripts ?? []
+        switch record {
+        case let .reference(reference):
+            return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData
+                .scripts ?? []
+        case let .actor(actor):
+            let templates = actorResolversBuildingIfNeeded(localized: pluginLocalized).template
+            return (try? templates.resolveScripts(base: actor.base).value) ?? []
+        }
     }
 }
