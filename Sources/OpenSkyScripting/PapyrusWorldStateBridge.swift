@@ -24,7 +24,13 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Set immediately after the world runtime is built — it cannot be an init
     /// parameter, because the runtime is constructed with the native registry
     /// this bridge already lives inside.
-    public weak var world: PapyrusWorldRuntime?
+    public weak var world: PapyrusWorldRuntime? {
+        didSet {
+            world?.attachOnUse = { [weak self] in self?.attachOnUse($0) ?? false }
+            world?.scriptsOfTarget = { [weak self] in self?.scriptsOfTarget($0) ?? [] }
+        }
+    }
+
     public weak var references: (any PapyrusWorldReferenceSource)?
     /// Plugin GLOB defaults. Nil in a synthetic session, where only overrides
     /// already recorded in the store are visible.
@@ -120,6 +126,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var trapWorld: (any PapyrusTrapWorldBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
+    /// Packages, vehicles, and idles for the actor AI natives.
+    public weak var actorAI: (any PapyrusActorAIBridge)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
@@ -179,6 +187,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     public func placedReference(for key: ReferenceKey) -> PlacedReference? {
         references?.referenceEntry(key: key)?.placedReference
+    }
+
+    public func baseObject(of key: ReferenceKey) -> FormID? {
+        guard let entry = references?.referenceEntry(key: key) else { return nil }
+        return entry.placedReference?.base ?? entry.placedActor?.base
     }
 
     public func triggerObjectCount(for key: ReferenceKey) -> Int {

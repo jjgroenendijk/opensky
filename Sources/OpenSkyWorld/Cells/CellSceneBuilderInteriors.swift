@@ -119,7 +119,8 @@ nonisolated extension CellSceneBuilder {
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildInteriorActors(
-            cellChildren: found.children, localized: localized, deltas: resolved.deltas
+            cellChildren: found.children, location: location, localized: localized,
+            deltas: resolved.deltas
         )
         let lighting = buildInteriorLighting(cell: found.cell, references: effective)
         var scene = makeScene(
@@ -143,7 +144,8 @@ nonisolated extension CellSceneBuilder {
                 navmeshes: Self.collectNavmeshes(in: found.children),
                 actors: actors,
                 referenceEntries: resolved.entries,
-                stateSequence: state.sequence
+                stateSequence: state.sequence,
+                vehicleFollowers: resolved.vehicleFollowers
             ),
             counts: counts
         )
@@ -308,17 +310,13 @@ nonisolated extension CellSceneBuilder {
         holding reference: ESMRecord,
         index: ESMFormIDIndex
     ) -> FormID? {
-        guard
-            !reference.isDeleted,
-            let cellID = index.cellFormID(containing: reference.formID),
-            let record = index.record(withFormID: cellID), record.type == "CELL",
-            let cell = decodeOrSkip(
-                record,
-                using: { try Cell(record: $0, localized: file.isLocalized) }
-            ),
-            cell.isInterior
-        else { return nil }
-        return FormID(cellID)
+        guard !reference.isDeleted else { return nil }
+        return PlacedRecordLookup(
+            index: index,
+            resolver: formIDResolver,
+            localized: file.isLocalized
+        )
+        .interiorCell(holding: FormID(reference.formID))
     }
 
     nonisolated func formIDIndexBuildingIfNeeded() -> ESMFormIDIndex {

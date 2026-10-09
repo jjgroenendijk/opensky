@@ -156,6 +156,14 @@ extension CellStreamer {
         return composition.referenceEntry(key: key)
     }
 
+    public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
+        guard
+            let placedRecords, let entry = placedRecords.entry(for: key),
+            let home = placedRecords.home(of: entry)
+        else { return nil }
+        return PluginPlacement(entry: entry, home: home)
+    }
+
     /// One resident ACHR in constant time. An interior scene replaces the
     /// exterior composition.
     public func residentActorPlacement(key: ReferenceKey) -> ResidentActorPlacement? {

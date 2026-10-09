@@ -70,6 +70,24 @@ nonisolated public struct PackageOverride: Equatable, Sendable {
     }
 }
 
+/// The packages a quest alias adds ahead of its actor's own stack, from the
+/// highest-priority quest that holds the actor (<https://ck.uesp.net/wiki/Quest_Alias_Tab>).
+nonisolated public struct PackageAliasStack: Equatable, Sendable {
+    public let packages: [FormID]
+    /// The quest whose aliases the package locations name.
+    public let quest: FormID
+
+    public init(packages: [FormID], quest: FormID) {
+        self.packages = packages
+        self.quest = quest
+    }
+}
+
+nonisolated public struct PackageHold: Equatable, Sendable {
+    /// The quest whose aliases the package locations name.
+    public let aliasQuest: FormID?
+}
+
 nonisolated public struct ActorPackageRuntime {
     public static let maximumReevaluationGameMinutes: Float = 15
 
@@ -162,6 +180,37 @@ nonisolated public struct ActorPackageRuntime {
         actors[actor]?.override
     }
 
+    /// Puts `stack` ahead of the actor's own packages and picks one now when it changed.
+    public mutating func setAliasStack(
+        _ stack: PackageAliasStack?,
+        actor: ReferenceKey,
+        clock: GameClock,
+        context: () -> ConditionContext
+    ) {
+        guard actors[actor] != nil, actors[actor]?.aliasStack != stack else { return }
+        actors[actor]?.aliasStack = stack
+        reevaluate(actor: actor, clock: clock, context: context())
+    }
+
+    public func aliasStack(for actor: ReferenceKey) -> PackageAliasStack? {
+        actors[actor]?.aliasStack
+    }
+
+    /// Set when a scene or a quest alias gave the actor its current package, so its
+    /// procedure runs. Nil for a package of the actor's own.
+    public func hold(for actor: ReferenceKey) -> PackageHold? {
+        guard let state = actors[actor], let current = state.current?.package.formID else {
+            return nil
+        }
+        if let override = state.override {
+            return PackageHold(aliasQuest: override.aliasQuest)
+        }
+        if let alias = state.aliasStack, alias.packages.contains(current) {
+            return PackageHold(aliasQuest: alias.quest)
+        }
+        return nil
+    }
+
     /// On-demand seam for the AI gate panel.
     public mutating func forceReevaluate(
         actor: ReferenceKey,
@@ -189,7 +238,7 @@ nonisolated public struct ActorPackageRuntime {
         evaluationContext.subject = actor
         evaluationContext.clock = clock
         let previous = state.current?.package.formID
-        let stack = state.override?.packages ?? state.stack
+        let stack = state.override?.packages ?? ((state.aliasStack?.packages ?? []) + state.stack)
         state.current = select(stack: stack, clock: clock, context: &evaluationContext)
         state.lastEvaluationGameSeconds = clock.totalGameSeconds
         state.nextEvaluationGameSeconds = nextEvaluation(after: clock, stack: stack)
@@ -234,6 +283,7 @@ nonisolated public struct ActorPackageRuntime {
         var nextEvaluationGameSeconds: Double?
         var isSuspended = false
         var override: PackageOverride?
+        var aliasStack: PackageAliasStack?
 
         func needsEvaluation(at clock: GameClock) -> Bool {
             guard

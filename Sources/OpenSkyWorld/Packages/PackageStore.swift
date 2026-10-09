@@ -13,6 +13,8 @@ nonisolated public enum PackageResolveError: Error, Equatable {
 
 nonisolated public enum PackageProcedureKind: Equatable, Sendable {
     case travel
+    /// Walks a chain of linked references from a start marker.
+    case patrol
     case wander
     case sandbox
     case sleep
@@ -108,7 +110,10 @@ nonisolated public struct PackageStore: Sendable {
         if names.contains("wander") {
             return .wander
         }
-        if names.contains("travel") || names.contains("patrol") {
+        if names.contains("patrol") {
+            return .patrol
+        }
+        if names.contains("travel") {
             return .travel
         }
         let name = package.procedureTypes.first ?? package.editorID ?? package.formID.description

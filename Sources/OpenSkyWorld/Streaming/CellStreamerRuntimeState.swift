@@ -80,6 +80,12 @@ extension CellStreamer {
         )
     }
 
+    /// Rebuilds a resident exterior cell, as when a reference it draws moved away.
+    public func requestRebuild(of location: CellSceneLocation) {
+        guard case let .exterior(coordinate) = location else { return }
+        requestRebuild(coordinate)
+    }
+
     /// Queues one rebuild, deduplicating against requests already queued. A
     /// cell that is not accounted for at all is skipped: it is neither drawn
     /// nor being built, so a return visit rebuilds it from the store anyway.

@@ -253,7 +253,8 @@ nonisolated public final class CellSceneBuilder {
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
                 referenceEntries: resolved.entries,
-                stateSequence: state.sequence
+                stateSequence: state.sequence,
+                vehicleFollowers: resolved.vehicleFollowers
             ),
             counts: counts
         )

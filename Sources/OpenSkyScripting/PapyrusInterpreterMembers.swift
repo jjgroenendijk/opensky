@@ -25,6 +25,14 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         let propertyName = try propertyName(operands[0])
+        if
+            let flow = try instancelessAccess(
+                propertyName, receiver: operands[1], setting: nil, destination: operands[2],
+                frame: frame
+            )
+        {
+            return flow
+        }
         guard let instance = try propertyInstance(operands[1], frame: frame) else {
             try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
             return .next
@@ -74,8 +82,16 @@ extension PapyrusInterpreter {
     ) throws(PapyrusFault) -> PapyrusFlow {
         let operands = try requireOperands(3, instruction: instruction)
         let propertyName = try propertyName(operands[0])
-        guard let instance = try propertyInstance(operands[1], frame: frame) else { return .next }
         let value = try read(operands[2], frame: frame)
+        if
+            let flow = try instancelessAccess(
+                propertyName, receiver: operands[1], setting: value,
+                destination: .identifier("::NoneVar"), frame: frame
+            )
+        {
+            return flow
+        }
+        guard let instance = try propertyInstance(operands[1], frame: frame) else { return .next }
         guard let resolved = try resolveProperty(propertyName, instance: instance) else {
             throw .missingProperty(
                 instruction: instructionIndex,
@@ -139,10 +155,52 @@ extension PapyrusInterpreter {
                 actual: value.typeName
             )
         }
-        guard let instance = runtime.instance(for: handle) else {
+        if let instance = runtime.instance(for: handle) {
+            return instance
+        }
+        // A stopped quest's scripts attach on first use (`siblingInstance`).
+        guard
+            case let .object(typeName) = declaredType(of: operand, frame: frame),
+            let sibling = runtime.siblingInstance?(handle, typeName),
+            let instance = runtime.instance(for: sibling)
+        else {
             throw .missingInstance(handle)
         }
         return instance
+    }
+
+    /// A form without a script instance, such as a cart or a global, still has the
+    /// properties of its declared type. `Motion_Keyframed` is a getter of `ObjectReference`
+    /// that returns 4; `GlobalVariable.Value` has a getter and a setter. Nil `setting` reads.
+    private func instancelessAccess(
+        _ name: String,
+        receiver operand: PexValue,
+        setting value: PapyrusValue?,
+        destination: PexValue,
+        frame: PapyrusFrame
+    ) throws(PapyrusFault) -> PapyrusFlow? {
+        guard
+            case let .object(handle) = try read(operand, frame: frame),
+            runtime.instance(for: handle) == nil,
+            case let .object(typeName) = declaredType(of: operand, frame: frame),
+            runtime.siblingInstance?(handle, typeName) == nil
+        else { return nil }
+        for script in try runtime.scriptChain(from: typeName) {
+            guard
+                let property = script.properties
+                    .first(where: { PapyrusRuntime.matches($0.name, name) })
+            else { continue }
+            let handler = value == nil ? property.readHandler : property.writeHandler
+            guard let handler, !property.flags.contains(.automatic) else { return nil }
+            try pushFrame(
+                PapyrusResolvedFunction(script: script, function: handler),
+                instanceHandle: handle,
+                arguments: value.map { [$0] } ?? [],
+                completion: value == nil ? .assign(destination) : .discard
+            )
+            return .next
+        }
+        return nil
     }
 
     private func propertyName(_ operand: PexValue) throws(PapyrusFault) -> String {

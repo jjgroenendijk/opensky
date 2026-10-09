@@ -31,6 +31,7 @@ public struct NPCMover {
     private var bestWaypointDistance: Float = .greatestFiniteMagnitude
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
+    public let ignoresStatics: Bool
 
     /// `drawnPlacement` is where the cell build drew the actor, when that is not
     /// where it starts: an actor parked since the last build of its cell.
@@ -42,6 +43,7 @@ public struct NPCMover {
         authoredPlacement = drawnPlacement ?? start.placement
         configuration = start.configuration
         path = start.path
+        ignoresStatics = start.ignoresStatics
         yaw = start.placement.rotation.z
         controller = WalkController(
             cameraPosition: start.placement.position + SIMD3(0, 0, start.capsule.eyeHeight),
@@ -69,22 +71,11 @@ public struct NPCMover {
         yaw = step.yaw
         gait = step.gait
         let waypoint = path.waypoints[waypointIndex]
-        controller.update(
-            frameTime: frameTime,
-            yaw: yaw,
-            sampleGround: world.sampleGround,
-            collisionQuery: world.collisionQuery
-        ) { state in
-            var plan = LocomotionStepPlan()
-            let remaining = SIMD2(
-                waypoint.x - state.feetPosition.x,
-                waypoint.y - state.feetPosition.y
-            )
-            let wanted = min(step.speed * state.dt, simd_length(remaining))
-            plan.horizontalDisplacement = simd_length(remaining) > 0
-                ? simd_normalize(remaining) * wanted : .zero
-            plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
-            return plan
+        let feet = controller.feetPosition
+        if world.hasGround(SIMD2(feet.x, feet.y)) {
+            walk(toward: waypoint, step: step, frameTime: frameTime, world: world)
+        } else {
+            glide(toward: waypoint, distance: step.speed * max(frameTime, 0))
         }
         emissions.drive = NPCLocomotionDriveUpdate(
             actor: actor,
@@ -103,6 +94,42 @@ public struct NPCMover {
             emissions: emissions,
             isFinished: state == .arrived || state == .gaveUp
         )
+    }
+
+    private mutating func walk(
+        toward waypoint: SIMD3<Float>,
+        step: NPCMoverStepPlan,
+        frameTime: Float,
+        world: NPCMovementWorld
+    ) {
+        controller.update(
+            frameTime: frameTime,
+            yaw: yaw,
+            sampleGround: world.sampleGround,
+            collisionQuery: ignoresStatics ? { _ in [] } : world.collisionQuery
+        ) { state in
+            var plan = LocomotionStepPlan()
+            let remaining = SIMD2(
+                waypoint.x - state.feetPosition.x,
+                waypoint.y - state.feetPosition.y
+            )
+            let wanted = min(step.speed * state.dt, simd_length(remaining))
+            plan.horizontalDisplacement = simd_length(remaining) > 0
+                ? simd_normalize(remaining) * wanted : .zero
+            plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
+            return plan
+        }
+    }
+
+    /// Without loaded ground there is nothing to stand on, so the actor slides along
+    /// its path line instead of falling, as an actor out of the loaded area does.
+    private mutating func glide(toward waypoint: SIMD3<Float>, distance: Float) {
+        let feet = controller.feetPosition
+        let remaining = waypoint - feet
+        let horizontal = simd_length(SIMD2(remaining.x, remaining.y))
+        let fraction = horizontal > 0 ? min(1, distance / horizontal) : 1
+        let moved = feet + remaining * fraction
+        controller.reset(cameraPosition: moved + SIMD3(0, 0, capsule.eyeHeight))
     }
 
     private func stepPlan(frameTime: Float) -> NPCMoverStepPlan {
@@ -132,14 +159,21 @@ public struct NPCMover {
         advancePastReachedWaypoints(emissions: &emissions)
     }
 
+    /// Near on the ground, and within one capsule height up or down. A patrol marker
+    /// can float above the ground, and a waypoint on the floor above is not reached.
+    private func isReached(_ waypoint: SIMD3<Float>) -> Bool {
+        let feet = controller.feetPosition
+        let flat = simd_distance(SIMD2(feet.x, feet.y), SIMD2(waypoint.x, waypoint.y))
+        return flat <= NPCMovementRuntime.waypointTolerance && abs(feet.z - waypoint.z) <= capsule
+            .height
+    }
+
     private mutating func advancePastReachedWaypoints(
         emissions: inout NPCMoverEmissions
     ) {
         while waypointIndex < path.waypoints.count {
             let waypoint = path.waypoints[waypointIndex]
-            guard
-                simd_distance(controller.feetPosition, waypoint)
-                <= NPCMovementRuntime.waypointTolerance else { break }
+            guard isReached(waypoint) else { break }
             if
                 let crossing = path.doorCrossings.first(where: {
                     $0.waypointIndex == waypointIndex

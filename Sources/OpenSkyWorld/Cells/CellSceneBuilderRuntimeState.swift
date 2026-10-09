@@ -21,6 +21,14 @@ nonisolated public struct EffectiveReferences: Sendable {
     /// What render and collision both place. Both read this one array, so a
     /// moved object's collision shape follows its mesh.
     public let references: [PlacedReference]
+
+    /// The FormIDs of the references that ride a vehicle.
+    public var vehicleFollowers: Set<UInt32> {
+        Set(entries.compactMap { entry in
+            deltas[entry.key]?.component(ReferenceVehicleLink.self) == nil
+                ? nil : entry.formID.rawValue
+        })
+    }
 }
 
 nonisolated extension CellSceneBuilder {
@@ -49,13 +57,14 @@ nonisolated extension CellSceneBuilder {
         counts: inout BuildCounts
     ) -> EffectiveReferences {
         let spawned = spawnedReferences(in: location, state: state, counts: &counts)
-        let entries = referenceEntries(refs: refs, collected: collected) + spawned.entries
         let deltas = state.deltasByKey()
+        let placed = relocating(refs, into: location, deltas: deltas)
+        let entries = referenceEntries(refs: placed, collected: collected) + spawned.entries
         return EffectiveReferences(
             entries: entries,
             deltas: deltas,
             references: applyRuntimeState(
-                refs: refs + spawned.references,
+                refs: placed + spawned.references,
                 entries: entries,
                 deltas: deltas,
                 parentPool: parentPool,

@@ -37,7 +37,9 @@ completed actions:
 2. Entering runs the phase's begin fragments, then starts each action whose start phase is
    this phase.
 3. A phase is done when every action whose end phase is this phase has finished, or when its
-   completion conditions pass. An action with no end phase ends in its start phase.
+   completion conditions pass. An action with no end phase ends in its start phase. A phase
+   with completion conditions and no actions to wait for waits for the conditions. For
+   example, phase 2 of `MQ101`'s first scene waits for stage 12.
 4. Finishing completes the actions that should end by now, runs the phase's end fragments, and
    moves to the next phase.
 5. After the last phase, a scene with flag 0x08 (repeat while true) starts again from phase 1

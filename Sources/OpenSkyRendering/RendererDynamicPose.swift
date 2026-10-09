@@ -37,9 +37,13 @@ extension Renderer {
         return instance.moved(by: delta)
     }
 
+    /// A vehicle follower wins over a walking pose, because a rider does not walk.
     func mergeInstanceDeltas() {
-        instanceDeltas = npcInstanceDeltas.isEmpty
+        let moving = npcInstanceDeltas.isEmpty
             ? dynamicInstanceDeltas
             : dynamicInstanceDeltas.merging(npcInstanceDeltas) { _, npc in npc }
+        instanceDeltas = vehicleInstanceDeltas.isEmpty
+            ? moving
+            : moving.merging(vehicleInstanceDeltas) { _, vehicle in vehicle }
     }
 }

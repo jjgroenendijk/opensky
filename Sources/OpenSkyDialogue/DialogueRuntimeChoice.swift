@@ -29,6 +29,9 @@ extension DialogueRuntime {
         store.set(state, for: key)
         noteBranch(ofSaid: id, speaker: speaker)
 
+        let quest = dialogue.topic(ofInfo: id)?.owningQuest
+            .flatMap { ReferenceKey.resolve($0, using: dialogue.resolver) }
+        let context = TopicInfoFragmentContext(speaker: speaker, quest: quest)
         var dispatched: [String] = []
         var unrun = 0
         for phase in TopicInfoFragmentPhase.allCases
@@ -38,7 +41,9 @@ extension DialogueRuntime {
                 unrun += 1
                 continue
             }
-            let names = fragments.runTopicInfoFragments(of: info, key: key, phase: phase)
+            let names = fragments.runTopicInfoFragments(
+                of: info, key: key, phase: phase, context: context
+            )
             dispatched.append(contentsOf: names)
             if names.isEmpty {
                 unrun += 1

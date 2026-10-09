@@ -120,6 +120,8 @@ nonisolated public struct CellProviderIndexes {
 
     /// Owns the builder, which never reaches the main actor.
     let runner: SerialCellBuildRunner
+    /// Shares the builder's FormID index, so the walk over the plugin runs once.
+    let placedRecords: PlacedRecordLookup
     let scriptFileSystem: any GameFileSource
     let scriptFormIDResolver: FormIDResolver
     /// Plugin the item indexes were built from, which magic-item EFID links are
@@ -173,6 +175,7 @@ nonisolated public struct CellProviderIndexes {
             detectionSettings: tuning.detection
         )
         stores.craftingCatalog = craftingCatalog
+        stores.placedRecords = placedRecords
         stores.lockTrapData = records.scripted.lockTrap
         stores.storyData = records.scripted.story
         stores.idleStore = records.loadOrder.idles

@@ -47,8 +47,11 @@ public final class IdleCoordinator {
         let clip: ActorAnimationClip
         let end: Float
         let hasProp: Bool
-        /// The playback the clip went to; a cell rebuild replaces it.
-        let playback: ObjectIdentifier
+        /// The playback the clip went to; a cell rebuild replaces it. Nil for the player,
+        /// who has none, so only the events play.
+        var playback: ObjectIdentifier?
+        /// Annotations still to send, as absolute animation times.
+        var events: [IdleAnimationEvent] = []
     }
 
     private(set) var store: IdleStore?
@@ -61,6 +64,11 @@ public final class IdleCoordinator {
     private(set) var markers: [IdleMarkerPlacement] = []
     private var markersRefreshAt: Float = 0
     public internal(set) var usesIdleMarkers = true
+    /// Each clip annotation an idle passes, as `(actor, name)`.
+    public var onAnimationEvent: ((ReferenceKey, String) -> Void)?
+    /// The player has no playback, so a player idle only times its events with this rig.
+    static let playerSkeletonPath = ActorAnimationClipLoader.characterRoot
+        + "character assets\\skeleton.nif"
     let random: (Int) -> Int
 
     weak var world: (any IdleWorld)?
@@ -173,7 +181,11 @@ public final class IdleCoordinator {
 
     private func step(_ actor: IdleActorPresence, now: Float) {
         guard var session = sessions[actor.key] else { return }
-        if let playing = session.playing {
+        if var playing = session.playing {
+            let due = playing.events.prefix { $0.time <= now }
+            playing.events.removeFirst(due.count)
+            session.playing = playing
+            due.forEach { onAnimationEvent?(actor.key, $0.name) }
             if now >= playing.end {
                 endIdle(of: actor.key)
                 session.playing = nil
@@ -182,10 +194,8 @@ public final class IdleCoordinator {
                 ObjectIdentifier(playback) != playing.playback
             {
                 playback.play(playing.clip, startingAt: now, forSeconds: playing.end - now)
-                session.playing = Playing(
-                    clip: playing.clip, end: playing.end, hasProp: playing.hasProp,
-                    playback: ObjectIdentifier(playback)
-                )
+                playing.playback = ObjectIdentifier(playback)
+                session.playing = playing
             }
         }
         if
@@ -262,30 +272,24 @@ public final class IdleCoordinator {
             ), timer: timer, now: now)
         }
         let playback = world?.actorPlayback(for: actor)
+        let skeleton = playback?.clip.skeletonMeshPath
+            ?? (actor == .player ? Self.playerSkeletonPath : nil)
         var clipState: AssetLoadState<ActorAnimationClip>?
-        if let path = plan.clipPath, let playback {
-            clipState = clip(path, skeleton: playback.clip.skeletonMeshPath)
+        if let path = plan.clipPath, let skeleton {
+            clipState = clip(path, skeleton: skeleton)
         }
         if case .loading = clipState {
             return wait(waiting, on: actor, chosen: chosen, plan: plan)
         }
         var failure: String?
         var seconds: Float = 0
-        if let playback, let clip = clipState?.value {
+        if let clip = clipState?.value {
             seconds = IdleCore.playSeconds(
                 clipDuration: clip.animation.duration,
                 properties: chosen.record.properties,
                 random: random
             )
-            playback.play(clip, startingAt: now, forSeconds: seconds)
-            let prop = Self.attachment(plan.prop)
-            if prop != nil || sessions[actor]?.playing?.hasProp == true {
-                world?.setProp(prop, on: actor)
-            }
-            sessions[actor, default: Session()].playing = Playing(
-                clip: clip, end: now + seconds, hasProp: prop != nil,
-                playback: ObjectIdentifier(playback)
-            )
+            start(clip, plan: plan, on: actor, for: seconds, now: now)
         } else {
             failure = plan.clipPath == nil ? "no clip" : "the clip did not load"
         }
@@ -313,6 +317,27 @@ extension IdleCoordinator {
             actor: actor, source: waiting.source, trace: waiting.selection.trace,
             chosen: chosen.record.editorID, plan: plan, seconds: 0, failure: "loading"
         ))
+    }
+
+    /// The player has no playback; its clip only times the events.
+    private func start(
+        _ clip: ActorAnimationClip, plan: IdlePlaybackPlan,
+        on actor: ReferenceKey, for seconds: Float, now: Float
+    ) {
+        let playback = world?.actorPlayback(for: actor)
+        playback?.play(clip, startingAt: now, forSeconds: seconds)
+        let prop = playback == nil ? nil : Self.attachment(plan.prop)
+        if prop != nil || sessions[actor]?.playing?.hasProp == true {
+            world?.setProp(prop, on: actor)
+        }
+        let events = IdleCore.playEvents(
+            annotations: clip.animation.annotations, notify: plan.notify,
+            clipDuration: clip.animation.duration, seconds: seconds
+        ).map { IdleAnimationEvent(time: now + $0.time, name: $0.name) }
+        sessions[actor, default: Session()].playing = Playing(
+            clip: clip, end: now + seconds, hasProp: prop != nil,
+            playback: playback.map(ObjectIdentifier.init), events: events
+        )
     }
 
     private func finish(_ report: IdleReport, timer: Float?, now: Float) -> IdleReport {

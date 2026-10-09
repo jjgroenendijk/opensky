@@ -13,13 +13,15 @@ extension PapyrusWorldStateBridge: DialogueFragmentDispatching {
     public func runTopicInfoFragments(
         of info: TopicInfo,
         key: ReferenceKey,
-        phase: TopicInfoFragmentPhase
+        phase: TopicInfoFragmentPhase,
+        context: TopicInfoFragmentContext
     ) -> [String] {
         guard let world else { return [] }
         return world.queueTopicInfoFragment(
             of: info,
             key: key,
             phase: phase,
+            context: context,
             formIDResolver: formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
         )
     }

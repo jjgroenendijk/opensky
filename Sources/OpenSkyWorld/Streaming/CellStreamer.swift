@@ -23,8 +23,7 @@ public final class CellStreamer {
     public typealias SceneSink = (RenderScene, SceneCamera?) -> Void
 
     public static let logger = EngineLogger(
-        subsystem: "nl.jjgroenendijk.opensky",
-        category: "CellStream"
+        subsystem: "nl.jjgroenendijk.opensky", category: "CellStream"
     )
 
     public var grid: CellGridManager
@@ -55,6 +54,8 @@ public final class CellStreamer {
     /// The world state each build runs against, read on the main thread at dispatch. The
     /// default is the plugin baseline.
     public var stateSource: () -> WorldStateSnapshot = { .empty }
+    /// Plugin records for references no resident cell holds.
+    public var placedRecords: PlacedRecordLookup?
 
     /// Desired requests not yet submitted. Only one build reaches the runner
     /// at a time, so recentering can discard obsolete backlog before it does

@@ -60,6 +60,16 @@ struct SceneRuntimeTests {
         #expect(steps(events).last == .ended(.finished))
     }
 
+    /// A phase with end conditions and no actions waits for the conditions.
+    @Test func aPhaseWithOnlyEndConditionsWaitsForThem() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.waitScene()
+        let started = try SceneFixture.runtime(store: store, scene: scene).start(scene.formID)
+        #expect(steps(started) == [.began, .phaseStarted(0)])
+        let events = try SceneFixture.runtime(store: store, scene: scene, gate: 1, now: 1).tick()
+        #expect(steps(events) == [.phaseCompleted(0, byConditions: true), .ended(.finished)])
+    }
+
     /// A phase whose start conditions pass runs; one with no actions ends at once.
     @Test func startConditionsLetAPhaseRun() throws {
         let store = WorldStateStore()

@@ -58,7 +58,7 @@ extension PapyrusNativeFunctions {
 
     /// `MoveTo(akTarget, afX, afY, afZ, abMatchRotation)`. The opening quest moves the
     /// player through an `Actor`-typed variable, so both names are registered. Another
-    /// reference moves only inside the resident cells; the player ignores the offsets.
+    /// reference may be unloaded and may change cells; the player ignores the offsets.
     private static func installMoveTo(into registry: inout PapyrusNativeRegistry) {
         for script in ["ObjectReference", "Actor"] {
             withReference(script, "MoveTo", into: &registry) { call, world, menus, key in
@@ -80,9 +80,11 @@ extension PapyrusNativeFunctions {
         _ call: PapyrusNativeCall, _ world: PapyrusWorldStateBridge
     ) -> PapyrusNativeResult {
         guard
-            let moved = world.referenceState(for: key)?.transform,
-            let place = world.referenceState(for: target)?.transform
-        else { return needsResidentReference(call) }
+            let movedPlacement = world.placement(of: key),
+            let targetPlacement = world.placement(of: target)
+        else { return failure(call, "MoveTo needs references the plugins place") }
+        let moved = movedPlacement.state.transform
+        let place = targetPlacement.state.transform
         let offsets = (1 ... 3).map { float(call, at: $0) ?? 0 }
         guard offsets.allSatisfy(\.isFinite) else { return failure(
             call,
@@ -97,6 +99,9 @@ extension PapyrusNativeFunctions {
             ).erased,
             for: key
         )
+        if let destination = targetPlacement.location, destination != movedPlacement.location {
+            world.relocate(key, to: destination)
+        }
         return .returned(.none)
     }
 
@@ -125,7 +130,7 @@ extension PapyrusNativeFunctions {
         }
         for name in ["GetActorBase", "GetLeveledActorBase"] {
             withReference("Actor", name, into: &registry) { _, world, _, key in
-                let base = key == .player ? FormID(0x7) : world.placedReference(for: key)?.base
+                let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
                 guard
                     let base, let baseKey = world.referenceKey(forFormID: base),
                     let handle = world.objectHandle(for: baseKey)

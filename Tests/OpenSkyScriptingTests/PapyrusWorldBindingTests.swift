@@ -3,6 +3,7 @@
 import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
@@ -64,6 +65,45 @@ struct PapyrusWorldBindingTests {
             == .integer(42))
         #expect(instance.value(named: "::target_var", declaredBy: "HolderScript")
             == .object(targetHandle))
+    }
+
+    /// A trigger names the actor base it waits for, which carries no script.
+    @Test func anObjectPropertyBindsAFormWithoutAScript() throws {
+        let holder = PapyrusWorldFixture.eventScript(
+            "HolderScript",
+            events: [],
+            variables: [PexVariable(
+                name: "::actor_var", typeName: "ActorBase", userFlags: 0, initialValue: .null
+            )],
+            properties: [automaticProperty(
+                "TriggerActor",
+                type: "ActorBase",
+                backing: "::actor_var"
+            )]
+        )
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [holder], nativeDispatch: PapyrusWorldProbeDispatch()
+        )
+        let references = try PapyrusWorldFixture.index([
+            PapyrusWorldFixture.referenceEntry(objectID: 1, scripts: [
+                .init("HolderScript", properties: [
+                    .init("TriggerActor", .object(VMADFixture.object(0x50)))
+                ])
+            ])
+        ])
+        world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: references,
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: true
+        )
+        let handle = try #require(world.instancesByKey[
+            PapyrusWorldFixture.key(objectID: 1, script: "HolderScript")
+        ])
+        let instance = try #require(world.runtime.instance(for: handle))
+        let base = ReferenceKey.plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x50)
+        #expect(instance.value(named: "::actor_var", declaredBy: "HolderScript")
+            == .object(world.objectHandle(for: base)))
     }
 
     @Test("removed and library-missing scripts are counted, never faults")

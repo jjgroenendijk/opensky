@@ -145,6 +145,9 @@ destination counts as overridden while paused, and Reset unpauses.
 - Objects and arrays are not saved. Their identity is made at run time and means nothing in the
   world, so they save as `None` and restore to the compiled default.
 - A persistent reference's instances are never retired, not even by a world space change.
+- A reference in an unloaded cell gets its scripts when a script first casts it to one of them or
+  uses a member through a variable of that type. It keeps them, and its cell's later attach fires
+  no second `OnInit`. In the game, a persistent reference has its scripts from the first load.
 - A reference that first appears in a rebuilt cell gets `OnInit` but no `OnCellAttach` or `OnLoad`,
   because the cell did not attach again.
 - The fired `OnInit` set outlives retirement. A reference that leaves and comes back gets fresh

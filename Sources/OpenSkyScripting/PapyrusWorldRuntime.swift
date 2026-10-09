@@ -42,6 +42,8 @@ public final class PapyrusWorldRuntime {
     /// Which instances each attached cell owns, so detach retires the right
     /// ones.
     public var attachedByCell: [CellSceneLocation: Set<PapyrusInstanceKey>] = [:]
+    /// The references of each cell that already sent `OnCellLoad`.
+    public var cellLoadedReferences: [CellSceneLocation: Set<ReferenceKey>] = [:]
     /// Instances created from an `isPersistent` reference entry; these
     /// survive `detach`.
     public var persistentKeys: Set<PapyrusInstanceKey> = []
@@ -66,6 +68,8 @@ public final class PapyrusWorldRuntime {
     public var dialogueFragmentsQueued = 0
     /// Scene begin, end, and phase fragments enqueued.
     public var sceneFragmentsQueued = 0
+    /// The quest that owns each scene or topic whose fragment ran, for `GetOwningQuest`.
+    public var fragmentQuests: [ReferenceKey: ReferenceKey] = [:]
     /// Stage fragments enqueued this session, for the Scripts readout.
     public var questFragmentsQueued = 0
     /// Newest fragment enqueued, worded like a `recentEvents` entry. Nil until
@@ -82,6 +86,8 @@ public final class PapyrusWorldRuntime {
     /// Update timers for `Form.RegisterForUpdate` and friends, advanced once per
     /// fixed step by `advanceUpdateTimers(gameClock:)`.
     public var updateTimers = PapyrusUpdateTimerRegistry()
+    /// Who listens for each lowercased animation event, by the reference that sends it.
+    public var animationEventListeners: [ReferenceKey: [String: Set<PapyrusInstanceKey>]] = [:]
     /// Master-list resolver from the latest attach, so an event argument naming a
     /// base record (`OnHit`'s `akSource`) becomes world identity. Nil until the
     /// first attach. One resolver per session.
@@ -108,6 +114,11 @@ public final class PapyrusWorldRuntime {
     public var opaqueHandlesByKey: [ReferenceKey: PapyrusObjectHandle] = [:]
     public var opaqueKeysByHandle: [PapyrusObjectHandle: ReferenceKey] = [:]
     public var nextOpaqueHandleValue = UInt64.max
+    /// Attaches the scripts of a stopped quest or an unloaded reference; true when
+    /// any attached.
+    public var attachOnUse: ((ReferenceKey) -> Bool)?
+    /// The scripts a stopped quest or an unloaded reference would attach; empty otherwise.
+    public var scriptsOfTarget: ((ReferenceKey) -> [String])?
     /// Activation depth of the event currently being dispatched; 0 while
     /// nothing is dispatching, which is the depth a player use-key activation
     /// starts from. Read by `queueOnActivate(target:activator:)`.
@@ -150,6 +161,8 @@ public final class PapyrusWorldRuntime {
     public static let onInitEventName = "OnInit"
     public static let onCellAttachEventName = "OnCellAttach"
     public static let onLoadEventName = "OnLoad"
+    public static let onCellLoadEventName = "OnCellLoad"
+    public static let onAnimationEventName = "OnAnimationEvent"
     public static let onActivateEventName = "OnActivate"
     public static let onTriggerEnterEventName = "OnTriggerEnter"
     public static let onTriggerLeaveEventName = "OnTriggerLeave"
@@ -183,6 +196,7 @@ public final class PapyrusWorldRuntime {
             tracker.noteResume(of: call, outcome: outcome)
         }
         runtime.siblingInstance = { [weak self] in self?.sibling(of: $0, as: $1) }
+        runtime.describeHandle = { [weak self] in self?.referenceKey(for: $0)?.description }
     }
 
     /// Keeps the attach's master-list resolver for later event arguments.

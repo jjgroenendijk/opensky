@@ -15,6 +15,30 @@ public protocol DialogueFragmentDispatching: AnyObject, Sendable {
     func runTopicInfoFragments(
         of info: TopicInfo,
         key: ReferenceKey,
-        phase: TopicInfoFragmentPhase
+        phase: TopicInfoFragmentPhase,
+        context: TopicInfoFragmentContext
     ) -> [String]
+}
+
+/// Who says the line, which the fragment gets as `akSpeakerRef`, and the quest that
+/// owns its topic, which `GetOwningQuest` answers.
+nonisolated public struct TopicInfoFragmentContext: Equatable, Sendable {
+    public let speaker: ReferenceKey?
+    public let quest: ReferenceKey?
+
+    public static let none = TopicInfoFragmentContext(speaker: nil, quest: nil)
+
+    public init(speaker: ReferenceKey?, quest: ReferenceKey?) {
+        self.speaker = speaker
+        self.quest = quest
+    }
+}
+
+extension DialogueFragmentDispatching {
+    @discardableResult
+    public func runTopicInfoFragments(
+        of info: TopicInfo, key: ReferenceKey, phase: TopicInfoFragmentPhase
+    ) -> [String] {
+        runTopicInfoFragments(of: info, key: key, phase: phase, context: .none)
+    }
 }

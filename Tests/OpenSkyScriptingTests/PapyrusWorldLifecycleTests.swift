@@ -49,6 +49,59 @@ struct PapyrusWorldLifecycleTests {
         ])
     }
 
+    /// A quest can use a persistent reference whose cell is unloaded. Its scripts
+    /// attach then, and the cell's later attach keeps them with no second `OnInit`.
+    @Test("an unloaded reference's scripts attach on use and survive its cell attach")
+    func unloadedReferenceAttachesOnUse() throws {
+        let probe = PapyrusWorldProbeDispatch()
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [PapyrusWorldFixture.fullEventScript("AScript")],
+            nativeDispatch: probe
+        )
+        let entry = try PapyrusWorldFixture.referenceEntry(
+            objectID: 1, scripts: [.init("AScript", properties: [])], isPersistent: true
+        )
+        #expect(world.attachUnloaded(entry, formIDResolver: PapyrusWorldFixture.resolver) == 1)
+        PapyrusWorldFixture.drain(world)
+        #expect(probe.notes == ["ascript.oninit"])
+
+        world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: PapyrusWorldFixture.index([entry]),
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: true
+        )
+        PapyrusWorldFixture.drain(world)
+        #expect(world.instancesByKey.count == 1)
+        #expect(probe.notes.filter { $0 == "ascript.oninit" }.count == 1)
+    }
+
+    @Test("OnCellLoad follows the other attach events")
+    func cellLoadComesLast() throws {
+        let probe = PapyrusWorldProbeDispatch()
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [PapyrusWorldFixture.eventScript("CScript", events: [
+                ("OnLoad", PapyrusWorldFixture.probeBody(note: "cscript.onload")),
+                ("OnCellLoad", PapyrusWorldFixture.probeBody(note: "cscript.oncellload"))
+            ])],
+            nativeDispatch: probe
+        )
+        let references = try PapyrusWorldFixture.index([
+            PapyrusWorldFixture.referenceEntry(
+                objectID: 1,
+                scripts: [.init("CScript", properties: [])]
+            )
+        ])
+        world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: references,
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: true
+        )
+        PapyrusWorldFixture.drain(world)
+        #expect(probe.notes == ["cscript.onload", "cscript.oncellload"])
+    }
+
     @Test("a rebuild keeps instances and enqueues nothing")
     func rebuildIsSilent() throws {
         let probe = PapyrusWorldProbeDispatch()

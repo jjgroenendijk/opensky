@@ -101,7 +101,26 @@ nonisolated public enum AIPackageReadout: Sendable {
         guard let package = snapshot.package else {
             return "\(header)\nPackage: \(snapshot.selectedActorName) has none registered."
         }
-        return "\(header)\n\(selectionText(for: package))\n\(scheduleText(for: package.schedule))"
+        let lines = [
+            header, selectionText(for: package), scheduleText(for: package.schedule),
+            snapshot.procedure.map(procedureStateText(for:)),
+            snapshot.carrier.map { "Riding: \($0)" }
+        ]
+        return lines.compactMap(\.self).joined(separator: "\n")
+    }
+
+    /// Where a held package's procedure is, such as `Procedure: moving, point 3 of 32`.
+    public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
+        let state = switch machine.state {
+        case .ready: "ready"
+        case .moving: "moving"
+        case .idleStop: "pausing"
+        case let .looping(clip): "looping \(clip.rawValue)"
+        case .complete: "done"
+        case .failed: "failed"
+        }
+        guard !machine.path.isEmpty else { return "Procedure: \(state)" }
+        return "Procedure: \(state), point \(machine.pathIndex + 1) of \(machine.path.count + 1)"
     }
 
     /// Which package won for one actor, and which procedure it runs.
@@ -121,6 +140,7 @@ nonisolated public enum AIPackageReadout: Sendable {
     public static func procedureText(for procedure: PackageProcedureKind) -> String {
         switch procedure {
         case .travel: "travel"
+        case .patrol: "patrol"
         case .wander: "wander"
         case .sandbox: "sandbox"
         case .sleep: "sleep"

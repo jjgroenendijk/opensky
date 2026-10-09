@@ -123,6 +123,26 @@ struct PapyrusWorldDialogueTests {
         #expect(session.world.attachedByCell.isEmpty)
     }
 
+    /// The fragment gets the speaker as `akSpeakerRef`, and `GetOwningQuest` on the
+    /// instance names the quest that owns the topic.
+    @Test func aResultFragmentGetsItsSpeakerAndQuest() throws {
+        let session = try session()
+        PapyrusWorldFixture.drain(session.world)
+        let speaker = ReferenceKey.plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x9001)
+        let quest = ReferenceKey.plugin(
+            name: PapyrusWorldFixture.pluginName, objectID: PapyrusQuestFixture.questObjectID
+        )
+        let context = TopicInfoFragmentContext(speaker: speaker, quest: quest)
+
+        try session.bridge.runTopicInfoFragments(
+            of: info(), key: infoKey, phase: .end, context: context
+        )
+        let event = try #require(session.world.eventQueue.last)
+        #expect(event.arguments == [.object(session.world.objectHandle(for: speaker))])
+        let handle = session.world.objectHandle(for: infoKey)
+        #expect(session.world.owningQuest(of: handle) == quest)
+    }
+
     /// Saying the same line twice runs on the instance the first saying
     /// created, so a result script keeps its variables between two sayings.
     @Test func asecondSayingReusesTheInstance() throws {

@@ -8,6 +8,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
@@ -21,14 +22,20 @@ extension PapyrusWorldRuntime {
         _ quest: Quest,
         key: ReferenceKey,
         formIDResolver: FormIDResolver,
-        aliases: QuestAliasState = .empty
+        aliases: QuestAliasState = .empty,
+        cellsLoadedAtStart: Set<CellSceneLocation>? = nil,
+        waitsForTargets: Bool = true
     ) -> Int {
-        let names = (quest.script.scripts + fragmentScripts(of: quest)
-            + quest.aliasScripts.flatMap(\.scripts)).filter { !$0.isRemoved }.map(\.name)
+        let loadedAtStart = cellsLoadedAtStart
+            ?? (quest.flags.contains(.startGameEnabled) ? [] : Set(cellLoadedReferences.keys))
+        let attached = attachedScripts(of: quest)
+        let targets = waitsForTargets ? targetScripts(of: attached, resolver: formIDResolver) : []
+        let names = attached.map(\.name) + targets
         if hasDeferredWork(forQuest: key) || scriptsLoading(names) {
             deferUntilScriptsLoad(quest: key) { [weak self] in
                 self?.attachQuest(
-                    quest, key: key, formIDResolver: formIDResolver, aliases: aliases
+                    quest, key: key, formIDResolver: formIDResolver, aliases: aliases,
+                    cellsLoadedAtStart: loadedAtStart, waitsForTargets: waitsForTargets
                 )
             }
             return 0
@@ -54,7 +61,25 @@ extension PapyrusWorldRuntime {
         for item in plan + aliasPlan where created.contains(item.key) {
             enqueueOnInitIfNeeded(item.key)
         }
+        enqueueLateCellLoad(
+            aliasPlan.map(\.key).filter(created.contains), skipping: loadedAtStart
+        )
         return created.count
+    }
+
+    /// A quest's scripts load in the background, so its alias scripts can attach after
+    /// a cell loaded. Each gets the `OnCellLoad` of a cell that loaded after the quest
+    /// started. A start-game quest starts before every cell.
+    private func enqueueLateCellLoad(
+        _ keys: [PapyrusInstanceKey], skipping loadedAtStart: Set<CellSceneLocation>
+    ) {
+        let loaded = cellLoadedReferences.filter { !loadedAtStart.contains($0.key) }
+            .values.reduce(into: Set<ReferenceKey>()) { $0.formUnion($1) }
+        for key in keys where loaded.contains(key.reference) {
+            enqueue(PapyrusScriptEvent(
+                target: key, functionName: Self.onCellLoadEventName, arguments: []
+            ))
+        }
     }
 
     /// Retires every script instance the quest holds, with its variables, events,
@@ -198,6 +223,12 @@ extension PapyrusWorldRuntime {
     /// properties of its own. Empty when the quest has no fragment tail, and
     /// also when the tail carries no fragments — a tail that only holds alias
     /// scripts names a file the quest never calls into.
+    /// Every script an attach of `quest` instantiates: its own, its fragments', and its aliases'.
+    func attachedScripts(of quest: Quest) -> [AttachedScript] {
+        (quest.script.scripts + fragmentScripts(of: quest) + quest.aliasScripts.flatMap(\.scripts))
+            .filter { !$0.isRemoved }
+    }
+
     private func fragmentScripts(of quest: Quest) -> [AttachedScript] {
         guard
             let section = quest.script.questFragments,

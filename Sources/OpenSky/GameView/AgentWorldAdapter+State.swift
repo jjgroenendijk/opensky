@@ -30,6 +30,9 @@ extension AgentWorldAdapter {
         case let .actors(radius): try actorsState(radius: radius)
         case .menu: menuState
         case let .quest(editorID): try questState(editorID)
+        case .scenes: scenesState()
+        case let .scripts(reference): try scriptsState(reference: reference)
+        case let .packages(reference): try packagesState(reference: reference)
         case let .actorValue(reference, name): try actorValueState(reference, name: name)
         case let .global(editorID): try globalState(editorID)
         case .time: timeState()
@@ -159,8 +162,21 @@ extension AgentWorldAdapter {
             "stage": state.stagesReached.last.map { .init(Int($0)) } ?? .null,
             "stagesDone": .array(state.stagesReached.map { .init(Int($0)) }),
             "running": .bool(state.isRunning),
-            "completed": .bool(state.isCompleted)
+            "completed": .bool(state.isCompleted),
+            "aliases": aliasFills(editorID, in: quests)
         ]
+    }
+
+    /// Each reference alias by name, with the reference that fills it or null.
+    private func aliasFills(_ editorID: String, in quests: QuestRuntime) -> AgentJSON {
+        guard let quest = quests.quests.quest(editorID: editorID) else { return .null }
+        let table = try? quests.aliasState(of: quest.formID)
+        var fills: [String: AgentJSON] = [:]
+        for alias in quest.aliases where alias.category == .reference {
+            let name = alias.name ?? String(alias.id)
+            fills[name] = table?.reference(forAlias: alias.id).map { .string("\($0)") } ?? .null
+        }
+        return .object(fills)
     }
 
     private func actorValueState(_ text: String, name: String) throws(AgentFailure) -> AgentJSON {

@@ -24,6 +24,8 @@ import simd
 
 final class AIWorldAdapter {
     unowned let game: GameViewController
+    /// The newest package move result per actor, for `state packages`.
+    private(set) var lastPackageMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
 
     init(game: GameViewController) {
         self.game = game
@@ -44,8 +46,21 @@ final class AIWorldAdapter {
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
             packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
+        renderer.onPlayerWalkArrived = { [weak packages] in
+            packages?.movementSettled(actor: .player, reason: .arrival)
+        }
         streamer.onNPCPosesChanged = { [weak renderer] deltas in
             renderer?.npcInstanceDeltas = deltas
+        }
+        // A walker drawn by the cell it left would vanish when that cell unloads, so
+        // it moves into the cell it entered, and the cell it left drops it.
+        streamer.onNPCCellHandoff = { [weak game, weak streamer] persistence in
+            guard let cell = persistence.cell, let streamer else { return }
+            let drawing = streamer.cellLocation(of: persistence.actor)
+            game?.scripts.bridge?.relocate(persistence.actor, to: cell)
+            if let drawing, drawing != cell {
+                streamer.requestRebuild(of: drawing)
+            }
         }
         let animation = game.npcAnimation
         streamer.onNPCLocomotionDrive = { [weak animation] update in
@@ -92,6 +107,10 @@ final class AIWorldAdapter {
 }
 
 extension AIWorldAdapter: PackageWorld {
+    var packageDrivesPlayer: Bool {
+        game.vehicleWorld.isPlayerAIDriven
+    }
+
     func packageResidents() -> [RuntimeReferenceEntry]? {
         guard game.renderer != nil else { return nil }
         return game.streamer?.residentActorEntries()
@@ -152,8 +171,79 @@ extension AIWorldAdapter {
         return point.map { PackagePlace(point: $0, radius: location.radius) }
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool {
-        game.streamer?.moveActor(actor, to: point) == .started
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool {
+        if actor == .player {
+            return walkPlayer(to: point, direct: direct)
+        }
+        let result = game.streamer?.moveActor(actor, to: point, direct: direct) ?? .actorNotResident
+        lastPackageMoves[actor] = result
+        return result == .started
+    }
+
+    /// The player has no NPC mover, so the renderer walks the navmesh path. Without
+    /// a path the player walks straight, as a direct move does.
+    private func walkPlayer(to point: SIMD3<Float>, direct: Bool) -> Bool {
+        guard let renderer = game.renderer else { return false }
+        let query = NavigationPathQuery(
+            start: renderer.walkController.feetPosition, target: point,
+            capsuleRadius: PlayerCapsule.standard.radius
+        )
+        renderer.playerWalkIgnoresStatics = direct
+        let found = direct ? NavigationPathResult.path(.straight(to: point))
+            : game.streamer?.findPath(query) ?? .miss(.disconnected)
+        switch found {
+        case let .path(path):
+            renderer.playerWalkPath = path.waypoints + [point]
+            lastPackageMoves[.player] = .started
+        case let .miss(reason):
+            renderer.playerWalkPath = [point]
+            lastPackageMoves[.player] = .noPath(reason)
+        }
+        return true
+    }
+
+    /// Each running quest's alias packages, the higher-priority quest first.
+    func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
+        guard let quests = game.scripts.bridge?.questRuntime else { return [:] }
+        var stacks: [ReferenceKey: PackageAliasStack] = [:]
+        let running = quests.runningQuests().map(\.quest).sorted { $0.priority > $1.priority }
+        for quest in running where quest.aliases.contains(where: { !$0.packages.isEmpty }) {
+            guard let table = try? quests.aliasState(of: quest.formID) else { continue }
+            for alias in quest.aliases where !alias.packages.isEmpty {
+                guard let actor = table.reference(forAlias: alias.id), stacks[actor] == nil else {
+                    continue
+                }
+                stacks[actor] = PackageAliasStack(packages: alias.packages, quest: quest.formID)
+            }
+        }
+        return stacks
+    }
+
+    func packagePatrolPath(
+        from start: Package.Target, actor _: ReferenceKey, aliasQuest: FormID?
+    ) -> [SIMD3<Float>]? {
+        let key: ReferenceKey? = switch start.kind {
+        case .specificReference:
+            game.scripts.bridge?.formIDResolver.flatMap {
+                ReferenceKey.resolve(FormID(start.value), using: $0)
+            }
+        case .referenceAlias:
+            aliasQuest.flatMap {
+                game.scripts.bridge?.questRuntime?.aliasResolution()
+                    .reference(alias: start.value, in: $0)
+            }
+        default:
+            nil
+        }
+        guard let key, let lookup = game.streamer?.placedRecords else { return nil }
+        let path = lookup.linkedChain(from: key)
+        return path.isEmpty ? nil : path
+    }
+
+    func packageProcedure(_ event: PackageScriptEvent) {
+        game.scripts.bridge?.runPackageFragment(
+            of: event.package, slot: event.fragmentSlot, actor: event.actor
+        )
     }
 
     private static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
@@ -162,6 +252,31 @@ extension AIWorldAdapter {
 }
 
 extension AIWorldAdapter: AINavigationWorld {
+    /// An estimate: the game seats a rider on the horse's saddle node, which OpenSky
+    /// does not read yet.
+    private static let riderSeatHeight: Float = 90
+
+    /// The horse a placed actor starts on, `ACHR` `XHOR` (docs/formats/placed-references.md).
+    func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey? {
+        guard
+            let raw = game.streamer?.placedRecords?.entry(for: rider)?.placedActor?
+                .details.links["XHOR"],
+            let resolver = game.scripts.bridge?.formIDResolver,
+            let horse = ReferenceKey.resolve(raw, using: resolver),
+            game.vehicleWorld.vehicles.seat(rider, on: horse, height: Self.riderSeatHeight)
+        else { return nil }
+        _ = game.streamer?.stopActor(rider)
+        return horse
+    }
+
+    func dismountPackageActor(_ rider: ReferenceKey) {
+        game.vehicleWorld.vehicles.detach(rider)
+    }
+
+    func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey? {
+        game.vehicleWorld.vehicles.core.links[actor]?.carrier
+    }
+
     var isStreaming: Bool {
         game.streamer != nil
     }

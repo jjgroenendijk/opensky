@@ -202,6 +202,14 @@ Retires when swift-build reports a replayed job to the driver: then `make build-
 `make test-unit` compiles no Swift file, and the scheme no longer needs to build `OpenSkyTests`
 in every plan.
 
+## A new protocol requirement can shift stale witness slots
+
+Observed 2026-10-09 on Xcode 27.0. A requirement added in the middle of `PapyrusWorldBridge`
+moved every later witness slot. The incremental build did not recompile the unchanged files
+that call the protocol, so `globalValue(for:)` ran the `write(_:for:)` witness and crashed
+with `EXC_BAD_ACCESS`. Add a requirement at the end of a protocol, or touch its callers
+before a local build. A clean CI build is not affected.
+
 ## A stopped signing step leaves a `.cstemp` file
 
 Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`

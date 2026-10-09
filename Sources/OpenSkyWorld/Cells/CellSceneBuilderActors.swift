@@ -78,7 +78,11 @@ nonisolated extension CellSceneBuilder {
             guard owner == coordinate else { continue }
             byID[actor.formID.rawValue] = CollectedActor(actor: actor, isPersistent: true)
         }
-        let collected = byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue }
+        let collected = relocating(
+            byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
+            into: .exterior(coordinate),
+            deltas: deltas
+        )
         let actors = collected.map(\.actor)
         build.entries = actorEntries(collected)
         build.counts.discovered = actors.count + malformed.count
@@ -94,13 +98,16 @@ nonisolated extension CellSceneBuilder {
     /// have no worldspace persistent cell to map in.
     nonisolated public func buildInteriorActors(
         cellChildren: ESMGroup?,
+        location: CellSceneLocation,
         localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var build = CellActorBuild()
         var malformed: [String] = []
-        let collected = decodeActors(in: cellChildren, malformed: &malformed)
+        let collected = relocating(
+            decodeActors(in: cellChildren, malformed: &malformed), into: location, deltas: deltas
+        )
         let actors = collected.map(\.actor)
         build.entries = actorEntries(collected)
         build.counts.discovered = actors.count + malformed.count

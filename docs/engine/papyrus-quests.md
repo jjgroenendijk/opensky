@@ -31,6 +31,12 @@ start-game-enabled quests, or whatever a save recorded. `Start` and `Stop` keep 
 `Stop` is the only thing that retires a quest's instances, and it clears their fired `OnInit` marks,
 so a later `Start` runs `OnInit` on fresh instances instead of resuming half a script.
 
+In the game a quest's scripts exist whether the quest runs or not, so any script can read a
+stopped quest's properties. Source: the Creation Kit wiki page "OnInit", which says a quest script
+initializes when the game first loads. OpenSky attaches a stopped quest's scripts when a script
+first casts the quest to one of its script types. Hearthfire's adoption script reads the
+`HousePurchase` quest this way before the player owns a house.
+
 ## The Quest natives
 
 `IsRunning`, `IsCompleted`, `GetCurrentStageID`, `IsStageDone`, `Start`, `Stop`, `CompleteQuest`,
@@ -108,6 +114,12 @@ An empty alias gets no instance. An alias script section naming another quest is
 filling that alias needs the other quest's table. A save restores the fills with the world state,
 and the session attaches running quests' scripts afterwards, so alias scripts come back bound to the
 restored fills.
+
+A quest's scripts load in the background, so an alias script can attach after its reference's
+cell loaded. Such an alias script gets the `OnCellLoad` of each cell that loaded after its quest
+started, once. A start-game quest counts as started before every cell. A cell that was already
+loaded when the quest started sends nothing, as in the game. New Game starts `MQ101`, then the
+opening cells load, and the cart horses wait for this event before the opening can move on.
 
 ## Where OpenSky differs
 

@@ -47,10 +47,24 @@ does not own either system.
 | Procedure | Behavior |
 | --- | --- |
 | Travel | Move to the target, then finish |
+| Patrol | Move to the start marker, then along its linked references, then finish |
 | Wander | Pick seeded random points in a radius, wait 1 second, repeat |
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
+
+A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
+the navmesh otherwise. A straight leg follows the terrain and ignores static collision, so a
+rock or a fallen log on the authored line does not stop it. This is a guess at the game's
+behavior, not a confirmed rule. That input is the last of the Patrol procedure's six inputs, by the
+`BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
+
+A patrol whose "Ride Horse if Possible?" input is true rides the actor's horse, when the actor
+has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the patrol, and its
+arrivals move the rider's patrol on. A package without the input takes the rider off.
+
+A walk over an exterior cell whose terrain is not loaded slides along its path line instead of
+falling. Without this, an actor ahead of the loaded area falls through the world.
 
 A movement failure ends the machine as failed. An unsupported procedure also fails, on purpose.
 Random points are even over the area (the radius is `sqrt` of a random number), and use the same
@@ -63,10 +77,10 @@ actors are picked against the live clock, quest and actor state, and enable stat
 
 Not done yet:
 
-- Sending procedure commands to movement and animation for packages the schedule picks. Only
-  scene packages run their machine.
-- Aliases and linked references as targets. They are decoded, but need their quest and
-  reference runtime first.
+- Sending procedure commands to movement and animation for packages the schedule picks from
+  the actor's own list. Only scene and alias packages run their machine.
+- Aliases and linked references as package locations. They are decoded, but need their quest
+  and reference runtime first. A patrol start already resolves both.
 - The branch graph inside a procedure tree.
 
 A condition OpenSky cannot answer is false, with a reason. So an actor whose package depends on
@@ -89,6 +103,58 @@ the move. A move that cannot start fails the machine.
 
 The action is done when the machine completes or fails. Travel completes on arrival. Wander,
 sandbox, sleep, and eat never complete. An unsupported procedure fails at once.
+
+### The player in a scene package
+
+The player has no NPC mover. After a script calls `SetPlayerAIDriven(true)`, a scene package
+can hold the player too, with the base `Player` (`NPC_` 0x000007). A move finds a navmesh path, as an
+NPC's move does, then turns the view to each waypoint and holds forward. The player's own
+capsule and walk speed carry the player. A straight leg of a static-pathing patrol ignores static
+collision, as an NPC's does. Arrival within 40 units of the last waypoint ends the
+move. `MQ101` uses this after the cart ride: Scene4 walks the
+player to `MQ101PlayerMoveLineMarker1`, then sets stage 75, which opens the race menu.
+
+## Alias packages
+
+A quest alias can add packages to the actor in it (`ALPC`). While the quest runs, the selector
+picks from the alias packages first, then from the actor's own list. When several running quests
+hold the actor, the quest with the highest priority gives the packages. Source: the Creation Kit
+wiki page "Quest Alias Tab".
+
+An alias package runs its machine, as a scene package does. A patrol's start marker is its first
+single-reference input (`PTDA`): a reference, or a reference alias of the quest. The path is the
+start marker, then each unkeyed linked reference (`XLKR`) after it, until the chain ends or comes
+back to a marker it already passed. OpenSky reads the markers from the plugins, so a path can go
+through cells that are not loaded. A patrol does not repeat yet, even when its "Repeatable?" input
+is true.
+
+The cart horses of `MQ101` drive the opening this way. Their patrols run the carts from the
+start of the game into Helgen. A trigger box on the road sets a stage when a horse walks
+through it.
+
+## Package fragments
+
+A package can carry Papyrus fragments in its `VMAD` (flag 0x01 begin, 0x02 end, 0x04 change). A
+held package runs its begin fragment when its machine starts and its end fragment when the
+machine completes. A failed machine runs no end fragment. Each fragment gets the actor as
+`akActor`. The change fragment does not run yet. Layout: [VMAD](/formats/vmad.md).
+
+`GetOwningQuest()` in a package fragment answers the package's owner quest, `PACK` `QNAM`. The
+end fragments of the `MQ101` cart patrols set the stages that unload the carts this way.
+
+## When a walk ends
+
+A walk that ends reports its rest pose after the movement runtime has stored its own state. A
+listener may start the next move right away, as a patrol does at each marker. If the report came
+during the runtime's update, that update would write back its older copy and drop the new move.
+
+## Walking into another cell
+
+An actor that walks into another cell moves into that cell's references, the way `MoveTo` moves
+one ([reference identity](/engine/reference-identity.md#moved-references)). The cell it left is
+rebuilt without it. Without this, a horse that walked far from its plugin cell would vanish when
+that cell unloads. A vehicle follower, such as a cart, does the same when its pose enters
+another loaded cell ([vehicles](/engine/vehicles.md)).
 
 ## Controls
 

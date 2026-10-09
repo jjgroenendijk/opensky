@@ -60,6 +60,10 @@ nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
     public let selectedActorIsHostile: Bool
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// The selected actor's procedure machine, when a scene or alias package holds it.
+    public var procedure: PackageProcedureMachine?
+    /// What the selected actor rides, such as a cart, or nil.
+    public var carrier: ReferenceKey?
 
     /// The reading with no streamed cell attached.
     public static let unavailable = AINavigationSnapshot(

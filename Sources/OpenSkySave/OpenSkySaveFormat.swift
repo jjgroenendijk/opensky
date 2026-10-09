@@ -124,6 +124,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let harvestDays = "HRVD"
         /// Runtime lock state of doors and containers.
         public static let locks = "LOCK"
+        /// References moved into another cell, and the cell that draws them.
+        public static let relocations = "RLOC"
         /// Playing scenes: phase, started actions, and completed actions.
         public static let scenes = "SCNS"
         /// Quests the story manager started: last start time and start count.

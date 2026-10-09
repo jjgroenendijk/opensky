@@ -71,6 +71,13 @@ nonisolated public enum QuestAliasFiller: Sendable {
                     return
                 }
                 key = unique
+            case .locationAliasReference where locations != nil:
+                // OpenSky does not search child locations yet, so a miss never fails a start.
+                guard let found = locationReference(of: alias) else {
+                    skipped.note(.unresolvedReference)
+                    return
+                }
+                key = found
             default:
                 skipped.note(.unsupportedFillType(alias.fillType))
                 // An unimplemented fill type is OpenSky's gap, not the quest's,
@@ -103,6 +110,20 @@ nonisolated public enum QuestAliasFiller: Sendable {
                     .flatMap({ ReferenceKey.resolve($0, using: resolver) })
             else { return nil }
             return locations?.uniqueActorReferences[base]
+        }
+
+        /// ALFA names a location alias and ALRT a location ref type. The first reference
+        /// that location lists under the type, and that no other alias holds, fills it.
+        private func locationReference(of alias: Quest.Alias) -> ReferenceKey? {
+            guard
+                let locations, let raw = alias.aliasReference, raw >= 0,
+                let place = state.location(forAlias: UInt32(raw)),
+                let type = alias.referenceType
+                    .flatMap({ ReferenceKey.resolve($0, using: resolver) })
+            else { return nil }
+            return locations.specialReferences(ofType: type, in: place).first {
+                alias.flags.contains(.allowReuseInQuest) || !state.holds($0)
+            }
         }
 
         /// ALFE names the event, ALFD the member that fills the alias

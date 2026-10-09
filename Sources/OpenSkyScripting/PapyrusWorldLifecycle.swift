@@ -19,7 +19,7 @@ nonisolated public struct PapyrusAttachItem: Sendable {
 
 extension PapyrusWorldRuntime {
     /// Creates instances for every reference with VMAD script data and enqueues
-    /// `OnInit` (if never fired), `OnCellAttach`, `OnLoad`. On a rebuild
+    /// `OnInit` (if never fired), `OnCellAttach`, `OnLoad`, then `OnCellLoad`. On a rebuild
     /// (`firstIntegration == false`) only new references get `OnInit`.
     public func attach(
         cell: CellSceneLocation,
@@ -27,8 +27,9 @@ extension PapyrusWorldRuntime {
         formIDResolver: FormIDResolver,
         firstIntegration: Bool
     ) {
-        let names = references.sortedEntries().flatMap(attachedScripts(of:))
-            .filter { !$0.isRemoved }.map(\.name)
+        let scripts = references.sortedEntries().flatMap(attachedScripts(of:))
+            .filter { !$0.isRemoved }
+        let names = scripts.map(\.name) + targetScripts(of: scripts, resolver: formIDResolver)
         if deferredScriptWork.contains(where: { $0.cell == cell }) || scriptsLoading(names) {
             deferUntilScriptsLoad(cell: cell) { [weak self] in
                 self?.attach(
@@ -56,6 +57,22 @@ extension PapyrusWorldRuntime {
         enqueueAttachEvents(
             plan: plan, created: created, firstIntegration: firstIntegration
         )
+        if firstIntegration {
+            enqueueCellLoad(references: references)
+            cellLoadedReferences[cell] = Set(references.sortedEntries().map(\.key))
+        }
+    }
+
+    /// `OnCellLoad` goes to every script on the cell's references, alias scripts
+    /// included, once the cell is in the scene (<https://ck.uesp.net/wiki/OnCellLoad>).
+    private func enqueueCellLoad(references: RuntimeReferenceIndex) {
+        for entry in references.sortedEntries() {
+            for key in instanceKeys(on: entry.key) {
+                enqueue(PapyrusScriptEvent(
+                    target: key, functionName: Self.onCellLoadEventName, arguments: []
+                ))
+            }
+        }
     }
 
     /// Retires the cell's instances. Instances whose reference entry was
@@ -64,6 +81,7 @@ extension PapyrusWorldRuntime {
     /// else is removed from the runtime and from the event queue.
     public func detach(cell: CellSceneLocation) {
         deferredScriptWork.removeAll { $0.cell == cell }
+        cellLoadedReferences[cell] = nil
         guard let keys = attachedByCell.removeValue(forKey: cell) else {
             return
         }
@@ -107,6 +125,31 @@ extension PapyrusWorldRuntime {
         entry.placedReference?.scriptData.scripts
             ?? entry.placedActor?.scriptData.scripts
             ?? []
+    }
+
+    /// A persistent reference keeps its scripts while its cell is unloaded, so they
+    /// attach on first use and stay. A later cell attach keeps them and fires no
+    /// second `OnInit`. Returns the instances created.
+    @discardableResult
+    public func attachUnloaded(
+        _ entry: RuntimeReferenceEntry,
+        formIDResolver: FormIDResolver
+    ) -> Int {
+        let names = attachedScripts(of: entry).filter { !$0.isRemoved }.map(\.name)
+        guard !names.isEmpty, !scriptsLoading(names) else { return 0 }
+        let plan = collectAttachPlan(references: RuntimeReferenceIndex(entries: [entry]))
+        var created: Set<PapyrusInstanceKey> = []
+        for item in plan {
+            persistentKeys.insert(item.key)
+            if instancesByKey[item.key] == nil, instantiate(item) {
+                created.insert(item.key)
+            }
+        }
+        bind(plan: plan, created: created, formIDResolver: formIDResolver)
+        for item in plan where created.contains(item.key) {
+            enqueueOnInitIfNeeded(item.key)
+        }
+        return created.count
     }
 
     public func instantiate(_ item: PapyrusAttachItem) -> Bool {
@@ -156,7 +199,7 @@ extension PapyrusWorldRuntime {
                 formIDResolver: formIDResolver,
                 aliases: aliasResolution,
                 aliasHandle: { self.aliasInstanceHandle(for: $0) ?? self.objectHandle(for: $0) },
-                objectHandle: { handles[$0] }
+                objectHandle: { handles[$0] ?? self.objectHandle(for: $0) }
             )
             bindingSkips.merge(binding.skipped)
             for (name, value) in binding.initialValues.sorted(by: { $0.key < $1.key })

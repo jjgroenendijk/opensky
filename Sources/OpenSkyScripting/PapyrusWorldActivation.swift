@@ -81,16 +81,25 @@ extension PapyrusWorldRuntime {
 
     /// The lowest-script-name instance on the same form as `handle` whose script is
     /// `typeName` or extends it. An alias script and a form script never pair.
+    /// An opaque handle of a stopped quest or an unloaded reference attaches its
+    /// scripts first, as they exist in the game (`attachOnUse`).
     func sibling(of handle: PapyrusObjectHandle, as typeName: String) -> PapyrusObjectHandle? {
-        guard let source = keysByHandle[handle] else { return nil }
+        guard let reference = referenceKey(for: handle) else { return nil }
         let aliasKeys = aliasInstanceKeys
-        let isAlias = aliasKeys.contains(source)
-        return instancesByKey.keys
-            .filter { $0.reference == source.reference && aliasKeys.contains($0) == isAlias }
-            .sorted()
-            .lazy
-            .compactMap { self.instancesByKey[$0] }
-            .first { self.runtime.resolvesObject($0, as: typeName) }
+        let isAlias = keysByHandle[handle].map(aliasKeys.contains) ?? false
+        let find = {
+            self.instancesByKey.keys
+                .filter { $0.reference == reference && aliasKeys.contains($0) == isAlias }
+                .sorted()
+                .lazy
+                .compactMap { self.instancesByKey[$0] }
+                .first { self.runtime.resolvesObject($0, as: typeName) }
+        }
+        if let found = find() {
+            return found
+        }
+        guard keysByHandle[handle] == nil, attachOnUse?(reference) == true else { return nil }
+        return find()
     }
 
     var aliasInstanceKeys: Set<PapyrusInstanceKey> {

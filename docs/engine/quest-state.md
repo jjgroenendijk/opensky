@@ -127,6 +127,13 @@ cell children of the load order. `Ralof` and `Hadvar` each have exactly one, in 
 persistent cell. A base with no persistent actor, or with more than one, is still counted and
 left empty and never fails the start, the same as an unimplemented fill. Every other fill type
 is counted and left empty, and an unimplemented fill type never fails a quest start.
+Location Alias Reference (`ALFA` plus `ALRT`) names a location alias and a location ref type
+(`LCRT`). The reference comes from that location's `LCSR` and `ACSR` lists: the first one of that
+type that no other alias of the quest holds. The opening's cart drivers fill this way: two
+`MQ101CartDriver` entries in `HelgenLocation` fill `ImperialSoldier01` and `ImperialSoldier02`.
+The location alias must come earlier in the list, as `Helgen` does in `MQ101`. A miss is counted
+and never fails the start, because OpenSky does not search child locations yet.
+
 Refusing a start because OpenSky cannot run a Find Matching Reference search would present
 an engine gap as game behavior. Only an implemented fill that finds nothing (an `ALFR` or
 `ALFL` naming no record) fails a required alias.
@@ -135,8 +142,9 @@ The reuse rule refuses the fill, not the start. The page says the rule "is not r
 types" and names one exception, so which types it covers is not documented. Failing the start would
 refuse thirteen quests `Skyrim.esm` ships that way.
 
-Also not done: condition-driven and `ALFA` plus `ALRT` location searches, "Reserves Reference" (a rule
-across quests), and any check that a filled reference exists, is alive, enabled, or not destroyed.
+Also not done: condition-driven searches, `ALFA` plus `ALRT` searches in child locations,
+"Reserves Reference" (a rule across quests), and any check that a filled reference exists, is
+alive, enabled, or not destroyed.
 
 `Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
 162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest

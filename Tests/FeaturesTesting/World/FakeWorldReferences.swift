@@ -17,6 +17,8 @@ nonisolated public final class FakeWorldReferences: PapyrusWorldReferenceSource 
     /// Cell every known reference reports as resident in; nil models a
     /// reference the streamer cannot attribute, so writes go unattributed.
     public var cell: CellSceneLocation?
+    /// Plugin records of references no resident cell holds.
+    public var pluginPlacements: [ReferenceKey: PluginPlacement] = [:]
 
     public init(
         entries: [RuntimeReferenceEntry],
@@ -40,5 +42,9 @@ nonisolated public final class FakeWorldReferences: PapyrusWorldReferenceSource 
 
     public func activateChildren(of key: ReferenceKey) -> [ReferenceKey] {
         index[key].map { index.sortedEntries().activateChildren(of: $0.formID) } ?? []
+    }
+
+    public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
+        pluginPlacements[key]
     }
 }

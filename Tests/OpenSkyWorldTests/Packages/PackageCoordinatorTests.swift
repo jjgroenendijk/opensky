@@ -16,7 +16,11 @@ private final class FakePackageWorld: PackageWorld {
     var packageClock: GameClock? = GameClock(hour: 9)
     private(set) var contextReads = 0
     private(set) var moves: [SIMD3<Float>] = []
+    private(set) var movers: [ReferenceKey] = []
+    var horse: ReferenceKey?
+    var drivesPlayer = false
     static let place = SIMD3<Float>(100, 0, 0)
+    static let patrol = [SIMD3<Float>(10, 0, 0), SIMD3<Float>(20, 0, 0)]
 
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
         .zero
@@ -28,13 +32,28 @@ private final class FakePackageWorld: PackageWorld {
         location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool {
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool) -> Bool {
         moves.append(point)
+        movers.append(actor)
         return true
+    }
+
+    func packagePatrolPath(
+        from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
+    ) -> [SIMD3<Float>]? {
+        Self.patrol
+    }
+
+    func mountPackageActor(_: ReferenceKey) -> ReferenceKey? {
+        horse
     }
 
     func packageResidents() -> [RuntimeReferenceEntry]? {
         residents
+    }
+
+    var packageDrivesPlayer: Bool {
+        drivesPlayer
     }
 
     func packageConditionContext(clock _: GameClock) -> ConditionContext {
@@ -78,7 +97,9 @@ struct PackageCoordinatorTests {
         #expect(world.contextReads == 1, "one context serves every actor in one advance")
 
         world.residents = []
-        coordinator.advance()
+        coordinator.advance(by: 0.5)
+        #expect(coordinator.registeredActors.count == 1, "a short absence is a cell handoff")
+        coordinator.advance(by: 0.5)
         #expect(coordinator.registeredActors.isEmpty)
         #expect(coordinator.readouts().isEmpty)
     }
@@ -136,6 +157,40 @@ struct PackageCoordinatorTests {
         #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
     }
 
+    /// A patrol that rides the actor's horse walks the horse, and the horse's arrival
+    /// moves the rider's patrol on.
+    @Test func aRidingPatrolWalksTheHorse() throws {
+        let (coordinator, world) = try Self.coordinator()
+        let horse = PackageRuntimeFixture.key(0x900)
+        world.horse = horse
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let override = PackageOverride(packages: [FormID(0x103)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .running)
+        #expect(coordinator.mounts[Self.guardKey] == horse)
+        coordinator.movementSettled(actor: horse, reason: .arrival)
+
+        #expect(world.movers == [horse, horse])
+        #expect(world.moves == FakePackageWorld.patrol)
+    }
+
+    /// After `SetPlayerAIDriven(true)` a scene package walks the player, and the
+    /// player's arrival ends it.
+    @Test func aScenePackageWalksAnAIDrivenPlayer() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.drivesPlayer = true
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 1)
+        let override = PackageOverride(packages: [FormID(0x102)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(override, actor: .player) == .running)
+        #expect(world.movers == [.player])
+        coordinator.movementSettled(actor: .player, reason: .arrival)
+        #expect(coordinator.runOverride(override, actor: .player) == .done)
+    }
+
     private static func coordinator() throws -> (PackageCoordinator, FakePackageWorld) {
         let morning = try PackageRuntimeFixture.package(
             id: 0x100,
@@ -149,11 +204,22 @@ struct PackageCoordinatorTests {
                 Package.Location(rawKind: 0, value: 0x700, radius: 0)
             ))]
         )
+        let ride = try PackageRuntimeFixture.package(
+            id: 0x103, editorID: "RidePatrol", procedureNames: ["Patrol"],
+            dataInputs: [Package.DataInput(index: 0, type: "PTDA", value: .target(
+                Package.Target(rawKind: 0, value: 0x701, countOrDistance: 0)
+            ))] + [false, false, true, true].enumerated().map { index, flag in
+                Package.DataInput(index: Int8(index + 1), type: "CNAM", value: .boolean(flag))
+            }
+        )
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
+        let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
         let coordinator = PackageCoordinator()
         coordinator.wire(store: PackageStore(
-            packages: [morning, fallback, walk],
-            actorTemplates: ActorTemplateResolver(actors: [0x600: actor], leveledActors: [:])
+            packages: [morning, fallback, walk, ride],
+            actorTemplates: ActorTemplateResolver(
+                actors: [0x600: actor, 0x7: player], leveledActors: [:]
+            )
         ))
         let world = FakePackageWorld()
         coordinator.attach(world: world)

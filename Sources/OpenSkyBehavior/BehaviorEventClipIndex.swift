@@ -14,6 +14,19 @@ nonisolated public struct BehaviorEventClip: Equatable, Sendable {
     /// String payloads of events below the target state, in walk order. A prop
     /// event such as `AnimObjDraw` names its ANIO editor ID here.
     public let payloads: [String]
+    /// The target state's notify events. A cart exit state sends `ExitCartEnd` on exit.
+    public var notify = BehaviorStateNotify()
+}
+
+/// Event names a state sends when the machine enters it and when it leaves it.
+nonisolated public struct BehaviorStateNotify: Equatable, Sendable {
+    public var enter: [String]
+    public var exit: [String]
+
+    public init(enter: [String] = [], exit: [String] = []) {
+        self.enter = enter
+        self.exit = exit
+    }
 }
 
 /// Event lookups over a set of behavior files, decoded once each. The loader
@@ -27,6 +40,8 @@ nonisolated public final class BehaviorEventClipIndex {
         /// Lowercased event name -> the generators its transitions lead to,
         /// deepest state machine first, because an inner machine picks the clip.
         let targets: [String: [HKXPointerTarget]]
+        /// The notify events of the state each target generator belongs to.
+        let notify: [HKXPointerTarget: BehaviorStateNotify]
         /// Behavior files the graph references, in walk order.
         let references: [String]
     }
@@ -55,7 +70,8 @@ nonisolated public final class BehaviorEventClipIndex {
                 return BehaviorEventClip(
                     animationName: found.animationName,
                     behaviorFiles: [file] + found.behaviorFiles,
-                    payloads: Self.payloads(below: target, in: events.graph) + found.payloads
+                    payloads: Self.payloads(below: target, in: events.graph) + found.payloads,
+                    notify: events.notify[target] ?? found.notify
                 )
             }
         }
@@ -66,7 +82,8 @@ nonisolated public final class BehaviorEventClipIndex {
                 return BehaviorEventClip(
                     animationName: found.animationName,
                     behaviorFiles: [file] + found.behaviorFiles,
-                    payloads: found.payloads
+                    payloads: found.payloads,
+                    notify: found.notify
                 )
             }
         }
@@ -127,6 +144,7 @@ nonisolated public final class BehaviorEventClipIndex {
         guard let behavior = HKBBehaviorGraph.graphs(in: graph).first else { return nil }
         let names = behavior.data?.stringData?.eventNames ?? []
         var found: [String: [(depth: Int, target: HKXPointerTarget)]] = [:]
+        var notify: [HKXPointerTarget: BehaviorStateNotify] = [:]
         var references: [String] = []
         if let root = behavior.rootGenerator {
             for node in HKBGraphTopology.walk(from: root, in: graph).nodes {
@@ -137,11 +155,19 @@ nonisolated public final class BehaviorEventClipIndex {
                     references.append(name)
                 }
                 guard let machine = node.object as? HKBStateMachine else { continue }
-                for (eventID, generator) in transitions(of: machine, in: graph) {
-                    guard names.indices.contains(eventID), let name = names[eventID] else {
+                for transition in transitions(of: machine, in: graph) {
+                    guard
+                        names.indices.contains(transition.eventID),
+                        let name = names[transition.eventID]
+                    else {
                         continue
                     }
-                    found[name.lowercased(), default: []].append((node.depth, generator))
+                    let state = transition.state
+                    found[name.lowercased(), default: []].append((node.depth, transition.generator))
+                    notify[transition.generator] = BehaviorStateNotify(
+                        enter: eventNames(state.enterNotifyEvents, names: names, in: graph),
+                        exit: eventNames(state.exitNotifyEvents, names: names, in: graph)
+                    )
                 }
             }
         }
@@ -151,19 +177,35 @@ nonisolated public final class BehaviorEventClipIndex {
                 .map(\.element.target)
         }
         return GraphEvents(
-            graph: graph, root: behavior.rootGenerator, targets: targets, references: references
+            graph: graph, root: behavior.rootGenerator, targets: targets, notify: notify,
+            references: references
         )
+    }
+
+    private static func eventNames(
+        _ array: HKXPointerTarget?, names: [String?], in graph: HKXObjectGraph
+    ) -> [String] {
+        guard let array, let events = HKBStateMachineEventPropertyArray.decode(at: array, in: graph)
+        else { return [] }
+        return events.events.compactMap { names.indices.contains($0.id) ? names[$0.id] : nil }
     }
 
     /// `FLAG_TO_NESTED_STATE_ID_IS_VALID` (docs/engine/behavior-state-machines.md).
     private static let toNestedStateFlag = 0x2000
 
-    /// Each transition of one state machine as its event index and the
-    /// generator of the state it enters, or of the nested state it names.
+    /// One transition's event index, and the generator and info of the state it enters.
+    private struct EventTransition {
+        let eventID: Int
+        let generator: HKXPointerTarget
+        let state: HKBStateMachineStateInfo
+    }
+
+    /// Each transition of one state machine, into the state it enters or the nested
+    /// state it names.
     private static func transitions(
         of machine: HKBStateMachine,
         in graph: HKXObjectGraph
-    ) -> [(Int, HKXPointerTarget)] {
+    ) -> [EventTransition] {
         let states = states(of: machine, in: graph)
         let arrays = [machine.wildcardTransitions] + states.map(\.transitions)
         return arrays.compactMap(\.self)
@@ -172,8 +214,8 @@ nonisolated public final class BehaviorEventClipIndex {
             .compactMap { transition in
                 guard
                     transition.eventId >= 0,
-                    let target = states.first(where: { $0.stateId == transition.toStateId })?
-                        .generator
+                    let state = states.first(where: { $0.stateId == transition.toStateId }),
+                    let target = state.generator
                 else { return nil }
                 // A modifier generator may wrap the nested machine, so take the
                 // first machine below the target.
@@ -181,10 +223,19 @@ nonisolated public final class BehaviorEventClipIndex {
                     transition.flags & toNestedStateFlag != 0,
                     let nested = HKBGraphTopology.walk(from: target, in: graph).nodes
                         .lazy.compactMap({ $0.object as? HKBStateMachine }).first,
-                    let inner = Self.states(of: nested, in: graph)
-                        .first(where: { $0.stateId == transition.toNestedStateId })?.generator
-                else { return (transition.eventId, target) }
-                return (transition.eventId, inner)
+                    let innerState = Self.states(of: nested, in: graph)
+                        .first(where: { $0.stateId == transition.toNestedStateId }),
+                    let inner = innerState.generator
+                else { return EventTransition(
+                    eventID: transition.eventId,
+                    generator: target,
+                    state: state
+                ) }
+                return EventTransition(
+                    eventID: transition.eventId,
+                    generator: inner,
+                    state: innerState
+                )
             }
     }
 

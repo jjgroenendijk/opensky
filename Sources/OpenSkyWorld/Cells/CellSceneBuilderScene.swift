@@ -33,6 +33,8 @@ nonisolated public struct CellGeometryBuild {
     public var referenceEntries: [RuntimeReferenceEntry] = []
     /// The world-state snapshot sequence applied; 0 means none.
     public var stateSequence: UInt64 = 0
+    /// References that ride a vehicle, drawn at their live pose like a body.
+    public var vehicleFollowers: Set<UInt32> = []
 
     public var referenceIndex: RuntimeReferenceIndex {
         RuntimeReferenceIndex(entries: referenceEntries + actors.entries)
@@ -190,6 +192,7 @@ nonisolated extension CellSceneBuilder {
         let particles = makeParticlePlaybacks(instances: instances)
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
+            .union(geometry.vehicleFollowers)
         let placed = instances.filter { !$0.model.meshes.isEmpty }.map { instance in
             RenderPlacement(
                 model: instance.model,

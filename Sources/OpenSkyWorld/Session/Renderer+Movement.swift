@@ -35,6 +35,13 @@ extension Renderer {
         thirdPersonCamera.reset()
     }
 
+    /// Puts the player's feet at `feet` and keeps the view, as a vehicle seat does.
+    public func placePlayerFeet(at feet: SIMD3<Float>) {
+        guard movementMode.isPlayerControlled else { return }
+        freeFlyCamera.position = feet + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
+        walkController.reset(cameraPosition: freeFlyCamera.position)
+    }
+
     /// Advances active movement mode by one input frame. First frame makes no
     /// move. dt clamps to 100 ms; WalkController further uses fixed substeps.
     public func advanceCamera() {
@@ -49,7 +56,8 @@ extension Renderer {
         // while the clock keeps its mark fresh (resume carries no time jump).
         let dt = cameraClock.advance(to: wallClock.now, paused: worldSimPaused)
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
-        let frameInput = input.makeInput(dt: dt)
+        var frameInput = input.makeInput(dt: dt)
+        steerPlayerWalk(&frameInput)
         if frameInput.cycleCameraMode {
             setMovementMode(movementMode.next)
         }
@@ -90,6 +98,33 @@ extension Renderer {
         locomotion.reset()
     }
 
+    private var walkCollisionQuery: CapsuleWorldCollider.CandidateQuery {
+        guard playerWalkIgnoresStatics, !playerWalkPath.isEmpty else {
+            return collisionQuery ?? { _ in [] }
+        }
+        return { _ in [] }
+    }
+
+    /// Turns the view to the package walk's next waypoint and holds forward, until
+    /// the last one is reached.
+    private func steerPlayerWalk(_ frameInput: inout CameraInput) {
+        guard !playerWalkPath.isEmpty, movementMode.isPlayerControlled else { return }
+        let feet = walkController.feetPosition
+        let remaining = PlayerPackageWalk.remainingPath(playerWalkPath, feet: feet)
+        playerWalkPath = remaining
+        guard
+            let next = remaining.first,
+            let yaw = PlayerPackageWalk.steeringYaw(feet: feet, target: next)
+        else {
+            onPlayerWalkArrived?()
+            return
+        }
+        freeFlyCamera.yaw = yaw
+        frameInput.moveForward = 1
+        frameInput.moveRight = 0
+        frameInput.lookRight = 0
+    }
+
     /// One input frame of simulated player movement, shared by `.walk` and
     /// `.thirdPerson`: the same capsule, the same locomotion bridge, and the
     /// same behavior graph. Only where the eye ends up differs.
@@ -99,7 +134,7 @@ extension Renderer {
             camera: &freeFlyCamera,
             input: frameInput,
             sampleGround: terrainSampler ?? { _ in nil },
-            collisionQuery: collisionQuery ?? { _ in [] },
+            collisionQuery: walkCollisionQuery,
             plan: { [locomotion] state in locomotion.plan(state) }
         )
         // The view follows the drawn capsule, blended between steps.

@@ -262,7 +262,13 @@ public final class PapyrusInterpreter {
     }
 
     private func fault(_ fault: PapyrusFault) -> PapyrusRunOutcome {
-        let place = frames.last?.ownerScript.name
+        var place = frames.last?.ownerScript.name
+        if
+            case let .missingInstance(handle) = fault,
+            let receiver = runtime.describeHandle?(handle)
+        {
+            place = (place ?? "") + " on \(receiver)"
+        }
         frames.removeAll()
         runtime.tally.noteFault(fault, in: place)
         return .faulted(fault)

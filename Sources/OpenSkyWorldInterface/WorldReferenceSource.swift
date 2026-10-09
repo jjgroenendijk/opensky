@@ -16,6 +16,25 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func cellLocation(of key: ReferenceKey) -> CellSceneLocation?
     /// Resident references whose `XAPR` names `key`: activating `key` activates them too.
     func activateChildren(of key: ReferenceKey) -> [ReferenceKey]
+    /// The plugin record behind `key` and the cell that draws it there, loaded or not.
+    func pluginPlacement(of key: ReferenceKey) -> PluginPlacement?
+}
+
+nonisolated extension PapyrusWorldReferenceSource {
+    public func pluginPlacement(of _: ReferenceKey) -> PluginPlacement? {
+        nil
+    }
+}
+
+/// A placed record and its plugin cell, as `MoveTo` needs them for an unloaded reference.
+nonisolated public struct PluginPlacement: Sendable {
+    public let entry: RuntimeReferenceEntry
+    public let home: CellSceneLocation
+
+    public init(entry: RuntimeReferenceEntry, home: CellSceneLocation) {
+        self.entry = entry
+        self.home = home
+    }
 }
 
 nonisolated extension Sequence<RuntimeReferenceEntry> {

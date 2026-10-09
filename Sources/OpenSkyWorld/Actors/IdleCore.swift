@@ -2,6 +2,8 @@
 // markers, which marker an actor takes, and how long one idle plays.
 // See docs/engine/idle-runtime.md.
 
+import OpenSkyBehavior
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import simd
@@ -126,4 +128,42 @@ nonisolated public enum IdleCore {
     public static func isDoOnce(_ marker: IdleMarker) -> Bool {
         (marker.flags ?? 0) & 0x04 != 0
     }
+
+    /// The clip's annotations over `seconds` of looping, as seconds from the start.
+    /// A script hears them as animation events, such as `ExitCartEnd`.
+    public static func annotationEvents(
+        _ annotations: [HKAAnnotation], clipDuration: Float, seconds: Float
+    ) -> [IdleAnimationEvent] {
+        guard clipDuration > 0, !annotations.isEmpty else { return [] }
+        var events: [IdleAnimationEvent] = []
+        var loopStart: Float = 0
+        while loopStart < seconds {
+            for annotation in annotations where loopStart + annotation.time <= seconds {
+                events.append(IdleAnimationEvent(
+                    time: loopStart + annotation.time, name: annotation.text
+                ))
+            }
+            loopStart += clipDuration
+        }
+        return events
+    }
+}
+
+nonisolated extension IdleCore {
+    /// The state's enter events at the start, the annotations, then its exit events at
+    /// the end, in time order. The game leaves the state when the idle ends.
+    public static func playEvents(
+        annotations: [HKAAnnotation], notify: BehaviorStateNotify,
+        clipDuration: Float, seconds: Float
+    ) -> [IdleAnimationEvent] {
+        notify.enter.map { IdleAnimationEvent(time: 0, name: $0) }
+            + annotationEvents(annotations, clipDuration: clipDuration, seconds: seconds)
+            + notify.exit.map { IdleAnimationEvent(time: seconds, name: $0) }
+    }
+}
+
+/// One clip annotation an idle sends, at seconds from the idle's start.
+nonisolated public struct IdleAnimationEvent: Equatable, Sendable {
+    public let time: Float
+    public let name: String
 }

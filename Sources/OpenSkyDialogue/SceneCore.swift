@@ -38,6 +38,8 @@ public enum SceneCore {
             editorID: entry.editorID,
             phase: Int(state.phase) + 1,
             phaseCount: entry.scene.phases.count,
+            phaseName: entry.scene.phases.indices.contains(Int(state.phase))
+                ? entry.scene.phases[Int(state.phase)].name : nil,
             runningActions: state.running.map(\.action)
         )
     }

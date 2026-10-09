@@ -29,6 +29,7 @@ public enum PapyrusNativeFunctions {
         installPresentation(into: &registry)
         installMenus(into: &registry)
         installReferenceAlias(into: &registry)
+        installVehicle(into: &registry)
     }
 
     public static func failure(

@@ -126,11 +126,14 @@ extension PapyrusInterpreter {
         }
         switch (value, type) {
         case let (.object(handle), .object(name)):
-            if runtime.instance(for: handle) == nil || runtime.resolvesObject(handle, as: name) {
+            if runtime.instance(for: handle) != nil, runtime.resolvesObject(handle, as: name) {
                 return value
             }
             if let sibling = runtime.siblingInstance?(handle, name) {
                 return .object(sibling)
+            }
+            if runtime.instance(for: handle) == nil {
+                return value
             }
         case let (.array(array), .array(elementType))
             where array.elementType == elementType:
