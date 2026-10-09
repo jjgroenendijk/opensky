@@ -104,11 +104,7 @@ extension PapyrusInterpreter {
 
     func nativeReturnType(_ destination: PexValue) -> PapyrusType {
         guard let frame = frames.last else { return .none }
-        if
-            case let .identifier(name) = destination,
-            PapyrusRuntime.matches(name, "::nonevar")
-            || PapyrusRuntime.matches(name, "none")
-        {
+        if case let .identifier(name) = destination, frame.compiled.binding(for: name).isDiscard {
             return .none
         }
         return (try? destinationType(destination, frame: frame)) ?? .none

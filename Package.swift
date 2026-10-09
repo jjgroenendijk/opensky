@@ -175,6 +175,7 @@ func feature(
     _ name: String,
     dependencies: [String] = [],
     interface: [String]? = nil,
+    swiftSettings extraSettings: [SwiftSetting] = [],
     tests: [String]? = nil
 ) -> [Target] {
     var targets: [Target] = []
@@ -183,7 +184,7 @@ func feature(
         targets.append(.target(
             name: interfaceName,
             dependencies: checked(interfaceName, interface),
-            swiftSettings: librarySettings
+            swiftSettings: librarySettings + extraSettings
         ))
         declared.append(interfaceName)
         libraryTargets.append(interfaceName)
@@ -192,7 +193,7 @@ func feature(
     targets.append(.target(
         name: name,
         dependencies: checked(name, ownInterface + dependencies),
-        swiftSettings: librarySettings
+        swiftSettings: librarySettings + extraSettings
     ))
     declared.append(name)
     libraryTargets.append(name)
@@ -274,12 +275,10 @@ targets += testing("TagsTesting", dependencies: [])
 // string tables, then one module per format family. A family depends only on the
 // core, so a parser change rebuilds one family and the modules that use it.
 targets += foundation("OpenSkyFormatsCore", tests: ["FormatsTesting"])
-// Pixel loops the engine runs on the CPU, such as the chargen face paint. Unoptimized
-// they are about 100 times slower, so Debug builds them optimized too.
-targets += foundation(
-    "OpenSkyImageKernels",
-    swiftSettings: [.unsafeFlags(["-O"], .when(configuration: .debug))]
-)
+/// CPU loops such as the chargen face paint and the Papyrus interpreter run up to 100
+/// times slower unoptimized, so Debug builds them optimized too.
+let optimizedInDebug: [SwiftSetting] = [.unsafeFlags(["-O"], .when(configuration: .debug))]
+targets += foundation("OpenSkyImageKernels", swiftSettings: optimizedInDebug)
 let formatFamilies = ["ESM", "Mesh", "Animation", "Audio", "PEX", "SWF", "ESS"]
 for family in formatFamilies {
     let module = "OpenSkyFormats\(family)"
@@ -604,6 +603,7 @@ targets += feature(
         "OpenSkyWorldInterface", "DequeModule"
     ],
     interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
+    swiftSettings: optimizedInDebug,
     tests: [
         "FormatsTesting", "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics",

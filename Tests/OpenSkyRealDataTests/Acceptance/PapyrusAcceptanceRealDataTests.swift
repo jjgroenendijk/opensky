@@ -17,6 +17,7 @@ struct PapyrusAcceptanceRealDataTests {
         let terminalOutcomes: Int
         let completed: Int
         let pending: Int
+        let tickSeconds: Double
     }
 
     private static let entryPointNames = [
@@ -41,7 +42,7 @@ struct PapyrusAcceptanceRealDataTests {
         // Pinned so a new native shows up here. The SKSE perk-point functions add
         // nothing, because the vanilla corpus never calls them. The six scene and
         // story natives are all called, and 8 of the 9 menu and map natives.
-        #expect(coverage == PexNativeCoverage(implemented: 179, referenced: 508))
+        #expect(coverage == PexNativeCoverage(implemented: 186, referenced: 508))
         #expect(run.entryPoints == 577)
         // 21 entry points still wait, or yield each tick in a loop with no wait, when
         // the tick cap ends the run. A yielding loop calls its natives every tick.
@@ -52,14 +53,17 @@ struct PapyrusAcceptanceRealDataTests {
         // entry point faults.
         #expect(runtime.tally.faultTotal == 0)
         #expect(runtime.tally.nativeCallTotal == 814_881)
-        #expect(runtime.tally.unimplementedNativeTotal == 260)
+        #expect(runtime.tally.unimplementedNativeTotal == 160)
         // World natives refuse in this headless run, so their calls count as
         // failures rather than unimplemented natives.
-        #expect(runtime.tally.nativeFailureTotal == 592_742)
+        #expect(runtime.tally.nativeFailureTotal == 592_821)
         #expect(runtime.tally.deferredAnimationTotal == 236)
         #expect(runtime.tally.rankedFaultKinds.isEmpty)
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.name == "game.GetForm")
-        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 78)
+        #expect(
+            runtime.tally.rankedUnimplementedNatives.first?.name
+                == "ReferenceAlias.AddInventoryEventFilter"
+        )
+        #expect(runtime.tally.rankedUnimplementedNatives.first?.count == 41)
 
         let report = Self.report(
             paths: paths,
@@ -107,6 +111,7 @@ struct PapyrusAcceptanceRealDataTests {
         }
 
         var outcomes: [PapyrusRunOutcome] = []
+        let started = ContinuousClock.now
         for _ in 0 ..< 256 {
             clock = GameClock(
                 totalGameSeconds: clock.totalGameSeconds + GameClock.secondsPerDay
@@ -116,6 +121,7 @@ struct PapyrusAcceptanceRealDataTests {
                 break
             }
         }
+        let elapsed = ContinuousClock.now - started
         let completed = outcomes.reduce(into: 0) { count, outcome in
             if case .completed = outcome {
                 count += 1
@@ -127,7 +133,9 @@ struct PapyrusAcceptanceRealDataTests {
                 entryPoints: entryPoints,
                 terminalOutcomes: outcomes.count,
                 completed: completed,
-                pending: scheduler.pendingCount
+                pending: scheduler.pendingCount,
+                tickSeconds: Double(elapsed.components.seconds)
+                    + Double(elapsed.components.attoseconds) / 1e18
             )
         )
     }
@@ -145,6 +153,35 @@ struct PapyrusAcceptanceRealDataTests {
                     && $0.function.parameters.isEmpty
             })?.name
         }
+    }
+
+    /// Runs the same entry points and holds the interpreter to an instruction rate.
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot), .tags(.perf, .slow))
+    func runsEntryPointsAtTheInstructionRate() throws {
+        let root = try #require(RealDataEnvironment.dataRoot)
+        let loader = PexScriptLoader(fileSystem: VirtualFileSystem(root: root))
+        let files = try loader.scriptPaths().map(loader.load)
+        let (runtime, run) = try executeEntryPoints(
+            files: files,
+            registry: .standard
+        )
+        let rate = Self.instructionRate(runtime: runtime, run: run)
+        print("Papyrus instructions per second\t\(Int(rate))")
+        #expect(rate >= Self.minimumInstructionRate)
+    }
+
+    /// Instructions per second. Measured 1.8 million optimized and 1.7 million in Debug,
+    /// which builds the scripting modules optimized too.
+    private static var minimumInstructionRate: Double {
+        #if OPENSKY_OPTIMIZED
+            600_000
+        #else
+            500_000
+        #endif
+    }
+
+    private static func instructionRate(runtime: PapyrusRuntime, run: RunEvidence) -> Double {
+        Double(runtime.tally.instructionsExecuted) / max(run.tickSeconds, 0.001)
     }
 
     private static func report(
@@ -177,6 +214,9 @@ struct PapyrusAcceptanceRealDataTests {
         unknown native calls\t\(runtime.tally.unimplementedNativeTotal)
         native argument failures\t\(runtime.tally.nativeFailureTotal)
         deferred animations\t\(runtime.tally.deferredAnimationTotal)
+        instructions executed\t\(runtime.tally.instructionsExecuted)
+        tick seconds\t\(String(format: "%.2f", run.tickSeconds))
+        instructions per second\t\(Int(Self.instructionRate(runtime: runtime, run: run)))
 
         Fault kinds
         \(faults)

@@ -69,7 +69,8 @@ nonisolated public final class PapyrusTally {
 
     public private(set) var runs = 0
     public private(set) var instructionsExecuted = 0
-    public private(set) var opcodeCounts: [PexOpcode: Int] = [:]
+    /// Indexed by opcode byte, because the run loop counts every instruction.
+    private var countsByOpcodeByte = [Int](repeating: 0, count: 256)
     public private(set) var nativeCallCounts: [String: Int] = [:]
     public private(set) var nativeCallTotal = 0
     public private(set) var unnamedNativeCalls = 0
@@ -126,7 +127,15 @@ nonisolated public final class PapyrusTally {
 
     public func noteInstruction(_ opcode: PexOpcode) {
         instructionsExecuted += 1
-        opcodeCounts[opcode, default: 0] += 1
+        countsByOpcodeByte[Int(opcode.rawValue)] += 1
+    }
+
+    public var opcodeCounts: [PexOpcode: Int] {
+        var counts: [PexOpcode: Int] = [:]
+        for (byte, count) in countsByOpcodeByte.enumerated() where count > 0 {
+            counts[PexOpcode(rawValue: UInt8(byte))] = count
+        }
+        return counts
     }
 
     public func noteNative(_ call: PapyrusNativeCall) {

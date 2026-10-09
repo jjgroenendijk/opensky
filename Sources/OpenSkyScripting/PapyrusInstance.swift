@@ -88,9 +88,17 @@ public final class PapyrusInstance {
     }
 }
 
-nonisolated public struct PapyrusResolvedFunction: Sendable {
-    public let script: PexObject
-    public let function: PexFunction
+public struct PapyrusResolvedFunction {
+    public let owner: PapyrusScriptIndex
+    public let compiled: PapyrusCompiledFunction
+
+    public var script: PexObject {
+        owner.script
+    }
+
+    public var function: PexFunction {
+        compiled.function
+    }
 }
 
 nonisolated public struct PapyrusResolvedProperty: Sendable {

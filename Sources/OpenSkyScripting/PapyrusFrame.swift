@@ -11,60 +11,57 @@ nonisolated public enum PapyrusFrameCompletion: Sendable {
 }
 
 public final class PapyrusFrame {
-    public let ownerScript: PexObject
-    public let function: PexFunction
+    public let owner: PapyrusScriptIndex
+    public let compiled: PapyrusCompiledFunction
     public let instanceHandle: PapyrusObjectHandle?
     public let completion: PapyrusFrameCompletion
 
-    public private(set) var values: [String: PapyrusValue] = [:]
-    public private(set) var types: [String: PapyrusType] = [:]
+    /// Parameters and locals, in `compiled`'s slot order.
+    public private(set) var slots: [PapyrusValue]
     public var instructionIndex = 0
 
     public init(
-        ownerScript: PexObject,
-        function: PexFunction,
+        owner: PapyrusScriptIndex,
+        compiled: PapyrusCompiledFunction,
         instanceHandle: PapyrusObjectHandle?,
-        arguments: [PapyrusValue],
         completion: PapyrusFrameCompletion
     ) {
-        self.ownerScript = ownerScript
-        self.function = function
+        self.owner = owner
+        self.compiled = compiled
         self.instanceHandle = instanceHandle
         self.completion = completion
-        for (index, parameter) in function.parameters.enumerated() {
-            let key = PapyrusRuntime.key(parameter.name)
-            let type = PapyrusType(name: parameter.typeName)
-            types[key] = type
-            values[key] = arguments.indices.contains(index)
-                ? arguments[index]
-                : type.defaultValue
-        }
-        for local in function.localVariables {
-            let key = PapyrusRuntime.key(local.name)
-            let type = PapyrusType(name: local.typeName)
-            types[key] = type
-            values[key] = type.defaultValue
-        }
+        slots = compiled.slotDefaults
+    }
+
+    public var ownerScript: PexObject {
+        owner.script
+    }
+
+    public var function: PexFunction {
+        compiled.function
     }
 
     public var defaultReturnValue: PapyrusValue {
-        PapyrusType(name: function.returnTypeName).defaultValue
+        compiled.defaultReturnValue
     }
 
     public func localValue(named name: String) -> PapyrusValue? {
-        values[PapyrusRuntime.key(name)]
+        compiled.binding(for: name).slot.map { slots[$0] }
     }
 
     public func localType(named name: String) -> PapyrusType? {
-        types[PapyrusRuntime.key(name)]
+        compiled.binding(for: name).slot.map { compiled.slotTypes[$0] }
     }
 
     public func setLocalValue(_ value: PapyrusValue, named name: String) -> Bool {
-        let key = PapyrusRuntime.key(name)
-        guard values[key] != nil else {
+        guard let slot = compiled.binding(for: name).slot else {
             return false
         }
-        values[key] = value
+        slots[slot] = value
         return true
+    }
+
+    public func setSlot(_ slot: Int, to value: PapyrusValue) {
+        slots[slot] = value
     }
 }

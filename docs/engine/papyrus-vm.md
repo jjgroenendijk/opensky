@@ -84,6 +84,26 @@ and the six array operations.
 Integer add, subtract, multiply, and negate wrap in 32-bit two's complement, so hostile operands
 cannot trap Swift. Division widens to 64 bits first, which also handles `Int32.min / -1`.
 
+## Name resolution
+
+Papyrus names ignore case, so a lookup by name folds both names first. The run loop must
+not do that for each instruction. The first time a script is used, the runtime builds a
+`PapyrusScriptIndex` for it:
+
+- Each function is compiled once. Its parameters and locals get slots in an array, and
+  every identifier spelling its instructions use is bound to a slot, to `self`, to a
+  discard (`::NoneVar`), or to a member that the instance holds.
+- Functions are found by folded state and function name, and each spelling seen at a call
+  site is remembered.
+- A member variable is found once per spelling, walking up the parent chain.
+
+Any change to the script library drops every index, because a newly loaded parent can
+change what a name means.
+
+The scripting modules also build optimized in Debug, as the image kernels do. A busy loop
+runs for the whole instruction slice every frame, so an unoptimized interpreter costs a
+lot of frame time in a Debug app.
+
 ## Calls and suspension
 
 A call pushes a frame onto the interpreter's own array. PEX never calls PEX through Swift
