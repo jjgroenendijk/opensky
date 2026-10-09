@@ -84,14 +84,14 @@ nonisolated public struct PapyrusScriptEvent: Equatable, Sendable {
     }
 }
 
-/// Per-tick dispatch ceiling for one 1/30 s step. 32 events drain a ten-script
-/// cell attach in one step; 100 000 instructions is one
-/// `PapyrusLimits.instructionBudget` slice.
+/// Per-tick ceiling for one 1/30 s step. 32 events drain a ten-script cell attach in
+/// one step. The instructions are shared by every script, like the game's
+/// `fUpdateBudgetMS`; docs/engine/papyrus-vm.md explains the default.
 nonisolated public struct PapyrusTickBudget: Equatable, Sendable {
     public var events: Int
     public var instructions: Int
 
-    public static let standard = PapyrusTickBudget(events: 32, instructions: 100_000)
+    public static let standard = PapyrusTickBudget(events: 32, instructions: 4000)
 
     public init(events: Int, instructions: Int) {
         self.events = events

@@ -52,7 +52,8 @@ extension PapyrusWorldRuntime {
             implementedNativeNameCount: Self.implementedNativeNameCount(tally),
             unimplementedNativeTotal: tally.unimplementedNativeTotal,
             topUnimplementedNatives: Self.topUnimplementedNatives(tally),
-            lastFault: tally.lastFault
+            lastFault: tally.lastFault,
+            lastStepInstructions: lastStepInstructions
         )
     }
 

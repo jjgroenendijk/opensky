@@ -42,4 +42,8 @@ final class ScriptsPanelViewController: InspectorPanelViewController {
     var scriptBurstControl: NSButton {
         schedulerSection.burstControl
     }
+
+    var scriptBudgetControl: NSPopUpButton {
+        schedulerSection.budgetControl
+    }
 }

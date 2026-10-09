@@ -43,6 +43,7 @@ struct ScriptsPanelTests {
         #expect(panel.scriptPauseControl.accessibilityIdentifier() == "ScriptPauseControl")
         #expect(panel.scriptStepControl.accessibilityIdentifier() == "ScriptStepControl")
         #expect(panel.scriptBurstControl.accessibilityIdentifier() == "ScriptBurstControl")
+        #expect(panel.scriptBudgetControl.accessibilityIdentifier() == "ScriptBudgetControl")
         #expect(
             panel.questsSection.questAliasControl.accessibilityIdentifier()
                 == "ScriptQuestAliasControl"
@@ -65,7 +66,8 @@ struct ScriptsPanelTests {
         panel.view.layoutSubtreeIfNeeded()
 
         for control: NSView in [
-            panel.scriptPauseControl, panel.scriptStepControl, panel.scriptBurstControl
+            panel.scriptPauseControl, panel.scriptStepControl, panel.scriptBurstControl,
+            panel.scriptBudgetControl
         ] {
             #expect(!control.isHidden)
             #expect(control.frame.height > 0)
@@ -147,6 +149,30 @@ struct ScriptsPanelTests {
         #expect(fake.setPausedCalls == [false])
         #expect(!panel.isOverridden)
         #expect(panel.scriptPauseControl.state == .off)
+    }
+
+    /// The budget control sets the shared step budget, shows it, and counts as an
+    /// override until reset puts the standard budget back.
+    @Test @MainActor
+    func budgetControlSetsTheStepBudget() {
+        let panel = ScriptsPanelViewController()
+        panel.loadViewIfNeeded()
+        let fake = FakeScriptProvider()
+        let standard = PapyrusTickBudget.standard.instructions
+        fake.scriptsSnapshot = makeScriptsSnapshot(budgetInstructions: standard)
+        panel.provider = fake
+        #expect(panel.scriptBudgetControl.selectedItem?.tag == standard)
+        #expect(!panel.isOverridden)
+
+        panel.scriptBudgetControl.selectItem(withTag: 16000)
+        sendScriptsControl(panel.scriptBudgetControl)
+        #expect(fake.budgetCalls == [16000])
+        #expect(panel.isOverridden)
+
+        panel.schedulerSection.performResetToDefaults()
+        #expect(fake.budgetCalls == [16000, standard])
+        #expect(panel.scriptBudgetControl.selectedItem?.tag == standard)
+        #expect(!panel.isOverridden)
     }
 
     @Test @MainActor

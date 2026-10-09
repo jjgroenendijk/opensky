@@ -237,6 +237,10 @@ extension ScriptCoordinator: ScriptControlProviding {
     public func stepScripts(ticks: Int) {
         runtime?.burst(ticks: ticks, gameClock: world?.gameClock)
     }
+
+    public func setScriptInstructionBudget(_ instructions: Int) {
+        runtime?.budget.instructions = max(1, instructions)
+    }
 }
 
 /// Lets the app's provider object stand in for its `ScriptCoordinator`.
@@ -263,6 +267,10 @@ extension ScriptControlForwarding {
 
     public func stepScripts(ticks: Int) {
         scripts.stepScripts(ticks: ticks)
+    }
+
+    public func setScriptInstructionBudget(_ instructions: Int) {
+        scripts.setScriptInstructionBudget(instructions)
     }
 }
 

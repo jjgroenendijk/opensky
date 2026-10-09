@@ -59,10 +59,14 @@ handler waits. The game does the same: a thread unlocks its object during a late
 Kit wiki, "Threading Notes (Papyrus)"). Example: `CritterSpawn` waits in a loop in `OnLoad` for as
 long as its cell is loaded, and its `OnCellLoad` still runs.
 
-A drain stops when the tick has run 32 events, or when it has run 100,000 instructions. The rest
-waits for the next tick. 32 events drains a ten-script cell in one step, because an attach queues
-three events per instance, and a mass attach carries over instead of stalling a frame. 100,000
-instructions is one call's slice, so one runaway handler cannot take more of a frame than one slice.
+A drain stops when the tick has run 32 events. The rest waits for the next tick. 32 events drains a
+ten-script cell in one step, because an attach queues three events per instance, and a mass attach
+carries over instead of stalling a frame.
+
+All scripts share one instruction budget per tick, resumed calls and new events together. The
+[scheduler](/engine/papyrus-vm.md#scheduler) explains how the budget is spent and why its default
+is 4,000 instructions. The World > Scripts sidebar shows what the last step spent and can change
+the budget.
 
 `OnInit` fires once ever per instance. The fired set is saved. A pending set covers the gap between
 queuing and running, so a rebuild in between cannot queue a second one. Whether a function exists is

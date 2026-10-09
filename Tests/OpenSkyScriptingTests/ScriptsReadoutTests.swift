@@ -101,20 +101,21 @@ struct ScriptsReadoutTests {
 
     @Test
     func schedulerTextCarriesEveryCounterTheGateNames() {
-        let text = ScriptsReadout.schedulerText(
-            for: makeScriptsSnapshot(
-                pendingWaitCount: 2,
-                pendingTimerCount: 5,
-                tickCount: 120,
-                budgetEvents: 100,
-                budgetInstructions: 20000,
-                lastTickSteps: 4,
-                lastTickDispatched: 3,
-                lastTickQueued: 1,
-                lastTickResumed: 2,
-                lastTickFaulted: 1
-            )
+        var snapshot = makeScriptsSnapshot(
+            pendingWaitCount: 2,
+            pendingTimerCount: 5,
+            tickCount: 120,
+            budgetEvents: 100,
+            budgetInstructions: 20000,
+            lastTickSteps: 4,
+            lastTickDispatched: 3,
+            lastTickQueued: 1,
+            lastTickResumed: 2,
+            lastTickFaulted: 1
         )
+        snapshot.lastStepInstructions = 1500
+        let text = ScriptsReadout.schedulerText(for: snapshot)
+        #expect(text.contains("Last step instructions: 1500 of 20000"))
         #expect(text.contains("Pending waits: 2  Pending timers: 5"))
         #expect(text.contains("Ticks: 120  Budget: 100 events / 20000 instructions"))
         #expect(

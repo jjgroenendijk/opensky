@@ -30,6 +30,10 @@ public final class PapyrusRuntime {
     /// Changes whenever `scripts` does, so a cached lookup knows it may be stale.
     public private(set) var scriptsGeneration = 0
 
+    /// Instructions every script together may still run in this fixed step. The world
+    /// runtime sets it for each step; outside a step nothing limits it.
+    public var stepInstructionsLeft = Int.max
+
     public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
     /// Another script instance on the same form that is of the named type. The game keeps
     /// all scripts of one form in one object, so a cast between them succeeds.

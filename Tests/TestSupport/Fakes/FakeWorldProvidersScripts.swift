@@ -25,6 +25,10 @@ extension FakeWorldProviders {
         scripts.stepScripts(ticks: ticks)
     }
 
+    func setScriptInstructionBudget(_ instructions: Int) {
+        scripts.setScriptInstructionBudget(instructions)
+    }
+
     var questAliasQuestEditorIDs: [String] {
         scripts.questAliasQuestEditorIDs
     }

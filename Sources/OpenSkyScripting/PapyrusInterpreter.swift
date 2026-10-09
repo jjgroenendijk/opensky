@@ -211,10 +211,11 @@ public final class PapyrusInterpreter {
                     continue
                 }
                 let index = frame.instructionIndex
-                guard remainingBudget > 0 else {
+                guard remainingBudget > 0, runtime.stepInstructionsLeft > 0 else {
                     return .suspended(yieldSlice())
                 }
                 remainingBudget -= 1
+                runtime.stepInstructionsLeft -= 1
                 let instruction = frame.function.instructions[index]
                 runtime.tally.noteInstruction(instruction.opcode)
                 frame.instructionIndex += 1

@@ -5,8 +5,8 @@ import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 public final class PapyrusScheduler {
+    /// Kept in the order the calls suspended.
     private struct Entry {
-        let order: UInt64
         let wake: Wake
         let call: SuspendedCall
     }
@@ -35,7 +35,6 @@ public final class PapyrusScheduler {
     public private(set) var pendingCount = 0
 
     private var lastGameSeconds: Double?
-    private var nextOrder: UInt64 = 0
     private var entries: [Entry] = []
     private var terminal: [PapyrusRunOutcome] = []
     private var answers: [UInt64: PapyrusValue] = [:]
@@ -109,8 +108,7 @@ public final class PapyrusScheduler {
         case let .external(token):
             .external(token)
         }
-        entries.append(Entry(order: nextOrder, wake: wake, call: call))
-        nextOrder &+= 1
+        entries.append(Entry(wake: wake, call: call))
         pendingCount = entries.count
     }
 
@@ -122,23 +120,20 @@ public final class PapyrusScheduler {
         elapsedGameHours += min(max(0, hours), maximumGameHoursPerStep)
     }
 
+    /// Resumes due calls oldest first while the step has instructions left. A call
+    /// that is not reached keeps its place, and a call that yields goes to the back,
+    /// so every busy loop gets a turn within a few steps.
     private func wakeDueCalls() {
-        while true {
-            let due = entries
-                .filter { isDue($0.wake) }
-                .sorted { $0.order < $1.order }
-            guard !due.isEmpty else {
-                pendingCount = entries.count
-                return
-            }
-            let dueOrders = Set(due.map(\.order))
-            entries.removeAll { dueOrders.contains($0.order) }
-            for entry in due {
-                let outcome = runtime.resume(entry.call, returning: answer(for: entry.wake))
-                onResume?(entry.call, outcome)
-                route(outcome)
-            }
+        while
+            runtime.stepInstructionsLeft > 0,
+            let index = entries.firstIndex(where: { isDue($0.wake) })
+        {
+            let entry = entries.remove(at: index)
+            let outcome = runtime.resume(entry.call, returning: answer(for: entry.wake))
+            onResume?(entry.call, outcome)
+            route(outcome)
         }
+        pendingCount = entries.count
     }
 
     private func answer(for wake: Wake) -> PapyrusValue? {
