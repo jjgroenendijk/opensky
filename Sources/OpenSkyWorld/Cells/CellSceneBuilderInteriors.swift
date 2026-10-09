@@ -92,7 +92,7 @@ nonisolated extension CellSceneBuilder {
         }
         var counts = BuildCounts()
         let refs = persistentCell(in: world, localized: localized).map {
-            collectReferences(in: $0.children, counts: &counts)
+            collectReferences(in: $0, counts: &counts)
         } ?? []
         exteriorPersistentRefs[key] = refs
         return refs
@@ -109,7 +109,7 @@ nonisolated extension CellSceneBuilder {
             throw CellSceneError.interiorCellNotFound(formID: cellFormID)
         }
         var counts = BuildCounts()
-        let collected = collectTaggedReferences(in: found.children, counts: &counts)
+        let collected = collectTaggedReferences(in: found, counts: &counts)
         let refs = collected.map(\.reference)
         let location = CellSceneLocation.interior(cellFormID)
         let resolved = effectiveReferences(
@@ -119,7 +119,7 @@ nonisolated extension CellSceneBuilder {
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildInteriorActors(
-            cellChildren: found.children, location: location, localized: localized,
+            cell: found, location: location, localized: localized,
             deltas: resolved.deltas
         )
         let lighting = buildInteriorLighting(cell: found.cell, references: effective)
@@ -162,10 +162,10 @@ nonisolated extension CellSceneBuilder {
         worldspaceEditorID: String,
         state: WorldStateSnapshot = .empty
     ) throws -> DoorTransition {
-        let index = formIDIndexBuildingIfNeeded()
+        let index = loadOrderIndexBuildingIfNeeded()
         guard
-            let sourceRecord = index.record(withFormID: sourceDoor.rawValue),
-            sourceRecord.type == "REFR"
+            let sourceRecord = index.record(withFormID: sourceDoor),
+            sourceRecord.record.type == "REFR", !sourceRecord.record.isDeleted
         else {
             throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
         }
@@ -175,18 +175,18 @@ nonisolated extension CellSceneBuilder {
         }
         let destinationID = teleport.door
         guard
-            let destinationRecord = index.record(withFormID: destinationID.rawValue),
-            destinationRecord.type == "REFR"
+            let destinationRecord = index.record(withFormID: destinationID),
+            destinationRecord.record.type == "REFR", !destinationRecord.record.isDeleted
         else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
         let destination = try Self.placedReference(destinationRecord)
-        guard index.record(withFormID: destination.base.rawValue)?.type == "DOOR" else {
+        guard index.record(withFormID: destination.base)?.record.type == "DOOR" else {
             throw CellSceneError.teleportDestinationNotFound(formID: destinationID)
         }
 
         let scene: CellScene
-        if let interior = interiorCell(holding: destinationRecord, index: index) {
+        if let interior = placedRecords.interiorCell(holding: destinationID) {
             scene = try buildInteriorScene(cellFormID: interior, state: state)
         } else {
             let grid = CellGridManager.cellCoordinate(for: destination.placement.position)
@@ -207,13 +207,15 @@ nonisolated extension CellSceneBuilder {
 }
 
 nonisolated extension CellSceneBuilder {
-    nonisolated private static func placedReference(_ record: ESMRecord) throws -> PlacedReference {
+    nonisolated private static func placedReference(
+        _ found: LoadOrderRecord
+    ) throws -> PlacedReference {
         do {
-            return try PlacedReference(record: record)
+            return try found.decode(PlacedReference.init(record:))
         } catch {
             throw CellSceneError.malformedRecord(
-                type: record.type,
-                formID: FormID(record.formID),
+                type: found.record.type,
+                formID: found.formID,
                 reason: String(describing: error)
             )
         }
@@ -225,16 +227,20 @@ nonisolated extension CellSceneBuilder {
         formID: FormID,
         localized: Bool
     ) -> FoundCell? {
-        guard let top = file.topGroup(of: "CELL") else { return nil }
         let block = Int32(formID.objectID % 10)
         let subBlock = Int32((formID.objectID / 10) % 10)
-        return findInteriorCell(
-            in: top,
-            formID: formID.rawValue,
-            expectedBlock: block,
-            expectedSubBlock: subBlock,
-            localized: localized
-        )
+        let base = file.topGroup(of: "CELL").flatMap { top in
+            findInteriorCell(
+                in: top,
+                formID: formID.rawValue,
+                expectedBlock: block,
+                expectedSubBlock: subBlock,
+                localized: localized
+            )
+        }
+        guard let found = loadOrderCell(formID: formID, base: base), found.cell.isInterior
+        else { return nil }
+        return found
     }
 
     nonisolated private func findInteriorCell(
@@ -305,26 +311,12 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    /// The interior CELL whose children hold a live reference; nil for an exterior one.
-    nonisolated private func interiorCell(
-        holding reference: ESMRecord,
-        index: ESMFormIDIndex
-    ) -> FormID? {
-        guard !reference.isDeleted else { return nil }
-        return PlacedRecordLookup(
-            index: index,
-            resolver: formIDResolver,
-            localized: file.isLocalized
-        )
-        .interiorCell(holding: FormID(reference.formID))
-    }
-
-    nonisolated func formIDIndexBuildingIfNeeded() -> ESMFormIDIndex {
-        if let formIDIndex {
-            return formIDIndex
+    nonisolated func loadOrderIndexBuildingIfNeeded() -> LoadOrderRecordIndex {
+        if let loadOrderIndex {
+            return loadOrderIndex
         }
-        let index = ESMFormIDIndex(file: file)
-        formIDIndex = index
+        let index = LoadOrderRecordIndex(plugins: loadOrderPlugins, space: formIDResolver)
+        loadOrderIndex = index
         return index
     }
 }

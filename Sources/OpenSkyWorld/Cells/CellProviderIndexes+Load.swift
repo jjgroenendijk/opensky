@@ -52,7 +52,7 @@ nonisolated extension CellProviderIndexes {
         async let records = RecordStores.load(context)
         let built = try progress.measure(.assetLibraries) {
             try makeRunner(
-                file: file,
+                plugins: context,
                 assets: RunnerAssets(
                     fileSystem: fileSystem, device: device, cache: assetCache, fastLoad: fastLoad
                 ),
@@ -104,7 +104,7 @@ nonisolated extension CellProviderIndexes {
 
     /// Hands the new builder straight to the runner, so no other code holds it.
     private static func makeRunner(
-        file: ESMFile,
+        plugins context: LoadContext,
         assets: RunnerAssets,
         localizationLanguage: String,
         terrainLODConfigurationStore: TerrainLODConfigurationStore
@@ -118,10 +118,12 @@ nonisolated extension CellProviderIndexes {
             textures.fastLoader = try FastTextureLoader(device: assets.device, control: control)
         }
         let builder = CellSceneBuilder(
-            file: file,
+            file: context.file,
             meshes: meshes,
             textures: textures,
             fileSystem: fileSystem,
+            pluginName: context.pluginName,
+            plugins: context.plugins,
             localizationLanguage: localizationLanguage,
             terrainLODConfigurationStore: terrainLODConfigurationStore
         )

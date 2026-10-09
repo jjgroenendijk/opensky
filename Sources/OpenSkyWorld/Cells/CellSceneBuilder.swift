@@ -115,8 +115,10 @@ nonisolated public final class CellSceneBuilder {
     /// Built on first use, like every index below.
     public var statIndex: [UInt32: StaticObject]?
     public var textureSetIndex: [UInt32: TextureSet]?
-    /// Door transitions look up references and their cells by FormID through it.
-    var formIDIndex: ESMFormIDIndex?
+    /// Every active plugin, lowest priority first; `file` alone when none are given.
+    public let loadOrderPlugins: [(name: String, file: ESMFile)]
+    /// Door transitions, base objects, and cells read the load order through it.
+    var loadOrderIndex: LoadOrderRecordIndex?
     /// MSTT/TREE/FURN/ACTI/CONT/DOOR; checked when a base is not a STAT.
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
@@ -165,18 +167,23 @@ nonisolated public final class CellSceneBuilder {
         textures: TextureLibrary,
         fileSystem: (any GameFileSource)? = nil,
         pluginName: String = "Skyrim.esm",
+        plugins: [(name: String, file: ESMFile)] = [],
         localizationLanguage: String = LocalizationLanguageSettings.fallback,
         terrainLODConfigurationStore: TerrainLODConfigurationStore? = nil
     ) {
         self.file = file
+        loadOrderPlugins = plugins.isEmpty ? [(pluginName, file)] : plugins
         self.meshes = meshes
         self.textures = textures
         self.fileSystem = fileSystem
         self.pluginName = pluginName
         pluginLocalized = file.isLocalized
         // Without a header, master index 0 falls through to the plugin itself.
+        // The load-order space keeps the first plugin's own FormIDs unchanged.
         var skipped = SkippedRecords()
-        formIDResolver = FormIDResolver(pluginName: pluginName, masters: skipped.masters(of: file))
+        formIDResolver = plugins.count > 1
+            ? FormIDResolver.loadOrder(plugins.map(\.name))
+            : FormIDResolver(pluginName: pluginName, masters: skipped.masters(of: file))
         skippedRecords = skipped
         localizedStrings = fileSystem.map {
             LocalizedStrings(vfs: $0, pluginName: pluginName, language: localizationLanguage)
@@ -208,7 +215,7 @@ nonisolated public final class CellSceneBuilder {
         let world = source.world
         let found = source.cell
         var counts = BuildCounts()
-        let collected = collectTaggedReferences(in: found.children, counts: &counts)
+        let collected = collectTaggedReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
             local: collected.map(\.reference), world: world.children,
@@ -225,7 +232,7 @@ nonisolated public final class CellSceneBuilder {
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
-            cellChildren: found.children,
+            cell: found,
             world: world.children,
             coordinate: coordinate,
             localized: pluginLocalized,

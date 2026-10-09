@@ -58,7 +58,7 @@ nonisolated extension CellSceneBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
     nonisolated public func buildExteriorActors(
-        cellChildren: ESMGroup?,
+        cell: FoundCell?,
         world: ESMGroup,
         coordinate: CellCoordinate,
         localized: Bool,
@@ -68,7 +68,7 @@ nonisolated extension CellSceneBuilder {
         var build = CellActorBuild()
         var malformed: [String] = []
         var byID: [UInt32: CollectedActor] = [:]
-        for collected in decodeActors(in: cellChildren, malformed: &malformed) {
+        for collected in decodeActors(in: cell, malformed: &malformed) {
             byID[collected.actor.formID.rawValue] = collected
         }
         // Records stored in the worldspace persistent CELL are persistent by
@@ -97,7 +97,7 @@ nonisolated extension CellSceneBuilder {
     /// Actors for one interior cell — local children groups only; interiors
     /// have no worldspace persistent cell to map in.
     nonisolated public func buildInteriorActors(
-        cellChildren: ESMGroup?,
+        cell: FoundCell?,
         location: CellSceneLocation,
         localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
@@ -106,7 +106,7 @@ nonisolated extension CellSceneBuilder {
         var build = CellActorBuild()
         var malformed: [String] = []
         let collected = relocating(
-            decodeActors(in: cellChildren, malformed: &malformed), into: location, deltas: deltas
+            decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
         )
         let actors = collected.map(\.actor)
         build.entries = actorEntries(collected)
@@ -119,10 +119,19 @@ nonisolated extension CellSceneBuilder {
         return build
     }
 
-    /// Non-deleted ACHRs decoded from the cell's persistent + temporary
+    /// Non-deleted ACHRs of every plugin from the cell's persistent + temporary
     /// children groups. Deleted records place nothing (not discovered);
     /// a decode failure is discovered-but-failed.
     nonisolated private func decodeActors(
+        in cell: FoundCell?,
+        malformed: inout [String]
+    ) -> [CollectedActor] {
+        guard let cell else { return [] }
+        let base = decodeBaseActors(in: cell.children, malformed: &malformed)
+        return mergingLaterActors(base, cell: FormID(cell.formID), malformed: &malformed)
+    }
+
+    nonisolated private func decodeBaseActors(
         in cellChildren: ESMGroup?,
         malformed: inout [String]
     ) -> [CollectedActor] {
@@ -166,7 +175,7 @@ nonisolated extension CellSceneBuilder {
         var actors: [PlacedActor] = []
         if let persistent = persistentCell(in: world, localized: localized) {
             var malformed: [String] = []
-            actors = decodeActors(in: persistent.children, malformed: &malformed)
+            actors = decodeActors(in: persistent, malformed: &malformed)
                 .map(\.actor)
         }
         exteriorPersistentActors[key] = actors

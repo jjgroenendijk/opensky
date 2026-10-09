@@ -43,6 +43,31 @@ a rebuild of a cell the player walks back into, finds its cell without a walk. T
 `LTEX` to `TXST` diffuse path the same way, because finding one record by FormID scans the
 whole file.
 
+## Load order
+
+A cell holds the references of every active plugin, not only `Skyrim.esm`. The builder works
+in the load-order FormID space ([FormID](/formats/formid.md#load-order-space)): the first plugin
+keeps its FormIDs, and a record of a later plugin is decoded and then renumbered.
+
+- The builder walks the first plugin's groups as above. Then each later plugin's `REFR` and
+  `ACHR` records stored under the same `CELL` are laid over them, lowest priority first.
+- A later record with the same FormID replaces the earlier one in place. A new FormID joins the
+  end. A record with the deleted flag removes it. An override that does not decode keeps the
+  earlier version and is counted as malformed.
+- The `CELL` values (lighting, water, owner, regions) come from the last plugin that has the
+  record. A cell that only a later plugin defines, such as a `HearthFires.esm` house interior,
+  builds with that plugin's references alone.
+- Base objects (`STAT`, `TXST`, `LIGH`, and the placeable bases) are indexed over every
+  plugin, so a reference to a plugin's own base resolves.
+- The lookup for unloaded references and the door transitions read the winning record of the
+  load order. So a script on a reference that a Creation Club plugin places runs before its
+  cell loads.
+
+Source: UESP [Mod File Format](https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format) on
+overrides across the load order. Not yet load-order wide: new worldspaces and new exterior
+cells, terrain, navmeshes, hazards, the actor base chain (`NPC_`, `RACE`), and the text of a
+later plugin's localized names.
+
 ## Base objects
 
 A reference's base FormID is looked up in two cached indexes: `STAT` first, then the placeable

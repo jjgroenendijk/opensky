@@ -8,11 +8,10 @@ import OpenSkyGameData
 import OpenSkyWorldState
 
 nonisolated extension CellSceneBuilder {
-    /// Built from the FormID index the door transitions use.
+    /// Built from the load-order index the door transitions use.
     nonisolated public var placedRecords: PlacedRecordLookup {
         PlacedRecordLookup(
-            index: formIDIndexBuildingIfNeeded(), resolver: formIDResolver,
-            localized: pluginLocalized,
+            index: loadOrderIndexBuildingIfNeeded(),
             templates: actorResolversBuildingIfNeeded(localized: pluginLocalized).template
         )
     }

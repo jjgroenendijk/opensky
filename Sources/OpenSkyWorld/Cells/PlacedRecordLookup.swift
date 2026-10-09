@@ -1,6 +1,6 @@
-// Any placed REFR or ACHR by key, loaded or not. `MoveTo` needs it for a
-// reference whose cell is not resident, and a build needs it for a reference
-// moved in from another cell. See docs/engine/reference-identity.md.
+// Any placed REFR or ACHR of the load order by key, loaded or not. `MoveTo`
+// needs it for a reference whose cell is not resident, and a build needs it for
+// a reference moved in from another cell. See docs/engine/reference-identity.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -10,43 +10,38 @@ import OpenSkyWorldState
 import simd
 
 nonisolated public struct PlacedRecordLookup: Sendable {
-    private let index: ESMFormIDIndex
-    private let resolver: FormIDResolver
-    private let localized: Bool
+    private let index: LoadOrderRecordIndex
     private let templates: ActorTemplateResolver?
 
-    public init(
-        index: ESMFormIDIndex,
-        resolver: FormIDResolver,
-        localized: Bool,
-        templates: ActorTemplateResolver? = nil
-    ) {
+    private var resolver: FormIDResolver {
+        index.space
+    }
+
+    public init(index: LoadOrderRecordIndex, templates: ActorTemplateResolver? = nil) {
         self.index = index
-        self.resolver = resolver
-        self.localized = localized
         self.templates = templates
     }
 
-    /// The decoded record behind `key`, or nil for a key of another plugin, a
-    /// deleted record, or one that is not a REFR or ACHR.
+    /// The winning record behind `key`, or nil for a key of a plugin outside the
+    /// load order, a deleted record, or one that is not a REFR or ACHR.
     public func entry(for key: ReferenceKey) -> RuntimeReferenceEntry? {
         guard
             case let .plugin(name, objectID) = key,
             let formID = resolver.localFormID(
                 of: ResolvedFormID(plugin: name, objectID: objectID)
             ),
-            let record = index.record(withFormID: formID.rawValue), !record.isDeleted
+            let found = index.record(withFormID: formID), !found.record.isDeleted
         else { return nil }
-        let decoded: RuntimeReferenceRecord? = switch record.type {
-        case "REFR": (try? PlacedReference(record: record)).map { .reference($0) }
-        case "ACHR": (try? PlacedActor(record: record)).map { .actor($0) }
+        let decoded: RuntimeReferenceRecord? = switch found.record.type {
+        case "REFR": (try? found.decode(PlacedReference.init(record:))).map { .reference($0) }
+        case "ACHR": (try? found.decode(PlacedActor.init(record:))).map { .actor($0) }
         default: nil
         }
         guard let decoded else { return nil }
         return RuntimeReferenceEntry(
             key: key,
             formID: formID,
-            isPersistent: record.flags.contains(.persistent),
+            isPersistent: found.record.flags.contains(.persistent),
             record: decoded,
             baseScripts: baseScripts(of: decoded)
         )
@@ -58,9 +53,9 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         }
         guard
             case let .reference(reference) = record,
-            let base = index.record(withFormID: reference.base.rawValue),
-            ModelBase.supportedTypes.contains(base.type),
-            let decoded = try? ModelBase(record: base, localized: localized)
+            let base = index.record(withFormID: reference.base),
+            ModelBase.supportedTypes.contains(base.record.type),
+            let decoded = try? base.decode({ try ModelBase(record: $0, localized: base.localized) })
         else { return [] }
         return decoded.scriptData.scripts
     }
@@ -101,10 +96,10 @@ nonisolated public struct PlacedRecordLookup: Sendable {
     /// The interior CELL whose children hold `formID`; nil for an exterior one.
     public func interiorCell(holding formID: FormID) -> FormID? {
         guard
-            let cellID = index.cellFormID(containing: formID.rawValue),
-            let record = index.record(withFormID: cellID), record.type == "CELL",
-            let cell = try? Cell(record: record, localized: localized), cell.isInterior
+            let cellID = index.cellFormID(containing: formID),
+            let found = index.record(withFormID: cellID), found.record.type == "CELL",
+            let cell = try? Cell(record: found.record, localized: found.localized), cell.isInterior
         else { return nil }
-        return FormID(cellID)
+        return cellID
     }
 }

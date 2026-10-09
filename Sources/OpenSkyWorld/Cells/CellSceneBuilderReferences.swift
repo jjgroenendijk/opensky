@@ -21,11 +21,20 @@ nonisolated public struct CollectedActor: Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// Live REFRs from the persistent and temporary children groups, tagged
-    /// with their group. Other record types are not static placements and are
-    /// not counted (docs/engine/cell-scene.md). A REFR that fails to decode is
-    /// counted as malformed.
+    /// Live REFRs of every plugin from the persistent and temporary children
+    /// groups, tagged with their group. Other record types are not static
+    /// placements and are not counted (docs/engine/cell-scene.md). A REFR that
+    /// fails to decode is counted as malformed.
     nonisolated public func collectTaggedReferences(
+        in cell: FoundCell?,
+        counts: inout BuildCounts
+    ) -> [CollectedReference] {
+        guard let cell else { return [] }
+        let base = collectBaseReferences(in: cell.children, counts: &counts)
+        return mergingLaterReferences(base, cell: FormID(cell.formID), counts: &counts)
+    }
+
+    nonisolated private func collectBaseReferences(
         in cellChildren: ESMGroup?,
         counts: inout BuildCounts
     ) -> [CollectedReference] {
@@ -57,10 +66,10 @@ nonisolated extension CellSceneBuilder {
     /// Untagged collection for the render and collision paths, which place
     /// persistent and temporary records identically.
     nonisolated public func collectReferences(
-        in cellChildren: ESMGroup?,
+        in cell: FoundCell?,
         counts: inout BuildCounts
     ) -> [PlacedReference] {
-        collectTaggedReferences(in: cellChildren, counts: &counts).map(\.reference)
+        collectTaggedReferences(in: cell, counts: &counts).map(\.reference)
     }
 
     /// Index entries for the references a finished cell placed. A reference from
