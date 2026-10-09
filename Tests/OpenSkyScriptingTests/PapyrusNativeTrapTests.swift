@@ -96,6 +96,21 @@ struct PapyrusNativeTrapTests {
         #expect(fixture.call("SetMotionType") == .deviated(.none, .stubbed))
         #expect(fixture.call("ApplyHavokImpulse") == .deviated(.none, .stubbed))
         #expect(fixture.call("IsLockBroken", returnType: .boolean) == .returned(.boolean(false)))
+        #expect(fixture.call("IsFurnitureInUse", returnType: .boolean)
+            == .deviated(.boolean(false), .stubbed))
+        #expect(fixture.call("GetAngleX", returnType: .float) == .returned(.float(0)))
+    }
+
+    @Test func getFormHandsBackTheFormBehindALoadOrderID() throws {
+        let fixture = try Fixture.make()
+        let getForm = { (formID: Int32) in
+            fixture.registry.invoke(PapyrusNativeCall(
+                kind: .staticFunction, scriptName: "Game", functionName: "GetForm",
+                receiver: nil, arguments: [.integer(formID)], returnType: .object("Form")
+            ))
+        }
+        #expect(getForm(Int32(Fixture.leverID)) == .returned(.object(fixture.receiver)))
+        #expect(getForm(0) == .returned(.none))
     }
 
     @Test func animationEventWaitIsPacedAndAnswersTrue() throws {

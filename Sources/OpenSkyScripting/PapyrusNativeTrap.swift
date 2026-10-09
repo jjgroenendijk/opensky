@@ -18,9 +18,9 @@ extension PapyrusNativeFunctions {
         installTrapStubs(into: &registry)
     }
 
-    /// `int GetTriggerObjectCount()`, `Form GetBaseObject()`, `float GetAngleZ()`,
-    /// `ObjectReference GetNthLinkedRef(int)`, `bool IsLockBroken()`, and
-    /// `float Utility.GetCurrentRealTime()`.
+    /// `int GetTriggerObjectCount()`, `Form GetBaseObject()`, `float GetAngleX()`,
+    /// `float GetAngleZ()`, `ObjectReference GetNthLinkedRef(int)`, `bool IsLockBroken()`,
+    /// and `float Utility.GetCurrentRealTime()`.
     private static func installTrapReads(into registry: inout PapyrusNativeRegistry) {
         reference("GetTriggerObjectCount", into: &registry) { _, target in
             .returned(.integer(Int32(clamping: target.world.triggerObjectCount(for: target.key))))
@@ -33,11 +33,13 @@ extension PapyrusNativeFunctions {
             else { return .returned(.none) }
             return .returned(.object(handle))
         }
-        reference("GetAngleZ", into: &registry) { call, target in
-            guard let state = target.world.referenceState(for: target.key) else {
-                return needsResidentReference(call)
+        for (functionName, axis) in [("GetAngleX", 0), ("GetAngleZ", 2)] {
+            reference(functionName, into: &registry) { call, target in
+                guard let state = target.world.referenceState(for: target.key) else {
+                    return needsResidentReference(call)
+                }
+                return .returned(.float(state.transform.rotation[axis] * 180 / .pi))
             }
-            return .returned(.float(state.transform.rotation.z * 180 / .pi))
         }
         reference("GetNthLinkedRef", into: &registry) { call, target in
             guard let count = integer(call, at: 0) else {
