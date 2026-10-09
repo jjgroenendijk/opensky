@@ -114,6 +114,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Load-order MGEF lookup, for `HasMagicEffectWithKeyword`. Nil in a
     /// synthetic session with no record index.
     public var magicEffectStore: MagicEffectStore?
+    /// Load-order FLST lookup, for the `FormList` natives. Nil fails them.
+    public var formListStore: FormListStore?
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.
@@ -196,6 +198,22 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     public func triggerObjectCount(for key: ReferenceKey) -> Int {
         triggerOccupants[key]?.count ?? 0
+    }
+
+    public func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
+        guard
+            let formListStore,
+            case let .plugin(plugin, objectID) = key,
+            let resolved = formListStore.formList(ResolvedFormID(
+                plugin: plugin,
+                objectID: objectID
+            ))
+        else { return nil }
+        return resolved.list.entries.map { entry in
+            entry
+                .flatMap { formListStore.resolvedID($0, fromPlugin: resolved.sourcePlugin) }
+                .map(ReferenceKey.init(resolved:))
+        }
     }
 
     public func lockState(for key: ReferenceKey) -> ReferenceLockState? {

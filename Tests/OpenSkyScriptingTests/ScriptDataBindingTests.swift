@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
+import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
 import Testing
 
@@ -154,6 +155,23 @@ struct ScriptDataBindingTests {
             "property missing from PEX",
             "removed property"
         ])
+    }
+
+    @Test("a full property binds through its setter, and one without a setter is skipped")
+    func bindsFullPropertiesThroughTheirSetter() throws {
+        let runtime = PapyrusRuntime(files: [PexFixture.runtimeFile(objects: [
+            PapyrusWorldFixture.setterScript("BoundScript")
+        ])])
+        let attached = try script(properties: [
+            .init("Limit", .integer(3)),
+            .init("ReadOnly", .integer(1))
+        ])
+        let bound = try attached.makeInstance(in: runtime, formIDResolver: resolver) { _ in nil }
+
+        let instance = try #require(runtime.instance(for: bound.handle))
+        #expect(instance.value(named: "limitStore", declaredBy: "BoundScript") == .integer(3))
+        #expect(bound.binding.initialValues.isEmpty)
+        #expect(bound.binding.skipped.ranked.map(\.name) == ["full property without a setter"])
     }
 
     @Test("removed script attachments cannot create instances")

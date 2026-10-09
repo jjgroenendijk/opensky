@@ -146,6 +146,9 @@ extension PapyrusInterpreter {
         let scriptName = try name(from: operands[0])
         let functionName = try name(from: operands[1])
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
+        if runtime.script(named: scriptName) == nil {
+            _ = runtime.loadScript?(scriptName)
+        }
         if
             let script = runtime.script(named: scriptName),
             let function = function(named: functionName, state: "", script: script),

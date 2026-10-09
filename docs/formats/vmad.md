@@ -159,14 +159,21 @@ vanilla, the flag byte is always 1, 2, or 3.
 ## Binding values to PEX variables
 
 OpenSky finds a property by name, without case, in the script and then up its parent
-scripts. It binds only when the PEX property is automatic and names a backing variable.
-The value goes to that exact backing variable name. OpenSky never builds the name itself.
+scripts. An automatic property binds to the backing variable it names. The value goes to
+that exact backing variable name. OpenSky never builds the name itself.
+
+A full property, one with its own `Set` function, binds by running that function once on
+the new instance, after the automatic values and before `OnInit`. The setter can write
+other variables. Example: the trap trigger base script stores its use limit in a plain
+variable that only the `TriggerCount` setter writes. A tripwire that sets `FiniteUse`
+needs that limit, or it can never fire. The Creation Kit wiki does not state when the
+game runs the setter. Running it before `OnInit` is an inference from this data.
 
 In vanilla, every automatic property uses the name `::<Property>_var`. This is a habit of
 the compiler, not a rule. So OpenSky reads the name from the PEX file.
 
 A value is converted to a Papyrus value and must pass the declared type check. A property
-that is removed, missing, not automatic, or the wrong type, and an object that does not
+that is removed, missing, full without a setter, or the wrong type, and an object that does not
 resolve, keep the compiled default. OpenSky counts each kind of skip.
 
 ## Errors

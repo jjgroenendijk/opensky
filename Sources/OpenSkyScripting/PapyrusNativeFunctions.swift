@@ -25,6 +25,7 @@ public enum PapyrusNativeFunctions {
         installFaction(into: &registry)
         installLock(into: &registry)
         installTrap(into: &registry)
+        installFormList(into: &registry)
         installStory(into: &registry)
         installPresentation(into: &registry)
         installMenus(into: &registry)

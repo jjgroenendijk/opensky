@@ -61,6 +61,7 @@ final class TrapCellSession {
         let plugins = ActivePluginFiles.load(root: root, baseFile: install.file)
         hazards = HazardStore(plugins: plugins)
         spells = SpellStore(plugins: plugins)
+        bridge.formListStore = FormListStore(plugins: plugins)
     }
 
     static func make() throws -> TrapCellSession {

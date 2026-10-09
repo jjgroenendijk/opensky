@@ -93,18 +93,27 @@ extension PapyrusWorldRuntime {
             guard let outcome = dispatch(event) else {
                 continue
             }
-            if case let .suspended(call) = outcome {
-                busyInstances.insert(event.target)
-                suspensionTracker.begin(id: call.id, instance: event.target)
-            }
-            if case .faulted = outcome {
+            if settle(outcome, target: event.target) {
                 faulted += 1
             }
-            scheduler.schedule(outcome)
         }
         // Skipped busy-instance events keep their order ahead of the
         // untouched tail; both were behind the dispatched prefix.
         eventQueue = retained + Array(eventQueue.dropFirst(drainCursor ?? 0))
+    }
+
+    /// Hands `outcome` to the scheduler; a suspended call holds `target` busy until it
+    /// resumes. Returns true for a fault.
+    func settle(_ outcome: PapyrusRunOutcome, target: PapyrusInstanceKey) -> Bool {
+        if case let .suspended(call) = outcome {
+            busyInstances.insert(target)
+            suspensionTracker.begin(id: call.id, instance: target)
+        }
+        scheduler.schedule(outcome)
+        if case .faulted = outcome {
+            return true
+        }
+        return false
     }
 
     /// Delivers one event. Returns nil for a counted no-op: a retired
