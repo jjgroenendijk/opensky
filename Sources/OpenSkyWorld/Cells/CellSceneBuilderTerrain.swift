@@ -125,7 +125,7 @@ nonisolated extension CellSceneBuilder {
         coordinate: CellCoordinate,
         quadFlags: UInt32
     ) -> (patches: [TerrainMeshBuilder.Patch], heightField: TerrainHeightField)? {
-        if let land = landRecord(in: found.children) {
+        if let land = landRecord(in: found) {
             if let heights = land.heightField?.heights {
                 let field = TerrainHeightField(
                     coordinate: coordinate,
@@ -181,6 +181,25 @@ nonisolated extension CellSceneBuilder {
             resolved.opacities.append(layer.opacities)
         }
         return resolved
+    }
+
+    /// The cell's LAND as the load order has it: the last plugin's decodable
+    /// record wins, as for every other cell child.
+    nonisolated public func landRecord(in found: FoundCell) -> Land? {
+        let later = laterChildren(of: FormID(stored: found.formID), type: "LAND")
+        for child in later.reversed() {
+            if child.record.record.isDeleted {
+                return nil
+            }
+            if
+                let land = decodeOrSkip(child.record.record, using: { _ in
+                    try child.record.decode(Land.init(record:))
+                })
+            {
+                return land
+            }
+        }
+        return landRecord(in: found.children)
     }
 
     /// The first decodable LAND in the cell's temporary-children group (UESP Groups).

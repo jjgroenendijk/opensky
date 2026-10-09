@@ -229,7 +229,7 @@ nonisolated extension CellSceneBuilder {
         let world = try worldChildrenGroup(editorID: worldspaceEditorID, localized: localized)
         guard
             let found = findCell(
-                in: world.children, gridX: gridX, gridY: gridY, localized: localized
+                in: world, gridX: gridX, gridY: gridY, localized: localized
             )
         else {
             throw CellSceneError.cellNotFound(
@@ -243,7 +243,7 @@ nonisolated extension CellSceneBuilder {
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
             local: localRefs,
-            world: world.children,
+            world: world,
             coordinate: coordinate,
             localized: localized
         )

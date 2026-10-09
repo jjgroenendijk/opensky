@@ -34,23 +34,25 @@ nonisolated public struct PackageStore: Sendable {
     /// PACK records that failed to decode.
     public private(set) var skippedRecords = SkippedRecords()
 
+    /// The source plugin's translation of each package from a plugin whose
+    /// FormIDs move; its conditions stay as written (`ConditionEvaluator`).
+    private var translations: [UInt32: FormIDTranslation] = [:]
+
     public init(file: ESMFile) {
-        let localized = file.isLocalized
-        actorTemplates = ActorTemplateResolver.build(from: file, localized: localized)
-        var decoded: [UInt32: Package] = [:]
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    /// Every plugin's PACK records; a later override wins.
+    public init(loadOrder: LoadOrderPlugins) {
+        actorTemplates = ActorTemplateResolver.build(from: loadOrder)
         var skipped = SkippedRecords()
-        if let group = file.topGroup(of: "PACK") {
-            for case let .record(record) in skipped.children(of: group)
-                where record.type == "PACK"
-            {
-                guard
-                    !record.isDeleted,
-                    let package = skipped.decode(record, using: Package.init(record:))
-                else { continue }
-                decoded[record.formID] = package
-            }
+        let decoded = loadOrder.indexPluginRecords(of: "PACK", skipped: &skipped) {
+            try (package: Package(record: $0), translation: $1.translation)
         }
-        packages = decoded
+        packages = decoded.mapValues(\.package)
+        translations = decoded.compactMapValues {
+            $0.translation.isIdentity ? nil : $0.translation
+        }
         skippedRecords = skipped
     }
 
@@ -64,6 +66,12 @@ nonisolated public struct PackageStore: Sendable {
 
     public func package(_ id: FormID) -> Package? {
         packages[id.rawValue]
+    }
+
+    /// How the conditions of package `id` translate into the load order; nil
+    /// when its plugin keeps its FormIDs.
+    public func translation(of id: FormID) -> FormIDTranslation? {
+        translations[id.rawValue]
     }
 
     public func packageStack(for actorBase: FormID) throws -> ActorSourcedField<[FormID]> {

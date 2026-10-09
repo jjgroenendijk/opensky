@@ -17,39 +17,55 @@ nonisolated public struct CellHazard: Equatable, Sendable {
 }
 
 nonisolated extension CellSceneBuilder {
-    /// The enabled `PHZD` records directly under `cellChildren`.
+    /// The enabled `PHZD` records every plugin stores under `cell`.
     nonisolated public func collectHazards(
-        in cellChildren: ESMGroup?,
+        in cell: FoundCell,
         resolved: EffectiveReferences,
         parentPool: [FormID: PlacedReference] = [:]
     ) -> [CellHazard] {
-        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return [] }
+        let placed = mergingLater(
+            baseHazards(in: cell.children),
+            later: laterChildren(of: FormID(cell.formID), type: "PHZD"),
+            formID: \.formID
+        ) {
+            try $0.record.decode(PlacedProjectile.init(record:))
+        } failed: { _ in }
         let byFormID = entriesByFormID(resolved.entries)
         let enable = EnableParentResolver(deltas: resolved.deltas) { formID in
             byFormID[formID] ?? parentPool[formID].flatMap { reference in
                 self.runtimeEntry(formID: formID, isPersistent: true, record: .reference(reference))
             }
         }
-        var hazards: [CellHazard] = []
+        return placed.compactMap { placed in
+            guard
+                let key = ReferenceKey.resolve(placed.formID, using: formIDResolver),
+                enable.isEnabled(
+                    key: key,
+                    initiallyDisabled: placed.isInitiallyDisabled,
+                    link: placed.enableParent
+                )
+            else { return nil }
+            return CellHazard(
+                key: key,
+                hazardKey: ReferenceKey.resolve(placed.base, using: formIDResolver),
+                position: placed.placement.position,
+                enableParent: placed.enableParent
+            )
+        }
+    }
+
+    /// The first plugin's live `PHZD` records; one that does not decode is skipped.
+    nonisolated private func baseHazards(in cellChildren: ESMGroup?) -> [PlacedProjectile] {
+        guard let cellChildren, let children = childrenOrSkip(cellChildren) else { return [] }
+        var hazards: [PlacedProjectile] = []
         for case let .group(group) in children {
             guard let records = childrenOrSkip(group) else { continue }
-            for case let .record(record) in records where record.type == "PHZD" {
-                guard
-                    !record.isDeleted,
-                    let placed = try? PlacedProjectile(record: record),
-                    let key = ReferenceKey.resolve(placed.formID, using: formIDResolver),
-                    enable.isEnabled(
-                        key: key,
-                        initiallyDisabled: placed.isInitiallyDisabled,
-                        link: placed.enableParent
-                    )
-                else { continue }
-                hazards.append(CellHazard(
-                    key: key,
-                    hazardKey: ReferenceKey.resolve(placed.base, using: formIDResolver),
-                    position: placed.placement.position,
-                    enableParent: placed.enableParent
-                ))
+            for case let .record(record) in records
+                where record.type == "PHZD" && !record.isDeleted
+            {
+                if let placed = try? PlacedProjectile(record: record) {
+                    hazards.append(placed)
+                }
             }
         }
         return hazards

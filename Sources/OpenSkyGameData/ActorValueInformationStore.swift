@@ -20,7 +20,7 @@ nonisolated public struct ResolvedActorValueInformation: Equatable, Sendable {
     public var displayName: String {
         switch information.name {
         case let .inline(value): value
-        case .tableID: information.editorID ?? id.description
+        case .tableID, .pluginTableID: information.editorID ?? id.description
         case nil: information.editorID ?? id.description
         }
     }

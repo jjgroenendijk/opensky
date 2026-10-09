@@ -21,11 +21,15 @@ nonisolated public struct MaterialTypeIndex: Sendable {
     public static let empty = MaterialTypeIndex(materials: [], landTextureMaterials: [:])
 
     public init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        let materials = file.decodeRecords(of: "MATT", skipped: &skipped) {
+        let materials = loadOrder.decodeRecords(of: "MATT", skipped: &skipped) {
             try MaterialType(record: $0)
         }
-        let textures = file.decodeRecords(of: "LTEX", skipped: &skipped) {
+        let textures = loadOrder.decodeRecords(of: "LTEX", skipped: &skipped) {
             try LandTexture(record: $0)
         }
         self.init(

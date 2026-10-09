@@ -90,7 +90,7 @@ nonisolated extension CellSceneBuilder {
         firstPerson: Bool,
         label: String
     ) -> Result<ActorAssembly<ActorRenderAsset>, PlayerBodyError> {
-        let resolvers = actorResolversBuildingIfNeeded(localized: pluginLocalized)
+        let resolvers = actorResolversBuildingIfNeeded()
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
             var appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)

@@ -32,7 +32,7 @@ nonisolated public struct LightRecord: Sendable {
         public static let inverseSquare = Flags(rawValue: 0x4000)
     }
 
-    public internal(set) var formID: FormID
+    public let formID: FormID
     public let editorID: String?
     public let time: Int32
     public let radius: UInt32
@@ -49,7 +49,7 @@ nonisolated public struct LightRecord: Sendable {
     }
 
     /// The fields lighting does not read: model, name, sound, scripts.
-    public internal(set) var details: LightDetails
+    public let details: LightDetails
     public let skipped: FieldTally
 
     /// Decodes with FULL read as inline text.
@@ -133,9 +133,9 @@ nonisolated public struct LightDetails: Equatable, Sendable {
     public let iconPath: String?
     public let messageIconPath: String?
     /// SNAM — the SNDR the light loops.
-    public internal(set) var sound: FormID?
+    public let sound: FormID?
     /// LNAM — lens flare.
-    public internal(set) var lensFlare: FormID?
+    public let lensFlare: FormID?
     public let destructible: Destructible?
     public let scriptData: ScriptData
 

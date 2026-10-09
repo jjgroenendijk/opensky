@@ -27,7 +27,7 @@ nonisolated extension CellSceneBuilder {
         let world = try worldChildrenGroup(
             editorID: worldspaceEditorID, localized: localized
         )
-        return persistentReferences(in: world.children, localized: localized)
+        return persistentReferences(in: world, localized: localized)
             .filter { $0.teleportDestination != nil }
             .flatMap { ref -> [(coordinate: CellCoordinate, door: PlacedDoor)] in
                 let doors = resolveDoors(refs: [ref])
@@ -40,7 +40,7 @@ nonisolated extension CellSceneBuilder {
     /// `coordinate`. Local teleport doors are filtered by position too.
     nonisolated public func exteriorReferences(
         local: [PlacedReference],
-        world: ESMGroup,
+        world: FoundWorld,
         coordinate: CellCoordinate,
         localized: Bool
     ) -> [PlacedReference] {
@@ -67,10 +67,10 @@ nonisolated extension CellSceneBuilder {
     /// The worldspace's persistent references by FormID, where an exterior `XESP`
     /// parent usually lives. Built once per worldspace.
     nonisolated func persistentParentPool(
-        in world: ESMGroup,
+        in world: FoundWorld,
         localized: Bool
     ) -> [FormID: PlacedReference] {
-        let key = world.parentFormID ?? 0
+        let key = world.formID.rawValue
         if let cached = exteriorPersistentPools[key] {
             return cached
         }
@@ -83,10 +83,10 @@ nonisolated extension CellSceneBuilder {
     }
 
     nonisolated private func persistentReferences(
-        in world: ESMGroup,
+        in world: FoundWorld,
         localized: Bool
     ) -> [PlacedReference] {
-        let key = world.parentFormID ?? 0
+        let key = world.formID.rawValue
         if let cached = exteriorPersistentRefs[key] {
             return cached
         }
@@ -141,7 +141,7 @@ nonisolated extension CellSceneBuilder {
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
-                navmeshes: Self.collectNavmeshes(in: found.children),
+                navmeshes: collectNavmeshes(in: found),
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
@@ -149,7 +149,7 @@ nonisolated extension CellSceneBuilder {
             ),
             counts: counts
         )
-        scene.hazards = collectHazards(in: found.children, resolved: resolved)
+        scene.hazards = collectHazards(in: found, resolved: resolved)
         scene.imageSpace = found.cell.extras.imageSpace
         scene.assets = drainTouchedAssets()
         return scene

@@ -139,13 +139,8 @@ nonisolated extension CellSceneBuilder {
         if let lightingTemplateIndex {
             return lightingTemplateIndex
         }
-        var index: [UInt32: LightingTemplate] = [:]
-        if let top = file.topGroup(of: "LGTM"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "LGTM" {
-                if let template = decodeOrSkip(record, using: LightingTemplate.init(record:)) {
-                    index[record.formID] = template
-                }
-            }
+        let index = loadOrderRecords(of: "LGTM") { record, _ in
+            try LightingTemplate(record: record)
         }
         lightingTemplateIndex = index
         return index

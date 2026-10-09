@@ -96,7 +96,7 @@ nonisolated public struct ItemDefinition: Equatable, Sendable {
     /// The same definition with a FULL string ID replaced by its text. A missing
     /// table or ID keeps the ID, so callers still fall back to the editor ID.
     func resolvingName(with strings: LocalizedStrings) -> ItemDefinition {
-        guard case .tableID = name, let text = strings.resolve(name) else { return self }
+        guard name?.tableIDValue != nil, let text = strings.resolve(name) else { return self }
         return ItemDefinition(
             formID: formID, family: family, editorID: editorID, name: .inline(text),
             value: value, weight: weight, keywords: keywords, enchantment: enchantment
@@ -154,21 +154,33 @@ nonisolated public final class ItemDefinitionStore {
     /// EITM resolved to the winning ENCH identity while the index is built;
     /// without it the links are still carried, just unresolved. Supply `strings`
     /// to turn each FULL string ID into its text.
-    public init(
+    public convenience init(
         file: ESMFile,
         enchantments: ItemEnchantmentResolver? = nil,
         strings: LocalizedStrings? = nil
     ) {
+        self.init(
+            loadOrder: LoadOrderPlugins(file: file),
+            enchantments: enchantments,
+            strings: strings
+        )
+    }
+
+    /// Every plugin's item records in the load-order space; a later plugin wins.
+    public init(
+        loadOrder: LoadOrderPlugins,
+        enchantments: ItemEnchantmentResolver? = nil,
+        strings: LocalizedStrings? = nil
+    ) {
         self.enchantments = enchantments
-        let localized = file.isLocalized
         var skipped = SkippedRecords()
         var definitions: [UInt32: ItemDefinition] = [:]
         for family in ItemDefinition.Family.allCases {
-            let decoded = Self.decodeAll(family.recordType, in: file, skipped: &skipped) {
+            let decoded = Self.decodeAll(family.recordType, in: loadOrder, skipped: &skipped) {
                 try Self.definition(
                     record: $0,
                     family: family,
-                    localized: localized,
+                    localized: $1,
                     enchantments: enchantments
                 )
             }
@@ -182,38 +194,38 @@ nonisolated public final class ItemDefinitionStore {
                 ($0, skipped.count(of: $0.recordType))
             }
         )
-        containers = Self.decodeAll("CONT", in: file, skipped: &skipped) {
-            try Container(record: $0, localized: localized)
+        containers = Self.decodeAll("CONT", in: loadOrder, skipped: &skipped) {
+            try Container(record: $0, localized: $1)
         }
-        projectiles = Self.decodeAll("PROJ", in: file, skipped: &skipped) {
-            try Projectile(record: $0)
+        projectiles = Self.decodeAll("PROJ", in: loadOrder, skipped: &skipped) { record, _ in
+            try Projectile(record: record)
         }
         skippedRecords = skipped
         // The family loop above already counted these decoders' failures.
         var repeated = SkippedRecords()
-        armor = Self.decodeAll("ARMO", in: file, skipped: &repeated) {
-            try Armor(record: $0, localized: localized)
+        armor = Self.decodeAll("ARMO", in: loadOrder, skipped: &repeated) {
+            try Armor(record: $0, localized: $1)
         }
-        weapons = Self.decodeAll("WEAP", in: file, skipped: &repeated) {
-            try Weapon(record: $0, localized: localized)
+        weapons = Self.decodeAll("WEAP", in: loadOrder, skipped: &repeated) {
+            try Weapon(record: $0, localized: $1)
         }
-        ammunition = Self.decodeAll("AMMO", in: file, skipped: &repeated) {
-            try Ammunition(record: $0, localized: localized)
+        ammunition = Self.decodeAll("AMMO", in: loadOrder, skipped: &repeated) {
+            try Ammunition(record: $0, localized: $1)
         }
-        ingestibles = Self.decodeAll("ALCH", in: file, skipped: &repeated) {
-            try Ingestible(record: $0, localized: localized)
+        ingestibles = Self.decodeAll("ALCH", in: loadOrder, skipped: &repeated) {
+            try Ingestible(record: $0, localized: $1)
         }
-        ingredients = Self.decodeAll("INGR", in: file, skipped: &repeated) {
-            try Ingredient(record: $0, localized: localized)
+        ingredients = Self.decodeAll("INGR", in: loadOrder, skipped: &repeated) {
+            try Ingredient(record: $0, localized: $1)
         }
-        books = Self.decodeAll("BOOK", in: file, skipped: &repeated) {
-            try Book(record: $0, localized: localized)
+        books = Self.decodeAll("BOOK", in: loadOrder, skipped: &repeated) {
+            try Book(record: $0, localized: $1)
         }
-        soulGems = Self.decodeAll("SLGM", in: file, skipped: &repeated) {
-            try SoulGem(record: $0, localized: localized)
+        soulGems = Self.decodeAll("SLGM", in: loadOrder, skipped: &repeated) {
+            try SoulGem(record: $0, localized: $1)
         }
-        apparatus = Self.decodeAll("APPA", in: file, skipped: &repeated) {
-            try Apparatus(record: $0, localized: localized)
+        apparatus = Self.decodeAll("APPA", in: loadOrder, skipped: &repeated) {
+            try Apparatus(record: $0, localized: $1)
         }
     }
 
@@ -322,17 +334,11 @@ nonisolated public final class ItemDefinitionStore {
 
     private static func decodeAll<Value>(
         _ type: FourCC,
-        in file: ESMFile,
+        in loadOrder: LoadOrderPlugins,
         skipped: inout SkippedRecords,
-        using decode: (ESMRecord) throws -> Value
+        using decode: (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
-        var values: [UInt32: Value] = [:]
-        for record in file.liveRecords(of: type, skipped: &skipped) {
-            if let value = skipped.decode(record, using: decode) {
-                values[record.formID] = value
-            }
-        }
-        return values
+        loadOrder.indexRecords(of: type, skipped: &skipped, using: decode)
     }
 }
 

@@ -5,89 +5,61 @@
 import Foundation
 import OpenSkyFormatsCore
 
-/// One plugin's record, with the translation into the load-order space.
-nonisolated public struct LoadOrderRecord: Sendable {
-    public let record: ESMRecord
-    /// Position of the record's plugin in the load order; 0 is the first plugin.
-    public let position: Int
-    public let translation: FormIDTranslation
-    /// The TES4 localized flag of the plugin that holds the record.
-    public let localized: Bool
-
-    /// The record's own FormID in the load-order space.
-    public var formID: FormID {
-        translation(FormID(record.formID))
-    }
-
-    /// Decodes the record and moves its FormIDs into the load-order space.
-    public func decode<Value: FormIDRenumbering>(
-        _ decode: (ESMRecord) throws -> Value
-    ) rethrows -> Value {
-        try translation.renumber(decode(record))
-    }
-}
-
-/// A REFR or ACHR stored under a cell, and the children group it came from.
+/// A record stored under a cell, such as a REFR, ACHR, NAVM, or PHZD, and the
+/// children group it came from.
 nonisolated public struct CellChildRecord: Sendable {
     public let record: LoadOrderRecord
     public let isPersistent: Bool
 }
 
-/// One active plugin and the translation of its FormIDs into the load-order space.
-nonisolated public struct LoadOrderPlugin: Sendable {
-    public let name: String
-    public let file: ESMFile
-    public let translation: FormIDTranslation
+/// A CELL record a plugin stores in a worldspace. The persistent one sits right
+/// in the world children group; the others sit in exterior cell blocks.
+nonisolated public struct WorldCellRecord: Sendable {
+    public let record: LoadOrderRecord
+    public let isPersistent: Bool
 }
 
 nonisolated public struct LoadOrderRecordIndex: Sendable {
-    private struct Source: Sendable {
-        let position: Int
-        let index: ESMFormIDIndex
-        let translation: FormIDTranslation
-        let localized: Bool
+    /// What one later plugin stores under cells and worldspaces.
+    private struct Placed: Sendable {
         /// Keyed by the load-order FormID of the owning CELL.
-        let cellChildren: [UInt32: [CellChildRecord]]
+        var cellChildren: [UInt32: [CellChildRecord]] = [:]
+        /// Keyed by the load-order FormID of the owning WRLD.
+        var worldCells: [UInt32: [WorldCellRecord]] = [:]
     }
 
-    /// The FormID space every lookup takes and returns.
-    public let space: FormIDResolver
-    /// Lowest priority first.
-    public let plugins: [LoadOrderPlugin]
+    private struct Source: Sendable {
+        let plugin: LoadOrderPlugin
+        let index: ESMFormIDIndex
+        let placed: Placed
+    }
+
+    public let loadOrder: LoadOrderPlugins
     private let sources: [Source]
+
+    /// The FormID space every lookup takes and returns.
+    public var space: FormIDResolver {
+        loadOrder.space
+    }
+
+    /// Lowest priority first.
+    public var plugins: [LoadOrderPlugin] {
+        loadOrder.plugins
+    }
 
     /// The first plugin's cells are read through its own groups, so only the later
     /// plugins get a children table.
-    ///
-    /// - Parameter space: the target space; the load order of `plugins` when nil.
-    ///   A one-plugin builder passes the plugin's own space, so nothing moves.
     public init(plugins: [(name: String, file: ESMFile)], space: FormIDResolver? = nil) {
-        let space = space ?? FormIDResolver.loadOrder(plugins.map(\.name))
-        self.space = space
-        var skipped = SkippedRecords()
-        self.plugins = plugins.map { plugin in
-            let resolver = FormIDResolver(
-                pluginName: plugin.name, masters: skipped.masters(of: plugin.file)
-            )
-            return LoadOrderPlugin(
-                name: plugin.name,
-                file: plugin.file,
-                translation: FormIDTranslation(source: resolver, target: space)
-            )
-        }
-        sources = self.plugins.enumerated().map { position, plugin in
-            let translation = plugin.translation
-            let localized = plugin.file.isLocalized
-            let isBase = position == 0
-            return Source(
-                position: position,
+        self.init(LoadOrderPlugins(plugins, space: space))
+    }
+
+    public init(_ loadOrder: LoadOrderPlugins) {
+        self.loadOrder = loadOrder
+        sources = loadOrder.plugins.map { plugin in
+            Source(
+                plugin: plugin,
                 index: ESMFormIDIndex(file: plugin.file),
-                translation: translation,
-                localized: localized,
-                cellChildren: isBase ? [:] : Self.cellChildren(
-                    of: plugin.file, position: position, translation: translation,
-                    localized: localized
-                )
+                placed: plugin.position == 0 ? Placed() : Self.placed(in: plugin)
             )
         }
     }
@@ -104,13 +76,19 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
             let found = winner(of: formID),
             let cell = found.source.index.cellFormID(containing: found.local.rawValue)
         else { return nil }
-        return found.source.translation(FormID(cell))
+        return found.source.plugin.translation(FormID(stored: cell))
     }
 
-    /// The REFR and ACHR records the plugins after the first store under `cell`,
-    /// lowest priority first. A later record with the same FormID overrides.
+    /// The records the plugins after the first store under `cell`, lowest
+    /// priority first. A later record with the same FormID overrides.
     public func laterChildren(ofCell cell: FormID) -> [CellChildRecord] {
-        sources.flatMap { $0.cellChildren[cell.rawValue] ?? [] }
+        sources.flatMap { $0.placed.cellChildren[cell.rawValue] ?? [] }
+    }
+
+    /// The CELL records the plugins after the first store in worldspace `world`,
+    /// lowest priority first.
+    public func laterCells(ofWorld world: FormID) -> [WorldCellRecord] {
+        sources.flatMap { $0.placed.worldCells[world.rawValue] ?? [] }
     }
 
     private struct Winner {
@@ -123,64 +101,53 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
         guard let resolved = space.resolve(formID) else { return nil }
         for source in sources.reversed() {
             guard
-                let local = source.translation.source.localFormID(of: resolved),
+                let local = source.plugin.translation.source.localFormID(of: resolved),
                 let record = source.index.record(withFormID: local.rawValue)
             else { continue }
-            let found = LoadOrderRecord(
-                record: record, position: source.position, translation: source.translation,
-                localized: source.localized
-            )
+            let found = LoadOrderRecord(record: record, plugin: source.plugin)
             return Winner(record: found, source: source, local: local)
         }
         return nil
     }
 
-    private struct ChildContext {
-        let position: Int
-        let translation: FormIDTranslation
-        let localized: Bool
-    }
-
-    private static func cellChildren(
-        of file: ESMFile,
-        position: Int,
-        translation: FormIDTranslation,
-        localized: Bool
-    ) -> [UInt32: [CellChildRecord]] {
-        let context = ChildContext(
-            position: position, translation: translation, localized: localized
-        )
-        var children: [UInt32: [CellChildRecord]] = [:]
+    private static func placed(in plugin: LoadOrderPlugin) -> Placed {
+        var placed = Placed()
         for type: FourCC in ["CELL", "WRLD"] {
-            guard let top = file.topGroup(of: type) else { continue }
-            collect(top, context: context, into: &children)
+            guard let top = plugin.file.topGroup(of: type) else { continue }
+            collect(top, world: nil, plugin: plugin, into: &placed)
         }
-        return children
+        return placed
     }
 
-    /// A malformed group is skipped, as in `ESMWalk`.
+    /// A malformed group is skipped, as in `ESMWalk`. `world` is the load-order
+    /// FormID of the worldspace the walk is in, nil for interior cells.
     private static func collect(
         _ group: ESMGroup,
-        context: ChildContext,
-        into children: inout [UInt32: [CellChildRecord]]
+        world: UInt32?,
+        plugin: LoadOrderPlugin,
+        into placed: inout Placed
     ) {
         guard let items = try? group.children() else { return }
         let isPersistent = group.kind == .cellPersistentChildren
         let ownsRecords = isPersistent || group.kind == .cellTemporaryChildren
+        let world = group.kind == .worldChildren
+            ? plugin.translation(FormID(stored: group.header.label)).rawValue : world
         for item in items {
             switch item {
-            case let .record(record)
-                where ownsRecords && (record.type == "REFR" || record.type == "ACHR"):
-                let cell = context.translation(FormID(group.header.label)).rawValue
-                let found = LoadOrderRecord(
-                    record: record, position: context.position,
-                    translation: context.translation, localized: context.localized
-                )
-                children[cell, default: []].append(
-                    CellChildRecord(record: found, isPersistent: isPersistent)
-                )
+            case let .record(record) where ownsRecords:
+                let cell = plugin.translation(FormID(stored: group.header.label)).rawValue
+                placed.cellChildren[cell, default: []].append(CellChildRecord(
+                    record: LoadOrderRecord(record: record, plugin: plugin),
+                    isPersistent: isPersistent
+                ))
+            case let .record(record) where record.type == "CELL":
+                guard let world else { continue }
+                placed.worldCells[world, default: []].append(WorldCellRecord(
+                    record: LoadOrderRecord(record: record, plugin: plugin),
+                    isPersistent: group.kind == .worldChildren
+                ))
             case let .group(nested):
-                collect(nested, context: context, into: &children)
+                collect(nested, world: world, plugin: plugin, into: &placed)
             case .record:
                 continue
             }

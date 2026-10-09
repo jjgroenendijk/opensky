@@ -23,14 +23,16 @@ nonisolated public final class GlobalStore: Sendable {
 
     /// `pluginName` is needed because a plugin does not store its own name.
     public convenience init(file: ESMFile, pluginName: String) {
+        self.init(loadOrder: LoadOrderPlugins(file: file, name: pluginName))
+    }
+
+    /// Every plugin's GLOB records; a later plugin's default value wins.
+    public convenience init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
-        let decoded = file.decodeRecords(of: "GLOB", skipped: &skipped) { try Global(record: $0) }
-        self.init(
-            globals: decoded,
-            resolver: FormIDResolver(pluginName: pluginName, masters: masters),
-            skippedRecords: skipped
-        )
+        let decoded = loadOrder.decodeRecords(of: "GLOB", skipped: &skipped) {
+            try Global(record: $0)
+        }
+        self.init(globals: decoded, resolver: loadOrder.space, skippedRecords: skipped)
     }
 
     public init(
@@ -75,7 +77,7 @@ nonisolated public final class GlobalStore: Sendable {
     }
 
     public func formID(editorID: String) -> FormID? {
-        formIDsByEditorID[editorID.lowercased()].map(FormID.init)
+        formIDsByEditorID[editorID.lowercased()].map(FormID.init(stored:))
     }
 
     /// The key overrides and saves use. Nil for a FormID this plugin does not define.

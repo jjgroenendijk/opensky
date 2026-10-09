@@ -103,7 +103,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
             guard let count = merged[key] else { return nil }
             return InventoryStack(item: FormID(key.item), count: count, stolen: key.stolen)
         }
-        self.equipped = Set(equipped.map(\.rawValue)).sorted().map(FormID.init)
+        self.equipped = Set(equipped.map(\.rawValue)).sorted().map(FormID.init(stored:))
     }
 
     /// The compound stack key: base form, then honest before stolen. Ordering
@@ -274,7 +274,7 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
         result.equipped = Set(equipped.map(\.rawValue))
             .union([item.rawValue])
             .sorted()
-            .map(FormID.init)
+            .map(FormID.init(stored:))
         return result
     }
 

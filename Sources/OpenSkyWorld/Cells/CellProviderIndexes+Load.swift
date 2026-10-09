@@ -14,8 +14,11 @@ nonisolated extension CellProviderIndexes {
     /// The values every stage reads. All `Sendable`, so a child task can take them.
     struct LoadContext: Sendable {
         let file: ESMFile
+        /// The master's file name; its string tables carry this name.
         let pluginName: String
         let plugins: [(name: String, file: ESMFile)]
+        /// The same plugins; stores built over it read records in the load-order space.
+        let loadOrder: LoadOrderPlugins
         let tuning: SettingIndexes
         let progress: WorldLoadProgress
     }
@@ -46,6 +49,7 @@ nonisolated extension CellProviderIndexes {
             file: file,
             pluginName: esmURL.lastPathComponent,
             plugins: plugins,
+            loadOrder: LoadOrderPlugins(plugins),
             tuning: tuning,
             progress: progress
         )
@@ -60,7 +64,8 @@ nonisolated extension CellProviderIndexes {
                 terrainLODConfigurationStore: terrainLODConfigurationStore
             )
         }
-        let audio = try progress.measure(.weatherAndSound) { AudioStores(file: file) }
+        let audio = try progress
+            .measure(.weatherAndSound) { AudioStores(loadOrder: context.loadOrder) }
         let inventory = try progress.measure(.items) {
             inventoryBaselines(context, magic.enchantments, fileSystem, localizationLanguage)
         }
@@ -68,7 +73,7 @@ nonisolated extension CellProviderIndexes {
             CraftingCatalog(
                 recipes: RecipeStore(plugins: plugins),
                 itemPlugin: built.formIDResolver,
-                file: file
+                loadOrder: context.loadOrder
             )
         }
         return try await CellProviderIndexes(
@@ -76,7 +81,7 @@ nonisolated extension CellProviderIndexes {
             placedRecords: built.placedRecords,
             scriptFileSystem: fileSystem,
             scriptFormIDResolver: built.formIDResolver,
-            magicItemPluginName: context.pluginName,
+            magicItemPluginName: FormIDResolver.loadOrderSpaceName,
             tuning: tuning,
             magic: magic,
             audio: audio,
@@ -154,10 +159,10 @@ nonisolated extension CellProviderIndexes {
         _ language: String
     ) -> InventoryBaselineResolver {
         InventoryBaselineResolver.build(
-            from: context.file,
+            from: context.loadOrder,
             enchantments: ItemEnchantmentResolver(
                 store: enchantments,
-                pluginName: context.pluginName
+                pluginName: FormIDResolver.loadOrderSpaceName
             ),
             strings: LocalizedStrings(
                 vfs: fileSystem,
@@ -176,12 +181,14 @@ nonisolated extension CellProviderIndexes.RecordStores {
         async let dialogue = progress.measure(.dialogue) {
             DialogueStore(plugins: context.plugins)
         }
-        async let packages = progress.measure(.packages) { PackageStore(file: file) }
+        async let packages = progress.measure(.packages) {
+            PackageStore(loadOrder: context.loadOrder)
+        }
         async let world = progress.measure(.factions) {
             CellProviderIndexes.WorldRecords(context)
         }
         async let equipment = progress.measure(.equipment) {
-            EquipmentCatalog.build(from: file)
+            EquipmentCatalog.build(from: context.loadOrder)
         }
         async let actorValues = progress.measure(.actorStats) {
             actorValueBaselines(context)
@@ -197,7 +204,7 @@ nonisolated extension CellProviderIndexes.RecordStores {
         async let menus = progress.measure(.menusAndMessages) {
             (
                 PresentationRecordStore(plugins: context.plugins),
-                MenuRecordData(file: file, plugins: context.plugins, settings: context.tuning.store)
+                MenuRecordData(loadOrder: context.loadOrder, settings: context.tuning.store)
             )
         }
         let (idleStore, effects) = try await idles
@@ -225,11 +232,10 @@ nonisolated extension CellProviderIndexes.RecordStores {
     ) -> ActorValueBaselineResolver {
         ActorValueBaselineResolver(
             resolver: ActorValueResolver.build(
-                from: context.file,
-                localized: context.file.isLocalized,
-                pluginName: context.pluginName,
+                from: context.loadOrder,
                 // Load-order wide, so a patch plugin's CLAS override reaches the derivation.
                 classes: CharacterClassStore(plugins: context.plugins),
+                pluginName: FormIDResolver.loadOrderSpaceName,
                 settings: context.tuning.level
             )
         )
@@ -238,7 +244,7 @@ nonisolated extension CellProviderIndexes.RecordStores {
 
 nonisolated extension CellProviderIndexes.WorldRecords {
     init(_ context: CellProviderIndexes.LoadContext) {
-        globals = GlobalStore(file: context.file, pluginName: context.pluginName)
+        globals = GlobalStore(loadOrder: context.loadOrder)
         locations = LocationStore(plugins: context.plugins)
         factions = FactionStore(plugins: context.plugins)
         relationships = RelationshipStore(plugins: context.plugins)

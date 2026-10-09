@@ -31,15 +31,20 @@ nonisolated public final class FootstepStore {
     /// Nil when the plugin has no set named `defaultSetEditorID`.
     public private(set) var defaultSet: FootstepSet?
 
-    public init(file: ESMFile) {
+    public convenience init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        sets = file.indexRecords(of: "FSTS", skipped: &skipped) { try FootstepSet(record: $0) }
-        footsteps = file.indexRecords(of: "FSTP", skipped: &skipped) { try Footstep(record: $0) }
-        impactDataSets = file.indexRecords(of: "IPDS", skipped: &skipped) {
+        sets = loadOrder.indexRecords(of: "FSTS", skipped: &skipped) { try FootstepSet(record: $0) }
+        footsteps = loadOrder
+            .indexRecords(of: "FSTP", skipped: &skipped) { try Footstep(record: $0) }
+        impactDataSets = loadOrder.indexRecords(of: "IPDS", skipped: &skipped) {
             try ImpactDataSet(record: $0)
         }
-        impacts = file.indexRecords(of: "IPCT", skipped: &skipped) { try Impact(record: $0) }
-        armatureSets = file.indexRecords(of: "ARMA", skipped: &skipped) {
+        impacts = loadOrder.indexRecords(of: "IPCT", skipped: &skipped) { try Impact(record: $0) }
+        armatureSets = loadOrder.indexRecords(of: "ARMA", skipped: &skipped) {
             try ArmorAddon(record: $0).footstepSound
         }
         skippedRecords = skipped

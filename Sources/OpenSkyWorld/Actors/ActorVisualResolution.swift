@@ -189,47 +189,50 @@ nonisolated public struct ActorVisualResolver: Sendable {
         self.colors = colors
     }
 
-    /// Indexes every decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT top-group record.
     public static func build(
         from file: ESMFile,
-        localized: Bool,
+        localized _: Bool,
         pluginName: String
     ) -> ActorVisualResolver {
+        build(from: LoadOrderPlugins(file: file, name: pluginName))
+    }
+
+    /// Indexes every plugin's decodable RACE/ARMO/ARMA/OTFT/LVLI/HDPT records;
+    /// a later override wins.
+    public static func build(from loadOrder: LoadOrderPlugins) -> ActorVisualResolver {
         var skipped = SkippedRecords()
-        let masters = skipped.masters(of: file)
         var resolver = ActorVisualResolver(
-            races: index(file, "RACE", &skipped) { try Race(record: $0, localized: localized) },
-            armors: index(file, "ARMO", &skipped) { try Armor(record: $0, localized: localized) },
-            armorAddons: index(file, "ARMA", &skipped, ArmorAddon.init(record:)),
-            outfits: index(file, "OTFT", &skipped, Outfit.init(record:)),
-            leveledItems: index(file, "LVLI", &skipped, LeveledList.init(record:)),
-            formIDResolver: FormIDResolver(pluginName: pluginName, masters: masters),
-            equipment: EquipmentCatalog.build(from: file),
-            headParts: index(file, "HDPT", &skipped) {
-                try HeadPart(record: $0, localized: localized)
+            races: loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
+                try Race(record: $0, localized: $1)
             },
-            formLists: index(file, "FLST", &skipped, FormList.init(record:)),
-            textureSets: index(file, "TXST", &skipped, TextureSet.init(record:)),
-            colors: index(file, "CLFM", &skipped) { try ColorForm(record: $0, localized: localized)
+            armors: loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
+                try Armor(record: $0, localized: $1)
+            },
+            armorAddons: loadOrder.indexRecords(of: "ARMA", skipped: &skipped) {
+                try ArmorAddon(record: $0)
+            },
+            outfits: loadOrder
+                .indexRecords(of: "OTFT", skipped: &skipped) { try Outfit(record: $0) },
+            leveledItems: loadOrder.indexRecords(of: "LVLI", skipped: &skipped) {
+                try LeveledList(record: $0)
+            },
+            formIDResolver: loadOrder.space,
+            equipment: EquipmentCatalog.build(from: loadOrder),
+            headParts: loadOrder.indexRecords(of: "HDPT", skipped: &skipped) {
+                try HeadPart(record: $0, localized: $1)
+            },
+            formLists: loadOrder.indexRecords(of: "FLST", skipped: &skipped) {
+                try FormList(record: $0)
+            },
+            textureSets: loadOrder.indexRecords(of: "TXST", skipped: &skipped) {
+                try TextureSet(record: $0)
+            },
+            colors: loadOrder.indexRecords(of: "CLFM", skipped: &skipped) {
+                try ColorForm(record: $0, localized: $1)
             }
         )
         resolver.skippedRecords = skipped
         return resolver
-    }
-
-    private static func index<Value>(
-        _ file: ESMFile,
-        _ type: FourCC,
-        _ skipped: inout SkippedRecords,
-        _ decode: (ESMRecord) throws -> Value
-    ) -> [UInt32: Value] {
-        var values: [UInt32: Value] = [:]
-        guard let top = file.topGroup(of: type) else { return values }
-        for case let .record(record) in skipped.children(of: top) {
-            guard record.type == type, !record.isDeleted else { continue }
-            values[record.formID] = skipped.decode(record, using: decode)
-        }
-        return values
     }
 
     /// One actor's renderable inputs.

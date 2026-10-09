@@ -96,7 +96,7 @@ nonisolated public struct Condition: Equatable, Sendable {
         }
 
         public var asFormID: FormID {
-            FormID(rawValue)
+            FormID(stored: rawValue)
         }
 
         public var asInt32: Int32 {
@@ -159,14 +159,15 @@ nonisolated public struct Condition: Equatable, Sendable {
         reader.skip(3) // unused, may be nonzero
         let comparisonWord = try reader.readUInt32()
         comparisonValue = flags.contains(.useGlobal)
-            ? .global(FormID(comparisonWord))
+            ? .global(FormID(stored: comparisonWord))
             : .value(Float(bitPattern: comparisonWord))
         functionIndex = try reader.readUInt16()
         reader.skip(2) // padding, may be nonzero
         parameter1 = try Parameter(rawValue: reader.readUInt32())
         parameter2 = try Parameter(rawValue: reader.readUInt32())
         runOn = try RunOnType(rawValue: reader.readUInt32())
-        reference = try FormID(reader.readUInt32())
+        // Conditions stay as written; the evaluator translates them by function.
+        reference = try FormID(stored: reader.readUInt32())
         parameter3 = try Int32(bitPattern: reader.readUInt32())
     }
 }

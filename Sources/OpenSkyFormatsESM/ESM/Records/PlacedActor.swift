@@ -6,9 +6,9 @@ import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct PlacedActor: Sendable {
-    public internal(set) var formID: FormID
+    public let formID: FormID
     /// NAME — the NPC_ base actor this reference places.
-    public internal(set) var base: FormID
+    public let base: FormID
     public let placement: PlacedReference.Placement
     /// XSCL — uniform scale, defaulting to 1 when the field is absent.
     public let scale: Float
@@ -16,10 +16,10 @@ nonisolated public struct PlacedActor: Sendable {
     /// or script enables it, so the renderer skips it.
     public let isInitiallyDisabled: Bool
     /// VMAD — Papyrus scripts attached directly to this placed actor.
-    public internal(set) var scriptData: ScriptData
+    public let scriptData: ScriptData
     /// XESP.
-    public internal(set) var enableParent: EnableParent?
-    public internal(set) var details: PlacedReferenceDetails
+    public let enableParent: EnableParent?
+    public let details: PlacedReferenceDetails
     /// Fields this decode does not read.
     public let skipped: FieldTally
 

@@ -127,22 +127,11 @@ nonisolated extension CellSceneBuilder {
         )
     }
 
-    nonisolated private func worldspaceIndexBuildingIfNeeded() -> [UInt32: Worldspace] {
+    nonisolated func worldspaceIndexBuildingIfNeeded() -> [UInt32: Worldspace] {
         if let worldspaceIndex {
             return worldspaceIndex
         }
-        let localized = file.isLocalized
-        var index: [UInt32: Worldspace] = [:]
-        if let top = file.topGroup(of: "WRLD"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "WRLD" {
-                let world = decodeOrSkip(record, using: {
-                    try Worldspace(record: $0, localized: localized)
-                })
-                if let world {
-                    index[record.formID] = world
-                }
-            }
-        }
+        let index = loadOrderRecords(of: "WRLD") { try Worldspace(record: $0, localized: $1) }
         worldspaceIndex = index
         return index
     }
@@ -151,14 +140,7 @@ nonisolated extension CellSceneBuilder {
         if let waterTypeIndex {
             return waterTypeIndex
         }
-        var index: [UInt32: WaterType] = [:]
-        if let top = file.topGroup(of: "WATR"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children where record.type == "WATR" {
-                if let water = decodeOrSkip(record, using: WaterType.init(record:)) {
-                    index[record.formID] = water
-                }
-            }
-        }
+        let index = loadOrderRecords(of: "WATR") { record, _ in try WaterType(record: record) }
         waterTypeIndex = index
         return index
     }

@@ -210,7 +210,7 @@ nonisolated public struct Faction: Equatable, Sendable {
     public var displayName: String {
         switch name {
         case let .inline(value): value
-        case .tableID, nil: editorID ?? formID.description
+        case .tableID, .pluginTableID, nil: editorID ?? formID.description
         }
     }
 

@@ -33,25 +33,36 @@ nonisolated public struct InventoryBaselineResolver {
     /// LVLI and OTFT records that failed to decode.
     public private(set) var skippedRecords = SkippedRecords()
 
-    /// Builds every index from one plugin, keyed by raw FormID.
-    /// - Parameter enchantments: the load-order ENCH view `EITM` links resolve
-    ///   through. Nil leaves every `resolvedID` nil, as in a synthetic session.
-    /// - Parameter strings: the tables item names resolve through. Nil keeps
-    ///   string IDs, so a row falls back to the editor ID.
     public static func build(
         from file: ESMFile,
         enchantments: ItemEnchantmentResolver? = nil,
         strings: LocalizedStrings? = nil
     ) -> InventoryBaselineResolver {
-        let localized = file.isLocalized
+        build(from: LoadOrderPlugins(file: file), enchantments: enchantments, strings: strings)
+    }
+
+    /// Builds every index over the load order, keyed by load-order FormID.
+    /// - Parameter enchantments: the load-order ENCH view `EITM` links resolve
+    ///   through. Nil leaves every `resolvedID` nil, as in a synthetic session.
+    /// - Parameter strings: the tables item names resolve through. Nil keeps
+    ///   string IDs, so a row falls back to the editor ID.
+    public static func build(
+        from loadOrder: LoadOrderPlugins,
+        enchantments: ItemEnchantmentResolver? = nil,
+        strings: LocalizedStrings? = nil
+    ) -> InventoryBaselineResolver {
         var skipped = SkippedRecords()
         var resolver = InventoryBaselineResolver(
-            items: ItemDefinitionStore(file: file, enchantments: enchantments, strings: strings),
-            leveledItems: file.indexRecords(of: "LVLI", skipped: &skipped) {
+            items: ItemDefinitionStore(
+                loadOrder: loadOrder, enchantments: enchantments, strings: strings
+            ),
+            leveledItems: loadOrder.indexRecords(of: "LVLI", skipped: &skipped) {
                 try LeveledList(record: $0)
             },
-            outfits: file.indexRecords(of: "OTFT", skipped: &skipped) { try Outfit(record: $0) },
-            actors: ActorTemplateResolver.build(from: file, localized: localized)
+            outfits: loadOrder.indexRecords(of: "OTFT", skipped: &skipped) {
+                try Outfit(record: $0)
+            },
+            actors: ActorTemplateResolver.build(from: loadOrder)
         )
         resolver.skippedRecords = skipped
         return resolver

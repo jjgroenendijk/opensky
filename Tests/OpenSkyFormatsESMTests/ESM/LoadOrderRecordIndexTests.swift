@@ -104,32 +104,47 @@ struct LoadOrderRecordIndexTests {
         #expect(index.cellFormID(containing: FormID(Self.overridden)) == FormID(Self.cell))
     }
 
-    @Test func renumberingMovesScriptObjectsAndLinks() {
-        let link = PlacedReference.LinkedReference(
-            keyword: FormID(0x0100_0001),
-            ref: FormID(0x0100_0002)
-        )
-        var script = ScriptData()
-        script.scripts = [AttachedScript(name: "S", flags: [], properties: [
-            ScriptProperty(
-                name: "Target", type: 1, flags: [],
-                value: .object(ScriptObjectReference(
-                    formID: FormID(0x0100_0003),
-                    alias: -1,
-                    unused: 0
-                ))
-            )
-        ])]
-        let shift: (FormID) -> FormID = { FormID($0.rawValue + 0x0100_0000) }
-        #expect(link.renumbered(shift) == .init(
-            keyword: FormID(0x0200_0001),
-            ref: FormID(0x0200_0002)
+    @Test func outsideTheDecodeScopeFormIDsStayAsWritten() throws {
+        let index = try index()
+        let child = try #require(index.laterChildren(ofCell: FormID(Self.cell)).last)
+        let raw = try PlacedReference(record: child.record.record)
+        #expect(raw.base == FormID(0x0100_0900))
+        #expect(child.record.formID == FormID(0x0200_0800))
+    }
+
+    @Test func aLaterPluginsTableIDsNameThePlugin() throws {
+        let index = try index()
+        let field = ESMField(type: "FULL", data: ESMFixture.words([7]))
+        let mod = index.plugins[2]
+        #expect(try mod.decode { try LString(field: field, localized: true) }
+            == .pluginTableID(7, plugin: "Mod.esp"))
+        #expect(try index.plugins[0].decode { try LString(field: field, localized: true) }
+            == .tableID(7))
+    }
+
+    @Test func aStoreSeesEveryPluginAndTheLastWins() throws {
+        func keyword(_ formID: UInt32, _ name: String) -> Data {
+            ESMFixture.record("KYWD", formID: formID, data: ESMFixture.field(
+                "EDID", Data(name.utf8) + Data([0])
+            ))
+        }
+        let base = try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
+            "KYWD", contents: keyword(0x10, "Old") + keyword(0x11, "Kept")
         ))
-        let moved = script.renumbered(shift).scripts[0].properties[0].value
-        #expect(moved == .object(ScriptObjectReference(
-            formID: FormID(0x0200_0003),
-            alias: -1,
-            unused: 0
-        )))
+        let other = try ESMFile(data: ESMFixture.tes4(masters: ["Base.esm"]))
+        let mod = try ESMFile(data: ESMFixture.tes4(masters: ["Base.esm"]) + ESMFixture.topGroup(
+            "KYWD", contents: keyword(0x10, "New") + keyword(0x0100_0020, "Added")
+        ))
+        let loadOrder = LoadOrderPlugins(
+            [("Base.esm", base), ("Other.esm", other), ("Mod.esp", mod)]
+        )
+        var skipped = SkippedRecords()
+        let names = loadOrder.indexRecords(of: "KYWD", skipped: &skipped) {
+            ESMWalk.editorID(of: $0)
+        }
+        #expect(names == [0x10: "New", 0x11: "Kept", 0x0200_0020: "Added"])
+        let ids = loadOrder.decodeRecords(of: "KYWD", skipped: &skipped) { FormID($0.formID) }
+        #expect(ids == [FormID(0x10), FormID(0x11), FormID(0x0200_0020)])
+        #expect(skipped.isEmpty)
     }
 }

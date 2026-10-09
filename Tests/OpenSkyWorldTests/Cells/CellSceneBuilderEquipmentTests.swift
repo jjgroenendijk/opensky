@@ -20,7 +20,7 @@ extension CellSceneBuilderTests {
             actor: ReferenceStateDelta(components: [
                 .inventory: ReferenceInventoryState(
                     stacks: equipped.map { InventoryStack(item: FormID($0), count: 1) },
-                    equipped: equipped.map(FormID.init)
+                    equipped: equipped.map(FormID.init(stored:))
                 ).erased
             ])
         ])

@@ -24,15 +24,19 @@ nonisolated public final class SoundRecordStore {
     public let categories: [UInt32: SoundCategory]
     public let skippedRecords: SkippedRecords
 
-    public init(file: ESMFile) {
+    public convenience init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        sounds = file.indexRecords(of: "SOUN", skipped: &skipped) { try SoundMarker(record: $0) }
-        descriptors = file.indexRecords(of: "SNDR", skipped: &skipped) {
+        sounds = loadOrder
+            .indexRecords(of: "SOUN", skipped: &skipped) { try SoundMarker(record: $0) }
+        descriptors = loadOrder.indexRecords(of: "SNDR", skipped: &skipped) {
             try SoundDescriptor(record: $0)
         }
-        let localized = file.isLocalized
-        categories = file.indexRecords(of: "SNCT", skipped: &skipped) {
-            try SoundCategory(record: $0, localized: localized)
+        categories = loadOrder.indexRecords(of: "SNCT", skipped: &skipped) {
+            try SoundCategory(record: $0, localized: $1)
         }
         skippedRecords = skipped
     }

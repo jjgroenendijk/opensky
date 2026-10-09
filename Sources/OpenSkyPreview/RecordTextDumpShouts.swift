@@ -160,7 +160,7 @@ nonisolated extension RecordTextDump {
     static func displayText(_ value: LString?) -> String {
         switch value {
         case let .inline(text): "\"\(text)\""
-        case let .tableID(id): "string #\(id)"
+        case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
         case nil: "-"
         }
     }

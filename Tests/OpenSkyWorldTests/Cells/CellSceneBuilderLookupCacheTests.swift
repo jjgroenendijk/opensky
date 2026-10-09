@@ -24,7 +24,7 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
         ))
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
         for _ in 0 ..< 2 {
-            let found = builder.findCell(in: world.children, gridX: 6, gridY: -2, localized: false)
+            let found = builder.findCell(in: world, gridX: 6, gridY: -2, localized: false)
             #expect(found?.cell.editorID == "EarlierCell")
         }
     }
@@ -34,12 +34,12 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
             cellFormID: 0x50, editorID: "OtherCell", grid: (-40, 33)
         ))
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
-        let other = builder.findCell(in: world.children, gridX: -40, gridY: 33, localized: false)
-        let target = builder.findCell(in: world.children, gridX: 6, gridY: -2, localized: false)
+        let other = builder.findCell(in: world, gridX: -40, gridY: 33, localized: false)
+        let target = builder.findCell(in: world, gridX: 6, gridY: -2, localized: false)
         #expect(other?.formID == 0x50)
         #expect(target?.cell.editorID == "TestCell06")
         #expect(target?.children != nil)
-        #expect(builder.findCell(in: world.children, gridX: 0, gridY: 0, localized: false) == nil)
+        #expect(builder.findCell(in: world, gridX: 0, gridY: 0, localized: false) == nil)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func persistentCellIsNotAnExteriorCell() throws {
@@ -49,8 +49,8 @@ struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
         ))
         let builder = try makeBuilder(extraWorldChildren: persistent)
         let world = try builder.worldChildrenGroup(editorID: "Tamriel", localized: false)
-        #expect(builder.findCell(in: world.children, gridX: 0, gridY: 0, localized: false) == nil)
-        #expect(builder.persistentCell(in: world.children, localized: false)?.formID == 0x60)
+        #expect(builder.findCell(in: world, gridX: 0, gridY: 0, localized: false) == nil)
+        #expect(builder.persistentCell(in: world, localized: false)?.formID == 0x60)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func rebuildMatchesFirstBuild() throws {

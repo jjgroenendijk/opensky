@@ -92,4 +92,39 @@ struct CellSceneBuilderLoadOrderTests {
         #expect(lookup.interiorCell(holding: entry.formID) == FormID(Self.modInterior))
         #expect(builder.statIndexBuildingIfNeeded()[0x0200_0900]?.modelPath == "mod.nif")
     }
+
+    /// `World.esp` has no masters, so its own records move from `00xxxxxx` to `03xxxxxx`.
+    @Test(.enabled(if: CellSceneBuilderTests.hasDevice))
+    func aWorldspaceOnlyALaterPluginDefinesBuilds() throws {
+        let device = try #require(CellSceneBuilderTests.device)
+        let base = try ESMFile(data: fixtures.plugin())
+        let world = try ESMFile(data: fixtures.plugin(
+            worldspaceEditorID: "ModWorld",
+            cellEditorID: "ModCell",
+            grid: (3, 4),
+            temporaryRefs: fixtures.refrRecord(formID: 0x300, base: 0x100),
+            statRecords: fixtures.statRecord(formID: 0x100, modelPath: "mod.nif")
+        ))
+        let other = try ESMFile(data: ESMFixture.tes4(masters: ["Skyrim.esm"]))
+        let vfs = VirtualFileSystem(dataURL: fixtures.dataURL, archiveURLs: [])
+        let textures = try TextureLibrary(fileSystem: vfs, device: device)
+        let builder = CellSceneBuilder(
+            file: base,
+            meshes: MeshLibrary(fileSystem: vfs, device: device, textures: textures),
+            textures: textures,
+            fileSystem: vfs,
+            plugins: [
+                ("Skyrim.esm", base), ("Other.esm", other), ("Mod.esp", other),
+                ("World.esp", world)
+            ]
+        )
+        let found = try builder.worldChildrenGroup(editorID: "ModWorld", localized: false)
+        #expect(found.formID == FormID(0x0300_001A))
+        #expect(found.children == nil)
+        let scene = try builder.buildScene(worldspaceEditorID: "ModWorld", gridX: 3, gridY: 4)
+        let added = try #require(scene.references.entry(for: FormID(0x0300_0300)))
+        #expect(added.placedReference?.base == FormID(0x0300_0100))
+        let tamriel = try builder.buildScene(worldspaceEditorID: "Tamriel", gridX: 6, gridY: -2)
+        #expect(tamriel.references.entry(for: FormID(0x0300_0300)) == nil)
+    }
 }

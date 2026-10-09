@@ -65,18 +65,18 @@ nonisolated public struct MenuRecordData: Sendable {
     /// String GMSTs the menus show, such as `sNoFastTravelCombat`, by editor ID.
     public let menuTexts: [String: LString]
 
-    public init(
-        file: ESMFile, plugins: [(name: String, file: ESMFile)], settings: GameSettingStore
-    ) {
-        let localized = file.isLocalized
-        let player = Self.records(in: file, of: "NPC_").first {
-            $0.formID == Self.playerBase.rawValue
-        }.flatMap { try? ActorBase(record: $0, localized: localized) }
-        let races = Self.records(in: file, of: "RACE").compactMap {
-            try? Race(record: $0, localized: localized)
+    /// Every plugin's records; a later plugin's override wins.
+    public init(loadOrder: LoadOrderPlugins, settings: GameSettingStore) {
+        var skipped = SkippedRecords()
+        let player = loadOrder.indexRecords(of: "NPC_", skipped: &skipped) { record, localized in
+            FormID(record.formID) == Self.playerBase
+                ? try ActorBase(record: record, localized: localized) : nil
+        }[Self.playerBase.rawValue]
+        let races = loadOrder.decodeRecords(of: "RACE", skipped: &skipped) {
+            try Race(record: $0, localized: $1)
         }.filter { $0.flags.contains(.playable) }
-        let worldspaces = Self.records(in: file, of: "WRLD").compactMap {
-            try? Worldspace(record: $0, localized: localized)
+        let worldspaces = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
+            try Worldspace(record: $0, localized: $1)
         }
         let tamriel = worldspaces.first { $0.editorID == Self.tamrielEditorID }
         worldspaceEditorIDs = worldspaces.reduce(into: [:]) { names, space in
@@ -85,7 +85,7 @@ nonisolated public struct MenuRecordData: Sendable {
         self.player = player
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
         self.tamriel = tamriel
-        markers = MapMarkerIndex(plugins: plugins)
+        markers = MapMarkerIndex(plugins: loadOrder.files)
         mapSettings = MenuMapSettings(store: settings)
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID
@@ -94,19 +94,6 @@ nonisolated public struct MenuRecordData: Sendable {
                 case let .string(text) = resolved.setting.value
             else { return }
             texts[name] = text
-        }
-    }
-
-    /// The direct record children of one top group; nested groups are skipped.
-    private static func records(in file: ESMFile, of type: FourCC) -> [ESMRecord] {
-        guard let top = file.topGroup(of: type), let children = try? top.children() else {
-            return []
-        }
-        return children.compactMap {
-            if case let .record(record) = $0, record.type == type, !record.isDeleted {
-                return record
-            }
-            return nil
         }
     }
 }

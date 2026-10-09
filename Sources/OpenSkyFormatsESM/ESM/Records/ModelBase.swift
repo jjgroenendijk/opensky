@@ -36,7 +36,7 @@ nonisolated public struct ModelBase: Sendable {
         public let loop: FormID?
     }
 
-    public internal(set) var formID: FormID
+    public let formID: FormID
     public let recordType: FourCC
     public let editorID: String?
     /// FULL — in-game display name; localized plugins store a string-table ID.
@@ -52,20 +52,20 @@ nonisolated public struct ModelBase: Sendable {
     public let isEditorMarker: Bool
     /// Sound links for activator/door/container bases; nil when the record
     /// carries none of the decoded sound fields.
-    public internal(set) var sounds: Sounds?
+    public let sounds: Sounds?
     /// VMAD — Papyrus scripts attached to this activator-like base record.
-    public internal(set) var scriptData: ScriptData
+    public let scriptData: ScriptData
     /// KSIZ + KWDA. A FURN crafting station names its workbench keyword here.
-    public internal(set) var keywords: KeywordList
+    public let keywords: KeywordList
     /// ACTI and FURN KNAM.
-    public internal(set) var interactionKeyword: FormID?
+    public let interactionKeyword: FormID?
     /// FURN WBDT. Nil on other types and on furniture without the field.
     public let workbench: Workbench?
     /// FLOR and TREE produce. Nil when the record carries none of its fields.
-    public internal(set) var produce: HarvestProduce?
+    public let produce: HarvestProduce?
     /// TACT VNAM, a VTYP.
-    public internal(set) var voiceType: FormID?
-    public internal(set) var details: ModelBaseDetails
+    public let voiceType: FormID?
+    public let details: ModelBaseDetails
     /// Fields this decoder does not read, and fields too short to read.
     public let skipped: FieldTally
 

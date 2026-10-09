@@ -59,7 +59,7 @@ nonisolated extension CellSceneBuilder {
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
     nonisolated public func buildExteriorActors(
         cell: FoundCell?,
-        world: ESMGroup,
+        world: FoundWorld,
         coordinate: CellCoordinate,
         localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
@@ -88,7 +88,7 @@ nonisolated extension CellSceneBuilder {
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, localized: localized, deltas: deltas)
+        resolveActors(actors, into: &build, deltas: deltas)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
         return build
@@ -99,7 +99,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func buildInteriorActors(
         cell: FoundCell?,
         location: CellSceneLocation,
-        localized: Bool,
+        localized _: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:]
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
@@ -113,7 +113,7 @@ nonisolated extension CellSceneBuilder {
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, localized: localized, deltas: deltas)
+        resolveActors(actors, into: &build, deltas: deltas)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
         return build
@@ -165,10 +165,10 @@ nonisolated extension CellSceneBuilder {
     /// exteriorPersistentRefs. Malformed persistent records are logged once
     /// here — they carry no position, so no streamed cell can own (or count) them.
     nonisolated private func persistentActors(
-        in world: ESMGroup,
+        in world: FoundWorld,
         localized: Bool
     ) -> [PlacedActor] {
-        let key = world.parentFormID ?? 0
+        let key = world.formID.rawValue
         if let cached = exteriorPersistentActors[key] {
             return cached
         }
@@ -188,11 +188,10 @@ nonisolated extension CellSceneBuilder {
     nonisolated private func resolveActors(
         _ actors: [PlacedActor],
         into build: inout CellActorBuild,
-        localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta]
     ) {
         guard !actors.isEmpty else { return }
-        let resolvers = actorResolversBuildingIfNeeded(localized: localized)
+        let resolvers = actorResolversBuildingIfNeeded()
         let assembler = ActorAssembler(provider: meshes)
         let indexed = entriesByFormID(build.entries)
         for actor in actors {
@@ -360,16 +359,15 @@ nonisolated extension CellSceneBuilder {
     /// because the player body resolves through the same pair
     /// (CellSceneBuilderPlayer.swift) and must not force a second copy of two
     /// plugin-wide indexes into memory.
-    nonisolated public func actorResolversBuildingIfNeeded(
-        localized: Bool
-    ) -> (template: ActorTemplateResolver, visual: ActorVisualResolver) {
+    nonisolated public func actorResolversBuildingIfNeeded()
+        -> (template: ActorTemplateResolver, visual: ActorVisualResolver)
+    {
         if let template = actorTemplateResolver, let visual = actorVisualResolver {
             return (template, visual)
         }
-        let template = ActorTemplateResolver.build(from: file, localized: localized)
-        let visual = ActorVisualResolver.build(
-            from: file, localized: localized, pluginName: pluginName
-        )
+        let loadOrder = loadOrderIndexBuildingIfNeeded().loadOrder
+        let template = ActorTemplateResolver.build(from: loadOrder)
+        let visual = ActorVisualResolver.build(from: loadOrder)
         actorTemplateResolver = template
         actorVisualResolver = visual
         return (template, visual)

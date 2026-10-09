@@ -131,40 +131,26 @@ nonisolated public struct ActorTemplateResolver: Sendable {
         self.skippedRecords = skippedRecords
     }
 
-    /// Indexes every decodable NPC_ + LVLN top-group record. Undecodable
-    /// records drop out of the index and later resolve as missing targets.
-    public static func build(from file: ESMFile, localized: Bool) -> ActorTemplateResolver {
-        var actors: [UInt32: ActorBase] = [:]
-        var skipped = SkippedRecords()
-        if let top = file.topGroup(of: "NPC_") {
-            for case let .record(record) in skipped.children(of: top) {
-                guard record.type == "NPC_", !record.isDeleted else { continue }
-                actors[record.formID] = skipped.decode(record) {
-                    try ActorBase(record: $0, localized: localized)
-                }
-            }
-        }
-        return ActorTemplateResolver(
-            actors: actors,
-            leveledActors: leveledLists(in: file, of: "LVLN", skipped: &skipped),
-            leveledSpells: leveledLists(in: file, of: "LVSP", skipped: &skipped),
-            skippedRecords: skipped
-        )
+    public static func build(from file: ESMFile, localized _: Bool) -> ActorTemplateResolver {
+        build(from: LoadOrderPlugins(file: file))
     }
 
-    /// Every decodable leveled list of one record type, by raw FormID.
-    private static func leveledLists(
-        in file: ESMFile,
-        of type: FourCC,
-        skipped: inout SkippedRecords
-    ) -> [UInt32: LeveledList] {
-        var lists: [UInt32: LeveledList] = [:]
-        guard let top = file.topGroup(of: type) else { return lists }
-        for case let .record(record) in skipped.children(of: top) {
-            guard record.type == type, !record.isDeleted else { continue }
-            lists[record.formID] = skipped.decode(record) { try LeveledList(record: $0) }
-        }
-        return lists
+    /// Indexes every plugin's decodable NPC_, LVLN, and LVSP records; a later
+    /// override wins. Undecodable records resolve as missing targets.
+    public static func build(from loadOrder: LoadOrderPlugins) -> ActorTemplateResolver {
+        var skipped = SkippedRecords()
+        return ActorTemplateResolver(
+            actors: loadOrder.indexRecords(of: "NPC_", skipped: &skipped) {
+                try ActorBase(record: $0, localized: $1)
+            },
+            leveledActors: loadOrder.indexRecords(of: "LVLN", skipped: &skipped) {
+                try LeveledList(record: $0)
+            },
+            leveledSpells: loadOrder.indexRecords(of: "LVSP", skipped: &skipped) {
+                try LeveledList(record: $0)
+            },
+            skippedRecords: skipped
+        )
     }
 
     public func resolve(base: FormID) throws -> ResolvedActorAppearance {

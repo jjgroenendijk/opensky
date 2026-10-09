@@ -47,7 +47,7 @@ nonisolated public struct ResolvedPerk: Sendable {
     public var displayName: String {
         switch record.name {
         case let .inline(value): value
-        case .tableID: record.editorID ?? id.description
+        case .tableID, .pluginTableID: record.editorID ?? id.description
         case nil: record.editorID ?? id.description
         }
     }

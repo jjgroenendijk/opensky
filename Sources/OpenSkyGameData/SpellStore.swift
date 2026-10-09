@@ -60,7 +60,7 @@ nonisolated public struct ResolvedSpell: Sendable {
     public var displayName: String {
         switch record.name {
         case let .inline(value): value
-        case let .tableID(id): record.editorID ?? "string #\(id)"
+        case let .tableID(id), let .pluginTableID(id, _): record.editorID ?? "string #\(id)"
         case nil: record.editorID ?? id.description
         }
     }

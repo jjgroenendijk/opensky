@@ -161,14 +161,13 @@ final class AgentTeleportJob {
     // MARK: - Cells by editor ID
 
     private func startLookup(
-        _ find: @escaping @Sendable (ESMFile) -> CellDirectoryEntry?
+        _ find: @escaping @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?
     ) throws(AgentFailure) {
         guard let root = adapter.dataRoot else {
             throw AgentFailure(.notReady, "no game data is loaded")
         }
-        let url = root.dataURL.appending(path: "Skyrim.esm")
         Task { [weak self] in
-            let result = await Self.findCell(find, in: url)
+            let result = await Self.findCell(find, in: root)
             self?.lookup = result
         }
     }
@@ -178,7 +177,7 @@ final class AgentTeleportJob {
             guard let placement = try referenceLookup.get() else {
                 throw AgentFailure(
                     .notFound,
-                    "no exterior reference with that FormID in Skyrim.esm"
+                    "no exterior reference with that FormID in the load order"
                 )
             }
             exactFeet = placement.position
@@ -187,7 +186,7 @@ final class AgentTeleportJob {
         }
         guard let lookup else { return }
         guard let entry = try lookup.get() else {
-            throw AgentFailure(.notFound, "no such cell in Skyrim.esm")
+            throw AgentFailure(.notFound, "no such cell in the load order")
         }
         switch entry {
         case let .exterior(_, grid):
@@ -205,15 +204,20 @@ final class AgentTeleportJob {
 
     @concurrent
     nonisolated private static func findCell(
-        _ find: @Sendable (ESMFile) -> CellDirectoryEntry?,
-        in url: URL
+        _ find: @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?,
+        in root: GameDataRoot
     ) async -> Result<CellDirectoryEntry?, AgentFailure> {
         do {
-            let file = try ESMFile(url: url)
-            return .success(find(file))
+            return try .success(find(loadOrder(root)))
         } catch {
             return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
         }
+    }
+
+    /// The same plugins and FormID space the session reads.
+    nonisolated private static func loadOrder(_ root: GameDataRoot) throws -> LoadOrderPlugins {
+        let file = try ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
+        return LoadOrderPlugins(ActivePluginFiles.load(root: root, baseFile: file))
     }
 
     // MARK: - References outside the loaded cells
@@ -222,9 +226,8 @@ final class AgentTeleportJob {
         guard let root = adapter.dataRoot else {
             throw AgentFailure(.notReady, "no game data is loaded")
         }
-        let url = root.dataURL.appending(path: "Skyrim.esm")
         Task { [weak self] in
-            let result = await Self.findReference(formID, in: url)
+            let result = await Self.findReference(formID, in: root)
             self?.referenceLookup = result
         }
     }
@@ -232,11 +235,10 @@ final class AgentTeleportJob {
     @concurrent
     nonisolated private static func findReference(
         _ formID: FormID,
-        in url: URL
+        in root: GameDataRoot
     ) async -> Result<PlacedReference.Placement?, AgentFailure> {
         do {
-            let file = try ESMFile(url: url)
-            return .success(CellDirectory.exteriorPlacement(of: formID, in: file))
+            return try .success(CellDirectory.exteriorPlacement(of: formID, in: loadOrder(root)))
         } catch {
             return .failure(AgentFailure(.failed, "could not read Skyrim.esm: \(error)"))
         }

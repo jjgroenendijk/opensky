@@ -34,7 +34,7 @@ enum PackageRuntimeFixture {
             ),
             schedule: schedule,
             conditions: conditions,
-            template: template.map(FormID.init),
+            template: template.map(FormID.init(stored:)),
             dataInputs: dataInputs,
             procedureTypes: procedureNames,
             scriptData: ScriptData(ownerType: "PACK"),

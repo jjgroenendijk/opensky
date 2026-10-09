@@ -9,9 +9,14 @@ nonisolated public final class AcousticSpaceStore {
     public let spaces: [UInt32: AcousticSpace]
     public let skippedRecords: SkippedRecords
 
-    public init(file: ESMFile) {
+    public convenience init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        spaces = file.indexRecords(of: "ASPC", skipped: &skipped) { try AcousticSpace(record: $0) }
+        spaces = loadOrder
+            .indexRecords(of: "ASPC", skipped: &skipped) { try AcousticSpace(record: $0) }
         skippedRecords = skipped
     }
 

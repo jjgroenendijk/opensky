@@ -130,10 +130,15 @@ nonisolated public struct CraftingCatalog: Sendable {
         self.stations = stations
     }
 
-    /// Builds the catalog with every recipe-offering FURN base of the item plugin.
     public init(recipes: RecipeStore, itemPlugin: FormIDResolver, file: ESMFile) {
+        self.init(recipes: recipes, itemPlugin: itemPlugin, loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    /// Builds the catalog with every recipe-offering FURN base of the load order.
+    /// `itemPlugin` must be the space `loadOrder` reads in.
+    public init(recipes: RecipeStore, itemPlugin: FormIDResolver, loadOrder: LoadOrderPlugins) {
         let probe = CraftingCatalog(recipes: recipes, itemPlugin: itemPlugin, stations: [])
-        let offering = Self.stations(in: file).filter {
+        let offering = Self.stations(in: loadOrder).filter {
             !probe.station(workbench: $0.workbench, keywords: $0.keywords).keywords.isEmpty
         }
         self.init(recipes: recipes, itemPlugin: itemPlugin, stations: offering)
@@ -150,13 +155,14 @@ nonisolated public struct CraftingCatalog: Sendable {
         )
     }
 
-    private static func stations(in file: ESMFile) -> [CraftingStationChoice] {
+    private static func stations(in loadOrder: LoadOrderPlugins) -> [CraftingStationChoice] {
         var skipped = SkippedRecords()
-        let bases = file.indexRecords(of: "FURN", skipped: &skipped) { try ModelBase(record: $0) }
+        let bases = loadOrder
+            .indexRecords(of: "FURN", skipped: &skipped) { try ModelBase(record: $0) }
         return bases.compactMap { raw, base in
             guard let workbench = base.workbench, let editorID = base.editorID else { return nil }
             return CraftingStationChoice(
-                base: FormID(raw),
+                base: FormID(stored: raw),
                 editorID: editorID,
                 workbench: workbench,
                 keywords: base.keywords.keywords

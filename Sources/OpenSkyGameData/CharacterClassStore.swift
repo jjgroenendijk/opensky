@@ -18,7 +18,7 @@ nonisolated public struct ResolvedCharacterClass: Equatable, Sendable {
     public var displayName: String {
         switch characterClass.name {
         case let .inline(value): value
-        case .tableID: characterClass.editorID ?? id.description
+        case .tableID, .pluginTableID: characterClass.editorID ?? id.description
         case nil: characterClass.editorID ?? id.description
         }
     }

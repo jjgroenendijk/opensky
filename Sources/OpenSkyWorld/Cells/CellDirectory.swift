@@ -1,8 +1,8 @@
-// Finds a cell by editor ID for a console-style `coc`, or by FormID for a save. An exterior cell
-// gives
-// its grid. An interior gives a door elsewhere that leads in, because the door
+// Finds a cell by editor ID for a console-style `coc`, or by FormID for a save,
+// in the last plugin that has it. An exterior cell gives its grid. An interior gives a door
+// elsewhere that leads in, because the door
 // transition path is how an interior is built and entered. Pure: file in,
-// value out, so it runs off the main actor.
+// value out, so it runs off the main actor. FormIDs are load-order FormIDs.
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -15,15 +15,42 @@ nonisolated public enum CellDirectoryEntry: Equatable, Sendable {
 }
 
 nonisolated public enum CellDirectory {
-    /// Interior cells live under the CELL top group, exterior ones under WRLD.
     public static func find(editorID: String, in file: ESMFile) -> CellDirectoryEntry? {
+        find(editorID: editorID, in: LoadOrderPlugins(file: file))
+    }
+
+    /// Interior cells live under the CELL top group, exterior ones under WRLD.
+    public static func find(
+        editorID: String,
+        in loadOrder: LoadOrderPlugins
+    ) -> CellDirectoryEntry? {
         let wanted = editorID.lowercased()
-        return find(in: file) { ESMWalk.editorID(of: $0)?.lowercased() == wanted }
+        return find(in: loadOrder) { record, _ in
+            ESMWalk.editorID(of: record)?.lowercased() == wanted
+        }
+    }
+
+    public static func find(formID: FormID, in file: ESMFile) -> CellDirectoryEntry? {
+        find(formID: formID, in: LoadOrderPlugins(file: file))
     }
 
     /// A save names its cell by FormID, not by editor ID.
-    public static func find(formID: FormID, in file: ESMFile) -> CellDirectoryEntry? {
-        find(in: file) { $0.formID == formID.rawValue }
+    public static func find(formID: FormID, in loadOrder: LoadOrderPlugins) -> CellDirectoryEntry? {
+        find(in: loadOrder) { record, plugin in plugin.formID(of: record) == formID }
+    }
+
+    private static func find(
+        in loadOrder: LoadOrderPlugins, matching: (ESMRecord, LoadOrderPlugin) -> Bool
+    ) -> CellDirectoryEntry? {
+        for plugin in loadOrder.plugins.reversed() {
+            let found = plugin.decode {
+                find(in: plugin.file) { matching($0, plugin) }
+            }
+            if let found {
+                return found
+            }
+        }
+        return nil
     }
 
     private static func find(
@@ -40,15 +67,28 @@ nonisolated public enum CellDirectory {
         return nil
     }
 
-    /// Where an exterior reference of this file stands. A persistent reference sits in
-    /// its worldspace's persistent CELL, so the whole WRLD group is searched.
     public static func exteriorPlacement(
         of formID: FormID, in file: ESMFile
     ) -> PlacedReference.Placement? {
-        guard let top = file.topGroup(of: "WRLD"), let children = try? top.children() else {
-            return nil
+        exteriorPlacement(of: formID, in: LoadOrderPlugins(file: file))
+    }
+
+    /// Where an exterior reference stands, in the last plugin that places it. A
+    /// persistent reference sits in its worldspace's persistent CELL, so the
+    /// whole WRLD group is searched.
+    public static func exteriorPlacement(
+        of formID: FormID, in loadOrder: LoadOrderPlugins
+    ) -> PlacedReference.Placement? {
+        guard let resolved = loadOrder.space.resolve(formID) else { return nil }
+        for plugin in loadOrder.plugins.reversed() {
+            guard
+                let top = plugin.file.topGroup(of: "WRLD"), let children = try? top.children(),
+                let local = plugin.translation.source.localFormID(of: resolved),
+                let found = plugin.decode({ placement(of: local, in: children) })
+            else { continue }
+            return found
         }
-        return placement(of: formID, in: children)
+        return nil
     }
 
     private static func placement(
@@ -107,7 +147,7 @@ nonisolated public enum CellDirectory {
         guard
             siblings.indices.contains(next),
             case let .group(group) = siblings[next],
-            group.parentFormID == cell.formID.rawValue
+            group.parentFormID.map({ FormID($0) }) == cell.formID
         else { return .interior(cell: cell.formID, entryDoor: nil) }
         return .interior(cell: cell.formID, entryDoor: firstReturnDoor(in: group))
     }
