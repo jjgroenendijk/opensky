@@ -5,7 +5,8 @@ import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
 nonisolated public struct PapyrusLimits: Equatable, Sendable {
-    public var instructionBudget = 1_000_000
+    /// Instructions one call runs before it yields to the next tick.
+    public var instructionBudget = 100_000
     public var callDepth = 256
     public var inheritanceDepth = 64
     public var arrayLength = 100_000
@@ -17,7 +18,6 @@ nonisolated public struct PapyrusLimits: Equatable, Sendable {
 }
 
 nonisolated public enum PapyrusFault: Error, Equatable, Sendable {
-    case budgetExhausted(instruction: Int)
     case callDepthExceeded(instruction: Int)
     case invalidJump(instruction: Int, target: Int)
     case typeMismatch(instruction: Int, expected: String, actual: String)
@@ -34,7 +34,6 @@ nonisolated public enum PapyrusFault: Error, Equatable, Sendable {
 
     public var kind: String {
         switch self {
-        case .budgetExhausted: "budgetExhausted"
         case .callDepthExceeded: "callDepthExceeded"
         case .invalidJump: "invalidJump"
         case .typeMismatch: "typeMismatch"

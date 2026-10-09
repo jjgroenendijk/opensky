@@ -34,13 +34,14 @@ extension PapyrusInterpreter {
             try write(nativeReturnType(operands[2]).defaultValue, to: operands[2], frame: frame)
             return .next
         }
-        guard case let .object(handle) = receiverValue else {
+        guard case let .object(value) = receiverValue else {
             throw .typeMismatch(
                 instruction: instructionIndex,
                 expected: "Object",
                 actual: receiverValue.typeName
             )
         }
+        let handle = declaredReceiver(value, operand: operands[1], frame: frame)
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
         if
             let intrinsic = try intrinsic(

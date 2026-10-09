@@ -132,16 +132,14 @@ extension PapyrusInterpreter {
             if let sibling = runtime.siblingInstance?(handle, name) {
                 return .object(sibling)
             }
-            if runtime.instance(for: handle) == nil {
-                return value
-            }
+            // A form that is not of the type casts to None (CK wiki "Cast Reference").
+            return runtime.instance(for: handle) == nil ? value : .none
         case let (.array(array), .array(elementType))
             where array.elementType == elementType:
             return value
         default:
             throw .unsupported(source: value.typeName, destination: type.name)
         }
-        throw .unsupported(source: value.typeName, destination: type.name)
     }
 
     public func declaredType(

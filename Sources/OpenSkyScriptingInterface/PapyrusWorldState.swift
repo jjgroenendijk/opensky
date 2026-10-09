@@ -85,8 +85,8 @@ nonisolated public struct PapyrusScriptEvent: Equatable, Sendable {
 }
 
 /// Per-tick dispatch ceiling for one 1/30 s step. 32 events drain a ten-script
-/// cell attach in one step; 100 000 instructions is a tenth of
-/// `PapyrusLimits.instructionBudget`.
+/// cell attach in one step; 100 000 instructions is one
+/// `PapyrusLimits.instructionBudget` slice.
 nonisolated public struct PapyrusTickBudget: Equatable, Sendable {
     public var events: Int
     public var instructions: Int

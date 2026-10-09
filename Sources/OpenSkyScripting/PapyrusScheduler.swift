@@ -50,6 +50,12 @@ public final class PapyrusScheduler {
         self.maximumGameHoursPerStep = max(0, maximumGameHoursPerStep)
     }
 
+    /// Drops the waiting calls in `ids`, so none of them resumes.
+    public func cancel(_ ids: Set<UInt64>) {
+        entries.removeAll { ids.contains($0.call.id) }
+        pendingCount = entries.count
+    }
+
     public func schedule(_ outcome: PapyrusRunOutcome) {
         route(outcome)
     }
@@ -143,7 +149,7 @@ public final class PapyrusScheduler {
         case let .external(token):
             answers[token] != nil
         case let .realSteps(startTick, duration):
-            Double(tickCount - startTick) * fixedStepSeconds >= duration
+            tickCount > startTick && Double(tickCount - startTick) * fixedStepSeconds >= duration
         case let .gameHours(value):
             elapsedGameHours >= value
         }

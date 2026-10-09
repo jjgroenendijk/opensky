@@ -1,8 +1,8 @@
 // Bounded, explicit-frame Skyrim Papyrus interpreter.
 //
 // Calls push `PapyrusFrame` values onto `frames`; Swift recursion is never used
-// for bytecode. An invoked native may suspend, retaining this interpreter and
-// its remaining budget through `SuspendedCall`.
+// for bytecode. An invoked native may suspend, retaining this interpreter
+// through `SuspendedCall`. Each resume starts a new instruction slice.
 
 import Foundation
 import OpenSkyFormatsPEX
@@ -147,6 +147,7 @@ public final class PapyrusInterpreter {
             return fault(.invalidResume)
         }
         pendingResume = nil
+        remainingBudget = runtime.limits.instructionBudget
         switch pending.target {
         case .root:
             return .completed(value)
@@ -180,7 +181,10 @@ public final class PapyrusInterpreter {
                     continue
                 }
                 let index = frame.instructionIndex
-                try consumeBudget(at: index)
+                guard remainingBudget > 0 else {
+                    return .suspended(yieldSlice())
+                }
+                remainingBudget -= 1
                 let instruction = frame.function.instructions[index]
                 runtime.tally.noteInstruction(instruction.opcode)
                 frame.instructionIndex += 1
@@ -233,13 +237,6 @@ public final class PapyrusInterpreter {
             _ = frame.setLocalValue(converted, named: parameter.name)
         }
         frames.append(frame)
-    }
-
-    private func consumeBudget(at index: Int) throws(PapyrusFault) {
-        guard remainingBudget > 0 else {
-            throw .budgetExhausted(instruction: index)
-        }
-        remainingBudget -= 1
     }
 
     private func complete(_ value: PapyrusValue) throws(PapyrusFault) -> PapyrusValue? {

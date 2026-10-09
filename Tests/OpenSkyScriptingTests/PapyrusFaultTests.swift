@@ -10,16 +10,25 @@ import Testing
 struct PapyrusFaultTests {
     typealias Support = PapyrusTestSupport
 
-    @Test func instructionBudgetStopsARunawayLoop() {
+    @Test("a loop that uses up its slice yields and goes on with a new slice")
+    func aRunawayLoopYields() {
         var limits = PapyrusLimits.standard
         limits.instructionBudget = 25
         let (runtime, handle) = runtime(
             instructions: [op(.jump, .integer(0))],
             limits: limits
         )
-        let outcome = runtime.invoke("Run", on: handle)
-        #expect(Support.fault(outcome)?.kind == "budgetExhausted")
+        guard case let .suspended(call) = runtime.invoke("Run", on: handle) else {
+            Issue.record("expected a yield")
+            return
+        }
+        #expect(call.request == .realSeconds(0))
         #expect(runtime.tally.instructionsExecuted == 25)
+        guard case .suspended = runtime.resume(call, returning: nil) else {
+            Issue.record("expected a second yield")
+            return
+        }
+        #expect(runtime.tally.instructionsExecuted == 50)
     }
 
     @Test func explicitFramesStopAtTheCallDepthCap() {
@@ -89,7 +98,8 @@ struct PapyrusFaultTests {
                 op(.returnValue, .identifier("other"))
             ]
         )
-        #expect(Support.fault(runtime.invoke("Run", on: handle))?.kind == "typeMismatch")
+        // A failed cast gives None (CK wiki "Cast Reference").
+        #expect(Support.value(runtime.invoke("Run", on: handle)) == PapyrusValue.none)
         let sibling = PapyrusObjectHandle(99)
         runtime.siblingInstance = { $1 == "OtherScript" ? sibling : nil }
         guard case let .completed(value) = runtime.invoke("Run", on: handle) else {
