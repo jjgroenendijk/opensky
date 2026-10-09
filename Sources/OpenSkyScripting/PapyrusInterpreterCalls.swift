@@ -146,16 +146,15 @@ extension PapyrusInterpreter {
         let scriptName = try name(from: operands[0])
         let functionName = try name(from: operands[1])
         let arguments = try callArguments(operands, countIndex: 3, frame: frame)
-        if runtime.script(named: scriptName) == nil {
+        if runtime.index(named: scriptName) == nil {
             _ = runtime.loadScript?(scriptName)
         }
         if
-            let script = runtime.script(named: scriptName),
-            let function = function(named: functionName, state: "", script: script),
-            !function.flags.contains(.native)
+            let resolved = staticFunction(functionName, script: scriptName),
+            !resolved.function.flags.contains(.native)
         {
             try pushFrame(
-                PapyrusResolvedFunction(script: script, function: function),
+                resolved,
                 instanceHandle: nil,
                 arguments: arguments,
                 completion: .assign(operands[2])

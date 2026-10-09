@@ -18,8 +18,17 @@ public final class PapyrusRuntime {
     public let coercion = PapyrusCoercion()
 
     public var scripts: [String: PexObject] = [:] {
-        didSet { scriptChains.removeAll() }
+        didSet {
+            scriptChains.removeAll()
+            indicesBySpelling.removeAll()
+            indicesByKey.removeAll()
+            indexChains.removeAll()
+            scriptsGeneration &+= 1
+        }
     }
+
+    /// Changes whenever `scripts` does, so a cached lookup knows it may be stale.
+    public private(set) var scriptsGeneration = 0
 
     public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
     /// Another script instance on the same form that is of the named type. The game keeps
@@ -34,6 +43,9 @@ public final class PapyrusRuntime {
     /// Each script's inheritance chain by folded name. A new script can complete a
     /// chain that stopped at a missing parent, so any change to `scripts` clears it.
     private var scriptChains: [String: [PexObject]] = [:]
+    private var indicesBySpelling: [String: PapyrusScriptIndex] = [:]
+    private var indicesByKey: [String: PapyrusScriptIndex] = [:]
+    private var indexChains: [String: [PapyrusScriptIndex]] = [:]
     private var nextHandleValue: UInt64 = 1
     private var nextSuspensionValue: UInt64 = 1
 
@@ -146,6 +158,29 @@ public final class PapyrusRuntime {
 
     public func script(named name: String) -> PexObject? {
         scripts[Self.key(name)]
+    }
+
+    /// The compiled form of the library script `name`, kept until the library changes.
+    public func index(named name: String) -> PapyrusScriptIndex? {
+        if let known = indicesBySpelling[name] {
+            return known
+        }
+        let key = Self.key(name)
+        guard let script = scripts[key] else { return nil }
+        let index = indicesByKey[key] ?? PapyrusScriptIndex(script)
+        indicesByKey[key] = index
+        indicesBySpelling[name] = index
+        return index
+    }
+
+    /// `scriptChain(from:)` as indices, child first.
+    public func indexChain(from name: String) throws(PapyrusFault) -> [PapyrusScriptIndex] {
+        if let known = indexChains[name] {
+            return known
+        }
+        let chain = try scriptChain(from: name).compactMap { index(named: $0.name) }
+        indexChains[name] = chain
+        return chain
     }
 
     public func instance(for handle: PapyrusObjectHandle) -> PapyrusInstance? {

@@ -39,11 +39,12 @@ extension PapyrusInterpreter {
                 detail: "destination is not an identifier"
             )
         }
-        if Self.isDiscard(name) {
+        let binding = frame.compiled.binding(for: name)
+        if binding.isDiscard {
             return
         }
-        if let type = frame.localType(named: name) {
-            _ = try frame.setLocalValue(cast(value, to: type), named: name)
+        if let slot = binding.slot {
+            try frame.setSlot(slot, to: cast(value, to: frame.compiled.slotTypes[slot]))
             return
         }
         if
@@ -72,8 +73,8 @@ extension PapyrusInterpreter {
                 detail: "destination is not an identifier"
             )
         }
-        if let type = frame.localType(named: name) {
-            return type
+        if let slot = frame.compiled.binding(for: name).slot {
+            return frame.compiled.slotTypes[slot]
         }
         if let declared = try declaredVariable(name, frame: frame) {
             return PapyrusType(name: declared.variable.typeName)
@@ -149,11 +150,12 @@ extension PapyrusInterpreter {
         guard case let .identifier(name) = operand else {
             return nil
         }
-        if PapyrusRuntime.matches(name, "self") || PapyrusRuntime.matches(name, "_self") {
+        let binding = frame.compiled.binding(for: name)
+        if binding.isSelf {
             return .object(frame.ownerScript.name)
         }
-        if let type = frame.localType(named: name) {
-            return type
+        if let slot = binding.slot {
+            return frame.compiled.slotTypes[slot]
         }
         let declared = try? declaredVariable(name, frame: frame)
         return declared.map { PapyrusType(name: $0.variable.typeName) }
@@ -164,16 +166,12 @@ extension PapyrusInterpreter {
         instance: PapyrusInstance,
         startingAt scriptName: String? = nil
     ) throws(PapyrusFault) -> PapyrusResolvedFunction? {
-        let start = scriptName ?? instance.rootScriptName
-        let chain = try runtime.scriptChain(from: start)
-        for script in chain {
-            if let function = function(named: name, state: instance.activeState, script: script) {
-                return PapyrusResolvedFunction(script: script, function: function)
-            }
-        }
-        for script in chain {
-            if let function = function(named: name, state: "", script: script) {
-                return PapyrusResolvedFunction(script: script, function: function)
+        let chain = try runtime.indexChain(from: scriptName ?? instance.rootScriptName)
+        for state in [instance.activeState, ""] {
+            for owner in chain {
+                if let compiled = owner.function(named: name, state: state) {
+                    return PapyrusResolvedFunction(owner: owner, compiled: compiled)
+                }
             }
         }
         return nil
@@ -195,24 +193,39 @@ extension PapyrusInterpreter {
         return nil
     }
 
-    public func function(named name: String, state: String, script: PexObject) -> PexFunction? {
-        script.states.first(where: { PapyrusRuntime.matches($0.name, state) })?
-            .functions.first(where: { PapyrusRuntime.matches($0.name, name) })?
-            .function
+    /// The empty-state function `name` of the library script `script`.
+    public func staticFunction(_ name: String, script: String) -> PapyrusResolvedFunction? {
+        guard
+            let owner = runtime.index(named: script),
+            let compiled = owner.function(named: name, state: "")
+        else { return nil }
+        return PapyrusResolvedFunction(owner: owner, compiled: compiled)
+    }
+
+    public func propertyHandler(
+        of resolved: PapyrusResolvedProperty,
+        writing: Bool
+    ) -> PapyrusResolvedFunction? {
+        guard
+            let owner = runtime.index(named: resolved.script.name),
+            let compiled = owner.handler(ofProperty: resolved.property.name, writing: writing)
+        else { return nil }
+        return PapyrusResolvedFunction(owner: owner, compiled: compiled)
     }
 
     private func readIdentifier(
         _ name: String,
         frame: PapyrusFrame
     ) throws(PapyrusFault) -> PapyrusValue {
-        if Self.isDiscard(name) {
+        let binding = frame.compiled.binding(for: name)
+        if binding.isDiscard {
             return .none
         }
-        if PapyrusRuntime.matches(name, "self") || PapyrusRuntime.matches(name, "_self") {
+        if binding.isSelf {
             return frame.instanceHandle.map(PapyrusValue.object) ?? .none
         }
-        if let value = frame.localValue(named: name) {
-            return value
+        if let slot = binding.slot {
+            return frame.slots[slot]
         }
         if let instance = frame.instanceHandle.flatMap(runtime.instance(for:)) {
             let owner = try declaredVariable(name, frame: frame)?.owner.name ?? frame.ownerScript
@@ -232,22 +245,10 @@ extension PapyrusInterpreter {
     private func declaredVariable(
         _ name: String,
         frame: PapyrusFrame
-    ) throws(PapyrusFault) -> (owner: PexObject, variable: PexVariable)? {
-        let chain = try [frame.ownerScript] + runtime
-            .scriptChain(from: frame.ownerScript.parentClassName)
-        for script in chain {
-            if
-                let variable = script.variables
-                    .first(where: { PapyrusRuntime.matches($0.name, name) })
-            {
-                return (script, variable)
-            }
+    ) throws(PapyrusFault) -> PapyrusScriptIndex.DeclaredVariable? {
+        try frame.owner.declaredVariable(name, generation: runtime.scriptsGeneration) {
+            () throws(PapyrusFault) in
+            try runtime.scriptChain(from: frame.ownerScript.parentClassName)
         }
-        return nil
-    }
-
-    private static func isDiscard(_ name: String) -> Bool {
-        let key = PapyrusRuntime.key(name)
-        return key == "::nonevar" || key == "none"
     }
 }

@@ -116,14 +116,14 @@ public final class PapyrusInterpreter {
             }
             guard
                 let resolved = try resolveProperty(name, instance: instance),
-                let setter = resolved.property.writeHandler
+                let setter = propertyHandler(of: resolved, writing: true)
             else {
                 throw PapyrusFault.missingProperty(
                     instruction: 0, script: instance.rootScriptName, property: name
                 )
             }
             try pushFrame(
-                PapyrusResolvedFunction(script: resolved.script, function: setter),
+                setter,
                 instanceHandle: handle,
                 arguments: [value],
                 completion: .root
@@ -142,29 +142,24 @@ public final class PapyrusInterpreter {
         arguments: [PapyrusValue]
     ) -> PapyrusRunOutcome {
         do {
-            guard let script = runtime.script(named: scriptName) else {
+            guard let resolved = staticFunction(functionName, script: scriptName) else {
                 throw PapyrusFault.missingFunction(
                     instruction: 0, script: scriptName, function: functionName
                 )
             }
-            guard let function = function(named: functionName, state: "", script: script) else {
-                throw PapyrusFault.missingFunction(
-                    instruction: 0, script: scriptName, function: functionName
-                )
-            }
-            if function.flags.contains(.native) {
+            if resolved.function.flags.contains(.native) {
                 let call = PapyrusNativeCall(
                     kind: .staticFunction,
-                    scriptName: script.name,
+                    scriptName: resolved.script.name,
                     functionName: functionName,
                     receiver: nil,
                     arguments: arguments,
-                    returnType: PapyrusType(name: function.returnTypeName)
+                    returnType: PapyrusType(name: resolved.function.returnTypeName)
                 )
                 return nativeOutcome(call, target: .root)
             }
             try pushFrame(
-                PapyrusResolvedFunction(script: script, function: function),
+                resolved,
                 instanceHandle: nil,
                 arguments: arguments,
                 completion: .root
@@ -251,25 +246,19 @@ public final class PapyrusInterpreter {
         guard frames.count < runtime.limits.callDepth else {
             throw .callDepthExceeded(instruction: instructionIndex)
         }
+        let compiled = resolved.compiled
         let frame = PapyrusFrame(
-            ownerScript: resolved.script,
-            function: resolved.function,
+            owner: resolved.owner,
+            compiled: compiled,
             instanceHandle: instanceHandle,
-            arguments: arguments,
             completion: completion
         )
-        for parameter in resolved.function.parameters {
-            guard
-                let value = frame.localValue(named: parameter.name),
-                let type = frame.localType(named: parameter.name)
-            else {
-                throw .invalidOperand(
-                    instruction: instructionIndex,
-                    detail: "missing parameter \(parameter.name)"
-                )
-            }
-            let converted = try cast(value, to: type)
-            _ = frame.setLocalValue(converted, named: parameter.name)
+        for (index, slot) in compiled.argumentSlots.enumerated() {
+            guard let slot else { continue }
+            let value = arguments.indices.contains(index)
+                ? arguments[index]
+                : compiled.slotDefaults[slot]
+            try frame.setSlot(slot, to: cast(value, to: compiled.slotTypes[slot]))
         }
         frames.append(frame)
     }

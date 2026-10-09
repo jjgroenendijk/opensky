@@ -60,7 +60,7 @@ extension PapyrusInterpreter {
             try write(value, to: operands[2], frame: frame)
             return .next
         }
-        guard let getter = resolved.property.readHandler else {
+        guard let getter = propertyHandler(of: resolved, writing: false) else {
             throw .missingProperty(
                 instruction: instructionIndex,
                 script: resolved.script.name,
@@ -68,7 +68,7 @@ extension PapyrusInterpreter {
             )
         }
         try pushFrame(
-            PapyrusResolvedFunction(script: resolved.script, function: getter),
+            getter,
             instanceHandle: instance.handle,
             arguments: [],
             completion: .assign(operands[2])
@@ -121,7 +121,7 @@ extension PapyrusInterpreter {
             }
             return .next
         }
-        guard let setter = resolved.property.writeHandler else {
+        guard let setter = propertyHandler(of: resolved, writing: true) else {
             throw .missingProperty(
                 instruction: instructionIndex,
                 script: resolved.script.name,
@@ -129,7 +129,7 @@ extension PapyrusInterpreter {
             )
         }
         try pushFrame(
-            PapyrusResolvedFunction(script: resolved.script, function: setter),
+            setter,
             instanceHandle: instance.handle,
             arguments: [value],
             completion: .discard
@@ -207,15 +207,15 @@ extension PapyrusInterpreter {
             case let .object(typeName) = declaredType(of: operand, frame: frame),
             runtime.siblingInstance?(handle, typeName) == nil
         else { return nil }
-        for script in try runtime.scriptChain(from: typeName) {
+        for owner in try runtime.indexChain(from: typeName) {
             guard
-                let property = script.properties
+                let property = owner.script.properties
                     .first(where: { PapyrusRuntime.matches($0.name, name) })
             else { continue }
-            let handler = value == nil ? property.readHandler : property.writeHandler
+            let handler = owner.handler(ofProperty: property.name, writing: value != nil)
             guard let handler, !property.flags.contains(.automatic) else { return nil }
             try pushFrame(
-                PapyrusResolvedFunction(script: script, function: handler),
+                PapyrusResolvedFunction(owner: owner, compiled: handler),
                 instanceHandle: handle,
                 arguments: value.map { [$0] } ?? [],
                 completion: value == nil ? .assign(destination) : .discard
