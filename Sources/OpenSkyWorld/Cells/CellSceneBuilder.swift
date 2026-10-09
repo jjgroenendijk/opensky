@@ -82,8 +82,12 @@ nonisolated public struct FoundCell: Sendable {
 
 /// The world-children group and its WRLD; DNAM feeds the LAND-less terrain fallback.
 nonisolated public struct FoundWorld: Sendable {
-    public let children: ESMGroup
+    /// The first plugin's world children group; nil for a worldspace only a
+    /// later plugin defines.
+    public let children: ESMGroup?
     public let worldspace: Worldspace?
+    /// The WRLD's load-order FormID.
+    public let formID: FormID
 }
 
 /// A class because the record indexes are cached across builds.
@@ -147,6 +151,8 @@ nonisolated public final class CellSceneBuilder {
     var worldChildrenGroups: [String: FoundWorld] = [:]
     /// Keyed by the world-children group's file offset, then by XCLC grid.
     var exteriorCellIndexes: [Int: [SIMD2<Int32>: FoundCell]] = [:]
+    /// Keyed by WRLD load-order FormID, then by XCLC grid, over every plugin.
+    var loadOrderExteriorCells: [UInt32: [SIMD2<Int32>: FoundCell]] = [:]
     /// LTEX FormID to its TXST diffuse key; nil marks a broken chain.
     var terrainDiffuseKeys: [UInt32: String?] = [:]
     public var waterTypeIndex: [UInt32: WaterType]?
@@ -218,12 +224,12 @@ nonisolated public final class CellSceneBuilder {
         let collected = collectTaggedReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
         let refs = exteriorReferences(
-            local: collected.map(\.reference), world: world.children,
+            local: collected.map(\.reference), world: world,
             coordinate: coordinate, localized: pluginLocalized
         )
         counts.totalRefs = refs.count + counts.malformedRefs
         let location = CellSceneLocation.exterior(coordinate)
-        let parents = persistentParentPool(in: world.children, localized: pluginLocalized)
+        let parents = persistentParentPool(in: world, localized: pluginLocalized)
         let resolved = effectiveReferences(
             refs: refs, collected: collected, state: state, location: location,
             parentPool: parents, counts: &counts
@@ -233,7 +239,7 @@ nonisolated public final class CellSceneBuilder {
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
             cell: found,
-            world: world.children,
+            world: world,
             coordinate: coordinate,
             localized: pluginLocalized,
             deltas: resolved.deltas
@@ -256,7 +262,7 @@ nonisolated public final class CellSceneBuilder {
                 staticCollision: collision.staticCollision,
                 triggerVolumes: collision.triggerVolumes,
                 dynamicBodies: collision.dynamicBodies,
-                navmeshes: Self.collectNavmeshes(in: found.children),
+                navmeshes: collectNavmeshes(in: found),
                 actors: actors,
                 worldspaceMusicType: world.worldspace?.musicType,
                 referenceEntries: resolved.entries,
@@ -265,7 +271,7 @@ nonisolated public final class CellSceneBuilder {
             ),
             counts: counts
         )
-        scene.hazards = collectHazards(in: found.children, resolved: resolved, parentPool: parents)
+        scene.hazards = collectHazards(in: found, resolved: resolved, parentPool: parents)
         scene.assets = drainTouchedAssets()
         return scene
     }
@@ -342,35 +348,21 @@ nonisolated extension CellSceneBuilder {
         return found
     }
 
-    /// Decodes every WRLD up to the match, so `worldChildrenGroup` keeps the result.
+    /// The winning WRLD with that editor ID in the whole load order, and the
+    /// first plugin's children group for it.
     nonisolated private func uncachedWorldChildrenGroup(
         editorID: String,
-        localized: Bool
+        localized _: Bool
     ) throws -> FoundWorld {
-        guard let top = file.topGroup(of: "WRLD") else {
-            throw CellSceneError.worldspaceNotFound(editorID: editorID)
-        }
-        var matchedFormID: UInt32?
-        var matchedWorld: Worldspace?
-        for child in try top.children() {
-            switch child {
-            case let .record(record) where record.type == "WRLD":
-                guard
-                    let world = decodeOrSkip(record, using: {
-                        try Worldspace(record: $0, localized: localized)
-                    })
-                else { continue }
-                let matches = world.editorID == editorID
-                matchedFormID = matches ? record.formID : nil
-                matchedWorld = matches ? world : nil
-            case let .group(group)
-                where group.kind == .worldChildren && group.parentFormID == matchedFormID:
-                return FoundWorld(children: group, worldspace: matchedWorld)
-            default:
-                break
-            }
-        }
-        throw CellSceneError.worldspaceNotFound(editorID: editorID)
+        guard
+            let match = worldspaceIndexBuildingIfNeeded()
+                .filter({ $0.value.editorID == editorID })
+                .min(by: { $0.key < $1.key })
+        else { throw CellSceneError.worldspaceNotFound(editorID: editorID) }
+        let formID = FormID(stored: match.key)
+        return FoundWorld(
+            children: baseWorldChildren(of: formID), worldspace: match.value, formID: formID
+        )
     }
 
     /// Matches the decoded XCLC grid, never the unreliable block labels. The first
@@ -397,7 +389,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Every exterior CELL under `group` by grid. One full walk costs about as much
     /// as a few single-cell searches, and each later build then skips the walk.
-    nonisolated private func exteriorCellIndex(
+    nonisolated func exteriorCellIndex(
         of group: ESMGroup,
         localized: Bool
     ) -> [SIMD2<Int32>: FoundCell] {

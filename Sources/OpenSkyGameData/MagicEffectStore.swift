@@ -27,7 +27,7 @@ nonisolated public struct ResolvedMagicEffect: Equatable, Sendable {
     public var displayName: String {
         switch effect.name {
         case let .inline(value): value
-        case let .tableID(id): effect.editorID ?? "string #\(id)"
+        case let .tableID(id), let .pluginTableID(id, _): effect.editorID ?? "string #\(id)"
         case nil: effect.editorID ?? id.description
         }
     }

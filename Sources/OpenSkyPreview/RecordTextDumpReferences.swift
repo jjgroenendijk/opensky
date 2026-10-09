@@ -126,7 +126,7 @@ nonisolated extension RecordTextDump {
         let location = try Location(record: record, localized: localized)
         let name = switch location.name {
         case let .inline(value): "\"\(value)\""
-        case let .tableID(id): "string #\(id)"
+        case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
         case nil: "-"
         }
         let keywordNames = if let keywordContext {

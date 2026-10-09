@@ -72,7 +72,11 @@ nonisolated public final class WeatherSystem {
     /// Convenience: resolve the store + worldspace from an ESM file by editor
     /// ID. Returns nil when the plugin carries no weather data at all.
     public convenience init?(file: ESMFile, worldspaceEditorID: String) {
-        let store = WeatherStore(file: file)
+        self.init(loadOrder: LoadOrderPlugins(file: file), worldspaceEditorID: worldspaceEditorID)
+    }
+
+    public convenience init?(loadOrder: LoadOrderPlugins, worldspaceEditorID: String) {
+        let store = WeatherStore(loadOrder: loadOrder)
         guard !store.weathers.isEmpty else { return nil }
         self.init(
             store: store,

@@ -55,12 +55,18 @@ In vanilla, the highest index used is exactly the number of masters. For example
 ## Load-order space
 
 The index the game console shows is different. It depends on the user's full load order.
-OpenSky names a record by (plugin file name, object ID) instead, which does not depend on
-load order. The quest and dialogue stores and the cell builder are the exception: they number
-records in the load-order space, as the console does, so `Skyrim.esm` FormIDs keep their
-value and a DLC record gets its load position as top byte. Every FormID a record holds, such
-as a reference's base, its linked references, and its script properties, is renumbered with
-it.
+The record stores name a record by (plugin file name, object ID), which does not depend on
+load order. The game session works in the load-order space instead, as the console does:
+`Skyrim.esm` FormIDs keep their value and a DLC record gets its load position as top byte.
+The cell builder, the quest and dialogue stores, and every store built over the whole load
+order number their records this way. A store keyed by (plugin, object ID) resolves such a
+FormID through the reserved plugin name `<load order>`.
+
+A later plugin's record is decoded inside a decode scope. In the scope, every FormID the
+decoder reads moves into the load-order space, and every string-table ID keeps the name of
+its plugin. So each field of each record type is translated, such as a reference's base, its
+linked references, and its script properties, and no decoder needs its own renumbering.
+Outside a scope, a FormID stays as written.
 
 A plugin that lists its masters in load order and loads right after them keeps every FormID
 unchanged, so no renumbering is needed. Every official plugin does: `Update.esm` lists

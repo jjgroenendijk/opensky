@@ -160,7 +160,7 @@ struct IdleRuntimeRealDataTests {
         builder: CellSceneBuilder,
         file: ESMFile
     ) -> ConditionContext {
-        let resolvers = builder.actorResolversBuildingIfNeeded(localized: true)
+        let resolvers = builder.actorResolversBuildingIfNeeded()
         var states: [ReferenceKey: ActorConditionState] = [:]
         for entry in scene.references.sortedEntries() {
             guard let placed = entry.placedActor else { continue }
@@ -200,7 +200,7 @@ struct IdleRuntimeRealDataTests {
         logs: URL
     ) throws {
         let placed = try #require(pick.actor.placedActor)
-        let resolvers = builder.actorResolversBuildingIfNeeded(localized: true)
+        let resolvers = builder.actorResolversBuildingIfNeeded()
         let visual = try resolvers.visual.resolve(
             appearance: resolvers.template.resolve(base: placed.base)
         )

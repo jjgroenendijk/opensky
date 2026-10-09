@@ -22,10 +22,15 @@ nonisolated public final class MusicRecordStore {
     public let musicTracks: [UInt32: MusicTrack]
     public let skippedRecords: SkippedRecords
 
-    public init(file: ESMFile) {
+    public convenience init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        musicTypes = file.indexRecords(of: "MUSC", skipped: &skipped) { try MusicType(record: $0) }
-        musicTracks = file.indexRecords(of: "MUST", skipped: &skipped) {
+        musicTypes = loadOrder
+            .indexRecords(of: "MUSC", skipped: &skipped) { try MusicType(record: $0) }
+        musicTracks = loadOrder.indexRecords(of: "MUST", skipped: &skipped) {
             try MusicTrack(record: $0)
         }
         skippedRecords = skipped

@@ -23,7 +23,7 @@ struct HeadAssemblyRenderRealDataTests {
         let placed = try PlacedActor(record: #require(
             ESMWalk.record(withFormID: 0x0001_A682, in: install.file)
         ))
-        let resolvers = builder.actorResolversBuildingIfNeeded(localized: true)
+        let resolvers = builder.actorResolversBuildingIfNeeded()
         let visual = try resolvers.visual.resolve(
             appearance: resolvers.template.resolve(base: placed.base)
         )

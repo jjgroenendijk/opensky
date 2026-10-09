@@ -22,7 +22,7 @@ nonisolated extension CellSceneBuilder {
         )
         guard
             let found = findCell(
-                in: world.children,
+                in: world,
                 gridX: gridX,
                 gridY: gridY,
                 localized: pluginLocalized
@@ -101,7 +101,7 @@ nonisolated extension CellSceneBuilder {
         if let materialTypeIndex {
             return materialTypeIndex
         }
-        let index = MaterialTypeIndex(file: file)
+        let index = MaterialTypeIndex(loadOrder: loadOrderIndexBuildingIfNeeded().loadOrder)
         materialTypeIndex = index
         return index
     }

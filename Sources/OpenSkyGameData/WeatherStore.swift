@@ -58,28 +58,27 @@ nonisolated public final class WeatherStore {
     public let worldspaceByEditorID: [String: UInt32]
     public let skippedRecords: SkippedRecords
 
-    public init(file: ESMFile) {
-        let localized = file.isLocalized
+    public convenience init(file: ESMFile) {
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    /// Every plugin's records; a later plugin's override wins.
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        weathers = Self.index(file, "WTHR", &skipped) { try Weather(record: $0) }
-        climates = Self.index(file, "CLMT", &skipped) { try Climate(record: $0) }
-        regions = Self.index(file, "REGN", &skipped) { try Region(record: $0) }
+        weathers = loadOrder.indexRecords(of: "WTHR", skipped: &skipped) { try Weather(record: $0) }
+        climates = loadOrder.indexRecords(of: "CLMT", skipped: &skipped) { try Climate(record: $0) }
+        regions = loadOrder.indexRecords(of: "REGN", skipped: &skipped) { try Region(record: $0) }
+        let worlds = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
+            try Worldspace(record: $0, localized: $1)
+        }
         var climateByWorld: [UInt32: FormID] = [:]
         var worldByEditorID: [String: UInt32] = [:]
-        if let top = file.topGroup(of: "WRLD") {
-            for case let .record(record) in skipped.children(of: top) where record.type == "WRLD" {
-                guard
-                    let world = skipped.decode(
-                        record,
-                        using: { try Worldspace(record: $0, localized: localized) }
-                    )
-                else { continue }
-                if let climate = world.climate, !climate.isNull {
-                    climateByWorld[record.formID] = climate
-                }
-                if let editorID = world.editorID {
-                    worldByEditorID[editorID] = record.formID
-                }
+        for world in worlds {
+            if let climate = world.climate, !climate.isNull {
+                climateByWorld[world.formID.rawValue] = climate
+            }
+            if let editorID = world.editorID {
+                worldByEditorID[editorID] = world.formID.rawValue
             }
         }
         worldspaceClimate = climateByWorld
@@ -117,21 +116,5 @@ nonisolated public final class WeatherStore {
             ?? selectable.first { weather in
                 preset.matches(weather.data?.precipitation ?? .none)
             }
-    }
-
-    private static func index<Value>(
-        _ file: ESMFile,
-        _ type: FourCC,
-        _ skipped: inout SkippedRecords,
-        _ decode: (ESMRecord) throws -> Value
-    ) -> [UInt32: Value] {
-        var out: [UInt32: Value] = [:]
-        guard let top = file.topGroup(of: type) else { return out }
-        for case let .record(record) in skipped.children(of: top) where record.type == type {
-            if let value = skipped.decode(record, using: decode) {
-                out[record.formID] = value
-            }
-        }
-        return out
     }
 }

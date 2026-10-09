@@ -86,15 +86,15 @@ nonisolated public struct CellProviderIndexes {
         let acousticSpaces: AcousticSpaceStore
         let music: MusicRecordStore
 
-        init(file: ESMFile) {
+        init(loadOrder: LoadOrderPlugins) {
             weather = WeatherSystem(
-                file: file, worldspaceEditorID: FirstRenderCell.worldspaceEditorID
+                loadOrder: loadOrder, worldspaceEditorID: FirstRenderCell.worldspaceEditorID
             )
-            sound = SoundRecordStore(file: file)
-            footstep = FootstepStore(file: file)
-            materialTypes = MaterialTypeIndex(file: file)
-            acousticSpaces = AcousticSpaceStore(file: file)
-            music = MusicRecordStore(file: file)
+            sound = SoundRecordStore(loadOrder: loadOrder)
+            footstep = FootstepStore(loadOrder: loadOrder)
+            materialTypes = MaterialTypeIndex(loadOrder: loadOrder)
+            acousticSpaces = AcousticSpaceStore(loadOrder: loadOrder)
+            music = MusicRecordStore(loadOrder: loadOrder)
         }
     }
 

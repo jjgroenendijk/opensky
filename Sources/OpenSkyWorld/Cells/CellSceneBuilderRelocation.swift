@@ -12,7 +12,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated public var placedRecords: PlacedRecordLookup {
         PlacedRecordLookup(
             index: loadOrderIndexBuildingIfNeeded(),
-            templates: actorResolversBuildingIfNeeded(localized: pluginLocalized).template
+            templates: actorResolversBuildingIfNeeded().template
         )
     }
 

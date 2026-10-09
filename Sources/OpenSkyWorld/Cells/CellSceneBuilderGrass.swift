@@ -22,7 +22,7 @@ nonisolated extension CellSceneBuilder {
         guard
             worldspace?.flags.contains(.noGrass) != true,
             let terrain,
-            let land = landRecord(in: found.children)
+            let land = landRecord(in: found)
         else { return nil }
 
         let textures = landTextureIndexBuildingIfNeeded()
@@ -96,16 +96,8 @@ nonisolated extension CellSceneBuilder {
         if let landTextureIndex {
             return landTextureIndex
         }
-        var textures: [LandTexture] = []
-        if let top = file.topGroup(of: "LTEX"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children {
-                guard record.type == "LTEX", !record.isDeleted else { continue }
-                if let texture = decodeOrSkip(record, using: LandTexture.init(record:)) {
-                    textures.append(texture)
-                }
-            }
-        }
-        let index = LandTexture.index(textures)
+        let textures = loadOrderRecords(of: "LTEX") { record, _ in try LandTexture(record: record) }
+        let index = LandTexture.index(textures.sorted { $0.key < $1.key }.map(\.value))
         landTextureIndex = index
         return index
     }
@@ -114,15 +106,7 @@ nonisolated extension CellSceneBuilder {
         if let grassIndex {
             return grassIndex
         }
-        var index: [UInt32: Grass] = [:]
-        if let top = file.topGroup(of: "GRAS"), let children = childrenOrSkip(top) {
-            for case let .record(record) in children {
-                guard record.type == "GRAS", !record.isDeleted else { continue }
-                if let grass = decodeOrSkip(record, using: Grass.init(record:)) {
-                    index[record.formID] = grass
-                }
-            }
-        }
+        let index = loadOrderRecords(of: "GRAS") { record, _ in try Grass(record: record) }
         grassIndex = index
         return index
     }

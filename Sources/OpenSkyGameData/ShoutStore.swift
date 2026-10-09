@@ -18,7 +18,8 @@ nonisolated public struct ResolvedWordOfPower: Equatable, Sendable {
     public var displayName: String {
         switch word.name {
         case let .inline(value): value
-        case let .tableID(tableID): word.editorID ?? "string #\(tableID)"
+        case let .tableID(tableID), let .pluginTableID(tableID, _):
+            word.editorID ?? "string #\(tableID)"
         case nil: word.editorID ?? id.description
         }
     }
@@ -49,7 +50,8 @@ nonisolated public struct ResolvedShout: Sendable {
     public var displayName: String {
         switch shout.name {
         case let .inline(value): value
-        case let .tableID(tableID): shout.editorID ?? "string #\(tableID)"
+        case let .tableID(tableID), let .pluginTableID(tableID, _):
+            shout.editorID ?? "string #\(tableID)"
         case nil: shout.editorID ?? id.description
         }
     }

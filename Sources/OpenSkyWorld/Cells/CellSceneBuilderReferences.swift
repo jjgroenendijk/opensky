@@ -124,7 +124,7 @@ nonisolated extension CellSceneBuilder {
             return modelBaseIndexBuildingIfNeeded()[reference.base.rawValue]?.scriptData
                 .scripts ?? []
         case let .actor(actor):
-            let templates = actorResolversBuildingIfNeeded(localized: pluginLocalized).template
+            let templates = actorResolversBuildingIfNeeded().template
             return (try? templates.resolveScripts(base: actor.base).value) ?? []
         }
     }

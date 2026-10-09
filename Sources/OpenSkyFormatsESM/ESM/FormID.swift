@@ -7,7 +7,14 @@ import Foundation
 nonisolated public struct FormID: Hashable, Sendable {
     public let rawValue: UInt32
 
+    /// Inside `RecordDecodeScope.decoding`, the value moves into the scope's
+    /// FormID space, so a decoder reads every FormID of a record translated.
     public init(_ rawValue: UInt32) {
+        self.rawValue = RecordDecodeScope.translated(rawValue)
+    }
+
+    /// The value as written; a decode scope leaves it alone.
+    public init(stored rawValue: UInt32) {
         self.rawValue = rawValue
     }
 
@@ -66,6 +73,10 @@ nonisolated public struct FormIDResolver: Equatable, Sendable {
         self.masters = masters
     }
 
+    /// The name a store registers the load-order space under, so a FormID read
+    /// in that space resolves like one read in a plugin. No file has this name.
+    public static let loadOrderSpaceName = "<load order>"
+
     /// The FormID space of a whole load order: the top byte is the plugin's
     /// position, as the game numbers forms at runtime. The first plugin, `Skyrim.esm`,
     /// is 0, so its own FormIDs keep their value.
@@ -91,7 +102,7 @@ nonisolated public struct FormIDResolver: Equatable, Sendable {
             ? masters.count
             : masters.firstIndex { $0.lowercased() == name }
         guard let index, index < 0xFF, id.objectID <= 0xFFFFFF else { return nil }
-        return FormID(UInt32(index) << 24 | id.objectID)
+        return FormID(stored: UInt32(index) << 24 | id.objectID)
     }
 }
 
@@ -100,15 +111,34 @@ nonisolated public struct FormIDResolver: Equatable, Sendable {
 nonisolated public struct FormIDTranslation: Equatable, Sendable {
     public let source: FormIDResolver
     public let target: FormIDResolver
+    /// True when every FormID keeps its value: the source lists its masters in
+    /// the target's order and sits right after them.
+    public let isIdentity: Bool
+    /// The target top byte for each source top byte; nil where the target
+    /// space cannot name the plugin.
+    private let topBytes: [UInt32?]
 
     public init(source: FormIDResolver, target: FormIDResolver) {
         self.source = source
         self.target = target
+        topBytes = (0 ... 0xFF).map { index in
+            let plugin = index < source.masters.count ? source.masters[index] : source.pluginName
+            return target.localFormID(of: ResolvedFormID(plugin: plugin, objectID: 0))?.rawValue
+        }
+        isIdentity = topBytes.enumerated().allSatisfy { index, byte in
+            index > source.masters.count || byte == UInt32(index) << 24
+        }
     }
 
     public func callAsFunction(_ id: FormID) -> FormID {
-        guard let resolved = source.resolve(id) else { return id }
-        return target.localFormID(of: resolved) ?? FormID(0)
+        FormID(stored: translate(id.rawValue))
+    }
+
+    /// The null FormID stays null.
+    func translate(_ raw: UInt32) -> UInt32 {
+        guard raw != 0 else { return 0 }
+        guard let top = topBytes[Int(raw >> 24)] else { return 0 }
+        return top | raw & 0x00FF_FFFF
     }
 
     public func callAsFunction(_ id: FormID?) -> FormID? {

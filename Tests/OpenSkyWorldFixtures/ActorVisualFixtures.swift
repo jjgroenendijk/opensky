@@ -171,14 +171,14 @@ public func appearance(
         base: base,
         chain: [.npc(base)],
         isFemale: ActorSourcedField(value: female, source: base),
-        race: ActorSourcedField(value: race.map(FormID.init), source: base),
-        voiceType: ActorSourcedField(value: voiceType.map(FormID.init), source: base),
-        wornArmor: ActorSourcedField(value: wornArmor.map(FormID.init), source: base),
+        race: ActorSourcedField(value: race.map(FormID.init(stored:)), source: base),
+        voiceType: ActorSourcedField(value: voiceType.map(FormID.init(stored:)), source: base),
+        wornArmor: ActorSourcedField(value: wornArmor.map(FormID.init(stored:)), source: base),
         headParts: ActorSourcedField(
-            value: headParts.map(FormID.init), source: FormID(headSource)
+            value: headParts.map(FormID.init(stored:)), source: FormID(headSource)
         ),
-        hairColor: ActorSourcedField(value: hairColor.map(FormID.init), source: base),
-        defaultOutfit: ActorSourcedField(value: outfit.map(FormID.init), source: base)
+        hairColor: ActorSourcedField(value: hairColor.map(FormID.init(stored:)), source: base),
+        defaultOutfit: ActorSourcedField(value: outfit.map(FormID.init(stored:)), source: base)
     )
 }
 

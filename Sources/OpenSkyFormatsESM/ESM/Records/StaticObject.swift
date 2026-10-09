@@ -14,13 +14,13 @@ nonisolated public struct StaticObject: Sendable {
         public let consideredSnow: Bool
     }
 
-    public internal(set) var formID: FormID
+    public let formID: FormID
     public let editorID: String?
     public let bounds: ObjectBounds?
     /// MODL group — mesh path relative to Data/ (e.g. "meshes\\clutter\\cup.nif"),
     /// texture hashes, and MODS alternate textures. Nil for marker statics.
-    public internal(set) var model: ModelData?
-    public internal(set) var directionalMaterial: DirectionalMaterial?
+    public let model: ModelData?
+    public let directionalMaterial: DirectionalMaterial?
     /// MNAM — the four distant LOD mesh paths, level 0 first. Empty when absent.
     public let distantLODModels: [String]
     /// Placed for the editor or for scripts; the game does not draw it.

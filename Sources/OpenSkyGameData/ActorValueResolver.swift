@@ -95,32 +95,42 @@ nonisolated public struct ActorValueResolver: Sendable {
         playerLevelSource = playerLevel
     }
 
-    /// Builds every index this resolver needs from one plugin file. `settings` and
-    /// `classes` are passed in, so a caller does not pay for a second load-order walk
-    /// and a patch plugin's CLAS override is seen.
+    /// Builds every index this resolver needs from one plugin file.
     public static func build(
         from file: ESMFile,
-        localized: Bool,
+        localized _: Bool,
         pluginName: String,
         classes: CharacterClassStore? = nil,
         settings: ActorValueLevelSettings = .documentedDefaults,
         playerLevel: PlayerLevelSource = PlayerLevelSource()
     ) -> ActorValueResolver {
-        var races: [UInt32: Race] = [:]
+        build(
+            from: LoadOrderPlugins(file: file, name: pluginName),
+            classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
+            pluginName: pluginName,
+            settings: settings,
+            playerLevel: playerLevel
+        )
+    }
+
+    /// Builds every index over the load order. `pluginName` names the FormID
+    /// space the records are read in, for the class lookups.
+    public static func build(
+        from loadOrder: LoadOrderPlugins,
+        classes: CharacterClassStore,
+        pluginName: String,
+        settings: ActorValueLevelSettings = .documentedDefaults,
+        playerLevel: PlayerLevelSource = PlayerLevelSource()
+    ) -> ActorValueResolver {
         var skipped = SkippedRecords()
-        if let top = file.topGroup(of: "RACE") {
-            for case let .record(record) in skipped.children(of: top) {
-                guard record.type == "RACE", !record.isDeleted else { continue }
-                races[record.formID] = skipped.decode(record) {
-                    try Race(record: $0, localized: localized)
-                }
-            }
+        let races = loadOrder.indexRecords(of: "RACE", skipped: &skipped) {
+            try Race(record: $0, localized: $1)
         }
         return ActorValueResolver(
-            templates: ActorTemplateResolver.build(from: file, localized: localized),
+            templates: ActorTemplateResolver.build(from: loadOrder),
             raceSkips: skipped,
             races: races,
-            classes: classes ?? CharacterClassStore(file: file, pluginName: pluginName),
+            classes: classes,
             pluginName: pluginName,
             settings: settings,
             playerLevel: playerLevel

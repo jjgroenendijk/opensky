@@ -211,7 +211,7 @@ nonisolated extension RecordTextDump {
     ) -> String {
         let name = switch fields.name {
         case let .inline(text): "\"\(text)\""
-        case let .tableID(id): "string #\(id)"
+        case let .tableID(id), let .pluginTableID(id, _): "string #\(id)"
         case nil: "-"
         }
         return String(

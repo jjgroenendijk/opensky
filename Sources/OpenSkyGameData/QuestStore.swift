@@ -158,7 +158,7 @@ nonisolated public final class QuestStore: Sendable {
     }
 
     public func formID(editorID: String) -> FormID? {
-        formIDsByEditorID[editorID.lowercased()].map(FormID.init)
+        formIDsByEditorID[editorID.lowercased()].map(FormID.init(stored:))
     }
 
     /// Session-stable key for a quest, which is how the runtime layer and the
@@ -170,7 +170,7 @@ nonisolated public final class QuestStore: Sendable {
     /// FormID behind a session-stable key, the direction the Papyrus natives
     /// read. Nil for a key that names no loaded quest.
     public func formID(for key: ReferenceKey) -> FormID? {
-        formIDsByKey[key].map(FormID.init)
+        formIDsByKey[key].map(FormID.init(stored:))
     }
 
     /// The QUST record a session-stable key names, or nil when it names none.

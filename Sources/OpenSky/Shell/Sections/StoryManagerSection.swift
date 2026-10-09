@@ -43,7 +43,7 @@ final class StoryManagerSection: PanelSectionViewController {
     var keyword: FormID? {
         let text = keywordControl.stringValue.trimmingCharacters(in: .whitespaces)
         let digits = text.lowercased().hasPrefix("0x") ? String(text.dropFirst(2)) : text
-        return UInt32(digits, radix: 16).map(FormID.init)
+        return UInt32(digits, radix: 16).map(FormID.init(stored:))
     }
 
     override func makeContentViews() -> [NSView] {

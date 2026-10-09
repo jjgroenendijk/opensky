@@ -100,39 +100,32 @@ nonisolated public struct EquipmentCatalog: Sendable {
         self.skippedRecords = skippedRecords.merging(equipSlots.skippedRecords)
     }
 
-    /// Indexes the ARMO and WEAP top groups against the plugin's own EQUP
-    /// records. Records that fail to decode drop out and later read as not
-    /// equippable.
     public static func build(from file: ESMFile) -> EquipmentCatalog {
-        let localized = file.isLocalized
-        let equipSlots = EquipSlotTable(file: file)
-        var items: [UInt32: EquippableItem] = [:]
+        build(from: LoadOrderPlugins(file: file))
+    }
+
+    /// Indexes every plugin's ARMO and WEAP records against the EQUP records.
+    /// Records that fail to decode drop out and later read as not equippable.
+    public static func build(from loadOrder: LoadOrderPlugins) -> EquipmentCatalog {
+        let equipSlots = EquipSlotTable(loadOrder: loadOrder)
         var unresolved = 0
         var skipped = SkippedRecords()
-        for record in file.liveRecords(of: "ARMO", skipped: &skipped) {
-            guard
-                let armor = skipped.decode(
-                    record,
-                    using: { try Armor(record: $0, localized: localized) }
-                )
-            else { continue }
-            items[armor.formID.rawValue] = EquippableItem(
+        var items = loadOrder.indexRecords(of: "ARMO", skipped: &skipped) {
+            let armor = try Armor(record: $0, localized: $1)
+            return EquippableItem(
                 occupancy: EquipmentOccupancy(slots: armor.bodyTemplate?.slots ?? BodySlots()),
                 modelPath: nil
             )
         }
-        for record in file.liveRecords(of: "WEAP", skipped: &skipped) {
-            guard
-                let weapon = skipped.decode(
-                    record,
-                    using: { try Weapon(record: $0, localized: localized) }
-                )
-            else { continue }
+        let weapons = loadOrder.indexRecords(of: "WEAP", skipped: &skipped) {
+            try Weapon(record: $0, localized: $1)
+        }
+        for (id, weapon) in weapons {
             let resolved = equipSlots.hands(of: weapon.equipType)
             if resolved == nil {
                 unresolved += 1
             }
-            items[weapon.formID.rawValue] = EquippableItem(
+            items[id] = EquippableItem(
                 occupancy: EquipmentOccupancy(hands: resolved ?? defaultWeaponHands),
                 modelPath: weapon.fields.modelPath
             )

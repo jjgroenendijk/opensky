@@ -48,11 +48,11 @@ nonisolated public struct PlacedReference: Sendable {
         public let ref: FormID
     }
 
-    public internal(set) var formID: FormID
+    public let formID: FormID
     /// Record-header flag 0x800: hidden until a script or quest enables it.
     public let isInitiallyDisabled: Bool
     /// NAME — the base object this reference places.
-    public internal(set) var base: FormID
+    public let base: FormID
     /// DATA placement as decoded. `var` because a cell build lays a runtime
     /// transform over it first (`CellSceneBuilder.applyRuntimeState`).
     public var placement: Placement
@@ -60,11 +60,11 @@ nonisolated public struct PlacedReference: Sendable {
     /// for the same runtime-override reason as `placement`.
     public var scale: Float
     /// XTEL — present only on teleporting door references.
-    public internal(set) var teleportDestination: TeleportDestination?
+    public let teleportDestination: TeleportDestination?
     /// XRDS — per-reference point-light radius override.
     public let lightRadius: Float?
     /// XEMI — LIGH/REGN emittance override; LIGH handled by lighting pass.
-    public internal(set) var emittance: FormID?
+    public let emittance: FormID?
     /// XPRM — the primitive volume this reference encloses, nil when absent.
     /// Layout and decode policy live in `PlacedReferencePrimitive.swift`.
     public let primitive: Primitive?
@@ -72,10 +72,10 @@ nonisolated public struct PlacedReference: Sendable {
     /// so this is an array rather than an optional; it is empty when the
     /// reference links to nothing. Read it through
     /// `linkedReference(keyword:)` rather than by index.
-    public internal(set) var linkedReferences: [LinkedReference]
+    public let linkedReferences: [LinkedReference]
     /// XOWN — the NPC_ or FACT that owns this reference; nil when unowned.
     /// Taking an owned item is theft, and an owned container is a crime scene.
-    public internal(set) var owner: FormID?
+    public let owner: FormID?
     /// XRNK — faction rank required to use the reference freely. Meaningful
     /// only when `owner` is a FACT; nil when the field is absent.
     public let ownerFactionRank: Int32?
@@ -83,14 +83,14 @@ nonisolated public struct PlacedReference: Sendable {
     /// absent, which means one.
     public let itemCount: Int32?
     /// VMAD — Papyrus scripts attached directly to this placed reference.
-    public internal(set) var scriptData: ScriptData
+    public let scriptData: ScriptData
     /// XLOC. Nil when the reference is not locked.
-    public internal(set) var lock: LockData?
+    public let lock: LockData?
     /// XESP.
-    public internal(set) var enableParent: EnableParent?
+    public let enableParent: EnableParent?
     /// The XMRK group. Nil when the reference is not a map marker.
     public let mapMarker: MapMarker?
-    public internal(set) var details: PlacedReferenceDetails
+    public let details: PlacedReferenceDetails
     /// Fields this decode does not read, and malformed shared subrecords.
     public let skipped: FieldTally
 

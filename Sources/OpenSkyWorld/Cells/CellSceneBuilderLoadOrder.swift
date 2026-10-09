@@ -69,7 +69,7 @@ nonisolated extension CellSceneBuilder {
     /// A later record replaces the one with the same FormID in place, a new one
     /// joins the end, and a deleted one removes it. An override that does not
     /// decode keeps the earlier version.
-    nonisolated private func mergingLater<Item>(
+    nonisolated func mergingLater<Item>(
         _ items: [Item],
         later: [CellChildRecord],
         formID: (Item) -> FormID,
@@ -100,14 +100,15 @@ nonisolated extension CellSceneBuilder {
         return order.compactMap { byID.removeValue(forKey: $0) }
     }
 
-    nonisolated private func laterChildren(of cell: FormID, type: FourCC) -> [CellChildRecord] {
+    nonisolated func laterChildren(of cell: FormID, type: FourCC) -> [CellChildRecord] {
         loadOrderIndexBuildingIfNeeded().laterChildren(ofCell: cell)
             .filter { $0.record.record.type == type }
     }
 
     /// Every plugin's `type` records by load-order FormID; a later plugin wins.
     /// A deleted record or one that does not decode keeps the earlier version.
-    nonisolated func loadOrderRecords<Value: FormIDRenumbering>(
+    /// `decode` gets the record and its plugin's localized flag.
+    nonisolated func loadOrderRecords<Value>(
         of type: FourCC,
         decode: (ESMRecord, Bool) throws -> Value
     ) -> [UInt32: Value] {
@@ -115,16 +116,15 @@ nonisolated extension CellSceneBuilder {
         for plugin in loadOrderIndexBuildingIfNeeded().plugins {
             guard let top = plugin.file.topGroup(of: type), let children = childrenOrSkip(top)
             else { continue }
-            let localized = plugin.file.isLocalized
             for case let .record(record) in children
                 where record.type == type && !record.isDeleted
             {
                 guard
-                    let value = decodeOrSkip(record, using: {
-                        try plugin.translation.renumber(decode($0, localized))
+                    let value = decodeOrSkip(record, using: { record in
+                        try plugin.decode { try decode(record, plugin.localized) }
                     })
                 else { continue }
-                index[plugin.translation(FormID(record.formID)).rawValue] = value
+                index[plugin.formID(of: record).rawValue] = value
             }
         }
         return index

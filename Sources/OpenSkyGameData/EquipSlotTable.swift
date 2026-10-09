@@ -111,18 +111,13 @@ nonisolated public struct EquipSlotTable: Equatable, Sendable {
     }
 
     public init(file: ESMFile) {
-        var slots: [UInt32: EquipSlot] = [:]
+        self.init(loadOrder: LoadOrderPlugins(file: file))
+    }
+
+    public init(loadOrder: LoadOrderPlugins) {
         var skipped = SkippedRecords()
-        guard let group = file.topGroup(of: "EQUP") else {
-            self.init(slots: slots)
-            return
-        }
-        for child in skipped.children(of: group) {
-            guard case let .record(record) = child, record.type == "EQUP", !record.isDeleted
-            else { continue }
-            if let slot = skipped.decode(record, using: { try EquipSlot(record: $0) }) {
-                slots[slot.formID.rawValue] = slot
-            }
+        let slots = loadOrder.indexRecords(of: "EQUP", skipped: &skipped) {
+            try EquipSlot(record: $0)
         }
         self.init(slots: slots, skippedRecords: skipped)
     }
