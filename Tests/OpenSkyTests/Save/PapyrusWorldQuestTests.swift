@@ -53,6 +53,21 @@ struct PapyrusWorldQuestTests {
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
     }
 
+    /// A script that casts a stopped quest to its script type reaches the quest's
+    /// script, as in the game, where quest scripts exist whether the quest runs or not.
+    @Test func castingAStoppedQuestAttachesItsScripts() throws {
+        let quest = try PapyrusQuestFixture.quest(startGameEnabled: false)
+        let session = PapyrusQuestFixture.session(quest: quest)
+        let world = session.world
+        let handle = world.objectHandle(for: PapyrusQuestFixture.questKey)
+
+        let sibling = world.runtime.siblingInstance?(handle, PapyrusQuestFixture.questScript)
+        #expect(sibling == world.instancesByKey[
+            PapyrusQuestFixture.instanceKey(PapyrusQuestFixture.questScript)
+        ])
+        #expect(sibling != nil)
+    }
+
     /// Setting a stage runs that stage's fragment exactly once, and a repeat of
     /// the same stage runs nothing: the stage is already in the reached set.
     @Test func settingAStageRunsItsFragmentOnce() throws {

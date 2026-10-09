@@ -155,7 +155,12 @@ public final class Renderer: NSObject {
         didSet { mergeInstanceDeltas() }
     }
 
-    /// Both maps in one, an NPC winning a shared key, so a drawn instance costs one lookup.
+    /// Carts and their riders, which follow a carrier instead of walking.
+    public var vehicleInstanceDeltas: [UInt32: float4x4] = [:] {
+        didSet { mergeInstanceDeltas() }
+    }
+
+    /// All maps in one, so a drawn instance costs one lookup.
     var instanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public var currentResolvedWeather: ResolvedWeather?
@@ -195,6 +200,13 @@ public final class Renderer: NSObject {
     /// Menu-mode pause gate. True freezes the per-frame time advance while the frame and
     /// UI still draw. Clocks keep their marks fresh while paused, so resume has no jump.
     public var worldSimPaused = false
+    /// The waypoints a package walks the player along, empty without a walk
+    /// (`PlayerPackageWalk`).
+    public var playerWalkPath: [SIMD3<Float>] = []
+    /// A straight package walk ignores static collision, as an NPC's straight leg does.
+    public var playerWalkIgnoresStatics = false
+    /// Called once when the player reaches the last waypoint of `playerWalkPath`.
+    public var onPlayerWalkArrived: (() -> Void)?
     /// The simulation side of each frame (`RenderFrameDriver.swift`). The
     /// renderer holds it strongly; the driver holds the renderer unowned.
     public var frameDriver: (any RenderFrameDriver)?

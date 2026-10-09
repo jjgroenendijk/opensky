@@ -10,6 +10,11 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
     case actors(radius: Float)
     case menu
     case quest(String)
+    case scenes
+    /// With a reference, also its script instances and their variables.
+    case scripts(reference: String?)
+    /// The actor's package, its procedure progress, and its newest move result.
+    case packages(reference: String)
     case actorValue(reference: String, name: String)
     case global(String)
     case time
@@ -29,7 +34,23 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
         case "global": return try .global(args.string("id"))
         case "time": return .time
         case "frame": return .frame
-        default: throw AgentFailure(.unknownCommand, "unknown state query: \(name)")
+        default:
+            guard let query = try inspection(name, args) else {
+                throw AgentFailure(.unknownCommand, "unknown state query: \(name)")
+            }
+            return query
+        }
+    }
+
+    /// The reads that look inside the scripts, scenes, and packages.
+    private static func inspection(
+        _ name: String, _ args: AgentArguments
+    ) throws(AgentFailure) -> Self? {
+        switch name {
+        case "scenes": .scenes
+        case "scripts": try .scripts(reference: args.optionalString("ref"))
+        case "packages": try .packages(reference: args.string("ref"))
+        default: nil
         }
     }
 }

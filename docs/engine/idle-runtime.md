@@ -94,6 +94,18 @@ On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through t
 The loop count comes from the idle's `DATA`: a random count between the loop minimum and
 maximum. A zero maximum plays the clip once.
 
+A clip's annotations become animation events. Each annotation is a time and a name, such as
+`CartExit`, and it fires once per loop at that time. An annotation past the end of the last loop
+does not fire. A script that called `RegisterForAnimationEvent` on the actor gets
+`OnAnimationEvent` with the name.
+
+The state the idle's event leads to can also send events: its enter notify events fire when the
+idle starts, and its exit notify events when it ends. The cart exit states send `ExitCartEnd`
+this way; no clip annotation carries it.
+
+The player can play an idle too, such as the cart exit in `MQ101`. The player's body has no
+idle pose, so OpenSky loads the clip only to time its events, against the character skeleton.
+
 ## Prop
 
 A prop is a held object, such as a broom or a tankard. It is an `ANIO` record.

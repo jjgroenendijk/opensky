@@ -78,6 +78,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var harvestDays: [SaveHarvestDayEntry] = []
         /// Absent `LOCK`: every lock is as its plugin placed it.
         public var locks: [SaveLockEntry] = []
+        /// Absent `RLOC`: every reference is in its plugin cell.
+        public var relocations: [SaveRelocationEntry] = []
         /// Absent `SCNS`: no scene is playing.
         public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SMQS`: the story manager started no quest.

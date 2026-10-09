@@ -1,10 +1,14 @@
 // The Game menu natives reach the menu bridge, and fail without one.
 
+import FeaturesTesting
+import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
+import OpenSkyWorldInterface
 import OpenSkyWorldState
 import Testing
 
@@ -96,6 +100,25 @@ struct PapyrusNativeMenusTests {
         #expect(actor("GetRace") == .returned(.none))
     }
 
+    /// A placed actor is an `ACHR`, not a `REFR`, and still names its NPC base.
+    @Test func actorBaseAnswersForAPlacedActor() throws {
+        let entry = try PapyrusWorldFixture.actorEntry(
+            objectID: 0x900, base: 0x50, scripts: [.init("Horse", properties: [])]
+        )
+        let session = PapyrusWorldFixture.session(
+            objects: [PapyrusWorldFixture.eventScript("Horse", events: [])], entries: [entry]
+        )
+        let menus = FakeMenuBridge()
+        session.bridge.menus = menus
+        let registry = PapyrusWorldFixture.registry(for: session)
+        let result = registry.invoke(PapyrusWorldFixture.methodCall(
+            "Actor", "GetActorBase", receiver: session.world.objectHandle(for: entry.key),
+            returnType: .object("ActorBase")
+        ))
+        let base = ReferenceKey.plugin(name: PapyrusWorldFixture.pluginName, objectID: 0x50)
+        #expect(result == .returned(.object(session.world.objectHandle(for: base))))
+    }
+
     @Test func moveToPlacesAResidentReferenceAtItsTarget() throws {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let menus = FakeMenuBridge()
@@ -115,5 +138,35 @@ struct PapyrusNativeMenusTests {
         #expect(PapyrusWorldFixture.isInvalidArguments(move(fixture.receiver, .float(.infinity))))
         let absent = fixture.handle(PapyrusNativeReferenceFixture.doorID)
         #expect(PapyrusWorldFixture.isInvalidArguments(move(absent, .float(0))))
+    }
+
+    @Test func moveToSendsAnUnloadedReferenceIntoTheTargetCell() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let prisoner = PapyrusNativeReferenceFixture.key(PapyrusNativeReferenceFixture.doorID)
+        let record = try PapyrusWorldFixture.referenceEntry(
+            objectID: PapyrusNativeReferenceFixture.doorID, scripts: [], placement: SIMD3(9, 9, 9)
+        )
+        fixture.session.references.pluginPlacements[prisoner] = PluginPlacement(
+            entry: record, home: .interior(FormID(0x999))
+        )
+        let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "ObjectReference", "MoveTo",
+            receiver: fixture.handle(PapyrusNativeReferenceFixture.doorID),
+            arguments: [.object(fixture.receiver), .float(0), .float(0), .float(0)]
+        ))
+        #expect(result == .returned(.none))
+        let store = fixture.session.worldState
+        #expect(store.component(ReferenceTransformOverride.self, for: prisoner)?.position == SIMD3(
+            1,
+            2,
+            3
+        ))
+        #expect(
+            store.component(ReferenceRelocation.self, for: prisoner)
+                == ReferenceRelocation(location: PapyrusWorldFixture.cell)
+        )
+        #expect(menus.calls.isEmpty)
     }
 }

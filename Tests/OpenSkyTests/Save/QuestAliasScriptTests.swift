@@ -4,6 +4,7 @@
 import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsPEX
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 @testable import OpenSkyScripting
@@ -54,6 +55,40 @@ struct QuestAliasScriptTests {
 
         PapyrusWorldFixture.drain(session.world)
         #expect(session.dispatch.notes.contains("alias.oninit"))
+    }
+
+    /// `GetOwningQuest` on an alias script answers with the quest that holds the alias.
+    @Test func anAliasScriptKnowsItsOwningQuest() throws {
+        let session = try session()
+        let aliasKey = PapyrusQuestFixture.aliasInstanceKey(PapyrusQuestFixture.aliasScript)
+        let handle = try #require(session.world.instancesByKey[aliasKey])
+        #expect(session.world.owningQuest(of: handle) == PapyrusQuestFixture.questKey)
+    }
+
+    /// The alias script attaches after its cell loaded, so it gets the
+    /// `OnCellLoad` it missed. MQ101's cart horses wait for it.
+    @Test func aStartGameAliasScriptHearsOnCellLoadFromAnAlreadyLoadedCell() throws {
+        let quest = try PapyrusQuestFixture.quest(
+            aliases: PapyrusQuestFixture.forcedAlias(),
+            aliasScripts: [PapyrusQuestFixture.aliasScriptSection()]
+        )
+        let aliasObject = PexFixture.runtimeObject(
+            name: PapyrusQuestFixture.aliasScript,
+            states: [PapyrusTestSupport.state(functions: [
+                ("OnCellLoad", PapyrusWorldFixture.probeBody(note: "alias.oncellload"))
+            ])]
+        )
+        let session = try PapyrusQuestFixture.session(
+            quest: quest,
+            objects: PapyrusQuestFixture.objects([aliasObject]),
+            entries: [PapyrusWorldFixture.referenceEntry(
+                objectID: PapyrusQuestFixture.aliasReferenceObjectID,
+                scripts: [],
+                isPersistent: true
+            )]
+        )
+        PapyrusWorldFixture.drain(session.world)
+        #expect(session.dispatch.notes.filter { $0 == "alias.oncellload" }.count == 1)
     }
 
     /// A quest with no filled alias instantiates no alias script at all, which

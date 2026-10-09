@@ -246,7 +246,8 @@ final class RecordingDialogueDispatcher: DialogueFragmentDispatching {
     func runTopicInfoFragments(
         of info: TopicInfo,
         key: ReferenceKey,
-        phase: TopicInfoFragmentPhase
+        phase: TopicInfoFragmentPhase,
+        context _: TopicInfoFragmentContext
     ) -> [String] {
         phases.append(phase)
         if let onDispatch {

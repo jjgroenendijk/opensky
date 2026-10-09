@@ -50,6 +50,17 @@ nonisolated public struct NavigationPath: Equatable, Sendable {
     public let target: SIMD3<Float>
 }
 
+nonisolated extension NavigationPath {
+    /// One leg to `point` with no corridor, so no cell rebuild invalidates it.
+    public static func straight(to point: SIMD3<Float>) -> NavigationPath {
+        NavigationPath(
+            waypoints: [point], doorCrossings: [],
+            stats: NavigationPathStats(nodesExpanded: 0, corridorTriangleCount: 0),
+            corridor: [], cellSequences: [:], target: point
+        )
+    }
+}
+
 nonisolated public enum NavigationPathMiss: Equatable, Sendable {
     case startProjection
     case targetProjection

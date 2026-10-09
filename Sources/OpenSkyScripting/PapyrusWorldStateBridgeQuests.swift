@@ -8,6 +8,8 @@ import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
+import OpenSkyWorldInterface
+import OpenSkyWorldState
 
 @MainActor
 extension PapyrusWorldStateBridge {
@@ -156,12 +158,56 @@ extension PapyrusWorldStateBridge {
         return entries.indices.contains(index) && entries[index].flags.contains(.completeQuest)
     }
 
+    /// In the game a quest's scripts exist whether it runs or not, and a persistent
+    /// reference keeps its scripts while unloaded. OpenSky attaches them on first use.
+    func attachOnUse(_ key: ReferenceKey) -> Bool {
+        if attachIdleQuest(key) {
+            return true
+        }
+        guard
+            let world, cellLocation(of: key) == nil,
+            let placement = references?.pluginPlacement(of: key)
+        else { return false }
+        let resolver = formIDResolver ?? FormIDResolver(pluginName: "", masters: [])
+        return world.attachUnloaded(placement.entry, formIDResolver: resolver) > 0
+    }
+
+    /// The scripts `attachOnUse` would attach for `key`, so an attach can load them first.
+    func scriptsOfTarget(_ key: ReferenceKey) -> [String] {
+        if let quest = questRuntime?.quests.quest(key: key) {
+            return world?.attachedScripts(of: quest).map(\.name) ?? []
+        }
+        guard
+            cellLocation(of: key) == nil,
+            let entry = references?.pluginPlacement(of: key)?.entry
+        else {
+            return []
+        }
+        let scripts = entry.placedReference?.scriptData.scripts ?? entry.placedActor?.scriptData
+            .scripts ?? []
+        return scripts.filter { !$0.isRemoved }.map(\.name)
+    }
+
+    private func attachIdleQuest(_ key: ReferenceKey) -> Bool {
+        guard
+            world?.hasDeferredWork(forQuest: key) == false,
+            let quest = try? resolveQuest(key).quest, !quest.script.scripts.isEmpty
+        else {
+            return false
+        }
+        return attachQuestScripts(quest, key: key, waitsForTargets: false) > 0
+    }
+
     /// A quest's scripts, bound with the master list of the plugin whose record won.
     /// A synthetic session with no resolver binds against an empty master list,
     /// which resolves only same-plugin FormIDs — the same fallback the
     /// reference path takes.
     @discardableResult
-    private func attachQuestScripts(_ quest: Quest, key: ReferenceKey) -> Int {
+    private func attachQuestScripts(
+        _ quest: Quest,
+        key: ReferenceKey,
+        waitsForTargets: Bool = true
+    ) -> Int {
         guard let world else { return 0 }
         let aliases = questRuntime.flatMap { try? $0.aliasState(of: quest.formID) } ?? .empty
         // The binding seam is refreshed before the attach rather than after,
@@ -176,6 +222,9 @@ extension PapyrusWorldStateBridge {
         let resolver = questRuntime?.quests.sourceResolver(of: quest.formID)
             ?? formIDResolver
             ?? FormIDResolver(pluginName: "", masters: [])
-        return world.attachQuest(quest, key: key, formIDResolver: resolver, aliases: aliases)
+        return world.attachQuest(
+            quest, key: key, formIDResolver: resolver, aliases: aliases,
+            waitsForTargets: waitsForTargets
+        )
     }
 }

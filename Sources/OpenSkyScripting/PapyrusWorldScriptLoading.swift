@@ -20,10 +20,31 @@ public struct PapyrusDeferredScriptWork {
 }
 
 extension PapyrusWorldRuntime {
-    /// Requests every named script. True when any of them still loads.
+    /// Types whose property handlers a script runs on a form without a script instance,
+    /// such as `ObjectReference.Motion_Keyframed`. Nothing else may load them.
+    static let referenceTypeScripts = ["ObjectReference", "Actor", "GlobalVariable"]
+
+    /// The scripts of the quests and references that `scripts`' object properties name.
+    /// An attach waits for them too, so a first use can attach them at once (`attachOnUse`).
+    func targetScripts(of scripts: [AttachedScript], resolver: FormIDResolver) -> [String] {
+        guard let scriptsOfTarget else { return [] }
+        let objects = scripts.flatMap(\.properties).flatMap { property -> [ScriptObjectReference] in
+            switch property.value {
+            case let .object(object): [object]
+            case let .objects(objects): objects
+            default: []
+            }
+        }
+        let keys = Set(objects.compactMap { $0.directReferenceKey(using: resolver) })
+        return keys.sorted().flatMap(scriptsOfTarget)
+    }
+
+    /// Requests every named script, and the reference types. True when any still loads.
     func scriptsLoading(_ names: [String]) -> Bool {
         var loading = false
-        for name in names where scriptAvailability(named: name) == .loading {
+        for name in names + Self.referenceTypeScripts
+            where scriptAvailability(named: name) == .loading
+        {
             loading = true
         }
         return loading

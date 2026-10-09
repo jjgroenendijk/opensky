@@ -93,6 +93,47 @@ struct NPCMovementRuntimeTests {
         #expect(persistence.map(\.reason) == [.save, .giveUp])
     }
 
+    /// A patrol marker floats above the ground, and a marker walk passes a wall.
+    @Test
+    func aMarkerWalkReachesAFloatingMarkerThroughAWall() throws {
+        let marker = SIMD3<Float>(100, 0, 40)
+        var start = Self.start(actor: actor, path: .straight(to: marker))
+        start.ignoresStatics = true
+        var runtime = NPCMovementRuntime()
+        let started = runtime.start(start)
+        #expect(started)
+
+        let walled = Self.world(collisionQuery: { _ in [Self.wall] })
+        for _ in 0 ..< 100 where runtime.activeMoverCount > 0 {
+            runtime.advance(by: 0.1, world: walled)
+        }
+
+        let readout = try #require(runtime.readouts().first)
+        #expect(readout.state == .arrived)
+        #expect(readout.feetPosition.x > 80)
+    }
+
+    @Test
+    func aWalkWithoutLoadedGroundKeepsItsHeight() throws {
+        let marker = SIMD3<Float>(100, 0, 300)
+        var runtime = NPCMovementRuntime()
+        let started = runtime.start(Self.start(actor: actor, path: .straight(to: marker)))
+        #expect(started)
+        let base = Self.world()
+        var unloaded = NPCMovementWorld(
+            sampleGround: { _ in nil }, collisionQuery: base.collisionQuery,
+            repath: base.repath, cellAt: base.cellAt, triggersAt: base.triggersAt
+        )
+        unloaded.hasGround = { _ in false }
+        for _ in 0 ..< 100 where runtime.activeMoverCount > 0 {
+            runtime.advance(by: 0.1, world: unloaded)
+        }
+
+        let readout = try #require(runtime.readouts().first)
+        #expect(readout.state == .arrived)
+        #expect(readout.feetPosition.z > marker.z - 50, "the walk did not fall")
+    }
+
     @Test
     func simultaneousMoverCapRejectsOnlyTheNinthActor() {
         var runtime = NPCMovementRuntime()

@@ -5,6 +5,7 @@
 // See docs/engine/dialogue.md and docs/engine/papyrus-quests.md.
 
 import Foundation
+import OpenSkyDialogueInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
@@ -19,6 +20,7 @@ extension PapyrusWorldRuntime {
         of info: TopicInfo,
         key: ReferenceKey,
         phase: TopicInfoFragmentPhase,
+        context: TopicInfoFragmentContext = .none,
         formIDResolver: FormIDResolver
     ) -> [String] {
         guard
@@ -31,7 +33,8 @@ extension PapyrusWorldRuntime {
         if instancesByKey[target] == nil, scriptsLoading([fragment.scriptName]) {
             deferUntilScriptsLoad { [weak self] in
                 self?.queueTopicInfoFragment(
-                    of: info, key: key, phase: phase, formIDResolver: formIDResolver
+                    of: info, key: key, phase: phase, context: context,
+                    formIDResolver: formIDResolver
                 )
             }
             return []
@@ -44,10 +47,13 @@ extension PapyrusWorldRuntime {
             return []
         }
         dialogueInstanceKeys.insert(target)
+        if let quest = context.quest {
+            fragmentQuests[key] = quest
+        }
         enqueue(PapyrusScriptEvent(
             target: target,
             functionName: fragment.functionName,
-            arguments: []
+            arguments: context.speaker.map { [PapyrusValue.object(objectHandle(for: $0))] } ?? []
         ))
         dialogueFragmentsQueued += 1
         return [fragment.functionName]
@@ -81,6 +87,9 @@ extension PapyrusWorldRuntime {
         else {
             return false
         }
+        if let quest = scene.quest.flatMap({ ReferenceKey.resolve($0, using: formIDResolver) }) {
+            fragmentQuests[key] = quest
+        }
         enqueue(PapyrusScriptEvent(target: target, functionName: functionName, arguments: []))
         sceneFragmentsQueued += 1
         return true
@@ -97,7 +106,7 @@ extension PapyrusWorldRuntime {
     /// Idempotent, so script variables persist. The record's VMAD entry is
     /// preferred, because it carries the filled properties; the bare name is the
     /// fallback.
-    private func attachRecordScript(
+    func attachRecordScript(
         _ target: PapyrusInstanceKey,
         declared scripts: [AttachedScript],
         formIDResolver: FormIDResolver

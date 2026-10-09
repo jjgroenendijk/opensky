@@ -112,4 +112,7 @@ public protocol PapyrusWorldBridge:
         handle: PapyrusObjectHandle,
         family: PapyrusUpdateTimerFamily
     )
+
+    /// The base form of a placed reference or a placed actor.
+    func baseObject(of key: ReferenceKey) -> FormID?
 }

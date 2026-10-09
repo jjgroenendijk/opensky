@@ -14,10 +14,15 @@ public struct CellStreamerNPCMovementState {
     public var onDrive: ((NPCLocomotionDriveUpdate) -> Void)?
     public var onPosesChanged: (([UInt32: float4x4]) -> Void)?
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
+    /// An actor walked into another cell. Called after its rest write.
+    public var onCellHandoff: ((NPCMovementPersistence) -> Void)?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
     public var recordingRest: NPCMovementPersistence?
+    /// Rest writes held while the runtime mutates. A listener that starts the next
+    /// move would else write into a runtime copy that the mutation then overwrites.
+    public var heldRests: [NPCMovementPersistence]?
 }
 
 /// One NPC pose written to the store and drawn through a delta until the cell
@@ -59,13 +64,22 @@ extension CellStreamer {
         set { npcMovementState.onDoorCrossing = newValue }
     }
 
+    public var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? {
+        get { npcMovementState.onCellHandoff }
+        set { npcMovementState.onCellHandoff = newValue }
+    }
+
+    /// A `direct` move walks the straight line to `point` on the terrain, without a
+    /// navmesh path or static collision.
     @discardableResult
-    public func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult {
+    public func moveActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false
+    ) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
         }
         let standing = npcMovement.standingTransform(of: entry, in: stateSource())
-        let result = findPath(NavigationPathQuery(
+        let result = direct ? .path(.straight(to: point)) : findPath(NavigationPathQuery(
             start: standing.position,
             target: point,
             capsuleRadius: PlayerCapsule.standard.radius
@@ -81,7 +95,8 @@ extension CellStreamer {
             scale: standing.scale,
             capsule: .standard,
             configuration: npcMovementConfiguration,
-            path: path
+            path: path,
+            ignoresStatics: direct
         ))
         return started ? .started : .moverCapReached
     }
@@ -91,7 +106,7 @@ extension CellStreamer {
     @discardableResult
     public func stopActor(_ actor: ReferenceKey) -> Bool {
         bindNPCMovementCallbacks()
-        return npcMovement.stop(actor)
+        return holdingRests { npcMovement.stop(actor) }
     }
 
     /// Turns a resident actor towards a world point.
@@ -145,11 +160,28 @@ extension CellStreamer {
 
     /// Writes all active actors once immediately before a save snapshot.
     public func persistNPCMovementForSave() {
-        npcMovement.persistForSave()
+        holdingRests { npcMovement.persistForSave() }
     }
 
     public func advanceNPCMovement(frameTime: Float) {
         bindNPCMovementCallbacks()
+        holdingRests { advanceMovers(frameTime: frameTime) }
+        bakeBuiltRests()
+        onNPCPosesChanged?(npcMovement.instanceDeltas())
+    }
+
+    /// Runs `body`, then delivers the rest writes it emitted, once the runtime holds
+    /// its result.
+    private func holdingRests<T>(_ body: () -> T) -> T {
+        npcMovementState.heldRests = []
+        let result = body()
+        let rests = npcMovementState.heldRests ?? []
+        npcMovementState.heldRests = nil
+        rests.forEach(deliverRest)
+        return result
+    }
+
+    private func advanceMovers(frameTime: Float) {
         npcMovement.advance(by: frameTime, world: NPCMovementWorld(
             sampleGround: { [weak self] position in self?.sampleTerrain(at: position) },
             collisionQuery: { [weak self] bounds in
@@ -163,10 +195,11 @@ extension CellStreamer {
             },
             triggersAt: { [weak self] state in
                 Set(self?.triggerVolumes(intersecting: state).map(\.reference) ?? [])
+            },
+            hasGround: { [weak self] position in
+                self?.interiorScene != nil || self?.sampleTerrain(at: position) != nil
             }
         ))
-        bakeBuiltRests()
-        onNPCPosesChanged?(npcMovement.instanceDeltas())
     }
 
     /// Called from `noteStateMutation` while a rest write is in progress. The actor
@@ -212,14 +245,26 @@ extension CellStreamer {
         return navigationState.graph.cell(at: position)
     }
 
+    private func deliverRest(_ persistence: NPCMovementPersistence) {
+        npcMovementState.recordingRest = persistence
+        onNPCMovementPersist?(persistence)
+        npcMovementState.recordingRest = nil
+        if persistence.reason == .cellHandoff {
+            onNPCCellHandoff?(persistence)
+        }
+    }
+
     public func bindNPCMovementCallbacks() {
         npcMovement.onDrive = { [weak self] update in
             self?.onNPCLocomotionDrive?(update)
         }
         npcMovement.onPersist = { [weak self] persistence in
-            self?.npcMovementState.recordingRest = persistence
-            self?.onNPCMovementPersist?(persistence)
-            self?.npcMovementState.recordingRest = nil
+            guard let self else { return }
+            if npcMovementState.heldRests != nil {
+                npcMovementState.heldRests?.append(persistence)
+            } else {
+                deliverRest(persistence)
+            }
         }
         npcMovement.onTriggerTransition = { [weak self] event in
             self?.onTriggerTransition(event)

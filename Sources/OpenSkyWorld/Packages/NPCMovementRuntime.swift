@@ -14,6 +14,8 @@ public struct NPCMovementWorld {
     public let repath: (NavigationPathQuery) -> NavigationPathResult
     public let cellAt: (SIMD3<Float>) -> CellSceneLocation?
     public let triggersAt: (PlayerCapsuleState) -> Set<ReferenceKey>
+    /// False over an exterior cell whose terrain is not loaded, where a walk would fall.
+    public var hasGround: (SIMD2<Float>) -> Bool = { _ in true }
 }
 
 public struct NPCMoveStart {
@@ -24,6 +26,9 @@ public struct NPCMoveStart {
     public let capsule: PlayerCapsule
     public let configuration: PlayerMovementConfiguration
     public let path: NavigationPath
+    /// A marker walk follows the terrain through rocks and logs, as a static-pathing
+    /// patrol keeps to its authored line.
+    public var ignoresStatics = false
 }
 
 public struct NPCMovementRuntime {

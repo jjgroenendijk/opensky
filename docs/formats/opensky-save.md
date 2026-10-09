@@ -118,6 +118,7 @@ chunk cannot read into the next.
 | `HRVS` | harvested flora and trees | world |
 | `HRVD` | game day of each timed harvest | world |
 | `LOCK` | changed locks | world |
+| `RLOC` | references moved into another cell | world |
 | `SUMM` | save list row: name, level, race, location, play time | below |
 | `THMB` | save list picture | below |
 | `PIDN` | the player's race, sex, name, and face | world |
@@ -132,6 +133,11 @@ that `HRVS` does not name. An older build skips `HRVD`, so its plants stay harve
 `LOCK` is a uint32 entry count, then per changed lock: the key, the cell, a locked byte (0 or
 1), the `XLOC` level byte, and the key `KEYM` as a uint32 FormID (0 for none). A lock that
 still matches its `XLOC` writes no entry. See [locks](/engine/locks.md).
+
+`RLOC` is a uint32 entry count, then per moved reference: the key, the cell, and the cell
+that draws it now, in the same cell encoding. The target cell is never absent. A reference
+moved back to its plugin cell writes no entry. See
+[reference identity](/engine/reference-identity.md).
 
 `SUMM` holds the character name (string), the level (uint16), the race name and the
 location name (strings), and the real play time in seconds (float64, finite, not negative).

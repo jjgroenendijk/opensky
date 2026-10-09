@@ -29,6 +29,8 @@ nonisolated public struct ESMRecord: Sendable {
         public static let localized = Flags(rawValue: 1 << 7)
         /// TES4: ESL (light) file, loaded into the 0xFE FormID space.
         public static let esl = Flags(rawValue: 1 << 9)
+        /// REFR/ACHR: the reference stays in memory when its cell unloads (UESP 0x400).
+        public static let persistent = Flags(rawValue: 1 << 10)
         /// REFR/ACHR: placed reference starts disabled until a script or
         /// quest enables it (UESP record-header flag 0x800).
         public static let initiallyDisabled = Flags(rawValue: 1 << 11)

@@ -98,10 +98,12 @@ extension SceneRuntime {
         private mutating func completePhaseIfDone() -> Bool {
             let index = state.phase
             let phase = scene.phases[Int(index)]
-            let actionsDone = scene.actions.indices
-                .filter { Self.endPhase(scene.actions[$0]) == index }
-                .allSatisfy { !state.isRunning(UInt32($0)) }
-            let byConditions = !phase.completionConditions.isEmpty
+            let ending = scene.actions.indices.filter { Self.endPhase(scene.actions[$0]) == index }
+            let hasConditions = !phase.completionConditions.isEmpty
+            // A phase with end conditions and no actions waits for the conditions.
+            let actionsDone = !(ending.isEmpty && hasConditions)
+                && ending.allSatisfy { !state.isRunning(UInt32($0)) }
+            let byConditions = hasConditions
                 && evaluator.evaluate(phase.completionConditions).isTrue
             guard actionsDone || byConditions else { return false }
             for progress in state.running

@@ -67,11 +67,18 @@ extension IdleWorldAdapter: IdleWorld {
             },
             uniquingKeysWith: { first, _ in first }
         )
-        return game.actorWorld.combatActors().map {
+        let actors = game.actorWorld.combatActors().map {
             IdleActorPresence(
                 key: $0.key, feet: $0.feet, procedure: packages[$0.key], isDead: $0.isDead
             )
         }
+        // The player has no package, so it takes no marker; a script idle still plays.
+        let player = game.renderer.map {
+            IdleActorPresence(
+                key: .player, feet: $0.walkController.feetPosition, procedure: nil, isDead: false
+            )
+        }
+        return actors + (player.map { [$0] } ?? [])
     }
 
     func idleConditionContext() -> ConditionContext {

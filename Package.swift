@@ -608,7 +608,7 @@ targets += feature(
         "FormatsTesting", "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics",
         "FeaturesTesting", "OpenSkyScriptingFixtures", "OpenSkyScriptingInterface",
-        "OpenSkyWorldState"
+        "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

@@ -50,7 +50,7 @@ nonisolated extension CellProviderIndexes {
             progress: progress
         )
         async let records = RecordStores.load(context)
-        let (runner, formIDResolver) = try progress.measure(.assetLibraries) {
+        let built = try progress.measure(.assetLibraries) {
             try makeRunner(
                 file: file,
                 assets: RunnerAssets(
@@ -67,14 +67,15 @@ nonisolated extension CellProviderIndexes {
         let crafting = try progress.measure(.crafting) {
             CraftingCatalog(
                 recipes: RecipeStore(plugins: plugins),
-                itemPlugin: formIDResolver,
+                itemPlugin: built.formIDResolver,
                 file: file
             )
         }
         return try await CellProviderIndexes(
-            runner: runner,
+            runner: built.runner,
+            placedRecords: built.placedRecords,
             scriptFileSystem: fileSystem,
-            scriptFormIDResolver: formIDResolver,
+            scriptFormIDResolver: built.formIDResolver,
             magicItemPluginName: context.pluginName,
             tuning: tuning,
             magic: magic,
@@ -83,6 +84,13 @@ nonisolated extension CellProviderIndexes {
             craftingCatalog: crafting,
             records: records
         ).makeSession()
+    }
+
+    /// The runner and the builder values the main actor keeps.
+    private struct BuiltRunner {
+        let runner: SerialCellBuildRunner
+        let formIDResolver: FormIDResolver
+        let placedRecords: PlacedRecordLookup
     }
 
     /// Where the asset libraries read from.
@@ -100,7 +108,7 @@ nonisolated extension CellProviderIndexes {
         assets: RunnerAssets,
         localizationLanguage: String,
         terrainLODConfigurationStore: TerrainLODConfigurationStore
-    ) throws -> (SerialCellBuildRunner, FormIDResolver) {
+    ) throws -> BuiltRunner {
         let fileSystem = assets.fileSystem
         let textures = try TextureLibrary(fileSystem: fileSystem, device: assets.device)
         let meshes = MeshLibrary(fileSystem: fileSystem, device: assets.device, textures: textures)
@@ -119,6 +127,7 @@ nonisolated extension CellProviderIndexes {
         )
         builder.collisionModels?.assetCache = assets.cache
         let formIDResolver = builder.formIDResolver
+        let placedRecords = builder.placedRecords
         let lodPrebuild = builder.distantLODBuilder?.prebuild(
             worldspace: FirstRenderCell.worldspaceEditorID
         )
@@ -129,7 +138,9 @@ nonisolated extension CellProviderIndexes {
             ),
             lodPrebuild: lodPrebuild
         )
-        return (runner, formIDResolver)
+        return BuiltRunner(
+            runner: runner, formIDResolver: formIDResolver, placedRecords: placedRecords
+        )
     }
 
     /// Item names resolve through the string tables while the index is built.

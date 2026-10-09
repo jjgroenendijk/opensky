@@ -23,6 +23,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var scriptFileSystem: (any GameFileSource)?
     /// The same master-list resolver every streamed reference key came from.
     public var scriptFormIDResolver: FormIDResolver
+    /// Every placed record by key, for references whose cell is not loaded.
+    public var placedRecords: PlacedRecordLookup?
     /// Weather runtime for this worldspace; nil when the plugin has no WTHR.
     public var weatherSystem: WeatherSystem?
     /// Sound record index (SOUN/SNDR); nil when the plugin has no sound data.

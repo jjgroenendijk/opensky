@@ -27,6 +27,14 @@ public protocol AINavigationWorld: AnyObject {
     func stopActor(_ actor: ReferenceKey) -> Bool
     func isHostile(_ actor: ReferenceKey) -> Bool
     func setHostile(_ hostile: Bool, actor: ReferenceKey)
+    /// What the actor rides, such as a cart, or nil.
+    func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey?
+}
+
+extension AINavigationWorld {
+    public func vehicleCarrier(of _: ReferenceKey) -> ReferenceKey? {
+        nil
+    }
 }
 
 @MainActor
@@ -54,7 +62,7 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
         guard let world, world.isStreaming else { return .unavailable }
         let actors = actorOptions()
         let selected = AINavigationCore.resolve(chosenActor, in: actors)
-        return AINavigationSnapshot(
+        var snapshot = AINavigationSnapshot(
             isAvailable: true,
             actors: actors,
             selectedActor: selected,
@@ -68,6 +76,9 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             selectedActorIsHostile: selected.map(world.isHostile) ?? false,
             lastActionText: lastActionText
         )
+        snapshot.procedure = selected.flatMap { packages.executions[$0]?.machine }
+        snapshot.carrier = selected.flatMap(world.vehicleCarrier(of:))
+        return snapshot
     }
 
     public var selectedAIActor: ReferenceKey? {

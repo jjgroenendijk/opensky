@@ -22,8 +22,63 @@ public protocol PackageWorld: AnyObject {
     func packagePlace(
         of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
     ) -> PackagePlace?
-    /// False when the move could not start.
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> Bool
+    /// False when the move could not start. A `direct` move walks the straight line on
+    /// the terrain, as a static-pathing patrol does.
+    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool
+    /// The packages each filled quest alias adds to its actor.
+    func packageAliasStacks() -> [ReferenceKey: PackageAliasStack]
+    /// The points a patrol walks, from its start marker along the linked references.
+    func packagePatrolPath(
+        from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> [SIMD3<Float>]?
+    /// A held package started or finished its procedure. Its fragments run here.
+    func packageProcedure(_ event: PackageScriptEvent)
+    /// Seats `rider` on its horse and returns the horse, or nil when it has none loaded.
+    func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey?
+    func dismountPackageActor(_ rider: ReferenceKey)
+    /// True after `SetPlayerAIDriven(true)`: scene and alias packages move the player.
+    var packageDrivesPlayer: Bool { get }
+}
+
+extension PackageWorld {
+    public func packageAliasStacks() -> [ReferenceKey: PackageAliasStack] {
+        [:]
+    }
+
+    public func packagePatrolPath(
+        from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
+    ) -> [SIMD3<Float>]? {
+        nil
+    }
+
+    public func packageProcedure(_: PackageScriptEvent) {}
+
+    public func mountPackageActor(_: ReferenceKey) -> ReferenceKey? {
+        nil
+    }
+
+    public func dismountPackageActor(_: ReferenceKey) {}
+
+    public var packageDrivesPlayer: Bool {
+        false
+    }
+}
+
+/// The begin or end of one actor's package, which runs the package's fragment.
+nonisolated public struct PackageScriptEvent: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
+        case begin
+        case end
+    }
+
+    public let kind: Kind
+    public let actor: ReferenceKey
+    public let package: Package
+
+    /// The PACK fragment flag: 0x01 begin, 0x02 end (docs/formats/vmad.md).
+    public var fragmentSlot: UInt32 {
+        kind == .begin ? 0x01 : 0x02
+    }
 }
 
 /// Which actors to drop from and add to the selector after a residency change.
@@ -63,16 +118,34 @@ public final class PackageCoordinator {
     public private(set) var registeredActors: [ReferenceKey: FormID] = [:]
     /// The procedure of each actor a scene holds.
     public private(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
+    /// Each rider's horse, which walks the rider's package for it.
+    public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
 
     weak var world: (any PackageWorld)?
+    private var store: PackageStore?
+    /// Real seconds until the alias stacks are read again.
+    private var aliasRefreshSeconds: Float = 0
+    private static let aliasRefreshInterval: Float = 1
+    /// A walking actor leaves residency for a few frames while it moves into the next
+    /// cell. A shorter absence keeps its package and procedure.
+    private static let departureGraceSeconds: Float = 1
+    /// The `Player` `NPC_` record in `Skyrim.esm`.
+    static let playerBase = FormID(0x7)
+    private var absentSeconds: [ReferenceKey: Float] = [:]
 
     public init() {}
+
+    public convenience init(world: any PackageWorld) {
+        self.init()
+        attach(world: world)
+    }
 
     public func attach(world: any PackageWorld) {
         self.world = world
     }
 
     public func wire(store: PackageStore) {
+        self.store = store
         runtime = ActorPackageRuntime(store: store)
         registeredActors = [:]
     }
@@ -86,14 +159,21 @@ public final class PackageCoordinator {
             let residents = world.packageResidents(),
             let clock = world.packageClock
         else { return }
-        let change = PackageCore.reconcile(
-            registered: registeredActors,
-            residents: ActorPackageRuntime.residentBases(residents)
-        )
+        var bases = ActorPackageRuntime.residentBases(residents)
+        if world.packageDrivesPlayer {
+            bases[.player] = Self.playerBase
+        }
+        let change = PackageCore.reconcile(registered: registeredActors, residents: bases)
+        absentSeconds = absentSeconds.filter { bases[$0.key] == nil }
         for actor in change.departed {
+            let away = (absentSeconds[actor] ?? 0) + delta
+            absentSeconds[actor] = away
+            guard away >= Self.departureGraceSeconds else { continue }
+            absentSeconds[actor] = nil
             runtime.unregister(actor: actor)
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
+            mounts.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
             guard (try? runtime.register(actor: arrival.actor, base: arrival.base)) != nil else {
@@ -102,6 +182,11 @@ public final class PackageCoordinator {
             registeredActors[arrival.actor] = arrival.base
         }
 
+        aliasRefreshSeconds -= delta
+        if aliasRefreshSeconds <= 0 || !change.arrived.isEmpty {
+            aliasRefreshSeconds = Self.aliasRefreshInterval
+            applyAliasStacks(world.packageAliasStacks(), to: &runtime, clock: clock)
+        }
         var context: ConditionContext?
         runtime.advance(clock: clock) { _ in
             if let context {
@@ -138,19 +223,51 @@ public final class PackageCoordinator {
         self.runtime = runtime
     }
 
-    // MARK: - Scene packages
+    /// Picks `actor`'s package again now, as `EvaluatePackage` asks.
+    public func evaluate(_ actor: ReferenceKey) {
+        guard
+            var runtime, let world, let clock = world.packageClock,
+            registeredActors[actor] != nil
+        else { return }
+        applyAliasStacks(world.packageAliasStacks(), to: &runtime, clock: clock)
+        runtime.forceReevaluate(
+            actor: actor, clock: clock, context: world.packageConditionContext(clock: clock)
+        )
+        self.runtime = runtime
+        syncExecution(actor)
+    }
+
+    private func applyAliasStacks(
+        _ stacks: [ReferenceKey: PackageAliasStack],
+        to runtime: inout ActorPackageRuntime,
+        clock: GameClock
+    ) {
+        guard let world else { return }
+        for actor in registeredActors.keys.sorted() {
+            runtime.setAliasStack(stacks[actor], actor: actor, clock: clock) {
+                world.packageConditionContext(clock: clock)
+            }
+        }
+    }
+
+    // MARK: - Scene and alias packages
 
     /// Runs the packages ahead of the actor's schedule, or keeps them running.
     public func runOverride(
         _ override: PackageOverride, actor: ReferenceKey
     ) -> PackageOverrideProgress {
-        guard var runtime, let world, let clock = world.packageClock else { return .notSimulated }
         guard
-            runtime.setOverride(
-                override, actor: actor, clock: clock,
-                context: world.packageConditionContext(clock: clock)
-            ) else { return .notSimulated }
-        self.runtime = runtime
+            var runtime, let world, let clock = world.packageClock,
+            registeredActors[actor] != nil else { return .notSimulated }
+        // A scene asks every frame; only a new override needs the costly context.
+        if runtime.override(for: actor) != override {
+            guard
+                runtime.setOverride(
+                    override, actor: actor, clock: clock,
+                    context: world.packageConditionContext(clock: clock)
+                ) else { return .notSimulated }
+            self.runtime = runtime
+        }
         syncExecution(actor)
         return executions[actor]?.isDone == true ? .done : .running
     }
@@ -167,6 +284,7 @@ public final class PackageCoordinator {
         )
         self.runtime = runtime
         executions.removeValue(forKey: actor)
+        updateMount(actor, rides: false)
     }
 
     /// A move the procedure asked for ended.
@@ -177,27 +295,38 @@ public final class PackageCoordinator {
         case .giveUp: event = .movementFailed
         default: return
         }
+        step(mounts.first { $0.value == actor }?.key ?? actor, with: event)
+    }
+
+    /// Feeds one event to the actor's machine. Finishing the procedure ends the package.
+    private func step(_ actor: ReferenceKey, with event: PackageProcedureEvent) {
         guard var execution = executions[actor] else { return }
+        let wasDone = execution.isDone
         let commands = execution.handle(event)
         executions[actor] = execution
+        if
+            !wasDone, execution.machine.state == .complete,
+            let package = try? store?.resolve(execution.package).package
+        {
+            world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
+        }
         apply(commands, actor: actor)
     }
 
     private func advanceOverrides(by delta: Float) {
-        for actor in executions.keys.sorted() {
+        let held = registeredActors.keys.filter { runtime?.hold(for: $0) != nil }
+        let ridden = Set(mounts.values)
+        for actor in Set(executions.keys).union(held).sorted() where !ridden.contains(actor) {
             syncExecution(actor)
-            guard var execution = executions[actor] else { continue }
-            let commands = execution.handle(.tick(delta))
-            executions[actor] = execution
-            apply(commands, actor: actor)
+            step(actor, with: .tick(delta))
         }
     }
 
-    /// Starts a machine for the actor's current override package when it changed.
+    /// Starts a machine for the actor's current held package when it changed.
     private func syncExecution(_ actor: ReferenceKey) {
         guard
             let runtime, let world,
-            let override = runtime.override(for: actor),
+            let hold = runtime.hold(for: actor),
             let current = runtime.currentPackage(for: actor)
         else {
             executions.removeValue(forKey: actor)
@@ -206,20 +335,40 @@ public final class PackageCoordinator {
         guard executions[actor]?.package != current.package.formID else { return }
         guard let start = world.packageActorPosition(actor) else { return }
         let place = PackageOverrideExecution.location(of: current.package).flatMap {
-            world.packagePlace(of: $0, actor: actor, aliasQuest: override.aliasQuest)
+            world.packagePlace(of: $0, actor: actor, aliasQuest: hold.aliasQuest)
         }
-        var execution = PackageOverrideExecution(package: current, start: start, place: place)
+        let path = current.procedure == .patrol
+            ? PackageOverrideExecution.patrolStart(of: current.package).flatMap {
+                world.packagePatrolPath(from: $0, actor: actor, aliasQuest: hold.aliasQuest)
+            } : nil
+        var execution = PackageOverrideExecution(
+            package: current, start: start, place: place, path: path ?? []
+        )
+        updateMount(actor, rides: execution.ridesHorse)
         let commands = execution.start()
         executions[actor] = execution
+        world.packageProcedure(PackageScriptEvent(
+            kind: .begin, actor: actor, package: current.package
+        ))
         apply(commands, actor: actor)
     }
 
     private func apply(_ commands: [PackageProcedureCommand], actor: ReferenceKey) {
         for command in commands {
             guard case let .move(point) = command else { continue }
-            if world?.movePackageActor(actor, to: point) != true {
+            let direct = executions[actor]?.isDirect ?? false
+            if world?.movePackageActor(mounts[actor] ?? actor, to: point, direct: direct) != true {
                 movementSettled(actor: actor, reason: .giveUp)
             }
+        }
+    }
+
+    private func updateMount(_ actor: ReferenceKey, rides: Bool) {
+        guard let world else { return }
+        if rides, mounts[actor] == nil, let horse = world.mountPackageActor(actor) {
+            mounts[actor] = horse
+        } else if !rides, mounts.removeValue(forKey: actor) != nil {
+            world.dismountPackageActor(actor)
         }
     }
 

@@ -284,11 +284,7 @@ final class GameViewController: NSViewController {
     let combat = CombatCoordinator()
     lazy var combatWorld = CombatWorldAdapter(game: self)
     /// Live resident-actor package selection.
-    lazy var packages: PackageCoordinator = {
-        let packages = PackageCoordinator()
-        packages.attach(world: aiWorld)
-        return packages
-    }()
+    lazy var packages = PackageCoordinator(world: aiWorld)
 
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
     lazy var perception: PerceptionCoordinator = {
@@ -318,6 +314,8 @@ final class GameViewController: NSViewController {
 
     /// Ambient idles and the head switch, with the coordinators they drive.
     lazy var idleWorld = IdleWorldAdapter(game: self)
+    /// Carts, riders, and the actor AI natives.
+    lazy var vehicleWorld = VehicleWorldAdapter(game: self)
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))

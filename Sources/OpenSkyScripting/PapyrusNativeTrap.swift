@@ -27,7 +27,7 @@ extension PapyrusNativeFunctions {
         }
         reference("GetBaseObject", into: &registry) { _, target in
             guard
-                let base = target.world.placedReference(for: target.key)?.base,
+                let base = target.world.baseObject(of: target.key),
                 let key = target.world.referenceKey(forFormID: base),
                 let handle = target.world.objectHandle(for: key)
             else { return .returned(.none) }

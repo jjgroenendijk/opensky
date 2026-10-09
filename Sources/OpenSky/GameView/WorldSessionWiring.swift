@@ -40,6 +40,7 @@ final class WorldSessionWiring {
                 }
             }
         )
+        streamer.placedRecords = (provider as? WorldDataStores)?.placedRecords
         renderer.attachTextureStreaming(to: session.runner)
         wireAnimationAssets(renderer: renderer)
         wireMenuMovies(renderer: renderer)
@@ -163,6 +164,7 @@ final class WorldSessionWiring {
         game.aiWorld.wirePackages(provider: provider, renderer: renderer)
         game.aiWorld.wirePerception(provider: provider, renderer: renderer)
         game.idleWorld.wireIdles(provider: provider, renderer: renderer)
+        game.vehicleWorld.wireVehicles(renderer: renderer)
         // The perception pass answers "did anybody see it" for every crime.
         game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.

@@ -98,6 +98,30 @@ enum SceneFixture {
 }
 
 extension SceneFixture {
+    static let waitSceneID: UInt32 = 0x4002
+
+    /// One phase with no actions that ends when the gate global is 1.
+    static func waitScene() throws -> CatalogScene {
+        let fields: [(String, Data)] = [
+            ("EDID", ESMFixture.zstring("WaitScene")),
+            ("HNAM", Data()), ("NAM0", ESMFixture.zstring("Wait for cell")), ("NEXT", Data()),
+            ("CTDA", condition(gateEquals: 1)), ("NEXT", Data()), ("HNAM", Data()),
+            ("PNAM", ESMFixture.u32(DialogueRuntimeFixture.runningQuest))
+        ]
+        let record = try Scene(record: ESMFixture.record(
+            "SCEN",
+            formID: waitSceneID,
+            fields: fields
+        ))
+        return CatalogScene(
+            formID: FormID(waitSceneID),
+            key: .plugin(name: DialogueFixture.pluginName, objectID: waitSceneID),
+            scene: record
+        )
+    }
+}
+
+extension SceneFixture {
     static let packageSceneID: UInt32 = 0x4001
     static let walkPackage: UInt32 = 0x5000
 

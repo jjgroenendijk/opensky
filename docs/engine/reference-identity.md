@@ -131,3 +131,22 @@ After that a spawn is the same as an authored placement. The same state pass mov
 same code draws it, makes it solid, and makes it takeable. That is why dropping reuses the component
 system instead of a separate list of runtime objects, and why a dropped item's mesh and collision
 cannot disagree.
+
+## Moved references
+
+`MoveTo` can send a plugin reference to a cell other than the one its plugin places it in. The
+opening quest does this: Ralof stands in Helgen and Ulfric in an interior, and both move to the
+cart on the road. A transform override alone cannot do that, because a cell build draws only the
+records its own cell holds, and an exterior persistent record is drawn by the cell its plugin
+position falls in.
+
+So `MoveTo` writes two components: the transform override, and a relocation that names the cell
+that draws the reference now. A build then follows one rule:
+
+- a reference whose relocation names another cell is left out of its plugin cell;
+- a reference whose relocation names this cell joins this cell's build, with the record read
+  from a FormID index over the whole plugin, because its plugin cell may not be loaded.
+
+Moving a reference back to its plugin cell drops the relocation. The same index answers `MoveTo`
+for a reference no loaded cell holds: its state is the plugin record with this session's deltas on
+top. The save writes relocations in the `RLOC` chunk ([save format](/formats/opensky-save.md)).

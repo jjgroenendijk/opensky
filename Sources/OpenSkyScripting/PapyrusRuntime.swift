@@ -25,6 +25,8 @@ public final class PapyrusRuntime {
     /// Another script instance on the same form that is of the named type. The game keeps
     /// all scripts of one form in one object, so a cast between them succeeds.
     public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
+    /// The world identity behind a handle, for fault text.
+    public var describeHandle: ((PapyrusObjectHandle) -> String?)?
 
     /// Each script's inheritance chain by folded name. A new script can complete a
     /// chain that stopped at a missing parent, so any change to `scripts` clears it.

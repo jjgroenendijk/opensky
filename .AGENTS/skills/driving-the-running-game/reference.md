@@ -42,7 +42,17 @@ arrow keys.
 
 `state player`, `state target`, `state actors [--radius <units>]`, `state menu`,
 `state quest <editorID>`, `state av <name> [--ref <ref>]`, `state global <editorID>`,
+`state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
 `state time`, `state frame`.
+
+- `state quest` also lists each reference alias with the reference that fills it, or null.
+- `state scenes` lists each playing scene with its quest, its current phase, and the phase's
+  name.
+- `state scripts` gives the script queue, the waits, the newest events, the newest fault, and
+  the missing natives. With `--ref`, it also lists the scripts on that reference or quest
+  with their state and variables.
+- `state packages` gives the actor's package, its procedure, the procedure machine's state
+  and patrol point, the mover's state, and the vehicle links.
 
 A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded reference.
 

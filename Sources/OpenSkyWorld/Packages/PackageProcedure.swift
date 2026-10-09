@@ -37,7 +37,10 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     public let center: SIMD3<Float>
     public let destination: SIMD3<Float>?
     public let radius: Float
+    /// Patrol points after the first, in walking order.
+    public let path: [SIMD3<Float>]
     public private(set) var state: PackageProcedureState = .ready
+    public private(set) var pathIndex = 0
     private var random: ConditionRandom
 
     public init(
@@ -45,19 +48,21 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         center: SIMD3<Float>,
         destination: SIMD3<Float>? = nil,
         radius: Float,
+        path: [SIMD3<Float>] = [],
         seed: UInt64
     ) {
         self.kind = kind
         self.center = center
         self.destination = destination
         self.radius = max(0, radius)
+        self.path = path
         random = ConditionRandom(seed: seed)
     }
 
     public mutating func start() -> [PackageProcedureCommand] {
         guard state == .ready else { return [] }
         switch kind {
-        case .travel, .sleep, .eat:
+        case .travel, .patrol, .sleep, .eat:
             state = .moving
             return [.move(to: destination ?? center)]
         case .wander, .sandbox:
@@ -87,6 +92,13 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         case .travel:
             state = .complete
             return []
+        case .patrol:
+            guard pathIndex < path.count else {
+                state = .complete
+                return []
+            }
+            pathIndex += 1
+            return [.move(to: path[pathIndex - 1])]
         case .sleep:
             state = .looping(.sleep)
             return [.playLoop(.sleep)]

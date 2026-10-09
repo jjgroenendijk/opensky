@@ -42,6 +42,8 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     /// The clip's path in the virtual file system, nil when nothing plays.
     public let clipPath: String?
     public let prop: IdleProp
+    /// What the graph's state sends as the idle starts and ends, such as `ExitCartEnd`.
+    public var notify = BehaviorStateNotify()
 }
 
 /// Caches decoded behavior files and prop bones for the session.
@@ -104,7 +106,8 @@ nonisolated public final class IdlePlaybackResolver {
                 event: event,
                 path: .graphEvent(behaviorFiles: clip.behaviorFiles),
                 clipPath: path,
-                prop: prop(payloads: clip.payloads, project: project)
+                prop: prop(payloads: clip.payloads, project: project),
+                notify: clip.notify
             )
         }
         guard
