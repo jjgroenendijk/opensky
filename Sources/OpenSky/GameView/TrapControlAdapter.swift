@@ -97,7 +97,7 @@ final class TrapControlAdapter {
         bridge: PapyrusWorldStateBridge,
         resolver: EnableParentResolver
     ) -> TrapTriggerRow? {
-        let scripts = (entry.placedReference?.scriptData.scripts ?? [])
+        let scripts = entry.scripts.filter { !$0.isRemoved }
             .map(\.name)
             .filter(TrapScriptFamily.contains)
         guard !scripts.isEmpty else { return nil }

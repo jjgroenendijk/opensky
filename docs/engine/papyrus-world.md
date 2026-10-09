@@ -106,6 +106,12 @@ another reference in the same cell gets a live handle. A reference with several 
 represented by the instance with the lowest script name. On a first integration each instance gets
 `OnInit` (if never fired), `OnCellAttach`, then `OnLoad`.
 
+A reference runs the `VMAD` scripts of its base object as well as its own. When both name the same
+script, the reference's property values override the base's, one property at a time, and the
+reference's flags win, so a removed flag drops the base script. Source: the Creation Kit wiki pages
+"Script" and "Reference". OpenSky reads base scripts from the model-base records, such as `ACTI`,
+`CONT`, and `DOOR`. Scripts on an `NPC_` base are not attached yet.
+
 Detach retires the cell's instances in sorted order: the instance leaves, its queued events drop, and
 its suspension records are forgotten.
 

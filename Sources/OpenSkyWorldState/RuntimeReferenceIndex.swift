@@ -26,6 +26,14 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
     /// streaming lifetime of the cell they are rendered in.
     public let isPersistent: Bool
     public let record: RuntimeReferenceRecord
+    /// `VMAD` scripts of the base object, which the reference runs too.
+    public let baseScripts: [AttachedScript]
+
+    /// The scripts this reference runs: its own over its base object's.
+    public var scripts: [AttachedScript] {
+        let own = placedReference?.scriptData.scripts ?? placedActor?.scriptData.scripts ?? []
+        return own.overlaying(base: baseScripts)
+    }
 
     public var placedReference: PlacedReference? {
         guard case let .reference(reference) = record else { return nil }
@@ -41,12 +49,14 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
         key: ReferenceKey,
         formID: FormID,
         isPersistent: Bool,
-        record: RuntimeReferenceRecord
+        record: RuntimeReferenceRecord,
+        baseScripts: [AttachedScript] = []
     ) {
         self.key = key
         self.formID = formID
         self.isPersistent = isPersistent
         self.record = record
+        self.baseScripts = baseScripts
     }
 }
 

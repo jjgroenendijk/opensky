@@ -40,8 +40,19 @@ nonisolated public struct PlacedRecordLookup: Sendable {
             key: key,
             formID: formID,
             isPersistent: record.flags.contains(.persistent),
-            record: decoded
+            record: decoded,
+            baseScripts: baseScripts(of: decoded)
         )
+    }
+
+    private func baseScripts(of record: RuntimeReferenceRecord) -> [AttachedScript] {
+        guard
+            case let .reference(reference) = record,
+            let base = index.record(withFormID: reference.base.rawValue),
+            ModelBase.supportedTypes.contains(base.type),
+            let decoded = try? ModelBase(record: base, localized: localized)
+        else { return [] }
+        return decoded.scriptData.scripts
     }
 
     /// The positions along the unkeyed linked references from `start`, which is the

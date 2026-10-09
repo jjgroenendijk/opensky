@@ -122,9 +122,7 @@ extension PapyrusWorldRuntime {
     private func attachedScripts(
         of entry: RuntimeReferenceEntry
     ) -> [AttachedScript] {
-        entry.placedReference?.scriptData.scripts
-            ?? entry.placedActor?.scriptData.scripts
-            ?? []
+        entry.scripts
     }
 
     /// A persistent reference keeps its scripts while its cell is unloaded, so they
