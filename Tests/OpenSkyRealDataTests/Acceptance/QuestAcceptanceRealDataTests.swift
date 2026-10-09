@@ -55,20 +55,23 @@ struct QuestAcceptanceRealDataTests {
     // MARK: - Assertions
 
     /// The quest's own scripts ran to their end with no fault. The last fragment
-    /// reaches two item natives OpenSky does not have yet, then stops the quest, which
-    /// retires its instances and clears its alias table. No cell is loaded, so four
-    /// object properties stay `None`; the one filled alias binds to its reference.
+    /// reaches two item natives OpenSky does not have yet, starts the next quest,
+    /// `MGRArniel02`, and stops this one. Every object property binds, because a
+    /// reference in an unloaded cell gets a handle when a script first uses it.
+    /// `MGRArniel02` fills one alias; its six other alias properties stay unfilled.
     @MainActor
     private static func expectCleanRun(_ session: QuestRealDataSession) throws {
         let world = session.world
-        #expect(world.questCount == 0)
+        let next = try #require(session.quests.quest(editorID: "MGRArniel02"))
+        #expect(try session.state(of: next.formID).isRunning)
+        #expect(world.questCount == 1)
         #expect(world.runtime.tally.faultTotal == 0)
-        #expect(world.bindingSkips.counts[.unresolvedReference] == 4)
-        #expect(world.bindingSkips.counts[.aliasObject] == nil)
+        #expect(world.bindingSkips.counts[.unresolvedReference] == nil)
+        #expect(world.bindingSkips.counts[.aliasObject] == 6)
         #expect(world.runtime.tally.unimplementedNativeTotal == 2)
         #expect(world.questFragmentsQueued > 0, "no stage fragment ever ran")
         #expect(world.eventQueue.isEmpty, "the quest left work queued")
-        #expect(world.aliasResolution.filledAliasCount == 0)
+        #expect(world.aliasResolution.filledAliasCount == 1)
     }
 
     /// The journal page the run produced: a title, an objective and at least
