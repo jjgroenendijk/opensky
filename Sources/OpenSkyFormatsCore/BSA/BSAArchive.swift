@@ -87,6 +87,19 @@ nonisolated public struct BSAArchive: Sendable {
         )
     }
 
+    /// The fixed header's size; enough bytes for `validateHeader`.
+    public static let headerSize = 36
+
+    /// Checks the magic, version, and name flags without reading the tables.
+    public static func validateHeader(_ prefix: Data) throws {
+        var reader = BinaryReader(prefix)
+        do {
+            _ = try readHeader(&reader)
+        } catch is BinaryReaderError {
+            throw BSAError.malformed("header shorter than \(headerSize) bytes")
+        }
+    }
+
     private struct Header {
         let flags: ArchiveFlags
         let folderRecordOffset: Int

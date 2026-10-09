@@ -107,6 +107,24 @@ nonisolated public struct PluginHeader: Sendable {
     }
 }
 
+nonisolated extension PluginHeader {
+    /// Reads the TES4 record at the start of a plugin without walking its groups.
+    public init(pluginData data: Data) throws {
+        var reader = BinaryReader(data)
+        let header: ESMRecord.Header
+        do {
+            header = try ESMRecord.Header(reader: &reader)
+        } catch is BinaryReaderError {
+            throw ESMError.missingTES4
+        }
+        let end = ESMRecord.Header.size + Int(header.dataSize)
+        guard header.type == "TES4", end <= data.count else { throw ESMError.missingTES4 }
+        try self.init(tes4: ESMRecord(
+            header: header, dataRange: ESMRecord.Header.size ..< end, file: data
+        ))
+    }
+}
+
 nonisolated extension ESMFile {
     /// Decodes the TES4 record. Cheap (one small record) but not cached —
     /// callers keep the result.

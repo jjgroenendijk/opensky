@@ -99,4 +99,17 @@ struct BSAArchiveTests {
             _ = try BSAArchive(data: bytes.prefix(40))
         }
     }
+
+    @Test func theHeaderAloneIsCheckedWithoutTheTables() throws {
+        var fixture = BSAFixture()
+        fixture.files = [BSAFixture.File(folder: "meshes", name: "a.nif", stored: Data([1, 2]))]
+        let data = fixture.build()
+        try BSAArchive.validateHeader(data.prefix(BSAArchive.headerSize))
+        #expect(throws: BSAError.notABSA) {
+            try BSAArchive.validateHeader(Data("NOPE".utf8) + data.dropFirst(4).prefix(32))
+        }
+        #expect(throws: BSAError.malformed("header shorter than 36 bytes")) {
+            try BSAArchive.validateHeader(data.prefix(20))
+        }
+    }
 }
