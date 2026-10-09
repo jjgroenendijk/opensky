@@ -50,9 +50,14 @@ There is one first-in, first-out queue for the whole world. An event queued earl
 than one queued after it. Events are always queued, never run inline, so an attach never re-enters
 the VM from inside streaming.
 
-Each instance runs one event at a time. An instance whose handler suspends in a latent call is busy,
-and its later events wait, in order, until that handler finishes. Other instances run past it. A
+A handler that uses up its instruction slice holds its instance. The instance's later events wait,
+in order, until that handler finishes or reaches a latent call. Other instances run past it. A
 skipped event goes back ahead of the rest of the queue, so the queue never reorders.
+
+A latent call, such as `Utility.Wait`, releases the instance, so its next event runs while the first
+handler waits. The game does the same: a thread unlocks its object during a latent call (Creation
+Kit wiki, "Threading Notes (Papyrus)"). Example: `CritterSpawn` waits in a loop in `OnLoad` for as
+long as its cell is loaded, and its `OnCellLoad` still runs.
 
 A drain stops when the tick has run 32 events, or when it has run 100,000 instructions. The rest
 waits for the next tick. 32 events drains a ten-script cell in one step, because an attach queues

@@ -80,9 +80,12 @@ public final class PapyrusWorldRuntime {
     /// The next queue position a running drain reads. `retire` moves it back when it
     /// removes events the drain already passed, so the drain never reads past the end.
     var drainCursor: Int?
-    /// Instances with a latent call in flight. Their queued events stay
-    /// queued, in order, until the suspended handler settles.
-    public var busyInstances: Set<PapyrusInstanceKey> = []
+    /// Instances whose call used up its instruction slice. Their queued events stay
+    /// queued, in order, until that call settles or waits on a latent call.
+    public var busyInstances: Set<PapyrusInstanceKey> {
+        suspensionTracker.heldInstances
+    }
+
     /// Update timers for `Form.RegisterForUpdate` and friends, advanced once per
     /// fixed step by `advanceUpdateTimers(gameClock:)`.
     public var updateTimers = PapyrusUpdateTimerRegistry()
@@ -334,17 +337,24 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
     public struct StepSummary: Sendable {
         public let resumed: Int
         public let faulted: Int
-        public let settledInstances: [PapyrusInstanceKey]
     }
 
     private var instanceByID: [UInt64: PapyrusInstanceKey] = [:]
+    private var holdingIDs: Set<UInt64> = []
     private var resumed = 0
     private var faulted = 0
-    private var settled: [PapyrusInstanceKey] = []
 
-    /// Marks `instance` busy under suspension `id`.
-    public func begin(id: UInt64, instance: PapyrusInstanceKey) {
-        instanceByID[id] = instance
+    /// Instances with a suspended call that holds them.
+    public var heldInstances: Set<PapyrusInstanceKey> {
+        Set(holdingIDs.compactMap { instanceByID[$0] })
+    }
+
+    /// Tracks the suspension `call` of `instance`.
+    public func begin(_ call: SuspendedCall, instance: PapyrusInstanceKey) {
+        instanceByID[call.id] = instance
+        if call.holdsInstance {
+            holdingIDs.insert(call.id)
+        }
     }
 
     /// Drops every suspension owned by a retired instance and returns their ids.
@@ -352,28 +362,25 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
     public func forget(instance key: PapyrusInstanceKey) -> Set<UInt64> {
         let ids = Set(instanceByID.filter { $0.value == key }.keys)
         instanceByID = instanceByID.filter { $0.value != key }
+        holdingIDs.subtract(ids)
         return ids
     }
 
-    /// Follows one woken call: a re-suspension moves the busy marker to the
-    /// new suspension id, a terminal outcome settles the instance.
+    /// Follows one woken call: a re-suspension is tracked under its new id, a
+    /// terminal outcome settles the call.
     public func noteResume(of call: SuspendedCall, outcome: PapyrusRunOutcome) {
         resumed += 1
         let key = instanceByID.removeValue(forKey: call.id)
+        holdingIDs.remove(call.id)
         switch outcome {
         case let .suspended(next):
             if let key {
-                instanceByID[next.id] = key
+                begin(next, instance: key)
             }
         case .completed:
-            if let key {
-                settled.append(key)
-            }
+            break
         case .faulted:
             faulted += 1
-            if let key {
-                settled.append(key)
-            }
         }
     }
 
@@ -382,10 +389,7 @@ nonisolated public final class PapyrusWorldSuspensionTracker {
         defer {
             resumed = 0
             faulted = 0
-            settled.removeAll()
         }
-        return StepSummary(
-            resumed: resumed, faulted: faulted, settledInstances: settled
-        )
+        return StepSummary(resumed: resumed, faulted: faulted)
     }
 }

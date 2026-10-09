@@ -1,5 +1,5 @@
 // Fixed-step tick and event dispatch for `PapyrusWorldRuntime`: one FIFO in
-// global order, serial delivery per instance, and a budget per tick.
+// global order, a used-up slice holding its instance, and a budget per tick.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -13,9 +13,6 @@ extension PapyrusWorldRuntime {
     public func stepFixed(gameClock: GameClock? = nil) -> PapyrusTickReport {
         _ = scheduler.tick(gameClock: gameClock)
         let resumes = suspensionTracker.drainStep()
-        for key in resumes.settledInstances {
-            busyInstances.remove(key)
-        }
         advanceUpdateTimers(gameClock: gameClock)
         var dispatched = 0
         var faulted = resumes.faulted
@@ -102,12 +99,11 @@ extension PapyrusWorldRuntime {
         eventQueue = retained + Array(eventQueue.dropFirst(drainCursor ?? 0))
     }
 
-    /// Hands `outcome` to the scheduler; a suspended call holds `target` busy until it
-    /// resumes. Returns true for a fault.
+    /// Hands `outcome` to the scheduler and tracks a suspended call of `target`.
+    /// Returns true for a fault.
     func settle(_ outcome: PapyrusRunOutcome, target: PapyrusInstanceKey) -> Bool {
         if case let .suspended(call) = outcome {
-            busyInstances.insert(target)
-            suspensionTracker.begin(id: call.id, instance: target)
+            suspensionTracker.begin(call, instance: target)
         }
         scheduler.schedule(outcome)
         if case .faulted = outcome {

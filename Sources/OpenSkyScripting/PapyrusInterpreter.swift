@@ -25,6 +25,9 @@ nonisolated public struct SuspendedCall {
     public let nativeCall: PapyrusNativeCall
     public let request: PapyrusNativeSuspension
     public let continuation: PapyrusContinuation
+    /// True for a used-up instruction slice. A latent call releases its instance, so
+    /// other events on it run meanwhile (CK wiki "Threading Notes (Papyrus)").
+    public let holdsInstance: Bool
 }
 
 public final class PapyrusContinuation {

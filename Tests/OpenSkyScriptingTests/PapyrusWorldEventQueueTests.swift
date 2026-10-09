@@ -1,10 +1,11 @@
 // FIFO event queue semantics for `PapyrusWorldRuntime`:
-// budget-bounded drain with carry-over, global order, per-instance serial
-// delivery across a latent suspension, and the fixed-step latent wake.
+// budget-bounded drain with carry-over, global order, a latent wait that
+// releases its instance, a used-up slice that holds it, and the fixed-step wake.
 
 @testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
@@ -38,8 +39,8 @@ struct PapyrusWorldEventQueueTests {
         ])
     }
 
-    @Test("same-instance events never interleave across a latent suspension")
-    func perInstanceSerialDelivery() throws {
+    @Test("a latent wait lets the same instance's next event run")
+    func latentWaitReleasesTheInstance() throws {
         let probe = PapyrusWorldProbeDispatch()
         let waiter = PapyrusWorldFixture.eventScript("WaiterScript", events: [
             ("OnLoad", PapyrusWorldFixture.probeBody(note: "waiter.done", waitSeconds: 2)),
@@ -78,25 +79,57 @@ struct PapyrusWorldEventQueueTests {
             )
         ]
 
-        // Step 1: the waiter's OnLoad suspends in Utility.Wait(2); its
-        // OnCellAttach must stay queued while the bystander proceeds.
+        // Step 1: the waiter's OnLoad suspends in Utility.Wait(2), which releases
+        // the instance, so its OnCellAttach runs in the same step.
         let first = world.stepFixed()
-        #expect(first.dispatched == 2)
-        #expect(first.queued == 1)
-        #expect(probe.notes == ["bystander.onload"])
+        #expect(first.dispatched == 3)
+        #expect(first.queued == 0)
+        #expect(probe.notes == ["waiter.attach", "bystander.onload"])
 
         let second = world.stepFixed()
         #expect(second.resumed == 0)
-        #expect(second.dispatched == 0)
-        #expect(probe.notes == ["bystander.onload"])
-
-        // Step 3: two 1 s steps have elapsed since the suspension, so the
-        // wait resumes, the handler finishes, and only then does the queued
-        // OnCellAttach for the same instance run.
+        // Step 3: two 1 s steps have elapsed, so the wait resumes and finishes.
         let third = world.stepFixed()
         #expect(third.resumed == 1)
-        #expect(third.dispatched == 1)
-        #expect(probe.notes == ["bystander.onload", "waiter.done", "waiter.attach"])
+        #expect(probe.notes == ["waiter.attach", "bystander.onload", "waiter.done"])
+    }
+
+    @Test("a call that used up its slice holds the instance's next event")
+    func usedUpSliceHoldsTheInstance() throws {
+        let spin = PexFixture.runtimeFunction(instructions: [
+            PapyrusTestSupport.instruction(.jump, .integer(0))
+        ])
+        let spinner = PapyrusWorldFixture.eventScript("SpinnerScript", events: [
+            ("OnLoad", spin),
+            ("OnCellAttach", PapyrusWorldFixture.probeBody(note: "spinner.attach"))
+        ])
+        var limits = PapyrusLimits.standard
+        limits.instructionBudget = 10
+        let probe = PapyrusWorldProbeDispatch()
+        let world = PapyrusWorldRuntime(runtime: PapyrusRuntime(
+            files: [PexFixture.runtimeFile(objects: [spinner])],
+            nativeDispatch: probe,
+            limits: limits
+        ))
+        try world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: PapyrusWorldFixture.index([PapyrusWorldFixture.referenceEntry(
+                objectID: 1, scripts: [.init("SpinnerScript", properties: [])]
+            )]),
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: true
+        )
+        let key = PapyrusWorldFixture.key(objectID: 1, script: "SpinnerScript")
+        world.eventQueue = [
+            PapyrusScriptEvent(target: key, functionName: "OnLoad", arguments: []),
+            PapyrusScriptEvent(target: key, functionName: "OnCellAttach", arguments: [])
+        ]
+        for _ in 0 ..< 3 {
+            world.stepFixed()
+        }
+        #expect(world.busyInstances == [key])
+        #expect(world.eventQueue.map(\.functionName) == ["OnCellAttach"])
+        #expect(probe.notes.isEmpty)
     }
 
     @Test("Utility.Wait(1.0) resumes after exactly 30 fixed 1/30 steps")
