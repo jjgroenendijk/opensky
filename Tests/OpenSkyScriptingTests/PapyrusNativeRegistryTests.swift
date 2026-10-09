@@ -13,7 +13,7 @@ struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
         // Pinned so an added or lost native is a visible change.
-        #expect(standard.count == 207)
+        #expect(standard.count == 211)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))

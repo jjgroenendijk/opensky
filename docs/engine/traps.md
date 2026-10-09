@@ -57,7 +57,7 @@ Implemented for traps:
 | `ObjectReference.PushActorAway` | Knocks the actor argument back, away from the receiver |
 | `ObjectReference.GetBaseObject` | The base form |
 | `ObjectReference.GetNthLinkedRef` | Follows the untagged `XLKR` link n times |
-| `ObjectReference.GetAngleZ` | Rotation about Z, in degrees |
+| `ObjectReference.GetAngleX`, `GetAngleZ` | Rotation about X or Z, in degrees |
 | `ObjectReference.IsLockBroken` | Always false: OpenSky never breaks a lock |
 | `Utility.GetCurrentRealTime` | Seconds since the first call |
 | `FormList.GetSize`, `FormList.GetAt` | The list's plugin entries. A nested list is one entry, and a runtime `AddForm` is not seen |
@@ -83,8 +83,9 @@ script runs on:
   `Form.UnregisterForAnimationEvent`.
 - Records and world: `AddItem`, `BlockActivation`, `CreateDetectionEvent`,
   `SetActorCause`, `CalculateEncounterLevel` (1), `GetActorOwner`, `GetFactionOwner`,
-  `GetParentCell` (None), `Form.HasKeyword` (false), `FormList.HasForm` (false),
-  `Actor.GetEquippedItemType` (0), `Cell.IsAttached` (true).
+  `GetParentCell` (None), `SetNoFavorAllowed`, `IsFurnitureInUse` (false),
+  `Form.HasKeyword` (false), `FormList.HasForm` (false), `Actor.GetEquippedItemType` (0),
+  `Cell.IsAttached` (true).
 
 ## Placing with PlaceAtMe
 

@@ -1,7 +1,8 @@
-// The `Game` family. Only `GetPlayer` is installed: the rest of `Game` needs
-// session systems that do not exist yet.
+// The `Game` family: `GetPlayer` and `GetForm`. The rest of `Game` lives with the
+// system it reaches, such as menus, skills, and levels.
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
@@ -20,6 +21,20 @@ extension PapyrusNativeFunctions {
             else {
                 return failure(call, "GetPlayer needs a world runtime")
             }
+            return .returned(.object(handle))
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "GetForm"
+        ) { call, context in
+            guard let world = context.world, let formID = integer(call, at: 0) else {
+                return failure(call, "GetForm needs a world runtime and an int FormID")
+            }
+            guard
+                formID != 0,
+                let key = world.referenceKey(forFormID: FormID(stored: UInt32(bitPattern: formID))),
+                let handle = world.objectHandle(for: key)
+            else { return .returned(.none) }
             return .returned(.object(handle))
         })
     }
