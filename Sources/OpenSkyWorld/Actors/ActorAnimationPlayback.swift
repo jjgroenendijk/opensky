@@ -117,6 +117,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         var overrideStart: Float = 0
         /// Animation time the override ends at. Zero when none is playing.
         var overrideEnd: Float = 0
+        var headLook = HeadLook.forward
+        var weaponsDrawn = false
     }
 
     public let actor: FormID
@@ -128,6 +130,8 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     /// Changed on the main actor after the build queue hands the scene over.
     private let state: Mutex<State>
     private let meshes: [RenderMesh]
+    /// Hand node to sheath node, from `ResolvedActorVisual.sheathNodes`.
+    public let sheathNodes: [String: String]
 
     /// The clip currently playing: the idle one, or a bounded combat override.
     public var clip: ActorAnimationClip {
@@ -139,9 +143,11 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         clip: ActorAnimationClip,
         models: [RenderModel],
         female: Bool = false,
-        transform: float4x4 = matrix_identity_float4x4
+        transform: float4x4 = matrix_identity_float4x4,
+        sheathNodes: [String: String] = [:]
     ) {
         self.actor = actor
+        self.sheathNodes = sheathNodes
         self.female = female
         self.transform = transform
         idleClip = clip
@@ -217,7 +223,22 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        meshes.applySkinningPose(pose, updating: &updatedMeshes)
+        let (look, clip, drawn) = state.withLock { ($0.headLook, $0.clip, $0.weaponsDrawn) }
+        let sheathed = WeaponSheathing.apply(sheathNodes, drawn: drawn, to: pose)
+        let posed = HeadTrackingCore.apply(look, to: sheathed, parents: clip.skeleton.parentIndices)
+        return meshes.applySkinningPose(posed, updating: &updatedMeshes)
+    }
+
+    /// False keeps each weapon and the shield on its sheath node.
+    public var weaponsDrawn: Bool {
+        get { state.withLock { $0.weaponsDrawn } }
+        set { state.withLock { $0.weaponsDrawn = newValue } }
+    }
+
+    /// The neck and head turn drawn on top of every clip, until changed.
+    public var headLook: HeadLook {
+        get { state.withLock { $0.headLook } }
+        set { state.withLock { $0.headLook = newValue } }
     }
 
     @discardableResult
@@ -268,7 +289,8 @@ nonisolated extension CellSceneBuilder {
             clip: clip,
             models: assembly.models.map(\.asset.model),
             female: assembly.visual.appearance.isFemale.value,
-            transform: assembly.transform
+            transform: assembly.transform,
+            sheathNodes: assembly.visual.sheathNodes
         ))
     }
 

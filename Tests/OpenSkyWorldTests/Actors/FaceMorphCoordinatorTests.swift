@@ -17,6 +17,10 @@ struct FaceMorphCoordinatorTests {
         func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
             actor == playback.actor ? playback : nil
         }
+
+        var faceMorphPlaybacks: [FaceMorphPlayback] {
+            [playback]
+        }
     }
 
     @Test

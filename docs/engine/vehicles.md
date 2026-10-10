@@ -62,9 +62,15 @@ wait for their horses (`MQ101Horse`). A riding package seats the rider on the ho
 vehicle link. The horse then walks the rider's package, so it is the horse that enters the
 triggers.
 
-[WARNING] The seat is 90 units above the horse's feet. This is an estimate: the game seats
-the rider on the horse's saddle node, which OpenSky does not read yet. There is no riding
-animation yet.
+The rider's root goes on the horse's `SaddleBone`, a node of
+`meshes\actors\horse\character assets\skeleton.nif` (read on the install). Its position is taken
+from the horse's drawn pose at the moment the rider is seated. A horse whose skeleton did not load
+seats the rider 90 units above its feet instead.
+
+The rider plays the clips in `meshes\actors\character\animations\horse_rider\`: `idle.hkx`
+while the horse stands, and `walkforward.hkx` or `runforward.hkx` as the horse walks or runs.
+[WARNING] The walk and run names follow the horse's own folder; `idle.hkx` was seen on the
+install. A clip that does not load leaves the rider in the clip it plays.
 
 ## Leaving a vehicle
 

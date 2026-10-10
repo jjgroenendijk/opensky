@@ -24,7 +24,7 @@ extension SceneRuntime.Playback {
                 return
             }
             let topic = entry.translation?(dialogue.topic) ?? dialogue.topic
-            say(index, topic: topic, speaker: speaker)
+            say(index, topic: topic, speaker: speaker, lookAt: lookTarget(of: dialogue))
         case .package:
             guard let actor = actor(of: action) else {
                 note(.emptyAlias(index))
@@ -44,7 +44,16 @@ extension SceneRuntime.Playback {
         ScenePackageOwner(scene: entry.formID, action: index)
     }
 
-    private mutating func say(_ index: UInt32, topic id: FormID?, speaker: ReferenceKey) {
+    private func lookTarget(of dialogue: SceneDialogue) -> ReferenceKey? {
+        guard let alias = dialogue.headtrackAliasID, alias >= 0, let quest = entry.quest else {
+            return nil
+        }
+        return evaluator.context.aliases.reference(alias: UInt32(alias), in: quest)
+    }
+
+    private mutating func say(
+        _ index: UInt32, topic id: FormID?, speaker: ReferenceKey, lookAt: ReferenceKey?
+    ) {
         let dialogue = runtime.dialogue
         guard
             let topic = id.flatMap({ dialogue.dialogue.topic($0) }),
@@ -55,7 +64,8 @@ extension SceneRuntime.Playback {
             complete(index)
             return
         }
-        let line = SceneLine(speaker: speaker, topic: topic.formID, info: offer.info)
+        var line = SceneLine(speaker: speaker, topic: topic.formID, info: offer.info)
+        line.lookAt = lookAt
         run(index, duration: nil)
         runtime.pendingLines.lines[owner(index)] = line
         startLineClock(index)

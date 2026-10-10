@@ -58,6 +58,12 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         return String(skeletonMeshPath[..<assets.lowerBound]) + "\\"
     }
 
+    /// The rider's clip on a horse: idle when the horse stands, else its gait.
+    public static func riderAnimationPath(_ gait: LocomotionGait?) -> String {
+        let name = gait.flatMap(gaitFileName) ?? "idle.hkx"
+        return characterRoot + "animations\\horse_rider\\" + name
+    }
+
     private static let actorsRoot = "meshes\\actors\\"
 
     private static func gaitFileName(_ gait: LocomotionGait) -> String? {

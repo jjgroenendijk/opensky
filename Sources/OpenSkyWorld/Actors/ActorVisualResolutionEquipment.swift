@@ -5,15 +5,32 @@
 // is a reason-tagged skip. See docs/engine/actor-resolution.md.
 
 import Foundation
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 
 /// Skeleton nodes a rigid attachment can hang from, observed with
-/// `openskycli skeleton`: `Weapon` under `NPC R Hand [RHnd]` and `Shield` under
-/// `NPC L Hand [LHnd]`. See docs/engine/actor-resolution.md.
+/// `openskycli skeleton`. See docs/engine/actor-resolution.md.
 nonisolated public enum ActorAttachmentBone: Sendable {
-    /// The drawn right-hand weapon node.
+    /// The drawn right-hand weapon node, under `NPC R Hand [RHnd]`.
     public static let drawnWeapon = "Weapon"
+    /// The drawn left-hand node, under `NPC L Hand [LHnd]`.
+    public static let drawnOffHand = "Shield"
+
+    /// The node a sheathed weapon of `type` hangs from. Nil for hand-to-hand and
+    /// unknown types, which stay in the hand.
+    public static func sheathNode(for type: Weapon.AnimationType?) -> String? {
+        switch type {
+        case .oneHandSword: "WeaponSword"
+        case .oneHandDagger: "WeaponDagger"
+        case .oneHandAxe: "WeaponAxe"
+        case .oneHandMace: "WeaponMace"
+        case .twoHandSword, .twoHandAxe, .staff: "WeaponBack"
+        case .bow, .crossbow: "WeaponBow"
+        case .other, nil: nil
+        }
+    }
 }
 
 /// One resolved body part with the ARMA DNAM draw priority that orders it.
@@ -111,12 +128,14 @@ nonisolated extension ActorVisualResolver {
     /// Order follows the equipped set, which `ReferenceInventoryState` keeps
     /// sorted by FormID — so two stores that reached the same equipped set
     /// resolve to the same part list in the same order.
+    /// A second one-handed weapon goes to the left hand, which is dual wield.
     public func wornEquipment(
         equipped: [FormID],
         skips: inout [AppearanceSkip]
     ) -> WornEquipment {
         var armors: [Armor] = []
         var attachments: [ResolvedAttachment] = []
+        var rightHandTaken = false
         for item in equipped {
             if let armor = self.armors[item.rawValue] {
                 armors.append(armor)
@@ -130,12 +149,42 @@ nonisolated extension ActorVisualResolver {
                 skips.append(AppearanceSkip(subject: item, reason: .unrenderableEquipment))
                 continue
             }
+            let offHand = entry.occupancy.hands == .leftHand
+                || (rightHandTaken && entry.occupancy.hands == .rightHand)
+            rightHandTaken = rightHandTaken || !offHand
             attachments.append(ResolvedAttachment(
                 modelPath: modelPath,
-                bone: ActorAttachmentBone.drawnWeapon
+                bone: offHand ? ActorAttachmentBone.drawnOffHand : ActorAttachmentBone.drawnWeapon,
+                sheathBone: ActorAttachmentBone.sheathNode(for: entry.animationType)
             ))
         }
         return WornEquipment(armors: armors, attachments: attachments)
+    }
+
+    /// The swaps of the model `female` wears, with the same cross-gender
+    /// fallback as the model path.
+    func textureSwaps(
+        of armature: ArmorAddon, female: Bool
+    ) -> [ModelSurfaceOverride.ShapeTextures] {
+        let model = (female ? armature.femaleModel : armature.maleModel)
+            ?? armature.maleModel ?? armature.femaleModel
+        return textureSwaps(model?.alternateTextures ?? [])
+    }
+
+    /// ARMA alternate textures as per-shape textures. An entry whose TXST is
+    /// missing keeps the shape's own textures, as `MODS` does on a static.
+    func textureSwaps(
+        _ alternates: [ModelData.AlternateTexture]
+    ) -> [ModelSurfaceOverride.ShapeTextures] {
+        alternates.compactMap { alternate in
+            textureSets[alternate.textureSet.rawValue].map { set in
+                ModelSurfaceOverride.ShapeTextures(
+                    shapeName: alternate.shapeName,
+                    diffuseTexture: set.diffusePath.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+                    normalTexture: set.normalPath.flatMap(NIFShaderTextureSet.vfsKey(for:))
+                )
+            }
+        }
     }
 
     /// Worn parts in ARMA DNAM draw order: ascending priority, ties in resolve order.

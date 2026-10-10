@@ -37,18 +37,33 @@ nonisolated extension MeshLibrary {
         path: String,
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        loadActorModel(path: path, skeleton: skeleton, surface: nil, bodyWeight: nil)
+    }
+
+    public func loadActorModel(
+        path: String,
+        skeleton: ActorSkeletonAsset?,
+        surface: ModelSurfaceOverride?,
+        bodyWeight: Float?
+    ) -> Result<ActorRenderAsset, ActorAssetFailure> {
+        let weight = bodyWeight
+            .flatMap { BodyWeightBlend.thinPath(forHeavy: path) != nil ? $0 : nil }
         do {
             let model = try loadModel(
                 path: path,
                 terrainLODClipMask: nil,
                 actorSkeleton: skeleton,
-                explicitActorSkeleton: true
+                explicitActorSkeleton: true,
+                surface: surface,
+                bodyWeight: weight
             )
             let pathKey = try meshKey(for: path)
             let key = cacheKey(
                 path: pathKey,
                 terrainLODClipMask: nil,
-                actorSkeletonKey: skeleton?.pathKey ?? "none"
+                actorSkeletonKey: skeleton?.pathKey ?? "none",
+                surface: surface,
+                bodyWeight: weight
             )
             return .success(ActorRenderAsset(
                 model: model.posableCopy(device: device), bounds: modelBounds[key]

@@ -7,6 +7,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyRendering
 import simd
 
@@ -18,6 +19,14 @@ nonisolated public protocol ActorAssetProvider {
     func loadActorModel(
         path: String,
         skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure>
+    /// `surface` lays per-shape textures over the model, such as ARMA swaps.
+    /// `bodyWeight`, 0 to 1, blends a `_1.nif` model with its `_0.nif` sibling.
+    func loadActorModel(
+        path: String,
+        skeleton: Skeleton?,
+        surface: ModelSurfaceOverride?,
+        bodyWeight: Float?
     ) -> Result<Asset, ActorAssetFailure>
     /// A rigid model rewritten to ride one named skeleton bone. It caches under its
     /// own key, because the bone is part of the geometry.
@@ -44,6 +53,16 @@ nonisolated extension ActorAssetProvider {
         normalTexture _: String?,
         tint _: SIMD3<Float>?,
         skeleton: Skeleton?
+    ) -> Result<Asset, ActorAssetFailure> {
+        loadActorModel(path: path, skeleton: skeleton)
+    }
+
+    /// A provider that cannot retexture loads the plain mesh.
+    public func loadActorModel(
+        path: String,
+        skeleton: Skeleton?,
+        surface _: ModelSurfaceOverride?,
+        bodyWeight _: Float?
     ) -> Result<Asset, ActorAssetFailure> {
         loadActorModel(path: path, skeleton: skeleton)
     }
@@ -134,6 +153,8 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             append(
                 path: part.modelPath,
                 role: .body(part),
+                surface: part.surface,
+                bodyWeight: visual.appearance.weight / 100,
                 skeleton: skeleton,
                 models: &models,
                 skips: &skips
@@ -196,11 +217,15 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
     private func append(
         path: String,
         role: ActorModelRole,
+        surface: ModelSurfaceOverride? = nil,
+        bodyWeight: Float? = nil,
         skeleton: Provider.Skeleton?,
         models: inout [AssembledActorModel<Provider.Asset>],
         skips: inout [ActorAssemblySkip]
     ) {
-        switch provider.loadActorModel(path: path, skeleton: skeleton) {
+        switch provider.loadActorModel(
+            path: path, skeleton: skeleton, surface: surface, bodyWeight: bodyWeight
+        ) {
         case let .success(asset):
             models.append(AssembledActorModel(role: role, path: path, asset: asset))
         case let .failure(failure):

@@ -21,6 +21,8 @@ public final class NPCAnimationCoordinator {
     public private(set) var unresolvableClips: Set<String> = []
     /// Movers whose gait clip is still loading.
     private var waiting: [ReferenceKey: ActorClipKey] = [:]
+    /// Each horse's rider, which plays the rider clip of the horse's gait.
+    public private(set) var riders: [ReferenceKey: ReferenceKey] = [:]
 
     weak var world: (any NPCAnimationWorld)?
 
@@ -31,6 +33,9 @@ public final class NPCAnimationCoordinator {
     }
 
     public func drive(_ update: NPCLocomotionDriveUpdate) {
+        if let rider = riders[update.actor] {
+            playRiderClip(rider, gait: update.intent == .still ? nil : update.gait)
+        }
         guard let playback = world?.actorPlayback(for: update.actor) else { return }
         waiting[update.actor] = nil
         guard
@@ -44,6 +49,30 @@ public final class NPCAnimationCoordinator {
             return
         }
         apply(key, to: update.actor, playback: playback)
+    }
+
+    /// Seats `rider` on `horse` for animation: it plays the rider idle now, and the rider
+    /// clip of the horse's gait as the horse moves.
+    public func ride(_ rider: ReferenceKey, on horse: ReferenceKey) {
+        riders[horse] = rider
+        playRiderClip(rider, gait: nil)
+    }
+
+    private func playRiderClip(_ rider: ReferenceKey, gait: LocomotionGait?) {
+        guard let playback = world?.actorPlayback(for: rider) else { return }
+        waiting[rider] = nil
+        let key = ActorClipKey(
+            skeletonMeshPath: playback.clip.skeletonMeshPath,
+            animationPath: ActorAnimationClipLoader.riderAnimationPath(gait)
+        )
+        apply(key, to: rider, playback: playback)
+    }
+
+    /// Hands a rider that got off back to its own clips.
+    public func dismount(_ rider: ReferenceKey) {
+        riders = riders.filter { $0.value != rider }
+        waiting[rider] = nil
+        world?.actorPlayback(for: rider)?.setLocomotionClip(nil)
     }
 
     /// Sets the clip of each mover whose clip arrived. Runs after the loader drains.

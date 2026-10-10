@@ -3,13 +3,16 @@
 // live in the coordinators (docs/engine/coordinators.md).
 
 import OpenSkyActorsInterface
+import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
+import simd
 
 /// Answers `PlayerWorld` and `FaceMorphWorld` from the session systems `game` owns.
 final class PlayerWorldAdapter {
@@ -76,6 +79,10 @@ extension PlayerWorldAdapter: PlayerWorld {
         return equipment.equipped(on: InventoryHolder.player)
     }
 
+    var playerWeaponsDrawn: Bool {
+        game.combat.isWeaponDrawn
+    }
+
     var playerAppearanceOverride: PlayerAppearanceOverride? {
         game.worldState.component(PlayerIdentityState.self, for: .player).map { identity in
             var appearance = PlayerAppearanceOverride(
@@ -138,5 +145,39 @@ extension PlayerWorldAdapter: FaceMorphWorld {
 
     func faceMorphPlayback(for actor: FormID) -> FaceMorphPlayback? {
         game.renderer?.scene.faceMorphPlayback(for: actor)
+    }
+
+    var faceMorphPlaybacks: [FaceMorphPlayback] {
+        game.renderer?.scene.animations.compactMap { $0 as? FaceMorphPlayback } ?? []
+    }
+}
+
+extension PlayerWorldAdapter: HeadTrackingWorld {
+    var headTrackingSubjects: [HeadTrackingSubject] {
+        guard let renderer = game.renderer, let streamer = game.streamer else { return [] }
+        let deltas = renderer.npcInstanceDeltas
+        return game.actorWorld.combatActors().compactMap { actor in
+            guard
+                !actor.isDead,
+                let formID = streamer.referenceEntry(key: actor.key)?.placedActor?.formID,
+                let playback = renderer.scene.actorPlayback(for: formID)
+            else { return nil }
+            let delta = deltas[formID.rawValue] ?? matrix_identity_float4x4
+            return HeadTrackingSubject(
+                key: actor.key, playback: playback, worldFromActor: delta * playback.transform
+            )
+        }
+    }
+
+    func headPosition(of key: ReferenceKey) -> SIMD3<Float>? {
+        if key == .player {
+            return game.renderer.map {
+                $0.walkController.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight)
+            }
+        }
+        guard let actor = game.actorWorld.combatActors().first(where: { $0.key == key }) else {
+            return nil
+        }
+        return actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0))
     }
 }

@@ -46,6 +46,9 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     /// HCLF, a CLFM. A Traits-tab field, like the head parts it tints.
     public let hairColor: ActorSourcedField<FormID?>
     public let defaultOutfit: ActorSourcedField<FormID?>
+    /// NAM7, 0 (thin) to 100 (heavy), a Traits-tab field. A record without it
+    /// reads as 50, which is an assumption: no source gives the default.
+    public var weight: Float = 50
 }
 
 /// Stat-relevant fields of one actor after template resolution. Separate from
@@ -178,7 +181,10 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             },
             defaultOutfit: resolveField(in: npcs, flag: .useInventory) {
                 ActorSourcedField(value: $0.defaultOutfit, source: $0.formID)
-            }
+            },
+            weight: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.weight ?? 50, source: $0.formID)
+            }.value
         )
     }
 
@@ -372,7 +378,8 @@ nonisolated extension ResolvedActorAppearance {
                 ? headParts : ActorSourcedField(value: override.headParts, source: base),
             hairColor: override.hairColor.map { ActorSourcedField(value: $0, source: base) }
                 ?? hairColor,
-            defaultOutfit: defaultOutfit
+            defaultOutfit: defaultOutfit,
+            weight: weight
         )
     }
 }

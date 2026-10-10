@@ -692,6 +692,34 @@ extension GameViewController: FaceMorphControlProviding {
         faceMorphs.faceMorphSnapshot
     }
 
+    var automaticBlinkingEnabled: Bool {
+        get { faceMorphs.automaticBlinkingEnabled }
+        set {
+            faceMorphs.automaticBlinkingEnabled = newValue
+            playerSettingsStore.set(.characterBlinking, to: newValue ? 1 : 0)
+        }
+    }
+
+    var dialogueExpressionsEnabled: Bool {
+        get { faceMorphs.dialogueExpressionsEnabled }
+        set {
+            faceMorphs.dialogueExpressionsEnabled = newValue
+            playerSettingsStore.set(.characterDialogueExpressions, to: newValue ? 1 : 0)
+        }
+    }
+
+    var headTrackingEnabled: Bool {
+        get { headTracking.isEnabled }
+        set {
+            headTracking.isEnabled = newValue
+            playerSettingsStore.set(.characterHeadTracking, to: newValue ? 1 : 0)
+        }
+    }
+
+    var headTrackingReadout: String {
+        headTracking.readout(for: dialogueMenu.speakerOrTarget)
+    }
+
     func setFaceMorphWeight(_ weight: Float, target: String) {
         faceMorphs.setFaceMorphWeight(weight, target: target)
     }
@@ -766,25 +794,5 @@ extension GameViewController: PerceptionControlProviding {
 
     func perceptionLines(for actor: ReferenceKey) -> [String] {
         perception.perceptionLines(for: actor)
-    }
-}
-
-extension GameViewController {
-    var scenes: SceneCoordinator {
-        storyWorld.scenes
-    }
-
-    var storyManager: StoryManagerCoordinator {
-        storyWorld.storyManager
-    }
-}
-
-extension GameViewController {
-    var idles: IdleCoordinator {
-        idleWorld.idles
-    }
-
-    var headAssembly: HeadAssemblyCoordinator {
-        idleWorld.headAssembly
     }
 }

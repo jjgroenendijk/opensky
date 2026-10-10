@@ -59,4 +59,19 @@ struct NPCAnimationCoordinatorTests {
             "\(Self.skeleton)#\(run)"
         ])
     }
+
+    @Test func aRiderPlaysTheRiderClipsOfItsHorse() {
+        #expect(ActorAnimationClipLoader.riderAnimationPath(nil)
+            == ActorAnimationClipLoader.characterRoot + "animations\\horse_rider\\idle.hkx")
+        #expect(ActorAnimationClipLoader.riderAnimationPath(.run)
+            == ActorAnimationClipLoader.characterRoot + "animations\\horse_rider\\runforward.hkx")
+        let coordinator = NPCAnimationCoordinator()
+        coordinator.attach(world: FakeNPCAnimationWorld())
+        let rider = ReferenceKey.plugin(name: "ride.esm", objectID: 1)
+        let horse = ReferenceKey.plugin(name: "ride.esm", objectID: 2)
+        coordinator.ride(rider, on: horse)
+        #expect(coordinator.riders == [horse: rider])
+        coordinator.dismount(rider)
+        #expect(coordinator.riders.isEmpty)
+    }
 }

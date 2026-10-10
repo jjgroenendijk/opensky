@@ -29,12 +29,16 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
     nonisolated private struct State {
         var manualWeights: [String: Float] = [:]
         var lipWeights: [String: Float] = [:]
+        /// Emotion and blinking, set each frame by the face morph coordinator.
+        var expressionWeights: [String: Float] = [:]
         var unknownTargetCount = 0
 
         var weights: [String: Float] {
             var combined = manualWeights
-            for (target, value) in lipWeights {
-                combined[target] = min(max((combined[target] ?? 0) + value, 0), 1)
+            for layer in [lipWeights, expressionWeights] {
+                for (target, value) in layer {
+                    combined[target] = min(max((combined[target] ?? 0) + value, 0), 1)
+                }
             }
             return combined
         }
@@ -89,6 +93,26 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
         return applyWeights()
     }
 
+    public var expressionWeights: [String: Float] {
+        state.withLock { $0.expressionWeights }
+    }
+
+    /// Uploads only when the weights changed, so a face between blinks costs nothing.
+    @discardableResult
+    public func setExpressionWeights(_ weights: [String: Float]) -> Bool {
+        let targets = Set(targetNames)
+        let known = weights.filter { targets.contains($0.key) }
+        let changed = state.withLock { state in
+            guard state.expressionWeights != known else { return false }
+            state.expressionWeights = known
+            return true
+        }
+        if changed {
+            applyWeights()
+        }
+        return changed
+    }
+
     @discardableResult
     public func clearLipWeights() -> Int {
         let hadWeights = state.withLock { state in
@@ -108,6 +132,7 @@ nonisolated public final class FaceMorphPlayback: RenderAnimation, LipMorphWeigh
         state.withLock {
             $0.manualWeights.removeAll(keepingCapacity: true)
             $0.lipWeights.removeAll(keepingCapacity: true)
+            $0.expressionWeights.removeAll(keepingCapacity: true)
         }
         return applyWeights()
     }

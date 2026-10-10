@@ -66,7 +66,8 @@ nonisolated extension PlayerBody {
         self.init(
             assembly: rig.assembly,
             animation: PlayerAnimationPlayback(
-                skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model)
+                skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model),
+                sheathNodes: rig.assembly.visual.sheathNodes
             ),
             faceMorphs: rig.faceMorphs
         )
@@ -80,7 +81,8 @@ nonisolated extension PlayerFirstPersonRig {
         self.init(
             assembly: rig.assembly,
             animation: PlayerAnimationPlayback(
-                skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model)
+                skeleton: skeleton, pose: pose, models: rig.assembly.models.map(\.asset.model),
+                sheathNodes: rig.assembly.visual.sheathNodes
             )
         )
     }

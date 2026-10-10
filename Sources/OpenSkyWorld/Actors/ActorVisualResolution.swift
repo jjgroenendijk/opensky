@@ -76,16 +76,46 @@ nonisolated public struct ResolvedBodyPart: Equatable, Sendable {
     /// arms, or nil when it has no first-person geometry.
     public let firstPersonModelPath: String?
     public let slots: BodySlots
+    /// ARMA MO2S/MO3S per-shape textures, already resolved through their TXST.
+    public let textureSwaps: [ModelSurfaceOverride.ShapeTextures]
+
+    public init(
+        origin: Origin, armature: FormID, modelPath: String, firstPersonModelPath: String?,
+        slots: BodySlots, textureSwaps: [ModelSurfaceOverride.ShapeTextures] = []
+    ) {
+        self.origin = origin
+        self.armature = armature
+        self.modelPath = modelPath
+        self.firstPersonModelPath = firstPersonModelPath
+        self.slots = slots
+        self.textureSwaps = textureSwaps
+    }
+
+    /// The swaps as a model override, or nil when the part keeps its own textures.
+    public var surface: ModelSurfaceOverride? {
+        guard !textureSwaps.isEmpty else { return nil }
+        return ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil, shapes: textureSwaps
+        )
+    }
 }
 
 /// One rigid model hung off a named skeleton bone, such as a drawn weapon.
-/// `bone` is a Havok rig name: `Weapon`, under `NPC R Hand [RHnd]` (NIF node
-/// `WEAPON`), observed on the install (docs/engine/actor-resolution.md).
+/// `bone` is a Havok rig name from `ActorAttachmentBone`, such as `Weapon` under
+/// `NPC R Hand [RHnd]` (docs/engine/actor-resolution.md).
 nonisolated public struct ResolvedAttachment: Equatable, Sendable {
     /// WEAP MODL path, relative to Data/.
     public let modelPath: String
-    /// Havok rig bone the model rides.
+    /// Havok rig bone the model rides while drawn.
     public let bone: String
+    /// The node the pose moves `bone` onto while sheathed; nil stays in the hand.
+    public let sheathBone: String?
+
+    public init(modelPath: String, bone: String, sheathBone: String? = nil) {
+        self.modelPath = modelPath
+        self.bone = bone
+        self.sheathBone = sheathBone
+    }
 }
 
 /// Everything milestone 5.2 resolves for one placed actor.
@@ -431,7 +461,8 @@ nonisolated public struct ActorVisualResolver: Sendable {
                     firstPersonModelPath: armature.firstPersonModelPath(
                         female: selection.female
                     ),
-                    slots: slots
+                    slots: slots,
+                    textureSwaps: textureSwaps(of: armature, female: selection.female)
                 ),
                 priority: armature.priority(female: selection.female)
             ))

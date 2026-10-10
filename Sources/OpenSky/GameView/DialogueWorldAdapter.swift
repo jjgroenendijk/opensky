@@ -50,6 +50,8 @@ final class DialogueWorldAdapter {
         renderer.onWorldUpdate = { [weak self] delta in
             advancePreviousSystems?(delta)
             self?.game.dialogueCamera.refreshFocus()
+            self?.game.faceMorphs.tick(now: self?.game.renderer?.animationTime ?? 0)
+            self?.game.headTracking.tick(deltaTime: delta)
         }
         renderer.worldOverlaySources
             .register(identifier: "dialogue-camera") { [weak renderer] context, list in
