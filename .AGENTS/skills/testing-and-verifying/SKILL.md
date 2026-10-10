@@ -16,8 +16,8 @@ The mechanics behind every command below are in `docs/testing.md`.
 
 ## One build per batch of edits
 
-Every build or test run costs minutes of wall time on this machine, and one build runs at a
-time machine-wide (the build lock). So do not build after each file. Make every edit the
+Every build or test run costs minutes of wall time on this machine, and only two builds run at
+a time machine-wide (the build slots). So do not build after each file. Make every edit the
 change needs, then run one check, read the result, fix everything it reports, and run again.
 A session that builds after each edit spends its whole time waiting.
 
@@ -95,7 +95,7 @@ These commands build, so the background-shell and one-`xcodebuild` rules in the 
   re-reads the whole context.
 - The output already lists each error once, with repository paths. Read it from the
   notification. Open the transcript only when the output says errors were not shown.
-- A build waits for the machine-wide build lock when another session builds, and says
+- A build waits when both build slots are busy or another build uses its checkout, and says
   so. That wait is the plan working; do not start a second build to get around it.
 - The build removes stale module copies itself and builds once more when a failed build
   left new ones (`docs/tools/build-system.md`). Do not delete `.swiftmodule` folders by

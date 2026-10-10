@@ -12,8 +12,8 @@
 #
 #   xcodebuild_products_dir CONFIG   built-products directory for a macOS scheme
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
-#   opensky_build_lock               wait for the machine-wide build lock
-#   opensky_build_unlock             release it
+#   opensky_build_lock               wait for a build slot and this build tree
+#   opensky_build_unlock             release both
 #   xcodebuild_phase_marks FILE      stdin -> stdout, noting when each phase starts in FILE
 #   xcodebuild_phases FILE           print one line with the length of each phase
 # shellcheck shell=sh
@@ -61,34 +61,63 @@ xcodebuild_summary() {
     '
 }
 
-# One build at a time on this machine. Sessions in several worktrees each start
-# their own build, and eleven at once were seen on eight cores and 16 GB: every
-# one of them then swaps. The lock is a directory, because mkdir is atomic. It
-# holds the owner's pid; a lock whose owner is gone is taken over.
+# A few builds at a time on this machine. Sessions in several worktrees each
+# start their own build, and eleven at once were seen on eight cores and 16 GB:
+# every one of them then swaps. OPENSKY_BUILD_SLOTS (default 2) sets how many
+# run. A build also locks its own tree, because two builds into one derived data
+# tree collide in xcodebuild's build database.
+opensky_try_lock() {
+    if mkdir "$1" 2>/dev/null; then
+        printf '%s\n' "$$" >"$1/pid"
+        return 0
+    fi
+    owner="$(cat "$1/pid" 2>/dev/null || true)"
+    if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
+        rm -rf "$1"
+    fi
+    return 1
+}
+
+# A lock is a directory, because mkdir is atomic. It holds the owner's pid; a
+# lock whose owner is gone is taken over.
 opensky_build_lock() {
-    lock="$OPENSKY_CACHE_ROOT/build.lock"
     mkdir -p "$OPENSKY_CACHE_ROOT"
+    slots="${OPENSKY_BUILD_SLOTS:-2}"
+    tree_lock="$OPENSKY_DERIVED_DATA.build.lock"
+    OPENSKY_BUILD_LOCK=""
     waited=0
-    until mkdir "$lock" 2>/dev/null; do
-        owner="$(cat "$lock/pid" 2>/dev/null || true)"
-        if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
-            rm -rf "$lock"
-            continue
+    while :; do
+        if opensky_try_lock "$tree_lock"; then
+            slot=1
+            while [ "$slot" -le "$slots" ]; do
+                if opensky_try_lock "$OPENSKY_CACHE_ROOT/build.lock.$slot"; then
+                    OPENSKY_BUILD_LOCK="$tree_lock $OPENSKY_CACHE_ROOT/build.lock.$slot"
+                    return 0
+                fi
+                slot=$((slot + 1))
+            done
+            rm -rf "$tree_lock"
         fi
         if [ "$((waited % 30))" -eq 0 ]; then
-            printf '[INFO] waiting for the build lock held by pid %s (%s)\n' \
-                "${owner:-?}" "$(ps -o command= -p "${owner:-0}" 2>/dev/null | cut -c1-80)"
+            printf '[INFO] waiting for one of %s build slots or for this tree, held by:\n' \
+                "$slots"
+            for held in "$tree_lock" "$OPENSKY_CACHE_ROOT"/build.lock.*; do
+                owner="$(cat "$held/pid" 2>/dev/null || true)"
+                [ -n "$owner" ] || continue
+                printf '[INFO]   pid %s (%s)\n' \
+                    "$owner" "$(ps -o command= -p "$owner" 2>/dev/null | cut -c1-80)"
+            done
         fi
         sleep 2
         waited=$((waited + 2))
     done
-    printf '%s\n' "$$" >"$lock/pid"
-    OPENSKY_BUILD_LOCK="$lock"
 }
 
 opensky_build_unlock() {
     [ -n "${OPENSKY_BUILD_LOCK:-}" ] || return 0
-    rm -rf "$OPENSKY_BUILD_LOCK"
+    for held in $OPENSKY_BUILD_LOCK; do
+        rm -rf "$held"
+    done
     OPENSKY_BUILD_LOCK=""
 }
 

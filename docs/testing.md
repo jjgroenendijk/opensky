@@ -58,8 +58,9 @@ guided by the `testing-and-verifying` skill, and the commit's `Tests:` section r
 CI runs the lint checks and the whole unit plan on every push to a pull request, and the sanitizers
 and `make health` weekly ([continuous integration](/tools/ci.md)).
 
-Every build or test command waits for the machine-wide build lock
-([build system](/tools/build-system.md)), so two sessions never compile at once.
+Every build or test command waits for a build slot and for its own build tree
+([build system](/tools/build-system.md)), so at most two builds compile at once, and never two in
+one checkout.
 
 ## Real-data suites and the data root
 

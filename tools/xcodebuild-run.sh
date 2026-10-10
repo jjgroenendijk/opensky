@@ -8,7 +8,7 @@
 # xcodebuild's own -quiet cannot do this: it decides what to print before the
 # text exists, leaving no full copy anywhere.
 #
-# A build takes the machine-wide build lock first (tools/xcodebuild-lib.sh),
+# A build takes a build slot and its tree's lock first (tools/xcodebuild-lib.sh),
 # then removes stale module copies (tools/stale-modules.sh). When a failed build
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
