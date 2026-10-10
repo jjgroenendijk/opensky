@@ -16,6 +16,26 @@ nonisolated public struct MusicKey: Equatable, Sendable {
     public let cellMusicType: UInt32?
     public let regions: [UInt32]
     public let worldspaceMusicType: UInt32?
+    /// False until the center cell is built, so its location is looked up once it is.
+    public let isResident: Bool
+    /// Looked up only when the other fields change, so a steady frame skips it.
+    public var locationMusicType: UInt32?
+
+    var withoutLocation: MusicKey {
+        var key = self
+        key.locationMusicType = nil
+        return key
+    }
+}
+
+/// The streamer's music state: the last key sent and the location lookup behind it.
+public struct MusicFeed {
+    /// Nil until the first emit; guards against re-firing every frame.
+    public var lastEmittedKey: MusicKey?
+    /// The `NAM1` music type of a cell's location; nil without location data.
+    public var locationMusicType: ((CellScene) -> FormID?)?
+
+    public init() {}
 }
 
 extension CellStreamer {
@@ -24,8 +44,8 @@ extension CellStreamer {
     /// from update() and apply(transition:).
     public func emitMusicContextIfNeeded() {
         let key = currentMusicKey()
-        guard key != lastEmittedMusicKey else { return }
-        lastEmittedMusicKey = key
+        guard key != musicFeed.lastEmittedKey else { return }
+        musicFeed.lastEmittedKey = key
         onMusicContextChanged?(Self.musicContext(key: key))
     }
 
@@ -33,30 +53,44 @@ extension CellStreamer {
     /// music without changing the key (an interior re-entered with the same
     /// FormID after its playlist resolved differently).
     public func invalidateMusicContext() {
-        lastEmittedMusicKey = nil
+        musicFeed.lastEmittedKey = nil
     }
 
     private func currentMusicKey() -> MusicKey {
+        let (cellKey, scene) = cellMusicKey()
+        if let last = musicFeed.lastEmittedKey, last.withoutLocation == cellKey {
+            return last
+        }
+        var key = cellKey
+        key.locationMusicType = scene.flatMap { musicFeed.locationMusicType?($0) }?.rawValue
+        return key
+    }
+
+    private func cellMusicKey() -> (MusicKey, CellScene?) {
         if let interiorScene {
-            return MusicKey(
+            let key = MusicKey(
                 isInterior: true,
                 interiorFormID: Self.interiorCellFormID(in: interiorScene),
                 exteriorCenter: nil,
                 cellMusicType: interiorScene.musicType?.rawValue,
                 regions: [],
-                worldspaceMusicType: nil
+                worldspaceMusicType: nil,
+                isResident: true
             )
+            return (key, interiorScene)
         }
         let center = grid.center
         let scene = composition.cells[center]
-        return MusicKey(
+        let key = MusicKey(
             isInterior: false,
             interiorFormID: nil,
             exteriorCenter: center,
             cellMusicType: scene?.musicType?.rawValue,
             regions: scene?.regions.map(\.rawValue) ?? [],
-            worldspaceMusicType: scene?.worldspaceMusicType?.rawValue
+            worldspaceMusicType: scene?.worldspaceMusicType?.rawValue,
+            isResident: scene != nil
         )
+        return (key, scene)
     }
 
     /// The key already carries every selection input, so the context is a pure
@@ -65,6 +99,7 @@ extension CellStreamer {
         MusicContext(
             isInterior: key.isInterior,
             cellMusicType: key.cellMusicType.map { FormID($0) },
+            locationMusicType: key.locationMusicType.map { FormID($0) },
             regions: key.regions.map { FormID($0) },
             worldspaceMusicType: key.worldspaceMusicType.map { FormID($0) },
             cellIdentity: key.interiorFormID ?? packed(key.exteriorCenter)

@@ -32,6 +32,11 @@ nonisolated public struct CellLocationResolver: Sendable {
         return cells.location(worldspace: worldspace, x: coordinate.x, y: coordinate.y)
     }
 
+    /// The `NAM1` music type of the cell's location, in the load-order FormID space.
+    public func musicType(of scene: CellScene) -> FormID? {
+        location(of: scene).flatMap(store.musicType(of:))
+    }
+
     /// Where each reference in `scenes` is, by the cell that holds it.
     public func referenceLocations(in scenes: [CellScene]) -> [ReferenceKey: ResolvedFormID] {
         var result: [ReferenceKey: ResolvedFormID] = [:]

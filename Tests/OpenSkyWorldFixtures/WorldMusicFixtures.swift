@@ -175,6 +175,7 @@ public enum MusicFixture {
 
     public static func context(
         cellMusicType: UInt32? = nil,
+        locationMusicType: UInt32? = nil,
         regions: [UInt32] = [],
         worldspaceMusicType: UInt32? = nil,
         isInterior: Bool = false
@@ -182,6 +183,7 @@ public enum MusicFixture {
         MusicContext(
             isInterior: isInterior,
             cellMusicType: cellMusicType.map { FormID($0) },
+            locationMusicType: locationMusicType.map { FormID($0) },
             regions: regions.map { FormID($0) },
             worldspaceMusicType: worldspaceMusicType.map { FormID($0) },
             cellIdentity: 0

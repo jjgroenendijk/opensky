@@ -23,6 +23,7 @@ public enum LocationFixture: Sendable {
         _ formID: UInt32,
         _ editorID: String,
         parent: UInt32? = nil,
+        music: UInt32? = nil,
         keywords: [UInt32] = [],
         uniqueActors: [UInt32] = [],
         cellLists: [CellList] = []
@@ -30,6 +31,9 @@ public enum LocationFixture: Sendable {
         var fields = ESMFixture.field("EDID", ESMFixture.zstring(editorID))
         if let parent {
             fields += ESMFixture.field("PNAM", ESMFixture.words([parent]))
+        }
+        if let music {
+            fields += ESMFixture.field("NAM1", ESMFixture.words([music]))
         }
         if !keywords.isEmpty {
             fields += ESMFixture.field("KSIZ", ESMFixture.words([UInt32(keywords.count)]))

@@ -1,4 +1,4 @@
-// Music selection: the CELL -> REGN -> WRLD precedence chain and the three
+// Music selection: the CELL -> LCTN -> REGN -> WRLD precedence chain and the three
 // derived states. Playlist assembly (flags, palettes, ordering, crossfade) is
 // covered by MusicCatalogPlaylistTests. Pure value logic — no engine, no audio
 // device. Fixtures are synthetic plugins built in code
@@ -22,6 +22,30 @@ struct MusicCatalogTests {
             weatherStore: MusicFixture.makeWeatherStore(regionMusic: [0x200: 0x20])
         )
         #expect(selection.editorID == "MUSTownWhiterun")
+    }
+
+    @Test func locationMusicTypeSitsBetweenTheCellAndTheRegion() {
+        let weather = MusicFixture.makeWeatherStore(regionMusic: [0x200: 0x20])
+        let overRegion = MusicSelection.resolve(
+            context: MusicFixture.context(locationMusicType: 0x30, regions: [0x200]),
+            musicStore: MusicFixture.makeDefaultStore(),
+            weatherStore: weather
+        )
+        #expect(overRegion.editorID == "MUSTownWhiterun")
+
+        let underCell = MusicSelection.resolve(
+            context: MusicFixture.context(cellMusicType: 0x20, locationMusicType: 0x30),
+            musicStore: MusicFixture.makeDefaultStore(),
+            weatherStore: weather
+        )
+        #expect(underCell.editorID == "MUSExplore")
+
+        let dangling = MusicSelection.resolve(
+            context: MusicFixture.context(locationMusicType: 0x999, regions: [0x200]),
+            musicStore: MusicFixture.makeDefaultStore(),
+            weatherStore: weather
+        )
+        #expect(dangling.editorID == "MUSExplore")
     }
 
     @Test func regionMusicTypeWinsOverWorldspace() {

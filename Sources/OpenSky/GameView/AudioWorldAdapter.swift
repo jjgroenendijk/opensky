@@ -36,6 +36,9 @@ final class AudioWorldAdapter {
         streamer.onMusicContextChanged = { [weak audio] context in
             audio?.musicDirector?.handleMusicContext(context)
         }
+        streamer.musicFeed.locationMusicType = { [unowned game] scene in
+            game.runtimeStateWorld.locationMusicType(of: scene)
+        }
     }
 }
 

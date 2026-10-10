@@ -42,10 +42,33 @@ extension CellStreamerTests {
         #expect(emitted.count == 2)
     }
 
-    /// A cell that authors no music at all leaves the key unchanged, so the
-    /// initial empty emission is not repeated.
     @Test
-    func musiclessCenterCellDoesNotReEmit() {
+    func locationMusicIsLookedUpOnceWhenTheCenterCellArrives() {
+        let runner = ManualCellBuildRunner()
+        var emitted: [MusicContext] = []
+        var lookups = 0
+        let streamer = Fixture.makeStreamer(runner: runner)
+        streamer.onMusicContextChanged = { emitted.append($0) }
+        streamer.musicFeed.locationMusicType = { _ in
+            lookups += 1
+            return FormID(0x50)
+        }
+        streamer.update(cameraPosition: Fixture.center)
+        #expect(lookups == 0)
+        #expect(emitted.last?.locationMusicType == nil)
+
+        runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))
+        streamer.update(cameraPosition: Fixture.center)
+        streamer.update(cameraPosition: Fixture.center)
+        #expect(lookups == 1)
+        #expect(emitted.count == 2)
+        #expect(emitted.last?.locationMusicType == FormID(0x50))
+    }
+
+    /// A cell with no music emits once more when it arrives, because only then can
+    /// its location be read. The context is the same, so the music does not change.
+    @Test
+    func musiclessCenterCellReEmitsTheSameContext() {
         let runner = ManualCellBuildRunner()
         var emitted: [MusicContext] = []
         let streamer = Fixture.makeStreamer(runner: runner)
@@ -53,7 +76,9 @@ extension CellStreamerTests {
         streamer.update(cameraPosition: Fixture.center)
         runner.complete(Fixture.coordinate(0, 0), with: .success(Fixture.cellScene()))
         streamer.update(cameraPosition: Fixture.center)
-        #expect(emitted.count == 1)
+        streamer.update(cameraPosition: Fixture.center)
+        #expect(emitted.count == 2)
+        #expect(emitted.last == emitted.first)
     }
 
     @Test

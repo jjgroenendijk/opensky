@@ -1,7 +1,7 @@
 // Music playlist selection: pure value logic over MUSC and MUST records that
 // turns a listener context into a playlist plus the advance and crossfade policy.
-// Precedence: CELL.XCMO -> first REGN.RDMO of the cell's XCLR regions ->
-// WRLD.ZNAM. The exploration, town, and interior states are derived, not
+// Precedence: CELL.XCMO -> LCTN.NAM1 -> first REGN.RDMO of the cell's XCLR
+// regions -> WRLD.ZNAM. The exploration, town, and interior states are derived, not
 // authored (docs/engine/music.md).
 
 import Foundation
@@ -16,6 +16,8 @@ nonisolated public struct MusicContext: Equatable, Sendable {
     public let isInterior: Bool
     /// CELL.XCMO override; nil when the cell authors none.
     public let cellMusicType: FormID?
+    /// LCTN.NAM1 of the cell's location; nil when it has none.
+    public let locationMusicType: FormID?
     /// XCLR REGN FormIDs for the exterior center cell; empty for interiors.
     public let regions: [FormID]
     /// WRLD.ZNAM of the owning worldspace; nil for interiors and worldspaces
@@ -30,6 +32,7 @@ nonisolated public struct MusicContext: Equatable, Sendable {
     public static let empty = MusicContext(
         isInterior: false,
         cellMusicType: nil,
+        locationMusicType: nil,
         regions: [],
         worldspaceMusicType: nil,
         cellIdentity: 0
@@ -52,6 +55,10 @@ nonisolated public struct MusicContext: Equatable, Sendable {
         mix(UInt64(cellMusicType?.rawValue ?? 0))
         mix(UInt64(worldspaceMusicType?.rawValue ?? 0))
         mix(UInt64(cellIdentity))
+        // Only when set, so a cell without a location keeps its track order.
+        if let locationMusicType {
+            mix(UInt64(locationMusicType.rawValue))
+        }
         for region in regions {
             mix(UInt64(region.rawValue))
         }
@@ -61,12 +68,14 @@ nonisolated public struct MusicContext: Equatable, Sendable {
     public init(
         isInterior: Bool,
         cellMusicType: FormID?,
+        locationMusicType: FormID? = nil,
         regions: [FormID],
         worldspaceMusicType: FormID?,
         cellIdentity: UInt32
     ) {
         self.isInterior = isInterior
         self.cellMusicType = cellMusicType
+        self.locationMusicType = locationMusicType
         self.regions = regions
         self.worldspaceMusicType = worldspaceMusicType
         self.cellIdentity = cellIdentity
@@ -231,16 +240,18 @@ nonisolated public struct MusicSelection: Equatable, Sendable {
 
     // MARK: - Precedence
 
-    /// CELL.XCMO, then the first REGN.RDMO among the cell's regions (record
-    /// order), then WRLD.ZNAM. A link that names a MUSC the store does not
+    /// CELL.XCMO, then LCTN.NAM1, then the first REGN.RDMO among the cell's
+    /// regions (record order), then WRLD.ZNAM. A link that names a MUSC the store does not
     /// hold is skipped so a broken override cannot silence the world.
     private static func selectMusicType(
         context: MusicContext,
         musicStore: MusicRecordStore,
         weatherStore: WeatherStore?
     ) -> FormID? {
-        if let cell = context.cellMusicType, musicStore.musicType(cell) != nil {
-            return cell
+        for link in [context.cellMusicType, context.locationMusicType] {
+            if let link, musicStore.musicType(link) != nil {
+                return link
+            }
         }
         for regionID in context.regions {
             guard

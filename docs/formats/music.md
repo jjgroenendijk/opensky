@@ -15,8 +15,9 @@ Skyrim SE describes music with two records:
 - `MUST`, a music track, is one entry. It has a sound file, loop points, an optional finale
   file, and cue points.
 
-The world picks a `MUSC` through three links. The most specific link wins: `CELL XCMO`,
-then the region's `REGN RDMO`, then the worldspace default `WRLD ZNAM`. See
+The world picks a `MUSC` through four links. The most specific link wins: `CELL XCMO`,
+then the location's `LCTN NAM1`, then the region's `REGN RDMO`, then the worldspace default
+`WRLD ZNAM`. See
 [music runtime](/engine/music.md).
 
 ## Sources
@@ -95,10 +96,11 @@ them only when it builds the playlist.
 | `CELL` | `XCMO` | FormID of a `MUSC` |
 | `WRLD` | `ZNAM` | FormID of a `MUSC` |
 | `REGN` | `RDMO` | FormID of a `MUSC` |
+| `LCTN` | `NAM1` | FormID of a `MUSC` (xEdit `wbDefinitionsTES5.pas` line 6506) |
 
 UESP says `RDMO` "can appear with RDSA under same RDAT or on its own". So OpenSky reads it
 in any region area. See [weather records](/formats/weather.md) for region areas. A null
-FormID in any of the three links means "no music set here".
+FormID in any of the four links means "no music set here".
 
 ## Field sizes
 
@@ -131,5 +133,3 @@ The name in the record is often not the name of the file that ships. See
 
 - `MUST` conditions are read but not evaluated. A track with conditions plays as if it had
   none.
-- `LCTN NAM1`, the music of a location (xEdit `wbDefinitionsTES5.pas` line 6506), is read by
-  the [location](/formats/locations.md) decoder but does not pick music yet.

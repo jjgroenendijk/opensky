@@ -323,6 +323,11 @@ extension RuntimeStateWorldAdapter {
         cellLocationResolver()?.location(of: scene)
     }
 
+    /// The `NAM1` music type of a resident cell's location.
+    func locationMusicType(of scene: CellScene) -> FormID? {
+        cellLocationResolver()?.musicType(of: scene)
+    }
+
     private func cellLocationResolver() -> CellLocationResolver? {
         if let cellLocations {
             return cellLocations
