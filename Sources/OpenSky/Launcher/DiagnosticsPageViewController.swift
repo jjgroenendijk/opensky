@@ -9,11 +9,11 @@ import OpenSkyWorld
 
 final class DiagnosticsPageViewController: NSViewController {
     let layout = LauncherPageLayout(pageName: "Diagnostics")
-    let logsButton = NSButton(title: "Open Logs Folder", target: nil, action: nil)
+    let logsButton = LauncherButton(title: "Open Logs Folder", target: nil, action: nil)
     lazy var logsLabel = layout.line("DiagnosticsLogsStatsLabel")
-    let copyButton = NSButton(title: "Copy System Report", target: nil, action: nil)
-    let reportLabel = NSTextField(labelWithString: "")
-    let benchmarkButton = NSButton(title: "Run Benchmark", target: nil, action: nil)
+    let copyButton = LauncherButton(title: "Copy System Report", target: nil, action: nil)
+    let reportLabel = LauncherText(labelWithString: "")
+    let benchmarkButton = LauncherButton(title: "Run Benchmark", target: nil, action: nil)
     lazy var benchmarkLabel = layout.line("DiagnosticsBenchmarkStatsLabel")
     private(set) var report = DiagnosticsPageViewController.currentReport()
     private var installCheck: Task<Void, Never>?
@@ -33,10 +33,10 @@ final class DiagnosticsPageViewController: NSViewController {
     override func loadView() {
         configureControls()
         view = layout.makeView(title: "Diagnostics", groups: [
-            layout.group("Logs", [logsButton, logsLabel]),
-            layout.group("System report", [copyButton, reportLabel]),
+            layout.group("Logs", [logsLabel, layout.buttons([logsButton])]),
+            layout.group("System report", [reportLabel, layout.buttons([copyButton])]),
             layout.group("Benchmark", [
-                benchmarkButton, benchmarkLabel,
+                benchmarkLabel, layout.buttons([benchmarkButton]),
                 layout
                     .detail(layout
                         .note("The same run as openskycli benchmark, with the saved settings"))
@@ -83,7 +83,7 @@ final class DiagnosticsPageViewController: NSViewController {
         logsLabel.stringValue = "Logs: not written yet"
         benchmarkLabel.stringValue = "Benchmark: not run"
         reportLabel.font = PanelMetrics.monoFont
-        reportLabel.textColor = Theme.parchmentDim
+        reportLabel.textColor = LauncherStyle.textDim
         reportLabel.maximumNumberOfLines = 0
         reportLabel.isSelectable = true
         reportLabel.setAccessibilityIdentifier("DiagnosticsReportStatsLabel")

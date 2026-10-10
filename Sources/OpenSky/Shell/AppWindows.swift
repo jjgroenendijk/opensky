@@ -5,9 +5,11 @@ import AppKit
 
 enum AppWindows {
     static func makeLauncher(content: NSViewController) -> NSWindow {
-        let window = makeWindow(size: NSSize(width: 820, height: 520), content: content)
+        let window = makeWindow(size: NSSize(width: 900, height: 600), content: content)
         window.title = "OpenSky Launcher"
         window.titlebarAppearsTransparent = true
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = LauncherStyle.sidebarBackground
         window.setFrameAutosaveName("OpenSkyLauncherWindow")
         return window
     }

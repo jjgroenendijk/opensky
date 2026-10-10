@@ -19,16 +19,17 @@ says where that surface goes and how to build it.
 
 The app opens on the launcher, not on the developer shell. The launcher holds:
 
-- The game folder: the path, where it came from, and Choose and Use Default buttons. It shares
-  `GameFolderPicker` with Settings, so both validate a folder the same way.
 - One button per launch mode. Play opens the game alone in its own window, with no sidebar,
   inspector, or frame HUD. Developer Mode opens the shell this page describes. Play needs a
   valid game folder; Developer Mode does not, because the shell shows a demo scene without one.
   Return chooses the mode the user picked last.
 - A page list on the left: Launch, Asset Optimisation, Graphics, Diagnostics, and Settings.
   Settings is the same view as the Cmd+, window.
-  - Launch checks the install, offers Continue and the start of Play, and shows the asset
-    optimisation status with a link to its page.
+  - Launch offers Continue and the start of Play. It shows the game folder in one line and the
+    asset optimisation status, with links to Settings and to the Asset Optimisation page.
+  - Settings holds the game folder, the install check, plugins.txt, the string-table
+    language, and the Skyrim saves folder. The game folder is a load setting, so it sits with
+    the others and not on the page a player starts from.
   - Asset Optimisation picks the texture quality, the folder, and direct GPU loading, and
     converts, checks, and clears the [asset cache](/engine/asset-cache.md). Its rules live in
     `AssetCacheCoordinator` in `OpenSkyWorld`, shared by the pages through `LauncherContext`.
@@ -51,6 +52,19 @@ A launcher page is built with `LauncherPageLayout`: a title, an optional status 
 row that only a curious player needs is wrapped in `layout.detail(_:)`, and the "Show
 details" switch at the top of every page shows those rows. The switch is one setting for all
 pages, so the launcher stays short by default.
+
+The launcher looks like the SkyUI mod configuration menu, so it feels like part of Skyrim:
+black panels, uppercase condensed headings over a thin rule, white and grey text, and flat
+outlined buttons. A setting is a `LauncherRow`: its name on the left, its control on the right,
+and a band under the pointer. A click anywhere on the row acts on the control. Every heading,
+row title, and readout starts at the same left edge (`LauncherStyle.textInset`). The drawing is
+original; the face is the Futura Condensed that ships with macOS, so nothing comes from SkyUI
+or the game. `LauncherStyle` holds the colours and fonts.
+
+The page area never gets narrower than `LauncherPageLayout.minimumPageWidth`, the page width
+plus both margins. The split view enforces it, so the window cannot shrink until a control
+clips. The standard split divider stays: an `NSSplitView` subclass set on the split view
+controller crashes AppKit with an index error when the controller first lays out.
 
 A launch mode first loads the world data off the main actor. While it runs, the launch page
 shows a load panel instead of the mode buttons: a progress bar, the stages that run now, one row

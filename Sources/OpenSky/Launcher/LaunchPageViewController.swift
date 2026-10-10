@@ -1,10 +1,9 @@
-// The launcher's first page: the game folder and its check, Continue, where Play
-// starts, the two launch modes side by side, and the asset optimisation status.
+// The launcher's first page: Continue, where Play starts, the two launch modes side
+// by side, and what to check before playing. The game folder is set in Settings.
 // While a world load runs, the load panel takes the place of the mode buttons.
 
 import AppKit
 import OpenSkyAssetCache
-import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkySave
 import OpenSkyWorld
@@ -17,15 +16,9 @@ protocol LauncherPageRefreshing: AnyObject {
 final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let context: LauncherContext
     let layout = LauncherPageLayout(pageName: "Launch")
-    lazy var folderPathLabel = layout.line("LauncherGameFolderStatsLabel", mono: true)
-    lazy var folderNoteLabel = layout.line("LauncherGameFolderNoteStatsLabel")
-    lazy var installLabel = layout.line("LauncherInstallStatsLabel")
-    lazy var installCountsLabel = layout.line("LauncherInstallCountsStatsLabel")
-    let installProblemsLabel = NSTextField(labelWithString: "")
-    private var installCheck: Task<Void, Never>?
-    let chooseButton = NSButton(title: "Choose…", target: nil, action: nil)
-    let resetButton = NSButton(title: "Use Default", target: nil, action: nil)
-    let continueButton = NSButton(title: "Continue", target: nil, action: nil)
+    lazy var folderLabel = layout.line("LauncherGameFolderStatsLabel")
+    let settingsLinkButton = LauncherButton(title: "Open Settings", target: nil, action: nil)
+    let continueButton = LauncherButton(title: "Continue", target: nil, action: nil)
     lazy var continueLabel = layout.line("LauncherContinueStatsLabel")
     var continueOffer = ContinueOffer.noSaves
     var continueCheck: Task<Void, Never>?
@@ -35,13 +28,18 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
     let startXField = NSTextField()
     let startYField = NSTextField()
     lazy var startReasonLabel = layout.line("LaunchStartReasonStatsLabel")
+    lazy var startCellRow = layout.row("Cell", startCellField)
+    lazy var startGridRow = layout.row("Worldspace and grid cell", makeGridFields())
     var startForm = LaunchStartForm(LaunchPreferences.savedStart())
     private(set) var modeButtons: [(LaunchMode, NSButton)] = []
     private var modeRow = NSView()
     let assetStatus = LauncherStatusView(name: "LauncherAssetOptimisation")
-    let assetLinkButton = NSButton(title: "Open Asset Optimisation", target: nil, action: nil)
+    let assetLinkButton = LauncherButton(
+        title: "Open Asset Optimisation",
+        target: nil,
+        action: nil
+    )
     private let loadPanel = WorldLoadPanel()
-    private var problem: String?
 
     init(context: LauncherContext) {
         self.context = context
@@ -60,14 +58,14 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         configureStartControls()
         configureContinue()
         view = layout.makeView(title: "OpenSky", groups: [
-            makeFolderGroup(),
-            layout.group("Continue", [continueButton, continueLabel]),
+            layout.group("Continue", [continueLabel, layout.buttons([continueButton])]),
             makeStartGroup(),
             modeRow,
             loadPanel,
             makeBeforeYouPlayGroup()
         ])
         context.assetOptimisation.observe { [weak self] in self?.refreshAssetStatus() }
+        refreshAssetStatus()
         refreshGameFolder()
     }
 
@@ -83,16 +81,11 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     func refreshGameFolder() {
         let status = GameFolderStatus()
-        folderPathLabel.stringValue = status.path ?? "Not found"
-        folderPathLabel.toolTip = status.path
-        let note = problem ?? status.note
-        folderNoteLabel.stringValue = note
-        folderNoteLabel.toolTip = note
-        folderNoteLabel.textColor = problem == nil && status.isFound
-            ? Theme.parchmentDim
-            : .systemOrange
+        folderLabel.stringValue = status.path.map { "Game folder: \($0)" }
+            ?? "Game folder: not found. Choose it in Settings"
+        folderLabel.toolTip = status.isFound ? status.path : status.note
+        folderLabel.textColor = status.isFound ? LauncherStyle.textDim : LauncherStyle.warning
         refreshModes()
-        checkInstall(status)
     }
 
     /// Play needs a valid start; both modes need the game folder.
@@ -114,42 +107,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             : state.detail
         assetStatus.show(
             symbol: state.symbolName, title: "Asset Optimisation: \(state.title)", detail: detail,
-            colour: state == .ready ? .systemGreen : state.needsConversion ? .systemOrange : Theme
-                .parchmentDim
+            colour: state == .ready ? LauncherStyle.good : state.needsConversion ? LauncherStyle
+                .warning : LauncherStyle.textDim
         )
-    }
-
-    /// The check reads every plugin and archive header, so it runs off the main actor.
-    private func checkInstall(_ status: GameFolderStatus) {
-        installCheck?.cancel()
-        let path = status.path ?? GameDataLocator.persistedRootDefaults?
-            .string(forKey: GameDataLocator.defaultsKey)
-        guard let path else {
-            show(nil)
-            return
-        }
-        installLabel.stringValue = "Install: checking"
-        installCheck = Task { [weak self] in
-            let summary = await GameInstallCheck.check(
-                installURL: URL(filePath: path, directoryHint: .isDirectory)
-            )
-            guard !Task.isCancelled else { return }
-            self?.show(summary)
-        }
-    }
-
-    func show(_ summary: GameInstallSummary?) {
-        guard let summary else {
-            installLabel.stringValue = "Install: no folder to check"
-            installCountsLabel.stringValue = ""
-            installProblemsLabel.isHidden = true
-            return
-        }
-        installLabel.stringValue = summary.headline
-        installCountsLabel.stringValue = summary.countLine
-        installProblemsLabel.stringValue = summary.problemLines
-            .map { "Problem: \($0)" }.joined(separator: "\n")
-        installProblemsLabel.isHidden = summary.isComplete
     }
 
     func showLoad(_ timeline: WorldLoadTimeline, elapsed: Duration) {
@@ -167,7 +127,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         guard isViewLoaded, loadPanel.isHidden == loading else { return }
         modeRow.isHidden = loading
         loadPanel.isHidden = !loading
-        for button in [chooseButton, resetButton, continueButton] {
+        for button in [settingsLinkButton, continueButton] {
             button.isEnabled = !loading
         }
         if !loading {
@@ -177,35 +137,9 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
 
     // MARK: - Layout
 
-    private func makeFolderGroup() -> NSView {
-        folderPathLabel.textColor = Theme.parchment
-        folderPathLabel.lineBreakMode = .byTruncatingMiddle
-        folderPathLabel.isSelectable = true
-        installProblemsLabel.font = PanelMetrics.captionFont
-        installProblemsLabel.textColor = .systemOrange
-        installProblemsLabel.maximumNumberOfLines = 0
-        installProblemsLabel.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width)
-            .isActive = true
-        installProblemsLabel.setAccessibilityIdentifier("LauncherInstallProblemsStatsLabel")
-        PanelComponents.configureButton(
-            chooseButton, target: self, action: #selector(chooseFolder),
-            identifier: "LauncherChooseGameFolderControl"
-        )
-        chooseButton.toolTip = "Pick the folder that holds Data/Skyrim.esm"
-        PanelComponents.configureButton(
-            resetButton, target: self, action: #selector(useDefaultFolder),
-            identifier: "LauncherResetGameFolderControl"
-        )
-        resetButton.toolTip = "Forget the chosen folder and use the default Steam location"
-        return layout.group("Game folder", [
-            folderPathLabel, folderNoteLabel, installLabel, layout.detail(installCountsLabel),
-            installProblemsLabel, PanelComponents.buttonRow([chooseButton, resetButton])
-        ])
-    }
-
     private func makeModeRow() -> NSView {
         let columns = LauncherRegistry.modes.map { descriptor -> NSView in
-            let button = NSButton(
+            let button = LauncherButton(
                 title: descriptor.title,
                 image: NSImage(
                     systemSymbolName: descriptor.symbolName,
@@ -215,14 +149,13 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
                 target: self,
                 action: #selector(startMode(_:))
             )
-            button.imagePosition = .imageLeading
-            button.controlSize = .large
+            button.isPrimary = true
             button.toolTip = descriptor.toolTip
             button.setAccessibilityIdentifier(descriptor.controlIdentifier)
-            button.widthAnchor.constraint(equalToConstant: 240).isActive = true
+            button.widthAnchor.constraint(equalToConstant: 260).isActive = true
             modeButtons.append((descriptor.mode, button))
             let summary = layout.note(descriptor.summary)
-            summary.widthAnchor.constraint(equalToConstant: 250).isActive = true
+            summary.widthAnchor.constraint(equalToConstant: 260).isActive = true
             summary.setAccessibilityIdentifier(
                 descriptor.controlIdentifier.replacingOccurrences(
                     of: "Control",
@@ -243,7 +176,15 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
             identifier: "LauncherAssetOptimisationLinkControl"
         )
         assetLinkButton.toolTip = "Convert game files so they load faster"
-        return layout.group("Before you play", [assetStatus, assetLinkButton])
+        PanelComponents.configureButton(
+            settingsLinkButton, target: self, action: #selector(openSettings),
+            identifier: "LauncherSettingsLinkControl"
+        )
+        settingsLinkButton.toolTip = "Choose the game folder and the other load settings"
+        folderLabel.lineBreakMode = .byTruncatingMiddle
+        return layout.group("Before you play", [
+            folderLabel, assetStatus, layout.buttons([settingsLinkButton, assetLinkButton])
+        ])
     }
 
     // MARK: - Actions
@@ -257,17 +198,7 @@ final class LaunchPageViewController: NSViewController, LauncherPageRefreshing {
         context.showPage("assetOptimisation")
     }
 
-    @objc private func chooseFolder() {
-        guard let window = view.window else { return }
-        GameFolderPicker.choose(for: window) { [weak self] problem in
-            self?.problem = problem
-            self?.context.actions?.gameFolderDidChange()
-        }
-    }
-
-    @objc private func useDefaultFolder() {
-        GameDataLocator.clearUserChoice()
-        problem = nil
-        context.actions?.gameFolderDidChange()
+    @objc private func openSettings() {
+        context.showPage("settings")
     }
 }

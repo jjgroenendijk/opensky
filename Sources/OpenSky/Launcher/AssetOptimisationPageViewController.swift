@@ -11,8 +11,8 @@ final class AssetOptimisationPageViewController: NSViewController {
     let coordinator: AssetCacheCoordinator
     let layout = LauncherPageLayout(pageName: "AssetOptimisation")
     let status = LauncherStatusView(name: "AssetOptimisation")
-    let convertButton = NSButton(title: "Convert", target: nil, action: nil)
-    let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
+    let convertButton = LauncherButton(title: "Convert", target: nil, action: nil)
+    let cancelButton = LauncherButton(title: "Cancel", target: nil, action: nil)
     lazy var convertReasonLabel = layout.line("AssetOptimisationConvertReasonStatsLabel")
     let progressBar = NSProgressIndicator()
     lazy var spaceLabel = layout.line("AssetOptimisationSpaceStatsLabel")
@@ -43,9 +43,9 @@ final class AssetOptimisationPageViewController: NSViewController {
     )
     lazy var folderLabel = layout.line("AssetOptimisationFolderStatsLabel", mono: true)
     lazy var sizeLabel = layout.line("AssetOptimisationSizeStatsLabel")
-    let chooseFolderButton = NSButton(title: "Choose…", target: nil, action: nil)
-    let defaultFolderButton = NSButton(title: "Use Default", target: nil, action: nil)
-    let clearButton = NSButton(title: "Clear…", target: nil, action: nil)
+    let chooseFolderButton = LauncherButton(title: "Choose…", target: nil, action: nil)
+    let defaultFolderButton = LauncherButton(title: "Use Default", target: nil, action: nil)
+    let clearButton = LauncherButton(title: "Clear…", target: nil, action: nil)
 
     /// The settings file as saved now; the game window writes the same file.
     static func savedSettings() -> PlayerSettingsStore {
@@ -65,18 +65,14 @@ final class AssetOptimisationPageViewController: NSViewController {
     override func loadView() {
         configureControls()
         view = layout.makeView(title: "Asset Optimisation", status: status, groups: [
-            PanelComponents.group([
-                PanelComponents.buttonRow([convertButton, cancelButton]), convertReasonLabel,
+            layout.group("Conversion", [
+                layout.buttons([convertButton, cancelButton]), convertReasonLabel,
                 progressBar, spaceLabel, spaceWarningLabel, problemLabel
             ]),
-            layout.group("Optimised files", [enabledCheckbox]),
+            layout.group("Optimised files", [layout.toggle(enabledCheckbox)]),
             layout.group("Textures", [
-                PanelComponents.labeledFieldRow(
-                    caption: "Quality",
-                    captionWidth: 80,
-                    field: qualityPopUp
-                ),
-                qualityChangeLabel, layout.detail(qualityLimitsLabel)
+                layout.row("Quality", qualityPopUp), qualityChangeLabel,
+                layout.detail(qualityLimitsLabel)
             ] + formatRows()),
             layout.group(
                 "Meshes and collision",
@@ -86,15 +82,14 @@ final class AssetOptimisationPageViewController: NSViewController {
                 "Converted from and to", AssetOptimisationReadout.conversionLines.map(layout.note)
             )),
             layout.group("Direct GPU loading", [
-                directLoadCheckbox, directLoadLabel,
-                layout.note(AssetOptimisationReadout.directLoadReason),
-                layout.detail(PanelComponents.group([
-                    directTexturesCheckbox, directMeshesCheckbox, directAllDisksCheckbox
-                ]))
-            ]),
+                layout.toggle(directLoadCheckbox), directLoadLabel,
+                layout.note(AssetOptimisationReadout.directLoadReason)
+            ] + [directTexturesCheckbox, directMeshesCheckbox, directAllDisksCheckbox].map {
+                layout.detail(layout.toggle($0))
+            }),
             layout.group("Folder", [
                 folderLabel, sizeLabel,
-                PanelComponents.buttonRow([chooseFolderButton, defaultFolderButton, clearButton])
+                layout.buttons([chooseFolderButton, defaultFolderButton, clearButton])
             ])
         ])
         coordinator.onChange = { [weak self] in self?.refresh() }
@@ -115,9 +110,7 @@ final class AssetOptimisationPageViewController: NSViewController {
 
     private func formatRows() -> [NSView] {
         zip(AssetTextureClass.allCases, formatPopUps).map { group, popUp in
-            layout.detail(PanelComponents.labeledFieldRow(
-                caption: group.title, captionWidth: 80, field: popUp
-            ))
+            layout.detail(layout.row(group.title, popUp))
         }
     }
 
@@ -127,8 +120,8 @@ final class AssetOptimisationPageViewController: NSViewController {
         let state = coordinator.status
         status.show(
             symbol: state.symbolName, title: state.title, detail: state.detail,
-            colour: state == .ready ? .systemGreen : state.needsConversion ? .systemOrange : Theme
-                .parchmentDim
+            colour: state == .ready ? LauncherStyle.good : state.needsConversion ? LauncherStyle
+                .warning : LauncherStyle.textDim
         )
         let reason = coordinator.convertDisabledReason
         convertButton.isEnabled = reason == nil

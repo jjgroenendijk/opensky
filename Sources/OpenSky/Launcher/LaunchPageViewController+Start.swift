@@ -14,7 +14,6 @@ extension LaunchPageViewController: NSTextFieldDelegate {
             identifier: "LaunchContinueControl"
         )
         continueButton.toolTip = "Start Play and load the newest save"
-        continueButton.controlSize = .large
         continueLabel.stringValue = "Saves: checking"
     }
 
@@ -62,16 +61,23 @@ extension LaunchPageViewController: NSTextFieldDelegate {
         startWorldspaceField.toolTip = "Only Tamriel streams exterior cells today"
         startXField.toolTip = "The grid X of the exterior cell"
         startYField.toolTip = "The grid Y of the exterior cell"
-        startReasonLabel.textColor = .systemOrange
+        startReasonLabel.textColor = LauncherStyle.warning
         showStartForm()
     }
 
+    func makeGridFields() -> NSStackView {
+        for field in [startWorldspaceField, startXField, startYField] {
+            LauncherStyle.style(field)
+        }
+        let fields = NSStackView(views: [startWorldspaceField, startXField, startYField])
+        fields.spacing = PanelMetrics.rowGap
+        return fields
+    }
+
     func makeStartGroup() -> NSView {
-        let gridRow = NSStackView(views: [startWorldspaceField, startXField, startYField])
-        gridRow.spacing = PanelMetrics.rowGap
-        return layout.group("Start", [
-            startKindPopUp, startCellField, gridRow, startReasonLabel,
-            layout.note("Applies to Play. Developer Mode starts as before.")
+        layout.group("Start", [
+            layout.row("Play starts at", startKindPopUp), startCellRow, startGridRow,
+            startReasonLabel, layout.note("Applies to Play. Developer Mode starts as before.")
         ])
     }
 
@@ -87,9 +93,11 @@ extension LaunchPageViewController: NSTextFieldDelegate {
     /// Shows the reason of an invalid start, and remembers a valid one.
     private func refreshStart() {
         startCellField.isHidden = startForm.kind != .cell
+        startCellRow.isHidden = startCellField.isHidden
         for field in [startWorldspaceField, startXField, startYField] {
             field.isHidden = startForm.kind != .exterior
         }
+        startGridRow.isHidden = startForm.kind != .exterior
         switch startForm.validate() {
         case let .success(start):
             LaunchPreferences.remember(start)

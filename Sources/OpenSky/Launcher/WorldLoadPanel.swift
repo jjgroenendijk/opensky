@@ -9,7 +9,7 @@ final class WorldLoadPanel: NSStackView {
 
     private let bar = NSProgressIndicator()
     private let statusLabel = NSTextField(labelWithString: "")
-    private let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
+    private let cancelButton = LauncherButton(title: "Cancel", target: nil, action: nil)
     private var rows: [WorldLoadStage: StageRow] = [:]
 
     init() {
@@ -17,20 +17,21 @@ final class WorldLoadPanel: NSStackView {
         orientation = .vertical
         alignment = .leading
         spacing = PanelMetrics.groupSpacing
-        let heading = NSTextField(labelWithAttributedString: Theme.headingAttributed(
+        let heading = NSTextField(labelWithAttributedString: LauncherStyle.caps(
             "Loading world data",
-            size: 13,
-            color: Theme.parchment
+            size: 15,
+            colour: LauncherStyle.text
         ))
         bar.isIndeterminate = false
         bar.minValue = 0
         bar.maxValue = 1
         bar.setAccessibilityIdentifier("LauncherLoadProgressIndicator")
-        bar.widthAnchor.constraint(equalToConstant: 440).isActive = true
-        statusLabel.font = PanelMetrics.captionFont
-        statusLabel.textColor = Theme.parchmentDim
+        bar.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width).isActive = true
+        statusLabel.font = LauncherStyle.font(14)
+        statusLabel.textColor = LauncherStyle.textDim
         statusLabel.lineBreakMode = .byTruncatingTail
-        statusLabel.widthAnchor.constraint(equalToConstant: 440).isActive = true
+        statusLabel.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width)
+            .isActive = true
         statusLabel.setAccessibilityIdentifier("LauncherLoadStatusStatsLabel")
         PanelComponents.configureButton(
             cancelButton,
@@ -120,17 +121,17 @@ private final class StageRow: NSStackView {
         let text: String
         switch state {
         case .pending:
-            setSymbol("circle", color: Theme.parchmentDim)
+            setSymbol("circle", color: LauncherStyle.textDim)
             text = ""
         case .running:
-            setSymbol("hourglass", color: Theme.gold)
+            setSymbol("hourglass", color: LauncherStyle.text)
             text = "…"
         case let .finished(duration):
-            setSymbol("checkmark.circle.fill", color: Theme.gold)
+            setSymbol("checkmark.circle.fill", color: LauncherStyle.text)
             text = duration.secondsText
         }
-        title.textColor = state == .pending ? Theme.parchmentDim : Theme.parchment
-        time.textColor = Theme.parchmentDim
+        title.textColor = state == .pending ? LauncherStyle.textDim : LauncherStyle.text
+        time.textColor = LauncherStyle.textDim
         time.stringValue = text
         setAccessibilityValue(text.isEmpty ? "\(state)" : text)
     }

@@ -1,5 +1,5 @@
-// The launcher: the app opens on it, shows the game folder and its pages, and
-// each launch mode button opens its window.
+// The launcher: the app opens on it, shows its pages with the game folder under
+// Settings, and each launch mode button opens its window.
 
 import XCTest
 
@@ -9,7 +9,7 @@ final class LauncherUITests: OpenSkyUITestCase {
         let app = try launchApp(launchMode: "")
         XCTAssertTrue(app.tables["LauncherSidebar"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["LauncherGameFolderStatsLabel"].exists)
-        XCTAssertTrue(app.buttons["LauncherChooseGameFolderControl"].exists)
+        XCTAssertTrue(app.buttons["LauncherSettingsLinkControl"].exists)
         XCTAssertTrue(app.buttons["LaunchPlayControl"].isEnabled)
 
         app.buttons["LaunchDeveloperControl"].click()
@@ -34,7 +34,6 @@ final class LauncherUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.buttons["LaunchContinueControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["LauncherContinueStatsLabel"].exists)
         XCTAssertTrue(app.popUpButtons["LaunchStartKindControl"].exists)
-        XCTAssertTrue(app.staticTexts["LauncherInstallStatsLabel"].exists)
         XCTAssertTrue(app.staticTexts["LaunchPlaySummaryStatsLabel"].exists)
         XCTAssertTrue(app.staticTexts["LauncherAssetOptimisationStatusStatsLabel"].exists)
 
@@ -52,7 +51,7 @@ final class LauncherUITests: OpenSkyUITestCase {
     }
 
     @MainActor
-    func testDiagnosticsAndGraphicsPagesShowTheirControls() throws {
+    func testDiagnosticsSettingsAndGraphicsPagesShowTheirControls() throws {
         let app = try launchApp(launchMode: "")
         let sidebar = app.tables["LauncherSidebar"]
         XCTAssertTrue(sidebar.waitForExistence(timeout: 5))
@@ -60,6 +59,10 @@ final class LauncherUITests: OpenSkyUITestCase {
         XCTAssertTrue(app.buttons["DiagnosticsOpenLogsControl"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["DiagnosticsCopyReportControl"].exists)
         XCTAssertTrue(app.buttons["DiagnosticsBenchmarkControl"].exists)
+
+        sidebar.descendants(matching: .any)["LauncherPage-settings"].firstMatch.click()
+        XCTAssertTrue(app.buttons["SettingsChooseGameFolderControl"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["SettingsInstallStatsLabel"].exists)
 
         sidebar.descendants(matching: .any)["LauncherPage-graphics"].firstMatch.click()
         XCTAssertTrue(app.popUpButtons["GraphicsPresetControl"].waitForExistence(timeout: 5))

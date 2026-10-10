@@ -71,7 +71,7 @@ extension GraphicsPageViewController {
     }
 
     private func configurePopUps() {
-        let renderScales = PlayerSettingsCatalog.renderScaleOptions.map { "Render scale \($0)" }
+        let renderScales = PlayerSettingsCatalog.renderScaleOptions
         popUp(
             renderScaleControl,
             renderScales,
@@ -86,9 +86,8 @@ extension GraphicsPageViewController {
             textureBudgetControl, TextureBudget.choiceTitles, "TextureBudget",
             "GPU memory for close-up texture levels; Automatic follows this Mac"
         )
-        let caps = PlayerSettingsCatalog.frameRateCapOptions.map {
-            "Frame rate cap: \(PlayerSettingsCatalog.frameRateCapTitle($0))"
-        }
+        let caps = PlayerSettingsCatalog.frameRateCapOptions
+            .map(PlayerSettingsCatalog.frameRateCapTitle)
         popUp(frameRateCapControl, caps, "FrameRateCap", "The most frames a second Play draws")
     }
 
@@ -162,17 +161,13 @@ final class GraphicsOptionRow: NSObject {
             button.setAccessibilityIdentifier(identifier)
             toggle = button
             field = nil
-            views.append(button)
+            views.append(layout.toggle(button))
         } else {
             let input = NSTextField()
             PanelComponents.configureTextField(input, identifier: identifier, width: 100)
             toggle = nil
             field = input
-            views.append(PanelComponents.labeledFieldRow(
-                caption: option.title,
-                captionWidth: 190,
-                field: input
-            ))
+            views.append(layout.row(option.title, input))
         }
         let note = layout
             .note(option.unavailableReason.map { "Unavailable: \($0)" } ?? option.iniName)
@@ -181,7 +176,9 @@ final class GraphicsOptionRow: NSObject {
         if option.unavailableReason != nil {
             views.append(layout.detail(layout.note(option.iniName)))
         }
-        view = PanelComponents.group(views)
+        let stack = PanelComponents.group(views)
+        stack.spacing = 2
+        view = stack
         super.init()
         toggle?.target = self
         toggle?.action = #selector(changed)
