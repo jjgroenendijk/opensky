@@ -4,14 +4,19 @@
 import OpenSkyFormatsAnimation
 import OpenSkyGameData
 
-/// One clip retargeted to one skeleton.
+/// One clip retargeted to one skeleton. The clip is the first of `animationPaths` that
+/// exists, because creatures name the same clip differently.
 nonisolated public struct ActorClipKey: Hashable, Sendable {
     public let skeletonMeshPath: String
-    public let animationPath: String
+    public let animationPaths: [String]
 
     public init(skeletonMeshPath: String, animationPath: String) {
+        self.init(skeletonMeshPath: skeletonMeshPath, animationPaths: [animationPath])
+    }
+
+    public init(skeletonMeshPath: String, animationPaths: [String]) {
         self.skeletonMeshPath = skeletonMeshPath
-        self.animationPath = animationPath
+        self.animationPaths = animationPaths
     }
 }
 
@@ -30,7 +35,8 @@ extension AssetLoader where Key == ActorClipKey, Value == ActorAnimationClip {
         { key in
             try ActorAnimationClipLoader.clip(
                 skeletonMeshPath: key.skeletonMeshPath,
-                animationPath: key.animationPath,
+                animationPaths: key.animationPaths,
+                exists: files.exists,
                 readHKX: { try HKXFile(data: files.contents(forPath: $0)) }
             )
         }
