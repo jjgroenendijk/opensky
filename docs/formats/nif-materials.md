@@ -24,7 +24,7 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 | Type | Field | Notes |
 | --- | --- | --- |
 | uint32 | Shader flags 1 | Bit 15: refraction, so the shape is skipped |
-| uint32 | Shader flags 2 | Bit 4: double-sided, so no culling |
+| uint32 | Shader flags 2 | Bit 4: double-sided, so no culling. Bit 29: tree animation |
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
 | int32 | Texture set ref | `BSShaderTextureSet` |
@@ -39,6 +39,10 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 A refraction shape bends the image behind it, such as the heat-haze dome in
 `fireplacewood01burning.nif` (flags 1 `0x82418309`, texture `VaporTileNormal_n.dds`). Its
 texture is a normal map. OpenSky has no refraction pass, so it does not draw the shape.
+
+A shape with the tree animation flag, such as a pine branch in `treepineforestdead01.nif`
+(flags 2 `0x22008031`), stores its wind weight in the vertex alpha. OpenSky sets that alpha
+to 1, so it does not cut the branch away.
 
 The fields after specular strength (lighting effects, and per-shader-type fields such as
 environment map scale, skin tint, parallax, and eye data) are not read. The block size

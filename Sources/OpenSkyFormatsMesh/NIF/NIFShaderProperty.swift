@@ -32,6 +32,11 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         shaderFlags2 & 0x10 != 0
     }
 
+    /// SLSF2 bit 29 Tree_Anim: the vertex alpha is the branch's wind weight, not opacity.
+    public var isTreeAnimated: Bool {
+        shaderFlags2 & 0x2000_0000 != 0
+    }
+
     /// SLSF1 bit 15 Refraction: the shape bends what is behind it, such as the
     /// heat haze over a fire, and its texture is a normal map.
     public var isRefraction: Bool {
