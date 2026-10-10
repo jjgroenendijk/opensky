@@ -38,6 +38,8 @@ nonisolated extension BehaviorGraphInstance {
         case let value as HKBTimerModifier: value.modifier.enable
         case let value as BSEventOnDeactivateModifier: value.modifier.enable
         case let value as BSEventEveryNEventsModifier: value.modifier.enable
+        case let value as HKBPoweredRagdollControlsModifier: value.modifier.enable
+        case let value as BSRagdollContactListenerModifier: value.modifier.enable
         default: true
         }
     }
@@ -74,6 +76,13 @@ nonisolated extension BehaviorGraphInstance {
             return pose
         case let controls as HKBRigidBodyRagdollControlsModifier:
             applyRagdollControls(controls)
+            return pose
+        case let powered as HKBPoweredRagdollControlsModifier:
+            poweredRagdollControls = powered
+            return pose
+        case let listener as BSRagdollContactListenerModifier:
+            let id = listener.contactEvent.id
+            ragdollContactEvent = events.names.indices.contains(id) ? events.names[id] : nil
             return pose
         default:
             tally.notePassthroughModifier(object.className)
@@ -161,7 +170,7 @@ nonisolated extension BehaviorGraphInstance {
 
     /// `hkbRigidBodyRagdollControlsModifier`: publishes the authored blend duration so
     /// `RagdollRuntime` uses it. `m_bones` is not read; the ragdoll uses every body in
-    /// the skeleton NIF. The powered and contact-listener ragdoll modifiers pass through.
+    /// the skeleton NIF.
     private func applyRagdollControls(_ controls: HKBRigidBodyRagdollControlsModifier) {
         ragdollBlendDuration = controls.durationToBlend
     }

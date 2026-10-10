@@ -20,7 +20,7 @@ import OpenSkyAssetCache
 final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
     var livingEnvironment = FakeLivingEnvironmentState()
-    var faceMorphSnapshot = FaceMorphControlSnapshot.empty
+    var faceState = FakeFaceState()
     var idleState = FakeIdleState()
     var agentControlState = FakeAgentControlState()
     var presentationState = FakePresentationState()

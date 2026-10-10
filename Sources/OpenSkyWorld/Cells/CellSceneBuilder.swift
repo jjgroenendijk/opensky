@@ -4,6 +4,7 @@
 
 import Foundation
 import Metal
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
@@ -71,6 +72,8 @@ nonisolated public struct ResolvedInstance {
     /// The base's MODS texture sets; empty for a model drawn as authored.
     public let surface: ModelSurfaceOverride
     public let transform: float4x4
+    /// The behaviour set when `model` is this reference's own node-skinned copy.
+    public var animated: ObjectBehaviorAsset?
 }
 
 /// A located CELL and its cell-children group; nil children means no references.
@@ -139,6 +142,8 @@ nonisolated public final class CellSceneBuilder {
     var faceMorphFiles: [String: Result<TRIFile, AssetLoadFailure>] = [:]
     /// Painted chargen face color maps as DDS bytes, by their synthetic texture key.
     var faceTintTextures: [String: Data] = [:]
+    /// Object behaviour sets by project path; nil inside records a failed load.
+    var objectBehaviorAssets: [String: ObjectBehaviorAsset?] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver
@@ -497,7 +502,9 @@ nonisolated extension CellSceneBuilder {
             let surface = surface(for: resolved.alternateTextures)
             if
                 let instance = loadInstance(
-                    ref: ref, modelPath: modelPath, surface: surface, counts: &counts
+                    ref: ref, modelPath: modelPath, surface: surface,
+                    behavior: objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
+                    counts: &counts
                 )
             {
                 instances.append(instance)
@@ -511,20 +518,28 @@ nonisolated extension CellSceneBuilder {
         ref: PlacedReference,
         modelPath: String,
         surface: ModelSurfaceOverride,
+        behavior: ObjectBehaviorAsset?,
         counts: inout BuildCounts
     ) -> ResolvedInstance? {
         do {
+            let animated = behavior.flatMap {
+                try? meshes.animatedObjectModel(
+                    path: modelPath, bones: Set($0.skeleton.boneNames),
+                    reference: ref.formID.rawValue, surface: surface
+                )
+            }
             return try ResolvedInstance(
                 sortKey: (try? VirtualFileSystem.normalize(modelPath)) ?? modelPath,
                 formID: ref.formID.rawValue,
                 modelPath: modelPath,
-                model: meshes.model(path: modelPath, surface: surface),
+                model: animated ?? meshes.model(path: modelPath, surface: surface),
                 surface: surface,
                 transform: MatrixMath.placement(
                     position: ref.placement.position,
                     rotation: ref.placement.rotation,
                     scale: ref.scale
-                )
+                ),
+                animated: animated == nil ? nil : behavior
             )
         } catch MeshLibraryError.editorMarkerOnly {
             counts.markers += 1

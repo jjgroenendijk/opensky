@@ -15,6 +15,8 @@ public protocol PlayerWorld: AnyObject {
     var playerEquippedSet: [FormID]? { get }
     /// The race menu choices; nil keeps the `Player` record.
     var playerAppearanceOverride: PlayerAppearanceOverride? { get }
+    /// True while the weapon rides the hand node rather than its sheath.
+    var playerWeaponsDrawn: Bool { get }
     func showPlayerBody(_ body: PlayerBody) throws
     func showFirstPersonRig(_ rig: PlayerFirstPersonRig) throws
     var playerFirstPersonRig: PlayerFirstPersonRig? { get }

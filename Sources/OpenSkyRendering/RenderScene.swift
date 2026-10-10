@@ -63,6 +63,20 @@ nonisolated public final class RenderModel: Sendable {
             RenderMaterial(material: $0, textureProvider: textureProvider)
         }
     }
+
+    private init(meshes: [RenderMesh], renderMaterials: [RenderMaterial]) {
+        self.meshes = meshes
+        materials = renderMaterials
+    }
+
+    /// The model with its own skinning palettes, for one actor. The geometry and
+    /// textures stay shared. A model with no skinned mesh is returned as is.
+    public func posableCopy(device: MTLDevice) -> RenderModel {
+        guard meshes.contains(where: \.isSkinned) else { return self }
+        return RenderModel(
+            meshes: meshes.map { $0.posableCopy(device: device) }, renderMaterials: materials
+        )
+    }
 }
 
 /// One placed model going into a RenderScene: instance transform plus the

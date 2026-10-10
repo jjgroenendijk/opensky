@@ -46,9 +46,11 @@ On ARMO, `MODL` is a 4-byte ARMA FormID, not a path. `SkinNaked` has 25 of them.
 | `MOD2`/`MOD3` | zstring | male and female third-person model |
 | `MOD4`/`MOD5` | zstring | male and female first-person model |
 
-`NAM0` to `NAM3` are texture swaps. Many ARMAs have a male model only, and both genders wear
-it (`StormCloakBootsAA`). First-person models are rare: of the ARMAs for vanilla iron armor,
-only the torso and hands have one.
+`NAM0`/`NAM1` are the male and female skin `TXST`, and `NAM2`/`NAM3` a `FLST` of skin
+textures it may swap to. `MO2S` to `MO5S` are per-shape alternate textures, laid out like
+`MODS`. Many ARMAs have a male model only, and both genders wear it (`StormCloakBootsAA`).
+First-person models are rare: of the ARMAs for vanilla iron armor, only the torso and hands
+have one.
 
 `DNAM`: `0x00` uint8 male priority, `0x01` uint8 female priority, `0x02` 4 bytes (xEdit:
 weight-slider flags; UESP: one unknown uint32), `0x06` uint8 detection sound value, `0x07`

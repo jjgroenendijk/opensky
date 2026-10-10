@@ -61,21 +61,44 @@ Movement     = (equippedWeightBase + equippedWeightMult * weight)
 Action       = ActionSound * fSneakActionMult
 ```
 
-The last term, `(Noticer - Sneaker)`, is left out of the code. Both skills use the same pinned
-value, so it is always zero, and writing it out would suggest it is not.
+Both skill factors are a Sneak skill, clamped to `fSneakPerceptionSkillMin` to
+`fSneakPerceptionSkillMax` and multiplied by `fSneakSkillMult`. The noticer is the observer, and the
+sneaker is the target. So a skilled sneaker lowers the value at every distance, through the last
+term.
+
+Muffle follows UESP "Skyrim:Muffle (effect)" and not the shorter Sneak page: it scales the armour
+weight by `1 - muffle`, so a fully muffled target still makes the base noise of its steps. Muffle
+is the `Movement Noise Mult` actor value, which every Muffle effect raises
+(`PerkMuffleConstantSelf` is a value modifier on it). Effects stack, and values over 1 do nothing
+more.
+
+`ActionSound` is the sound level of the attack or cast the target makes right now. A swing uses the
+weapon's `WEAP` `VNAM` level, and a cast uses the casting sound level of the spell's first effect.
+The sound lasts as long as the swing or the cast.
 
 Outdoors, the attenuation range is multiplied by `fSneakExteriorDistanceMult`. So the same
 distance counts for less in the open than in a corridor.
 
-UESP describes the visual factor only in words: light level drives it. Light level is not
-available here, so this shape is OpenSky's own:
+UESP describes the visual factor only in words: light level drives it. So this shape is OpenSky's
+own:
 
 ```text
-Visual Factor = 0 without a sight line, or outside the view cone
-              = visualBaseValue * lightFactor * (sneakVisualMult while crouched)
+Visual Factor = 0 without a sight line, outside the view cone, or while invisible
+              = visualBaseValue * lightLevel * (sneakVisualMult while crouched)
 ```
 
-There is no partial seeing. A target outside the cone or behind a wall can only be heard.
+There is no partial seeing. A target outside the cone, behind a wall, or with an `Invisibility`
+actor value above zero can only be heard.
+
+### Light level
+
+The light level is sampled at the middle of the target's body from the light the scene pass shades
+it with: the ambient colour, the sun (or the cell's directional light indoors), and the 8 nearest
+point lights with the shader's `(1 - d / r) ^ falloff`. The Rec. 709 luminance of that sum,
+divided by `fullLightLuminance`, clamped to 0 to 1, is the level. There is no shadow test and no
+facing term. So a target in the shade of a wall at noon still counts as lit. [WARNING] OpenSky's own
+shape: the install has `fSneakLightMult`, `fSneakLightExteriorMult`, and `fDetectionSneakLightMod`,
+but no source says how the game combines them.
 
 ### Gait multipliers
 
@@ -88,8 +111,8 @@ There is no partial seeing. A target outside the cone or behind a wall can only 
 | Sprint | `sprintMovementMult` = 3 | OpenSky |
 
 Vanilla's movement term has no crouch factor. Vanilla uses the Sneak skill on the other side of
-the formula instead. OpenSky has no skills yet, so sneaking has to lower the gait term. Swimming
-uses the walking value instead of a new unmeasured constant.
+the formula instead, and OpenSky does that too. The sneak multiplier stays, because the sneak walk
+is slower than a walk. Swimming uses the walking value instead of a new unmeasured constant.
 
 ### Noise radius
 
@@ -98,7 +121,7 @@ distance where the sound and skill terms exactly cancel `fSneakBaseValue`. The e
 not use it. The readout shows it, because a radius in world units is easy to check. Zero is a
 real answer: a target too quiet to notice even up close has no radius.
 
-Where each constant comes from, and which inputs are still fixed at a neutral value, is on the
+Where each constant and each input comes from is on the
 [detection constants](/engine/detection-constants.md) page.
 
 ## Level and state
@@ -165,8 +188,9 @@ searches.
   feet out to the range its senses reach. The color is grey, amber, or red for the strongest
   state. A white line points to the place it will investigate. The overlay uses depth, so a wall
   hides the cone behind it ([navigation](/engine/navigation.md)).
-- World > AI & Navigation > Detection: the totals, one line per tracked pair of the selected
-  actor, and every constant with its source. This section has no controls on purpose. A control
+- World > AI & Navigation > Detection: the totals, each target's inputs (light, armour weight,
+  muffle, action sound, Sneak, invisibility), one line per tracked pair of the selected actor, and
+  every constant with its source. This section has no controls on purpose. A control
   that set a level directly would show a number the formula never made.
 - `openskycli gmst detection` prints every setting with its source, and
   `openskycli gmst list --prefix <s>` prints any group of game settings ([CLI](/tools/cli.md)).

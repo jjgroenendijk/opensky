@@ -88,8 +88,12 @@ the bind pose. Shards spread over the frame, so they fail it.
 Decoded clips are cached by skeleton path and gender. Each drawn actor gets a playback object owned
 by its cell, which is freed with the cell. The clip data can stay cached.
 
-One update samples each clip once, and fills each shared mesh's palette once. Actors that share a
-body share the pose, so there is no repeated work.
+One update samples each clip once, and actors that play the same clip share that sample. Each
+actor still has its own palette. The mesh cache shares the geometry and the textures, and each
+loaded actor gets a copy of each skinned mesh with its own bone matrices. So two actors with the
+same body can play different clips, and a ragdoll or a head turn on one does not move the other.
+The cost is one draw per actor for each skinned mesh, instead of one instanced draw for all of
+them.
 
 A character skeleton under `meshes\actors\character\` plays the gendered `mt_` clips. A creature
 skeleton, such as `meshes\actors\horse\character assets\skeleton.nif`, plays the clips in the

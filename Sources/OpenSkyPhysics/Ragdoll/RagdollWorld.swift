@@ -100,6 +100,10 @@ nonisolated public struct RagdollWorld: Sendable {
     /// Keys in the order they were added, oldest first. `ragdolls` is sorted by key,
     /// so `trim(to:)` needs this separate age order.
     private var spawnOrder: [ReferenceKey] = []
+    /// Ragdolls that touched the world on their last step, and the ones that began
+    /// to since the last drain.
+    private var touching: Set<ReferenceKey> = []
+    private var contactStarts: [ReferenceKey] = []
     private var accumulatedTime: Float = 0
     public var isFrozen = false
     /// Whether a ragdoll's bones may touch each other at all: one switch over every
@@ -166,6 +170,8 @@ nonisolated public struct RagdollWorld: Sendable {
         cells.removeValue(forKey: key)
         wasSettled.remove(key)
         spawnOrder.removeAll { $0 == key }
+        touching.remove(key)
+        contactStarts.removeAll { $0 == key }
     }
 
     /// Stops simulating the oldest corpses until at most `limit` remain. A trimmed
@@ -199,6 +205,8 @@ nonisolated public struct RagdollWorld: Sendable {
         wasSettled.removeAll()
         spawnOrder.removeAll()
         settled.removeAll()
+        touching.removeAll()
+        contactStarts.removeAll()
         accumulatedTime = 0
     }
 
@@ -224,10 +232,28 @@ nonisolated public struct RagdollWorld: Sendable {
                 ragdolls[index].instance.step(
                     world: world, dt: PhysicsStep.fixedTimeStep
                 )
+                noteContact(of: ragdolls[index])
             }
             accumulatedTime -= PhysicsStep.fixedTimeStep
         }
         recordSettled()
+    }
+
+    /// The ragdolls that began touching the world since the last call, in the
+    /// order they did. A ragdoll that stays in contact is reported once.
+    public mutating func drainContactStarts() -> [ReferenceKey] {
+        defer { contactStarts.removeAll() }
+        return contactStarts
+    }
+
+    private mutating func noteContact(of entry: (key: ReferenceKey, instance: RagdollInstance)) {
+        guard entry.instance.lastStats.contactCount > 0 else {
+            touching.remove(entry.key)
+            return
+        }
+        if touching.insert(entry.key).inserted {
+            contactStarts.append(entry.key)
+        }
     }
 
     /// Records the resting root transform of every ragdoll that came to rest

@@ -125,7 +125,8 @@ its two speakers and ends.
 
 ## Not done yet
 
-- Scenes play no idles and turn no heads (`HTID`).
+- Scenes play no idles. A line turns the speaker's head toward its `HTID` alias
+  ([head tracking](/engine/head-tracking.md)).
 - `ForceStart()` does not stop other scenes.
 - Actor behavior flags (`VNAM`, actor `DNAM`), such as "interrupt on combat", are decoded
   but not used.

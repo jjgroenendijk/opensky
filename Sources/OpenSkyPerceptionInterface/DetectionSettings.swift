@@ -2,7 +2,6 @@
 // naming its source. GMSTs come from the load order, with install-observed
 // fallbacks (UESP's `fSneakDistanceAttenuationExponent` does not exist). Values
 // no record documents, such as the view cone, are marked "OpenSky constant".
-// Light, muffle, and skill stay pinned in `DetectionFormula`.
 // See docs/engine/detection.md.
 
 import Foundation
@@ -32,18 +31,17 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// `fSneakRunningMult` — how much louder a running target is than a walking
     /// one.
     public let runningMult: MovementSetting
-    /// `fSneakActionMult` — what an action sound is multiplied by. OpenSky feeds
-    /// no action sounds yet, so this multiplies a pinned zero; it is resolved
-    /// anyway so the term is wired rather than absent.
+    /// `fSneakActionMult` — what an action sound is multiplied by.
     public let actionMult: MovementSetting
     /// `fSneakSkillMult` — what a skill level is multiplied by to become a skill
-    /// factor. Both skills are pinned (see `DetectionFormula`), so this weights
-    /// a documented constant rather than a stored actor value.
+    /// factor.
     public let skillMult: MovementSetting
     /// `fSneakPerceptionSkillMin` and `fSneakPerceptionSkillMax` — the range a
     /// skill level is clamped to before it is weighted.
     public let perceptionSkillMin: MovementSetting
     public let perceptionSkillMax: MovementSetting
+    /// `iSoundLevelSilent` — the action sound of a silent weapon or spell.
+    public let silentActionSound: MovementSetting
 
     // MARK: - OpenSky's own
 
@@ -59,9 +57,8 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// on the same terms.
     public let equippedWeightMult: MovementSetting
     /// What movement noise is multiplied by while the target is sneaking.
-    /// Vanilla's own movement term has no crouch factor at all — it spends the
-    /// Sneak skill on the observer's side of the formula instead — and OpenSky
-    /// has no skills to spend, so the gait is where sneaking has to pay.
+    /// Vanilla's movement term has no crouch factor, but the sneak walk is
+    /// slower and softer than a walk, so it is quieter here too.
     public let sneakMovementMult: MovementSetting
     /// The same for a sprinting target, one step above `fSneakRunningMult`.
     public let sprintMovementMult: MovementSetting
@@ -74,6 +71,13 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     public let visualBaseValue: MovementSetting
     /// What the visual term is multiplied by while the target is sneaking.
     public let sneakVisualMult: MovementSetting
+    /// The action sounds of the other three sound levels. The install has a
+    /// game setting only for the silent level.
+    public let normalActionSound: MovementSetting
+    public let loudActionSound: MovementSetting
+    public let veryLoudActionSound: MovementSetting
+    /// The luminance of the light reaching a target that counts as fully lit.
+    public let fullLightLuminance: MovementSetting
     /// Detection value at which the level climbs at its full rate. A stronger
     /// signal than this does not climb faster.
     public let fullDetectionValue: MovementSetting
@@ -99,12 +103,25 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
     /// plugin authors them.
     public static func resolve(store: GameSettingStore) -> DetectionSettings {
         make(loadOrderSource: "vanilla Skyrim.esm value") { editorID in
-            guard
-                let resolved = store.setting(editorID: editorID),
-                case let .float(value) = resolved.setting.value,
-                value.isFinite
-            else { return nil }
+            guard let resolved = store.setting(editorID: editorID) else { return nil }
+            let value: Float
+            switch resolved.setting.value {
+            case let .float(number): value = number
+            case let .integer(number): value = Float(number)
+            default: return nil
+            }
+            guard value.isFinite else { return nil }
             return MovementSetting(value: value, source: resolved.sourcePlugin)
+        }
+    }
+
+    /// The action sound of one sound level.
+    public func actionSound(for level: DetectionSoundLevel) -> Float {
+        switch level {
+        case .silent: max(0, silentActionSound.value)
+        case .normal: max(0, normalActionSound.value)
+        case .loud: max(0, loudActionSound.value)
+        case .veryLoud: max(0, veryLoudActionSound.value)
         }
     }
 
@@ -142,6 +159,7 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             skillMult: vanilla("fSneakSkillMult", 0.5),
             perceptionSkillMin: vanilla("fSneakPerceptionSkillMin", 0),
             perceptionSkillMax: vanilla("fSneakPerceptionSkillMax", 100),
+            silentActionSound: vanilla("iSoundLevelSilent", 10),
             distanceAttenuationExponent: ours(2),
             equippedWeightBase: ours(12),
             equippedWeightMult: ours(0.5),
@@ -150,6 +168,10 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             viewConeHalfAngleDegrees: ours(90),
             visualBaseValue: ours(40),
             sneakVisualMult: ours(0.5),
+            normalActionSound: ours(25),
+            loudActionSound: ours(50),
+            veryLoudActionSound: ours(100),
+            fullLightLuminance: ours(1),
             fullDetectionValue: ours(25),
             gainPerSecond: ours(100),
             decayPerSecond: ours(20),
@@ -157,4 +179,13 @@ nonisolated public struct DetectionSettings: Equatable, Sendable {
             detectedLevel: ours(100)
         )
     }
+}
+
+/// The sound level a weapon (`WEAP` `VNAM`) or a magic effect (`MGEF` casting
+/// sound level) declares. The raw values are the record values.
+nonisolated public enum DetectionSoundLevel: UInt32, CaseIterable, Sendable {
+    case loud = 0
+    case normal = 1
+    case silent = 2
+    case veryLoud = 3
 }

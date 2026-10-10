@@ -16,11 +16,19 @@ nonisolated public enum RigidAttachment: Sendable {
         restTransform: float4x4
     ) -> Model {
         Model(
-            meshes: model.meshes.map { skinned($0, to: bone, restTransform: restTransform) },
+            meshes: model.meshes.map {
+                skinned($0, to: bone, restTransform: restTransform, local: $0.transform)
+            },
             materials: model.materials,
             skippedShapeCount: model.skippedShapeCount,
             editorMarkerShapeCount: model.editorMarkerShapeCount
         )
+    }
+
+    /// One mesh of an object bound to the node it sits under. The mesh transform
+    /// becomes relative to the node, so the rest pose draws it where it was.
+    public static func skinned(_ mesh: Mesh, toNode bone: String, nodeRest: float4x4) -> Mesh {
+        skinned(mesh, to: bone, restTransform: nodeRest, local: nodeRest.inverse * mesh.transform)
     }
 
     /// One mesh bound to `bone`. A mesh that already carries skinning is left
@@ -30,10 +38,10 @@ nonisolated public enum RigidAttachment: Sendable {
     private static func skinned(
         _ mesh: Mesh,
         to bone: String,
-        restTransform: float4x4
+        restTransform: float4x4,
+        local: float4x4
     ) -> Mesh {
         guard mesh.skinning == nil else { return mesh }
-        let local = mesh.transform
         let inverseLocal = local.inverse
         let skinning = MeshSkinning(
             weights: Array(repeating: SIMD4(1, 0, 0, 0), count: mesh.positions.count),
@@ -45,7 +53,7 @@ nonisolated public enum RigidAttachment: Sendable {
         )
         return Mesh(
             name: mesh.name,
-            transform: mesh.transform,
+            transform: local,
             positions: mesh.positions,
             normals: mesh.normals,
             tangents: mesh.tangents,

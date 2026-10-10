@@ -188,10 +188,11 @@ nonisolated public enum AIDetectionReadout: Sendable {
         let dropped = readout.droppedPairCount > 0
             ? ", \(readout.droppedPairCount) pairs over the cap"
             : ""
-        return "Detection: \(readout.pairs.count) pairs from"
+        let pass = "Detection: \(readout.pairs.count) pairs from"
             + " \(readout.observerCount) observers over \(readout.targetCount) targets"
             + " (\(readout.lineOfSightQueryCount) sight queries,"
             + " \(readout.stepCount) steps)\(dropped)"
+        return ([pass] + readout.targets.map { "  \($0.summaryLine)" }).joined(separator: "\n")
     }
 
     /// Every pair the selected actor is on either side of.

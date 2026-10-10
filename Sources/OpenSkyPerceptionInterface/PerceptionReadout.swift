@@ -79,6 +79,8 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
     public let droppedPairCount: Int
     public let lineOfSightQueryCount: Int
     public let stepCount: Int
+    /// What each target brings into the formula this frame.
+    public let targets: [DetectionTargetReadout]
 
     public static let empty = PerceptionReadout(
         pairs: [],
@@ -101,7 +103,8 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
         targetCount: Int,
         droppedPairCount: Int,
         lineOfSightQueryCount: Int,
-        stepCount: Int
+        stepCount: Int,
+        targets: [DetectionTargetReadout] = []
     ) {
         self.pairs = pairs
         self.observerCount = observerCount
@@ -109,5 +112,30 @@ nonisolated public struct PerceptionReadout: Equatable, Sendable {
         self.droppedPairCount = droppedPairCount
         self.lineOfSightQueryCount = lineOfSightQueryCount
         self.stepCount = stepCount
+        self.targets = targets
+    }
+}
+
+/// One target's non-geometric inputs, as the Detection section shows them.
+nonisolated public struct DetectionTargetReadout: Equatable, Sendable {
+    public let name: String
+    public let traits: DetectionTargetTraits
+
+    public init(name: String, traits: DetectionTargetTraits) {
+        self.name = name
+        self.traits = traits
+    }
+
+    public var summaryLine: String {
+        String(
+            format: "%@: light %.2f, armour weight %.1f, muffle %.2f, action %.0f, Sneak %.0f%@",
+            name,
+            traits.lightLevel,
+            traits.equippedWeight,
+            traits.muffle,
+            traits.actionSound,
+            traits.sneakSkill,
+            traits.isInvisible ? ", invisible" : ""
+        )
     }
 }

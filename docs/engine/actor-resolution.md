@@ -120,9 +120,29 @@ A drawn weapon is a rigid model on a named bone. The bone names come from
 | `WeaponBack`, `WeaponBow` | spine | sheathed on the back |
 
 The node in `skeleton.nif` is spelled `WEAPON`, but the Havok rig spells it `Weapon`. So the
-NIF bone lookup ignores case. Draw and sheathe move the weapon between the sheathed node and
-the hand node on the `BeginWeaponDraw` and `BeginWeaponSheathe` clip annotations
-([melee combat](/engine/melee-combat.md)).
+NIF bone lookup ignores case.
+
+A weapon is always skinned to a hand node. While it is sheathed, the pose places that hand node
+on the sheath node, so a draw or a sheathe needs no rebuild:
+
+| item | drawn | sheathed |
+| --- | --- | --- |
+| one-handed weapon | `Weapon` | `WeaponSword`, `WeaponDagger`, `WeaponAxe` or `WeaponMace` |
+| two-handed weapon, staff | `Weapon` | `WeaponBack` |
+| bow, crossbow | `Weapon` | `WeaponBow` |
+| second one-handed weapon (dual wield) | `Shield` | its type's sheath node |
+| worn shield (slot 39) | `Shield` | `Shield` |
+| hand-to-hand, unknown type | `Weapon` | `Weapon` |
+
+The sheath node comes from the WEAP `DNAM` animation type. A weapon whose equip slot is the left
+hand, or a second one-handed weapon, rides `Shield`. The player draws on the
+`BeginWeaponDraw` and `BeginWeaponSheathe` clip annotations
+([melee combat](/engine/melee-combat.md)). An NPC has no graph with a draw state, so it draws
+while its combat activity is "fighting".
+
+The vanilla skeleton (`skeleton.nif`, read with `openskycli nif`) has no node for a shield on
+the back. So a sheathed shield stays on the arm, as in the game. Vanilla has no left-hand sheath
+nodes either, so a dual-wielded pair of the same type shares one sheath node and overlaps.
 
 A scene bakes placement transforms when it is built. The only transform that changes each
 frame is GPU skinning. So `RigidAttachment` turns the weapon into a skinned mesh with one
@@ -145,8 +165,32 @@ at the weapon origin, not in the hand.
 An equipment change mid-animation continues the clip; it does not restart it. The animation
 clock does not reset on a cell rebuild, and actors are posed before each draw.
 
-Not done yet: shields on the back, dual-wield placement, ARMA texture swaps, and the `DNAM`
-weapon adjust value.
+## Body weight
+
+Many body and armour models come in pairs: `_0.nif` is the thin body and `_1.nif` the heavy
+one. Both files have the same shapes and the same vertex order, so the game blends them vertex
+for vertex. The weight is `NPC_ NAM7`, 0 to 100, a Traits-tab field that follows the template
+chain like the head parts.
+
+An ARMA names the heavy file: `IronCuirassAA` `MOD2` is `Armor\Iron\Male\CuirassLight_1.nif`,
+and the archive holds `cuirasslight_0.nif` beside it (`openskycli record`, `openskycli vfs ls`).
+
+A part whose model path ends in `_1.nif` loads its `_0.nif` sibling too. Each position and
+normal moves from thin to heavy by the weight. A shape whose vertex count differs between the
+two files keeps the heavy vertices, and a missing sibling keeps the heavy model.
+
+Where OpenSky differs: the weight rounds to tenths, so the cache holds at most 11 copies of one
+body. An actor with no `NAM7` reads as 50; no source gives the game's default.
+
+## Armour texture swaps
+
+An ARMA model carries alternate textures in `MO2S` (male) and `MO3S` (female), in the same layout
+as a static's `MODS` ([armor](/formats/armor.md)). Each entry names a shape in the mesh and a
+`TXST`. The resolver reads the `TXST` diffuse and normal paths, and the mesh loads with those
+textures on that shape. An entry whose `TXST` is missing keeps the shape's own textures, as on a
+static.
+
+Not done yet: the `NAM0` to `NAM3` skin texture sets, and the `DNAM` weapon adjust value.
 
 ## Assembly
 

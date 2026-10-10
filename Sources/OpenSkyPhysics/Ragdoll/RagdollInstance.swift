@@ -36,6 +36,11 @@ nonisolated public struct RagdollInstance: Sendable {
     /// Whether the bones may touch each other this step; the sidebar switch over the
     /// definition's pairs.
     public var isSelfCollisionEnabled = true
+    /// The powered-ragdoll motor that holds the bones near the hand-off pose
+    /// while the blend runs. Nil leaves the bones to the solver alone.
+    public var motor: RagdollMotor?
+    /// The hand-off pose of each body, index-aligned with `bodies`: the motor's target.
+    public private(set) var motorTargets: [RagdollPose] = []
     public private(set) var blendElapsed: Float = 0
     public private(set) var lastStats = DynamicStepStats()
     /// Where the root bone was when the current settle window opened, and how
@@ -80,6 +85,7 @@ nonisolated public struct RagdollInstance: Sendable {
     ) {
         guard !definition.bones.isEmpty else { return nil }
         var bodies: [DynamicBody] = []
+        var targets: [RagdollPose] = []
         bodies.reserveCapacity(definition.bones.count)
         for bone in definition.bones {
             guard animatedBoneMatrices.indices.contains(bone.boneIndex) else { return nil }
@@ -97,9 +103,11 @@ nonisolated public struct RagdollInstance: Sendable {
             )
             body.linearVelocity = velocity
             bodies.append(body)
+            targets.append(pose)
         }
         self.definition = definition
         self.bodies = bodies
+        motorTargets = targets
         self.blendDuration = max(0, blendDuration.isFinite ? blendDuration : 0)
     }
 
@@ -135,6 +143,7 @@ nonisolated public struct RagdollInstance: Sendable {
     public mutating func step(world: DynamicStepWorld, dt: Float) -> DynamicStepStats {
         guard dt > 0, dt.isFinite else { return lastStats }
         blendElapsed = min(blendElapsed + dt, max(blendDuration, 0))
+        applyMotor(dt: dt)
         lastStats = DynamicBodySolver.step(
             bodies: &bodies,
             world: world,
@@ -144,6 +153,28 @@ nonisolated public struct RagdollInstance: Sendable {
         )
         updateSettling(dt: dt)
         return lastStats
+    }
+
+    /// Pulls each body towards its hand-off pose, more weakly as the simulation
+    /// takes over. After the blend the motor does nothing.
+    private mutating func applyMotor(dt: Float) {
+        guard let motor, motorTargets.count == bodies.count else { return }
+        let weight = 1 - simulationWeight
+        guard weight > 0 else { return }
+        for index in bodies.indices where !bodies[index].isSleeping {
+            let target = motorTargets[index]
+            let body = bodies[index]
+            let mass = body.definition.mass
+            bodies[index].linearVelocity = motor.driven(
+                body.linearVelocity, error: target.position - body.originPosition,
+                mass: mass, dt: dt, weight: weight
+            )
+            bodies[index].angularVelocity = motor.driven(
+                body.angularVelocity,
+                error: RagdollMotor.angularError(from: body.orientation, to: target.orientation),
+                mass: mass, dt: dt, weight: weight
+            )
+        }
     }
 
     /// Puts the whole ragdoll to sleep once its root stops travelling, and runs the

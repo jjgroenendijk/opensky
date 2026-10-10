@@ -26,6 +26,8 @@ public final class PlayerCoordinator {
     /// The set the newest rigs were requested for, to detect a change.
     private var equipped: [FormID]?
     private var appearance: PlayerAppearanceOverride?
+    /// The shown rigs' playbacks, which take the draw state each frame.
+    private var rigAnimations: [Bool: PlayerAnimationPlayback] = [:]
     /// Why there is no body, when there is none.
     public private(set) var failureReason: String?
     /// Kept apart from `failureReason`: an install can have a working
@@ -117,6 +119,9 @@ public final class PlayerCoordinator {
     /// Equipment changes come from the panel, a menu, or a script, so the body
     /// watches the resulting set. One array comparison per frame.
     public func refreshBody() {
+        for animation in rigAnimations.values {
+            animation.weaponsDrawn = world?.playerWeaponsDrawn ?? false
+        }
         guard
             world?.playerEquippedSet != equipped
             || world?.playerAppearanceOverride != appearance
@@ -157,9 +162,9 @@ public final class PlayerCoordinator {
         case let .success(rig):
             failureReason = nil
             do {
-                try world.showPlayerBody(
-                    PlayerBody(rig: rig, skeleton: graph.skeleton, pose: locomotion.pose)
-                )
+                let body = PlayerBody(rig: rig, skeleton: graph.skeleton, pose: locomotion.pose)
+                try world.showPlayerBody(body)
+                rigAnimations[false] = body.animation
             } catch {
                 failureReason = String(describing: error)
                 Self.logger.error(
@@ -185,6 +190,7 @@ public final class PlayerCoordinator {
             )
             do {
                 try world.showFirstPersonRig(rig)
+                rigAnimations[true] = rig.animation
             } catch {
                 let text = String(describing: error)
                 firstPersonFailureReason = text

@@ -31,7 +31,7 @@ public protocol PackageWorld: AnyObject {
     func packagePatrolPath(
         from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]?
-    /// A held package started or finished its procedure. Its fragments run here.
+    /// A held package started, finished, or was left. Its fragments run here.
     func packageProcedure(_ event: PackageScriptEvent)
     /// Seats `rider` on its horse and returns the horse, or nil when it has none loaded.
     func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey?
@@ -64,20 +64,26 @@ extension PackageWorld {
     }
 }
 
-/// The begin or end of one actor's package, which runs the package's fragment.
+/// The begin, end, or change of one actor's package, which runs the package's fragment.
+/// A change is the actor leaving the package, whether it completed or not.
 nonisolated public struct PackageScriptEvent: Equatable, Sendable {
     public enum Kind: Equatable, Sendable {
         case begin
         case end
+        case change
     }
 
     public let kind: Kind
     public let actor: ReferenceKey
     public let package: Package
 
-    /// The PACK fragment flag: 0x01 begin, 0x02 end (docs/formats/vmad.md).
+    /// The PACK fragment flag: 0x01 begin, 0x02 end, 0x04 change (docs/formats/vmad.md).
     public var fragmentSlot: UInt32 {
-        kind == .begin ? 0x01 : 0x02
+        switch kind {
+        case .begin: 0x01
+        case .end: 0x02
+        case .change: 0x04
+        }
     }
 }
 
@@ -283,8 +289,18 @@ public final class PackageCoordinator {
             context: world.packageConditionContext(clock: clock)
         )
         self.runtime = runtime
-        executions.removeValue(forKey: actor)
+        leaveExecution(of: actor)
         updateMount(actor, rides: false)
+    }
+
+    /// Drops the actor's machine and runs the change fragment of the package it left.
+    private func leaveExecution(of actor: ReferenceKey) {
+        guard let execution = executions.removeValue(forKey: actor) else { return }
+        if let package = try? store?.resolve(execution.package).package {
+            world?.packageProcedure(
+                PackageScriptEvent(kind: .change, actor: actor, package: package)
+            )
+        }
     }
 
     /// A move the procedure asked for ended.
@@ -301,13 +317,14 @@ public final class PackageCoordinator {
     /// Feeds one event to the actor's machine. Finishing the procedure ends the package.
     private func step(_ actor: ReferenceKey, with event: PackageProcedureEvent) {
         guard var execution = executions[actor] else { return }
-        let wasDone = execution.isDone
+        let wasComplete = execution.machine.state == .complete
+        let lapsBefore = execution.machine.laps
         let commands = execution.handle(event)
         executions[actor] = execution
-        if
-            !wasDone, execution.machine.state == .complete,
-            let package = try? store?.resolve(execution.package).package
-        {
+        // A repeatable patrol ends its package at the end of every lap, and walks on.
+        let ended = execution.machine.laps > lapsBefore
+            || (!wasComplete && execution.machine.state == .complete)
+        if ended, let package = try? store?.resolve(execution.package).package {
             world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
         }
         apply(commands, actor: actor)
@@ -329,11 +346,12 @@ public final class PackageCoordinator {
             let hold = runtime.hold(for: actor),
             let current = runtime.currentPackage(for: actor)
         else {
-            executions.removeValue(forKey: actor)
+            leaveExecution(of: actor)
             return
         }
         guard executions[actor]?.package != current.package.formID else { return }
         guard let start = world.packageActorPosition(actor) else { return }
+        leaveExecution(of: actor)
         let place = PackageOverrideExecution.location(of: current.package).flatMap {
             world.packagePlace(of: $0, actor: actor, aliasQuest: hold.aliasQuest)
         }

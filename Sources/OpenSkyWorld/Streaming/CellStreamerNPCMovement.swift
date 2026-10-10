@@ -16,6 +16,8 @@ public struct CellStreamerNPCMovementState {
     public var onDoorCrossing: ((ReferenceKey, FormID) -> Void)?
     /// An actor walked into another cell. Called after its rest write.
     public var onCellHandoff: ((NPCMovementPersistence) -> Void)?
+    /// The player and the standing actors walkers steer around.
+    public var standingActors: (() -> [NPCNeighbour])?
     /// Rest writes no resident build has drawn yet, oldest first, per actor.
     public var unbakedRests: [ReferenceKey: [NPCUnbakedRest]] = [:]
     /// The rest write in progress, so its store mutation rebuilds no cell.
@@ -67,6 +69,11 @@ extension CellStreamer {
     public var onNPCCellHandoff: ((NPCMovementPersistence) -> Void)? {
         get { npcMovementState.onCellHandoff }
         set { npcMovementState.onCellHandoff = newValue }
+    }
+
+    public var npcStandingActors: (() -> [NPCNeighbour])? {
+        get { npcMovementState.standingActors }
+        set { npcMovementState.standingActors = newValue }
     }
 
     /// A `direct` move walks the straight line to `point` on the terrain, without a
@@ -198,7 +205,9 @@ extension CellStreamer {
             },
             hasGround: { [weak self] position in
                 self?.interiorScene != nil || self?.sampleTerrain(at: position) != nil
-            }
+            },
+            standingActors: { [weak self] in self?.npcStandingActors?() ?? [] },
+            sampleWater: { [weak self] position in self?.sampleWaterHeight(at: position) }
         ))
     }
 

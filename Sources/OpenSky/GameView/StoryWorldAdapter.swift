@@ -276,7 +276,20 @@ extension StoryWorldAdapter: SceneWorld {
 
     func sceneLineSpoken(_ line: SceneLine) {
         game.audio.speak(voicePaths(of: line.info, speaker: line.speaker), speaker: line.speaker)
-        let text = game.dialogue.runtime?.dialogue.info(line.info)
+        let info = game.dialogue.runtime?.dialogue.info(line.info)
+        if let target = line.lookAt {
+            game.headTracking.setLookTarget(target, for: line.speaker, seconds: line.seconds)
+        }
+        if
+            let response = info?.responses.first,
+            let face = game.streamer?.referenceEntry(key: line.speaker)?.placedActor?.formID
+        {
+            game.faceMorphs.showEmotion(
+                response.emotion, value: response.emotionValue, on: face,
+                now: game.renderer?.animationTime ?? 0, seconds: line.seconds
+            )
+        }
+        let text = info
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(
             text, kind: .general, seconds: Double(line.seconds),

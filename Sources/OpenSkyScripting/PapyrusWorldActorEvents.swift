@@ -50,6 +50,15 @@ extension PapyrusWorldRuntime {
         queueActorEvent("OnRaceSwitchComplete", on: actor, arguments: [])
     }
 
+    /// Queues `OnPackageStart(akNewPackage)`, `OnPackageEnd(akOldPackage)`, or
+    /// `OnPackageChange(akOldPackage)` on each script of `actor`. Returns the count.
+    @discardableResult
+    public func queuePackageEvent(
+        _ functionName: String, package: FormID, actor: ReferenceKey
+    ) -> Int {
+        queueActorEvent(functionName, on: actor, arguments: [formValue(package)])
+    }
+
     /// Instance iteration is in `PapyrusInstanceKey` order, the same
     /// deterministic order `queueOnActivate` uses, so a reference carrying
     /// several scripts always queues them the same way.

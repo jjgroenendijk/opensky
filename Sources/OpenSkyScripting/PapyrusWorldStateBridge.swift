@@ -126,6 +126,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var menus: (any PapyrusMenuBridge)?
     /// Hazards and explosions that `PlaceAtMe` places.
     public weak var trapWorld: (any PapyrusTrapWorldBridge)?
+    /// Object behaviour graphs, for the animation natives. Nil paces them.
+    public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
     /// Packages, vehicles, and idles for the actor AI natives.

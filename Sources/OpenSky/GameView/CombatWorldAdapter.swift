@@ -2,6 +2,7 @@
 // them from the renderer's frame hooks, and plays reaction clips. The rules live
 // in the coordinator (docs/engine/coordinators.md).
 
+import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
@@ -79,9 +80,19 @@ final class CombatWorldAdapter {
         combat.attach(world: self)
         combat.wireLoop(settings: settings)
         let advanceWorld = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak combat] delta in
+        renderer.onWorldUpdate = { [weak combat, weak self] delta in
             advanceWorld?(delta)
             combat?.advanceLoop(by: delta)
+            self?.updateNPCDrawStates()
+        }
+    }
+
+    /// Only the player has a graph with a draw state, so an NPC draws while it fights.
+    private func updateNPCDrawStates() {
+        guard let loop = game.combat.loop else { return }
+        for actor in game.actorWorld.combatActors() {
+            game.actorPlayback(for: actor.key)?.weaponsDrawn = loop
+                .activity(of: actor.key) == .fighting
         }
     }
 

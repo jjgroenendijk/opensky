@@ -127,8 +127,18 @@ An alias package runs its machine, as a scene package does. A patrol's start mar
 single-reference input (`PTDA`): a reference, or a reference alias of the quest. The path is the
 start marker, then each unkeyed linked reference (`XLKR`) after it, until the chain ends or comes
 back to a marker it already passed. OpenSky reads the markers from the plugins, so a path can go
-through cells that are not loaded. A patrol does not repeat yet, even when its "Repeatable?" input
-is true.
+through cells that are not loaded.
+
+The patrol template's four Bool inputs are "Repeatable?", "Start At Nearest?", "Ride Horse if
+Possible?", and "Static Pathing?". A repeatable patrol walks from its last marker back to its first
+and goes on. Each lap ends the package: the end fragment and `OnPackageEnd` run, and a scene action
+that waits for the package is done. The actor keeps walking for as long as it holds the package,
+which is the Creation Kit wiki's note on `OnPackageEnd`. A one-marker patrol has no lap and ends.
+"Start At Nearest?" starts the walk at the marker nearest the actor. A repeatable patrol walks the
+markers it skipped on the way round. A plain one drops them.
+
+The `MQ101` cart horse patrols are not repeatable (`0, 0, 0, 1`: static pathing only), so the carts
+stop at the end of each leg.
 
 The cart horses of `MQ101` drive the opening this way. Their patrols run the carts from the
 start of the game into Helgen. A trigger box on the road sets a stage when a horse walks
@@ -138,8 +148,13 @@ through it.
 
 A package can carry Papyrus fragments in its `VMAD` (flag 0x01 begin, 0x02 end, 0x04 change). A
 held package runs its begin fragment when its machine starts and its end fragment when the
-machine completes. A failed machine runs no end fragment. Each fragment gets the actor as
-`akActor`. The change fragment does not run yet. Layout: [VMAD](/formats/vmad.md).
+machine completes. A failed machine runs no end fragment. The change fragment runs when the actor
+leaves the package, whether it completed or not: another package replaced it, or its scene or
+alias let the actor go. Each fragment gets the actor as `akActor`. Layout: [VMAD](/formats/vmad.md).
+
+The same three moments queue `OnPackageStart(akNewPackage)`, `OnPackageEnd(akOldPackage)`, and
+`OnPackageChange(akOldPackage)` on the actor's own scripts. Source: the Creation Kit wiki pages for
+the three events. An actor that unloads leaves its package with no change event.
 
 `GetOwningQuest()` in a package fragment answers the package's owner quest, `PACK` `QNAM`. The
 end fragments of the `MQ101` cart patrols set the stages that unload the carts this way.

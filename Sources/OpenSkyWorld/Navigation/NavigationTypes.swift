@@ -33,6 +33,12 @@ nonisolated public struct NavigationDoorCrossing: Equatable, Sendable {
     public let waypointIndex: Int
 }
 
+/// A jump up or a drop down a navmesh ledge link. The mover jumps from the waypoint
+/// at `waypointIndex` to the next one.
+nonisolated public struct NavigationLedgeCrossing: Equatable, Sendable {
+    public let waypointIndex: Int
+}
+
 nonisolated public struct NavigationPathStats: Equatable, Sendable {
     public let nodesExpanded: Int
     public let corridorTriangleCount: Int
@@ -48,6 +54,7 @@ nonisolated public struct NavigationPath: Equatable, Sendable {
     public let corridor: [NavigationTriangleID]
     public let cellSequences: [CellSceneLocation: UInt64]
     public let target: SIMD3<Float>
+    public var ledgeCrossings: [NavigationLedgeCrossing] = []
 }
 
 nonisolated extension NavigationPath {

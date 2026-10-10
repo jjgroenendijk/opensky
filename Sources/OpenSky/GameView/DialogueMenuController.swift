@@ -14,6 +14,7 @@ import OpenSkyGameData
 import OpenSkyMenus
 import OpenSkyRendering
 import OpenSkyWorld
+import OpenSkyWorldState
 
 /// Holds the conversation's menu model and movie state for `game`.
 final class DialogueMenuController {
@@ -65,6 +66,7 @@ final class DialogueMenuController {
             dialogue.recordGreeting(info, speaker: speaker)
             speakCurrentRun()
         }
+        game.headTracking.setLookTarget(.player, for: speaker)
         dialogue.lastOutcome = DialogueCore.openedText(
             speaker: model.speaker,
             topicCount: model.topics.count,
@@ -92,6 +94,10 @@ final class DialogueMenuController {
         isOpen = false
         if let speaker = model.speakerKey {
             game.audio.stopSpeaking(speaker)
+            game.headTracking.setLookTarget(nil, for: speaker)
+        }
+        if let face = speakerFace {
+            game.faceMorphs.clearEmotion(on: face)
         }
         dialogue.endConversation()
         model.showTopicList()
@@ -149,27 +155,6 @@ final class DialogueMenuController {
             return
         }
         chooseTopic()
-    }
-
-    /// Says the run on screen in the speaker's voice. A run with no voice file
-    /// waits for Enter.
-    private func speakCurrentRun() {
-        guard let speaker = model.speakerKey, let line = model.line else { return }
-        let paths = game.storyWorld.voicePaths(of: line.info, speaker: speaker)
-        guard paths.indices.contains(line.index) else {
-            game.audio.stopSpeaking(speaker)
-            return
-        }
-        game.audio.speak([paths[line.index]], speaker: speaker) { [weak self] in
-            self?.voiceEnded(line)
-        }
-    }
-
-    private func voiceEnded(_ line: DialogueResponseLine) {
-        guard isOpen, model.line == line else { return }
-        advance()
-        publishModel()
-        publishSubtitle()
     }
 
     private func chooseTopic() {
@@ -308,5 +293,49 @@ final class DialogueMenuController {
                 "[ERROR] dialogue subtitle: \(String(describing: error), privacy: .public)"
             )
         }
+    }
+}
+
+/// Speech and the speaker's face, outside the class body for its length cap.
+extension DialogueMenuController {
+    /// Says the run on screen in the speaker's voice. A run with no voice file
+    /// waits for Enter.
+    private func speakCurrentRun() {
+        guard let speaker = model.speakerKey, let line = model.line else { return }
+        showEmotion(of: line)
+        let paths = game.storyWorld.voicePaths(of: line.info, speaker: speaker)
+        guard paths.indices.contains(line.index) else {
+            game.audio.stopSpeaking(speaker)
+            return
+        }
+        game.audio.speak([paths[line.index]], speaker: speaker) { [weak self] in
+            self?.voiceEnded(line)
+        }
+    }
+
+    private func voiceEnded(_ line: DialogueResponseLine) {
+        guard isOpen, model.line == line else { return }
+        advance()
+        publishModel()
+        publishSubtitle()
+    }
+
+    /// The placed actor whose face the speaker's expression goes on.
+    private var speakerFace: FormID? {
+        model.speakerKey.flatMap { game.streamer?.referenceEntry(key: $0)?.placedActor?.formID }
+    }
+
+    /// Puts the emotion of the run on screen (INFO `TRDT`) on the speaker's face.
+    private func showEmotion(of line: DialogueResponseLine) {
+        guard
+            let face = speakerFace,
+            let info = dialogue.runtime?.dialogue.info(line.info),
+            info.responses.indices.contains(line.index)
+        else { return }
+        let response = info.responses[line.index]
+        game.faceMorphs.showEmotion(
+            response.emotion, value: response.emotionValue, on: face,
+            now: game.renderer?.animationTime ?? 0
+        )
     }
 }

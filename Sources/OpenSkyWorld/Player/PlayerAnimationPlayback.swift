@@ -62,14 +62,21 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
     /// The revision last composed, so an unchanged pose costs one comparison.
     private let appliedRevision = Mutex<Int?>(nil)
     private let updatedBoneCount = Mutex(0)
+    private let drawn = Mutex(false)
+    /// Hand node to sheath node, from `ResolvedActorVisual.sheathNodes`.
+    public let sheathNodes: [String: String]
 
     /// Bones matched into palettes by the last applied pose, for the readout.
     public var lastUpdatedBoneCount: Int {
         updatedBoneCount.withLock { $0 }
     }
 
-    public init(skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel]) {
+    public init(
+        skeleton: HKASkeleton, pose: PlayerPoseBuffer, models: [RenderModel],
+        sheathNodes: [String: String] = [:]
+    ) {
         self.skeleton = skeleton
+        self.sheathNodes = sheathNodes
         self.pose = pose
         boneIndex = SkeletonBoneIndex(names: skeleton.boneNames)
         var seen = Set<ObjectIdentifier>()
@@ -98,8 +105,27 @@ nonisolated public final class PlayerAnimationPlayback: RenderAnimation {
             !bones.isEmpty,
             let world = try? SkeletonPoseMath.worldMatrices(skeleton: skeleton, localPoses: bones)
         else { return 0 }
-        let pose = SkeletonPose(bones: boneIndex, matrices: world)
+        let pose = WeaponSheathing.apply(
+            sheathNodes,
+            drawn: weaponsDrawn,
+            to: SkeletonPose(bones: boneIndex, matrices: world)
+        )
         return meshes.reduce(0) { $0 + $1.updateSkinningPose(pose) }
+    }
+
+    /// False keeps each weapon and the shield on its sheath node. A change
+    /// recomposes on the next update, even without a new simulated pose.
+    public var weaponsDrawn: Bool {
+        get { drawn.withLock { $0 } }
+        set {
+            let changed = drawn.withLock { old in
+                defer { old = newValue }
+                return old != newValue
+            }
+            if changed {
+                appliedRevision.withLock { $0 = nil }
+            }
+        }
     }
 
     @discardableResult

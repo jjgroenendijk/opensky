@@ -1,7 +1,6 @@
 // The detection value, as pure arithmetic. The shape is UESP "Skyrim:Sneak",
 // "Remaining Undetected", with constants from `DetectionSettings`. The visual
-// factor's shape is ours, because UESP describes it only in words. Light level,
-// muffle, action sounds, and skill levels are pinned constants, not guesses.
+// factor's shape is ours, because UESP describes it only in words.
 // See docs/engine/detection.md.
 
 import Foundation
@@ -10,21 +9,6 @@ import OpenSkyPhysics
 import simd
 
 nonisolated public enum DetectionFormula: Sendable {
-    /// How lit the target is, 1 being fully lit. Pinned: nothing samples scene
-    /// light per actor yet. `fSneakLightMult`, `fSneakLightExteriorMult` and
-    /// `fDetectionSneakLightMod` are the settings a real light term would read.
-    public static let pinnedLightFactor: Float = 1
-    /// The Muffle magnitude on the target, 1 being unmuffled. Pinned: no magic
-    /// effects exist yet.
-    public static let pinnedMuffle: Float = 1
-    /// The target's action sound this instant. Pinned: no attack, cast or shout
-    /// reports one to perception yet.
-    public static let pinnedActionSound: Float = 0
-    /// Both skill levels, pinned at 15, the vanilla starting skill (UESP
-    /// "Skyrim:Skills"), because the runtime does not read Sneak yet. Equal values
-    /// make the `(Noticer - Sneaker)` term zero.
-    public static let pinnedSkillLevel: Float = 15
-
     /// The range this pair's senses attenuate over, world units.
     public static func maximumDistance(settings: DetectionSettings, isExterior: Bool) -> Float {
         let base = max(0, settings.maxDistance.value)
@@ -65,15 +49,17 @@ nonisolated public enum DetectionFormula: Sendable {
         }
     }
 
-    /// The sound term, before distance attenuation.
+    /// The sound term, before distance attenuation. Muffle scales the armour
+    /// part only (UESP "Skyrim:Muffle (effect)"): a silenced target still
+    /// makes the base noise of its own steps.
     public static func soundFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        let weight = inputs.equippedWeight.isFinite ? max(0, inputs.equippedWeight) : 0
+        let traits = inputs.traits
+        let weight = finiteNonNegative(traits.equippedWeight)
+        let unmuffled = 1 - min(finiteNonNegative(traits.muffle), 1)
         let carried = max(0, settings.equippedWeightBase.value)
-            + max(0, settings.equippedWeightMult.value) * weight
-        let movement = carried
-            * movementMultiplier(gait: inputs.gait, settings: settings)
-            * pinnedMuffle
-        let action = pinnedActionSound * settings.actionMult.value
+            + max(0, settings.equippedWeightMult.value) * weight * unmuffled
+        let movement = carried * movementMultiplier(gait: inputs.gait, settings: settings)
+        let action = finiteNonNegative(traits.actionSound) * settings.actionMult.value
         let occlusion = inputs.hasLineOfSight ? 1 : max(0, settings.soundLosMult.value)
         return settings.soundsMult.value * (movement + action) * occlusion
     }
@@ -82,18 +68,29 @@ nonisolated public enum DetectionFormula: Sendable {
     /// line or outside the cone; there is no partial seeing in this model, and
     /// the docs page says so.
     public static func visualFactor(inputs: DetectionInputs, settings: DetectionSettings) -> Float {
-        guard inputs.hasLineOfSight, inputs.isInViewCone else { return 0 }
+        guard inputs.hasLineOfSight, inputs.isInViewCone, !inputs.traits.isInvisible else {
+            return 0
+        }
         let crouch = inputs.isSneaking ? max(0, settings.sneakVisualMult.value) : 1
-        return max(0, settings.visualBaseValue.value) * pinnedLightFactor * crouch
+        let light = min(finiteNonNegative(inputs.traits.lightLevel), 1)
+        return max(0, settings.visualBaseValue.value) * light * crouch
     }
 
-    /// The observer's skill term, from the pinned skill level.
-    public static func skillFactor(settings: DetectionSettings) -> Float {
+    /// One skill level, clamped and weighted into a skill factor.
+    public static func skillFactor(
+        level: Float = DetectionTargetTraits.startingSkill,
+        settings: DetectionSettings
+    ) -> Float {
+        let level = level.isFinite ? level : DetectionTargetTraits.startingSkill
         let clamped = min(
-            max(pinnedSkillLevel, settings.perceptionSkillMin.value),
+            max(level, settings.perceptionSkillMin.value),
             settings.perceptionSkillMax.value
         )
         return clamped * settings.skillMult.value
+    }
+
+    private static func finiteNonNegative(_ value: Float) -> Float {
+        value.isFinite ? max(0, value) : 0
     }
 
     /// The whole formula, with its terms.
@@ -106,11 +103,11 @@ nonisolated public enum DetectionFormula: Sendable {
         )
         let sound = soundFactor(inputs: inputs, settings: settings)
         let visual = visualFactor(inputs: inputs, settings: settings)
-        let skill = skillFactor(settings: settings)
-        // The trailing `(Noticer - Sneaker)` term is omitted rather than added
-        // as a literal zero: both skills are pinned to one constant, so it is
-        // exactly zero by construction and writing it would suggest otherwise.
-        let value = settings.sneakBaseValue.value + (sound + visual + skill) * attenuation
+        let noticer = skillFactor(level: inputs.noticerSkill, settings: settings)
+        let sneaker = skillFactor(level: inputs.traits.sneakSkill, settings: settings)
+        let value = settings.sneakBaseValue.value
+            + (sound + visual + noticer) * attenuation
+            + (noticer - sneaker)
         return DetectionBreakdown(
             soundFactor: sound,
             visualFactor: visual,
@@ -127,7 +124,8 @@ nonisolated public enum DetectionFormula: Sendable {
         settings: DetectionSettings,
         isExterior: Bool,
         hasLineOfSight: Bool = true,
-        equippedWeight: Float = 0
+        traits: DetectionTargetTraits = .neutral,
+        noticerSkill: Float = DetectionTargetTraits.startingSkill
     ) -> Float {
         let inputs = DetectionInputs(
             distance: 0,
@@ -135,12 +133,13 @@ nonisolated public enum DetectionFormula: Sendable {
             isInViewCone: false,
             isExterior: isExterior,
             gait: gait,
-            equippedWeight: equippedWeight
+            traits: traits,
+            noticerSkill: noticerSkill
         )
-        let audible = soundFactor(inputs: inputs, settings: settings) + skillFactor(
-            settings: settings
-        )
-        let deficit = -settings.sneakBaseValue.value
+        let noticer = skillFactor(level: noticerSkill, settings: settings)
+        let sneaker = skillFactor(level: traits.sneakSkill, settings: settings)
+        let audible = soundFactor(inputs: inputs, settings: settings) + noticer
+        let deficit = -settings.sneakBaseValue.value - (noticer - sneaker)
         let exponent = max(0, settings.distanceAttenuationExponent.value)
         guard audible > 0, deficit > 0, exponent > 0, audible > deficit else {
             return audible > 0 && deficit <= 0

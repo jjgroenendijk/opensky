@@ -79,7 +79,8 @@ sends a "standing still" drive every frame, so the animation keeps the idle clip
 count against the limit of eight movers. A turn has no path, no collision sweep, and no new
 search, so the CPU budget that limit protects does not apply ([navigation](/engine/navigation.md)).
 Starting a walk ends a hold, and starting a hold ends a walk, because one yaw has one owner.
-Head tracking, eye contact, and look-at IK are not done: nothing above the neck aims at anything.
+During the conversation the speaker turns its head toward the player
+([head tracking](/engine/head-tracking.md)).
 
 Suspension is a latch, not a saved plan. While an actor stood in a conversation, the world moved
 on. On release it needs the package its schedule names now. So the package is selected again from

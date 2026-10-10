@@ -93,7 +93,11 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         fileSystem: any GameFileSource
     ) -> @Sendable (String) throws -> SplineBehaviorClip {
         { path in
-            guard let clip = try decode(fileSystem.contents(forPath: path)) else {
+            // A tagfile set names its clips `.hkx` too.
+            let tagfile = path.hasSuffix(".hkx") ? String(path.dropLast(4)) + ".hkt" : path
+            let data = try (try? fileSystem.contents(forPath: path))
+                ?? fileSystem.contents(forPath: tagfile)
+            guard let clip = decode(data) else {
                 throw AssetLoadFailure(reason: "no usable clip in \(path)")
             }
             return clip
@@ -168,9 +172,9 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
 
     private static func decode(_ data: Data) -> SplineBehaviorClip? {
         guard
-            let file = try? HKXFile(data: data),
-            let binding = (try? HKAAnimationBinding.bindings(in: file))?.first,
-            let animations = try? HKASplineCompressedAnimation.animations(in: file)
+            let graph = try? HKXObjectGraph.decode(data),
+            let binding = (try? HKAAnimationBinding.bindings(in: graph))?.first,
+            let animations = try? HKASplineCompressedAnimation.animations(in: graph)
         else {
             return nil
         }

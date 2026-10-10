@@ -40,6 +40,9 @@ A-star search runs over triangles:
   the estimate is 0, because a door can be a shortcut through space and the estimate must never be
   too high.
 - A door costs the two legs to and from the door, not the jump between them.
+- A ledge edge link (type 1, ledge up, or type 2, ledge down) costs the walk to the edge middle,
+  the jump to the nearest point of the target triangle, the walk on, and 128 more units. So a
+  path walks around a ledge when the way round is short. The 128 is OpenSky's own number.
 - Ties are broken by total estimate, then remaining estimate, then triangle ID. So the result is
   the same every time.
 
@@ -54,7 +57,8 @@ date.
 The corridor's shared edges become portals. Each portal end moves inward by the capsule radius. A
 portal narrower than two radii shrinks to its middle point. The funnel algorithm then pulls the
 shortest line through the portals. A door ends the current funnel part, adds the door point, and
-starts a new part at the paired door.
+starts a new part at the paired door. A ledge does the same: the funnel part ends at the edge
+middle, and the next part starts at the landing point.
 
 ## Replacing a path
 
@@ -78,8 +82,18 @@ long frame is clamped to 100 ms, so it cannot jump.
 - A waypoint counts as reached within 12 units.
 - At a door, the mover reaches the door point, reports the door, and moves its capsule to the
   paired door.
-- Jumping and swimming are not supported. A target that needs them fails. It does not skip the
-  navmesh.
+- At a ledge crossing, the mover leaves its walk controller and follows an arc to the landing
+  point. The arc peaks 32 units above the higher end. It takes the horizontal distance over the
+  run speed, between 0.35 and 1.2 seconds. The controller starts again at the landing.
+- In water, the mover swims with the player's depths: water at least 90 units deep over its feet
+  starts a swim, and less than 70 ends it. A swimmer floats at the surface, uses the swim gait
+  and the swim speed, and reaches a waypoint on the bed below it.
+- Walkers steer around each other, and around the player and standing NPCs. Actors are not
+  collision shapes, so this bends the walk direction instead. A neighbour ahead, within 96 units
+  past touching, turns the walker to the side away from it. A neighbour dead ahead is passed on
+  the right, so two actors walking at each other both turn right. Two that overlap push apart.
+  A marker another actor stands on counts as reached, or both would wait for it. These rules are
+  OpenSky's own.
 
 Progress is the distance to the next waypoint. Getting at least one unit closer resets the stuck
 timer. After two seconds with no progress, the mover searches again once, from where it is to the
@@ -144,8 +158,8 @@ offscreen. It draws at most 65,536 primitives per frame, and counts what it drew
 
 ## Not done yet
 
-Movers do not avoid each other. Jumping, swimming, and other moves off the navmesh are not part of
-the graph.
+Movers do not jump over an obstacle the navmesh does not link with a ledge. A swim follows the
+navmesh path, so water with no navmesh under it is not crossed.
 
 ## Controls
 

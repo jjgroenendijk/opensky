@@ -149,6 +149,10 @@ nonisolated public final class BehaviorGraphInstance {
     /// `hkbRigidBodyRagdollControlsModifier`. Nil until one has run. Internal, because
     /// the modifier that writes it is an extension in another file.
     public var ragdollBlendDuration: Float?
+    /// The `hkbPoweredRagdollControlsModifier` the last update ran, or nil.
+    public var poweredRagdollControls: HKBPoweredRagdollControlsModifier?
+    /// The event the last update's `BSRagdollContactListenerModifier` raises on contact.
+    public var ragdollContactEvent: String?
 
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
@@ -267,6 +271,8 @@ nonisolated public final class BehaviorGraphInstance {
         pendingClipPhase = nil
         pendingNestedStateId = nil
         isWaitingForClip = false
+        poweredRagdollControls = nil
+        ragdollContactEvent = nil
         let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)
         activeStates = activeStatesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))

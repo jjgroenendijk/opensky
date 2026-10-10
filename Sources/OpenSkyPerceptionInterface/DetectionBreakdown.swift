@@ -24,8 +24,15 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
     public let isSneaking: Bool
     /// How the target is moving, or nil when it is standing still.
     public let gait: LocomotionGait?
-    /// Combined weight of everything the target has equipped.
-    public let equippedWeight: Float
+    /// What the target carries into the formula besides its pose: armour,
+    /// light, muffle, action noise, skill, and invisibility.
+    public let traits: DetectionTargetTraits
+    /// The observer's Sneak skill, which UESP calls the noticer skill.
+    public let noticerSkill: Float
+
+    public var equippedWeight: Float {
+        traits.equippedWeight
+    }
 
     public init(
         distance: Float,
@@ -34,7 +41,8 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
         isExterior: Bool = true,
         isSneaking: Bool = false,
         gait: LocomotionGait? = nil,
-        equippedWeight: Float = 0
+        traits: DetectionTargetTraits = .neutral,
+        noticerSkill: Float = DetectionTargetTraits.startingSkill
     ) {
         self.distance = distance
         self.hasLineOfSight = hasLineOfSight
@@ -42,7 +50,47 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
         self.isExterior = isExterior
         self.isSneaking = isSneaking
         self.gait = gait
+        self.traits = traits
+        self.noticerSkill = noticerSkill
+    }
+}
+
+/// The target-side inputs that do not come from geometry. `neutral` is a
+/// target with nothing equipped, fully lit, unmuffled, silent, and at the
+/// starting skill.
+nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
+    /// 15, the vanilla starting level of every skill (UESP "Skyrim:Skills").
+    public static let startingSkill: Float = 15
+    public static let neutral = DetectionTargetTraits()
+
+    /// Combined weight of the armour the target wears.
+    public var equippedWeight: Float
+    /// How lit the target is: 0 is dark, 1 is fully lit.
+    public var lightLevel: Float
+    /// The summed Muffle magnitude, the `Movement Noise Mult` actor value.
+    /// 1 or more silences the armour.
+    public var muffle: Float
+    /// The loudness of the attack or cast the target is making now.
+    public var actionSound: Float
+    /// The target's Sneak skill, which UESP calls the sneaker skill.
+    public var sneakSkill: Float
+    /// An invisible target cannot be seen, but it can still be heard.
+    public var isInvisible: Bool
+
+    public init(
+        equippedWeight: Float = 0,
+        lightLevel: Float = 1,
+        muffle: Float = 0,
+        actionSound: Float = 0,
+        sneakSkill: Float = startingSkill,
+        isInvisible: Bool = false
+    ) {
         self.equippedWeight = equippedWeight
+        self.lightLevel = lightLevel
+        self.muffle = muffle
+        self.actionSound = actionSound
+        self.sneakSkill = sneakSkill
+        self.isInvisible = isInvisible
     }
 }
 

@@ -62,12 +62,43 @@ different expressions are never drawn as one instanced draw.
 The shadow pass adds the same changes before skinning. So a mouth cannot move in the picture while
 its shadow keeps the rest pose.
 
+## Automatic expressions
+
+Every loaded face blinks, and a speaker's face shows the emotion of the line it says. These
+weights are a third layer, added to the manual and lip weights and clamped like them.
+
+A dialogue response's `TRDT` emotion picks one target of the expression TRI, at the response's
+emotion value out of 100. The names were read from `malehead.tri` on the install:
+
+| Emotion | Target |
+| --- | --- |
+| Anger | `DialogueAnger` |
+| Disgust | `DialogueDisgusted` |
+| Fear | `DialogueFear` |
+| Sad | `DialogueSad` |
+| Happy | `DialogueHappy` |
+| Surprise | `DialogueSurprise` |
+| Puzzled | `DialoguePuzzled` |
+| Neutral | nothing |
+
+In the dialogue menu the emotion holds until the next response or the end of the conversation.
+A scene line holds it for the line's length.
+
+A blink closes `BlinkLeft` and `BlinkRight` together over 0.2 seconds. Each actor blinks every 3
+to 6 seconds, at a gap and an offset from its FormID, so a crowd does not blink together. The
+blink timing is OpenSky's own. The weights are uploaded only when they change, so a face between
+blinks costs nothing.
+
 ## Controls
 
-World > HUD & Interaction > Face Morphs follows the current dialogue speaker, or else the actor
+World > Dialogue & Voice > Face Morphs follows the current dialogue speaker, or else the actor
 under the crosshair. It has a target list, a weight slider, a reset button, and a readout of
-targets, active weights, file pairs, missing pairs, and writes to unknown names. A nonzero weight
-marks the panel as changed, and the panel's reset clears all weights.
+targets, active weights, file pairs, missing pairs, writes to unknown names, and the automatic
+expression. Checkboxes turn blinking, dialogue expressions, and
+[head tracking](/engine/head-tracking.md) on or off. A nonzero weight or a checkbox turned off
+marks the panel as changed, and the panel's reset clears all weights and turns all three on.
+The launcher's Graphics page has the same three switches under Characters. Both places write
+one persisted player setting each, so a choice survives a restart.
 
 ## Failures
 
@@ -78,6 +109,6 @@ The failures are kept for the readout. Any pair that worked still morphs.
 
 - `.lip` timing, and turning dialogue time into weights.
 - Race sliders and character creation morphs.
-- Body morphs.
-- Expression animation and automatic idle expressions.
+- Body morphs other than weight ([actor resolution](/engine/actor-resolution.md)).
+- Mood and combat expressions (`Mood*`, `CombatAnger`, `CombatShout`).
 - Keeping panel weights after the actor unloads, or in saves.

@@ -88,13 +88,31 @@ Three ragdoll modifier classes are decoded ([behavior node classes](/formats/hkx
 | Class | Status |
 | --- | --- |
 | `hkbRigidBodyRagdollControlsModifier` | Used: gives `m_durationToBlend` as the hand-off blend time |
-| `hkbPoweredRagdollControlsModifier` | Passes through. It drives a ragdoll toward the animated pose with motors, which a living actor needs |
-| `BSRagdollContactListenerModifier` | Passes through. Nothing here needs its contact events |
+| `hkbPoweredRagdollControlsModifier` | Used: gives the motor that holds the bones during the blend |
+| `BSRagdollContactListenerModifier` | Used: its `m_contactEvent` fires when a ragdoll first touches the world |
 
 `m_bones` is not read. The ragdoll is every bone the skeleton NIF has a body for. That is the same
 set on every vanilla character, and it comes from the physics data, not the graph. `0_master.hkx`
 has exactly one instance of the class, `DriveRagdollRB`, which blends over 0.5 seconds. A session
 with no graph uses that value.
+
+The modifiers run each graph update. When a modifier stops running, its setting stops applying.
+
+The powered modifier gives `m_tau`, `m_damping`, `m_maxForce`, and the two recovery velocities.
+During the blend, a motor pulls each bone body back toward the pose it had at the hand-off. Each
+step changes the body's velocity toward a target speed: `m_proportionalRecoveryVelocity` times the
+distance, plus `m_constantRecoveryVelocity`. `m_tau` is how much of the gap one step closes, and
+`m_damping` slows the body's own motion. The pull fades as the simulation takes over, and stops
+when the blend ends. The force and the constant speed are in metres in the file, so OpenSky scales
+them by the Havok-to-engine scale.
+
+This differs from the game. Havok drives the bones with constraint motors toward the pose the
+animation holds now. OpenSky changes velocities toward the hand-off pose. The result is the same
+kind of motion: a corpse sags over the blend instead of dropping at once.
+
+The contact listener fires once when a ragdoll begins touching the world. It fires again only
+after the ragdoll has left the ground. OpenSky counts contacts per ragdoll, not per bone, so the
+modifier's `m_bones` list is not used.
 
 ## Not done yet
 

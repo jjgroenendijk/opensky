@@ -55,11 +55,17 @@ public final class VehicleCoordinator {
     }
 
     /// Seats `rider` on top of `horse`, facing the way the horse faces.
+    /// `saddle` is the world point of the horse's saddle node; without one the rider sits
+    /// `height` above the horse's feet.
     @discardableResult
-    public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, height: Float) -> Bool {
+    public func seat(
+        _ rider: ReferenceKey, on horse: ReferenceKey, height: Float,
+        saddle: SIMD3<Float>? = nil
+    ) -> Bool {
         guard let horsePose = currentPose(of: horse) else { return false }
         let seat = ReferenceTransformOverride(placement: PlacedReference.Placement(
-            position: horsePose.position + SIMD3(0, 0, height), rotation: horsePose.rotation
+            position: saddle ?? horsePose.position + SIMD3(0, 0, height),
+            rotation: horsePose.rotation
         ))
         return core.attach(rider, to: horse, followerPose: seat, carrierPose: horsePose)
     }

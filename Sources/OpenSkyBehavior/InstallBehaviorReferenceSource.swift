@@ -19,13 +19,15 @@ nonisolated public final class InstallBehaviorReferenceSource: BehaviorReference
         var byName: [String: String] = [:]
         for entry in fileSystem.archiveEntries() {
             let path = entry.path
+            let lowered = path.lowercased()
             guard
-                path.lowercased().hasPrefix(folder),
-                path.hasSuffix(".hkx"),
-                let name = path.split(separator: "\\").last
+                lowered.hasPrefix(folder),
+                lowered.hasSuffix(".hkx") || lowered.hasSuffix(".hkt"),
+                let name = lowered.split(separator: "\\").last
             else { continue }
-            let key = String(name).lowercased()
-            if byName[key] == nil {
+            // A graph names a tagfile behaviour with `.hkx`, as for a packfile.
+            let key = String(name.dropLast(4)) + ".hkx"
+            if byName[key] == nil || lowered.hasSuffix(".hkx") {
                 byName[key] = path
             }
         }
@@ -47,8 +49,7 @@ nonisolated public final class InstallBehaviorReferenceSource: BehaviorReference
         guard
             let path = pathsByName[key] ?? pathsByName[key + ".hkx"],
             let data = try? fileSystem.contents(forPath: path),
-            let file = try? HKXFile(data: data),
-            let objectGraph = try? HKXObjectGraph(file: file),
+            let objectGraph = try? HKXObjectGraph.decode(data),
             let graph = HKBBehaviorGraph.graphs(in: objectGraph).first
         else { return nil }
         return BehaviorGraphInstance(

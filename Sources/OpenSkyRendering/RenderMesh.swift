@@ -241,6 +241,42 @@ nonisolated public final class RenderMesh: Sendable {
         uvPerUnit = layout.uvPerUnit
     }
 
+    /// The same geometry with its own palette, so one actor's pose does not move
+    /// another actor drawn with the same cached model. A static mesh is returned as is.
+    public func posableCopy(device: MTLDevice) -> RenderMesh {
+        guard
+            let skinningPalette,
+            let source = boneMatrixBuffer,
+            let matrices = device.makeBuffer(length: source.length, options: .storageModeShared)
+        else { return self }
+        matrices.label = source.label
+        let bind = skinningPalette.bindPoseMatrices
+        let slotBytes = bind.count * MemoryLayout<float4x4>.stride
+        for slot in 0 ..< source.length / max(slotBytes, 1) {
+            matrices.contents().advanced(by: slot * slotBytes)
+                .copyMemory(from: bind, byteCount: slotBytes)
+        }
+        return RenderMesh(copying: self, boneMatrixBuffer: matrices, palette: skinningPalette)
+    }
+
+    private init(
+        copying source: RenderMesh, boneMatrixBuffer: MTLBuffer, palette: SkinningPalette
+    ) {
+        name = source.name
+        vertexCount = source.vertexCount
+        vertexBuffer = source.vertexBuffer
+        indexBuffer = source.indexBuffer
+        indexCount = source.indexCount
+        skinningBuffer = source.skinningBuffer
+        self.boneMatrixBuffer = boneMatrixBuffer
+        skinningPalette = palette
+        boneMatrices = Mutex(palette.bindPoseMatrices)
+        localTransform = source.localTransform
+        localBounds = source.localBounds
+        materialSlot = source.materialSlot
+        uvPerUnit = source.uvPerUnit
+    }
+
     private struct SkinBuffers {
         let attributes: MTLBuffer?
         let matrices: MTLBuffer?

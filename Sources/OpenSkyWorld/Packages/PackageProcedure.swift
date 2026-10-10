@@ -41,6 +41,10 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     public let radius: Float
     /// Patrol points after the first, in walking order.
     public let path: [SIMD3<Float>]
+    /// A repeatable patrol walks back to its first point after its last, and never completes.
+    public let repeats: Bool
+    /// Times a repeatable patrol went back to its first point.
+    public private(set) var laps = 0
     public private(set) var state: PackageProcedureState = .ready
     public private(set) var pathIndex = 0
     private var random: ConditionRandom
@@ -51,6 +55,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         destination: SIMD3<Float>? = nil,
         radius: Float,
         path: [SIMD3<Float>] = [],
+        repeats: Bool = false,
         seed: UInt64
     ) {
         self.kind = kind
@@ -58,6 +63,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         self.destination = destination
         self.radius = max(0, radius)
         self.path = path
+        self.repeats = repeats
         random = ConditionRandom(seed: seed)
     }
 
@@ -99,6 +105,12 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             return []
         case .patrol:
             guard pathIndex < path.count else {
+                // A one-point patrol has nowhere to go back from, so it ends.
+                if repeats, !path.isEmpty, let first = destination {
+                    pathIndex = 0
+                    laps += 1
+                    return [.move(to: first)]
+                }
                 state = .complete
                 return []
             }

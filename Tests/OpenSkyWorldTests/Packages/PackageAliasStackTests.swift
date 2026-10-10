@@ -60,4 +60,38 @@ struct PackageAliasStackTests {
         #expect(patrol.handle(.arrived).isEmpty)
         #expect(patrol.state == .complete)
     }
+
+    @Test func aRepeatablePatrolWalksBackToItsFirstPointAndCountsTheLap() {
+        let points: [SIMD3<Float>] = [[1, 0, 0], [2, 0, 0]]
+        var patrol = PackageProcedureMachine(
+            kind: .patrol, center: .zero, destination: points[0], radius: 0,
+            path: [points[1]], repeats: true, seed: 1
+        )
+        #expect(patrol.start() == [.move(to: points[0])])
+        #expect(patrol.handle(.arrived) == [.move(to: points[1])])
+        #expect(patrol.handle(.arrived) == [.move(to: points[0])])
+        #expect(patrol.laps == 1)
+        #expect(patrol.state == .moving)
+        #expect(patrol.handle(.arrived) == [.move(to: points[1])])
+    }
+
+    @Test func aOnePointRepeatablePatrolStillEnds() {
+        var patrol = PackageProcedureMachine(
+            kind: .patrol, center: .zero, destination: [1, 0, 0], radius: 0,
+            repeats: true, seed: 1
+        )
+        _ = patrol.start()
+        #expect(patrol.handle(.arrived).isEmpty)
+        #expect(patrol.state == .complete)
+    }
+
+    @Test func startAtNearestBeginsAtTheClosestMarker() {
+        let points: [SIMD3<Float>] = [[0, 0, 0], [100, 0, 0], [200, 0, 0]]
+        let near: SIMD3<Float> = [110, 0, 0]
+        #expect(PackageOverrideExecution.startingAtNearest(points, to: near, loops: false)
+            == [points[1], points[2]])
+        #expect(PackageOverrideExecution.startingAtNearest(points, to: near, loops: true)
+            == [points[1], points[2], points[0]])
+        #expect(PackageOverrideExecution.startingAtNearest([], to: near, loops: true).isEmpty)
+    }
 }

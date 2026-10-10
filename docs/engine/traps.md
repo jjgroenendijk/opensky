@@ -69,8 +69,9 @@ Implemented for traps:
 Without a running game (the CLI and the package tests) the four world natives above are
 traced stubs too.
 
-`WaitForAnimationEvent` waits one second of real time, then answers true. No animation event
-arrives, because OpenSky plays no object behavior graph. A thresher repeats
+A trap whose mesh names a behaviour graph runs it, and the animation natives drive that
+graph ([object animation](/engine/object-animation.md)). For a trap without a graph,
+`WaitForAnimationEvent` waits one second of real time, then answers true. A thresher repeats
 `PlayAnimation` and `WaitForAnimationEvent` while its cell is loaded. An instant answer
 would run that loop thousands of times in each frame.
 
@@ -176,9 +177,9 @@ and `PHZD`.
 
 ## Not done
 
-Swinging blades and battering rams move through their behavior graph, which scripts start
-with `PlayAnimation`. OpenSky does not play object behavior graphs yet, so these traps do not
-swing. `SetMotionType` stays stubbed: OpenSky cannot turn a static object into a dynamic
-body at runtime. `Weapon.Fire` stays stubbed: projectiles fire only from actors.
-`PlaceAtMe` of any base other than a hazard or an explosion answers None: OpenSky has no
-runtime-spawned references for other forms yet.
+A swinging blade or a battering ram swings, but its blade does not hit: the graph moves the
+mesh, not a collision body, so `ProcessTrapHit` comes only from the trigger. `SetMotionType`
+stays stubbed: OpenSky cannot turn a static object into a dynamic body at runtime.
+`Weapon.Fire` stays stubbed: projectiles fire only from actors. `PlaceAtMe` of any base other
+than a hazard or an explosion answers None: OpenSky has no runtime-spawned references for other
+forms yet.

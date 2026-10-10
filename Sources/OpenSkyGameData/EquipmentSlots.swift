@@ -63,6 +63,18 @@ nonisolated public struct EquippableItem: Equatable, Sendable {
     /// WEAP MODL — the world model a hand attachment loads. Nil for armour,
     /// whose geometry comes from its ARMA armatures instead.
     public let modelPath: String?
+    /// WEAP DNAM animation type, which picks the sheath node. Nil for armour.
+    public let animationType: Weapon.AnimationType?
+
+    public init(
+        occupancy: EquipmentOccupancy,
+        modelPath: String?,
+        animationType: Weapon.AnimationType? = nil
+    ) {
+        self.occupancy = occupancy
+        self.modelPath = modelPath
+        self.animationType = animationType
+    }
 }
 
 /// Which slots each equippable base record in one plugin occupies. Single-plugin
@@ -127,7 +139,8 @@ nonisolated public struct EquipmentCatalog: Sendable {
             }
             items[id] = EquippableItem(
                 occupancy: EquipmentOccupancy(hands: resolved ?? defaultWeaponHands),
-                modelPath: weapon.fields.modelPath
+                modelPath: weapon.fields.modelPath,
+                animationType: weapon.animationType
             )
         }
         return EquipmentCatalog(

@@ -123,7 +123,8 @@ clip from the body.
 - `hkbRigidBodyRagdollControlsModifier`: OpenSky reads `m_durationToBlend` as the blend
   time from animation to physics (see [ragdoll](/engine/ragdoll.md)). It does not read
   `m_bones`: the ragdoll uses every bone that has a body in the skeleton NIF.
-  `hkbPoweredRagdollControlsModifier` and `BSRagdollContactListenerModifier` do nothing yet.
+  `hkbPoweredRagdollControlsModifier` gives the motor settings, and
+  `BSRagdollContactListenerModifier` gives the contact event. Neither reads its `m_bones`.
 - `hkbRigidBodyRagdollControlsModifier::m_controlData` holds a 48-byte
   `hkaKeyFrameHierarchyUtilityControlData`. This is a physics class, and its members are not
   confirmed against vanilla files. OpenSky skips it.

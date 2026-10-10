@@ -232,11 +232,10 @@ final class GameViewController: NSViewController {
 
     lazy var playerWorld = PlayerWorldAdapter(game: self)
     /// The Face Morphs panel, over the actor in conversation.
-    lazy var faceMorphs: FaceMorphCoordinator = {
-        let faceMorphs = FaceMorphCoordinator()
-        faceMorphs.attach(world: playerWorld)
-        return faceMorphs
-    }()
+    lazy var faceMorphs = FaceMorphCoordinator(world: playerWorld, settings: playerSettings.store)
+
+    lazy var headTracking =
+        HeadTrackingCoordinator(world: playerWorld, settings: playerSettings.store)
 
     /// Actor values: damage, restore, regeneration, and the panel controls.
     lazy var actorValues: ActorValueCoordinator = {
@@ -321,6 +320,8 @@ final class GameViewController: NSViewController {
     lazy var idleWorld = IdleWorldAdapter(game: self)
     /// Carts, riders, and the actor AI natives.
     lazy var vehicleWorld = VehicleWorldAdapter(game: self)
+    /// Traps, doors, and levers that a behaviour graph runs.
+    lazy var objectAnimationWorld = ObjectAnimationWorldAdapter(game: self)
 
     override func loadView() {
         let gameView = GameMetalView(frame: NSRect(x: 0, y: 0, width: 1280, height: 720))
@@ -640,5 +641,43 @@ extension GameViewController: AudioControlForwarding, RuntimeStateControlForward
 extension GameViewController {
     var canWriteScreenshot: Bool {
         renderer != nil
+    }
+}
+
+extension GameViewController {
+    var scenes: SceneCoordinator {
+        storyWorld.scenes
+    }
+
+    var storyManager: StoryManagerCoordinator {
+        storyWorld.storyManager
+    }
+}
+
+extension GameViewController {
+    var idles: IdleCoordinator {
+        idleWorld.idles
+    }
+
+    var headAssembly: HeadAssemblyCoordinator {
+        idleWorld.headAssembly
+    }
+}
+
+extension GameViewController: ObjectAnimationControlProviding {
+    var objectAnimationEnabled: Bool {
+        get { objectAnimationWorld.objects.isEnabled }
+        set {
+            objectAnimationWorld.objects.isEnabled = newValue
+            playerSettingsStore.set(.objectAnimation, to: newValue ? 1 : 0)
+        }
+    }
+
+    var objectAnimationRows: [ObjectAnimationRow] {
+        objectAnimationWorld.objects.rows
+    }
+
+    func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
+        objectAnimationWorld.objects.send(event, to: reference)
     }
 }

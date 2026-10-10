@@ -38,6 +38,24 @@ final class AIWorldAdapter {
             }
     }
 
+    /// The living actors and the player, for walkers to steer around. Each mover is
+    /// dropped from this list by the movement runtime, which knows who walks.
+    func standingActors() -> [NPCNeighbour] {
+        var actors = game.actorWorld.combatActors().filter { !$0.isDead }.map {
+            NPCNeighbour(
+                key: $0.key, position: SIMD2($0.feet.x, $0.feet.y),
+                radius: $0.capsule.radius * max($0.scale, 0)
+            )
+        }
+        if let feet = game.renderer?.locomotion.status.feetPosition {
+            actors.append(NPCNeighbour(
+                key: .player, position: SIMD2(feet.x, feet.y),
+                radius: PlayerCapsule.standard.radius
+            ))
+        }
+        return actors
+    }
+
     func wireNPCMovement(renderer: Renderer, streamer: CellStreamer) {
         streamer.npcMovementConfiguration = renderer.locomotion.configuration
         let worldState = game.worldState
@@ -52,6 +70,7 @@ final class AIWorldAdapter {
         streamer.onNPCPosesChanged = { [weak renderer] deltas in
             renderer?.npcInstanceDeltas = deltas
         }
+        streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
         streamer.onNPCCellHandoff = { [weak game, weak streamer] persistence in
@@ -244,6 +263,9 @@ extension AIWorldAdapter {
         game.scripts.bridge?.runPackageFragment(
             of: event.package, slot: event.fragmentSlot, actor: event.actor
         )
+        game.scripts.bridge?.queuePackageEvent(
+            slot: event.fragmentSlot, package: event.package.formID, actor: event.actor
+        )
     }
 
     private static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
@@ -252,9 +274,9 @@ extension AIWorldAdapter {
 }
 
 extension AIWorldAdapter: AINavigationWorld {
-    /// An estimate: the game seats a rider on the horse's saddle node, which OpenSky
-    /// does not read yet.
+    /// Used only for a horse without a `SaddleBone`, such as one whose skeleton did not load.
     private static let riderSeatHeight: Float = 90
+    static let saddleBone = "SaddleBone"
 
     /// The horse a placed actor starts on, `ACHR` `XHOR` (docs/formats/placed-references.md).
     func mountPackageActor(_ rider: ReferenceKey) -> ReferenceKey? {
@@ -263,14 +285,33 @@ extension AIWorldAdapter: AINavigationWorld {
                 .details.links["XHOR"],
             let resolver = game.scripts.bridge?.formIDResolver,
             let horse = ReferenceKey.resolve(raw, using: resolver),
-            game.vehicleWorld.vehicles.seat(rider, on: horse, height: Self.riderSeatHeight)
+            game.vehicleWorld.vehicles.seat(
+                rider, on: horse, height: Self.riderSeatHeight, saddle: saddlePosition(of: horse)
+            )
         else { return nil }
         _ = game.streamer?.stopActor(rider)
+        game.npcAnimation.ride(rider, on: horse)
         return horse
     }
 
     func dismountPackageActor(_ rider: ReferenceKey) {
         game.vehicleWorld.vehicles.detach(rider)
+        game.npcAnimation.dismount(rider)
+    }
+
+    /// The horse's `SaddleBone` in world space, from its drawn pose
+    /// (docs/engine/vehicles.md).
+    private func saddlePosition(of horse: ReferenceKey) -> SIMD3<Float>? {
+        guard
+            let renderer = game.renderer,
+            let playback = game.actorPlayback(for: horse),
+            let pose = playback.skeletonPose(at: renderer.animationTime),
+            let index = pose.bones.index(of: Self.saddleBone),
+            pose.matrices.indices.contains(index)
+        else { return nil }
+        let delta = renderer.npcInstanceDeltas[playback.actor.rawValue] ?? matrix_identity_float4x4
+        let world = delta * playback.transform * pose.matrices[index].columns.3
+        return SIMD3(world.x, world.y, world.z)
     }
 
     func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey? {
@@ -349,7 +390,8 @@ extension AIWorldAdapter: PerceptionSessionWorld {
                     eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
                     facing: actor.facing,
                     isExterior: isExterior,
-                    label: actor.label
+                    label: actor.label,
+                    sneakSkill: sneakSkill(of: actor.key)
                 ),
                 isDead: actor.isDead,
                 isHostile: game.factions.hostility(of: actor.key) == .hostile,
@@ -369,7 +411,9 @@ extension AIWorldAdapter: PerceptionSessionWorld {
             eye: status.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             gait: isMoving ? status.gait : nil,
             isSneaking: status.gait == .sneak,
-            equippedWeight: 0,
+            traits: playerDetectionTraits(
+                at: status.feetPosition, eyeHeight: PlayerCapsule.standard.eyeHeight
+            ),
             name: "Player"
         )]
     }

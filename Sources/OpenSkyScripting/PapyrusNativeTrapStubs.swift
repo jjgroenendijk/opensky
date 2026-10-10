@@ -50,18 +50,7 @@ extension PapyrusNativeFunctions {
         TrapStub("Cell", "IsAttached", .boolean(true))
     ]
 
-    /// OpenSky plays no object behavior graph, so no animation event arrives. A trap loops
-    /// on this wait while its cell is loaded; an instant answer would spin that loop.
-    static let animationEventWaitSeconds = 1.0
-
     static func installTrapStubs(into registry: inout PapyrusNativeRegistry) {
-        registry.register(PapyrusNativeFunction(
-            scriptName: "ObjectReference",
-            functionName: "WaitForAnimationEvent"
-        ) { call, context in
-            context.log.append("Paced \(call.qualifiedName)")
-            return .suspended(.realSecondsAnswering(animationEventWaitSeconds, .boolean(true)))
-        })
         for stub in trapStubs {
             registry.register(PapyrusNativeFunction(
                 scriptName: stub.scriptName,

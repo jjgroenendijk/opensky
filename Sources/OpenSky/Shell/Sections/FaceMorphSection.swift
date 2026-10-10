@@ -1,5 +1,6 @@
 // World > HUD & Interaction > Face Morphs: pick a TRI target, scrub its 0...1
-// weight, and inspect association paths and misses.
+// weight, turn blinking and dialogue expressions on or off, and inspect association
+// paths and misses.
 
 import AppKit
 import OpenSkyWorld
@@ -16,6 +17,13 @@ final class FaceMorphSection: PanelSectionViewController {
     let targetControl = NSPopUpButton(frame: .zero, pullsDown: false)
     let weightControl = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
     let resetControl = NSButton(title: "Reset weights", target: nil, action: nil)
+    let blinkControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
+    let expressionControl = NSButton(
+        checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
+    )
+    let headTrackingControl = NSButton(
+        checkboxWithTitle: "Head tracking", target: nil, action: nil
+    )
     private let weightLabel = PanelComponents.valueLabel(width: 64)
     private let statsLabel = PanelComponents.statsLabel(identifier: "FaceMorphStatsLabel")
 
@@ -32,11 +40,17 @@ final class FaceMorphSection: PanelSectionViewController {
     }
 
     static func isOverridden(provider: (any FaceMorphControlProviding)?) -> Bool {
-        provider?.faceMorphSnapshot.weights.values.contains(where: { $0 != 0 }) ?? false
+        guard let provider else { return false }
+        return provider.faceMorphSnapshot.weights.values.contains(where: { $0 != 0 })
+            || !provider.automaticBlinkingEnabled || !provider.dialogueExpressionsEnabled
+            || !provider.headTrackingEnabled
     }
 
     static func resetToDefaults(provider: (any FaceMorphControlProviding)?) {
         provider?.resetFaceMorphWeights()
+        provider?.automaticBlinkingEnabled = true
+        provider?.dialogueExpressionsEnabled = true
+        provider?.headTrackingEnabled = true
     }
 
     override func resetToDefaults() {
@@ -65,12 +79,27 @@ final class FaceMorphSection: PanelSectionViewController {
             action: #selector(resetWeights),
             identifier: "FaceMorphResetControl"
         )
+        PanelComponents.configureCheckbox(
+            blinkControl, target: self, action: #selector(blinkChanged),
+            identifier: "FaceMorphBlinkControl"
+        )
+        PanelComponents.configureCheckbox(
+            expressionControl, target: self, action: #selector(expressionChanged),
+            identifier: "FaceMorphExpressionControl"
+        )
+        expressionControl.toolTip = "A speaker shows the emotion of the line it says."
+        PanelComponents.configureCheckbox(
+            headTrackingControl, target: self, action: #selector(headTrackingChanged),
+            identifier: "HeadTrackingControl"
+        )
+        headTrackingControl.toolTip = "Actors turn their heads toward what they look at."
         return [
             PanelComponents.group([
                 targetControl,
                 PanelComponents.sliderRow(slider: weightControl, valueLabel: weightLabel),
                 resetControl
             ]),
+            PanelComponents.group([blinkControl, expressionControl, headTrackingControl]),
             statsLabel
         ]
     }
@@ -93,6 +122,12 @@ final class FaceMorphSection: PanelSectionViewController {
         targetControl.isEnabled = available
         weightControl.isEnabled = available
         resetControl.isEnabled = snapshot.actor != nil
+        blinkControl.state = provider?.automaticBlinkingEnabled ?? true ? .on : .off
+        expressionControl.state = provider?.dialogueExpressionsEnabled ?? true ? .on : .off
+        headTrackingControl.state = provider?.headTrackingEnabled ?? true ? .on : .off
+        headTrackingControl.isEnabled = provider != nil
+        blinkControl.isEnabled = provider != nil
+        expressionControl.isEnabled = provider != nil
         updateWeightLabel()
     }
 
@@ -108,11 +143,35 @@ final class FaceMorphSection: PanelSectionViewController {
             "Actor \(actor) · \(snapshot.targetNames.count) targets · \(active) active",
             "TRI pairs: \(snapshot.pairedPaths.count) · "
                 + "misses: \(snapshot.associationMisses.count)",
-            "Unknown target writes: \(snapshot.unknownTargetCount)"
+            "Unknown target writes: \(snapshot.unknownTargetCount)",
+            "Expression: " + Self.expressionText(snapshot.expressionWeights),
+            "Head: " + (provider?.headTrackingReadout ?? "")
         ]
         lines += snapshot.pairedPaths.prefix(3)
         lines += snapshot.associationMisses.prefix(3)
         statsLabel.stringValue = lines.joined(separator: "\n")
+    }
+
+    static func expressionText(_ weights: [String: Float]) -> String {
+        guard !weights.isEmpty else { return "none" }
+        return weights.sorted { $0.key < $1.key }
+            .map { "\($0.key) \(String(format: "%.2f", $0.value))" }
+            .joined(separator: ", ")
+    }
+
+    @objc private func headTrackingChanged() {
+        provider?.headTrackingEnabled = headTrackingControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func blinkChanged() {
+        provider?.automaticBlinkingEnabled = blinkControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func expressionChanged() {
+        provider?.dialogueExpressionsEnabled = expressionControl.state == .on
+        finishInteraction()
     }
 
     @objc private func targetChanged() {

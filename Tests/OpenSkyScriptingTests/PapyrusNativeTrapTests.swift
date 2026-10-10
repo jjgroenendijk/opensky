@@ -10,6 +10,22 @@ import OpenSkyScriptingFixtures
 import Testing
 
 @MainActor
+private final class FakeObjectAnimation: PapyrusObjectAnimationBridge {
+    var hasGraph = true
+    var played: [String] = []
+    var awaited: [String] = []
+
+    func playAnimation(_ event: String, on _: ReferenceKey) -> Bool {
+        played.append(event)
+        return hasGraph
+    }
+
+    func awaitAnimationEvent(_ event: String, on _: ReferenceKey) -> UInt64? {
+        awaited.append(event)
+        return hasGraph ? 77 : nil
+    }
+}
+
 private final class FakeTrapWorld: PapyrusTrapWorldBridge {
     struct Placed {
         let base: ReferenceKey
@@ -119,6 +135,30 @@ struct PapyrusNativeTrapTests {
             "WaitForAnimationEvent", arguments: [.string("EndLoop")], returnType: .boolean
         )
         #expect(result == .suspended(.realSecondsAnswering(
+            PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
+        )))
+    }
+
+    @Test func animationNativesDriveAnObjectGraph() throws {
+        let fixture = try Fixture.make()
+        let graphs = FakeObjectAnimation()
+        fixture.session.bridge.objectAnimation = graphs
+        let play = fixture.call(
+            "PlayAnimation", arguments: [.string("Trigger")], returnType: .boolean
+        )
+        #expect(play == .returned(.boolean(true)))
+        let wait = fixture.call(
+            "PlayAnimationAndWait", arguments: [.string("Reset"), .string("Done")],
+            returnType: .boolean
+        )
+        #expect(wait == .suspended(.external(77)))
+        #expect(graphs.played == ["Trigger", "Reset"])
+        #expect(graphs.awaited == ["Done"])
+        graphs.hasGraph = false
+        let paced = fixture.call(
+            "WaitForAnimationEvent", arguments: [.string("Done")], returnType: .boolean
+        )
+        #expect(paced == .suspended(.realSecondsAnswering(
             PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
         )))
     }
