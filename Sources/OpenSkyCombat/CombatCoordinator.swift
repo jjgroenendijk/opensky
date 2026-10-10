@@ -30,6 +30,8 @@ public final class CombatCoordinator {
     /// The Difficulty setting; the app sets it from the settings store.
     public var difficulty = DifficultyLevel.default
     public var difficultySettings = DifficultySettings.synthetic
+    /// The actor the player last hurt. The HUD shows its name and health.
+    public internal(set) var playerStruckTarget: ReferenceKey?
 
     public init() {}
 
