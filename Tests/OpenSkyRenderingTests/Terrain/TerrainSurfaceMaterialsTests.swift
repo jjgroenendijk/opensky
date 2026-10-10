@@ -94,6 +94,22 @@ struct TerrainSurfaceMaterialsTests {
         #expect(materials.material(column: 32, row: 32) == Self.snow)
     }
 
+    @Test func aQuadrantWithNoBaseTextureIsDefaultGround() throws {
+        let dirt = FormID(0x103)
+        let types = MaterialTypeIndex(
+            materials: [MaterialType(formID: dirt, editorID: "MaterialDirt", materialName: "Dirt")],
+            landTextureMaterials: [FormID(0): dirt, Self.stoneTexture: Self.stone]
+        )
+        let land = try Self.land(baseTextures: [(Self.stoneTexture, 0)])
+        let materials = try #require(TerrainSurfaceMaterials.build(
+            land: land,
+            materialTypes: types
+        ))
+
+        #expect(materials.material(column: 0, row: 0) == Self.stone)
+        #expect(materials.material(column: 32, row: 32) == dirt)
+    }
+
     @Test func aTextureNamingNoMaterialResolvesToNothing() throws {
         let land = try Self.land(baseTextures: [(Self.unmappedTexture, 0)])
 

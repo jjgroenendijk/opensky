@@ -228,3 +228,11 @@ nonisolated public struct Land: Sendable {
         return out
     }
 }
+
+nonisolated extension Land {
+    /// A quadrant with no `BTXT` draws the default ground, as a null `LTEX` does
+    /// (docs/formats/land.md).
+    public func baseTexture(quadrant: UInt8) -> FormID {
+        baseTextures.first { $0.quadrant == quadrant }?.texture ?? FormID(0)
+    }
+}

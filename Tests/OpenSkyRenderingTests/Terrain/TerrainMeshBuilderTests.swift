@@ -154,15 +154,15 @@ struct TerrainMeshBuilderTests {
     // MARK: - Splat inputs
 
     @Test func routesBaseTexturePerQuadrant() throws {
-        // Fixture paints quadrant q's base with LTEX 0x1000+q; an unpainted
-        // quadrant carries no base FormID.
+        // Fixture paints quadrant q's base with LTEX 0x1000+q; a quadrant with
+        // no BTXT draws the null LTEX, the default ground.
         let patches = try TerrainMeshBuilder.patches(
             land: land(baseQuadrants: [0, 1, 3]), hiddenQuadrants: 0
         )
         #expect(patches.count == 4)
         #expect(patches[0].baseTexture == FormID(0x1000))
         #expect(patches[1].baseTexture == FormID(0x1001))
-        #expect(patches[2].baseTexture == nil)
+        #expect(patches[2].baseTexture == FormID(0))
         #expect(patches[3].baseTexture == FormID(0x1003))
     }
 

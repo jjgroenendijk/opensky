@@ -106,6 +106,19 @@ struct SceneRuntimeTests {
         #expect(runtime.stop(id).isEmpty)
     }
 
+    /// The coordinator passes the scenes it knows play, so a tick reads no other scene.
+    @Test func aTickOfNamedScenesAdvancesOnlyThose() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.scene()
+        try SceneFixture.runtime(store: store, scene: scene).start(id)
+
+        let runtime = try SceneFixture.runtime(store: store, scene: scene, now: 3)
+        #expect(runtime.tick(scenes: []).isEmpty)
+        #expect(runtime.tick(scenes: [FormID(0xDEAD)]).isEmpty)
+        let named = try SceneFixture.runtime(store: store, scene: scene, now: 3).tick(scenes: [id])
+        #expect(steps(named).contains(.phaseStarted(1)))
+    }
+
     @Test func aSceneEndsWhenItsQuestStops() throws {
         let store = WorldStateStore()
         let scene = try SceneFixture.scene()

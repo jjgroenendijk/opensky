@@ -89,7 +89,10 @@ nonisolated public struct NPCFacingHold: Equatable, Sendable {
     public var transform: ReferenceTransformOverride {
         ReferenceTransformOverride(
             position: feetPosition,
-            rotation: SIMD3(authoredPlacement.rotation.x, authoredPlacement.rotation.y, yaw),
+            rotation: SIMD3(
+                authoredPlacement.rotation.x, authoredPlacement.rotation.y,
+                NPCYawMath.heading(fromYaw: yaw)
+            ),
             scale: scale
         )
     }
@@ -146,6 +149,17 @@ nonisolated public enum NPCYawMath: Sendable {
             delta += .pi * 2
         }
         return delta
+    }
+
+    /// The walk yaw, counter-clockwise from +X, of a placement's `angleZ`, which is
+    /// clockwise from north (docs/engine/player-camera.md).
+    public static func yaw(fromHeading heading: Float) -> Float {
+        .pi / 2 - heading
+    }
+
+    /// The `angleZ` that faces a placement along walk yaw `yaw`.
+    public static func heading(fromYaw yaw: Float) -> Float {
+        .pi / 2 - yaw
     }
 
     /// The same turn, clamped to what one step is allowed to rotate by.

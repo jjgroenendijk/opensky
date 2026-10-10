@@ -43,8 +43,8 @@ nonisolated public enum TerrainMeshBuilder: Sendable {
         /// Quadrant index 0-3; nil for the fallback plane.
         public let quadrant: UInt8?
         public let mesh: Mesh
-        /// BTXT LTEX FormID; nil -> quadrant painted with no base (fallback
-        /// material downstream).
+        /// BTXT LTEX FormID; nil only for the fallback plane, which draws the
+        /// fallback material.
         public let baseTexture: FormID?
         /// ATXT layers sorted by layer number — the splat blend order
         /// (UESP LAND: the layer number drives stacking above the base).
@@ -73,7 +73,7 @@ nonisolated public enum TerrainMeshBuilder: Sendable {
             patches.append(Patch(
                 quadrant: quadrant,
                 mesh: mesh,
-                baseTexture: land.baseTextures.first { $0.quadrant == quadrant }?.texture,
+                baseTexture: land.baseTexture(quadrant: quadrant),
                 layers: layers
             ))
         }

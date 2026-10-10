@@ -98,7 +98,7 @@ public struct NPCMovementRuntime {
         facings[start.actor] = NPCFacingHold(
             start: start,
             feetPosition: settled?.feetPosition ?? start.placement.position,
-            yaw: settled?.yaw ?? start.placement.rotation.z,
+            yaw: settled?.yaw ?? NPCYawMath.yaw(fromHeading: start.placement.rotation.z),
             drawnPlacement: drawn
         )
     }

@@ -123,7 +123,7 @@ nonisolated extension CellSceneBuilder {
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildInteriorActors(
             cell: found, location: location, localized: localized,
-            deltas: resolved.deltas,
+            deltas: resolved.deltas, collision: collision.staticCollision,
             parents: ActorEnableParents(references: entriesByFormID(resolved.entries))
         )
         let lighting = buildInteriorLighting(cell: found.cell, references: effective)
