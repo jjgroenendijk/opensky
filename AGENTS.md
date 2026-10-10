@@ -54,8 +54,8 @@ conflict.
   internal disk; the compilation cache store they all share stays on the data volume.
   `make` passes both on every `xcodebuild` call and exports `OPENSKY_DERIVED_DATA` for
   `tools/`. A new build command that skips them starts a second, cold cache.
-- Anything that builds runs in a background shell: it can pass the tool timeout. One build
-  runs at a time on the machine: `make` waits for the build lock and says whose build it
+- Anything that builds runs in a background shell: it can pass the tool timeout. Two builds
+  run at a time on the machine: `make` waits for a free build slot and says whose builds it
   waits for. `git push` builds too.
 - Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read

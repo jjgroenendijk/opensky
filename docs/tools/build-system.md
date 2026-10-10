@@ -55,13 +55,20 @@ The cache is on the internal disk because the data volume is a USB disk that wri
 compilation cache store stays on the data volume: it is tens of gigabytes, more than the boot
 volume can hold, and a replayed task reads a few files from it rather than streaming.
 
-## One build at a time
+## Two builds at a time
 
-Every command that compiles takes a machine-wide lock first, `build.lock` under `CACHE_ROOT`, in
-`tools/xcodebuild-lib.sh`. A second session's build waits and prints the owner's pid every
-30 seconds; a lock whose owner is gone is taken over. The machine has four performance cores and
-16 GB, and before the lock, up to eleven builds ran at once and each took many times longer than
-alone. `make test-rerun` takes no lock, because it compiles nothing.
+Every command that compiles takes two locks first, in `tools/xcodebuild-lib.sh`:
+
+- A build slot: `build.lock.1` to `build.lock.N` under `CACHE_ROOT`. `OPENSKY_BUILD_SLOTS` sets
+  N, and the default is 2.
+- Its build tree: `<DERIVED_DATA>.build.lock`. Two builds into one tree would collide in
+  xcodebuild's build database, so a second build in the same checkout waits even when a slot is
+  free.
+
+A build that cannot take both waits and prints the owners' pids every 30 seconds. A lock whose
+owner is gone is taken over. The machine has four performance cores and 16 GB. Before the lock,
+up to eleven builds ran at once and each took many times longer than alone; two at once still
+fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 
 | Knob | Default | Changes |
 | --- | --- | --- |
@@ -73,6 +80,7 @@ alone. `make test-rerun` takes no lock, because it compiles nothing.
 | `XCODEBUILD_FLAGS` | empty | Extra flags or build settings |
 | `OPENSKY_XCODEBUILD_RAW` | unset | `=1` prints the whole transcript instead of the filtered output |
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
+| `OPENSKY_BUILD_SLOTS` | `2` | How many builds run on the machine at once |
 
 ## Build settings in Config/
 
@@ -240,7 +248,7 @@ it and ends with one line, for example
 | Phase | From | To |
 | --- | --- | --- |
 | `make` | `make` started (`OPENSKY_MAKE_STARTED`) | the wrapper started |
-| `lock` | the wrapper started | the build lock was taken and the stale-module check ran |
+| `lock` | the wrapper started | the build locks were taken and the stale-module check ran |
 | `start` | the lock | xcodebuild printed `Resolve Package Graph` |
 | `resolve` | `Resolve Package Graph` | `Resolved source packages:` |
 | `plan` | `Resolved source packages:` | `Build description path:` |
