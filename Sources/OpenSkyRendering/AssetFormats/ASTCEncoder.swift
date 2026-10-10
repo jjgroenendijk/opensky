@@ -86,3 +86,32 @@ nonisolated public enum ASTCEncoder {
         return blocks
     }
 }
+
+nonisolated extension ASTCEncoder {
+    /// RGBA8 pixels from the blocks of one image, as astcenc decodes them. The
+    /// format search uses it to measure a candidate without a GPU round trip.
+    public static func decode(
+        _ blocks: Data, width: Int, height: Int, block: ASTCBlockSize
+    ) throws -> TexturePixels {
+        guard block.pixelFormat != nil else {
+            throw ASTCEncoderError.unsupportedBlock(width: block.width, height: block.height)
+        }
+        var rgba = [UInt8](repeating: 0, count: width * height * 4)
+        var message = [CChar](repeating: 0, count: 256)
+        let status = blocks.withUnsafeBytes { source in
+            rgba.withUnsafeMutableBufferPointer { target in
+                opensky_astc_decode(
+                    source.baseAddress?.assumingMemoryBound(to: UInt8.self), source.count,
+                    UInt32(width), UInt32(height), UInt32(block.width), UInt32(block.height),
+                    target.baseAddress, &message, message.count
+                )
+            }
+        }
+        guard status == 0 else {
+            let bytes = message.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
+            throw ASTCEncoderError
+                .encodeFailed(String(bytes: bytes, encoding: .utf8) ?? "status \(status)")
+        }
+        return TexturePixels(width: width, height: height, rgba: rgba)
+    }
+}

@@ -10,7 +10,7 @@ tags: [engine, assets, cache, loading, metal4]
 
 Fast mesh loading reads the vertex and index bytes of a cached mesh straight from its entry
 file into GPU buffers, with Metal fast resource loading (MTLIO). It works like fast texture
-loading ([asset cache](/engine/asset-cache.md), "Fast resource loading"): the CPU does not
+loading ([asset cache](/engine/asset-cache.md), "Direct GPU loading"): the CPU does not
 copy the bytes.
 
 Reference: Apple, `MTLIOCommandQueue` and `MTLIOCommandBuffer.load(_:offset:size:sourceHandle:sourceHandleOffset:)`.
@@ -46,9 +46,10 @@ not read the GPU blocks or the model.
 - If the IO command buffer fails, every buffer of the batch is filled on the CPU from the
   same entry.
 
-The setting "Fast mesh loading" (`assetCache.fastMeshLoad`) is off by default. It is on the
-launcher's Asset Cache page under Loading, and in World > Asset Cache.
-`openskycli benchmark --asset-cache --fast-load --fast-mesh-load` measures it.
+The setting `assetOptimisation.directLoad.meshes` is off by default. It is the Meshes switch
+under "Direct GPU loading" on the launcher's Asset Optimisation page, and in World > Asset
+Optimisation. `openskycli benchmark --asset-optimisation --direct-load --direct-mesh-load`
+measures it.
 
 ## Measured
 

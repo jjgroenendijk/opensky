@@ -1,5 +1,5 @@
-// The asset cache texture path on the GPU: a ready texture uploads to the same
-// texels as its DDS, and the ASTC presets stay within their quality limits.
+// The optimised texture path on the GPU: a ready texture uploads to the same
+// texels as its DDS, and the format search picks the smallest passing format.
 
 import EngineTesting
 import FormatsTesting
@@ -75,22 +75,104 @@ struct ASTCTextureConverterTests {
         }
     }
 
+    /// Random texels: no ASTC block size holds them within a quality target.
+    private func noise(size: Int) -> ReadyTexture {
+        var generator = SystemRandomNumberGenerator()
+        var bytes = Data(count: size * size * 4)
+        for index in bytes.indices {
+            bytes[index] = UInt8.random(in: 0 ... 255, using: &generator)
+        }
+        return ReadyTexture(format: .rgba8, width: size, height: size, mipCount: 1, bytes: bytes)
+    }
+
     @Test(.enabled(if: Self.hasDevice))
-    func highestQualityKeepsShippedBytes() throws {
+    func originalKeepsShippedBytes() throws {
         let converter = try gpu().converter
         let bytes = DDSFixture.file(format: .bc1, width: 8, height: 8, mipCount: 2)
         let converted = try converter.convert(
             path: "textures\\a_n.dds",
             bytes: bytes,
-            preset: .highestQuality
+            output: AssetTextureOutput(quality: .original)
         )
         #expect(try converted == ReadyTextureCodec.encode(ReadyTexture(dds: DDSFile(data: bytes))))
     }
 
+    @Test(.enabled(if: Self.hasDevice))
+    func aSmoothTextureGetsTheSmallestFormat() throws {
+        let converter = try gpu().converter
+        let target = try #require(TextureQuality.low.target)
+        let result = try converter.convert(
+            gradient(size: 512),
+            plan: .search(target),
+            path: "a.dds"
+        )
+        #expect(result.format == .astc8x8)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func noiseKeepsItsShippedBlocks() throws {
+        let converter = try gpu().converter
+        let target = try #require(TextureQuality.high.target)
+        let source = noise(size: 512)
+        let result = try converter.convert(source, plan: .search(target), path: "a.dds")
+        #expect(result == source)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func aSmallTextureIsNotSearched() throws {
+        let converter = try gpu().converter
+        let target = try #require(TextureQuality.low.target)
+        let source = gradient(size: 128)
+        #expect(try converter.convert(source, plan: .search(target), path: "a.dds") == source)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func aForcedFormatEncodesEveryLevelOnce() throws {
+        let converter = try gpu().converter
+        let result = try converter.convert(
+            gradient(size: 64),
+            plan: .forced(.astc6x6),
+            path: "a.dds"
+        )
+        #expect(result.format == .astc6x6)
+        #expect(result.width == 64)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func aSizeLimitDropsTheTopLevels() throws {
+        let converter = try gpu().converter
+        let bytes = DDSFixture.file(format: .bc1, width: 64, height: 64, mipCount: 4)
+        let converted = try #require(try converter.convert(
+            path: "a.dds", bytes: bytes, output: AssetTextureOutput(maximumSide: 16)
+        ))
+        let ready = try ReadyTextureCodec.decode(converted)
+        #expect(ready.width == 16)
+        #expect(ready.mipCount == 2)
+        #expect(ready.format == .bc1)
+    }
+
+    @Test(.enabled(if: Self.hasDevice))
+    func theCPUDecodeMatchesTheGPUDecode() throws {
+        let gpu = try gpu()
+        let source = gradient(size: 64)
+        let encoded = try gpu.converter.encode(source, as: .astc6x6)
+        let uploaded = try gpu.loader.upload(ready: encoded, usage: .data, label: "astc")
+        let viaGPU = try gpu.readback.pixels(of: uploaded, level: 0)
+        let viaCPU = try ASTCEncoder.decode(
+            encoded.bytes, width: 64, height: 64, block: ASTCBlockSize(width: 6, height: 6)
+        )
+        let difference = try TextureImageDifference.compare(
+            reference: viaGPU,
+            candidate: viaCPU,
+            normals: false
+        )
+        #expect(difference.maxChannelError <= 1)
+    }
+
     @Test(.enabled(if: Self.hasDevice), arguments: [
-        (ReadyTextureFormat.astc4x4, 40.0), (.astc6x6, 30.0), (.astc8x8, 30.0)
+        (ReadyTextureFormat.astc4x4, 40.0), (.astc5x5, 34.0), (.astc6x6, 30.0), (.astc8x8, 30.0)
     ])
-    func astcStaysWithinPresetLimit(format: ReadyTextureFormat, minimumPSNR: Double) throws {
+    func astcStaysWithinItsLimit(format: ReadyTextureFormat, minimumPSNR: Double) throws {
         let gpu = try gpu()
         let converter = gpu.converter
         let loader = gpu.loader

@@ -42,6 +42,22 @@ struct LoadOrderPanelTests {
         #expect(panel.chooseControl.accessibilityIdentifier() == "LoadOrderChooseControl")
         #expect(panel.useDefaultControl.accessibilityIdentifier() == "LoadOrderUseDefaultControl")
         #expect(panel.reloadControl.accessibilityIdentifier() == "LoadOrderReloadControl")
+        #expect(panel.installLabel.accessibilityIdentifier() == "LoadOrderInstallStatsLabel")
+        #expect(
+            panel.installProblemsLabel.accessibilityIdentifier()
+                == "LoadOrderInstallProblemsStatsLabel"
+        )
+    }
+
+    /// The synthetic plugins are empty files, so the check lists them as problems.
+    @Test func theInstallCheckShowsItsProblems() async throws {
+        let panel = try Self.makePanel(root: Self.makeRoot())
+        for _ in 0 ..< 200 where panel.installLabel.stringValue == "Install: checking" {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(panel.installLabel.stringValue.hasPrefix("Version unknown"))
+        #expect(panel.installProblemsLabel.stringValue.contains("Update.esm is missing"))
+        #expect(!panel.installProblemsLabel.isHidden)
     }
 
     @Test func controlsHaveVisibleFrames() throws {

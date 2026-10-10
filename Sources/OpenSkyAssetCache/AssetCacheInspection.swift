@@ -47,7 +47,8 @@ nonisolated extension AssetCacheReader {
         guard let source = stamp(forPath: path) else { return nil }
         return AssetCacheKind.kinds(forPath: source.path).map { kind in
             let request = AssetCacheRequest(
-                kind: kind, source: source, converterVersion: kind.converterVersion, preset: preset
+                kind: kind, source: source, converterVersion: kind.converterVersion,
+                output: kind == .texture ? textureOutput.variant(forPath: source.path) : 0
             )
             return AssetCacheEntryInspection(kind: kind, state: inspectionState(request))
         }

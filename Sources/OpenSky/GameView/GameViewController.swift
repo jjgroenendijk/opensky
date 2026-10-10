@@ -15,6 +15,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyLaunch
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerception
@@ -32,6 +33,10 @@ final class GameViewController: NSViewController {
     var startupErrorMessage: String?
     /// Set by the launch mode; the player setting can also ask for it.
     var startsAtTitleScreen = false
+    /// Where Play starts, from the launcher. Ignored when `continueSlot` is set.
+    var launchStart = LaunchStart.normal
+    /// The save the launcher's Continue loads.
+    var continueSlot: String?
 
     /// Loaded off the main actor before the view loads, on the system default
     /// device the view also uses. Nil falls back to `DemoScene`.
@@ -396,7 +401,12 @@ extension GameViewController {
             sessionWiring.wireStreaming(session: session, renderer: newRenderer)
         }
         // After the world data, because the title's logo loads through it.
-        if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
+        if let continueSlot {
+            loadingWorld.coverSessionStart()
+            titleMenu.load(continueSlot)
+        } else if launchStart != .normal {
+            menuWorld.startPlayer(at: launchStart)
+        } else if startsAtTitleScreen || playerSettings.store.bool(.startAtTitleScreen) {
             titleMenu.open()
         } else {
             loadingWorld.coverSessionStart()
@@ -463,14 +473,16 @@ extension GameViewController {
         ])
     }
 
-    /// Saves the next frame the window presents, without app chrome. Waits at
-    /// most 2 s, because a hidden window presents no frame.
+    /// Saves the next frame the window presents, without app chrome. Gives up after
+    /// 60 drawn frames, or 10 s with no frame: a hidden window presents none. Frames,
+    /// not seconds, bound the wait, because a busy main actor draws few frames a second.
     func writeScreenshot(to url: URL) async throws {
         guard let renderer else { throw ScreenshotError.rendererNotReady }
         renderer.requestWindowCapture()
+        let firstFrame = renderer.frameIndex
         let clock = ContinuousClock()
-        let deadline = clock.now + .seconds(2)
-        while clock.now < deadline {
+        let deadline = clock.now + .seconds(10)
+        while clock.now < deadline, renderer.frameIndex - firstFrame < 60 {
             if let texture = renderer.takeWindowCapture() {
                 try FrameScreenshot.write(texture: texture, to: url)
                 return

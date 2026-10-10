@@ -36,13 +36,13 @@ struct PlayerSettingsStoreTests {
     @Test func aTextValueSurvivesARestartAndUnknownTextIsIgnored() {
         let disk = MemoryPersistence()
         let first = PlayerSettingsStore(persistence: disk)
-        first.setText(.assetCacheFolder, to: "/Volumes/Fast/Cache")
+        first.setText(.assetOptimisationFolder, to: "/Volumes/Fast/Cache")
         first.setText(PlayerSettingID("unknown.text"), to: "x")
         let second = PlayerSettingsStore(persistence: disk)
-        #expect(second.text(.assetCacheFolder) == "/Volumes/Fast/Cache")
+        #expect(second.text(.assetOptimisationFolder) == "/Volumes/Fast/Cache")
         #expect(second.text(PlayerSettingID("unknown.text")) == nil)
-        second.setText(.assetCacheFolder, to: "")
-        #expect(PlayerSettingsStore(persistence: disk).text(.assetCacheFolder) == nil)
+        second.setText(.assetOptimisationFolder, to: "")
+        #expect(PlayerSettingsStore(persistence: disk).text(.assetOptimisationFolder) == nil)
     }
 
     @Test func anUnreadableFileStartsFromDefaults() {

@@ -1,4 +1,4 @@
-// World > Asset Cache: the session toggle, the read counts, and one entry.
+// World > Asset Optimisation: the session toggle, the read counts, and one entry.
 
 import AppKit
 import Foundation
@@ -42,8 +42,7 @@ struct AssetCacheSectionTests {
                 directoryHint: .isDirectory
             )
         return try AssetCacheReader(
-            store: AssetCacheStore(root: root, limitBytes: 1 << 30), files: NoFiles(),
-            preset: .balanced
+            store: AssetCacheStore(root: root, limitBytes: 1 << 30), files: NoFiles()
         )
     }
 
@@ -59,7 +58,7 @@ struct AssetCacheSectionTests {
         panel.assetCacheProvider = FakeWorldProviders()
         panel.loadViewIfNeeded()
         #expect(panel.sections.map(\.sectionIdentifier).contains("assetCache"))
-        #expect(panel.assetCacheSection.statsReadout == "Cache: off for this session")
+        #expect(panel.assetCacheSection.statsReadout == "Optimised files: off for this session")
     }
 
     @Test func idsArePinned() {
@@ -83,7 +82,8 @@ struct AssetCacheSectionTests {
         let section = AssetCacheSection()
         section.loadViewIfNeeded()
         section.provider = provider
-        #expect(section.statsReadout == "Preset: Balanced\nReads: none")
+        #expect(section
+            .statsReadout == "Texture quality: \(TextureQuality.default.title)\nReads: none")
         let toggle = try #require(find("AssetCacheReadControl", in: section.view) as? NSButton)
         #expect(toggle.state == .on)
         toggle.performClick(nil)
@@ -112,7 +112,7 @@ struct AssetCacheSectionTests {
         let section = AssetCacheSection()
         section.loadViewIfNeeded()
         section.provider = provider
-        #expect(section.fastLoadReadout == "Fast load: no cell loaded yet")
+        #expect(section.fastLoadReadout == "Direct GPU loading: no cell loaded yet")
         let toggle = try #require(find("AssetCacheFastLoadControl", in: section.view) as? NSButton)
         #expect(toggle.state == .on)
         toggle.performClick(nil)

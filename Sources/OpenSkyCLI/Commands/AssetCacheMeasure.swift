@@ -74,13 +74,14 @@ enum AssetCacheMeasure {
         perKind: Int
     ) async throws {
         // Kinds the cache no longer stores are measured too, so the decision can be checked again.
-        let built = try AssetCacheConverters.make(preset: settings.preset)
+        let built = try AssetCacheConverters.make(textureOutput: settings.textureOutput)
         let retired: [any AssetConverting] = [LooseAnimationConverter(), CachedAudioConverter()]
         let converters = built + retired.filter { old in !built.contains { $0.kind == old.kind } }
         reader.kinds = Set(AssetCacheKind.allCases)
         let context = Context(files: files, reader: reader, evict: [dataURL, reader.store.root])
         let builder = AssetCacheBuilder(
-            store: reader.store, files: files, converters: converters, preset: settings.preset
+            store: reader.store, files: files, converters: converters,
+            textureOutput: settings.textureOutput
         )
         let paths = files.archiveEntries().map(\.path).sorted()
         print(

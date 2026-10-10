@@ -164,19 +164,19 @@ struct TextureStreamingSectionTests {
         )
         #expect(section.budgetControl.accessibilityIdentifier() == "TextureBudgetControl")
         #expect(section.enabledControl.state == .on)
-        #expect(section.budgetControl.titleOfSelectedItem == "Budget 512 MiB")
+        #expect(section.budgetControl.titleOfSelectedItem == "Budget: Automatic")
         #expect(!TextureStreamingSection.isOverridden(provider: providers))
 
         section.enabledControl.state = .off
         section.enabledControl.sendAction(section.enabledControl.action, to: section)
-        section.budgetControl.selectItem(at: 0)
+        section.budgetControl.selectItem(at: 3)
         section.budgetControl.sendAction(section.budgetControl.action, to: section)
         #expect(!providers.textureStreamingEnabled)
-        #expect(providers.textureBudgetIndex == 0)
+        #expect(providers.textureBudgetIndex == 3)
         #expect(TextureStreamingSection.isOverridden(provider: providers))
         TextureStreamingSection.resetToDefaults(provider: providers)
         #expect(providers.textureStreamingEnabled)
-        #expect(providers.textureBudgetIndex == 2)
+        #expect(providers.textureBudgetIndex == 0)
     }
 
     @Test

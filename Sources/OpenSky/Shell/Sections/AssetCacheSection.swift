@@ -1,5 +1,5 @@
-// World > Asset Cache section: turn cache reads on and off for the running
-// session, the hits and misses per kind, and the entries of one asset path.
+// World > Asset Optimisation section: turn optimised reads on and off for the
+// running session, the hits and misses per kind, and the entries of one asset path.
 
 import AppKit
 import OpenSkyAssetCache
@@ -15,7 +15,7 @@ final class AssetCacheSection: PanelSectionViewController {
     }
 
     private let enabledControl = NSButton(
-        checkboxWithTitle: "Read from the cache",
+        checkboxWithTitle: "Read the optimised files",
         target: nil,
         action: nil
     )
@@ -25,12 +25,12 @@ final class AssetCacheSection: PanelSectionViewController {
 
     private let statsLabel = PanelComponents.statsLabel(identifier: "AssetCacheStatsLabel")
     private let fastLoadControl = NSButton(
-        checkboxWithTitle: "Fast texture loading",
+        checkboxWithTitle: "Direct GPU loading of textures",
         target: nil,
         action: nil
     )
     private let fastMeshLoadControl = NSButton(
-        checkboxWithTitle: "Fast mesh loading",
+        checkboxWithTitle: "Direct GPU loading of meshes",
         target: nil,
         action: nil
     )
@@ -43,7 +43,7 @@ final class AssetCacheSection: PanelSectionViewController {
     private var inspectedPath: String?
 
     override var sectionTitle: String {
-        "Asset Cache"
+        "Asset Optimisation"
     }
 
     override var sectionIdentifier: String {
@@ -68,7 +68,7 @@ final class AssetCacheSection: PanelSectionViewController {
             identifier: "AssetCacheReadControl"
         )
         enabledControl.toolTip = "Off loads every new asset from the game archives, for comparison"
-        statsLabel.toolTip = "Cache hits and misses per asset kind since the game started"
+        statsLabel.toolTip = "Optimised file hits and misses per asset kind since the game started"
         for (kind, control) in zip(AssetCacheKind.built, kindControls) {
             PanelComponents.configureCheckbox(
                 control, target: self, action: #selector(toggleKind(_:)),
@@ -82,13 +82,13 @@ final class AssetCacheSection: PanelSectionViewController {
             fastLoadControl, target: self, action: #selector(toggleFastLoad),
             identifier: "AssetCacheFastLoadControl"
         )
-        fastLoadControl.toolTip = "Read cached textures straight into GPU memory during a cell load"
+        fastLoadControl.toolTip = "Read optimised textures straight into GPU memory on a cell load"
         PanelComponents.configureCheckbox(
             fastMeshLoadControl, target: self, action: #selector(toggleFastMeshLoad),
             identifier: "AssetCacheFastMeshLoadControl"
         )
-        fastMeshLoadControl.toolTip = "Read cached meshes straight into GPU buffers on a cell load"
-        fastLoadLabel.toolTip = "Assets read by fast loading, and the last cell's load time"
+        fastMeshLoadControl.toolTip = "Read optimised meshes straight into GPU buffers"
+        fastLoadLabel.toolTip = "Assets read by direct GPU loading, and the last cell's load time"
         PanelComponents.configureTextField(
             pathControl, identifier: "AssetCachePathControl", width: 200,
             placeholder: "meshes\\clutter\\bucket01.nif"
@@ -98,7 +98,7 @@ final class AssetCacheSection: PanelSectionViewController {
             inspectControl, target: self, action: #selector(inspect),
             identifier: "AssetCacheInspectControl"
         )
-        inspectControl.toolTip = "Show the cache entries of this path"
+        inspectControl.toolTip = "Show the optimised files of this path"
         let inspectRow = NSStackView(views: [pathControl, inspectControl])
         inspectRow.spacing = PanelMetrics.rowGap
         return [
@@ -114,7 +114,7 @@ final class AssetCacheSection: PanelSectionViewController {
             enabledControl.isEnabled = false
             inspectControl.isEnabled = false
             kindControls.forEach { $0.isEnabled = false }
-            statsLabel.stringValue = "Cache: off for this session"
+            statsLabel.stringValue = "Optimised files: off for this session"
             entryLabel.stringValue = ""
             return
         }
@@ -129,8 +129,9 @@ final class AssetCacheSection: PanelSectionViewController {
         let lines = AssetCacheReadout.countLines(cache.allCounts)
         statsLabel
             .stringValue =
-            (["Preset: \(cache.preset.title)"] + (lines.isEmpty ? ["Reads: none"] : lines))
-                .joined(separator: "\n")
+            (["Texture quality: \(cache.textureOutput.quality.title)"] +
+                (lines.isEmpty ? ["Reads: none"] : lines))
+            .joined(separator: "\n")
         entryLabel.stringValue = inspectedPath.map {
             AssetCacheReadout.inspectionLines(cache.inspect(path: $0)).joined(separator: "\n")
         } ?? ""
@@ -142,14 +143,14 @@ final class AssetCacheSection: PanelSectionViewController {
                 control.isEnabled = false
                 control.state = .off
             }
-            fastLoadLabel.stringValue = "Fast load: off for this session"
+            fastLoadLabel.stringValue = "Direct GPU loading: off for this session"
             return
         }
         fastLoadControl.isEnabled = true
         fastLoadControl.state = control.isEnabled ? .on : .off
         fastMeshLoadControl.isEnabled = true
         fastMeshLoadControl.state = control.loadsMeshes ? .on : .off
-        fastLoadLabel.stringValue = AssetCacheReadout.fastLoadLines(control.snapshot)
+        fastLoadLabel.stringValue = AssetCacheReadout.directLoadLines(control.snapshot)
             .joined(separator: "\n")
     }
 

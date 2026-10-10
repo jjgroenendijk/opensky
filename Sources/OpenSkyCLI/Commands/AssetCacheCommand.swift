@@ -1,8 +1,7 @@
-// `asset-cache build|check|clear|status|extract|io-bench|measure|compare`: builds the asset
-// cache without the app, with the preset and folder from the shared settings unless options
-// override them. The
-// cache is game content and lives outside the repo (AGENTS.md Legal & IP); the location check
-// refuses a folder inside a git checkout or the install.
+// `asset-optimisation build|check|clear|status|extract|io-bench|measure|compare`: converts
+// without the app, with the texture quality and folder from the shared settings unless options
+// override them. The files are game content and live outside the repo (AGENTS.md Legal & IP);
+// the location check refuses a folder inside a git checkout or the install.
 
 import Foundation
 import Metal
@@ -149,24 +148,24 @@ enum AssetCacheCommand {
         }
     }
 
-    /// The shared settings, with `--preset`, `--folder`, `--limit-gib`, and `--kinds` on top.
+    /// The shared settings, with `--texture-quality`, `--max-texture-side`, `--folder`, and
+    /// `--kinds` on top.
     @MainActor
     static func settings(_ arguments: AssetCacheSettingsOptions) throws -> AssetCacheSettings {
         var settings =
             AssetCacheSettings(store: PlayerSettingsStore(persistence: try? PlayerSettingsFile
                     .defaultFile()))
-        if let name = arguments.preset {
-            guard let preset = AssetQualityPreset.allCases.first(where: { $0.cliName == name })
-            else {
-                throw CLIError.usage("--preset is best, balanced, or highest")
+        if let name = arguments.textureQuality {
+            guard let quality = TextureQuality.allCases.first(where: { $0.cliName == name }) else {
+                throw CLIError.usage("--texture-quality is original, high, medium, or low")
             }
-            settings.preset = preset
+            settings.textureOutput.quality = quality
+        }
+        if let side = arguments.maxTextureSide {
+            settings.textureOutput.maximumSide = try int(side, "--max-texture-side")
         }
         if let folder = arguments.folder {
             settings.folder = URL(filePath: folder, directoryHint: .isDirectory)
-        }
-        if let limit = arguments.limitGib {
-            settings.limitBytes = try UInt64(int(limit, "--limit-gib")) << 30
         }
         if let list = arguments.kinds {
             settings.kinds = try kinds(list)
@@ -197,11 +196,12 @@ enum AssetCacheCommand {
     private static func builder(
         reader: AssetCacheReader, files: VirtualFileSystem, options: Options
     ) throws -> AssetCacheBuilder {
-        let converters = try AssetCacheConverters.make(preset: options.settings.preset)
+        let converters = try AssetCacheConverters
+            .make(textureOutput: options.settings.textureOutput)
         return AssetCacheBuilder(
             store: reader.store, files: files,
             converters: converters.filter { options.settings.kinds.contains($0.kind) },
-            preset: options.settings.preset
+            textureOutput: options.settings.textureOutput
         )
     }
 
@@ -221,13 +221,18 @@ enum AssetCacheCommand {
         let builder = try builder(reader: reader, files: files, options: options)
         let items = items(builder, options: options)
         let total = items.reduce(UInt64(0)) { $0 + (files.provenance(forPath: $1.path)?.size ?? 0) }
-        for warning in reader.store
-            .locationWarnings(neededBytes: settings.preset.estimatedBaseGameCacheBytes)
-        {
+        let space = await AssetSpaceCheck(
+            check: builder.check(items), output: settings.textureOutput,
+            volume: AssetCacheVolume.of(reader.store.root)
+        )
+        printError("[INFO] \(space.line)")
+        for warning in space.warnings {
             printError("[WARNING] \(warning.message)")
         }
-        let preset = settings.preset.title
-        printError("[INFO] \(items.count) items, \(total >> 20) MiB of sources, preset \(preset)")
+        let quality = settings.textureOutput.quality.title
+        printError(
+            "[INFO] \(items.count) items, \(total >> 20) MiB of sources, texture quality \(quality)"
+        )
         let throttle = AssetCacheProgressThrottle(interval: .seconds(5))
         let result = await Task(priority: .utility) {
             await builder.build(
@@ -263,9 +268,9 @@ enum AssetCacheCommand {
     private static func status(reader: AssetCacheReader, settings: AssetCacheSettings) {
         let usage = reader.store.usage()
         print("folder\t\(reader.store.root.path(percentEncoded: false))")
-        print("preset\t\(settings.preset.title)")
+        print("texture quality\t\(settings.textureOutput.quality.title)")
         print("entries\t\(usage.entryCount)")
-        print("size\t\(usage.bytes >> 20) MiB of \(reader.store.limitBytes >> 30) GiB")
+        print("size\t\(usage.bytes >> 20) MiB")
         for kind in AssetCacheKind.built {
             let kindUsage = usage.kinds[kind] ?? AssetCacheKindUsage()
             let stored = settings.kinds.contains(kind) ? "cached" : "archives"
@@ -279,12 +284,8 @@ enum AssetCacheCommand {
     }
 }
 
-extension AssetQualityPreset {
+extension TextureQuality {
     var cliName: String {
-        switch self {
-        case .bestPerformance: "best"
-        case .balanced: "balanced"
-        case .highestQuality: "highest"
-        }
+        title.lowercased()
     }
 }

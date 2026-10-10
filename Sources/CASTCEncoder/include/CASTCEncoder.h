@@ -22,6 +22,12 @@ int opensky_astc_encode(const uint8_t *rgba, uint32_t width, uint32_t height,
                         uint32_t block_x, uint32_t block_y, float effort, uint8_t *out,
                         size_t out_size, char *error, size_t error_size);
 
+/// Decodes 2D LDR ASTC blocks into RGBA8 rows, top row first. `out` holds
+/// `width * height * 4` bytes. Returns 0 on success, as `opensky_astc_encode` does.
+int opensky_astc_decode(const uint8_t *blocks, size_t blocks_size, uint32_t width,
+                        uint32_t height, uint32_t block_x, uint32_t block_y, uint8_t *out,
+                        char *error, size_t error_size);
+
 #ifdef __cplusplus
 }
 #endif

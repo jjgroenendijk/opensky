@@ -1,4 +1,4 @@
-// The kinds of converted assets and the quality presets they are built for.
+// The kinds of converted assets.
 // See docs/engine/asset-cache.md.
 
 import Foundation
@@ -47,46 +47,5 @@ nonisolated public enum AssetCacheKind: UInt8, CaseIterable, Sendable, CustomStr
             return nil
         }
         self = kind
-    }
-}
-
-/// How converted assets trade build time, GPU memory, and disk size against looks.
-nonisolated public enum AssetQualityPreset: UInt8, CaseIterable, Sendable, CustomStringConvertible {
-    case bestPerformance = 0
-    case balanced = 1
-    case highestQuality = 2
-
-    public static let `default` = Self.balanced
-
-    public var title: String {
-        switch self {
-        case .bestPerformance: "Best performance"
-        case .balanced: "Balanced"
-        case .highestQuality: "Highest quality"
-        }
-    }
-
-    public var description: String {
-        title
-    }
-}
-
-nonisolated extension AssetQualityPreset {
-    private static let gibibyte: UInt64 = 1 << 30
-
-    /// The whole base-game cache for this preset, rounded up from a full build:
-    /// textures, meshes, and collision.
-    public var estimatedBaseGameCacheBytes: UInt64 {
-        switch self {
-        case .bestPerformance: 11 * Self.gibibyte
-        case .balanced: 21 * Self.gibibyte
-        case .highestQuality: 21 * Self.gibibyte
-        }
-    }
-
-    /// Fits the whole base-game cache with a tenth to spare, in whole GiB.
-    public var defaultLimitBytes: UInt64 {
-        let withMargin = estimatedBaseGameCacheBytes + estimatedBaseGameCacheBytes / 10
-        return (withMargin + Self.gibibyte - 1) / Self.gibibyte * Self.gibibyte
     }
 }

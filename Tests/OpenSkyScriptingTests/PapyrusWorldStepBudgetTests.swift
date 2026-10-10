@@ -3,7 +3,6 @@
 
 @testable import FormatsTesting
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsPEX
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

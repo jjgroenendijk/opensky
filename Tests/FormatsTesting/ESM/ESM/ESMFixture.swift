@@ -100,11 +100,12 @@ public enum ESMFixture: Sendable {
         flags: UInt32 = 1,
         author: String? = nil,
         description: String? = nil,
-        masters: [String] = []
+        masters: [String] = [],
+        recordCount: UInt32 = 0
     ) -> Data {
         var hedr = Data()
         hedr.appendUInt32(Float(1.71).bitPattern)
-        hedr.appendUInt32(0) // record count
+        hedr.appendUInt32(recordCount)
         hedr.appendUInt32(0x800) // next object ID
         var fields = field("HEDR", hedr)
         if let author {

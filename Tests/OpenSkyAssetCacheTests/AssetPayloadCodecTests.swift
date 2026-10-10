@@ -218,7 +218,7 @@ struct AssetPayloadCodecTests {
     @Test func aDDSLayoutTheEngineDoesNotReadIsNotStored() throws {
         let rgb16 = DDSFixture.xrgb8888File(width: 4, height: 4, mipCount: 1, bitCount: 16)
         #expect(try ShippedTextureConverter().convert(
-            path: "textures\\a.dds", bytes: rgb16, preset: .highestQuality
+            path: "textures\\a.dds", bytes: rgb16, output: AssetTextureOutput()
         ) == nil)
     }
 

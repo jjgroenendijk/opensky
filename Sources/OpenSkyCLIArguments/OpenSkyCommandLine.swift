@@ -33,7 +33,8 @@ public struct OpenSkyCommandLine: ParsableCommand {
         discussion: "cell, screenshot, and render target the first render cell, "
             + "Tamriel (6,-2), unless --worldspace, --x, and --y say otherwise.",
         subcommands: [
-            VFSArguments.self, RecordArguments.self, PluginsArguments.self,
+            VFSArguments.self, RecordArguments.self, PluginsArguments.self, InstallArguments.self,
+            GraphicsArguments.self,
             ESSArguments.self, GMSTArguments.self, ArcheryArguments.self,
             FootstepArguments.self, CellArguments.self, ActorArguments.self,
             ActorValuesArguments.self, CollisionArguments.self, InteriorArguments.self,

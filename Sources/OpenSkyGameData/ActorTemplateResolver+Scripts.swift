@@ -1,5 +1,4 @@
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension ActorTemplateResolver {

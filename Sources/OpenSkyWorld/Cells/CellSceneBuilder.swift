@@ -149,8 +149,6 @@ nonisolated public final class CellSceneBuilder {
     public var worldspaceIndex: [UInt32: Worldspace]?
     /// Keyed by WRLD editor ID; holds only lookups made with `pluginLocalized`.
     var worldChildrenGroups: [String: FoundWorld] = [:]
-    /// Keyed by the world-children group's file offset, then by XCLC grid.
-    var exteriorCellIndexes: [Int: [SIMD2<Int32>: FoundCell]] = [:]
     /// Keyed by WRLD load-order FormID, then by XCLC grid, over every plugin.
     var loadOrderExteriorCells: [UInt32: [SIMD2<Int32>: FoundCell]] = [:]
     /// LTEX FormID to its TXST diffuse key; nil marks a broken chain.
@@ -363,28 +361,6 @@ nonisolated extension CellSceneBuilder {
         return FoundWorld(
             children: baseWorldChildren(of: formID), worldspace: match.value, formID: formID
         )
-    }
-
-    /// Matches the decoded XCLC grid, never the unreliable block labels. The first
-    /// decodable CELL in depth-first order wins. Skips the persistent CELL, which
-    /// also carries XCLC (0,0) (`persistentCell(in:)`).
-    nonisolated public func findCell(
-        in group: ESMGroup,
-        gridX: Int32,
-        gridY: Int32,
-        localized: Bool
-    ) -> FoundCell? {
-        let grid = SIMD2(gridX, gridY)
-        guard localized == pluginLocalized else {
-            return exteriorCellIndex(of: group, localized: localized)[grid]
-        }
-        let key = group.contentRange.lowerBound
-        if let cached = exteriorCellIndexes[key] {
-            return cached[grid]
-        }
-        let index = exteriorCellIndex(of: group, localized: localized)
-        exteriorCellIndexes[key] = index
-        return index[grid]
     }
 
     /// Every exterior CELL under `group` by grid. One full walk costs about as much

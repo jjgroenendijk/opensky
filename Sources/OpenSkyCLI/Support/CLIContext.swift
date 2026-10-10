@@ -27,7 +27,10 @@ struct CLIContext {
     }
 
     func makeTerrainLODConfigurationStore() -> TerrainLODConfigurationStore {
-        TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(root: root))
+        TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(
+            root: root,
+            settings: PlayerSettingsFile.savedData()
+        ))
     }
 
     /// File name of the base plugin, which is what a record link inside it

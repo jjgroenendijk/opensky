@@ -8,13 +8,14 @@ import OpenSkyWorld
 final class LauncherViewController: NSSplitViewController {
     private let sidebar = LauncherSidebarViewController()
     private let content = NSViewController()
-    private weak var actions: (any LauncherActions)?
+    private let context: LauncherContext
     private var pageControllers: [String: NSViewController] = [:]
     private(set) var currentPageID: String?
 
     init(actions: any LauncherActions) {
-        self.actions = actions
+        context = LauncherContext(actions: actions)
         super.init(nibName: nil, bundle: nil)
+        context.showPage = { [weak self] id in self?.showPage(id: id) }
     }
 
     @available(*, unavailable)
@@ -70,12 +71,12 @@ final class LauncherViewController: NSSplitViewController {
     }
 
     private func show(_ page: LauncherPageDescriptor) {
-        guard let actions, currentPageID != page.id else { return }
+        guard currentPageID != page.id else { return }
         if let current = currentPageID.flatMap({ pageControllers[$0] }) {
             current.view.removeFromSuperview()
             current.removeFromParent()
         }
-        let controller = pageControllers[page.id] ?? page.makeController(actions)
+        let controller = pageControllers[page.id] ?? page.makeController(context)
         pageControllers[page.id] = controller
         currentPageID = page.id
         content.addChild(controller)
@@ -86,7 +87,7 @@ final class LauncherViewController: NSSplitViewController {
             pageView.topAnchor.constraint(equalTo: content.view.topAnchor),
             pageView.leadingAnchor.constraint(equalTo: content.view.leadingAnchor),
             pageView.trailingAnchor.constraint(equalTo: content.view.trailingAnchor),
-            pageView.bottomAnchor.constraint(lessThanOrEqualTo: content.view.bottomAnchor)
+            pageView.bottomAnchor.constraint(equalTo: content.view.bottomAnchor)
         ])
     }
 }

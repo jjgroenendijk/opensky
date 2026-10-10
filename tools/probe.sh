@@ -121,6 +121,14 @@ printf '%s\n' "$plugins" | grep -q '^plugins.txt: ' \
   || fail "plugins did not report where the load order came from"
 echo "[ OK ] plugins ($(printf '%s\n' "$plugins" | tail -n 1))"
 
+# Game folder check: version, DLC, and counts. Problems exit 1, so a damaged
+# install fails the probe here first.
+install="$("$cli" --data-root "$data_root" install 2>>"$log")" \
+  || fail "install reported problems"
+printf '%s\n' "$install" | grep -q '^\[INFO\] Version ' \
+  || fail "install did not report a version line"
+echo "[ OK ] install ($(printf '%s\n' "$install" | sed -n 2p))"
+
 # Skyrim saves: read-only. Runs only when OPENSKY_SKYRIM_SAVES names a folder.
 if [ -n "${OPENSKY_SKYRIM_SAVES:-}" ]; then
   saves="$("$cli" ess list "$OPENSKY_SKYRIM_SAVES" 2>>"$log")" \
@@ -480,17 +488,17 @@ printf '%s\n' "$launch" | grep '^total ' || fail "launch-bench printed no total"
 cache_dir="$(mktemp -d)/AssetCache"
 cache_paths="$(dirname "$cache_dir")/paths.txt"
 "$cli" --data-root "$data_root" vfs ls 'meshes\clutter\*.nif' 2>>"$log" | cut -f1 | head -n 20 >"$cache_paths"
-run "asset cache build" asset-cache build --folder "$cache_dir" --kinds collision --paths "$cache_paths" --width 4
-grep -q '^failures 0$' "$log" || fail "asset-cache build reported failures"
-run "asset cache check" asset-cache check --folder "$cache_dir" --kinds collision --paths "$cache_paths"
-awk '/^--- asset cache check/{f=1;next} /^--- /{f=0} f' "$log" \
+run "asset optimisation build" asset-optimisation build --folder "$cache_dir" --kinds collision --paths "$cache_paths" --width 4
+grep -q '^failures 0$' "$log" || fail "asset-optimisation build reported failures"
+run "asset optimisation check" asset-optimisation check --folder "$cache_dir" --kinds collision --paths "$cache_paths"
+awk '/^--- asset optimisation check/{f=1;next} /^--- /{f=0} f' "$log" \
   | grep -qE '^collision[[:space:]]current [1-9][0-9]*[[:space:]]stale 0[[:space:]]missing 0$' \
-  || fail "asset-cache check found missing collision entries"
-run "asset cache measure" asset-cache measure --folder "$cache_dir" --per-kind 5
+  || fail "asset-optimisation check found missing collision entries"
+run "asset optimisation measure" asset-optimisation measure --folder "$cache_dir" --per-kind 5
 grep -qE '^textures[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
-  || fail "asset-cache measure printed no texture row"
+  || fail "asset-optimisation measure printed no texture row"
 grep -qE '^animation[[:space:]]5[[:space:]].*[[:space:]]warm[[:space:]]' "$log" \
-  || fail "asset-cache measure printed no animation row: retired kinds must still measure"
+  || fail "asset-optimisation measure printed no animation row: retired kinds must still measure"
 rm -rf "$(dirname "$cache_dir")"
 echo "[ OK ] asset cache build + check + measure"
 

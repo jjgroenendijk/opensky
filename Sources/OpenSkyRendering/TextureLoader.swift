@@ -186,6 +186,7 @@ nonisolated public final class TextureLoader {
         case .rgba8: return srgb ? .rgba8Unorm_srgb : .rgba8Unorm
         case .bgra8: return srgb ? .bgra8Unorm_srgb : .bgra8Unorm
         case .astc4x4: return srgb ? .astc_4x4_srgb : .astc_4x4_ldr
+        case .astc5x5: return srgb ? .astc_5x5_srgb : .astc_5x5_ldr
         case .astc6x6: return srgb ? .astc_6x6_srgb : .astc_6x6_ldr
         case .astc8x8: return srgb ? .astc_8x8_srgb : .astc_8x8_ldr
         }

@@ -34,14 +34,10 @@ struct AssetCacheStoreTests {
     }
 
     private func request(
-        _ source: AssetSourceStamp, converter: UInt32 = 1, preset: AssetQualityPreset = .balanced
+        _ source: AssetSourceStamp, converter: UInt32 = 1, output: UInt8 = 0,
+        kind: AssetCacheKind = .texture
     ) -> AssetCacheRequest {
-        AssetCacheRequest(
-            kind: .texture,
-            source: source,
-            converterVersion: converter,
-            preset: preset
-        )
+        AssetCacheRequest(kind: kind, source: source, converterVersion: converter, output: output)
     }
 
     private func payload(of lookup: AssetCacheLookup) -> Data? {
@@ -98,12 +94,22 @@ struct AssetCacheStoreTests {
         }
     }
 
-    @Test func anotherPresetMakesTheEntryStale() throws {
+    @Test func anotherTextureOutputMakesTheTextureStale() throws {
         let store = try makeStore()
-        try store.store(Data([1]), for: request(source(), preset: .balanced))
-        let lookup = store.lookup(request(source(), preset: .highestQuality))
-        guard case .stale(.presetChanged(built: .balanced)) = lookup else {
-            Issue.record("expected presetChanged")
+        try store.store(Data([1]), for: request(source(), output: 0))
+        let lookup = store.lookup(request(source(), output: 2))
+        guard case .stale(.outputChanged(built: 0)) = lookup else {
+            Issue.record("expected outputChanged")
+            return
+        }
+    }
+
+    @Test func aTextureOutputChangeLeavesMeshesCurrent() throws {
+        let store = try makeStore()
+        let mesh = source("meshes\\a.nif")
+        try store.store(Data([1]), for: request(mesh, output: 0, kind: .mesh))
+        guard case .hit = store.lookup(request(mesh, output: 2, kind: .mesh)) else {
+            Issue.record("expected a mesh hit")
             return
         }
     }
@@ -138,7 +144,7 @@ struct AssetCacheStoreTests {
         let store = try makeStore()
         let sound = source("sound\\fx\\a.wav")
         try store.store(Data([1, 2]), for: AssetCacheRequest(
-            kind: .audio, source: sound, converterVersion: 1, preset: .balanced
+            kind: .audio, source: sound, converterVersion: 1
         ))
         try store.store(Data([3]), for: request(source()))
         #expect(store.usage().entryCount == 2)

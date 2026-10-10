@@ -9,7 +9,7 @@ import OpenSkyFormatsMesh
 nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     case bc1 = 1, bc2, bc3, bc4, bc5, bc7
     case rgba8 = 10, bgra8
-    case astc4x4 = 20, astc6x6, astc8x8
+    case astc4x4 = 20, astc6x6, astc8x8, astc5x5
 
     public init(_ format: DDSPixelFormat) {
         switch format {
@@ -29,8 +29,35 @@ nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
         switch self {
         case .rgba8, .bgra8: 1
         case .bc1, .bc2, .bc3, .bc4, .bc5, .bc7, .astc4x4: 4
+        case .astc5x5: 5
         case .astc6x6: 6
         case .astc8x8: 8
+        }
+    }
+
+    /// Bits of GPU memory per texel: 4 for BC1, 8 for BC3 and ASTC 4x4, 2 for ASTC 8x8.
+    public var bitsPerPixel: Double {
+        Double(bytesPerBlock * 8) / Double(blockDimension * blockDimension)
+    }
+
+    /// `3.56` for ASTC 6x6, `8` for BC3.
+    public var bitsPerPixelText: String {
+        let value = bitsPerPixel
+        return value == value.rounded() ? String(Int(value)) : String(format: "%.2f", value)
+    }
+
+    /// `BC1`, `ASTC 6x6`.
+    public var title: String {
+        switch self {
+        case .bc1: "BC1"
+        case .bc2: "BC2"
+        case .bc3: "BC3"
+        case .bc4: "BC4"
+        case .bc5: "BC5"
+        case .bc7: "BC7"
+        case .rgba8: "RGBA8"
+        case .bgra8: "BGRA8"
+        case .astc4x4, .astc5x5, .astc6x6, .astc8x8: "ASTC \(blockDimension)x\(blockDimension)"
         }
     }
 
@@ -55,7 +82,7 @@ nonisolated public enum ReadyTextureFormat: UInt8, Sendable, CaseIterable {
     }
 }
 
-nonisolated public struct ReadyTexture: Sendable {
+nonisolated public struct ReadyTexture: Equatable, Sendable {
     public let format: ReadyTextureFormat
     public let width: Int
     public let height: Int
@@ -97,6 +124,22 @@ nonisolated public struct ReadyTexture: Sendable {
 
     public var expectedByteCount: Int {
         levelRange(mipCount - 1).upperBound
+    }
+
+    /// The levels from the first one no larger than `side` on its long side, as they
+    /// are: the smaller levels are already in the source, so nothing is lost.
+    public func keepingLevels(fittingWithin side: Int?) -> ReadyTexture {
+        guard let side else { return self }
+        var first = 0
+        while first < mipCount - 1, max(width(level: first), height(level: first)) > side {
+            first += 1
+        }
+        guard first > 0 else { return self }
+        let start = bytes.startIndex + levelRange(first).lowerBound
+        return ReadyTexture(
+            format: format, width: width(level: first), height: height(level: first),
+            mipCount: mipCount - first, bytes: bytes[start ..< bytes.endIndex]
+        )
     }
 
     /// The shipped levels as they are. `xrgb8888` gets an opaque alpha byte,

@@ -48,6 +48,14 @@ nonisolated public enum AssetCacheLocationWarning: Equatable, Sendable {
     case networkDisk
     /// The disk has less free space than the cache needs.
     case lowFreeSpace(availableBytes: UInt64, neededBytes: UInt64)
+
+    public var isLowFreeSpace: Bool {
+        if case .lowFreeSpace = self {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 nonisolated public enum AssetCacheLocation {
@@ -119,12 +127,13 @@ nonisolated extension AssetCacheLocationWarning {
     public var message: String {
         switch self {
         case .externalDisk:
-            "The cache folder is on an external disk, which may read slower than the internal disk."
+            "The folder is on an external disk, which may read slower than the internal disk."
         case .networkDisk:
-            "The cache folder is on a network disk. Reads are slow, and the disk may go away."
+            "The folder is on a network disk. Reads are slow, and the disk may go away."
         case let .lowFreeSpace(available, needed):
-            "The disk has \(available >> 30) GiB free, but the cache needs about "
-                + "\(needed >> 30) GiB. Choose another folder."
+            "The disk has \(available.formatted(.byteCount(style: .file))) free, but the "
+                + "conversion needs about \(needed.formatted(.byteCount(style: .file))). "
+                + "Free space or choose another folder."
         }
     }
 }

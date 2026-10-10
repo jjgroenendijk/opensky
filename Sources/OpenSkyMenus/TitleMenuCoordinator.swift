@@ -237,7 +237,7 @@ public final class TitleMenuCoordinator {
         }
     }
 
-    func load(_ slot: String) {
+    public func load(_ slot: String) {
         guard let saves, loadWork == nil else { return }
         lastResult = "Loading \(slot)"
         loadWork = Task {

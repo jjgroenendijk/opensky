@@ -45,22 +45,6 @@ public final class PapyrusFrame {
         compiled.defaultReturnValue
     }
 
-    public func localValue(named name: String) -> PapyrusValue? {
-        compiled.binding(for: name).slot.map { slots[$0] }
-    }
-
-    public func localType(named name: String) -> PapyrusType? {
-        compiled.binding(for: name).slot.map { compiled.slotTypes[$0] }
-    }
-
-    public func setLocalValue(_ value: PapyrusValue, named name: String) -> Bool {
-        guard let slot = compiled.binding(for: name).slot else {
-            return false
-        }
-        slots[slot] = value
-        return true
-    }
-
     public func setSlot(_ slot: Int, to value: PapyrusValue) {
         slots[slot] = value
     }

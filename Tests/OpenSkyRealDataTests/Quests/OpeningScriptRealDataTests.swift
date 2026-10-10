@@ -3,7 +3,6 @@
 // animation event itself. The report holds stage numbers and counts only.
 
 import Foundation
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests

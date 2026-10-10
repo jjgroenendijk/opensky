@@ -18,8 +18,6 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
     /// Game units per noise tile, one per layer.
     public let uvScales: SIMD3<Float>
     public let amplitudes: SIMD3<Float>
-    public let reflectionMagnitude: Float
-    public let sunSparkleMagnitude: Float
     public let sunSpecularMagnitude: Float
     public let sunSparklePower: Float
 
@@ -28,7 +26,6 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
         fogNear: Float, fogFar: Float,
         windDirections: SIMD3<Float>, windSpeeds: SIMD3<Float>,
         uvScales: SIMD3<Float>, amplitudes: SIMD3<Float>,
-        reflectionMagnitude: Float, sunSparkleMagnitude: Float,
         sunSpecularMagnitude: Float, sunSparklePower: Float
     ) {
         self.sunSpecularPower = sunSpecularPower
@@ -40,8 +37,6 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
         self.windSpeeds = windSpeeds
         self.uvScales = uvScales
         self.amplitudes = amplitudes
-        self.reflectionMagnitude = reflectionMagnitude
-        self.sunSparkleMagnitude = sunSparkleMagnitude
         self.sunSpecularMagnitude = sunSpecularMagnitude
         self.sunSparklePower = sunSparklePower
     }
@@ -62,7 +57,6 @@ nonisolated public struct WaterSurfaceFields: Equatable, Sendable {
             fresnelAmount: float(at: 24), fogNear: float(at: 32), fogFar: float(at: 36),
             windDirections: float3(at: 100), windSpeeds: float3(at: 112),
             uvScales: float3(at: 172), amplitudes: float3(at: 184),
-            reflectionMagnitude: float(at: 196), sunSparkleMagnitude: float(at: 200),
             sunSpecularMagnitude: float(at: 204), sunSparklePower: float(at: 224)
         )
     }

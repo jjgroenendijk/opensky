@@ -107,4 +107,14 @@ struct PluginHeaderTests {
                 == "Skyrim.esm:00003C"
         )
     }
+
+    @Test func readsTheHeaderFromThePluginStartAlone() throws {
+        let tes4 = ESMFixture.tes4(masters: ["Skyrim.esm"], recordCount: 42)
+        let plugin = tes4 + ESMFixture.topGroup("GMST", contents: Data())
+        let header = try PluginHeader(pluginData: plugin)
+        #expect(header.stats.recordCount == 42)
+        #expect(header.masters == ["Skyrim.esm"])
+        #expect(throws: ESMError.missingTES4) { try PluginHeader(pluginData: tes4.prefix(10)) }
+        #expect(throws: ESMError.missingTES4) { try PluginHeader(pluginData: tes4.dropLast(4)) }
+    }
 }

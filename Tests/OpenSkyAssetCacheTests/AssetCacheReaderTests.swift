@@ -34,7 +34,10 @@ struct AssetCacheReaderTests {
     private let path = "textures\\rock.dds"
     private let meshPath = "meshes\\rock.nif"
     private let provenance = GameFileProvenance(origin: "a.bsa", size: 10, modified: 5)
-    private let decoder = AssetCacheDecoder(kind: .texture, converterVersion: 2) { data in
+    private let decoder = AssetCacheDecoder(
+        kind: .texture,
+        converterVersion: AssetConverterVersion.texture
+    ) { data in
         guard data.first != 0xFF else { throw CachePayloadError.truncated }
         return Array(data)
     }
@@ -48,17 +51,17 @@ struct AssetCacheReaderTests {
         let store = try AssetCacheStore(root: root, limitBytes: 1 << 30)
         let stamp = provenance ?? self.provenance
         let files = StampedFiles(stamps: [path: stamp, meshPath: stamp])
-        return AssetCacheReader(store: store, files: files, preset: .balanced)
+        return AssetCacheReader(store: store, files: files)
     }
 
     private func store(
         _ payload: [UInt8],
         in reader: AssetCacheReader,
-        converter: UInt32 = 2
+        converter: UInt32 = AssetConverterVersion.texture
     ) throws {
         let source = try #require(reader.stamp(forPath: "Textures/Rock.dds"))
         try reader.store.store(Data(payload), for: AssetCacheRequest(
-            kind: .texture, source: source, converterVersion: converter, preset: .balanced
+            kind: .texture, source: source, converterVersion: converter
         ))
     }
 
@@ -112,10 +115,10 @@ struct AssetCacheReaderTests {
         #expect(reader.value(forPath: path, decoder: decoder) == [1])
     }
 
-    @Test func anotherPresetMakesTheEntryStale() throws {
+    @Test func anotherTextureQualityMakesTheTextureStale() throws {
         let reader = try makeReader()
         try store([1], in: reader)
-        reader.preset = .highestQuality
+        reader.textureOutput = AssetTextureOutput(quality: .low)
         #expect(reader.value(forPath: path, decoder: decoder) == nil)
         #expect(reader.counts(for: .texture).stale == 1)
     }
@@ -137,8 +140,7 @@ struct AssetCacheReaderTests {
         let payload = ModelCacheCodec.encode(model)
         let source = try #require(reader.stamp(forPath: meshPath))
         let request = AssetCacheRequest(
-            kind: .mesh, source: source, converterVersion: AssetConverterVersion.mesh,
-            preset: .balanced
+            kind: .mesh, source: source, converterVersion: AssetConverterVersion.mesh
         )
         try reader.store.store(payload, for: request)
 

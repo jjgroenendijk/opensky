@@ -32,6 +32,24 @@ extension PluginsArguments: CLIRunnable {
     }
 }
 
+extension InstallArguments: CLIRunnable {
+    func execute() throws {
+        try InstallCommand.run(dataRoot: global.dataRoot)
+    }
+}
+
+extension GraphicsArguments.Status: CLIRunnable {
+    func execute() throws {
+        try GraphicsCommand.status(context: context())
+    }
+}
+
+extension GraphicsArguments.Preset: CLIRunnable {
+    func execute() throws {
+        try GraphicsCommand.preset(context: context(), name: name.lowercased())
+    }
+}
+
 extension ESSArguments: CLIRunnable {
     func execute() async throws {
         try await ESSCommand.run(arguments: self)

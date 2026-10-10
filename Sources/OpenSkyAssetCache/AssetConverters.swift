@@ -1,5 +1,5 @@
 // Converters turn one source file's bytes into one cache payload. Each is pure:
-// bytes and preset in, bytes out, with a version. A converter returns nil for a
+// bytes and the texture output in, bytes out, with a version. A converter returns nil for a
 // source it does not store, which then always loads from the original file.
 
 import Foundation
@@ -11,7 +11,7 @@ nonisolated public protocol AssetConverting: Sendable {
     var version: UInt32 { get }
     /// True for the VFS paths this converter reads, such as `.dds` files.
     func accepts(path: String) -> Bool
-    func convert(path: String, bytes: Data, preset: AssetQualityPreset) throws -> Data?
+    func convert(path: String, bytes: Data, output: AssetTextureOutput) throws -> Data?
 }
 
 /// Shipped textures, stored as they are: the BC blocks and mip levels, ready to upload.
@@ -30,8 +30,10 @@ nonisolated public struct ShippedTextureConverter: AssetConverting {
         path.hasSuffix(".dds")
     }
 
-    public func convert(path _: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
-        try ReadyTexture.shipped(dds: bytes).map(ReadyTextureCodec.encode)
+    public func convert(path _: String, bytes: Data, output: AssetTextureOutput) throws -> Data? {
+        try ReadyTexture.shipped(dds: bytes).map {
+            ReadyTextureCodec.encode($0.keepingLevels(fittingWithin: output.maximumSide))
+        }
     }
 }
 
@@ -64,7 +66,7 @@ nonisolated public struct ReadyMeshConverter: AssetConverting {
         path.hasSuffix(".nif")
     }
 
-    public func convert(path: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
+    public func convert(path: String, bytes: Data, output _: AssetTextureOutput) throws -> Data? {
         let file = try NIFFile(data: bytes)
         if
             path.hasPrefix("meshes\\actors\\character\\"),
@@ -93,7 +95,7 @@ nonisolated public struct ReadyCollisionConverter: AssetConverting {
         path.hasSuffix(".nif")
     }
 
-    public func convert(path _: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
+    public func convert(path _: String, bytes: Data, output _: AssetTextureOutput) throws -> Data? {
         try CollisionCacheCodec.encode(NIFFile(data: bytes).collisionModel())
     }
 }
@@ -115,7 +117,7 @@ nonisolated public struct LooseAnimationConverter: AssetConverting {
         path.hasSuffix(".hkx")
     }
 
-    public func convert(path _: String, bytes: Data, preset _: AssetQualityPreset) throws -> Data? {
+    public func convert(path _: String, bytes: Data, output _: AssetTextureOutput) throws -> Data? {
         bytes
     }
 }
