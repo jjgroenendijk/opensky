@@ -52,13 +52,13 @@ The object starts at its virtual fixup offset in `__data__`. Pointers are 8 byte
 | 0x10 | 4 | `hkaAnimation.m_type` | 5 means spline compressed |
 | 0x14 | 4 | `m_duration` | Seconds |
 | 0x18 | 4 | `m_numberOfTransformTracks` | |
-| 0x1C | 4 | `m_numberOfFloatTracks` | Not read |
+| 0x1C | 4 | `m_numberOfFloatTracks` | Only their masks are read, to skip them |
 | 0x20 | 8 | `m_extractedMotion` pointer | See below |
 | 0x28 | 16 | `m_annotationTracks` `hkArray` | See below |
 | 0x38 | 4 | `m_numFrames` | |
 | 0x3C | 4 | `m_numBlocks` | |
 | 0x40 | 4 | `m_maxFramesPerBlock` | |
-| 0x44 | 4 | `m_maskAndQuantizationSize` | `transformTracks * 4 + floatTracks` |
+| 0x44 | 4 | `m_maskAndQuantizationSize` | `transformTracks * 4 + floatTracks`, padded to 4 |
 | 0x48 | 4 | `m_blockDuration` | `(maxFramesPerBlock - 1) * frameDuration` |
 | 0x4C | 4 | `m_blockInverseDuration` | `1 / blockDuration` |
 | 0x50 | 4 | `m_frameDuration` | 1/30 s |

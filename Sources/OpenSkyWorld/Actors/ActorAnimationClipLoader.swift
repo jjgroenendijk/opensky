@@ -20,13 +20,13 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         characterRoot + "animations\\\(female ? "female" : "male")\\mt_idle.hkx"
     }
 
-    /// The idle clip of the skeleton at `skeletonMeshPath`: gendered for a character,
-    /// `animations\idle.hkx` beside a creature's skeleton.
-    public static func idleAnimationPath(skeletonMeshPath: String, female: Bool) -> String {
-        guard let root = creatureRoot(skeletonMeshPath) else {
-            return idleAnimationPath(female: female)
+    /// The idle clips to try, in order, for the skeleton at `skeletonMeshPath`: the
+    /// gendered one for a character, the candidates beside a creature's skeleton.
+    public static func idleAnimationPaths(skeletonMeshPath: String, female: Bool) -> [String] {
+        guard let location = CreatureClipNames.location(skeletonMeshPath: skeletonMeshPath) else {
+            return [idleAnimationPath(female: female)]
         }
-        return root + "animations\\idle.hkx"
+        return CreatureClipNames.paths(CreatureClipNames.idle, at: location)
     }
 
     /// Direct gait clips named by the vanilla behavior graph census. They are
@@ -37,25 +37,15 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         }
     }
 
-    /// The gait clip for any skeleton, as `idleAnimationPath(skeletonMeshPath:female:)`.
-    public static func gaitAnimationPath(
+    /// The gait clips to try, in order, as `idleAnimationPaths(skeletonMeshPath:female:)`.
+    /// Empty for a gait with no direct clip.
+    public static func gaitAnimationPaths(
         _ gait: LocomotionGait, skeletonMeshPath: String, female: Bool
-    ) -> String? {
-        guard let root = creatureRoot(skeletonMeshPath) else {
-            return gaitAnimationPath(gait, female: female)
+    ) -> [String] {
+        guard let location = CreatureClipNames.location(skeletonMeshPath: skeletonMeshPath) else {
+            return gaitAnimationPath(gait, female: female).map { [$0] } ?? []
         }
-        return gaitFileName(gait).map { root + "animations\\" + $0 }
-    }
-
-    /// `meshes\actors\horse\` for `meshes\actors\horse\character assets\skeleton.nif`;
-    /// nil for the character skeleton and for a path outside `meshes\actors\`.
-    static func creatureRoot(_ skeletonMeshPath: String) -> String? {
-        guard
-            !skeletonMeshPath.hasPrefix(characterRoot),
-            skeletonMeshPath.hasPrefix(actorsRoot),
-            let assets = skeletonMeshPath.range(of: "\\character assets\\")
-        else { return nil }
-        return String(skeletonMeshPath[..<assets.lowerBound]) + "\\"
+        return CreatureClipNames.paths(CreatureClipNames.gait(gait), at: location)
     }
 
     /// The rider's clip on a horse: idle when the horse stands, else its gait.
@@ -63,8 +53,6 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         let name = gait.flatMap(gaitFileName) ?? "idle.hkx"
         return characterRoot + "animations\\horse_rider\\" + name
     }
-
-    private static let actorsRoot = "meshes\\actors\\"
 
     private static func gaitFileName(_ gait: LocomotionGait) -> String? {
         switch gait {
@@ -108,7 +96,8 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         readHKX: (String) throws -> HKXFile
     ) throws -> ActorAnimationClip {
         guard
-            skeletonMeshPath.hasPrefix(characterRoot) || creatureRoot(skeletonMeshPath) != nil,
+            skeletonMeshPath.hasPrefix(characterRoot)
+            || CreatureClipNames.location(skeletonMeshPath: skeletonMeshPath) != nil,
             skeletonMeshPath.hasSuffix(".nif")
         else {
             throw ActorAnimationLoadError.unsupportedSkeleton(skeletonMeshPath)
@@ -136,6 +125,24 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
             binding: binding,
             skeletonMeshPath: skeletonMeshPath
         )
+    }
+
+    /// Decodes the first of `animationPaths` that `exists`, else tries the first, so a
+    /// missing clip still reports its path.
+    public static func clip(
+        skeletonMeshPath: String,
+        animationPaths: [String],
+        exists: (String) -> Bool,
+        readHKX: (String) throws -> HKXFile
+    ) throws -> ActorAnimationClip {
+        guard let path = chosenPath(animationPaths, exists: exists) else {
+            throw ActorAnimationLoadError.noClip(skeletonMeshPath)
+        }
+        return try clip(skeletonMeshPath: skeletonMeshPath, animationPath: path, readHKX: readHKX)
+    }
+
+    static func chosenPath(_ paths: [String], exists: (String) -> Bool) -> String? {
+        paths.first(where: exists) ?? paths.first
     }
 
     /// The animation the binding points at, falling back to the file's first

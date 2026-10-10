@@ -96,10 +96,29 @@ The cost is one draw per actor for each skinned mesh, instead of one instanced d
 them.
 
 A character skeleton under `meshes\actors\character\` plays the gendered `mt_` clips. A creature
-skeleton, such as `meshes\actors\horse\character assets\skeleton.nif`, plays the clips in the
-`animations` folder beside its `character assets` folder: `idle.hkx`, `walkforward.hkx`, and
-`runforward.hkx`. These names were checked on the install for the horse and most other creatures.
-A creature without one of them stays in its last clip. Its behaviour graph does not run.
+skeleton sits in a `character assets` folder, such as
+`meshes\actors\horse\character assets\skeleton.nif`. It plays clips from the `animations` folder
+beside that folder. Creatures name the same clip differently, so each of idle, walk, and run is a
+list of candidate names, tried in order. The first one that exists plays. Examples:
+
+| Creature | Idle | Walk | Run |
+| --- | --- | --- | --- |
+| horse | `idle.hkx` | `walkforward.hkx` | `runforward.hkx` |
+| bear | `mt_idle.hkx` | `walkforward.hkx` | `runforward.hkx` |
+| troll | `mtidle_standing.hkx` | `mtwalkforward.hkx` | `mtrunforward.hkx` |
+| draugr | `mtidle.hkx` | `mtforward.hkx` | `mtfastforward.hkx` |
+| mudcrab | `mainidle.hkx` | `forward_walk.hkx` | `forward_run.hkx` |
+
+The names come from a listing of the install's archives. Some folders differ:
+
+- A folder name can carry a variant: `canine\character assets wolf\`. Then a variant clip, such as
+  `mt_idle_wolf.hkx`, is tried before the shared `mt_idle.hkx`.
+- The netch uses `characterassets`, without a space.
+- A creature with only one gait clip, such as the netch, plays it for both walk and run.
+
+A dragon on the ground plays `ground_combatidle.hkx`, because no calm ground idle was found.
+This is a guess and may differ from the game. Its behaviour graph does not run, so a dragon does not
+fly, and a creature does not play its random idle variations.
 Actors with a missing skeleton stay in the bind pose. Each drawn actor is counted as animated or
 static, and each static one has its `ACHR` and a reason. So an actor with a missing clip still shows.
 

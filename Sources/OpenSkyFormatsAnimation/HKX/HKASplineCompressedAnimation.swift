@@ -235,7 +235,9 @@ nonisolated private enum HKASplineObjectDecoder {
         guard metadata.floatTrackCount >= 0 else {
             throw invalid("m_numberOfFloatTracks", metadata.floatTrackCount)
         }
-        let expectedMaskSize = metadata.transformTrackCount * 4 + metadata.floatTrackCount
+        // The stored size includes the pad to 4 that follows the masks in each block.
+        let expectedMaskSize = (metadata.transformTrackCount * 4 + metadata.floatTrackCount + 3)
+            / 4 * 4
         guard metadata.maskSize == expectedMaskSize else {
             throw mismatch("m_maskAndQuantizationSize", expectedMaskSize, metadata.maskSize)
         }

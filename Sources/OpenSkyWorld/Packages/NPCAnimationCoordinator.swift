@@ -102,18 +102,20 @@ public final class NPCAnimationCoordinator {
         skeletonMeshPath: String,
         female: Bool
     ) -> ActorClipKey? {
-        ActorAnimationClipLoader.gaitAnimationPath(
+        let paths = ActorAnimationClipLoader.gaitAnimationPaths(
             gait, skeletonMeshPath: skeletonMeshPath, female: female
-        ).map {
-            ActorClipKey(skeletonMeshPath: skeletonMeshPath, animationPath: $0)
-        }
+        )
+        guard !paths.isEmpty else { return nil }
+        return ActorClipKey(skeletonMeshPath: skeletonMeshPath, animationPaths: paths)
     }
 
     private func state(of key: ActorClipKey) -> AssetLoadState<ActorAnimationClip>? {
         guard let clips = world?.animationClips else { return nil }
         let state = clips.state(of: key)
         if case .failed = state {
-            unresolvableClips.insert("\(key.skeletonMeshPath)#\(key.animationPath)")
+            unresolvableClips.insert(
+                "\(key.skeletonMeshPath)#\(key.animationPaths.joined(separator: "|"))"
+            )
         }
         return state
     }
