@@ -91,26 +91,6 @@ nonisolated public struct LoadOrderPlugins: Sendable {
         self.init([(name, file)])
     }
 
-    /// Live `type` records of every plugin, the last one of each FormID. A
-    /// deleted later record keeps the earlier version (docs/formats/formid.md).
-    public func liveRecords(of type: FourCC, skipped: inout SkippedRecords) -> [LoadOrderRecord] {
-        var order: [FormID] = []
-        var byID: [FormID: LoadOrderRecord] = [:]
-        for plugin in plugins {
-            for record in plugin.file.liveRecords(of: type, skipped: &skipped) {
-                let id = plugin.formID(of: record)
-                if
-                    byID
-                        .updateValue(LoadOrderRecord(record: record, plugin: plugin), forKey: id) ==
-                        nil
-                {
-                    order.append(id)
-                }
-            }
-        }
-        return order.compactMap { byID[$0] }
-    }
-
     /// Decoded `type` records in first-seen order. A later record that does not
     /// decode keeps the earlier version.
     public func decodeRecords<Value>(

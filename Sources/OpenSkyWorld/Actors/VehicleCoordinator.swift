@@ -2,7 +2,6 @@
 // session each frame and publishes the followers' draw deltas. The player rider
 // is placed, not drawn. See docs/engine/vehicles.md.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 import simd

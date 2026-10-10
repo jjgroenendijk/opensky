@@ -164,10 +164,6 @@ nonisolated public enum GraphicsOptions {
         option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals", noDecals)
     ]
 
-    public static func option(id: PlayerSettingID) -> GraphicsOption? {
-        all.first { $0.id == id }
-    }
-
     /// Store rows for every option. A toggle stores 0 or 1; a number keeps the INI value.
     static var definitions: [PlayerSettingDefinition] {
         all.map { option in

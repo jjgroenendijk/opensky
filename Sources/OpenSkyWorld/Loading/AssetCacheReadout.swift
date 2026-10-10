@@ -66,10 +66,6 @@ nonisolated public enum AssetCacheReadout {
         }
     }
 
-    /// Why the kinds the cache does not store have no switch.
-    public static let retiredKindsNote =
-        "Audio and animation load from the archives: the cache made them no faster."
-
     /// The fraction done, 0 to 1.
     public static func fraction(_ progress: AssetCacheBuildProgress?) -> Double {
         guard let progress, progress.totalBytes > 0 else { return 0 }

@@ -15,10 +15,6 @@ nonisolated public enum CellDirectoryEntry: Equatable, Sendable {
 }
 
 nonisolated public enum CellDirectory {
-    public static func find(editorID: String, in file: ESMFile) -> CellDirectoryEntry? {
-        find(editorID: editorID, in: LoadOrderPlugins(file: file))
-    }
-
     /// Interior cells live under the CELL top group, exterior ones under WRLD.
     public static func find(
         editorID: String,
@@ -28,10 +24,6 @@ nonisolated public enum CellDirectory {
         return find(in: loadOrder) { record, _ in
             ESMWalk.editorID(of: record)?.lowercased() == wanted
         }
-    }
-
-    public static func find(formID: FormID, in file: ESMFile) -> CellDirectoryEntry? {
-        find(formID: formID, in: LoadOrderPlugins(file: file))
     }
 
     /// A save names its cell by FormID, not by editor ID.
@@ -65,12 +57,6 @@ nonisolated public enum CellDirectory {
             }
         }
         return nil
-    }
-
-    public static func exteriorPlacement(
-        of formID: FormID, in file: ESMFile
-    ) -> PlacedReference.Placement? {
-        exteriorPlacement(of: formID, in: LoadOrderPlugins(file: file))
     }
 
     /// Where an exterior reference stands, in the last plugin that places it. A

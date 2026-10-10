@@ -1,7 +1,6 @@
 // The references a location lists by location ref type (`LCRT`), which a quest alias
 // of the "location alias reference" kind fills from. See docs/formats/locations.md.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension LocationStore {

@@ -1,8 +1,6 @@
 // Alias packages run ahead of the actor's own, a patrol walks its whole path, and a
 // held package reports which quest its locations name. Synthetic records only.
 
-import FeaturesTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM

@@ -192,10 +192,6 @@ nonisolated public struct ActorPackageRuntime {
         reevaluate(actor: actor, clock: clock, context: context())
     }
 
-    public func aliasStack(for actor: ReferenceKey) -> PackageAliasStack? {
-        actors[actor]?.aliasStack
-    }
-
     /// Set when a scene or a quest alias gave the actor its current package, so its
     /// procedure runs. Nil for a package of the actor's own.
     public func hold(for actor: ReferenceKey) -> PackageHold? {
