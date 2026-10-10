@@ -75,14 +75,9 @@ final class LoadingScreenWorldAdapter {
         game.loadingScreens.loadFinished(at: now)
     }
 
-    /// The destination cell's `XLCN`, which is where the player stands when the screen is chosen.
+    /// The destination cell's location, which is where the player stands when the screen is chosen.
     private func location(of scene: CellScene) -> ResolvedFormID? {
-        guard
-            let link = scene.locationLink,
-            let plugin = scene.ownerPluginName,
-            let locations = (game.worldData as? LocationDataProviding)?.locationStore
-        else { return nil }
-        return locations.resolvedID(link, fromPlugin: plugin)
+        game.runtimeStateWorld.location(of: scene)
     }
 
     private func placement(_ frame: LoadingCoverFrame, renderer: Renderer) -> [RenderPlacement] {
@@ -128,14 +123,8 @@ extension LoadingScreenWorldAdapter: LoadingScreenWorld {
         (game.worldData as? PresentationDataProviding)?.presentationRecords
     }
 
-    /// Most LSCR conditions ask about the location, so the context carries the LCTN store.
     func loadingConditionContext() -> ConditionContext {
-        var context = game.runtimeState.conditionContext()
-        context.data = ConditionDataResolution(
-            formLists: (game.worldData as? FactionDataProviding)?.formListStore,
-            locations: (game.worldData as? LocationDataProviding)?.locationStore
-        )
-        return context
+        game.runtimeState.conditionContext()
     }
 
     func loadingText(of screen: ResolvedRecord<LoadScreen>) -> String? {

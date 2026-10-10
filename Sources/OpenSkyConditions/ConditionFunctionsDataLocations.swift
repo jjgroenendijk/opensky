@@ -10,6 +10,20 @@ nonisolated extension ConditionFunctions {
         installDirectLocations(&registry)
         installLocationAliases(&registry)
         installSameLocation(&registry)
+        installCellFacts(&registry)
+    }
+
+    private static func installCellFacts(_ registry: inout ConditionFunctionRegistry) {
+        // xEdit index 300, `IsInInterior`, no parameters. Returns 1 when the reference
+        // is in an interior cell. (<https://ck.uesp.net/wiki/IsInInterior>)
+        registry.register(ConditionFunction(index: 300, name: "IsInInterior") { call in
+            call.referenceKey().flatMap { reference in
+                guard let interior = call.context.data.isInInterior(reference) else {
+                    return .failure(.unavailableData(.location))
+                }
+                return .success(Self.isTrue(interior))
+            }
+        })
     }
 
     private static func installDirectLocations(

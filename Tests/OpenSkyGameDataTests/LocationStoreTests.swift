@@ -2,6 +2,7 @@
 
 @testable import FormatsTesting
 import Foundation
+import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing
@@ -69,6 +70,30 @@ struct LocationStoreTests {
         #expect(cell.location == FormID(0x10))
         #expect(store.location(containing: cell, fromPlugin: "Base.esm")?.location.editorID
             == "InteriorLocation")
+    }
+
+    @Test
+    func exteriorCellsGoToTheDeepestLocationThatListsThem() throws {
+        let world: UInt32 = 0x3C
+        let shared = CellCoordinate(x: 4, y: -20)
+        let removed = CellCoordinate(x: 5, y: -20)
+        let file = try plugin(locations: [
+            LocationFixture.recordBytes(0x10, "Hold", cellLists: [
+                .init("LCEC", worldspace: world, cells: [shared, removed])
+            ]),
+            LocationFixture.recordBytes(0x20, "Town", parent: 0x10, cellLists: [
+                .init("LCEC", worldspace: world, cells: [shared]),
+                .init("ACEC", worldspace: world, cells: [removed]),
+                .init("RCEC", worldspace: world, cells: [removed])
+            ])
+        ])
+        let map = LocationCellMap(store: LocationStore(plugins: [("Base.esm", file)]))
+        let space = id("Base.esm", world)
+
+        #expect(map.location(worldspace: space, x: 4, y: -20) == id("Base.esm", 0x20))
+        #expect(map.location(worldspace: space, x: 5, y: -20) == id("Base.esm", 0x10))
+        #expect(map.location(worldspace: space, x: 6, y: -20) == nil)
+        #expect(map.location(worldspace: id("Base.esm", 0x99), x: 4, y: -20) == nil)
     }
 
     private func plugin(

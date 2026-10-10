@@ -68,6 +68,14 @@ does. So "is `WhiterunLocation` a hold?" is true. The full chain is
 
 `CELL XLCN` is a 4-byte `LCTN` FormID. It says which location a cell belongs to.
 
+Most exterior cells have no `XLCN`. For those, the location lists the cell itself: its
+`LCEC` and `ACEC` lists name a worldspace and grid cells, and `RCEC` removes cells again.
+On the install, `HelgenLocation` lists its 8 town cells in `LCEC`, and
+`FalkreathHoldLocation` lists none. So OpenSky reads `XLCN` first, then the cell lists.
+When two locations list one cell, the one deeper in the `PNAM` chain wins, so a town wins
+over its hold. [WARNING] That tie rule is inferred, not taken from an open spec. A cell
+that no location claims has no location.
+
 ## Quest aliases
 
 A quest alias (`ALLS`) with an `ALFL` field names one `LCTN` directly. OpenSky fills the

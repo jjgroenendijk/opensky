@@ -59,6 +59,16 @@ nonisolated public struct CellScene: Sendable {
     public let ownerPluginName: String?
     /// The worldspace ZNAM music type; the last link in the chain.
     public let worldspaceMusicType: FormID?
+    /// The WRLD's load-order FormID, which a location's `LCEC` cell list names. Nil indoors.
+    public let worldspace: FormID?
+
+    public var isInterior: Bool {
+        if case .interior = location {
+            return true
+        }
+        return false
+    }
+
     /// CPU collision surface for exterior LAND/DNAM terrain. nil for
     /// interiors or cells with no drawable terrain.
     public let terrainHeightField: TerrainHeightField?
@@ -105,6 +115,7 @@ nonisolated public struct CellScene: Sendable {
         locationLink: FormID? = nil,
         ownerPluginName: String? = nil,
         worldspaceMusicType: FormID? = nil,
+        worldspace: FormID? = nil,
         terrainHeightField: TerrainHeightField? = nil,
         waterHeight: Float? = nil,
         grassPlacements: [GrassPlacement] = [],
@@ -129,6 +140,7 @@ nonisolated public struct CellScene: Sendable {
         self.locationLink = locationLink
         self.ownerPluginName = ownerPluginName
         self.worldspaceMusicType = worldspaceMusicType
+        self.worldspace = worldspace
         self.terrainHeightField = terrainHeightField
         self.waterHeight = waterHeight
         self.grassPlacements = grassPlacements

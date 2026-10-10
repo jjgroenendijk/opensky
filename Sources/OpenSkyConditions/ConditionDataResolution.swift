@@ -13,6 +13,7 @@ nonisolated public struct ConditionDataResolution: Sendable {
 
     private let currentLocations: [ReferenceKey: ResolvedFormID]
     private let editorLocations: [ReferenceKey: ResolvedFormID]
+    private let interiors: [ReferenceKey: Bool]
 
     public static let empty = ConditionDataResolution()
 
@@ -22,7 +23,8 @@ nonisolated public struct ConditionDataResolution: Sendable {
         locations: LocationStore? = nil,
         sourcePlugin: String? = nil,
         currentLocations: [ReferenceKey: ResolvedFormID] = [:],
-        editorLocations: [ReferenceKey: ResolvedFormID] = [:]
+        editorLocations: [ReferenceKey: ResolvedFormID] = [:],
+        interiors: [ReferenceKey: Bool] = [:]
     ) {
         self.keywords = keywords
         self.formLists = formLists
@@ -30,6 +32,7 @@ nonisolated public struct ConditionDataResolution: Sendable {
         self.sourcePlugin = sourcePlugin
         self.currentLocations = currentLocations
         self.editorLocations = editorLocations
+        self.interiors = interiors
     }
 
     public func currentLocation(of reference: ReferenceKey) -> ResolvedFormID? {
@@ -38,6 +41,11 @@ nonisolated public struct ConditionDataResolution: Sendable {
 
     public func editorLocation(of reference: ReferenceKey) -> ResolvedFormID? {
         editorLocations[reference]
+    }
+
+    /// Whether the cell that holds `reference` is an interior; nil when it is not loaded.
+    public func isInInterior(_ reference: ReferenceKey) -> Bool? {
+        interiors[reference]
     }
 
     /// A copy that reads FormIDs from `plugin` and puts `reference` in `location`,
@@ -51,7 +59,8 @@ nonisolated public struct ConditionDataResolution: Sendable {
         current[reference] = location
         return Self(
             keywords: keywords, formLists: formLists, locations: locations,
-            sourcePlugin: plugin, currentLocations: current, editorLocations: editorLocations
+            sourcePlugin: plugin, currentLocations: current, editorLocations: editorLocations,
+            interiors: interiors
         )
     }
 }
