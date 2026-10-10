@@ -35,8 +35,8 @@ framing and culling include it. Each cell owns its water item, even though the m
 
 ## Draw order
 
-Sky, opaque objects, terrain, alpha-tested objects, grass, water, then particles, rain and snow,
-and overlays.
+Sky, cloud layers, opaque objects, terrain, alpha-tested objects, grass, water, then particles,
+rain and snow, and overlays.
 
 Water has its own pipeline: straight alpha blending, depth test "less", no depth writes, no
 culling. The shader mixes the shallow and deep water colors by distance, adds the reflection

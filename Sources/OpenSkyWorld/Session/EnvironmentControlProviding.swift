@@ -43,6 +43,9 @@ public protocol WeatherControlProviding: AnyObject {
     var weatherTransitionsPaused: Bool { get set }
     var windState: WindState { get }
     var timeOfDay: Float { get set }
+    var cloudsEnabled: Bool { get set }
+    /// Drawn layers, with the reason when none draw.
+    var cloudReadout: String { get }
 }
 
 nonisolated public struct AnimationControlSnapshot: Equatable, Sendable {

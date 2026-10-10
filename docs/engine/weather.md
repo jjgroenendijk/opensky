@@ -151,6 +151,21 @@ The weather applies only to exteriors. Interiors keep their `CELL` and `LGTM` li
 - The sky shader keeps its procedural sun disc and glow, tinted by the sun and sun glare colors.
   With no weather, it takes the original procedural path.
 
+## Clouds
+
+Each enabled cloud layer of the current weather draws on its shape of the cloud dome
+([weather record](/formats/weather.md)). A layer is skipped when its index is at or past `LNAM`,
+when `NAM1` disables it, or when it has no texture. Its colour and alpha blend from `PNAM` and
+`JNAM` by the same time-of-day weights as the sky. During a transition both weathers' layers
+draw, each faded by its share of the blend.
+
+The texture moves by the layer speed per second, in texture repeats, and wraps at one repeat.
+[WARNING] The unit of the speed is a guess from the xEdit conversion; the game may scale it.
+
+The dome draws right after the sky, with alpha blending and no depth writes, at the far end of
+the depth range. The dome and the textures load off the main actor; until they land, the sky
+draws without clouds. Interiors draw no clouds.
+
 ## Controls
 
 World > Environment > Weather:
@@ -164,4 +179,6 @@ World > Environment > Weather:
 - Time of day: a slider from 0 to 24 hours. It sets the game clock hour through the `GameHour`
   global, so the change is journaled and the clock stays the one source of the time. The value is
   kept between runs, with 13:00 as the default.
-- Readout: the current weather, the blend percent, and the wind speed and heading.
+- Clouds: draws the cloud layers, on by default.
+- Readout: the current weather, the blend percent, the wind speed and heading, and how many cloud
+  layers draw.

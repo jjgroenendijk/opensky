@@ -96,6 +96,9 @@ extension RenderCommand {
             weatherPlugin: "skyrim.esm"
         )
         try applyWeather(options.weather, to: renderer, file: file, worldspace: scene.worldspace)
+        renderer.skyClouds = try SkyClouds(
+            fileSystem: scene.context.makeFileSystem(), device: renderer.device, immediate: true
+        )
         if let name = options.imageSpace {
             guard let space = records.imageSpaces.record(editorID: name) else {
                 throw CLIError.failure("no IMGS \(name)")

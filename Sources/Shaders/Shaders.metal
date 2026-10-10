@@ -320,6 +320,46 @@ fragment float4 skyFragment(
     return float4(color, 1.0);
 }
 
+// Weather cloud layers on the dome shapes of meshes\sky\clouds.nif. The dome
+// follows the camera and draws behind everything, after the sky gradient.
+
+typedef struct
+{
+    float4 position [[position]];
+    float4 color;
+    float2 texcoord;
+} CloudVertexOut;
+
+vertex CloudVertexOut cloudVertex(
+    uint vertexID [[vertex_id]],
+    const device CloudVertex *vertices [[buffer(BufferIndexVertices)]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    constant CloudLayerUniforms &layer [[buffer(BufferIndexDrawUniforms)]])
+{
+    CloudVertex source = vertices[vertexID];
+    float4 clip =
+        frame.viewProjectionMatrix * float4(frame.cameraPosition + source.position.xyz, 1.0);
+    // Any depth inside the clip range: the dome draws with no depth test.
+    clip.z = clip.w * 0.5;
+    CloudVertexOut out;
+    out.position = clip;
+    out.color = source.color;
+    out.texcoord = source.texcoord + layer.uvOffset;
+    return out;
+}
+
+fragment float4 cloudFragment(
+    CloudVertexOut in [[stage_in]],
+    constant CloudLayerUniforms &layer [[buffer(BufferIndexDrawUniforms)]],
+    texture2d<float> cloudMap [[texture(TextureIndexDiffuse)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]])
+{
+    float4 texel = cloudMap.sample(trilinear, in.texcoord);
+    // The dome's vertex colours are (1, 0, 0, a): only the alpha, an edge fade, is used.
+    float alpha = texel.a * layer.colorAlpha.a * in.color.a;
+    return float4(texel.rgb * layer.colorAlpha.rgb, alpha);
+}
+
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
 // selected via function constant so opaque draws pay nothing for it.

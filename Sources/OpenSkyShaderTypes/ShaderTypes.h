@@ -288,6 +288,24 @@ typedef struct
     vector_float4 uvRect;
 } ParticleInstance;
 
+/// One vertex of the cloud dome, in model space around the camera.
+typedef struct
+{
+    vector_float4 position;
+    vector_float4 color;
+    vector_float2 texcoord;
+    vector_float2 padding;
+} CloudVertex;
+
+/// One weather cloud layer drawn on its dome shape.
+typedef struct
+{
+    /// rgb tint, a opacity.
+    vector_float4 colorAlpha;
+    vector_float2 uvOffset;
+    vector_float2 padding;
+} CloudLayerUniforms;
+
 /// Per-group material scalars for one instanced static-mesh draw, shared by every
 /// instance. Matrices are in InstanceTransform. Lives in the per-draw uniform ring.
 typedef struct

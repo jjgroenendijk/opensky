@@ -94,7 +94,7 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 | `LNAM` | 4 | Max cloud layers |
 | `MNAM` | 4 | Precipitation, an `SPGD` ([environment shading](/formats/environment-shading.md)) |
 | `NNAM` | 4 | Visual effect, an `RFCT` ([visual effects](/formats/visual-effects.md)) |
-| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement |
+| `RNAM`, `QNAM` | 32 | Y and X speed per layer, uint8; 127 is no movement. xEdit shows `(raw - 127) / 1270` |
 | `PNAM` | 512 | Color per layer: 4 times of day, RGBA bytes |
 | `JNAM` | 512 | Alpha per layer: 4 floats |
 | `NAM1` | 4 | Disabled layers, one bit per layer |
@@ -106,6 +106,11 @@ weather has 32 cloud layers. Layer textures use the signatures `00TX` to `@0TX` 
 | `MODL` | model group | Aurora mesh |
 | `DNAM`, `CNAM`, `ANAM`, `BNAM` | zstring | Older 4-layer cloud textures |
 | `ONAM` | 4 | Older cloud speeds, unused |
+
+The layers draw on the shapes of `meshes\sky\clouds.nif`. Its 29 `BSTriShape` blocks are in layer
+order: each shape's texture on the install matches the texture of the layer with the same index in
+the vanilla weathers. The shapes' vertex colours are (1, 0, 0, a). Only the alpha, an edge fade, is
+meaningful.
 
 One `PNAM` on the install is 64 bytes (4 layers), from an older form version. A `NAM0`,
 `FNAM`, or `DATA` of an unknown size is tallied.

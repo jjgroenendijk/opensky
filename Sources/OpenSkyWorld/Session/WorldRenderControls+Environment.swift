@@ -60,6 +60,15 @@ extension WorldRenderControls: WeatherControlProviding {
         get { renderer?.timeOfDay ?? TimeOfDaySettings.load() }
         set { runtimeState.setGameClockHour(newValue) }
     }
+
+    public var cloudsEnabled: Bool {
+        get { renderer?.cloudsEnabled ?? true }
+        set { renderer?.cloudsEnabled = newValue }
+    }
+
+    public var cloudReadout: String {
+        renderer?.cloudReadout ?? "no renderer"
+    }
 }
 
 extension WorldRenderControls: AnimationControlProviding {

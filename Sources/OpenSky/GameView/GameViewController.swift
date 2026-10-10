@@ -365,8 +365,7 @@ final class GameViewController: NSViewController {
             newRenderer.shadowQuality = ShadowQualitySettings.load()
             newRenderer.applyGraphicsSettings(playerSettings.store)
             newRenderer.timeOfDay = TimeOfDaySettings.load()
-            // Without weather data the renderer keeps its procedural sky.
-            newRenderer.weather = (provider as? WeatherProviding)?.weatherSystem
+            try newRenderer.attachWeather(from: provider)
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
             renderer = newRenderer

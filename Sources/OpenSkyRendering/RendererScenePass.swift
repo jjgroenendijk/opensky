@@ -593,6 +593,7 @@ extension Renderer {
             encoder.setRenderPipelineState(skyPipeline)
             encoder.setCullMode(.none)
             encoder.drawPrimitives(primitiveType: .triangle, vertexStart: 0, vertexCount: 3)
+            encodeClouds(state: &state)
         }
         encoder.setDepthStencilState(depthState)
         // Wireframe is a raster state rather than a channel, so it is set on the

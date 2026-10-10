@@ -11,6 +11,7 @@ import simd
 /// The scene pass's pipeline states, built together from one library.
 nonisolated public struct RenderPipelines: Sendable {
     public let sky: MTLRenderPipelineState
+    public let clouds: MTLRenderPipelineState
     public let opaque: MTLRenderPipelineState
     public let alphaTest: MTLRenderPipelineState
     /// Rigid shapes with a blending alpha property, drawn after water.
@@ -251,6 +252,7 @@ extension Renderer {
         }
         return try RenderPipelines(
             sky: makeSkyPipeline(library: library, compiler: compiler, view: view),
+            clouds: makeCloudPipeline(library: library, compiler: compiler, view: view),
             opaque: makeVariant(alphaTest: false),
             alphaTest: makeVariant(alphaTest: true),
             blended: makeMeshPipeline(
@@ -313,6 +315,34 @@ extension Renderer {
         descriptor.vertexFunctionDescriptor = vertexFunction
         descriptor.fragmentFunctionDescriptor = fragmentFunction
         descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
+    }
+
+    private static func makeCloudPipeline(
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = "cloudVertex"
+        let fragmentFunction = MTL4LibraryFunctionDescriptor()
+        fragmentFunction.library = library
+        fragmentFunction.name = "cloudFragment"
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = "WeatherClouds"
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = fragmentFunction
+        guard let color = descriptor.colorAttachments[0] else {
+            throw RendererError.pipelineAttachmentMissing
+        }
+        color.pixelFormat = view.colorPixelFormat
+        color.blendingState = .enabled
+        color.sourceRGBBlendFactor = .sourceAlpha
+        color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        color.sourceAlphaBlendFactor = .one
+        color.destinationAlphaBlendFactor = .oneMinusSourceAlpha
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
