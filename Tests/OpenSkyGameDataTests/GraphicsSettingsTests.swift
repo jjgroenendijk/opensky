@@ -18,13 +18,13 @@ struct GraphicsSettingsTests {
         try #require(GraphicsOptions.all.first { $0.key == key })
     }
 
-    @Test func everyOptionHasOneIdAndAppliedOnesAreTheDistances() {
+    @Test func everyOptionHasOneIdAndAppliedOnesAreTheDistancesAndDecals() {
         let ids = GraphicsOptions.all.map(\.id)
         #expect(Set(ids).count == ids.count)
         let applied = GraphicsOptions.all.filter { $0.unavailableReason == nil }.map(\.key)
         #expect(applied == [
             "fBlockLevel0Distance", "fBlockLevel1Distance", "fBlockMaximumDistance",
-            "fTreeLoadDistance"
+            "fTreeLoadDistance", "bDecals", "uMaxDecals"
         ])
         #expect(GraphicsOptions.all.allSatisfy { $0.id.rawValue == "graphics.\($0.key)" })
     }

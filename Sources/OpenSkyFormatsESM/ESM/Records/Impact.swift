@@ -125,8 +125,17 @@ nonisolated public struct ImpactDataSet: Equatable, Sendable {
     /// unknown: the most frequent IPCT in the table, ties broken by record
     /// order. Footsteps use it until collision materials exist.
     public func impact(for material: FormID?) -> FormID? {
-        if let material, let match = entries.first(where: { $0.material == material }) {
-            return match.impact
+        impact(forFirstOf: material.map { [$0] } ?? [])
+    }
+
+    /// The impact of the first material in `chain` that the table names, so a
+    /// child material with no pair of its own takes its parent's. Else the
+    /// representative one.
+    public func impact(forFirstOf chain: [FormID]) -> FormID? {
+        for material in chain {
+            if let match = entries.first(where: { $0.material == material }) {
+                return match.impact
+            }
         }
         var counts: [UInt32: Int] = [:]
         var best: FormID?

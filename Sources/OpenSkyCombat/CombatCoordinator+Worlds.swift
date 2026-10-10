@@ -105,6 +105,10 @@ extension CombatCoordinator: MeleeCombatWorld {
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
         world?.playImpact(impact, at: position)
     }
+
+    public func impactMaterial(of target: ReferenceKey) -> FormID? {
+        world?.impactMaterial(of: target)
+    }
 }
 
 extension CombatCoordinator: ProjectileWorld {

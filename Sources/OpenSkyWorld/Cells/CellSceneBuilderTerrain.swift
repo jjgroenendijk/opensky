@@ -23,9 +23,17 @@ nonisolated public struct TerrainBuild {
     public let layerSkipCount: Int
 }
 
+/// The TXST paths of one land texture: TX00 diffuse, and TX01 normal when set.
+nonisolated struct TerrainTextureKeys: Equatable {
+    let diffuse: String
+    let normal: String?
+}
+
 /// One patch's layer textures and aligned opacities, capped at the shader maximum.
 nonisolated private struct ResolvedTerrainLayers {
     var textures: [MTLTexture] = []
+    var normals: [MTLTexture] = []
+    var resolvedNormals = 0
     var opacities: [[Float]] = []
     var skipped = 0
 }
@@ -91,6 +99,13 @@ nonisolated extension CellSceneBuilder {
                 )
                 let world = ModelBounds.containing(patch.mesh.positions)?
                     .transformed(by: transform)
+                let baseNormalKey = patch.baseTexture.flatMap { terrainTextureKeys(for: $0) }?
+                    .normal
+                let normals = TerrainNormalMaps(
+                    base: textures.texture(key: baseNormalKey, usage: .data),
+                    layers: resolved.normals,
+                    resolvedCount: resolved.resolvedNormals + (baseNormalKey == nil ? 0 : 1)
+                )
                 built.items.append(TerrainDrawItem(
                     mesh: upload.mesh,
                     weightsBuffer: upload.weightsBuffer,
@@ -99,6 +114,7 @@ nonisolated extension CellSceneBuilder {
                         textureProvider: textures.provider
                     ),
                     layerTextures: resolved.textures,
+                    normals: normals,
                     modelMatrix: transform,
                     normalMatrix: normalMatrix,
                     bounds: world
@@ -164,7 +180,7 @@ nonisolated extension CellSceneBuilder {
     ) -> ResolvedTerrainLayers {
         var resolved = ResolvedTerrainLayers()
         for layer in layers {
-            guard let key = terrainDiffuseKey(for: layer.texture) else {
+            guard let keys = terrainTextureKeys(for: layer.texture) else {
                 resolved.skipped += 1
                 let id = layer.texture.description
                 Self.logger.warning(
@@ -177,7 +193,9 @@ nonisolated extension CellSceneBuilder {
                 Self.logger.warning("terrain quadrant over the layer cap, extra dropped")
                 continue
             }
-            resolved.textures.append(textures.texture(key: key, usage: .color))
+            resolved.textures.append(textures.texture(key: keys.diffuse, usage: .color))
+            resolved.normals.append(textures.texture(key: keys.normal, usage: .data))
+            resolved.resolvedNormals += keys.normal == nil ? 0 : 1
             resolved.opacities.append(layer.opacities)
         }
         return resolved
@@ -217,30 +235,34 @@ nonisolated extension CellSceneBuilder {
         return nil
     }
 
-    /// LTEX TNAM -> TXST TX00, normalized like NIF materials. Nil on any broken
-    /// link. The splat path is diffuse-only (docs/engine/terrain.md).
-    nonisolated private func terrainDiffuseKey(for ltexID: FormID) -> String? {
-        if let cached = terrainDiffuseKeys[ltexID.rawValue] {
+    /// LTEX TNAM -> TXST TX00 and TX01, normalized like NIF materials. Nil on any
+    /// broken link or a missing diffuse (docs/engine/terrain.md).
+    nonisolated private func terrainTextureKeys(for ltexID: FormID) -> TerrainTextureKeys? {
+        if let cached = terrainTextureKeyCache[ltexID.rawValue] {
             return cached
         }
-        let key = uncachedTerrainDiffuseKey(for: ltexID)
-        terrainDiffuseKeys[ltexID.rawValue] = .some(key)
-        return key
+        let keys = uncachedTerrainTextureKeys(for: ltexID)
+        terrainTextureKeyCache[ltexID.rawValue] = .some(keys)
+        return keys
     }
 
     /// A null LTEX resolves to the default ground texture (docs/formats/land.md).
-    nonisolated private func uncachedTerrainDiffuseKey(for ltexID: FormID) -> String? {
+    nonisolated private func uncachedTerrainTextureKeys(for ltexID: FormID) -> TerrainTextureKeys? {
         guard
             let ltex = landTextureIndexBuildingIfNeeded()[ltexID.rawValue],
             let textureSet = ltex.textureSet,
-            let txst = textureSetIndexBuildingIfNeeded()[textureSet.rawValue]
+            let txst = textureSetIndexBuildingIfNeeded()[textureSet.rawValue],
+            let diffuse = txst.diffusePath.flatMap({ NIFShaderTextureSet.vfsKey(for: $0) })
         else { return nil }
-        return txst.diffusePath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) }
+        return TerrainTextureKeys(
+            diffuse: diffuse,
+            normal: txst.normalPath.flatMap { NIFShaderTextureSet.vfsKey(for: $0) }
+        )
     }
 
     /// The BTXT base material, or `Material.fallback` when unpainted or broken.
     nonisolated private func terrainBaseMaterial(for baseTexture: FormID?) -> Material {
-        guard let baseTexture, let diffuse = terrainDiffuseKey(for: baseTexture) else {
+        guard let baseTexture, let diffuse = terrainTextureKeys(for: baseTexture)?.diffuse else {
             return .fallback
         }
         let fallback = Material.fallback

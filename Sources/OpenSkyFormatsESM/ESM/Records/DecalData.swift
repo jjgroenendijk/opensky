@@ -30,6 +30,26 @@ nonisolated public struct DecalData: Equatable, Sendable {
     /// RGB, 0-255 each.
     public let color: SIMD3<UInt8>
 
+    /// Test seam: decal data built from values rather than bytes.
+    public init(
+        width: ClosedRange<Float>,
+        height: ClosedRange<Float>,
+        depth: Float = 0,
+        flags: Flags = [],
+        color: SIMD3<UInt8> = SIMD3(255, 255, 255)
+    ) {
+        minWidth = width.lowerBound
+        maxWidth = width.upperBound
+        minHeight = height.lowerBound
+        maxHeight = height.upperBound
+        self.depth = depth
+        shininess = 0
+        parallaxScale = 0
+        parallaxPasses = 0
+        self.flags = flags
+        self.color = color
+    }
+
     public init(_ reader: inout BinaryReader) throws {
         minWidth = try reader.readFloat32()
         maxWidth = try reader.readFloat32()

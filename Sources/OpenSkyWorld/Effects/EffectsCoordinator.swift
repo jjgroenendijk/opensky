@@ -4,6 +4,7 @@
 // and the record resolvers. See docs/rendering/visual-effects.md.
 
 import Foundation
+import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMagicInterface
@@ -27,12 +28,22 @@ public final class EffectsCoordinator {
     public weak var world: (any EffectsWorld)?
     public private(set) var records = EffectRecordStore.empty
     public private(set) var catalog = EffectCatalog.empty
-    public private(set) var visualEffects = VisualEffectRuntime()
+    public internal(set) var visualEffects = VisualEffectRuntime()
     public private(set) var spellHitCount = 0
     public private(set) var lastSpellHit = "No spell hit yet."
     /// Model paths that failed to load, so a bad path is tried once.
     public private(set) var failedModels: Set<String> = []
-    private var meshes: MeshLibrary?
+    /// Marks impacts leave on surfaces.
+    public internal(set) var decals = DecalRuntime()
+    /// Impact models (dust, sparks, blood spray) show where a hit or step lands.
+    public var impactModelsEnabled = true
+    public internal(set) var impactCount = 0
+    /// The last impact shown, so the panel can show it again.
+    public internal(set) var lastImpact: (impact: Impact, decal: ImpactDecal?)?
+    var decalsChanged = false
+    /// The particle systems of each live effect, by instance id.
+    var effectParticles: [Int: EffectParticles] = [:]
+    var meshes: MeshLibrary?
     private var drewModels = false
 
     public init() {}
@@ -133,12 +144,15 @@ public final class EffectsCoordinator {
             switch anchor {
             case let .actor(key): world?.effectTransform(of: key)
             case let .point(position): Self.translation(position)
+            case let .surface(position, normal): Self.surfaceTransform(position, normal: normal)
             }
         } + extraModels
         if !models.isEmpty || drewModels {
             try renderer.setEffectPlacements(models.compactMap(placement))
             drewModels = !models.isEmpty
         }
+        syncParticles(models, renderer: renderer)
+        try syncDecals(renderer: renderer)
         try renderer.setMembranes(visualEffects.membranes { anchor in
             guard case let .actor(key) = anchor else { return nil }
             return world?.membraneTarget(of: key)
@@ -196,7 +210,7 @@ public final class EffectsCoordinator {
         }
     }
 
-    private static func translation(_ position: SIMD3<Float>) -> float4x4 {
+    static func translation(_ position: SIMD3<Float>) -> float4x4 {
         var matrix = matrix_identity_float4x4
         matrix.columns.3 = SIMD4(position, 1)
         return matrix

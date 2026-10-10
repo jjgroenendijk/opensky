@@ -21,6 +21,10 @@ struct FakeEffectsState {
     var reverbWetOverride: Float?
     var reverbRecord: ReverbParameters?
     var lastAudioRouting: String?
+    var impactModelsEnabled = true
+    var decalsEnabled = true
+    var decalsCleared = 0
+    var impactRepeats = 0
 }
 
 extension FakeWorldProviders {
@@ -52,6 +56,11 @@ extension FakeWorldProviders {
     var imageSpacePassEnabled: Bool {
         get { effectsState.imageSpace.passEnabled }
         set { effectsState.imageSpace.passEnabled = newValue }
+    }
+
+    var toneMappingEnabled: Bool {
+        get { effectsState.imageSpace.toneMapping.enabled }
+        set { effectsState.imageSpace.toneMapping.enabled = newValue }
     }
 
     var imageSpaceNames: [String] {
@@ -96,6 +105,32 @@ extension FakeWorldProviders {
     func clearVisualEffects() {
         effectsState.cleared += 1
         effectsState.attached = []
+    }
+
+    var impactModelsEnabled: Bool {
+        get { effectsState.impactModelsEnabled }
+        set { effectsState.impactModelsEnabled = newValue }
+    }
+
+    var decalsEnabled: Bool {
+        get { effectsState.decalsEnabled }
+        set { effectsState.decalsEnabled = newValue }
+    }
+
+    func clearDecals() {
+        effectsState.decalsCleared += 1
+    }
+
+    func repeatLastImpact() -> Bool {
+        effectsState.impactRepeats += 1
+        return true
+    }
+
+    var impactSnapshot: ImpactSnapshot {
+        ImpactSnapshot(
+            impactCount: effectsState.impactRepeats, decalCount: effectsState.impactRepeats,
+            decalLimit: 100, decalsDrawn: 0, lastImpact: "FSTDirtWalkLImpact"
+        )
     }
 
     var visualEffectSnapshot: VisualEffectSnapshot {

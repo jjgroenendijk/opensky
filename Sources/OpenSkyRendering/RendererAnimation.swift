@@ -32,7 +32,7 @@ extension Renderer {
 
     public func updateParticles(deltaTime: Float) {
         guard particlesEnabled, !particlesFrozen else { return }
-        for playback in scene.particles {
+        for playback in scene.particles + effects.particles {
             playback.advance(
                 deltaTime: deltaTime,
                 wind: currentWind,

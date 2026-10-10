@@ -54,29 +54,29 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & FrameStatsProviding
     & GrassControlProviding & HUDControlProviding
     & HeadAssemblyControlProviding & IdleControlProviding
-    & ImageSpaceControlProviding & InventoryEquipmentControlProviding &
+    & ImageSpaceControlProviding & ImpactControlProviding & InventoryEquipmentControlProviding
+    &
     InventoryMenuControlProviding
-    & ItemControlProviding
-    & JournalControlProviding & LoadingScreenControlProviding
-    & LockControlProviding & MagicEffectControlProviding & MapMenuControlProviding
+    & ItemControlProviding & JournalControlProviding
+    & LoadingScreenControlProviding & LockControlProviding & MagicEffectControlProviding
+    & MapMenuControlProviding
     & MeleeCombatControlProviding
     & MessageControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
     & PlayerLocomotionControlProviding
-    & PlayerSettingsControlProviding
-    & PrecipitationControlProviding & ProgressionControlProviding
-    & RaceMenuControlProviding & RagdollControlProviding
-    & RenderDebugControlProviding & RenderPerformanceControlProviding
-    & RuntimeStateControlProviding & SWFLabControlProviding
-    & SceneControlProviding
-    & SceneStatsProviding & ScriptControlProviding
-    & ShadowControlProviding & StoryManagerControlProviding & SystemMenuControlProviding
-    & TerrainLODControlProviding
-    & TitleMenuControlProviding & TrapControlProviding & TriggerControlProviding
-    & UILabControlProviding
-    & VisualEffectControlProviding & WaterControlProviding
+    & PlayerSettingsControlProviding & PrecipitationControlProviding
+    & ProgressionControlProviding & RaceMenuControlProviding
+    & RagdollControlProviding & RenderDebugControlProviding
+    & RenderPerformanceControlProviding & RuntimeStateControlProviding
+    & SWFLabControlProviding
+    & SceneControlProviding & SceneStatsProviding
+    & ScriptControlProviding & ShadowControlProviding & StoryManagerControlProviding
+    & SystemMenuControlProviding & TerrainLODControlProviding
+    & TerrainShadingControlProviding & TitleMenuControlProviding & TrapControlProviding
+    & TriggerControlProviding
+    & UILabControlProviding & VisualEffectControlProviding & WaterControlProviding
     & WeatherControlProviding & WorldLoadReportProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
@@ -277,6 +277,7 @@ enum DestinationRegistry {
                 panel.particleProvider = context.providers
                 panel.precipitationProvider = context.providers
                 panel.waterProvider = context.providers
+                panel.terrainProvider = context.providers
                 panel.grassProvider = context.providers
                 return panel
             },

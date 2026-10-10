@@ -8,6 +8,7 @@
 import Metal
 import MetalKit
 import OpenSkyShaderTypes
+import QuartzCore
 import simd
 
 /// The composite pipelines, their uniform ring, and the scratch targets of the split pass.
@@ -16,6 +17,8 @@ public final class ImageSpacePassResources {
     /// Grades the pixel in tile memory, so the scene pass needs no copy and no stored depth.
     public let tilePipeline: MTLRenderPipelineState
     public let uniformBuffer: MTLBuffer
+    /// The tone-mapping luminance sum and sample count per frame slot.
+    public let luminanceBuffer: MTLBuffer
     /// Sized to the last target; replaced when the target size or format changes.
     public private(set) var sceneCopy: MTLTexture?
     /// The depth the split pass stores between its two encoders. The scene depth is
@@ -46,6 +49,30 @@ public final class ImageSpacePassResources {
         else { throw RendererError.bufferAllocationFailed }
         buffer.label = "ImageSpaceUniforms"
         uniformBuffer = buffer
+        guard
+            let luminance = device.makeBuffer(
+                length: Self.luminanceStride * Renderer.maxFramesInFlight,
+                options: .storageModeShared
+            )
+        else { throw RendererError.bufferAllocationFailed }
+        luminance.label = "ImageSpaceLuminance"
+        luminance.contents().initializeMemory(
+            as: UInt8.self, repeating: 0, count: luminance.length
+        )
+        luminanceBuffer = luminance
+    }
+
+    static let luminanceStride = 2 * MemoryLayout<UInt32>.stride
+
+    /// The slot's luminance from the frame that last used it, cleared for this frame.
+    func takeMeanLuminance(slot: Int) -> Float? {
+        let values = luminanceBuffer.contents().advanced(by: Self.luminanceStride * slot)
+            .bindMemory(to: UInt32.self, capacity: 2)
+        defer {
+            values[0] = 0
+            values[1] = 0
+        }
+        return ToneMappingState.meanLuminance(sum: values[0], count: values[1])
     }
 
     private static func makePipeline(
@@ -147,14 +174,33 @@ struct ImageSpaceGrade {
 
 extension Renderer {
     /// The grade this frame draws, or nil when the pass is off or would change nothing.
-    func imageSpaceGrade(descriptor: MTL4RenderPassDescriptor) -> ImageSpaceGrade? {
+    func imageSpaceGrade(descriptor: MTL4RenderPassDescriptor, slot: Int) -> ImageSpaceGrade? {
         let parameters = imageSpace.current.clampedForDisplay
+        let toneMaps = imageSpace.passEnabled && imageSpace.toneMapping.enabled
+            && ToneMappingState.isActive(parameters.hdr)
+        let measured = imageSpacePass.takeMeanLuminance(slot: slot)
+        let deltaTime = eyeAdaptationClock.advance(to: CACurrentMediaTime(), paused: false)
+        if toneMaps, let measured {
+            imageSpace.toneMapping.eye.advance(
+                measured: measured, speed: parameters.hdr.eyeAdaptSpeed, deltaTime: deltaTime
+            )
+        } else if !toneMaps {
+            imageSpace.toneMapping.eye.reset()
+        }
         guard
-            imageSpace.passEnabled, !parameters.isNeutral,
+            imageSpace.passEnabled, toneMaps || !parameters.isNeutral,
             let target = descriptor.colorAttachments[0].texture
         else { return nil }
+        let toneMapping = toneMaps
+            ? SIMD4(
+                imageSpace.toneMapping.eye.exposure(strength: parameters.hdr.eyeAdaptStrength),
+                parameters.hdr.white, parameters.hdr.eyeAdaptStrength > 0 ? 1 : 0, 0
+            )
+            : SIMD4(1, 0, 0, 0)
         return ImageSpaceGrade(
-            uniforms: Self.uniforms(parameters, targetHeight: target.height),
+            uniforms: Self.uniforms(
+                parameters, targetHeight: target.height, toneMapping: toneMapping
+            ),
             alwaysSplits: imageSpaceAlwaysSplits
         )
     }
@@ -277,6 +323,11 @@ extension Renderer {
             imageSpacePass.uniformBuffer.gpuAddress + UInt64(offset),
             index: BufferIndex.imageSpaceUniforms.rawValue
         )
+        argumentTable.setAddress(
+            imageSpacePass.luminanceBuffer.gpuAddress
+                + UInt64(ImageSpacePassResources.luminanceStride * slot),
+            index: BufferIndex.imageSpaceLuminance.rawValue
+        )
     }
 
     /// The same targets, loading the graded color and the stored depth.
@@ -300,7 +351,8 @@ extension Renderer {
     /// The blur radius is authored for a 1080-pixel-high frame and scales with the target.
     static func uniforms(
         _ parameters: ImageSpaceParameters,
-        targetHeight: Int
+        targetHeight: Int,
+        toneMapping: SIMD4<Float> = SIMD4(1, 0, 0, 0)
     ) -> ImageSpaceUniforms {
         ImageSpaceUniforms(
             tint: parameters.tint,
@@ -311,7 +363,8 @@ extension Renderer {
                 parameters.contrast,
                 parameters.blurRadius * Float(targetHeight) / 1080
             ),
-            extra: SIMD4(parameters.doubleVision, 0, 0, 0)
+            extra: SIMD4(parameters.doubleVision, 0, 0, 0),
+            toneMapping: toneMapping
         )
     }
 }

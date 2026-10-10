@@ -86,5 +86,11 @@ extension AudioWorldAdapter: AudioWorld {
         game.renderer?.worldAudio = engine
         game.renderer?.musicDirector = music
         game.renderer?.footstepDirector = footsteps
+        let store = (game.worldData as? AudioDataProviding)?.footstepStore
+        footsteps.onImpact = { [weak game] impact, position in
+            game?.effects.showImpact(
+                impact, decal: store?.decal(of: impact), at: position, on: .ground
+            )
+        }
     }
 }

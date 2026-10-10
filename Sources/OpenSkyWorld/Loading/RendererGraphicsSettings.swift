@@ -28,6 +28,8 @@ extension Renderer {
         frameInterpolationEnabled = store.bool(.frameInterpolation)
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)
+        terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
+        imageSpace.toneMapping.enabled = store.bool(.toneMapping)
         let caps = PlayerSettingsCatalog.frameRateCapOptions
         frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]
     }

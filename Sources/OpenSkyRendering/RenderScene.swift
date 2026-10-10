@@ -317,6 +317,9 @@ nonisolated public struct TerrainDrawItem: Sendable {
     public let material: RenderMaterial
     /// ATXT layer diffuses, <= TerrainConstant.maxLayers, blend order.
     public let layerTextures: [MTLTexture]
+    /// TX01 normal maps of the base and of each layer, aligned with `layerTextures`.
+    /// A flat placeholder stands in for a texture set without one.
+    public let normals: TerrainNormalMaps
     public let modelMatrix: float4x4
     public let normalMatrix: float4x4
     /// World-space AABB for frustum culling; nil -> never culled.
@@ -327,6 +330,7 @@ nonisolated public struct TerrainDrawItem: Sendable {
         weightsBuffer: MTLBuffer,
         material: RenderMaterial,
         layerTextures: [MTLTexture],
+        normals: TerrainNormalMaps,
         modelMatrix: float4x4,
         normalMatrix: float4x4,
         bounds: ModelBounds?
@@ -335,9 +339,24 @@ nonisolated public struct TerrainDrawItem: Sendable {
         self.weightsBuffer = weightsBuffer
         self.material = material
         self.layerTextures = layerTextures
+        self.normals = normals
         self.modelMatrix = modelMatrix
         self.normalMatrix = normalMatrix
         self.bounds = bounds
+    }
+}
+
+/// The normal maps of one terrain quadrant draw.
+nonisolated public struct TerrainNormalMaps: Sendable {
+    public let base: MTLTexture
+    public let layers: [MTLTexture]
+    /// Base and layer maps that came from a TX01 path, for the panel readout.
+    public let resolvedCount: Int
+
+    public init(base: MTLTexture, layers: [MTLTexture], resolvedCount: Int) {
+        self.base = base
+        self.layers = layers
+        self.resolvedCount = resolvedCount
     }
 }
 
@@ -601,6 +620,7 @@ nonisolated public struct RenderScene: Sendable {
                 item.weightsBuffer, item.material.diffuse
             ])
             add(item.layerTextures)
+            add([item.normals.base] + item.normals.layers)
         }
         for item in water {
             add([item.mesh.vertexBuffer, item.mesh.indexBuffer])

@@ -108,7 +108,8 @@ extension Renderer {
         }
         for item in scene.terrain {
             guard let bounds = item.bounds else { continue }
-            for texture in [item.material.diffuse] + item.layerTextures {
+            let normals = [item.normals.base] + item.normals.layers
+            for texture in [item.material.diffuse] + item.layerTextures + normals {
                 note(texture, bounds: bounds, uvPerUnit: 1 / Self.terrainRepeatUnits)
             }
         }

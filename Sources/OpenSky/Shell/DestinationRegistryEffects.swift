@@ -17,6 +17,7 @@ extension DestinationRegistry {
                 let panel = EffectsPanelViewController()
                 panel.imageSpaceProvider = context.providers
                 panel.visualEffectProvider = context.providers
+                panel.impactProvider = context.providers
                 panel.explosionProvider = context.providers
                 let providers = context.providers
                 panel.refocusAction = { [weak providers] in providers?.refocusGameView() }
@@ -26,10 +27,12 @@ extension DestinationRegistry {
                 isOverridden: { context in
                     ImageSpaceSection.isOverridden(provider: context.providers)
                         || VisualEffectSection.isOverridden(provider: context.providers)
+                        || ImpactSection.isOverridden(provider: context.providers)
                 },
                 resetToDefaults: { context in
                     ImageSpaceSection.resetToDefaults(provider: context.providers)
                     VisualEffectSection.resetToDefaults(provider: context.providers)
+                    ImpactSection.resetToDefaults(provider: context.providers)
                 }
             )
         )

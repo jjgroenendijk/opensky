@@ -23,6 +23,7 @@ nonisolated public enum EffectsReadout {
                 + " · contrast \(number(values.contrast))",
             "Tint: \(number(values.tint.x)) \(number(values.tint.y)) \(number(values.tint.z))"
                 + " at \(number(values.tint.w))",
+            toneMapping(state.toneMapping, hdr: values.hdr),
             "Modifiers: \(state.modifiers.instances.count)"
         ]
         lines += state.modifiers.instances.prefix(listedRows).map { instance in
@@ -33,6 +34,16 @@ nonisolated public enum EffectsReadout {
             lines.append("Pass: off")
         }
         return lines.joined(separator: "\n")
+    }
+
+    public static func toneMapping(_ state: ToneMappingState, hdr: ImageSpaceHDR) -> String {
+        guard state.enabled else { return "Tone mapping: off" }
+        let eye = state.eye
+        let exposure = number(eye.exposure(strength: hdr.eyeAdaptStrength))
+        let scene = eye.measuredLuminance.map(number) ?? "-"
+        let adapted = eye.adaptedLuminance.map(number) ?? "-"
+        return "Tone mapping: white \(number(hdr.white)) · exposure \(exposure)"
+            + " · scene \(scene) · eye \(adapted)"
     }
 
     public static func visualEffects(_ snapshot: VisualEffectSnapshot) -> String {
@@ -52,6 +63,7 @@ nonisolated public enum EffectsReadout {
         let anchor = switch instance.anchor {
         case let .actor(key): key == .player ? "player" : key.description
         case .point: "a point"
+        case .surface: "a surface"
         }
         let left = instance.duration.map { "\(number(max(0, $0 - instance.elapsed))) s left" }
             ?? "lasting"

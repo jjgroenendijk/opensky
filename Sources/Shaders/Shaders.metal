@@ -819,6 +819,8 @@ typedef struct
     float4 color;
     float4 weights0;
     float4 weights1;
+    /// World direction of +u, east (TerrainMeshBuilder UVs). +v is north.
+    float3 tangent;
 } TerrainVertexOut;
 
 vertex TerrainVertexOut terrainVertex(
@@ -835,7 +837,26 @@ vertex TerrainVertexOut terrainVertex(
     out.color = in.color;
     out.weights0 = in.weights0;
     out.weights1 = in.weights1;
+    out.tangent = (draw.modelMatrix * float4(1.0, 0.0, 0.0, 0.0)).xyz;
     return out;
+}
+
+/// Tangent-space normal from a TX01 texel. Z is rebuilt from XY, so a two-channel
+/// map works too. Green points along +v (measured on the vanilla maps, docs/engine/terrain.md).
+static float2 terrainNormalXY(float4 texel)
+{
+    return texel.rg * 2.0 - 1.0;
+}
+
+/// The blended layer normals bend the vertex normal. East is made orthogonal to it,
+/// and north follows from the cross product.
+static float3 terrainShadingNormal(TerrainVertexOut in, float2 blendedXY)
+{
+    float3 vertexNormal = normalize(in.normal);
+    float3 tangent = normalize(in.tangent - vertexNormal * dot(in.tangent, vertexNormal));
+    float3 bitangent = cross(vertexNormal, tangent);
+    float z = sqrt(saturate(1.0 - dot(blendedXY, blendedXY)));
+    return normalize(tangent * blendedXY.x + bitangent * blendedXY.y + vertexNormal * z);
 }
 
 fragment float4 terrainFragment(
@@ -846,6 +867,9 @@ fragment float4 terrainFragment(
     texture2d<float> baseMap [[texture(TextureIndexDiffuse)]],
     array<texture2d<float>, TerrainConstantMaxLayers> layerMaps
     [[texture(TextureIndexTerrainLayer0)]],
+    texture2d<float> baseNormalMap [[texture(TextureIndexTerrainBaseNormal)]],
+    array<texture2d<float>, TerrainConstantMaxLayers> layerNormalMaps
+    [[texture(TextureIndexTerrainLayerNormal0)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -865,16 +889,24 @@ fragment float4 terrainFragment(
     float weights[TerrainConstantMaxLayers] = {in.weights0.x, in.weights0.y, in.weights0.z,
                                                in.weights0.w, in.weights1.x, in.weights1.y,
                                                in.weights1.z, in.weights1.w};
+    bool normalMaps = draw.normalMapsEnabled != 0;
+    float2 normalXY =
+        normalMaps ? terrainNormalXY(baseNormalMap.sample(trilinear, in.texcoord)) : float2(0.0);
     uint count = min(draw.layerCount, uint(TerrainConstantMaxLayers));
     for (uint layer = 0; layer < count; ++layer) {
+        float weight = saturate(weights[layer]);
         float3 layerColor = layerMaps[layer].sample(trilinear, in.texcoord).rgb;
-        albedo = mix(albedo, layerColor, saturate(weights[layer]));
+        albedo = mix(albedo, layerColor, weight);
+        if (normalMaps) {
+            float4 texel = layerNormalMaps[layer].sample(trilinear, in.texcoord);
+            normalXY = mix(normalXY, terrainNormalXY(texel), weight);
+        }
     }
-    float3 normal = normalize(in.normal);
+    float3 normal = normalMaps ? terrainShadingNormal(in, normalXY) : normalize(in.normal);
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
     if (rayTracedShadows) {
-        float traced = rayTracedSunShadow(in.worldPosition, normal, frame, rayScene);
+        float traced = rayTracedSunShadow(in.worldPosition, normalize(in.normal), frame, rayScene);
         if (rayShadowView) {
             return float4(float3(traced), 1.0);
         }
@@ -1028,6 +1060,60 @@ fragment float4 particleFragment(
         discard_fragment();
     }
     return float4(applyFog(sample.rgb, in.worldPosition, frame), sample.a);
+}
+
+// Decals (docs/rendering/decals.md): a flat quad on the struck surface, lit by the
+// sun and ambient with the surface normal, drawn after the opaque scene with a depth
+// bias so it wins the depth test against the surface under it.
+
+typedef struct
+{
+    float4 position [[position]];
+    float3 worldPosition;
+    float3 normal;
+    float2 texcoord;
+    float4 color;
+} DecalVertexOut;
+
+vertex DecalVertexOut decalVertex(
+    uint vertexID [[vertex_id]],
+    uint instanceID [[instance_id]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    const device DecalInstance *decals [[buffer(BufferIndexParticleInstances)]])
+{
+    constexpr float2 corners[6] = {float2(-1, -1), float2(1, -1), float2(-1, 1),
+                                   float2(-1, 1),  float2(1, -1), float2(1, 1)};
+    const device DecalInstance &decal = decals[instanceID];
+    float2 corner = corners[vertexID];
+    float3 world = decal.center.xyz + decal.axisU.xyz * corner.x + decal.axisV.xyz * corner.y;
+    DecalVertexOut out;
+    out.position = frame.viewProjectionMatrix * float4(world, 1.0);
+    out.worldPosition = world;
+    out.normal = cross(decal.axisU.xyz, decal.axisV.xyz);
+    out.texcoord =
+        decal.uvRect.xy + float2(corner.x * 0.5 + 0.5, 0.5 - corner.y * 0.5) * decal.uvRect.zw;
+    out.color = decal.color;
+    return out;
+}
+
+fragment float4 decalFragment(
+    DecalVertexOut in [[stage_in]],
+    constant FrameUniforms &frame [[buffer(BufferIndexFrameUniforms)]],
+    texture2d<float> diffuseMap [[texture(TextureIndexDiffuse)]],
+    depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
+    sampler trilinear [[sampler(SamplerIndexTrilinear)]],
+    sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
+{
+    float4 diffuse = diffuseMap.sample(trilinear, in.texcoord) * in.color;
+    if (diffuse.a <= 0.002) {
+        discard_fragment();
+    }
+    float3 normal = normalize(in.normal);
+    float lambert = saturate(dot(normal, -frame.sunDirection));
+    float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
+    float3 illumination =
+        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame);
+    return float4(applyFog(diffuse.rgb * illumination, in.worldPosition, frame), diffuse.a);
 }
 
 // Sun-shadow depth pre-pass: each caster renders into one cascade slice,
@@ -1278,7 +1364,7 @@ fragment float4 swfMaskFragment(SWFVertexOut in [[stage_in]])
 }
 
 // Image-space composite: one fullscreen triangle over a copy of the scene color.
-// Order: blur, double vision, saturation, brightness, contrast, tint, fade
+// Order: blur, double vision, tone mapping, saturation, brightness, contrast, tint, fade
 // (docs/rendering/image-space.md). The blur is a cheap two-ring disc.
 constant float3 imageSpaceLuminance = float3(0.2126, 0.7152, 0.0722);
 
@@ -1304,8 +1390,38 @@ static float3 imageSpaceBlur(
     return sum / count;
 }
 
+// HDR tone mapping: every 16th pixel each way adds its fixed-point log2 luminance to
+// the slot's counters for the eye (EyeAdaptation.swift), then the exposure scales the
+// color and an extended Reinhard curve maps the white point to display white.
+static void imageSpaceMeasure(
+    float2 position,
+    float3 color,
+    constant ImageSpaceUniforms &uniforms,
+    device atomic_uint *luminance)
+{
+    uint2 pixel = uint2(position);
+    if (uniforms.toneMapping.z < 0.5 || any((pixel & 15u) != 0u)) {
+        return;
+    }
+    float logLuminance = log2(max(dot(color, imageSpaceLuminance), 1.0e-5)) + 16.0;
+    uint fixedPoint = uint(clamp(logLuminance, 0.0, 32.0) * 256.0);
+    atomic_fetch_add_explicit(&luminance[0], fixedPoint, memory_order_relaxed);
+    atomic_fetch_add_explicit(&luminance[1], 1u, memory_order_relaxed);
+}
+
+static float3 imageSpaceToneMap(float3 color, constant ImageSpaceUniforms &uniforms)
+{
+    color *= uniforms.toneMapping.x;
+    float white = uniforms.toneMapping.y;
+    if (white > 0.0) {
+        color = color * (1.0 + color / (white * white)) / (1.0 + color);
+    }
+    return color;
+}
+
 static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniforms)
 {
+    color = imageSpaceToneMap(color, uniforms);
     float luminance = dot(color, imageSpaceLuminance);
     color = mix(float3(luminance), color, uniforms.grading.x);
     color *= uniforms.grading.y;
@@ -1321,6 +1437,7 @@ static float4 imageSpaceGrade(float3 color, constant ImageSpaceUniforms &uniform
 fragment float4 imageSpaceFragment(
     SkyVertexOut in [[stage_in]],
     constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
+    device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
     texture2d<float> scene [[texture(TextureIndexSceneColor)]])
 {
     constexpr sampler linearClamp(filter::linear, address::clamp_to_edge);
@@ -1328,6 +1445,7 @@ fragment float4 imageSpaceFragment(
     float2 texel = 1.0 / size;
     float2 uv = in.position.xy * texel;
     float3 color = scene.sample(linearClamp, uv).rgb;
+    imageSpaceMeasure(in.position.xy, color, uniforms, luminance);
     if (uniforms.grading.w > 0.5) {
         color = imageSpaceBlur(scene, linearClamp, uv, texel, uniforms.grading.w, color);
     }
@@ -1344,8 +1462,10 @@ fragment float4 imageSpaceFragment(
 fragment float4 imageSpaceTileFragment(
     SkyVertexOut in [[stage_in]],
     constant ImageSpaceUniforms &uniforms [[buffer(BufferIndexImageSpaceUniforms)]],
+    device atomic_uint *luminance [[buffer(BufferIndexImageSpaceLuminance)]],
     float4 scene [[color(0)]])
 {
+    imageSpaceMeasure(in.position.xy, scene.rgb, uniforms, luminance);
     return imageSpaceGrade(scene.rgb, uniforms);
 }
 

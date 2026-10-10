@@ -27,6 +27,28 @@ pass, and the shader reads the pixel from tile memory, so the frame needs no cop
 depth [memoryless](/rendering/metal4-renderer.md). Blur and double vision read other pixels. For
 them the scene pass ends, the color is copied, and a second pass grades the copy.
 
+## HDR tone mapping
+
+Tone mapping runs first in the grade, before saturation. It has two parts:
+
+- **Eye adaptation.** Every 16th pixel in each direction adds its log2 luminance to two GPU
+  counters per frame slot. When the slot comes round again, the CPU reads the mean and moves
+  the eye towards it. The exposure is `(0.18 / eye) ^ (strength / (strength + 10))`, clamped
+  to 0.25 to 4. So a dark cave gets brighter and a bright snowfield gets darker.
+- **White point.** An extended Reinhard curve, `c * (1 + c / white²) / (1 + c)`, maps the
+  `white` value to display white. Vanilla values are about 0.9 to 1.05, so the curve stays
+  close to the identity.
+
+The `HNAM` units are not documented. Vanilla speeds are 30 to 45, and strengths are 1 (clear
+nights) to 25. OpenSky divides the speed by 20 to get a rate per second, and turns the
+strength into the weight above. Both constants are OpenSky's own choice, made so that a
+cave entrance adapts in about half a second. An image space with no strength and no white
+point turns the stage off.
+
+`World > Effects > Image Space` holds the switch (`ImageSpaceToneMappingControl`), and its
+readout shows the white point, exposure, measured scene luminance, and eye. The launcher's
+graphics page holds the same switch.
+
 At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own limit.
 
 ## Triggers
@@ -42,8 +64,8 @@ player sees.
 
 ## Where OpenSky differs
 
-- HDR values (bloom, eye adaptation, white point) are decoded and blended but not drawn.
-  The renderer has no HDR tone-mapping stage yet.
+- The scene renders into an 8-bit target, so tone mapping works on display-range color.
+  Bloom, the sunlight scale, and the sky scale are decoded and blended but not drawn.
 - Depth of field, radial blur, and motion blur are decoded but not drawn. The blur radius
   is a 12-tap disc blur, and double vision is one ghost image offset to the side.
 - The tint mixes the color toward its own brightness times the tint color, by the tint

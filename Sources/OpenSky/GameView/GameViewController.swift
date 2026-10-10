@@ -364,6 +364,7 @@ final class GameViewController: NSViewController {
             }
             newRenderer.shadowQuality = ShadowQualitySettings.load()
             newRenderer.applyGraphicsSettings(playerSettings.store)
+            effects.applyGraphicsSettings(playerSettings.store)
             newRenderer.timeOfDay = TimeOfDaySettings.load()
             try newRenderer.attachWeather(from: provider)
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)

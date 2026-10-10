@@ -57,7 +57,7 @@ nonisolated public enum GraphicsOptions {
     }
 
     private static let noSSAO = "OpenSky has no screen-space ambient occlusion yet"
-    private static let noDecals = "OpenSky draws no decals yet"
+    private static let noSkinDecals = "OpenSky draws no decals on actors yet"
     private static let fixedFades = "OpenSky fades objects at fixed distances today"
 
     public static let all: [GraphicsOption] = [
@@ -156,12 +156,17 @@ nonisolated public enum GraphicsOptions {
             .effects, "Rain occlusion", "Display", "bUsePrecipitationOcclusion",
             "OpenSky does not hide rain under roofs yet"
         ),
-        option(.decals, "Decals", "Decals", "bDecals", noDecals),
-        option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noDecals),
-        option(.decals, "Decals per frame", "Display", "iMaxDecalsPerFrame", noDecals),
-        option(.decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame", noDecals),
-        option(.decals, "Decal limit", "Display", "uMaxDecals", noDecals),
-        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals", noDecals)
+        option(.decals, "Decals", "Decals", "bDecals"),
+        option(.decals, "Skin decals", "Decals", "bSkinnedDecals", noSkinDecals),
+        option(
+            .decals, "Decals per frame", "Display", "iMaxDecalsPerFrame",
+            "OpenSky places every decal the frame asks for"
+        ),
+        option(
+            .decals, "Skin decals per frame", "Display", "iMaxSkinDecalsPerFrame", noSkinDecals
+        ),
+        option(.decals, "Decal limit", "Display", "uMaxDecals"),
+        option(.decals, "Skin decal limit", "Display", "uMaxSkinDecals", noSkinDecals)
     ]
 
     /// Store rows for every option. A toggle stores 0 or 1; a number keeps the INI value.
@@ -184,6 +189,8 @@ nonisolated public enum GraphicsOptions {
         case "fBlockLevel1Distance": Double(fallback.level1Distance)
         case "fBlockMaximumDistance": Double(fallback.maximumDistance)
         case "fTreeLoadDistance": Double(fallback.treeLoadDistance)
+        case "bDecals": 1
+        case "uMaxDecals": 100
         default: 0
         }
     }

@@ -27,6 +27,8 @@ public final class WorldAudioFootstepDirector {
 
     /// Footstep playback. On by default, like the SFX and ambience beds; the
     /// World > Audio panel writes back here.
+    /// Each routed step's impact, for its dust model; set by the session.
+    public var onImpact: ((Impact, SIMD3<Float>) -> Void)?
     public var footstepsEnabled = true
 
     /// The MATT under the player's feet in the last routed frame. Nil while airborne.
@@ -106,6 +108,7 @@ public final class WorldAudioFootstepDirector {
                 )
             else { continue }
             routedEventCount += 1
+            onImpact?(resolved.impact, position)
             play(resolved, tag: name, at: position)
         }
     }
@@ -147,6 +150,7 @@ public final class WorldAudioFootstepDirector {
             )
         else { return "\(tag) resolves to no sound in \(describe(footstepSet))" }
         routedEventCount += 1
+        onImpact?(resolved.impact, position)
         return play(resolved, tag: tag, at: position)
     }
 

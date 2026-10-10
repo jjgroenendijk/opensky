@@ -77,7 +77,9 @@ nonisolated public struct MeleeHitRecord: Equatable, Sendable {
 /// blade and an enchanted arrow apply through one implementation, exactly as
 /// `reportScriptHit` is implemented once for melee, archery and the combat loop.
 @MainActor
-public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantmentApplying {
+public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponEnchantmentApplying,
+    ImpactMaterialReading
+{
     /// Where the player is standing and which way they face, this frame.
     var meleeAttacker: MeleeAttacker { get }
 
@@ -127,5 +129,20 @@ nonisolated extension MeleeCombatWorld {
     /// formula, which is the value the term had before either existed.
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         1
+    }
+}
+
+/// Melee and archery read a struck actor's material through this one seam, so a
+/// session that is both worlds has one implementation.
+@MainActor
+public protocol ImpactMaterialReading {
+    /// The MATT an actor's body counts as when struck: its race's `NAM4`.
+    func impactMaterial(of target: ReferenceKey) -> FormID?
+}
+
+extension ImpactMaterialReading {
+    /// No material: the impact data set's default entry plays.
+    public func impactMaterial(of _: ReferenceKey) -> FormID? {
+        nil
     }
 }

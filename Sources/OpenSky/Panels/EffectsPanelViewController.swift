@@ -1,4 +1,5 @@
-// World > Effects: image space, visual effects, and explosions with hazards.
+// World > Effects: image space, visual effects, impacts with decals, and explosions
+// with hazards.
 // Each section reaches the session through its own narrow provider protocol.
 
 import AppKit
@@ -8,6 +9,7 @@ import OpenSkyWorld
 final class EffectsPanelViewController: InspectorPanelViewController {
     let imageSpaceSection = ImageSpaceSection()
     let visualEffectSection = VisualEffectSection()
+    let impactSection = ImpactSection()
     let explosionSection = ExplosionSection()
 
     weak var imageSpaceProvider: (any ImageSpaceControlProviding)? {
@@ -18,11 +20,15 @@ final class EffectsPanelViewController: InspectorPanelViewController {
         didSet { visualEffectSection.provider = visualEffectProvider }
     }
 
+    weak var impactProvider: (any ImpactControlProviding)? {
+        didSet { impactSection.provider = impactProvider }
+    }
+
     weak var explosionProvider: (any ExplosionControlProviding)? {
         didSet { explosionSection.provider = explosionProvider }
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [imageSpaceSection, visualEffectSection, explosionSection]
+        [imageSpaceSection, visualEffectSection, impactSection, explosionSection]
     }
 }

@@ -1,6 +1,7 @@
 // Terrain splat blending on the GPU over a synthetic quad: a red base, a
 // green ATXT layer, and layer weight 0 in the west and 1 in the east. The west
-// must read red and the east green. Skips without Metal 4.
+// must read red and the east green. A tilted normal map must darken the quad
+// under a straight-down sun. Skips without Metal 4.
 
 import EngineTesting
 import Foundation
@@ -34,17 +35,7 @@ struct TerrainSplatRenderTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func blendsLayerByVertexWeights() throws {
-        let device = try #require(Self.device)
-        let scene = try Self.terrainScene(device: device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
-            device: device, width: Self.width, height: Self.height,
-            scene: scene,
-            camera: Self.camera,
-            shaderLibrary: ShaderLibraryFixture.library(device: device)
-        )
-        let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
-
-        let pixels = OffscreenRendererFixture.pixels(of: texture)
+        let pixels = try Self.render(normal: Self.flatNormal, normalMapsEnabled: true)
 
         // Sample the quad's west (weight 0) and east (weight 1) interior at
         // exact projected positions — deterministic, no eyeballing.
@@ -58,11 +49,44 @@ struct TerrainSplatRenderTests {
         #expect(eastBGRA[1] > eastBGRA[2] + 64, "east should be layer green, got \(eastBGRA)")
     }
 
+    /// A normal map that points every texel east leaves no light from a sun overhead.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func normalMapBendsTheLighting() throws {
+        let eastNormal = SIMD4<UInt8>(255, 128, 128, 255)
+        let lit = try Self.render(normal: eastNormal, normalMapsEnabled: false)
+        let bent = try Self.render(normal: eastNormal, normalMapsEnabled: true)
+        let west = try #require(Self.project(SIMD3(64, 256, 0)))
+        let litRed = Int(Self.pixel(lit, at: west)[2])
+        let bentRed = Int(Self.pixel(bent, at: west)[2])
+        #expect(bentRed + 64 < litRed, "tilted normals should darken: \(bentRed) vs \(litRed)")
+    }
+
     // MARK: - Scene assembly
+
+    private static let flatNormal = SIMD4<UInt8>(128, 128, 255, 255)
+
+    @MainActor
+    private static func render(normal: SIMD4<UInt8>, normalMapsEnabled: Bool) throws -> [UInt8] {
+        let device = try #require(Self.device)
+        let scene = try Self.terrainScene(device: device, normal: normal)
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+            device: device, width: Self.width, height: Self.height,
+            scene: scene,
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
+        renderer.terrainNormalMapsEnabled = normalMapsEnabled
+        let texture = try renderer.renderOffscreen(width: Self.width, height: Self.height)
+        return OffscreenRendererFixture.pixels(of: texture)
+    }
 
     /// One 512x512 terrain quad at z = 0: red base, green layer, layer
     /// weight 0 on west vertices and 1 on east vertices.
-    private static func terrainScene(device: MTLDevice) throws -> RenderScene {
+    private static func terrainScene(
+        device: MTLDevice,
+        normal: SIMD4<UInt8>
+    ) throws -> RenderScene {
         let mesh = Mesh(
             name: "splat-quad",
             transform: matrix_identity_float4x4,
@@ -96,6 +120,9 @@ struct TerrainSplatRenderTests {
         let layer = try solidTexture(
             device: device, rgba: SIMD4(0, 255, 0, 255), label: "layer-green"
         )
+        let normalMap = try solidTexture(
+            device: device, rgba: normal, label: "normal", pixelFormat: .rgba8Unorm
+        )
         let material = RenderMaterial(
             material: .fallback,
             textureProvider: { _, _ in base }
@@ -105,6 +132,7 @@ struct TerrainSplatRenderTests {
             weightsBuffer: weightsBuffer,
             material: material,
             layerTextures: [layer],
+            normals: TerrainNormalMaps(base: normalMap, layers: [normalMap], resolvedCount: 2),
             modelMatrix: matrix_identity_float4x4,
             normalMatrix: matrix_identity_float4x4,
             bounds: nil
@@ -115,11 +143,12 @@ struct TerrainSplatRenderTests {
     private static func solidTexture(
         device: MTLDevice,
         rgba: SIMD4<UInt8>,
-        label: String
+        label: String,
+        pixelFormat: MTLPixelFormat = .rgba8Unorm_srgb
     ) throws -> MTLTexture {
         let descriptor = MTLTextureDescriptor()
         descriptor.textureType = .type2D
-        descriptor.pixelFormat = .rgba8Unorm_srgb
+        descriptor.pixelFormat = pixelFormat
         descriptor.width = 4
         descriptor.height = 4
         descriptor.usage = .shaderRead

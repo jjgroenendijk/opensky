@@ -156,7 +156,8 @@ only by a bash ([item records](/formats/item-records.md)).
 
 A swing only strikes actors, and actors have no Havok material per body part here. So the hit uses
 the `IPDS` default entry, the most frequent `IPCT` in the table. Every link is optional. A missing
-link ends the chain with a silent hit, not an error. Hit decals and visual effects are not done.
+link ends the chain with a silent hit, not an error. The `IPCT` also shows its impact model
+and leaves its decal ([impacts and decals](/rendering/decals.md)).
 
 ## Input
 

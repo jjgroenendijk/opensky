@@ -214,7 +214,8 @@ extension Renderer {
             uvOffset: item.material.uvOffset,
             uvScale: item.material.uvScale,
             layerCount: UInt32(min(item.layerTextures.count, TerrainConstant.maxLayers.rawValue)),
-            pointLightCount: UInt32(pointLightCount)
+            pointLightCount: UInt32(pointLightCount),
+            normalMapsEnabled: terrainNormalMapsEnabled ? 1 : 0
         )
         drawUniformBuffer.contents().advanced(by: offset)
             .copyMemory(from: &uniforms, byteCount: MemoryLayout<TerrainDrawUniforms>.size)
@@ -380,8 +381,9 @@ extension Renderer {
 
     /// Encodes the terrain splat draws: per-quadrant pipeline with the base
     /// diffuse at TextureIndexDiffuse and the ATXT layer array at
-    /// TextureIndexTerrainLayer0+. Unused layer slots rebind the base diffuse
-    /// so every declared texture argument is valid; the shader never samples
+    /// TextureIndexTerrainLayer0+, and their normal maps after them. Unused layer
+    /// slots rebind the base textures so every declared texture argument is valid; the shader never
+    /// samples
     /// past TerrainDrawUniforms.layerCount.
     private func encodeTerrain(
         items: [TerrainDrawItem],
@@ -458,7 +460,18 @@ extension Renderer {
                 streamedBinding(texture),
                 index: TextureIndex.terrainLayer0.rawValue + layerSlot
             )
+            let normal = layerSlot < item.normals.layers.count
+                ? item.normals.layers[layerSlot]
+                : item.normals.base
+            argumentTable.setTexture(
+                streamedBinding(normal),
+                index: TextureIndex.terrainLayerNormal0.rawValue + layerSlot
+            )
         }
+        argumentTable.setTexture(
+            streamedBinding(item.normals.base),
+            index: TextureIndex.terrainBaseNormal.rawValue
+        )
     }
 
     /// The frame-wide bindings every draw in the pass shares: this frame's
@@ -535,7 +548,7 @@ extension Renderer {
         )
         let sceneTarget = upscaleFrame.map { upscaleSceneDescriptor($0, matching: target) }
             ?? target
-        let grade = imageSpaceGrade(descriptor: sceneTarget)
+        let grade = imageSpaceGrade(descriptor: sceneTarget, slot: slot)
         let waterDepth = waterReadsDepth(projection: projection)
         guard
             let descriptor = scenePassDescriptor(
@@ -603,6 +616,7 @@ extension Renderer {
         encoder.setTriangleFillMode(state.fillMode)
         encodeSceneGeometry(state: &state)
         encodeMembranes(state: &state)
+        encodeDecals(state: &state)
         encodeGrass(groups: scene.grass, state: &state)
         // The water split replaces the encoder, so later layers use `state.encoder`.
         guard
@@ -613,6 +627,7 @@ extension Renderer {
         else { return false }
         encodeBlendedGroups(state: &state)
         encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
+        encodeParticles(items: effects.particles, enabled: particlesEnabled, state: &state)
         encodeParticles(
             items: precipitation.drawItems,
             enabled: precipitationEnabled,

@@ -154,6 +154,7 @@ struct RenderSceneTests {
             weightsBuffer: weights,
             material: material,
             layerTextures: layers,
+            normals: TerrainNormalMaps(base: base, layers: layers, resolvedCount: 0),
             modelMatrix: matrix_identity_float4x4,
             normalMatrix: matrix_identity_float4x4,
             bounds: nil
@@ -161,7 +162,8 @@ struct RenderSceneTests {
         let scene = RenderScene(instances: [], terrain: [item])
         #expect(scene.drawCount == 1)
         #expect(scene.terrain[0].layerTextures.count == 2)
-        // vertex + index + weights buffers, base diffuse, 2 layer textures.
+        // vertex + index + weights buffers, base diffuse, 2 layer textures; the
+        // normal maps reuse those textures here.
         #expect(scene.residencyAllocations.count == 6)
     }
 

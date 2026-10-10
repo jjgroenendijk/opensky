@@ -11,11 +11,13 @@ import simd
 nonisolated public enum EffectAnchor: Hashable, Sendable {
     case actor(ReferenceKey)
     case point(SIMD3<Float>)
+    /// A point on a surface, with the model's up turned to the surface normal.
+    case surface(SIMD3<Float>, normal: SIMD3<Float>)
 }
 
 /// Why an effect is live, for the readout and for removing one source's effects.
 nonisolated public enum VisualEffectCause: String, Equatable, Sendable, CaseIterable {
-    case race, spellHit, explosion, debug
+    case race, spellHit, explosion, impact, debug
 }
 
 /// The resolved look of one `RFCT` (or one `EFSH` alone).
@@ -55,10 +57,13 @@ nonisolated public struct VisualEffectInstance: Equatable, Sendable {
 nonisolated public struct VisualEffectModel: Equatable, Sendable {
     public let path: String
     public let transform: float4x4
+    /// The live effect it draws for, so its particle systems persist across frames.
+    public let instanceID: Int?
 
-    public init(path: String, transform: float4x4) {
+    public init(path: String, transform: float4x4, instanceID: Int? = nil) {
         self.path = path
         self.transform = transform
+        self.instanceID = instanceID
     }
 }
 
@@ -131,7 +136,7 @@ nonisolated public struct VisualEffectRuntime: Sendable {
         instances.compactMap { instance in
             guard let path = instance.spec.artModel, let transform = locate(instance.anchor)
             else { return nil }
-            return VisualEffectModel(path: path, transform: transform)
+            return VisualEffectModel(path: path, transform: transform, instanceID: instance.id)
         }
     }
 

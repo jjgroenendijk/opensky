@@ -24,6 +24,7 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | A spell hit | The `MGEF` hit shader and hit effect art, on each target | The effect duration; for an instant spell, the shader's settle time or 2 s for art |
 | A race ability | The same links of each `RACE SPLO` ability, on each resident actor of the race | While the actor is resident |
 | An explosion | The `EXPL` model at the blast point | 2 s |
+| An impact | The `IPCT` model at the contact point ([impacts and decals](/rendering/decals.md)) | 2 s |
 | The Effects panel | Any `RFCT`, `EFSH`, `ADDN`, or `ARTO`, on the player or the nearest actor | Until cleared |
 
 An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. A lasting effect that is
@@ -53,8 +54,8 @@ draws no membrane.
 - The membrane and particle textures of the `EFSH` are not sampled. The membrane is a flat
   color with a rim term.
 - The fill color has three keys in the record. OpenSky uses key 1 only.
-- `EFSH` particles and `ADDN` particle systems are drawn as their model only; their emitters
-  do not run here.
+- The NIF particle systems inside an effect model run while the effect lives, and move
+  with its anchor. `EFSH` particles are not drawn.
 - Art and membranes follow the actor's feet and facing, not a named bone. The `RFCT` node
   index is not used.
 - An actor's membrane covers every mesh drawn for that actor, including worn armor.

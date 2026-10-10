@@ -43,6 +43,17 @@ nonisolated public struct TextureSet: Sendable {
         paths[1]
     }
 
+    /// Test seam: a texture set with only a diffuse and decal data.
+    public init(formID: FormID, diffusePath: String?, decal: DecalData?) {
+        self.formID = formID
+        editorID = nil
+        bounds = nil
+        paths = [diffusePath] + Array(repeating: nil, count: Self.slotTypes.count - 1)
+        self.decal = decal
+        flags = []
+        skipped = FieldTally()
+    }
+
     public init(record: ESMRecord) throws {
         var rest = try RecordFields(record: record, type: "TXST")
         formID = rest.formID

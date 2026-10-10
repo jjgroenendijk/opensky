@@ -8,6 +8,8 @@ import OpenSkyRendering
 @MainActor
 public protocol ImageSpaceControlProviding: AnyObject {
     var imageSpacePassEnabled: Bool { get set }
+    /// HDR tone mapping: eye adaptation and the white point.
+    var toneMappingEnabled: Bool { get set }
     /// The `IMGS` editor IDs, for the forced baseline picker.
     var imageSpaceNames: [String] { get }
     /// Nil follows the weather or the interior cell.
@@ -48,8 +50,51 @@ nonisolated public struct VisualEffectSnapshot: Equatable, Sendable {
 }
 
 @MainActor
-public protocol EffectsControlForwarding: ImageSpaceControlProviding, VisualEffectControlProviding {
+public protocol ImpactControlProviding: AnyObject {
+    /// Impact models: dust under a step, sparks or blood spray on a hit.
+    var impactModelsEnabled: Bool { get set }
+    var decalsEnabled: Bool { get set }
+    func clearDecals()
+    /// Shows the last impact again at the player's feet. False before the first one.
+    @discardableResult
+    func repeatLastImpact() -> Bool
+    var impactSnapshot: ImpactSnapshot { get }
+}
+
+nonisolated public struct ImpactSnapshot: Equatable, Sendable {
+    public let impactCount: Int
+    public let decalCount: Int
+    public let decalLimit: Int
+    /// Decals the last frame drew.
+    public let decalsDrawn: Int
+    /// The last impact's editor ID, or nil before the first.
+    public let lastImpact: String?
+
+    public init(
+        impactCount: Int, decalCount: Int, decalLimit: Int, decalsDrawn: Int, lastImpact: String?
+    ) {
+        self.impactCount = impactCount
+        self.decalCount = decalCount
+        self.decalLimit = decalLimit
+        self.decalsDrawn = decalsDrawn
+        self.lastImpact = lastImpact
+    }
+
+    public var text: String {
+        """
+        Impacts: \(impactCount), last \(lastImpact ?? "none")
+        Decals: \(decalCount) of \(decalLimit), \(decalsDrawn) drawn
+        """
+    }
+}
+
+@MainActor
+public protocol EffectsControlForwarding: ImageSpaceControlProviding, VisualEffectControlProviding,
+    ImpactControlProviding
+{
     var effects: EffectsCoordinator { get }
+    /// Where the impact and decal switches are saved.
+    var playerSettingsStore: PlayerSettingsStore { get }
     var renderer: Renderer? { get }
     /// The actor the panels act on, nil when none is resident.
     var effectsSelectedActor: ReferenceKey? { get }
@@ -59,6 +104,14 @@ extension EffectsControlForwarding {
     public var imageSpacePassEnabled: Bool {
         get { renderer?.imageSpace.passEnabled ?? true }
         set { renderer?.imageSpace.passEnabled = newValue }
+    }
+
+    public var toneMappingEnabled: Bool {
+        get { renderer?.imageSpace.toneMapping.enabled ?? playerSettingsStore.bool(.toneMapping) }
+        set {
+            renderer?.imageSpace.toneMapping.enabled = newValue
+            playerSettingsStore.set(.toneMapping, to: newValue ? 1 : 0)
+        }
     }
 
     public var imageSpaceNames: [String] {
@@ -115,6 +168,41 @@ extension EffectsControlForwarding {
 
     public func clearVisualEffects() {
         effects.removeAll(cause: .debug)
+    }
+
+    public var impactModelsEnabled: Bool {
+        get { effects.impactModelsEnabled }
+        set {
+            effects.impactModelsEnabled = newValue
+            playerSettingsStore.set(.impactEffects, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var decalsEnabled: Bool {
+        get { effects.decalsEnabled }
+        set {
+            effects.decalsEnabled = newValue
+            playerSettingsStore.set(.decals, to: newValue ? 1 : 0)
+        }
+    }
+
+    public func clearDecals() {
+        effects.clearDecals()
+    }
+
+    public func repeatLastImpact() -> Bool {
+        effects.repeatLastImpact()
+    }
+
+    public var impactSnapshot: ImpactSnapshot {
+        ImpactSnapshot(
+            impactCount: effects.impactCount,
+            decalCount: effects.decals.decals.count,
+            decalLimit: effects.decals.limit,
+            decalsDrawn: renderer?.effects.lastDecalDraws ?? 0,
+            lastImpact: effects.lastImpact
+                .map { $0.impact.editorID ?? $0.impact.formID.description }
+        )
     }
 
     public var visualEffectSnapshot: VisualEffectSnapshot {

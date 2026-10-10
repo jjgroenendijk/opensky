@@ -16,6 +16,18 @@ nonisolated public struct ResolvedFootstep: Equatable, Sendable {
     public let sound: FormID
 }
 
+/// The decal an impact leaves: the `TXST` diffuse and the `DODT` that sizes it.
+nonisolated public struct ImpactDecal: Equatable, Sendable {
+    /// Relative to `textures\`, as `TXST` stores it.
+    public let diffusePath: String
+    public let decal: DecalData
+
+    public init(diffusePath: String, decal: DecalData) {
+        self.diffusePath = diffusePath
+        self.decal = decal
+    }
+}
+
 nonisolated public final class FootstepStore {
     /// The set for an actor with no boot armature. Vanilla has one (`00012F16`).
     public static let defaultSetEditorID = "DefaultFootstepSet"
@@ -26,6 +38,10 @@ nonisolated public final class FootstepStore {
     public let impacts: [UInt32: Impact]
     /// ARMA FormID -> FSTS FormID, from ARMA.SNDD, for armatures that name one.
     public let armatureSets: [UInt32: FormID]
+    /// MATT PNAM links, so a surface missing from an impact table takes its parent's.
+    public let materialParents: MaterialParents
+    /// The TXSTs an IPCT `DNAM` names for its decal.
+    public let textureSets: [UInt32: TextureSet]
     public let skippedRecords: SkippedRecords
 
     /// Nil when the plugin has no set named `defaultSetEditorID`.
@@ -47,6 +63,14 @@ nonisolated public final class FootstepStore {
         armatureSets = loadOrder.indexRecords(of: "ARMA", skipped: &skipped) {
             try ArmorAddon(record: $0).footstepSound
         }
+        textureSets = loadOrder.indexRecords(of: "TXST", skipped: &skipped) {
+            try TextureSet(record: $0)
+        }
+        materialParents = MaterialParents(materials: Array(
+            loadOrder.indexRecords(of: "MATT", skipped: &skipped) {
+                try MaterialType(record: $0)
+            }.values
+        ))
         skippedRecords = skipped
         defaultSet = sets.values.first { $0.editorID == Self.defaultSetEditorID }
     }
@@ -57,7 +81,9 @@ nonisolated public final class FootstepStore {
         footsteps: [Footstep],
         impactDataSets: [ImpactDataSet],
         impacts: [Impact],
-        armatureSets: [FormID: FormID] = [:]
+        armatureSets: [FormID: FormID] = [:],
+        materialParents: MaterialParents = .empty,
+        textureSets: [TextureSet] = []
     ) {
         self.sets = Dictionary(
             uniqueKeysWithValues: sets.map { ($0.formID.rawValue, $0) }
@@ -73,6 +99,10 @@ nonisolated public final class FootstepStore {
         )
         self.armatureSets = Dictionary(
             uniqueKeysWithValues: armatureSets.map { ($0.key.rawValue, $0.value) }
+        )
+        self.materialParents = materialParents
+        self.textureSets = Dictionary(
+            textureSets.map { ($0.formID.rawValue, $0) }, uniquingKeysWith: { $1 }
         )
         skippedRecords = SkippedRecords()
         defaultSet = sets.first { $0.editorID == Self.defaultSetEditorID }
@@ -94,7 +124,8 @@ nonisolated public final class FootstepStore {
     }
 
     /// Walks one graph event name to its sound. `material` is the MATT under
-    /// the foot; nil makes the impact table use its representative entry.
+    /// the foot, tried with its parents; nil makes the impact table use its
+    /// representative entry.
     public func resolve(
         tag: String,
         gait: FootstepGait,
@@ -110,13 +141,26 @@ nonisolated public final class FootstepStore {
             guard
                 let dataSetID = footstep.impactDataSet,
                 let dataSet = impactDataSets[dataSetID.rawValue],
-                let impactID = dataSet.impact(for: material),
+                let impactID = dataSet.impact(forFirstOf: materialParents.chain(from: material)),
                 let impact = impacts[impactID.rawValue],
                 let sound = impact.sound
             else { return nil }
             return ResolvedFootstep(footstep: footstep, impact: impact, sound: sound)
         }
         return nil
+    }
+
+    /// The decal `impact` leaves, or nil when it names no texture set with a
+    /// diffuse, or no decal data. The IPCT's own `DODT` wins over the TXST's.
+    public func decal(of impact: Impact) -> ImpactDecal? {
+        guard
+            impact.effect?.flags.map({ $0 & 1 == 0 }) ?? true,
+            let id = impact.textureSet,
+            let textureSet = textureSets[id.rawValue],
+            let diffuse = textureSet.diffusePath,
+            let decal = impact.decal ?? textureSet.decal
+        else { return nil }
+        return ImpactDecal(diffusePath: diffuse, decal: decal)
     }
 
     /// Every tag one gait of a set answers to, in record order.

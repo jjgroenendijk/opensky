@@ -95,6 +95,16 @@ public protocol WaterControlProviding: AnyObject {
 }
 
 @MainActor
+public protocol TerrainShadingControlProviding: AnyObject {
+    /// Terrain lighting follows the land textures' TX01 normal maps.
+    var terrainNormalMapsEnabled: Bool { get set }
+    /// Terrain quadrant draws in the scene.
+    var terrainQuadrantCount: Int { get }
+    /// Base and layer textures in those draws that have a normal map.
+    var terrainNormalMapCount: Int { get }
+}
+
+@MainActor
 public protocol PrecipitationControlProviding: AnyObject {
     var precipitationEnabled: Bool { get set }
     var precipitationSnapshot: PrecipitationRuntimeSnapshot { get }
