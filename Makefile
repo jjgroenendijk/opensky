@@ -216,8 +216,9 @@ swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \
 		swiftformat --config $(SWIFTFORMAT_CFG) $$files
 
+# Package.swift stays out, as in CI: one manifest cannot split to the file-length cap.
 swift-lint: #| Lint the changed Swift files strictly [ALL=1 whole tree]
-	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
+	@files="$(filter-out Package.swift,$(LINT_SWIFT))"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
 		$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $$files
 
 metal-format: #| Autoformat Metal shaders

@@ -112,7 +112,8 @@ help rewrite many blocks at once.
 
 ## File length
 
-The limits are in AGENTS.md: a warning above 600 lines, a failure above 800. The check
+The limits are in AGENTS.md: a warning above 600 lines, a failure above 800, and no limit for
+`Package.swift`, because SwiftPM reads one manifest file and cannot split it. The check
 reads every text file, not only Swift, because a long shader or script is as hard to
 review as a long Swift file. It is the one check in a git hook, because a split is cheap
 before the commit and expensive after review starts. The hook reads the staged content,

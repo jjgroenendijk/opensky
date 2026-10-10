@@ -170,6 +170,7 @@ absent from it run at SwiftLint defaults.
 No file is longer than 800 lines, in any language. Above 600 lines `make file-length` and
 the pre-commit hook print a warning: split the file then, while the split is still easy.
 A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
+`Package.swift` is the one exception, because SwiftPM reads a single manifest file.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 
