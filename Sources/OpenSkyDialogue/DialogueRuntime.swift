@@ -196,16 +196,20 @@ public struct DialogueRuntime: DialogueAccess {
         )
     }
 
-    /// One response: the say-once gate, the forced-speaker gate, then the
-    /// condition list.
+    /// One response: the say-once gate, the reset-time gate, the forced-speaker
+    /// gate, then the condition list.
     private func evaluate(
         info: TopicInfo,
         topic: DialogueTopic,
         speaker: ReferenceKey,
         evaluator: inout ConditionEvaluator
     ) -> DialogueInfoTrace {
-        if info.flags.contains(.sayOnce), hasBeenSaid(info.formID) {
+        let said = saidState(of: info.formID)
+        if info.flags.contains(.sayOnce), said.hasBeenSaid {
             return DialogueInfoTrace(info: info.formID, outcome: nil, rejection: .alreadySaid)
+        }
+        if !said.hasReset(resetHours: info.resetHours, speaker: speaker, onDay: currentDay) {
+            return DialogueInfoTrace(info: info.formID, outcome: nil, rejection: .waitingForReset)
         }
         if let forced = info.speaker, !speaks(speaker, as: forced) {
             return DialogueInfoTrace(
@@ -245,6 +249,12 @@ public struct DialogueRuntime: DialogueAccess {
         evaluator.context.aliasQuest = id
         evaluator.context.formIDTranslation = questStates.translation(of: id)
         return evaluator.evaluate(conditions).isTrue
+    }
+
+    /// `GameDaysPassed`, or nil in a context with no clock.
+    var currentDay: Double? {
+        context.globals.floatValue(editorID: GameClock.TimeGlobal.gameDaysPassed.editorID)
+            .map(Double.init)
     }
 
     /// Whether the topic's owning quest is running. A topic naming no quest is

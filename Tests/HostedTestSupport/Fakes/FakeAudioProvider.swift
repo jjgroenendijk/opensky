@@ -38,6 +38,7 @@ final class FakeAudioProvider: AudioControlProviding {
     var lipSyncEnabled = true
     var lipSyncSnapshot = LipSyncSnapshot.empty
     var lastLipSyncError: String?
+    var speechDescription = "Dialogue speech: nobody speaking"
 
     var voiceFileMatchCount: Int {
         voiceFileMatchCountOverride ?? selectableVoiceFileNames.count

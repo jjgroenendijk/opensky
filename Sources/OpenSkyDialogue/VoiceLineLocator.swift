@@ -64,9 +64,11 @@ nonisolated public struct VoiceLineLocator: Sendable {
         return VoiceFilePath.exportedFormID(local, masterCount: source.masters.count)
     }
 
-    /// Every recorded line one INFO holds for one voice type, in response
-    /// order. Empty when the INFO belongs to no loaded topic.
+    /// Every recorded line one INFO says for one voice type, in response order.
+    /// A shared INFO (`DNAM`) says the lines recorded for its target. Empty when
+    /// the INFO belongs to no loaded topic.
     public func lines(info: TopicInfo, voiceType: String) -> [VoiceLine] {
+        let info = dialogue.responseSource(ofInfo: info.formID) ?? info
         guard let topic = dialogue.topic(ofInfo: info.formID) else { return [] }
         let quest = questEditorID(ofTopic: topic)
         let source = dialogue.sourceResolver(ofInfo: info.formID)

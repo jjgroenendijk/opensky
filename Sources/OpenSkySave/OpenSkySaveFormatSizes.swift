@@ -117,6 +117,10 @@ nonisolated extension OpenSkySaveFormat {
     /// size. No cell tag travels with the entry: an INFO is a base record that
     /// belongs to no cell, so the byte could only ever hold one value.
     public static let minimumDialogueEntrySize = 11
+    /// `DLGT` entry: the smallest INFO key (7) and the speaker count (4).
+    public static let minimumDialogueSaidDayEntrySize = 11
+    /// One `DLGT` speaker: the smallest key (7) and the float64 day (8).
+    public static let minimumDialogueSaidDaySpeakerSize = 15
     /// Smallest number of bytes a single `AEFF` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero effect
     /// count (4). An entry with effects is longer, so this is a lower bound.

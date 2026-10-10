@@ -16,6 +16,8 @@ nonisolated public enum DialogueRejection: Equatable, Sendable {
     case questNotRunning(FormID)
     /// The response is flagged say-once and has already been said.
     case alreadySaid
+    /// The response was said fewer game hours ago than its reset time.
+    case waitingForReset
     /// The response's condition list evaluated false.
     case conditionsFailed
     /// The topic is not the starting topic of a top-level branch, so only a

@@ -25,7 +25,9 @@ extension DialogueRuntime {
         guard let key = dialogue.key(forInfo: id) else {
             throw DialogueError.unresolvedInfoKey(id)
         }
-        let state = saidState(of: id).said()
+        let state = saidState(of: id).said(
+            by: speaker, onDay: info.resetHours > 0 ? currentDay : nil
+        )
         store.set(state, for: key)
         noteBranch(ofSaid: id, speaker: speaker)
 

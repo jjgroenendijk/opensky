@@ -82,6 +82,21 @@ reported from one place only, so it means "played out". A source stopped by hand
 source limit, or purged with its cell does not report. That is the point: a subtitle must clear
 when the line ends, not when it is cut off.
 
+## Dialogue speech
+
+Scenes and the dialogue menu speak through one channel per actor. A line is the voice files of
+its responses, in response order. A [shared response](/engine/dialogue.md) uses the files of the
+`INFO` it shares. Each file plays at the speaker's head bone, on the Voice category, and drives the
+speaker's mouth from its lip track while lip sync is on. When a file plays out, the next one
+starts. A file that does not load is skipped, and the next one plays.
+
+A new line for the same actor cuts off the old one, and so does a closed conversation. The menu
+gets a call when the last file plays out, not when the line is cut off. With audio off, nothing is
+said, and the scene still times the line by its voice file length.
+
+The voice stays where it started. A speaker who walks during a long line is not followed. The
+Voice section's speech readout lists each speaking actor, its file, and its place in the line.
+
 ## Voice controls
 
 World > Dialogue & Voice > Voice has a filter field, a file picker, and Play line. The archives hold

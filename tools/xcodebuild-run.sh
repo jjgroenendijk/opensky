@@ -9,7 +9,8 @@
 # text exists, leaving no full copy anywhere.
 #
 # A build takes a build slot and its tree's lock first (tools/xcodebuild-lib.sh),
-# then removes stale module copies (tools/stale-modules.sh). When a failed build
+# then removes stale module copies (tools/stale-modules.sh) and test bundles a
+# stopped build left unsigned (tools/unsigned-plugins.sh). When a failed build
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
 #
@@ -102,9 +103,17 @@ remove_stale() {
     printf '[INFO] removed stale module copies: %s\n' "$stale"
 }
 
+remove_unsigned() {
+    unsigned="$(OPENSKY_DERIVED_DATA="${derived_data:-$OPENSKY_DERIVED_DATA}" \
+        "$root/tools/unsigned-plugins.sh" -d | tr '\n' ' ' | sed 's/ $//')"
+    [ -n "$unsigned" ] || return 0
+    printf '[INFO] removed unsigned test bundles: %s\n' "$unsigned"
+}
+
 if [ -n "$compiles" ]; then
     opensky_build_lock
     remove_stale || true
+    remove_unsigned
 fi
 mark lock
 started="$(date +%s)"

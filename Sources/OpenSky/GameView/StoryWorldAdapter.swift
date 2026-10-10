@@ -34,6 +34,8 @@ final class StoryWorldAdapter {
     static let locationCheckInterval = 30
     /// Voice file lengths for scene lines. Nil without game data.
     private var voiceTimer: SceneVoiceTimer?
+    /// Voice file paths for scene and menu lines. Nil without game data.
+    private var voiceLocator: VoiceLineLocator?
 
     /// Scene playback over the dialogue runtime.
     lazy var scenes: SceneCoordinator = {
@@ -66,9 +68,10 @@ final class StoryWorldAdapter {
             let dialogue = (provider as? DialogueDataProviding)?.dialogueStore,
             let files = game.audioFileSystem
         {
+            let locator = VoiceLineLocator(dialogue: dialogue, quests: questStore)
+            voiceLocator = locator
             voiceTimer = SceneVoiceTimer(
-                locator: VoiceLineLocator(dialogue: dialogue, quests: questStore),
-                read: { try files.contents(forPath: $0) }
+                locator: locator, read: { try files.contents(forPath: $0) }
             )
         }
         storyManager.story = data.storyManager
@@ -242,7 +245,9 @@ extension StoryWorldAdapter: SceneWorld {
         return voiceTimer.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
     }
 
+    /// A shared INFO (`DNAM`) says its target's text.
     private func responseTexts(of info: TopicInfo) -> [String?] {
+        let info = game.dialogue.index?.responseSource(ofInfo: info.formID) ?? info
         let strings = game.dialogue.strings
         return info.responses.map { response in
             strings.flatMap { response.resolvedText(using: $0) }
@@ -258,7 +263,19 @@ extension StoryWorldAdapter: SceneWorld {
         return record.editorID
     }
 
+    /// The voice files `speaker` says `info` with, in response order. Empty
+    /// without game data or a known voice type.
+    func voicePaths(of info: FormID, speaker: ReferenceKey) -> [String] {
+        guard
+            let voiceLocator,
+            let record = voiceLocator.dialogue.info(info),
+            let voiceType = voiceTypeName(of: speaker)
+        else { return [] }
+        return voiceLocator.lines(info: record, voiceType: voiceType).map(\.path)
+    }
+
     func sceneLineSpoken(_ line: SceneLine) {
+        game.audio.speak(voicePaths(of: line.info, speaker: line.speaker), speaker: line.speaker)
         let text = game.dialogue.runtime?.dialogue.info(line.info)
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(

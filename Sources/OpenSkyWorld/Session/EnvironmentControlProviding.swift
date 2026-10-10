@@ -421,4 +421,6 @@ public protocol AudioControlProviding: AnyObject {
     /// Forces one footstep for the named tag at the player's feet, so the
     /// chain can be verified without walking.
     func forcePlayFootstep(tag: String) -> String?
+    /// The dialogue lines scenes and the dialogue menu are saying, one row per actor.
+    var speechDescription: String { get }
 }

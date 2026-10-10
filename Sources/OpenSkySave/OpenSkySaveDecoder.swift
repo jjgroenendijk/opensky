@@ -60,7 +60,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(actorValues, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.deaths, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.combatStates, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.dialogue, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.dialogueWithSaidDays, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.activeEffects, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.spellbooks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.enchantedItems, into: entries)
@@ -236,8 +236,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             body.deaths = try OpenSkySaveDeathDecoder.decodeDeaths(payload)
         case OpenSkySaveFormat.ChunkTag.combatStates:
             body.combatStates = try OpenSkySaveCombatDecoder.decodeCombatStates(payload)
-        case OpenSkySaveFormat.ChunkTag.dialogueStates:
-            body.dialogue = try OpenSkySaveDialogueDecoder.decodeDialogueStates(payload)
+        case OpenSkySaveFormat.ChunkTag.dialogueStates,
+             OpenSkySaveFormat.ChunkTag.dialogueSaidDays:
+            try OpenSkySaveDialogueDecoder.apply(tag: tag, payload: payload, to: &body)
         case OpenSkySaveFormat.ChunkTag.activeEffects:
             body.activeEffects = try OpenSkySaveActiveEffectDecoder.decodeActiveEffects(payload)
         case OpenSkySaveFormat.ChunkTag.spellbooks:

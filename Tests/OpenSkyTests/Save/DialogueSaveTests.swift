@@ -1,4 +1,4 @@
-// DLGS chunk: dialogue said-state in the native save.
+// DLGS and DLGT chunks: dialogue said-state and said days in the native save.
 // An older build must still load the save, which the renamed-tag case
 // simulates, and `RDLT` must gain no entry for a reference whose only
 // component is this one.
@@ -21,6 +21,11 @@ struct DialogueSaveTests {
     private let spoken = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0000_2004)
     private let repeated = ReferenceKey.plugin(name: "dawnguard.esm", objectID: 0x0001_00FF)
 
+    private let saidDays: [ReferenceKey: Double] = [
+        .plugin(name: "skyrim.esm", objectID: 0x0001_A694): 2.25,
+        .plugin(name: "skyrim.esm", objectID: 0x0001_3BB9): 3.5
+    ]
+
     private func snapshot() -> WorldStateSnapshot {
         let entries = [
             OpenSkySaveFixture.entry(
@@ -29,7 +34,7 @@ struct DialogueSaveTests {
             OpenSkySaveFixture.entry(
                 key: repeated,
                 cell: nil,
-                components: [DialogueRuntimeState(saidCount: 7).erased]
+                components: [DialogueRuntimeState(saidCount: 7, saidDays: saidDays).erased]
             )
         ]
         return OpenSkySaveFixture.snapshot(
@@ -56,7 +61,26 @@ struct DialogueSaveTests {
         let decoded = try #require(delta.component(DialogueRuntimeState.self))
         #expect(decoded.saidCount == 1)
         #expect(decoded.hasBeenSaid)
-        #expect(file.snapshot[repeated]?.component(DialogueRuntimeState.self)?.saidCount == 7)
+        let restored = file.snapshot[repeated]?.component(DialogueRuntimeState.self)
+        #expect(restored?.saidCount == 7)
+        #expect(restored?.saidDays == saidDays)
+        #expect(decoded.saidDays.isEmpty)
+    }
+
+    /// An older build skips `DLGT` and keeps the counts; the line then repeats
+    /// without waiting for its reset time.
+    @Test func aSkippedSaidDayChunkKeepsTheCounts() throws {
+        let encoded = encode(snapshot())
+        let offset = try #require(OpenSkySaveFixture.offset(
+            ofChunk: OpenSkySaveFormat.ChunkTag.dialogueSaidDays, in: encoded
+        ))
+        let renamed = OpenSkySaveFixture.patching(
+            encoded, at: offset, with: Array("ZZZZ".utf8)
+        )
+        let file = try OpenSkySaveDecoder.decode(renamed)
+        let restored = file.snapshot[repeated]?.component(DialogueRuntimeState.self)
+        #expect(restored?.saidCount == 7)
+        #expect(restored?.saidDays.isEmpty == true)
     }
 
     @Test func decodedEntriesStayInReferenceKeyOrder() throws {

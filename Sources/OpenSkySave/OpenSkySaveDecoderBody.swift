@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyDialogueInterface
+import OpenSkyFormatsESM
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
@@ -49,6 +50,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var combatStates: [SaveCombatStateEntry] = []
         /// Absent `DLGS`: every response restores unsaid.
         public var dialogue: [SaveDialogueEntry] = []
+        /// Absent `DLGT`: no said response waits for its reset time.
+        public var dialogueSaidDays: [ReferenceKey: [ReferenceKey: Double]] = [:]
         /// Absent `AEFF`: no actor carries a timed magic effect.
         public var activeEffects: [SaveActiveEffectEntry] = []
         /// Absent `SPLB`: everyone restores with an empty spellbook.

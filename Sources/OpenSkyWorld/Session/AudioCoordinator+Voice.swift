@@ -77,6 +77,7 @@ extension AudioCoordinator {
     /// Plays the line the trigger waited for, once its file is in.
     func drainVoice() {
         voiceFiles?.drain()
+        drainSpeech()
         guard let name = voice.waitingPath else { return }
         _ = playVoiceFile(named: name)
     }
@@ -160,10 +161,13 @@ extension AudioCoordinator {
     }
 
     /// Without this, a retired source reads "no reading" instead of "finished".
-    private func observeVoiceCompletion(engine: WorldAudioEngine) {
+    /// Spoken dialogue lines advance from the same callback.
+    func observeVoiceCompletion(engine: WorldAudioEngine) {
         guard engine.onSourceFinished == nil else { return }
         engine.onSourceFinished = { [weak self] id in
-            guard let self, voice.playing?.sourceID == id else { return }
+            guard let self else { return }
+            speechSourceFinished(id)
+            guard voice.playing?.sourceID == id else { return }
             voice.finished = true
             voice.lipPlayback?.finish(at: world?.audioAnimationTime ?? 0)
         }
@@ -176,32 +180,39 @@ extension AudioCoordinator {
             voice.lipError = nil
             return
         }
+        let started = startLipSync(playback: playback, path: path, on: world?.lipSyncTarget())
+        voice.lipPlayback = started.driver
+        voice.lipError = started.error
+    }
+
+    /// Drives `target`'s mouth from the line's lip track. Returns the driver, or
+    /// the reason it did not start; the audio plays either way.
+    func startLipSync(
+        playback: VoicePlayback, path: String, on target: LipSyncPlayback?
+    ) -> (driver: LipSyncPlayback?, error: String?) {
         guard let lipData = playback.lipData else {
-            voice.lipError = "line has no lip data"
             Self.lipSyncLogger.info("[INFO] lip sync miss: line has no lip data")
-            return
+            return (nil, "line has no lip data")
         }
-        guard let lipPlayback = world?.lipSyncTarget() else {
-            voice.lipError = "no selected actor with expression TRI bindings"
-            Self.lipSyncLogger.info("[INFO] lip sync miss: no selected actor")
-            return
+        guard let target else {
+            Self.lipSyncLogger.info("[INFO] lip sync miss: no actor with TRI bindings")
+            return (nil, "no selected actor with expression TRI bindings")
         }
         do {
             let track = try LIPFile(data: lipData)
-            lipPlayback.isEnabled = true
-            lipPlayback.start(
+            target.isEnabled = true
+            target.start(
                 track: track,
                 clock: playback.clock,
                 line: AudioLabCore.shortVoiceName(path),
                 animationTime: world?.audioAnimationTime ?? 0
             )
-            voice.lipPlayback = lipPlayback
-            voice.lipError = nil
+            return (target, nil)
         } catch {
-            voice.lipError = String(describing: error)
             Self.lipSyncLogger.error(
                 "[ERROR] lip decode: \(String(describing: error), privacy: .public)"
             )
+            return (nil, String(describing: error))
         }
     }
 }

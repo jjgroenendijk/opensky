@@ -25,6 +25,14 @@ private final class FakeAudioWorld: AudioWorld {
         nil
     }
 
+    func lipSyncTarget(for _: ReferenceKey) -> LipSyncPlayback? {
+        nil
+    }
+
+    func speakerHeadPosition(of _: ReferenceKey) -> SIMD3<Float>? {
+        nil
+    }
+
     func playerConditionsPass(_: [Condition]) -> Bool {
         true
     }
@@ -93,6 +101,30 @@ struct AudioCoordinatorTests {
         #expect(audio.lastVoiceError == "audio engine is not running")
         #expect(audio.currentVoiceDescription == nil)
         #expect(audio.voicePlaybackDescription.isEmpty)
+    }
+
+    @Test
+    func speechRefusesWithoutARunningEngine() {
+        let (audio, _) = Self.makeCoordinator()
+        let speaker = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x1A694)
+        var finished = false
+        audio.speak(["a.fuz"], speaker: speaker) { finished = true }
+        #expect(!audio.isSpeaking(speaker))
+        #expect(!finished)
+        #expect(audio.lastSpeechError == "audio is off")
+        #expect(audio.speechDescription
+            == "Dialogue speech: nobody speaking\nSpeech failed: audio is off")
+    }
+
+    @Test
+    func aSpeechQueueSaysItsFilesInOrder() {
+        var queue = SpeechQueue(paths: ["a.fuz", "b.fuz"])
+        #expect(queue.next() == "a.fuz")
+        #expect(queue.position == 1)
+        #expect(queue.next() == "b.fuz")
+        #expect(queue.position == 2)
+        #expect(queue.next() == nil)
+        #expect(queue.current == nil)
     }
 
     @Test

@@ -21,6 +21,7 @@ struct FakeVoiceState {
     var lipSyncEnabled = true
     var lipSyncSnapshot = LipSyncSnapshot.empty
     var lastLipSyncError: String?
+    var speechDescription = "Dialogue speech: nobody speaking"
 }
 
 extension FakeWorldProviders {
@@ -60,6 +61,10 @@ extension FakeWorldProviders {
 
     var lastLipSyncError: String? {
         voice.lastLipSyncError
+    }
+
+    var speechDescription: String {
+        voice.speechDescription
     }
 
     /// Files the Voice section asked to play, in order.
