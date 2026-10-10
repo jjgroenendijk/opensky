@@ -101,6 +101,14 @@ struct HKASplineAnimationTests {
         #expect(abs(end.translation.x - 30) < 0.001)
     }
 
+    @Test func decodesWithFloatMasksThatNeedPadding() throws {
+        var fixture = HKASplineAnimationFixture()
+        fixture.floatTrackCount = 1
+        let animation = try firstAnimation(fixture)
+        let start = try #require(animation.localTransforms(at: 0).first)
+        #expect(start.scale == SIMD3<Float>(2, 3, 4))
+    }
+
     /// `m_extractedMotion` at 0x20 is read for presence only: null means the
     /// clip animates in place, which decides whether it may drive the character.
     @Test func readsWhetherTheClipCarriesExtractedMotion() throws {

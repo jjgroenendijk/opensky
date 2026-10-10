@@ -11,6 +11,8 @@ public struct HKASplineAnimationFixture: Sendable {
     public var descendingKnots = false
     public var transformByteCountOverride: Int?
     public var omitDataFixup = false
+    /// Float tracks carry only their 1-byte masks; no float data is written.
+    public var floatTrackCount = 0
     /// Registers a fixup for `m_extractedMotion`, so the decoded animation
     /// reports `carriesExtractedMotion`. What it points at is a placeholder:
     /// the parser reads the presence of the pointer and never follows it.
@@ -74,12 +76,13 @@ public struct HKASplineAnimationFixture: Sendable {
         writeUInt32(5, at: 0x10, to: &object) // hkaAnimation::HK_SPLINE_COMPRESSED_ANIMATION
         writeFloat(duration, at: 0x14, to: &object)
         writeUInt32(1, at: 0x18, to: &object) // transform tracks
-        writeUInt32(0, at: 0x1C, to: &object) // float tracks
+        writeUInt32(UInt32(floatTrackCount), at: 0x1C, to: &object)
         writeUInt32(UInt32(annotationTracks.count), at: 0x30, to: &object) // m_annotationTracks
         writeUInt32(31, at: 0x38, to: &object) // frames 0 ... 30
         writeUInt32(1, at: 0x3C, to: &object)
         writeUInt32(256, at: 0x40, to: &object)
-        writeUInt32(4, at: 0x44, to: &object) // one 4-byte transform mask
+        // One 4-byte transform mask and the float masks, padded to 4.
+        writeUInt32(UInt32((4 + floatTrackCount + 3) / 4 * 4), at: 0x44, to: &object)
         writeFloat(8.5, at: 0x48, to: &object)
         writeFloat(1 / 8.5, at: 0x4C, to: &object)
         writeFloat(1 / 30, at: 0x50, to: &object)
@@ -178,6 +181,8 @@ public struct HKASplineAnimationFixture: Sendable {
     /// identity quaternion spline; three static scale lanes.
     private func blockData() -> Data {
         var block = Data([quantization, 0x12, 0xF0, 0x07])
+        block.append(Data(repeating: 0, count: floatTrackCount))
+        align(&block, to: 4)
 
         appendSplineHeader(to: &block) // translation
         align(&block, to: 4)
