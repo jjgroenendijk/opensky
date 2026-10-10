@@ -88,6 +88,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
+    /// The MATT an actor's body counts as when struck: its race's `NAM4`.
+    func impactMaterial(of actor: ReferenceKey) -> FormID?
     func setCombatMusicActive(_ active: Bool)
 
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit?

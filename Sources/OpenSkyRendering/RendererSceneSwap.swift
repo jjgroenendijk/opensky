@@ -172,6 +172,9 @@ extension Renderer {
         guard !ready.isEmpty else { return }
         var live = Set(sceneAllocations.map(ObjectIdentifier.init))
         live.formUnion(effects.scene.residencyAllocations.map(ObjectIdentifier.init))
+        live.formUnion(
+            (effects.decalAllocations + effects.particleAllocations).map(ObjectIdentifier.init)
+        )
         live
             .formUnion((effects.loadingCover?.residencyAllocations ?? [])
                 .map(ObjectIdentifier.init))

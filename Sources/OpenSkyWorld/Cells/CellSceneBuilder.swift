@@ -151,8 +151,8 @@ nonisolated public final class CellSceneBuilder {
     var worldChildrenGroups: [String: FoundWorld] = [:]
     /// Keyed by WRLD load-order FormID, then by XCLC grid, over every plugin.
     var loadOrderExteriorCells: [UInt32: [SIMD2<Int32>: FoundCell]] = [:]
-    /// LTEX FormID to its TXST diffuse key; nil marks a broken chain.
-    var terrainDiffuseKeys: [UInt32: String?] = [:]
+    /// LTEX FormID to its TXST texture keys; nil marks a broken chain.
+    var terrainTextureKeyCache: [UInt32: TerrainTextureKeys?] = [:]
     public var waterTypeIndex: [UInt32: WaterType]?
     public var waterPlaneMesh: RenderMesh?
     public var landTextureIndex: [UInt32: LandTexture]?

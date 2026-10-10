@@ -11,6 +11,7 @@ nonisolated public struct ImageSpaceState: Equatable, Sendable {
     /// Replaces the baseline while set, for a strong-tint check.
     public var forcedBaseline: ResolvedImageSpace?
     public var modifiers = ImageSpaceModifierRuntime()
+    public var toneMapping = ToneMappingState()
 
     public init() {}
 

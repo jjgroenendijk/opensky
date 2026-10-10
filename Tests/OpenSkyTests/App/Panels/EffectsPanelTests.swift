@@ -16,6 +16,7 @@ struct EffectsPanelTests {
         panel.loadViewIfNeeded()
         panel.imageSpaceProvider = provider
         panel.visualEffectProvider = provider
+        panel.impactProvider = provider
         panel.explosionProvider = provider
         return panel
     }
@@ -30,6 +31,7 @@ struct EffectsPanelTests {
         #expect(blast.sectionIdentifier == "explosions")
         let controls: [(NSView, String)] = [
             (image.passControl, "ImageSpacePassControl"),
+            (image.toneMappingControl, "ImageSpaceToneMappingControl"),
             (image.forcedControl, "ImageSpaceForcedControl"),
             (image.modifierControl, "ImageSpaceModifierControl"),
             (image.strengthControl, "ImageSpaceStrengthControl"),
@@ -39,6 +41,10 @@ struct EffectsPanelTests {
             (visual.attachPlayerControl, "VisualEffectAttachPlayerControl"),
             (visual.attachActorControl, "VisualEffectAttachActorControl"),
             (visual.clearControl, "VisualEffectClearControl"),
+            (panel.impactSection.modelsControl, "ImpactModelsControl"),
+            (panel.impactSection.decalsControl, "DecalsControl"),
+            (panel.impactSection.repeatControl, "ImpactRepeatControl"),
+            (panel.impactSection.clearControl, "DecalClearControl"),
             (blast.explosionControl, "ExplosionSelectControl"),
             (blast.detonateControl, "ExplosionDetonateControl"),
             (blast.debrisControl, "DebrisSelectControl"),
@@ -85,6 +91,9 @@ struct EffectsPanelTests {
         section.passControl.state = .off
         tap(section.passControl)
         #expect(!provider.imageSpacePassEnabled)
+        section.toneMappingControl.state = .off
+        tap(section.toneMappingControl)
+        #expect(!provider.toneMappingEnabled)
         section.strengthControl.floatValue = 0.5
         tap(section.playControl)
         #expect(provider.effectsState.modifierStarts.first?.0 == "FlashModifier")
@@ -92,7 +101,9 @@ struct EffectsPanelTests {
         ImageSpaceSection.resetToDefaults(provider: provider)
         #expect(provider.imageSpacePassEnabled)
         #expect(provider.forcedImageSpaceName == nil)
+        section.refreshReadout()
         #expect(section.readout.hasPrefix("Baseline:"))
+        #expect(section.readout.contains("Tone mapping: off"))
     }
 
     @Test func visualEffectControlsAttachAndClear() {
@@ -107,6 +118,25 @@ struct EffectsPanelTests {
         tap(section.clearControl)
         #expect(provider.effectsState.cleared == 1)
         #expect(!VisualEffectSection.isOverridden(provider: provider))
+    }
+
+    @Test func impactControlsToggleRepeatAndClear() {
+        let provider = FakeWorldProviders()
+        let section = panel(provider).impactSection
+        #expect(section.sectionIdentifier == "impacts")
+        #expect(!ImpactSection.isOverridden(provider: provider))
+        section.decalsControl.state = .off
+        tap(section.decalsControl)
+        #expect(!provider.decalsEnabled)
+        #expect(ImpactSection.isOverridden(provider: provider))
+        tap(section.repeatControl)
+        tap(section.clearControl)
+        #expect(provider.effectsState.impactRepeats == 1)
+        #expect(provider.effectsState.decalsCleared == 1)
+        section.refreshReadout()
+        #expect(section.readout.contains("last FSTDirtWalkLImpact"))
+        ImpactSection.resetToDefaults(provider: provider)
+        #expect(provider.decalsEnabled)
     }
 
     @Test func explosionControlsDetonateThrowAndSpawn() {

@@ -14,11 +14,11 @@ extension ProjectileRuntime {
         // An arrow resolves impact through the ammunition's chain. AMMO has no INAM, so
         // the unarmed profile's nil data set is what an arrow carries. The lookup stays,
         // so an AMMO impact link is a one-line change.
-        guard
-            let resolved = impacts.resolve(
-                weapon: .unarmed, material: impact.material
-            )
+        let material = impact.material ?? impact.target.flatMap { world.impactMaterial(of: $0) }
+        guard var resolved = impacts.resolve(weapon: .unarmed, material: material)
         else { return nil }
+        resolved.target = impact.target
+        resolved.surfaceNormal = impact.normal
         world.playProjectileImpact(resolved, at: impact.position)
         return resolved.sound
     }

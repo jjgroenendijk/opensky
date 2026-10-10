@@ -48,11 +48,25 @@ way as NIF texture paths, so terrain and objects share one texture cache. A quad
 `BTXT` draws the default ground texture, the same as a null `LTEX`
 ([LAND](/formats/land.md#texture-layers)); Helgen has such quadrants. A base texture whose
 link is broken gives the fallback material. A broken layer is dropped with its weight, and the
-other weights stay in line. The cell summary counts drawn and dropped layers. Normal maps
-(`TX01`) are not used yet.
+other weights stay in line. The cell summary counts drawn and dropped layers.
 
 A cell's `XCLC` quad flags `0x1` to `0x8` hide the matching quarter. A hidden quarter has no
 mesh.
+
+## Normal maps
+
+Each land texture's `TXST` `TX01` is its normal map. The base and every layer bind one, and the
+splat shader blends the normal XY with the same layer weights as the color. Z is rebuilt from
+XY. A missing normal map is a flat one, so that layer lights like the vertex normal.
+
+The tangent frame follows the UVs: +u is east (+X) and +v is north (+Y). Green points along
++v. This was measured on the vanilla data: for 80 of the 82 terrain `_n.dds` maps, the curl
+test (the change of red along v against the change of green along u) only holds with green
+along +v. The other two are almost flat and give no answer.
+
+Ray-traced shadows still test the vertex normal. `World > Environment > Terrain` and the
+launcher's graphics page hold the switch, and the panel counts the quadrants that have a
+normal map.
 
 ## Placement
 

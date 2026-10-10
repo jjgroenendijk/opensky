@@ -53,7 +53,9 @@ does not read `BNAM` or `FNAM`.
 this string. A `MATT` without `MNAM` can still be a parent, but no mesh can point at it.
 
 `PNAM` chains are real in vanilla. For example, stone stairs have stone as their parent.
-OpenSky does not follow them yet.
+An impact lookup that finds no `IPCT` for a material tries its parent, then the parent's
+parent, and so on. A loop or a chain longer than 16 ends the walk. The game's own limit is
+not known.
 
 ## The Havok material hash
 

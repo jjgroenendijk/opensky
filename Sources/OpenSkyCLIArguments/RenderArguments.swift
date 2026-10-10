@@ -41,6 +41,8 @@ public struct ScreenshotArguments: CLICommandArguments {
 public struct EffectCaptureArguments: ParsableArguments, Sendable {
     @Flag(help: "Skip the image-space composite pass.")
     public var imageSpaceOff = false
+    @Flag(help: "Skip HDR tone mapping inside the image-space pass.")
+    public var toneMappingOff = false
     @Option(parsing: .unconditional, help: ArgumentHelp("Force an IMGS.", valueName: "edid"))
     public var imgs: String?
     @Option(parsing: .unconditional, help: ArgumentHelp("Start an IMAD.", valueName: "edid"))

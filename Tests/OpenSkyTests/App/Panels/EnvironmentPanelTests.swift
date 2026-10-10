@@ -145,6 +145,31 @@ struct EnvironmentPanelTests {
         #expect(Self.label("WaterStatsLabel", in: section.view)?.stringValue == "Water surfaces: 3")
     }
 
+    @Test @MainActor
+    func terrainNormalMapToggleWritesTheProviderAndShowsAsOverride() {
+        let provider = FakeWorldProviders()
+        provider.terrainQuadrantCount = 4
+        provider.terrainNormalMapCount = 9
+        let section = TerrainSection()
+        _ = section.view
+        section.provider = provider
+        #expect(section.normalMapsControl.accessibilityIdentifier() == "TerrainNormalMapsControl")
+        #expect(section.normalMapsControl.state == .on)
+        #expect(!TerrainSection.isOverridden(provider: provider))
+
+        section.normalMapsControl.performClick(nil)
+        #expect(!provider.terrainNormalMapsEnabled)
+        #expect(TerrainSection.isOverridden(provider: provider))
+
+        TerrainSection.resetToDefaults(provider: provider)
+        #expect(provider.terrainNormalMapsEnabled)
+        section.refreshReadout()
+        #expect(
+            Self.label("TerrainStatsLabel", in: section.view)?.stringValue
+                == "Terrain quadrants: 4\nNormal maps: 9"
+        )
+    }
+
     @MainActor
     private static func label(_ identifier: String, in view: NSView) -> NSTextField? {
         if let label = view as? NSTextField, label.accessibilityIdentifier() == identifier {

@@ -37,6 +37,17 @@ nonisolated public struct MembraneDraw: Equatable, Sendable {
     }
 }
 
+/// One texture's decals in the shared decal buffer.
+nonisolated public struct DecalBatch {
+    public let texture: MTLTexture
+    public let instances: [DecalInstance]
+
+    public init(texture: MTLTexture, instances: [DecalInstance]) {
+        self.texture = texture
+        self.instances = instances
+    }
+}
+
 /// The effect models, the membrane pipelines, and their uniform ring.
 public final class EffectLayer {
     /// At most this many membranes draw in one frame; the rest wait.
@@ -50,10 +61,18 @@ public final class EffectLayer {
     public internal(set) var loadingCover: RenderScene?
     /// Membranes the last frame drew, for the readout.
     public internal(set) var lastMembraneDraws = 0
+    /// The particle systems of effect models, simulated like the scene's.
+    public internal(set) var particles: [ParticlePlayback] = []
+    /// The decals, one batch per texture, in `decalBuffer` order.
+    public internal(set) var decalBatches: [DecalBatch] = []
+    var decalBuffer: MTLBuffer?
+    /// Decals the last frame drew, for the readout.
+    public internal(set) var lastDecalDraws = 0
 
     let staticPipeline: MTLRenderPipelineState
     let skinnedPipeline: MTLRenderPipelineState
     let morphedPipeline: MTLRenderPipelineState
+    let decalPipeline: MTLRenderPipelineState
     let depthState: MTLDepthStencilState
     let uniformBuffer: MTLBuffer
 
@@ -73,6 +92,9 @@ public final class EffectLayer {
         morphedPipeline = try make(
             "morphedSkinnedMeshVertex", MorphVertexLayout.vertexDescriptor()
         )
+        decalPipeline = try Self.makeDecalPipeline(
+            library: library, compiler: compiler, view: view
+        )
         let depth = MTLDepthStencilDescriptor()
         depth.label = "MembraneDepth"
         depth.depthCompareFunction = .lessEqual
@@ -89,6 +111,35 @@ public final class EffectLayer {
         else { throw RendererError.bufferAllocationFailed }
         buffer.label = "MembraneUniforms"
         uniformBuffer = buffer
+    }
+
+    /// Blends over the surface by the decal's alpha.
+    private static func makeDecalPipeline(
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> MTLRenderPipelineState {
+        let vertexFunction = MTL4LibraryFunctionDescriptor()
+        vertexFunction.library = library
+        vertexFunction.name = "decalVertex"
+        let fragment = MTL4LibraryFunctionDescriptor()
+        fragment.library = library
+        fragment.name = "decalFragment"
+        let descriptor = MTL4RenderPipelineDescriptor()
+        descriptor.label = "Decal"
+        descriptor.rasterSampleCount = view.sampleCount
+        descriptor.vertexFunctionDescriptor = vertexFunction
+        descriptor.fragmentFunctionDescriptor = fragment
+        guard let color = descriptor.colorAttachments[0] else {
+            throw RendererError.pipelineAttachmentMissing
+        }
+        color.pixelFormat = view.colorPixelFormat
+        color.blendingState = .enabled
+        color.sourceRGBBlendFactor = .sourceAlpha
+        color.destinationRGBBlendFactor = .oneMinusSourceAlpha
+        color.sourceAlphaBlendFactor = .zero
+        color.destinationAlphaBlendFactor = .one
+        return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
     /// Additive: the membrane only ever brightens what is under it.

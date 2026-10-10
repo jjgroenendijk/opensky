@@ -39,6 +39,15 @@ final class GraphicsPageViewController: NSViewController {
         target: nil,
         action: nil
     )
+    let terrainNormalMapsControl = NSButton(
+        checkboxWithTitle: "Terrain normal maps", target: nil, action: nil
+    )
+    let impactEffectsControl = NSButton(
+        checkboxWithTitle: "Impact effects", target: nil, action: nil
+    )
+    let toneMappingControl = NSButton(
+        checkboxWithTitle: "HDR tone mapping", target: nil, action: nil
+    )
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
@@ -123,7 +132,9 @@ final class GraphicsPageViewController: NSViewController {
             layout.group("Rendering", [
                 layout.toggle(rayTracedShadowsControl), rayTracingLabel,
                 layout.toggle(meshShaderGrassControl), layout.toggle(gpuCullingControl),
-                layout.toggle(waterDepthControl), layout.toggle(pipelineCacheControl),
+                layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
+                layout.toggle(impactEffectsControl), layout.toggle(toneMappingControl),
+                layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl])
             ]),
             layout.group("Texture memory", [
@@ -167,6 +178,9 @@ final class GraphicsPageViewController: NSViewController {
             && store.bool(.frameInterpolation) ? .on : .off
         gpuCullingControl.state = store.bool(.gpuCulling) ? .on : .off
         waterDepthControl.state = store.bool(.waterDepth) ? .on : .off
+        terrainNormalMapsControl.state = store.bool(.terrainNormalMaps) ? .on : .off
+        impactEffectsControl.state = store.bool(.impactEffects) ? .on : .off
+        toneMappingControl.state = store.bool(.toneMapping) ? .on : .off
         pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))

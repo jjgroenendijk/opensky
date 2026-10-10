@@ -30,7 +30,7 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexSkinningAttributes = 6,
     /// Skinned-mesh bind-pose bone matrix array.
     BufferIndexBoneMatrices = 7,
-    /// CPU-simulated particle billboard instances.
+    /// CPU-simulated particle billboard instances, and the decal quads (DecalInstance).
     BufferIndexParticleInstances = 8,
     /// Screen-space UI vertex stream (UIVertex), indexed by [[vertex_id]];
     /// no vertex descriptor, read as a device pointer like particles.
@@ -74,6 +74,8 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexMeshletTriangles = 24,
     /// Two atomic counters per frame slot: meshlets tested, meshlets drawn.
     BufferIndexMeshletCounters = 25,
+    /// Two atomic counters per frame slot: summed fixed-point log2 luminance, samples.
+    BufferIndexImageSpaceLuminance = 26,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -114,6 +116,9 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     TextureIndexEffectPalette = 14,
     /// The scene depth copied before the water draws, for its see-through depth.
     TextureIndexWaterDepth = 15,
+    /// Terrain normal maps (LTEX TXST TX01): the base, then one slot per layer slot.
+    TextureIndexTerrainBaseNormal = 16,
+    TextureIndexTerrainLayerNormal0 = 17,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -287,6 +292,20 @@ typedef struct
     /// xy UV origin, zw UV extent (NIF Subtexture Offset).
     vector_float4 uvRect;
 } ParticleInstance;
+
+/// One decal quad on a surface (docs/rendering/decals.md), built from vertex_id
+/// like a particle. The two axes are half the width and height; their cross
+/// product is the surface normal.
+typedef struct
+{
+    vector_float4 center;
+    vector_float4 axisU;
+    vector_float4 axisV;
+    /// DODT colour times the texture; alpha is the fade.
+    vector_float4 color;
+    /// xy UV origin, zw UV extent: one cell of a subtexture grid, or the whole texture.
+    vector_float4 uvRect;
+} DecalInstance;
 
 /// One vertex of the cloud dome, in model space around the camera.
 typedef struct
@@ -471,6 +490,8 @@ typedef struct
     /// Bound ATXT layer count, <= TerrainConstantMaxLayers.
     unsigned int layerCount;
     unsigned int pointLightCount;
+    /// 0 shades with the vertex normal alone.
+    unsigned int normalMapsEnabled;
 } TerrainDrawUniforms;
 
 /// One water surface. Colors and shading decode from WATR DNAM (docs/formats/water.md).
@@ -608,6 +629,8 @@ typedef struct
     vector_float4 grading;
     /// x double-vision strength; yzw unused.
     vector_float4 extra;
+    /// x exposure, y white point (0 is none), z 1 to measure luminance, w unused.
+    vector_float4 toneMapping;
 } ImageSpaceUniforms;
 
 /// One effect-shader membrane drawn additively over its target's meshes

@@ -126,6 +126,27 @@ extension WorldRenderControls: WaterControlProviding {
     }
 }
 
+extension WorldRenderControls: TerrainShadingControlProviding {
+    public var terrainNormalMapsEnabled: Bool {
+        get {
+            renderer?.terrainNormalMapsEnabled
+                ?? world?.playerSettingsStore.bool(.terrainNormalMaps) ?? true
+        }
+        set {
+            renderer?.terrainNormalMapsEnabled = newValue
+            world?.playerSettingsStore.set(.terrainNormalMaps, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var terrainQuadrantCount: Int {
+        renderer?.scene.terrain.count ?? 0
+    }
+
+    public var terrainNormalMapCount: Int {
+        renderer?.scene.terrain.reduce(0) { $0 + $1.normals.resolvedCount } ?? 0
+    }
+}
+
 extension WorldRenderControls: PrecipitationControlProviding {
     public var precipitationEnabled: Bool {
         get { renderer?.precipitationEnabled ?? true }

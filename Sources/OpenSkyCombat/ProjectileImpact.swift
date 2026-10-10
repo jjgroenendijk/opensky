@@ -21,6 +21,8 @@ nonisolated public struct ProjectileImpact: Equatable, Sendable {
     /// The MATT type of the static surface struck. Nil for an actor, which
     /// carries no material yet, so the impact data set's default entry plays.
     public var material: FormID?
+    /// The struck surface's normal, for a decal. Nil for an actor.
+    public var normal: SIMD3<Float>?
 
     public var isActor: Bool {
         target != nil
@@ -86,7 +88,8 @@ nonisolated public enum ProjectileImpactQuery: Sendable {
             position: staticHit.position,
             target: nil,
             reference: staticHit.reference,
-            material: staticHit.material
+            material: staticHit.material,
+            normal: staticHit.normal
         )
         guard let actorHit else { return asImpact }
         return actorHit.distance <= staticHit.distance ? actorHit : asImpact

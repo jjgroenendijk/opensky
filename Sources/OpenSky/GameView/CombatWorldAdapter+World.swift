@@ -198,6 +198,7 @@ extension CombatWorldAdapter: CombatWorld {
     /// A playback failure is logged by the engine and leaves the hit silent. The
     /// file loads off the main actor and is kept, so a repeated impact does not read it.
     func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
+        showImpact(impact, at: position)
         guard
             let engine = game.renderer?.worldAudio, engine.isRunning,
             let assets = game.audio.assets,

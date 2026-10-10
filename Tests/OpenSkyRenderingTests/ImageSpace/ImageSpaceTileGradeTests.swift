@@ -1,5 +1,5 @@
-// The image-space grade in tile memory against the grade through a color copy, and the
-// render targets each one leaves behind. Needs Metal 4.
+// The image-space grade in tile memory against the grade through a color copy, the
+// tone-mapping stage, and the render targets each one leaves behind. Needs Metal 4.
 
 import EngineTesting
 import Metal
@@ -46,6 +46,25 @@ struct ImageSpaceTileGradeTests {
 
         let neutral = try render(makeRenderer(grade: .neutral))
         #expect(neutral != tile, "the grade changed no pixel")
+    }
+
+    /// A white point below the scene's brightest value lifts the frame; the eye reads
+    /// the luminance the GPU summed once the frame slot comes round again.
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
+    func toneMappingMeasuresTheSceneAndChangesTheFrame() throws {
+        var hdr = ImageSpaceParameters()
+        hdr.hdr.white = 0.5
+        hdr.hdr.eyeAdaptStrength = 15
+        let renderer = try makeRenderer(grade: hdr)
+        renderer.imageSpace.toneMapping.enabled = false
+        let off = try render(renderer)
+        renderer.imageSpace.toneMapping.enabled = true
+        var mapped = off
+        for _ in 0 ... Renderer.maxFramesInFlight {
+            mapped = try render(renderer)
+        }
+        #expect(mapped != off, "tone mapping changed no pixel")
+        #expect(renderer.imageSpace.toneMapping.eye.measuredLuminance != nil)
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))

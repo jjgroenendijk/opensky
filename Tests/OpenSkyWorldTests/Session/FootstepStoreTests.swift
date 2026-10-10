@@ -64,6 +64,38 @@ struct FootstepStoreTests {
         )?.sound == FormID(0x400))
     }
 
+    /// Packed snow has no pair of its own, so it takes its parent's: snow.
+    @Test func aMaterialWithoutAPairTakesItsParents() {
+        let store = Self.store()
+
+        #expect(store.resolve(
+            tag: "FootLeft", gait: .walking, in: Self.walkSet, material: Self.packedSnow
+        )?.sound == FormID(0x402))
+        #expect(store.materialParents.chain(from: Self.packedSnow) == [Self.packedSnow, Self.snow])
+    }
+
+    @Test func aLoopingParentChainStops() {
+        let parents = MaterialParents(parents: [FormID(1): FormID(2), FormID(2): FormID(1)])
+
+        #expect(parents.chain(from: FormID(1)) == [FormID(1), FormID(2)])
+        #expect(parents.chain(from: nil).isEmpty)
+    }
+
+    /// The IPCT's own DODT wins over the TXST's, and the "no decal" flag hides it.
+    @Test func anImpactsDecalComesFromItsTextureSet() {
+        let store = Self.store()
+        let impactDecal = DecalData(width: 10 ... 20, height: 5 ... 8)
+        let bloody = Self.impact(0x303, sound: 0x403, textureSet: 0x600, decal: impactDecal)
+
+        let decal = store.decal(of: bloody)
+        #expect(decal?.diffusePath == "decals\\blood01.dds")
+        #expect(decal?.decal == impactDecal)
+        #expect(store.decal(of: Self.impact(0x304, sound: 0x403, textureSet: 0x600))?.decal
+            == Self.textureSetDecal)
+        #expect(store.decal(of: Self.impact(0x305, sound: 0x403, textureSet: 0x601)) == nil)
+        #expect(store.decal(of: Self.impact(0x300, sound: 0x400)) == nil)
+    }
+
     @Test func tagsReportTheGaitListInRecordOrder() {
         let store = Self.store()
 
@@ -130,7 +162,15 @@ struct FootstepStoreTests {
                 impact(0x301, sound: 0x401),
                 impact(0x302, sound: 0x402)
             ],
-            armatureSets: [FormID(0x900): FormID(0x10)]
+            armatureSets: [FormID(0x900): FormID(0x10)],
+            materialParents: MaterialParents(parents: [packedSnow: snow]),
+            textureSets: [
+                TextureSet(
+                    formID: FormID(0x600), diffusePath: "decals\\blood01.dds",
+                    decal: textureSetDecal
+                ),
+                TextureSet(formID: FormID(0x601), diffusePath: nil, decal: textureSetDecal)
+            ]
         )
     }
 
@@ -151,6 +191,9 @@ struct FootstepStoreTests {
     /// also the representative entry, and snow once.
     static let stone = FormID(0x501)
     static let snow = FormID(0x502)
+    /// A child of snow that no table names.
+    static let packedSnow = FormID(0x503)
+    static let textureSetDecal = DecalData(width: 30 ... 40, height: 30 ... 40)
 
     /// A table pairing the given impact with stone twice and 0x302 with snow.
     /// Stone is therefore both an exact answer and the representative one, so
@@ -167,10 +210,26 @@ struct FootstepStoreTests {
         )
     }
 
-    private static func impact(_ id: UInt32, sound: UInt32) -> Impact {
+    private static func impact(
+        _ id: UInt32,
+        sound: UInt32,
+        textureSet: UInt32? = nil,
+        decal: DecalData? = nil
+    ) -> Impact {
         decode("IPCT") {
             ESMFixture.field("SNAM", uint32(sound))
+                + (textureSet.map { ESMFixture.field("DNAM", uint32($0)) } ?? Data())
+                + (decal.map { ESMFixture.field("DODT", dodt($0)) } ?? Data())
         } build: { try Impact(record: $0) } id: { id }
+    }
+
+    private static func dodt(_ decal: DecalData) -> Data {
+        var data = Data()
+        for value in [decal.minWidth, decal.maxWidth, decal.minHeight, decal.maxHeight, 0, 0, 0] {
+            data.appendUInt32(value.bitPattern)
+        }
+        data.append(contentsOf: [0, decal.flags.rawValue, 0, 0] + [255, 255, 255, 0])
+        return data
     }
 
     /// Builds one synthetic record and decodes it. A fixture that cannot be

@@ -292,8 +292,11 @@ public final class Renderer: NSObject {
     public var meshGrass: MeshShaderGrassState
     /// Grades every frame through the copy, so a test can compare it with the tile grade.
     var imageSpaceAlwaysSplits = false
+    var eyeAdaptationClock = FrameSimClock()
     /// Scene depth under the water surface (RendererWaterPass.swift).
     public var waterDepth = WaterDepthState()
+    /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
+    public var terrainNormalMapsEnabled = true
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
@@ -374,7 +377,7 @@ public final class Renderer: NSObject {
                 shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
                 uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
                 swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
-                effects.uniformBuffer
+                imageSpacePass.luminanceBuffer, effects.uniformBuffer
             ]
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )

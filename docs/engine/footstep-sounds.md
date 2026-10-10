@@ -45,6 +45,9 @@ boots win over the bare foot they cover with no extra ranking.
 Footsteps are positional, placed at the feet, not at the listener. That is what makes third person
 sound right.
 
+A routed step also shows the `IPCT` impact model at the feet, such as dust
+([impacts and decals](/rendering/decals.md)).
+
 ## Controls
 
 World > Audio > Footsteps:

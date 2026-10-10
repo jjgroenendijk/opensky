@@ -34,17 +34,20 @@ runtime and are never copied into the repository or a test fixture.
 OpenSky applies the four terrain distances today: `fBlockLevel0Distance`,
 `fBlockLevel1Distance`, `fBlockMaximumDistance`, and `fTreeLoadDistance`. They feed the
 distant terrain the same way the INI keys do, and the terrain LOD override of the developer
-sidebar still wins over them.
+sidebar still wins over them. It also applies `bDecals` and `uMaxDecals`
+([impacts and decals](/rendering/decals.md)).
 
 Every other option is shown, saved, and disabled, with one line that says why it does
-nothing yet, such as "OpenSky draws no decals yet". So a player sees what the game would
+nothing yet, such as "OpenSky draws no decals on actors yet". So a player sees what the game would
 change, and an option that starts to work only needs its reason removed.
 
 ## OpenSky's own groups
 
 - Upscaling: render scale, the MetalFX upscaler, and frame interpolation.
 - Rendering: ray-traced sun shadows, mesh shader grass, GPU culling, shallow water depth,
-  and the [pipeline cache](/rendering/pipeline-cache.md).
+  [terrain normal maps](/engine/terrain.md), impact effects,
+  [HDR tone mapping](/rendering/image-space.md), and the
+  [pipeline cache](/rendering/pipeline-cache.md).
 - Texture memory: "Full detail only near the camera" is
   [texture streaming](/rendering/texture-streaming.md), and "Memory for close-up detail" is
   its budget. Automatic follows this Mac's GPU memory.

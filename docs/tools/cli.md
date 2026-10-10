@@ -109,7 +109,8 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
   cell left a ring with neither terrain nor LOD. `--ui-sample` draws the UI sample and
   `--navmesh-overlay` draws navmesh triangles ([navigation](/engine/navigation.md)).
 - `screenshot` effect flags make the image-space and effect A/B captures.
-  `--image-space-off` skips the composite pass. `--imgs` forces a baseline, and `--imad` starts
+  `--image-space-off` skips the composite pass, and `--tone-mapping-off` skips only its
+  [HDR tone mapping](/rendering/image-space.md). `--imgs` forces a baseline, and `--imad` starts
   a modifier sampled at `--imad-at` seconds. `--membrane` puts an `EFSH` membrane on the first
   actor and frames it. `--weather` forces a weather, so its `SPGD` rain falls. Rain needs a few
   frames to fill the volume, so add `--frames 60`.

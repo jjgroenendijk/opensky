@@ -142,7 +142,7 @@ nonisolated public struct StuckProjectile: Equatable, Sendable {
 /// `WeaponEnchantmentApplying`, so bows and blades share one implementation.
 @MainActor
 public protocol ProjectileWorld: ScriptHitReporting, SkillUseReporting, SpellHitApplying,
-    WeaponEnchantmentApplying
+    WeaponEnchantmentApplying, ImpactMaterialReading
 {
     /// Where the player is aiming from, this frame.
     var projectileShooter: ProjectileShooter { get }

@@ -102,3 +102,43 @@ nonisolated public struct MaterialType: Equatable, Sendable {
         return id.isNull ? nil : id
     }
 }
+
+/// The `PNAM` links of every material, walked from a child towards its root.
+nonisolated public struct MaterialParents: Equatable, Sendable {
+    /// Vanilla chains are two or three deep; a loop in a plugin stops here.
+    public static let maximumDepth = 16
+
+    private let parents: [UInt32: FormID]
+
+    public init(parents: [FormID: FormID]) {
+        self.parents = Dictionary(
+            uniqueKeysWithValues: parents.map { ($0.key.rawValue, $0.value) }
+        )
+    }
+
+    public init(materials: [MaterialType]) {
+        var parents: [FormID: FormID] = [:]
+        for material in materials {
+            if let parent = material.parent, !parent.isNull {
+                parents[material.formID] = parent
+            }
+        }
+        self.init(parents: parents)
+    }
+
+    public static let empty = MaterialParents(parents: [:])
+
+    /// `material` first, then its parent, its parent's parent, and so on. Empty for nil.
+    public func chain(from material: FormID?) -> [FormID] {
+        guard let material else { return [] }
+        var chain = [material]
+        while
+            chain.count < Self.maximumDepth,
+            let parent = parents[chain[chain.count - 1].rawValue],
+            !chain.contains(parent)
+        {
+            chain.append(parent)
+        }
+        return chain
+    }
+}

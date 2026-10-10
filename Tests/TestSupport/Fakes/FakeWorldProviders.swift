@@ -73,9 +73,8 @@ final class FakeWorldProviders: WorldControlProviders {
 
     var effectsState = FakeEffectsState()
 
-    // WaterControlProviding
-    var waterDepthEnabled = true
-    var waterSurfaceCount = 0
+    /// WaterControlProviding and TerrainShadingControlProviding
+    var surfaces = FakeSurfaceState()
 
     // PrecipitationControlProviding
     var precipitationEnabled = true

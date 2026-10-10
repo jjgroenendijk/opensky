@@ -51,6 +51,18 @@ extension GraphicsPageViewController {
             "Shallow water shows the ground below; costs one depth copy"
         )
         checkbox(
+            terrainNormalMapsControl, "TerrainNormalMaps",
+            "Light the ground with the land textures' normal maps"
+        )
+        checkbox(
+            toneMappingControl, "ToneMapping",
+            "The eye adapts to dark and bright scenes; follows the weather's image space"
+        )
+        checkbox(
+            impactEffectsControl, "ImpactEffects",
+            "Dust under a step, sparks or blood spray where a hit lands"
+        )
+        checkbox(
             pipelineCacheControl, "PipelineCache",
             "Load compiled GPU pipelines saved by an earlier launch; starts faster"
         )
@@ -113,7 +125,9 @@ extension GraphicsPageViewController {
                 .rayTracedShadows
             ),
             (meshShaderGrassControl, .meshShaderGrass), (gpuCullingControl, .gpuCulling),
-            (waterDepthControl, .waterDepth), (pipelineCacheControl, .pipelineCacheEnabled),
+            (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
+            (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
+            (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ]
     }

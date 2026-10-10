@@ -149,6 +149,10 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func playImpact(_: ResolvedMeleeImpact, at _: SIMD3<Float>) {}
 
+    func impactMaterial(of _: ReferenceKey) -> FormID? {
+        nil
+    }
+
     func setCombatMusicActive(_: Bool) {}
 
     func sweep(_: ShapeSweepQuery) -> ShapeSweepHit? {

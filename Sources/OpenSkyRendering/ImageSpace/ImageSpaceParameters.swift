@@ -5,7 +5,8 @@ import Foundation
 import OpenSkyFormatsESM
 import simd
 
-/// The `IMGS` `HNAM` values. Passed through: the renderer has no HDR eye adaptation or bloom.
+/// The `IMGS` `HNAM` values. Tone mapping uses the eye and white values; bloom and
+/// the light scales are not drawn.
 nonisolated public struct ImageSpaceHDR: Equatable, Sendable {
     public var eyeAdaptSpeed: Float = 0
     public var bloomBlurRadius: Float = 0

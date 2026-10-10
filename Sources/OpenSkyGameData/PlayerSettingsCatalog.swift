@@ -183,6 +183,12 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
         row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
         row(
+            "rendering.terrainNormalMaps", .opensky, .toggle, "Terrain normal maps", 1,
+            applied: true
+        ),
+        row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
+        row("rendering.toneMapping", .opensky, .toggle, "HDR tone mapping", 1, applied: true),
+        row(
             "rendering.textureStreaming",
             .opensky,
             .toggle,
@@ -307,6 +313,15 @@ nonisolated extension PlayerSettingID {
     public static let gpuCulling = Self("rendering.gpuCulling")
     /// Water reads the scene depth, so shallow water shows the ground below it.
     public static let waterDepth = Self("rendering.waterDepth")
+    /// Terrain lighting follows the land textures' normal maps.
+    public static let terrainNormalMaps = Self("rendering.terrainNormalMaps")
+    /// A hit or a step shows its impact model: dust, sparks, or blood spray.
+    public static let impactEffects = Self("rendering.impactEffects")
+    /// The eye adapts to the scene brightness and the image space white point applies.
+    public static let toneMapping = Self("rendering.toneMapping")
+    /// The game's `[Decals] bDecals` and `[Display] uMaxDecals`.
+    public static let decals = Self("graphics.bDecals")
+    public static let decalLimit = Self("graphics.uMaxDecals")
     /// Large textures keep only the mip levels the camera needs.
     public static let textureStreaming = Self("rendering.textureStreaming")
     /// An index into `TextureBudget.choiceTitles`: 0 is Automatic.

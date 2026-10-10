@@ -12,6 +12,7 @@ import simd
 
 struct EffectCaptureOptions {
     var imageSpaceOff = false
+    var toneMappingOff = false
     var imageSpace: String?
     var modifier: String?
     var modifierAt: Float = 0
@@ -26,6 +27,7 @@ struct EffectCaptureOptions {
     static func parse(_ arguments: EffectCaptureArguments) throws -> Self {
         var options = Self()
         options.imageSpaceOff = arguments.imageSpaceOff
+        options.toneMappingOff = arguments.toneMappingOff
         options.imageSpace = arguments.imgs
         options.modifier = arguments.imad
         options.modifierAt = try number(arguments.imadAt, name: "--imad-at") ?? 0
@@ -87,6 +89,7 @@ extension RenderCommand {
     ) throws {
         let file = scene.file
         renderer.imageSpace.passEnabled = !options.imageSpaceOff
+        renderer.imageSpace.toneMapping.enabled = !options.toneMappingOff
         guard options.needsRecords else { return }
         let records = EffectRecordStore(
             plugins: ActivePluginFiles.load(root: scene.context.root, baseFile: file)
@@ -162,7 +165,8 @@ extension RenderCommand {
             "[INFO] image space: pass \(state.passEnabled ? "on" : "off"), "
                 + "baseline \(baseline), "
                 + "modifiers [\(modifiers)], saturation \(current.saturation), "
-                + "brightness \(current.brightness), tint \(current.tint)"
+                + "brightness \(current.brightness), tint \(current.tint), "
+                + EffectsReadout.toneMapping(state.toneMapping, hdr: current.hdr).lowercased()
         )
         print(
             "[INFO] effects: membranes drawn \(renderer.effects.lastMembraneDraws), "
