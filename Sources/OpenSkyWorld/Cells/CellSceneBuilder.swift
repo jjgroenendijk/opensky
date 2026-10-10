@@ -262,7 +262,7 @@ nonisolated public final class CellSceneBuilder {
                 dynamicBodies: collision.dynamicBodies,
                 navmeshes: collectNavmeshes(in: found),
                 actors: actors,
-                worldspaceMusicType: world.worldspace?.musicType,
+                world: world,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
                 vehicleFollowers: resolved.vehicleFollowers

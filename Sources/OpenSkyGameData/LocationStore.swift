@@ -72,6 +72,11 @@ nonisolated public struct LocationStore: Sendable {
         )
     }
 
+    /// The KYWD records over the same index, for conditions that name a keyword.
+    public var keywords: KeywordStore {
+        keywordStore
+    }
+
     public func location(_ id: ResolvedFormID) -> ResolvedLocation? {
         table.value(id)
     }

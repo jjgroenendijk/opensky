@@ -27,8 +27,8 @@ nonisolated public struct CellGeometryBuild {
     /// Decoded NAVM records built beside the rest of the cell-owned geometry.
     public var navmeshes: [Navmesh] = []
     public let actors: CellActorBuild
-    /// WRLD ZNAM; the interior path has no worldspace and leaves it nil.
-    public var worldspaceMusicType: FormID?
+    /// The cell's worldspace; the interior path has none and leaves it nil.
+    public var world: FoundWorld?
     /// REFR entries only; actor entries travel inside `actors`.
     public var referenceEntries: [RuntimeReferenceEntry] = []
     /// The world-state snapshot sequence applied; 0 means none.
@@ -196,15 +196,7 @@ nonisolated extension CellSceneBuilder {
         // A simulated reference draws at its live pose, so it keeps its FormID.
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
-        let placed = instances.filter { !$0.model.meshes.isEmpty }.map { instance in
-            RenderPlacement(
-                model: instance.model,
-                transform: instance.transform,
-                bounds: meshes.bounds(forPath: instance.modelPath, surface: instance.surface)?
-                    .transformed(by: instance.transform),
-                referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
-            )
-        }
+        let placed = renderPlacements(instances, simulated: simulated)
         let bounds = unionedBounds(
             placements: placed + actors.placements, geometry: geometry
         )
@@ -241,7 +233,8 @@ nonisolated extension CellSceneBuilder {
             owner: RecordOwnership(cell: found.cell),
             locationLink: found.cell.location,
             ownerPluginName: pluginName,
-            worldspaceMusicType: geometry.worldspaceMusicType,
+            worldspaceMusicType: geometry.world?.worldspace?.musicType,
+            worldspace: geometry.world?.formID,
             terrainHeightField: geometry.terrain?.heightField,
             waterHeight: geometry.water?.height,
             grassPlacements: geometry.grass?.placements ?? [],
@@ -252,6 +245,21 @@ nonisolated extension CellSceneBuilder {
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )
+    }
+
+    nonisolated private func renderPlacements(
+        _ instances: [ResolvedInstance],
+        simulated: Set<UInt32>
+    ) -> [RenderPlacement] {
+        instances.filter { !$0.model.meshes.isEmpty }.map { instance in
+            RenderPlacement(
+                model: instance.model,
+                transform: instance.transform,
+                bounds: meshes.bounds(forPath: instance.modelPath, surface: instance.surface)?
+                    .transformed(by: instance.transform),
+                referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
+            )
+        }
     }
 
     nonisolated private func makeParticlePlaybacks(

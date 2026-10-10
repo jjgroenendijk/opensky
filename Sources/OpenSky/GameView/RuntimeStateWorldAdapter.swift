@@ -32,6 +32,10 @@ final class RuntimeStateWorldAdapter {
     private var saveStore: OpenSkySaveStore?
     /// Parses every plugin header, so it is built once per session.
     private var fingerprint: Task<[SavePluginFingerprint], any Error>?
+    /// Built once, the first time a condition asks where something is.
+    private var cellLocations: CellLocationResolver?
+    /// Reference places for one set of resident cells, rebuilt when the set changes.
+    private var referencePlaces: ResidentReferencePlaces?
 
     init(game: GameViewController) {
         self.game = game
@@ -176,7 +180,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
     ) -> ConditionContext {
         let quests = game.scripts.bridge?.questRuntime
-        return ConditionContext(
+        var context = ConditionContext(
             globals: globals,
             quests: quests?.resolution() ?? .empty,
             aliases: quests?.aliasResolution() ?? .empty,
@@ -190,6 +194,8 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             subject: crosshair?.key,
             target: crosshair?.key
         )
+        context.data = conditionData()
+        return context
     }
 
     private func references(crosshair: RuntimeReferenceEntry?) -> RuntimeReferenceIndex {
@@ -280,5 +286,82 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         let feet = renderer.movementMode.isPlayerControlled
             ? renderer.walkController.feetPosition : renderer.freeFlyCamera.position
         return SavePlayerPlace(cell: cell, feet: feet, yaw: renderer.freeFlyCamera.yaw)
+    }
+}
+
+/// Where resident references are, for one set of resident cells and reference count.
+private struct ResidentReferencePlaces {
+    let cells: Set<CellSceneLocation>
+    let count: Int
+    let places: ReferencePlaces
+}
+
+/// Each reference's location and whether its cell is an interior.
+private struct ReferencePlaces {
+    var locations: [ReferenceKey: ResolvedFormID] = [:]
+    var interiors: [ReferenceKey: Bool] = [:]
+}
+
+/// The record data every live condition reads. Each evaluator translates a record's
+/// FormIDs into the load-order space, so the stores are read in that space.
+extension RuntimeStateWorldAdapter {
+    func conditionData() -> ConditionDataResolution {
+        let locationStore = (game.worldData as? LocationDataProviding)?.locationStore
+        let places = currentReferencePlaces()
+        return ConditionDataResolution(
+            keywords: locationStore?.keywords,
+            formLists: (game.worldData as? FactionDataProviding)?.formListStore,
+            locations: locationStore,
+            sourcePlugin: FormIDResolver.loadOrderSpaceName,
+            currentLocations: places.locations,
+            interiors: places.interiors
+        )
+    }
+
+    /// The location a resident cell belongs to; nil without location data.
+    func location(of scene: CellScene) -> ResolvedFormID? {
+        cellLocationResolver()?.location(of: scene)
+    }
+
+    private func cellLocationResolver() -> CellLocationResolver? {
+        if let cellLocations {
+            return cellLocations
+        }
+        let store = (game.worldData as? LocationDataProviding)?.locationStore
+        cellLocations = store.map { CellLocationResolver(store: $0) }
+        return cellLocations
+    }
+
+    /// Where the player and each resident reference are now.
+    private func currentReferencePlaces() -> ReferencePlaces {
+        guard let streamer = game.streamer else { return ReferencePlaces() }
+        let cells = streamer.residentCellLocations
+        let count = streamer.residentReferenceCount
+        var places: ReferencePlaces
+        if let cached = referencePlaces, cached.cells == cells, cached.count == count {
+            places = cached.places
+        } else {
+            places = residentPlaces(in: streamer.residentScenes)
+            referencePlaces = ResidentReferencePlaces(cells: cells, count: count, places: places)
+        }
+        if
+            let current = streamer.currentCellLocation,
+            let scene = streamer.residentScene(at: current)
+        {
+            places.locations[.player] = location(of: scene)
+            places.interiors[.player] = scene.isInterior
+        }
+        return places
+    }
+
+    private func residentPlaces(in scenes: [CellScene]) -> ReferencePlaces {
+        var places = ReferencePlaces()
+        places.locations = cellLocationResolver()?.referenceLocations(in: scenes) ?? [:]
+        for scene in scenes {
+            for entry in scene.references.sortedEntries() {
+                places.interiors[entry.key] = scene.isInterior
+            }
+        }
+        return places
     }
 }

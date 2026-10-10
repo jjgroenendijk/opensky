@@ -80,6 +80,11 @@ aliases, actor state, enable state, the clock, the runtime reference index, subj
 target, a random source, and the snapshots for data, magic, factions, crime, perks,
 detection, and dialogue. A caller off the main actor builds its own context from a snapshot.
 
+During play, the data snapshot carries the keyword, form list, and location stores, and
+each resident reference's current location: the location of the cell that holds it
+([cell link](/formats/locations.md#cell-link)). The stores are read in the load-order
+FormID space. Each evaluator first translates a record's FormIDs into that space.
+
 `ConditionRandom` is a SplitMix64 value type. The engine seeds it once per session. The same
 seed gives the same draws.
 

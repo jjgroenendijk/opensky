@@ -188,6 +188,14 @@ extension CellStreamer {
         interiorScene?.references.sortedActorEntries ?? composition.actorEntries()
     }
 
+    /// Every resident cell's built scene: the interior alone, or the loaded exterior cells.
+    public var residentScenes: [CellScene] {
+        if let interiorScene {
+            return [interiorScene]
+        }
+        return Array(composition.cells.values)
+    }
+
     /// The built scene for one resident cell, or nil. It gives a cell's `XOWN` owner
     /// and `XLCN` link. An interior scene replaces the exterior composition.
     public func residentScene(at location: CellSceneLocation) -> CellScene? {
