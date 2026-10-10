@@ -75,15 +75,10 @@ struct QuestAcceptanceTests {
             QuestAliasState.self, for: Chain.questKey
         ) != nil)
 
-        // The page lists the quest by its own FULL text as soon as it runs, and
-        // shows nothing under it: no stage is reached and no objective is shown.
-        let journal = try chain.journal()
-        let entry = try #require(journal.selectedEntry)
-        #expect(entry.title == Chain.questTitle)
-        #expect(entry.kind == .mainQuest)
-        #expect(entry.stage == nil)
-        #expect(entry.objectives.isEmpty)
-        #expect(entry.logEntries.isEmpty)
+        // No stage is reached and no objective is shown, so the running quest
+        // has nothing to show and stays off the page, as in the game.
+        let page = try JournalMenuModel.build(runtime: chain.runtime, strings: nil)
+        #expect(!page.entries.contains { $0.editorID == Chain.questEditorID })
     }
 
     /// Step 2 — the lever's cell attaches, which is what binds its `GateQuest`
@@ -149,9 +144,11 @@ struct QuestAcceptanceTests {
         #expect(chain.session.world.runtime.tally.unimplementedNativeTotal == 0)
         #expect(chain.session.world.runtime.tally.faultTotal == 0)
 
-        // The page has grown by exactly what the stage produced: the reached
-        // stage's journal paragraph and the displayed objective.
+        // The quest is on the page now, with exactly what the stage produced:
+        // the reached stage's journal paragraph and the displayed objective.
         let entry = try #require(chain.journal().selectedEntry)
+        #expect(entry.title == Chain.questTitle)
+        #expect(entry.kind == .mainQuest)
         #expect(entry.stage == Chain.leverStage)
         #expect(entry.logEntries == [Chain.firstJournalText])
         #expect(entry.objectives.map(\.text) == [Chain.objectiveText])

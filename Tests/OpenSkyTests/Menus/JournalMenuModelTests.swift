@@ -56,8 +56,19 @@ struct JournalMenuModelTests {
         )
     }
 
-    private func runtime() throws -> QuestRuntime {
-        try QuestRuntime(store: WorldStateStore(), quests: store())
+    /// The main quest shows its first objective, so it is on the page; a running
+    /// quest with nothing to show is not.
+    private func runtime(showingMainQuest: Bool = true) throws -> QuestRuntime {
+        let runtime = try QuestRuntime(store: WorldStateStore(), quests: store())
+        if showingMainQuest {
+            try runtime.setObjectiveDisplayed(10, on: mainQuest)
+        }
+        return runtime
+    }
+
+    private func startSideQuest(_ runtime: QuestRuntime) throws {
+        try runtime.startQuest(sideQuest)
+        try runtime.setObjectiveDisplayed(5, on: sideQuest)
     }
 
     private func model(_ runtime: QuestRuntime) -> JournalMenuModel {
@@ -82,7 +93,7 @@ struct JournalMenuModelTests {
     @Test
     func startingAQuestPutsItOnThePage() throws {
         let runtime = try runtime()
-        try runtime.startQuest(sideQuest)
+        try startSideQuest(runtime)
         #expect(model(runtime).active.map(\.editorID) == ["FreeformRiften", "MQ101"])
     }
 
@@ -122,17 +133,38 @@ struct JournalMenuModelTests {
                 formID: 0x0100,
                 fields: QuestFixture.editorID("NamelessQuest")
                     + QuestFixture.general(flags: 0x0001, type: 1)
+                    + QuestFixture.stage(10)
+                    + QuestFixture.logEntry(text: "Something happened.")
             )
         )
         let runtime = QuestRuntime(store: WorldStateStore(), quests: store)
+        try runtime.setStage(10, on: FormID(0x0100))
         #expect(model(runtime).active.first?.title == "NamelessQuest")
+    }
+
+    /// A running quest with no displayed objective and no log entry is a
+    /// background quest, such as one that tracks an achievement.
+    @Test
+    func aRunningQuestWithNothingToShowIsNotListed() throws {
+        let store = try QuestFixture.store(
+            QuestFixture.record(
+                formID: 0x0100,
+                fields: QuestFixture.editorID("BYOHHouseBuilding")
+                    + QuestFixture.general(flags: 0x0001, type: 6)
+                    + QuestFixture.stage(10)
+                    + QuestFixture.objective(10, text: "Build a house")
+            )
+        )
+        let runtime = QuestRuntime(store: WorldStateStore(), quests: store)
+        #expect(try runtime.state(of: FormID(0x0100)).isRunning)
+        #expect(model(runtime).active.isEmpty)
     }
 
     /// Only reached stages contribute journal paragraphs, oldest first, and the
     /// description block joins them the way the page shows them.
     @Test
     func logEntriesFollowTheReachedStagesInStageOrder() throws {
-        let runtime = try runtime()
+        let runtime = try runtime(showingMainQuest: false)
         try runtime.setStage(20, on: mainQuest)
         let partial = try #require(model(runtime).active.first)
         #expect(partial.logEntries == ["I escaped through the keep."])
@@ -149,8 +181,8 @@ struct JournalMenuModelTests {
     /// onto the three states, failed winning over completed.
     @Test
     func onlyTouchedObjectivesAppearAndFailedWins() throws {
-        let runtime = try runtime()
-        #expect(model(runtime).active.first?.objectives.isEmpty == true)
+        let runtime = try runtime(showingMainQuest: false)
+        #expect(model(runtime).active.isEmpty)
 
         try runtime.setObjectiveDisplayed(10, on: mainQuest)
         try runtime.setObjectiveCompleted(20, on: mainQuest)
@@ -169,7 +201,7 @@ struct JournalMenuModelTests {
     @Test
     func selectionClampsAndNeverWraps() throws {
         let runtime = try runtime()
-        try runtime.startQuest(sideQuest)
+        try startSideQuest(runtime)
         var built = model(runtime)
         #expect(built.selectedIndex == 0)
 
@@ -196,7 +228,7 @@ struct JournalMenuModelTests {
     @Test
     func switchingToCompletedReselectsIntoTheOtherList() throws {
         let runtime = try runtime()
-        try runtime.startQuest(sideQuest)
+        try startSideQuest(runtime)
         try runtime.completeQuest(sideQuest)
         var built = model(runtime)
         built.select(1)
