@@ -132,8 +132,18 @@ public struct SceneRuntime {
     /// Advances every playing scene: stops those whose quest stopped, completes
     /// timed actions, and moves phases on.
     public func tick() -> [SceneEvent] {
+        advance(playingScenes())
+    }
+
+    /// Advances only the scenes in `ids` that play, in the same FormID order as `tick()`.
+    /// A caller that knows which scenes play skips the scan of the whole catalog.
+    public func tick(scenes ids: Set<FormID>) -> [SceneEvent] {
+        advance(ids.sorted { $0.rawValue < $1.rawValue }.compactMap { catalog.scene($0) })
+    }
+
+    private func advance(_ entries: [CatalogScene]) -> [SceneEvent] {
         var events: [SceneEvent] = []
-        for entry in playingScenes() {
+        for entry in entries {
             guard let state = store.component(SceneRuntimeState.self, for: entry.key)
             else { continue }
             var playback = Playback(runtime: self, entry: entry, state: state, isNew: false)

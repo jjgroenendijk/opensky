@@ -42,6 +42,8 @@ nonisolated public struct CatalogScene: Equatable, Sendable {
 
 nonisolated public struct SceneCatalog: Sendable {
     private let byFormID: [UInt32: CatalogScene]
+    /// Every scene in FormID order.
+    public let all: [CatalogScene]
     private let byQuest: [UInt32: [UInt32]]
     private let byEditorID: [String: UInt32]
 
@@ -61,6 +63,7 @@ nonisolated public struct SceneCatalog: Sendable {
             }
         }
         self.byFormID = byFormID
+        all = byFormID.keys.sorted().compactMap { byFormID[$0] }
         self.byQuest = byQuest
         self.byEditorID = byEditorID
     }
@@ -102,10 +105,5 @@ nonisolated public struct SceneCatalog: Sendable {
     /// Scenes whose PNAM names `quest`, in FormID order.
     public func scenes(ofQuest quest: FormID) -> [CatalogScene] {
         (byQuest[quest.rawValue] ?? []).compactMap { byFormID[$0] }
-    }
-
-    /// Every scene in FormID order.
-    public var all: [CatalogScene] {
-        byFormID.keys.sorted().compactMap { byFormID[$0] }
     }
 }

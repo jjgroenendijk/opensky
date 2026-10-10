@@ -88,7 +88,7 @@ public final class SceneCoordinator {
             rescan()
         }
         guard !playing.isEmpty, let runtime else { return }
-        record(runtime.tick())
+        record(runtime.tick(scenes: playing))
     }
 
     /// Starts the quest's begin-on-start scenes.
