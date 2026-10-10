@@ -180,11 +180,14 @@ not implement to be a counted no-op, listed here:
 
 | Entry point | Why |
 | --- | --- |
-| `OnVoiceReady`, `SkipText` | Need voice playback timing, which tells the menu a line ended |
+| `OnVoiceReady`, `SkipText` | The engine side moves on when a voice file ends, so the movie needs no voice timing |
 | `SetAllowProgress`, `StartProgressTimer` | The same gate from the movie's side, with its 750 ms `ALLOW_PROGRESS_DELAY` |
 | `AdjustForPALSD` | Standard-definition TV layout. No use on macOS |
 
-Camera framing, speaker facing, voice playback, and lip movement are not done yet.
+Each response run is said in the speaker's voice, with lip movement, through the dialogue
+speech channel ([audio decoding](/engine/audio-decoding.md)). When a run's voice file plays to
+its end, the menu moves on as Accept does. A run with no voice file waits for Accept. Accept
+during a run cuts its voice off and starts the next one.
 
 ## Controls
 

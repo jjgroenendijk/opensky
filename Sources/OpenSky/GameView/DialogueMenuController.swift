@@ -1,6 +1,7 @@
 // The dialogue menu: `dialoguemenu.swf` over `DialogueMenuModel`. Every
 // conversation step is a `DialogueCoordinator` call. The menu leaves the world
-// running while the player reads the list. A spoken line goes into the HUD's
+// running while the player reads the list. Each run is said in the speaker's
+// voice, and its end moves the menu on. A spoken line goes into the HUD's
 // subtitle field once the HUD movie is back. See docs/engine/dialogue-menu.md.
 
 import Foundation
@@ -62,6 +63,7 @@ final class DialogueMenuController {
         isOpen = true
         if model.state == .greeting, let info = model.line?.info {
             dialogue.recordGreeting(info, speaker: speaker)
+            speakCurrentRun()
         }
         dialogue.lastOutcome = DialogueCore.openedText(
             speaker: model.speaker,
@@ -88,6 +90,9 @@ final class DialogueMenuController {
     func close() {
         guard isOpen else { return }
         isOpen = false
+        if let speaker = model.speakerKey {
+            game.audio.stopSpeaking(speaker)
+        }
         dialogue.endConversation()
         model.showTopicList()
         game.menuMode.dismiss(Self.identifier)
@@ -132,16 +137,39 @@ final class DialogueMenuController {
         }
     }
 
-    /// Enter on a line steps to its next run, then hands the list back. Exact
-    /// end-of-line timing waits for the playback clock.
+    /// Enter on a line steps to its next run, then hands the list back. The end
+    /// of a run's voice file does the same.
     private func advance() {
         guard model.state == .topicList else {
-            if !model.advanceResponse() {
+            if model.advanceResponse() {
+                speakCurrentRun()
+            } else {
                 finishResponse()
             }
             return
         }
         chooseTopic()
+    }
+
+    /// Says the run on screen in the speaker's voice. A run with no voice file
+    /// waits for Enter.
+    private func speakCurrentRun() {
+        guard let speaker = model.speakerKey, let line = model.line else { return }
+        let paths = game.storyWorld.voicePaths(of: line.info, speaker: speaker)
+        guard paths.indices.contains(line.index) else {
+            game.audio.stopSpeaking(speaker)
+            return
+        }
+        game.audio.speak([paths[line.index]], speaker: speaker) { [weak self] in
+            self?.voiceEnded(line)
+        }
+    }
+
+    private func voiceEnded(_ line: DialogueResponseLine) {
+        guard isOpen, model.line == line else { return }
+        advance()
+        publishModel()
+        publishSubtitle()
     }
 
     private func chooseTopic() {
@@ -161,9 +189,14 @@ final class DialogueMenuController {
                 strings: dialogue.strings
             )
         )
+        speakCurrentRun()
     }
 
+    /// Skipping the last run cuts its voice off, as skipping the text does.
     private func finishResponse() {
+        if let speaker = model.speakerKey {
+            game.audio.stopSpeaking(speaker)
+        }
         switch dialogue.finishResponse(speaker: model.speakerKey) {
         case .close:
             close()

@@ -107,6 +107,10 @@ extension AudioControlForwarding {
         audio.lipSyncSnapshot
     }
 
+    public var speechDescription: String {
+        audio.speechDescription
+    }
+
     public var lastLipSyncError: String? {
         audio.lastLipSyncError
     }

@@ -73,6 +73,21 @@ struct AudioVoicePanelTests {
     }
 
     @Test @MainActor
+    func theSpeechReadoutShowsTheProvidersLines() {
+        let panel = DialoguePanelViewController()
+        let provider = FakeAudioProvider()
+        provider.speechDescription = "Dialogue speech:\nskyrim.esm:0x1A694 · a.fuz · 1 of 2"
+        panel.audioProvider = provider
+        panel.loadViewIfNeeded()
+        panel.voiceSection.refreshReadout()
+        #expect(
+            panel.voiceSection.speechStatsLabel.accessibilityIdentifier()
+                == "DialogueSpeechStatsLabel"
+        )
+        #expect(panel.voiceSection.speechStatsLabel.stringValue == provider.speechDescription)
+    }
+
+    @Test @MainActor
     func applyingTheFilterPushesItToTheProvider() {
         let panel = DialoguePanelViewController()
         let provider = FakeAudioProvider()

@@ -69,14 +69,21 @@ extension AudioWorldAdapter: AudioWorld {
     }
 
     func lipSyncTarget() -> LipSyncPlayback? {
+        game.dialogueMenu.speakerOrTarget.flatMap(lipSyncTarget(for:))
+    }
+
+    func lipSyncTarget(for speaker: ReferenceKey) -> LipSyncPlayback? {
         guard
             let renderer = game.renderer,
-            let key = game.dialogueMenu.speakerOrTarget,
-            let actor = game.streamer?.referenceEntry(key: key)?.placedActor?.formID
+            let actor = game.streamer?.referenceEntry(key: speaker)?.placedActor?.formID
         else { return nil }
         return renderer.scene.animations.lazy
             .compactMap { $0 as? LipSyncPlayback }
             .first { $0.actor == actor }
+    }
+
+    func speakerHeadPosition(of speaker: ReferenceKey) -> SIMD3<Float>? {
+        game.dialogueWorld.headPosition(of: speaker)
     }
 
     func playerConditionsPass(_ conditions: [Condition]) -> Bool {

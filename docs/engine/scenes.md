@@ -126,7 +126,6 @@ its two speakers and ends.
 ## Not done yet
 
 - Scenes play no idles and turn no heads (`HTID`).
-- A scene line is timed by its voice file, but the voice is not played.
 - `ForceStart()` does not stop other scenes.
 - Actor behavior flags (`VNAM`, actor `DNAM`), such as "interrupt on combat", are decoded
   but not used.

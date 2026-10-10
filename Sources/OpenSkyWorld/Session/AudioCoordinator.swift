@@ -33,6 +33,10 @@ public protocol AudioWorld: AnyObject {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     )
+    /// The lip-sync driver of one actor, or nil when it has no TRI bindings loaded.
+    func lipSyncTarget(for speaker: ReferenceKey) -> LipSyncPlayback?
+    /// Where `speaker`'s voice comes from, in native units; nil when it is not loaded.
+    func speakerHeadPosition(of speaker: ReferenceKey) -> SIMD3<Float>?
 }
 
 public final class AudioCoordinator {
@@ -50,6 +54,7 @@ public final class AudioCoordinator {
     /// Set once the list is requested; a test awaits it.
     var musicListing: Task<Void, Never>?
     var voice = VoiceLabState()
+    var speech = SpeechState()
 
     public init() {}
 

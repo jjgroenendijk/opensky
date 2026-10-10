@@ -1,5 +1,6 @@
 // World > Dialogue & Voice > Voice (docs/engine/audio-decoding.md): filter the
-// `.fuz` lines, play one in front of the camera, and watch the voice submix.
+// `.fuz` lines, play one in front of the camera, watch the voice submix, and see
+// which dialogue lines actors are saying.
 // Control ids keep the `AudioVoice` prefix because UI tests use them. The
 // filter covers about 75,000 files, so the readout states the match count.
 
@@ -24,6 +25,7 @@ final class AudioVoiceSection: PanelSectionViewController {
     private let statsLabel = PanelComponents.statsLabel(identifier: "AudioVoiceStatsLabel")
     let sourceStatsLabel = PanelComponents.statsLabel(identifier: "VoiceSourceStatsLabel")
     let lipSyncStatsLabel = PanelComponents.statsLabel(identifier: "LipSyncStatsLabel")
+    let speechStatsLabel = PanelComponents.statsLabel(identifier: "DialogueSpeechStatsLabel")
     lazy var lipSyncReadout: NSStackView = {
         let readout = PanelComponents.group([lipSyncStatsLabel])
         readout.setAccessibilityElement(true)
@@ -92,6 +94,7 @@ final class AudioVoiceSection: PanelSectionViewController {
             ]),
             statsLabel,
             sourceStatsLabel,
+            speechStatsLabel,
             lipSyncReadout
         ]
     }
@@ -152,9 +155,11 @@ final class AudioVoiceSection: PanelSectionViewController {
         guard let provider else {
             statsLabel.stringValue = "Voice: unavailable"
             sourceStatsLabel.stringValue = ""
+            speechStatsLabel.stringValue = ""
             return
         }
         sourceStatsLabel.stringValue = Self.sourceReadout(provider.audioStatsSnapshot)
+        speechStatsLabel.stringValue = provider.speechDescription
         statsLabel.stringValue = Self.readoutText(
             listed: provider.selectableVoiceFileNames.count,
             matched: provider.voiceFileMatchCount,
