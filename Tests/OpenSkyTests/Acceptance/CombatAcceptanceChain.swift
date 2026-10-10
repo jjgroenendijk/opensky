@@ -6,7 +6,6 @@
 // shared `ManualCellBuildRunner`.
 
 import AppKit
-import FeaturesTesting
 import Foundation
 @testable import OpenSky
 @testable import OpenSkyActors
@@ -14,6 +13,7 @@ import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

@@ -11,7 +11,7 @@ import AppKit
 @testable import OpenSkyInventory
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPreview
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

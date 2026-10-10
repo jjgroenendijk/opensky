@@ -1,15 +1,15 @@
 // Synthetic GRAS rendering gates: slope orientation, cross-cell batching,
 // and runtime instance-budget accounting. No game assets.
 
-import EngineTesting
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

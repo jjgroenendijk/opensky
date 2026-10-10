@@ -8,7 +8,7 @@ import Foundation
 import Metal
 import MetalKit
 @testable import OpenSky
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

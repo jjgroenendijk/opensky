@@ -1,7 +1,7 @@
-import FormatsTesting
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 import Synchronization
 import Testing

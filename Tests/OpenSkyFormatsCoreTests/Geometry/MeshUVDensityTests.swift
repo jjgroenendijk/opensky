@@ -1,7 +1,7 @@
 // The UV density of a mesh: how many texture repeats one world unit holds.
 
 import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

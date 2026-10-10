@@ -9,9 +9,9 @@ import Foundation
 @testable import OpenSkyMenus
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

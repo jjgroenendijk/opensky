@@ -9,8 +9,8 @@ import AppKit
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

@@ -13,10 +13,10 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

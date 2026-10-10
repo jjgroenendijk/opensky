@@ -9,8 +9,8 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

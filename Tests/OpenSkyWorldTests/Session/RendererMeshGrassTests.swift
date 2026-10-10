@@ -1,15 +1,15 @@
 // Mesh-shader grass against the classic grass draw on synthetic blades: the two paths must
 // give the same frame, and the object stage must cull the meshlets outside the view.
 
-import EngineTesting
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

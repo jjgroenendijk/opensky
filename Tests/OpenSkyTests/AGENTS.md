@@ -34,16 +34,16 @@ implementations. The last kind lives in `<Feature>/`, for example `Magic/CasterR
 Every other suite goes in a package test target, including one that builds a `Renderer`;
 `Tests/AGENTS.md` has the rule.
 
-`Tests/TestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
+`Tests/HostedTestSupport/` is compiled into this bundle and `OpenSkyRealDataTests`. It holds the
 fixtures both bundles use that need the app or two implementations. `Support/` holds the
-ones only this bundle uses. Other fixtures are in the `Tests/<Name>Testing/` and
+ones only this bundle uses. Other fixtures are in the `Tests/OpenSky<Layer>Testing/` and
 `Tests/<Name>Fixtures/` libraries, which this bundle links through `OpenSkyTestSupport`.
 
 ## Fixtures and output
 
 - Fixtures are synthetic and built in code — never a real extracted file. The existing
   helpers are `BSAFixture`, `ESMFixture`, `NIFFixture`, and `StringTableFixture`, in
-  `Tests/FormatsTesting/`.
+  `Tests/OpenSkyFormatsTesting/`.
 - `print()` appears in the live `xcodebuild` console but is not in the `.xcresult`, so
   `make test-report` and any backgrounded run lose it. To capture a result, assert on the
   value or write an artifact to gitignored `.logs/`.

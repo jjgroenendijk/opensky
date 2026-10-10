@@ -163,7 +163,7 @@ dynamic variants, so it finds no edge from a variant. Upstream fixed this in
 [swift-build PR 1457](https://github.com/swiftlang/swift-build/pull/1457), "Fix dependency
 diagnostics for dynamic target variants".
 
-`Config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. In this
+`config/Build/Overrides.xcconfig` turns the check off where `MACH_O_TYPE` is `mh_dylib`. In this
 workspace only the package variants are dylibs. Their imports are still checked against
 `Package.swift` by `make module-graph` (rule 7).
 

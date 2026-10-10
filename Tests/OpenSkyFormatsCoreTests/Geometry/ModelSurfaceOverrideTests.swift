@@ -3,8 +3,8 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

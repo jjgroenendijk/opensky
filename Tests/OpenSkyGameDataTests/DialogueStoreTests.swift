@@ -1,10 +1,10 @@
 // DialogueStore's group descent and order-preserving indexes over one
 // synthetic plugin. No game data is embedded.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

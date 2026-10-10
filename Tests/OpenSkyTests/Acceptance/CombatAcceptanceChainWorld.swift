@@ -3,13 +3,13 @@
 // chain's real state, so the route integrates the four runtimes. Impacts and
 // sounds are dropped: a SNDR needs the install.
 
-import EngineTesting
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

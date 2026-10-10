@@ -8,9 +8,9 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @MainActor

@@ -5,7 +5,7 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
 
 ## Folder layout
 
-- No Swift file sits loose at the root of `OpenSky/`, `OpenSkyFormats*/`, or
+- No Swift file sits loose at the root of `OpenSky/`, a multi-format `OpenSkyFormats*/`, or
   `OpenSkyWorld/`; each goes in a domain folder. `OpenSkyGameData/` and the feature modules
   are small enough to stay flat. `OpenSkyRendering/` keeps the renderer at its root and puts
   `UI/`, `Terrain/`, `Weather/`, `ImageSpace/`, `Effects/`, `TextureStreaming/`, and
@@ -14,8 +14,11 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   (the start window and its pages), `Panels/` (one view controller per destination),
   `GameView/` (`GameViewController`, its panel forwards, the world adapters, and the menu
   controllers), and `Resources/`.
-- `OpenSkyFormats*/`: one folder per format (`BSA/`, `ESM/`, `NIF/`, ...), plus `Binary/`,
-  `Compression/`, and `Geometry/`.
+- `OpenSkyFormats*/`: one folder per format (`BSA/`, `NIF/`, `DDS/`, ...), plus `Binary/`,
+  `Compression/`, and `Geometry/`. A module named after its one format (`OpenSkyFormatsESM`,
+  `OpenSkyFormatsPEX`, `OpenSkyFormatsSWF`) keeps the format at its root, because a folder
+  with the module's own name says nothing (`OpenSkyFormatsESM/Records/`). Its test target
+  and its `OpenSkyFormatsTesting` folder follow the same layout.
 - `OpenSkyWorld/`: `Actors/`, `Benchmark/`, `Camera/`, `Cells/`, `Conditions/`, `Effects/`,
   `Loading/`, `Navigation/`, `Packages/`, `Player/`, `Session/`, `State/`, `Streaming/`,
   `Terrain/`, and `Weather/`.
@@ -31,7 +34,7 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   the package tests or the CLI. Put it in a coordinator in the feature module instead;
   `docs/engine/coordinators.md` has the pattern, and `VendorCore` with `VendorCoordinator` is
   the example: a pure core and a thin shell.
-- Past the SwiftLint file cap, split into a satellite file (`Renderer.swift` ->
+- Past 600 lines (the file-length warning), split into a satellite file (`Renderer.swift` ->
   `RendererScenePass.swift`). Check first which members need same-file `private(set)`
   access. Past the parameter or tuple cap, introduce a struct.
 

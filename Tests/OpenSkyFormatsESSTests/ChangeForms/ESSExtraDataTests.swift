@@ -1,11 +1,11 @@
 // Every extra data layout the reader knows, read to its exact end, and the cases that stop
 // the list. Bytes are built in code.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

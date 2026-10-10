@@ -4,15 +4,15 @@
 // renderer changes stay visually verifiable without Screen Recording TCC.
 // Skips when the machine lacks a Metal 4 GPU (paravirtual CI).
 
-import EngineTesting
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 private struct EnvironmentRender {

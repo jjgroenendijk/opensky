@@ -1,10 +1,10 @@
 // Havok binary tagfile decode over synthetic streams from HKTagfileFixture.
 // Layout: docs/formats/hkt-tagfile.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

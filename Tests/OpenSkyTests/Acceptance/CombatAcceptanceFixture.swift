@@ -5,10 +5,10 @@
 // seam between the runtimes and animation. Everything is invented; the vanilla
 // half is `CombatAcceptanceRealDataTests`.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyCombat
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

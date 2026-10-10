@@ -1,9 +1,9 @@
 // Synthetic locks: the use-key gate, a carried key, the prompt, a forced unlock,
 // and a full lockpicking session through the coordinator.
 
-import FeaturesTesting
 import Foundation
 import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface

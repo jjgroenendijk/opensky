@@ -1,10 +1,10 @@
 // PIDN, MRKS, FOGM, SUMM, and THMB: the player's identity, the map markers, the
 // local map fog, and the save list row come back as they were.
 
-import FormatsTesting
 import Foundation
 import OpenSkyActorsInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkySave
 import OpenSkySaveFixtures

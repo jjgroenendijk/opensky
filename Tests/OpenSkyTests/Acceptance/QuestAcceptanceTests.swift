@@ -14,8 +14,8 @@ import OpenSkySaveFixtures
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

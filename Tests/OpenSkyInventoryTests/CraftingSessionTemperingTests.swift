@@ -1,7 +1,7 @@
 // A tempering bench: rows for held items only, one copy improved per temper, the
 // count kept, and the skill cap respected.
 
-import FeaturesTesting
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

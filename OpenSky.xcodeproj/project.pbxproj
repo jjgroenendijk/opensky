@@ -96,13 +96,13 @@
 			path = OpenSkyRealDataTests;
 			sourceTree = "<group>";
 		};
-		5AD1000130001093001700A6 /* TestSupport */ = {
+		5AD1000130001093001700A6 /* HostedTestSupport */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				5AD1000130001093001700B4 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 				5AD1000130001093001700B5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			path = TestSupport;
+			path = HostedTestSupport;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -141,7 +141,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5ACF160130001093001700BA /* Config */ = {
+		5ACF160130001093001700BA /* config */ = {
 			isa = PBXGroup;
 			children = (
 				5ACF160130001093001700B1 /* Base.xcconfig */,
@@ -153,13 +153,13 @@
 				5ACF160130001093001700B7 /* Tests.xcconfig */,
 				5ACF160130001093001700B8 /* UITests.xcconfig */,
 			);
-			path = Config;
+			path = config;
 			sourceTree = "<group>";
 		};
 		5A3BADF83000109100177F95 = {
 			isa = PBXGroup;
 			children = (
-				5ACF160130001093001700BA /* Config */,
+				5ACF160130001093001700BA /* config */,
 				5A3BAE033000109100177F94 /* Sources */,
 				5A3BAE033000109100177F98 /* Tests */,
 				5A3BAE023000109100177F95 /* Products */,
@@ -181,7 +181,7 @@
 			children = (
 				5A3BAE1C3000109300177F95 /* OpenSkyTests */,
 				5AD1000130001093001700A5 /* OpenSkyRealDataTests */,
-				5AD1000130001093001700A6 /* TestSupport */,
+				5AD1000130001093001700A6 /* HostedTestSupport */,
 				5A3BAE263000109300177F95 /* OpenSkyUITests */,
 			);
 			path = Tests;
@@ -243,7 +243,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5A3BAE1C3000109300177F95 /* OpenSkyTests */,
-				5AD1000130001093001700A6 /* TestSupport */,
+				5AD1000130001093001700A6 /* HostedTestSupport */,
 			);
 			name = OpenSkyTests;
 			packageProductDependencies = (
@@ -289,7 +289,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				5AD1000130001093001700A5 /* OpenSkyRealDataTests */,
-				5AD1000130001093001700A6 /* TestSupport */,
+				5AD1000130001093001700A6 /* HostedTestSupport */,
 			);
 			name = OpenSkyRealDataTests;
 			packageProductDependencies = (

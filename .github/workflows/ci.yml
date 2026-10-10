@@ -118,6 +118,8 @@ jobs:
         run: >-
           make cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-links
           docs-length agent-files comment-length panel-text duplicates no-suppressions
+      - if: success() || failure()
+        run: make file-length ALL=1
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
   # skills, or the Renovate config skips it. Any other event always builds.
@@ -141,7 +143,7 @@ jobs:
             build=false
             for file in $files; do
               case "$file" in
-                *.md | docs/* | .AGENTS/* | .claude/* | .github/renovate.json) ;;
+                *.md | docs/* | .agents/* | .claude/* | .github/renovate.json) ;;
                 *) build=true ;;
               esac
             done

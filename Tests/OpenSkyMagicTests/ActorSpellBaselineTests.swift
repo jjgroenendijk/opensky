@@ -2,8 +2,8 @@
 // it, the race list, and leveled spell lists. `ActorSpellBaselineRealDataTests`
 // checks the same against a vanilla caster.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

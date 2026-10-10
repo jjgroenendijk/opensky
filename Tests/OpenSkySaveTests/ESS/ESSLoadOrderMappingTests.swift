@@ -1,10 +1,10 @@
 // Ref ids onto the current load order: each kind, light plugins, and a missing or
 // reordered plugin.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
+import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import Testing
 

@@ -1,9 +1,9 @@
 // Lookups the shipped scripts rely on: a variable a parent declares, and a global
 // script no attached script names.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

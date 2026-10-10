@@ -1,10 +1,10 @@
 // Alias scripts and their save: a `ReferenceAlias` script starts on the filling
 // reference, retires when the quest stops, and rebinds after a load.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 @testable import OpenSkyScripting

@@ -22,7 +22,7 @@
 export OPENSKY_CACHE_ROOT
 : "${OPENSKY_DERIVED_DATA:=$OPENSKY_CACHE_ROOT/$(basename "$(cd "$(dirname "$0")/.." && pwd)")}"
 export OPENSKY_DERIVED_DATA
-: "${XCODE_XCCONFIG_FILE:=$(cd "$(dirname "$0")/.." && pwd)/Config/Build/Overrides.xcconfig}"
+: "${XCODE_XCCONFIG_FILE:=$(cd "$(dirname "$0")/.." && pwd)/config/Build/Overrides.xcconfig}"
 export XCODE_XCCONFIG_FILE
 
 # xcodebuild puts a macOS scheme's products at a fixed path under the derived

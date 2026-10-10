@@ -2,15 +2,15 @@
 // upscaled frame with the native frame of the same pose: a wrong jitter or motion
 // convention, or a ghost of an earlier frame, lowers the match. Skips without Metal 4.
 
-import EngineTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

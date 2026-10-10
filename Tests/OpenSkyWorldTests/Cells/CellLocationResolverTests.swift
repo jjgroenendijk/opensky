@@ -1,9 +1,9 @@
 // A cell's location: its XLCN link first, then the LCTN cell lists for an exterior.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

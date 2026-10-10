@@ -9,7 +9,7 @@ import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

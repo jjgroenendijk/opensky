@@ -1,10 +1,10 @@
 // One actor key resident in two cells, as the worldspace persistent CELL at
 // grid (0,0) produces. Synthetic records only.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

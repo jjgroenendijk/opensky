@@ -3,12 +3,12 @@
 // "not a member". Mutations go through `FactionRuntime` or
 // `RelationshipRuntime` into the world-state store, so they save like seeds.
 
-import FeaturesTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

@@ -2,11 +2,11 @@
 // is four dialogue phases between two forced-reference actors, so it plays with
 // no loaded cell. Pins were observed on 2026-10-03 against the shipped `Skyrim.esm`.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
+import OpenSkyFeaturesTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

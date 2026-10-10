@@ -1,8 +1,8 @@
 // `InventoryRuntime`: add, remove, transfer, carry weight, and gold, plus the
 // journal entries and snapshot determinism. `@MainActor` like the store.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

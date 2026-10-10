@@ -2,13 +2,13 @@
 // `ConditionContext` seams. Indices are raw on-disk numbers (Creation Kit
 // minus 4096); each condition is a real 32-byte CTDA.
 
-import EngineTesting
-import FeaturesTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogueInterface
+import OpenSkyEngineTesting
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyQuests
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

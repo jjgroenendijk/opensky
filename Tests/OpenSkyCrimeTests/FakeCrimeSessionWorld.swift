@@ -1,9 +1,9 @@
 // A `CrimeSessionWorld` made of plain values, for `CrimeCoordinatorTests`.
 
-import FeaturesTesting
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface

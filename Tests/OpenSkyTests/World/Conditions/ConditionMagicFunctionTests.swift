@@ -2,9 +2,9 @@
 // raw on-disk numbers (Creation Kit minus 4096); see the
 // ConditionFunctionsMagic.swift header.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagicInterface

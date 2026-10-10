@@ -1,18 +1,18 @@
 // Perception on the real install: the shipped detection GMSTs, and a Whiterun
 // guard that notices a player walking toward it over the real city geometry.
 
-import FeaturesTesting
 import Foundation
 import Metal
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

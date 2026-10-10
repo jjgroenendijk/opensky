@@ -1,10 +1,10 @@
 // The image-space grade in tile memory against the grade through a color copy, the
 // tone-mapping stage, and the render targets each one leaves behind. Needs Metal 4.
 
-import EngineTesting
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

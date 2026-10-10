@@ -1,9 +1,9 @@
 // Stat records and stat-side template resolution. Layout:
 // docs/formats/actors.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

@@ -1,7 +1,7 @@
 // The evaluator over the whole-game registry, which `OpenSkyWorld` owns.
 
-import FeaturesTesting
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 

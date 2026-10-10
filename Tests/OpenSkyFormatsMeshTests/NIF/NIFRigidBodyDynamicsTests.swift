@@ -1,11 +1,11 @@
 // Inertial-tail decode over synthetic bhkRigidBodyCInfo2010 payloads.
 // Layouts: NifTools nif.xml; docs/formats/nif-collision.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

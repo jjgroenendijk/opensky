@@ -2,8 +2,8 @@
 // vanilla start clock, and corrupt payloads throw.
 // See docs/formats/opensky-save-world-chunks.md.
 
-@testable import FormatsTesting
 import Foundation
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyWorldState

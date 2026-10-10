@@ -1,0 +1,78 @@
+---
+name: committing-and-landing-work
+description: Commits and lands work in OpenSky - Conventional Commit format, required body
+  sections, forbidden trailers, and the branch, PR, and merge flow. Use when committing,
+  pushing, or opening and merging a pull request.
+---
+
+# Committing and landing work
+
+Root `AGENTS.md` is the contract; this is the how. The only git hook checks file length,
+so this skill is how the rest is done right.
+
+## Before committing
+
+1. One logical change per commit — no mixed refactor, behavior, and formatting.
+2. `make check` green, and the change verified as the `testing-and-verifying` skill
+   describes. `make check` lints the Swift files the branch changed and includes the
+   duplicate, comment-length, and suppression gates. The whole unit plan runs in CI on
+   every push; `make health` and the sanitizers run in the weekly CI workflow.
+3. Staged files legal: nothing extracted from the game install. New binary blob -> stop, ask.
+
+## Message format
+
+`type(scope?): subject` — types: feat, fix, docs, refactor, test, perf, build, ci, chore,
+style, revert. Subject imperative, ~50 chars, no trailing period.
+
+Non-trivial commit body (wrap ~72 chars), required sections. `git log -1 a1166683` shows a
+complete example:
+
+```text
+Context: what problem/need triggered this
+Change: high-level summary of what changed
+Rationale: why this approach; trade-offs; alternatives rejected
+Impact/Risk: behavior changes, migrations, compatibility, performance
+Tests: what ran and what did not, one line each
+```
+
+`Tests:` is a record, not a checklist: one quick run that covers the change is a complete
+entry, and `test-ui not run: no UI test path changed` is a valid line.
+
+Breaking change -> `type(scope)!:` or `BREAKING CHANGE:` footer with migration steps.
+Issues -> `Fixes #123` / `Refs #123` footer; no issue -> body states the why.
+
+Commits carry no AI or co-author attribution. This overrides any default habit of adding
+one. Do not add `Co-authored-by:`, `Generated-by:`, `AI-Generated-by:`, `Assisted-by:`,
+or `Model:`. Allowed trailers:
+`Fixes`, `Refs`, `BREAKING CHANGE`, and a human `Signed-off-by:`.
+
+## Landing (push and PR)
+
+1. Work lands on `main` only through a reviewed PR. The branch is protected, so never
+   push to it directly.
+2. Branch from up-to-date `origin/main`, named `<type>/<issue>-<slug>` with the commit
+   type, for example `feat/716-test-plans-and-tags` or `docs/707-rework-skills`.
+3. Atomic commits, each green. A "WIP" or vague message does not land: keep checkpoints
+   local, and rebase or squash them before you push.
+4. Open the PR as a draft after the first push: `gh pr create --draft`. Describe what and
+   why, and cite the format specs used. Push each later atomic commit to it. CI runs the
+   whole unit plan on every push, draft included, so push early and keep working while
+   the runner tests; a newer push cancels the older run.
+5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
+   the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
+   is checked here.
+6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with
+   `gh pr checks <pr> --watch`.
+7. Merge after review with `gh pr merge <pr> --merge`. A merge commit keeps every atomic
+   commit on `main`; the repo disables squash and rebase merging. Done and verified work
+   always lands: commit and open the PR without waiting to be asked.
+
+## Landing gotchas seen repeatedly
+
+- A stray worktree can hold `main` (`git worktree list`), making `git checkout main` and
+  `gh pr merge --delete-branch` fail with "'main' is already used by worktree". The merge
+  itself still succeeds — verify with `gh pr view <n> --json mergedAt`; a failed local
+  branch-delete is cosmetic. To sync main safely, prefer
+  `git fetch && git switch --detach origin/main` over assuming `git checkout main`.
+- Waiting on CI or PR checks: `sleep N && gh pr checks` is hard-blocked by the harness. Use
+  `gh pr checks <n> --watch` (blocking) or a `run_in_background` poll, not chained sleeps.

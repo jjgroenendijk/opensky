@@ -1,10 +1,10 @@
 // PACK decoder tests use synthetic field bytes only. No game records or
 // extracted assets are fixtures (AGENTS.md legal boundary).
 
-import FeaturesTesting
-import FormatsTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

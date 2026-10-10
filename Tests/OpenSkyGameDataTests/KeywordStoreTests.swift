@@ -1,9 +1,9 @@
 // Cross-plugin KYWD lookup and KWDA resolution over synthetic ESM fixtures.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

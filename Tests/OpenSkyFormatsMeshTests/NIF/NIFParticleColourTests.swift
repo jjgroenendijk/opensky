@@ -1,11 +1,11 @@
 // BSPSysSimpleColorModifier decode and its colour ramp, over synthetic in-code
 // payloads (NIFParticleFixture). Layout: docs/formats/nif-particles.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

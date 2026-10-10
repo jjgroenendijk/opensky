@@ -3,16 +3,16 @@
 // checked on the types: one weight per viseme, a finished line costs nothing,
 // a disabled seam costs nothing, one vertex range per active target.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import Synchronization
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

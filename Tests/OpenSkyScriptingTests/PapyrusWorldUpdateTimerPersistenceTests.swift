@@ -1,8 +1,8 @@
 // Update-timer save seam: the `timerStates()` round trip, persistent-only
 // snapshots, unknown-target skips, re-anchoring to the clock, and detach purges.
 
-import FormatsTesting
 import OpenSkyFormatsCore
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

@@ -7,8 +7,8 @@ import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

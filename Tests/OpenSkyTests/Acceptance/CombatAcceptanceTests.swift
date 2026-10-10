@@ -4,8 +4,8 @@
 // halves are gated; this runs without a device or install.
 
 import Foundation
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

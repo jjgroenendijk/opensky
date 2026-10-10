@@ -1,9 +1,9 @@
 // The audio coordinator's world reads and its behavior before audio is enabled.
 // The engine is never started, so no audio device is touched.
 
-import EngineTesting
 import Foundation
 import OpenSkyAudio
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics

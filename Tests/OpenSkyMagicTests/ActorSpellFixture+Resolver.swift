@@ -1,6 +1,6 @@
 // The spell baseline resolver over `ActorSpellFixture` records.
 
-import FeaturesTesting
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

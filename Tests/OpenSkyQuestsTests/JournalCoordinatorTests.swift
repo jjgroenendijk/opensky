@@ -1,9 +1,9 @@
 // The journal shell over two synthetic quests: what each panel control does or
 // why it refuses, and the quest list the readouts show.
 
-import EngineTesting
-import FormatsTesting
+import OpenSkyEngineTesting
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyQuests
 import OpenSkyQuestsInterface

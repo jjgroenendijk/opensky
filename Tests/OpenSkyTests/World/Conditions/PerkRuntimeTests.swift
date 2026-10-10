@@ -1,8 +1,8 @@
 // Owning perks and their effects: the component, the rank chain, `HasPerk`
 // gating, seeding from an authored list, and the ability grant.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

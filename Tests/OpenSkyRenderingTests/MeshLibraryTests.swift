@@ -3,14 +3,14 @@
 // BCn — untextured fallback material). Fixtures are built in code — never
 // extracted game files (AGENTS.md Legal & IP boundary).
 
-@testable import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

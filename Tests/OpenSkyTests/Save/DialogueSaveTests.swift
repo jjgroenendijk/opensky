@@ -4,11 +4,11 @@
 // component is this one.
 // A session where nobody spoke writes the same bytes as before the chunk.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkySave

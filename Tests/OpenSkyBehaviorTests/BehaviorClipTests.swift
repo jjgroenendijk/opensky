@@ -2,9 +2,9 @@
 // root motion. Uses the shared synthetic spline packfile, so time advance goes
 // through the real `HKASplineCompressedAnimation` sampling.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import simd
 import Testing

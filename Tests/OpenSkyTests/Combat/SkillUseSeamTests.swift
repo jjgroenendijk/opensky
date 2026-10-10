@@ -2,12 +2,12 @@
 // cast. Tests check what reached `SkillUseReporting`; the conversion is in
 // `SkillAdvancementRuntimeTests`.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

@@ -2,8 +2,8 @@
 // temporary install-shaped directory. Verification is in
 // `OpenSkySaveFingerprintTests`.
 
-import FormatsTesting
 import Foundation
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkySave
 import Testing

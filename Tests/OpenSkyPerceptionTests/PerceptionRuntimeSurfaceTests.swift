@@ -1,8 +1,8 @@
 // What the perception pass costs and hands out: bounds, readout, condition
 // seam, and overlay. What an observer perceives is in `PerceptionRuntimeTests`.
 
-import FeaturesTesting
 @testable import OpenSkyDiagnostics
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPerception
 @testable import OpenSkyPerceptionInterface

@@ -1,0 +1,27 @@
+// Target-level settings for the OpenSkyCLI target, shared by Debug and Release.
+#include "Signing.xcconfig"
+
+// The target and module are OpenSkyCLI, like every other Swift name. The binary stays
+// lowercase, the usual form for a terminal command.
+PRODUCT_NAME = openskycli
+PRODUCT_MODULE_NAME = OpenSkyCLI
+
+SUPPORTED_PLATFORMS = macosx
+
+// The CLI compiles the same engine sources as the app, so it needs the same isolation
+// default. The structs shared with Metal reach both targets through the
+// OpenSkyShaderTypes clang module on SWIFT_INCLUDE_PATHS, so the CLI no longer has to
+// borrow the app target's bridging header.
+SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
+
+// The shaders in Sources/Shaders import ShaderTypes.h from the package's
+// OpenSkyShaderTypes target. The target compiles them, because makeDefaultLibrary() reads
+// the main bundle.
+MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
+
+// The vendored decode-only ffmpeg. A command-line tool has no bundle to embed into, so
+// it loads the dylibs straight from .vendor at run time.
+LD_RUNPATH_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib $(SRCROOT)/.vendor/astcenc/lib
+// astcenc is static (docs/decisions/astcenc.md) and needs the C++ runtime.
+OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample -lastcenc -lc++

@@ -1,11 +1,11 @@
 // The pipeline archive: a second renderer loads every pipeline the first one saved,
 // and a corrupt file falls back to a compile. Needs Metal 4.
 
-import EngineTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

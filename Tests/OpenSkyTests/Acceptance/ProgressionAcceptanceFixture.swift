@@ -4,9 +4,9 @@
 // coordinators through the controller's own `ProgressionControlProviding`.
 
 import AppKit
-import FeaturesTesting
 @testable import OpenSky
 import OpenSkyActors
+import OpenSkyFeaturesTesting
 @testable import OpenSkyProgression
 @testable import OpenSkyWorld
 import Testing

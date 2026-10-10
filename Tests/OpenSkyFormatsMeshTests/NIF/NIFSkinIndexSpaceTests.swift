@@ -2,12 +2,12 @@
 // bone indices, and a partition's Bone Indices are palette-local.
 // Layout: docs/formats/nif.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

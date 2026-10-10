@@ -1,10 +1,10 @@
 // A walk or a turn starts where the actor is drawn: its movement pose, then a
 // saved transform, then the placed record. Synthetic ACHR only.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld

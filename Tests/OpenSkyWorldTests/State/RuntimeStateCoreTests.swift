@@ -1,8 +1,8 @@
 // The pure rules of the Runtime State panel. Synthetic values only.
 
-import EngineTesting
-import FormatsTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

@@ -1,11 +1,11 @@
 // Quest change forms with form flags, script delay, run data, and instances, which the
 // import skips but must read to their end.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

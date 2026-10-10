@@ -2,10 +2,10 @@
 // takes over from its parent, failures name their condition, and each CAMS
 // action is one stage with its own seeded pick.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing

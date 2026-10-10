@@ -10,11 +10,11 @@ import Foundation
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

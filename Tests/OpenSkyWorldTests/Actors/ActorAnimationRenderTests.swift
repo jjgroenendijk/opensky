@@ -1,14 +1,14 @@
 // Actor animation render gate: frames at different times differ for a skinned
 // actor, while an identical static prop stays byte-identical.
 
-import EngineTesting
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 private final class SyntheticBoneAnimation: RenderAnimation {

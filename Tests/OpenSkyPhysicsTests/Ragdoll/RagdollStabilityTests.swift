@@ -2,10 +2,10 @@
 // many simulated minutes without NaN or divergence. It is never rebuilt, so
 // joint drift from each collapse carries into the next.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 struct RagdollStabilityTests {

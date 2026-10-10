@@ -1,9 +1,9 @@
 // Every bhk shape keeps its Havok material, and the two multi-material blocks
 // split into one shape per material. Layouts from NifTools nif.xml.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import simd
 import Testing
 

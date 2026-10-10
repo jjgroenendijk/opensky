@@ -1,8 +1,8 @@
 // Unit tests for MatrixMath (AGENTS.md "Testing": every math routine tested).
 
 @testable import OpenSkyFormatsCore
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

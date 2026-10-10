@@ -6,8 +6,8 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

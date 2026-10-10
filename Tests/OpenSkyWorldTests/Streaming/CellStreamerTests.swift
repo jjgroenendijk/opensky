@@ -1,6 +1,6 @@
 // CellStreamer: request dedupe, no retry on void or failed cells, one
 // recompose per frame, unload on recenter, out-of-order completion, and first-
-// cell camera reseed. Fixture: `Tests/TestSupport/World/Streaming/CellStreamerFixture.swift`.
+// cell camera reseed. Fixture: `Tests/HostedTestSupport/World/Streaming/CellStreamerFixture.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsCore

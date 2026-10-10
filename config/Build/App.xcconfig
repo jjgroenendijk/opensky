@@ -1,0 +1,36 @@
+// Target-level settings for the OpenSky app, shared by Debug and Release.
+#include "Signing.xcconfig"
+
+// The identifier keeps its lowercase form from before the target was renamed, because
+// macOS stores permission grants and user defaults against it.
+PRODUCT_BUNDLE_IDENTIFIER = nl.jjgroenendijk.opensky
+SUPPORTED_PLATFORMS = macosx
+
+// The app is written main-actor-by-default. The structs shared with Metal reach Swift
+// through the OpenSkyShaderTypes clang module, which Base.xcconfig puts on
+// SWIFT_INCLUDE_PATHS; there is deliberately no bridging header.
+SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
+
+// The shaders in Sources/Shaders import ShaderTypes.h from the package's
+// OpenSkyShaderTypes target. The target compiles them, because makeDefaultLibrary() reads
+// the main bundle.
+MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
+
+// Generated Info.plist keys.
+GENERATE_INFOPLIST_FILE = YES
+INFOPLIST_KEY_NSPrincipalClass = NSApplication
+INFOPLIST_KEY_NSHumanReadableCopyright =
+INFOPLIST_KEY_NSRemovableVolumesUsageDescription = OpenSky reads game data from your selected Skyrim Special Edition installation.
+
+// Asset catalog and localized strings.
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon
+ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor
+STRING_CATALOG_GENERATE_SYMBOLS = YES
+SWIFT_EMIT_LOC_STRINGS = YES
+
+// The vendored decode-only ffmpeg: link it, find it at build time, and load it from
+// the bundle's Frameworks directory at run time (the "Embed vendored ffmpeg" phase).
+LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/../Frameworks
+LIBRARY_SEARCH_PATHS = $(inherited) $(SRCROOT)/.vendor/ffmpeg/lib $(SRCROOT)/.vendor/astcenc/lib
+// astcenc is static (docs/decisions/astcenc.md) and needs the C++ runtime.
+OTHER_LDFLAGS = $(inherited) -lavcodec -lavutil -lswresample -lastcenc -lc++

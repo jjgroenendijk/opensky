@@ -1,11 +1,11 @@
 // Change form envelopes and the typed reference, quest, and topic decoders, over bytes
 // built in code.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

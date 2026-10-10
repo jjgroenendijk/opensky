@@ -1,10 +1,10 @@
 // Unit tests for BinaryWriter byte ordering, string encoding, and round-trip
 // through BinaryReader.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -1,11 +1,11 @@
 // Scene line length from synthetic `.fuz` files: the line waits while a file
 // loads, then lasts the packet table's playing time.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyDialogue
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 import Testing
 

@@ -1,8 +1,8 @@
 // The player shell against fake worlds: graph loading failures, the body
 // rebuild on an equipment change, and the two panel snapshots.
 
-import EngineTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics

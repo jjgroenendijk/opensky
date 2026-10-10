@@ -1,6 +1,6 @@
 #!/bin/sh
 # RealData test-target lint (issues #381, #418). `make test-real` runs whatever
-# Config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
+# config/TestPlans/RealData.xctestplan selects, and since #418 that is one whole target:
 # OpenSkyRealDataTests. So the check is no longer "is every suite named in the
 # plan" -- a 57-entry list nobody could keep spelled right -- but the two
 # structural facts that make target-level selection correct:
@@ -31,8 +31,8 @@ import pathlib
 import re
 import sys
 
-PLANS = [pathlib.Path("Config/TestPlans/RealData.xctestplan"),
-         pathlib.Path("Config/TestPlans/RealDataAll.xctestplan")]
+PLANS = [pathlib.Path("config/TestPlans/RealData.xctestplan"),
+         pathlib.Path("config/TestPlans/RealDataAll.xctestplan")]
 TARGET = "OpenSkyRealDataTests"
 HOME = pathlib.Path("Tests/OpenSkyRealDataTests")
 # Every other test folder: the app-hosted unit bundle, the package test and
@@ -94,7 +94,7 @@ for PLAN in PLANS:
 
 # Issue #380: an app-hosted unit bundle and the UI runner deadlock in one session.
 HOSTED = {"OpenSkyTests", TARGET}
-for path in sorted(pathlib.Path("Config/TestPlans").glob("*.xctestplan")):
+for path in sorted(pathlib.Path("config/TestPlans").glob("*.xctestplan")):
     with path.open("rb") as stream:
         listed = {
             entry.get("target", {}).get("name")

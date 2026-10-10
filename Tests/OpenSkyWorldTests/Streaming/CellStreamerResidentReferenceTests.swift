@@ -2,9 +2,9 @@
 // built here because `CellStreamerFixture.cellScene` keeps no references and
 // `CellScene.references` is immutable.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures

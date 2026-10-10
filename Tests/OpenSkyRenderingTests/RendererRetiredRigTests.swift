@@ -2,12 +2,12 @@
 // meshes and textures with the cell's actors, so a shared allocation must stay
 // resident while a rig still draws it. Skips without Metal 4.
 
-import EngineTesting
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

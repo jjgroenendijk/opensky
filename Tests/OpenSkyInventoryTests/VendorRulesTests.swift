@@ -1,10 +1,10 @@
 // Faction vendors: finding the vendor faction, reading its chest, hours, and
 // buy/sell list, and both list negations. Layouts: docs/formats/factions.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface

@@ -2,7 +2,6 @@
 // `ActorValueRuntime`, and `RagdollRuntime`, so script damage and sword damage
 // reach one store and one death latch. Only the ragdoll skeleton is faked.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyActors
 @testable import OpenSkyActorsInterface
@@ -10,6 +9,7 @@ import Foundation
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting

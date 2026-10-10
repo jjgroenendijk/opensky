@@ -1,10 +1,10 @@
 // Zlib stream decoder tests. Streams are built by ZlibFixture.stream via
 // Apple's Compression encoder + hand-computed RFC 1950 wrapper.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

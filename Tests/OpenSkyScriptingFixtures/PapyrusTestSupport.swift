@@ -1,6 +1,6 @@
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface
 import Testing

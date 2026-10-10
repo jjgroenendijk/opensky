@@ -5,10 +5,10 @@ them and the rules `Package.swift` enforces.
 
 ## Testing libraries
 
-A folder named `<Name>Testing/` is a library of shared fixtures, not a test target. There
-is one per layer: `FormatsTesting` (byte builders, one subfolder per format family),
-`EngineTesting` (game data, behavior, physics, rendering, world state), and
-`FeaturesTesting` (fakes of the feature interfaces). Every unit test target that needs the
+A folder named `OpenSky<Layer>Testing/` is a library of shared fixtures, not a test target. There
+is one per layer: `OpenSkyFormatsTesting` (byte builders, one subfolder per format family),
+`OpenSkyEngineTesting` (game data, behavior, physics, rendering, world state), and
+`OpenSkyFeaturesTesting` (fakes of the feature interfaces). Every unit test target that needs the
 fixtures links it: package test targets, `OpenSkyTests`, and `OpenSkyRealDataTests`.
 
 - Declarations that tests use are `public`. A struct a test builds has an explicit
@@ -20,14 +20,14 @@ fixtures links it: package test targets, `OpenSkyTests`, and `OpenSkyRealDataTes
   implementation declares, goes in that feature's `<Name>Fixtures/` library. Only
   `<Name>Tests` and the Xcode bundles may link it. Example: `FakeCombatWorld` in
   `OpenSkyCombatFixtures`. One used only by `<Name>Tests` stays in that target.
-- A fixture that needs two implementations goes in `Tests/TestSupport/` when both Xcode
+- A fixture that needs two implementations goes in `Tests/HostedTestSupport/` when both Xcode
   bundles use it, else in `Tests/OpenSkyTests/Support/`.
 - A fixture that a package test target and `OpenSkyTests` or `OpenSkyRealDataTests` both
   need goes in a library, never in two copies.
 - A byte builder goes in the lowest library that can build it. A helper that wraps the bytes
   in a higher store is an extension in a higher library, for example
-  `DialogueFixture+Store.swift` in `EngineTesting` over `DialogueFixture` in
-  `FormatsTesting`.
+  `DialogueFixture+Store.swift` in `OpenSkyEngineTesting` over `DialogueFixture` in
+  `OpenSkyFormatsTesting`.
 - A library holds no `@Test`. Put tests in the test target of the module they test.
 - Fixtures are synthetic and built in code, never an extracted game file (root
   `AGENTS.md`, Legal & IP boundary).
@@ -55,13 +55,13 @@ is named for the behavior it checks, such as `CombatAcceptanceTests`, never for 
 number.
 
 A suite that builds a `Renderer` goes in a package test target too. It passes
-`shaderLibrary: ShaderLibraryFixture.library(device: device)` from `EngineTesting`, because a
+`shaderLibrary: ShaderLibraryFixture.library(device: device)` from `OpenSkyEngineTesting`, because a
 package test has no app bundle to load `default.metallib` from. `make test-unit` compiles the
 shaders first (`make shader-library`).
 
 ## Test plans
 
-`Config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
+`config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
 reviewable configuration, not a flag. A plan builds only the bundles it lists, so the
 smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
@@ -87,7 +87,7 @@ test host while the UI runner waits for it, and the run deadlocks
 
 ## Tags
 
-`Tests/TagsTesting/Tags.swift` holds the shared Swift Testing tags, and every test target
+`Tests/OpenSkyTagsTesting/Tags.swift` holds the shared Swift Testing tags, and every test target
 links it. Put a tag on the suite, `@Suite(.tags(.gpu))`, or on one test when only that
 test needs it.
 

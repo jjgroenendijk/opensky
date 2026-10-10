@@ -1,15 +1,15 @@
 // Particle CPU simulation and Metal billboard acceptance on engine values.
 
-import EngineTesting
-import FormatsTesting
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

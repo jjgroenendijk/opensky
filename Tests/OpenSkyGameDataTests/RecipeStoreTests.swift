@@ -1,8 +1,8 @@
 // COBJ lookup and the workbench-keyword and created-object indexes over synthetic plugins.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

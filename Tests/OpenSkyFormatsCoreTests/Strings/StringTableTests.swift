@@ -2,10 +2,10 @@
 // (StringTableFixture). Covers all three entry framings, the lenient
 // UTF-8 -> windows-1252 decode policy, and malformed-input rejection.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

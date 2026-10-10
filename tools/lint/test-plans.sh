@@ -1,5 +1,5 @@
 #!/bin/sh
-# Check the rules every test plan under Config/TestPlans/ follows.
+# Check the rules every test plan under config/TestPlans/ follows.
 #
 # docs/tools/test-runs.md explains each rule. In short: every plan is in the
 # scheme, sets test timeouts, never repeats or retries tests, and selects by
@@ -18,9 +18,9 @@ import re
 import sys
 
 ROOT = pathlib.Path.cwd()
-PLANS = ROOT / "Config/TestPlans"
+PLANS = ROOT / "config/TestPlans"
 SCHEME = ROOT / "OpenSky.xcodeproj/xcshareddata/xcschemes/OpenSky.xcscheme"
-TAGS = ROOT / "Tests/TagsTesting/Tags.swift"
+TAGS = ROOT / "Tests/OpenSkyTagsTesting/Tags.swift"
 TIMEOUT_KEYS = (
     "defaultTestExecutionTimeAllowance",
     "maximumTestExecutionTimeAllowance",
@@ -43,9 +43,9 @@ def load(path):
 plans = {path.stem: load(path) for path in sorted(PLANS.glob("*.xctestplan"))}
 declared_tags = set(re.findall(r"@Tag public static var (\w+)", TAGS.read_text()))
 
-in_scheme = set(re.findall(r"container:Config/TestPlans/(\w+)\.xctestplan", SCHEME.read_text()))
+in_scheme = set(re.findall(r"container:config/TestPlans/(\w+)\.xctestplan", SCHEME.read_text()))
 for name in sorted(set(plans) ^ in_scheme):
-    where = "the scheme" if name in plans else "Config/TestPlans/"
+    where = "the scheme" if name in plans else "config/TestPlans/"
     problems.append(f"{name}.xctestplan is missing from {where}")
 
 for name, plan in plans.items():

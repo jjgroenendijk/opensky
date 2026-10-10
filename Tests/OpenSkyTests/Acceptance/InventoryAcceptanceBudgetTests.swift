@@ -7,9 +7,9 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 /// A provider whose builds report whatever summary the case needs, so the real

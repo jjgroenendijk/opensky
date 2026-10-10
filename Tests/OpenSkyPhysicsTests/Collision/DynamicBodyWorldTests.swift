@@ -1,7 +1,7 @@
 // The registry around the solver: residency, resting transforms for
 // persistence, the player's shove, and the panel's freeze and reset.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh

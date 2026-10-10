@@ -3,7 +3,7 @@
 // parameters, so the table below of names and nif.xml values is the evidence.
 
 @testable import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

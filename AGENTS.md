@@ -60,8 +60,9 @@ conflict.
 - Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
   `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
-- No git hook runs on commit or push. Run `make check` before committing. The CI lint jobs
-  on each pull request are the gate before code lands.
+- The only git hook is `pre-commit` in `tools/githooks/`, which runs the file-length check;
+  `make bootstrap` (or `make hooks`) turns it on. Run `make check` before committing. The CI
+  lint jobs on each pull request are the gate before code lands.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
   date observed. Check it before fighting an odd failure, and record new ones there.
@@ -83,13 +84,13 @@ conflict.
 
 - `Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
   its layer and gives the import rules. Read it before you add a module or an import.
-- `Config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
-  (`docs/tools/build-system.md`). `Config/TestPlans/` holds the test plans
+- `config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
+  (`docs/tools/build-system.md`). `config/TestPlans/` holds the test plans
   (`docs/tools/test-runs.md`).
 - `.logs/` and `.vendor/` are gitignored. A script writes its output into
   `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
   Link the run directory, never a loose file (`docs/tools/run-output.md`).
-- Skills live in `.AGENTS/skills/`; `.claude/skills` is a symlink to it. Each nested
+- Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it. Each nested
   `AGENTS.md` has a `CLAUDE.md` symlink beside it; `make lint` checks it.
 
 ## Architecture
@@ -166,6 +167,11 @@ Size code to the lint limits while writing, not after a failed `make fix`; that 
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
 absent from it run at SwiftLint defaults.
 
+No file is longer than 800 lines, in any language. Above 600 lines `make file-length` and
+the pre-commit hook print a warning: split the file then, while the split is still easy.
+A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
+`Package.swift` is the one exception, because SwiftPM reads a single manifest file.
+
 ## Writing style (agent output, docs, comments, commit bodies)
 
 Write for young, capable students who learn English as a second language: short
@@ -216,7 +222,7 @@ better name instead.
 
 ## Skills — load before the matching work
 
-Each skill in `.AGENTS/skills/` holds the full workflow for one kind of task. Each skill
+Each skill in `.agents/skills/` holds the full workflow for one kind of task. Each skill
 folder also holds `evals.json`: test scenarios to run in a fresh session after you change
 the skill.
 

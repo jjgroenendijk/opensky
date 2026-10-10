@@ -1,7 +1,7 @@
 #!/bin/sh
 # Check that every Swift Testing suite carries the shared tags its files call for.
 #
-# The tags live in Tests/TagsTesting/Tags.swift. A suite needs:
+# The tags live in Tests/OpenSkyTagsTesting/Tags.swift. A suite needs:
 #   .acceptance  when it is declared under an Acceptance/ folder,
 #   .gpu         when a file of the suite reaches a Metal device,
 #   .parser      when it is declared in a format test target.
@@ -167,13 +167,13 @@ def add_tags(text, primary, missing):
 
 
 def add_import(text):
-    if not re.search(r"^import TagsTesting$", text, re.M):
+    if not re.search(r"^import OpenSkyTagsTesting$", text, re.M):
         if re.search(r"^import Testing$", text, re.M):
-            text = re.sub(r"^import Testing$", "import TagsTesting\nimport Testing", text, count=1, flags=re.M)
+            text = re.sub(r"^import Testing$", "import OpenSkyTagsTesting\nimport Testing", text, count=1, flags=re.M)
         else:
             imports = list(re.finditer(r"^(?:@testable )?import .*$", text, re.M))
             at = imports[-1].end() if imports else 0
-            text = text[:at] + "\nimport TagsTesting\nimport Testing" + text[at:]
+            text = text[:at] + "\nimport OpenSkyTagsTesting\nimport Testing" + text[at:]
     return text
 
 

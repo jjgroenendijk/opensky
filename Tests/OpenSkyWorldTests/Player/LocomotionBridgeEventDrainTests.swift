@@ -2,8 +2,8 @@
 // handed over once, the queue is bounded, and reset or pause leaves nothing to
 // replay. See docs/engine/walk-mode.md.
 
-import EngineTesting
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyWorld
 import simd
 import Testing

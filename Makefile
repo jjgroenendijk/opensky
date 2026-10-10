@@ -39,7 +39,7 @@ XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
 # The compilation cache store. Every worktree shares the main checkout's, which
 # stays on the data volume because it runs to tens of gigabytes. Prefix mapping in
-# Config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
+# config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
 # in a hidden folder: xcodebuild scans every visible file under the package root
 # at each start, and the store holds hundreds of thousands (docs/tools/build-system.md).
 SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --git-common-dir)))
@@ -47,9 +47,9 @@ COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/Com
 export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
 # The unused-code scan's own build tree: uncached, so its index store is complete.
 INDEX_DATA       ?= $(DERIVED_DATA)-index
-# Settings that must also reach package targets (Config/Build/Overrides.xcconfig).
+# Settings that must also reach package targets (config/Build/Overrides.xcconfig).
 # xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
-export XCODE_XCCONFIG_FILE := $(CURDIR)/Config/Build/Overrides.xcconfig
+export XCODE_XCCONFIG_FILE := $(CURDIR)/config/Build/Overrides.xcconfig
 # Test result bundles. They live under the build cache rather than build/: xcodebuild
 # watches the package root, and a result bundle growing there during `test` makes it
 # re-resolve the package mid-run, which crashes it once the package is large (#582).
@@ -106,8 +106,9 @@ PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 # unit test plan points at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
 SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
-SHADER_SOURCES   := Sources/Shaders/Shaders.metal Sources/OpenSkyShaderTypes/ShaderTypes.h
-# Mirrors the Metal settings in Config/Build/*.xcconfig; change both together.
+SHADER_FILES     := $(sort $(wildcard Sources/Shaders/*.metal))
+SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) Sources/OpenSkyShaderTypes/ShaderTypes.h
+# Mirrors the Metal settings in config/Build/*.xcconfig; change both together.
 METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 	-I Sources/OpenSkyShaderTypes
 
@@ -124,7 +125,7 @@ COVERAGE_FLOOR   := 80
 ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
-# Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds
+# Test plans (config/TestPlans/*.xctestplan) choose which test bundles a run builds
 # and runs, instead of -only-testing flags (issue #346). A plan builds only the
 # bundles it lists, so the layer plans are the quick runs. The UI bundle must never
 # share a plan with an app-hosted bundle (OpenSkyTests, OpenSkyRealDataTests): both
@@ -149,13 +150,13 @@ MD_GLOB          := **/*.md
 # The tool commands. Override one to try another build of the tool.
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
-METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
+METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
 
 .DEFAULT_GOAL := help
 
 ##@ Getting started
 
-.PHONY: help bootstrap ffmpeg astcenc link-shared
+.PHONY: help bootstrap hooks ffmpeg astcenc link-shared
 
 # A `#|` target is a part of a listed one, such as each check inside `lint`.
 help: ## Show the main targets [ALL=1 also lists the parts]
@@ -167,6 +168,10 @@ help: ## Show the main targets [ALL=1 also lists the parts]
 
 bootstrap: ## Install the toolchain with Homebrew
 	@./tools/bootstrap.sh
+
+# The setting lives in the shared git config, so every worktree uses the hooks.
+hooks: #| Point git at the project hooks in tools/githooks
+	@git config core.hooksPath tools/githooks && echo "[ OK ] git hooks: tools/githooks"
 
 ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
@@ -183,7 +188,7 @@ link-shared: #| Point this worktree's ffmpeg and compile cache at the main check
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text comment-blocks comment-apply \
-        duplicates no-suppressions
+        duplicates no-suppressions file-length
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -201,7 +206,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions file-length ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -211,8 +216,9 @@ swift-format: #| Autoformat the changed Swift files [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to format"; exit 0; }; \
 		swiftformat --config $(SWIFTFORMAT_CFG) $$files
 
+# Package.swift stays out, as in CI: one manifest cannot split to the file-length cap.
 swift-lint: #| Lint the changed Swift files strictly [ALL=1 whole tree]
-	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
+	@files="$(filter-out Package.swift,$(LINT_SWIFT))"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to lint"; exit 0; }; \
 		$(SWIFTLINT) lint --strict --quiet --config $(SWIFTLINT_CFG) $$files
 
 metal-format: #| Autoformat Metal shaders
@@ -261,6 +267,10 @@ no-game-content: #| Check no game assets or rendered captures are tracked
 
 docs-links: #| Check links inside docs/ resolve
 	@./tools/check-docs-links.sh
+
+# The pre-commit hook runs the same script on the staged files.
+file-length: #| Fail on a changed file over 800 lines, warn over 600 [ALL=1 whole tree]
+	@./tools/lint/file-length.sh $(if $(ALL),--all,)
 
 docs-length: #| Check no docs page is longer than DOCS_MAX_LINES
 	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \
@@ -322,7 +332,7 @@ shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
 # looks current to make.
 $(SHADER_LIBRARY): $(SHADER_SOURCES)
 	@mkdir -p $(@D)
-	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp Sources/Shaders/Shaders.metal
+	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp $(SHADER_FILES)
 	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
 
 ##@ Code health
@@ -432,7 +442,7 @@ xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME
 test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test()']
 	@$(check_plan)test -n "$(xctestrun)" || { \
 		echo "[ERROR] no built $(PLAN) plan under $(DERIVED_DATA): run make test-unit PLAN=$(PLAN) first" >&2; exit 2; }
-	@newer="$$(find Sources Tests Config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
+	@newer="$$(find Sources Tests config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
 		[ -z "$$newer" ] || echo "[WARNING] $$newer changed after the last build of $(PLAN); run make test-unit PLAN=$(PLAN) to rebuild"
 	@$(XCB_RUN) test-rerun xcodebuild -xctestrun "$(xctestrun)" $(XCODEBUILD_DD) \
 		-destination '$(DESTINATION)' $(call test_bundle,rerun-$(PLAN)) \

@@ -1,10 +1,10 @@
 // Where a body goes in a cell build: the movable half of a NIF goes to the
 // dynamic world. A positive mass decides, not the motion byte alone.
 
-import FormatsTesting
 import Metal
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

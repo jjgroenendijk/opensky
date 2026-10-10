@@ -1,10 +1,10 @@
 // The scene catalog over a load order: a scene and its PNAM quest take the
 // FormIDs of the quest store's load-order space.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyDialogue
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

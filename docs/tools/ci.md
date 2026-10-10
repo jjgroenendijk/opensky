@@ -31,7 +31,7 @@ request one commit at a time, and the runner tests each commit while the session
 next one, so the session never runs the whole unit plan locally. A newer push cancels the run of
 the older one, so unfinished work costs at most one run per push.
 
-A pull request that changes only Markdown, `docs/`, `.AGENTS/`, `.claude/`, or the Renovate config
+A pull request that changes only Markdown, `docs/`, `.agents/`, `.claude/`, or the Renovate config
 skips Build & test, because nothing in it is compiled. `Lint` accepts that skip only when
 `Changes` asked for it. A push to `main` always builds, so the compilation cache stays current.
 

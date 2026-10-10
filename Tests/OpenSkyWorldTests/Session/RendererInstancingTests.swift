@@ -2,15 +2,15 @@
 // become one draw with `instanceCount`, each instance lands at its own screen
 // position, and per-instance culling still applies. Skips without Metal 4.
 
-import EngineTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

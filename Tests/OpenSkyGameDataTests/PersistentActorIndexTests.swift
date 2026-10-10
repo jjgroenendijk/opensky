@@ -1,9 +1,9 @@
 // The Unique Actor fallback: a base with one persistent placed actor maps to it.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

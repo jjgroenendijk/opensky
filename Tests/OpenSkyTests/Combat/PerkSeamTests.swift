@@ -2,11 +2,11 @@
 // spell cost. Each test checks the formula's output, so a seam that stops
 // folding perks in fails even when the evaluator is right.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

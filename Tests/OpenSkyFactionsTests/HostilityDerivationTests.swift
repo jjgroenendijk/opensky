@@ -1,12 +1,12 @@
 // The hostility derivation: the reaction matrix, RELA overriding faction
 // neutrality, the crime seam, and the precedence order.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFactions
 import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 import Testing

@@ -4,15 +4,15 @@
 // Readouts are found by accessibility id, so the run needs no UI automation.
 
 import AppKit
-@testable import FeaturesTesting
 @testable import OpenSky
 @testable import OpenSkyCrime
 @testable import OpenSkyFactions
+@testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPreview
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

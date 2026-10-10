@@ -1,10 +1,10 @@
 // CPU decode of the face color map and tint mask layouts, and the RGBA8 writer.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import OpenSkyImageKernels
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

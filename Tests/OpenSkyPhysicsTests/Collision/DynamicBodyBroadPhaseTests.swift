@@ -1,7 +1,7 @@
 // The sort-and-sweep broad phase finds exactly the pairs the all-pairs loop found,
 // in the same order.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics
 import simd

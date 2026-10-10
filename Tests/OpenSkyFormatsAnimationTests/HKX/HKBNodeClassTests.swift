@@ -3,10 +3,10 @@
 // a bad pointer at 0x10 records `sectionMissing`. The declared sizes match
 // docs/formats/hkx-behavior-nodes.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// One registry class and the Havok size of its instances.

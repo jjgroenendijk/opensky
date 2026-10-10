@@ -11,9 +11,9 @@ import Foundation
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyProgressionInterface
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

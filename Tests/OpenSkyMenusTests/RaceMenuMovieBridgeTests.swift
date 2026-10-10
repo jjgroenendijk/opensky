@@ -1,11 +1,11 @@
 // The race menu movie bridge over a synthetic runtime: what the engine sends, and
 // how the movie's calls change the player's identity.
 
-import FormatsTesting
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 

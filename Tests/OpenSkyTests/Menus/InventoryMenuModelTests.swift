@@ -2,8 +2,8 @@
 // gold split, category filters, and navigation. Rows come from
 // `InventoryBaselineFixture`.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

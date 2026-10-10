@@ -1,10 +1,10 @@
 // Footstep tag to sound over synthetic records: the chain the footstep
 // director walks. See docs/engine/audio.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld
 import Testing

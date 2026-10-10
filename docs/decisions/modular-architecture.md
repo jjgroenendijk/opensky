@@ -74,7 +74,7 @@ Rules 4 and 5 keep it narrow. A `Fixtures` library may build only its own featur
 feature only through its Interface and its `Testing` fakes.
 
 A fixture that needs two implementations is integration support. It goes in
-`Tests/TestSupport/` when both Xcode bundles use it, else in `Tests/OpenSkyTests/Support/`.
+`Tests/HostedTestSupport/` when both Xcode bundles use it, else in `Tests/OpenSkyTests/Support/`.
 
 ## The layers
 

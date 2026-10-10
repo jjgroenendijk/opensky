@@ -1,8 +1,8 @@
 // A script whose VMAD value reaches a variable only through a property setter.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 
 extension PapyrusWorldFixture {
     /// Script with a full property `Limit` whose setter copies the value into the

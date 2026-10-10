@@ -2,9 +2,9 @@
 // keeps locomotion in a referenced file, so a wrong crossing breaks everything
 // after it.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import Testing
 

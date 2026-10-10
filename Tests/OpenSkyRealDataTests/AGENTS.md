@@ -29,7 +29,7 @@ forward `OPENSKY_DATA_ROOT` into the host.
 
 Support code only these suites use — a probe harness, a report writer, a real-terrain
 driver — belongs here too. Support shared with the synthetic suites goes in
-`Tests/TestSupport/`, which both test targets compile.
+`Tests/HostedTestSupport/`, which both test targets compile.
 
 ## Running them
 

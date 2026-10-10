@@ -2,13 +2,13 @@
 // overlay changes the frame, an off toggle matches the empty baseline, frames
 // repeat byte for byte, and a scale change moves pixels. Skips without Metal 4.
 
-import EngineTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

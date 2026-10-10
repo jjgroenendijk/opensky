@@ -2,10 +2,10 @@
 // `akActionRef`, missing handlers, the bridge, and unload order against
 // `detach`. The end-to-end walk is in TriggerVolumeWalkTests.
 
-import FormatsTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

@@ -2,10 +2,10 @@
 // the store. The graph copies vanilla's shape: two leaves, a choose-one, an
 // all-of, and a one-parent composite that puts a shield in the left hand.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

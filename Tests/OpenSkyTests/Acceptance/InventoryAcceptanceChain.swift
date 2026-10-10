@@ -2,11 +2,11 @@
 // `InventoryBaselineFixture` plus a loose iron sword, a chest, and a merchant
 // chest. A guard is the actor an equip is visible on. No Metal or install.
 
-import FeaturesTesting
-@testable import FormatsTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface

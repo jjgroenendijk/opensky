@@ -1,8 +1,8 @@
 // Harvesting synthetic flora: the produce grant, the harvested component, the
 // refused second harvest, the label change, the reset, and the regrowth.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface

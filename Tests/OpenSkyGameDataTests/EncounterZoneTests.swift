@@ -1,10 +1,10 @@
 // Synthetic ECZN decode and load-order tests. Layout: UESP ECZN, cross-
 // checked against xEdit dev-4.1.6 wbDefinitionsTES5.pas lines 6286-6306.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

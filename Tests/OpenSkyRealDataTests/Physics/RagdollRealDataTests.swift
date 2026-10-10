@@ -3,9 +3,9 @@
 // and every bone name bound. The report in `.logs/` holds bone names, joint
 // counts, and settle times only.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM

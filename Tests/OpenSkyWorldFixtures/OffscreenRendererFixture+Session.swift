@@ -1,7 +1,7 @@
 // Offscreen renderers driven by a `GameSession`, the way the app builds one.
 
-import EngineTesting
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 

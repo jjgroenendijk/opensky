@@ -2,7 +2,7 @@
 // does not grow, and two runs match exactly. Fixtures come from
 // `RagdollFixture`.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyPhysics
 import simd
 import Testing

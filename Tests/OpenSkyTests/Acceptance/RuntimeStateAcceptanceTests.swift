@@ -8,8 +8,8 @@ import Foundation
 @testable import OpenSky
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

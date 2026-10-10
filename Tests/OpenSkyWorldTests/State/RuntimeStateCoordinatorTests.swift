@@ -1,9 +1,9 @@
 // The Runtime State coordinator's world reads, journal tail, clock scrubs, and
 // save outcomes, over a fake world. Synthetic GLOB records and references.
 
-import EngineTesting
-import FormatsTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import Testing

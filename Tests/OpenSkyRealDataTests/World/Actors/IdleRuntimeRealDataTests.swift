@@ -11,10 +11,10 @@ import MetalKit
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldState
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

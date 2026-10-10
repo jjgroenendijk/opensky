@@ -3,12 +3,12 @@
 // and `QuestRuntime` records it. Fixtures come from `PapyrusQuestFixture` and
 // `DialogueFixture`.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyQuestsInterface

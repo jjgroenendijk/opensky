@@ -2,10 +2,10 @@
 // value logic; no engine, no file system. Source: docs/engine/world-sfx.md
 // and docs/formats/acoustic-space.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

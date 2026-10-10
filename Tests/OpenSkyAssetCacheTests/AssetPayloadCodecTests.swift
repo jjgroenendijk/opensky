@@ -1,11 +1,11 @@
 // The converted payloads decode to exactly what the direct load path builds:
 // flattened models, collision models, and shipped texture levels.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyAssetCache
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import simd
 import Testing
 

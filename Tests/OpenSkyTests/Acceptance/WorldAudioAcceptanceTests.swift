@@ -7,7 +7,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// The shared sidebar session plus the Audio panel's own steps.

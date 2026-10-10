@@ -3,16 +3,16 @@
 // `swfEnabled = false` and a cleared movie restore it byte for byte, and
 // repeated frames are identical. Movies are built in code.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 /// Synthetic menu movie: plate + sprite + clip layer + edit text. `hidden`

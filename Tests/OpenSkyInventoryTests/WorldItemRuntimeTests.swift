@@ -2,8 +2,8 @@
 // `InventoryRuntime`, with `FakeWorldReferences` in place of `CellStreamer`.
 // `wireWorldItems` builds the same object the app uses.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

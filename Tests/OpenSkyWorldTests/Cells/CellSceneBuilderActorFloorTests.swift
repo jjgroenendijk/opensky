@@ -1,10 +1,10 @@
 // An actor placed inside a road mesh stands on top of it. Synthetic records only.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

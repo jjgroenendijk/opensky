@@ -1,7 +1,7 @@
 // Synthetic capsule/world response: wall slide, ramp, bounded steps,
 // terrain/mesh seam, query filtering, ceilings. No game assets.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh

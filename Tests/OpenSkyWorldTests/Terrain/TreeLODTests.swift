@@ -1,7 +1,7 @@
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 import simd
 import Testing

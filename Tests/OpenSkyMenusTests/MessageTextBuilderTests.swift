@@ -1,9 +1,9 @@
 // `Message.Show` number tokens, alias tags, and visible buttons that keep
 // their MESG index. Token examples are the Creation Kit wiki's.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 

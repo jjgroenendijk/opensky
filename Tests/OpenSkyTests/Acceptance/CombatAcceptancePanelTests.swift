@@ -11,8 +11,8 @@ import AppKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

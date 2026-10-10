@@ -1,9 +1,9 @@
 // `HasPerk` through the real evaluator. Raw index 448 (Creation Kit 4544); see
 // the ConditionFunctionsPerk.swift header.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyProgressionInterface
 @testable import OpenSkyWorld

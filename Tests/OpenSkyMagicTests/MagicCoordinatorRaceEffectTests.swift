@@ -1,8 +1,8 @@
 // Which race spells give an actor a lasting look. Records are synthetic and
 // built in code, never extracted game files.
 
-import FeaturesTesting
 import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

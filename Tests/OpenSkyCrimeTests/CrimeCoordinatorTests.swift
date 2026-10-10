@@ -2,12 +2,12 @@
 // one guard tick, and the panel's bounty and membership controls. The
 // sentences and lists are tested in `CrimeCoreTests`.
 
-import FeaturesTesting
 import OpenSkyConditions
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

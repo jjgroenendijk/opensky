@@ -1,9 +1,9 @@
 // The instruction budget every script shares per fixed step: busy loops stay inside it
 // and each one moves, and a loop that waits costs almost nothing.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

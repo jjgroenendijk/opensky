@@ -1,8 +1,8 @@
 // The perk shell over the fixture load order: ownership writes, the one-time
 // `PRKR` seed, and what an entry point answers with and without a runtime.
 
-import FeaturesTesting
 import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression

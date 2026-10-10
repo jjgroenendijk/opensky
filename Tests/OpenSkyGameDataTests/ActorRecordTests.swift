@@ -1,9 +1,9 @@
 // ACHR, NPC_ and LVLN decoding and template resolution. Layout:
 // docs/formats/actors.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

@@ -3,9 +3,9 @@
 // Synthetic in-code payloads only; layouts: NifTools nif.xml and
 // docs/formats/nif-collision.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import Testing
 
 struct NIFCollisionStripsTests {

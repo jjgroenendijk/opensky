@@ -1,10 +1,10 @@
 // WorldStateStore: component round-trips, reset, dirty tracking, the change
 // journal, snapshot determinism, and generated keys.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import simd

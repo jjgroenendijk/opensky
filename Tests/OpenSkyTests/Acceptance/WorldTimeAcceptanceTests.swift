@@ -7,9 +7,9 @@
 import AppKit
 import Foundation
 @testable import OpenSky
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

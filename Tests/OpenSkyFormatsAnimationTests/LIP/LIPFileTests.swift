@@ -1,10 +1,10 @@
 // Defensive `.lip` header, sparse-grid and sampling tests. Every byte is built
 // by LIPFixture; no installed voice data enters the unit target.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite("LIP facial-animation track", .tags(.parser))

@@ -2,9 +2,9 @@
 // rebuilt wearing it from a `WorldStateSnapshot`; an actor without one uses
 // its plugin outfit.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

@@ -1,11 +1,11 @@
 // Plain-value fake for `RuntimeStateCoordinatorTests`: one optional resident
 // reference, an optional clock, and a save store held in memory.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 
