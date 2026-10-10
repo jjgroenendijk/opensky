@@ -52,6 +52,7 @@ does not own either system.
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
+| Wait | Stay in place and send no move, until another package wins |
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
 the navmesh otherwise. A straight leg follows the terrain and ignores static collision, so a

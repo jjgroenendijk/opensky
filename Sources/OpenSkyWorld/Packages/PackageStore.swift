@@ -19,6 +19,8 @@ nonisolated public enum PackageProcedureKind: Equatable, Sendable {
     case sandbox
     case sleep
     case eat
+    /// Stays where it is and moves nowhere, as a rider in a cart does.
+    case wait
     case unsupported(String)
 }
 
@@ -123,6 +125,9 @@ nonisolated public struct PackageStore: Sendable {
         }
         if names.contains("travel") {
             return .travel
+        }
+        if names.contains("wait") {
+            return .wait
         }
         let name = package.procedureTypes.first ?? package.editorID ?? package.formID.description
         return .unsupported(name)

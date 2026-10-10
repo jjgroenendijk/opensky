@@ -14,6 +14,8 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case moving
     case idleStop(secondsRemaining: Float)
     case looping(PackageLoopClip)
+    /// A wait package holds here until another package wins.
+    case waiting
     case complete
     case failed
 }
@@ -68,6 +70,9 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         case .wander, .sandbox:
             state = .moving
             return [.move(to: nextWanderPoint())]
+        case .wait:
+            state = .waiting
+            return []
         case .unsupported:
             state = .failed
             return []
@@ -110,6 +115,8 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
             return []
         case .sandbox:
             state = .idleStop(secondsRemaining: Self.sandboxIdleSeconds)
+            return []
+        case .wait:
             return []
         case .unsupported:
             state = .failed

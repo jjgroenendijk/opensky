@@ -215,6 +215,13 @@ struct PackageRuntimeTests {
         }
     }
 
+    @Test func waitHoldsInPlace() {
+        var wait = PackageProcedureMachine(kind: .wait, center: .zero, radius: 0, seed: 3)
+        #expect(wait.start().isEmpty)
+        #expect(wait.handle(.tick(60)).isEmpty)
+        #expect(wait.state == .waiting)
+    }
+
     private func tryContext(enableState: ReferenceEnableState) -> ConditionContext {
         ConditionContext(
             referenceEnable: ReferenceEnableResolution(states: [
