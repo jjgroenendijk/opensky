@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: OpenSky save chunks — actors
-description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, AEFF, ECHG, FCTN, RELS,
+description: Payload layouts of the AVAL, AVOV, DETH, CBTS, DLGS, DLGT, AEFF, ECHG, FCTN, RELS,
   CRIM, STOL, TMPR, and CRVG chunks in an .osav save.
 tags: [format, save, world-state, actors, magic, crime]
 ---
@@ -71,6 +71,13 @@ hostile and alive ([combat](/engine/combat.md)). Minimum entry size: 9 bytes.
 One entry per `INFO` that was said: the INFO key and a uint32 said count. No cell, because an
 INFO is a base record. A count of 0 is never written and is dropped on read. The offered
 topics are not stored ([dialogue](/engine/dialogue.md)). Minimum entry size: 11 bytes.
+
+## DLGT: dialogue reset days
+
+One entry per said `INFO` with a reset time: the INFO key, a uint32 speaker count, then per
+speaker its key and a float64 `GameDaysPassed` day, in key order. A non-finite day is dropped,
+and so is an entry `DLGS` does not name. Without the chunk, a line does not wait for its reset
+time. Minimum entry size: 11 bytes; one speaker: 15 bytes.
 
 ## AEFF: active magic effects
 

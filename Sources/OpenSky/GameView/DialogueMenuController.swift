@@ -156,7 +156,10 @@ final class DialogueMenuController {
         guard let info = dialogue.choose(entry.info, speaker: speaker) else { return }
         model.beginResponse(
             info: entry.info,
-            runs: DialogueMenuModel.responseRuns(info, strings: dialogue.strings)
+            runs: DialogueMenuModel.responseRuns(
+                dialogue.index?.responseSource(ofInfo: entry.info) ?? info,
+                strings: dialogue.strings
+            )
         )
     }
 

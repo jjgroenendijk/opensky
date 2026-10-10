@@ -2,7 +2,8 @@
 type: Subsystem
 title: Dialogue runtime
 description: Which topics a speaker offers and which response wins, the rejection trace,
-  said-state, what choosing a response does, result script fragments, and what is saved.
+  shared responses, said-state and reset times, what choosing a response does, result script
+  fragments, and what is saved.
 tags: [engine, dialogue, conditions, quests, papyrus, runtime-state]
 ---
 
@@ -33,11 +34,15 @@ runtime uses no AppKit and also builds into `OpenSkyCLI`.
 4. Say-once is checked before the conditions. "Say Once: If checked, this info will only be said
    once. Once said, it will never be said again." (<https://ck.uesp.net/wiki/Dialogue_Views>,
    Response Data.)
-5. A forced speaker is checked with the conditions. `INFO` `ANAM` names the `NPC_` allowed to say
+5. The reset time is checked next. "Hours Until Reset: After this line is spoken, the speaker
+   will not say it again until the specified time has elapsed."
+   (<https://ck.uesp.net/wiki/Topic_Info>.) The wait belongs to the speaker, so another actor may
+   say the line at once. A session with no clock does not hold a line back.
+6. A forced speaker is checked with the conditions. `INFO` `ANAM` names the `NPC_` allowed to say
    the line. 223 of the 31,465 responses in `Skyrim.esm` have one. If the reference index has no
    record for the speaker, the check passes. It must not silence an actor for a reason that has
    nothing to do with the record.
-6. Offered topics are sorted by `DIAL` `PNAM` priority, highest first. Ties go to the lower
+7. Offered topics are sorted by `DIAL` `PNAM` priority, highest first. Ties go to the lower
    FormID. That tie-break is OpenSky's: the Creation Kit gives no order for equal priorities, and
    dictionary order would give the same world two different menus.
 
@@ -78,27 +83,45 @@ speaker. Only an exclusive branch is stored, and a save keeps it in the `DLBS` c
 ## The trace
 
 A selection returns the offered topics, the topics that offered nothing, and the condition
-tally. Each topic has one trace line per response, with the condition result and one of four
+tally. Each topic has one trace line per response, with the condition result and one of five
 reasons:
 
 | Reason | Meaning |
 | --- | --- |
 | `questNotRunning` | The topic's quest is not running, so no response was checked |
 | `alreadySaid` | Say-once, and already used |
+| `waitingForReset` | The speaker said it fewer game hours ago than its reset time |
 | `conditionsFailed` | The conditions were false, or `ANAM` named another speaker |
 | `notReached` | An earlier response in file order already won |
 
 Nothing stops early. Every topic is checked even after several have won. The question "why is
 this line not offered?" needs exactly the topics a shortcut would skip.
 
+## Shared responses
+
+"Share Response Data From Info: Select a SharedInfo ID to acquire the response lines from that
+Info." (<https://ck.uesp.net/wiki/Topic_Info>.) An `INFO` with a `DNAM` says the responses of the
+`INFO` it names: their text, and their voice files, which are named after that target `INFO`
+and its topic. Its own conditions, flags, result scripts, and topic links still apply. The
+target can share again; the chain stops at a missing `INFO` or a loop. Said-state stays on the
+`INFO` that was chosen, not on the target.
+
+Observed in `Skyrim.esm`: 3,411 `INFO` records have a `DNAM`, and none has responses of its own.
+Every target is in a miscellaneous-category topic with subtype `IDAT`, and none shares again.
+Of the 3,901 voice file names built from the targets, 3,894 exist in the archives for at least
+one voice type.
+
 ## Said-state
 
-Said-state is a world state component with one count, keyed by the `INFO` record's
-session-stable `ReferenceKey`, the same way quest state is keyed by the `QUST`.
+Said-state is a world state component, keyed by the `INFO` record's session-stable
+`ReferenceKey`, the same way quest state is keyed by the `QUST`. It holds a said count and, for
+a response with a reset time, the `GameDaysPassed` day each speaker last said it.
 
-It is per response, not per speaker. The Creation Kit rule belongs to the response. Shared
-responses (`INFO` `DNAM`) can be reached from several speakers, so a table per speaker would let
-each of them say the same "once" line.
+The count is per response, not per speaker. The Dialogue Views page above says a say-once line
+is "never said again". The Topic Info page says instead that another actor may still say it.
+OpenSky follows the first, because a Skyrim save stores one said flag per `INFO` change form,
+not one per actor. Shared responses (`INFO` `DNAM`) can be reached from several speakers, so a
+table per speaker would let each of them say the same "once" line.
 
 Where the conversation is inside a branch is not stored. `Skyrim.esm` has zero `INFO` records with a
 `PNAM` previous-info link, and 4,294 with `TCLT` topic links. So the next lines depend only on
@@ -165,7 +188,8 @@ The faction functions that guard and vendor lines depend on are on the
 
 ## Saving
 
-Said-state is saved in its own `DLGS` chunk, not inside `RDLT`. A component kind inside `RDLT` is
+Said-state is saved in its own `DLGS` chunk, not inside `RDLT`, and the speaker days in a
+`DLGT` chunk beside it. A component kind inside `RDLT` is
 versioned by the format version, so an older build would refuse the whole file instead of
 loading the rest. A session where nobody spoke writes no chunk
 ([save chunks](/formats/opensky-save-actor-chunks.md)).
@@ -178,9 +202,7 @@ decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 - Topics are scoped by branch, not by dialogue view (`DLVW`). Views are an editor layout, and no
   open source says the game reads them at run time.
 - Scene topics are spoken only by the [scene runtime](/engine/scenes.md).
-- Shared responses (`INFO` `DNAM`) are not applied. They change what a line says, not whether it
-  is offered.
-- Reset times are decoded but not used. A repeatable line can repeat at once.
+- A topic row shows the chosen `INFO`'s own prompt (`RNAM`), not the shared target's.
 
 ## Measured coverage
 

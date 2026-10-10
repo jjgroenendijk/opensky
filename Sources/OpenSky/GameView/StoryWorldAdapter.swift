@@ -242,7 +242,9 @@ extension StoryWorldAdapter: SceneWorld {
         return voiceTimer.duration(of: info, voiceType: voiceTypeName(of: speaker), texts: texts)
     }
 
+    /// A shared INFO (`DNAM`) says its target's text.
     private func responseTexts(of info: TopicInfo) -> [String?] {
+        let info = game.dialogue.index?.responseSource(ofInfo: info.formID) ?? info
         let strings = game.dialogue.strings
         return info.responses.map { response in
             strings.flatMap { response.resolvedText(using: $0) }

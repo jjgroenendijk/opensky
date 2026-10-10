@@ -35,7 +35,8 @@ nonisolated extension DialogueMenuModel {
         return topic.formID.description
     }
 
-    /// Every TRDT run of one response, in file order, resolved.
+    /// Every TRDT run of one response, in file order, resolved. Pass the INFO
+    /// `DialogueStore.responseSource(ofInfo:)` gives, so a shared line has text.
     ///
     /// A run whose text does not resolve becomes an empty string rather than
     /// being dropped, because the runs are also the count a readout reports and
@@ -100,7 +101,7 @@ extension DialogueMenuModel {
         )
         if
             let greeting = runtime.greeting(for: speaker),
-            let info = runtime.dialogue.info(greeting.info)
+            let info = runtime.dialogue.responseSource(ofInfo: greeting.info)
         {
             model.beginResponse(
                 info: greeting.info,

@@ -97,12 +97,14 @@ extension SWFDialogueMenuCommand {
     @MainActor
     private struct Session {
         let strings: LocalizedStrings
+        let store: DialogueStore
         let topics: [(topic: DialogueTopic, info: TopicInfo)]
         let model: DialogueMenuModel
 
         init(context: CLIContext, rowCount: Int) throws {
             let file = try context.loadSkyrimESM()
             let store = DialogueStore(file: file, pluginName: "Skyrim.esm")
+            self.store = store
             strings = LocalizedStrings(
                 vfs: context.makeFileSystem(), pluginName: "Skyrim.esm"
             )
@@ -136,7 +138,9 @@ extension SWFDialogueMenuCommand {
             guard let record = topics.first(where: { $0.info.formID == info })?.info else {
                 return []
             }
-            return DialogueMenuModel.responseRuns(record, strings: strings)
+            return DialogueMenuModel.responseRuns(
+                store.responseSource(ofInfo: info) ?? record, strings: strings
+            )
         }
 
         /// Every text field of every picked row, resolved out of all three

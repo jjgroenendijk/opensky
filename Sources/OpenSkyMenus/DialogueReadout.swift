@@ -103,6 +103,7 @@ nonisolated public enum DialogueReadout: Sendable {
         switch rejection {
         case let .questNotRunning(quest): "quest \(quest) not running"
         case .alreadySaid: "already said"
+        case .waitingForReset: "waiting for its reset time"
         case .conditionsFailed: "conditions failed"
         case .notReached: "not reached"
         case .notBranchEntry: "not a branch start"

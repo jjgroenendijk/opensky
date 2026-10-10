@@ -139,6 +139,21 @@ nonisolated public final class DialogueStore: Sendable {
         infosByFormID[id.rawValue]
     }
 
+    /// The INFO whose responses `id` speaks: the one its `DNAM` shares, else itself.
+    /// A missing target or a loop of shared links stops at the last INFO reached.
+    public func responseSource(ofInfo id: FormID) -> TopicInfo? {
+        guard var current = info(id) else { return nil }
+        var visited: Set<UInt32> = [id.rawValue]
+        while
+            let shared = current.sharedInfo,
+            visited.insert(shared.rawValue).inserted,
+            let next = info(shared)
+        {
+            current = next
+        }
+        return current
+    }
+
     /// The DIAL record whose child group holds `id`, or nil when no loaded
     /// plugin declares that INFO.
     public func topic(ofInfo id: FormID) -> DialogueTopic? {

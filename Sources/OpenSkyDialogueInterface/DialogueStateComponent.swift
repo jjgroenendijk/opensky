@@ -29,6 +29,10 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// still benefits from an honest count in the trace readout, and because a
     /// counter costs the same four bytes a flag would have been padded to.
     public private(set) var saidCount: UInt32
+    /// `GameDaysPassed` when each speaker last said the response, kept only for a
+    /// response with a reset time: "the speaker will not say it again until the
+    /// specified time has elapsed" (<https://ck.uesp.net/wiki/Topic_Info>).
+    public private(set) var saidDays: [ReferenceKey: Double]
 
     /// The state an INFO has before anything says it, which is the baseline of
     /// every INFO in every plugin: a response nothing has spoken.
@@ -38,8 +42,9 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
         .dialogue
     }
 
-    public init(saidCount: UInt32 = 0) {
+    public init(saidCount: UInt32 = 0, saidDays: [ReferenceKey: Double] = [:]) {
         self.saidCount = saidCount
+        self.saidDays = saidDays
     }
 
     /// Whether this response has ever been said, which is what the say-once
@@ -59,7 +64,25 @@ nonisolated public struct DialogueRuntimeState: WorldStateComponent, Sendable {
     /// wrapping: a conversation repeated four billion times is not a reason for
     /// a say-once line to become sayable again.
     public func said() -> Self {
-        DialogueRuntimeState(saidCount: saidCount == .max ? .max : saidCount + 1)
+        DialogueRuntimeState(
+            saidCount: saidCount == .max ? .max : saidCount + 1, saidDays: saidDays
+        )
+    }
+
+    /// `said()`, with the day `speaker` said it. A nil day records no time.
+    public func said(by speaker: ReferenceKey, onDay day: Double?) -> Self {
+        var state = said()
+        if let day {
+            state.saidDays[speaker] = day
+        }
+        return state
+    }
+
+    /// Whether `speaker` may say a line with `resetHours` again on `day`. Without a
+    /// said time or a clock nothing can be measured, so the line is not held back.
+    public func hasReset(resetHours: Float, speaker: ReferenceKey, onDay day: Double?) -> Bool {
+        guard resetHours > 0, let last = saidDays[speaker], let day else { return true }
+        return (day - last) * 24 >= Double(resetHours)
     }
 }
 

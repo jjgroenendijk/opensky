@@ -70,6 +70,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Dialogue said-state, one entry per said INFO. Offered topics are derived from
         /// records and quest state, so they are not saved.
         public static let dialogueStates = "DLGS"
+        /// The game day each speaker last said an INFO with a reset time. Apart
+        /// from `DLGS`, so an older build skips it and still loads the counts.
+        public static let dialogueSaidDays = "DLGT"
 
         /// Active timed magic effects per actor, with remaining duration. Each owns part
         /// of a temporary slot, which load rebuilds from here. Instant effects already
