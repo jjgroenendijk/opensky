@@ -19,7 +19,7 @@ Sources: Anthropic, "The new rules of context engineering for Claude 5 generatio
 ## Where a new rule goes
 
 Pick the first place that fits. Check that the rule is not already written somewhere
-(`grep -rn` over `AGENTS.md`, `*/AGENTS.md`, `.AGENTS/skills/`, `docs/`) and update that
+(`grep -rn` over `AGENTS.md`, `*/AGENTS.md`, `.agents/skills/`, `docs/`) and update that
 copy instead of adding a second one.
 
 1. **A lint rule or `make` target**, when a machine can check it. A check cannot be
@@ -103,7 +103,7 @@ in the wrong file, or missing its reason.
 
 ## Review an instruction file
 
-1. Measure it: `wc -l AGENTS.md */AGENTS.md .AGENTS/skills/*/SKILL.md`.
+1. Measure it: `wc -l AGENTS.md */AGENTS.md .agents/skills/*/SKILL.md`.
 2. For each section, ask: does it apply to nearly every task? If not, move it by the list
    in "Where a new rule goes".
 3. Remove text that repeats code, `docs/`, another file, or a check that already enforces

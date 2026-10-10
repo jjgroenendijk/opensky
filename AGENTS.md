@@ -90,7 +90,7 @@ conflict.
 - `.logs/` and `.vendor/` are gitignored. A script writes its output into
   `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.
   Link the run directory, never a loose file (`docs/tools/run-output.md`).
-- Skills live in `.AGENTS/skills/`; `.claude/skills` is a symlink to it. Each nested
+- Skills live in `.agents/skills/`; `.claude/skills` is a symlink to it. Each nested
   `AGENTS.md` has a `CLAUDE.md` symlink beside it; `make lint` checks it.
 
 ## Architecture
@@ -221,7 +221,7 @@ better name instead.
 
 ## Skills — load before the matching work
 
-Each skill in `.AGENTS/skills/` holds the full workflow for one kind of task. Each skill
+Each skill in `.agents/skills/` holds the full workflow for one kind of task. Each skill
 folder also holds `evals.json`: test scenarios to run in a fresh session after you change
 the skill.
 

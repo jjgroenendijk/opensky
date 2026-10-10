@@ -143,7 +143,7 @@ jobs:
             build=false
             for file in $files; do
               case "$file" in
-                *.md | docs/* | .AGENTS/* | .claude/* | .github/renovate.json) ;;
+                *.md | docs/* | .agents/* | .claude/* | .github/renovate.json) ;;
                 *) build=true ;;
               esac
             done

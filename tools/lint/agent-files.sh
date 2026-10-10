@@ -22,7 +22,7 @@ for agents in $(git ls-files -- 'AGENTS.md' '*/AGENTS.md'); do
   fi
 done
 
-for skill_dir in .AGENTS/skills/*/; do
+for skill_dir in .agents/skills/*/; do
   skill="$(basename "$skill_dir")"
   file="${skill_dir}SKILL.md"
   if [ ! -f "$file" ]; then
