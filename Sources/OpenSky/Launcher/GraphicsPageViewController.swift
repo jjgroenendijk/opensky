@@ -54,6 +54,16 @@ final class GraphicsPageViewController: NSViewController {
     let toneMappingControl = NSButton(
         checkboxWithTitle: "HDR tone mapping", target: nil, action: nil
     )
+    let blinkingControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
+    let expressionsControl = NSButton(
+        checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
+    )
+    let headTrackingControl = NSButton(
+        checkboxWithTitle: "Head tracking", target: nil, action: nil
+    )
+    let objectAnimationControl = NSButton(
+        checkboxWithTitle: "Animated objects", target: nil, action: nil
+    )
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
@@ -144,6 +154,10 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl])
             ]),
+            layout.group("Characters and objects", [
+                layout.toggle(blinkingControl), layout.toggle(expressionsControl),
+                layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl)
+            ]),
             layout.group("Texture memory", [
                 layout.toggle(textureStreamingControl),
                 layout.note("Far textures keep only small levels; costs a little pop-in up close"),
@@ -190,6 +204,10 @@ final class GraphicsPageViewController: NSViewController {
         toneMappingControl.state = store.bool(.toneMapping) ? .on : .off
         lightAnimationControl.state = store.bool(.lightAnimation) ? .on : .off
         particleSortingControl.state = store.bool(.particleSorting) ? .on : .off
+        blinkingControl.state = store.bool(.characterBlinking) ? .on : .off
+        expressionsControl.state = store.bool(.characterDialogueExpressions) ? .on : .off
+        headTrackingControl.state = store.bool(.characterHeadTracking) ? .on : .off
+        objectAnimationControl.state = store.bool(.objectAnimation) ? .on : .off
         pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))

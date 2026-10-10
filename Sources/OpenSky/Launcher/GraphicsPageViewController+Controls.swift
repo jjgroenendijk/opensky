@@ -58,6 +58,7 @@ extension GraphicsPageViewController {
             toneMappingControl, "ToneMapping",
             "The eye adapts to dark and bright scenes; follows the weather's image space"
         )
+        configureCharacterCheckboxes()
         checkbox(
             impactEffectsControl, "ImpactEffects",
             "Dust under a step, sparks or blood spray where a hit lands"
@@ -79,6 +80,22 @@ extension GraphicsPageViewController {
             "Large textures keep only the levels the camera needs; saves GPU memory"
         )
         checkbox(fullScreenControl, "FullScreen", "Play opens full screen")
+    }
+
+    private func configureCharacterCheckboxes() {
+        checkbox(blinkingControl, "CharacterBlinking", "Actors blink on their own")
+        checkbox(
+            expressionsControl, "CharacterExpressions",
+            "A speaker's face shows the emotion of the line it says"
+        )
+        checkbox(
+            headTrackingControl, "CharacterHeadTracking",
+            "Actors turn their heads toward what they look at"
+        )
+        checkbox(
+            objectAnimationControl, "ObjectAnimation",
+            "Traps, doors, and levers play their animations"
+        )
     }
 
     /// `name` becomes the id `Graphics<name>Control`.
@@ -136,6 +153,10 @@ extension GraphicsPageViewController {
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
+            (blinkingControl, .characterBlinking),
+            (expressionsControl, .characterDialogueExpressions),
+            (headTrackingControl, .characterHeadTracking),
+            (objectAnimationControl, .objectAnimation),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ]

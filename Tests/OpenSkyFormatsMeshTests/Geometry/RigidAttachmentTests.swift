@@ -156,6 +156,25 @@ struct RigidAttachmentTests {
         #expect(attached.skippedShapeCount == 3)
         #expect(attached.meshes.count == 1)
     }
+
+    /// An object mesh under a node: at the node's rest pose it draws where the
+    /// file placed it, and a turned node carries it along.
+    @Test func nodeBoundMeshKeepsItsPlaceAtRestAndFollowsTheNode() throws {
+        let nodeRest = MatrixMath.translation(SIMD3(0, 0, 100))
+        let placed = MatrixMath.translation(SIMD3(5, 0, 90))
+        let bound = RigidAttachment.skinned(
+            mesh(vertex: SIMD3(1, 0, 0), transform: placed), toNode: "Blade01", nodeRest: nodeRest
+        )
+        let skinning = try #require(bound.skinning)
+        #expect(skinning.boneNames == ["Blade01"])
+
+        let atRest = skinning.rootParentToSkin * nodeRest * skinning.skinToBoneMatrices[0]
+        #expect(simd_distance(world(bound, bone: atRest), SIMD3(6, 0, 90)) < 1e-4)
+
+        let lifted = MatrixMath.translation(SIMD3(0, 0, 110))
+        let moved = skinning.rootParentToSkin * lifted * skinning.skinToBoneMatrices[0]
+        #expect(simd_distance(world(bound, bone: moved), SIMD3(6, 0, 100)) < 1e-4)
+    }
 }
 
 @Suite(.tags(.parser))

@@ -197,12 +197,13 @@ nonisolated extension CellSceneBuilder {
         let simulated = Set(geometry.dynamicBodies.map(\.reference.rawValue))
             .union(geometry.vehicleFollowers)
         let placed = renderPlacements(instances, simulated: simulated)
+        let objects = animatedObjects(instances)
         let bounds = unionedBounds(
             placements: placed + actors.placements, geometry: geometry
         )
         let renderScene = RenderScene(
             instances: placed + actors.placements,
-            animations: actors.animations,
+            animations: actors.animations + objects.map(\.playback),
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
             sky: found.cell.isInterior ? nil : geometry.sky,
@@ -220,7 +221,7 @@ nonisolated extension CellSceneBuilder {
             counts: counts
         )
         Self.logger.info("\(summary.summaryLine, privacy: .public)")
-        return CellScene(
+        var scene = CellScene(
             renderScene: renderScene,
             summary: summary,
             bounds: bounds.map { (min: $0.min, max: $0.max) },
@@ -245,6 +246,8 @@ nonisolated extension CellSceneBuilder {
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )
+        scene.animatedObjects = objects.map(\.object)
+        return scene
     }
 
     nonisolated private func renderPlacements(

@@ -20,8 +20,8 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   with the module's own name says nothing (`OpenSkyFormatsESM/Records/`). Its test target
   and its `OpenSkyFormatsTesting` folder follow the same layout.
 - `OpenSkyWorld/`: `Actors/`, `Benchmark/`, `Camera/`, `Cells/`, `Conditions/`, `Effects/`,
-  `Loading/`, `Navigation/`, `Packages/`, `Player/`, `Session/`, `State/`, `Streaming/`,
-  `Terrain/`, and `Weather/`.
+  `Loading/`, `Navigation/`, `Objects/`, `Packages/`, `Player/`, `Session/`, `State/`,
+  `Streaming/`, `Terrain/`, and `Weather/`.
 - A panel seam, `XControlProviding.swift` or `XReadout.swift`, lives in the module of its
   domain. A seam that names a higher layer, such as menus, cameras, or scripts, lives in
   `OpenSkyMenus/`.

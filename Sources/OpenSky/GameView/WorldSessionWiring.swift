@@ -165,6 +165,7 @@ final class WorldSessionWiring {
         game.aiWorld.wirePerception(provider: provider, renderer: renderer)
         game.idleWorld.wireIdles(provider: provider, renderer: renderer)
         game.vehicleWorld.wireVehicles(renderer: renderer)
+        game.objectAnimationWorld.wire(renderer: renderer)
         // The perception pass answers "did anybody see it" for every crime.
         game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.

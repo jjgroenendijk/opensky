@@ -148,6 +148,22 @@ masters: each one carries `Prn`. Each value is a bone of the character `skeleton
 except `NPC L Hand` and `NPC R Hand`, which leave out the bone's `[LHnd]` or `[RHnd]` tag.
 OpenSky matches such a value to the bone whose name starts with it.
 
+## BSBehaviorGraphExtraData
+
+Names the Havok behaviour project that animates an object mesh. After the `NiExtraData`
+name:
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| uint32 | Name | String-table index, -1 is none |
+| uint32 | Behaviour graph file | String-table index; a path under `meshes\` |
+| uint8 | Controls base skeleton | Non-zero when the graph also moves the root |
+
+Reference: the `BSBehaviorGraphExtraData` entry of nif.xml (NifTools). Confirmed on the
+install: `meshes\traps\swingingblade\trapbladeswinging01.nif` names
+`Traps\SwingingBlade\TrapBladeSwinging01.hkx`, a path relative to `meshes\`. How OpenSky runs it:
+[object animation](/engine/object-animation.md).
+
 ## BSTriShape
 
 Skyrim SE geometry, stream 100 only. After the shared fields:

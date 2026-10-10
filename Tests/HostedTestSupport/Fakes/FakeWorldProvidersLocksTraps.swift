@@ -4,6 +4,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyPhysics
+@testable import OpenSkyWorld
 
 struct FakeLockTrapState {
     var doorLocked = true
@@ -15,6 +16,8 @@ struct FakeLockTrapState {
     var disarmed = false
     var lastLock = "No lock action yet."
     var lastTrap = "No trap action yet."
+    var objectAnimationEnabled = true
+    var objectEvents: [String] = []
 }
 
 extension FakeWorldProviders {
@@ -86,5 +89,27 @@ extension FakeWorldProviders {
         locksTraps.disarmed = true
         locksTraps.lastTrap = "Activated Plate: 1 script events."
         return locksTraps.lastTrap
+    }
+}
+
+extension FakeWorldProviders {
+    var objectAnimationEnabled: Bool {
+        get { locksTraps.objectAnimationEnabled }
+        set { locksTraps.objectAnimationEnabled = newValue }
+    }
+
+    var objectAnimationRows: [ObjectAnimationRow] {
+        [ObjectAnimationRow(
+            reference: 0x0B00, project: "meshes\\traps\\blade\\blade.hkx",
+            events: ["Trip", "Reset"], activeState: "Idle"
+        )]
+    }
+
+    func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
+        guard reference == 0x0B00, objectAnimationRows[0].events.contains(event) else {
+            return false
+        }
+        locksTraps.objectEvents.append(event)
+        return true
     }
 }

@@ -18,6 +18,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let sceneSection = SceneStatsSection()
     let triggerSection = TriggerVolumeSection()
     let trapSection = TrapSection()
+    let objectAnimationSection = ObjectAnimationSection()
     let renderDebugSection = RenderDebugSection()
 
     /// Weak: the game controller owns this panel's parent and the renderer, so
@@ -71,6 +72,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { trapSection.provider = trapProvider }
     }
 
+    /// Object behaviour graphs, beside the trap scripts that play them.
+    weak var objectAnimationProvider: (any ObjectAnimationControlProviding)? {
+        didSet { objectAnimationSection.provider = objectAnimationProvider }
+    }
+
     /// The render debug channel and the layer mask: both are views of the
     /// frame this panel reports on.
     weak var renderDebugProvider: (any RenderDebugControlProviding)? {
@@ -81,7 +87,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
         [
             cameraSection, cinematicSection, firstPersonSection, frameSection, worldLoadSection,
             assetCacheSection, sceneSection, renderDebugSection, triggerSection, trapSection,
-            loadingSection
+            objectAnimationSection, loadingSection
         ]
     }
 

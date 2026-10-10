@@ -100,6 +100,8 @@ nonisolated public struct CellScene: Sendable {
     public var hazards: [CellHazard] = []
     /// CELL `XCIM`, the interior's image space, spelled in `ownerPluginName`.
     public var imageSpace: FormID?
+    /// Activators and doors a behaviour graph animates, posed through their buffers.
+    public var animatedObjects: [CellAnimatedObject] = []
 
     public init(
         renderScene: RenderScene,

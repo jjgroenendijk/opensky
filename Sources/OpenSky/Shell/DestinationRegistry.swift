@@ -61,7 +61,7 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & LoadingScreenControlProviding & LockControlProviding & MagicEffectControlProviding
     & MapMenuControlProviding
     & MeleeCombatControlProviding
-    & MessageControlProviding
+    & MessageControlProviding & ObjectAnimationControlProviding
     & ParticleControlProviding
     & PerceptionControlProviding
     & PhysicsControlProviding
@@ -200,6 +200,7 @@ enum DestinationRegistry {
                 panel.sceneStatsProvider = context.providers
                 panel.triggerProvider = context.providers
                 panel.trapProvider = context.providers
+                panel.objectAnimationProvider = context.providers
                 panel.renderDebugProvider = context.providers
                 // None of the panel's own provider seams carry refocus, so the
                 // factory supplies it from the full provider set.

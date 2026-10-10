@@ -43,6 +43,8 @@ nonisolated public final class MeshLibrary {
     /// Mesh keys resolved since the last drain, so a cell build can record its
     /// mesh working set (for eviction keep-sets). Build-queue confined.
     private var touchedKeys: Set<String> = []
+    /// The behaviour project each object mesh names; nil inside means none.
+    var behaviorProjects: [String: String?] = [:]
     // Internal rather than private: the actor-facing loaders live in
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
     // extension in another file cannot reach `private` members. Still
@@ -112,7 +114,8 @@ nonisolated public final class MeshLibrary {
         actorSkeleton: ActorSkeletonAsset? = nil,
         explicitActorSkeleton: Bool = false,
         attachmentBone: String? = nil,
-        surface: ModelSurfaceOverride? = nil
+        surface: ModelSurfaceOverride? = nil,
+        bodyWeight: Float? = nil
     ) throws -> RenderModel {
         let pathKey = try meshKey(for: path)
         let key = cacheKey(
@@ -120,7 +123,8 @@ nonisolated public final class MeshLibrary {
             terrainLODClipMask: terrainLODClipMask,
             actorSkeletonKey: explicitActorSkeleton ? actorSkeleton?.pathKey ?? "none" : nil,
             attachmentBone: attachmentBone,
-            surface: surface
+            surface: surface,
+            bodyWeight: bodyWeight
         )
         touchedKeys.insert(key)
         if let hit = cache[key] {
@@ -142,6 +146,12 @@ nonisolated public final class MeshLibrary {
             let decodedParticles = decoded.particles
             var model = terrainLODClipMask
                 .map { TerrainLODClipper.clipped(decoded.model, to: $0) } ?? decoded.model
+            if let bodyWeight {
+                model = weightBlended(
+                    model, heavyPathKey: pathKey, weight: bodyWeight,
+                    actorSkeleton: actorSkeleton
+                )
+            }
             if let surface {
                 model = surface.applied(to: model)
             }
@@ -329,13 +339,16 @@ nonisolated public final class MeshLibrary {
         }
         return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
     }
+}
 
+nonisolated extension MeshLibrary {
     public func cacheKey(
         path: String,
         terrainLODClipMask: TerrainLODClipMask?,
         actorSkeletonKey: String? = nil,
         attachmentBone: String? = nil,
-        surface: ModelSurfaceOverride? = nil
+        surface: ModelSurfaceOverride? = nil,
+        bodyWeight: Float? = nil
     ) -> String {
         var key = path
         if let terrainLODClipMask {
@@ -350,7 +363,31 @@ nonisolated public final class MeshLibrary {
         if let surface, !surface.isEmpty {
             key += "|" + surface.cacheKey
         }
+        if let bodyWeight {
+            key += "|weight:\(Self.weightStep(bodyWeight))"
+        }
         return key
+    }
+
+    /// Weights round to tenths, so a cell of NPCs shares at most 11 copies of a body.
+    static func weightStep(_ weight: Float) -> Int {
+        Int((min(max(weight, 0), 1) * 10).rounded())
+    }
+
+    /// The heavy model blended with its `_0.nif` sibling. A missing or unreadable
+    /// sibling leaves the heavy model, as a vanilla piece without a thin file has.
+    private func weightBlended(
+        _ heavy: Model, heavyPathKey: String, weight: Float, actorSkeleton: ActorSkeletonAsset?
+    ) -> Model {
+        guard
+            let thinPath = BodyWeightBlend.thinPath(forHeavy: heavyPathKey),
+            let thin = try? decode(
+                pathKey: thinPath, actorSkeleton: actorSkeleton, explicitActorSkeleton: true
+            )
+        else { return heavy }
+        return BodyWeightBlend.blend(
+            thin: thin.model, heavy: heavy, weight: Float(Self.weightStep(weight)) / 10
+        )
     }
 }
 
@@ -392,5 +429,54 @@ nonisolated extension MeshLibrary {
     /// Whether the plain model of a normalized path is already uploaded.
     func isLoaded(pathKey: String) -> Bool {
         cache[cacheKey(path: pathKey, terrainLODClipMask: nil)] != nil
+    }
+}
+
+nonisolated extension MeshLibrary {
+    /// The behaviour project an object mesh names, or nil. Each path is read once.
+    public func behaviorProjectPath(forPath path: String) -> String? {
+        guard let pathKey = try? meshKey(for: path) else { return nil }
+        if let known = behaviorProjects[pathKey] {
+            return known
+        }
+        let project = (try? fileSystem.contents(forPath: pathKey))
+            .flatMap { try? NIFFile(data: $0) }
+            .flatMap(NIFBehaviorGraphExtraData.projectPath(in:))
+        behaviorProjects[pathKey] = .some(project)
+        return project
+    }
+
+    /// One reference's own copy of an animated object, with the meshes under
+    /// `bones` skinned to them. Own copy, because each object poses its palette.
+    public func animatedObjectModel(
+        path: String,
+        bones: Set<String>,
+        reference: UInt32,
+        surface: ModelSurfaceOverride
+    ) throws -> RenderModel {
+        let pathKey = try meshKey(for: path)
+        let key = cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)
+            + "|object:\(reference)"
+        touchedKeys.insert(key)
+        if let hit = cache[key] {
+            textures.markTouched(modelTextureKeys[key] ?? [])
+            return hit
+        }
+        guard let data = try? fileSystem.contents(forPath: pathKey) else {
+            throw MeshLibraryError.fileNotFound(path: pathKey)
+        }
+        let model: Model
+        do {
+            model = try surface.applied(to: NIFFile(data: data).nodeSkinnedModel(bones: bones))
+        } catch {
+            throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
+        }
+        guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
+        let render = try makeRenderModel(model, key: key)
+        cache[key] = render
+        skippedShapes[key] = model.skippedShapeCount
+        modelBounds[key] = ModelBounds.containing(model: model)
+        loadedCount += 1
+        return render
     }
 }

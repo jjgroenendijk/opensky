@@ -38,6 +38,8 @@ nonisolated extension NIFFile {
         public let hierarchy: NIFNodeHierarchy
         public let skeleton: NIFSkeleton?
         public var meshes: [Mesh] = []
+        /// The block index of each mesh, in `meshes` order.
+        public var meshBlocks: [Int] = []
         public var materials: [Material] = []
         public var slotIndexes: [SlotKey: Int] = [:]
         public var skippedShapeCount = 0
@@ -99,7 +101,7 @@ nonisolated extension NIFFile {
                         depth: visit.depth + 1
                     )
                 } else if Self.shapeTypes.contains(block.typeName) {
-                    try appendShape(block: block, parent: visit.parent)
+                    try appendShape(block: block, index: index, parent: visit.parent)
                 }
                 // Any other type is a leaf we do not draw (collision, shader
                 // properties, controllers…): subtree ends.
@@ -124,6 +126,7 @@ nonisolated extension NIFFile {
 
         private mutating func appendShape(
             block: NIFFile.Block,
+            index: Int,
             parent: float4x4
         ) throws {
             let shape: NIFTriShape = switch block.typeName {
@@ -177,6 +180,7 @@ nonisolated extension NIFFile {
                 materialSlot: slotIndex,
                 skinning: geometry.skinning
             ))
+            meshBlocks.append(index)
         }
 
         public struct ShapeGeometry: Sendable {

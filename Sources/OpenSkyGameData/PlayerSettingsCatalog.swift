@@ -242,7 +242,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             .choice(options: frameRateCapOptions.map(frameRateCapTitle)),
             "Frame rate cap", 0, applied: true
         )
-    ] + assetKindRows + textureFormatRows
+    ] + assetKindRows + textureFormatRows + characterRows
 }
 
 nonisolated extension PlayerSettingsCatalog {
@@ -348,6 +348,14 @@ nonisolated extension PlayerSettingID {
     /// Draws grass with object and mesh shaders that cull meshlets on the GPU.
     public static let meshShaderGrass = Self("rendering.meshShaderGrass")
     public static let fullScreen = Self("window.fullScreen")
+    /// Actors blink on their own.
+    public static let characterBlinking = Self("characters.blinking")
+    /// A speaker's face shows the emotion of the line it says.
+    public static let characterDialogueExpressions = Self("characters.dialogueExpressions")
+    /// Actors turn their heads toward what they look at.
+    public static let characterHeadTracking = Self("characters.headTracking")
+    /// Traps, doors, and levers play their behaviour graph animations.
+    public static let objectAnimation = Self("world.objectAnimation")
     /// An index into `PlayerSettingsCatalog.frameRateCapOptions`.
     public static let frameRateCap = Self("window.frameRateCap")
 
@@ -360,4 +368,16 @@ nonisolated extension PlayerSettingID {
     public static func textureFormat(group: String) -> Self {
         Self("assetOptimisation.textureFormat.\(group)")
     }
+}
+
+nonisolated extension PlayerSettingsCatalog {
+    private static let characterRows: [PlayerSettingDefinition] = [
+        row("characters.blinking", .opensky, .toggle, "Blinking", 1, applied: true),
+        row(
+            "characters.dialogueExpressions", .opensky, .toggle, "Dialogue expressions", 1,
+            applied: true
+        ),
+        row("characters.headTracking", .opensky, .toggle, "Head tracking", 1, applied: true),
+        row("world.objectAnimation", .opensky, .toggle, "Animated objects", 1, applied: true)
+    ]
 }
