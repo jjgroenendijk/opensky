@@ -95,7 +95,7 @@ nonisolated public struct TerrainSurfaceMaterials: Equatable, Sendable {
 
     private static func quadrant(_ index: UInt8, in land: Land) -> Quadrant {
         Quadrant(
-            base: land.baseTextures.first { $0.quadrant == index }?.texture,
+            base: land.baseTexture(quadrant: index),
             layers: land.layers
                 .filter { $0.quadrant == index }
                 .sorted { $0.layer < $1.layer }

@@ -44,9 +44,12 @@ For each quarter:
 - Layer weights go into a per-vertex stream of two float4 values, at most 8 layers.
 
 A land texture resolves through `LTEX` `TNAM` to `TXST` `TX00`. The path is normalized the same
-way as NIF texture paths, so terrain and objects share one texture cache. A missing base texture
-gives the fallback material. A broken layer is dropped with its weight, and the other weights stay
-in line. The cell summary counts drawn and dropped layers. Normal maps (`TX01`) are not used yet.
+way as NIF texture paths, so terrain and objects share one texture cache. A quadrant with no
+`BTXT` draws the default ground texture, the same as a null `LTEX`
+([LAND](/formats/land.md#texture-layers)); Helgen has such quadrants. A base texture whose
+link is broken gives the fallback material. A broken layer is dropped with its weight, and the
+other weights stay in line. The cell summary counts drawn and dropped layers. Normal maps
+(`TX01`) are not used yet.
 
 A cell's `XCLC` quad flags `0x1` to `0x8` hide the matching quarter. A hidden quarter has no
 mesh.

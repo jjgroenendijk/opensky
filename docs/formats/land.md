@@ -84,6 +84,11 @@ dev-4.1.6 (`wbLANDTextureToStr` in `wbDefinitionsCommon.pas`) shows it as the `L
 editor ID `LDirt02` for Skyrim. OpenSky resolves a null `LTEX` to `LDirt02`, for the
 texture, the grass, and the ground material.
 
+A quadrant may have no `BTXT` at all and only `ATXT` layers. Three quadrants of the Helgen
+cell (3, -20) are like this on the real install. OpenSky draws the default ground texture under
+such a quadrant, as for a null `LTEX`, and uses its ground material. This is UNCONFIRMED against
+the game, but the layers there blend into dirt and snow, not into a blank surface.
+
 OpenSky does not read `MPCD` (multi-pass color data, rare).
 
 ## LTEX
