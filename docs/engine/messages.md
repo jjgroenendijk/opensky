@@ -60,7 +60,10 @@ identifies and ends the help message". Rules:
 
 The count of times shown and the done flag per event are saved in the
 [`HELP` save chunk](/formats/opensky-save-world-chunks.md), so a done tutorial stays done after
-a load. OpenSky reports the `Jump`, `Sneak`, and `Activate` events from their keys.
+a load. OpenSky reports the `Jump`, `Sneak`, and `Activate` events from their keys, and the
+`Look` event when the pointer turns the view. The opening cart ride shows "Use [Look] to look
+around." with the `Look` event (`QF_MQ101_0003372B` calls `ShowAsHelpMessage` with it), so it
+stays until the player looks around.
 
 ## Message boxes
 
