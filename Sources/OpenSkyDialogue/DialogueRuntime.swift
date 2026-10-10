@@ -169,6 +169,15 @@ public struct DialogueRuntime: DialogueAccess {
                 }
             )
         }
+        guard questDialogueConditionsPass(topic, speaker: speaker, evaluator: &evaluator) else {
+            return DialogueTopicOffer(
+                topic: topic.formID,
+                info: infos.first?.formID ?? FormID(0),
+                considered: infos.map {
+                    DialogueInfoTrace(info: $0.formID, outcome: nil, rejection: .conditionsFailed)
+                }
+            )
+        }
         var traces: [DialogueInfoTrace] = []
         var winner: FormID?
         for info in infos {
@@ -217,6 +226,25 @@ public struct DialogueRuntime: DialogueAccess {
             outcome: outcome,
             rejection: outcome.isTrue ? nil : .conditionsFailed
         )
+    }
+
+    /// The owning quest's dialogue conditions, which every response of the
+    /// quest must also pass. They often name the speaker's voice type or faction.
+    private func questDialogueConditionsPass(
+        _ topic: DialogueTopic,
+        speaker: ReferenceKey,
+        evaluator: inout ConditionEvaluator
+    ) -> Bool {
+        guard
+            let id = topic.owningQuest,
+            let conditions = questStates.quest(id)?.dialogueConditions,
+            !conditions.isEmpty
+        else { return true }
+        evaluator.context.subject = speaker
+        evaluator.context.target = .player
+        evaluator.context.aliasQuest = id
+        evaluator.context.formIDTranslation = questStates.translation(of: id)
+        return evaluator.evaluate(conditions).isTrue
     }
 
     /// Whether the topic's owning quest is running. A topic naming no quest is

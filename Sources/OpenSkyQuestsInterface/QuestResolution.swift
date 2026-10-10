@@ -44,6 +44,12 @@ nonisolated public struct QuestResolution: Sendable {
         defaults.quest(id)
     }
 
+    /// Maps the quest's plugin-local FormIDs, such as those its conditions name,
+    /// into the load order.
+    public func translation(of id: FormID) -> FormIDTranslation? {
+        defaults.translation(of: id)
+    }
+
     public func state(editorID: String) -> QuestRuntimeState? {
         guard let id = defaults.formID(editorID: editorID) else { return nil }
         return state(for: id)
