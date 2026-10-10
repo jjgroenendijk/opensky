@@ -236,6 +236,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
     public var directionalAmbient: DirectionalAmbientColors
     public var wind: WindState
     public var precipitation: PrecipitationState
+    /// Both weathers' layers during a transition, each faded by its weight.
+    public var clouds: [ResolvedCloudLayer] = []
 
     /// Resolves one weather at `hour` under `timing`. Missing NAM0/FNAM/DALC
     /// fields resolve to zero/disabled rather than throwing (mod-quirk rule).
@@ -269,7 +271,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
                 weights: weights
             ),
             wind: WindState.from(weather.data),
-            precipitation: PrecipitationState(weather.data?.precipitation ?? .none)
+            precipitation: PrecipitationState(weather.data?.precipitation ?? .none),
+            clouds: ResolvedCloudLayer.layers(of: weather.sky, weights: weights)
         )
     }
 
@@ -305,7 +308,8 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
             wind: WindState.blend(lhs.wind, rhs.wind, time),
             precipitation: PrecipitationState.blend(
                 lhs.precipitation, rhs.precipitation, time
-            )
+            ),
+            clouds: lhs.clouds.map { $0.fading(1 - time) } + rhs.clouds.map { $0.fading(time) }
         )
     }
 
@@ -319,6 +323,9 @@ nonisolated public struct ResolvedWeather: Equatable, Sendable {
         result.horizon *= scale
         result.sun *= scale
         result.sunGlare *= scale
+        for index in result.clouds.indices {
+            result.clouds[index].color *= scale
+        }
         return result
     }
 

@@ -277,7 +277,9 @@ nonisolated extension CellSceneBuilder {
     ) throws -> ActorAnimationClip {
         try ActorAnimationClipLoader.clip(
             skeletonMeshPath: key.skeletonPath,
-            animationPath: ActorAnimationClipLoader.idleAnimationPath(female: key.female),
+            animationPath: ActorAnimationClipLoader.idleAnimationPath(
+                skeletonMeshPath: key.skeletonPath, female: key.female
+            ),
             readHKX: readHKX
         )
     }

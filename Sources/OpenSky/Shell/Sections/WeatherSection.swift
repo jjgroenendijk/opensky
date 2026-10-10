@@ -20,6 +20,7 @@ final class WeatherSection: PanelSectionViewController {
     let clearControl = NSButton(title: "Clear", target: nil, action: nil)
     let rainControl = NSButton(title: "Rain", target: nil, action: nil)
     let snowControl = NSButton(title: "Snow", target: nil, action: nil)
+    let cloudsControl = NSButton(checkboxWithTitle: "Clouds", target: nil, action: nil)
     let transitionsPausedControl = NSButton(
         checkboxWithTitle: "Pause transitions", target: nil, action: nil
     )
@@ -54,6 +55,7 @@ final class WeatherSection: PanelSectionViewController {
         return !provider.weatherEnabled
             || provider.weatherOverrideActive
             || provider.weatherTransitionsPaused
+            || !provider.cloudsEnabled
             || provider.timeOfDay != TimeOfDaySettings.fallback
     }
 
@@ -62,6 +64,7 @@ final class WeatherSection: PanelSectionViewController {
         provider.weatherEnabled = true
         provider.forceWeather(named: nil)
         provider.weatherTransitionsPaused = false
+        provider.cloudsEnabled = true
         provider.timeOfDay = TimeOfDaySettings.fallback
         TimeOfDaySettings.clearOverride()
     }
@@ -87,6 +90,10 @@ final class WeatherSection: PanelSectionViewController {
             transitionsPausedControl, target: self, action: #selector(pauseChanged),
             identifier: "WeatherTransitionsPausedControl"
         )
+        PanelComponents.configureCheckbox(
+            cloudsControl, target: self, action: #selector(cloudsChanged),
+            identifier: "WeatherCloudsControl"
+        )
 
         timeControl.target = self
         timeControl.action = #selector(timeChanged)
@@ -101,7 +108,7 @@ final class WeatherSection: PanelSectionViewController {
 
         return [
             PanelComponents.group([
-                enabledControl, weatherControl, presets, transitionsPausedControl
+                enabledControl, weatherControl, presets, transitionsPausedControl, cloudsControl
             ]),
             PanelComponents.group([
                 PanelComponents.caption("Time of day"), timeControl, timeLabel
@@ -134,6 +141,8 @@ final class WeatherSection: PanelSectionViewController {
         }
         transitionsPausedControl.isEnabled = !names.isEmpty
         transitionsPausedControl.state = provider?.weatherTransitionsPaused == true ? .on : .off
+        cloudsControl.isEnabled = !names.isEmpty
+        cloudsControl.state = provider?.cloudsEnabled == false ? .off : .on
         let current = provider?.currentWeatherName
         if let current, weatherControl.itemTitles.contains(current) {
             weatherControl.selectItem(withTitle: current)
@@ -189,6 +198,11 @@ final class WeatherSection: PanelSectionViewController {
         finishInteraction()
     }
 
+    @objc private func cloudsChanged() {
+        provider?.cloudsEnabled = cloudsControl.state == .on
+        finishInteraction()
+    }
+
     @objc private func timeChanged() {
         let hour = Float(timeControl.doubleValue)
         provider?.timeOfDay = hour
@@ -214,6 +228,7 @@ final class WeatherSection: PanelSectionViewController {
         statsLabel.stringValue = """
         Weather: \(name) (blend \(progress)%)\(paused)
         Wind: \(String(format: "%.2f", wind.speed)) @ \(heading)°
+        Clouds: \(provider.cloudReadout)
         """
     }
 

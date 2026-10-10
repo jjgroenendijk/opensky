@@ -21,7 +21,7 @@ nonisolated extension CellSceneBuilder {
     nonisolated public func collectHazards(
         in cell: FoundCell,
         resolved: EffectiveReferences,
-        parentPool: [FormID: PlacedReference] = [:]
+        parentPool: EnableParentPool = EnableParentPool()
     ) -> [CellHazard] {
         let placed = mergingLater(
             baseHazards(in: cell.children),
@@ -31,11 +31,7 @@ nonisolated extension CellSceneBuilder {
             try $0.record.decode(PlacedProjectile.init(record:))
         } failed: { _ in }
         let byFormID = entriesByFormID(resolved.entries)
-        let enable = EnableParentResolver(deltas: resolved.deltas) { formID in
-            byFormID[formID] ?? parentPool[formID].flatMap { reference in
-                self.runtimeEntry(formID: formID, isPersistent: true, record: .reference(reference))
-            }
-        }
+        let enable = enableResolver(entries: byFormID, pool: parentPool, deltas: resolved.deltas)
         return placed.compactMap { placed in
             guard
                 let key = ReferenceKey.resolve(placed.formID, using: formIDResolver),

@@ -116,6 +116,7 @@ nonisolated public enum AIPackageReadout: Sendable {
         case .moving: "moving"
         case .idleStop: "pausing"
         case let .looping(clip): "looping \(clip.rawValue)"
+        case .waiting: "waiting"
         case .complete: "done"
         case .failed: "failed"
         }
@@ -145,6 +146,7 @@ nonisolated public enum AIPackageReadout: Sendable {
         case .sandbox: "sandbox"
         case .sleep: "sleep"
         case .eat: "eat"
+        case .wait: "wait"
         case let .unsupported(name): "unsupported (\(name))"
         }
     }

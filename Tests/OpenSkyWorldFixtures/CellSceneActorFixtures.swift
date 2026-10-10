@@ -15,11 +15,13 @@ extension CellSceneBuilderFixture {
         base: UInt32,
         position: SIMD3<Float> = .zero,
         headerFlags: UInt32 = 0,
-        includePlacement: Bool = true
+        includePlacement: Bool = true,
+        enableParent: UInt32? = nil
     ) -> Data {
         var name = Data()
         name.appendUInt32(base)
         var fields = ESMFixture.field("NAME", name)
+        fields += enableParentField(enableParent)
         if includePlacement {
             var data = Data()
             for value in [position.x, position.y, position.z, 0, 0, 0] {

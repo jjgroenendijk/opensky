@@ -1,6 +1,6 @@
 // Vehicles: a cart tethered to its horse, and riders sitting on the cart. A
-// follower keeps the offset it had to its carrier when it was attached, so it
-// moves as the carrier moves (<https://ck.uesp.net/wiki/SetVehicle_-_Actor>).
+// follower keeps a fixed offset to its carrier, so it moves as the carrier moves
+// (<https://ck.uesp.net/wiki/SetVehicle_-_Actor>).
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -17,6 +17,9 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     /// The cart exit idles send this when the rider stands beside the cart, which
     /// takes it off the vehicle. See docs/engine/vehicles.md.
     public static let exitEvent = "ExitCartEnd"
+    /// Where the player's feet sit in the cart frame: seat C of the cart idles, less
+    /// the standing hip height. See docs/engine/vehicles.md.
+    public static let playerSeat = SIMD3<Float>(-42.0, -104.7, 67.5)
     /// A chain longer than this is a loop in plugin or script data.
     private static let maximumDepth = 8
 
@@ -32,11 +35,28 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         followerPose: ReferenceTransformOverride,
         carrierPose: ReferenceTransformOverride
     ) -> Bool {
-        guard follower != carrier, !carries(follower, carrier) else { return false }
-        links[follower] = VehicleLink(
-            carrier: carrier,
+        link(
+            follower, to: carrier,
             offset: Self.matrix(carrierPose).inverse * Self.matrix(followerPose)
         )
+    }
+
+    /// `SetVehicle`: a rider's root sits on the vehicle's root, and its seat idle
+    /// moves the body into its seat. The player plays no idle, so it gets a seat.
+    @discardableResult
+    public mutating func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool {
+        var offset = matrix_identity_float4x4
+        if rider == .player {
+            offset.columns.3 = SIMD4(Self.playerSeat, 1)
+        }
+        return link(rider, to: vehicle, offset: offset)
+    }
+
+    private mutating func link(
+        _ follower: ReferenceKey, to carrier: ReferenceKey, offset: float4x4
+    ) -> Bool {
+        guard follower != carrier, !carries(follower, carrier) else { return false }
+        links[follower] = VehicleLink(carrier: carrier, offset: offset)
         return true
     }
 

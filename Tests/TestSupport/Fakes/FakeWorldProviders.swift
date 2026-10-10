@@ -54,6 +54,7 @@ final class FakeWorldProviders: WorldControlProviders {
     var weatherTransitionFraction: Float = 0
     var weatherTransitionsPaused = false
     var windState: WindState = .calm
+    var cloudsEnabled = true
     // `timeOfDay` is deliberately not stored here: the live implementation
     // routes it through the same game-clock seam the Runtime State panel uses,
     // so the fake forwards it too (DestinationRegistryRuntimeStateTests).

@@ -37,6 +37,7 @@ public final class Renderer: NSObject {
     public let commandAllocators: [MTL4CommandAllocator]
     public let argumentTable: MTL4ArgumentTable
     public let skyPipeline: MTLRenderPipelineState
+    public let cloudPipeline: MTLRenderPipelineState
     public let opaquePipeline: MTLRenderPipelineState
     public let alphaTestPipeline: MTLRenderPipelineState
     public let blendedPipeline: MTLRenderPipelineState
@@ -166,6 +167,9 @@ public final class Renderer: NSObject {
     var instanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public var currentResolvedWeather: ResolvedWeather?
+    /// The weather's cloud layers; nil keeps the plain sky gradient.
+    public var skyClouds: SkyClouds?
+    public var cloudsEnabled = true
     /// The post-process values and running modifiers the composite pass applies.
     public var imageSpace = ImageSpaceState()
     public let precipitation: PrecipitationVolume
@@ -331,7 +335,8 @@ public final class Renderer: NSObject {
         let compiler = try pipelineCache ?? PipelineCache(device: device, fileURL: nil)
         self.pipelineCache = compiler
         let pipelines = try Self.makePipelines(view: view, library: library, compiler: compiler)
-        (skyPipeline, opaquePipeline) = (pipelines.sky, pipelines.opaque)
+        (skyPipeline, cloudPipeline) = (pipelines.sky, pipelines.clouds)
+        opaquePipeline = pipelines.opaque
         (alphaTestPipeline, blendedPipeline) = (pipelines.alphaTest, pipelines.blended)
         skinnedOpaquePipeline = pipelines.skinnedOpaque
         (skinnedAlphaTestPipeline, grassPipeline) = (pipelines.skinnedAlphaTest, pipelines.grass)

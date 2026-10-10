@@ -91,9 +91,13 @@ by its cell, which is freed with the cell. The clip data can stay cached.
 One update samples each clip once, and fills each shared mesh's palette once. Actors that share a
 body share the pose, so there is no repeated work.
 
-Only known human skeletons play clips. Creatures, and actors with a missing skeleton, stay in the
-bind pose. Each drawn actor is counted as animated or static, and each static one has its `ACHR`
-and a reason. So an actor with a missing clip still shows.
+A character skeleton under `meshes\actors\character\` plays the gendered `mt_` clips. A creature
+skeleton, such as `meshes\actors\horse\character assets\skeleton.nif`, plays the clips in the
+`animations` folder beside its `character assets` folder: `idle.hkx`, `walkforward.hkx`, and
+`runforward.hkx`. These names were checked on the install for the horse and most other creatures.
+A creature without one of them stays in its last clip. Its behaviour graph does not run.
+Actors with a missing skeleton stay in the bind pose. Each drawn actor is counted as animated or
+static, and each static one has its `ACHR` and a reason. So an actor with a missing clip still shows.
 
 ## Time and controls
 

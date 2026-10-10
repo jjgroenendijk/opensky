@@ -4,6 +4,10 @@
 @testable import OpenSkyRendering
 
 extension FakeWorldProviders {
+    var cloudReadout: String {
+        cloudsEnabled ? "4 of 4 layers" : "off"
+    }
+
     var renderDebugMode: RenderDebugMode {
         get { renderDebug.mode }
         set { renderDebug.mode = newValue }

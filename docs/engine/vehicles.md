@@ -21,9 +21,21 @@ checked against the `MQ101` fragments in the user's install.
 - `SetVehicle(cart)` on an actor links the actor to the cart. `SetVehicle(None)` takes
   the actor off again.
 
-A link stores one offset: the follower's pose in the carrier's frame at the moment of the
-link. Each frame the follower's pose is the carrier's live pose times that offset. So a
-rider follows the cart, and the cart follows the horse, through one chain.
+A link stores one offset: the follower's pose in the carrier's frame. Each frame the
+follower's pose is the carrier's live pose times that offset. So a rider follows the cart,
+and the cart follows the horse, through one chain.
+
+A tether keeps the offset the cart had to the horse at the moment of the link. `SetVehicle`
+does not: it puts the rider's root on the cart's root. The cart idle then moves the body
+into its seat. In the cart idles, such as `IdleCartPrisonerASway`, the root bone has no
+offset and the `NPC COM` bone carries the seat, for example (-33.5, -199.6, 138.8) for seat
+A, in the cart's frame. Seats B, C, and D are further forward, and the driver is at the
+front. This was read from the clips on the install.
+
+The player plays no cart idle, so its feet get a fixed seat: seat C at (-42.0, -104.7), and
+67.5 units up. That height is seat C's hip height, 138.8, less a standing hip height of 71.3,
+the `NPC COM` height at the end of the cart exit clip. So the eye sits about where a seated
+rider's eye is. [WARNING] This seat is derived from the clips, not from an open spec.
 
 A link that would make a loop is refused. A chain deeper than 8 links gives no pose,
 because only a loop in plugin or script data can make one.
@@ -71,6 +83,7 @@ its carrier, its last pose is kept as a transform override.
 
 ## Where OpenSky differs
 
-- `Game.SetHudCartMode` and `Game.SetSittingRotation` do nothing yet. The first hides the
-  HUD during the ride; the second turns the rider in the seat.
+- `Game.SetHudCartMode` and `Game.SetSittingRotation` do nothing yet. The HUD movie has a
+  `CartMode` among its HUD modes, but OpenSky does not drive HUD modes yet. The second turns
+  the player in the seat; the player keeps the view it had.
 - The cart's wheels do not turn, and the cart does not tilt on uneven ground.

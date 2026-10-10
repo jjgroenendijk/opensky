@@ -82,6 +82,15 @@ extension WorldRenderControlForwarding {
         set { renderControls.timeOfDay = newValue }
     }
 
+    public var cloudsEnabled: Bool {
+        get { renderControls.cloudsEnabled }
+        set { renderControls.cloudsEnabled = newValue }
+    }
+
+    public var cloudReadout: String {
+        renderControls.cloudReadout
+    }
+
     public var actorAnimationsEnabled: Bool {
         get { renderControls.actorAnimationsEnabled }
         set { renderControls.actorAnimationsEnabled = newValue }

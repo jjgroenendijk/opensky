@@ -7,6 +7,17 @@ import OpenSkyRendering
 
 /// Where the session finds effect records (`IMGS`, `SPGD`), and the cell link an
 /// interior names.
+extension Renderer {
+    /// The session's weather and its cloud layers. Without weather data the renderer
+    /// keeps its procedural sky.
+    public func attachWeather(from provider: Any?) throws {
+        weather = (provider as? WeatherProviding)?.weatherSystem
+        if let files = (provider as? ScriptDataProviding)?.scriptFileSystem {
+            skyClouds = try SkyClouds(fileSystem: files, device: device)
+        }
+    }
+}
+
 nonisolated public struct ImageSpaceLinks: Sendable {
     public let records: EffectRecordStore
     /// The plugin the weather store's `IMSP` links are spelled in.
@@ -40,7 +51,10 @@ extension Renderer {
     /// Advances weather and caches this frame's resolve; nil without a weather system.
     /// Rerolls count real game hours, so a fixed clock (offscreen, CLI) never rerolls.
     public func updateWeather(deltaTime: Float) {
-        defer { updateImageSpace(deltaTime: deltaTime) }
+        defer {
+            updateImageSpace(deltaTime: deltaTime)
+            prepareClouds()
+        }
         guard weatherEnabled, let weather else {
             currentResolvedWeather = nil
             return

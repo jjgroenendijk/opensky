@@ -82,4 +82,14 @@ struct VehicleCoreTests {
         core.detach(Self.cart)
         #expect(core.links.isEmpty)
     }
+
+    @Test func aRiderBoardsOnTheVehicleRoot() throws {
+        var core = VehicleCore()
+        core.board(Self.horse, on: Self.cart)
+        core.board(.player, on: Self.cart)
+        let poses = core.poses { _ in ReferenceTransformOverride(position: [100, 50, 10]) }
+        #expect(try Self.near(#require(poses[Self.horse]).position, [100, 50, 10]))
+        let player = try #require(poses[.player])
+        #expect(Self.near(player.position, SIMD3(100, 50, 10) + VehicleCore.playerSeat))
+    }
 }

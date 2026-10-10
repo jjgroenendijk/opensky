@@ -51,6 +51,37 @@ extension CellSceneBuilderTests {
         #expect(scene.renderScene.instanceCount == 0)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func enabledParentOutweighsChildDisabledFlag() throws {
+        try writeLooseFile("meshes/torso_m.nif", unitNIF())
+        // The child lies in cell (6,-2); its enabled parent is persistent elsewhere.
+        let scene = try build(pluginData: plugin(
+            temporaryRefs: achrRecord(
+                formID: 0x901, base: 0x800, headerFlags: 0x0000_0800, enableParent: 0x900
+            ),
+            modelBaseRecords: actorChainRecords(npc: 0x800),
+            extraWorldChildren: persistentActorCell(
+                refs: achrRecord(formID: 0x900, base: 0x800, position: SIMD3(29000, -6000, 10))
+            )
+        ))
+        #expect(scene.summary.actorDrawnCount == 1)
+        #expect(scene.summary.actorDisabledSkipCount == 0)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func referenceFollowsADisabledActorParent() throws {
+        try writeLooseFile("meshes/arch/wall.nif", staticNIF(positions: [
+            SIMD3(0, 0, 0), SIMD3(2, 0, 0), SIMD3(0, 4, 6)
+        ]))
+        let scene = try build(pluginData: plugin(
+            temporaryRefs: refrRecord(formID: 0x200, base: 0x100, enableParent: 0x900),
+            statRecords: statRecord(formID: 0x100, modelPath: "arch\\wall.nif"),
+            extraWorldChildren: persistentActorCell(refs: achrRecord(
+                formID: 0x900, base: 0x800, position: SIMD3(29000, -6000, 10),
+                headerFlags: 0x0000_0800
+            ))
+        ))
+        #expect(scene.summary.drawnRefCount == 0)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func unresolvableActorBaseCountsFailed() throws {
         let scene = try build(pluginData: plugin(
             temporaryRefs: achrRecord(formID: 0x900, base: 0xDEAD)
