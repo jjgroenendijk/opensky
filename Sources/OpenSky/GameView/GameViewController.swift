@@ -474,18 +474,22 @@ extension GameViewController {
     }
 
     /// Saves the next frame the window presents, without app chrome. Gives up after
-    /// 60 drawn frames, or 10 s with no frame: a hidden window presents none. Frames,
-    /// not seconds, bound the wait, because a busy main actor draws few frames a second.
+    /// 60 drawn frames with no copy, or 10 s: a hidden window encodes none. Frames bound
+    /// that wait, because a busy main actor draws few frames a second. An encoded copy
+    /// waits for a busy GPU until the 10 s end.
     func writeScreenshot(to url: URL) async throws {
         guard let renderer else { throw ScreenshotError.rendererNotReady }
         renderer.requestWindowCapture()
         let firstFrame = renderer.frameIndex
         let clock = ContinuousClock()
         let deadline = clock.now + .seconds(10)
-        while clock.now < deadline, renderer.frameIndex - firstFrame < 60 {
+        while clock.now < deadline {
             if let texture = renderer.takeWindowCapture() {
                 try FrameScreenshot.write(texture: texture, to: url)
                 return
+            }
+            if !renderer.hasEncodedWindowCapture, renderer.frameIndex - firstFrame >= 60 {
+                break
             }
             try await Task.sleep(for: .milliseconds(8))
         }

@@ -21,6 +21,14 @@ extension Renderer {
         windowCapture = .requested
     }
 
+    /// A frame has encoded the copy; the GPU may still be finishing it.
+    public var hasEncodedWindowCapture: Bool {
+        if case .copied = windowCapture {
+            return true
+        }
+        return false
+    }
+
     /// The copied frame once the GPU has finished it, else nil. Taking it ends
     /// the capture.
     public func takeWindowCapture() -> MTLTexture? {
