@@ -35,7 +35,7 @@ CURRENT_PROJECT_VERSION = 1
 MARKETING_VERSION = 1.0
 PRODUCT_NAME = $(TARGET_NAME)
 
-// Signing. CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM live in Config/Build/Signing.xcconfig,
+// Signing. CODE_SIGN_IDENTITY and DEVELOPMENT_TEAM live in config/Build/Signing.xcconfig,
 // which every target that produces a bundle includes.
 CODE_SIGN_STYLE = Automatic
 

@@ -6,7 +6,7 @@
 
 import PackageDescription
 
-/// The same language settings as Config/Build/Base.xcconfig. Change both together.
+/// The same language settings as config/Build/Base.xcconfig. Change both together.
 let languageSettings: [SwiftSetting] = [
     .enableUpcomingFeature("MemberImportVisibility"),
     .enableUpcomingFeature("NonisolatedNonsendingByDefault"),

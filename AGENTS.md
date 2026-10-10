@@ -84,8 +84,8 @@ conflict.
 
 - `Package.swift` declares every engine module. `docs/tools/modules.md` lists each one with
   its layer and gives the import rules. Read it before you add a module or an import.
-- `Config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
-  (`docs/tools/build-system.md`). `Config/TestPlans/` holds the test plans
+- `config/Build/*.xcconfig` holds every build setting, signing included, never the pbxproj
+  (`docs/tools/build-system.md`). `config/TestPlans/` holds the test plans
   (`docs/tools/test-runs.md`).
 - `.logs/` and `.vendor/` are gitignored. A script writes its output into
   `.logs/<script>/<UTC timestamp>/` through `tools/run-dir.sh` and points `latest` at it.

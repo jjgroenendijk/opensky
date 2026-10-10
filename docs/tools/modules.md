@@ -86,7 +86,7 @@ import it. Example: `OpenSkyPreview` prints records with the whole-game conditio
 both the Preview panel and `openskycli record` use it.
 
 The helpers also give every target the same settings: the language settings of
-`Config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
+`config/Build/Base.xcconfig`, `MainActor` default isolation for library code, and the header
 path of the vendored ffmpeg. Test targets also link ffmpeg, because a package test executable
 has no `OTHER_LDFLAGS`. Change the settings in `Package.swift` and the xcconfig together.
 
@@ -189,7 +189,7 @@ the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
 
 SwiftPM can compile a `.metal` resource, but it ignores header search paths and the Metal settings
-in `Config/Build/`, such as warnings as errors. So the shaders stay outside the package.
+in `config/Build/`, such as warnings as errors. So the shaders stay outside the package.
 
 ## Keeping the lines clean
 

@@ -33,7 +33,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Parser | New or updated synthetic-fixture tests, `make test-package T='OpenSkyFormatsESMTests/Suite'`, then `make test-unit PLAN=Formats` |
 | Math routine | New or updated tests, `make test-package T='Target/Suite'` for the suites that cover it |
 | Engine logic in one subsystem | `make test-unit PLAN=<layer>` for its layer (`Engine`, `Features`, or `App`), narrowed with `T=` while iterating |
-| Shared types, `ShaderTypes.h`, project or `Config/` files, file moves between `OpenSky/` and a package module | `make build-app`, `make build-cli`, or `make build-tests` for the products the change reaches, then `make test-unit` |
+| Shared types, `ShaderTypes.h`, project or `config/` files, file moves between `OpenSky/` and a package module | `make build-app`, `make build-cli`, or `make build-tests` for the products the change reaches, then `make test-unit` |
 | Rendering or shaders | `make test-unit PLAN=GPU`, plus an offscreen render the user can look at (`probing-real-game-data` skill); a green build does not prove a triangle appeared |
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill and `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |

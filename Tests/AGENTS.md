@@ -61,7 +61,7 @@ shaders first (`make shader-library`).
 
 ## Test plans
 
-`Config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
+`config/TestPlans/` holds the checked-in plans, so which bundles a run touches is
 reviewable configuration, not a flag. A plan builds only the bundles it lists, so the
 smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 

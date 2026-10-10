@@ -19,7 +19,7 @@ Which bundles a run touches is a checked-in test plan, not a flag. Each `make te
 one plain `xcodebuild test` call on one plan, with no script between `make` and `xcodebuild`, so the
 plan decides what runs. `make lint-test-targets` fails a target that runs tests under another name.
 A plan builds only the bundles it lists, and the build is most of a run's time, so the plans are
-small. The `OpenSky` scheme has these plans, under `Config/TestPlans/`:
+small. The `OpenSky` scheme has these plans, under `config/TestPlans/`:
 
 | Plan | Test targets | Used by |
 | --- | --- | --- |
@@ -176,7 +176,7 @@ format family and subsystem, so a change gets a real-data check in minutes. `ALL
 
 ## The RealData plan
 
-`Config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
+`config/TestPlans/RealData.xctestplan` holds a literal install path. A plan value is not
 macro-expanded, so `$(OPENSKY_DATA_ROOT)` would arrive as those characters. The `RealDataAll` and
 Perf plans hold the same path, and `make lint-test-plans` fails when they differ. An exported
 `OPENSKY_DATA_ROOT` does not change it. To use another install, edit all three plans.
@@ -204,7 +204,7 @@ compiles without them, and both write the same package intermediates under `Buil
 Without a fix, `make build-cli` after `make test-unit` would recompile the whole engine, and the
 next test build would do it again. The `Makefile` therefore passes `CLANG_COVERAGE_MAPPING=YES`
 on every Debug command line (`COVERAGE_Debug`), and `tools/probe.sh` does the same. It has to be
-the command line: xcodebuild sets this setting per action above `Config/Build/Overrides.xcconfig`,
+the command line: xcodebuild sets this setting per action above `config/Build/Overrides.xcconfig`,
 so an xcconfig value does not reach the compiler. A Release build stays without coverage. An
 instrumented program writes `default.profraw` into its working directory when it exits;
 `.gitignore` covers it.

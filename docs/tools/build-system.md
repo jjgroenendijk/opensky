@@ -1,7 +1,7 @@
 ---
 type: Tool
 title: Build system and xcodebuild invocation
-description: How the Makefile and the tools/ scripts share one xcodebuild invocation - the Config/
+description: How the Makefile and the tools/ scripts share one xcodebuild invocation - the config/
   xcconfig layer, the OpenSkyShaderTypes module, compilation caching across worktrees, signing,
   output filtering, warnings as errors, and the products path.
 tags: [tool, build, make, xcodebuild]
@@ -82,14 +82,14 @@ fit in memory. `make test-rerun` takes no lock, because it compiles nothing.
 | `OPENSKY_MAX_ERRORS` | `40` | How many unique errors the filtered output prints |
 | `OPENSKY_BUILD_SLOTS` | `2` | How many builds run on the machine at once |
 
-## Build settings in Config/
+## Build settings in config/
 
-Every build setting is in a text file under `Config/Build/`. The project file has empty
+Every build setting is in a text file under `config/Build/`. The project file has empty
 `buildSettings` and names these files as bases. So a setting change is a one-line diff a review can
 read, and the project file, the worst merge conflict surface, holds no copies of the values.
 
 ```text
-Config/
+config/
 ├── Build/
 │   ├── Base.xcconfig        deployment target, SDK, Swift mode, warnings, versioning
 │   ├── Debug.xcconfig       #include Base + -Onone, dwarf, testability, prefix mapping
@@ -104,7 +104,7 @@ Config/
     └── *.xctestplan         the four test plans (see test runs)
 ```
 
-The test plans are in `Config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
+The test plans are in `config/TestPlans/` for the same reason ([test runs](/tools/test-runs.md)).
 `Debug.xcconfig` and `Release.xcconfig` are the project's base configurations for every target. The
 target files sit above them and apply to both configurations of one target. Only a setting that
 differs per configuration inside one target still belongs in the project file.
@@ -116,7 +116,7 @@ file above every target in the build. A build started from the Xcode window does
 it only turns off a missing-dependency check that is wrong for package framework variants
 ([environment](/tools/environment.md#package-framework-variants-warn-about-declared-dependencies)).
 
-`tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `Config/Build/*.xcconfig` and the project
+`tools/lint/swift-baseline.sh` reads `SWIFT_VERSION` from `config/Build/*.xcconfig` and the project
 file, so the Swift 6 mode check still catches a configuration that slips back
 ([Swift toolchain](/tools/swift-toolchain.md)).
 
@@ -141,7 +141,7 @@ every compile task. The reason for the module is explicit dependencies and two d
 
 ## Compilation caching
 
-`COMPILATION_CACHE_ENABLE_CACHING = YES` in `Config/Build/Base.xcconfig` turns on Xcode 26's compilation
+`COMPILATION_CACHE_ENABLE_CACHING = YES` in `config/Build/Base.xcconfig` turns on Xcode 26's compilation
 cache. Each compile task is keyed on its command line and inputs, and a task with a known key
 replays the stored result instead of compiling. Explicit modules, which the cache needs, are already
 on by default. The store is `$(COMPILATION_CACHE)`, passed as `COMPILATION_CACHE_CAS_PATH` on every
@@ -179,7 +179,7 @@ store over by size instead ([CI](/tools/ci.md#caches)).
 ### One store for every worktree
 
 Without prefix mapping, every project task's key holds the absolute source path, so a new worktree
-hit only SDK module builds. `Config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
+hit only SDK module builds. `config/Build/Debug.xcconfig` sets `SWIFT_ENABLE_PREFIX_MAPPING`,
 `SWIFT_ENABLE_PROJECT_PREFIX_MAPPING`, `CLANG_ENABLE_PREFIX_MAPPING`, and
 `CLANG_ENABLE_PROJECT_PREFIX_MAPPING`. Xcode then rewrites the checkout path to `/^src`, derived-data
 temporaries to `/^derived`, and products to `/^built`, so the same source gets the same key in any
@@ -201,7 +201,7 @@ The mapping has three costs:
 
 ## Signing
 
-`Config/Build/Signing.xcconfig` names the identity and team, and every target that makes a bundle
+`config/Build/Signing.xcconfig` names the identity and team, and every target that makes a bundle
 includes it: the app, the CLI, the unit test bundles, and the UI test runner.
 
 ```text
@@ -223,7 +223,7 @@ A machine without the certificate, and CI, override on the command line, which b
 make test-unit XCODEBUILD_FLAGS='CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM='
 ```
 
-A hand-written, gitignored `Config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
+A hand-written, gitignored `config/Build/Local.xcconfig` is the lasting form; the `#include?` picks
 it up. Check a build with `codesign -dv --verbose=2 <bundle>`: `Authority=Apple Development: ...`
 with a `TeamIdentifier` is right, and `Signature=adhoc` causes repeated prompts.
 
@@ -289,7 +289,7 @@ issue with the transcript: it means a case the flag does not cover.
 
 ## Warnings are errors
 
-`SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `Config/Build/Base.xcconfig`, next to
+`SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `config/Build/Base.xcconfig`, next to
 `MTL_TREAT_WARNINGS_AS_ERRORS`, so it covers every target. SwiftLint never sees compiler warnings,
 and before this setting the test targets had gathered about a hundred. Expect a toolchain upgrade that
 adds a deprecation warning to break the build. Fix the warning. Do not turn the setting off.

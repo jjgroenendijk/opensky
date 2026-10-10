@@ -109,7 +109,7 @@ The plan is built from that fixed set of path shapes and nothing else — there 
 "delete everything untracked" rule, and no rule reaches a source directory. Every entry is
 checked before deletion to sit inside this checkout, the worktree home, or the cache root, and the checkout
 roots themselves are refused outright; a path that fails the check aborts the run instead
-of being deleted. Sources, `Config/Build/Local.xcconfig`, and the shared `.vendor/ffmpeg` prefix
+of being deleted. Sources, `config/Build/Local.xcconfig`, and the shared `.vendor/ffmpeg` prefix
 are out of scope.
 
 `make clean` remains the way to empty the current checkout: it deletes this checkout's

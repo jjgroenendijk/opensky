@@ -39,7 +39,7 @@ XCODEBUILD_DD    := -derivedDataPath $(DERIVED_DATA)
 export OPENSKY_DERIVED_DATA := $(DERIVED_DATA)
 # The compilation cache store. Every worktree shares the main checkout's, which
 # stays on the data volume because it runs to tens of gigabytes. Prefix mapping in
-# Config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
+# config/Build/Debug.xcconfig makes the keys the same in every worktree. It lives
 # in a hidden folder: xcodebuild scans every visible file under the package root
 # at each start, and the store holds hundreds of thousands (docs/tools/build-system.md).
 SHARED_ROOT      := $(abspath $(dir $(shell git rev-parse --git-common-dir)))
@@ -47,9 +47,9 @@ COMPILATION_CACHE ?= $(or $(OPENSKY_COMPILATION_CACHE),$(SHARED_ROOT)/.cache/Com
 export OPENSKY_COMPILATION_CACHE := $(COMPILATION_CACHE)
 # The unused-code scan's own build tree: uncached, so its index store is complete.
 INDEX_DATA       ?= $(DERIVED_DATA)-index
-# Settings that must also reach package targets (Config/Build/Overrides.xcconfig).
+# Settings that must also reach package targets (config/Build/Overrides.xcconfig).
 # xcodebuild reads this variable, so every xcodebuild in make and tools/ gets it.
-export XCODE_XCCONFIG_FILE := $(CURDIR)/Config/Build/Overrides.xcconfig
+export XCODE_XCCONFIG_FILE := $(CURDIR)/config/Build/Overrides.xcconfig
 # Test result bundles. They live under the build cache rather than build/: xcodebuild
 # watches the package root, and a result bundle growing there during `test` makes it
 # re-resolve the package mid-run, which crashes it once the package is large (#582).
@@ -108,7 +108,7 @@ SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
 SHADER_FILES     := $(sort $(wildcard Sources/Shaders/*.metal))
 SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) Sources/OpenSkyShaderTypes/ShaderTypes.h
-# Mirrors the Metal settings in Config/Build/*.xcconfig; change both together.
+# Mirrors the Metal settings in config/Build/*.xcconfig; change both together.
 METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 	-I Sources/OpenSkyShaderTypes
 
@@ -125,7 +125,7 @@ COVERAGE_FLOOR   := 80
 ICON_SVG         := Sources/OpenSky/Resources/Branding/opensky-logo.svg
 ICON_DIR         := Sources/OpenSky/Resources/Assets.xcassets/AppIcon.appiconset
 
-# Test plans (Config/TestPlans/*.xctestplan) choose which test bundles a run builds
+# Test plans (config/TestPlans/*.xctestplan) choose which test bundles a run builds
 # and runs, instead of -only-testing flags (issue #346). A plan builds only the
 # bundles it lists, so the layer plans are the quick runs. The UI bundle must never
 # share a plan with an app-hosted bundle (OpenSkyTests, OpenSkyRealDataTests): both
@@ -441,7 +441,7 @@ xctestrun = $(lastword $(sort $(wildcard $(DERIVED_DATA)/Build/Products/$(SCHEME
 test-rerun: ## Rerun the last built plan without the build system [PLAN=Quick|...] [T='Target/Suite/test()']
 	@$(check_plan)test -n "$(xctestrun)" || { \
 		echo "[ERROR] no built $(PLAN) plan under $(DERIVED_DATA): run make test-unit PLAN=$(PLAN) first" >&2; exit 2; }
-	@newer="$$(find Sources Tests Config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
+	@newer="$$(find Sources Tests config Package.swift -type f -newer "$(xctestrun)" 2>/dev/null | head -n 1)"; \
 		[ -z "$$newer" ] || echo "[WARNING] $$newer changed after the last build of $(PLAN); run make test-unit PLAN=$(PLAN) to rebuild"
 	@$(XCB_RUN) test-rerun xcodebuild -xctestrun "$(xctestrun)" $(XCODEBUILD_DD) \
 		-destination '$(DESTINATION)' $(call test_bundle,rerun-$(PLAN)) \

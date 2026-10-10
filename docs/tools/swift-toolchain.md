@@ -21,7 +21,7 @@ reachable as `make swift-baseline`, so neither can regress silently.
   minimum, so 6.3.3 and 6.4.1 both fail. A version without a patch number matches the same
   version with `.0`. A missing or non-Apple `swiftc` fails the same way.
 * Any `SWIFT_VERSION` build setting reads something other than `6.0`. Both places a
-  setting can be declared are scanned: `Config/Build/*.xcconfig`, where the one declaration
+  setting can be declared are scanned: `config/Build/*.xcconfig`, where the one declaration
   covering every target lives today, and `OpenSky.xcodeproj/project.pbxproj`, where a
   reintroduced per-target setting would override it. A project with no `SWIFT_VERSION` at
   all is treated as a failure rather than a pass. See

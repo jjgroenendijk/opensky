@@ -57,44 +57,44 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:Config/TestPlans/UnitTests.xctestplan"
+            reference = "container:config/TestPlans/UnitTests.xctestplan"
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Quick.xctestplan">
+            reference = "container:config/TestPlans/Quick.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Formats.xctestplan">
+            reference = "container:config/TestPlans/Formats.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Engine.xctestplan">
+            reference = "container:config/TestPlans/Engine.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Features.xctestplan">
+            reference = "container:config/TestPlans/Features.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/App.xctestplan">
+            reference = "container:config/TestPlans/App.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/AgentControl.xctestplan">
+            reference = "container:config/TestPlans/AgentControl.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/RealDataAll.xctestplan">
+            reference = "container:config/TestPlans/RealDataAll.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/UITests.xctestplan">
+            reference = "container:config/TestPlans/UITests.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/RealData.xctestplan">
+            reference = "container:config/TestPlans/RealData.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Sanitizers.xctestplan">
+            reference = "container:config/TestPlans/Sanitizers.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/Perf.xctestplan">
+            reference = "container:config/TestPlans/Perf.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:Config/TestPlans/GPU.xctestplan">
+            reference = "container:config/TestPlans/GPU.xctestplan">
          </TestPlanReference>
       </TestPlans>
    </TestAction>
