@@ -33,7 +33,10 @@ struct RendererGPUCullingTests {
 
     /// A row of crates from x = -6000 to 6000, plus one taller crate a physics body
     /// moves, which must stay on the CPU path.
-    private static func crateRowScene(device: MTLDevice) throws -> RenderScene {
+    private static func crateRowScene(
+        device: MTLDevice,
+        rooms: RoomPortalGraph? = nil
+    ) throws -> RenderScene {
         let texture = try OffscreenRendererFixture.solidTexture(device: device)
         func placements(height: Float, xs: [Float], reference: UInt32) throws -> [RenderPlacement] {
             let model = Model(
@@ -56,8 +59,20 @@ struct RendererGPUCullingTests {
         let row = stride(from: Float(-6000), through: 6000, by: 400).map(\.self)
         return try RenderScene(
             instances: placements(height: 64, xs: row, reference: 0)
-                + placements(height: 128, xs: [-1000], reference: 0x0001_0F00)
+                + placements(height: 128, xs: [-1000], reference: 0x0001_0F00),
+            rooms: rooms
         )
+    }
+
+    /// The eye's room holds the west crates; the east room has no portal to it.
+    private static func twoRooms() throws -> RoomPortalGraph {
+        func room(_ x: Float) throws -> OrientedBox {
+            try #require(OrientedBox(
+                transform: MatrixMath.translation(SIMD3(x, -500, 300)),
+                halfExtents: SIMD3(1500, 1000, 1000)
+            ))
+        }
+        return try RoomPortalGraph(rooms: [room(-2500), room(2500)], portals: [], links: [])
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))
@@ -96,6 +111,40 @@ struct RendererGPUCullingTests {
         #expect(renderer.lastGPUCullCounts == CullCounts(), "counts are read a few frames late")
         let differing = zip(cpuPixels, gpuPixels).count { $0 != $1 }
         #expect(differing == 0, "\(differing) bytes differ between the CPU and GPU frames")
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func bothPathsSkipTheSameHiddenRoom() throws {
+        let device = try #require(Self.device)
+        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+            device: device, width: Self.width, height: Self.height,
+            scene: Self.crateRowScene(device: device, rooms: Self.twoRooms()),
+            camera: Self.camera,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
+        renderer.gpuCullingEnabled = false
+        let cpuPixels = try OffscreenRendererFixture.pixels(
+            of: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        )
+        let cpu = renderer.lastDrawStats
+        #expect(cpu.roomCulledInstances > 0)
+        #expect(renderer.roomCullingReadout.visibleRooms == 1)
+
+        renderer.gpuCullingEnabled = true
+        let gpuPixels = try OffscreenRendererFixture.pixels(
+            of: renderer.renderOffscreen(width: Self.width, height: Self.height)
+        )
+        let gpu = renderer.lastFrameGPUCullCounts()
+        #expect(gpu.cameraRoomCulled == cpu.roomCulledInstances)
+        #expect(gpu.cameraVisible + renderer.lastDrawStats.drawnInstances == cpu.drawnInstances)
+        let differing = zip(cpuPixels, gpuPixels).count { $0 != $1 }
+        #expect(differing == 0, "\(differing) bytes differ between the CPU and GPU frames")
+
+        renderer.roomCullingEnabled = false
+        _ = try renderer.renderOffscreen(width: Self.width, height: Self.height)
+        #expect(renderer.lastFrameGPUCullCounts().cameraRoomCulled == 0)
+        #expect(renderer.roomCullingReadout.visibleRooms == nil)
     }
 
     @Test(.enabled(if: Self.hasMetal4Device))

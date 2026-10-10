@@ -39,6 +39,8 @@ placed under a guessed identity.
 Only `box` and `sphere`. The others are counted as excluded:
 
 - `portalBox` is room portal geometry for occlusion, not gameplay.
+- A `box` on a room marker (a reference with `XRMR`) is room bounds for occlusion too
+  ([rooms and portals](/formats/placed-references.md#rooms-and-portals)).
 - `line` is not a volume.
 - `none` has no shape.
 

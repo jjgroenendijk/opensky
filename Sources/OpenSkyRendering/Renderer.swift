@@ -287,6 +287,8 @@ public final class Renderer: NSObject {
     var lastSceneDepth: RenderTargetEntry?
     /// GPU frustum culling for the scene's static groups (RendererGPUCulling.swift).
     public var gpuCull: GPUCullState
+    /// Interior room-and-portal culling (RendererRoomCulling.swift).
+    public var roomCulling = RoomCullingState()
     /// Large textures keep only the levels the camera needs (TextureStreaming/).
     public var textureStreaming: TextureStreamingState
     public var rayTracedShadows: RayTracedShadowState

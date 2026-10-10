@@ -125,7 +125,7 @@ extension WorldRenderControls: ParticleControlProviding {
 
     public var controlledParticleSystemCount: Int {
         (renderer?.scene.particles ?? []).count {
-            !$0.simulator.definition.emitterControllers.isEmpty
+            $0.simulator.definition.emitterControllers.contains { !$0.birthRate.isEmpty }
         }
     }
 

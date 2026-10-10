@@ -84,7 +84,8 @@ nonisolated extension CellSceneBuilder {
         var volumes: [TriggerVolume] = []
         for ref in refs {
             guard let primitive = ref.primitive else { continue }
-            guard let geometry = Self.triggerGeometry(of: primitive) else {
+            // A room marker's box is occlusion data, like a portal box.
+            guard ref.details.room == nil, let geometry = Self.triggerGeometry(of: primitive) else {
                 stats.excludedPrimitiveCount += 1
                 continue
             }

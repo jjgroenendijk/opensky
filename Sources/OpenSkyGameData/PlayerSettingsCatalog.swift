@@ -181,6 +181,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
         ),
         row("pipelineCache.enabled", .opensky, .toggle, "Cache GPU pipelines", 1, applied: true),
         row("rendering.gpuCulling", .opensky, .toggle, "Cull on the GPU", 1, applied: true),
+        row("rendering.roomCulling", .opensky, .toggle, "Cull hidden rooms", 1, applied: true),
         row("rendering.waterDepth", .opensky, .toggle, "See into shallow water", 1, applied: true),
         row(
             "rendering.terrainNormalMaps", .opensky, .toggle, "Terrain normal maps", 1,
@@ -318,6 +319,8 @@ nonisolated extension PlayerSettingID {
     public static let pipelineCacheEnabled = Self("pipelineCache.enabled")
     /// The static scene culls in a compute pass; off culls it on the CPU.
     public static let gpuCulling = Self("rendering.gpuCulling")
+    /// An interior draws only the rooms the camera sees through portals.
+    public static let roomCulling = Self("rendering.roomCulling")
     /// Water reads the scene depth, so shallow water shows the ground below it.
     public static let waterDepth = Self("rendering.waterDepth")
     /// Terrain lighting follows the land textures' normal maps.

@@ -422,6 +422,8 @@ typedef NS_ENUM(EnumBackingType, CullBufferIndex)
     CullBufferIndexParameters = 1,
     CullBufferIndexOutput = 2,
     CullBufferIndexArguments = 3,
+    /// Room-culled counter, then the visible-room bitset (docs/rendering/room-portal-culling.md).
+    CullBufferIndexRooms = 4,
 };
 
 typedef NS_ENUM(EnumBackingType, CullConstant)
@@ -442,8 +444,9 @@ typedef struct
     unsigned int group;
     /// First output slot of the group.
     unsigned int outputBase;
+    /// Interior room index; 0xFFFFFFFF when the instance is in no single room.
+    unsigned int room;
     unsigned int padding0;
-    unsigned int padding1;
 } CullInstance;
 
 /// One view's frustum planes, inward-facing, as `Frustum` builds them.
@@ -451,9 +454,10 @@ typedef struct
 {
     vector_float4 planes[6];
     unsigned int instanceCount;
+    /// Words in the room bitset; 0 turns room culling off for this view.
+    unsigned int roomWordCount;
     unsigned int padding0;
     unsigned int padding1;
-    unsigned int padding2;
 } CullParameters;
 
 /// Temporal upscaling (docs/rendering/upscaling.md). Motion is last frame's screen

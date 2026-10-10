@@ -139,6 +139,8 @@ nonisolated public struct DrawInstance: Sendable {
     public var layer: RenderLayer = .statics
     /// See `RenderPlacement.owner`.
     public var owner: UInt32 = 0
+    /// The interior room this static instance sits in, or `RoomPortalGraph.noRoom`.
+    public var room = RoomPortalGraph.noRoom
 }
 
 /// One instanced draw call. Grouped by mesh and diffuse identity: a mesh belongs to one
@@ -305,100 +307,6 @@ nonisolated private struct GroupAccumulator {
     }
 }
 
-/// One terrain quadrant draw for the splat pipeline: quadrant mesh, its
-/// per-vertex splat-weight stream (TerrainVertexLayout), the BTXT base
-/// material, and the ATXT layer diffuses in blend order. Terrain always
-/// draws opaque (docs/rendering/scene-drawing.md, terrain splat section).
-nonisolated public struct TerrainDrawItem: Sendable {
-    public let mesh: RenderMesh
-    /// Two float4 weight lanes per vertex, vertex-count sized.
-    public let weightsBuffer: MTLBuffer
-    /// Base diffuse + UV params; alpha fields unused (terrain is opaque).
-    public let material: RenderMaterial
-    /// ATXT layer diffuses, <= TerrainConstant.maxLayers, blend order.
-    public let layerTextures: [MTLTexture]
-    /// TX01 normal maps of the base and of each layer, aligned with `layerTextures`.
-    /// A flat placeholder stands in for a texture set without one.
-    public let normals: TerrainNormalMaps
-    public let modelMatrix: float4x4
-    public let normalMatrix: float4x4
-    /// World-space AABB for frustum culling; nil -> never culled.
-    public let bounds: ModelBounds?
-
-    public init(
-        mesh: RenderMesh,
-        weightsBuffer: MTLBuffer,
-        material: RenderMaterial,
-        layerTextures: [MTLTexture],
-        normals: TerrainNormalMaps,
-        modelMatrix: float4x4,
-        normalMatrix: float4x4,
-        bounds: ModelBounds?
-    ) {
-        self.mesh = mesh
-        self.weightsBuffer = weightsBuffer
-        self.material = material
-        self.layerTextures = layerTextures
-        self.normals = normals
-        self.modelMatrix = modelMatrix
-        self.normalMatrix = normalMatrix
-        self.bounds = bounds
-    }
-}
-
-/// The normal maps of one terrain quadrant draw.
-nonisolated public struct TerrainNormalMaps: Sendable {
-    public let base: MTLTexture
-    public let layers: [MTLTexture]
-    /// Base and layer maps that came from a TX01 path, for the panel readout.
-    public let resolvedCount: Int
-
-    public init(base: MTLTexture, layers: [MTLTexture], resolvedCount: Int) {
-        self.base = base
-        self.layers = layers
-        self.resolvedCount = resolvedCount
-    }
-}
-
-/// Exterior sky marker. Colors are procedural in the shader for now; this
-/// value makes sky presence explicit per worldspace and mergeable per scene.
-nonisolated public struct SkyParameters: Equatable, Sendable {
-    public init() {}
-}
-
-/// One water surface: a cell plane at the CELL/WRLD water height, or a placed
-/// mesh with a water shader. `look` comes from WATR.
-nonisolated public struct WaterDrawItem: Sendable {
-    public let mesh: RenderMesh
-    public let modelMatrix: float4x4
-    public let look: WaterLook
-    public let bounds: ModelBounds?
-
-    public init(mesh: RenderMesh, modelMatrix: float4x4, look: WaterLook, bounds: ModelBounds?) {
-        self.mesh = mesh
-        self.modelMatrix = modelMatrix
-        self.look = look
-        self.bounds = bounds
-    }
-
-    public init(
-        mesh: RenderMesh,
-        modelMatrix: float4x4,
-        shallowColor: SIMD3<Float>,
-        deepColor: SIMD3<Float>,
-        reflectionColor: SIMD3<Float>,
-        bounds: ModelBounds?
-    ) {
-        self.init(
-            mesh: mesh, modelMatrix: modelMatrix,
-            look: WaterLook(
-                shallowColor: shallowColor, deepColor: deepColor, reflectionColor: reflectionColor
-            ),
-            bounds: bounds
-        )
-    }
-}
-
 /// Draw lists for one frame. Placements become instances grouped by mesh and material,
 /// opaque before alpha-tested. Terrain draws once per patch through the splat pipeline.
 nonisolated public struct RenderScene: Sendable {
@@ -420,6 +328,8 @@ nonisolated public struct RenderScene: Sendable {
     /// clip's pose in the same `[String: float4x4]` shape, so unsimulated bones keep
     /// the animation.
     public var ragdollPoses: [UInt32: [String: float4x4]] = [:]
+    /// The interior's rooms and portals; nil turns room culling off.
+    public let rooms: RoomPortalGraph?
 
     public init(
         instances: [RenderPlacement],
@@ -431,7 +341,8 @@ nonisolated public struct RenderScene: Sendable {
         pointLights: [RenderPointLight] = [],
         grass: [GrassRenderPlacement] = [],
         particles: [ParticlePlayback] = [],
-        placedWaterLook: WaterLook = .fallback
+        placedWaterLook: WaterLook = .fallback,
+        rooms: RoomPortalGraph? = nil
     ) {
         var opaque = GroupAccumulator()
         var alphaTested = GroupAccumulator()
@@ -455,7 +366,7 @@ nonisolated public struct RenderScene: Sendable {
                     mesh: mesh, material: material, faceMorph: faceMorph
                 )
                 let modelMatrix = placement.transform * mesh.localTransform
-                let instance = DrawInstance(
+                var instance = DrawInstance(
                     modelMatrix: modelMatrix,
                     normalMatrix: MatrixMath.normalMatrix(modelMatrix),
                     bounds: placement.bounds,
@@ -467,6 +378,7 @@ nonisolated public struct RenderScene: Sendable {
                     layer: placement.layer,
                     owner: placement.owner
                 )
+                instance.room = Self.room(of: placement, in: rooms)
                 // Blended groups ride the alpha-tested list, so culling and
                 // streaming need no third list; the scene pass draws them last.
                 if material.alphaTestThreshold == nil, !blended {
@@ -494,6 +406,16 @@ nonisolated public struct RenderScene: Sendable {
         self.grass = grassGroups.groups
         self.particles = particles
         self.animations = animations
+        self.rooms = rooms
+    }
+
+    /// Only still statics get a room: an actor or a simulated body moves out of it.
+    private static func room(of placement: RenderPlacement, in rooms: RoomPortalGraph?) -> UInt32 {
+        guard
+            let rooms, let bounds = placement.bounds,
+            placement.layer == .statics, placement.referenceFormID == 0
+        else { return RoomPortalGraph.noRoom }
+        return rooms.soleRoom(touching: bounds)
     }
 
     /// Merges already-built scenes into one draw-list union — grid/streaming
@@ -527,6 +449,9 @@ nonisolated public struct RenderScene: Sendable {
         self.grass = grass.groups
         particles = scenes.flatMap(\.particles)
         animations = scenes.flatMap(\.animations)
+        // Room indices belong to one graph, so two graphs turn room culling off.
+        let graphs = scenes.compactMap(\.rooms)
+        rooms = graphs.count == 1 ? graphs.first : nil
     }
 
     /// Samples every resident actor at one shared world clock. A malformed

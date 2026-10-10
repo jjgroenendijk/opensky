@@ -46,6 +46,10 @@ extension GraphicsPageViewController {
             "Cull the static scene in a compute pass, not on the CPU"
         )
         checkbox(
+            roomCullingControl, "RoomCulling",
+            "Inside, skip rooms the camera cannot see through a doorway"
+        )
+        checkbox(
             waterDepthControl,
             "WaterDepth",
             "Shallow water shows the ground below; costs one depth copy"
@@ -133,6 +137,7 @@ extension GraphicsPageViewController {
                 .rayTracedShadows
             ),
             (meshShaderGrassControl, .meshShaderGrass), (gpuCullingControl, .gpuCulling),
+            (roomCullingControl, .roomCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
             (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),

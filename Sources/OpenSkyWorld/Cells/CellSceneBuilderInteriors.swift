@@ -131,14 +131,13 @@ nonisolated extension CellSceneBuilder {
             found: found,
             grid: (x: 0, y: 0),
             instances: instances,
-            // Interior water needs room bounds, not the exterior cell plane.
             geometry: CellGeometryBuild(
                 location: location,
                 doors: resolveDoors(refs: effective),
                 interactions: resolveInteractions(refs: effective),
                 terrain: nil,
                 grass: nil,
-                water: nil,
+                water: buildInteriorWater(found: found, instances: instances),
                 sky: nil,
                 lighting: lighting?.lighting,
                 pointLights: lighting?.pointLights ?? [],
@@ -149,7 +148,8 @@ nonisolated extension CellSceneBuilder {
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
-                vehicleFollowers: resolved.vehicleFollowers
+                vehicleFollowers: resolved.vehicleFollowers,
+                rooms: RoomPortalGraphBuilder.graph(references: effective)
             ),
             counts: counts
         )

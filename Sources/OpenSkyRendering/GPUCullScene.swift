@@ -15,17 +15,21 @@ nonisolated public struct CullCounts: Equatable, Sendable {
     /// Summed over the shadow cascades.
     public var shadowVisible = 0
     public var shadowCulled = 0
+    /// Camera instances in a room the camera cannot see, inside `cameraCulled`.
+    public var cameraRoomCulled = 0
 
     public init(
         cameraVisible: Int = 0,
         cameraCulled: Int = 0,
         shadowVisible: Int = 0,
-        shadowCulled: Int = 0
+        shadowCulled: Int = 0,
+        cameraRoomCulled: Int = 0
     ) {
         self.cameraVisible = cameraVisible
         self.cameraCulled = cameraCulled
         self.shadowVisible = shadowVisible
         self.shadowCulled = shadowCulled
+        self.cameraRoomCulled = cameraRoomCulled
     }
 }
 
@@ -43,7 +47,7 @@ public struct GPUCullingResources {
         descriptor.label = "Cull Instances"
         pipeline = try compiler.makeComputePipelineState(descriptor: descriptor)
         let table = MTL4ArgumentTableDescriptor()
-        table.maxBufferBindCount = CullBufferIndex.arguments.rawValue + 1
+        table.maxBufferBindCount = CullBufferIndex.rooms.rawValue + 1
         argumentTable = try compiler.device.makeArgumentTable(descriptor: table)
     }
 }
@@ -73,6 +77,9 @@ public final class GPUCullScene {
     let parameters: MTLBuffer
     let output: MTLBuffer
     let arguments: MTLBuffer
+    /// Per frame slot: the room-culled counter, then `roomWordCount` bitset words.
+    let rooms: MTLBuffer
+    let roomWordCount: Int
     let instanceCount: Int
     let groups: [GPUCullGroup]
     /// The GPU group of each `scene.opaque` group, nil for a CPU group.
@@ -84,7 +91,7 @@ public final class GPUCullScene {
     private var countedGroups: [[[Int]]]
 
     var allocations: [MTLAllocation] {
-        [instances, parameters, output, arguments]
+        [instances, parameters, output, arguments, rooms]
     }
 
     /// Nil when the scene has no group the GPU can cull.
@@ -98,6 +105,12 @@ public final class GPUCullScene {
         argumentTemplate = builder.arguments
         countedGroups = Array(
             repeating: Array(repeating: [], count: Self.viewCount), count: framesInFlight
+        )
+        roomWordCount = scene.rooms.map { ($0.rooms.count + 31) / 32 } ?? 0
+        rooms = try Renderer.makeUniformBuffer(
+            device: device,
+            length: MemoryLayout<UInt32>.stride * (1 + roomWordCount) * framesInFlight,
+            label: "CullRooms"
         )
         let views = Self.viewCount * framesInFlight
         instances = try Renderer.makeUniformBuffer(
@@ -139,6 +152,10 @@ public final class GPUCullScene {
         return output.gpuAddress + UInt64(first * Self.transformStride)
     }
 
+    private func roomOffset(slot: Int) -> Int {
+        MemoryLayout<UInt32>.stride * (1 + roomWordCount) * slot
+    }
+
     func argumentAddress(group: Int, view: Int, slot: Int) -> UInt64 {
         let entry = viewSlot(view: view, slot: slot) * groups.count + group
         return arguments.gpuAddress + UInt64(entry * Self.argumentStride)
@@ -153,6 +170,9 @@ public final class GPUCullScene {
     /// work completed.
     func counts(slot: Int) -> CullCounts {
         var counts = CullCounts()
+        counts.cameraRoomCulled = Int(
+            rooms.contents().advanced(by: roomOffset(slot: slot)).load(as: UInt32.self)
+        )
         for view in 0 ..< Self.viewCount {
             for group in countedGroups[slot][view] {
                 let visible = Int(arguments.contents()
@@ -172,9 +192,11 @@ public final class GPUCullScene {
         return counts
     }
 
-    /// Resets the slot's draw arguments and encodes one cull dispatch per view.
+    /// Resets the slot's draw arguments and encodes one cull dispatch per view. Rooms
+    /// cull only the camera view: a hidden room still casts shadows into a seen one.
     func encode(
         frustums: [Frustum],
+        roomVisibility: RoomVisibility?,
         slot: Int,
         resources: GPUCullingResources,
         commandBuffer: MTL4CommandBuffer
@@ -186,9 +208,15 @@ public final class GPUCullScene {
         encoder.setArgumentTable(resources.argumentTable)
         let table = resources.argumentTable
         table.setAddress(instances.gpuAddress, index: CullBufferIndex.instances.rawValue)
+        let roomWords = writeRooms(roomVisibility, slot: slot)
+        table.setAddress(
+            rooms.gpuAddress + UInt64(roomOffset(slot: slot)), index: CullBufferIndex.rooms.rawValue
+        )
         let width = CullConstant.threadgroupWidth.rawValue
         for (view, frustum) in frustums.enumerated() {
-            let parameterAddress = writeParameters(frustum, view: view, slot: slot)
+            let parameterAddress = writeParameters(
+                frustum, roomWords: view == 0 ? roomWords : 0, view: view, slot: slot
+            )
             resetArguments(view: view, slot: slot)
             table.setAddress(parameterAddress, index: CullBufferIndex.parameters.rawValue)
             table.setAddress(
@@ -214,14 +242,35 @@ public final class GPUCullScene {
         return true
     }
 
-    private func writeParameters(_ frustum: Frustum, view: Int, slot: Int) -> UInt64 {
+    /// Zeroes the slot's counter and writes the bitset; returns the words the kernel reads.
+    private func writeRooms(_ visibility: RoomVisibility?, slot: Int) -> Int {
+        let base = rooms.contents().advanced(by: roomOffset(slot: slot))
+        base.storeBytes(of: UInt32(0), as: UInt32.self)
+        guard let visibility, roomWordCount > 0, visibility.words.count == roomWordCount
+        else { return 0 }
+        visibility.words.withUnsafeBytes { bytes in
+            guard let words = bytes.baseAddress else { return }
+            base.advanced(by: MemoryLayout<UInt32>.stride).copyMemory(
+                from: words, byteCount: bytes.count
+            )
+        }
+        return roomWordCount
+    }
+
+    private func writeParameters(
+        _ frustum: Frustum,
+        roomWords: Int,
+        view: Int,
+        slot: Int
+    ) -> UInt64 {
         var parameters = CullParameters(
             planes: (
                 frustum.left, frustum.right, frustum.bottom,
                 frustum.top, frustum.near, frustum.far
             ),
             instanceCount: UInt32(instanceCount),
-            padding0: 0, padding1: 0, padding2: 0
+            roomWordCount: UInt32(roomWords),
+            padding0: 0, padding1: 0
         )
         let offset = viewSlot(view: view, slot: slot) * MemoryLayout<CullParameters>.stride
         self.parameters.contents().advanced(by: offset)
@@ -284,8 +333,8 @@ private struct GPUCullSceneBuilder {
             boundsMax: SIMD4(bounds?.max ?? .zero, bounds == nil ? 0 : 1),
             group: UInt32(group),
             outputBase: UInt32(outputBase),
-            padding0: 0,
-            padding1: 0
+            room: instance.room,
+            padding0: 0
         )
     }
 }

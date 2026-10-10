@@ -88,6 +88,20 @@ extension CellSceneBuilderTests {
         #expect(scene.triggerVolumes.stats.volumeCount == 0)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func excludesRoomMarkerBoxes() throws {
+        let scene = try build(pluginData: plugin(
+            temporaryRefs: primitiveRefrRecord(
+                formID: 0x200,
+                base: 0x100,
+                primitive: PrimitiveFixture(halfExtents: SIMD3(10, 10, 10), type: .box),
+                extraFields: ESMFixture.field("XRMR", Data([0, 0, 0, 0]))
+            ),
+            statRecords: statRecord(formID: 0x100, modelPath: nil)
+        ))
+        #expect(scene.triggerVolumes.volumes.isEmpty)
+        #expect(scene.triggerVolumes.stats.excludedPrimitiveCount == 1)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func buildsNoTriggerVolumesWithoutEitherSource() throws {
         try writeLooseFile("meshes/arch/solid.nif", collisionRenderNIF())
         let scene = try build(pluginData: plugin(
@@ -155,7 +169,8 @@ extension CellSceneBuilderTests {
         base: UInt32,
         position: SIMD3<Float> = .zero,
         scale: Float? = nil,
-        primitive: PrimitiveFixture
+        primitive: PrimitiveFixture,
+        extraFields: Data = Data()
     ) -> Data {
         var name = Data()
         name.appendUInt32(base)
@@ -179,6 +194,7 @@ extension CellSceneBuilderTests {
         }
         xprm.appendUInt32(primitive.type.rawValue)
         fields += ESMFixture.field("XPRM", xprm)
+        fields += extraFields
         return ESMFixture.record("REFR", formID: formID, data: fields)
     }
 

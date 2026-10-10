@@ -1,5 +1,5 @@
-// Exterior water: CELL overrides over WRLD defaults and parents, WATR colors,
-// and one shared cell-sized plane. Sources: UESP CELL/WRLD/WATR and xEdit
+// Cell water: CELL overrides over WRLD defaults and parents, WATR colors, and
+// one shared quad, cell-sized outside and room-sized inside. Sources: UESP CELL/WRLD/WATR and xEdit
 // dev-4.1.6 wbDefinitionsTES5.pas.
 
 import Foundation
@@ -60,19 +60,7 @@ nonisolated extension CellSceneBuilder {
         guard let height, height.isFinite else { return nil }
 
         let look = resolvedWaterLook(for: found.cell.waterType ?? worldWater.type)
-        let mesh: RenderMesh
-        do {
-            if let waterPlaneMesh {
-                mesh = waterPlaneMesh
-            } else {
-                let uploaded = try meshes.renderMesh(WaterMeshBuilder.cellPlane())
-                waterPlaneMesh = uploaded
-                mesh = uploaded
-            }
-        } catch {
-            Self.logger.warning("water plane upload failed, skipped")
-            return nil
-        }
+        guard let mesh = sharedWaterPlane() else { return nil }
 
         let origin = SIMD3<Float>(
             Float(grid.x) * TerrainMeshBuilder.cellSize,
@@ -93,6 +81,92 @@ nonisolated extension CellSceneBuilder {
             ),
             height: height
         )
+    }
+
+    /// An interior has no grid, so its plane spans the XY bounds of the placed
+    /// geometry plus a margin. Every vanilla interior stores the editor default 0, and
+    /// draws its water as placed meshes, so 0 draws nothing (docs/engine/sky-water.md).
+    nonisolated public func buildInteriorWater(
+        found: FoundCell,
+        instances: [ResolvedInstance]
+    ) -> WaterBuild? {
+        guard
+            found.cell.isInterior, found.cell.flags.contains(.hasWater),
+            case let .height(height)? = found.cell.waterHeight,
+            height.isFinite, height != 0,
+            let placed = placedBounds(instances, waterSurfaces: false),
+            placed.min.z < height, height < placed.max.z,
+            !placedWaterSurface(instances, isAt: height),
+            let mesh = sharedWaterPlane()
+        else { return nil }
+        let margin = SIMD2<Float>(repeating: Self.interiorWaterMargin)
+        let lower = SIMD2(placed.min.x, placed.min.y) - margin
+        let size = SIMD2(placed.max.x, placed.max.y) + margin - lower
+        let origin = SIMD3(lower, height)
+        let transform = MatrixMath.translation(origin) * float4x4(diagonal: SIMD4(
+            size.x / TerrainMeshBuilder.cellSize, size.y / TerrainMeshBuilder.cellSize, 1, 1
+        ))
+        return WaterBuild(
+            item: WaterDrawItem(
+                mesh: mesh,
+                modelMatrix: transform,
+                look: resolvedWaterLook(for: found.cell.waterType),
+                bounds: ModelBounds(min: origin, max: origin + SIMD3(size, 0))
+            ),
+            height: height
+        )
+    }
+
+    /// Walls sit at the geometry's edge; a short overlap hides the seam behind them.
+    nonisolated static let interiorWaterMargin: Float = 64
+
+    nonisolated private func placedBounds(
+        _ instances: [ResolvedInstance],
+        waterSurfaces: Bool
+    ) -> ModelBounds? {
+        var result: ModelBounds?
+        for instance in instances where Self.drawsWater(instance) == waterSurfaces {
+            guard
+                let local = meshes.bounds(forPath: instance.modelPath, surface: instance.surface)
+            else { continue }
+            let world = local.transformed(by: instance.transform)
+            result = result.map { $0.union(world) } ?? world
+        }
+        return result
+    }
+
+    /// A placed water mesh at the cell height already draws that surface.
+    nonisolated private func placedWaterSurface(
+        _ instances: [ResolvedInstance],
+        isAt height: Float
+    ) -> Bool {
+        instances.contains { instance in
+            guard
+                Self.drawsWater(instance),
+                let local = meshes.bounds(forPath: instance.modelPath, surface: instance.surface)
+            else { return false }
+            let world = local.transformed(by: instance.transform)
+            return world.min.z - 1 <= height && height <= world.max.z + 1
+        }
+    }
+
+    nonisolated private static func drawsWater(_ instance: ResolvedInstance) -> Bool {
+        instance.model.materials.contains(where: \.waterSurface)
+    }
+
+    /// The cached 4096 x 4096 quad every water plane scales and moves.
+    nonisolated private func sharedWaterPlane() -> RenderMesh? {
+        if let waterPlaneMesh {
+            return waterPlaneMesh
+        }
+        do {
+            let uploaded = try meshes.renderMesh(WaterMeshBuilder.cellPlane())
+            waterPlaneMesh = uploaded
+            return uploaded
+        } catch {
+            Self.logger.warning("water plane upload failed, skipped")
+            return nil
+        }
     }
 
     /// Applies WRLD PNAM category inheritance recursively. Cycles are invalid

@@ -45,6 +45,13 @@ controller's time. The time loops, reverses, or clamps between the start and sto
 the on/off track is off, the emitter births nothing. A full system does not save births for
 later.
 
+A controller that a controller manager drives takes its keys and timing from one sequence.
+The game starts sequences from animation events, which OpenSky does not send to effects yet.
+So OpenSky plays one default sequence per controller, chosen among the sequences that feed
+it: the first whose name ends in `idle` (any case), else the first loop, else the first.
+This is an OpenSky policy, not a value read from the game. A controller with no keys in
+that sequence keeps its own keys.
+
 An emitter without a controller fills about a quarter of the capacity per average lifespan,
 clamped to 6 to 60 births per second. Both rates are times the user's emission scale. An
 offscreen render at an exact time resets to the seed and steps in 50 ms slices, so frame tests
@@ -83,7 +90,7 @@ particles, and systems with a keyed birth rate. The sort is the player setting
 
 ## Not done
 
-- Birth rates that a controller manager sequence feeds.
+- Switching sequences on animation events.
 - Rotation, drag, spawn and death chains, collision, and strip particles.
 - Soft particles that fade near depth.
 - Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).

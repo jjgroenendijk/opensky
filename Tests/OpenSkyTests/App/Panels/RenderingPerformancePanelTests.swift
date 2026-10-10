@@ -34,8 +34,9 @@ struct RenderingPerformancePanelTests {
         #expect(
             panel.sections.map(\.sectionIdentifier)
                 == [
-                    "renderTargets", "pipelineCache", "gpuCulling", "textureStreaming",
-                    "rayTracedShadows", "upscaling", "frameInterpolation", "meshShaderGrass"
+                    "renderTargets", "pipelineCache", "gpuCulling", "roomCulling",
+                    "textureStreaming", "rayTracedShadows", "upscaling", "frameInterpolation",
+                    "meshShaderGrass"
                 ]
         )
         #expect(

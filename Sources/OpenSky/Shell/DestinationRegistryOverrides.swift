@@ -256,6 +256,7 @@ extension DestinationRegistry {
         isOverridden: { context in
             PipelineCacheSection.isOverridden(provider: context.providers)
                 || GPUCullingSection.isOverridden(provider: context.providers)
+                || RoomCullingSection.isOverridden(provider: context.providers)
                 || TextureStreamingSection.isOverridden(provider: context.providers)
                 || RayTracedShadowsSection.isOverridden(provider: context.providers)
                 || UpscalingSection.isOverridden(provider: context.providers)
@@ -265,6 +266,7 @@ extension DestinationRegistry {
         resetToDefaults: { context in
             PipelineCacheSection.resetToDefaults(provider: context.providers)
             GPUCullingSection.resetToDefaults(provider: context.providers)
+            RoomCullingSection.resetToDefaults(provider: context.providers)
             TextureStreamingSection.resetToDefaults(provider: context.providers)
             RayTracedShadowsSection.resetToDefaults(provider: context.providers)
             UpscalingSection.resetToDefaults(provider: context.providers)

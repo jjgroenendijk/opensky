@@ -180,6 +180,11 @@ extension Renderer {
             // The live pose of a reference a rigid body owns, and the baked one
             // for everything else (RendererDynamicPose.swift).
             let instance = drawn(placed)
+            if roomCulling.visibility?.contains(room: instance.room) == false {
+                state.stats.culledInstances += 1
+                state.stats.roomCulledInstances += 1
+                continue
+            }
             if let bounds = instance.bounds, !state.frustum.intersects(bounds) {
                 state.stats.culledInstances += 1
                 continue

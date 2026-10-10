@@ -18,9 +18,15 @@ The builder finds the interior `CELL` through its block and sub-block groups (se
 persistent and temporary children the same way as an exterior cell. The `DATA` interior flag
 must be set.
 
-An interior scene has no terrain, no sky, no exterior water plane, and no distant LOD. Its
-lighting comes from `XCLL` and the lighting template, plus its own lights (see
-[lighting](/formats/lighting.md)). Interior water and portals are not done yet.
+An interior scene has no terrain, no sky, and no distant LOD. Its lighting comes from `XCLL`
+and the lighting template, plus its own lights (see [lighting](/formats/lighting.md)).
+
+Water in an interior is mostly placed water meshes. A cell water plane is drawn only for a
+height an author set on purpose ([sky and water](/engine/sky-water.md#interior-water)).
+
+The room markers and portals become a graph, and the renderer skips the rooms the camera
+cannot see ([room and portal culling](/rendering/room-portal-culling.md)). Room bounds are
+occlusion data, so they never become trigger volumes ([trigger volumes](/engine/trigger-volumes.md)).
 
 ## Finding the target
 
