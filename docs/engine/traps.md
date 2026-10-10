@@ -29,9 +29,13 @@ resolves the effective state like this:
 A disabled reference drops out of rendering, collision, and trigger volumes. The cell build
 counts it as "disabled", apart from a reference a script disabled.
 
-Parents are looked up among the cell's own references and, for an exterior cell, every
-persistent reference of the worldspace. A parent elsewhere, such as in another interior, is
-counted as unresolved and the child keeps its own state. Papyrus `IsEnabled` uses the same
+The same rule applies to placed actors (`ACHR`), and a parent can be an actor. The opening of
+the game needs both: the second cart horse and both carts start disabled and name the first
+horse as their parent.
+
+Parents are looked up among the cell's own references and actors and, for an exterior cell,
+every persistent reference and actor of the worldspace. A parent elsewhere, such as in another
+interior, is counted as unresolved and the child keeps its own state. Papyrus `IsEnabled` uses the same
 rule over resident references.
 
 When a reference's enable state changes, every resident cell with a reference or hazard that

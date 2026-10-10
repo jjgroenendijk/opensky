@@ -127,7 +127,7 @@ nonisolated public final class CellSceneBuilder {
     public var modelBaseIndex: [UInt32: ModelBase]?
     /// Keyed by WRLD FormID. Placement decides which exterior scene owns each ref.
     public var exteriorPersistentRefs: [UInt32: [PlacedReference]] = [:]
-    var exteriorPersistentPools: [UInt32: [FormID: PlacedReference]] = [:]
+    var exteriorPersistentPools: [UInt32: EnableParentPool] = [:]
     /// Keyed by WRLD FormID, with the same ownership rule as the persistent refs.
     public var exteriorPersistentActors: [UInt32: [PlacedActor]] = [:]
     public var actorTemplateResolver: ActorTemplateResolver?
@@ -216,8 +216,7 @@ nonisolated public final class CellSceneBuilder {
         let source = try exteriorBuildSource(
             worldspaceEditorID: worldspaceEditorID, gridX: gridX, gridY: gridY
         )
-        let world = source.world
-        let found = source.cell
+        let (world, found) = (source.world, source.cell)
         var counts = BuildCounts()
         let collected = collectTaggedReferences(in: found, counts: &counts)
         let coordinate = CellCoordinate(x: gridX, y: gridY)
@@ -236,11 +235,12 @@ nonisolated public final class CellSceneBuilder {
         let collision = buildCollision(resolved: resolved, location: location)
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
-            cell: found,
-            world: world,
-            coordinate: coordinate,
-            localized: pluginLocalized,
-            deltas: resolved.deltas
+            cell: found, world: world, coordinate: coordinate, localized: pluginLocalized,
+            deltas: resolved.deltas,
+            parents: ActorEnableParents(
+                references: entriesByFormID(resolved.entries),
+                pool: parents
+            )
         )
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
         var scene = makeScene(

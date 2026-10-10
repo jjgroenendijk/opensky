@@ -159,11 +159,12 @@ extension CellSceneBuilderFixture {
         rotation: SIMD3<Float> = .zero,
         scale: Float? = nil,
         includePlacement: Bool = true,
-        teleport: TeleportFixture? = nil
+        teleport: TeleportFixture? = nil,
+        enableParent: UInt32? = nil
     ) -> Data {
         var name = Data()
         name.appendUInt32(base)
-        var fields = ESMFixture.field("NAME", name)
+        var fields = ESMFixture.field("NAME", name) + enableParentField(enableParent)
         if includePlacement {
             var data = Data()
             for value in [
@@ -192,6 +193,15 @@ extension CellSceneBuilderFixture {
             fields += ESMFixture.field("XTEL", xtel)
         }
         return ESMFixture.record("REFR", formID: formID, data: fields)
+    }
+
+    /// An `XESP` that follows `parent` without the opposite flag, or nothing.
+    public func enableParentField(_ parent: UInt32?) -> Data {
+        guard let parent else { return Data() }
+        var link = Data()
+        link.appendUInt32(parent)
+        link.appendUInt32(0)
+        return ESMFixture.field("XESP", link)
     }
 
     public func interiorCellGroup(

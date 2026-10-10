@@ -56,6 +56,20 @@ nonisolated public struct CellActorBuild {
     public var disabledKeys: Set<ReferenceKey> = []
 }
 
+/// What an actor's `XESP` link may name besides the cell's own actors.
+nonisolated public struct ActorEnableParents {
+    public var references: [FormID: RuntimeReferenceEntry]
+    public var pool: EnableParentPool
+
+    public init(
+        references: [FormID: RuntimeReferenceEntry] = [:],
+        pool: EnableParentPool = EnableParentPool()
+    ) {
+        self.references = references
+        self.pool = pool
+    }
+}
+
 nonisolated extension CellSceneBuilder {
     /// Actors for one exterior cell: local ACHRs plus worldspace-persistent
     /// ACHRs whose physical position lies in this cell, resolved + assembled.
@@ -64,10 +78,10 @@ nonisolated extension CellSceneBuilder {
         world: FoundWorld,
         coordinate: CellCoordinate,
         localized: Bool,
-        deltas: [ReferenceKey: ReferenceStateDelta] = [:]
+        deltas: [ReferenceKey: ReferenceStateDelta] = [:],
+        parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
-        var build = CellActorBuild()
         var malformed: [String] = []
         var byID: [UInt32: CollectedActor] = [:]
         for collected in decodeActors(in: cell, malformed: &malformed) {
@@ -85,15 +99,9 @@ nonisolated extension CellSceneBuilder {
             into: .exterior(coordinate),
             deltas: deltas
         )
-        let actors = collected.map(\.actor)
-        build.entries = actorEntries(collected)
-        build.counts.discovered = actors.count + malformed.count
-        build.counts.failures = malformed.count
-        build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, deltas: deltas)
-        build.durationMS =
-            Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
-        return build
+        return resolvedBuild(
+            collected, malformed: malformed, parents: parents, deltas: deltas, started: started
+        )
     }
 
     /// Actors for one interior cell — local children groups only; interiors
@@ -102,20 +110,38 @@ nonisolated extension CellSceneBuilder {
         cell: FoundCell?,
         location: CellSceneLocation,
         localized _: Bool,
-        deltas: [ReferenceKey: ReferenceStateDelta] = [:]
+        deltas: [ReferenceKey: ReferenceStateDelta] = [:],
+        parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
-        var build = CellActorBuild()
         var malformed: [String] = []
         let collected = relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
         )
+        return resolvedBuild(
+            collected, malformed: malformed, parents: parents, deltas: deltas, started: started
+        )
+    }
+
+    /// Counts, indexes, and resolves the collected actors of one cell build.
+    nonisolated private func resolvedBuild(
+        _ collected: [CollectedActor],
+        malformed: [String],
+        parents: ActorEnableParents,
+        deltas: [ReferenceKey: ReferenceStateDelta],
+        started: UInt64
+    ) -> CellActorBuild {
+        var build = CellActorBuild()
         let actors = collected.map(\.actor)
         build.entries = actorEntries(collected)
         build.counts.discovered = actors.count + malformed.count
         build.counts.failures = malformed.count
         build.counts.failureReasons = malformed
-        resolveActors(actors, into: &build, deltas: deltas)
+        let enable = enableResolver(
+            entries: parents.references.merging(entriesByFormID(build.entries)) { $1 },
+            pool: parents.pool, deltas: deltas
+        )
+        resolveActors(actors, into: &build, deltas: deltas, enable: enable)
         build.durationMS =
             Double(DispatchTime.now().uptimeNanoseconds - started) / 1_000_000
         return build
@@ -166,7 +192,7 @@ nonisolated extension CellSceneBuilder {
     /// ACHRs of the worldspace persistent CELL, cached per WRLD like
     /// exteriorPersistentRefs. Malformed persistent records are logged once
     /// here — they carry no position, so no streamed cell can own (or count) them.
-    nonisolated private func persistentActors(
+    nonisolated func persistentActors(
         in world: FoundWorld,
         localized: Bool
     ) -> [PlacedActor] {
@@ -190,7 +216,8 @@ nonisolated extension CellSceneBuilder {
     nonisolated private func resolveActors(
         _ actors: [PlacedActor],
         into build: inout CellActorBuild,
-        deltas: [ReferenceKey: ReferenceStateDelta]
+        deltas: [ReferenceKey: ReferenceStateDelta],
+        enable: EnableParentResolver
     ) {
         guard !actors.isEmpty else { return }
         let resolvers = actorResolversBuildingIfNeeded()
@@ -200,7 +227,7 @@ nonisolated extension CellSceneBuilder {
             let id = actor.formID.description
             if
                 let skip = actorRuntimeSkip(
-                    actor: actor, entry: indexed[actor.formID], deltas: deltas
+                    actor: actor, entry: indexed[actor.formID], deltas: deltas, enable: enable
                 )
             {
                 build.counts.disabledSkips += 1
@@ -337,22 +364,23 @@ nonisolated extension CellSceneBuilder {
         return delta.component(ReferenceInventoryState.self)?.equipped
     }
 
-    /// Why this actor is not drawn, or nil when it should be. The disabled flag
-    /// and runtime enable state resolve through `ReferenceState`; an actor with
-    /// no index entry only has its record flag.
+    /// Why this actor is not drawn, or nil when it should be. An `XESP` parent
+    /// decides alone, as for references; an actor with no index entry only has
+    /// its record flag.
     nonisolated private func actorRuntimeSkip(
         actor: PlacedActor,
         entry: RuntimeReferenceEntry?,
-        deltas: [ReferenceKey: ReferenceStateDelta]
+        deltas: [ReferenceKey: ReferenceStateDelta],
+        enable: EnableParentResolver
     ) -> String? {
         guard let entry else {
             return actor.isInitiallyDisabled ? "initially disabled" : nil
         }
         let resolved = resolvedRuntimeState(for: entry, deltas: deltas)
-        guard !resolved.isVisible else { return nil }
         if resolved.deletion.isDeleted {
             return "deleted at runtime"
         }
+        guard !enable.isEnabled(entry) else { return nil }
         return resolved.overriddenKinds.contains(.enableState)
             ? "disabled at runtime"
             : "initially disabled"

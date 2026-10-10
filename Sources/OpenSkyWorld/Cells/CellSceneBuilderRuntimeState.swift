@@ -53,7 +53,7 @@ nonisolated extension CellSceneBuilder {
         collected: [CollectedReference],
         state: WorldStateSnapshot,
         location: CellSceneLocation,
-        parentPool: [FormID: PlacedReference] = [:],
+        parentPool: EnableParentPool = EnableParentPool(),
         counts: inout BuildCounts
     ) -> EffectiveReferences {
         let spawned = spawnedReferences(in: location, state: state, counts: &counts)
@@ -80,16 +80,12 @@ nonisolated extension CellSceneBuilder {
         refs: [PlacedReference],
         entries: [RuntimeReferenceEntry],
         deltas: [ReferenceKey: ReferenceStateDelta],
-        parentPool: [FormID: PlacedReference] = [:],
+        parentPool: EnableParentPool = EnableParentPool(),
         counts: inout BuildCounts
     ) -> [PlacedReference] {
         guard !refs.isEmpty else { return refs }
         let entriesByFormID = entriesByFormID(entries)
-        let enable = EnableParentResolver(deltas: deltas) { formID in
-            entriesByFormID[formID] ?? parentPool[formID].flatMap { reference in
-                self.runtimeEntry(formID: formID, isPersistent: true, record: .reference(reference))
-            }
-        }
+        let enable = enableResolver(entries: entriesByFormID, pool: parentPool, deltas: deltas)
         var effective: [PlacedReference] = []
         effective.reserveCapacity(refs.count)
         for ref in refs {
