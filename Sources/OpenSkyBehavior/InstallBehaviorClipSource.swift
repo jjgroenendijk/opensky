@@ -66,11 +66,26 @@ nonisolated public final class InstallBehaviorClipSource: BehaviorClipSource {
         pathsByName = byName
     }
 
-    /// Every archived character animation, by archive path.
-    public static func animationPaths(in fileSystem: any GameFileSource) -> [String] {
-        fileSystem.archiveEntries()
-            .map(\.path)
-            .filter { $0.hasPrefix(animationPrefix) && $0.hasSuffix(".hkx") }
+    /// Every archived clip in `folder`, by archive path.
+    public static func animationPaths(
+        in fileSystem: any GameFileSource,
+        folder: String = animationPrefix
+    ) -> [String] {
+        clipPaths(fileSystem.archiveEntries().map(\.path), in: folder)
+    }
+
+    /// The clips under `folder`.
+    public static func clipPaths(_ paths: [String], in folder: String) -> [String] {
+        paths.filter { $0.hasPrefix(folder) && $0.hasSuffix(".hkx") }
+    }
+
+    /// The `animations` folder beside a graph's `behaviors` folder. Clips are keyed by file
+    /// name, and the first-person set reuses the third-person names, so each graph needs
+    /// its own folder.
+    public static func animationFolder(forBehaviorPath path: String) -> String {
+        let components = path.split(separator: "\\", omittingEmptySubsequences: false)
+        guard components.count > 2 else { return animationPrefix }
+        return components.dropLast(2).joined(separator: "\\") + "\\animations\\"
     }
 
     /// The read a worker runs: one archive path to one decoded clip.

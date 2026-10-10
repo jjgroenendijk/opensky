@@ -32,6 +32,10 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     /// Which perspective the instance runs as: a bool both vanilla `0_master.hkx` files
     /// declare. Not in `variables`: it is seeded once and differs between the two graphs.
     public static let isFirstPerson = "IsFirstPerson"
+    /// The int and float spellings both files also declare. The first-person
+    /// `1hm_behavior.hkx` reaches its weapon idle only through `i1stPerson == 1`.
+    public static let firstPersonInt = "i1stPerson"
+    public static let firstPersonReal = "fIsFirstPerson"
 
     /// Every variable the bridge writes, in write order.
     public static let variables = [

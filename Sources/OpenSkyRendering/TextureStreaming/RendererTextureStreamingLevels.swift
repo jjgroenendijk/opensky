@@ -112,7 +112,21 @@ extension Renderer {
                 note(texture, bounds: bounds, uvPerUnit: 1 / Self.terrainRepeatUnits)
             }
         }
+        // The arms ride the eye and carry no bounds, so they count as at the camera.
+        let atEye = ModelBounds(min: camera, max: camera)
+        for group in firstPersonArmGroups {
+            let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
+            note(group.material.diffuse, bounds: atEye, uvPerUnit: group.mesh.uvPerUnit * uvScale)
+        }
         return nearest
+    }
+}
+
+extension Renderer {
+    /// The arm groups drawn this frame, which are not in `frameDrawGroups`.
+    var firstPersonArmGroups: [DrawGroup] {
+        guard areFirstPersonArmsVisible, let rig = frameDriver?.firstPersonRig else { return [] }
+        return rig.render.opaque + rig.render.alphaTested
     }
 }
 

@@ -17,6 +17,8 @@ struct LocomotionBridgeFirstPersonTests {
             BehaviorVariableSpec($0, .real, 0)
         }
         variables.append(BehaviorVariableSpec(LocomotionGraphNames.isFirstPerson, .bool, 0))
+        variables.append(BehaviorVariableSpec(LocomotionGraphNames.firstPersonInt, .int32, 0))
+        variables.append(BehaviorVariableSpec(LocomotionGraphNames.firstPersonReal, .real, 0))
         var table = BehaviorObjectTable()
         let root = table.add(
             BehaviorFixture.clipGenerator("idle", animationName: "idle"), at: 0x10
@@ -66,6 +68,10 @@ struct LocomotionBridgeFirstPersonTests {
         #expect(
             first.variable(named: LocomotionGraphNames.isFirstPerson)?.boolValue == true
         )
+        #expect(third.variable(named: LocomotionGraphNames.firstPersonInt) == .int(0))
+        #expect(first.variable(named: LocomotionGraphNames.firstPersonInt) == .int(1))
+        #expect(third.variable(named: LocomotionGraphNames.firstPersonReal) == .real(0))
+        #expect(first.variable(named: LocomotionGraphNames.firstPersonReal) == .real(1))
     }
 
     /// A reset re-seeds it: attaching, teleporting, or entering walk mode must

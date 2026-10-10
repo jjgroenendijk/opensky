@@ -16,8 +16,12 @@ struct PlayerCoreTests {
     @Test
     func anUndeclaredVariableIsListedWithNoValue() {
         let rows = PlayerCore.variables(of: nil)
-        #expect(rows.map(\.name).last == LocomotionGraphNames.isFirstPerson)
-        #expect(rows.count == LocomotionGraphNames.variables.count + 1)
+        #expect(rows.map(\.name).suffix(3) == [
+            LocomotionGraphNames.isFirstPerson,
+            LocomotionGraphNames.firstPersonInt,
+            LocomotionGraphNames.firstPersonReal
+        ])
+        #expect(rows.count == LocomotionGraphNames.variables.count + 3)
         #expect(rows.allSatisfy { $0.value == nil })
     }
 

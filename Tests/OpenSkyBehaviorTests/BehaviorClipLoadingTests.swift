@@ -145,6 +145,23 @@ struct BehaviorClipLoadingTests {
         source.drain()
         #expect(source.clip(named: "idle.hkx", bindingIndex: -1) != nil)
     }
+
+    @Test func eachGraphReadsTheAnimationFolderBesideItsBehaviors() {
+        let third = InstallBehaviorClipSource.animationFolder(
+            forBehaviorPath: "meshes\\actors\\character\\behaviors\\0_master.hkx"
+        )
+        let first = InstallBehaviorClipSource.animationFolder(
+            forBehaviorPath: "meshes\\actors\\character\\_1stperson\\behaviors\\0_master.hkx"
+        )
+        #expect(third == InstallBehaviorClipSource.animationPrefix)
+        #expect(first == "meshes\\actors\\character\\_1stperson\\animations\\")
+        let archive = [
+            "meshes\\actors\\character\\animations\\mt_idle.hkx",
+            "meshes\\actors\\character\\_1stperson\\animations\\mt_idle.hkx"
+        ]
+        #expect(InstallBehaviorClipSource.clipPaths(archive, in: first) == [archive[1]])
+        #expect(InstallBehaviorClipSource.clipPaths(archive, in: third) == [archive[0]])
+    }
 }
 
 private enum PlayerClipTestError: Error {

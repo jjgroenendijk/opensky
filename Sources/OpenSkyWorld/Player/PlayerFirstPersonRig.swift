@@ -25,7 +25,9 @@ nonisolated public final class PlayerFirstPersonRig {
         self.animation = animation
         cameraBoneIndex = animation.skeleton.boneNames
             .firstIndex(of: FirstPersonCamera.cameraBoneName)
-        render = RenderScene(instances: assembly.renderPlacements(at: matrix_identity_float4x4))
+        render = RenderScene(
+            instances: Self.placements(of: assembly, at: matrix_identity_float4x4)
+        )
     }
 
     /// The camera bone's matrix in rig space for the pose currently published,
@@ -53,13 +55,27 @@ nonisolated public final class PlayerFirstPersonRig {
         )
         guard !Self.isEqual(wanted, transform) else { return }
         transform = wanted
-        render = RenderScene(instances: assembly.renderPlacements(at: wanted))
+        render = RenderScene(instances: Self.placements(of: assembly, at: wanted))
     }
 
     /// GPU allocations the arms keep alive, added to the renderer's residency
     /// set at attach and live for the whole session, exactly as the body's are.
     public var residencyAllocations: [MTLAllocation] {
         render.residencyAllocations
+    }
+
+    /// Unbounded, so never culled. The bounds are the bind pose, below the eye, while a drawn
+    /// weapon's clip lifts the hands into view.
+    private static func placements(
+        of assembly: ActorAssembly<ActorRenderAsset>,
+        at transform: float4x4
+    ) -> [RenderPlacement] {
+        assembly.renderPlacements(at: transform).map {
+            RenderPlacement(
+                model: $0.model, transform: $0.transform, faceMorphs: $0.faceMorphs,
+                layer: $0.layer, owner: $0.owner
+            )
+        }
     }
 
     private static func isEqual(_ lhs: float4x4, _ rhs: float4x4) -> Bool {
