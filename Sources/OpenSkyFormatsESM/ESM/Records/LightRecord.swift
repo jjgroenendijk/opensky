@@ -19,7 +19,7 @@ nonisolated public struct LightRecord: Sendable {
         let flicker: FlickerEffect
     }
 
-    /// DATA offsets 32 to 43. Read raw; docs/formats/lighting.md has the units.
+    /// DATA offsets 28 to 39. Read raw; docs/formats/lighting.md has the units.
     public struct FlickerEffect: Equatable, Sendable {
         public let period: Float
         public let intensityAmplitude: Float

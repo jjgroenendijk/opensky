@@ -101,6 +101,15 @@ extension WorldRenderControlForwarding {
         renderControls.animationSnapshot
     }
 
+    public var lightAnimationEnabled: Bool {
+        get { renderControls.lightAnimationEnabled }
+        set { renderControls.lightAnimationEnabled = newValue }
+    }
+
+    public var animatedLightCount: Int {
+        renderControls.animatedLightCount
+    }
+
     public var particlesEnabled: Bool {
         get { renderControls.particlesEnabled }
         set { renderControls.particlesEnabled = newValue }
@@ -118,6 +127,15 @@ extension WorldRenderControlForwarding {
 
     public var particleSnapshot: ParticleControlSnapshot {
         renderControls.particleSnapshot
+    }
+
+    public var particleSortingEnabled: Bool {
+        get { renderControls.particleSortingEnabled }
+        set { renderControls.particleSortingEnabled = newValue }
+    }
+
+    public var controlledParticleSystemCount: Int {
+        renderControls.controlledParticleSystemCount
     }
 
     public var precipitationEnabled: Bool {

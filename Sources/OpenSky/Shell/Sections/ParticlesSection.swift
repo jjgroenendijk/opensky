@@ -17,6 +17,9 @@ final class ParticlesSection: PanelSectionViewController {
     let frozenControl = NSButton(
         checkboxWithTitle: "Freeze simulation", target: nil, action: nil
     )
+    let sortControl = NSButton(
+        checkboxWithTitle: "Sort far to near", target: nil, action: nil
+    )
     let emissionControl = NSSlider(value: 1, minValue: 0, maxValue: 2, target: nil, action: nil)
     private let emissionLabel = PanelComponents.valueLabel(width: 74)
     private let statsLabel = PanelComponents.statsLabel(identifier: "ParticleStatsLabel")
@@ -42,6 +45,7 @@ final class ParticlesSection: PanelSectionViewController {
         return !provider.particlesEnabled
             || provider.particlesFrozen
             || provider.particleEmissionScale != 1
+            || !provider.particleSortingEnabled
     }
 
     static func resetToDefaults(provider: (any ParticleControlProviding)?) {
@@ -49,6 +53,7 @@ final class ParticlesSection: PanelSectionViewController {
         provider.particlesEnabled = true
         provider.particlesFrozen = false
         provider.particleEmissionScale = 1
+        provider.particleSortingEnabled = true
     }
 
     override func makeContentViews() -> [NSView] {
@@ -59,6 +64,10 @@ final class ParticlesSection: PanelSectionViewController {
         PanelComponents.configureCheckbox(
             frozenControl, target: self, action: #selector(frozenChanged),
             identifier: "ParticlesFrozenControl"
+        )
+        PanelComponents.configureCheckbox(
+            sortControl, target: self, action: #selector(sortChanged),
+            identifier: "ParticleSortControl"
         )
         PanelComponents.configureSlider(
             emissionControl,
@@ -71,6 +80,7 @@ final class ParticlesSection: PanelSectionViewController {
             PanelComponents.group([
                 enabledControl,
                 frozenControl,
+                sortControl,
                 PanelComponents.sliderRow(slider: emissionControl, valueLabel: emissionLabel)
             ]),
             statsLabel
@@ -82,6 +92,8 @@ final class ParticlesSection: PanelSectionViewController {
         enabledControl.isEnabled = available
         frozenControl.isEnabled = available
         emissionControl.isEnabled = available
+        sortControl.isEnabled = available
+        sortControl.state = provider?.particleSortingEnabled == true ? .on : .off
         enabledControl.state = provider?.particlesEnabled == true ? .on : .off
         frozenControl.state = provider?.particlesFrozen == true ? .on : .off
         emissionControl.floatValue = provider?.particleEmissionScale ?? 1
@@ -97,7 +109,8 @@ final class ParticlesSection: PanelSectionViewController {
         let state = provider.particlesEnabled
             ? (provider.particlesFrozen ? "frozen" : "playing") : "disabled"
         statsLabel.stringValue = "Particles: \(snapshot.systemCount) systems, "
-            + "\(snapshot.emitterCount) emitters, \(snapshot.liveCount) live · \(state)"
+            + "\(snapshot.emitterCount) emitters, \(snapshot.liveCount) live, "
+            + "\(provider.controlledParticleSystemCount) keyed · \(state)"
     }
 
     @objc private func enabledChanged() {
@@ -107,6 +120,11 @@ final class ParticlesSection: PanelSectionViewController {
 
     @objc private func frozenChanged() {
         provider?.particlesFrozen = frozenControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func sortChanged() {
+        provider?.particleSortingEnabled = sortControl.state == .on
         finishInteraction()
     }
 

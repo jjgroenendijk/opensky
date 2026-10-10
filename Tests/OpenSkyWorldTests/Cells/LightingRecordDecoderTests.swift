@@ -61,9 +61,13 @@ struct LightingRecordDecoderTests {
         data.appendUInt32(UInt32(bitPattern: -1))
         data.appendUInt32(512)
         appendColor(128, 64, 32, to: &data)
-        data.appendUInt32(LightRecord.Flags.inverseSquare.rawValue)
+        data.appendUInt32(LightRecord.Flags([.inverseSquare, .pulse]).rawValue)
         data.appendFloat32(2)
-        data.append(Data(count: 28))
+        data.append(Data(count: 8)) // FOV, near clip
+        for value: Float in [0.75, 0.3, 4] {
+            data.appendFloat32(value)
+        }
+        data.append(Data(count: 8)) // value, weight
         var fnam = Data()
         fnam.appendFloat32(0.5)
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("WarmLight"))
@@ -77,7 +81,13 @@ struct LightingRecordDecoderTests {
         #expect(light.time == -1)
         #expect(light.radius == 512)
         #expect(light.color == color(128, 64, 32))
-        #expect(light.flags == .inverseSquare)
+        #expect(light.flags == [.inverseSquare, .pulse])
+        #expect(light.flicker == LightRecord.FlickerEffect(
+            period: 0.75, intensityAmplitude: 0.3, movementAmplitude: 4
+        ))
+        let animation = try #require(RenderLightAnimation(light: light, reference: 7))
+        #expect(animation.kind == .pulse)
+        #expect(animation.period == 0.75)
         #expect(light.falloffExponent == 2)
         #expect(light.fade == 0.5)
         #expect(light.isSupportedPointLight)

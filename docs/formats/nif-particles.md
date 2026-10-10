@@ -115,8 +115,7 @@ shape values. The mesh emitter comes straight from `NiPSysEmitter`, with no Emit
 Blocks OpenSky reads:
 
 - Emitters: `NiPSysBoxEmitter` (width, height, depth), `NiPSysCylinderEmitter` (radius,
-  height), `NiPSysSphereEmitter` (radius), `NiPSysMeshEmitter` (mesh refs and a uint32
-  velocity type; it does not sample the mesh yet).
+  height), `NiPSysSphereEmitter` (radius), `NiPSysMeshEmitter` (see below).
 - Modifiers known by type only: `NiPSysAgeDeathModifier`, `NiPSysSpawnModifier`,
   `NiPSysRotationModifier`, `NiPSysPositionModifier`, `NiPSysBoundUpdateModifier`,
   `NiPSysDragModifier`, `BSPSysInheritVelocityModifier`, `BSPSysSubTexModifier`.
@@ -130,10 +129,48 @@ Blocks OpenSky reads:
   Example: `fxfirewithembers01.nif` smoke stores 0.1, 0.45, 0.46, 1.0 as its stops and peaks
   at alpha 0.4 in colour 2, so it never draws opaque.
 
+### NiPSysMeshEmitter
+
+After the `NiPSysEmitter` fields: a uint32 mesh count, that many `Ptr` refs to the emitter
+shapes, then `VelocityType` (uint32: 0 normals, 1 random, 2 the emission axis), `EmitFrom`
+(uint32: 0 vertices, 1 face centre, 2 edge centre, 3 face surface, 4 edge surface), and the
+emission axis (Vector3).
+
+OpenSky reads the positions, normals and triangles of each `BSTriShape`,
+`BSSubIndexTriShape` or `BSDynamicTriShape` the refs name. It moves them into the particle
+system's space with the shape's scene graph transform. A skinned shape uses its bind pose.
+At most 65,536 vertices are kept per emitter.
+
+## Emitter controllers
+
+The particle system's controller ref starts a chain of `NiTimeController` blocks, linked by
+"Next Controller". OpenSky reads each `NiPSysEmitterCtlr` and passes over the rest, such as
+`NiPSysUpdateCtlr`. In version 20.2.0.7 its fields are:
+
+| Field | Type | Bytes |
+| --- | --- | --- |
+| Next Controller | Ref | 4 |
+| Flags | uint16 | 2 |
+| Frequency, Phase, Start Time, Stop Time | 4 x float32 | 16 |
+| Target | Ptr | 4 |
+| Interpolator (birth rate) | Ref | 4 |
+| Modifier Name | string index | 4 |
+| Visibility Interpolator (emitter on or off) | Ref | 4 |
+
+Flags bits 1 and 2 are the cycle: 0 loop, 1 reverse, 2 clamp. The modifier name matches
+the emitter's name.
+
+- The birth rate is an `NiFloatInterpolator`: a float32 pose value, then a ref to
+  `NiFloatData`. `NiFloatData` is a `KeyGroup<float>`: a uint32 count, a uint32 key type
+  when the count is not zero, then keys of time and value. Quadratic keys add two floats
+  and TBC keys add three. The pose value -3.402823466e+38 means "unset".
+- The on/off track is an `NiBoolInterpolator` or `NiBoolTimelineInterpolator`: a pose
+  byte (2 means unset), then a ref to `NiBoolData`, a `KeyGroup<byte>`.
+- A blend interpolator, which a controller manager feeds, gives no keys. Such a system
+  keeps the fallback rate ([particle playback](/rendering/particles.md)).
+
 ## Not read
 
-- Controllers (`NiPSysUpdateCtlr`, `NiPSysEmitterCtlr`, interpolators). Playback uses a
-  fixed, limited birth rate instead.
 - Skin and material data. Particles do not need them.
 - Shader properties other than `BSEffectShaderProperty`. For example, a lit particle
   system that uses `BSLightingShaderProperty` gets its material from the mesh material path.

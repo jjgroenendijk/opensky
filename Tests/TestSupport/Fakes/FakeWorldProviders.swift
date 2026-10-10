@@ -19,6 +19,7 @@ import OpenSkyAssetCache
 @MainActor
 final class FakeWorldProviders: WorldControlProviders {
     var refocusCount = 0
+    var livingEnvironment = FakeLivingEnvironmentState()
     var faceMorphSnapshot = FaceMorphControlSnapshot.empty
     var idleState = FakeIdleState()
     var agentControlState = FakeAgentControlState()
@@ -522,5 +523,33 @@ extension FakeWorldProviders {
 
     func clearPreviewMenus() {
         menuMode.dismissAll()
+    }
+}
+
+/// Light animation and particle sort switches, kept out of the class body for its size cap.
+struct FakeLivingEnvironmentState {
+    var lightAnimationEnabled = true
+    var animatedLightCount = 0
+    var particleSortingEnabled = true
+    var controlledParticleSystemCount = 0
+}
+
+extension FakeWorldProviders {
+    var lightAnimationEnabled: Bool {
+        get { livingEnvironment.lightAnimationEnabled }
+        set { livingEnvironment.lightAnimationEnabled = newValue }
+    }
+
+    var animatedLightCount: Int {
+        livingEnvironment.animatedLightCount
+    }
+
+    var particleSortingEnabled: Bool {
+        get { livingEnvironment.particleSortingEnabled }
+        set { livingEnvironment.particleSortingEnabled = newValue }
+    }
+
+    var controlledParticleSystemCount: Int {
+        livingEnvironment.controlledParticleSystemCount
     }
 }
