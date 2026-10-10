@@ -729,7 +729,8 @@ fragment float4 grassFragment(
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
     float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
-    float alpha = diffuse.a * in.color.a * draw.materialAlpha * in.distanceFade;
+    // Grass vertex alpha is the wind weight, 0 at the root, not opacity.
+    float alpha = diffuse.a * draw.materialAlpha * in.distanceFade;
     if (alpha < draw.alphaThreshold) {
         discard_fragment();
     }
