@@ -138,7 +138,7 @@ nonisolated extension NIFFile {
                 editorMarkerShapeCount += 1
                 return
             }
-            guard !shape.object.isHidden, try !isUndrawableEffect(shape) else {
+            guard !shape.object.isHidden, try !isUndrawableShape(shape) else {
                 skippedShapeCount += 1
                 return
             }
@@ -281,12 +281,15 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// The static path has no additive blend and no texture-less effect look, so
-    /// those effect shapes are skipped; drawn anyway they show as flat cards.
-    /// An effect block that does not decode keeps the fallback material.
-    func isUndrawableEffect(_ shape: NIFTriShape) throws -> Bool {
+    /// The static path has no additive blend, no texture-less effect look, and no
+    /// refraction, so those shapes are skipped. Drawn anyway, an effect shows as a flat
+    /// card and a heat-haze dome shows its normal map as colour.
+    func isUndrawableShape(_ shape: NIFTriShape) throws -> Bool {
         guard shape.shaderPropertyRef >= 0 else { return false }
         let block = try block(at: Int(shape.shaderPropertyRef))
+        if block.typeName == "BSLightingShaderProperty" {
+            return try NIFLightingShaderProperty(data: block.data, header: file.header).isRefraction
+        }
         guard
             block.typeName == NIFFile.effectShaderType,
             let effect = try? NIFEffectShaderProperty(data: block.data, header: file.header)

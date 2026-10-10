@@ -32,6 +32,12 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         shaderFlags2 & 0x10 != 0
     }
 
+    /// SLSF1 bit 15 Refraction: the shape bends what is behind it, such as the
+    /// heat haze over a fire, and its texture is a normal map.
+    public var isRefraction: Bool {
+        shaderFlags1 & 0x8000 != 0
+    }
+
     public init(data: Data, header: NIFHeader) throws {
         let streamVersion = header.bsStream?.version ?? 0
         guard streamVersion == 83 || streamVersion == 100 else {
