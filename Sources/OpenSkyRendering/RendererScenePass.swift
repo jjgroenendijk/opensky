@@ -140,9 +140,10 @@ extension Renderer {
         let first = (slot * drawUniformSlotCapacity + draw) * limit
         for index in 0 ..< pick.count {
             let light = scene.pointLights[Int(pick.indices[index])]
+            let live = light.animated(at: animationTime, enabled: lightAnimationEnabled)
             var uniform = PointLightUniform(
-                positionRadius: SIMD4(light.position, light.radius),
-                colorFalloff: SIMD4(light.color, light.falloffExponent)
+                positionRadius: SIMD4(live.position, light.radius),
+                colorFalloff: SIMD4(live.color, light.falloffExponent)
             )
             pointLightBuffer.contents().advanced(by: (first + index) * stride)
                 .copyMemory(from: &uniform, byteCount: MemoryLayout<PointLightUniform>.size)
@@ -626,8 +627,12 @@ extension Renderer {
             )
         else { return false }
         encodeBlendedGroups(state: &state)
-        encodeParticles(items: scene.particles, enabled: particlesEnabled, state: &state)
-        encodeParticles(items: effects.particles, enabled: particlesEnabled, state: &state)
+        encodeParticles(
+            items: sortedParticles(scene.particles + effects.particles),
+            enabled: particlesEnabled,
+            sorted: particleSortingEnabled,
+            state: &state
+        )
         encodeParticles(
             items: precipitation.drawItems,
             enabled: precipitationEnabled,

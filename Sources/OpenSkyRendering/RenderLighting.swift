@@ -57,16 +57,31 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
     public let radius: Float
     public let color: SIMD3<Float>
     public let falloffExponent: Float
+    /// Flicker or pulse; nil for a steady light.
+    public let animation: RenderLightAnimation?
 
     public init(
         position: SIMD3<Float>,
         radius: Float,
         color: SIMD3<Float>,
-        falloffExponent: Float
+        falloffExponent: Float,
+        animation: RenderLightAnimation? = nil
     ) {
         self.position = position
         self.radius = radius
         self.color = color
         self.falloffExponent = falloffExponent
+        self.animation = animation
+    }
+
+    /// Position and colour at `time` seconds; a steady light or `animated` false
+    /// gives the base values.
+    public func animated(
+        at time: Float,
+        enabled: Bool
+    ) -> (position: SIMD3<Float>, color: SIMD3<Float>) {
+        guard enabled, let animation else { return (position, color) }
+        let sample = animation.sample(at: time)
+        return (position + sample.offset, color * sample.intensity)
     }
 }

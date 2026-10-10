@@ -64,6 +64,10 @@ nonisolated public struct AnimationControlSnapshot: Equatable, Sendable {
 public protocol AnimationControlProviding: AnyObject {
     var actorAnimationsEnabled: Bool { get set }
     var animationSnapshot: AnimationControlSnapshot { get }
+    /// Placed lights flicker and pulse; kept in the player settings.
+    var lightAnimationEnabled: Bool { get set }
+    /// Scene point lights that have a flicker or pulse.
+    var animatedLightCount: Int { get }
 }
 
 nonisolated public struct ParticleControlSnapshot: Equatable, Sendable {
@@ -84,6 +88,10 @@ public protocol ParticleControlProviding: AnyObject {
     var particlesFrozen: Bool { get set }
     var particleEmissionScale: Float { get set }
     var particleSnapshot: ParticleControlSnapshot { get }
+    /// Blended particles draw far to near; kept in the player settings.
+    var particleSortingEnabled: Bool { get set }
+    /// Resident systems whose birth rate comes from an emitter controller.
+    var controlledParticleSystemCount: Int { get }
 }
 
 @MainActor

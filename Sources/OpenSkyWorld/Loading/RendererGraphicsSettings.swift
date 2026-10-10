@@ -29,6 +29,8 @@ extension Renderer {
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
+        lightAnimationEnabled = store.bool(.lightAnimation)
+        particleSortingEnabled = store.bool(.particleSorting)
         imageSpace.toneMapping.enabled = store.bool(.toneMapping)
         let caps = PlayerSettingsCatalog.frameRateCapOptions
         frameRateCap = caps[min(max(Int(store.value(.frameRateCap)), 0), caps.count - 1)]

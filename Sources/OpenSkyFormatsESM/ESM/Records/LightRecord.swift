@@ -1,5 +1,5 @@
 // LIGH base-light decoder. DATA is the exact 48-byte Skyrim layout; point
-// rendering currently accepts omni variants, skipping negative + spot.
+// rendering accepts omni variants, skipping negative + spot.
 //
 // References:
 // - UESP LIGH: https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/LIGH
@@ -16,6 +16,20 @@ nonisolated public struct LightRecord: Sendable {
         let color: SIMD3<Float>
         let flags: Flags
         let falloff: Float
+        let flicker: FlickerEffect
+    }
+
+    /// DATA offsets 28 to 39. Read raw; docs/formats/lighting.md has the units.
+    public struct FlickerEffect: Equatable, Sendable {
+        public let period: Float
+        public let intensityAmplitude: Float
+        public let movementAmplitude: Float
+
+        public init(period: Float, intensityAmplitude: Float, movementAmplitude: Float) {
+            self.period = period
+            self.intensityAmplitude = intensityAmplitude
+            self.movementAmplitude = movementAmplitude
+        }
     }
 
     public struct Flags: OptionSet, Equatable, Sendable {
@@ -26,7 +40,11 @@ nonisolated public struct LightRecord: Sendable {
         }
 
         public static let negative = Flags(rawValue: 0x0004)
+        public static let flicker = Flags(rawValue: 0x0008)
         public static let offByDefault = Flags(rawValue: 0x0020)
+        public static let flickerSlow = Flags(rawValue: 0x0040)
+        public static let pulse = Flags(rawValue: 0x0080)
+        public static let pulseSlow = Flags(rawValue: 0x0100)
         public static let spotLight = Flags(rawValue: 0x0200)
         public static let shadowSpotlight = Flags(rawValue: 0x0400)
         public static let inverseSquare = Flags(rawValue: 0x4000)
@@ -39,6 +57,7 @@ nonisolated public struct LightRecord: Sendable {
     public let color: SIMD3<Float>
     public let flags: Flags
     public let falloffExponent: Float
+    public let flicker: FlickerEffect
     public let fade: Float
 
     public var isSupportedPointLight: Bool {
@@ -78,19 +97,7 @@ nonisolated public struct LightRecord: Sendable {
                         "LIGH \(recordID) DATA has \(field.data.count) bytes, expected 48"
                     )
                 }
-                let time = try Int32(bitPattern: reader.readUInt32())
-                let radius = try reader.readUInt32()
-                let color = try Self.readColor(&reader)
-                let flags = try Flags(rawValue: reader.readUInt32())
-                let falloff = try reader.readFloat32()
-                reader.skip(28)
-                decoded = DecodedData(
-                    time: time,
-                    radius: radius,
-                    color: color,
-                    flags: flags,
-                    falloff: falloff
-                )
+                decoded = try Self.decodeData(&reader)
             case "FNAM":
                 if field.data.count >= 4 {
                     fade = try reader.readFloat32()
@@ -111,7 +118,27 @@ nonisolated public struct LightRecord: Sendable {
         color = decoded.color
         flags = decoded.flags
         falloffExponent = decoded.falloff
+        flicker = decoded.flicker
         self.fade = fade
+    }
+
+    private static func decodeData(_ reader: inout BinaryReader) throws -> DecodedData {
+        let time = try Int32(bitPattern: reader.readUInt32())
+        let radius = try reader.readUInt32()
+        let color = try readColor(&reader)
+        let flags = try Flags(rawValue: reader.readUInt32())
+        let falloff = try reader.readFloat32()
+        reader.skip(8) // FOV, near clip
+        let flicker = try FlickerEffect(
+            period: reader.readFloat32(),
+            intensityAmplitude: reader.readFloat32(),
+            movementAmplitude: reader.readFloat32()
+        )
+        reader.skip(8) // value, weight
+        return DecodedData(
+            time: time, radius: radius, color: color, flags: flags, falloff: falloff,
+            flicker: flicker
+        )
     }
 
     private static func readColor(_ reader: inout BinaryReader) throws -> SIMD3<Float> {

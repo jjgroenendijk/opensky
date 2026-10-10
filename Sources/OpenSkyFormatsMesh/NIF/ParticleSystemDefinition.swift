@@ -33,6 +33,8 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
     /// Resolved blend/test state when `alphaPropertyRef` points at a
     /// NiAlphaProperty.
     public let alphaProperty: NIFAlphaProperty?
+    /// The system's `NiPSysEmitterCtlr` blocks; empty when none drives it.
+    public let emitterControllers: [ParticleEmitterController]
 
     public init(
         name: String?,
@@ -45,7 +47,8 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
         shaderPropertyRef: Int32,
         alphaPropertyRef: Int32,
         effectShader: NIFEffectShaderProperty?,
-        alphaProperty: NIFAlphaProperty?
+        alphaProperty: NIFAlphaProperty?,
+        emitterControllers: [ParticleEmitterController] = []
     ) {
         self.name = name
         self.worldTransform = worldTransform
@@ -58,6 +61,7 @@ nonisolated public struct ParticleSystemDefinition: Equatable, Sendable {
         self.alphaPropertyRef = alphaPropertyRef
         self.effectShader = effectShader
         self.alphaProperty = alphaProperty
+        self.emitterControllers = emitterControllers
     }
 }
 
@@ -120,9 +124,56 @@ nonisolated public struct ParticleEmitter: Equatable, Sendable {
         case box(width: Float, height: Float, depth: Float)
         case cylinder(radius: Float, height: Float)
         case sphere(radius: Float)
-        /// Emitter mesh block refs + nif.xml VelocityType. Mesh sampling
-        /// itself is deferred; only the refs + mode are recorded.
-        case mesh(meshRefs: [Int32], initialVelocityType: UInt32)
+        /// Births on the surface of other shapes in the file.
+        case mesh(MeshEmitterSource)
+    }
+}
+
+/// `NiPSysMeshEmitter`: where on the emitter meshes a particle is born, and which
+/// way it starts. The geometry is in the particle system's own space.
+nonisolated public struct MeshEmitterSource: Equatable, Sendable {
+    /// nif.xml `VelocityType`.
+    public enum Velocity: UInt32, Equatable, Sendable {
+        case normals = 0
+        case random = 1
+        case direction = 2
+    }
+
+    /// nif.xml `EmitFrom`.
+    public enum EmitFrom: UInt32, Equatable, Sendable {
+        case vertices = 0
+        case faceCenter = 1
+        case edgeCenter = 2
+        case faceSurface = 3
+        case edgeSurface = 4
+    }
+
+    public let meshRefs: [Int32]
+    public let velocity: Velocity
+    public let emitFrom: EmitFrom
+    public let emissionAxis: SIMD3<Float>
+    public var positions: [SIMD3<Float>]
+    /// One per position, or empty when the meshes store none.
+    public var normals: [SIMD3<Float>]
+    /// Indices into `positions`.
+    public var triangles: [SIMD3<UInt32>]
+
+    public init(
+        meshRefs: [Int32],
+        velocity: Velocity,
+        emitFrom: EmitFrom,
+        emissionAxis: SIMD3<Float>,
+        positions: [SIMD3<Float>] = [],
+        normals: [SIMD3<Float>] = [],
+        triangles: [SIMD3<UInt32>] = []
+    ) {
+        self.meshRefs = meshRefs
+        self.velocity = velocity
+        self.emitFrom = emitFrom
+        self.emissionAxis = emissionAxis
+        self.positions = positions
+        self.normals = normals
+        self.triangles = triangles
     }
 }
 

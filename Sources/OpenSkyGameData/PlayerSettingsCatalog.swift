@@ -187,6 +187,11 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             applied: true
         ),
         row("rendering.impactEffects", .opensky, .toggle, "Impact effects", 1, applied: true),
+        row("rendering.lightAnimation", .opensky, .toggle, "Flickering lights", 1, applied: true),
+        row(
+            "rendering.particleSorting", .opensky, .toggle, "Sort particles far to near", 1,
+            applied: true
+        ),
         row("rendering.toneMapping", .opensky, .toggle, "HDR tone mapping", 1, applied: true),
         row(
             "rendering.textureStreaming",
@@ -238,7 +243,9 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
             "Frame rate cap", 0, applied: true
         )
     ] + assetKindRows + textureFormatRows
+}
 
+nonisolated extension PlayerSettingsCatalog {
     /// The frame rate caps in menu order; 0 is no cap.
     public static let frameRateCapOptions = [0, 30, 60, 120]
 
@@ -317,6 +324,10 @@ nonisolated extension PlayerSettingID {
     public static let terrainNormalMaps = Self("rendering.terrainNormalMaps")
     /// A hit or a step shows its impact model: dust, sparks, or blood spray.
     public static let impactEffects = Self("rendering.impactEffects")
+    /// Placed lights flicker and pulse as their light records ask.
+    public static let lightAnimation = Self("rendering.lightAnimation")
+    /// Blended particles and their systems draw far to near.
+    public static let particleSorting = Self("rendering.particleSorting")
     /// The eye adapts to the scene brightness and the image space white point applies.
     public static let toneMapping = Self("rendering.toneMapping")
     /// The game's `[Decals] bDecals` and `[Display] uMaxDecals`.

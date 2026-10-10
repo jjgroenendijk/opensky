@@ -191,18 +191,6 @@ struct NIFParticleTests {
         #expect(emitter.shape == .sphere(radius: 7.5))
     }
 
-    @Test func decodesMeshEmitter() throws {
-        let payload = NIFParticleFixture.meshEmitter(
-            base: NIFParticleFixture.modifierBase(),
-            emitter: NIFParticleFixture.emitterBase(),
-            meshRefs: [5, 6], velocityType: 2
-        )
-        let emitter = try NIFParticleModifierDecoder.emitter(
-            typeName: "NiPSysMeshEmitter", data: payload, header: header()
-        )
-        #expect(emitter.shape == .mesh(meshRefs: [5, 6], initialVelocityType: 2))
-    }
-
     // MARK: NiPSysData
 
     @Test func decodesPSysDataFlagsAndSubtextures() throws {

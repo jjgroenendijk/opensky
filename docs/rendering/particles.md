@@ -29,8 +29,9 @@ Each playback owns a shared buffer with three ranges, one per frame in flight. I
 
 The simulation is deterministic for a seed and a sequence of fixed steps.
 
-- Box, cylinder, sphere, and mesh emitters create particles in world space. Mesh emitters use their
-  origin, because the source vertices are not kept.
+- Box, cylinder, and sphere emitters create particles in world space. A mesh emitter picks a
+  vertex, an edge, or a face of its shapes, as its `EmitFrom` value says. The start direction
+  is the surface normal, the emission axis, or random, as its `VelocityType` says.
 - Speed, declination, planar angle, color, radius, and lifespan, each with its variation, set up a
   new particle. A particle dies at the end of its lifespan.
 - Active modifiers run in file order. Gravity changes velocity. Wind adds the live weather vector
@@ -39,10 +40,15 @@ The simulation is deterministic for a seed and a sequence of fixed steps.
 - Radius and alpha fade in at birth and out at death, so particles do not pop.
 - Subtexture offsets pick each particle's rectangle in the texture atlas.
 
-Emitter controllers and their birth-rate tracks are not decoded yet. Until they are, a system fills
-about a quarter of its capacity per average lifespan, clamped to 6 to 60 births per second, times the
-user's emission scale. An offscreen render at an exact time resets to the seed and steps in 50 ms
-slices, so frame tests repeat.
+An emitter with an `NiPSysEmitterCtlr` births at the keyed rate, sampled linearly at the
+controller's time. The time loops, reverses, or clamps between the start and stop times. While
+the on/off track is off, the emitter births nothing. A full system does not save births for
+later.
+
+An emitter without a controller fills about a quarter of the capacity per average lifespan,
+clamped to 6 to 60 births per second. Both rates are times the user's emission scale. An
+offscreen render at an exact time resets to the seed and steps in 50 ms slices, so frame tests
+repeat.
 
 ## Drawing
 
@@ -59,7 +65,10 @@ not culled.
 | `DEST_COLOR`, `ZERO` (4 and 1) | Multiply | Modulation effects |
 | Anything else, or none | Alpha | Smoke, steam, water |
 
-Systems draw in scene order. Back-to-front sorting is not done yet.
+Placed and effect systems draw far to near, by the distance from the camera to the emitter
+origin. Inside an alpha or multiply system, the particles also draw far to near. Additive
+systems are not sorted inside, because a sum does not depend on order. Rain and snow follow
+the camera and draw last.
 
 ## Wind and controls
 
@@ -67,12 +76,14 @@ The renderer publishes the blended weather wind, and every live frame passes it 
 `BSWind` modifiers. Calm or no weather is zero.
 
 `World > Environment > Particles` turns drawing on and off (the simulation keeps its state), freezes
-the simulation (the current frame stays), scales new births from 0 to 200 percent (living particles
-go on), and shows resident systems, active emitters, and live particles.
+the simulation (the current frame stays), turns the far-to-near sort on and off, scales new births
+from 0 to 200 percent (living particles go on), and shows resident systems, active emitters, live
+particles, and systems with a keyed birth rate. The sort is the player setting
+`rendering.particleSorting`, which the launcher's Graphics page also shows.
 
 ## Not done
 
-- `NiPSysEmitterCtlr` birth rates and interpolators.
-- Births on mesh surfaces, rotation, drag, spawn and death chains, collision, and strip particles.
-- Back-to-front sorting and soft particles that fade near depth.
+- Birth rates that a controller manager sequence feeds.
+- Rotation, drag, spawn and death chains, collision, and strip particles.
+- Soft particles that fade near depth.
 - Collision and splashes for precipitation, which uses this path ([precipitation](/rendering/precipitation.md)).

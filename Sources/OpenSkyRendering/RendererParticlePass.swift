@@ -1,4 +1,6 @@
 // Billboard particle encoding split from RendererScenePass for file limits.
+// Placed and effect systems draw far to near; precipitation follows the camera
+// and stays in its own call.
 
 import Metal
 import OpenSkyShaderTypes
@@ -9,6 +11,7 @@ extension Renderer {
     public func encodeParticles(
         items: [ParticlePlayback],
         enabled: Bool,
+        sorted: Bool = false,
         state: inout ScenePassState
     ) {
         // The feature switch ANDed with the view filter: `enabled` is the
@@ -21,7 +24,9 @@ extension Renderer {
         defer { state.encoder.setTriangleFillMode(state.fillMode) }
         var boundMode: ParticleBlendMode?
         for item in items {
-            let (offset, count) = item.prepareBuffer(slot: state.slot)
+            let (offset, count) = item.prepareBuffer(
+                slot: state.slot, viewer: sorted ? freeFlyCamera.position : nil
+            )
             guard count >= 1 else { continue }
             if boundMode != item.blendMode {
                 state.encoder.setRenderPipelineState(
@@ -47,5 +52,15 @@ extension Renderer {
             state.stats.drawCalls += 1
             state.stats.drawnInstances += count
         }
+    }
+}
+
+extension Renderer {
+    /// Far systems first when sorting is on, so near smoke blends over far fire.
+    func sortedParticles(_ items: [ParticlePlayback]) -> [ParticlePlayback] {
+        guard particleSortingEnabled, items.count > 1 else { return items }
+        return ParticleDrawOrder.backToFront(
+            items, viewer: freeFlyCamera.position, at: \.origin
+        )
     }
 }

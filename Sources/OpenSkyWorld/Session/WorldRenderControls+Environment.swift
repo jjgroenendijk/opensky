@@ -2,6 +2,7 @@
 // precipitation, and grass.
 
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyRendering
 import simd
@@ -77,6 +78,18 @@ extension WorldRenderControls: AnimationControlProviding {
         set { renderer?.actorAnimationsEnabled = newValue }
     }
 
+    public var lightAnimationEnabled: Bool {
+        get { renderer?.lightAnimationEnabled ?? true }
+        set {
+            renderer?.lightAnimationEnabled = newValue
+            world?.playerSettingsStore.set(.lightAnimation, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var animatedLightCount: Int {
+        (renderer?.scene.pointLights ?? []).count { $0.animation != nil }
+    }
+
     public var animationSnapshot: AnimationControlSnapshot {
         AnimationControlSnapshot(
             playbackCount: renderer?.scene.animations.count ?? 0,
@@ -100,6 +113,20 @@ extension WorldRenderControls: ParticleControlProviding {
     public var particleEmissionScale: Float {
         get { renderer?.particleEmissionScale ?? 1 }
         set { renderer?.particleEmissionScale = simd_clamp(newValue, 0, 2) }
+    }
+
+    public var particleSortingEnabled: Bool {
+        get { renderer?.particleSortingEnabled ?? true }
+        set {
+            renderer?.particleSortingEnabled = newValue
+            world?.playerSettingsStore.set(.particleSorting, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var controlledParticleSystemCount: Int {
+        (renderer?.scene.particles ?? []).count {
+            !$0.simulator.definition.emitterControllers.isEmpty
+        }
     }
 
     public var particleSnapshot: ParticleControlSnapshot {

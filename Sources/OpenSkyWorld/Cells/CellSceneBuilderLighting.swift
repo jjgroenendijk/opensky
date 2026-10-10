@@ -120,7 +120,7 @@ nonisolated extension CellSceneBuilder {
         _ references: [PlacedReference]
     ) -> [RenderPointLight] {
         let lights = lightIndexBuildingIfNeeded()
-        return references.compactMap { reference in
+        return references.compactMap { reference -> RenderPointLight? in
             let base = lights[reference.base.rawValue]
             let emitted = reference.emittance.flatMap { lights[$0.rawValue] }
             guard let light = emitted ?? base, light.isSupportedPointLight else { return nil }
@@ -130,7 +130,8 @@ nonisolated extension CellSceneBuilder {
                 position: reference.placement.position,
                 radius: radius,
                 color: light.color * max(0, light.fade),
-                falloffExponent: max(0.01, light.falloffExponent)
+                falloffExponent: max(0.01, light.falloffExponent),
+                animation: RenderLightAnimation(light: light, reference: reference.formID.rawValue)
             )
         }
     }

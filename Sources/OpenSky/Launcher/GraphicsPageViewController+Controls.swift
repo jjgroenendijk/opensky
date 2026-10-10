@@ -63,6 +63,14 @@ extension GraphicsPageViewController {
             "Dust under a step, sparks or blood spray where a hit lands"
         )
         checkbox(
+            lightAnimationControl, "LightAnimation",
+            "Torches and fires flicker; some lights pulse"
+        )
+        checkbox(
+            particleSortingControl, "ParticleSorting",
+            "Draw smoke and steam far to near, so near particles blend over far ones"
+        )
+        checkbox(
             pipelineCacheControl, "PipelineCache",
             "Load compiled GPU pipelines saved by an earlier launch; starts faster"
         )
@@ -127,6 +135,7 @@ extension GraphicsPageViewController {
             (meshShaderGrassControl, .meshShaderGrass), (gpuCullingControl, .gpuCulling),
             (waterDepthControl, .waterDepth), (terrainNormalMapsControl, .terrainNormalMaps),
             (impactEffectsControl, .impactEffects), (toneMappingControl, .toneMapping),
+            (lightAnimationControl, .lightAnimation), (particleSortingControl, .particleSorting),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
         ]

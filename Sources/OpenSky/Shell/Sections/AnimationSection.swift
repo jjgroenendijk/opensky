@@ -1,4 +1,5 @@
-// World > Environment > Actor animation: enable toggle and playback readout.
+// World > Environment > Actor animation: enable toggle and playback readout, plus
+// the flicker and pulse of placed lights.
 
 import AppKit
 import OpenSkyWorld
@@ -13,6 +14,9 @@ final class AnimationSection: PanelSectionViewController {
     }
 
     let enabledControl = NSButton(checkboxWithTitle: "Enabled", target: nil, action: nil)
+    let lightsControl = NSButton(
+        checkboxWithTitle: "Flickering lights", target: nil, action: nil
+    )
     private let statsLabel = PanelComponents.statsLabel(identifier: "AnimationStatsLabel")
 
     override var sectionTitle: String {
@@ -32,11 +36,12 @@ final class AnimationSection: PanelSectionViewController {
     }
 
     static func isOverridden(provider: (any AnimationControlProviding)?) -> Bool {
-        provider?.actorAnimationsEnabled == false
+        provider?.actorAnimationsEnabled == false || provider?.lightAnimationEnabled == false
     }
 
     static func resetToDefaults(provider: (any AnimationControlProviding)?) {
         provider?.actorAnimationsEnabled = true
+        provider?.lightAnimationEnabled = true
     }
 
     override func makeContentViews() -> [NSView] {
@@ -44,12 +49,18 @@ final class AnimationSection: PanelSectionViewController {
             enabledControl, target: self, action: #selector(enabledChanged),
             identifier: "AnimationsEnabledControl"
         )
-        return [enabledControl, statsLabel]
+        PanelComponents.configureCheckbox(
+            lightsControl, target: self, action: #selector(lightsChanged),
+            identifier: "LightAnimationEnabledControl"
+        )
+        return [PanelComponents.group([enabledControl, lightsControl]), statsLabel]
     }
 
     override func syncControls() {
         enabledControl.isEnabled = provider != nil
         enabledControl.state = provider?.actorAnimationsEnabled == true ? .on : .off
+        lightsControl.isEnabled = provider != nil
+        lightsControl.state = provider?.lightAnimationEnabled == true ? .on : .off
     }
 
     override func refreshReadout() {
@@ -62,6 +73,12 @@ final class AnimationSection: PanelSectionViewController {
         statsLabel.stringValue = "Animation: \(snapshot.playbackCount) playbacks, "
             + "\(snapshot.updatedBoneCount) bones · \(state) · "
             + String(format: "%.2f ms", snapshot.updateMS)
+            + " · \(provider.animatedLightCount) animated lights"
+    }
+
+    @objc private func lightsChanged() {
+        provider?.lightAnimationEnabled = lightsControl.state == .on
+        finishInteraction()
     }
 
     @objc private func enabledChanged() {

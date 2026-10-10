@@ -77,14 +77,30 @@ float32. When `DALC` exists, it replaces the directional ambient block of `DATA`
 | 8 | 4 | Color RGBX |
 | 12 | 4 | Flags, uint32 |
 | 16 | 4 | Falloff exponent, float32 |
-| 20 | 28 | FOV, near clip, animation values, value, weight. Skipped |
+| 20 | 4 | FOV, float32. Skipped |
+| 24 | 4 | Near clip, float32. Skipped |
+| 28 | 4 | Flicker period, float32 |
+| 32 | 4 | Flicker intensity amplitude, float32 |
+| 36 | 4 | Flicker movement amplitude, float32 |
+| 40 | 8 | Value (uint32) and weight (float32). Skipped |
 
 `FNAM` is the fade, a float32. Without it the fade is 1.
 
 OpenSky draws omni lights, including shadow omni lights. It does not draw a light with any
 of these: flag `0x004` (negative), `0x200` (spot), `0x400` (shadow spot), `0x020` (off by
-default), or a radius that is not a positive finite number. The animation flags are read
-but lights do not animate yet.
+default), or a radius that is not a positive finite number.
+
+The animation flags are `0x008` flicker, `0x040` flicker slow, `0x080` pulse, and `0x100`
+pulse slow (xEdit dev-4.1.6). OpenSky reads the period as seconds per cycle, and a slow flag
+doubles it. A flickering light gets smooth random brightness and moves by up to the movement
+amplitude. A pulsing light follows a sine wave. The brightness swings by the intensity
+amplitude, clamped to 0 to 1. [WARNING] The curve shapes, the period unit, and the slow factor
+are OpenSky choices, not checked against the game. xEdit shows the period with a 0.01
+display scale, so the stored unit may differ.
+
+`World > Environment > Actor animation` has the "Flickering lights" switch and counts the
+animated lights. It is the player setting `rendering.lightAnimation`, also on the launcher's
+Graphics page.
 
 ## Placed lights (REFR)
 

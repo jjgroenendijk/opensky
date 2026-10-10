@@ -45,6 +45,12 @@ final class GraphicsPageViewController: NSViewController {
     let impactEffectsControl = NSButton(
         checkboxWithTitle: "Impact effects", target: nil, action: nil
     )
+    let lightAnimationControl = NSButton(
+        checkboxWithTitle: "Flickering lights", target: nil, action: nil
+    )
+    let particleSortingControl = NSButton(
+        checkboxWithTitle: "Sort particles far to near", target: nil, action: nil
+    )
     let toneMappingControl = NSButton(
         checkboxWithTitle: "HDR tone mapping", target: nil, action: nil
     )
@@ -134,6 +140,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(meshShaderGrassControl), layout.toggle(gpuCullingControl),
                 layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
                 layout.toggle(impactEffectsControl), layout.toggle(toneMappingControl),
+                layout.toggle(lightAnimationControl), layout.toggle(particleSortingControl),
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl])
             ]),
@@ -181,6 +188,8 @@ final class GraphicsPageViewController: NSViewController {
         terrainNormalMapsControl.state = store.bool(.terrainNormalMaps) ? .on : .off
         impactEffectsControl.state = store.bool(.impactEffects) ? .on : .off
         toneMappingControl.state = store.bool(.toneMapping) ? .on : .off
+        lightAnimationControl.state = store.bool(.lightAnimation) ? .on : .off
+        particleSortingControl.state = store.bool(.particleSorting) ? .on : .off
         pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))
