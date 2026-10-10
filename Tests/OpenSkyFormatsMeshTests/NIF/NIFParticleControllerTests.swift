@@ -67,9 +67,6 @@ struct NIFParticleControllerTests {
     }
 
     private func controlledFile(birthInterpolator: Data? = nil) -> Data {
-        var update = Data()
-        update.appendUInt32(5)
-        update.append(timeControllerTail())
         var emitter = Data()
         emitter.appendUInt32(0xFFFF_FFFF)
         emitter.append(timeControllerTail())
@@ -95,31 +92,16 @@ struct NIFParticleControllerTests {
         boolData.append(1)
         boolData.appendFloat32(1.5)
         boolData.append(0)
-        let system = NIFParticleFixture.particleSystemSSE(
-            prefix: NIFFixture.avObjectPrefix(nameIndex: 0, controllerRef: 4),
-            dataRef: 2, modifierRefs: [3]
-        )
-        return NIFFixture.file(
-            blocks: [
-                NIFFixture.Block("NiNode", NIFFixture.niNode(
-                    prefix: NIFFixture.avObjectPrefix(), children: [1]
-                )),
-                NIFFixture.Block("NiParticleSystem", system),
-                NIFFixture.Block("NiPSysData", NIFParticleFixture.psysData(maxParticles: 64)),
-                NIFFixture.Block("NiPSysBoxEmitter", NIFParticleFixture.boxEmitter(
-                    base: NIFParticleFixture.modifierBase(nameIndex: 1),
-                    emitter: NIFParticleFixture.emitterBase(),
-                    width: 1, height: 1, depth: 1
-                )),
-                NIFFixture.Block("NiPSysUpdateCtlr", update),
-                NIFFixture.Block("NiPSysEmitterCtlr", emitter),
+        return NIFParticleFixture.controlledSystemFile(
+            emitter: emitter,
+            updateTail: timeControllerTail(),
+            extraBlocks: [
                 NIFFixture.Block("NiFloatInterpolator", birthInterpolator ?? floatInterpolator),
                 NIFFixture.Block("NiFloatData", floatData),
                 NIFFixture.Block("NiBoolInterpolator", boolInterpolator),
                 NIFFixture.Block("NiBoolData", boolData)
             ],
-            strings: ["Smoke", "Emit"],
-            roots: [0]
+            strings: ["Smoke", "Emit"]
         )
     }
 

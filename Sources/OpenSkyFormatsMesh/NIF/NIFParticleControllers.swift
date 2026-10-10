@@ -1,12 +1,14 @@
 // The `NiPSysEmitterCtlr` blocks on a particle system's controller chain and
-// the float and bool interpolators they read. Other controllers are passed
-// over. Layout: docs/formats/nif-particles.md.
+// the float and bool interpolators they read, directly or through the default
+// controller manager sequence. Other controllers are passed over.
+// Layout: docs/formats/nif-particles.md.
 
 import Foundation
 import OpenSkyFormatsCore
 
 nonisolated enum NIFParticleControllerDecoder {
-    static let emitterControllerType = "NiPSysEmitterCtlr"
+    /// `BSPSysMultiTargetEmitterCtlr` adds two fields after the base layout.
+    static let emitterControllerTypes: Set = ["NiPSysEmitterCtlr", "BSPSysMultiTargetEmitterCtlr"]
     static let boolInterpolatorTypes: Set = ["NiBoolInterpolator", "NiBoolTimelineInterpolator"]
     /// nif.xml `#INV_FLT#`: the pose value is unset.
     static let invalidFloat: Float = -3.402823466e+38
@@ -17,27 +19,67 @@ nonisolated enum NIFParticleControllerDecoder {
         file: NIFFile
     ) throws -> [ParticleEmitterController] {
         var controllers: [ParticleEmitterController] = []
+        var feeds: [Int32: SequenceFeed]?
         var next = ref
         var visited: Set<Int32> = []
         while next >= 0 {
             guard visited.insert(next).inserted else {
                 throw NIFError.malformed("controller chain loops at block \(next)")
             }
-            let block = try Self.block(next, file)
+            let index = next
+            let block = try Self.block(index, file)
             var reader = BinaryReader(block.data)
             next = try Int32(bitPattern: reader.readUInt32())
-            if block.typeName == emitterControllerType {
-                try controllers.append(emitterController(&reader, file: file))
+            if emitterControllerTypes.contains(block.typeName) {
+                let controller = try emitterController(&reader, file: file)
+                guard controller.isManagerFed else {
+                    controllers.append(controller.decoded)
+                    continue
+                }
+                let all = try feeds ?? NIFControllerSequenceDecoder.defaultFeeds(file: file)
+                feeds = all
+                try controllers.append(controller.fed(by: all[index], file: file))
             }
         }
         return controllers
+    }
+
+    /// An emitter controller before its keys are chosen.
+    private struct RawEmitterController {
+        let name: String?
+        let timing: ControllerTiming
+        let birthRate: [NIFKey<Float>]
+        let active: [NIFKey<Bool>]
+        /// nif.xml `TimeControllerFlags` bit 5: a controller manager drives it.
+        let isManagerFed: Bool
+
+        var decoded: ParticleEmitterController {
+            ParticleEmitterController(
+                modifierName: name, timing: timing, birthRate: birthRate, active: active
+            )
+        }
+
+        /// The sequence's keys and timing; the controller's own when no sequence feeds it.
+        func fed(by feed: SequenceFeed?, file: NIFFile) throws -> ParticleEmitterController {
+            guard let feed else { return decoded }
+            let rate = try feed.interpolators["BirthRate"]
+                .map { try NIFParticleControllerDecoder.floatKeys($0, file: file) } ?? []
+            let on = try feed.interpolators["EmitterActive"]
+                .map { try NIFParticleControllerDecoder.boolKeys($0, file: file) } ?? []
+            return ParticleEmitterController(
+                modifierName: name,
+                timing: feed.timing,
+                birthRate: rate.isEmpty ? birthRate : rate,
+                active: on.isEmpty ? active : on
+            )
+        }
     }
 
     /// Reads past the next-controller ref, which the caller has already read.
     private static func emitterController(
         _ reader: inout BinaryReader,
         file: NIFFile
-    ) throws -> ParticleEmitterController {
+    ) throws -> RawEmitterController {
         let flags = try reader.readUInt16()
         let frequency = try reader.readFloat32()
         let phase = try reader.readFloat32()
@@ -49,8 +91,8 @@ nonisolated enum NIFParticleControllerDecoder {
         let visibility = try Int32(bitPattern: reader.readUInt32())
         let name = nameIndex != .max && Int(nameIndex) < file.header.strings.count
             ? file.header.strings[Int(nameIndex)] : nil
-        return try ParticleEmitterController(
-            modifierName: name,
+        return try RawEmitterController(
+            name: name,
             timing: ControllerTiming(
                 cycle: ControllerCycle(rawValue: (flags >> 1) & 0x3) ?? .clamp,
                 frequency: frequency,
@@ -59,7 +101,8 @@ nonisolated enum NIFParticleControllerDecoder {
                 stopTime: stop
             ),
             birthRate: floatKeys(interpolator, file: file),
-            active: boolKeys(visibility, file: file)
+            active: boolKeys(visibility, file: file),
+            isManagerFed: flags & 0x20 != 0
         )
     }
 

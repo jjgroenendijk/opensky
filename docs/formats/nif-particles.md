@@ -144,8 +144,9 @@ At most 65,536 vertices are kept per emitter.
 ## Emitter controllers
 
 The particle system's controller ref starts a chain of `NiTimeController` blocks, linked by
-"Next Controller". OpenSky reads each `NiPSysEmitterCtlr` and passes over the rest, such as
-`NiPSysUpdateCtlr`. In version 20.2.0.7 its fields are:
+"Next Controller". OpenSky reads each `NiPSysEmitterCtlr` and
+`BSPSysMultiTargetEmitterCtlr`, and passes over the rest, such as `NiPSysUpdateCtlr`. In
+version 20.2.0.7 its fields are:
 
 | Field | Type | Bytes |
 | --- | --- | --- |
@@ -166,8 +167,45 @@ the emitter's name.
   and TBC keys add three. The pose value -3.402823466e+38 means "unset".
 - The on/off track is an `NiBoolInterpolator` or `NiBoolTimelineInterpolator`: a pose
   byte (2 means unset), then a ref to `NiBoolData`, a `KeyGroup<byte>`.
-- A blend interpolator, which a controller manager feeds, gives no keys. Such a system
-  keeps the fallback rate ([particle playback](/rendering/particles.md)).
+- A blend interpolator gives no keys. A controller with flags bit `0x20` set is driven by
+  an `NiControllerManager`, and its keys come from a sequence instead (below).
+
+`BSPSysMultiTargetEmitterCtlr` is an `NiPSysEmitterCtlr` with two more fields: `Max Emitters`
+(uint16) and `Master Particle System` (Ptr). OpenSky reads it like `NiPSysEmitterCtlr` and
+ignores the two fields.
+
+## Controller manager sequences
+
+An `NiControllerManager` lists `NiControllerSequence` blocks. Each sequence names, per
+controller, the interpolator that feeds it. Layout for 20.2.0.7, BSVER 100, from nif.xml
+`NiSequence` and `NiControllerSequence`:
+
+| Field | Type | Bytes |
+| --- | --- | --- |
+| Name | string index | 4 |
+| Num Controlled Blocks | uint32 | 4 |
+| Array Grow By | uint32 | 4 |
+| Controlled Blocks | 29 bytes each | 29 x n |
+| Weight | float32 | 4 |
+| Text Keys | Ref | 4 |
+| Cycle Type | uint32 | 4 |
+| Frequency, Start Time, Stop Time | 3 x float32 | 12 |
+| Manager | Ptr | 4 |
+| Accum Root Name | string index | 4 |
+| Num Anim Note Arrays, then refs | uint16, Ref x n | 2 + 4 x n |
+
+A controlled block is an interpolator Ref, a controller Ref, a priority byte, then five
+string indices: node name, property type, controller type, controller ID, and interpolator
+ID. For an emitter controller the interpolator ID is `BirthRate` (an `NiFloatInterpolator`)
+or `EmitterActive` (an `NiBoolInterpolator`). Their layout is the same as above.
+
+Checked on the vanilla install: 525 of 912 particle NIFs hold sequences, and 142 use
+`BSPSysMultiTargetEmitterCtlr`. Every controller with flags bit `0x20` has a sequence that
+feeds it. Cycle types are 0 (loop) or 2 (clamp). Common emitter sequence names are `mIdle`,
+`Waiting`, `mBegin`, `mLoop`, and `mEnd`.
+
+A NIF does not say which sequence plays first; the game starts them from animation events.
+OpenSky's pick is in [particle playback](/rendering/particles.md).
 
 ## Not read
 
