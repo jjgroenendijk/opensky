@@ -149,7 +149,8 @@ nonisolated extension CellSceneBuilder {
                 actors: actors,
                 referenceEntries: resolved.entries,
                 stateSequence: state.sequence,
-                vehicleFollowers: resolved.vehicleFollowers
+                vehicleFollowers: resolved.vehicleFollowers,
+                rooms: RoomPortalGraphBuilder.graph(references: effective)
             ),
             counts: counts
         )

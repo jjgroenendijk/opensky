@@ -56,7 +56,8 @@ nonisolated extension RenderScene {
             pointLights: keepsAncillaryContent ? pointLights : [],
             grass: keepsAncillaryContent ? grass : [],
             particles: keepsAncillaryContent ? particles : [],
-            animations: keepsAncillaryContent ? animations : []
+            animations: keepsAncillaryContent ? animations : [],
+            rooms: keepsAncillaryContent ? rooms : nil
         )
     }
 
@@ -70,7 +71,8 @@ nonisolated extension RenderScene {
         pointLights: [RenderPointLight],
         grass: [GrassDrawGroup],
         particles: [ParticlePlayback],
-        animations: [any RenderAnimation]
+        animations: [any RenderAnimation],
+        rooms: RoomPortalGraph?
     ) {
         self.opaque = opaque
         self.alphaTested = alphaTested
@@ -82,5 +84,6 @@ nonisolated extension RenderScene {
         self.grass = grass
         self.particles = particles
         self.animations = animations
+        self.rooms = rooms
     }
 }

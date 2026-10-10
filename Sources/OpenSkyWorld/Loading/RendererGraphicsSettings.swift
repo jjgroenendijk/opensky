@@ -20,6 +20,7 @@ extension UpscalerKind {
 extension Renderer {
     public func applyGraphicsSettings(_ store: PlayerSettingsStore) {
         gpuCullingEnabled = store.bool(.gpuCulling)
+        roomCullingEnabled = store.bool(.roomCulling)
         textureStreaming.enabled = store.bool(.textureStreaming)
         textureStreaming.budgetBytes = Self.textureBudgetBytes(store: store, device: device)
         rayTracedShadows.enabled = store.bool(.rayTracedShadows)

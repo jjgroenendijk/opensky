@@ -13,12 +13,23 @@ kernel void cullInstances(
     constant CullParameters &parameters [[buffer(CullBufferIndexParameters)]],
     device InstanceTransform *output [[buffer(CullBufferIndexOutput)]],
     device atomic_uint *arguments [[buffer(CullBufferIndexArguments)]],
+    device atomic_uint *rooms [[buffer(CullBufferIndexRooms)]],
     uint index [[thread_position_in_grid]])
 {
     if (index >= parameters.instanceCount) {
         return;
     }
     device const CullInstance &instance = instances[index];
+    if (parameters.roomWordCount > 0 && instance.room != 0xFFFFFFFFu) {
+        uint word = instance.room / 32;
+        uint bits = word < parameters.roomWordCount
+                        ? atomic_load_explicit(&rooms[1 + word], memory_order_relaxed)
+                        : 0u;
+        if ((bits & (1u << (instance.room % 32))) == 0) {
+            atomic_fetch_add_explicit(&rooms[0], 1, memory_order_relaxed);
+            return;
+        }
+    }
     if (instance.boundsMax.w > 0.0) {
         for (uint plane = 0; plane < 6; plane++) {
             if (!cullPlaneKeeps(

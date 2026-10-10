@@ -35,6 +35,8 @@ nonisolated public struct CellGeometryBuild {
     public var stateSequence: UInt64 = 0
     /// References that ride a vehicle, drawn at their live pose like a body.
     public var vehicleFollowers: Set<UInt32> = []
+    /// An interior's rooms and portals, for occlusion culling.
+    public var rooms: RoomPortalGraph?
 
     public var referenceIndex: RuntimeReferenceIndex {
         RuntimeReferenceIndex(
@@ -210,7 +212,8 @@ nonisolated extension CellSceneBuilder {
             pointLights: geometry.pointLights,
             grass: geometry.grass?.renderPlacements ?? [],
             particles: particles,
-            placedWaterLook: geometry.water?.item.look ?? .fallback
+            placedWaterLook: geometry.water?.item.look ?? .fallback,
+            rooms: geometry.rooms
         )
         let summary = makeSummary(
             found: found,

@@ -50,6 +50,11 @@ extension FakeWorldProviders {
         set { renderPerformance.gpuCullingEnabled = newValue }
     }
 
+    var roomCullingEnabled: Bool {
+        get { renderPerformance.roomCullingEnabled }
+        set { renderPerformance.roomCullingEnabled = newValue }
+    }
+
     var textureStreamingEnabled: Bool {
         get { renderPerformance.textureStreamingEnabled }
         set { renderPerformance.textureStreamingEnabled = newValue }
@@ -105,6 +110,7 @@ struct FakeRenderPerformanceState {
     var snapshot: RenderPerformanceSnapshot? = RenderPerformanceSnapshot()
     var pipelineCacheEnabled = true
     var gpuCullingEnabled = true
+    var roomCullingEnabled = true
     var textureStreamingEnabled = true
     var textureBudgetIndex = 0
     var rayTracedShadowsEnabled = false

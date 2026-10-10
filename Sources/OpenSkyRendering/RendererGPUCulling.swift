@@ -44,6 +44,7 @@ extension Renderer {
         guard
             cullScene.encode(
                 frustums: viewProjections.map(Frustum.init(viewProjection:)),
+                roomVisibility: roomCulling.visibility,
                 slot: slot,
                 resources: gpuCull.resources,
                 commandBuffer: commandBuffer
@@ -65,6 +66,7 @@ extension Renderer {
         var stats = lastDrawStats
         stats.drawnInstances += gpu.cameraVisible
         stats.culledInstances += gpu.cameraCulled
+        stats.roomCulledInstances += gpu.cameraRoomCulled
         return stats
     }
 

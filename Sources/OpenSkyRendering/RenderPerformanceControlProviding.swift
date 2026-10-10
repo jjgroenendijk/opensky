@@ -19,6 +19,7 @@ nonisolated public struct RenderPerformanceSnapshot: Equatable, Sendable {
     public var upscaling = UpscaleStatus()
     public var frameInterpolation = FrameInterpolationStatus()
     public var meshShaderGrass = MeshShaderGrassStatus()
+    public var roomCulling = RoomCullingReadout()
 
     public init(
         renderTargets: RenderTargetMemory = RenderTargetMemory(),
@@ -68,6 +69,8 @@ public protocol RenderPerformanceControlProviding: AnyObject {
     func clearPipelineCache() -> Int
     /// Culls the scene's static groups on the GPU. Off culls them on the CPU.
     var gpuCullingEnabled: Bool { get set }
+    /// An interior draws only the rooms the camera sees through portals.
+    var roomCullingEnabled: Bool { get set }
     /// Large textures loaded from now on keep only the levels the camera needs. Off
     /// raises every streamed texture to its full size.
     var textureStreamingEnabled: Bool { get set }

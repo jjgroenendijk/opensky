@@ -8,6 +8,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
     let renderTargetsSection = RenderTargetsSection()
     let pipelineCacheSection = PipelineCacheSection()
     let gpuCullingSection = GPUCullingSection()
+    let roomCullingSection = RoomCullingSection()
     let textureStreamingSection = TextureStreamingSection()
     let rayTracedShadowsSection = RayTracedShadowsSection()
     let upscalingSection = UpscalingSection()
@@ -19,6 +20,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
             renderTargetsSection.provider = provider
             pipelineCacheSection.provider = provider
             gpuCullingSection.provider = provider
+            roomCullingSection.provider = provider
             textureStreamingSection.provider = provider
             rayTracedShadowsSection.provider = provider
             upscalingSection.provider = provider
@@ -30,7 +32,7 @@ final class RenderingPerformancePanelViewController: InspectorPanelViewControlle
     override func makeSections() -> [PanelSectionViewController] {
         [
             renderTargetsSection, pipelineCacheSection, gpuCullingSection,
-            textureStreamingSection, rayTracedShadowsSection, upscalingSection,
+            roomCullingSection, textureStreamingSection, rayTracedShadowsSection, upscalingSection,
             frameInterpolationSection, meshShaderGrassSection
         ]
     }

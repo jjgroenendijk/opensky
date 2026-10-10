@@ -6,11 +6,19 @@ nonisolated public struct SceneDrawStats: Equatable, Sendable {
     public var drawCalls = 0
     public var drawnInstances = 0
     public var culledInstances = 0
+    /// Instances in a room the camera cannot see, inside `culledInstances`.
+    public var roomCulledInstances = 0
 
-    public init(drawCalls: Int = 0, drawnInstances: Int = 0, culledInstances: Int = 0) {
+    public init(
+        drawCalls: Int = 0,
+        drawnInstances: Int = 0,
+        culledInstances: Int = 0,
+        roomCulledInstances: Int = 0
+    ) {
         self.drawCalls = drawCalls
         self.drawnInstances = drawnInstances
         self.culledInstances = culledInstances
+        self.roomCulledInstances = roomCulledInstances
     }
 }
 

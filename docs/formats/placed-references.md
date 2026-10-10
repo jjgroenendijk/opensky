@@ -105,6 +105,27 @@ the Creation Kit shows it. The unknown float has exactly four values, 0.15, 0.2,
 Uncertain: the four values of the unknown float look like an editor drawing hint, not
 something the game uses. How a line volume uses three sizes is also not known.
 
+## Rooms and portals
+
+Interiors mark their rooms and the doorways between them with references to two `STAT`
+bases. Source: xEdit `dev-4.1.6` `wbRefRecord(REFR, ...)` (`XRMR`, `XLRM`, `XPOD`).
+
+| reference | base | `XPRM` | own fields |
+| --- | --- | --- | --- |
+| room marker | `RoomMarker` | box | `XRMR` (uint8 linked room count, uint8 flags, 2 unused), optional `LNAM` lighting template and `INAM` image space, one `XLRM` FormID per linked room |
+| portal | `PortalMarker` | portal box | `XPOD`: origin room, then destination room, two FormIDs |
+
+In `Skyrim.esm` (probed on the vanilla install):
+
+- 1,947 references carry `XRMR`. Every one is a `RoomMarker` with a box primitive.
+- 2,486 references carry `XPOD`. Every one is a `PortalMarker` with a portal box, and each
+  holds exactly one pair. 15 pairs have a null end.
+- A portal box is thin on its local Y axis (half size 1), so it is a doorway-sized plate.
+- Room boxes are often turned about Z, so a room is an oriented box, not an axis-aligned one.
+
+How OpenSky uses them is on the [room and portal culling](/rendering/room-portal-culling.md)
+page.
+
 ## Locks, enable parents, and map markers
 
 Source: xEdit `dev-4.1.6` (commit `9fb0168`), `wbRefRecord(REFR, ...)`, `wbXLOC`, `wbXESP`, and `wbMapMarkerEnum`.

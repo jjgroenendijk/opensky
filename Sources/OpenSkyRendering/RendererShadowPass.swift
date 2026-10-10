@@ -163,6 +163,7 @@ extension Renderer {
         lastShadowDrawStats = ShadowDrawStats()
 
         let cascades = frameCascades(projection: projection)
+        updateRoomVisibility(viewProjection: projection * freeFlyCamera.viewMatrix())
         // The cull runs here, before any pass draws, for the camera and each cascade.
         encodeGPUCulling(
             slot: slot,

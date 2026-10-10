@@ -150,6 +150,7 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         snapshot.upscaling = renderer.upscale.status
         snapshot.frameInterpolation = renderer.frameInterpolationStatus
         snapshot.meshShaderGrass = renderer.meshShaderGrassStatus
+        snapshot.roomCulling = renderer.roomCullingReadout
         snapshot.textureStreaming = renderer.textureStreaming.stats
         snapshot.rayTracing = renderer.rayTracedShadows.availability
         snapshot.rayTracedShadows = renderer.rayTracedShadows.stats
@@ -250,6 +251,15 @@ extension WorldRenderControls: RenderPerformanceControlProviding {
         set {
             renderer?.gpuCullingEnabled = newValue
             world?.playerSettingsStore.set(.gpuCulling, to: newValue ? 1 : 0)
+        }
+    }
+
+    public var roomCullingEnabled: Bool {
+        get { renderer?.roomCullingEnabled ?? world?.playerSettingsStore.bool(.roomCulling) ?? true
+        }
+        set {
+            renderer?.roomCullingEnabled = newValue
+            world?.playerSettingsStore.set(.roomCulling, to: newValue ? 1 : 0)
         }
     }
 

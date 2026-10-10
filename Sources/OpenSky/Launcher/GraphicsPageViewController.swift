@@ -34,6 +34,9 @@ final class GraphicsPageViewController: NSViewController {
         checkboxWithTitle: "Draw grass with mesh shaders", target: nil, action: nil
     )
     let gpuCullingControl = NSButton(checkboxWithTitle: "Cull on the GPU", target: nil, action: nil)
+    let roomCullingControl = NSButton(
+        checkboxWithTitle: "Cull hidden rooms", target: nil, action: nil
+    )
     let waterDepthControl = NSButton(
         checkboxWithTitle: "See into shallow water",
         target: nil,
@@ -138,6 +141,7 @@ final class GraphicsPageViewController: NSViewController {
             layout.group("Rendering", [
                 layout.toggle(rayTracedShadowsControl), rayTracingLabel,
                 layout.toggle(meshShaderGrassControl), layout.toggle(gpuCullingControl),
+                layout.toggle(roomCullingControl),
                 layout.toggle(waterDepthControl), layout.toggle(terrainNormalMapsControl),
                 layout.toggle(impactEffectsControl), layout.toggle(toneMappingControl),
                 layout.toggle(lightAnimationControl), layout.toggle(particleSortingControl),
@@ -184,6 +188,7 @@ final class GraphicsPageViewController: NSViewController {
         frameInterpolationControl.state = interpolationUnsupportedReason == nil
             && store.bool(.frameInterpolation) ? .on : .off
         gpuCullingControl.state = store.bool(.gpuCulling) ? .on : .off
+        roomCullingControl.state = store.bool(.roomCulling) ? .on : .off
         waterDepthControl.state = store.bool(.waterDepth) ? .on : .off
         terrainNormalMapsControl.state = store.bool(.terrainNormalMaps) ? .on : .off
         impactEffectsControl.state = store.bool(.impactEffects) ? .on : .off

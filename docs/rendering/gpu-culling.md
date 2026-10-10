@@ -30,8 +30,10 @@ instance.
    at the group's output.
 
 The kernel uses the same positive-vertex test as `Frustum.intersects`, so both paths keep the
-same instances. Before it encodes a group's draw, the CPU tests the group's combined bounding
-box once. A group outside the view gets no draw, and its instances count as culled.
+same instances. In an interior, the camera view first skips instances in rooms the camera
+cannot see ([room and portal culling](/rendering/room-portal-culling.md)); the cascades do
+not. Before it encodes a group's draw, the CPU tests the group's combined bounding box once.
+A group outside the view gets no draw, and its instances count as culled.
 
 ## What stays on the CPU
 

@@ -234,6 +234,11 @@ extension WorldRenderControlForwarding {
         set { renderControls.gpuCullingEnabled = newValue }
     }
 
+    public var roomCullingEnabled: Bool {
+        get { renderControls.roomCullingEnabled }
+        set { renderControls.roomCullingEnabled = newValue }
+    }
+
     public var textureStreamingEnabled: Bool {
         get { renderControls.textureStreamingEnabled }
         set { renderControls.textureStreamingEnabled = newValue }
