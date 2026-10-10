@@ -73,7 +73,9 @@ public final class NPCAnimationCoordinator {
         skeletonMeshPath: String,
         female: Bool
     ) -> ActorClipKey? {
-        ActorAnimationClipLoader.gaitAnimationPath(gait, female: female).map {
+        ActorAnimationClipLoader.gaitAnimationPath(
+            gait, skeletonMeshPath: skeletonMeshPath, female: female
+        ).map {
             ActorClipKey(skeletonMeshPath: skeletonMeshPath, animationPath: $0)
         }
     }

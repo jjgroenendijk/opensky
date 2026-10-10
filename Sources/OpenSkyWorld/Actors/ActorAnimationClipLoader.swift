@@ -1,6 +1,7 @@
 // Loads one animation clip for one character skeleton. Paths come from the behavior
 // census of this install, never memory. Idle clips are gendered
-// (`animations\male\mt_idle.hkx`), combat clips are not. There is no unarmed stagger,
+// (`animations\male\mt_idle.hkx`), combat clips are not. A creature keeps its clips
+// beside its own skeleton, without the `mt_` prefix. There is no unarmed stagger,
 // so `1hm_` small stagger stands in; the same rig binds it.
 // See docs/engine/combat-behavior.md and docs/engine/actor-animation.md.
 
@@ -19,19 +20,52 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         characterRoot + "animations\\\(female ? "female" : "male")\\mt_idle.hkx"
     }
 
+    /// The idle clip of the skeleton at `skeletonMeshPath`: gendered for a character,
+    /// `animations\idle.hkx` beside a creature's skeleton.
+    public static func idleAnimationPath(skeletonMeshPath: String, female: Bool) -> String {
+        guard let root = creatureRoot(skeletonMeshPath) else {
+            return idleAnimationPath(female: female)
+        }
+        return root + "animations\\idle.hkx"
+    }
+
     /// Direct gait clips named by the vanilla behavior graph census. They are
     /// in-place; the NPC capsule remains the sole movement authority.
     public static func gaitAnimationPath(_ gait: LocomotionGait, female: Bool) -> String? {
-        let fileName: String
-        switch gait {
-        case .walk:
-            fileName = "mt_walkforward.hkx"
-        case .run, .sprint:
-            fileName = "mt_runforward.hkx"
-        case .sneak, .swim:
-            return nil
+        gaitFileName(gait).map {
+            characterRoot + "animations\\\(female ? "female" : "male")\\mt_" + $0
         }
-        return characterRoot + "animations\\\(female ? "female" : "male")\\" + fileName
+    }
+
+    /// The gait clip for any skeleton, as `idleAnimationPath(skeletonMeshPath:female:)`.
+    public static func gaitAnimationPath(
+        _ gait: LocomotionGait, skeletonMeshPath: String, female: Bool
+    ) -> String? {
+        guard let root = creatureRoot(skeletonMeshPath) else {
+            return gaitAnimationPath(gait, female: female)
+        }
+        return gaitFileName(gait).map { root + "animations\\" + $0 }
+    }
+
+    /// `meshes\actors\horse\` for `meshes\actors\horse\character assets\skeleton.nif`;
+    /// nil for the character skeleton and for a path outside `meshes\actors\`.
+    static func creatureRoot(_ skeletonMeshPath: String) -> String? {
+        guard
+            !skeletonMeshPath.hasPrefix(characterRoot),
+            skeletonMeshPath.hasPrefix(actorsRoot),
+            let assets = skeletonMeshPath.range(of: "\\character assets\\")
+        else { return nil }
+        return String(skeletonMeshPath[..<assets.lowerBound]) + "\\"
+    }
+
+    private static let actorsRoot = "meshes\\actors\\"
+
+    private static func gaitFileName(_ gait: LocomotionGait) -> String? {
+        switch gait {
+        case .walk: "walkforward.hkx"
+        case .run, .sprint: "runforward.hkx"
+        case .sneak, .swim: nil
+        }
     }
 
     /// The clip one combat reaction plays, as a canonical VFS path.
@@ -68,7 +102,7 @@ nonisolated public enum ActorAnimationClipLoader: Sendable {
         readHKX: (String) throws -> HKXFile
     ) throws -> ActorAnimationClip {
         guard
-            skeletonMeshPath.hasPrefix(characterRoot),
+            skeletonMeshPath.hasPrefix(characterRoot) || creatureRoot(skeletonMeshPath) != nil,
             skeletonMeshPath.hasSuffix(".nif")
         else {
             throw ActorAnimationLoadError.unsupportedSkeleton(skeletonMeshPath)
