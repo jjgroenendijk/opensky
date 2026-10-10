@@ -104,7 +104,24 @@ extension AgentWorldAdapter {
             result["magicka"] = ["current": .init(current.magicka), "max": .init(maximum.magicka)]
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
+        result["firstPerson"] = firstPersonState(renderer: renderer)
         return .object(result)
+    }
+
+    private func firstPersonState(renderer: Renderer) -> AgentJSON {
+        let snapshot = game.player.firstPersonSnapshot
+        let rig = renderer.playerFirstPersonRig
+        return [
+            "graphAttached": .bool(snapshot.graphAttached),
+            "rigAttached": .bool(snapshot.rigAttached),
+            "drawn": .bool(snapshot.active),
+            "failure": .init(snapshot.failureReason),
+            "armModels": .init(snapshot.armModelCount),
+            "bonesPosed": .init(rig?.animation.lastUpdatedBoneCount ?? 0),
+            "graphUpdates": .init(snapshot.graphUpdates),
+            "missingEvents": .array(snapshot.missingEvents.map(AgentJSON.string)),
+            "missingVariables": .array(snapshot.missingVariables.map(AgentJSON.string))
+        ]
     }
 
     private func cellState(at position: SIMD3<Float>) -> AgentJSON {
