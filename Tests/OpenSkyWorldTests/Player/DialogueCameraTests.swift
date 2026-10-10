@@ -215,10 +215,10 @@ struct DialogueCameraTests {
 
     // MARK: - Rig visibility
 
-    /// The eye leaves the player's head, so the body appears and the arms do
-    /// not — whichever mode the conversation interrupted.
+    /// The arms hide, and the body stays hidden: the eye sits just behind the
+    /// player's head, where a helmet would fill the view.
     @Test
-    func engagingShowsTheBodyAndHidesTheArmsInFirstPerson() {
+    func engagingHidesTheArmsAndKeepsTheBodyHiddenInFirstPerson() {
         let firstPerson = PlayerRigVisibility.resolve(
             mode: .walk, hasBody: true, hasArms: true
         )
@@ -227,7 +227,7 @@ struct DialogueCameraTests {
         let talking = PlayerRigVisibility.resolve(
             mode: .walk, hasBody: true, hasArms: true, dialogueCamera: true
         )
-        #expect(talking.drawsBody)
+        #expect(!talking.drawsBody)
         #expect(!talking.drawsArms)
         #expect(talking.castsBodyShadow)
     }

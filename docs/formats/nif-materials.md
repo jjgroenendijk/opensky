@@ -23,7 +23,7 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 
 | Type | Field | Notes |
 | --- | --- | --- |
-| uint32 | Shader flags 1 | `SkyrimShaderPropertyFlags1` |
+| uint32 | Shader flags 1 | Bit 15: refraction, so the shape is skipped |
 | uint32 | Shader flags 2 | Bit 4: double-sided, so no culling |
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
@@ -35,6 +35,10 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 | float | Glossiness | Specular power |
 | float x 3 | Specular color | |
 | float | Specular strength | |
+
+A refraction shape bends the image behind it, such as the heat-haze dome in
+`fireplacewood01burning.nif` (flags 1 `0x82418309`, texture `VaporTileNormal_n.dds`). Its
+texture is a normal map. OpenSky has no refraction pass, so it does not draw the shape.
 
 The fields after specular strength (lighting effects, and per-shader-type fields such as
 environment map scale, skin tint, parallax, and eye data) are not read. The block size

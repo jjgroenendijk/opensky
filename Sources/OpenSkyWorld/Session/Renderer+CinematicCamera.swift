@@ -39,7 +39,7 @@ extension Renderer {
         let resolved = DialogueCamera.collisionProbe.resolve(
             pivot: pose.lookAt,
             offset: pose.eye - pose.lookAt,
-            collisionQuery: collisionQuery ?? { _ in [] }
+            collisionQuery: pose.avoidsGeometry ? collisionQuery ?? { _ in [] } : { _ in [] }
         )
         cinematicCameraState.isCollisionLimited = resolved.isCollisionLimited
         let look = pose.lookAt - resolved.position

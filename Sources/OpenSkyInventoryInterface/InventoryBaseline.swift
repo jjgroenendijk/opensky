@@ -1,5 +1,6 @@
-// What an owner holds before runtime changes: a container's CNTO list, an
-// actor's resolved default outfit, and nothing for the player. Baselines are
+// What an owner holds before runtime changes: a container's CNTO list, and an
+// actor's resolved default outfit. The player is the `Player` NPC_ record, so
+// the outfit the body is drawn wearing is in the inventory too. Baselines are
 // re-derived on every call, so a reset restores what the records say now.
 // Leveled entries resolve deterministically and `chanceNone` is ignored.
 // Documented in docs/engine/inventory-state.md.
@@ -19,6 +20,8 @@ nonisolated public struct InventoryBaselineResolver {
     /// that points at itself is caught by the visited set; this cap catches the
     /// long chain that is technically acyclic and still nonsense.
     public static let maximumLeveledDepth = 8
+    /// The `Player` NPC_ record, whose outfit the player's body wears.
+    public static let playerBase = FormID(0x7)
 
     /// Item and container index.
     public let items: ItemDefinitionStore
@@ -72,7 +75,9 @@ nonisolated public struct InventoryBaselineResolver {
     /// applied. An owner nothing has touched resolves through here every time.
     public func baseline(for owner: InventoryOwner) -> ReferenceInventoryState {
         switch owner {
-        case .player, .generated:
+        case .player:
+            actorBaseline(Self.playerBase)
+        case .generated:
             .empty
         case let .container(base):
             containerBaseline(base)

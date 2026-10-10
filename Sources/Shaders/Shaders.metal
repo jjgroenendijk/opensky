@@ -249,10 +249,30 @@ vertex SkyVertexOut skyVertex(uint vertexID [[vertex_id]])
     return out;
 }
 
+// The sun sits along the same direction that lights the scene. The pixel's
+// view ray is rebuilt from the camera basis, so the disc stays round at any
+// aspect ratio. Returns (disc, glow), both zero once the sun is below the horizon.
+static float2 skySunDiscAndGlow(SkyVertexOut in, constant FrameUniforms &frame)
+{
+    float4 rightClip =
+        frame.viewProjectionMatrix * float4(frame.cameraForward + frame.cameraRight, 0.0);
+    float4 upClip = frame.viewProjectionMatrix * float4(frame.cameraForward + frame.cameraUp, 0.0);
+    float2 ndc = in.uv * 2.0 - 1.0;
+    float tanX = abs(rightClip.x) > 1e-5 ? rightClip.w / rightClip.x : 1.0;
+    float tanY = abs(upClip.y) > 1e-5 ? upClip.w / upClip.y : 1.0;
+    float3 ray = normalize(
+        frame.cameraForward + frame.cameraRight * (ndc.x * tanX) + frame.cameraUp * (ndc.y * tanY));
+    float3 towardSun = -normalize(frame.sunDirection);
+    float aboveHorizon = smoothstep(-0.05, 0.05, towardSun.z);
+    float angle = acos(clamp(dot(ray, towardSun), -1.0, 1.0));
+    float disc = (1.0 - smoothstep(0.016, 0.02, angle)) * aboveHorizon;
+    float glow = exp(-angle * 12.0) * aboveHorizon;
+    return float2(disc, glow);
+}
+
 // Weather sky: horizon -> sky-lower -> sky-upper vertical gradient, with the
-// procedural sun disc/glow retained (sun position still from time of day) but
-// tinted by the weather sun + sun-glare colors.
-static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame, float hour)
+// sun disc and glow tinted by the weather sun and sun-glare colours.
+static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame)
 {
     float3 lower =
         mix(frame.weatherHorizonColor, frame.weatherSkyLowerColor, smoothstep(0.0, 0.5, in.uv.y));
@@ -260,16 +280,12 @@ static float4 weatherSky(SkyVertexOut in, constant FrameUniforms &frame, float h
         mix(frame.weatherSkyLowerColor, frame.weatherSkyUpperColor, smoothstep(0.5, 1.0, in.uv.y));
     float3 color = in.uv.y < 0.5 ? lower : upper;
 
-    float sunrise = smoothstep(5.0, 8.0, hour);
-    float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
-    float daylight = sunrise * sunset;
-    float sunPhase = saturate((hour - 6.0) / 12.0);
-    float2 sunCenter = float2(0.08 + sunPhase * 0.84, 0.38 + sin(sunPhase * 3.14159265) * 0.36);
-    float sunDistance = distance(in.uv, sunCenter);
-    float disc = (1.0 - smoothstep(0.012, 0.02, sunDistance)) * daylight;
-    float glow = exp(-sunDistance * 32.0) * daylight;
-    color += frame.weatherGlareColor * glow * 0.5;
-    color = mix(color, frame.weatherSunColor, disc);
+    float2 sun = skySunDiscAndGlow(in, frame);
+    float3 tint =
+        frame.weatherSunColor /
+        max(max3(frame.weatherSunColor.r, frame.weatherSunColor.g, frame.weatherSunColor.b), 1e-3);
+    color += frame.weatherGlareColor * sun.y * 0.5;
+    color = mix(color, mix(tint, float3(1.0), 0.6), sun.x);
     return float4(color, 1.0);
 }
 
@@ -279,7 +295,7 @@ fragment float4 skyFragment(
 {
     float hour = fmod(frame.timeOfDayHours + 24.0, 24.0);
     if (frame.weatherSkyEnabled != 0) {
-        return weatherSky(in, frame, hour);
+        return weatherSky(in, frame);
     }
     float sunrise = smoothstep(5.0, 8.0, hour);
     float sunset = 1.0 - smoothstep(18.0, 21.0, hour);
@@ -298,13 +314,9 @@ fragment float4 skyFragment(
     float height = smoothstep(0.05, 0.92, in.uv.y);
     float3 color = mix(horizon, upper, height);
 
-    float sunPhase = saturate((hour - 6.0) / 12.0);
-    float2 sunCenter = float2(0.08 + sunPhase * 0.84, 0.38 + sin(sunPhase * 3.14159265) * 0.36);
-    float sunDistance = distance(in.uv, sunCenter);
-    float disc = (1.0 - smoothstep(0.012, 0.02, sunDistance)) * daylight;
-    float glow = exp(-sunDistance * 32.0) * daylight;
-    color += float3(1.0, 0.72, 0.36) * glow * 0.22;
-    color = mix(color, float3(1.0, 0.92, 0.68), disc);
+    float2 sun = skySunDiscAndGlow(in, frame);
+    color += float3(1.0, 0.72, 0.36) * sun.y * 0.22;
+    color = mix(color, float3(1.0, 0.95, 0.82), sun.x);
     return float4(color, 1.0);
 }
 
@@ -717,7 +729,8 @@ fragment float4 grassFragment(
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]])
 {
     float4 diffuse = diffuseMap.sample(trilinear, in.texcoord);
-    float alpha = diffuse.a * in.color.a * draw.materialAlpha * in.distanceFade;
+    // Grass vertex alpha is the wind weight, 0 at the root, not opacity.
+    float alpha = diffuse.a * draw.materialAlpha * in.distanceFade;
     if (alpha < draw.alphaThreshold) {
         discard_fragment();
     }

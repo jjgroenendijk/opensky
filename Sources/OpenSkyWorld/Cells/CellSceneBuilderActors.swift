@@ -52,6 +52,8 @@ nonisolated public struct CellActorBuild {
     /// Runtime index entries for every ACHR this cell owns, including ones not
     /// drawn: an initially-disabled actor still exists at runtime.
     public var entries: [RuntimeReferenceEntry] = []
+    /// Actors that exist but are disabled: the AI, the HUD, and the agent skip them.
+    public var disabledKeys: Set<ReferenceKey> = []
 }
 
 nonisolated extension CellSceneBuilder {
@@ -202,6 +204,9 @@ nonisolated extension CellSceneBuilder {
                 )
             {
                 build.counts.disabledSkips += 1
+                if let key = indexed[actor.formID]?.key {
+                    build.disabledKeys.insert(key)
+                }
                 Self.logger.info("ACHR \(id, privacy: .public): \(skip, privacy: .public), skipped")
                 continue
             }

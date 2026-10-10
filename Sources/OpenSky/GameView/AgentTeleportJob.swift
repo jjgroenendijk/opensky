@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -62,15 +63,12 @@ final class AgentTeleportJob {
                 try startReferenceLookup(formID)
                 return
             }
-            guard
-                let placement = streamer.referenceEntry(key: reference.key)?.placedReference?
-                    .placement
-            else {
+            guard let feet = Self.standingSpot(of: reference.key, game: adapter.game) else {
                 throw AgentFailure(.notFound, "the reference has no placement")
             }
             phase = .settling(untilFrame: 0)
             place(
-                at: placement.position,
+                at: feet,
                 renderer: renderer,
                 streamer: streamer,
                 leavingInterior: false
@@ -296,4 +294,23 @@ final class AgentTeleportJob {
             (Float(grid.y) + 0.5) * CellCoordinate.cellSize
         )
     }
+}
+
+extension AgentTeleportJob {
+    /// Next to a loaded actor, where it stands now, or on a loaded reference.
+    private static func standingSpot(of key: ReferenceKey, game: GameViewController)
+        -> SIMD3<Float>?
+    {
+        if let actor = game.actorWorld.combatActors().first(where: { $0.key == key }) {
+            // Rotation Z counts clockwise from north, so forward is (sin, cos).
+            let front = SIMD2<Float>(sin(actor.facing), cos(actor.facing)) * actorStandOff
+            return actor.feet + SIMD3(front, 0)
+        }
+        let entry = game.streamer?.referenceEntry(key: key)
+        return entry?.placedReference?.placement.position
+            ?? entry?.placedActor?.placement.position
+    }
+
+    /// About two arm lengths: close enough to talk, far enough not to overlap.
+    private static let actorStandOff: Float = 100
 }

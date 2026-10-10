@@ -95,7 +95,11 @@ extension CombatCoordinator: MeleeCombatWorld {
             amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
             multipliers: difficultyMultipliers
         )
-        return world?.damageHealth(by: scaled, of: target) ?? false
+        let landed = world?.damageHealth(by: scaled, of: target) ?? false
+        if landed, attacker == .player, target != .player {
+            playerStruckTarget = target
+        }
+        return landed
     }
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

@@ -150,7 +150,7 @@ nonisolated public struct ParticleModifier: Equatable, Sendable {
         case position
         case boundUpdate
         case drag
-        case simpleColor
+        case simpleColour(ParticleColourRamp)
         case scale(scales: [Float])
         case wind(strength: Float)
         case inheritVelocity
@@ -158,5 +158,53 @@ nonisolated public struct ParticleModifier: Equatable, Sendable {
         case lod(beginDistance: Float, endDistance: Float, endEmitScale: Float, endSize: Float)
         /// Any modifier type this decoder does not model.
         case unsupported(typeName: String)
+    }
+}
+
+/// `BSPSysSimpleColorModifier`: three colours over a particle's life, plus an alpha
+/// fade in and out. Layout and meaning: docs/formats/nif-particles.md.
+nonisolated public struct ParticleColourRamp: Equatable, Sendable {
+    public let fadeIn: Float
+    public let fadeOut: Float
+    public let colour1End: Float
+    public let colour2Start: Float
+    public let colour2End: Float
+    public let colour3Start: Float
+    public let colours: [SIMD4<Float>]
+
+    public init(fades: SIMD2<Float>, stops: SIMD4<Float>, colours: [SIMD4<Float>]) {
+        fadeIn = fades.x
+        fadeOut = fades.y
+        colour1End = stops.x
+        colour2Start = stops.y
+        colour2End = stops.z
+        colour3Start = stops.w
+        self.colours = colours
+    }
+
+    /// The colour at `fraction` (0 to 1) of the particle's life.
+    public func colour(at fraction: Float) -> SIMD4<Float> {
+        guard colours.count == 3 else { return SIMD4(repeating: 1) }
+        let age = simd_clamp(fraction, 0, 1)
+        var colour = if age <= colour1End {
+            colours[0]
+        } else if age < colour2Start {
+            simd_mix(colours[0], colours[1], SIMD4(repeating: ramp(age, colour1End, colour2Start)))
+        } else if age <= colour2End {
+            colours[1]
+        } else {
+            simd_mix(colours[1], colours[2], SIMD4(repeating: ramp(age, colour2End, colour3Start)))
+        }
+        if fadeIn > 0, age < fadeIn {
+            colour.w *= age / fadeIn
+        }
+        if fadeOut > 0, age > 1 - fadeOut {
+            colour.w *= (1 - age) / fadeOut
+        }
+        return colour
+    }
+
+    private func ramp(_ value: Float, _ start: Float, _ end: Float) -> Float {
+        end > start ? simd_clamp((value - start) / (end - start), 0, 1) : 1
     }
 }

@@ -58,6 +58,8 @@ leaves with it.
 With "fit to slope", the model's up axis follows the land normal, then the random turn is applied
 around it. The vertex shader bends the top of each blade along the weather's wind. The wind scale
 is 0 to 2. Grass fades from 70% of the draw distance, through alpha test, so it does not pop.
+A grass vertex's alpha is its wind weight, 0 at the root. It is not opacity, so the alpha test
+reads only the texture.
 
 Each frame, grass is filtered in this order:
 

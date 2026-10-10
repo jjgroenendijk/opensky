@@ -23,6 +23,8 @@ final class ActorWorldAdapter {
     unowned let game: GameViewController
     /// Change gate in front of the HUD meter contract.
     private var meters = HUDMeterBinding()
+    /// What the enemy health bar last showed; nil when it is hidden.
+    private var publishedEnemy: HUDEnemyHealth?
     /// NPC_ base raw FormID -> resolved FULL, or nil when none resolves.
     private var baseNames: [UInt32: String?] = [:]
 
@@ -106,21 +108,40 @@ final class ActorWorldAdapter {
     }
 
     private func publishHUDMeters(renderer: Renderer?) {
-        guard
-            let renderer,
-            game.hud.isLoaded,
-            let runtime = game.actorValues.runtime,
-            let meters = meters.publishing(runtime.hudMeters(for: .player))
-        else { return }
+        guard let renderer, game.hud.isLoaded, let runtime = game.actorValues.runtime else {
+            return
+        }
+        let meters = meters.publishing(runtime.hudMeters(for: .player))
+        let enemy = engagedEnemyHealth(runtime: runtime, renderer: renderer)
+        let enemyChanged = enemy != publishedEnemy
+        guard meters != nil || enemyChanged else { return }
+        publishedEnemy = enemy
         do {
             try renderer.updateSWFRuntime { runtime in
-                HUDMovieBridge.setMeters(meters, runtime: runtime)
+                if let meters {
+                    HUDMovieBridge.setMeters(meters, runtime: runtime)
+                }
+                if enemyChanged {
+                    HUDMovieBridge.setEnemyHealth(enemy, runtime: runtime)
+                }
             }
         } catch {
             Self.logger.error(
                 "[ERROR] HUD meters not published: \(String(describing: error), privacy: .public)"
             )
         }
+    }
+
+    private func engagedEnemyHealth(
+        runtime: ActorValueRuntime, renderer: Renderer
+    ) -> HUDEnemyHealth? {
+        guard
+            let actor = game.combat.engagedEnemy(playerFeet: renderer.freeFlyCamera.position),
+            let holder = actorValueHolder(for: actor.key)
+        else { return nil }
+        let name = game.streamer?.residentActorPlacement(key: actor.key)
+            .flatMap { displayName(base: $0.base) } ?? ""
+        return HUDEnemyHealth(name: name, health: runtime.hudMeters(for: holder).health)
     }
 
     private static let logger = EngineLogger(

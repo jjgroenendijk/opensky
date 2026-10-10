@@ -33,6 +33,17 @@ nonisolated public enum HUDCompassMarkerKind: Equatable, Sendable {
     }
 }
 
+/// The actor whose health bar the HUD shows; `health` is a fraction of full.
+nonisolated public struct HUDEnemyHealth: Equatable, Sendable {
+    public let name: String
+    public let health: Float
+
+    public init(name: String, health: Float) {
+        self.name = name
+        self.health = health
+    }
+}
+
 nonisolated public struct HUDCompassMarker: Equatable, Sendable {
     public let headingDegrees: Float
     public let opacityPercent: Float
@@ -75,6 +86,9 @@ nonisolated public enum HUDMovieBridge: Sendable {
         "/HUDMovieBaseInstance/Magica",
         "/HUDMovieBaseInstance/Stamina"
     ]
+    private static let enemyHealthPath = "/HUDMovieBaseInstance/EnemyHealth_mc"
+    private static let enemyNamePath =
+        "/HUDMovieBaseInstance/EnemyHealth_mc/BracketsInstance/RolloverNameInstance"
     private static let authoredPlaceholderPaths = [
         "/HUDMovieBaseInstance/RolloverInfoInstance",
         "/HUDMovieBaseInstance/GrayBarInstance",
@@ -100,7 +114,8 @@ nonisolated public enum HUDMovieBridge: Sendable {
         activationPrompt: String? = nil
     ) {
         setCrosshairEnabled(true, runtime: runtime)
-        setMeters(meters, runtime: runtime)
+        setMeters(meters, force: true, runtime: runtime)
+        setEnemyHealth(nil, runtime: runtime)
         setCompassMarkers(markers, runtime: runtime)
         setCompassHeading(headingDegrees, runtime: runtime)
         setActivationPrompt(activationPrompt, runtime: runtime)
@@ -111,10 +126,34 @@ nonisolated public enum HUDMovieBridge: Sendable {
         call("SetCrosshairEnabled", [.boolean(enabled)], runtime: runtime)
     }
 
-    public static func setMeters(_ meters: HUDMeterValues, runtime: SWFMovieRuntime) {
-        meter("SetHealthMeterPercent", value: meters.health, runtime: runtime)
-        meter("SetMagickaMeterPercent", value: meters.magicka, runtime: runtime)
-        meter("SetStaminaMeterPercent", value: meters.stamina, runtime: runtime)
+    /// A change that is not forced plays the meter's fade-in, which is how the
+    /// game shows a bar that is below full. A forced value only moves the fill.
+    public static func setMeters(
+        _ meters: HUDMeterValues,
+        force: Bool = false,
+        runtime: SWFMovieRuntime
+    ) {
+        meter("SetHealthMeterPercent", value: meters.health, force: force, runtime: runtime)
+        meter("SetMagickaMeterPercent", value: meters.magicka, force: force, runtime: runtime)
+        meter("SetStaminaMeterPercent", value: meters.stamina, force: force, runtime: runtime)
+    }
+
+    /// The name and health bar under the compass for the actor the player is
+    /// fighting. Nil hides them.
+    public static func setEnemyHealth(_ enemy: HUDEnemyHealth?, runtime: SWFMovieRuntime) {
+        guard let holder = runtime.node(atPath: enemyHealthPath, from: runtime.root) else {
+            return
+        }
+        runtime.setDisplayProperty(.visible, of: holder, to: .boolean(enemy != nil))
+        guard let enemy else { return }
+        runtime.setDisplayProperty(.alpha, of: holder, to: .number(100))
+        if let name = runtime.node(atPath: enemyNamePath, from: runtime.root) {
+            runtime.setText(enemy.name, of: name)
+        }
+        runtime.callMovie(
+            "SetEnemyHealthPercent",
+            arguments: [.number(Double(percent(enemy.health)))]
+        )
     }
 
     public static func setMetersEnabled(_ enabled: Bool, runtime: SWFMovieRuntime) {
@@ -207,16 +246,18 @@ nonisolated public enum HUDMovieBridge: Sendable {
         return remainder < 0 ? remainder + 360 : remainder
     }
 
+    /// The movie's meters count in percent, 0 to 100.
     private static func meter(
         _ name: String,
         value: Float,
+        force: Bool,
         runtime: SWFMovieRuntime
     ) {
-        call(
-            name,
-            [.number(Double(clampedUnit(value))), .boolean(true)],
-            runtime: runtime
-        )
+        call(name, [.number(Double(percent(value))), .boolean(force)], runtime: runtime)
+    }
+
+    private static func percent(_ fraction: Float) -> Float {
+        clampedUnit(fraction) * 100
     }
 
     private static func call(

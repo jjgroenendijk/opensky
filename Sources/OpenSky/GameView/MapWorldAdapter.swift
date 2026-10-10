@@ -124,7 +124,9 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     func setMapView(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
-        game.renderer?.setCinematicCamera(CinematicCameraPose(eye: eye, lookAt: lookAt))
+        game.renderer?.setCinematicCamera(
+            CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
+        )
     }
 
     func clearMapView() {

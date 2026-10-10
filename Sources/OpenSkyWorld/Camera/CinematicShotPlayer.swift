@@ -55,10 +55,14 @@ nonisolated public struct CinematicAnchors: Equatable, Sendable {
 nonisolated public struct CinematicCameraPose: Equatable, Sendable {
     public var eye: SIMD3<Float>
     public var lookAt: SIMD3<Float>
+    /// False for a map view, which looks down through terrain and roofs on
+    /// purpose. A shot near the ground pulls its eye in front of geometry.
+    public var avoidsGeometry: Bool
 
-    public init(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
+    public init(eye: SIMD3<Float>, lookAt: SIMD3<Float>, avoidsGeometry: Bool = true) {
         self.eye = eye
         self.lookAt = lookAt
+        self.avoidsGeometry = avoidsGeometry
     }
 }
 

@@ -114,7 +114,6 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
         "NiPSysPositionModifier": .position,
         "NiPSysBoundUpdateModifier": .boundUpdate,
         "NiPSysDragModifier": .drag,
-        "BSPSysSimpleColorModifier": .simpleColor,
         "BSPSysInheritVelocityModifier": .inheritVelocity,
         "BSPSysSubTexModifier": .subTex
     ]
@@ -133,6 +132,20 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
             reader.skip(4) // Decay
             let strength = try reader.readFloat32()
             return .gravity(axis: axis, strength: strength)
+        case "BSPSysSimpleColorModifier":
+            let fades = try SIMD2(reader.readFloat32(), reader.readFloat32())
+            let stops = try SIMD4(
+                reader.readFloat32(), reader.readFloat32(), reader.readFloat32(),
+                reader.readFloat32()
+            )
+            var colours: [SIMD4<Float>] = []
+            for _ in 0 ..< 3 {
+                try colours.append(SIMD4(
+                    reader.readFloat32(), reader.readFloat32(), reader.readFloat32(),
+                    reader.readFloat32()
+                ))
+            }
+            return .simpleColour(ParticleColourRamp(fades: fades, stops: stops, colours: colours))
         case "BSWindModifier":
             return try .wind(strength: reader.readFloat32())
         case "BSPSysScaleModifier":

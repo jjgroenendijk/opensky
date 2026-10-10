@@ -34,9 +34,9 @@ final class ContainerMenuController {
     private(set) var containerReference: FormID?
     /// Nil for a nominated or looted container, which trades anything.
     private(set) var vendor: Vendor?
-    /// Off by default: the vanilla movie takes the single SWF layer from the
-    /// gameplay HUD.
-    private(set) var movieEnabled = false
+    /// On by default, so play mode draws the menu. The HUD is suspended while
+    /// the movie holds the single SWF layer.
+    private(set) var movieEnabled = true
     private(set) var movieLoaded = false
     /// Bumped by each open and close, so a movie decoded late opens only the newest.
     private var movieRequest = 0

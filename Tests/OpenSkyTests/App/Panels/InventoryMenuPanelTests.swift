@@ -141,6 +141,7 @@ struct InventoryMenuPanelTests {
     func movieReadoutDistinguishesOffFailedAndLoaded() {
         let provider = FakeWorldProviders()
         provider.openInventoryMenu()
+        provider.inventoryMenuMovieEnabled = false
         #expect(
             InventoryMenuSection.movieReadout(for: provider.inventoryMenuSnapshot)
                 == "Movie: off (engine-drawn row list)"
@@ -182,9 +183,9 @@ struct InventoryMenuPanelTests {
         InventoryMenuSection.resetToDefaults(provider: provider)
         #expect(!provider.inventoryMenuIsOpen)
 
-        provider.inventoryMenuMovieEnabled = true
+        provider.inventoryMenuMovieEnabled = false
         #expect(InventoryMenuSection.isOverridden(provider: provider))
         InventoryMenuSection.resetToDefaults(provider: provider)
-        #expect(!provider.inventoryMenuMovieEnabled)
+        #expect(provider.inventoryMenuMovieEnabled)
     }
 }

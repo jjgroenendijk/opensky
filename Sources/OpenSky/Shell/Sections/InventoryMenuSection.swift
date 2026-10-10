@@ -46,18 +46,18 @@ final class InventoryMenuSection: PanelSectionViewController {
         Self.resetToDefaults(provider: provider)
     }
 
-    /// An open menu pauses world sim, and the movie takes the SWF layer from
-    /// the gameplay HUD. Both are states a user must be able to see and clear
+    /// An open menu pauses world sim, and a menu without its movie is drawn
+    /// only in the sidebar. Both are states a user must be able to see and clear
     /// from the sidebar without hunting for the control that set them.
     static func isOverridden(provider: (any InventoryMenuControlProviding)?) -> Bool {
         guard let provider else { return false }
-        return provider.inventoryMenuIsOpen || provider.inventoryMenuMovieEnabled
+        return provider.inventoryMenuIsOpen || !provider.inventoryMenuMovieEnabled
     }
 
     static func resetToDefaults(provider: (any InventoryMenuControlProviding)?) {
         guard let provider else { return }
         provider.closeInventoryMenu()
-        provider.inventoryMenuMovieEnabled = false
+        provider.inventoryMenuMovieEnabled = true
     }
 
     override func makeContentViews() -> [NSView] {

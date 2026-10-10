@@ -38,7 +38,8 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
 nonisolated public struct SimulatedParticle: Equatable, Sendable {
     public var position: SIMD3<Float>
     public var velocity: SIMD3<Float>
-    public let color: SIMD4<Float>
+    public let initialColor: SIMD4<Float>
+    public var color: SIMD4<Float>
     public let initialRadius: Float
     public var radius: Float
     public var age: Float
@@ -130,6 +131,9 @@ nonisolated public struct ParticleSimulator: Sendable {
                     particles[index].velocity += axis * strength * deltaTime
                 case let .wind(strength):
                     particles[index].velocity += windVector * strength * deltaTime
+                case let .simpleColour(ramp):
+                    particles[index].color = particles[index].initialColor
+                        * ramp.colour(at: particles[index].age / particles[index].lifetime)
                 case let .scale(scales):
                     particles[index].radius = scaledRadius(
                         initial: particles[index].initialRadius,
@@ -188,10 +192,12 @@ nonisolated public struct ParticleSimulator: Sendable {
         let radius = max(emitter.initialRadius + random.signed() * emitter.radiusVariation, 0.01)
             * spawnScale.size
         let atlasCount = max(definition.subtextureOffsets.count, 1)
+        let initialRampColour = colourRamp?.colour(at: 0) ?? SIMD4(repeating: 1)
         return SimulatedParticle(
             position: SIMD3(worldPosition4.x, worldPosition4.y, worldPosition4.z),
             velocity: direction * speed,
-            color: emitter.initialColor,
+            initialColor: emitter.initialColor,
+            color: emitter.initialColor * initialRampColour,
             initialRadius: radius,
             radius: radius,
             age: 0,
@@ -224,6 +230,15 @@ nonisolated public struct ParticleSimulator: Sendable {
             // until surface sampling exists.
             return .zero
         }
+    }
+
+    private var colourRamp: ParticleColourRamp? {
+        for modifier in definition.modifiers where modifier.active {
+            if case let .simpleColour(ramp) = modifier.kind {
+                return ramp
+            }
+        }
+        return nil
     }
 
     private func scaledRadius(initial: Float, scales: [Float], fraction: Float) -> Float {

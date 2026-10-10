@@ -2,13 +2,17 @@
 // gate, file order, say-once, priority, and what a choice does to said-state
 // and follow-up topics.
 
+import EngineTesting
 import FeaturesTesting
+import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyGameData
+@testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -31,6 +35,33 @@ struct DialogueRuntimeTests {
             DialogueRuntimeFixture.urgentFirstInfo,
             DialogueRuntimeFixture.ordinaryInfo
         ])
+    }
+
+    /// A quest's dialogue conditions gate every topic it owns, the greeting
+    /// too: a quest for one kind of speaker stays silent for everyone else.
+    @Test(arguments: [true, false])
+    func questDialogueConditionsGateItsTopics(speakerMatches: Bool) throws {
+        let allowed = speakerMatches
+            ? DialogueRuntimeFixture.speakerBase : DialogueRuntimeFixture.otherBase
+        let quests = try QuestFixture.store(QuestFixture.record(
+            formID: DialogueRuntimeFixture.runningQuest,
+            fields: QuestFixture.editorID("OpenSkyDialogueRunning")
+                + QuestFixture.general(flags: 1)
+                + DialogueFixture.condition(
+                    functionIndex: 72, comparisonValue: 1, parameter1: allowed
+                )
+                + QuestFixture.marker("NEXT")
+        ))
+        let runtime = try DialogueRuntime(
+            store: WorldStateStore(),
+            dialogue: DialogueRuntimeFixture.dialogueStore(),
+            questStates: QuestResolution(defaults: quests),
+            context: DialogueRuntimeFixture.context(),
+            registry: .dialogueTests
+        )
+        let speaker = DialogueRuntimeFixture.speakerKey
+        #expect((runtime.greeting(for: speaker) != nil) == speakerMatches)
+        #expect(runtime.topics(for: speaker).offers.isEmpty == !speakerMatches)
     }
 
     /// A topic whose owning quest is not running offers nothing, and says so

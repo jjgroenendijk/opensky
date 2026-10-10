@@ -136,6 +136,7 @@ struct ContainerMenuPanelTests {
         let provider = FakeWorldProviders()
         provider.containerMenuIsOpen = true
         provider.containerMenuMode = .barter
+        provider.containerMenuMovieEnabled = false
         provider.containerMenuModel = ContainerMenuModel(
             mode: .barter,
             container: FakeWorldProviders.merchantList,
@@ -176,10 +177,10 @@ struct ContainerMenuPanelTests {
         ContainerMenuSection.resetToDefaults(provider: provider)
         #expect(provider.containerMenuMode == .container)
 
-        provider.containerMenuMovieEnabled = true
+        provider.containerMenuMovieEnabled = false
         #expect(ContainerMenuSection.isOverridden(provider: provider))
         ContainerMenuSection.resetToDefaults(provider: provider)
-        #expect(!provider.containerMenuMovieEnabled)
+        #expect(provider.containerMenuMovieEnabled)
     }
 
     @Test @MainActor

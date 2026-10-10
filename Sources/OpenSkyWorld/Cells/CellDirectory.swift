@@ -31,18 +31,31 @@ nonisolated public enum CellDirectory {
         find(in: loadOrder) { record, plugin in plugin.formID(of: record) == formID }
     }
 
+    /// The last plugin wins the cell. A later override often carries only the
+    /// references it changes, so the door is taken from the newest plugin
+    /// that places one.
     private static func find(
         in loadOrder: LoadOrderPlugins, matching: (ESMRecord, LoadOrderPlugin) -> Bool
     ) -> CellDirectoryEntry? {
+        var winner: CellDirectoryEntry?
         for plugin in loadOrder.plugins.reversed() {
             let found = plugin.decode {
                 find(in: plugin.file) { matching($0, plugin) }
             }
-            if let found {
-                return found
+            switch (winner, found) {
+            case (nil, .interior(_, nil)?):
+                winner = found
+            case let (.interior(cell, nil)?, .interior(_, door?)?):
+                return .interior(cell: cell, entryDoor: door)
+            case (nil, _):
+                if let found {
+                    return found
+                }
+            default:
+                continue
             }
         }
-        return nil
+        return winner
     }
 
     private static func find(

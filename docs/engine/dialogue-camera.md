@@ -51,7 +51,9 @@ The shot: the camera stands on the player's side of the speaker, one shoulder of
 sight, so the view is three-quarter and not flat. It sits at the height of the player's eye, so a
 taller speaker is seen from below. Its distance from the speaker is the framing distance, or the
 player's own distance plus the space behind, if the player stands farther away. That keeps the
-player's body in the frame. Standing close gives a tight shot. Talking from across the room puts
+player's body in the frame in third person. In first person the body stays hidden, as in the game:
+the eye is just behind the player's head, so a helmet would fill the view. Standing close gives a
+tight shot. Talking from across the room puts
 the camera at the player's shoulder, not floating between the two.
 
 The camera is pulled in by the same collision sweep as the third-person camera. It never comes

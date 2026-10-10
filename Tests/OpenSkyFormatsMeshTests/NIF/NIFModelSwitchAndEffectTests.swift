@@ -114,6 +114,24 @@ struct NIFModelSwitchAndEffectTests {
         #expect(effect.vertexColors && effect.vertexAlpha)
     }
 
+    /// A fire's heat-haze dome sets SLSF1 bit 15. With no refraction pass it would
+    /// draw its normal map as colour, so it is skipped.
+    @Test func refractionShapeIsSkipped() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
+            .init("BSTriShape", shape(shaderPropertyRef: 3)),
+            .init("BSTriShape", shape(shaderPropertyRef: 4)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(shaderFlags1: 0x8241_8309)
+            ),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+        ]))
+        let model = try file.model()
+        #expect(model.meshes.count == 1)
+        #expect(model.skippedShapeCount == 1)
+    }
+
     @Test func litShapeHasNoEffectShading() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape())

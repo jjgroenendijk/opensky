@@ -121,7 +121,7 @@ final class FakeWorldProviders: WorldControlProviders {
     // SystemMenuControlProviding
     var systemMenuModel = SystemMenuModel()
     let menuCalls = FakeMenuCalls()
-    var systemMenuMovieEnabled = false
+    var systemMenuMovieEnabled = true
     var systemMenuMasterVolume: Float = 1
     var systemMenuIsOpen: Bool {
         systemMenuModel.isOpen
@@ -130,7 +130,7 @@ final class FakeWorldProviders: WorldControlProviders {
     /// InventoryMenuControlProviding
     var inventoryMenuModel = FakeWorldProviders.makeInventoryMenuModel()
     var inventoryMenuIsOpen = false
-    var inventoryMenuMovieEnabled = false
+    var inventoryMenuMovieEnabled = true
     var inventoryMenuLastAction: String?
 
     /// ContainerMenuControlProviding. The behaviour is in
@@ -145,7 +145,7 @@ final class FakeWorldProviders: WorldControlProviders {
     )
     var containerMenuIsOpen = false
     var containerMenuMode = ContainerMenuModel.Mode.container
-    var containerMenuMovieEnabled = false
+    var containerMenuMovieEnabled = true
     var containerMenuLastAction: String?
     var containerMenuMerchant: FormID? = FormID(0x0300)
 

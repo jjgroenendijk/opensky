@@ -45,6 +45,8 @@ arrow keys.
 `state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
 `state time`, `state frame`.
 
+- `state player` also gives `firstPerson`: whether the arms graph and rig are attached and
+  drawn, the failure reason, the arm model count, and the bones the last pose reached.
 - `state quest` also lists each reference alias with the reference that fills it, or null.
 - `state scenes` lists each playing scene with its quest, its current phase, and the phase's
   name.

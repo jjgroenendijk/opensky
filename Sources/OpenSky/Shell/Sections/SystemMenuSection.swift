@@ -42,18 +42,18 @@ final class SystemMenuSection: PanelSectionViewController {
         Self.resetToDefaults(provider: provider)
     }
 
-    /// An open menu pauses world sim, and the movie takes the SWF layer from the
-    /// gameplay HUD. Both are states a user must be able to see and clear from
+    /// An open menu pauses world sim, and a menu without its movie is drawn
+    /// only in the sidebar. Both are states a user must be able to see and clear from
     /// the sidebar without hunting for the control that set them.
     static func isOverridden(provider: (any SystemMenuControlProviding)?) -> Bool {
         guard let provider else { return false }
-        return provider.systemMenuIsOpen || provider.systemMenuMovieEnabled
+        return provider.systemMenuIsOpen || !provider.systemMenuMovieEnabled
     }
 
     static func resetToDefaults(provider: (any SystemMenuControlProviding)?) {
         guard let provider else { return }
         provider.closeSystemMenu()
-        provider.systemMenuMovieEnabled = false
+        provider.systemMenuMovieEnabled = true
     }
 
     override func makeContentViews() -> [NSView] {

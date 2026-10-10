@@ -45,6 +45,25 @@ struct CombatCoordinatorTests {
         #expect(coordinator.combatStyle(of: .player) == nil)
     }
 
+    /// The HUD names the actor the player last hurt while it lives and stays
+    /// near. A blow from anyone else does not change it.
+    @Test func theEngagedEnemyIsTheLivingActorThePlayerHurt() {
+        let world = FakeCoordinatorWorld()
+        world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0))]
+        let coordinator = Self.coordinator(world)
+        #expect(coordinator.engagedEnemy(playerFeet: .zero) == nil)
+        coordinator.applyHealthDamage(5, to: Self.guardKey, attacker: nil)
+        #expect(coordinator.engagedEnemy(playerFeet: .zero) == nil)
+        coordinator.applyHealthDamage(5, to: Self.guardKey, attacker: .player)
+        #expect(coordinator.engagedEnemy(playerFeet: .zero)?.key == Self.guardKey)
+        let far = SIMD3<Float>(CombatCoordinator.enemyBarRange + 100, 0, 0)
+        #expect(coordinator.engagedEnemy(playerFeet: far) == nil)
+        world.actors = [
+            CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0), isDead: true)
+        ]
+        #expect(coordinator.engagedEnemy(playerFeet: .zero) == nil)
+    }
+
     @Test func meleeTargetsAreTheResidentActors() {
         let world = FakeCoordinatorWorld()
         world.actors = [CombatActorObservation(key: Self.guardKey, feet: SIMD3(10, 0, 0))]

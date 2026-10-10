@@ -1,6 +1,7 @@
 // Builds a `JournalMenuModel` from quest state. A quest is listed only when its
-// `Kind` is not `.none` (docs/formats/quest-records.md); an objective only
-// while `isDisplayed` is set. Text goes through `LocalizedStrings`: FULL and
+// `Kind` is not `.none` (docs/formats/quest-records.md) and it has an objective
+// or a log entry to show; an objective only while `isDisplayed` is set. Text goes through
+// `LocalizedStrings`: FULL and
 // NNAM resolve from `.strings`, the CNAM paragraph from `.dlstrings`.
 
 import Foundation
@@ -63,6 +64,9 @@ extension JournalMenuModel {
                 strings: strings?.scoped(to: runtime.quests.sourcePlugin(of: quest.formID)),
                 aliases: aliases
             )
+            // A background quest, such as one that tracks an achievement, has
+            // nothing to show, so the game never lists it.
+            guard !entry.objectives.isEmpty || !entry.logEntries.isEmpty else { continue }
             if state.isRunning {
                 active.append(entry)
             }

@@ -37,7 +37,10 @@ nonisolated public struct CellGeometryBuild {
     public var vehicleFollowers: Set<UInt32> = []
 
     public var referenceIndex: RuntimeReferenceIndex {
-        RuntimeReferenceIndex(entries: referenceEntries + actors.entries)
+        RuntimeReferenceIndex(
+            entries: referenceEntries + actors.entries,
+            absentActors: actors.disabledKeys
+        )
     }
 }
 

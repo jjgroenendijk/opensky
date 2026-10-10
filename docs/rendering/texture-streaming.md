@@ -57,8 +57,9 @@ every texture whole.
    level far too coarse. A landscape texture repeats every two terrain quads
    ([terrain](/engine/terrain.md)).
    A scene texture the rule does not measure, such as grass or particles, keeps all its
-   levels. A texture outside the scene lists, such as the player's first-person body,
-   keeps the levels it has.
+   levels. A grass texture keeps them even when a static far away shares it. A texture
+   outside the scene lists, such as the player's first-person body, keeps the levels it
+   has.
 4. A texture that needs finer levels asks the worker to read them again from the asset
    cache or the archive. They arrive in the mailbox a few frames later, and the frame maps
    and fills them.

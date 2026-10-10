@@ -94,8 +94,8 @@ Input must go through the renderer's SWF update batch. That batch rebuilds the d
 it returns. Sending input to the runtime directly changes the movie's selection without redrawing.
 
 The renderer has one SWF layer. The system menu takes it from the HUD while the movie is up, and
-gives it back on Resume. The movie is off by default. The engine selector is the main surface, and
-the movie is an extra on top.
+gives it back on Resume. The movie is on by default, so play mode shows the menu as the game does.
+The sidebar can turn it off; the engine selector then remains the only surface.
 
 No movie problem throws out of a control. A missing install, a movie that does not decode, or a
 call the runtime cannot answer becomes a message in the panel readout.

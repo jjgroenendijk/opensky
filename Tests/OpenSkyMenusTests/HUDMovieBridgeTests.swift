@@ -62,13 +62,13 @@ struct HUDMovieBridgeTests {
 
         #expect(harness.log.calls["SetCrosshairEnabled"]?.first == [.boolean(true)])
         #expect(harness.log.calls["SetHealthMeterPercent"]?.first == [
-            .number(0.75), .boolean(true)
+            .number(75), .boolean(true)
         ])
         #expect(harness.log.calls["SetMagickaMeterPercent"]?.first == [
-            .number(0.5), .boolean(true)
+            .number(50), .boolean(true)
         ])
         #expect(harness.log.calls["SetStaminaMeterPercent"]?.first == [
-            .number(0.25), .boolean(true)
+            .number(25), .boolean(true)
         ])
         #expect(harness.log.calls["SetCompassAngle"]?.first == [
             .number(270), .number(270), .boolean(true)
