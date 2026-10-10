@@ -1,5 +1,6 @@
 // The launcher's registry ids, its page cache, its mode buttons, the start
-// options, Continue, and the load panel. The unit test host withholds the
+// options, Continue, the load panel, and the install check on Settings. The unit test host
+// withholds the
 // install, so play stays disabled here.
 
 import AppKit
@@ -70,7 +71,8 @@ struct LauncherTests {
         #expect(play.isEnabled == status.canStart(.play))
         #expect(developer.isEnabled)
         #expect(find("LauncherGameFolderStatsLabel", in: page.view) != nil)
-        #expect(find("LauncherChooseGameFolderControl", in: page.view) != nil)
+        #expect(find("LauncherSettingsLinkControl", in: page.view) != nil)
+        #expect(find("LauncherChooseGameFolderControl", in: page.view) == nil)
 
         developer.performClick(nil)
         #expect(actions.started == [.developer])
@@ -107,9 +109,8 @@ struct LauncherTests {
         #expect(bar.isHiddenOrHasHiddenAncestor)
     }
 
-    @Test func theLaunchPageShowsTheInstallCheck() throws {
-        let actions = RecordingActions()
-        let page = LaunchPageViewController(context: LauncherContext(actions: actions))
+    @Test func settingsShowsTheInstallCheck() throws {
+        let page = SettingsViewController()
         page.loadViewIfNeeded()
         var summary = GameInstallSummary()
         summary.archives = 2
@@ -119,16 +120,17 @@ struct LauncherTests {
         )]
         page.show(summary)
         let problems = try #require(
-            find("LauncherInstallProblemsStatsLabel", in: page.view) as? NSTextField
+            find("SettingsInstallProblemsStatsLabel", in: page.view) as? NSTextField
         )
         #expect(problems.stringValue
             == "Problem: Update.esm is missing. Verify the game files in Steam.")
         #expect(!problems.isHidden)
         let counts = try #require(
-            find("LauncherInstallCountsStatsLabel", in: page.view) as? NSTextField
+            find("SettingsInstallCountsStatsLabel", in: page.view) as? NSTextField
         )
         #expect(counts.stringValue == "2 archives, 0 plugins, 0 records")
-        #expect(find("LauncherInstallStatsLabel", in: page.view) != nil)
+        #expect(find("SettingsInstallStatsLabel", in: page.view) != nil)
+        #expect(find("SettingsChooseGameFolderControl", in: page.view) != nil)
     }
 
     @Test func anInvalidStartTurnsPlayOffAndSaysWhy() throws {

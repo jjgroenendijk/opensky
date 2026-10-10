@@ -1,27 +1,35 @@
-// Settings content: data root, plugins.txt, string-table language, and the Skyrim
-// saves folder. The Cmd+, window and the launcher's Settings page both host it.
-// Validation lives in engine settings. Choices go to the shared defaults domain so
-// the CLI sees them too.
+// Settings: the game folder and its install check, plugins.txt, the string-table
+// language, and the Skyrim saves folder. The Cmd+, window and the launcher's
+// Settings page both host it, in the launcher's look. Choices go to the shared
+// defaults domain so the CLI sees them too.
 
 import AppKit
 import OpenSkyGameData
 import OpenSkyLaunch
 
-final class SettingsViewController: NSViewController {
+final class SettingsViewController: NSViewController, LauncherPageRefreshing {
     /// Called after a persisted engine-load setting changes.
     var onSettingsChanged: (() -> Void)?
 
-    private let pathLabel = NSTextField(wrappingLabelWithString: "")
-    private let noteLabel = NSTextField(wrappingLabelWithString: "")
-    private let pluginsPathLabel = NSTextField(wrappingLabelWithString: "")
-    private let pluginsNoteLabel = NSTextField(wrappingLabelWithString: "")
-    private let languageField = NSTextField(string: "")
-    private let languageNoteLabel = NSTextField(wrappingLabelWithString: "")
-    let savesNoteLabel = NSTextField(wrappingLabelWithString: "")
+    let layout = LauncherPageLayout(pageName: "Settings")
+    lazy var folderPathLabel = layout.line("SettingsGameFolderStatsLabel", mono: true)
+    lazy var folderNoteLabel = layout.line("SettingsGameFolderNoteStatsLabel")
+    lazy var installLabel = layout.line("SettingsInstallStatsLabel")
+    lazy var installCountsLabel = layout.line("SettingsInstallCountsStatsLabel")
+    let installProblemsLabel = LauncherText(labelWithString: "")
+    lazy var pluginsPathLabel = layout.line("SettingsPluginsTextStatsLabel", mono: true)
+    lazy var pluginsNoteLabel = layout.line("SettingsPluginsNoteStatsLabel")
+    let languageField = NSTextField(string: "")
+    lazy var languageNoteLabel = layout.line("SettingsLanguageStatsLabel")
+    lazy var savesNoteLabel = layout.line("SettingsSkyrimSavesStatsLabel")
+    private var installCheck: Task<Void, Never>?
 
     override func loadView() {
-        view = makeContentView()
-        view.frame = NSRect(x: 0, y: 0, width: 520, height: 420)
+        view = layout.makeView(title: "Settings", groups: [
+            makeGameFolderGroup(), makePluginsTextGroup(), makeLanguageGroup(),
+            makeSavesFolderGroup()
+        ])
+        view.frame = NSRect(x: 0, y: 0, width: LauncherPageLayout.minimumPageWidth, height: 560)
         refresh()
     }
 
@@ -30,166 +38,92 @@ final class SettingsViewController: NSViewController {
         refresh()
     }
 
-    // MARK: - Layout
-
-    private func makeContentView() -> NSView {
-        let heading = NSTextField(labelWithString: "Game Data Root")
-        heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
-
-        pathLabel.isSelectable = true
-        pathLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-
-        noteLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        noteLabel.textColor = .secondaryLabelColor
-
-        let chooseButton = NSButton(
-            title: "Choose…",
-            target: self,
-            action: #selector(chooseDataRoot)
-        )
-        chooseButton.setAccessibilityIdentifier("SettingsChooseGameFolderControl")
-        let resetButton = NSButton(
-            title: "Use Default",
-            target: self,
-            action: #selector(useDefaultRoot)
-        )
-        resetButton.setAccessibilityIdentifier("SettingsResetGameFolderControl")
-        let buttons = NSStackView(views: [resetButton, chooseButton])
-        buttons.orientation = .horizontal
-        buttons.alignment = .centerY
-
-        let pluginsViews = makePluginsTextViews()
-        let languageViews = makeLanguageViews()
-        let stack = NSStackView(views: [
-            heading, pathLabel, noteLabel, buttons
-        ] + pluginsViews + languageViews + makeSavesFolderViews())
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.edgeInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
-        stack.setCustomSpacing(12, after: noteLabel)
-        stack.setCustomSpacing(20, after: buttons)
-        stack.setCustomSpacing(12, after: pluginsNoteLabel)
-        if let pluginsButtons = pluginsViews.last {
-            stack.setCustomSpacing(20, after: pluginsButtons)
-        }
-        if let languageButtons = languageViews.last {
-            stack.setCustomSpacing(20, after: languageButtons)
-        }
-        for label in [
-            pathLabel, noteLabel, pluginsPathLabel, pluginsNoteLabel, languageNoteLabel,
-            savesNoteLabel
-        ] {
-            label.widthAnchor.constraint(
-                equalTo: stack.widthAnchor,
-                constant: -32
-            ).isActive = true
-        }
-        return stack
+    func refreshGameFolder() {
+        refresh()
     }
 
-    /// The second group: which plugins.txt the load order comes from.
-    private func makePluginsTextViews() -> [NSView] {
-        let heading = NSTextField(labelWithString: "Plugin Load Order (plugins.txt)")
-        heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
-
-        pluginsPathLabel.isSelectable = true
-        pluginsPathLabel.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-
-        pluginsNoteLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        pluginsNoteLabel.textColor = .secondaryLabelColor
-
-        let chooseButton = NSButton(
-            title: "Choose…",
-            target: self,
-            action: #selector(choosePluginsText)
-        )
-        chooseButton.setAccessibilityIdentifier("SettingsChoosePluginsTextControl")
-        let resetButton = NSButton(
-            title: "Search Automatically",
-            target: self,
-            action: #selector(useDefaultPluginsText)
-        )
-        resetButton.setAccessibilityIdentifier("SettingsResetPluginsTextControl")
-        let buttons = NSStackView(views: [resetButton, chooseButton])
-        buttons.orientation = .horizontal
-        buttons.alignment = .centerY
-        return [heading, pluginsPathLabel, pluginsNoteLabel, buttons]
+    func button(_ title: String, _ action: Selector, _ identifier: String) -> LauncherButton {
+        let button = LauncherButton(title: title, target: self, action: action)
+        button.setAccessibilityIdentifier(identifier)
+        return button
     }
 
-    /// Which `<plugin>_<language>.<ext>` tables localized records use.
-    private func makeLanguageViews() -> [NSView] {
-        let heading = NSTextField(labelWithString: "Localized String Tables")
-        heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
-
-        languageField.placeholderString = LocalizationLanguageSettings.fallback
-        languageField.setAccessibilityIdentifier("SettingsLanguageControl")
-        languageField.widthAnchor.constraint(equalToConstant: 220).isActive = true
-
-        languageNoteLabel.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-        languageNoteLabel.textColor = .secondaryLabelColor
-        languageNoteLabel.setAccessibilityIdentifier("SettingsLanguageStatsLabel")
-
-        let applyButton = NSButton(
-            title: "Apply Override",
-            target: self,
-            action: #selector(applyLanguage)
-        )
-        applyButton.setAccessibilityIdentifier("SettingsApplyLanguageControl")
-        let resetButton = NSButton(
-            title: "Use Skyrim INI",
-            target: self,
-            action: #selector(useSkyrimLanguage)
-        )
-        resetButton.setAccessibilityIdentifier("SettingsResetLanguageControl")
-        let buttons = NSStackView(views: [resetButton, applyButton])
-        buttons.orientation = .horizontal
-        buttons.alignment = .centerY
-        return [heading, languageField, languageNoteLabel, buttons]
+    private func makeGameFolderGroup() -> NSView {
+        folderPathLabel.textColor = LauncherStyle.text
+        folderPathLabel.lineBreakMode = .byTruncatingMiddle
+        folderPathLabel.isSelectable = true
+        // A failed lookup explains where it searched, so its note may take a few lines.
+        folderNoteLabel.maximumNumberOfLines = 3
+        folderNoteLabel.lineBreakMode = .byWordWrapping
+        folderNoteLabel.preferredMaxLayoutWidth = LauncherPageLayout.width
+        installProblemsLabel.font = LauncherStyle.font(14)
+        installProblemsLabel.textColor = LauncherStyle.warning
+        installProblemsLabel.maximumNumberOfLines = 0
+        installProblemsLabel.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width)
+            .isActive = true
+        installProblemsLabel.setAccessibilityIdentifier("SettingsInstallProblemsStatsLabel")
+        return layout.group("Game folder", [
+            folderPathLabel, folderNoteLabel, installLabel, layout.detail(installCountsLabel),
+            installProblemsLabel,
+            layout.buttons([
+                button("Choose…", #selector(chooseDataRoot), "SettingsChooseGameFolderControl"),
+                button("Use Default", #selector(useDefaultRoot), "SettingsResetGameFolderControl")
+            ])
+        ])
     }
 
     // MARK: - State
 
-    /// Re-resolves the root and updates the labels. `problem` (a failed
-    /// choice) shows in place of the source note.
-    private func refresh(problem: String? = nil, pluginsProblem: String? = nil) {
+    /// Re-resolves the root and updates every group. `problem` (a failed choice)
+    /// shows in place of the source note.
+    func refresh(problem: String? = nil, pluginsProblem: String? = nil) {
         let root = try? GameDataLocator.locate()
-        let status = GameFolderStatus { try GameDataLocator.locate() }
-        pathLabel.stringValue = status.path ?? "Not located"
-        noteLabel.stringValue = problem ?? status.note
-        noteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
+        let status = GameFolderStatus()
+        folderPathLabel.stringValue = status.path ?? "Not found"
+        folderPathLabel.toolTip = status.path
+        let note = problem ?? status.note
+        folderNoteLabel.stringValue = note
+        folderNoteLabel.toolTip = note
+        folderNoteLabel.textColor = problem == nil && status.isFound
+            ? LauncherStyle.textDim
+            : LauncherStyle.warning
+        checkInstall(status)
         refreshPluginsText(root: root, problem: pluginsProblem)
         refreshLanguage(root: root)
         refreshSavesFolder()
     }
 
-    private func refreshLanguage(root: GameDataRoot?, problem: String? = nil) {
-        let snapshot = LocalizationLanguageSettings.load(root: root)
-        if problem == nil {
-            languageField.stringValue = snapshot.language
-        }
-        languageNoteLabel.stringValue = problem
-            ?? "Resolves <plugin>_\(snapshot.language).<ext>. Source: \(snapshot.source)."
-        languageNoteLabel.textColor = problem == nil ? .secondaryLabelColor : .systemRed
-    }
-
-    /// The plugins.txt group. Without a data root there is nothing to search
-    /// relative to, so the group says so rather than guessing.
-    private func refreshPluginsText(root: GameDataRoot?, problem: String?) {
-        guard let root else {
-            pluginsPathLabel.stringValue = "Unavailable"
-            pluginsNoteLabel.stringValue = problem
-                ?? "Locate the game data root first."
-            pluginsNoteLabel.textColor = .secondaryLabelColor
+    /// The check reads every plugin and archive header, so it runs off the main actor.
+    private func checkInstall(_ status: GameFolderStatus) {
+        installCheck?.cancel()
+        let path = status.path ?? GameDataLocator.persistedRootDefaults?
+            .string(forKey: GameDataLocator.defaultsKey)
+        guard let path else {
+            show(nil)
             return
         }
-        let report = PluginLoadOrderReport(resolution: PluginLoadOrder.resolve(root: root))
-        pluginsPathLabel.stringValue = report.pluginsTextPath
-        let note = problem ?? report.problem ?? report.sourceNote
-        pluginsNoteLabel.stringValue = note + " " + report.summary + "."
-        pluginsNoteLabel.textColor = problem == nil && report.problem == nil
-            ? .secondaryLabelColor
-            : .systemOrange
+        installLabel.stringValue = "Install: checking"
+        installCheck = Task { [weak self] in
+            let summary = await GameInstallCheck.check(
+                installURL: URL(filePath: path, directoryHint: .isDirectory)
+            )
+            guard !Task.isCancelled else { return }
+            self?.show(summary)
+        }
+    }
+
+    func show(_ summary: GameInstallSummary?) {
+        guard let summary else {
+            installLabel.stringValue = "Install: no folder to check"
+            installCountsLabel.stringValue = "Counts: no folder"
+            installProblemsLabel.isHidden = true
+            return
+        }
+        installLabel.stringValue = summary.headline
+        installCountsLabel.stringValue = summary.countLine
+        installProblemsLabel.stringValue = summary.problemLines
+            .map { "Problem: \($0)" }.joined(separator: "\n")
+        installProblemsLabel.isHidden = summary.isComplete
     }
 
     // MARK: - Actions
@@ -210,51 +144,6 @@ final class SettingsViewController: NSViewController {
         refresh()
         onSettingsChanged?()
     }
-
-    @objc private func choosePluginsText() {
-        guard let window = view.window else { return }
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        panel.message = "Select the plugins.txt holding your load order."
-        panel.prompt = "Use File"
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard let self, response == .OK, let url = panel.url else { return }
-            do {
-                try PluginsTextLocator.saveUserChoice(path: url.path(percentEncoded: false))
-                refresh()
-                onSettingsChanged?()
-            } catch {
-                refresh(pluginsProblem: error.localizedDescription)
-            }
-        }
-    }
-
-    @objc private func useDefaultPluginsText() {
-        PluginsTextLocator.clearUserChoice()
-        refresh()
-        onSettingsChanged?()
-    }
-
-    @objc private func applyLanguage() {
-        do {
-            try LocalizationLanguageSettings.store(languageField.stringValue)
-            refresh()
-            onSettingsChanged?()
-        } catch {
-            refreshLanguage(
-                root: try? GameDataLocator.locate(),
-                problem: error.localizedDescription
-            )
-        }
-    }
-
-    @objc private func useSkyrimLanguage() {
-        LocalizationLanguageSettings.clearOverride()
-        refresh()
-        onSettingsChanged?()
-    }
 }
 
 /// The Cmd+, window around `SettingsViewController`.
@@ -267,16 +156,19 @@ final class SettingsWindowController: NSWindowController {
     }
 
     convenience init() {
+        let size = NSSize(width: LauncherPageLayout.minimumPageWidth, height: 560)
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 420),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.titled, .closable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "Settings"
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = LauncherStyle.background
         self.init(window: window)
         window.contentViewController = settings
-        window.setContentSize(NSSize(width: 520, height: 420))
+        window.setContentSize(size)
         window.center()
     }
 }

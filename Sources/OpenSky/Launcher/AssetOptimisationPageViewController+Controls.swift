@@ -35,9 +35,9 @@ extension AssetOptimisationPageViewController {
         progressBar.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width)
             .isActive = true
         progressBar.setAccessibilityIdentifier("AssetOptimisationProgressIndicator")
-        spaceWarningLabel.textColor = .systemOrange
-        problemLabel.textColor = .systemOrange
-        convertReasonLabel.textColor = .systemOrange
+        spaceWarningLabel.textColor = LauncherStyle.warning
+        problemLabel.textColor = LauncherStyle.warning
+        convertReasonLabel.textColor = LauncherStyle.warning
     }
 
     private func configureDirectLoad() {

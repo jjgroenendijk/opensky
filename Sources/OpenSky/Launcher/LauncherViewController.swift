@@ -27,14 +27,17 @@ final class LauncherViewController: NSSplitViewController {
         super.viewDidLoad()
         content.view = NSView()
         content.view.wantsLayer = true
-        content.view.layer?.backgroundColor = Theme.windowBackground.cgColor
+        content.view.layer?.backgroundColor = LauncherStyle.background.cgColor
 
-        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebar)
-        sidebarItem.minimumThickness = 160
-        sidebarItem.maximumThickness = 220
+        let sidebarItem = NSSplitViewItem(viewController: sidebar)
+        sidebarItem.minimumThickness = 210
+        sidebarItem.maximumThickness = 260
         sidebarItem.canCollapse = false
+        sidebarItem.holdingPriority = .defaultHigh
         addSplitViewItem(sidebarItem)
-        addSplitViewItem(NSSplitViewItem(viewController: content))
+        let contentItem = NSSplitViewItem(viewController: content)
+        contentItem.minimumThickness = LauncherPageLayout.minimumPageWidth
+        addSplitViewItem(contentItem)
         splitView.dividerStyle = .thin
 
         sidebar.onSelect = { [weak self] page in self?.show(page) }
@@ -92,7 +95,8 @@ final class LauncherViewController: NSSplitViewController {
     }
 }
 
-/// The launcher's page list: a plain source list, one row per registered page.
+/// The launcher's page list, drawn like the mod list of the SkyUI menu: black,
+/// grey names, and the chosen page in white on a band with a bar at its edge.
 final class LauncherSidebarViewController: NSViewController {
     var onSelect: ((LauncherPageDescriptor) -> Void)?
     private let tableView = NSTableView()
@@ -101,14 +105,22 @@ final class LauncherSidebarViewController: NSViewController {
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("page"))
         tableView.addTableColumn(column)
         tableView.headerView = nil
-        tableView.style = .sourceList
+        tableView.style = .plain
+        tableView.backgroundColor = LauncherStyle.sidebarBackground
+        tableView.rowHeight = 40
+        tableView.intercellSpacing = .zero
+        tableView.gridStyleMask = []
+        tableView.focusRingType = .none
         tableView.dataSource = self
         tableView.delegate = self
         tableView.setAccessibilityIdentifier("LauncherSidebar")
         tableView.setAccessibilityLabel("Launcher pages")
         let scroll = NSScrollView()
-        scroll.drawsBackground = false
+        scroll.drawsBackground = true
+        scroll.backgroundColor = LauncherStyle.sidebarBackground
         scroll.documentView = tableView
+        scroll.automaticallyAdjustsContentInsets = false
+        scroll.contentInsets = NSEdgeInsets(top: 24, left: 0, bottom: 0, right: 0)
         view = scroll
     }
 
@@ -124,6 +136,10 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
         LauncherRegistry.pages.count
     }
 
+    func tableView(_: NSTableView, rowViewForRow _: Int) -> NSTableRowView? {
+        LauncherSidebarRowView()
+    }
+
     func tableView(_: NSTableView, viewFor _: NSTableColumn?, row: Int) -> NSView? {
         let page = LauncherRegistry.pages[row]
         let cell = NSTableCellView()
@@ -131,19 +147,23 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
             image: NSImage(systemSymbolName: page.symbolName, accessibilityDescription: nil)
                 ?? NSImage()
         )
-        image.contentTintColor = Theme.gold
+        image.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
         let label = NSTextField(labelWithString: page.title)
-        label.textColor = Theme.parchment
+        label.font = LauncherStyle.font(17)
+        label.lineBreakMode = .byTruncatingTail
         cell.imageView = image
         cell.textField = label
-        let row = NSStackView(views: [image, label])
-        row.spacing = 6
-        row.translatesAutoresizingMaskIntoConstraints = false
-        cell.addSubview(row)
+        let stack = NSStackView(views: [image, label])
+        stack.spacing = 10
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        cell.addSubview(stack)
         NSLayoutConstraint.activate([
-            row.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
-            row.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
+            image.widthAnchor.constraint(equalToConstant: 20),
+            stack.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 22),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor, constant: -8),
+            stack.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
         ])
+        colour(cell, selected: tableView.selectedRow == row)
         // A plain cell view is not an accessibility element, so its id would not reach
         // UI tests; expose the row as one element named by its title.
         cell.setAccessibilityElement(true)
@@ -155,7 +175,33 @@ extension LauncherSidebarViewController: NSTableViewDataSource, NSTableViewDeleg
 
     func tableViewSelectionDidChange(_: Notification) {
         let row = tableView.selectedRow
+        tableView.enumerateAvailableRowViews { rowView, index in
+            if let cell = rowView.view(atColumn: 0) as? NSTableCellView {
+                colour(cell, selected: index == row)
+            }
+        }
         guard LauncherRegistry.pages.indices.contains(row) else { return }
         onSelect?(LauncherRegistry.pages[row])
+    }
+
+    private func colour(_ cell: NSTableCellView, selected: Bool) {
+        let colour = selected ? LauncherStyle.text : LauncherStyle.textDim
+        cell.textField?.textColor = colour
+        cell.imageView?.contentTintColor = colour
+    }
+}
+
+/// The chosen page's band: a faint fill and a white bar on the left edge.
+final class LauncherSidebarRowView: NSTableRowView {
+    override func drawSelection(in _: NSRect) {
+        LauncherStyle.highlight.setFill()
+        bounds.fill()
+        LauncherStyle.text.setFill()
+        NSRect(x: 0, y: 6, width: 3, height: bounds.height - 12).fill()
+    }
+
+    override var isEmphasized: Bool {
+        get { false }
+        set { _ = newValue }
     }
 }

@@ -42,7 +42,7 @@ final class GraphicsPageViewController: NSViewController {
     let pipelineCacheControl = NSButton(
         checkboxWithTitle: "Keep compiled GPU pipelines", target: nil, action: nil
     )
-    let clearPipelineCacheControl = NSButton(
+    let clearPipelineCacheControl = LauncherButton(
         title: "Clear Saved Pipelines",
         target: nil,
         action: nil
@@ -114,27 +114,27 @@ final class GraphicsPageViewController: NSViewController {
             layout.group(group.title, optionRows.filter { $0.option.group == group }.map(\.view))
         }
         view = layout.makeView(title: "Graphics", groups: [
-            layout.group("Preset", [presetControl, presetLabel])
+            layout.group("Preset", [layout.row("Preset", presetControl), presetLabel])
         ] + baseGroups + [
-            layout.group(
-                "Upscaling",
-                [renderScaleControl, upscalerControl, frameInterpolationControl]
-            ),
+            layout.group("Upscaling", [
+                layout.row("Render scale", renderScaleControl),
+                layout.row("Upscaler", upscalerControl), layout.toggle(frameInterpolationControl)
+            ]),
             layout.group("Rendering", [
-                rayTracedShadowsControl, rayTracingLabel, meshShaderGrassControl, gpuCullingControl,
-                waterDepthControl, pipelineCacheControl,
-                PanelComponents.buttonRow([clearPipelineCacheControl])
+                layout.toggle(rayTracedShadowsControl), rayTracingLabel,
+                layout.toggle(meshShaderGrassControl), layout.toggle(gpuCullingControl),
+                layout.toggle(waterDepthControl), layout.toggle(pipelineCacheControl),
+                layout.buttons([clearPipelineCacheControl])
             ]),
             layout.group("Texture memory", [
-                textureStreamingControl,
+                layout.toggle(textureStreamingControl),
                 layout.note("Far textures keep only small levels; costs a little pop-in up close"),
-                PanelComponents.labeledFieldRow(
-                    caption: "Memory for close-up detail", captionWidth: 190,
-                    field: textureBudgetControl
-                ),
+                layout.row("Memory for close-up detail", textureBudgetControl),
                 textureBudgetLabel
             ]),
-            layout.group("Window", [fullScreenControl, frameRateCapControl]),
+            layout.group("Window", [
+                layout.toggle(fullScreenControl), layout.row("Frame rate cap", frameRateCapControl)
+            ]),
             statusLabel
         ])
         refresh()

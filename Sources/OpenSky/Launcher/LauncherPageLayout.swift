@@ -6,7 +6,10 @@ import AppKit
 
 @MainActor
 final class LauncherPageLayout {
-    static let width: CGFloat = 520
+    static let width: CGFloat = 540
+    static let margin: CGFloat = 40
+    /// The narrowest page area that shows `width` and both margins without clipping.
+    static let minimumPageWidth = width + 2 * margin
     static let detailsKey = "OpenSkyLauncherShowsDetails"
 
     let detailsControl = NSSwitch()
@@ -32,62 +35,107 @@ final class LauncherPageLayout {
         return view
     }
 
-    /// A one-line label of the page width. Longer text truncates; the tooltip holds all of it.
+    /// A one-line readout of the page width. Longer text truncates; set the tooltip.
     func line(_ identifier: String, mono: Bool = false) -> NSTextField {
-        let label = NSTextField(labelWithString: "")
-        label.font = mono ? PanelMetrics.monoFont : PanelMetrics.captionFont
-        label.textColor = Theme.parchmentDim
-        label.lineBreakMode = .byTruncatingTail
+        let label = text("", mono: mono)
         label.widthAnchor.constraint(equalToConstant: Self.width).isActive = true
         label.setAccessibilityIdentifier(identifier)
         return label
     }
 
     /// A fixed note, such as why a feature needs converted files.
-    func note(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
-        label.font = PanelMetrics.captionFont
-        label.textColor = Theme.parchmentDim
-        label.lineBreakMode = .byTruncatingTail
-        label.toolTip = text
+    func note(_ string: String) -> NSTextField {
+        let label = text(string, mono: false)
+        label.toolTip = string
         return label
     }
 
-    /// A heading over the controls of one group.
+    private func text(_ string: String, mono: Bool) -> NSTextField {
+        let label = LauncherText(labelWithString: string)
+        label.font = mono ? PanelMetrics.monoFont : LauncherStyle.font(14)
+        label.textColor = LauncherStyle.textDim
+        label.lineBreakMode = .byTruncatingTail
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return label
+    }
+
+    /// A setting row: `title` on the left, `control` on the right.
+    func row(_ title: String, _ control: NSView) -> LauncherRow {
+        if let popUp = control as? NSPopUpButton {
+            LauncherStyle.style(popUp)
+        } else if let field = control as? NSTextField, field.isEditable {
+            LauncherStyle.style(field)
+        }
+        return LauncherRow(title: title, control: control)
+    }
+
+    /// A checkbox row; the row shows the checkbox's title, so the box draws alone.
+    func toggle(_ checkbox: NSButton) -> LauncherRow {
+        checkbox.imagePosition = .imageOnly
+        return LauncherRow(title: checkbox.title, control: checkbox)
+    }
+
+    /// Buttons side by side, their left edge in line with the row titles.
+    func buttons(_ buttons: [NSButton]) -> NSStackView {
+        let row = NSStackView(views: buttons)
+        row.spacing = 10
+        row.edgeInsets = NSEdgeInsets(top: 6, left: LauncherStyle.textInset, bottom: 6, right: 0)
+        return row
+    }
+
+    /// A heading and a rule over the controls of one group.
     func group(_ title: String, _ views: [NSView]) -> NSStackView {
-        let heading = NSTextField(labelWithAttributedString: Theme.headingAttributed(
-            title, size: 13, color: Theme.parchment
+        let heading = LauncherText(labelWithAttributedString: LauncherStyle.caps(
+            title, size: 15, colour: LauncherStyle.textDim
         ))
-        let stack = PanelComponents.group([heading] + views)
+        let rule = LauncherStyle.rule(width: Self.width)
+        let stack = NSStackView(views: [heading, rule] + views)
+        stack.orientation = .vertical
         stack.alignment = .leading
+        stack.spacing = 4
+        stack.setCustomSpacing(6, after: heading)
         return stack
     }
 
     /// The page: title, status, groups, and the details switch, in a scroll view.
     func makeView(title: String, status: LauncherStatusView? = nil, groups: [NSView]) -> NSView {
+        let stack = NSStackView(
+            views: [makeHeader(title: title)] + (status.map { [$0] } ?? []) + groups
+        )
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 30
+        stack.edgeInsets = NSEdgeInsets(
+            top: 28, left: Self.margin, bottom: Self.margin, right: Self.margin
+        )
+        applyDetails()
+        return LauncherScrollView(content: stack)
+    }
+
+    private func makeHeader(title: String) -> NSView {
         detailsControl.state = userDefaults.bool(forKey: Self.detailsKey) ? .on : .off
+        detailsControl.controlSize = .small
         detailsControl.target = self
         detailsControl.action = #selector(toggleDetails)
         detailsControl.setAccessibilityIdentifier("\(pageName)ShowDetailsControl")
         detailsControl.setAccessibilityLabel("Show details")
         detailsControl.toolTip = "Show the technical notes, such as setting keys and measurements"
-        let detailsRow = NSStackView(views: [
-            NSTextField(labelWithString: "Show details"),
-            detailsControl
-        ])
-        detailsRow.spacing = PanelMetrics.rowGap
-        let heading = NSTextField(labelWithAttributedString: Theme.headingAttributed(
-            title, size: 24, color: Theme.gold
+        let detailsLabel = NSTextField(labelWithAttributedString: LauncherStyle.caps(
+            "Show details", size: 13, colour: LauncherStyle.textDim
         ))
-        let header = NSStackView(views: [heading, NSView(), detailsRow])
-        header.widthAnchor.constraint(equalToConstant: Self.width).isActive = true
-        let stack = NSStackView(views: [header] + (status.map { [$0] } ?? []) + groups)
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 24
-        stack.edgeInsets = NSEdgeInsets(top: 32, left: 32, bottom: 32, right: 32)
-        applyDetails()
-        return LauncherScrollView(content: stack)
+        let detailsRow = NSStackView(views: [detailsLabel, detailsControl])
+        detailsRow.spacing = 8
+        let heading = NSTextField(labelWithAttributedString: LauncherStyle.caps(
+            title, size: 32, colour: LauncherStyle.text
+        ))
+        let titleRow = NSStackView(views: [heading, NSView(), detailsRow])
+        titleRow.alignment = .firstBaseline
+        titleRow.widthAnchor.constraint(equalToConstant: Self.width).isActive = true
+        let header = NSStackView(views: [titleRow, LauncherStyle.rule(width: Self.width)])
+        header.orientation = .vertical
+        header.alignment = .leading
+        header.spacing = 10
+        return header
     }
 
     @objc private func toggleDetails() {
@@ -111,11 +159,11 @@ final class LauncherStatusView: NSStackView {
     /// Ids `<name>StatusStatsLabel` and `<name>StatusDetailStatsLabel`.
     init(name: String) {
         super.init(frame: .zero)
-        titleLabel.font = .boldSystemFont(ofSize: 15)
-        titleLabel.textColor = Theme.parchment
+        titleLabel.font = LauncherStyle.font(18)
+        titleLabel.textColor = LauncherStyle.text
         titleLabel.setAccessibilityIdentifier("\(name)StatusStatsLabel")
-        detailLabel.font = PanelMetrics.captionFont
-        detailLabel.textColor = Theme.parchmentDim
+        detailLabel.font = LauncherStyle.font(14)
+        detailLabel.textColor = LauncherStyle.textDim
         detailLabel.lineBreakMode = .byTruncatingTail
         detailLabel.widthAnchor.constraint(equalToConstant: LauncherPageLayout.width - 40)
             .isActive = true
@@ -128,6 +176,7 @@ final class LauncherStatusView: NSStackView {
         setViews([symbolView, text], in: .leading)
         spacing = 12
         alignment = .centerY
+        edgeInsets = NSEdgeInsets(top: 0, left: LauncherStyle.textInset, bottom: 0, right: 0)
     }
 
     @available(*, unavailable)

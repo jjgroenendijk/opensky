@@ -58,7 +58,7 @@ enum LauncherRegistry {
             title: "Play",
             symbolName: "play.fill",
             toolTip: "Start the game without developer tools",
-            summary: "The game in its own window, from the start you choose",
+            summary: "The game alone, from the start you choose",
             controlIdentifier: "LaunchPlayControl"
         ),
         LaunchModeDescriptor(
@@ -66,7 +66,7 @@ enum LauncherRegistry {
             title: "Developer Mode",
             symbolName: "hammer.fill",
             toolTip: "Start the game with the sidebar and inspector panels",
-            summary: "The game with the sidebar and inspector panels",
+            summary: "The game with tool panels beside it",
             controlIdentifier: "LaunchDeveloperControl"
         )
     ]
