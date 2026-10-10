@@ -105,7 +105,7 @@ nonisolated public struct HKBDecodeReport: Sendable {
         var failed: [String: Int] = [:]
         var unresolved: [HKXUnresolvedReference] = []
 
-        for object in graph.file.objects {
+        for object in graph.objectRefs {
             guard let className = object.className else {
                 skipped["<unresolved>", default: 0] += 1
                 continue

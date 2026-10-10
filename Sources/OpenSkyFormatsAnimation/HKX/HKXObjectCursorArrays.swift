@@ -76,6 +76,11 @@ nonisolated extension HKXObjectCursor {
     /// Bytes of an `hkArray<hkUint8>`, read as one slice.
     public mutating func byteArray(at field: HKXField) -> Data? {
         guard let view = array(at: field) else { return nil }
+        if let tagged = view.tagged {
+            return Data(tagged.compactMap {
+                HKXObjectCursor.integer($0).map { UInt8(truncatingIfNeeded: $0) }
+            })
+        }
         guard let payload = graph.payload(ofSection: view.sectionIndex) else {
             recordMiss(field, .sectionMissing)
             return nil

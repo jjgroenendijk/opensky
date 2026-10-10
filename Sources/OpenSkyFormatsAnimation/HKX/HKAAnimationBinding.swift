@@ -14,7 +14,11 @@ nonisolated public struct HKAAnimationBinding: Sendable {
     public static let className = "hkaAnimationBinding"
 
     public static func bindings(in file: HKXFile) throws -> [HKAAnimationBinding] {
-        let graph = try HKXObjectGraph(file: file)
+        try bindings(in: HKXObjectGraph(file: file))
+    }
+
+    /// The same over any object graph, a tagfile's included.
+    public static func bindings(in graph: HKXObjectGraph) throws -> [HKAAnimationBinding] {
         var result: [HKAAnimationBinding] = []
         for object in graph.objects(ofClass: className) {
             guard var cursor = graph.cursor(at: object) else { continue }

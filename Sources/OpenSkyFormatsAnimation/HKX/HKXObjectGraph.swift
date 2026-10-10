@@ -51,6 +51,8 @@ nonisolated public struct HKXArrayView: Equatable, Sendable {
     public let sectionIndex: Int
     public let dataOffset: Int
     public let count: Int
+    /// The elements themselves when the array came from a tagfile.
+    public var tagged: [HKTValue]?
 }
 
 /// A resolved cross-object pointer: instance at `dataOffset` inside section
@@ -71,7 +73,12 @@ nonisolated public struct HKXPointerTarget: Equatable, Hashable, Sendable {
 /// registered object keyed by its location. Build one per file and hand out
 /// cursors; the indexes are shared by copy-on-write, so a cursor is cheap.
 nonisolated public struct HKXObjectGraph: Sendable {
-    public let file: HKXFile
+    /// Nil when the graph reads a tagfile.
+    public let file: HKXFile?
+    /// The decoded tagfile behind a graph built with `init(tagfile:)`.
+    public let tagfile: HKTagfile?
+    /// Every registered object, in inventory order.
+    public let objectRefs: [HKXObjectRef]
 
     /// Section payload (object data only) per section index.
     private let payloads: [Data]
@@ -84,6 +91,8 @@ nonisolated public struct HKXObjectGraph: Sendable {
 
     public init(file: HKXFile) throws {
         self.file = file
+        tagfile = nil
+        objectRefs = file.objects
         var payloads: [Data] = []
         var localTargets: [[Int: Int]] = []
         var globalTargets: [[Int: HKXPointerTarget]] = []
@@ -117,15 +126,35 @@ nonisolated public struct HKXObjectGraph: Sendable {
         )
     }
 
+    /// A graph over a tagfile's objects: each one sits in `tagSection` at its index,
+    /// and a cursor reads its members by name instead of by offset.
+    public init(tagfile: HKTagfile) {
+        file = nil
+        self.tagfile = tagfile
+        objectRefs = tagfile.objects.indices.map { index in
+            HKXObjectRef(
+                sectionIndex: Self.tagSection, dataOffset: index, signature: nil,
+                className: tagfile.className(of: tagfile.objects[index])
+            )
+        }
+        payloads = []
+        localTargets = []
+        globalTargets = []
+        classNames = [:]
+    }
+
     /// Every registered object of one class, in inventory order.
     public func objects(ofClass name: String) -> [HKXObjectRef] {
-        file.objects.filter { $0.className == name }
+        objectRefs.filter { $0.className == name }
     }
 
     /// Class name of the object registered at `target`, nil when the location
     /// carries no virtual fixup (an inline struct rather than an instance).
     public func className(at target: HKXPointerTarget) -> String? {
-        classNames[target]
+        if let object = tagObject(at: target), let tagfile {
+            return tagfile.className(of: object)
+        }
+        return classNames[target]
     }
 
     public func payload(ofSection index: Int) -> Data? {
@@ -151,11 +180,16 @@ nonisolated public struct HKXObjectGraph: Sendable {
     }
 
     public func cursor(at target: HKXPointerTarget) -> HKXObjectCursor? {
-        cursor(section: target.sectionIndex, offset: target.dataOffset)
+        if let object = tagObject(at: target) {
+            return tagCursor(over: .structure(object), base: target.dataOffset)
+        }
+        return cursor(section: target.sectionIndex, offset: target.dataOffset)
     }
 
     public func cursor(at object: HKXObjectRef) -> HKXObjectCursor? {
-        cursor(section: object.sectionIndex, offset: object.dataOffset)
+        cursor(at: HKXPointerTarget(
+            sectionIndex: object.sectionIndex, dataOffset: object.dataOffset
+        ))
     }
 
     /// Cursor over one element of an array, so element members are read with
@@ -164,6 +198,9 @@ nonisolated public struct HKXObjectGraph: Sendable {
     /// off the graph rather than off the owning cursor.
     public func element(of view: HKXArrayView, index: Int, stride: Int) -> HKXObjectCursor? {
         guard index >= 0, index < view.count, stride > 0 else { return nil }
+        if let tagged = view.tagged {
+            return tagged.indices.contains(index) ? tagCursor(over: tagged[index]) : nil
+        }
         guard let payload = payload(ofSection: view.sectionIndex) else { return nil }
         let start = view.dataOffset + index * stride
         guard start >= 0, start + stride <= payload.count else { return nil }

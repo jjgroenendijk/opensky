@@ -59,7 +59,13 @@ nonisolated public struct HKASplineCompressedAnimation: Sendable {
 
     /// Every spline-compressed animation object in inventory order.
     public static func animations(in file: HKXFile) throws -> [HKASplineCompressedAnimation] {
-        let graph = try HKXObjectGraph(file: file)
+        try animations(in: HKXObjectGraph(file: file))
+    }
+
+    /// The same over any object graph, a tagfile's included.
+    public static func animations(in graph: HKXObjectGraph) throws
+        -> [HKASplineCompressedAnimation]
+    {
         var result: [HKASplineCompressedAnimation] = []
         for object in graph.objects(ofClass: className) {
             guard var cursor = graph.cursor(at: object) else { continue }

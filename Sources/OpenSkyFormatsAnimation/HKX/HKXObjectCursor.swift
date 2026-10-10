@@ -20,6 +20,8 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// The owning section's payload; element cursors may sit in another
     /// section than the object that pointed at them.
     public let payload: Data
+    /// The object, struct, or element value when this cursor reads a tagfile.
+    public var tagValue: HKTValue?
 
     /// Every field this cursor failed to resolve, in read order.
     public private(set) var unresolved: [HKXUnresolvedReference] = []
@@ -105,6 +107,10 @@ nonisolated public struct HKXObjectCursor: Sendable {
         size: Int,
         _ read: (inout BinaryReader) throws -> Value
     ) -> Value? {
+        if tagValue != nil {
+            var reader = BinaryReader(tagBytes(at: field, size: size))
+            return try? read(&reader)
+        }
         let offset = base + field.offset
         guard containsSectionRange(offset, size) else {
             recordMiss(field, .outOfBounds)
@@ -137,6 +143,13 @@ nonisolated public struct HKXObjectCursor: Sendable {
         at field: HKXField,
         recordingNull: Bool
     ) -> HKXPointerTarget? {
+        if tagValue != nil {
+            let target = tagPointer(at: field)
+            if target == nil, recordingNull {
+                recordMiss(field, .noFixup)
+            }
+            return target
+        }
         let source = base + field.offset
         guard containsSectionRange(source, Self.pointerStride) else {
             recordMiss(field, .outOfBounds)
@@ -163,6 +176,13 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// which is not the same as an empty one, so the miss is recorded and nil
     /// returned rather than `""` invented.
     public mutating func string(at field: HKXField) -> String? {
+        if tagValue != nil {
+            guard case let .string(value?)? = tagged(field) else {
+                recordMiss(field, .noFixup)
+                return nil
+            }
+            return value
+        }
         guard let target = pointer(at: field) else { return nil }
         guard let stringPayload = graph.payload(ofSection: target.sectionIndex) else {
             recordMiss(field, .sectionMissing)
@@ -186,6 +206,9 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// Nil means the descriptor itself is unreadable or reports a negative
     /// count; zero is a well-formed empty array.
     public mutating func arrayCount(at field: HKXField) -> Int? {
+        if tagValue != nil {
+            return tagArray(at: field).count
+        }
         let sizeField = HKXField(field.offset + 8, field.name)
         guard let count = int32(at: sizeField) else { return nil }
         guard count >= 0 else {
@@ -201,6 +224,12 @@ nonisolated public struct HKXObjectCursor: Sendable {
     /// callers guard on `arrayCount` first when the distinction matters.
     public mutating func array(at field: HKXField) -> HKXArrayView? {
         guard let count = arrayCount(at: field), count > 0 else { return nil }
+        if tagValue != nil {
+            return HKXArrayView(
+                sectionIndex: HKXObjectGraph.tagSection, dataOffset: 0, count: count,
+                tagged: tagArray(at: field)
+            )
+        }
         guard let target = pointer(at: field) else { return nil }
         return HKXArrayView(
             sectionIndex: target.sectionIndex, dataOffset: target.dataOffset, count: count

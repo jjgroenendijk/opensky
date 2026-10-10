@@ -108,5 +108,21 @@ No file defines a cloth class (an `hcl` prefix or a `Cloth` name). So the instal
 cloth setup data, and no cloth binds to a skeleton bone. A future cloth simulation needs another
 data source. The skeletons in these files name 34 bones in all, listed by `openskycli hkt sweep`.
 
-OpenSky decodes these files into generic objects. It does not yet run their behavior graphs, which
-are decoded only from packfiles ([HKX behavior](/formats/hkx-behavior.md)).
+## Reading tagfile objects
+
+The behavior decoders read members by packfile offset and name. A tagfile has no offsets, so the
+same decoders read a tagfile through the member names alone:
+
+- A field name such as `m_controlData.m_maxForce` is a path. OpenSky drops a `Class::` prefix and
+  the `m_` of each part, then follows the parts through nested structs. `m_legs[2]` picks an array
+  element.
+- When the full path is not found, OpenSky tries it again without its first parts. Some packfile
+  names carry an outer struct that the tagfile type does not.
+- A float read inside a vector member, such as `m_gains[3]`, reads the float at that position.
+- A member whose presence bit is not set reads as zero bytes, as an unset Havok member would.
+- An object reference resolves to the remembered object, which OpenSky places in a section of its
+  own at the object index.
+
+So one decoder serves both containers, and a behavior set in a tagfile loads like a packfile set.
+Where a project names a `.hkx` file that the install only holds as `.hkt`, OpenSky loads the
+`.hkt` file. The fishing behavior is one: its clips are `.hkt` files.

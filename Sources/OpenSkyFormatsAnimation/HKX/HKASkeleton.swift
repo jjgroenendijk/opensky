@@ -82,7 +82,11 @@ nonisolated public struct HKASkeleton: Sendable {
     /// ragdoll in vanilla skeleton.hkx). Objects located via the container's
     /// virtual fixups; a malformed one throws rather than corrupting the set.
     public static func skeletons(in file: HKXFile) throws -> [HKASkeleton] {
-        let graph = try HKXObjectGraph(file: file)
+        try skeletons(in: HKXObjectGraph(file: file))
+    }
+
+    /// The same over any object graph, a tagfile's included.
+    public static func skeletons(in graph: HKXObjectGraph) throws -> [HKASkeleton] {
         var result: [HKASkeleton] = []
         for object in graph.objects(ofClass: className) {
             guard var cursor = graph.cursor(at: object) else { continue }
