@@ -18,19 +18,11 @@ extension SceneRuntime.Playback {
         case let .timer(seconds):
             run(index, duration: seconds ?? 0)
         case let .dialogue(dialogue):
-            guard let speaker = actor(of: action) else {
-                note(.emptyAlias(index))
-                complete(index)
-                return
-            }
+            guard let speaker = availableActor(index, action) else { return }
             let topic = entry.translation?(dialogue.topic) ?? dialogue.topic
             say(index, topic: topic, speaker: speaker, lookAt: lookTarget(of: dialogue))
         case .package:
-            guard let actor = actor(of: action) else {
-                note(.emptyAlias(index))
-                complete(index)
-                return
-            }
+            guard let actor = availableActor(index, action) else { return }
             note(.packageStarted(index, actor: actor))
             run(index, duration: nil)
             checkPackage(index, action)
@@ -38,6 +30,22 @@ extension SceneRuntime.Playback {
             note(.unsupportedAction(index, type: action.type))
             complete(index)
         }
+    }
+
+    /// Nil completes the action at once: an empty alias, a dead actor, or an
+    /// optional actor that another scene holds.
+    private mutating func availableActor(_ index: UInt32, _ action: SceneAction) -> ReferenceKey? {
+        guard let actor = actor(of: action) else {
+            note(.emptyAlias(index))
+            complete(index)
+            return nil
+        }
+        guard isAvailable(actor, alias: action.aliasID) else {
+            note(.actorUnavailable(index))
+            complete(index)
+            return nil
+        }
+        return actor
     }
 
     private func owner(_ index: UInt32) -> ScenePackageOwner {
@@ -111,7 +119,8 @@ extension SceneRuntime.Playback {
         // The initializer keeps the running list sorted, as a loaded save has it.
         state = SceneRuntimeState(
             phase: state.phase, phaseEntered: state.phaseEntered,
-            running: state.running + [progress], completed: state.completed
+            running: state.running + [progress], completed: state.completed,
+            pausedAt: state.pausedAt
         )
     }
 
@@ -120,7 +129,8 @@ extension SceneRuntime.Playback {
         state = SceneRuntimeState(
             phase: state.phase, phaseEntered: state.phaseEntered,
             running: state.running.filter { $0.action != index },
-            completed: state.completed + [index]
+            completed: state.completed + [index],
+            pausedAt: state.pausedAt
         )
         note(.actionCompleted(index))
     }

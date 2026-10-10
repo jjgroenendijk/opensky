@@ -131,20 +131,42 @@ Location Alias Reference (`ALFA` plus `ALRT`) names a location alias and a locat
 (`LCRT`). The reference comes from that location's `LCSR` and `ACSR` lists: the first one of that
 type that no other alias of the quest holds. The opening's cart drivers fill this way: two
 `MQ101CartDriver` entries in `HelgenLocation` fill `ImperialSoldier01` and `ImperialSoldier02`.
-The location alias must come earlier in the list, as `Helgen` does in `MQ101`. A miss is counted
-and never fails the start, because OpenSky does not search child locations yet.
+The location alias must come earlier in the list, as `Helgen` does in `MQ101`. When the location
+lists no free reference of the type, its child locations are searched: every location whose
+`PNAM` chain reaches it, nearest first. A miss in the whole tree fails a required alias. An empty
+location alias may be OpenSky's gap, so it is counted and never fails the start.
 
-Refusing a start because OpenSky cannot run a Find Matching Reference search would present
-an engine gap as game behavior. Only an implemented fill that finds nothing (an `ALFR` or
-`ALFL` naming no record) fails a required alias.
+### Find Matching Reference
+
+An alias with no fill subrecord but with match conditions, or with a near alias (`ALNA`), is a
+Find Matching Reference fill ([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). Each
+candidate runs the alias's match conditions with the candidate as subject, the quest as the
+alias quest, and the aliases filled so far. A dead candidate needs "Allow Dead" (`FNAM` bit 4),
+and a disabled one "Allow Disabled" (bit 7). A reference another alias of the quest holds needs
+"Allow Reuse in Quest". "Closest" (bit 13) takes the candidate nearest the player; otherwise a
+random match fills the alias.
+
+The candidates are the loaded references. A near alias with type 0 ("Linked Ref Child")
+narrows them to the references whose untagged linked ref (`XLKR`) is the near alias's
+reference. OpenSky does not search persistent references outside the loaded cells. So a miss
+fails a required alias only with "In Loaded Area" (bit 5), where the game searches the same
+set. Without it, the reference may wait in an unloaded cell, so the miss is counted and never
+fails the start.
+
+A "find matching reference from event" fill also runs the match conditions on the event's
+reference, and a reference that fails them does not fill the alias.
+
+Refusing a start because of a gap in OpenSky would present an engine gap as game behaviour.
+Only a fill that searched the place the game searches and found nothing fails a required
+alias.
 
 The reuse rule refuses the fill, not the start. The page says the rule "is not required for all fill
 types" and names one exception, so which types it covers is not documented. Failing the start would
 refuse thirteen quests `Skyrim.esm` ships that way.
 
-Also not done: condition-driven searches, `ALFA` plus `ALRT` searches in child locations,
-"Reserves Reference" (a rule across quests), and any check that a filled reference exists, is
-alive, enabled, or not destroyed.
+Also not done: Find Matching Reference outside the loaded cells, near alias types other than
+"Linked Ref Child", "Reserves Reference" (a rule across quests), and any check that a forced
+reference exists, is alive, enabled, or not destroyed.
 
 `Skyrim.esm` has 12,891 aliases across 1,607 quests. 5,591 fill: 2,688 specific references,
 162 direct locations, and 2,741 unique actors. No quest is blocked from starting. The largest

@@ -26,11 +26,16 @@ public protocol MapMenuWorld: AnyObject {
     var localMapFog: LocalMapFogState { get set }
     func showNotification(_ text: String)
     func awardExperience(_ amount: Int)
+    /// Counts one misc stat for the journal's Stats page.
+    func incrementStat(_ name: String)
     var fastTravelContext: FastTravelContext { get }
     /// Moves the player to the marker and the clock forward. False when it could not.
     func travel(to marker: MapMarkerSite) -> Bool
     func refusalText(_ refusal: FastTravelRefusal) -> String
+    /// The targets of the tracked quests' open objectives.
     var questTargets: [QuestTargetMarker] { get }
+    /// Puts the quest markers on the HUD compass.
+    func showQuestMarkers(_ positions: [SIMD3<Float>])
     /// Every worldspace with markers, for the sidebar inspector.
     var mapMarkerWorldspaces: [MapWorldspaceChoice] { get }
     func mapMarkerSites(in worldspace: ResolvedFormID) -> [MapMarkerSite]
@@ -58,6 +63,9 @@ public final class MapMenuCoordinator {
 
     var lastResultText: String?
     var inspection = MapMarkerInspection()
+    /// The tracked targets, refreshed every `questMarkerFrames` frames.
+    public internal(set) var questMarkers: [QuestTargetMarker] = []
+    var questMarkerFrame = 0
     public private(set) var discoveredCount = 0
     private var lastDiscoveryPosition: SIMD3<Float>?
     private let menuMode: MenuModeController
@@ -79,6 +87,7 @@ public final class MapMenuCoordinator {
 
     /// Discovers markers near the player and clears fog under them.
     public func tick() {
+        refreshQuestMarkersIfDue()
         guard mode == nil, let world, let player = world.playerPosition else { return }
         if let last = lastDiscoveryPosition, simd_distance(last, player) < Self.discoveryStep {
             return
@@ -94,6 +103,7 @@ public final class MapMenuCoordinator {
             world.storeMarkerState(site.state, for: key)
             world.showNotification("Discovered \(name)")
             world.awardExperience(settings.discoveryExperience)
+            world.incrementStat("Locations Discovered")
             discoveredCount += 1
         }
         exploreFog(at: player)
@@ -146,10 +156,11 @@ public final class MapMenuCoordinator {
 
     /// The world map needs map data; inside an interior it opens the local map.
     @discardableResult
-    public func open(_ requested: MapMenuMode = .world) -> Bool {
+    public func open(_ requested: MapMenuMode = .world, focus: SIMD3<Float>? = nil) -> Bool {
         guard mode == nil, let world, let player = world.playerPosition else { return false }
+        let center = focus ?? player
         if requested == .world, let limits = world.worldMapLimits {
-            camera = WorldMapCamera(limits: limits, focus: SIMD2(player.x, player.y))
+            camera = WorldMapCamera(limits: limits, focus: SIMD2(center.x, center.y))
             mode = .world
         } else {
             camera = nil
@@ -267,7 +278,7 @@ public final class MapMenuCoordinator {
             selected: selected?.name,
             cameraHeight: camera?.height,
             cameraPitch: camera?.pitch,
-            questTargets: world?.questTargets.map(\.text) ?? [],
+            questTargets: questMarkerLines,
             fastTravelEnabled: fastTravelEnabled,
             lastResult: lastResult,
             inspectedMarker: inspectedMarkerLine

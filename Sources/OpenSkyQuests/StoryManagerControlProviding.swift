@@ -31,6 +31,8 @@ nonisolated public struct StoryManagerSnapshot: Equatable, Sendable {
     public let droppedWalkLines: Int
     public let sessionStart: String
     public let lastOutcome: String?
+    /// NPC random conversations, hellos, and found bodies.
+    public let socialLines: [String]
 
     public init(
         nodeCount: Int,
@@ -38,7 +40,8 @@ nonisolated public struct StoryManagerSnapshot: Equatable, Sendable {
         walkLines: [String],
         droppedWalkLines: Int,
         sessionStart: String,
-        lastOutcome: String?
+        lastOutcome: String?,
+        socialLines: [String] = []
     ) {
         self.nodeCount = nodeCount
         self.events = events
@@ -46,6 +49,7 @@ nonisolated public struct StoryManagerSnapshot: Equatable, Sendable {
         self.droppedWalkLines = droppedWalkLines
         self.sessionStart = sessionStart
         self.lastOutcome = lastOutcome
+        self.socialLines = socialLines
     }
 }
 
@@ -56,6 +60,8 @@ public protocol StoryManagerControlProviding: AnyObject {
     func storyTree(event code: String) -> [String]
     /// Fires `code` with the player as actor 1.
     func fireStoryEvent(code: String, keyword: FormID?, value1: Float)
+    /// Runs the NPC social pass now, instead of on its frame timer.
+    func runSocialPass()
 }
 
 extension StoryManagerCoordinator: StoryManagerControlProviding {
@@ -76,7 +82,8 @@ extension StoryManagerCoordinator: StoryManagerControlProviding {
             droppedWalkLines: max(0, lines.count - limit),
             sessionStart: sessionStart.entries.isEmpty && sessionStart.missingLists.isEmpty
                 ? "not run" : StoryManagerCore.text(sessionStart),
-            lastOutcome: lastOutcome
+            lastOutcome: lastOutcome,
+            socialLines: social.lines
         )
     }
 
@@ -102,6 +109,10 @@ extension StoryManagerCoordinator: StoryManagerControlProviding {
         fire(data)
     }
 
+    public func runSocialPass() {
+        social.runPass()
+    }
+
     func questName(_ quest: FormID) -> String {
         world?.questRuntime?.quests.quest(quest)?.editorID ?? quest.description
     }
@@ -123,5 +134,9 @@ extension StoryManagerControlForwarding {
 
     public func fireStoryEvent(code: String, keyword: FormID?, value1: Float) {
         storyManager.fireStoryEvent(code: code, keyword: keyword, value1: value1)
+    }
+
+    public func runSocialPass() {
+        storyManager.runSocialPass()
     }
 }

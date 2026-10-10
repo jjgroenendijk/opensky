@@ -183,6 +183,14 @@ playing.
 A start time that is not finite is rejected. When `timed` is 0 the action has no end time and
 the duration is ignored. Minimum sizes: 21 bytes per entry, 17 per running action.
 
+## SCNP: paused scenes
+
+One entry per paused scene: the SCEN key, the cell, and the float64 scene-seconds time the
+pause began. The decoder lays it onto the matching `SCNS` entry; a pause with no scene is
+dropped. It is a separate chunk because `SCNS` entries have no length, so an older reader
+skips `SCNP` and loads the scene unpaused. A time that is not finite is rejected. Size: 16
+bytes per entry.
+
 ## SMQS: story-manager starts
 
 One entry per quest the [story manager](/engine/story-manager.md) started: the QUST key, the
@@ -204,8 +212,20 @@ per input event, sorted by event name. A record is the event name as a string, a
 count of times the [help message](/engine/messages.md#help-messages) showed, and a done
 byte: 1 once the player did the event. Minimum size: 12 bytes per entry, 7 per record.
 
-`SCNS`, `SMQS`, `DLBS`, and `HELP` merge into the `RDLT` deltas by key, like the other
-component chunks.
+## MSTS: misc stats
+
+One entry for the player: the key, the cell, a uint32 stat count, then per stat its name as a
+string and an int32 value, sorted by name. The names are the
+[journal's stats](/engine/journal.md#stats-page). Minimum size: 12 bytes per entry, 6 per
+stat.
+
+## QTRK: quest tracking
+
+One entry per quest the journal has shown: the QUST key, the cell, and a byte, 1 when the
+player tracks the quest. A quest with no entry was never shown. Size: 9 bytes per entry.
+
+`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, and `QTRK` merge into the `RDLT` deltas by
+key, like the other component chunks.
 
 ## PIDN: player identity
 

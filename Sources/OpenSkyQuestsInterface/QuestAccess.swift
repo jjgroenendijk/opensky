@@ -105,6 +105,10 @@ public protocol QuestAccess {
     /// - Returns: the table as stored, and why any alias stayed empty.
     @discardableResult
     func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult
+
+    /// Whether the player tracks the quest: its targets show on the compass and map.
+    func isTracked(_ id: FormID) -> Bool
+    func setTracked(_ id: FormID, _ isTracked: Bool)
 }
 
 extension QuestAccess {

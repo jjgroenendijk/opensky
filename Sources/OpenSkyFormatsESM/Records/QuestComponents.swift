@@ -134,8 +134,16 @@ nonisolated extension Quest {
             /// quest runs.
             public static let questObject = Flags(rawValue: 1 << 2)
             public static let allowReuseInQuest = Flags(rawValue: 1 << 3)
+            /// Ref. A dead actor may fill the alias.
+            public static let allowDead = Flags(rawValue: 1 << 4)
+            /// Ref. Find Matching Reference searches only the loaded area.
+            public static let matchInLoadedArea = Flags(rawValue: 1 << 5)
             /// Ref. Makes the target essential while the quest runs.
             public static let essential = Flags(rawValue: 1 << 6)
+            /// Ref. A disabled reference may fill the alias.
+            public static let allowDisabled = Flags(rawValue: 1 << 7)
+            /// Ref. Find Matching Reference prefers the match closest to the player.
+            public static let matchClosest = Flags(rawValue: 1 << 13)
         }
 
         /// How the alias gets its value, derived from which slots were filled.

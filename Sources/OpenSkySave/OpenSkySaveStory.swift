@@ -1,4 +1,4 @@
-// SCNS, SMQS, and DLBS chunks: playing scenes, the story manager's per-quest
+// SCNS, SCNP, SMQS, and DLBS chunks: playing scenes, the story manager's per-quest
 // start record, and the exclusive dialogue branch a speaker is in. Each merges
 // into the `RDLT` deltas by key. Layout: docs/formats/opensky-save-world-chunks.md.
 
@@ -52,6 +52,20 @@ nonisolated extension OpenSkySaveEncoder {
             for action in state.completed {
                 payload.writeUInt32(action)
             }
+        }
+    }
+
+    /// The pause time of every paused scene.
+    public static func writeScenePauses(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        let paused = entries.filter { $0.delta.component(SceneRuntimeState.self)?.pausedAt != nil }
+        writeStory(
+            SceneRuntimeState.self, tag: OpenSkySaveFormat.ChunkTag.scenePauses,
+            paused, &writer
+        ) { state, payload in
+            payload.writeUInt64((state.pausedAt ?? 0).bitPattern)
         }
     }
 
@@ -142,6 +156,35 @@ nonisolated public enum OpenSkySaveStoryDecoder: Sendable {
         }
     }
 
+    public static func decodeScenePauses(
+        _ payload: Data
+    ) throws -> [SaveStoryEntry<SceneRuntimeState>] {
+        try decode(
+            payload, tag: OpenSkySaveFormat.ChunkTag.scenePauses,
+            minimumSize: OpenSkySaveFormat.scenePauseEntrySize
+        ) { reader in
+            let seconds = try Double(bitPattern: reader.uint64("SCNP paused at"))
+            guard seconds.isFinite else {
+                throw OpenSkySaveError.invalidValue(context: "SCNP pause time is not finite")
+            }
+            return SceneRuntimeState(pausedAt: seconds)
+        }
+    }
+
+    /// Lays each `SCNP` pause time onto its `SCNS` scene. A pause with no scene is dropped.
+    static func applying(
+        _ pauses: [SaveStoryEntry<SceneRuntimeState>],
+        to scenes: [SaveStoryEntry<SceneRuntimeState>]
+    ) -> [SaveStoryEntry<SceneRuntimeState>] {
+        guard !pauses.isEmpty else { return scenes }
+        let times = Dictionary(pauses.map { ($0.key, $0.state.pausedAt) }) { _, last in last }
+        return scenes.map { entry in
+            var state = entry.state
+            state.pausedAt = times[entry.key].flatMap(\.self)
+            return SaveStoryEntry(key: entry.key, cell: entry.cell, state: state)
+        }
+    }
+
     public static func decodeStoryManagerQuests(
         _ payload: Data
     ) throws -> [SaveStoryEntry<StoryManagerQuestState>] {
@@ -199,6 +242,8 @@ nonisolated extension OpenSkySaveDecoder {
         switch tag {
         case OpenSkySaveFormat.ChunkTag.scenes:
             body.scenes = try OpenSkySaveStoryDecoder.decodeScenes(payload)
+        case OpenSkySaveFormat.ChunkTag.scenePauses:
+            body.scenePauses = try OpenSkySaveStoryDecoder.decodeScenePauses(payload)
         case OpenSkySaveFormat.ChunkTag.storyManagerQuests:
             body.storyManagerQuests = try OpenSkySaveStoryDecoder.decodeStoryManagerQuests(payload)
         case OpenSkySaveFormat.ChunkTag.dialogueBranches:
@@ -218,7 +263,7 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.relocations:
             body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         default:
-            break
+            try applyJournal(tag: tag, payload: payload, to: &body)
         }
     }
 }

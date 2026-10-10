@@ -40,6 +40,15 @@ extension PapyrusWorldStateBridge {
         world?.aliasResolution = resolved.runtime.aliasResolution()
     }
 
+    @discardableResult
+    public func incrementStat(_ name: String, by amount: Int32) -> Bool {
+        worldState.incrementMiscStat(name, by: amount)
+    }
+
+    public func queryStat(_ name: String) -> Int32 {
+        worldState.miscStats.value(name)
+    }
+
     public func completeQuest(for key: ReferenceKey) throws {
         let resolved = try resolveQuest(key)
         try resolved.runtime.completeQuest(resolved.quest.formID)

@@ -60,13 +60,14 @@ public final class SceneCoordinator {
         )
     }
 
-    public func start(_ id: FormID) {
+    /// `force` stops the scenes that share an actor first, as `ForceStart()` does.
+    public func start(_ id: FormID, force: Bool = false) {
         guard let runtime else {
             lastOutcome = "no dialogue index loaded"
             return
         }
         do {
-            let events = try runtime.start(id)
+            let events = try force ? runtime.forceStart(id) : runtime.start(id)
             record(events)
             lastOutcome = events.isEmpty ? "already playing" : "started"
         } catch {
@@ -95,6 +96,12 @@ public final class SceneCoordinator {
     public func questDidStart(_ quest: FormID) {
         guard !catalog.scenes(ofQuest: quest).isEmpty, let runtime else { return }
         record(runtime.questDidStart(quest))
+    }
+
+    /// Every actor a playing scene holds. Empty while no scene plays.
+    public func actorsInScenes() -> Set<ReferenceKey> {
+        guard !playing.isEmpty, let runtime else { return [] }
+        return runtime.actorsInPlayingScenes()
     }
 
     /// Finds playing scenes from the store, after a load or a reset.

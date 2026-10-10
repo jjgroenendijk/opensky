@@ -215,9 +215,14 @@ struct QuestJournalMovieBridgeTests {
                 QuestJournalMovieBridge.endpieceFrames.contains(label),
                 "\(kind.name) mapped to unmeasured label \(label)"
             )
+            #expect(Quest.Kind(rawValue: kind.rawValue) == kind)
         }
         #expect(QuestJournalMovieBridge.endpieceFrame(for: .unknown(99)) == "Misc")
         #expect(QuestJournalMovieBridge.endpieceFrame(for: .mainQuest) == "Main")
+        #expect(QuestJournalMovieBridge.endpieceFrame(for: .miscellaneous) == "Favor")
+        #expect(QuestJournalMovieBridge.endpieceFrame(for: .sideQuests) == "Misc")
+        let row = QuestJournalMovieBridge.titleRow(Self.entry(title: "Unbound", kind: .mainQuest))
+        #expect(row["type"] == .integer(1), "the movie indexes its table with the DNAM type")
     }
 
     /// A movie whose shape moved must leave the readouts empty, never crash.

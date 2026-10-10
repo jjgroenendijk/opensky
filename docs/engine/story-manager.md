@@ -86,6 +86,10 @@ when it has no `R1`.
 | `AIPL` | The player takes, steals, or buys an item | `R1` source container, `F1` item, `V1` acquire type |
 | `REMP` | The player drops, stores, or sells an item | `R1` container, `F1` item, `V1` remove type |
 | `CHRR` | A script changes a relationship rank | `R1`, `R2` the actors, `V1` old rank, `V2` new rank |
+| `ADIA` | Two actors start a conversation | `R1` the speaker, `R2` the listener |
+| `AHEL` | An actor says hello in passing | `R1` the walker, `R2` the actor greeted |
+| `DEAD` | An actor finds a dead body | `R1` the finder, `R2` the body |
+| `BRIB`, `INTM`, `FLAT` | The player wins a bribe, intimidation, or persuasion | `R1` the actor in the conversation |
 
 `KILL` crime status is 0 (not murder), 1 (murder), or 2 (murder that cost crime gold). A death
 is murder when the player struck the victim first ([crime](/engine/crime.md)). The rank is the
@@ -93,6 +97,12 @@ victim's rank toward the killer, 0 when no relationship names the pair. The crim
 steal, 1 pickpocket, 2 trespass, 3 assault, 4 murder, 5 escape from jail, 6 werewolf. The
 acquire type is 1 steal, 2 buy, 4 pick up, 5 container, 6 dead body. The remove type is 4
 dropped, 5 given (sold), 6 put in a container.
+
+`ADIA`, `AHEL`, and `DEAD` come from the [social pass](/engine/random-conversations.md). A
+speech event fires when the player picks a response that wins a speech check: a response whose
+conditions test `GetBribeSuccess` == 1, `GetIntimidateSuccess` == 1, or the Speechcraft actor
+value (17) >= a value. That is how the success lines of `Skyrim.esm` are gated. Persuasion
+sends `FLAT`, because the Creation Kit names the event "Flatter".
 
 `SKIL` fires once when one use raises a skill by more than one level, as the wiki says.
 `CLOC` is checked every 30 frames. Every event can also be fired from the sidebar, with the
@@ -106,11 +116,7 @@ These have vanilla nodes, but OpenSky has no system that does what they describe
 
 | Code | Event | Why it does not fire |
 | --- | --- | --- |
-| `ADIA` | Two actors start a conversation | No NPC-to-NPC conversation system |
-| `AHEL` | An actor says hello to another | NPC greetings do not run |
 | `AFAV` | The player receives a favor | No favor system |
-| `BRIB`, `FLAT`, `INTM` | Bribe, persuade, intimidate | No speech-check dialogue |
-| `DEAD` | An actor finds a dead body | Actors do not react to bodies |
 | `ESJA` | The player escapes jail | Jail time passes at once, so there is no escape |
 | `NVPE` | The player learns a word of power | No shout learning |
 
@@ -151,6 +157,6 @@ data, because their conditions ask for event data the sidebar does not give.
 - `AIPL` and `REMP` name no owner in `R2`, and pickpocketing, eating, and items a script moves
   fire neither event.
 - `ARRT` names no crime type, because the bounty does not record which crime it is for.
-- A DLC quest's conditions and dialogue still read FormIDs as if they were `Skyrim.esm`
-  numbers. Its aliases and script properties use the quest's own plugin. The `F1` form of an
-  event uses the same numbering.
+- `GetBribeSuccess` and `GetIntimidateSuccess` are not condition functions yet, so the
+  vanilla bribe and intimidate lines are never offered, and `BRIB` and `INTM` fire only for a
+  mod's line.

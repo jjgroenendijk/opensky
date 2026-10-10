@@ -57,4 +57,10 @@ public protocol PapyrusWorldQuestBridge: AnyObject, Sendable {
     func setQuestObjectiveFailed(
         _ objective: UInt16, _ isFailed: Bool, for key: ReferenceKey
     ) throws
+
+    /// `Game.IncrementStat`. False for a name outside the misc stat list.
+    @discardableResult
+    func incrementStat(_ name: String, by amount: Int32) -> Bool
+    /// `Game.QueryStat`: 0 for a stat never counted or not in the list.
+    func queryStat(_ name: String) -> Int32
 }

@@ -84,10 +84,11 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         )
         entries = OpenSkySaveDeltaMerge.merge(body.locks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.relocations, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.scenes, into: entries)
+        entries = OpenSkySaveDeltaMerge.merge(body.pausedScenes, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.storyManagerQuests, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
+        entries = mergeJournal(body, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.identities, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.markers, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.fog, into: entries)
@@ -288,7 +289,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
             try applyStory(tag: tag, payload: payload, to: &body)
         }
     }
+}
 
+nonisolated extension OpenSkySaveDecoder {
     /// `CLOK` payload: one `Float64` bit pattern of the clock's total game
     /// seconds. A non-finite or negative value is corruption, not a clock.
     static func decodeClock(_ payload: Data) throws -> GameClock {
@@ -306,9 +309,7 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         }
         return GameClock(totalGameSeconds: seconds)
     }
-}
 
-nonisolated extension OpenSkySaveDecoder {
     /// Rejects a declared element count that cannot possibly fit in the bytes
     /// left, before anything reserves storage for it. Without this a corrupt
     /// four-byte count is an out-of-memory crash rather than a thrown error.

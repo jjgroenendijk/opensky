@@ -57,6 +57,8 @@ nonisolated public enum QuestAliasSkipKind: SkipTallyKind {
     /// does not allow reuse. Counted, and deliberately not a start failure;
     /// `QuestAliasFiller` states why.
     case reusedInQuest
+    /// A search ran, and no reference passed the alias's match conditions.
+    case noMatch
 
     public var name: String {
         switch self {
@@ -65,6 +67,7 @@ nonisolated public enum QuestAliasSkipKind: SkipTallyKind {
         case .unresolvedLocation: "unresolved location"
         case .unresolvedReference: "unresolved reference"
         case .reusedInQuest: "reference reused in quest"
+        case .noMatch: "no match"
         }
     }
 }

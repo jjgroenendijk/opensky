@@ -27,6 +27,8 @@ public final class StoryManagerCoordinator {
     /// Events fired this session, by code.
     public private(set) var firedCounts: [FourCC: Int] = [:]
     public var lastOutcome: String?
+    /// NPC conversations, hellos, and found bodies, which fire through this coordinator.
+    public let social = SocialEventCoordinator()
     weak var world: (any StoryManagerWorld)?
 
     public init() {}

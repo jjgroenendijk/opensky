@@ -60,6 +60,9 @@ public enum SceneCore {
         case let .fragment(name): "fragment \(name)"
         case let .fragmentUnrun(name): "fragment \(name) not run"
         case .repeated: "repeated"
+        case .waitingForActors: "waiting for actors in another scene"
+        case .paused: "paused by an actor"
+        case .resumed: "resumed"
         case let .ended(reason): "ended (\(text(reason: reason)))"
         default: actionText(step)
         }
@@ -75,6 +78,7 @@ public enum SceneCore {
         case let .packageDone(action): "action \(action): package done"
         case let .noLine(action): "action \(action): no line passed"
         case let .emptyAlias(action): "action \(action): actor alias empty"
+        case let .actorUnavailable(action): "action \(action): actor dead or busy"
         case let .unsupportedAction(action, type): "action \(action): type \(type) not run"
         default: ""
         }
@@ -90,6 +94,8 @@ public enum SceneCore {
         case .finished: "finished"
         case .stopped: "stopped"
         case .questStopped: "quest stopped"
+        case .interrupted: "interrupted by another scene"
+        case .actorBehavior: "ended by an actor"
         }
     }
 }

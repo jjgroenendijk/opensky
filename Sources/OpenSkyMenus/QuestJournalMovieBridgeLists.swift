@@ -29,6 +29,7 @@ nonisolated extension QuestJournalMovieBridge {
             runtime: runtime
         )
         publishSelectionText(model, runtime: runtime)
+        publishPageFlags(model, runtime: runtime)
     }
 
     /// Writes one list's rows, rebuilds its entry clips and points it at
@@ -96,55 +97,52 @@ nonisolated extension QuestJournalMovieBridge {
 
     /// One quest row. `text` is the field the list base's `SetEntryText` reads;
     /// the rest carry the row's identity back out of a movie-driven selection.
+    /// The misc row has the shape the movie's own `onQuestsDataComplete` builds:
+    /// FormID 0 and type 0.
     public static func titleRow(_ entry: JournalQuestEntry) -> [String: AS2Value] {
         [
             "text": .string(entry.title),
             "formID": .number(Double(entry.formID.rawValue)),
             "instance": .number(Double(entry.formID.rawValue)),
-            "type": .integer(endpieceFrameIndex(for: entry.kind)),
+            "type": .integer(entry.isMiscGroup ? 0 : Int(entry.kind.rawValue)),
             "completed": .boolean(entry.isCompleted),
-            "active": .boolean(false)
+            "active": .boolean(entry.isTracked)
         ]
     }
 
     /// One objective row. `completed`, `failed` and `active` are the movie's
     /// own state names, and they move the entry clip off `Normal`. `active`
-    /// marks the tracked objective, which OpenSky does not model, so it is false.
+    /// marks an open objective of a tracked quest; `formID` names that quest.
     public static func objectiveRow(_ objective: JournalObjectiveEntry) -> [String: AS2Value] {
-        [
+        var row: [String: AS2Value] = [
             "text": .string(objective.text),
+            "formID": .number(Double(objective.quest.rawValue)),
             "instance": .integer(Int(objective.index)),
             "completed": .boolean(objective.state == .completed),
             "failed": .boolean(objective.state == .failed),
-            "active": .boolean(false)
+            "active": .boolean(objective.isActive)
         ]
-    }
-
-    /// `questTitleEndpieces` frame label for one quest type. The clip's own
-    /// labels are the type names, so the mapping is a rename rather than a
-    /// number: the movie has no endpiece for a type it predates, which falls
-    /// back to `Misc`.
-    public static func endpieceFrame(for kind: Quest.Kind) -> String {
-        switch kind {
-        case .mainQuest: "Main"
-        case .magesGuild: "MagesGuild"
-        case .thievesGuild: "ThievesGuild"
-        case .darkBrotherhood: "DarkBrotherhood"
-        case .companionQuests: "Companion"
-        case .sideQuests: "Favor"
-        case .daedricQuests: "Daedric"
-        case .civilWar: "CivilWar"
-        case .vampire: "DLC01"
-        case .dragonborn: "DLC02"
-        case .none, .miscellaneous, .unknown: "Misc"
+        // The movie offers "Show on map" only for a row with a target ID.
+        if objective.hasTargets, objective.state == .displayed {
+            row["questTargetID"] = .number(questTargetID(objective))
         }
+        return row
     }
 
-    /// Position of that label in the clip's own label order, which is the
-    /// number a row carries when the page wants the type without the name.
-    public static func endpieceFrameIndex(for kind: Quest.Kind) -> Int {
-        endpieceFrames.firstIndex(of: endpieceFrame(for: kind)) ?? 0
+    /// `questTitleEndpieces` frame label for one quest type, from the movie's own
+    /// table, which `onQuestHighlight` indexes with the row's `type`. A type the
+    /// movie predates falls back to `Misc`.
+    public static func endpieceFrame(for kind: Quest.Kind) -> String {
+        let index = Int(kind.rawValue)
+        return endpieceByType.indices.contains(index) ? endpieceByType[index] : "Misc"
     }
+
+    /// The movie's table, indexed by the QUST `DNAM` type (measured). Misc quests
+    /// get the `Favor` frame and side quests `Misc`.
+    static let endpieceByType = [
+        "Misc", "Main", "MagesGuild", "ThievesGuild", "DarkBrotherhood", "Companion",
+        "Favor", "Daedric", "Misc", "CivilWar", "DLC01", "DLC02"
+    ]
 
     /// The endpiece clip's frame labels in timeline order, as measured.
     public static var endpieceFrames: [String] {

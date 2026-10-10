@@ -108,6 +108,9 @@ public final class DialogueCoordinator {
             selection = choice.next
             followUp = choice
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
+            if let challenge = SpeechChallenge.won(by: info) {
+                world?.speechChallengeWon(challenge, speaker: speaker)
+            }
             return info
         } catch {
             lastOutcome = "choose refused: \(String(describing: error))"

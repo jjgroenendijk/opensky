@@ -115,10 +115,11 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         writeHarvests(entries, into: &writer)
         writeLocks(entries, into: &writer)
         writeRelocations(entries, into: &writer)
-        writeScenes(entries, into: &writer)
+        writeSceneChunks(entries, into: &writer)
         writeStoryManagerQuests(entries, into: &writer)
         writeDialogueBranches(entries, into: &writer)
         writeHelpMessages(entries, into: &writer)
+        writeJournal(entries, into: &writer)
         writeIdentityAndMap(entries, into: &writer)
     }
 

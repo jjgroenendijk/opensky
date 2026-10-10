@@ -4,6 +4,9 @@
 // coordinators (docs/engine/scenes.md, docs/engine/story-manager.md).
 
 import Foundation
+import OpenSkyActorsInterface
+import OpenSkyCombat
+import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue
@@ -48,6 +51,7 @@ final class StoryWorldAdapter {
     lazy var storyManager: StoryManagerCoordinator = {
         let storyManager = StoryManagerCoordinator()
         storyManager.attach(world: self)
+        storyManager.social.attach(world: self)
         return storyManager
     }()
 
@@ -75,6 +79,7 @@ final class StoryWorldAdapter {
             )
         }
         storyManager.story = data.storyManager
+        storyManager.social.settings = data.social
         game.progression.storyEvents = self
         game.inventory.storyEvents = self
         game.crime.storyEvents = self
@@ -98,12 +103,14 @@ final class StoryWorldAdapter {
             advancePreviousSystems?(delta)
             self?.voiceTimer?.drain()
             self?.scenes.tick()
+            self?.storyManager.social.tick()
             self?.checkPlayerLocation()
         }
     }
 
     /// A new game starts the same listed quests again over the cleared state.
     func rerunSessionStart() {
+        storyManager.social.reset()
         runSessionStart(lists: sessionStartLists)
     }
 
@@ -314,6 +321,20 @@ extension StoryWorldAdapter: SceneWorld {
         )
     }
 
+    /// OpenSky has no observe-combat behaviour, so that status is never set.
+    func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus {
+        var status: SceneActorStatus = []
+        if game.worldState.component(ActorDeathState.self, for: actor)?.isDead == true {
+            status.insert(.dead)
+        } else if (game.combat.loop?.activity(of: actor) ?? .notFighting) != .notFighting {
+            status.insert(.inCombat)
+        }
+        if game.dialogue.conversationSpeaker == actor {
+            status.insert(.inPlayerDialogue)
+        }
+        return status
+    }
+
     func stopQuest(_ quest: FormID) {
         guard let runtime = questRuntime, let key = runtime.quests.key(for: quest) else { return }
         try? game.scripts.bridge?.stopQuest(for: key)
@@ -325,8 +346,8 @@ extension StoryWorldAdapter: PapyrusStoryBridge {
         !(storyManager.fire(event)?.startedQuests.isEmpty ?? true)
     }
 
-    func startScene(_ scene: FormID) -> Bool {
-        scenes.start(scene)
+    func startScene(_ scene: FormID, force: Bool) -> Bool {
+        scenes.start(scene, force: force)
         return scenes.playing.contains(scene)
     }
 

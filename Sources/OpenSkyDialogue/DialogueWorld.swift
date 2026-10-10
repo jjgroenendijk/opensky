@@ -27,4 +27,6 @@ public protocol DialogueWorld: AnyObject {
     func stopActor(_ actor: ReferenceKey)
     func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>)
     func releaseFacing(of actor: ReferenceKey)
+    /// The player said a line that wins a speech challenge against `speaker`.
+    func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey)
 }

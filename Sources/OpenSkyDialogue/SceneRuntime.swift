@@ -22,6 +22,8 @@ public protocol SceneHost: AnyObject {
     ) -> ScenePackageState
     /// Hands `actor` back to its schedule, when `owner` still holds it.
     func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner)
+    /// What the actor does now, for the scene actor behaviour flags.
+    func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus
 }
 
 /// The scene action that holds an actor's packages.

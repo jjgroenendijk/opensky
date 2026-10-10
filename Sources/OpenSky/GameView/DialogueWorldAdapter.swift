@@ -188,4 +188,12 @@ extension DialogueWorldAdapter: DialogueWorld {
     func releaseFacing(of actor: ReferenceKey) {
         game.streamer?.releaseActorFacing(actor)
     }
+
+    /// `BRIB`, `INTM`, or `FLAT`, with the actor the player won over as `R1`.
+    func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
+        var event = StoryEventData(event: FourCC(stringLiteral: challenge.eventCode))
+        event.actor1 = speaker
+        game.storyWorld.reportStoryEvent(event)
+        game.worldState.incrementMiscStat(challenge.statName)
+    }
 }
