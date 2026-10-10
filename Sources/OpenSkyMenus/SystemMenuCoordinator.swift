@@ -45,8 +45,9 @@ public final class SystemMenuCoordinator {
     public internal(set) var saveWork: Task<Void, Never>?
     public private(set) var settings: PlayerSettingsCoordinator?
     public weak var saves: SaveGameService?
-    /// Off by default: the vanilla movie takes the one SWF layer from the HUD.
-    public private(set) var movieEnabled = false
+    /// On by default, so play mode draws the menu. The HUD is suspended while
+    /// the movie holds the one SWF layer.
+    public private(set) var movieEnabled = true
     public private(set) var movieLoaded = false
     /// Bumped by each open and close, so a movie decoded late opens only the newest.
     private var movieRequest = 0

@@ -90,10 +90,10 @@ struct SystemMenuPanelTests {
         SystemMenuSection.resetToDefaults(provider: provider)
         #expect(!provider.systemMenuIsOpen)
 
-        provider.systemMenuMovieEnabled = true
+        provider.systemMenuMovieEnabled = false
         #expect(SystemMenuSection.isOverridden(provider: provider))
         SystemMenuSection.resetToDefaults(provider: provider)
-        #expect(!provider.systemMenuMovieEnabled)
+        #expect(provider.systemMenuMovieEnabled)
     }
 
     @Test @MainActor

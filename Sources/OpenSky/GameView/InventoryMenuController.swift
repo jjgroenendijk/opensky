@@ -23,9 +23,9 @@ final class InventoryMenuController {
     unowned let game: GameViewController
     private(set) var isOpen = false
     private(set) var model = InventoryMenuModel.empty
-    /// Off by default: the vanilla movie takes the single SWF layer from the
-    /// gameplay HUD.
-    private(set) var movieEnabled = false
+    /// On by default, so play mode draws the menu. The HUD is suspended while
+    /// the movie holds the single SWF layer.
+    private(set) var movieEnabled = true
     private(set) var movieLoaded = false
     /// Bumped by each open and close, so a movie decoded late opens only the newest.
     private var movieRequest = 0

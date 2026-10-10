@@ -53,14 +53,14 @@ final class ContainerMenuSection: PanelSectionViewController {
     static func isOverridden(provider: (any ContainerMenuControlProviding)?) -> Bool {
         guard let provider else { return false }
         return provider.containerMenuIsOpen
-            || provider.containerMenuMovieEnabled
+            || !provider.containerMenuMovieEnabled
             || provider.containerMenuMode == .barter
     }
 
     static func resetToDefaults(provider: (any ContainerMenuControlProviding)?) {
         guard let provider else { return }
         provider.closeContainerMenu()
-        provider.containerMenuMovieEnabled = false
+        provider.containerMenuMovieEnabled = true
         provider.containerMenuMode = .container
     }
 
