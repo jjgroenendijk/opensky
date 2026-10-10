@@ -342,6 +342,7 @@ targets += foundation(
     "OpenSkyPhysics",
     dependencies: [
         "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyFormatsAnimation",
         "OpenSkyGameData", "OpenSkyBehavior", "OpenSkyAssetCache"
     ],
     tests: [

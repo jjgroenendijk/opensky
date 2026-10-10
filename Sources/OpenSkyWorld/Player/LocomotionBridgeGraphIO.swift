@@ -56,4 +56,13 @@ nonisolated extension LocomotionBridge {
     public var ragdollBlendDuration: Float? {
         graph?.ragdollBlendDuration
     }
+
+    /// The ragdoll modifier output of the last graph update.
+    public var ragdollGraphControls: RagdollGraphControls {
+        RagdollGraphControls(
+            blendDuration: graph?.ragdollBlendDuration,
+            powered: graph?.poweredRagdollControls,
+            contactEvent: graph?.ragdollContactEvent
+        )
+    }
 }

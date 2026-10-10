@@ -51,7 +51,7 @@ public final class RagdollCoordinator {
 
     /// One frame: zero-health actors die, `events` hand off, live ragdolls step.
     /// The caller drains `events` every frame, so no backlog builds up.
-    public func advance(events: [String], blendDuration: Float?, delta: Float) {
+    public func advance(events: [String], controls: RagdollGraphControls, delta: Float) {
         guard let runtime else { return }
         if let world {
             runtime.retainRagdolls(in: world.residentRagdollCells)
@@ -60,8 +60,10 @@ public final class RagdollCoordinator {
         for key in runtime.pendingHandOffs.sorted() {
             runtime.handleGraphEvents(events, on: key)
         }
-        runtime.blendDuration = blendDuration
+        runtime.blendDuration = controls.blendDuration
             ?? HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
+        runtime.motor = controls.powered.map(RagdollMotor.init)
+        runtime.contactEvent = controls.contactEvent
         runtime.advance(by: delta)
     }
 

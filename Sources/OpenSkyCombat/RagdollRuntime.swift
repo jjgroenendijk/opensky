@@ -117,6 +117,13 @@ public final class RagdollRuntime: DeathReporting {
     /// default a session with no evaluated modifier falls back to, and it is
     /// that same value rather than an invented one.
     public var blendDuration: Float = HKBRigidBodyRagdollControlsModifier.vanillaBlendDuration
+    /// The motor an active `hkbPoweredRagdollControlsModifier` asks for; a new
+    /// ragdoll takes it at hand-off. Nil spawns ragdolls without one.
+    public var motor: RagdollMotor?
+    /// The event an active `BSRagdollContactListenerModifier` raises when a ragdoll
+    /// begins touching the world. Nil raises nothing.
+    public var contactEvent: String?
+    public private(set) var contactEventsRaised = 0
 
     private weak var seam: (any RagdollWorldSeam)?
 
@@ -201,7 +208,7 @@ public final class RagdollRuntime: DeathReporting {
         guard let seam, !world.isRagdolling(key) else { return false }
         guard let actor = seam.ragdollActor(for: key) else { return false }
         guard
-            let instance = RagdollInstance(
+            var instance = RagdollInstance(
                 definition: actor.definition,
                 animatedBoneMatrices: actor.animatedBoneMatrices,
                 actorToWorld: actor.actorToWorld,
@@ -212,6 +219,7 @@ public final class RagdollRuntime: DeathReporting {
                 velocity: actor.velocity
             )
         else { return false }
+        instance.motor = motor
         world.add(instance, for: key, in: actor.cell)
         pendingHandOffs.remove(key)
         return true
@@ -236,6 +244,12 @@ public final class RagdollRuntime: DeathReporting {
     public func advance(by frameTime: Float) {
         guard let seam else { return }
         world.advance(by: frameTime, world: seam.ragdollStepWorld)
+        for key in world.drainContactStarts() {
+            guard let contactEvent, seam.raiseRagdollEvent(contactEvent, on: key) else {
+                continue
+            }
+            contactEventsRaised += 1
+        }
         for settled in world.drainSettledTransforms() {
             guard
                 let state = seam.deathState(of: settled.key),
@@ -286,5 +300,6 @@ public final class RagdollRuntime: DeathReporting {
         graphDrivenDeathCount = 0
         fallbackDeathCount = 0
         deathEventsQueued = 0
+        contactEventsRaised = 0
     }
 }

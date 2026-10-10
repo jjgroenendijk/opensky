@@ -41,7 +41,7 @@ final class RagdollWorldAdapter {
             let locomotion = renderer.locomotion
             ragdoll.advance(
                 events: locomotion.graphEvents.drain(locomotion.ragdollEventConsumer),
-                blendDuration: locomotion.ragdollBlendDuration,
+                controls: locomotion.ragdollGraphControls,
                 delta: delta
             )
         }
