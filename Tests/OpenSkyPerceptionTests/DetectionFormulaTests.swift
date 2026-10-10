@@ -24,9 +24,11 @@ struct DetectionFormulaTests {
         #expect(ours.map(\.editorID) == [
             "distanceAttenuationExponent", "equippedWeightBase", "equippedWeightMult",
             "sneakMovementMult", "sprintMovementMult", "viewConeHalfAngleDegrees",
-            "visualBaseValue", "sneakVisualMult", "fullDetectionValue", "gainPerSecond",
+            "visualBaseValue", "sneakVisualMult", "normalActionSound", "loudActionSound",
+            "veryLoudActionSound", "fullLightLuminance", "fullDetectionValue", "gainPerSecond",
             "decayPerSecond", "suspiciousLevel", "detectedLevel"
         ])
+        #expect(settings.silentActionSound.value == 10)
         // The synthetic set labels the load-order half as synthetic rather than
         // claiming it came from a plugin nothing loaded.
         #expect(settings.sneakBaseValue.source == "OpenSky synthetic")
@@ -75,7 +77,9 @@ struct DetectionFormulaTests {
         ) == 12)
         // Equipped weight adds at fSneakEquippedWeightMult per point.
         #expect(DetectionFormula.soundFactor(
-            inputs: DetectionInputs(distance: 0, gait: .walk, equippedWeight: 40),
+            inputs: DetectionInputs(
+                distance: 0, gait: .walk, traits: DetectionTargetTraits(equippedWeight: 40)
+            ),
             settings: settings
         ) == 32)
         // Running doubles it, sprinting trebles it, sneaking cuts it.
@@ -112,15 +116,73 @@ struct DetectionFormulaTests {
         ) == 20)
     }
 
-    @Test func skillTermIsThePinnedLevelWeightedByTheInstallMultiplier() {
+    @Test func skillTermWeightsTheClampedLevelAndTheGapMovesTheValue() {
         // 15 clamped into 0...100, times fSneakSkillMult.
         #expect(DetectionFormula.skillFactor(settings: settings) == 7.5)
-        #expect(DetectionFormula.pinnedSkillLevel == 15)
-        // The trailing (Noticer - Sneaker) term is exactly zero by
-        // construction, so the two pinned skills cancel.
-        #expect(DetectionFormula.pinnedLightFactor == 1)
-        #expect(DetectionFormula.pinnedMuffle == 1)
-        #expect(DetectionFormula.pinnedActionSound == 0)
+        #expect(DetectionFormula.skillFactor(level: 250, settings: settings) == 50)
+        #expect(DetectionFormula.skillFactor(level: .nan, settings: settings) == 7.5)
+        func value(noticer: Float, sneaker: Float) -> Float {
+            DetectionFormula.breakdown(
+                inputs: DetectionInputs(
+                    distance: 9999, traits: DetectionTargetTraits(sneakSkill: sneaker),
+                    noticerSkill: noticer
+                ),
+                settings: settings
+            ).value
+        }
+        // Out of range, only the (Noticer - Sneaker) term is left beside the base.
+        #expect(value(noticer: 15, sneaker: 15) == -15)
+        #expect(value(noticer: 15, sneaker: 75) == -15 + (7.5 - 37.5))
+        #expect(value(noticer: 55, sneaker: 15) == -15 + (27.5 - 7.5))
+    }
+
+    @Test func muffleSilencesTheArmourButNotTheSteps() {
+        func sound(muffle: Float) -> Float {
+            DetectionFormula.soundFactor(
+                inputs: DetectionInputs(
+                    distance: 0, gait: .walk,
+                    traits: DetectionTargetTraits(equippedWeight: 40, muffle: muffle)
+                ),
+                settings: settings
+            )
+        }
+        #expect(sound(muffle: 0) == 32)
+        #expect(sound(muffle: 0.5) == 22)
+        #expect(sound(muffle: 1) == 12)
+        // Stacked muffle past 1 has no extra effect.
+        #expect(sound(muffle: 3) == 12)
+    }
+
+    @Test func anActionSoundIsHeardEvenWhenStandingStill() {
+        let level = settings.actionSound(for: .normal)
+        let sound = DetectionFormula.soundFactor(
+            inputs: DetectionInputs(
+                distance: 0, gait: nil, traits: DetectionTargetTraits(actionSound: level)
+            ),
+            settings: settings
+        )
+        #expect(sound == level * 2)
+        #expect(settings.actionSound(for: .silent) < settings.actionSound(for: .normal))
+        #expect(settings.actionSound(for: .loud) < settings.actionSound(for: .veryLoud))
+    }
+
+    @Test func lightAndInvisibilityScaleTheVisualTerm() {
+        func visual(_ traits: DetectionTargetTraits) -> Float {
+            DetectionFormula.visualFactor(
+                inputs: DetectionInputs(distance: 0, traits: traits), settings: settings
+            )
+        }
+        #expect(visual(DetectionTargetTraits(lightLevel: 0.25)) == 10)
+        #expect(visual(DetectionTargetTraits(lightLevel: 0)) == 0)
+        #expect(visual(DetectionTargetTraits(lightLevel: 4)) == 40)
+        #expect(visual(DetectionTargetTraits(isInvisible: true)) == 0)
+        // Invisible, but still heard.
+        #expect(DetectionFormula.soundFactor(
+            inputs: DetectionInputs(
+                distance: 0, gait: .walk, traits: DetectionTargetTraits(isInvisible: true)
+            ),
+            settings: settings
+        ) == 12)
     }
 
     // MARK: - The whole value

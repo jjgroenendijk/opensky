@@ -28,6 +28,7 @@ Every constant keeps its source, shown by `openskycli gmst detection` and the pa
 | `fSneakSkillMult` | 0.5 | Turns a skill level into a skill factor |
 | `fSneakPerceptionSkillMin` | 0 | Bottom of the skill clamp |
 | `fSneakPerceptionSkillMax` | 100 | Top of the skill clamp |
+| `iSoundLevelSilent` | 10 | Action sound of a silent weapon or spell |
 
 ## OpenSky's own constants
 
@@ -44,6 +45,10 @@ cone, how loud a crouching target is, how fast a guard decides, or how long it t
 | `viewConeHalfAngleDegrees` | 90 | Half the view cone angle |
 | `visualBaseValue` | 40 | Visual term for a lit, standing target in the open |
 | `sneakVisualMult` | 0.5 | Visual term while crouched |
+| `normalActionSound` | 25 | Action sound at the normal level |
+| `loudActionSound` | 50 | Action sound at the loud level |
+| `veryLoudActionSound` | 100 | Action sound at the very loud level |
+| `fullLightLuminance` | 1 | Light luminance that counts as fully lit |
 | `fullDetectionValue` | 25 | Value at which the level climbs at full speed |
 | `gainPerSecond` | 100 | Level gained per second at full speed |
 | `decayPerSecond` | 20 | Level lost per second when nothing is noticed |
@@ -55,18 +60,19 @@ UESP names three of these as game settings: `fSneakDistanceAttenuationExponent`,
 those editor IDs. When a secondary source and the shipped game disagree, the game wins, so these
 stay OpenSky constants.
 
-## Missing inputs
+The install has a game setting for the silent sound level only. The other three levels have no
+`iSoundLevel*` setting in `Skyrim.esm`, so their values are ours. They keep the order the record
+enum implies: silent, normal, loud, very loud.
 
-Four inputs are not available yet. Each is a named constant at a neutral value, not a guess. A
-wrong number that moves is worse than a fixed one, because only the fixed one is visible.
+## Inputs
 
-| Input | Fixed at | What will supply it |
-| --- | --- | --- |
-| Light level | 1 | Scene light sampled per actor. The install has `fSneakLightMult`, `fSneakLightExteriorMult`, and `fDetectionSneakLightMod` for this term. They stay unused until there is a light level |
-| Muffle | 1 | Magic effects |
-| Action sounds | 0 | Attacks, casts, and shouts reported to perception |
-| Both skill levels | 15 | Stored skills. 15 is the vanilla starting level of every skill before race bonuses |
+| Input | Source |
+| --- | --- |
+| Both skill levels | The `Sneak` actor value of the observer and of the target |
+| Muffle | The target's `Movement Noise Mult` actor value |
+| Invisibility | The target's `Invisibility` actor value, above zero |
+| Armour weight | The sum of the `ARMO` weights the target has equipped |
+| Action sound | The swing's `WEAP` `VNAM`, or the cast's first `MGEF` casting sound level |
+| Light level | The scene light at the target ([light level](/engine/detection.md#light-level)) |
 
-Equipped weight is always 0, because nothing adds up the weight of an actor's equipped items
-yet. So every target counts only `equippedWeightBase`, and is quieter than a vanilla actor in
-armor.
+Only the player is a target, so only the player's inputs are sampled.

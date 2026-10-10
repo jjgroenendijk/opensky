@@ -349,7 +349,8 @@ extension AIWorldAdapter: PerceptionSessionWorld {
                     eye: actor.feet + SIMD3(0, 0, actor.capsule.eyeHeight * max(actor.scale, 0)),
                     facing: actor.facing,
                     isExterior: isExterior,
-                    label: actor.label
+                    label: actor.label,
+                    sneakSkill: sneakSkill(of: actor.key)
                 ),
                 isDead: actor.isDead,
                 isHostile: game.factions.hostility(of: actor.key) == .hostile,
@@ -369,7 +370,9 @@ extension AIWorldAdapter: PerceptionSessionWorld {
             eye: status.feetPosition + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight),
             gait: isMoving ? status.gait : nil,
             isSneaking: status.gait == .sneak,
-            equippedWeight: 0,
+            traits: playerDetectionTraits(
+                at: status.feetPosition, eyeHeight: PlayerCapsule.standard.eyeHeight
+            ),
             name: "Player"
         )]
     }

@@ -212,7 +212,8 @@ public final class PerceptionRuntime {
             isExterior: observer.isExterior,
             isSneaking: target.isSneaking,
             gait: target.gait,
-            equippedWeight: target.equippedWeight
+            traits: target.traits,
+            noticerSkill: observer.sneakSkill
         )
         pairs[key] = previous.advanced(
             inputs: inputs,

@@ -23,6 +23,8 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
     public let isExterior: Bool
     /// FULL name, editor ID, or key and base form, formatted only when read.
     public let label: ActorLabel
+    /// The observer's Sneak skill: a skilled observer notices more.
+    public let sneakSkill: Float
 
     public var name: String {
         label.text
@@ -34,11 +36,12 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
         eye: SIMD3<Float>? = nil,
         facing: Float = 0,
         isExterior: Bool = true,
-        name: String = "—"
+        name: String = "—",
+        sneakSkill: Float = DetectionTargetTraits.startingSkill
     ) {
         self.init(
             key: key, feet: feet, eye: eye, facing: facing, isExterior: isExterior,
-            label: ActorLabel(name)
+            label: ActorLabel(name), sneakSkill: sneakSkill
         )
     }
 
@@ -48,7 +51,8 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
         eye: SIMD3<Float>?,
         facing: Float,
         isExterior: Bool,
-        label: ActorLabel
+        label: ActorLabel,
+        sneakSkill: Float = DetectionTargetTraits.startingSkill
     ) {
         self.key = key
         self.feet = feet
@@ -56,6 +60,7 @@ nonisolated public struct PerceptionObserver: Equatable, Sendable {
         self.facing = facing
         self.isExterior = isExterior
         self.label = label
+        self.sneakSkill = sneakSkill
     }
 
     /// The unit heading the cone is centred on, in the XY plane. Perception is
@@ -81,10 +86,8 @@ nonisolated public struct PerceptionTarget: Equatable, Sendable {
     /// Whether the target is crouched. Distinct from `gait == .sneak` because a
     /// motionless crouching target is still harder to see while making no noise.
     public let isSneaking: Bool
-    /// Combined weight of everything equipped, which the movement-noise term
-    /// scales with. Zero is a supported value, not a missing one: it means the
-    /// target counts as `equippedWeightBase` alone.
-    public let equippedWeight: Float
+    /// Armour, light, muffle, action noise, skill, and invisibility.
+    public let traits: DetectionTargetTraits
     /// FULL name when one resolves, else the editor ID, else the FormID.
     public let name: String
 
@@ -94,7 +97,7 @@ nonisolated public struct PerceptionTarget: Equatable, Sendable {
         eye: SIMD3<Float>? = nil,
         gait: LocomotionGait? = nil,
         isSneaking: Bool = false,
-        equippedWeight: Float = 0,
+        traits: DetectionTargetTraits = .neutral,
         name: String = "—"
     ) {
         self.key = key
@@ -102,7 +105,7 @@ nonisolated public struct PerceptionTarget: Equatable, Sendable {
         self.eye = eye ?? (feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight))
         self.gait = gait
         self.isSneaking = isSneaking
-        self.equippedWeight = equippedWeight
+        self.traits = traits
         self.name = name
     }
 }
