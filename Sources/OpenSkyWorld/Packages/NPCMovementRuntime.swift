@@ -16,6 +16,11 @@ public struct NPCMovementWorld {
     public let triggersAt: (PlayerCapsuleState) -> Set<ReferenceKey>
     /// False over an exterior cell whose terrain is not loaded, where a walk would fall.
     public var hasGround: (SIMD2<Float>) -> Bool = { _ in true }
+    /// Actors that are not walking, such as the player and standing NPCs, that a mover
+    /// steers around. Walking actors come from the runtime itself.
+    public var standingActors: () -> [NPCNeighbour] = { [] }
+    /// The water surface height over a point, or nil where there is no water.
+    public var sampleWater: (SIMD2<Float>) -> Float? = { _ in nil }
 }
 
 public struct NPCMoveStart {
@@ -140,9 +145,11 @@ public struct NPCMovementRuntime {
             facings[key] = hold
             onDrive?(drive)
         }
+        let crowd = neighbourSnapshot(world: world)
         for key in movers.keys.sorted() {
             guard var mover = movers[key] else { continue }
-            let outcome = mover.advance(by: frameTime, world: world)
+            let near = crowd.filter { $0.key != key }
+            let outcome = mover.advance(by: frameTime, world: world, neighbours: near)
             publish(outcome.emissions)
             if outcome.isFinished {
                 parked[key] = NPCParkedMovement(mover, readout: mover.readout)
@@ -151,6 +158,21 @@ public struct NPCMovementRuntime {
                 movers[key] = mover
             }
         }
+    }
+
+    /// Every mover where it stood at the start of this step, and the standing actors the
+    /// world names. One snapshot, so the order movers step in does not change who avoids whom.
+    private func neighbourSnapshot(world: NPCMovementWorld) -> [NPCNeighbour] {
+        guard !movers.isEmpty else { return [] }
+        let walking = movers.keys.sorted().compactMap { key -> NPCNeighbour? in
+            guard let mover = movers[key] else { return nil }
+            let feet = mover.controller.feetPosition
+            return NPCNeighbour(
+                key: key, position: SIMD2(feet.x, feet.y), radius: mover.capsule.radius
+            )
+        }
+        let walkers = Set(movers.keys)
+        return walking + world.standingActors().filter { !walkers.contains($0.key) }
     }
 
     public mutating func persistForSave() {

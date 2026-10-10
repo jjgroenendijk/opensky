@@ -38,6 +38,24 @@ final class AIWorldAdapter {
             }
     }
 
+    /// The living actors and the player, for walkers to steer around. Each mover is
+    /// dropped from this list by the movement runtime, which knows who walks.
+    func standingActors() -> [NPCNeighbour] {
+        var actors = game.actorWorld.combatActors().filter { !$0.isDead }.map {
+            NPCNeighbour(
+                key: $0.key, position: SIMD2($0.feet.x, $0.feet.y),
+                radius: $0.capsule.radius * max($0.scale, 0)
+            )
+        }
+        if let feet = game.renderer?.locomotion.status.feetPosition {
+            actors.append(NPCNeighbour(
+                key: .player, position: SIMD2(feet.x, feet.y),
+                radius: PlayerCapsule.standard.radius
+            ))
+        }
+        return actors
+    }
+
     func wireNPCMovement(renderer: Renderer, streamer: CellStreamer) {
         streamer.npcMovementConfiguration = renderer.locomotion.configuration
         let worldState = game.worldState
@@ -52,6 +70,7 @@ final class AIWorldAdapter {
         streamer.onNPCPosesChanged = { [weak renderer] deltas in
             renderer?.npcInstanceDeltas = deltas
         }
+        streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
         // A walker drawn by the cell it left would vanish when that cell unloads, so
         // it moves into the cell it entered, and the cell it left drops it.
         streamer.onNPCCellHandoff = { [weak game, weak streamer] persistence in

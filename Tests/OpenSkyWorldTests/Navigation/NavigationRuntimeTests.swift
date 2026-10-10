@@ -183,6 +183,38 @@ struct NavigationRuntimeTests {
         #expect(streamer.navigationState.repathRequests.map(\.identifier) == [3])
     }
 
+    @Test
+    func ledgeLinkBecomesALedgeCrossing() throws {
+        let upper = try NavigationRuntimeFixture.navmesh(
+            id: 0x100,
+            vertices: [SIMD3(0, 0, 0), SIMD3(10, 0, 0), SIMD3(0, 10, 0)],
+            triangles: [NavmeshFixture.Triangle(
+                vertices: SIMD3(0, 1, 2),
+                neighbors: SIMD3(-1, 0, -1),
+                flags: NavmeshGeometry.TriangleFlags.edge12Link.rawValue
+            )],
+            edgeLinks: [NavmeshFixture.EdgeLink(type: 2, navmesh: 0x200, triangle: 0)]
+        )
+        let lower = try NavigationRuntimeFixture.navmesh(
+            id: 0x200,
+            vertices: [SIMD3(10, 0, -100), SIMD3(10, 10, -100), SIMD3(0, 10, -100)],
+            triangles: [NavmeshFixture.Triangle(vertices: SIMD3(0, 1, 2))]
+        )
+        var graph = RuntimeNavigationGraph()
+        graph.setCell(.interior(FormID(1)), scene: NavigationRuntimeFixture.scene(
+            location: .interior(FormID(1)), navmeshes: [upper, lower]
+        ))
+        let path = try #require(graph.findPath(NavigationPathQuery(
+            start: SIMD3(1, 1, 0), target: SIMD3(9, 9, -100),
+            capsuleRadius: 0, projectionRadius: 2
+        )).path)
+
+        let crossing = try #require(path.ledgeCrossings.first)
+        #expect(path.ledgeCrossings.count == 1)
+        #expect(path.waypoints[crossing.waypointIndex].z == 0)
+        #expect(path.waypoints[crossing.waypointIndex + 1].z == -100)
+    }
+
     private static let crossCellQuery = NavigationPathQuery(
         start: SIMD3(1, 1, 0),
         target: SIMD3(9, 9, 0),

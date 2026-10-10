@@ -6,12 +6,6 @@ import OpenSkyGameData
 import OpenSkyPhysics
 import simd
 
-private struct NPCMoverStepPlan {
-    let speed: Float
-    let gait: LocomotionGait
-    let yaw: Float
-}
-
 public struct NPCMover {
     public let actor: ReferenceKey
     public let formID: FormID
@@ -32,6 +26,11 @@ public struct NPCMover {
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
     public let ignoresStatics: Bool
+    /// The other actors near this one for the step in progress.
+    private var neighbours: [NPCNeighbour] = []
+    /// The jump across a ledge link in progress.
+    public internal(set) var hop: NPCLedgeHop?
+    public private(set) var isSwimming = false
 
     /// `drawnPlacement` is where the cell build drew the actor, when that is not
     /// where it starts: an actor parked since the last build of its cell.
@@ -55,8 +54,11 @@ public struct NPCMover {
 
     public mutating func advance(
         by frameTime: Float,
-        world: NPCMovementWorld
+        world: NPCMovementWorld,
+        neighbours: [NPCNeighbour] = []
     ) -> NPCMoverAdvanceOutcome {
+        self.neighbours = neighbours
+        defer { self.neighbours = [] }
         var emissions = NPCMoverEmissions()
         guard state == .moving || state == .awaitingRepath else {
             return NPCMoverAdvanceOutcome(emissions: emissions, isFinished: true)
@@ -67,13 +69,20 @@ public struct NPCMover {
             return NPCMoverAdvanceOutcome(emissions: emissions, isFinished: true)
         }
 
+        let feet = controller.feetPosition
+        let water = swimSurface(world: world)
+        isSwimming = water != nil
         let step = stepPlan(frameTime: frameTime)
         yaw = step.yaw
         gait = step.gait
         let waypoint = path.waypoints[waypointIndex]
-        let feet = controller.feetPosition
-        if world.hasGround(SIMD2(feet.x, feet.y)) {
-            walk(toward: waypoint, step: step, frameTime: frameTime, world: world)
+        if hop != nil {
+            continueHop(frameTime: frameTime)
+        } else if world.hasGround(SIMD2(feet.x, feet.y)) {
+            walk(
+                toward: waypoint, step: step, swimSurface: water,
+                frameTime: frameTime, world: world
+            )
         } else {
             glide(toward: waypoint, distance: step.speed * max(frameTime, 0))
         }
@@ -87,7 +96,7 @@ public struct NPCMover {
         advancePastReachedWaypoints(emissions: &emissions)
         if waypointIndex >= path.waypoints.count {
             finish(.arrived, reason: .arrival, emissions: &emissions)
-        } else {
+        } else if hop == nil {
             recoverIfStuck(frameTime: frameTime, world: world, emissions: &emissions)
         }
         return NPCMoverAdvanceOutcome(
@@ -99,9 +108,12 @@ public struct NPCMover {
     private mutating func walk(
         toward waypoint: SIMD3<Float>,
         step: NPCMoverStepPlan,
+        swimSurface: Float?,
         frameTime: Float,
         world: NPCMovementWorld
     ) {
+        let neighbours = neighbours
+        let radius = capsule.radius
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
@@ -114,44 +126,18 @@ public struct NPCMover {
                 waypoint.y - state.feetPosition.y
             )
             let wanted = min(step.speed * state.dt, simd_length(remaining))
-            plan.horizontalDisplacement = simd_length(remaining) > 0
-                ? simd_normalize(remaining) * wanted : .zero
+            let direction = simd_length(remaining) > 0
+                ? NPCAvoidance.steer(
+                    direction: remaining,
+                    from: SIMD2(state.feetPosition.x, state.feetPosition.y),
+                    radius: radius,
+                    neighbours: neighbours
+                ) : .zero
+            plan.horizontalDisplacement = direction * wanted
+            plan.swimSurfaceHeight = swimSurface
             plan.motionSource = wanted > 0 ? .configuredSpeed : .idle
             return plan
         }
-    }
-
-    /// Without loaded ground there is nothing to stand on, so the actor slides along
-    /// its path line instead of falling, as an actor out of the loaded area does.
-    private mutating func glide(toward waypoint: SIMD3<Float>, distance: Float) {
-        let feet = controller.feetPosition
-        let remaining = waypoint - feet
-        let horizontal = simd_length(SIMD2(remaining.x, remaining.y))
-        let fraction = horizontal > 0 ? min(1, distance / horizontal) : 1
-        let moved = feet + remaining * fraction
-        controller.reset(cameraPosition: moved + SIMD3(0, 0, capsule.eyeHeight))
-    }
-
-    private func stepPlan(frameTime: Float) -> NPCMoverStepPlan {
-        let waypoint = path.waypoints[waypointIndex]
-        let delta = SIMD2(
-            waypoint.x - controller.feetPosition.x,
-            waypoint.y - controller.feetPosition.y
-        )
-        let distance = simd_length(delta)
-        let nextGait: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
-        let speed = nextGait == .run ? configuration.runSpeed.value : configuration.walkSpeed.value
-        let targetYaw = distance > 0 ? atan2f(delta.y, delta.x) : yaw
-        let turnedYaw = NPCYawMath.turn(
-            from: yaw,
-            to: targetYaw,
-            maximum: NPCMovementRuntime.maximumYawSpeed * max(frameTime, 0)
-        )
-        return NPCMoverStepPlan(
-            speed: speed,
-            gait: nextGait,
-            yaw: turnedYaw
-        )
     }
 
     private mutating func advancePastReachedWaypoints() {
@@ -163,17 +149,24 @@ public struct NPCMover {
     /// can float above the ground, and a waypoint on the floor above is not reached.
     private func isReached(_ waypoint: SIMD3<Float>) -> Bool {
         let feet = controller.feetPosition
-        let flat = simd_distance(SIMD2(feet.x, feet.y), SIMD2(waypoint.x, waypoint.y))
-        return flat <= NPCMovementRuntime.waypointTolerance && abs(feet.z - waypoint.z) <= capsule
-            .height
+        let flatFeet = SIMD2(feet.x, feet.y)
+        let flatWaypoint = SIMD2(waypoint.x, waypoint.y)
+        // A swimmer floats over a waypoint on the bed below it.
+        guard isSwimming || abs(feet.z - waypoint.z) <= capsule.height else { return false }
+        return simd_distance(flatFeet, flatWaypoint) <= NPCMovementRuntime.waypointTolerance
+            || NPCAvoidance.isTaken(
+                flatWaypoint, from: flatFeet, radius: capsule.radius,
+                tolerance: NPCMovementRuntime.waypointTolerance, neighbours: neighbours
+            )
     }
 
     private mutating func advancePastReachedWaypoints(
         emissions: inout NPCMoverEmissions
     ) {
-        while waypointIndex < path.waypoints.count {
+        while waypointIndex < path.waypoints.count, hop == nil {
             let waypoint = path.waypoints[waypointIndex]
             guard isReached(waypoint) else { break }
+            startHopIfLedge()
             if
                 let crossing = path.doorCrossings.first(where: {
                     $0.waypointIndex == waypointIndex
@@ -228,20 +221,6 @@ public struct NPCMover {
         bestWaypointDistance = .greatestFiniteMagnitude
         secondsWithoutProgress = 0
         advancePastReachedWaypoints(emissions: &emissions)
-    }
-
-    private mutating func collectCellHandoff(
-        world: NPCMovementWorld,
-        into emissions: inout NPCMoverEmissions
-    ) {
-        let next = world.cellAt(controller.feetPosition)
-        guard let previous = currentCell else {
-            currentCell = next
-            return
-        }
-        guard let next, previous != next else { return }
-        currentCell = next
-        emissions.persistence.append(persistence(reason: .cellHandoff))
     }
 
     private mutating func collectTriggerEdges(

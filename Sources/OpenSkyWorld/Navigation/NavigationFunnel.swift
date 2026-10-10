@@ -1,12 +1,13 @@
 // Radius-aware string pulling for a triangle corridor. Shared-edge portals
-// shrink by the capsule radius before the standard funnel runs. Door points
-// split the funnel so the result cannot smooth past an authored traversal.
+// shrink by the capsule radius before the standard funnel runs. Door and ledge
+// points split the funnel so the result cannot smooth past an authored traversal.
 
 import simd
 
 nonisolated public struct NavigationPulledPath: Sendable {
     public var waypoints: [SIMD3<Float>]
     public var doorCrossings: [NavigationDoorCrossing]
+    public var ledgeCrossings: [NavigationLedgeCrossing] = []
 }
 
 nonisolated public struct NavigationOrientedPortal: Sendable {
@@ -65,6 +66,14 @@ nonisolated public enum NavigationFunnel: Sendable {
                 ))
                 append(destinationDoor, to: &result.waypoints)
                 segmentStart = destinationDoor
+                portals.removeAll(keepingCapacity: true)
+            case let .ledge(from, landing):
+                appendSegment(from: segmentStart, through: portals, to: from, result: &result)
+                result.ledgeCrossings.append(NavigationLedgeCrossing(
+                    waypointIndex: result.waypoints.count - 1
+                ))
+                append(landing, to: &result.waypoints)
+                segmentStart = landing
                 portals.removeAll(keepingCapacity: true)
             }
         }

@@ -12,6 +12,9 @@ import simd
 nonisolated public enum NavigationPortal: Equatable, Sendable {
     case edge(SIMD3<Float>, SIMD3<Float>)
     case door(reference: FormID, source: SIMD3<Float>, destination: SIMD3<Float>)
+    /// A ledge edge link: a jump up or a drop down from `source` on the source edge to
+    /// `destination` on the target triangle.
+    case ledge(source: SIMD3<Float>, destination: SIMD3<Float>)
 }
 
 nonisolated public struct NavigationTransition: Equatable, Sendable {
@@ -140,6 +143,10 @@ nonisolated public enum NavigationPathfinder: Sendable {
         }
     }
 
+    /// A jump costs as much as this much more walking, so a path walks around a ledge
+    /// when the way round is short. OpenSky's own number.
+    static let ledgePenalty: Float = 128
+
     private static func transitionCost(
         _ transition: NavigationTransition,
         from source: NavigationTriangleID,
@@ -155,6 +162,9 @@ nonisolated public enum NavigationPathfinder: Sendable {
             return simd_distance(sourceCenter, midpoint) + simd_distance(midpoint, targetCenter)
         case let .door(_, sourceDoor, targetDoor):
             return simd_distance(sourceCenter, sourceDoor) + simd_distance(targetDoor, targetCenter)
+        case let .ledge(from, landing):
+            return simd_distance(sourceCenter, from) + simd_distance(from, landing)
+                + simd_distance(landing, targetCenter) + Self.ledgePenalty
         }
     }
 
@@ -216,7 +226,8 @@ nonisolated public enum NavigationPathfinder: Sendable {
             ),
             corridor: scratch.corridor,
             cellSequences: sequences,
-            target: query.target
+            target: query.target,
+            ledgeCrossings: pulled.ledgeCrossings
         ))
     }
 }
@@ -246,6 +257,7 @@ nonisolated extension RuntimeNavigationGraph {
             let neighbor = triangle.neighbors[edge]
             guard neighbor >= 0 else { continue }
             let target: NavigationTriangleID
+            var isLedge = false
             if triangle.flags.contains(linkFlags[edge]) {
                 guard mesh.edgeLinks.indices.contains(Int(neighbor)) else { continue }
                 let link = mesh.edgeLinks[Int(neighbor)]
@@ -253,6 +265,7 @@ nonisolated extension RuntimeNavigationGraph {
                 target = NavigationTriangleID(
                     navmesh: link.navmesh, triangle: Int(link.triangle)
                 )
+                isLedge = link.type == .ledgeUp || link.type == .ledgeDown
             } else {
                 target = NavigationTriangleID(navmesh: node.navmesh, triangle: Int(neighbor))
             }
@@ -262,6 +275,17 @@ nonisolated extension RuntimeNavigationGraph {
                 !targetTriangle.flags.contains(.deleted)
             else { continue }
             let edgeVertices = Self.edge(edge, of: triangle)
+            if isLedge {
+                let from = (edgeVertices.0 + edgeVertices.1) / 2
+                result.append(NavigationTransition(
+                    target: target,
+                    portal: .ledge(
+                        source: from,
+                        destination: NavigationGeometry.closestPoint(on: targetTriangle, to: from)
+                    )
+                ))
+                continue
+            }
             result.append(NavigationTransition(
                 target: target,
                 portal: .edge(edgeVertices.0, edgeVertices.1)
@@ -321,9 +345,11 @@ nonisolated extension RuntimeNavigationGraph {
         switch (lhs.portal, rhs.portal) {
         case let (.door(left, _, _), .door(right, _, _)):
             return left.rawValue < right.rawValue
-        case (.edge, .door):
+        case let (.ledge(leftFrom, _), .ledge(rightFrom, _)):
+            return (leftFrom.x, leftFrom.y, leftFrom.z) < (rightFrom.x, rightFrom.y, rightFrom.z)
+        case (.edge, .door), (.edge, .ledge), (.ledge, .door):
             return true
-        case (.door, .edge):
+        case (.door, .edge), (.ledge, .edge), (.door, .ledge):
             return false
         case let (.edge(leftFirst, leftSecond), .edge(rightFirst, rightSecond)):
             if leftFirst != rightFirst {
