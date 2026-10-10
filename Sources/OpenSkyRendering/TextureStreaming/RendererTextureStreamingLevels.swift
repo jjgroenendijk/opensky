@@ -17,6 +17,9 @@ extension Renderer {
         guard !entries.isEmpty else { return }
         let nearest = textureStreaming.enabled ? nearestUses() : [:]
         let inScene = Set(sceneAllocations.map(ObjectIdentifier.init))
+        // Grass has no per-instance measure, so a static far away that shares its
+        // texture must not lower it under the grass at the player's feet.
+        let grass = Set(scene.grass.map { ObjectIdentifier($0.material.diffuse) })
         var demands: [TextureDemand] = []
         for entry in entries {
             guard let texture = entry.texture else {
@@ -27,7 +30,8 @@ extension Renderer {
                 continue
             }
             let key = ObjectIdentifier(texture)
-            demands.append(demand(for: entry, use: nearest[key], inScene: inScene.contains(key)))
+            let use = grass.contains(key) ? nil : nearest[key]
+            demands.append(demand(for: entry, use: use, inScene: inScene.contains(key)))
         }
         let budgetTiles = textureStreaming.budgetBytes / textureStreaming.pool.tileBytes
         let levels = textureStreaming.enabled
