@@ -325,3 +325,21 @@ extension NIFParticleFixture {
         return out
     }
 }
+
+extension NIFParticleFixture {
+    /// Fade in and out, the four colour stops, then three RGBA colours.
+    public static func simpleColourModifier(
+        base: Data, fades: SIMD2<Float>, stops: SIMD4<Float>, colours: [SIMD4<Float>]
+    ) -> Data {
+        var out = base
+        for value in [fades.x, fades.y, stops.x, stops.y, stops.z, stops.w] {
+            out.appendFloat32(value)
+        }
+        for colour in colours {
+            for channel in 0 ..< 4 {
+                out.appendFloat32(colour[channel])
+            }
+        }
+        return out
+    }
+}

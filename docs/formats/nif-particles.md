@@ -119,11 +119,16 @@ Blocks OpenSky reads:
   velocity type; it does not sample the mesh yet).
 - Modifiers known by type only: `NiPSysAgeDeathModifier`, `NiPSysSpawnModifier`,
   `NiPSysRotationModifier`, `NiPSysPositionModifier`, `NiPSysBoundUpdateModifier`,
-  `NiPSysDragModifier`, `BSPSysSimpleColorModifier`, `BSPSysInheritVelocityModifier`,
-  `BSPSysSubTexModifier`.
+  `NiPSysDragModifier`, `BSPSysInheritVelocityModifier`, `BSPSysSubTexModifier`.
 - Modifiers with values: `NiPSysGravityModifier` (axis, strength), `BSWindModifier`
   (strength), `BSPSysScaleModifier` (scale list), `BSPSysLODModifier` (begin and end
   distance, end emit scale, end size).
+- `BSPSysSimpleColorModifier`: fade in, fade out, colour 1 end, colour 2 start, colour 2
+  end, colour 3 start (6 x float32, each a fraction of the particle's life), then three
+  RGBA colours (12 x float32). A particle holds colour 1, blends to colour 2, holds it, then
+  blends to colour 3. Alpha also ramps up over the fade-in and down over the fade-out.
+  Example: `fxfirewithembers01.nif` smoke stores 0.1, 0.45, 0.46, 1.0 as its stops and peaks
+  at alpha 0.4 in colour 2, so it never draws opaque.
 
 ## Not read
 

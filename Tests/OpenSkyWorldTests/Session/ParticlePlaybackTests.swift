@@ -48,6 +48,27 @@ struct ParticlePlaybackTests {
         #expect(repeatRun.particles == calm.particles)
     }
 
+    /// A colour ramp replaces the emitter's opaque birth colour, so smoke that
+    /// peaks at alpha 0.4 never draws opaque.
+    @Test func colourRampTintsAndFadesLiveParticles() {
+        let ramp = ParticleColourRamp(
+            fades: SIMD2(0.1, 0.3), stops: SIMD4(0.1, 0.4, 0.5, 1),
+            colours: [SIMD4(1, 1, 1, 0), SIMD4(0.5, 0.5, 0.5, 0.4), SIMD4(1, 1, 1, 0)]
+        )
+        var simulator = ParticleSimulator(
+            definition: makeDefinition(windStrength: 0, extraModifiers: [
+                ParticleModifier(name: "Colour", order: 2, active: true, kind: .simpleColour(ramp))
+            ]),
+            placementTransform: matrix_identity_float4x4,
+            seed: 7
+        )
+        for _ in 0 ..< 20 {
+            simulator.advance(deltaTime: 0.05, wind: .calm, emissionScale: 1)
+        }
+        #expect(!simulator.particles.isEmpty)
+        #expect(simulator.particles.allSatisfy { $0.color.w <= 0.4 + 1e-5 })
+    }
+
     @Test func blendClassificationCoversEffectPipelines() throws {
         #expect(ParticleBlendMode(alpha: nil) == .alpha)
         #expect(try blendMode(source: 6, destination: 0) == .additive)
@@ -100,7 +121,9 @@ struct ParticlePlaybackTests {
         return device
     }()
 
-    private func makeDefinition(windStrength: Float) -> ParticleSystemDefinition {
+    private func makeDefinition(
+        windStrength: Float, extraModifiers: [ParticleModifier] = []
+    ) -> ParticleSystemDefinition {
         ParticleSystemDefinition(
             name: "Synthetic flame",
             worldTransform: matrix_identity_float4x4,
@@ -128,7 +151,7 @@ struct ParticlePlaybackTests {
                 order: 1,
                 active: true,
                 kind: .wind(strength: windStrength)
-            )],
+            )] + extraModifiers,
             subtextureOffsets: [],
             shaderPropertyRef: -1,
             alphaPropertyRef: -1,
