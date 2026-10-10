@@ -19,6 +19,7 @@ private final class FakePackageWorld: PackageWorld {
     private(set) var movers: [ReferenceKey] = []
     var horse: ReferenceKey?
     var drivesPlayer = false
+    private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
     static let place = SIMD3<Float>(100, 0, 0)
     static let patrol = [SIMD3<Float>(10, 0, 0), SIMD3<Float>(20, 0, 0)]
 
@@ -46,6 +47,10 @@ private final class FakePackageWorld: PackageWorld {
 
     func mountPackageActor(_: ReferenceKey) -> ReferenceKey? {
         horse
+    }
+
+    func packageProcedure(_ event: PackageScriptEvent) {
+        scriptEvents.append(event.kind)
     }
 
     func packageResidents() -> [RuntimeReferenceEntry]? {
@@ -154,6 +159,8 @@ struct PackageCoordinatorTests {
         coordinator.clearOverride(owner: owner, actor: Self.guardKey)
         #expect(coordinator.readout(for: Self.guardKey)?.editorID == "Morning")
         #expect(coordinator.executions.isEmpty)
+        // Leaving the package runs its change fragment, after the end of the walk.
+        #expect(world.scriptEvents == [.begin, .end, .change])
         #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
     }
 
@@ -174,6 +181,20 @@ struct PackageCoordinatorTests {
 
         #expect(world.movers == [horse, horse])
         #expect(world.moves == FakePackageWorld.patrol)
+    }
+
+    /// A package replaced before it ends runs its change fragment and no end fragment.
+    @Test func aReplacedPackageRunsItsChangeFragment() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let walk = PackageOverride(packages: [FormID(0x102)], owner: owner, aliasQuest: nil)
+        let ride = PackageOverride(packages: [FormID(0x103)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(walk, actor: Self.guardKey) == .running)
+        #expect(coordinator.runOverride(ride, actor: Self.guardKey) == .running)
+        #expect(world.scriptEvents == [.begin, .change, .begin])
     }
 
     /// After `SetPlayerAIDriven(true)` a scene package walks the player, and the

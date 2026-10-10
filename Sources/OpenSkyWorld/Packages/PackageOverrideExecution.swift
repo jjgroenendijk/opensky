@@ -30,20 +30,25 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     ) {
         self.package = package.package.formID
         let patrol = package.procedure == .patrol ? Self.patrolFlags(package.package) : []
-        isDirect = patrol.count == 4 && patrol[3]
-        ridesHorse = patrol.count == 4 && patrol[2]
+        let flags = patrol.count == 4 ? patrol : [false, false, false, false]
+        isDirect = flags[3]
+        ridesHorse = flags[2]
+        let walk = flags[1] ? Self.startingAtNearest(path, to: start, loops: flags[0]) : path
         machine = PackageProcedureMachine(
             kind: package.procedure,
             center: place?.point ?? start,
-            destination: place?.point ?? path.first,
+            destination: place?.point ?? walk.first,
             radius: Float(max(place?.radius ?? 0, 0)),
-            path: Array(path.dropFirst()),
+            path: Array(walk.dropFirst()),
+            repeats: flags[0],
             seed: UInt64(package.package.formID.rawValue)
         )
     }
 
+    /// A repeatable patrol is done after its first lap, though it keeps walking: a scene
+    /// waits for the package to end, not for the actor to stop.
     public var isDone: Bool {
-        machine.state == .complete || machine.state == .failed
+        machine.state == .complete || machine.state == .failed || machine.laps > 0
     }
 
     public mutating func start() -> [PackageProcedureCommand] {
@@ -65,6 +70,20 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
             }
             return nil
         }
+    }
+
+    /// "Start At Nearest?": the walk begins at the point nearest `start`. A
+    /// repeatable patrol keeps the points it skipped for its next lap; a plain one drops them.
+    public static func startingAtNearest(
+        _ path: [SIMD3<Float>], to start: SIMD3<Float>, loops: Bool
+    ) -> [SIMD3<Float>] {
+        guard
+            let nearest = path.indices.min(by: {
+                simd_distance_squared(path[$0], start) < simd_distance_squared(path[$1], start)
+            })
+        else { return path }
+        let tail = Array(path[nearest...])
+        return loops ? tail + path[..<nearest] : tail
     }
 
     /// The first location input, which is the place a travel, sandbox, or sleep

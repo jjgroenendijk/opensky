@@ -1,5 +1,6 @@
-// PACK fragments: a package runs its begin fragment when its procedure starts and its
-// end fragment when the procedure is done. Each takes `akActor`, the actor running it
+// PACK fragments: a package runs its begin fragment when its procedure starts, its end
+// fragment when the procedure is done, and its change fragment when the actor leaves it.
+// Each takes `akActor`, the actor running it
 // (<https://ck.uesp.net/wiki/Package_Fragments>). Layout: docs/formats/vmad.md.
 
 import Foundation
@@ -61,5 +62,18 @@ extension PapyrusWorldStateBridge {
         return world.queuePackageFragment(
             of: package, slot: slot, actor: actor, formIDResolver: formIDResolver
         )
+    }
+
+    /// The actor event that goes with a package fragment slot: start, end, or change.
+    @discardableResult
+    public func queuePackageEvent(slot: UInt32, package: FormID, actor: ReferenceKey) -> Int {
+        let name: String
+        switch slot {
+        case 0x01: name = "OnPackageStart"
+        case 0x02: name = "OnPackageEnd"
+        case 0x04: name = "OnPackageChange"
+        default: return 0
+        }
+        return world?.queuePackageEvent(name, package: package, actor: actor) ?? 0
     }
 }

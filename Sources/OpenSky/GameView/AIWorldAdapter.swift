@@ -244,6 +244,9 @@ extension AIWorldAdapter {
         game.scripts.bridge?.runPackageFragment(
             of: event.package, slot: event.fragmentSlot, actor: event.actor
         )
+        game.scripts.bridge?.queuePackageEvent(
+            slot: event.fragmentSlot, package: event.package.formID, actor: event.actor
+        )
     }
 
     private static func placedPosition(_ entry: RuntimeReferenceEntry) -> SIMD3<Float>? {
