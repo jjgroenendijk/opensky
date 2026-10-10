@@ -50,7 +50,9 @@ nonisolated extension MeshLibrary {
                 terrainLODClipMask: nil,
                 actorSkeletonKey: skeleton?.pathKey ?? "none"
             )
-            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
+            return .success(ActorRenderAsset(
+                model: model.posableCopy(device: device), bounds: modelBounds[key]
+            ))
         } catch MeshLibraryError.fileNotFound {
             return .failure(.missing)
         } catch {
@@ -79,7 +81,9 @@ nonisolated extension MeshLibrary {
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
                 attachmentBone: bone
             )
-            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
+            return .success(ActorRenderAsset(
+                model: model.posableCopy(device: device), bounds: modelBounds[key]
+            ))
         } catch MeshLibraryError.fileNotFound {
             return .failure(.missing)
         } catch {
@@ -115,7 +119,9 @@ nonisolated extension MeshLibrary {
                 actorSkeletonKey: skeleton?.pathKey ?? "none",
                 surface: surface
             )
-            return .success(ActorRenderAsset(model: model, bounds: modelBounds[key]))
+            return .success(ActorRenderAsset(
+                model: model.posableCopy(device: device), bounds: modelBounds[key]
+            ))
         } catch MeshLibraryError.fileNotFound {
             return .failure(.missing)
         } catch {

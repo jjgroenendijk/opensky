@@ -170,9 +170,8 @@ struct RenderMeshTests {
         )
     }
 
-    @Test(.enabled(if: Self.hasDevice)) func refreshesNamedBonePalette() throws {
-        let device = try #require(Self.device)
-        let source = Self.bareMesh()
+    private static func skinnedMesh() -> Mesh {
+        let source = bareMesh()
         let skinning = MeshSkinning(
             weights: Array(repeating: SIMD4(1, 0, 0, 0), count: 2),
             boneIndices: Array(repeating: .zero, count: 2),
@@ -181,7 +180,7 @@ struct RenderMeshTests {
             rootParentToSkin: MatrixMath.translation(SIMD3(1, 0, 0)),
             skinToBoneMatrices: [MatrixMath.translation(SIMD3(0, 2, 0))]
         )
-        let mesh = Mesh(
+        return Mesh(
             name: source.name,
             transform: source.transform,
             positions: source.positions,
@@ -194,7 +193,11 @@ struct RenderMeshTests {
             materialSlot: source.materialSlot,
             skinning: skinning
         )
-        let render = try RenderMesh(device: device, mesh: mesh)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func refreshesNamedBonePalette() throws {
+        let device = try #require(Self.device)
+        let render = try RenderMesh(device: device, mesh: Self.skinnedMesh())
 
         #expect(render.updateSkinningPose([
             "root": MatrixMath.translation(SIMD3(0, 0, 3))
@@ -208,6 +211,20 @@ struct RenderMeshTests {
         )
         #expect(render.updateSkinningPose(pose) == 1)
         #expect(render.currentBoneMatrices[0].columns.3 == SIMD4(1, 2, 5, 1))
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func posableCopiesKeepTheirOwnPalettes() throws {
+        let device = try #require(Self.device)
+        let cached = try RenderMesh(device: device, mesh: Self.skinnedMesh())
+        let first = cached.posableCopy(device: device)
+        let second = cached.posableCopy(device: device)
+
+        #expect(first !== second)
+        #expect(first.vertexBuffer === second.vertexBuffer)
+        #expect(first.boneMatrixBuffer !== second.boneMatrixBuffer)
+        first.updateSkinningPose(["root": MatrixMath.translation(SIMD3(0, 0, 3))])
+        #expect(first.currentBoneMatrices[0].columns.3 == SIMD4(1, 2, 3, 1))
+        #expect(second.currentBoneMatrices[0] == matrix_identity_float4x4)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func rejectsOutOfRangeBoneIndex() throws {
