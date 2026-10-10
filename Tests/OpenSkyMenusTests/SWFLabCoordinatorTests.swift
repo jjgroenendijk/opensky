@@ -1,14 +1,14 @@
 // The UI Lab SWF section over a synthetic BSA of synthetic SWF blobs, never
 // extracted game files. No world is attached, so there is no renderer.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

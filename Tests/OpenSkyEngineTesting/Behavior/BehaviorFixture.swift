@@ -3,10 +3,10 @@
 // `splineClip()` builds a real `HKASplineCompressedAnimation` from the
 // synthetic packfile fixture, so clip time runs through the engine's sampler.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
+import OpenSkyFormatsTesting
 import simd
 
 /// An in-memory `BehaviorObjectSource`: objects placed at offsets the test

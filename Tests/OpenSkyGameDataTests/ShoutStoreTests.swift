@@ -1,9 +1,9 @@
 // ShoutStore link resolution and the shout-family text dump.
 // Synthetic plugins only; nothing here reads the game install.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

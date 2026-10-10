@@ -5,8 +5,8 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
 @testable import OpenSkyScriptingInterface
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

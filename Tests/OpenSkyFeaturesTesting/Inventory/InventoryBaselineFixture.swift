@@ -2,9 +2,9 @@
 // `InventoryBaselineResolver.build(from:)`, the engine's own indexing path.
 // The FormID constants below are what suites assert against.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 

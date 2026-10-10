@@ -2,11 +2,11 @@
 // wrote, kept raw, and the scripts a magic effect runs. Synthetic records only.
 // Layout: docs/formats/dialogue.md, quest-records.md, magic-records.md.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

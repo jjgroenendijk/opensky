@@ -12,8 +12,8 @@ import Foundation
 @testable import OpenSkyMagic
 @testable import OpenSkyMagicInterface
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @MainActor

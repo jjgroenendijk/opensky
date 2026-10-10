@@ -2,10 +2,10 @@
 // "Skyrim Mod:Mod File Format/REFR" and xEdit dev-4.1.6 wbDefinitionsTES5.pas;
 // see docs/formats/placed-references.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

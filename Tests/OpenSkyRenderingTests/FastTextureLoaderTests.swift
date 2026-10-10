@@ -1,13 +1,13 @@
 // Fast resource loading: a cached texture read by an IO command buffer holds
 // the same texels as the CPU upload of the same entry.
 
-import EngineTesting
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyEngineTesting
 import OpenSkyGameData
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @MainActor

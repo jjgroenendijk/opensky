@@ -2,16 +2,16 @@
 // its levels in, and draws the same image as the texture uploaded whole. A missing
 // mapping reads zero and draws black. Skips without Metal 4.
 
-import EngineTesting
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

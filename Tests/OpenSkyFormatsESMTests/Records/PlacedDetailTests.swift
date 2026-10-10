@@ -1,11 +1,11 @@
 // The detail fields of ModelBase records and of REFR and ACHR over synthetic
 // fields. See docs/formats/world-records.md and placed-references.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

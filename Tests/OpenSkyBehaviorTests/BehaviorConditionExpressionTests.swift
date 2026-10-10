@@ -5,9 +5,9 @@
 // name would otherwise be copied out of the install. The grammar, not the data,
 // is what is under test.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import Testing
 

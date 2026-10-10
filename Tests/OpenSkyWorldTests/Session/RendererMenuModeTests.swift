@@ -5,13 +5,13 @@
 // frame still renders in both states. Skips without a Metal 4 GPU (paravirtual
 // CI); pattern from RendererUITests / RendererOffscreenTests.
 
-import EngineTesting
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

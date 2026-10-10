@@ -1,8 +1,8 @@
 // `FormList.GetSize` and `GetAt` over a synthetic FLST.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

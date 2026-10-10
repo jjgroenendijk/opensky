@@ -1,19 +1,19 @@
 // Trigger-volume collection: XPRM primitives, SkyrimLayer 12 NIF bodies, the
 // excluded primitive types, and unchanged static-collision accounting.
 
-@testable import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsMesh
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 extension CellSceneBuilderTests {

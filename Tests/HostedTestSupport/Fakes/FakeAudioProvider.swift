@@ -1,7 +1,7 @@
 // The audio control fake, shared by every suite that drives World > Audio and by
 // the real-data footstep suite in OpenSkyRealDataTests. It lives here rather than
-// beside one suite because openskyTestSupport is the folder both test targets
-// compile; see Tests/TestSupport/AGENTS.md.
+// beside one suite because HostedTestSupport is the folder both test targets
+// compile; see Tests/HostedTestSupport/AGENTS.md.
 
 import AppKit
 @testable import OpenSkyAudio

@@ -1,6 +1,6 @@
 // The spellbook runtime over the fixture records.
 
-import FeaturesTesting
+import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 import OpenSkyInventoryInterface
 @testable import OpenSkyMagic

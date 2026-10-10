@@ -1,10 +1,10 @@
 // Synthetic PACK, NPC_ and ACHR records for the package tests. Built in code,
 // never extracted from game data.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 

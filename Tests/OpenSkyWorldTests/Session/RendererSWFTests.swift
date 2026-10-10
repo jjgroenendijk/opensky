@@ -3,16 +3,16 @@
 // repeat byte for byte, a clip layer shrinks the covered area, and the draw
 // stats count draws, triangles, glyphs, and masks.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

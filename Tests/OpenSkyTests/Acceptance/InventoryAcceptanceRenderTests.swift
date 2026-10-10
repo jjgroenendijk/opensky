@@ -2,21 +2,21 @@
 // does, by changed-pixel count. A fixed camera renders before and after; a
 // fitted camera would move with the geometry. Needs Metal 4.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

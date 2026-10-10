@@ -1,9 +1,9 @@
 // MATT decoding and its two lookups: a NIF's Havok material and an LTEX MNAM.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyPhysics
 import Testing
 

@@ -1,8 +1,8 @@
 // The effect runtime setup that the active-effect suites share.
 
-import FeaturesTesting
 @testable import OpenSkyActors
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyMagic

@@ -1,6 +1,6 @@
 // `FakeWorldProviders`' RuntimeStateControlProviding forwarding, with the
 // game-clock seam `timeOfDay` uses. Both test targets share the fake, so its
-// conformances are shared too (Tests/TestSupport/AGENTS.md).
+// conformances are shared too (Tests/HostedTestSupport/AGENTS.md).
 
 import AppKit
 @testable import OpenSkyWorld

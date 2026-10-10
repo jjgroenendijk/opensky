@@ -1,9 +1,9 @@
 // `GetItemCount` and `EPTemperingItemIsEnchanted` through the whole-game registry,
 // and the first failing group that a crafting verdict names.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 @testable import OpenSkyWorld

@@ -2,10 +2,10 @@
 // place, and a payload without a cell or with a value that is not finite throws.
 // See docs/formats/opensky-save-world-chunks.md.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkySave
 import OpenSkySaveFixtures

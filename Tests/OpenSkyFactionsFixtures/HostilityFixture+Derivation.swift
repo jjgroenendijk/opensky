@@ -1,7 +1,7 @@
 // The one fixture builder that needs the Factions implementation.
 
-import FeaturesTesting
 @testable import OpenSkyFactions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 
 extension HostilityFixture {

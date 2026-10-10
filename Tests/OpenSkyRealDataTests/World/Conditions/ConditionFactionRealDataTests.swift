@@ -4,13 +4,13 @@
 // the production way, and records what the six faction functions add to the
 // registry's reach. Only counts, editor IDs and verdicts leave the run.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

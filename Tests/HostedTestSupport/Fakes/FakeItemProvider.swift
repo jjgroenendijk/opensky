@@ -1,6 +1,6 @@
 // The item control fake and the `FakeWorldProviders` forwarding that goes with
 // it, shared by the Items section suites and by the real-data inventory suites in
-// OpenSkyRealDataTests. See Tests/TestSupport/AGENTS.md.
+// OpenSkyRealDataTests. See Tests/HostedTestSupport/AGENTS.md.
 
 import AppKit
 @testable import OpenSkyFormatsESM

@@ -2,11 +2,11 @@
 // the image-space strength, hazard and debris placement, seeded debris, and a
 // projectile's timer and proximity detonation.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyCombat
 import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 import simd

@@ -1,7 +1,7 @@
 // The ground contact reports the material under the player's feet. Each
 // collision shape carries a material, and the footstep chain reads it.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

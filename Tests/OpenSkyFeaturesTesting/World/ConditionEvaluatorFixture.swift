@@ -2,12 +2,12 @@
 // reference index. Conditions are real 32-byte CTDA decoded through
 // `Condition(ctda:)`, so tests also cover the on-disk path.
 
-import EngineTesting
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorldState
 
 public enum ConditionEvaluatorFixture {

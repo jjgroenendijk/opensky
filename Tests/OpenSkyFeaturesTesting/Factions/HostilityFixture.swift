@@ -2,11 +2,11 @@
 // plugin holds all three record types so FACT and RELA resolve to the same
 // `ReferenceKey`s.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 public enum HostilityFixture {

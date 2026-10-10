@@ -1,9 +1,9 @@
 // Quest script instances and stage fragments: the lifecycle half. The natives
 // are in `PapyrusNativeQuestTests`.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyFormatsTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures

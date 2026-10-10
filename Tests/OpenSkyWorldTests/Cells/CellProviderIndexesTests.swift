@@ -1,12 +1,12 @@
-import FormatsTesting
 import Foundation
 import Metal
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import Synchronization
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

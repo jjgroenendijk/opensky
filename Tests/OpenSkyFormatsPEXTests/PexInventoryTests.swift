@@ -1,9 +1,9 @@
 // Papyrus opcode and external-call census tests.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite("PEX inventory", .tags(.parser))

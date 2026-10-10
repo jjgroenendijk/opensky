@@ -1,7 +1,7 @@
 // Third-person camera framing, mode cycling, and collision zoom. Synthetic
 // geometry only.
 
-import EngineTesting
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyPhysics

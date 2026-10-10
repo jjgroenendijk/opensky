@@ -1,10 +1,10 @@
 // VMAD property binding and attach-skip counting for `PapyrusWorldRuntime`.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

@@ -1,8 +1,8 @@
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite("Reference scripts over base scripts", .tags(.parser))

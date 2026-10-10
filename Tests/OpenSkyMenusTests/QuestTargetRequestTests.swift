@@ -1,7 +1,7 @@
 // Which objective targets reach the map: shown, unfinished, and passing QSTA.
 
-import FormatsTesting
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyMenus
 import OpenSkyQuestsInterface
 import Testing

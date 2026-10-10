@@ -1,9 +1,9 @@
 // `NiStringExtraData` over synthetic files: the `Prn` parent bone of a prop.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

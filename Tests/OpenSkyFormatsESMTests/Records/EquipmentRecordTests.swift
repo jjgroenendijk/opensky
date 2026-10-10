@@ -1,10 +1,10 @@
 // WEAP and AMMO decoders plus the inventory ARMO fields, over synthetic
 // InventoryFixture records. Layout: docs/formats/item-records.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

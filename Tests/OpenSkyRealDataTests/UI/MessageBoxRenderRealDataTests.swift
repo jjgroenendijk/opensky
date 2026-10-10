@@ -8,7 +8,7 @@ import Foundation
 @testable import OpenSkyGameData
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

@@ -1,10 +1,10 @@
 // Output models and reverb over synthetic SOPM and REVB records: the distance
 // curve, the routing rule, the reverb mapping, and the crossfade ramp.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import Testing
 
 struct SoundOutputReverbTests {

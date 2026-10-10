@@ -2,11 +2,11 @@
 // three characters it does not define, so it needs cross-movie imports before
 // it shows a list. Frames and numbers stay in gitignored `.logs/`.
 
-import FeaturesTesting
 import Foundation
 import Metal
 import MetalKit
 @testable import OpenSky
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
 @testable import OpenSkyGameData
@@ -14,8 +14,8 @@ import MetalKit
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

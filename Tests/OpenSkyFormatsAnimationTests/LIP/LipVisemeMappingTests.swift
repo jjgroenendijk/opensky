@@ -1,5 +1,5 @@
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite("LIP slot to TRI target mapping", .tags(.parser))

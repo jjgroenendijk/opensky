@@ -3,10 +3,10 @@
 // The BOOK and WEAP links that resolve through this store are covered in
 // SpellStoreLinkTests.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

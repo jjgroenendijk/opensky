@@ -1,11 +1,11 @@
 // Runtime relationship ranks: normalization, the two-layer lookup, writes in
 // both directions, and the `RELS` round trip.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyFactions
 import OpenSkyFactionsFixtures
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkySave

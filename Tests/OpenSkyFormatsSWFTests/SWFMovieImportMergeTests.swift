@@ -4,10 +4,10 @@
 // Synthetic fixtures only — the resolver seam stands in for the VFS, so none of
 // this touches a real install.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

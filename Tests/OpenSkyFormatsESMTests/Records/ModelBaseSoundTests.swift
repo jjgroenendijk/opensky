@@ -1,9 +1,9 @@
 // Sound fields on ModelBase (DOOR, ACTI, CONT) from synthetic ESM fields.
 // Layout: docs/formats/world-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import Testing
 
 extension RecordDecoderTests {

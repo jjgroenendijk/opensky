@@ -1,11 +1,11 @@
 // Ownership precedence and the "may this actor use it" rule: which `XOWN`
 // wins, what an unresolvable link means, and who counts as allowed.
 
-@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import Testing
 

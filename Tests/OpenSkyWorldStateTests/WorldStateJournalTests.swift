@@ -1,9 +1,9 @@
 // WorldStateStore journal, snapshot and generated-key tests.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState
 import simd

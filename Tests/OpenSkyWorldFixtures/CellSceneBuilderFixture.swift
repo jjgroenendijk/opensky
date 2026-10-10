@@ -2,10 +2,10 @@
 // cell-scene suites share, and the two Metal gates. A library because the
 // acceptance suites build the same cell.
 
-@testable import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

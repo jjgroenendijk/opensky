@@ -2,9 +2,9 @@
 // rows, filtering. Synthetic entries + in-code plugin fixture only
 // (AGENTS.md "Legal & IP boundary").
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPreview
 import Testing

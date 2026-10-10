@@ -1,9 +1,9 @@
 // The package shell over a fake session: residency reconcile, the scheduled
 // advance, and the suspend and resume latch. Synthetic records only.
 
-import FormatsTesting
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState

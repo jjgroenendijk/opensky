@@ -1,9 +1,9 @@
 // Field builders for the record detail tests. Synthetic bytes only; no game
 // records are fixtures (AGENTS.md legal boundary).
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 
 enum RecordDetailFixture {
     static func record(_ type: String, _ fields: Data) throws -> ESMRecord {

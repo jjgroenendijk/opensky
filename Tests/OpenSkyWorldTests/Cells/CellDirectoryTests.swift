@@ -1,9 +1,9 @@
 // A console-style teleport finds an interior by editor ID and enters through a
 // door that leads in, even when a later plugin overrides the cell.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import Testing

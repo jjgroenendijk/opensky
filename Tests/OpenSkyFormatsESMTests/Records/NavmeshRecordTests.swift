@@ -4,12 +4,12 @@
 // malformed-payload policy: truncation and out-of-range indices throw rather
 // than surviving into the pathing graph.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

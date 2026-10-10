@@ -2,11 +2,11 @@
 // xEdit-named fields they read. Synthetic records only.
 // Layout: docs/formats/records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

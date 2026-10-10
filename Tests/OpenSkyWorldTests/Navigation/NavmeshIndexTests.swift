@@ -3,10 +3,10 @@
 // island block skipped without derailing the entry behind it, and the
 // skip-and-log policy for deleted or malformed records.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
 import simd
 import Testing

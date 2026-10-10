@@ -1,9 +1,9 @@
 // The chargen and map record views in the Asset Browser: NPC face data, race
 // chargen data, and a map marker on a reference.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyPreview
 import Testing
 

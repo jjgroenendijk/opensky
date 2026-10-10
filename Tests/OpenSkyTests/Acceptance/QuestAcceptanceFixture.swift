@@ -3,10 +3,10 @@
 // the fragment script extends `Quest`; the lever finds its quest through an
 // automatic VMAD property.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyWorldState
 

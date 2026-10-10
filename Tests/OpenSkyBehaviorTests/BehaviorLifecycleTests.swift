@@ -1,9 +1,9 @@
 // Behavior node activation and deactivation, and determinism: two instances
 // stepped the same way give the same poses and event log.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import simd
 import Testing

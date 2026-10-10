@@ -1,12 +1,12 @@
 // M11 headless acceptance: native dispatch, latency, fallback, determinism.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

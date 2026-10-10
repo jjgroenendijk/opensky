@@ -1,10 +1,10 @@
 // `RegisterForAnimationEvent`: a listener hears one named event from one sender,
 // in any letter case, until it unregisters.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

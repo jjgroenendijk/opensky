@@ -3,10 +3,10 @@
 // offsets, the block-shaped actions, byte-offset seeking, and the degradations
 // a malformed stream must survive. Synthetic fixtures only.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

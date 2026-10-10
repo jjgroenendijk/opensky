@@ -1,8 +1,8 @@
 // The dialogue-branch, scene, and story-manager views in the Asset Browser.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyPreview
 import Testing
 

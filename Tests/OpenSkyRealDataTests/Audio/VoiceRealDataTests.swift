@@ -10,8 +10,8 @@ import Foundation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.smoke))

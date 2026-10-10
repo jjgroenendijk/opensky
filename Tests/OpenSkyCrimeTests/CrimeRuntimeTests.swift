@@ -2,11 +2,11 @@
 // murder 1000, assault 40, trespass 5, theft half the value rounded down
 // (<https://en.uesp.net/wiki/Skyrim:Crime>).
 
-@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing

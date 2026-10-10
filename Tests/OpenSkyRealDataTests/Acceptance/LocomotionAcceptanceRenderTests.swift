@@ -9,9 +9,9 @@ import MetalKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 /// The device and the install one render run is bound to, passed as one value

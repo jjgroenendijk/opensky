@@ -7,7 +7,7 @@ import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.smoke))

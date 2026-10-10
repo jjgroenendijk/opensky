@@ -2,10 +2,10 @@
 // minimum time after the destination is ready, then fades and resumes the
 // world. A forced screen holds until released.
 
-import FormatsTesting
 import Foundation
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import simd

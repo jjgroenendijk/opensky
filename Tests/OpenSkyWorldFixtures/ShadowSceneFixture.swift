@@ -1,9 +1,9 @@
 // A synthetic ground and tower under a low sun, shared by the sun-shadow suites
 // and the acceptance chains that render it. Everything is built in code.
 
-import EngineTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

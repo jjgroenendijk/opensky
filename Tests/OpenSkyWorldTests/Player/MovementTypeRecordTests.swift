@@ -2,9 +2,9 @@
 // bytes built in code — never extracted game data (AGENTS.md "Legal & IP
 // boundary"). Layout: UESP "Skyrim Mod:Mod File Format/MOVT".
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld

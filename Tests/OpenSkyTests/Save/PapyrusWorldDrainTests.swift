@@ -1,8 +1,8 @@
 // A script that stops its own quest during a drain retires queued events the drain
 // already passed, and the drain must still finish cleanly.
 
-import FormatsTesting
 import Foundation
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

@@ -11,9 +11,9 @@ import Foundation
 @testable import OpenSkyPerceptionInterface
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

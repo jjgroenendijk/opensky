@@ -5,8 +5,8 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyFormatsESM
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

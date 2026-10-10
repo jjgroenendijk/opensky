@@ -4,7 +4,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyPreview
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

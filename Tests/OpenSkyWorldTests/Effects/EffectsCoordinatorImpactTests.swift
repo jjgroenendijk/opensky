@@ -1,10 +1,10 @@
 // An impact through the effects coordinator: its model as a timed effect, its
 // decal on the ground under a struck actor, and the switches that turn each off.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
 import simd

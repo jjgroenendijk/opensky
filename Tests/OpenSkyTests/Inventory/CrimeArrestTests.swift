@@ -1,11 +1,11 @@
 // Arrest outcomes: paying a fine and serving a sentence, and their effect on
 // the ledger, gold, and stolen goods.
 
-@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyFeaturesTesting
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyWorldState

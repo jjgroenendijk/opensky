@@ -1,10 +1,10 @@
 // Active stack owners, frame instructions, and function messages, and the layouts that
 // stop the stack read without failing the table.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

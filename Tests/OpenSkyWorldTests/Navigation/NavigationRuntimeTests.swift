@@ -1,9 +1,9 @@
 // Runtime navmesh graph, projection, deterministic A*, door traversal and
 // bounded repathing over synthetic in-code geometry.
 
-import FormatsTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures

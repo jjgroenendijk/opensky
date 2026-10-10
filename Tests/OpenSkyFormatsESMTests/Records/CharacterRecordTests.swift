@@ -2,11 +2,11 @@
 // over synthetic fields. Layout sources: xEdit wbDefinitionsTES5.pas; see the
 // matching docs/formats/ pages.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

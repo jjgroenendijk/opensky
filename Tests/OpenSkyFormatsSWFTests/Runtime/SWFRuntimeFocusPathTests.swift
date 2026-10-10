@@ -1,10 +1,10 @@
 // Focus-path filtering for the menu-handler route, split from
 // `SWFRuntimeInputTests` for the type-body limit.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

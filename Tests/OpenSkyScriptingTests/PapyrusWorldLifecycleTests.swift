@@ -1,9 +1,9 @@
 // Cell attach and detach for `PapyrusWorldRuntime`: instantiation order, event
 // order, rebuild reconciliation, retirement, and persistent instances.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface

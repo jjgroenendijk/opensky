@@ -3,12 +3,12 @@
 // `GameViewController`: perception runs over real collision first. No clock is
 // read, so the sequence depends only on the step counts.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPerception

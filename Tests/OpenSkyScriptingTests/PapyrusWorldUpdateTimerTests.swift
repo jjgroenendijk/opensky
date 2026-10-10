@@ -3,8 +3,8 @@
 // Cadence uses the registry's rule: the first `n` with
 // `Double(n) * fixedStepSeconds >= interval`.
 
-import FormatsTesting
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

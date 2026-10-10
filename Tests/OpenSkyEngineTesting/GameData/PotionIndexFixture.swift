@@ -1,9 +1,9 @@
 // A two-plugin load order whose potion names an effect from its master.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 public enum PotionIndexFixture {

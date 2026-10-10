@@ -1,8 +1,8 @@
 // Race, sex, and name of any actor base, as the Papyrus identity natives read them.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

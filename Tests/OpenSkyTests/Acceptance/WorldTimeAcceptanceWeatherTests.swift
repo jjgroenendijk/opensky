@@ -5,11 +5,11 @@
 // `WorldTimeAcceptanceRealDataTests.swift`.
 
 import AppKit
-import EngineTesting
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSky
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
@@ -188,7 +188,7 @@ extension WorldTimeAcceptanceTests {
 
     // The clock plan these steps run on — timescale, step size and start hour — is
     // shared with the real-data half, so it lives in `WorldTimeAcceptanceClock`
-    // (`Tests/TestSupport/Acceptance/WorldTimeAcceptanceFixture.swift`).
+    // (`Tests/HostedTestSupport/Acceptance/WorldTimeAcceptanceFixture.swift`).
 
     /// `TimeScale` at 3600 plus the five clock-owned time globals. Invented
     /// FormIDs; the editor IDs are the vanilla spellings the engine matches on.

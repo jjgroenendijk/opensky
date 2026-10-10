@@ -1,15 +1,15 @@
 // The live frame clocks read the renderer's `WallClock`, so a manual clock
 // steps game time and world time by an exact amount.
 
-import EngineTesting
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyEngineTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

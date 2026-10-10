@@ -1,11 +1,11 @@
 // Synthetic TRI parser tests. Fixtures are authored bytes, never extracted
 // game content (AGENTS.md legal boundary).
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

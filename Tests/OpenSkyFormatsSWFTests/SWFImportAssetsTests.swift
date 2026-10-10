@@ -2,10 +2,10 @@
 // a vanilla edit text can name a font its own movie imports by name from a
 // fontlib.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

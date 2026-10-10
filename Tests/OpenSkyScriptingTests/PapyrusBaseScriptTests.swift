@@ -1,5 +1,5 @@
-@testable import FormatsTesting
 import Foundation
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

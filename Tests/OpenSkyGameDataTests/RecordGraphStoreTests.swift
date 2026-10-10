@@ -2,10 +2,10 @@
 // camera paths, story-manager nodes, head parts, scenes, and dialogue branches,
 // over synthetic plugins.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

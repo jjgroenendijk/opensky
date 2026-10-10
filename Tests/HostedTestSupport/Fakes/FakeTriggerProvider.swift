@@ -1,6 +1,6 @@
 // The trigger stats fake and the `FakeWorldProviders` forwarding that goes with
 // it, shared by the World panel suites and by the real-data trigger suites in
-// OpenSkyRealDataTests. See Tests/TestSupport/AGENTS.md.
+// OpenSkyRealDataTests. See Tests/HostedTestSupport/AGENTS.md.
 
 import AppKit
 @testable import OpenSkyPhysics

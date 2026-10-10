@@ -2,11 +2,11 @@
 // groups (DEST, attacks, inventory), positional model groups, and the
 // decoder registry, over synthetic fields. See docs/formats/records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

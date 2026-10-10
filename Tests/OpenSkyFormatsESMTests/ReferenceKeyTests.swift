@@ -1,10 +1,10 @@
 // Identity-layer tests: plugin key normalization across differing master
 // lists, the documented total order, and allocator determinism.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -2,12 +2,12 @@
 // `ConditionContext` quest seam. Indices are raw on-disk numbers (Creation Kit
 // minus 4096).
 
-import EngineTesting
-import FeaturesTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyEngineTesting
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorld

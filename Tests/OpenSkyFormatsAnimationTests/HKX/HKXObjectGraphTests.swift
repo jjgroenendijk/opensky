@@ -5,10 +5,10 @@
 // cstring reads, plus the rule that an unresolvable field yields nil and a
 // recorded reason rather than a trap. Byte map: docs/formats/hkx-behavior.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// One synthetic object exercising every cursor accessor at a known offset.

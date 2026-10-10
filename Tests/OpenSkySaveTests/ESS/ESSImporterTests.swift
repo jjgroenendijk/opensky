@@ -1,13 +1,13 @@
 // A whole synthetic save through the import: each mapped kind lands in the snapshot,
 // each unmapped kind is counted, and the result survives an `.osav` round trip.
 
-import FormatsTesting
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyDialogueInterface
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface

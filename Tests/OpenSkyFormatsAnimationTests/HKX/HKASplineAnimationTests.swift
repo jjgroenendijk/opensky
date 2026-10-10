@@ -1,11 +1,11 @@
 // hkaSplineCompressedAnimation decode over synthetic packfiles from
 // HKASplineFixture.swift. Byte map: docs/formats/hka-animation.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 private struct HKAAnimationBindingFixture {

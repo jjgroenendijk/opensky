@@ -2,11 +2,11 @@
 // alias actor, a timer that holds its phase, conditions that end or skip a
 // phase, and stops by request and by quest.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 @testable import OpenSkyDialogueInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorldState
 import Testing

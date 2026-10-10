@@ -3,11 +3,11 @@
 // `WorldStateSnapshot.==` ignores the journal sequence, so the tests check both
 // equality and that a restore records nothing. Plugin bytes are built in code.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkySave
 import OpenSkySaveFixtures

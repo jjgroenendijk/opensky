@@ -1,9 +1,9 @@
 // GetEventData (576) and the Event Data run-on (7), over a story event. Each
 // condition is a real 32-byte CTDA; member codes are xEdit `wbEventMemberEnum`.
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld

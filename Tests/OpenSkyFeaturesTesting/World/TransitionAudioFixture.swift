@@ -1,9 +1,9 @@
 // Synthetic SNDR, SNCT and ASPC plugins, built in code with ESMFixture.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 
 /// Synthetic audio plugins for the interior and exterior transition suites: a
 /// multi-descriptor SNDR store and a one-record ASPC store.

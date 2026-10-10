@@ -2,10 +2,10 @@
 // no script state, corrupt payloads throw, and a later unknown chunk is
 // skipped. See docs/formats/opensky-save-world-chunks.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyScripting

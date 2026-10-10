@@ -4,12 +4,12 @@
 // Its shape follows the vanilla probe: owning quests, `GetIsID` gates, and
 // follow-ups through TCLT links.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogueInterface
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkyWorldState

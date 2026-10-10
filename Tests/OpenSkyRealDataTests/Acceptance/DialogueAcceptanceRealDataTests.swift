@@ -5,11 +5,11 @@
 // IDs, and FormIDs; the report goes to gitignored `.logs/`.
 // Run: make test-real T='DialogueAcceptanceRealDataTests'
 
-import FeaturesTesting
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
@@ -18,9 +18,9 @@ import Foundation
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

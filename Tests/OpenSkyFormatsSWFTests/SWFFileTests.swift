@@ -2,10 +2,10 @@
 // built in code via SWFFixture — never extracted game files (AGENTS.md "Legal
 // & IP boundary").
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

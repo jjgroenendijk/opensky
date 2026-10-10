@@ -2,8 +2,8 @@
 // documented NAVM layout in code and decoded through the production parser;
 // no game bytes enter the test target.
 
-import FormatsTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface

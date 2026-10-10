@@ -3,7 +3,7 @@
 
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -1,9 +1,9 @@
 // The idle selector over synthetic IDLE records: marker order, do-once, the
 // related-idle tree, and the trace for every candidate.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing

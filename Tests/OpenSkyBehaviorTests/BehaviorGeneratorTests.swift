@@ -1,9 +1,9 @@
 // Blend, selection, and state-machine evaluation, and the tally a class with
 // no semantics leaves. Clip evaluation is in BehaviorClipTests.swift.
 
-import EngineTesting
 import Foundation
 import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 import simd
 import Testing

@@ -2,10 +2,10 @@
 // values at the offsets in docs/formats/hkx-behavior-modifiers.md and reads
 // every member back. All values are invented.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// Decodes one object of `className` at offset 0 after `writes` fill it.

@@ -1,8 +1,8 @@
 // Unit tests for the VFS lookup layer. Fixtures: temp directory trees +
 // synthetic BSA blobs built in code (AGENTS.md "Legal & IP boundary").
 
-import FormatsTesting
 import Foundation
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

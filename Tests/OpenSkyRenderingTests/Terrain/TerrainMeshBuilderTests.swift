@@ -5,10 +5,10 @@
 // edges, hidden-quadrant omission, the LAND-less fallback plane, and the
 // splat inputs: base/layer routing, VTXT dense bake, weight packing.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
 import simd

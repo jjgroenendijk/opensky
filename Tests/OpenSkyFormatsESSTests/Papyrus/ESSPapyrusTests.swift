@@ -1,10 +1,10 @@
 // The Papyrus table over synthetic tables: every value kind, arrays, both id widths,
 // and stacks counted and named.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

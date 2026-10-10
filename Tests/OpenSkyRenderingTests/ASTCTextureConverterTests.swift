@@ -1,14 +1,14 @@
 // The optimised texture path on the GPU: a ready texture uploads to the same
 // texels as its DDS, and the format search picks the smallest passing format.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
 import OpenSkyAssetCache
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @MainActor

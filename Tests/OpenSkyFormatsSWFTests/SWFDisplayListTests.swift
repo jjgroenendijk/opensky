@@ -3,11 +3,11 @@
 // framing), removals, SetBackgroundColor, and the SWFTransform affine math
 // with the movie-to-viewport mapping. Synthetic fixtures only.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

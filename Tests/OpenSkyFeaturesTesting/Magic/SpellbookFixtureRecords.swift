@@ -2,9 +2,9 @@
 // body-length cap. The other file says which store a suite gets; this one
 // says what is in it.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 extension SpellbookFixture {

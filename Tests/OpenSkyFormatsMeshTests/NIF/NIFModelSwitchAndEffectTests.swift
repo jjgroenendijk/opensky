@@ -1,11 +1,11 @@
 // Scene-graph flatten of selector nodes and effect shapes. Synthetic in-code
 // files only (NIFFixture); docs/formats/nif.md.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

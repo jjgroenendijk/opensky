@@ -76,7 +76,7 @@ its allowance is a hang to find, not a limit to raise.
 ## Tags
 
 Swift Testing tags label suites and tests: `.gpu`, `.slow`, `.acceptance`, `.perf`, and `.parser`,
-from `Tests/TagsTesting/Tags.swift`. `Tests/AGENTS.md` says which suite carries which, and
+from `Tests/OpenSkyTagsTesting/Tags.swift`. `Tests/AGENTS.md` says which suite carries which, and
 `make lint-test-tags` checks the ones a machine can find.
 
 A plan's `selectedTests` matches no Swift Testing test, but its `selectedTags` does. Each test

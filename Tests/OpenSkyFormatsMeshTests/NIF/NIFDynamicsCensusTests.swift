@@ -1,11 +1,11 @@
 // Census aggregation over synthetic collision models. The real-data sweep is
 // NIFDynamicsCensusRealDataTests; this pins the arithmetic without an install.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

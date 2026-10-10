@@ -3,10 +3,10 @@
 // means no timer, corrupt payloads throw, and an unknown chunk after PTMR is
 // skipped (docs/formats/opensky-save-world-chunks.md).
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import OpenSkySaveFixtures
 @testable import OpenSkyScripting

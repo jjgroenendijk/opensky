@@ -2,11 +2,11 @@
 // `OnActivate` calls `GetLinkedRef` and then `Disable`, on a real `CellStreamer`
 // and driven by a real raycast activation. Every byte is built in code.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyScripting

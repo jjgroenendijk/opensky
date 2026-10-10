@@ -1,10 +1,10 @@
 // Cloud layer resolve over a synthetic WTHR record: textures, tint, opacity, drift,
 // the disabled and LNAM limits, and the transition fade.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
 import simd

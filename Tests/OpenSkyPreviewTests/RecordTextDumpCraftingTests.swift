@@ -1,8 +1,8 @@
 // Decoded dump lines for ARTO, COBJ, FLOR, TACT, and FURN. In-code fixtures only.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyPreview
 import Testing
 

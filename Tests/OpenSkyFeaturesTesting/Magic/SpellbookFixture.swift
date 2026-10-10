@@ -2,10 +2,10 @@
 // spell shapes match vanilla records read with `openskycli record`.
 // Layouts: UESP "Skyrim Mod:Mod File Format" /SPEL, /EQUP, /MGEF, /BOOK.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 @MainActor

@@ -2,10 +2,10 @@
 // graph data. Offsets come from docs/formats/hkx-behavior-nodes.md,
 // hkx-behavior-modifiers.md, and hkx-behavior.md. All values are invented.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

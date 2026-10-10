@@ -1,8 +1,8 @@
 // The game folder check over install folders built in code.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
+import OpenSkyFormatsTesting
 import OpenSkyLaunch
 import Testing
 

@@ -1,9 +1,9 @@
 // Interior + door scene-build tests. Synthetic plugin/NIF fixtures only.
 
-import FormatsTesting
 import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering

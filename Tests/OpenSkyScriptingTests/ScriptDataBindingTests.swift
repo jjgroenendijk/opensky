@@ -1,9 +1,9 @@
-import FeaturesTesting
-import FormatsTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

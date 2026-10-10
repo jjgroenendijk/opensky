@@ -1,9 +1,9 @@
 // Unit tests for BinaryReader bounds checking and string decoding.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -2,11 +2,11 @@
 // tables in an in-memory file source — never extracted game files
 // (AGENTS.md "Legal & IP boundary").
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

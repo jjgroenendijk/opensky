@@ -2,10 +2,10 @@
 // budget-bounded drain with carry-over, global order, a latent wait that
 // releases its instance, a used-up slice that holds it, and the fixed-step wake.
 
-@testable import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface

@@ -3,11 +3,11 @@
 // all synthetic, never extracted game files.
 
 import CoreGraphics
-import FormatsTesting
 import Foundation
 import ImageIO
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 import UniformTypeIdentifiers
 

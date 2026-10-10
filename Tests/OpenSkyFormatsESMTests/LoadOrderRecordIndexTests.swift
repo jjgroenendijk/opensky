@@ -1,8 +1,8 @@
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+@testable import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// Load order `Base.esm`, `Other.esm`, `Mod.esp`. `Mod.esp` lists only `Base.esm`,

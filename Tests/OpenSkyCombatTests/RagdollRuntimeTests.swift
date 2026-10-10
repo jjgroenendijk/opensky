@@ -2,10 +2,10 @@
 // the raised events, which decides whether death waits for the graph's
 // hand-off or happens at once.
 
-import EngineTesting
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

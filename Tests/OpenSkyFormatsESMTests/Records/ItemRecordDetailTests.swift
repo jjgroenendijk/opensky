@@ -1,11 +1,11 @@
 // The xEdit-named fields of item records that no game system reads yet.
 // Synthetic records only. Layout: docs/formats/item-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

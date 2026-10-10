@@ -2,11 +2,11 @@
 // exactly the source samples, and long sounds are left to stream.
 
 import AVFAudio
-import FormatsTesting
 import Foundation
 import OpenSkyAssetCache
 @testable import OpenSkyAudio
 import OpenSkyFormatsAudio
+import OpenSkyFormatsTesting
 import Testing
 
 struct CachedAudioConverterTests {

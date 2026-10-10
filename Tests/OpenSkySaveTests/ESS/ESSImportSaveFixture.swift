@@ -1,11 +1,11 @@
 // One synthetic save holding every kind of data the import maps, plus one of each kind
 // it cannot, and the fake load order that names its forms.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
+import OpenSkyFormatsTesting
 
 enum ESSImportSaveFixture {
     typealias Ref = ESSChangeFlag.Reference

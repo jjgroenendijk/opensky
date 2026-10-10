@@ -1,8 +1,8 @@
 // The global store over synthetic GLOB records.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyWorldState
 
 extension GlobalFixture {

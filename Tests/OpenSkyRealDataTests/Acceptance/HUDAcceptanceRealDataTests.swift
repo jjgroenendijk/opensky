@@ -12,10 +12,10 @@ import MetalKit
 @testable import OpenSkyMenus
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldInterface
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

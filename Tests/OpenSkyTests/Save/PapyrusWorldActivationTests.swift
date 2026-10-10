@@ -1,7 +1,7 @@
 // Use-key activation reaching Papyrus: the interaction seam,
 // `ReferenceActivationState`, queued `OnActivate` with `akActionRef`, save
 // round trip, and recursion cap. Fixtures are in
-// `Tests/TestSupport/Papyrus/PapyrusWorldActivationFixture.swift`.
+// `Tests/HostedTestSupport/Papyrus/PapyrusWorldActivationFixture.swift`.
 
 import Foundation
 @testable import OpenSkyFormatsESM

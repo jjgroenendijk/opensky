@@ -1,8 +1,8 @@
 // The dialogue store over one synthetic dialogue plugin.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 extension DialogueFixture {

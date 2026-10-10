@@ -1,11 +1,11 @@
 // FLOR, TACT, FURN, TREE, and ACTI world-object fields on synthetic ModelBase
 // records. Layout: docs/formats/world-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

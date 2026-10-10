@@ -1,9 +1,9 @@
 // The main menu movie's Load list over a synthetic runtime: characters newest
 // first, one character's saves with the measured fields, and the save picture.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 

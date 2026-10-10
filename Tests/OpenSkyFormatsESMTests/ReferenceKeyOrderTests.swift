@@ -1,5 +1,5 @@
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

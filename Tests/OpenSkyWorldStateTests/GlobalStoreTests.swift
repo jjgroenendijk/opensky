@@ -1,11 +1,11 @@
 // GlobalStore index + the GlobalResolution lookup seam, over synthetic GLOB
 // records only. See docs/engine/global-variables.md.
 
-import EngineTesting
-@testable import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorldState
 import Testing
 

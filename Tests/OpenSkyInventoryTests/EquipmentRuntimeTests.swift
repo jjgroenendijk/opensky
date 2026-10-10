@@ -2,8 +2,8 @@
 // the accounting an equip must not change. The catalog is built over
 // `InventoryBaselineFixture`, so the real ARMO/WEAP indexing runs.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData

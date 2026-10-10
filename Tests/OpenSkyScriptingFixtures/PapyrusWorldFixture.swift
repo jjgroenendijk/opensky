@@ -2,11 +2,11 @@
 // REFR entries, event-handler scripts, and a note-recording native dispatch.
 // Every byte is built in code; no game data is embedded.
 
-import FeaturesTesting
-@testable import FormatsTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsPEX
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingInterface

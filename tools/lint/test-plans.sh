@@ -20,7 +20,7 @@ import sys
 ROOT = pathlib.Path.cwd()
 PLANS = ROOT / "config/TestPlans"
 SCHEME = ROOT / "OpenSky.xcodeproj/xcshareddata/xcschemes/OpenSky.xcscheme"
-TAGS = ROOT / "Tests/TagsTesting/Tags.swift"
+TAGS = ROOT / "Tests/OpenSkyTagsTesting/Tags.swift"
 TIMEOUT_KEYS = (
     "defaultTestExecutionTimeAllowance",
     "maximumTestExecutionTimeAllowance",

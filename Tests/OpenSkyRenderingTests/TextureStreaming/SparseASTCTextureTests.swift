@@ -5,7 +5,7 @@ import Foundation
 import Metal
 import OpenSkyAssetCache
 import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

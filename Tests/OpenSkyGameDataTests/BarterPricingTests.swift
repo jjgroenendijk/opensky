@@ -2,9 +2,9 @@
 // (https://en.uesp.net/wiki/Skyrim:Speech#Prices). The factors and price caps
 // are quoted from that page.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

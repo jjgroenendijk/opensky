@@ -1,11 +1,11 @@
 // The audio record stores count a record that fails to decode instead of
 // dropping it without a trace.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import Testing
 
 struct AudioRecordStoreSkipTests {

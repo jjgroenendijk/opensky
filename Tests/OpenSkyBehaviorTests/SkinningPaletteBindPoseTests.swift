@@ -3,12 +3,12 @@
 // NIF rotation is transposed on the way in. Without that, the bind palette
 // still looks right but every animated pose is wrong.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyBehavior
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import simd
 import Testing
 

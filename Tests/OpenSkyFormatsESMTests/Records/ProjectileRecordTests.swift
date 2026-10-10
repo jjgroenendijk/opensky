@@ -1,10 +1,10 @@
 // PROJ decode over fixtures built from the published layout.
 // Layout: docs/formats/projectiles.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

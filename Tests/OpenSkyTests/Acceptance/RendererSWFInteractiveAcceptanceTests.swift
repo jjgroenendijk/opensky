@@ -3,17 +3,17 @@
 // pointer, as CLIK's `gfx.controls.Button` uses, and `handleInput` for keys, as
 // every vanilla menu class defines. Movies are built in code.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 /// A movie whose `highlight` clip is hidden by an alpha-zero CXFORM and whose

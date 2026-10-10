@@ -2,11 +2,11 @@
 // Layout: UESP "Skyrim Mod:Mod File Format/CTDA Field" and xEdit dev
 // Core/wbDefinitionsTES5.pas `wbCTDA` (line 6889).
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -2,17 +2,17 @@
 // only `Skyrim.esm` as master and loads third, so its own records are `01xxxxxx`
 // in the file and `02xxxxxx` in the load order.
 
-@testable import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

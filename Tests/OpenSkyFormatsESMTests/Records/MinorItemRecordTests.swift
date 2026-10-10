@@ -1,11 +1,11 @@
 // KEYM, SLGM, and APPA over synthetic InventoryFixture records.
 // Layout: docs/formats/item-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

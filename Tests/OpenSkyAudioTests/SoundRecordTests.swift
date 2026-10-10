@@ -2,11 +2,11 @@
 // Layout sources: UESP SNDR/SOUN and xEdit wbDefinitionsTES5.pas; see
 // docs/formats/sound.md.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyAudio
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 import Testing
 
 struct SoundRecordTests {

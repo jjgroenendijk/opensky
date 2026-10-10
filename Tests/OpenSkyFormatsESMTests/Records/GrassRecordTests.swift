@@ -1,10 +1,10 @@
 // Synthetic GRAS + LTEX GNAM decoder tests. Fixtures contain authored bytes
 // only, never extracted game data.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

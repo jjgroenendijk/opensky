@@ -4,16 +4,16 @@
 // one, an unticked movie repeats byte for byte, and a display list larger than
 // the ring grows the ring instead of dropping draws. Movies are built in code.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
 import Metal
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 import simd
-import TagsTesting
 import Testing
 
 /// A menu-shaped movie whose whole frame-1 content sits under one alpha-zero

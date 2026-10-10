@@ -4,9 +4,9 @@
 // crashes. The real-data gate checks the vanilla movie's shape.
 
 import AppKit
-import FormatsTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 

@@ -1,9 +1,9 @@
 // A stage runs only the fragment of its first log entry whose conditions pass.
 
-import FormatsTesting
 import Foundation
 import OpenSkyConditions
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyScripting
 import OpenSkyWorldState
 import Testing

@@ -2,9 +2,9 @@
 // closed-form functions of x; `LocomotionAcceptanceFixture` is an eight-state graph
 // wired to `LocomotionGraphNames`. Real-data half: `LocomotionAcceptanceRealDataTests`.
 
-import EngineTesting
 import Foundation
 @testable import OpenSkyBehavior
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld

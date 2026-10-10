@@ -2,11 +2,11 @@
 // becomes a load-list row marked as an import.
 
 import AppKit
-import FormatsTesting
 import Foundation
 @testable import OpenSky
 import OpenSkyAgentControl
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyMenus
 import OpenSkySave
 import Testing

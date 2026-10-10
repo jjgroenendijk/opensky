@@ -2,17 +2,17 @@
 // and load in one run. Each step checks item totals, gold, world-state deltas,
 // and their cells. Pixels are in `InventoryAcceptanceRenderTests`.
 
-@testable import FeaturesTesting
 import Foundation
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
 @testable import OpenSkySave
 import OpenSkySaveFixtures
+import OpenSkyTagsTesting
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

@@ -1,10 +1,10 @@
 // LAND, LTEX and TXST decoding. Layout: docs/formats/land.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -6,8 +6,8 @@ import Metal
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyRendering
 import OpenSkyShaderTypes
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

@@ -2,10 +2,10 @@
 // Device-free, synthetic fixtures only — no test reads a real `.swf`
 // (AGENTS.md "Legal & IP boundary").
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

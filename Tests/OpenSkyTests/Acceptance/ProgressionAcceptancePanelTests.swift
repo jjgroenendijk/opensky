@@ -11,7 +11,7 @@ import AppKit
 @testable import OpenSkyGameData
 @testable import OpenSkyPreview
 @testable import OpenSkyProgression
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.acceptance))

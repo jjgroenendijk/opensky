@@ -2,12 +2,12 @@
 // material slot dedup, skip rules, cycle/ref defense. Synthetic in-code
 // files only (NIFFixture); docs/formats/nif.md "Scene graph -> engine mesh".
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import simd
-import TagsTesting
 import Testing
 
 @Suite(.tags(.parser))

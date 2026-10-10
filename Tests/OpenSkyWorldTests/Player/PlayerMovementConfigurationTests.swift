@@ -1,8 +1,8 @@
 // Player movement tuning resolved from GMST game settings. In-code plugin fixtures only.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
 @testable import OpenSkyWorld

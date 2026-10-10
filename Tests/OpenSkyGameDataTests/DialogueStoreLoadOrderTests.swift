@@ -1,10 +1,10 @@
 // DialogueStore over a load order: a DLC that loads later than its own master index
 // says, and adds an INFO to a topic of its master. No game data is embedded.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

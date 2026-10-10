@@ -1,9 +1,9 @@
 // The Asset Optimisation page's logic over an in-memory install: settings, check,
 // conversion, a quality change, clear, and a refused folder.
 
-import EngineTesting
 import Foundation
 import OpenSkyAssetCache
+import OpenSkyEngineTesting
 import OpenSkyGameData
 import OpenSkyRendering
 @testable import OpenSkyWorld

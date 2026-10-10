@@ -4,11 +4,11 @@
 // UESP's bounty table (<https://en.uesp.net/wiki/Skyrim:Crime>), so a wrong
 // sum reads as a wrong bounty.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyCrimeInterface
 @testable import OpenSkyFactionsInterface
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 public enum CrimeFixture {

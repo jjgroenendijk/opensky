@@ -41,8 +41,8 @@ Copy the shape of an existing format:
 
 | Kind | Parser | Fixture | Unit tests | Page |
 | --- | --- | --- | --- | --- |
-| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/FormatsTesting/Core/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
-| ESM record | `Sources/OpenSkyFormatsESM/Records/Footstep.swift` | `ESMFixture` in `Tests/FormatsTesting/ESM/` | `Tests/OpenSkyFormatsESMTests/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
+| Binary container | `Sources/OpenSkyFormatsCore/BSA/BSAArchive.swift` | `Tests/OpenSkyFormatsTesting/Core/BSA/BSAFixture.swift` | `Tests/OpenSkyFormatsCoreTests/BSA/BSAArchiveTests.swift` | `docs/formats/bsa.md` |
+| ESM record | `Sources/OpenSkyFormatsESM/Records/Footstep.swift` | `ESMFixture` in `Tests/OpenSkyFormatsTesting/ESM/` | `Tests/OpenSkyFormatsESMTests/Records/FootstepRecordTests.swift` | `docs/formats/footstep.md` |
 
 The real-data check of the record model is
 `Tests/OpenSkyRealDataTests/Formats/ESM/Records/FootstepRealDataTests.swift`.

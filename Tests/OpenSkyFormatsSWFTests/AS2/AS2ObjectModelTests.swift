@@ -1,10 +1,10 @@
 // Object literals, prototypes, and the class-relationship opcodes (milestone
 // 8.3.2) — the shape of vanilla `DoInitAction` class-registration code.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

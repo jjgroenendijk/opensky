@@ -1,10 +1,10 @@
 // Engine pictures in a movie: an image slot adds a bitmap and a shape that draws
 // it, and `MovieClipLoader.loadClip("img://...")` shows that shape.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

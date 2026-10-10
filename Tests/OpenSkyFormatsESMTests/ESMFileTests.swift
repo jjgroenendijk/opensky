@@ -1,10 +1,10 @@
 // ESM/ESP container-walk tests over synthetic in-code plugins (ESMFixture).
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

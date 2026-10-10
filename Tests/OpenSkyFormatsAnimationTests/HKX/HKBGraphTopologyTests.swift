@@ -2,10 +2,10 @@
 // in docs/formats/hkx-behavior-nodes.md: state names, transitions, weights,
 // and clip paths come back as written, reached through the registry.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsAnimation
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 /// One behavior graph: state machine -> state -> blender -> child -> clip, plus

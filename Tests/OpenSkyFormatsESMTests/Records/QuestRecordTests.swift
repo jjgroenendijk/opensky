@@ -1,11 +1,11 @@
 // QUST decode over synthetic field bytes only (QuestFixture).
 // Layout: docs/formats/quest-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite("QUST record", .tags(.parser))

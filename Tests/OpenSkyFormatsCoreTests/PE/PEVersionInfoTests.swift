@@ -1,9 +1,9 @@
 // The executable version reader, over executables built in code.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

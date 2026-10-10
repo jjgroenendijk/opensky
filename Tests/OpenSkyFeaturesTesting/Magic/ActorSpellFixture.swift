@@ -1,9 +1,9 @@
 // Synthetic NPC_, RACE, and LVSP records for the spell-baseline suite: the
 // smallest records that carry a `SPLO` run.
 
-@testable import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyFormatsTesting
 
 public enum ActorSpellFixture {
     /// ACBS, 24 bytes: uint32 flags, 7 stat words, uint16 template flags, two

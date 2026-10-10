@@ -1,10 +1,10 @@
 // ALCH and INGR decoders plus the shared EFID/EFIT/CTDA effect run, over
 // synthetic InventoryFixture records. Layout: docs/formats/item-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

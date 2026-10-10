@@ -1,11 +1,11 @@
 // The xEdit-named fields of world records that no game system reads yet.
 // Synthetic records only. Layout: docs/formats/world-records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

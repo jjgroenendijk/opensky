@@ -3,10 +3,10 @@
 // `ClearList()` are installed in code, so the tests check the bridge against
 // its contract.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 import Testing
 

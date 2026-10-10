@@ -1,9 +1,9 @@
 // The saves folder setting: each status message, listings newest first with a broken
 // file kept as an error row, the thumbnail size, and the inspector sections.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsESS
+import OpenSkyFormatsTesting
 @testable import OpenSkySave
 import Testing
 

@@ -2,10 +2,10 @@
 // steps, goto forms, path resolution, and scene regeneration. Movies are built
 // from `SWFDisplayFixture` tags and `SWFActionFixture` actions.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

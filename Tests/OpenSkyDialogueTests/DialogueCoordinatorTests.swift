@@ -2,11 +2,11 @@
 // `DialogueWorld`, the conversation steps, and the commands the speaker focus
 // sends.
 
-import FeaturesTesting
 import OpenSkyConditions
 @testable import OpenSkyDialogue
 import OpenSkyDialogueFixtures
 import OpenSkyDialogueInterface
+import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface

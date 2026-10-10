@@ -1,6 +1,6 @@
 // `FakeWorldProviders`' DialogueControlProviding and
 // DialogueCameraControlProviding forwarding. Both test targets share the fake,
-// so its conformances are shared too (Tests/TestSupport/AGENTS.md).
+// so its conformances are shared too (Tests/HostedTestSupport/AGENTS.md).
 
 import AppKit
 @testable import OpenSkyMenus

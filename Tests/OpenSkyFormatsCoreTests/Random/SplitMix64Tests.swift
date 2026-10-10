@@ -1,7 +1,7 @@
 // Pins the SplitMix64 stream, so every seeded roll in the engine stays the same.
 
 @testable import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

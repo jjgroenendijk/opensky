@@ -1,11 +1,11 @@
 // The plugin index an import reads: record types, editor IDs, global types, interior and
 // exterior cells, and the base of a changed reference, from one synthetic plugin.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkySave
 import Testing

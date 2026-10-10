@@ -2,8 +2,8 @@
 // trade and write nothing, a non-fence refuses stolen items, and a sale to a
 // fence or vendor clears the stolen flag.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

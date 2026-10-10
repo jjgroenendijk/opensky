@@ -1,8 +1,8 @@
 // UI Lab AS2 runtime readout wording: movie state, invoke log, and op tally.
 // The truncation cases matter most: a clipped list must say how much it hid.
 
-import FormatsTesting
 @testable import OpenSkyFormatsSWF
+import OpenSkyFormatsTesting
 @testable import OpenSkyMenus
 @testable import OpenSkyRendering
 import Testing

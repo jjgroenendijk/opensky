@@ -1,9 +1,9 @@
 // Cross-plugin GMST precedence over synthetic plugins. Later valid values win;
 // malformed records never erase the last usable setting.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing
 

@@ -1,10 +1,10 @@
 // CLMT decoder coverage over synthetic field bytes only. Layout source:
 // UESP "Skyrim Mod:Mod File Format/CLMT"; see docs/formats/records.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

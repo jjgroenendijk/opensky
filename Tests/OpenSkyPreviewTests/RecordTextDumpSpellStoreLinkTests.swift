@@ -1,9 +1,9 @@
 // Record dumps that name linked records through `SpellStoreLink`. In-code plugin fixtures only.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyPreview
 import Testing

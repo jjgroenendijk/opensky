@@ -1,9 +1,9 @@
 // The progression shell over the fixture tree: the panel's selections, the
 // perk-point spend and its refusals, and the world reads it makes.
 
-import FeaturesTesting
 import OpenSkyActorsInterface
 import OpenSkyConditions
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression

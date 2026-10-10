@@ -2,11 +2,11 @@
 // the install's: a two-rank damage chain whose first rank turns off with
 // `HasPerk <next rank> == 0`, a blocking perk, a spell-cost perk, and an ability.
 
-import EngineTesting
-import FormatsTesting
 import Foundation
+import OpenSkyEngineTesting
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 
 @MainActor

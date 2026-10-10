@@ -2,10 +2,10 @@
 // the hostility derivation reads about the player's bounties. No game-derived
 // bytes.
 
-import FeaturesTesting
 @testable import OpenSkyCrime
 import OpenSkyCrimeFixtures
 @testable import OpenSkyCrimeInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

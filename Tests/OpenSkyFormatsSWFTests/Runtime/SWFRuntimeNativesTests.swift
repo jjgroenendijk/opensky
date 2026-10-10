@@ -5,10 +5,10 @@
 // so the first assertion here is simply that referencing them no longer counts
 // as missing.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsSWF
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

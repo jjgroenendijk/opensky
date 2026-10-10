@@ -1,8 +1,8 @@
 // SkyrimLayer 12 (trigger) recognition over synthetic in-code NIF payloads
 // only. Layouts: NifTools nif.xml; docs/formats/nif-collision.md.
 
-import FormatsTesting
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 import simd
 import Testing
 

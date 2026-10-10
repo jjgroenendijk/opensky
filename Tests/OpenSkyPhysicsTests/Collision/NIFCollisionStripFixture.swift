@@ -3,8 +3,8 @@
 // strict type-body limit. Layouts follow NifTools nif.xml; no game bytes or
 // extracted assets are fixtures (AGENTS.md legal boundary).
 
-@testable import FormatsTesting
 import Foundation
+@testable import OpenSkyFormatsTesting
 import simd
 
 extension NIFCollisionFixture {

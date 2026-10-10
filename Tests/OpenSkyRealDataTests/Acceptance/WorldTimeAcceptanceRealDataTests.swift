@@ -7,9 +7,9 @@
 import Foundation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
-import TagsTesting
 import Testing
 
 @Suite(.tags(.acceptance, .gpu))

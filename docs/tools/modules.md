@@ -40,7 +40,7 @@ A **feature module** has up to four targets:
 | --- | --- | --- |
 | `X` | the implementation | always |
 | `XInterface` | the protocols and value types other modules use | another module uses the feature |
-| `FeaturesTesting` | fakes and fixtures of every feature interface that other modules' tests share | one library for all features |
+| `OpenSkyFeaturesTesting` | fakes and fixtures of every feature interface that other modules' tests share | one library for all features |
 | `XTests` | the unit tests of `X` | `X` has tests |
 | `XFixtures` | fixtures that build the real `X`, for `XTests` and the Xcode test bundles | both use such a fixture |
 
@@ -184,7 +184,7 @@ The `Sources/Shaders/*.metal` files are not in the package. The app and the CLI 
 them into the `default.metallib` of their own bundle, and `Renderer` loads it with
 `device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
 such bundle. `make shader-library` compiles the same files with `xcrun metal`,
-and `ShaderLibraryFixture` in `Tests/EngineTesting/Rendering/` loads it from
+and `ShaderLibraryFixture` in `Tests/OpenSkyEngineTesting/Rendering/` loads it from
 the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.
 
@@ -259,15 +259,15 @@ satisfies an old `import`, and the build fails with two types of the same name, 
 
 ## Tests
 
-Shared test fixtures live in three testing libraries, one per layer: `FormatsTesting` for the
-format modules, `EngineTesting` for the engine modules, and `FeaturesTesting` for the feature
-interfaces. Each has one subfolder per module, for example `Tests/EngineTesting/Physics/`. Three
-libraries instead of one per module keep the package at 89 targets, because every target costs
-manifest and graph time on each build. Their declarations are `public`, and a library may
-`@testable import` the modules it builds fixtures for. One library,
-`TagsTesting`, holds no fixtures: it declares the shared Swift Testing tags, and the
-`testTarget` helper in `Package.swift` links it into every package test target
-([test runs](/tools/test-runs.md#tags)).
+Shared test fixtures live in three testing libraries, one per layer: `OpenSkyFormatsTesting` for
+the format modules, `OpenSkyEngineTesting` for the engine modules, and `OpenSkyFeaturesTesting`
+for the feature interfaces. Each has one subfolder per module, for example
+`Tests/OpenSkyEngineTesting/Physics/`. Three libraries instead of one per module keep the
+package at 89 targets, because every target costs manifest and graph time on each build.
+Their declarations are `public`, and a library may `@testable import` the modules it builds
+fixtures for. One library, `OpenSkyTagsTesting`, holds no fixtures: it declares the shared
+Swift Testing tags, and the `testTarget` helper in `Package.swift` links it into every package
+test target ([test runs](/tools/test-runs.md#tags)).
 
 A testing library depends on interfaces, lower modules, and other testing libraries, never on
 a feature implementation. So any test target may link it without building another feature.

@@ -1,11 +1,11 @@
 // The `NPC_` change decoder over bytes built in code: identity fields, class, face, and
 // the attribute block that stops the read.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

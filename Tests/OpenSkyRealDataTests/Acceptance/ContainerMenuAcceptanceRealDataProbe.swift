@@ -2,8 +2,8 @@
 // ContainerMenuAcceptanceRealDataTests.swift drives the movies; split for the
 // type-length cap.
 
-import FeaturesTesting
 import Foundation
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyInventory

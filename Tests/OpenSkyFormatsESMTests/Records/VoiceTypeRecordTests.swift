@@ -1,11 +1,11 @@
 // VTYP decoder tests over synthetic bytes. Layout: UESP VTYP and xEdit
 // dev-4.1.6 `wbRecord(VTYP, ...)`.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

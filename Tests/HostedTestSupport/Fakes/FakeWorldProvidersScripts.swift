@@ -1,6 +1,6 @@
 // `FakeWorldProviders`' ScriptControlProviding forwarding. Both test targets
 // share the fake, so its conformances are shared too
-// (Tests/TestSupport/AGENTS.md).
+// (Tests/HostedTestSupport/AGENTS.md).
 
 import AppKit
 @testable import OpenSkyScripting

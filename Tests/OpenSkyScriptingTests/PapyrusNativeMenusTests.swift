@@ -1,9 +1,9 @@
 // The Game menu natives reach the menu bridge, and fail without one.
 
-import FeaturesTesting
-import FormatsTesting
 import Foundation
+import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures

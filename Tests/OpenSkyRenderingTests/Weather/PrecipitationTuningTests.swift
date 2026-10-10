@@ -1,9 +1,9 @@
 // The SPGD-to-precipitation mapping: rain and snow scales against their
 // anchors, the clamp, and the fallback.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyRendering
 import Testing
 

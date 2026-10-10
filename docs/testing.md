@@ -9,7 +9,7 @@ tags: [testing, tooling, process]
 # Testing setup
 
 Tests run through `make`. Fixture rules are in `Tests/OpenSkyTests/AGENTS.md`,
-`Tests/OpenSkyRealDataTests/AGENTS.md`, `Tests/TestSupport/AGENTS.md`, and the legal section of
+`Tests/OpenSkyRealDataTests/AGENTS.md`, `Tests/HostedTestSupport/AGENTS.md`, and the legal section of
 `AGENTS.md`: synthetic data built in code only, never files taken from the game. How the test plans,
 the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-runs.md) page.
 
@@ -26,11 +26,11 @@ the tag plans, coverage, and sanitizers work is on the [test runs](/tools/test-r
 - `OpenSkyUITests`: XCUITest smoke tests. The app launches, the main window appears, and there is no
   game data alert.
 
-`Tests/TestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
+`Tests/HostedTestSupport/` is not a target. Both `OpenSkyTests` and `OpenSkyRealDataTests` compile it,
 the way the package modules are shared by the app and `OpenSkyCLI`. It has no `@Test`, because
 a test there would run in both bundles. It holds only fixtures that need the app. Each
-`Tests/<Name>Testing/` folder is a package library of shared fixtures, for example
-`FormatsTesting` with the plugin byte builders. Every unit test target that needs one links it.
+`Tests/OpenSky<Layer>Testing/` folder is a package library of shared fixtures, for example
+`OpenSkyFormatsTesting` with the plugin byte builders. Every unit test target that needs one links it.
 
 ## Entry points
 

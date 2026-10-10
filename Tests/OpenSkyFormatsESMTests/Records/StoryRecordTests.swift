@@ -2,11 +2,11 @@
 // Layout sources: xEdit wbDefinitionsTES5.pas; see docs/formats/dialogue.md,
 // docs/formats/story-manager.md and docs/formats/scenes.md.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

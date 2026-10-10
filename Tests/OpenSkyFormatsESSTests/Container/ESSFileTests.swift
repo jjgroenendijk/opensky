@@ -1,10 +1,10 @@
 // The `.ess` container over synthetic saves: every supported version and compression,
 // and each way a file can be broken.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsESS
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

@@ -1,11 +1,11 @@
 // `ESMFile` decode helpers and `SkippedRecords` over synthetic plugins: a
 // record or group that fails to parse is counted, never dropped silently.
 
-import FormatsTesting
 import Foundation
 @testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

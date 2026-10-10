@@ -3,10 +3,10 @@
 // condition seam covers the player and every resident actor. The derivation
 // is tested in `HostilityDerivationTests`.
 
-import FeaturesTesting
 @testable import OpenSkyActorsInterface
 @testable import OpenSkyFactions
 @testable import OpenSkyFactionsInterface
+import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyWorldState

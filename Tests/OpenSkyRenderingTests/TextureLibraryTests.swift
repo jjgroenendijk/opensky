@@ -3,13 +3,13 @@
 // anywhere; the one real upload gates on BCn like TextureLoaderTests.
 // Fixtures are built in code — never extracted game files (AGENTS.md Legal).
 
-import FormatsTesting
 import Foundation
 import Metal
 @testable import OpenSkyFormatsMesh
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyRendering
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.gpu))

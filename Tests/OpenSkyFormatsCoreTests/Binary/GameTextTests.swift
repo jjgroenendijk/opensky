@@ -4,7 +4,7 @@
 
 import Foundation
 @testable import OpenSkyFormatsCore
-import TagsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))

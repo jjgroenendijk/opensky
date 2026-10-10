@@ -1,11 +1,11 @@
 // The INFO VMAD fragment tail, over synthetic `DialogueFixture` bytes. The count
 // is not stored: it is the number of set flag bits, so the cases vary the flags.
 
-import FormatsTesting
 import Foundation
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
-import TagsTesting
+import OpenSkyFormatsTesting
+import OpenSkyTagsTesting
 import Testing
 
 @Suite(.tags(.parser))
