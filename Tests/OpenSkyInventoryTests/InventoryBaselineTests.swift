@@ -91,10 +91,24 @@ struct InventoryBaselineTests {
 
     // MARK: - Player and generated owners
 
+    /// The fixture has no `Player` record, so the player has no outfit to wear.
     @Test func playerAndGeneratedOwnersBaselineEmpty() throws {
         let resolver = try Fixture.resolver()
         #expect(resolver.baseline(for: .player) == .empty)
         #expect(resolver.baseline(for: .generated) == .empty)
+    }
+
+    /// The player wears the `Player` record's outfit, so the inventory holds
+    /// and equips what the body is drawn wearing.
+    @Test func playerBaselineIsThePlayerRecordsOutfit() throws {
+        let resolver = try InventoryBaselineResolver.build(
+            from: ESMFile(data: Fixture.pluginBytes(playerOutfit: Fixture.guardOutfit))
+        )
+        let player = resolver.baseline(for: .player)
+        let guardBaseline = resolver.baseline(for: .actor(base: Fixture.guardActor))
+        #expect(!player.isEmpty)
+        #expect(player == guardBaseline)
+        #expect(player.equipped == player.stacks.map(\.item))
     }
 
     // MARK: - Leveled expansion edge cases
