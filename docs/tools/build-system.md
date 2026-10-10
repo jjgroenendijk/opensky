@@ -287,6 +287,12 @@ the failed pass wrote, because xcodebuild refuses a path that exists. A test run
 skips all of this. A `removed stale module copies` line in a build's output is worth a `bug`
 issue with the transcript: it means a case the flag does not cover.
 
+A build that stops before a test bundle is linked leaves that bundle unsigned inside
+`OpenSky.app/Contents/PlugIns/`. A later plan that does not build the bundle then fails the app's
+own `CodeSign` step with "code object is not signed at all". So `tools/xcodebuild-run.sh` also runs
+`tools/unsigned-plugins.sh` before every build. It deletes each test bundle in the app whose
+signature does not verify, and the next build that needs the bundle builds it again.
+
 ## Warnings are errors
 
 `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES` is in `config/Build/Base.xcconfig`, next to
