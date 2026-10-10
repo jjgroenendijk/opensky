@@ -55,8 +55,9 @@ does not own either system.
 | Wait | Stay in place and send no move, until another package wins |
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
-the navmesh otherwise. A straight leg follows the terrain and ignores static collision, so a
-rock or a fallen log on the authored line does not stop it. This is a guess at the game's
+the navmesh otherwise. A straight leg ignores static walls, so a rock or a fallen log on the
+authored line does not stop it. It still stands on a static floor, such as a road or a bridge,
+when the floor is within a step of its feet. This is a guess at the game's
 behavior, not a confirmed rule. That input is the last of the Patrol procedure's six inputs, by the
 `BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
 

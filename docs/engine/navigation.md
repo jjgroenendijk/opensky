@@ -101,6 +101,15 @@ The published heading follows the placement rule: `angleZ` turns clockwise from 
 +X, so the heading is a quarter turn minus the walk angle. An actor that walks east is drawn
 facing east.
 
+### Standing height
+
+An `ACHR` height can sit inside the road or floor mesh the actor stands on. In Helgen, the
+prisoners are placed up to a knee deep in the cobbled road. The game's character controller
+pushes an actor out of the floor. The cell build does the same: it lifts an actor onto the
+highest walkable static surface above its feet, up to half the actor capsule. A floor higher than
+that is a roof or a bridge over the actor, so the actor stays where it is. An actor is never
+moved down.
+
 Each moving actor checks which trigger volumes it is in once per frame. The trigger event carries
 the actor when it is not the player, so scripts get that actor as `akActionRef`. When a move ends,
 the actor leaves any volumes it is still in.

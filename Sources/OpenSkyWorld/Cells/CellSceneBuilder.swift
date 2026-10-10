@@ -236,7 +236,7 @@ nonisolated public final class CellSceneBuilder {
         let instances = resolveInstances(refs: effective, counts: &counts)
         let actors = buildExteriorActors(
             cell: found, world: world, coordinate: coordinate, localized: pluginLocalized,
-            deltas: resolved.deltas,
+            deltas: resolved.deltas, collision: collision.staticCollision,
             parents: ActorEnableParents(
                 references: entriesByFormID(resolved.entries),
                 pool: parents

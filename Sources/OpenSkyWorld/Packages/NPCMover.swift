@@ -19,7 +19,7 @@ public struct NPCMover {
     public let capsule: PlayerCapsule
     /// Where the current cell build draws the actor, which the draw delta starts from.
     public internal(set) var authoredPlacement: PlacedReference.Placement
-    private let configuration: PlayerMovementConfiguration
+    let configuration: PlayerMovementConfiguration
     public var controller: WalkController
     public var path: NavigationPath
     public var waypointIndex = 0
@@ -105,7 +105,7 @@ public struct NPCMover {
         controller.update(
             frameTime: frameTime,
             yaw: yaw,
-            sampleGround: world.sampleGround,
+            sampleGround: ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround,
             collisionQuery: ignoresStatics ? { _ in [] } : world.collisionQuery
         ) { state in
             var plan = LocomotionStepPlan()

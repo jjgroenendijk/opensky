@@ -8,6 +8,7 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorldState
 import simd
@@ -79,6 +80,7 @@ nonisolated extension CellSceneBuilder {
         coordinate: CellCoordinate,
         localized: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:],
+        collision: StaticCollisionSet = .empty,
         parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
@@ -94,11 +96,11 @@ nonisolated extension CellSceneBuilder {
             guard owner == coordinate else { continue }
             byID[actor.formID.rawValue] = CollectedActor(actor: actor, isPersistent: true)
         }
-        let collected = relocating(
+        let collected = Self.standingOnFloors(relocating(
             byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
             into: .exterior(coordinate),
             deltas: deltas
-        )
+        ), collision: collision)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
@@ -111,13 +113,14 @@ nonisolated extension CellSceneBuilder {
         location: CellSceneLocation,
         localized _: Bool,
         deltas: [ReferenceKey: ReferenceStateDelta] = [:],
+        collision: StaticCollisionSet = .empty,
         parents: ActorEnableParents = ActorEnableParents()
     ) -> CellActorBuild {
         let started = DispatchTime.now().uptimeNanoseconds
         var malformed: [String] = []
-        let collected = relocating(
+        let collected = Self.standingOnFloors(relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
-        )
+        ), collision: collision)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
