@@ -27,15 +27,39 @@ nonisolated public struct AmbienceContext: Equatable, Sendable {
     }
 }
 
-/// Resolved ambient bed: the SNDR/SOUN FormIDs that should be the positional
-/// loop set for the current context. Order is preserved (record order in
-/// REGN.RDSA, then ASPC.SNAM before ASPC.RDAT borrow) so the director's diff
-/// stays deterministic.
+/// The region sounds for the current context, in record order (REGN.RDSA, then
+/// ASPC.SNAM before the ASPC.RDAT borrow), so the director's diff stays deterministic.
+/// Which of them loop and which play now and then is the director's call.
 nonisolated public struct AmbienceBed: Equatable, Sendable {
     public struct Entry: Equatable, Sendable {
         /// SNDR descriptor or SOUN legacy marker. The director resolves the
         /// SOUN -> SNDR hop through SoundRecordStore before playback.
         public let sound: FormID
+        /// The weather the entry plays in; empty plays in all weather.
+        public var weather: Region.SoundEntry.Conditions = []
+        /// The chance a one-shot plays at each roll; a loop ignores it.
+        public var chance: Float = 1
+
+        public init(sound: FormID, weather: Region.SoundEntry.Conditions = [], chance: Float = 1) {
+            self.sound = sound
+            self.weather = weather
+            self.chance = chance
+        }
+
+        init(_ entry: Region.SoundEntry) {
+            self.init(sound: entry.sound, weather: entry.conditions, chance: entry.chance)
+        }
+
+        /// No weather, such as indoors, lets every entry play.
+        public func plays(in weather: Weather.Precipitation) -> Bool {
+            switch weather {
+            case .none: true
+            case .pleasant: self.weather.isEmpty || self.weather.contains(.pleasant)
+            case .cloudy: self.weather.isEmpty || self.weather.contains(.cloudy)
+            case .rainy: self.weather.isEmpty || self.weather.contains(.rainy)
+            case .snow: self.weather.isEmpty || self.weather.contains(.snowy)
+            }
+        }
     }
 
     public let entries: [Entry]
@@ -75,20 +99,23 @@ nonisolated public struct AmbienceBed: Equatable, Sendable {
             let borrowed = aspc.borrowedRegion,
             let region = weatherStore?.region(borrowed)
         {
-            entries.append(contentsOf: region.soundList.map { Entry(sound: $0.sound) })
+            entries.append(contentsOf: region.soundList.map(Entry.init))
         }
         return AmbienceBed(entries: entries)
     }
 
+    /// A region whose sound area has the override flag replaces the others, and the
+    /// highest priority override wins. [WARNING] Inferred from the Creation Kit's
+    /// region editor, not from an open spec: docs/engine/world-sfx.md#region-sounds.
     private static func resolveExterior(
         regions: [FormID],
         weatherStore: WeatherStore?
     ) -> AmbienceBed {
-        var entries: [Entry] = []
-        for regionID in regions {
-            guard let region = weatherStore?.region(regionID) else { continue }
-            entries.append(contentsOf: region.soundList.map { Entry(sound: $0.sound) })
-        }
-        return AmbienceBed(entries: entries)
+        let withSounds = regions.compactMap { weatherStore?.region($0) }
+            .filter { !$0.soundList.isEmpty }
+        let overriding = withSounds.filter(\.soundOverride)
+            .max { ($0.soundPriority ?? 0) < ($1.soundPriority ?? 0) }
+        let chosen = overriding.map { [$0] } ?? withSounds
+        return AmbienceBed(entries: chosen.flatMap { $0.soundList.map(Entry.init) })
     }
 }

@@ -25,8 +25,13 @@ private final class FakeAudioWorld: AudioWorld {
         nil
     }
 
+    func playerConditionsPass(_: [Condition]) -> Bool {
+        true
+    }
+
     func installAudio(
         engine _: WorldAudioEngine,
+        sounds _: WorldAudioSoundDirector,
         music _: WorldMusicDirector,
         footsteps _: WorldAudioFootstepDirector
     ) {}

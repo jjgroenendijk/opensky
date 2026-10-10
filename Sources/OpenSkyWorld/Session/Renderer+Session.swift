@@ -132,6 +132,11 @@ extension Renderer {
         _modify { yield &session.worldAudio }
     }
 
+    public var soundDirector: WorldAudioSoundDirector? {
+        get { session.soundDirector }
+        _modify { yield &session.soundDirector }
+    }
+
     public var musicDirector: WorldMusicDirector? {
         get { session.musicDirector }
         _modify { yield &session.musicDirector }

@@ -34,6 +34,39 @@ struct AmbienceCatalogTests {
         #expect(bed.entries.map(\.sound) == [FormID(0xAAA), FormID(0xAAB), FormID(0xBBA)])
     }
 
+    @Test func anOverridingRegionReplacesTheOthers() {
+        let weather = makeWeatherStore(regions: [
+            RegionFixture(id: 0x100, sounds: [SoundFixture(sound: 0xAAA, flags: 0, chance: 1)]),
+            RegionFixture(
+                id: 0x101, sounds: [SoundFixture(sound: 0xBBB, flags: 0, chance: 1)],
+                priority: 40, overrides: true
+            ),
+            RegionFixture(
+                id: 0x102, sounds: [SoundFixture(sound: 0xCCC, flags: 0, chance: 1)],
+                priority: 60, overrides: true
+            )
+        ])
+        let bed = AmbienceBed.resolve(
+            context: AmbienceContext(
+                regions: [FormID(0x100), FormID(0x101), FormID(0x102)],
+                acousticSpace: nil,
+                isInterior: false
+            ),
+            weatherStore: weather,
+            aspcStore: nil
+        )
+        #expect(bed.entries.map(\.sound) == [FormID(0xCCC)])
+    }
+
+    @Test func entriesKeepTheirWeatherAndChance() {
+        let snowy = AmbienceBed.Entry(sound: FormID(1), weather: [.snowy], chance: 0.1)
+        let anyWeather = AmbienceBed.Entry(sound: FormID(2))
+        #expect(snowy.plays(in: .snow))
+        #expect(!snowy.plays(in: .pleasant))
+        #expect(snowy.plays(in: .none))
+        #expect(anyWeather.plays(in: .rainy))
+    }
+
     @Test func exteriorEmptyWhenNoRegions() {
         let bed = AmbienceBed.resolve(
             context: AmbienceContext.empty,
@@ -114,6 +147,8 @@ struct AmbienceCatalogTests {
     struct RegionFixture {
         let id: UInt32
         let sounds: [SoundFixture]
+        var priority: UInt8 = 1
+        var overrides = false
     }
 
     /// Synthetic RDSA entry: SNDR/SOUN FormID, weather-state flags, weight.
@@ -147,7 +182,7 @@ struct AmbienceCatalogTests {
     private func regionFields(_ region: RegionFixture) -> Data {
         var soundHeader = Data()
         soundHeader.appendUInt32(7) // type: sound
-        soundHeader.append(contentsOf: [0x00, 1]) // flags, priority
+        soundHeader.append(contentsOf: [region.overrides ? 0x01 : 0x00, region.priority])
         soundHeader.appendUInt16(0)
 
         var rdsa = Data()

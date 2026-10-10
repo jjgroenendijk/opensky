@@ -60,30 +60,50 @@ Cell streaming sends an ambience context whenever it changes:
 
 The director turns the context into a fixed, ordered list of `SNDR` or `SOUN` FormIDs:
 
-- exterior: the `RDSA` entries of each region's sound area (`RDAT` type 7);
+- exterior: the `RDSA` entries of each region's sound area (`RDAT` type 7). When a sound area
+  has the override flag (`RDAT` flags bit 0), only the overriding region with the highest
+  `RDAT` priority is used;
 - interior: the acoustic space's `SNAM`, plus the sound area of the region it borrows through
   its own `RDAT` ([acoustic space](/formats/acoustic-space.md)).
 
 The new bed is compared with the old one, and only the changes stop or start sources. A scene
 swap sends the context again, so an interior entered twice still refreshes.
 
-## Bed lifetime
+## Region sounds
 
-A bed is continuous, so every bed source loops. At the end of the file, its stream rewinds to the
-first packet instead of finishing. Without this, a bed would play once and stay silent until the
-cell changed.
+Each `RDSA` entry holds a sound, a set of weather flags, and a chance
+([region records](/formats/weather.md#regn)). The sound's `SNDR` decides how the entry plays:
+
+- `LNAM` asks for a loop or an envelope: the entry is a loop. It plays without a break while it
+  may play. The stream rewinds at the end of the file instead of finishing.
+- Any other `LNAM`, or none: the entry is a one-shot. Every 1 to 5 seconds the director rolls.
+  It checks the one-shots in record order, and the first whose chance hits plays once.
+
+An entry may play when the current weather is in its weather flags and its `SNDR` conditions
+pass with the player as subject. No flags means all weather. Indoors there is no weather, so
+every entry may play. Each roll checks the loops again, so a weather change starts or stops a
+loop within a few seconds.
+
+Example: the Helgen road region has a wind loop and a gust with chance 0.07. The wind plays the
+whole time. The gust plays about once a minute, not as a second loop.
+
+[WARNING] No open source gives Skyrim's roll interval or the override rule. The interval is
+Morrowind's, from OpenMW's fallback settings (1.0 to 5.0 seconds). The override rule follows the
+Creation Kit region editor, which shows "Override" and "Priority" for each area.
+
+## Bed lifetime
 
 The director keeps two things:
 
 - The wanted bed: what the last context resolved to, playing or not. A new context is compared
   with it, and turning ambience on again starts it.
-- The playing sources: the IDs of the bed sources actually started. So stopping the bed stops
-  only these, and a one-shot sound keeps playing.
+- The playing sources: the IDs of the loops and one-shots it started. So stopping the bed stops
+  only these, and an activation sound keeps playing.
 
 A context change and the ambience toggle take the same path: stop what plays, then start the
 wanted bed if ambience is on and the engine runs. So turning ambience off stops the bed at once.
 Turning it on starts the last bed without waiting for a cell change. A context that arrives while
-ambience is off is kept, not lost.
+ambience is off is kept, not lost. A loop whose file arrives after it was stopped does not start.
 
 The readout comes from the live sources, not the wanted bed. Sources the engine already stopped
 are removed first. So the readout never claims a bed plays when it does not.
@@ -98,6 +118,8 @@ xEdit allows it.
 The resolved descriptor also gives the category. In Skyrim, the ambience categories are children
 of `AudioCategorySFX`, so vanilla effects and ambience both use the Effects volume. The same
 resolver handles Footsteps, Voice, and Music without fixed FormIDs.
+
+A descriptor with several `ANAM` tracks plays one of them, picked at random each time.
 
 ## Ambience has no position
 
