@@ -148,9 +148,9 @@ World > Audio > SFX & Ambience:
 - Stop ambience: stops the current bed. The next cell change starts it again.
 - Readout: the last sound played, the last error, and the current bed's FormIDs, or "none".
 
-Reset all on the Audio destination clears this section and the Output section. Nothing sounds
-until World > Audio > Output > Enabled is on.
+Reset all on the Audio destination clears this section and the Output section. Sound starts with
+the game. World > Audio > Output > Enabled and the Sound setting turn it off and on.
 
-A manual check: turn on audio, walk through a Whiterun exterior cell (its regions have beds),
+A manual check: walk through a Whiterun exterior cell (its regions have beds),
 press F on a door (open sound), and enter an interior (a bed from `XCAS`). Turning off SFX must
 mute the door sounds but not the bed.

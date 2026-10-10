@@ -166,7 +166,8 @@ World > Audio > Music:
 - Stop music, for comparing with silence.
 - Readout: the state, the playlist and file, and an error line when there is one.
 
-Nothing plays until World > Audio > Output > Enabled is on.
+Music starts with the game. World > Audio > Output > Enabled and the Sound setting turn all audio
+off and on.
 
 A manual check: walk an exterior cell and hear the exploration playlist. Enter a city and hear the
 crossfade to its town playlist. Enter an interior and check the state readout.
