@@ -23,7 +23,11 @@ nonisolated public enum PlayerCore {
     /// A name the graph does not declare gets a nil value, so a spelling
     /// mismatch shows on the panel.
     public static func variables(of graph: BehaviorGraphInstance?) -> [LocomotionVariableSnapshot] {
-        let names = LocomotionGraphNames.variables + [LocomotionGraphNames.isFirstPerson]
+        let names = LocomotionGraphNames.variables + [
+            LocomotionGraphNames.isFirstPerson,
+            LocomotionGraphNames.firstPersonInt,
+            LocomotionGraphNames.firstPersonReal
+        ]
         return names.map { name in
             LocomotionVariableSnapshot(
                 name: name, value: graph?.variable(named: name).map(describe)

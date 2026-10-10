@@ -5,6 +5,8 @@ import CoreGraphics
 import Foundation
 import Metal
 import MetalKit
+import OpenSkyBehavior
+import OpenSkyCombat
 @testable import OpenSkyPhysics
 @testable import OpenSkyRendering
 @testable import OpenSkyWorld
@@ -29,6 +31,25 @@ extension FirstPersonRenderRealDataTests {
             yaw: 0,
             dt: WalkController.fixedTimeStep
         ))
+    }
+
+    /// `iRightHandType` for fists and for a one-handed sword.
+    static let fistsHandType: Int32 = 0
+    static let swordHandType: Int32 = 1
+
+    /// Draws the weapon the way the melee runtime does, then steps two seconds so the
+    /// equip clip ends in the drawn idle.
+    static func drawWeapon(
+        _ assembled: PlayerBodyFixture.Assembled,
+        feet: SIMD3<Float>,
+        handType: Int32
+    ) {
+        assembled.bridge.write(.int(handType), to: CombatGraphNames.rightHandType)
+        assembled.bridge.raise(CombatGraphNames.weaponDraw)
+        assembled.bridge.raise(CombatGraphNames.weapEquip)
+        for _ in 0 ..< 240 {
+            drive(assembled, feet: feet, input: CameraInput(dt: 1.0 / 120))
+        }
     }
 
     @MainActor

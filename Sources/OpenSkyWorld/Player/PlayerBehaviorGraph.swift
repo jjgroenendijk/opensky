@@ -74,11 +74,13 @@ nonisolated public struct PlayerBehaviorGraph {
         else {
             throw PlayerBehaviorGraphError.noSkeleton(skeletonPath)
         }
+        let clipPaths = InstallBehaviorClipSource.animationPaths(
+            in: fileSystem,
+            folder: InstallBehaviorClipSource.animationFolder(forBehaviorPath: behaviorPath)
+        )
         let clips = clipWorker.map {
-            InstallBehaviorClipSource(
-                paths: InstallBehaviorClipSource.animationPaths(in: fileSystem), worker: $0
-            )
-        } ?? InstallBehaviorClipSource(fileSystem: fileSystem)
+            InstallBehaviorClipSource(paths: clipPaths, worker: $0)
+        } ?? InstallBehaviorClipSource(fileSystem: fileSystem, paths: clipPaths)
         let references = InstallBehaviorReferenceSource(
             fileSystem: fileSystem, rootPath: behaviorPath
         )

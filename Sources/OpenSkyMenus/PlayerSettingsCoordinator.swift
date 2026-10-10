@@ -8,6 +8,7 @@ import OpenSkyGameData
 
 /// What the settings change in the running game. The app answers it.
 public protocol PlayerSettingsWorld: AnyObject {
+    func applyAudioEnabled(_ enabled: Bool)
     func applyMasterVolume(_ volume: Float)
     func applyCategoryVolume(_ volume: Float, soundCategoryEditorID: String)
     func applyLook(sensitivity: Float, inverted: Bool)
@@ -109,6 +110,8 @@ public final class PlayerSettingsCoordinator {
         guard let world else { return }
         applyCount += 1
         switch id {
+        case .audioEnabled:
+            world.applyAudioEnabled(store.bool(.audioEnabled))
         case .masterVolume:
             world.applyMasterVolume(Float(store.value(.masterVolume)))
         case .lookSensitivity, .invertLook:

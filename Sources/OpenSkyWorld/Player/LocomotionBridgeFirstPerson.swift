@@ -1,6 +1,6 @@
 // The bridge's first-person half: a second graph over `_1stperson`, stepped with the
 // same inputs through the fan-out in `write` and `raise`. The instances share no state
-// (`LocomotionBridgeFirstPersonTests`). Only `IsFirstPerson` differs, seeded at attach
+// (`LocomotionBridgeFirstPersonTests`). Only the perspective variables differ, seeded at attach
 // and reset (docs/engine/behavior-state-machines.md, "Transition conditions").
 
 import OpenSkyBehavior
@@ -10,10 +10,17 @@ nonisolated extension LocomotionBridge {
     /// Tells each attached graph which perspective it is. Idempotent, so
     /// calling it from both `init` and `reset` costs one write each.
     public func seedPerspectiveVariables() {
-        _ = graph?.setVariable(.bool(false), named: LocomotionGraphNames.isFirstPerson)
-        _ = firstPersonGraph?.setVariable(
-            .bool(true), named: LocomotionGraphNames.isFirstPerson
-        )
+        for (instance, isFirstPerson) in [(graph, false), (firstPersonGraph, true)] {
+            _ = instance?.setVariable(
+                .bool(isFirstPerson), named: LocomotionGraphNames.isFirstPerson
+            )
+            _ = instance?.setVariable(
+                .int(isFirstPerson ? 1 : 0), named: LocomotionGraphNames.firstPersonInt
+            )
+            _ = instance?.setVariable(
+                .real(isFirstPerson ? 1 : 0), named: LocomotionGraphNames.firstPersonReal
+            )
+        }
     }
 
     /// One variable write, mirrored onto the first-person graph.

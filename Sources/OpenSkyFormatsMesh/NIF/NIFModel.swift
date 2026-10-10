@@ -164,7 +164,7 @@ nonisolated extension NIFFile {
                 slotIndex = materials.count - 1
                 slotIndexes[key] = slotIndex
             }
-            meshes.append(Mesh(
+            try meshes.append(Mesh(
                 name: shape.object.name,
                 transform: parent * shape.object.localTransform,
                 positions: geometry.positions,
@@ -172,7 +172,7 @@ nonisolated extension NIFFile {
                 tangents: geometry.tangents,
                 bitangents: geometry.bitangents,
                 uvs: geometry.uvs,
-                colors: geometry.colors,
+                colors: opacityColours(geometry.colors, shape: shape),
                 indices: geometry.indices,
                 materialSlot: slotIndex,
                 skinning: geometry.skinning
@@ -284,6 +284,17 @@ nonisolated extension NIFFile.Flattener {
     /// The static path has no additive blend, no texture-less effect look, and no
     /// refraction, so those shapes are skipped. Drawn anyway, an effect shows as a flat
     /// card and a heat-haze dome shows its normal map as colour.
+    /// A tree-animated shape's vertex alpha is wind weight, so it must not cut the branches.
+    func opacityColours(_ colours: [SIMD4<Float>], shape: NIFTriShape) throws -> [SIMD4<Float>] {
+        guard shape.shaderPropertyRef >= 0 else { return colours }
+        let block = try block(at: Int(shape.shaderPropertyRef))
+        guard
+            block.typeName == "BSLightingShaderProperty",
+            try NIFLightingShaderProperty(data: block.data, header: file.header).isTreeAnimated
+        else { return colours }
+        return colours.map { SIMD4($0.x, $0.y, $0.z, 1) }
+    }
+
     func isUndrawableShape(_ shape: NIFTriShape) throws -> Bool {
         guard shape.shaderPropertyRef >= 0 else { return false }
         let block = try block(at: Int(shape.shaderPropertyRef))

@@ -26,10 +26,18 @@ Root motion from the first-person graph is dropped. The third-person graph is th
 movement ([walk mode](/engine/walk-mode.md)). A second graph moving the player would double every
 step.
 
-`IsFirstPerson` is the one input that differs. It is false on the third-person graph and true on the
-first-person one, set at attach and again on every reset. The vanilla files declare it, and
-transition conditions read it. Every other name goes to both graphs. A miss on either side is
-counted separately, because the first-person files may spell names their own way.
+The perspective is the one input that differs. Both vanilla files declare it three times:
+`IsFirstPerson` (bool), `i1stPerson` (int) and `fIsFirstPerson` (float). All three are 0 on the
+third-person graph and 1 on the first-person one, set at attach and again on every reset.
+Transition conditions read them. For example, the first-person `1hm_behavior.hkx` reaches its drawn
+weapon idle only through `( iWantBlock == 0 ) && ( i1stPerson == 1 )`. Every other name goes to both
+graphs. A miss on either side is counted separately, because the first-person files may spell names
+their own way.
+
+The first-person graph plays the clips in `_1stperson\animations\`. They reuse the third-person file
+names, so the clip lookup must stay in that folder ([behavior clips](/engine/behavior-clips.md)).
+With the weapon sheathed, the first-person idle holds the hands below the view, so nothing of the arms
+shows. Drawing the weapon or the fists lifts them into the lower corners, as in the game.
 
 ## Anchoring the rig
 
@@ -79,6 +87,11 @@ Two other ways were rejected:
   full-screen depth clear every frame.
 - Turning off the depth test breaks the arms hiding their own parts, which is the one thing they
   need.
+
+The arms are never culled. Their mesh bounds are the bind pose, below the eye, and a drawn weapon's
+clip lifts the hands out of them. The arms are always beside the eye, so a cull test would save
+nothing. For the same reason, texture streaming counts their textures as seen from distance 0, so they
+load at full detail.
 
 ## Field of view
 

@@ -26,6 +26,12 @@ that window.
 - Sampling goes through the spline animation decoder, behind a clip interface, so the runtime does
   not care who loads the bytes.
 
+A graph finds a clip by its file name, in the `animations` folder beside the graph's `behaviors`
+folder. The first-person set reuses the third-person names, such as `mt_idle.hkx`, under
+`_1stperson\animations\`. So a first-person graph that searched the third-person folder would play
+third-person clips: the hands hang at the hips, and the `Camera1st` track gets the third-person
+camera, 56.5 units behind the head.
+
 ## Clip triggers and annotations
 
 A clip tells the rest of the graph where it is with events. They come from two places.

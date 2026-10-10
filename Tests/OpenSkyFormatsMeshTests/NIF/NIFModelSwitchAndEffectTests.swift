@@ -132,10 +132,56 @@ struct NIFModelSwitchAndEffectTests {
         #expect(model.skippedShapeCount == 1)
     }
 
+    /// Tree branches carry wind weight in vertex alpha; it must not cut them away.
+    @Test func treeAnimatedShapeIgnoresVertexAlpha() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
+            .init("BSTriShape", Self.colouredShape(shaderPropertyRef: 3, alpha: 51)),
+            .init("BSTriShape", Self.colouredShape(shaderPropertyRef: 4, alpha: 51)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(
+                    shaderFlags1: 0x8040_0308, shaderFlags2: 0x2200_8031
+                )
+            ),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(shaderFlags1: 0x8040_0308)
+            )
+        ]))
+        let meshes = try file.model().meshes
+        #expect(meshes.count == 2)
+        #expect(meshes[0].colors.allSatisfy { $0.w == 1 })
+        #expect(meshes[1].colors.allSatisfy { abs($0.w - 0.2) < 0.01 })
+    }
+
     @Test func litShapeHasNoEffectShading() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape())
         ]))
         #expect(try file.model().materials.first?.effect == nil)
+    }
+}
+
+extension NIFModelSwitchAndEffectTests {
+    /// The static triangle with an RGBA vertex colour after the tangent.
+    static func colouredShape(shaderPropertyRef: Int32, alpha: UInt8) -> Data {
+        var record = Data()
+        record.appendFloat32(1)
+        record.appendFloat32(2)
+        record.appendFloat32(3)
+        record.appendFloat32(0)
+        record.appendFloat16(0)
+        record.appendFloat16(0)
+        record.append(contentsOf: [128, 128, 255, 128])
+        record.append(contentsOf: [255, 128, 128, 128])
+        record.append(contentsOf: [255, 255, 255, alpha])
+        return NIFFixture.bsTriShape(
+            shaderPropertyRef: shaderPropertyRef,
+            attributes: 0x3B,
+            strideDwords: 8,
+            vertexRecords: Array(repeating: record, count: 3),
+            triangles: [0, 1, 2]
+        )
     }
 }

@@ -1,5 +1,5 @@
-// Offscreen render of the first-person arms on the real install. The arms draw
-// with a weapon in idle, walk, and sprint, and each state differs. First person
+// Offscreen render of the first-person arms on the real install. With the weapon
+// drawn the arms show in idle, walk, and sprint, and each state differs. First person
 // draws the arms and not the body, third person the reverse, and switching back
 // gives the same frame byte for byte. Arms with a weapon differ from arms
 // without one. Captures stay in gitignored `.logs/`.
@@ -52,11 +52,16 @@ struct FirstPersonRenderRealDataTests {
         try renderer.setPlayerFirstPersonRig(assembled.arms)
         Self.drive(assembled, feet: feet, input: CameraInput(dt: 1.0 / 120))
         Self.place(assembled, renderer: renderer, feet: feet)
+        // Sheathed, the first-person idle keeps the hands below the view, as in the game.
+        let sheathed = try Self.changedPixels(empty, Self.frame(renderer))
+        report.append("first person sheathed vs no arms: \(sheathed) changed pixels")
 
+        Self.drawWeapon(assembled, feet: feet, handType: Self.swordHandType)
+        Self.place(assembled, renderer: renderer, feet: feet)
         let idle = try Self.frame(renderer)
         let armPixels = Self.changedPixels(empty, idle)
-        report.append("first person idle vs no arms: \(armPixels) changed pixels")
-        #expect(armPixels > 0, "the arms drew nothing in first person")
+        report.append("first person drawn vs no arms: \(armPixels) changed pixels")
+        #expect(armPixels > 0, "the arms drew nothing with the weapon drawn")
 
         try Self.assertStatesDiffer(
             assembled,
@@ -177,8 +182,8 @@ struct FirstPersonRenderRealDataTests {
         renderer.setMovementMode(.walk)
     }
 
-    /// Equipping reaches both rigs: two rigs assembled from the same install at
-    /// the same pose, one holding a weapon and one not, produce different arms.
+    /// Equipping reaches both rigs: two rigs assembled from the same install, one
+    /// drawing a sword and one its fists, produce different arms.
     ///
     /// Both sides are freshly assembled and stepped identically, so the only
     /// difference between the two frames is the equipped set.
@@ -191,11 +196,14 @@ struct FirstPersonRenderRealDataTests {
         report: inout [String]
     ) throws {
         var frames: [[UInt8]] = []
-        for equipped in [[Self.ironCuirass, Self.ironSword], [Self.ironCuirass]] {
+        for (equipped, handType) in [
+            ([Self.ironCuirass, Self.ironSword], Self.swordHandType),
+            ([Self.ironCuirass], Self.fistsHandType)
+        ] {
             let fresh = try PlayerBodyFixture.assemble(
                 device: device, root: root, equipped: equipped
             )
-            drive(fresh, feet: feet, input: CameraInput(dt: 1.0 / 120))
+            drawWeapon(fresh, feet: feet, handType: handType)
             try renderer.setPlayerBody(fresh.body)
             try renderer.setPlayerFirstPersonRig(fresh.arms)
             place(fresh, renderer: renderer, feet: feet)

@@ -61,6 +61,10 @@ final class MenuWorldAdapter {
 }
 
 extension MenuWorldAdapter: PlayerSettingsWorld {
+    func applyAudioEnabled(_ enabled: Bool) {
+        game.audio.audioEnabled = enabled
+    }
+
     func applyMasterVolume(_ volume: Float) {
         game.audio.audioMasterVolume = volume
     }

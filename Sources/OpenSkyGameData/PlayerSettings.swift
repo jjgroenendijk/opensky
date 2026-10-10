@@ -122,6 +122,7 @@ nonisolated extension PlayerSettingID {
     public static let dialogueSubtitles = Self("display.dialogueSubtitles")
     public static let generalSubtitles = Self("display.generalSubtitles")
     public static let masterVolume = Self("audio.master")
+    public static let audioEnabled = Self("opensky.sound")
     public static let startAtTitleScreen = Self("opensky.startAtTitleScreen")
 
     /// One volume per menu-flagged `SNCT`, keyed by its editor ID.
