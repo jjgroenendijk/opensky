@@ -1,7 +1,7 @@
 // World SFX and ambience. One-shots play on use-key events, routed through SNDR.GNAM to
-// the SNCT chain. The ambience loop changes with the center cell, through its category's
-// submix. A missing engine, store or file means silence, not a crash. Papyrus subscribes
-// to the same `onInteraction` seam beside this.
+// the SNCT chain. The region sounds change with the center cell, through their category's
+// submix (WorldAudioSoundDirector+Region.swift). A missing engine, store or file means
+// silence, not a crash. Papyrus subscribes to the same `onInteraction` seam beside this.
 
 import Foundation
 import OpenSkyAudio
@@ -20,7 +20,8 @@ private struct ResolvedSoundFile {
 /// One sound waiting for its file: where it plays, and whether it is still wanted.
 private struct PendingSound {
     let resolved: ResolvedSoundFile
-    let position: SIMD3<Float>
+    /// Nil plays the sound without a position, as region sounds do.
+    let position: SIMD3<Float>?
     let kind: String
     let loops: Bool
     let adopt: ((Int) -> Bool)?
@@ -33,14 +34,24 @@ public final class WorldAudioSoundDirector {
         category: "WorldAudioDirector"
     )
 
-    private let engine: WorldAudioEngine
-    private let soundStore: SoundRecordStore?
-    private let weatherStore: WeatherStore?
+    let engine: WorldAudioEngine
+    let soundStore: SoundRecordStore?
+    let weatherStore: WeatherStore?
     private let aspcStore: AcousticSpaceStore?
     /// Sound files by canonical path, loaded off the main actor in production.
-    private let assets: AudioAssetLoader
+    let assets: AudioAssetLoader
     /// Bumped on each bed change, so a bed file that arrives late for an old bed is dropped.
-    private var ambienceGeneration = 0
+    var ambienceGeneration = 0
+    /// Which region loops play and when a one-shot rolls; also picks each sound's file.
+    var regionSounds = RegionSoundScheduler()
+    /// Source ids of the region loops that play, by sound.
+    var ambienceLoopSources: [FormID: Int] = [:]
+    /// Source ids of the region one-shots that may still play.
+    var ambienceOneShotSources: [Int] = []
+    /// The weather the region sounds follow; no weather lets every entry play.
+    public var currentWeather: () -> Weather.Precipitation = { .none }
+    /// Whether a sound's CTDA conditions pass for the player. Unwired, they pass.
+    public var soundConditionsPass: ([Condition]) -> Bool = { _ in true }
     /// The request each interaction loop is for. A loop that arrives after its door
     /// closed finds another token, or none, and does not start.
     private var interactionLoopTokens: [FormID: Int] = [:]
@@ -59,14 +70,10 @@ public final class WorldAudioSoundDirector {
         }
     }
 
-    /// Active ambience source ids owned by this director. Tracked so a context
-    /// change can retire exactly the previous bed without touching unrelated
-    /// one-shot SFX the engine is also playing.
-    private var ambienceSourceIDs: [Int] = []
     /// Bed the last context resolved to, whether or not it is playing. Diffed
     /// against a fresh context to skip no-op restarts, and re-used as the bed
     /// to start when ambience is switched back on.
-    private var desiredBed = AmbienceBed.empty
+    var desiredBed = AmbienceBed.empty
     /// Authored motion loops by placed reference. A close or cancelled
     /// animation boundary retires exactly its loop without touching ambience
     /// or unrelated effects.
@@ -203,14 +210,6 @@ public final class WorldAudioSoundDirector {
         engine.applyReverb(setting)
     }
 
-    /// Single path from wanted state to playing state, shared by the context
-    /// change and the panel toggle so the two cannot drift apart.
-    private func applyAmbienceState() {
-        retireAmbience()
-        guard ambienceEnabled, engine.isRunning else { return }
-        startAmbience(bed: desiredBed)
-    }
-
     // MARK: - Panel entry points (Phase 3 verification surface)
 
     /// Forces a one-shot SFX for any resolved SNDR FormID. Used by the World >
@@ -223,25 +222,13 @@ public final class WorldAudioSoundDirector {
         playResolved(id: formID, at: position, kind: "SFX")
     }
 
-    /// Ambience bed the panel readout shows. Reports "none" unless at least one
-    /// of this director's ambience sources is still alive in the engine, so the
-    /// readout cannot claim a bed the engine already retired (FIFO eviction,
-    /// cell purge, or a stream that ended).
-    public var currentAmbienceDescription: String {
-        pruneRetiredAmbienceSources()
-        guard !ambienceSourceIDs.isEmpty else { return "none" }
-        return desiredBed.entries
-            .map(\.sound.description)
-            .joined(separator: ", ")
-    }
-
     // MARK: - Internals
 
     /// Starts the sound when its file is loaded. `adopt` gets the new source's id and
     /// returns false for a sound no longer wanted, which then stops at once.
-    private func playResolved(
+    func playResolved(
         id: FormID,
-        at position: SIMD3<Float>,
+        at position: SIMD3<Float>?,
         kind: String,
         loops: Bool = false,
         adopt: ((Int) -> Bool)? = nil
@@ -268,21 +255,6 @@ public final class WorldAudioSoundDirector {
         }
         engine.stopSource(id: sourceID)
     }
-
-    private func retireAmbience() {
-        ambienceGeneration += 1
-        for id in ambienceSourceIDs {
-            engine.stopSource(id: id)
-        }
-        ambienceSourceIDs.removeAll()
-    }
-
-    /// Forgets ids the engine already stopped on its own, so the tracked set
-    /// only ever names sources that are actually playing.
-    private func pruneRetiredAmbienceSources() {
-        let live = Set(engine.sources.map(\.id))
-        ambienceSourceIDs.removeAll { !live.contains($0) }
-    }
 }
 
 /// Starting a sound once its file arrives.
@@ -298,11 +270,11 @@ extension WorldAudioSoundDirector {
             var request = AudioPlayRequest(
                 name: resolved.path,
                 category: resolved.category,
-                worldPosition: pending.position,
+                worldPosition: pending.position ?? .zero,
                 loops: pending.loops
             )
             request.outputModel = profile
-            let routing = AudioRoutingDecision.routing(
+            let routing = pending.position == nil ? .nonPositional : AudioRoutingDecision.routing(
                 profile: profile,
                 channelCount: profile == nil ? asset.channelCount : nil
             )
@@ -326,40 +298,7 @@ extension WorldAudioSoundDirector {
         }
     }
 
-    private func startAmbience(bed: AmbienceBed) {
-        let generation = ambienceGeneration
-        for entry in bed.entries {
-            guard let resolved = resolveSound(id: entry.sound) else { continue }
-            assets.request(resolved.path) { [weak self] result in
-                self?.startAmbienceEntry(result, resolved: resolved, generation: generation)
-            }
-        }
-    }
-
-    /// A bed is continuous: the streamer rewinds at end of file instead of letting
-    /// the engine retire it.
-    private func startAmbienceEntry(
-        _ result: Result<AudioFileAsset, AssetLoadFailure>,
-        resolved: ResolvedSoundFile,
-        generation: Int
-    ) {
-        guard generation == ambienceGeneration, ambienceEnabled, engine.isRunning else { return }
-        do {
-            let sourceID = try engine.playNonPositional(
-                asset: result.get(),
-                request: .nonPositional(
-                    name: resolved.path, category: resolved.category, loops: true
-                )
-            )
-            ambienceSourceIDs.append(sourceID)
-        } catch {
-            let reason = String(describing: error)
-            Self.logger.warning(
-                "[WARNING] ambience start failed: \(reason, privacy: .public)"
-            )
-        }
-    }
-
+    /// A descriptor with several files plays one of them at random, as the game does.
     private func resolveSound(id: FormID) -> ResolvedSoundFile? {
         guard let soundStore else { return nil }
         let resolved: ResolvedSound
@@ -368,7 +307,8 @@ extension WorldAudioSoundDirector {
         } catch {
             return nil
         }
-        guard let path = resolved.filePaths.first else { return nil }
+        guard !resolved.filePaths.isEmpty else { return nil }
+        let path = resolved.filePaths[regionSounds.pick(count: resolved.filePaths.count)]
         return ResolvedSoundFile(
             path: path,
             category: resolved.audioCategory ?? .effects,

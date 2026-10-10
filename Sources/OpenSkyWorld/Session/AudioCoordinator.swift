@@ -23,9 +23,13 @@ public protocol AudioWorld: AnyObject {
     var audioAnimationTime: Float { get }
     /// The lip-sync driver of the actor the dialogue menu faces.
     func lipSyncTarget() -> LipSyncPlayback?
-    /// The renderer's audio tick drives the listener, the playlist, and footsteps.
+    /// Whether a run of conditions passes with the player as subject.
+    func playerConditionsPass(_ conditions: [Condition]) -> Bool
+    /// The renderer's audio tick drives the listener, the playlist, region sounds,
+    /// and footsteps.
     func installAudio(
         engine: WorldAudioEngine,
+        sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     )
@@ -149,6 +153,7 @@ public final class AudioCoordinator {
         if let records = (provider as? EffectDataProviding)?.effectRecords {
             director.wireEffectRecords(records)
         }
+        wireRegionSoundGates(director)
         soundDirector = director
         let music = WorldMusicDirector(
             engine: engine,
@@ -165,10 +170,24 @@ public final class AudioCoordinator {
         )
         footsteps.materialTypes = audioData?.materialTypes ?? .empty
         footstepDirector = footsteps
-        world?.installAudio(engine: engine, music: music, footsteps: footsteps)
+        world?.installAudio(engine: engine, sounds: director, music: music, footsteps: footsteps)
         // The body is usually assembled before audio is on, so do not wait for an equip change.
         if let armatures = world?.playerFeetArmatures {
             footsteps.updateFootstepSet(feetArmatures: armatures)
+        }
+    }
+}
+
+extension AudioCoordinator {
+    /// Region sounds follow the current weather and their `SNDR` conditions.
+    private func wireRegionSoundGates(_ director: WorldAudioSoundDirector) {
+        let weather = (world?.audioWorldData as? WeatherProviding)?.weatherSystem
+        director.currentWeather = { [weak weather] in
+            guard let weather, let id = weather.currentWeatherID else { return .none }
+            return weather.store.weather(id)?.data?.precipitation ?? .none
+        }
+        director.soundConditionsPass = { [weak world] conditions in
+            world?.playerConditionsPass(conditions) ?? true
         }
     }
 }

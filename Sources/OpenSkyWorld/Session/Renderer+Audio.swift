@@ -43,6 +43,7 @@ extension Renderer {
         // retirements: a track that reached its end is already gone from
         // `sources`, which is how the playlist knows to advance.
         defer { musicDirector?.tick(deltaTime: deltaTime) }
+        defer { soundDirector?.tickAmbience(deltaTime: deltaTime) }
         defer { routeFootstepEvents() }
         worldAudio.updateListener(
             worldPosition: freeFlyCamera.position,

@@ -74,13 +74,13 @@ public enum WorldAudioDirectorFixture {
         )
     }
 
-    /// Director wired to one region (`0x100`) whose sound area names sound
-    /// `0xAAA`, the shape every ambience case needs.
+    /// Director wired to one region (`0x100`) whose sound area names the looping
+    /// sound `0xAAA`, the shape every ambience case needs.
     public static func makeAmbienceDirector(engine: WorldAudioEngine) -> WorldAudioSoundDirector {
         makeDirector(
             engine: engine,
             soundStore: makeSoundStore(
-                soundID: 0xAAA, descriptorID: 0xBBB, tracks: ["ambient/cave.xwm"]
+                soundID: 0xAAA, descriptorID: 0xBBB, tracks: ["ambient/cave.xwm"], loops: true
             ),
             weatherStore: makeWeatherStore(regions: [
                 Region(id: 0x100, sounds: [Sound(sound: 0xAAA, flags: 0, chance: 1)])
@@ -126,10 +126,14 @@ public enum WorldAudioDirectorFixture {
         soundID: UInt32,
         descriptorID: UInt32,
         tracks: [String],
-        category: AudioCategory = .effects
+        category: AudioCategory = .effects,
+        loops: Bool = false
     ) -> SoundRecordStore {
         let categoryID: UInt32 = 0xCCC
         var descriptorFields = ESMFixture.field("GNAM", uint32(categoryID))
+        if loops {
+            descriptorFields += ESMFixture.field("LNAM", Data([0, 8, 0, 0])) // selector 8: loop
+        }
         for track in tracks {
             descriptorFields += ESMFixture.field("ANAM", ESMFixture.zstring(track))
         }

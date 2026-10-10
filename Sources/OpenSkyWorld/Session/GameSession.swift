@@ -52,6 +52,8 @@ public final class GameSession: RenderFrameDriver {
     /// World audio playback graph; nil until the app wires one (offscreen and
     /// CLI paths stay silent). Ticked by Renderer+Audio.swift.
     public var worldAudio: WorldAudioEngine?
+    /// Region sound director, ticked from the pause-aware audio hook. Nil until audio is on.
+    public var soundDirector: WorldAudioSoundDirector?
     /// Music director, ticked from the pause-aware audio hook. Nil until audio is on.
     public var musicDirector: WorldMusicDirector?
     /// Footstep director, fed from the pause-aware audio hook with the bridge's graph

@@ -18,7 +18,10 @@ public enum TransitionAudioFixture {
         let categoryID: UInt32 = 0xB00
         var bytes = Data()
         for descriptor in descriptors {
+            // Every descriptor loops, so the ambience beds play as loops. A door sound
+            // ignores it, because activation always plays once.
             let fields = ESMFixture.field("GNAM", uint32(categoryID))
+                + ESMFixture.field("LNAM", Data([0, 8, 0, 0]))
                 + ESMFixture.field("ANAM", ESMFixture.zstring(descriptor.track))
             bytes += ESMFixture.record("SNDR", formID: descriptor.id, data: fields)
         }

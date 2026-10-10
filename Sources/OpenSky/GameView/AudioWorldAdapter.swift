@@ -2,6 +2,7 @@
 // the streamer. The rules live in the coordinator (docs/engine/coordinators.md).
 
 import OpenSkyAudio
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyPhysics
@@ -78,12 +79,21 @@ extension AudioWorldAdapter: AudioWorld {
             .first { $0.actor == actor }
     }
 
+    func playerConditionsPass(_ conditions: [Condition]) -> Bool {
+        var context = game.runtimeState.conditionContext()
+        context.subject = .player
+        var evaluator = ConditionEvaluator(context: context)
+        return evaluator.evaluate(conditions).isTrue
+    }
+
     func installAudio(
         engine: WorldAudioEngine,
+        sounds: WorldAudioSoundDirector,
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
         game.renderer?.worldAudio = engine
+        game.renderer?.soundDirector = sounds
         game.renderer?.musicDirector = music
         game.renderer?.footstepDirector = footsteps
     }
