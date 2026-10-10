@@ -2,6 +2,7 @@
 // the streamer. The rules live in the coordinator (docs/engine/coordinators.md).
 
 import OpenSkyAudio
+import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData

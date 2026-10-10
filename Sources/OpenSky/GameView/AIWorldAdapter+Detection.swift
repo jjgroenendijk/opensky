@@ -3,12 +3,17 @@
 // values magic effects move, the action sound of a swing or a cast, and the
 // light the renderer shades the player with. See docs/engine/detection.md.
 
+import OpenSkyActors
+import OpenSkyCombat
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyRendering
 import simd
 
@@ -63,7 +68,7 @@ extension AIWorldAdapter {
         var loudest: Float = 0
         if let melee = game.combat.melee, melee.state.attackPhase != .idle {
             let level = melee.weapon.weapon
-                .flatMap { game.combat.items?.weapon($0)?.detectionSoundLevel }
+                .flatMap { game.combat.items?.weapon($0)?.details.detectionSoundLevel }
                 .flatMap(DetectionSoundLevel.init(rawValue:)) ?? .normal
             loudest = max(loudest, settings.actionSound(for: level))
         }
