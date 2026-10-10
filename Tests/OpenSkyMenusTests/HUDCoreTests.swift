@@ -29,15 +29,18 @@ struct HUDCoreTests {
     }
 
     @Test
-    func headingIsNormalizedDegrees() {
-        #expect(HUDCore.headingDegrees(-.pi / 2) == 270)
-        #expect(HUDCore.headingDegrees(0) == 0)
+    func headingCountsClockwiseFromNorth() {
+        #expect(HUDCore.headingDegrees(.pi / 2) == 0)
+        #expect(HUDCore.headingDegrees(0) == 90)
+        #expect(HUDCore.headingDegrees(-.pi / 2) == 180)
+        #expect(HUDCore.headingDegrees(.pi) == 270)
     }
 
     @Test
     func markerPointsFromCameraToTarget() throws {
         let marker = try #require(HUDCore.markers(for: Self.target(), cameraPosition: .zero).first)
-        #expect(abs(marker.headingDegrees - 90) < 0.001)
+        // North may round to just under 360 rather than to 0.
+        #expect(min(marker.headingDegrees, 360 - marker.headingDegrees) < 0.001)
         #expect(marker.kind == .location)
     }
 

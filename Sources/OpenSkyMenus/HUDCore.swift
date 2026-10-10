@@ -47,8 +47,10 @@ nonisolated public enum HUDCore {
         return "\(interaction.actionLabel) \(interaction.name)"
     }
 
+    /// Yaw counts counter-clockwise from east (+X); a compass heading counts
+    /// clockwise from north (+Y).
     public static func headingDegrees(_ yawRadians: Float) -> Float {
-        HUDMovieBridge.normalizedDegrees(yawRadians * 180 / .pi)
+        HUDMovieBridge.normalizedDegrees(90 - yawRadians * 180 / .pi)
     }
 
     public static func markers(
