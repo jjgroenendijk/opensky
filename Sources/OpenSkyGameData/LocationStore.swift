@@ -179,6 +179,18 @@ nonisolated public struct LocationStore: Sendable {
         return resolve(raw, fromPlugin: pluginName)
     }
 
+    /// The location's own `NAM1` music type, in the load-order FormID space.
+    /// Parents are not read: vanilla repeats a parent's `NAM1` on its child.
+    public func musicType(of locationID: ResolvedFormID) -> FormID? {
+        guard
+            let resolved = location(locationID),
+            let raw = resolved.location.music,
+            let music = resolvedID(raw, fromPlugin: resolved.sourcePlugin),
+            let space = index.resolver(ofPlugin: FormIDResolver.loadOrderSpaceName)
+        else { return nil }
+        return space.localFormID(of: music)
+    }
+
     /// The selected location followed by its parents. A malformed cycle is
     /// represented once and then terminates, matching the containment queries.
     public func parentChain(of locationID: ResolvedFormID) -> [ResolvedLocation] {

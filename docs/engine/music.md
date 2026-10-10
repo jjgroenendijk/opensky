@@ -18,13 +18,27 @@ Playback and gain ramps are on the [world audio](/engine/audio.md) page.
 
 ## Choosing a music type
 
-Selection checks three links, most specific first, and takes the first that names a `MUSC` the
+Selection checks four links, most specific first, and takes the first that names a `MUSC` the
 store has:
 
 ```text
-CELL XCMO  ->  REGN RDMO (the first that resolves, among the cell's XCLR regions)
+CELL XCMO  ->  LCTN NAM1 (the cell's location)
+           ->  REGN RDMO (the first that resolves, among the cell's XCLR regions)
            ->  WRLD ZNAM
 ```
+
+The cell's location is its `XLCN` link, else the location whose cell list holds the exterior
+cell ([locations](/formats/locations.md)). Only the location's own `NAM1` counts, not its
+parents'. No open source states the order or the inheritance, so both come from the data. In
+`Skyrim.esm`, 8 of 638 `LCTN` records have a `NAM1`. They are dungeons, such as `MzulftLocation`
+with `MUSDungeon`, and farms with `_NONE`. A child location repeats its parent's `NAM1`
+(`FrostRiverFarmInteriorLocation` and `FrostRiverFarmLocation` both name `_NONE`), which would not
+be needed if a child inherited it. A location that names `_NONE` selects that silent playlist and
+so silences its region's music, which is what the record asks for.
+
+Most interior cells of these locations set their own `XCMO`, so the location matters mainly in
+exterior cells with no `XCMO`, such as the `MzulftExterior` cells. Whether the game puts the
+location above the region there is not confirmed. Compare it with the game when you can.
 
 A link to a missing record is skipped. It does not mean "no music", so a broken override in a
 mod cannot silence the world. Regions are checked in the cell's `XCLR` order, so the choice is
@@ -32,7 +46,8 @@ the same every time when two regions both have an `RDMO`. With nothing to select
 no link, or a playlist with no playable track) the result is silence, and the director stops.
 
 Cell streaming builds a music key from the center cell and sends it only when it changes. So a
-frame with no change costs one comparison. It is sent from the same places as the ambience
+frame with no change costs one comparison. The location is looked up only when the rest of the
+key changes, or when the center cell finishes loading. It is sent from the same places as the ambience
 context: each frame for an exterior move, and on entering or leaving an interior. Entering an
 interior clears the old key first, so an interior entered twice still sends it.
 
@@ -166,7 +181,9 @@ World > Audio > Music:
 - Stop music, for comparing with silence.
 - Readout: the state, the playlist and file, and an error line when there is one.
 
-Nothing plays until World > Audio > Output > Enabled is on.
+Music starts with the game. World > Audio > Output > Enabled and the Sound setting turn all audio
+off and on.
 
 A manual check: walk an exterior cell and hear the exploration playlist. Enter a city and hear the
-crossfade to its town playlist. Enter an interior and check the state readout.
+crossfade to its town playlist. Enter an interior and check the state readout. Walk to the
+door of Mzulft: the readout names `MUSDungeon`, from its location.

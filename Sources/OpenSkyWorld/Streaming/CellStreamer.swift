@@ -44,9 +44,7 @@ public final class CellStreamer {
     public var lastEmittedAmbienceKey: AmbienceKey?
     /// Fires with the current cell's music identity when it changes.
     public var onMusicContextChanged: ((MusicContext) -> Void)?
-    /// Last music key pushed; nil = never emitted. Internal for the
-    /// CellStreamerMusic satellite to read/write.
-    public var lastEmittedMusicKey: MusicKey?
+    public var musicFeed = MusicFeed()
     /// Retained for deterministic walk benchmarks that inspect nearby doors.
     /// Production use-key activation is view-ray based.
     public static let doorActivationRadius = InteractionRay.defaultMaximumDistance

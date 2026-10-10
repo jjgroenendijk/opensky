@@ -73,6 +73,26 @@ struct LocationStoreTests {
     }
 
     @Test
+    func locationMusicIsReadInTheLoadOrderSpaceWithoutParents() throws {
+        let base = try plugin(locations: [
+            LocationFixture.recordBytes(0x10, "Hold", music: 0x20),
+            LocationFixture.recordBytes(0x11, "Farm", parent: 0x10)
+        ])
+        // Patch.esp numbers its own forms with master index 1.
+        let patch = try plugin(masters: ["Base.esm"], locations: [
+            LocationFixture.recordBytes(0x0100_0040, "Dungeon", music: 0x0100_0030),
+            LocationFixture.recordBytes(0x0100_0041, "Tower", music: 0x20)
+        ])
+        let store = LocationStore(plugins: [("Base.esm", base), ("Patch.esp", patch)])
+
+        #expect(store.musicType(of: id("Base.esm", 0x10)) == FormID(0x20))
+        #expect(store.musicType(of: id("Base.esm", 0x11)) == nil)
+        #expect(store.musicType(of: id("Patch.esp", 0x40)) == FormID(0x0100_0030))
+        #expect(store.musicType(of: id("Patch.esp", 0x41)) == FormID(0x20))
+        #expect(store.musicType(of: id("Base.esm", 0x99)) == nil)
+    }
+
+    @Test
     func exteriorCellsGoToTheDeepestLocationThatListsThem() throws {
         let world: UInt32 = 0x3C
         let shared = CellCoordinate(x: 4, y: -20)
