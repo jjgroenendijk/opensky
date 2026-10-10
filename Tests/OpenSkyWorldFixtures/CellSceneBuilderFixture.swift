@@ -208,15 +208,17 @@ extension CellSceneBuilderFixture {
         formID: UInt32,
         refs: Data,
         blockLabel: UInt32? = nil,
-        subBlockLabel: UInt32? = nil
+        subBlockLabel: UInt32? = nil,
+        cellFlags: UInt16 = 0,
+        cellFields: Data = Data()
     ) -> Data {
         var flags = Data()
-        flags.appendUInt16(Cell.Flags.interior.rawValue)
+        flags.appendUInt16(Cell.Flags.interior.rawValue | cellFlags)
         let cell = ESMFixture.record(
             "CELL",
             formID: formID,
             data: ESMFixture.field("EDID", ESMFixture.zstring("TestInterior"))
-                + ESMFixture.field("DATA", flags)
+                + ESMFixture.field("DATA", flags) + cellFields
         )
         let temporary = ESMFixture.childGroup(parent: formID, groupType: 9, contents: refs)
         let children = ESMFixture.childGroup(
