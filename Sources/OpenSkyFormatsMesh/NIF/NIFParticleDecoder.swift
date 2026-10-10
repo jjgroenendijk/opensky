@@ -21,12 +21,16 @@ nonisolated extension NIFFile {
         for root in roots {
             try walker.walk(from: root)
         }
-        return walker.systems
+        return try walker.found.map { try walker.decodeSystem(block: $0.block, parent: $0.parent) }
     }
 
     fileprivate struct ParticleWalker {
         let file: NIFFile
-        var systems: [ParticleSystemDefinition] = []
+        /// Systems in walk order. They decode after the walk, because a mesh
+        /// emitter needs the transform of a shape found later.
+        var found: [(block: NIFFile.Block, parent: float4x4)] = []
+        /// The parent transform of every block the walk reached.
+        var parents: [Int: float4x4] = [:]
 
         mutating func walk(from root: Int32) throws {
             var stack = NIFGraphStack(root: root)
@@ -48,6 +52,7 @@ nonisolated extension NIFFile {
                 }
 
                 let block = file.blocks[index]
+                parents[index] = parents[index] ?? visit.parent
                 if NIFNode.traversedTypes.contains(block.typeName) {
                     let node = try NIFNode(data: block.data, header: file.header)
                     let world = visit.parent * node.object.localTransform
@@ -57,18 +62,19 @@ nonisolated extension NIFFile {
                         depth: visit.depth + 1
                     )
                 } else if NIFFile.particleSystemTypes.contains(block.typeName) {
-                    try systems.append(decodeSystem(block: block, parent: visit.parent))
+                    found.append((block, visit.parent))
                 }
                 // Any other type is a leaf we do not collect (geometry, shader
                 // properties, controllers…): subtree ends.
             }
         }
 
-        private func decodeSystem(
+        func decodeSystem(
             block: NIFFile.Block,
             parent: float4x4
         ) throws -> ParticleSystemDefinition {
             let system = try NIFParticleSystem(data: block.data, header: file.header)
+            let systemTransform = parent * system.object.localTransform
             let data = try decodeData(ref: system.dataRef)
             var emitters: [ParticleEmitter] = []
             var modifiers: [ParticleModifier] = []
@@ -76,11 +82,12 @@ nonisolated extension NIFFile {
                 guard ref >= 0 else { continue } // -1 = empty chain slot
                 let modBlock = try self.block(at: Int(ref))
                 if NIFParticleModifierDecoder.isEmitter(modBlock.typeName) {
-                    try emitters.append(NIFParticleModifierDecoder.emitter(
+                    let emitter = try NIFParticleModifierDecoder.emitter(
                         typeName: modBlock.typeName,
                         data: modBlock.data,
                         header: file.header
-                    ))
+                    )
+                    try emitters.append(withMeshGeometry(emitter, systemTransform: systemTransform))
                 } else {
                     try modifiers.append(NIFParticleModifierDecoder.modifier(
                         typeName: modBlock.typeName,
@@ -91,7 +98,7 @@ nonisolated extension NIFFile {
             }
             return try ParticleSystemDefinition(
                 name: system.object.name,
-                worldTransform: parent * system.object.localTransform,
+                worldTransform: systemTransform,
                 worldSpace: system.worldSpace,
                 maxParticles: data?.maxParticles ?? 0,
                 emitters: emitters,
@@ -100,8 +107,29 @@ nonisolated extension NIFFile {
                 shaderPropertyRef: system.shaderPropertyRef,
                 alphaPropertyRef: system.alphaPropertyRef,
                 effectShader: effectShader(ref: system.shaderPropertyRef),
-                alphaProperty: alphaProperty(ref: system.alphaPropertyRef)
+                alphaProperty: alphaProperty(ref: system.alphaPropertyRef),
+                emitterControllers: NIFParticleControllerDecoder.emitterControllers(
+                    from: system.object.controllerRef, file: file
+                )
             )
+        }
+
+        /// Fills a mesh emitter with its shapes' geometry in the system's space.
+        private func withMeshGeometry(
+            _ emitter: ParticleEmitter,
+            systemTransform: float4x4
+        ) throws -> ParticleEmitter {
+            guard case var .mesh(source) = emitter.shape else { return emitter }
+            let toSystem = systemTransform.inverse
+            for ref in source.meshRefs where ref >= 0 {
+                let index = Int(ref)
+                guard let shape = try NIFMeshEmitterGeometry.shape(try block(at: index), file)
+                else { continue }
+                let local = toSystem * (parents[index] ?? matrix_identity_float4x4)
+                    * shape.object.localTransform
+                NIFMeshEmitterGeometry.append(shape, transform: local, to: &source)
+            }
+            return emitter.replacingShape(.mesh(source))
         }
 
         /// Resolves the shader ref when it is a BSEffectShaderProperty. Other

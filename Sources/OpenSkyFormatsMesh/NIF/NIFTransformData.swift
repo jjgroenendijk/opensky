@@ -73,14 +73,17 @@ nonisolated public struct NIFTransformData: Equatable, Sendable {
         return simd_quatf(ix: vector.x, iy: vector.y, iz: vector.z, r: w)
     }
 
-    private static func keyGroup<Value>(
+    /// nif.xml `KeyGroup`: count, key type, then keys. `keySize` is the smallest key on
+    /// disk, so a count the block cannot hold throws before allocating.
+    static func keyGroup<Value>(
         _ reader: inout BinaryReader,
+        keySize: Int = 8,
         value read: (inout BinaryReader) throws -> Value
     ) throws -> [NIFKey<Value>] {
         let count = try Int(reader.readUInt32())
         guard count > 0 else { return [] }
         let type = try keyType(reader.readUInt32())
-        try checkCount(count, stride: 8, reader)
+        try checkCount(count, stride: keySize, reader)
         var keys: [NIFKey<Value>] = []
         keys.reserveCapacity(count)
         for _ in 0 ..< count {

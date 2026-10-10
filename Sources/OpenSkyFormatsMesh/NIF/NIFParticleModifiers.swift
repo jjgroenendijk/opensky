@@ -98,9 +98,15 @@ nonisolated public enum NIFParticleModifierDecoder: Sendable {
             for _ in 0 ..< count {
                 try refs.append(Int32(bitPattern: reader.readUInt32()))
             }
-            let velocityType = try reader.readUInt32()
-            // Emission type + emission axis follow; not needed for decode.
-            return .mesh(meshRefs: refs, initialVelocityType: velocityType)
+            let velocity = try reader.readUInt32()
+            let emitFrom = try reader.readUInt32()
+            let axis = try reader.readVector3()
+            return .mesh(MeshEmitterSource(
+                meshRefs: refs,
+                velocity: MeshEmitterSource.Velocity(rawValue: velocity) ?? .normals,
+                emitFrom: MeshEmitterSource.EmitFrom(rawValue: emitFrom) ?? .vertices,
+                emissionAxis: axis
+            ))
         default:
             throw NIFError.malformed("unexpected emitter type \(typeName)")
         }

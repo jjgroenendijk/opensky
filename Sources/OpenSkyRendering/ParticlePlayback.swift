@@ -19,6 +19,11 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     /// Destination modulation (DEST_COLOR / ZERO).
     case multiply
 
+    /// Additive blends sum, so their draw order does not change the image.
+    public var dependsOnOrder: Bool {
+        self == .alpha || self == .multiply
+    }
+
     public init(alpha: NIFAlphaProperty?) {
         guard alpha?.blendEnabled == true else {
             self = .alpha
@@ -65,8 +70,9 @@ nonisolated private struct ParticleRandom {
     }
 }
 
-/// Pure simulation. Birth-rate controllers are not decoded, so an OpenSky fallback
-/// fills about a quarter of capacity per average lifetime; not an engine constant.
+/// Pure simulation. An emitter with a `NiPSysEmitterCtlr` births at its keyed rate.
+/// One without falls back to about a quarter of capacity per average lifetime, an
+/// OpenSky choice and not an engine constant.
 nonisolated public struct ParticleSimulator: Sendable {
     public static let maximumCapacity = 2048
 
@@ -77,8 +83,11 @@ nonisolated public struct ParticleSimulator: Sendable {
     /// Scales new particles' speed and size. A faster particle lives shorter, so it
     /// still crosses the same distance. Existing particles keep their values.
     public var spawnScale = PrecipitationScale.identity
+    /// Seconds simulated since the last reset; the controllers' clock.
+    public private(set) var elapsed: Float = 0
     private var random: ParticleRandom
     private var birthAccumulator: Float = 0
+    private var controlledAccumulators: [Float] = []
     private var nextEmitter = 0
 
     public init(definition: ParticleSystemDefinition, placementTransform: float4x4, seed: UInt64) {
@@ -93,7 +102,9 @@ nonisolated public struct ParticleSimulator: Sendable {
         particles.removeAll(keepingCapacity: true)
         random = ParticleRandom(seed: seed)
         birthAccumulator = 0
+        controlledAccumulators.removeAll()
         nextEmitter = 0
+        elapsed = 0
     }
 
     /// Re-centers a camera-following emitter and its existing particles by
@@ -109,7 +120,60 @@ nonisolated public struct ParticleSimulator: Sendable {
         let deltaTime = simd_clamp(deltaTime, 0, 0.1)
         guard deltaTime > 0 else { return }
         updateExisting(deltaTime: deltaTime, wind: wind)
-        emit(deltaTime: deltaTime, scale: max(emissionScale, 0))
+        elapsed += deltaTime
+        let emitters = definition.emitters.filter(\.active)
+        let controlled = emitters.map(controllerRate(for:))
+        if controlled.allSatisfy({ $0 == nil }) {
+            emit(deltaTime: deltaTime, scale: max(emissionScale, 0))
+        } else {
+            emitControlled(
+                emitters: emitters, rates: controlled, deltaTime: deltaTime,
+                scale: max(emissionScale, 0)
+            )
+        }
+    }
+
+    /// The keyed birth rate of the controller that names this emitter. A file with
+    /// one emitter and one unnamed controller pairs them.
+    private func controllerRate(for emitter: ParticleEmitter) -> Float? {
+        let controllers = definition.emitterControllers
+        let named = controllers.first { $0.modifierName != nil && $0.modifierName == emitter.name }
+        let only = controllers.count == 1 && definition.emitters.count == 1 ? controllers.first : nil
+        return (named ?? only)?.birthRate(at: elapsed)
+    }
+
+    private mutating func emitControlled(
+        emitters: [ParticleEmitter],
+        rates: [Float?],
+        deltaTime: Float,
+        scale: Float
+    ) {
+        guard capacity > 0, scale > 0 else { return }
+        if controlledAccumulators.count != emitters.count {
+            controlledAccumulators = Array(repeating: 0, count: emitters.count)
+        }
+        let share = fallbackRate(emitters) / Float(emitters.count)
+        for (index, emitter) in emitters.enumerated() {
+            let rate = rates[index] ?? share
+            // A full system does not bank births for later.
+            controlledAccumulators[index] = min(
+                controlledAccumulators[index] + rate * scale * deltaTime, Float(capacity)
+            )
+            let births = min(Int(controlledAccumulators[index]), capacity - particles.count)
+            guard births > 0 else { continue }
+            controlledAccumulators[index] -= Float(births)
+            for _ in 0 ..< births {
+                particles.append(makeParticle(emitter: emitter))
+            }
+        }
+    }
+
+    private func fallbackRate(_ emitters: [ParticleEmitter]) -> Float {
+        let averageLife = max(
+            emitters.reduce(0) { $0 + max($1.lifeSpan, 0.1) } / Float(max(emitters.count, 1)),
+            0.1
+        )
+        return simd_clamp(Float(capacity) * 0.25 / averageLife, 6, 60)
     }
 
     private mutating func updateExisting(deltaTime: Float, wind: WindState) {
@@ -151,13 +215,7 @@ nonisolated public struct ParticleSimulator: Sendable {
     private mutating func emit(deltaTime: Float, scale: Float) {
         let emitters = definition.emitters.filter(\.active)
         guard capacity > 0, !emitters.isEmpty, particles.count < capacity, scale > 0 else { return }
-        let averageLife = max(
-            emitters.reduce(0) { $0 + max($1.lifeSpan, 0.1) }
-                / Float(emitters.count),
-            0.1
-        )
-        let fallbackRate = simd_clamp(Float(capacity) * 0.25 / averageLife, 6, 60)
-        birthAccumulator += fallbackRate * scale * deltaTime
+        birthAccumulator += fallbackRate(emitters) * scale * deltaTime
         let births = min(Int(birthAccumulator), capacity - particles.count)
         birthAccumulator -= Float(births)
         for _ in 0 ..< births {
@@ -169,11 +227,11 @@ nonisolated public struct ParticleSimulator: Sendable {
 
     private mutating func makeParticle(emitter: ParticleEmitter) -> SimulatedParticle {
         let modelTransform = placementTransform * definition.worldTransform
-        let localPosition = samplePosition(shape: emitter.shape)
-        let worldPosition4 = modelTransform * SIMD4(localPosition, 1)
+        let birth = sampleBirth(shape: emitter.shape)
+        let worldPosition4 = modelTransform * SIMD4(birth.position, 1)
         let declination = emitter.declination + random.signed() * emitter.declinationVariation
         let planar = emitter.planarAngle + random.signed() * emitter.planarAngleVariation
-        let localDirection = SIMD3(
+        let localDirection = birth.direction ?? SIMD3(
             sin(declination) * cos(planar),
             sin(declination) * sin(planar),
             cos(declination)
@@ -206,6 +264,30 @@ nonisolated public struct ParticleSimulator: Sendable {
         )
     }
 
+    /// Birth position in system space, and a start direction when the shape sets one.
+    private mutating func sampleBirth(
+        shape: ParticleEmitter.Shape
+    ) -> (position: SIMD3<Float>, direction: SIMD3<Float>?) {
+        guard case let .mesh(source) = shape else {
+            return (samplePosition(shape: shape), nil)
+        }
+        let sampler = MeshEmitterSampler(source: source)
+        let point = sampler.sample { random.unit() }
+        let direction: SIMD3<Float>? = switch source.velocity {
+        case .normals: point.normal
+        case .direction: source.emissionAxis
+        case .random: randomDirection()
+        }
+        return (point.position, direction)
+    }
+
+    private mutating func randomDirection() -> SIMD3<Float> {
+        let z = random.signed()
+        let angle = random.unit() * 2 * Float.pi
+        let xy = sqrt(max(1 - z * z, 0))
+        return SIMD3(xy * cos(angle), xy * sin(angle), z)
+    }
+
     private mutating func samplePosition(shape: ParticleEmitter.Shape) -> SIMD3<Float> {
         switch shape {
         case let .box(width, height, depth):
@@ -226,8 +308,6 @@ nonisolated public struct ParticleSimulator: Sendable {
             let xy = sqrt(max(1 - z * z, 0))
             return SIMD3(xy * cos(angle), xy * sin(angle), z) * radial
         case .mesh:
-            // Mesh emitters keep refs, not vertices, so they emit from the origin
-            // until surface sampling exists.
             return .zero
         }
     }
@@ -353,11 +433,23 @@ nonisolated public final class ParticlePlayback: Sendable {
         }
     }
 
-    public func prepareBuffer(slot: Int) -> (offset: Int, count: Int) {
+    /// The emitter's world origin, the point systems are sorted by.
+    public var origin: SIMD3<Float> {
         let simulator = simulator
-        let particles = simulator.particles
+        let origin = (simulator.placementTransform * simulator.definition.worldTransform).columns.3
+        return SIMD3(origin.x, origin.y, origin.z)
+    }
+
+    /// Writes the live particles into the slot's range. With a `viewer`, a blend that
+    /// depends on order gets its particles far to near.
+    public func prepareBuffer(slot: Int, viewer: SIMD3<Float>? = nil) -> (offset: Int, count: Int) {
+        let simulator = simulator
+        var particles = simulator.particles
         let offset = slot * max(capacity, 1) * MemoryLayout<ParticleGPUInstance>.stride
         guard !particles.isEmpty else { return (offset, 0) }
+        if let viewer, blendMode.dependsOnOrder {
+            particles = ParticleDrawOrder.backToFront(particles, viewer: viewer, at: \.position)
+        }
         let offsets = simulator.definition.subtextureOffsets
         let instances = particles.map { particle in
             let uv = offsets.indices.contains(particle.atlasIndex)
