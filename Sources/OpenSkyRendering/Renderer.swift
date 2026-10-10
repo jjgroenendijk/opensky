@@ -176,6 +176,8 @@ public final class Renderer: NSObject {
     public var precipitationEnabled = true
     public var particlesEnabled = true
     public var particlesFrozen = false
+    /// Blended particles and their systems draw far to near.
+    public var particleSortingEnabled = true
     public var particleEmissionScale: Float = 1
     /// World > Environment > Grass live controls. Values clamp at encode so
     /// tests/CLI callers cannot bypass renderer safety policy.
@@ -222,6 +224,8 @@ public final class Renderer: NSObject {
     public var lastUIDrawStats = UIDrawStats()
 
     public var animationTime: Float = 0
+    /// Placed lights flicker and pulse as their LIGH flags ask.
+    public var lightAnimationEnabled = true
     /// World > Environment actor-animation A/B. Off restores bind palettes;
     /// global time still advances so grass/particle effects stay independent.
     public var actorAnimationsEnabled = true
