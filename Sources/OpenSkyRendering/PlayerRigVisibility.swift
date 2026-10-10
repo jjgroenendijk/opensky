@@ -14,8 +14,9 @@ nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// carried as a field so the matrix is complete and the test can pin it.
     public let castsArmShadow: Bool
 
-    /// The rig policy for `mode`. `armsEnabled` is the panel toggle. `dialogueCamera`
-    /// outranks the mode: the eye has left the head, so the body shows and the arms do not.
+    /// The rig policy for `mode`. `armsEnabled` is the panel toggle. In a conversation
+    /// the arms hide, and a first-person body stays hidden: the eye sits just behind
+    /// the head, so the head and helmet would fill the view, and the game hides them too.
     public static func resolve(
         mode: CameraMovementMode,
         hasBody: Bool,
@@ -26,7 +27,7 @@ nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
         // Fly draws the body so a developer can fly around the character and
         // look at it; first person hides it because the eye is inside its head.
         let firstPerson = mode == .walk && !dialogueCamera
-        let bodyVisible = hasBody && !firstPerson
+        let bodyVisible = hasBody && mode != .walk
         return PlayerRigVisibility(
             drawsBody: bodyVisible,
             castsBodyShadow: hasBody && (mode.isPlayerControlled || bodyVisible),

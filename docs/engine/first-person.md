@@ -57,8 +57,8 @@ shadow pass is in its renderer and cannot be read from the install. The body cas
 because a player with no shadow looks like a bug. The arms never cast, because they are the same
 limbs the body already casts. A second copy at the eye would double the shadow.
 
-The dialogue camera hides the arms and draws the body in any mode
-([player camera and body](/engine/player-camera.md)).
+The dialogue camera hides the arms. It draws the body only in third person: in first person its eye
+is just behind the head, so the body stays hidden ([player camera and body](/engine/player-camera.md)).
 
 ## Depth
 
