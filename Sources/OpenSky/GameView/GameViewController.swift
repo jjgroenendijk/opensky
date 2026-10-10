@@ -400,6 +400,8 @@ extension GameViewController {
             worldData = session.data
             sessionWiring.wireStreaming(session: session, renderer: newRenderer)
         }
+        // The engine reads the world's sound records once, so it starts after they load.
+        audio.audioEnabled = playerSettings.store.bool(.audioEnabled)
         // After the world data, because the title's logo loads through it.
         if let continueSlot {
             loadingWorld.coverSessionStart()

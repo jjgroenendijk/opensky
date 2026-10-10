@@ -56,7 +56,8 @@ cannot disagree. Changing a filter applies it again to sources that are already 
 - Mute is separate from the volume. Unmuting restores the slider level, not full volume.
 - Solo is one optional category, so only one can be soloed at a time.
 
-The engine is off by default. A start failure, such as no output device, is shown in the readout.
+The engine starts with the game, unless the Sound setting is off
+([settings](/engine/settings.md)). A start failure, such as no output device, is shown in the readout.
 It never crashes and never blocks rendering.
 
 The four categories are the four vanilla `SNCT` nodes marked for menu display: Effects, Voice,

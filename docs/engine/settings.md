@@ -27,6 +27,7 @@ the system that uses it at once.
 
 | Setting | Reaches |
 | --- | --- |
+| Sound | Starts or stops the audio engine |
 | Master and category volumes | The audio engine, again after it is rebuilt |
 | Look sensitivity, invert Y | The camera input |
 | Crosshair, compass, floating markers, HUD opacity | The HUD movie and the SWF layer |

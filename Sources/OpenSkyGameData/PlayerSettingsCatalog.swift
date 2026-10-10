@@ -138,6 +138,7 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     /// Rows the vanilla pages do not have. The menu shows none of them.
     private static let opensky: [PlayerSettingDefinition] = [
         row("opensky.compass", .opensky, .toggle, "Compass", 1, applied: true),
+        row("opensky.sound", .opensky, .toggle, "Sound", 1, applied: true),
         row(
             "opensky.startAtTitleScreen",
             .opensky,
