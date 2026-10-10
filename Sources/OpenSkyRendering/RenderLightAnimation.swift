@@ -2,6 +2,7 @@
 // these are OpenSky shapes driven by the LIGH flicker values
 // (docs/formats/lighting.md, docs/engine/interiors.md).
 
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public struct RenderLightAnimation: Equatable, Sendable {
@@ -72,5 +73,36 @@ nonisolated public struct RenderLightAnimation: Equatable, Sendable {
         hash &*= 0x2C1B_3C6D
         hash ^= hash >> 12
         return Float(hash & 0xFFFF) / 32767.5 - 1
+    }
+}
+
+nonisolated extension RenderLightAnimation {
+    /// Seconds per cycle when the record stores none.
+    static let defaultPeriod: Float = 0.5
+
+    /// Nil for a light without a flicker or pulse flag. A slow flag doubles the
+    /// period, an OpenSky choice; `reference` puts each placed light out of step.
+    public init?(light: LightRecord, reference: UInt32) {
+        let flags = light.flags
+        let kind: Kind
+        if flags.contains(.flicker) || flags.contains(.flickerSlow) {
+            kind = .flicker
+        } else if flags.contains(.pulse) || flags.contains(.pulseSlow) {
+            kind = .pulse
+        } else {
+            return nil
+        }
+        let slow = flags.contains(.flickerSlow) || flags.contains(.pulseSlow)
+        let flicker = light.flicker
+        let period = flicker.period.isFinite && flicker.period > 0
+            ? flicker.period : Self.defaultPeriod
+        self.init(
+            kind: kind,
+            period: period * (slow ? 2 : 1),
+            intensityAmplitude: flicker.intensityAmplitude.isFinite ? flicker
+                .intensityAmplitude : 0,
+            movementAmplitude: flicker.movementAmplitude.isFinite ? flicker.movementAmplitude : 0,
+            phase: Float(reference % 997) / 997
+        )
     }
 }

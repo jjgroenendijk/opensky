@@ -76,7 +76,10 @@ nonisolated public struct RenderPointLight: Equatable, Sendable {
 
     /// Position and colour at `time` seconds; a steady light or `animated` false
     /// gives the base values.
-    public func animated(at time: Float, enabled: Bool) -> (position: SIMD3<Float>, color: SIMD3<Float>) {
+    public func animated(
+        at time: Float,
+        enabled: Bool
+    ) -> (position: SIMD3<Float>, color: SIMD3<Float>) {
         guard enabled, let animation else { return (position, color) }
         let sample = animation.sample(at: time)
         return (position + sample.offset, color * sample.intensity)

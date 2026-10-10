@@ -123,7 +123,7 @@ nonisolated extension NIFFile {
             let toSystem = systemTransform.inverse
             for ref in source.meshRefs where ref >= 0 {
                 let index = Int(ref)
-                guard let shape = try NIFMeshEmitterGeometry.shape(try block(at: index), file)
+                guard let shape = try NIFMeshEmitterGeometry.shape(block(at: index), file)
                 else { continue }
                 let local = toSystem * (parents[index] ?? matrix_identity_float4x4)
                     * shape.object.localTransform

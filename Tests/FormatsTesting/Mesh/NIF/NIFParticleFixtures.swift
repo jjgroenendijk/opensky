@@ -210,7 +210,9 @@ public enum NIFParticleFixture: Sendable {
         base: Data,
         emitter: Data,
         meshRefs: [Int32],
-        velocityType: UInt32 = 0
+        velocityType: UInt32 = 0,
+        emitFrom: UInt32 = 0,
+        axis: SIMD3<Float> = .zero
     ) -> Data {
         var out = base + emitter
         out.appendUInt32(UInt32(meshRefs.count))
@@ -218,8 +220,10 @@ public enum NIFParticleFixture: Sendable {
             out.appendUInt32(UInt32(bitPattern: ref))
         }
         out.appendUInt32(velocityType)
-        out.appendUInt32(0) // Emission Type
-        out.append(Data(count: 12)) // Emission Axis (Vector3)
+        out.appendUInt32(emitFrom)
+        out.appendFloat32(axis.x)
+        out.appendFloat32(axis.y)
+        out.appendFloat32(axis.z)
         return out
     }
 

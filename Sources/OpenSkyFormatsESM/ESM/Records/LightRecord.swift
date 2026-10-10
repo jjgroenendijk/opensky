@@ -97,26 +97,7 @@ nonisolated public struct LightRecord: Sendable {
                         "LIGH \(recordID) DATA has \(field.data.count) bytes, expected 48"
                     )
                 }
-                let time = try Int32(bitPattern: reader.readUInt32())
-                let radius = try reader.readUInt32()
-                let color = try Self.readColor(&reader)
-                let flags = try Flags(rawValue: reader.readUInt32())
-                let falloff = try reader.readFloat32()
-                reader.skip(8) // FOV, near clip
-                let flicker = try FlickerEffect(
-                    period: reader.readFloat32(),
-                    intensityAmplitude: reader.readFloat32(),
-                    movementAmplitude: reader.readFloat32()
-                )
-                reader.skip(8) // value, weight
-                decoded = DecodedData(
-                    time: time,
-                    radius: radius,
-                    color: color,
-                    flags: flags,
-                    falloff: falloff,
-                    flicker: flicker
-                )
+                decoded = try Self.decodeData(&reader)
             case "FNAM":
                 if field.data.count >= 4 {
                     fade = try reader.readFloat32()
@@ -139,6 +120,25 @@ nonisolated public struct LightRecord: Sendable {
         falloffExponent = decoded.falloff
         flicker = decoded.flicker
         self.fade = fade
+    }
+
+    private static func decodeData(_ reader: inout BinaryReader) throws -> DecodedData {
+        let time = try Int32(bitPattern: reader.readUInt32())
+        let radius = try reader.readUInt32()
+        let color = try readColor(&reader)
+        let flags = try Flags(rawValue: reader.readUInt32())
+        let falloff = try reader.readFloat32()
+        reader.skip(8) // FOV, near clip
+        let flicker = try FlickerEffect(
+            period: reader.readFloat32(),
+            intensityAmplitude: reader.readFloat32(),
+            movementAmplitude: reader.readFloat32()
+        )
+        reader.skip(8) // value, weight
+        return DecodedData(
+            time: time, radius: radius, color: color, flags: flags, falloff: falloff,
+            flicker: flicker
+        )
     }
 
     private static func readColor(_ reader: inout BinaryReader) throws -> SIMD3<Float> {

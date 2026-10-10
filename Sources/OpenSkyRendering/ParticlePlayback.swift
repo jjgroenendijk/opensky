@@ -138,7 +138,8 @@ nonisolated public struct ParticleSimulator: Sendable {
     private func controllerRate(for emitter: ParticleEmitter) -> Float? {
         let controllers = definition.emitterControllers
         let named = controllers.first { $0.modifierName != nil && $0.modifierName == emitter.name }
-        let only = controllers.count == 1 && definition.emitters.count == 1 ? controllers.first : nil
+        let only = controllers.count == 1 && definition.emitters.count == 1 ? controllers
+            .first : nil
         return (named ?? only)?.birthRate(at: elapsed)
     }
 
@@ -264,6 +265,28 @@ nonisolated public struct ParticleSimulator: Sendable {
         )
     }
 
+    private var colourRamp: ParticleColourRamp? {
+        for modifier in definition.modifiers where modifier.active {
+            if case let .simpleColour(ramp) = modifier.kind {
+                return ramp
+            }
+        }
+        return nil
+    }
+
+    private func scaledRadius(initial: Float, scales: [Float], fraction: Float) -> Float {
+        guard let first = scales.first else { return initial }
+        guard scales.count > 1 else { return max(initial * first, 0.01) }
+        let position = simd_clamp(fraction, 0, 1) * Float(scales.count - 1)
+        let lower = min(Int(position), scales.count - 1)
+        let upper = min(lower + 1, scales.count - 1)
+        let scale = scales[lower] * (1 - position.truncatingRemainder(dividingBy: 1))
+            + scales[upper] * position.truncatingRemainder(dividingBy: 1)
+        return max(initial * scale, 0.01)
+    }
+}
+
+nonisolated extension ParticleSimulator {
     /// Birth position in system space, and a start direction when the shape sets one.
     private mutating func sampleBirth(
         shape: ParticleEmitter.Shape
@@ -310,26 +333,6 @@ nonisolated public struct ParticleSimulator: Sendable {
         case .mesh:
             return .zero
         }
-    }
-
-    private var colourRamp: ParticleColourRamp? {
-        for modifier in definition.modifiers where modifier.active {
-            if case let .simpleColour(ramp) = modifier.kind {
-                return ramp
-            }
-        }
-        return nil
-    }
-
-    private func scaledRadius(initial: Float, scales: [Float], fraction: Float) -> Float {
-        guard let first = scales.first else { return initial }
-        guard scales.count > 1 else { return max(initial * first, 0.01) }
-        let position = simd_clamp(fraction, 0, 1) * Float(scales.count - 1)
-        let lower = min(Int(position), scales.count - 1)
-        let upper = min(lower + 1, scales.count - 1)
-        let scale = scales[lower] * (1 - position.truncatingRemainder(dividingBy: 1))
-            + scales[upper] * position.truncatingRemainder(dividingBy: 1)
-        return max(initial * scale, 0.01)
     }
 }
 

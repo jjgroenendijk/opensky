@@ -7,6 +7,7 @@ import OpenSkyFormatsCore
 
 nonisolated enum NIFParticleControllerDecoder {
     static let emitterControllerType = "NiPSysEmitterCtlr"
+    static let boolInterpolatorTypes: Set = ["NiBoolInterpolator", "NiBoolTimelineInterpolator"]
     /// nif.xml `#INV_FLT#`: the pose value is unset.
     static let invalidFloat: Float = -3.402823466e+38
 
@@ -87,8 +88,7 @@ nonisolated enum NIFParticleControllerDecoder {
     private static func boolKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Bool>] {
         guard ref >= 0 else { return [] }
         let block = try Self.block(ref, file)
-        guard block.typeName == "NiBoolInterpolator" || block.typeName == "NiBoolTimelineInterpolator"
-        else { return [] }
+        guard boolInterpolatorTypes.contains(block.typeName) else { return [] }
         var reader = BinaryReader(block.data)
         let value = try reader.readUInt8()
         let dataRef = try Int32(bitPattern: reader.readUInt32())
