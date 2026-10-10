@@ -108,7 +108,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
             vehicles.detach(rider)
             return
         }
-        vehicles.attach(rider, to: vehicle)
+        vehicles.board(rider, on: vehicle)
     }
 
     func tether(_ vehicle: ReferenceKey, to horse: ReferenceKey) {

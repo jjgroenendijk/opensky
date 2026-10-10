@@ -47,6 +47,13 @@ public final class VehicleCoordinator {
         )
     }
 
+    /// Puts `rider` in its seat on `vehicle`, as `SetVehicle` does.
+    @discardableResult
+    public func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool {
+        lastPoses[rider] = nil
+        return core.board(rider, on: vehicle)
+    }
+
     /// Seats `rider` on top of `horse`, facing the way the horse faces.
     @discardableResult
     public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, height: Float) -> Bool {
