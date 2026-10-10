@@ -65,15 +65,16 @@ nonisolated public struct RuntimeReferenceEntry: Sendable {
 nonisolated public struct RuntimeReferenceIndex: Sendable {
     private var entriesByKey: [ReferenceKey: RuntimeReferenceEntry]
     private var keysByFormID: [FormID: ReferenceKey]
-    /// ACHR entries in `sortedKeys()` order, built once: per-frame actor systems read
-    /// this list, and the index never changes after a build.
+    /// Present ACHR entries in `sortedKeys()` order, built once: per-frame actor
+    /// systems read this list, and the index never changes after a build. A
+    /// disabled actor stays findable by key but is not in this list.
     public let sortedActorEntries: [RuntimeReferenceEntry]
 
     /// Cells built without reference retention (synthetic render tests) use
     /// this rather than an optional field.
     public static let empty = RuntimeReferenceIndex(entries: [])
 
-    public init(entries: [RuntimeReferenceEntry]) {
+    public init(entries: [RuntimeReferenceEntry], absentActors: Set<ReferenceKey> = []) {
         var byKey: [ReferenceKey: RuntimeReferenceEntry] = [:]
         var byFormID: [FormID: ReferenceKey] = [:]
         byKey.reserveCapacity(entries.count)
@@ -85,7 +86,7 @@ nonisolated public struct RuntimeReferenceIndex: Sendable {
         entriesByKey = byKey
         keysByFormID = byFormID
         sortedActorEntries = byKey.values
-            .filter { $0.placedActor != nil }
+            .filter { $0.placedActor != nil && !absentActors.contains($0.key) }
             .sorted { $0.key < $1.key }
     }
 

@@ -146,6 +146,21 @@ struct RuntimeReferenceIndexTests {
             == index.sortedEntries().filter { $0.placedActor != nil }.map(\.formID))
     }
 
+    @Test func absentActorsStayFindableButLeaveTheActorList() throws {
+        let actors = try [0x305, 0x301].map { raw in
+            try RuntimeReferenceEntry(
+                key: .plugin(name: "skyrim.esm", objectID: FormID(raw).objectID),
+                formID: FormID(raw),
+                isPersistent: false,
+                record: .actor(placedActor(formID: raw))
+            )
+        }
+        let disabled = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x305)
+        let index = RuntimeReferenceIndex(entries: actors, absentActors: [disabled])
+        #expect(index.sortedActorEntries.map(\.formID) == [FormID(0x301)])
+        #expect(index[disabled] != nil)
+    }
+
     @Test func sortedKeysFollowReferenceKeyTotalOrder() throws {
         var entries = try [
             entry(formID: 0x203, plugin: "update.esm"),
