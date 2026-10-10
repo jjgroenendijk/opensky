@@ -8,7 +8,10 @@ extension NPCMover {
     public var transform: ReferenceTransformOverride {
         ReferenceTransformOverride(
             position: controller.feetPosition,
-            rotation: SIMD3(authoredPlacement.rotation.x, authoredPlacement.rotation.y, yaw),
+            rotation: SIMD3(
+                authoredPlacement.rotation.x, authoredPlacement.rotation.y,
+                NPCYawMath.heading(fromYaw: yaw)
+            ),
             scale: scale
         )
     }

@@ -44,7 +44,7 @@ public struct NPCMover {
         configuration = start.configuration
         path = start.path
         ignoresStatics = start.ignoresStatics
-        yaw = start.placement.rotation.z
+        yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(
             cameraPosition: start.placement.position + SIMD3(0, 0, start.capsule.eyeHeight),
             capsule: start.capsule,

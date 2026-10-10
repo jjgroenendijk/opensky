@@ -274,7 +274,7 @@ struct DialogueCameraTests {
         }
         #expect(hold.feetPosition == .zero)
         #expect(hold.transform.position == .zero)
-        #expect(abs(hold.transform.rotation.z - hold.yaw) < 0.001)
+        #expect(abs(hold.transform.rotation.z - NPCYawMath.heading(fromYaw: hold.yaw)) < 0.001)
         #expect(hold.readout.state == .facing)
     }
 

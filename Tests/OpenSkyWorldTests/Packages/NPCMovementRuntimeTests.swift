@@ -216,7 +216,7 @@ struct NPCMovementRuntimeTests {
         #expect(runtime.activeMoverCount == 1)
     }
 
-    private static func face(actor: ReferenceKey, target: SIMD3<Float>) -> NPCFaceStart {
+    static func face(actor: ReferenceKey, target: SIMD3<Float>) -> NPCFaceStart {
         NPCFaceStart(
             actor: actor,
             formID: FormID(1),
