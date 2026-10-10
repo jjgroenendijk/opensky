@@ -7,7 +7,7 @@
     "files": [],
     "expected_behavior": [
       "Looks up the layout in an open spec such as xEdit wbDefinitionsTES5.pas or UESP before writing code, and records the version read",
-      "Places the parser in Sources/OpenSkyFormatsESM/ESM/Records/ with an init(record:) entry point, following the shape of Footstep.swift",
+      "Places the parser in Sources/OpenSkyFormatsESM/Records/ with an init(record:) entry point, following the shape of Footstep.swift",
       "Adds .parser-tagged tests in OpenSkyFormatsESMTests built from ESMFixture, with no extracted game file",
       "Writes docs/formats/idle.md with the spec citation, and keeps the code comment to one line plus a link to that page"
     ]

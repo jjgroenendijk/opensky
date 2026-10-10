@@ -24,8 +24,8 @@ Vanilla Skyrim menus are mostly class registration code. `openskycli swf action-
 `_global`. So the main result of running a vanilla movie's bytecode is not a frame. It is the set of
 constructors left in `_global` and passed to `Object.registerClass`.
 
-The interpreter is in `Sources/OpenSkyFormatsSWF/SWF/AS2/` and the display runtime in
-`Sources/OpenSkyFormatsSWF/SWF/Runtime/`. `SWF*` types parse bytes. `AS2*` types run the
+The interpreter is in `Sources/OpenSkyFormatsSWF/AS2/` and the display runtime in
+`Sources/OpenSkyFormatsSWF/Runtime/`. `SWF*` types parse bytes. `AS2*` types run the
 bytecode. The `Runtime/` files are the one meeting point: they hold both an `AS2Object` and a
 placement. Both folders import no AppKit and build into the app and the CLI. What is in scope is on
 the [AS2 scope decision](/decisions/swf-as2-scope.md) page.
