@@ -56,4 +56,6 @@ else
   fi
 fi
 
+make hooks
+
 echo "[ OK ] Bootstrap complete. Try: make check"

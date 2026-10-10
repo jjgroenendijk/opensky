@@ -7,8 +7,8 @@ description: Commits and lands work in OpenSky - Conventional Commit format, req
 
 # Committing and landing work
 
-Root `AGENTS.md` is the contract; this is the how. No git hook checks a commit, so this
-skill is how it is done right.
+Root `AGENTS.md` is the contract; this is the how. The only git hook checks file length,
+so this skill is how the rest is done right.
 
 ## Before committing
 

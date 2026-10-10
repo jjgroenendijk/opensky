@@ -1,6 +1,6 @@
 // The shader library a package test hands to `Renderer`. The app and openskycli
 // load `default.metallib` from their own bundle; a package test has no such
-// bundle, so `make` compiles Shaders.metal into one file first
+// bundle, so `make` compiles the shaders into one file first
 // (`make shader-library`) and names it in OPENSKY_SHADER_LIBRARY.
 
 import Foundation

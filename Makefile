@@ -106,7 +106,8 @@ PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 # unit test plan points at the same path as $(BUILD_DIR)/OpenSkyShaders.metallib.
 SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
-SHADER_SOURCES   := Sources/Shaders/Shaders.metal Sources/OpenSkyShaderTypes/ShaderTypes.h
+SHADER_FILES     := $(sort $(wildcard Sources/Shaders/*.metal))
+SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) Sources/OpenSkyShaderTypes/ShaderTypes.h
 # Mirrors the Metal settings in Config/Build/*.xcconfig; change both together.
 METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 	-I Sources/OpenSkyShaderTypes
@@ -149,13 +150,13 @@ MD_GLOB          := **/*.md
 # The tool commands. Override one to try another build of the tool.
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
-METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null)
+METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
 
 .DEFAULT_GOAL := help
 
 ##@ Getting started
 
-.PHONY: help bootstrap ffmpeg astcenc link-shared
+.PHONY: help bootstrap hooks ffmpeg astcenc link-shared
 
 # A `#|` target is a part of a listed one, such as each check inside `lint`.
 help: ## Show the main targets [ALL=1 also lists the parts]
@@ -167,6 +168,10 @@ help: ## Show the main targets [ALL=1 also lists the parts]
 
 bootstrap: ## Install the toolchain with Homebrew
 	@./tools/bootstrap.sh
+
+# The setting lives in the shared git config, so every worktree uses the hooks.
+hooks: #| Point git at the project hooks in tools/githooks
+	@git config core.hooksPath tools/githooks && echo "[ OK ] git hooks: tools/githooks"
 
 ffmpeg: #| Build the vendored decode-only LGPL ffmpeg into .vendor/ffmpeg
 	@./tools/vendor-ffmpeg.sh
@@ -183,7 +188,7 @@ link-shared: #| Point this worktree's ffmpeg and compile cache at the main check
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text comment-blocks comment-apply \
-        duplicates no-suppressions
+        duplicates no-suppressions file-length
 
 fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
@@ -201,7 +206,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions file-length ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -261,6 +266,10 @@ no-game-content: #| Check no game assets or rendered captures are tracked
 
 docs-links: #| Check links inside docs/ resolve
 	@./tools/check-docs-links.sh
+
+# The pre-commit hook runs the same script on the staged files.
+file-length: #| Fail on a changed file over 800 lines, warn over 600 [ALL=1 whole tree]
+	@./tools/lint/file-length.sh $(if $(ALL),--all,)
 
 docs-length: #| Check no docs page is longer than DOCS_MAX_LINES
 	@find docs -name '*.md' -exec wc -l {} + | LC_ALL=C sort -k2 | awk -v max=$(DOCS_MAX_LINES) \
@@ -322,7 +331,7 @@ shader-library: $(SHADER_LIBRARY) #| Compile the shaders the package tests load
 # looks current to make.
 $(SHADER_LIBRARY): $(SHADER_SOURCES)
 	@mkdir -p $(@D)
-	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp Sources/Shaders/Shaders.metal
+	@xcrun -sdk macosx metal $(METAL_FLAGS) -o $@.tmp $(SHADER_FILES)
 	@mv $@.tmp $@ && echo "[ OK ] shader library: $@"
 
 ##@ Code health

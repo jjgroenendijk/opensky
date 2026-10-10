@@ -1,0 +1,3 @@
+#!/bin/sh
+# Git pre-commit hook. `make hooks` (part of `make bootstrap`) points git here.
+exec ./tools/lint/file-length.sh --staged

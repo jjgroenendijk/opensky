@@ -14,8 +14,8 @@ SUPPORTED_PLATFORMS = macosx
 // borrow the app target's bridging header.
 SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor
 
-// Shaders.metal lives in Sources/Shaders and imports ShaderTypes.h from the package's
-// OpenSkyShaderTypes target. The target compiles it, because makeDefaultLibrary() reads
+// The shaders in Sources/Shaders import ShaderTypes.h from the package's
+// OpenSkyShaderTypes target. The target compiles them, because makeDefaultLibrary() reads
 // the main bundle.
 MTL_HEADER_SEARCH_PATHS = $(inherited) $(SRCROOT)/Sources/OpenSkyShaderTypes
 

@@ -31,7 +31,7 @@ Rules for code under `Sources/`. The module list, the layers, and the import rul
   the package tests or the CLI. Put it in a coordinator in the feature module instead;
   `docs/engine/coordinators.md` has the pattern, and `VendorCore` with `VendorCoordinator` is
   the example: a pure core and a thin shell.
-- Past the SwiftLint file cap, split into a satellite file (`Renderer.swift` ->
+- Past 600 lines (the file-length warning), split into a satellite file (`Renderer.swift` ->
   `RendererScenePass.swift`). Check first which members need same-file `private(set)`
   access. Past the parameter or tuple cap, introduce a struct.
 

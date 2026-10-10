@@ -180,10 +180,10 @@ Three more targets wrap C headers. `OpenSkyShaderTypes` holds the structs shared
 astcenc ([astcenc](/decisions/astcenc.md)). It holds code, so it is in the `OpenSkyModules`
 product.
 
-`Sources/Shaders/Shaders.metal` is not in the package. The app and the CLI each compile it into
-the `default.metallib` of their own bundle, and `Renderer` loads it with
+The `Sources/Shaders/*.metal` files are not in the package. The app and the CLI each compile
+them into the `default.metallib` of their own bundle, and `Renderer` loads it with
 `device.makeDefaultLibrary()` unless the caller passes a `shaderLibrary`. A package test has no
-such bundle. `make shader-library` compiles the same file with `xcrun metal`,
+such bundle. `make shader-library` compiles the same files with `xcrun metal`,
 and `ShaderLibraryFixture` in `Tests/EngineTesting/Rendering/` loads it from
 the path in `OPENSKY_SHADER_LIBRARY`. `make` sets that variable for `swift test`, and the
 `UnitTests` plan sets it for xcodebuild. A test that runs without it fails; it does not skip.

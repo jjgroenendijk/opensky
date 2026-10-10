@@ -60,8 +60,9 @@ conflict.
 - Linked worktrees share the main checkout's `.vendor/ffmpeg` through `make`, so a worktree
   needs no `make bootstrap`. The cache's prefix mapping makes `#filePath` read
   `/^src/...`; find the checkout at runtime instead (`docs/tools/build-system.md`).
-- No git hook runs on commit or push. Run `make check` before committing. The CI lint jobs
-  on each pull request are the gate before code lands.
+- The only git hook is `pre-commit` in `tools/githooks/`, which runs the file-length check;
+  `make bootstrap` (or `make hooks`) turns it on. Run `make check` before committing. The CI
+  lint jobs on each pull request are the gate before code lands.
 - Facts about this machine and the outside world that will expire — CI status, missing TCC
   permissions, blocked upstream spec hosts — live in `docs/tools/environment.md` with the
   date observed. Check it before fighting an odd failure, and record new ones there.
@@ -165,6 +166,10 @@ milestone's closing PR, not per change.
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
 absent from it run at SwiftLint defaults.
+
+No file is longer than 800 lines, in any language. Above 600 lines `make file-length` and
+the pre-commit hook print a warning: split the file then, while the split is still easy.
+A file over 800 lines fails the hook, `make check`, and CI. Split it to below 600 lines.
 
 ## Writing style (agent output, docs, comments, commit bodies)
 

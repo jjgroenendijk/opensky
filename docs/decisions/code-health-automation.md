@@ -36,6 +36,7 @@ baseline files, and updating the baselines after each refactor cost too much.
 | Unused code | Periphery, `make health` | Health | Index build plus about 1.5 min scan |
 | Module graph (TMA) | `tools/lint/module-graph.sh` | Lint | Seconds, no build |
 | Comment length | `tools/lint/comment-length.sh` | Lint | Under a second |
+| File length | `tools/lint/file-length.sh`, `make file-length` | Lint, pre-commit hook | Under a second |
 | No lint suppressions | `make no-suppressions` | Lint | Instant |
 | New SwiftLint rules | SwiftLint | Lint | Part of the current lint |
 | No new `GameViewController` extensions | SwiftLint `custom_rules` | Lint | Part of the current lint |
@@ -108,6 +109,16 @@ The rules, the layer list, and the exceptions are in
 
 The limit and the rules are in AGENTS.md. `make comment-blocks` and `make comment-apply`
 help rewrite many blocks at once.
+
+## File length
+
+The limits are in AGENTS.md: a warning above 600 lines, a failure above 800. The check
+reads every text file, not only Swift, because a long shader or script is as hard to
+review as a long Swift file. It is the one check in a git hook, because a split is cheap
+before the commit and expensive after review starts. The hook reads the staged content,
+so a file trimmed but not staged still fails. CI runs it over the whole tree; `make lint`
+runs it over the files the branch changed. A warning does not fail, so files between 600
+and 800 lines can wait for their next real change.
 
 ## SwiftLint rules
 

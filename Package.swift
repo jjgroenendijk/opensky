@@ -234,7 +234,7 @@ func composition(_ name: String, dependencies: [String], tests: [String]? = nil)
 
 // MARK: - Modules, bottom-up
 
-/// The structs shared with Metal. Shaders.metal includes the same header.
+/// The structs shared with Metal. The shaders in Sources/Shaders include the same header.
 let shaderTypes = Target.target(name: "OpenSkyShaderTypes", publicHeadersPath: ".")
 /// The vendored ffmpeg as a clang module (Sources/CFFmpeg/include/module.modulemap).
 /// A C target, not a system library: when a testing library shares OpenSkyAudio

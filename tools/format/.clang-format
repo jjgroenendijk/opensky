@@ -1,6 +1,6 @@
 # Metal shader formatting (AGENTS.md "Code quality"). Metal is C++-based ->
 # clang-format (ships with Xcode, invoked via xcrun). Style matches hand-written
-# Shaders.metal conventions: 4-space indent, 100 cols, function/struct braces on
+# Sources/Shaders conventions: 4-space indent, 100 cols, function/struct braces on
 # their own line, control-flow braces attached, one wrapped param per line.
 BasedOnStyle: LLVM
 Language: Cpp

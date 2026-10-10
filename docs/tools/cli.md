@@ -18,7 +18,7 @@ Target membership follows the folders under `Sources/`. The app builds `OpenSky/
 Swift package through the `OpenSkyModules` product ([Swift modules](/tools/modules.md)). So
 app-only code is invisible to the CLI with no exception lists to maintain. Metal structs come
 through the `OpenSkyShaderTypes` module ([build system](/tools/build-system.md)).
-`Shaders.metal` compiles into `default.metallib` next to the binary, so
+The `Sources/Shaders` files compile into `default.metallib` next to the binary, so
 `device.makeDefaultLibrary()` works without an app bundle. Build it with `make build-cli`.
 
 The command line is declared with swift-argument-parser in the `OpenSkyCLIArguments` module
