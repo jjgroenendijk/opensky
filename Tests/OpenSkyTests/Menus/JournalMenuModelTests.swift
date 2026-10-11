@@ -41,7 +41,7 @@ struct JournalMenuModelTests {
                     formID: 0x0200,
                     fields: QuestFixture.editorID("FreeformRiften")
                         + QuestFixture.full("Supply and Demand")
-                        + QuestFixture.general(type: 6)
+                        + QuestFixture.general(type: 8)
                         + QuestFixture.stage(5, flags: 0x02)
                         + QuestFixture.logEntry(text: "Someone wants a delivery.")
                         + QuestFixture.objective(5, text: "Deliver the parcel")
