@@ -97,17 +97,35 @@ extension QuestRuntime {
             resolver: quests.sourceResolver(of: quest.formID),
             locations: locations,
             event: event,
-            scope: scope
+            scope: scope,
+            translation: quests.translation(of: quest.formID)
         )
         guard result.canStartQuest else {
             throw QuestError.aliasFillFailed(
                 quest: quest.formID, aliases: result.unfilledRequired
             )
         }
-        if !result.state.isEmpty {
-            store.set(result.state, for: key)
+        let filled = creating(result)
+        if !filled.state.isEmpty {
+            store.set(filled.state, for: key)
         }
-        return result
+        return filled
+    }
+
+    /// Makes each requested reference only once the quest may start, so a refused
+    /// start leaves nothing behind in the world.
+    private func creating(_ result: QuestAliasFillResult) -> QuestAliasFillResult {
+        guard let referenceCreator, !result.creations.isEmpty else { return result }
+        var state = result.state
+        for creation in result.creations {
+            if let created = referenceCreator(creation.base, creation.anchor) {
+                state = state.filling(creation.aliasID, with: created)
+            }
+        }
+        return QuestAliasFillResult(
+            state: state, skipped: result.skipped, unfilledRequired: result.unfilledRequired,
+            creations: result.creations
+        )
     }
 
     /// Drops the quest's alias table. Called by `stopQuest`, and by nothing

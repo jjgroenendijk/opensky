@@ -32,7 +32,8 @@ nonisolated extension CellSceneBuilder {
                     ),
                     scale: collected.actor.scale
                 ),
-                isPersistent: collected.isPersistent
+                isPersistent: collected.isPersistent,
+                spawnKey: collected.spawnKey
             )
         }
     }

@@ -83,6 +83,9 @@ final class ScriptWorldAdapter {
             locations: (provider as? LocationDataProviding)?.locationStore
         )
         runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
+        runtime.referenceCreator = { [weak game] base, anchor in
+            game?.storyWorld.createQuestReference(base, at: anchor)
+        }
         game.scripts.attachQuests(runtime)
     }
 

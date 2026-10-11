@@ -25,11 +25,12 @@ nonisolated public enum QuestAliasFiller: Sendable {
         resolver: FormIDResolver,
         locations: LocationStore? = nil,
         event: StoryEventData? = nil,
-        scope: QuestAliasSearchScope? = nil
+        scope: QuestAliasSearchScope? = nil,
+        translation: FormIDTranslation? = nil
     ) -> QuestAliasFillResult {
         var pass = FillPass(
             resolver: resolver, locations: locations, event: event, scope: scope,
-            quest: quest.formID
+            quest: quest.formID, translation: translation
         )
         for alias in quest.aliases {
             pass.fill(alias)
@@ -45,7 +46,9 @@ nonisolated public enum QuestAliasFiller: Sendable {
         let event: StoryEventData?
         let scope: QuestAliasSearchScope?
         let quest: FormID
+        let translation: FormIDTranslation?
         var state = QuestAliasState()
+        var creations: [QuestAliasCreation] = []
         var skipped = QuestAliasTally()
         var unfilledRequired: [UInt32] = []
 
@@ -53,7 +56,8 @@ nonisolated public enum QuestAliasFiller: Sendable {
             QuestAliasFillResult(
                 state: state,
                 skipped: skipped,
-                unfilledRequired: unfilledRequired
+                unfilledRequired: unfilledRequired,
+                creations: creations
             )
         }
 
@@ -62,14 +66,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 fillLocation(alias)
                 return
             }
-            if case .fromEvent = alias.fillType {
-                fillFromEvent(alias)
-                return
-            }
-            if let scope, alias.isMatchSearch {
-                fillMatching(alias, scope: scope)
-                return
-            }
+            guard !fillByRule(alias) else { return }
             let key: ReferenceKey?
             switch alias.fillType {
             case .specificReference:
@@ -109,6 +106,38 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 // same target simply overwrites this.
                 store(UInt32(bitPattern: forced), key)
             }
+        }
+
+        /// The fill types with their own rule. False when `alias` is none of them.
+        private mutating func fillByRule(_ alias: Quest.Alias) -> Bool {
+            switch alias.fillType {
+            case .fromEvent:
+                fillFromEvent(alias)
+            case .createReferenceToObject:
+                noteCreation(alias)
+            default:
+                guard let scope, alias.isMatchSearch else { return false }
+                fillMatching(alias, scope: scope)
+            }
+            return true
+        }
+
+        /// `ALCA` low 16 bits name the alias to create at; bit 0x8000 means "create in" its
+        /// inventory, which OpenSky does not do. The world makes the reference after the pass.
+        private mutating func noteCreation(_ alias: Quest.Alias) {
+            guard
+                let base = alias.createdObject, let at = alias.createAt, at & 0x8000 == 0,
+                let anchor = state.reference(forAlias: at & 0xFFFF)
+            else {
+                skipped.note(.unsupportedFillType(alias.fillType))
+                return
+            }
+            let translated = translation?(base) ?? base
+            creations.append(QuestAliasCreation(
+                aliasID: alias.id,
+                base: translated,
+                anchor: anchor
+            ))
         }
 
         /// Notes why nothing was found. An empty location alias may be OpenSky's gap,

@@ -21,6 +21,9 @@ public struct QuestRuntime: QuestAccess {
     public let locations: LocationStore?
     /// The loaded world for the Find Matching Reference fills. Nil skips them.
     public var referenceSearch: (@MainActor () -> QuestReferenceSearch?)?
+    /// Places a new reference of a base at an anchor, for "Create Reference to Object".
+    /// Nil leaves those aliases empty.
+    public var referenceCreator: (@MainActor (FormID, ReferenceKey) -> ReferenceKey?)?
 
     public init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
         self.store = store
