@@ -301,11 +301,12 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
     }
 
     /// The same placements at a transform supplied from outside, because the player
-    /// body moves every frame.
+    /// body moves every frame. A `reference` lets a walk or a vehicle move the body.
     public func renderPlacements(
         at transform: float4x4,
         faceMorphs: [ObjectIdentifier: FaceMorphBuffer] = [:],
-        owner: UInt32 = 0
+        owner: UInt32 = 0,
+        reference: UInt32 = 0
     ) -> [RenderPlacement] {
         models.map {
             let morphs: [ObjectIdentifier: FaceMorphBuffer] =
@@ -319,6 +320,7 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
                 bounds: Self.isAttachment($0.role)
                     ? nil
                     : $0.asset.bounds?.transformed(by: transform),
+                referenceFormID: reference,
                 faceMorphs: morphs,
                 layer: .actors,
                 owner: owner

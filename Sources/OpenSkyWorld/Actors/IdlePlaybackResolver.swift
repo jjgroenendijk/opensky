@@ -44,6 +44,10 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public let prop: IdleProp
     /// What the graph's state sends as the idle starts and ends, such as `ExitCartEnd`.
     public var notify = BehaviorStateNotify()
+    /// The state's clip loops, so the idle holds until another one replaces it.
+    public var loops = false
+    /// The graph state the event enters; nil when the clip was found by name.
+    public var state: String?
 }
 
 /// Caches decoded behavior files and prop bones for the session.
@@ -107,7 +111,9 @@ nonisolated public final class IdlePlaybackResolver {
                 path: .graphEvent(behaviorFiles: clip.behaviorFiles),
                 clipPath: path,
                 prop: prop(payloads: clip.payloads, project: project),
-                notify: clip.notify
+                notify: clip.notify,
+                loops: clip.loops,
+                state: clip.stateName
             )
         }
         guard

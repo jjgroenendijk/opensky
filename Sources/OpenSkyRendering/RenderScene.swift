@@ -344,6 +344,9 @@ nonisolated public struct RenderScene: Sendable {
     public var ragdollPoses: [UInt32: [String: float4x4]] = [:]
     /// The interior's rooms and portals; nil turns room culling off.
     public let rooms: RoomPortalGraph?
+    /// The placement each moving reference was built with, so a live pose becomes a
+    /// draw delta against what this scene holds.
+    public let referencePlacements: [UInt32: float4x4]
 
     public init(
         instances: [RenderPlacement],
@@ -421,6 +424,15 @@ nonisolated public struct RenderScene: Sendable {
         self.particles = particles
         self.animations = animations
         self.rooms = rooms
+        referencePlacements = Self.referencePlacements(of: instances)
+    }
+
+    private static func referencePlacements(of instances: [RenderPlacement]) -> [UInt32: float4x4] {
+        var placements: [UInt32: float4x4] = [:]
+        for placement in instances where placement.referenceFormID != 0 {
+            placements[placement.referenceFormID] = placement.transform
+        }
+        return placements
     }
 
     /// Only still statics get a room: an actor or a simulated body moves out of it.
@@ -466,6 +478,9 @@ nonisolated public struct RenderScene: Sendable {
         // Room indices belong to one graph, so two graphs turn room culling off.
         let graphs = scenes.compactMap(\.rooms)
         rooms = graphs.count == 1 ? graphs.first : nil
+        referencePlacements = scenes.reduce(into: [:]) { merged, scene in
+            merged.merge(scene.referencePlacements) { kept, _ in kept }
+        }
     }
 
     /// Samples every resident actor at one shared world clock. A malformed

@@ -16,6 +16,11 @@ nonisolated public struct BehaviorEventClip: Equatable, Sendable {
     public let payloads: [String]
     /// The target state's notify events. A cart exit state sends `ExitCartEnd` on exit.
     public var notify = BehaviorStateNotify()
+    /// The clip generator loops (`m_mode` 1, or 3 ping pong), so the state holds
+    /// until an event leaves it.
+    public var loops = false
+    /// The state the event enters, so a live graph can tell that it took the event.
+    public var stateName: String?
 }
 
 /// Event names a state sends when the machine enters it and when it leaves it.
@@ -42,6 +47,7 @@ nonisolated public final class BehaviorEventClipIndex {
         let targets: [String: [HKXPointerTarget]]
         /// The notify events of the state each target generator belongs to.
         let notify: [HKXPointerTarget: BehaviorStateNotify]
+        let stateNames: [HKXPointerTarget: String]
         /// Behavior files the graph references, in walk order.
         let references: [String]
     }
@@ -71,7 +77,9 @@ nonisolated public final class BehaviorEventClipIndex {
                     animationName: found.animationName,
                     behaviorFiles: [file] + found.behaviorFiles,
                     payloads: Self.payloads(below: target, in: events.graph) + found.payloads,
-                    notify: events.notify[target] ?? found.notify
+                    notify: events.notify[target] ?? found.notify,
+                    loops: found.loops,
+                    stateName: events.stateNames[target] ?? found.stateName
                 )
             }
         }
@@ -83,7 +91,9 @@ nonisolated public final class BehaviorEventClipIndex {
                     animationName: found.animationName,
                     behaviorFiles: [file] + found.behaviorFiles,
                     payloads: found.payloads,
-                    notify: found.notify
+                    notify: found.notify,
+                    loops: found.loops,
+                    stateName: found.stateName
                 )
             }
         }
@@ -100,7 +110,10 @@ nonisolated public final class BehaviorEventClipIndex {
     ) -> BehaviorEventClip? {
         for node in HKBGraphTopology.walk(from: target, in: graph).nodes {
             if let clip = node.object as? HKBClipGenerator, let name = clip.animationName {
-                return BehaviorEventClip(animationName: name, behaviorFiles: [], payloads: [])
+                return BehaviorEventClip(
+                    animationName: name, behaviorFiles: [], payloads: [],
+                    loops: clip.mode == 1 || clip.mode == 3
+                )
             }
             guard
                 let reference = node.object as? HKBBehaviorReferenceGenerator,
@@ -116,7 +129,8 @@ nonisolated public final class BehaviorEventClipIndex {
                 return BehaviorEventClip(
                     animationName: found.animationName,
                     behaviorFiles: [name] + found.behaviorFiles,
-                    payloads: found.payloads
+                    payloads: found.payloads,
+                    loops: found.loops
                 )
             }
         }
@@ -145,6 +159,7 @@ nonisolated public final class BehaviorEventClipIndex {
         let names = behavior.data?.stringData?.eventNames ?? []
         var found: [String: [(depth: Int, target: HKXPointerTarget)]] = [:]
         var notify: [HKXPointerTarget: BehaviorStateNotify] = [:]
+        var stateNames: [HKXPointerTarget: String] = [:]
         var references: [String] = []
         if let root = behavior.rootGenerator {
             for node in HKBGraphTopology.walk(from: root, in: graph).nodes {
@@ -168,6 +183,7 @@ nonisolated public final class BehaviorEventClipIndex {
                         enter: eventNames(state.enterNotifyEvents, names: names, in: graph),
                         exit: eventNames(state.exitNotifyEvents, names: names, in: graph)
                     )
+                    stateNames[transition.generator] = state.name
                 }
             }
         }
@@ -178,7 +194,7 @@ nonisolated public final class BehaviorEventClipIndex {
         }
         return GraphEvents(
             graph: graph, root: behavior.rootGenerator, targets: targets, notify: notify,
-            references: references
+            stateNames: stateNames, references: references
         )
     }
 

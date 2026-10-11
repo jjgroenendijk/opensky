@@ -52,6 +52,11 @@ extension PlayerCoordinator: PlayerLocomotionControlProviding {
         world?.playerLocomotion?.raiseGraphEvent(named: name) ?? false
     }
 
+    /// The player's idles go to the live graph, as an NPC's would in the game.
+    public func playIdle(named name: String, state: String?) {
+        world?.playerLocomotion?.playIdle(name, state: state)
+    }
+
     public func clearLocomotionTrace() {
         world?.playerLocomotion?.clearMotionTrace()
     }

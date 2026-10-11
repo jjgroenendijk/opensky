@@ -4,6 +4,7 @@
 import Foundation
 import OpenSkyActors
 import OpenSkyAgentControl
+import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyDiagnostics
 import OpenSkyFormatsCore
@@ -105,6 +106,16 @@ extension AgentWorldAdapter {
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
         result["firstPerson"] = firstPersonState(renderer: renderer)
+        let status = renderer.locomotion.status
+        result["graph"] = [
+            "attached": .bool(status.graphAvailable),
+            "raisedEvents": .array(status.raisedEvents.map(AgentJSON.string)),
+            "missingEvents": .array(status.missingEvents.map(AgentJSON.string)),
+            "recentEvents": .array(status.recentGraphEvents.map(AgentJSON.string)),
+            "activeStates": .array((renderer.locomotion.graph?.activeStates ?? []).map {
+                .string("\($0.machineName ?? "?") / \($0.stateName ?? "?")")
+            })
+        ]
         return .object(result)
     }
 

@@ -113,6 +113,7 @@ public final class Renderer: NSObject {
             rayTracedShadows.isCurrent = false
             // A new cell shows other surfaces; old frames would ghost over them.
             upscale.resetPending = true
+            mergeInstanceDeltas()
             pruneGrassMeshlets(keeping: scene.grass)
             pointLightPicks.removeAll(keepingCapacity: true)
         }
@@ -158,8 +159,9 @@ public final class Renderer: NSObject {
         didSet { mergeInstanceDeltas() }
     }
 
-    /// Carts and their riders, which follow a carrier instead of walking.
-    public var vehicleInstanceDeltas: [UInt32: float4x4] = [:] {
+    /// Where carts and their riders are now, as placements without scale. The delta
+    /// comes from the placement the scene was built with.
+    public var vehicleInstancePoses: [UInt32: float4x4] = [:] {
         didSet { mergeInstanceDeltas() }
     }
 

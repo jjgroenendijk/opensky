@@ -92,7 +92,15 @@ On the install, 1,034 idles name `0_Master.hkx`. 795 resolve to a clip through t
 `TG05_KnockOut`, and the kill moves, so they do not play.
 
 The loop count comes from the idle's `DATA`: a random count between the loop minimum and
-maximum. A zero maximum plays the clip once.
+maximum. A zero maximum plays the clip once, unless the clip loops.
+
+A clip generator's `m_mode` says how its clip plays: 0 once, 1 in a loop, 3 back and forth
+(`hkbClipGenerator` playback modes). A state whose clip loops does not end on its own in the game; it
+holds until an event leaves it. So an idle whose clip loops and whose `DATA` gives no loop count
+holds until another idle replaces it. The cart seat idles work this way: every seat and sway state
+of the `Cart` machine in `0_master.hkx` loops, and every exit state plays once (read on the install).
+A held idle sends its clip's annotations on every loop. When another idle replaces it, its state's
+exit events fire. At a marker, the next pick comes after the marker timer, or one second.
 
 A clip's annotations become animation events. Each annotation is a time and a name, such as
 `CartExit`, and it fires once per loop at that time. An annotation past the end of the last loop
@@ -103,8 +111,9 @@ The state the idle's event leads to can also send events: its enter notify event
 idle starts, and its exit notify events when it ends. The cart exit states send `ExitCartEnd`
 this way; no clip annotation carries it.
 
-The player can play an idle too, such as the cart exit in `MQ101`. The player's body has no
-idle pose, so OpenSky loads the clip only to time its events, against the character skeleton.
+The player can play an idle too, such as the cart seat and the cart exit in `MQ101`. OpenSky
+raises the idle's event on the player's own behavior graph, which poses the body. It also loads the
+clip, against the character skeleton, to time the idle's events.
 
 ## Prop
 

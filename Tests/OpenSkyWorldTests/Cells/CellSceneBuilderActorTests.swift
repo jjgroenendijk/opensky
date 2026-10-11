@@ -33,6 +33,12 @@ extension CellSceneBuilderTests {
         #expect(scene.summary.actorAnimationAccountingIsExact)
         #expect(scene.summary.actorAnimationFailuresAreExplained)
         #expect(scene.renderScene.instanceCount == 1)
+        // The body keeps its reference, so a walk or a vehicle can move it.
+        let renderScene = scene.renderScene
+        let tags = Set((renderScene.opaque + renderScene.alphaTested).flatMap(\.instances)
+            .map(\.referenceFormID))
+        #expect(!tags.contains(0))
+        #expect(tags == Set(renderScene.referencePlacements.keys))
         // The actor body key joins the cell's working set so streaming
         // eviction treats it exactly like a static's mesh.
         #expect(scene.assets.meshKeys.contains { $0.contains("torso_m.nif") })

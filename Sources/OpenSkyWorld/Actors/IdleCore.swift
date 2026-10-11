@@ -112,13 +112,22 @@ nonisolated public enum IdleCore {
         return clipDuration * Float(loops)
     }
 
-    /// The marker timer is the shortest stay; a longer clip still finishes.
+    /// The marker timer is the shortest stay; a longer clip still finishes. A held
+    /// idle waits for the timer alone.
     public static func nextSelection(
         after start: Float,
         playSeconds: Float,
         timer: Float?
     ) -> Float {
-        start + max(playSeconds, timer ?? 0, 1)
+        start + max(playSeconds.isFinite ? playSeconds : 0, timer ?? 0, 1)
+    }
+
+    /// A state whose clip loops holds until another idle replaces it, as a cart seat
+    /// does. A loop count in the idle's `DATA` still ends it (docs/engine/idle-runtime.md).
+    public static func holds(
+        _ plan: IdlePlaybackPlan, properties: IdleAnimation.Properties?
+    ) -> Bool {
+        plan.loops && (properties?.loopMaximum ?? 0) == 0
     }
 
     public static func selectionOrder(of marker: IdleMarker) -> IdleSelectionOrder {

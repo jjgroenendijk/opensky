@@ -3,9 +3,12 @@
 
 import Foundation
 import OpenSkyAgentControl
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import OpenSkyWorld
+import OpenSkyWorldState
+import simd
 
 extension AgentWorldAdapter {
     func packagesState(reference: String) throws(AgentFailure) -> AgentJSON {
@@ -29,6 +32,7 @@ extension AgentWorldAdapter {
                 .string("\($0.state) waypoint \($0.waypointIndex) of \($0.waypointCount)"
                     + " at \($0.feetPosition)")
             } ?? .null,
+            "vehicle": vehicleReadout(key),
             "vehicleLinks": .array(links.keys.sorted()
                 .map { .string("\($0) -> \(links[$0]?.carrier as Any)") }),
             "lastMove": game.aiWorld.lastPackageMoves[key].map { .string("\($0)") } ?? .null,
@@ -36,9 +40,32 @@ extension AgentWorldAdapter {
                 .string("\($0.x.rounded()), \($0.y.rounded()), \($0.z.rounded())")
             }) : .null,
             "idle": game.idleWorld.idles.idleSnapshot(for: key).report.map {
-                .string("\($0.chosen ?? "none") from \($0.source) for \($0.seconds) s"
+                .string("\($0.chosen ?? "none") from \($0.source) "
+                    + ($0.seconds.isFinite ? "for \($0.seconds) s" : "held")
                     + ($0.failure.map { ", failed: \($0)" } ?? ""))
             } ?? .null
+        ]
+    }
+
+    /// Where the vehicle pass puts `key`, and which cell draws it at which pose.
+    private func vehicleReadout(_ key: ReferenceKey) -> AgentJSON {
+        guard let live = game.vehicleWorld.vehicles.lastPoses[key] else { return .null }
+        let built = game.vehicleWorld.vehicleFormID(of: key)
+            .flatMap { game.renderer?.scene.referencePlacements[$0]?.columns.3 }
+        let head = game.idleWorld.idles.idleBone(of: key, named: DialogueCamera.headBoneName)
+            .map { bone in
+                let root = MatrixMath.placement(
+                    position: live.position, rotation: live.rotation, scale: 1
+                )
+                let world = root * SIMD4(bone, 1)
+                return SIMD3(world.x, world.y, world.z)
+            }
+        return [
+            "head": head.map { .init($0) } ?? .null,
+            "live": .init(live.position),
+            "yaw": .init(live.rotation.z),
+            "cell": game.streamer?.cellLocation(of: key).map { .string("\($0)") } ?? .null,
+            "built": built.map { .init(SIMD3($0.x, $0.y, $0.z)) } ?? .null
         ]
     }
 }

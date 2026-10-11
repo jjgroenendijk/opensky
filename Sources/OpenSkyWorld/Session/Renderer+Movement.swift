@@ -36,10 +36,19 @@ extension Renderer {
     }
 
     /// Puts the player's feet at `feet` and keeps the view, as a vehicle seat does.
+    /// Third person keeps its orbit around the new feet.
     public func placePlayerFeet(at feet: SIMD3<Float>) {
         guard movementMode.isPlayerControlled else { return }
-        freeFlyCamera.position = feet + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
-        walkController.reset(cameraPosition: freeFlyCamera.position)
+        let eye = feet + SIMD3<Float>(0, 0, walkController.capsule.eyeHeight)
+        walkController.reset(cameraPosition: eye)
+        freeFlyCamera.position = movementMode == .thirdPerson
+            ? thirdPersonCamera.resolve(
+                feetPosition: feet,
+                yaw: freeFlyCamera.yaw,
+                pitch: freeFlyCamera.pitch,
+                collisionQuery: collisionQuery ?? { _ in [] }
+            )
+            : eye
     }
 
     /// Advances active movement mode by one input frame. First frame makes no
@@ -64,6 +73,10 @@ extension Renderer {
         switch movementMode {
         case .fly:
             freeFlyCamera.update(frameInput)
+        case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
+            // The vehicle places a seated player; only the view turns.
+            freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
+            locomotion.advanceSeated(deltaTime: lastCameraDelta)
         case .walk, .thirdPerson:
             advancePlayer(frameInput)
         }

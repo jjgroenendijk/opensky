@@ -2,6 +2,7 @@
 // runs the selector on arrival, plays the clip, and shows the prop. The rules
 // live in `IdleCore` and `IdleSelector`. See docs/engine/idle-runtime.md.
 
+import OpenSkyBehavior
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
@@ -22,6 +23,9 @@ public protocol IdleWorld: AnyObject {
     func moveActor(_ actor: ReferenceKey, to point: SIMD3<Float>) -> NPCMoveCommandResult
     /// Shows a prop on the actor, or removes it with nil. It rebuilds no cell.
     func setProp(_ prop: ActorPropAttachment?, on actor: ReferenceKey)
+    /// Sends an idle's event to an actor that runs its own behavior graph, the player.
+    /// `state` is the graph state the event enters, when the graph walk found it.
+    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey)
 }
 
 @MainActor
@@ -45,8 +49,14 @@ public final class IdleCoordinator {
 
     struct Playing {
         let clip: ActorAnimationClip
+        let start: Float
+        /// Infinite while a looping state holds until another idle replaces it.
         let end: Float
         let hasProp: Bool
+        /// What the state sends when another idle replaces it before it ends.
+        var exitEvents: [String] = []
+        /// When a held idle's current loop ends and its annotations repeat.
+        var loopEnd: Float?
         /// The playback the clip went to; a cell rebuild replaces it. Nil for the player,
         /// who has none, so only the events play.
         var playback: ObjectIdentifier?
@@ -144,7 +154,8 @@ public final class IdleCoordinator {
             let actor = actors[key]
             let keepsMarker = actor.map { !$0.isDead && IdleCore.usesMarkers($0.procedure) }
                 ?? false
-            let stillPlaying = (session.playing?.end ?? 0) > now && actor != nil
+            let ending = session.playing.map { $0.end.isFinite && $0.end > now } ?? false
+            let stillPlaying = ending && actor != nil
             guard session.marker != nil, !keepsMarker || !usesIdleMarkers else { continue }
             guard !stillPlaying else { continue }
             endIdle(of: key)
@@ -182,6 +193,7 @@ public final class IdleCoordinator {
     private func step(_ actor: IdleActorPresence, now: Float) {
         guard var session = sessions[actor.key] else { return }
         if var playing = session.playing {
+            playing.repeatLoops(until: now)
             let due = playing.events.prefix { $0.time <= now }
             playing.events.removeFirst(due.count)
             session.playing = playing
@@ -284,11 +296,13 @@ public final class IdleCoordinator {
         var failure: String?
         var seconds: Float = 0
         if let clip = clipState?.value {
-            seconds = IdleCore.playSeconds(
-                clipDuration: clip.animation.duration,
-                properties: chosen.record.properties,
-                random: random
-            )
+            seconds = IdleCore.holds(plan, properties: chosen.record.properties)
+                ? .infinity
+                : IdleCore.playSeconds(
+                    clipDuration: clip.animation.duration,
+                    properties: chosen.record.properties,
+                    random: random
+                )
             start(clip, plan: plan, on: actor, for: seconds, now: now)
         } else {
             failure = plan.clipPath == nil ? "no clip" : "the clip did not load"
@@ -324,20 +338,34 @@ extension IdleCoordinator {
         _ clip: ActorAnimationClip, plan: IdlePlaybackPlan,
         on actor: ReferenceKey, for seconds: Float, now: Float
     ) {
+        leaveState(of: actor, now: now)
         let playback = world?.actorPlayback(for: actor)
         playback?.play(clip, startingAt: now, forSeconds: seconds)
+        if playback == nil, let event = plan.event {
+            world?.raiseIdleEvent(event, state: plan.state, on: actor)
+        }
         let prop = playback == nil ? nil : Self.attachment(plan.prop)
         if prop != nil || sessions[actor]?.playing?.hasProp == true {
             world?.setProp(prop, on: actor)
         }
+        let held = !seconds.isFinite
+        let duration = clip.animation.duration
         let events = IdleCore.playEvents(
-            annotations: clip.animation.annotations, notify: plan.notify,
-            clipDuration: clip.animation.duration, seconds: seconds
+            annotations: clip.animation.annotations,
+            notify: held ? BehaviorStateNotify(enter: plan.notify.enter) : plan.notify,
+            clipDuration: duration, seconds: held ? duration : seconds
         ).map { IdleAnimationEvent(time: now + $0.time, name: $0.name) }
         sessions[actor, default: Session()].playing = Playing(
-            clip: clip, end: now + seconds, hasProp: prop != nil,
+            clip: clip, start: now, end: now + seconds, hasProp: prop != nil,
+            exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
             playback: playback.map(ObjectIdentifier.init), events: events
         )
+    }
+
+    /// An idle replaced before its end leaves its state, which sends the exit events.
+    private func leaveState(of actor: ReferenceKey, now: Float) {
+        guard let playing = sessions[actor]?.playing, now < playing.end else { return }
+        playing.exitEvents.forEach { onAnimationEvent?(actor, $0) }
     }
 
     private func finish(_ report: IdleReport, timer: Float?, now: Float) -> IdleReport {

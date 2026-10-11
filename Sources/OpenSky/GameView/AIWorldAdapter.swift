@@ -274,8 +274,7 @@ extension AIWorldAdapter {
 }
 
 extension AIWorldAdapter: AINavigationWorld {
-    /// Used only for a horse without a `SaddleBone`, such as one whose skeleton did not load.
-    private static let riderSeatHeight: Float = 90
+    /// The rider's root sits on this node of the horse skeleton (docs/engine/vehicles.md).
     static let saddleBone = "SaddleBone"
 
     /// The horse a placed actor starts on, `ACHR` `XHOR` (docs/formats/placed-references.md).
@@ -285,9 +284,7 @@ extension AIWorldAdapter: AINavigationWorld {
                 .details.links["XHOR"],
             let resolver = game.scripts.bridge?.formIDResolver,
             let horse = ReferenceKey.resolve(raw, using: resolver),
-            game.vehicleWorld.vehicles.seat(
-                rider, on: horse, height: Self.riderSeatHeight, saddle: saddlePosition(of: horse)
-            )
+            game.vehicleWorld.vehicles.seat(rider, on: horse, bone: Self.saddleBone)
         else { return nil }
         _ = game.streamer?.stopActor(rider)
         game.npcAnimation.ride(rider, on: horse)
@@ -297,21 +294,6 @@ extension AIWorldAdapter: AINavigationWorld {
     func dismountPackageActor(_ rider: ReferenceKey) {
         game.vehicleWorld.vehicles.detach(rider)
         game.npcAnimation.dismount(rider)
-    }
-
-    /// The horse's `SaddleBone` in world space, from its drawn pose
-    /// (docs/engine/vehicles.md).
-    private func saddlePosition(of horse: ReferenceKey) -> SIMD3<Float>? {
-        guard
-            let renderer = game.renderer,
-            let playback = game.actorPlayback(for: horse),
-            let pose = playback.skeletonPose(at: renderer.animationTime),
-            let index = pose.bones.index(of: Self.saddleBone),
-            pose.matrices.indices.contains(index)
-        else { return nil }
-        let delta = renderer.npcInstanceDeltas[playback.actor.rawValue] ?? matrix_identity_float4x4
-        let world = delta * playback.transform * pose.matrices[index].columns.3
-        return SIMD3(world.x, world.y, world.z)
     }
 
     func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey? {

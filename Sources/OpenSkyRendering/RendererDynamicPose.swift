@@ -42,8 +42,27 @@ extension Renderer {
         let moving = npcInstanceDeltas.isEmpty
             ? dynamicInstanceDeltas
             : dynamicInstanceDeltas.merging(npcInstanceDeltas) { _, npc in npc }
-        instanceDeltas = vehicleInstanceDeltas.isEmpty
+        instanceDeltas = vehicleInstancePoses.isEmpty
             ? moving
-            : moving.merging(vehicleInstanceDeltas) { _, vehicle in vehicle }
+            : moving.merging(vehicleDeltas()) { _, vehicle in vehicle }
+    }
+
+    /// A rebuilt cell bakes a newer placement, so the delta follows the current scene.
+    private func vehicleDeltas() -> [UInt32: float4x4] {
+        vehicleInstancePoses.reduce(into: [:]) { deltas, entry in
+            guard let built = scene.referencePlacements[entry.key] else { return }
+            deltas[entry.key] = entry.value * Self.rigid(built).inverse
+        }
+    }
+
+    /// The placement without its scale, so the delta keeps the built scale.
+    private static func rigid(_ matrix: float4x4) -> float4x4 {
+        func unit(_ column: SIMD4<Float>) -> SIMD4<Float> {
+            SIMD4(simd_normalize(SIMD3(column.x, column.y, column.z)), 0)
+        }
+        return float4x4(
+            unit(matrix.columns.0), unit(matrix.columns.1), unit(matrix.columns.2),
+            matrix.columns.3
+        )
     }
 }

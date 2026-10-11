@@ -88,7 +88,7 @@ nonisolated public final class LocomotionBridge {
     public let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
-    private var wasMoving = false
+    var wasMoving = false
     private var wasSprinting = false
     private var wasSneaking = false
     private var wasSwimming = false
@@ -97,13 +97,16 @@ nonisolated public final class LocomotionBridge {
     /// gait must reach the graph without also telling `resolveSwim` that the
     /// capsule is already in water and may leave at the shallower threshold.
     private var wasGraphSwimming = false
-    private var wasGrounded = true
+    var wasGrounded = true
     /// False until a step sees the capsule standing. A reset leaves `isGrounded` false,
     /// and reporting that change would fake a landing on every teleport, so ground events
     /// start once standing.
     private var hasGroundSample = false
     private var isAirborneFromJump = false
     private var pendingJump = false
+    /// An idle the graph has not taken yet, because its current state has no
+    /// transition for it, such as a landing, and the state the idle enters.
+    var pendingIdle: (event: String, state: String?)?
 
     public init(
         configuration: PlayerMovementConfiguration,
@@ -164,6 +167,10 @@ nonisolated public final class LocomotionBridge {
         let jumpImpulse = resolveJump(state: state, swimming: swim != nil)
 
         writeVariables(state: state, gait: gait, direction: direction, moving: moving)
+        if let pendingIdle {
+            raise(pendingIdle.event)
+            self.pendingIdle = nil
+        }
         raiseEdgeEvents(
             moving: moving, gait: gait, swimming: swim != nil || gait == .swim,
             jumping: jumpImpulse != nil, grounded: state.isGrounded
@@ -316,7 +323,7 @@ nonisolated public final class LocomotionBridge {
 
     /// Steps every attached graph and returns the third-person root travel. The
     /// first-person graph's root motion is dropped, so the capsule is driven once.
-    private func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
+    func advanceGraph(deltaTime: Float) -> BehaviorRootMotion? {
         advanceFirstPersonGraph(deltaTime: deltaTime)
         guard let graph else { return nil }
         let result = graph.update(deltaTime: deltaTime)

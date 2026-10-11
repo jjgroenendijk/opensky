@@ -31,6 +31,8 @@ public final class GameSession: RenderFrameDriver {
     /// rings and manages residency; assigning it directly would draw from
     /// buffers the GPU has not been told about.
     public var playerBody: PlayerBody?
+    /// The vehicle pose the player rides at, where the body's root goes; nil on foot.
+    public var playerSeat: float4x4?
     /// The player's first-person arms, held like `playerBody`. Set through
     /// `setPlayerFirstPersonRig`.
     public var playerFirstPersonRig: PlayerFirstPersonRig?

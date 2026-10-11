@@ -1,6 +1,6 @@
-// The shell of the vehicle rules in `VehicleCore`: reads live poses from the
-// session each frame and publishes the followers' draw deltas. The player rider
-// is placed, not drawn. See docs/engine/vehicles.md.
+// The shell of the vehicle rules in `VehicleCore`: reads live poses, bones, and
+// the ground from the session each frame and publishes the followers' live poses.
+// The player rider is placed, not drawn. See docs/engine/vehicles.md.
 
 import OpenSkyFormatsESM
 import OpenSkyWorldState
@@ -11,15 +11,20 @@ import simd
 public protocol VehicleWorld: AnyObject {
     /// Where the reference is now: a walking actor's live pose, else its placed pose.
     func vehiclePose(of key: ReferenceKey) -> ReferenceTransformOverride?
-    /// The FormID and pose the current cell build drew the reference with.
-    func vehicleDrawnPose(of key: ReferenceKey)
-        -> (formID: UInt32, pose: ReferenceTransformOverride)?
-    func publishVehicleDeltas(_ deltas: [UInt32: float4x4])
+    /// The FormID the reference is drawn under, while a loaded cell draws it.
+    func vehicleFormID(of key: ReferenceKey) -> UInt32?
+    /// Placements by FormID; the renderer turns them into deltas against its build.
+    func publishVehiclePoses(_ poses: [UInt32: float4x4])
+    /// Every follower but the player, so other systems read where it rides.
+    func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride])
     func placePlayer(at pose: ReferenceTransformOverride)
     /// A follower left its carrier and now rests at `pose`.
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride)
     /// A follower that is not the player is at `pose` this frame.
     func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride)
+    /// A bone of the reference's live pose, in its root frame; nil while it loads.
+    func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>?
+    func vehicleGround(at point: SIMD2<Float>) -> Float?
 }
 
 @MainActor
@@ -54,20 +59,25 @@ public final class VehicleCoordinator {
         return core.board(rider, on: vehicle)
     }
 
-    /// Seats `rider` on top of `horse`, facing the way the horse faces.
-    /// `saddle` is the world point of the horse's saddle node; without one the rider sits
-    /// `height` above the horse's feet.
+    /// Seats `rider` on the horse's saddle bone, facing the way the horse faces.
     @discardableResult
-    public func seat(
-        _ rider: ReferenceKey, on horse: ReferenceKey, height: Float,
-        saddle: SIMD3<Float>? = nil
-    ) -> Bool {
-        guard let horsePose = currentPose(of: horse) else { return false }
-        let seat = ReferenceTransformOverride(placement: PlacedReference.Placement(
-            position: saddle ?? horsePose.position + SIMD3(0, 0, height),
-            rotation: horsePose.rotation
-        ))
-        return core.attach(rider, to: horse, followerPose: seat, carrierPose: horsePose)
+    public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String) -> Bool {
+        lastPoses[rider] = nil
+        return core.seat(rider, on: horse, bone: bone)
+    }
+
+    /// `TetherToHorse`: the cart trails the horse at the distance it has now.
+    @discardableResult
+    public func tow(_ cart: ReferenceKey, by horse: ReferenceKey) -> Bool {
+        guard
+            let world,
+            let cartPose = currentPose(of: cart),
+            let horsePose = currentPose(of: horse)
+        else { return false }
+        return core.tow(
+            cart, by: horse, followerPose: cartPose, carrierPose: horsePose,
+            ground: { world.vehicleGround(at: $0) }
+        )
     }
 
     public func detach(_ follower: ReferenceKey) {
@@ -83,24 +93,29 @@ public final class VehicleCoordinator {
         guard let world else { return }
         guard !core.links.isEmpty else {
             if hasDeltas {
-                world.publishVehicleDeltas([:])
+                world.publishVehiclePoses([:])
+                world.publishCarriedPoses([:])
                 hasDeltas = false
             }
             return
         }
-        lastPoses = core.poses { world.vehiclePose(of: $0) }
-        var deltas: [UInt32: float4x4] = [:]
+        lastPoses = core.advance(
+            base: { world.vehiclePose(of: $0) },
+            bone: { world.vehicleBone(of: $0, named: $1) },
+            ground: { world.vehicleGround(at: $0) }
+        )
+        var placements: [UInt32: float4x4] = [:]
         for (key, pose) in lastPoses {
             if key == .player {
                 world.placePlayer(at: pose)
-            } else if let drawn = world.vehicleDrawnPose(of: key) {
+            } else if let formID = world.vehicleFormID(of: key) {
                 world.vehicleFollowerMoved(key, to: pose)
-                deltas[drawn.formID] = VehicleCore.matrix(pose) * VehicleCore.matrix(drawn.pose)
-                    .inverse
+                placements[formID] = VehicleCore.matrix(pose)
             }
         }
-        world.publishVehicleDeltas(deltas)
-        hasDeltas = !deltas.isEmpty
+        world.publishVehiclePoses(placements)
+        world.publishCarriedPoses(lastPoses.filter { $0.key != .player })
+        hasDeltas = true
     }
 
     private func currentPose(of key: ReferenceKey) -> ReferenceTransformOverride? {

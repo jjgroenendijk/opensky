@@ -105,6 +105,11 @@ extension IdleWorldAdapter: IdleWorld {
         else { return }
         streamer.setActorProp(prop, on: placed.formID)
     }
+
+    func raiseIdleEvent(_ name: String, state: String?, on actor: ReferenceKey) {
+        guard actor == .player else { return }
+        game.player.playIdle(named: name, state: state)
+    }
 }
 
 extension IdleWorldAdapter: HeadAssemblyWorld {

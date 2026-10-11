@@ -28,6 +28,11 @@ extension Renderer {
     /// a developer view of the same world, not a different world.
     public func updatePlayerBodyPose() {
         guard let playerBody, movementMode.isPlayerControlled else { return }
+        // A seat clip poses the body from the vehicle's root, as it does a rider's.
+        if let playerSeat {
+            playerBody.place(at: playerSeat)
+            return
+        }
         playerBody.place(
             feetPosition: walkController.drawnFeetPosition,
             yaw: freeFlyCamera.yaw
