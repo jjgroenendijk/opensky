@@ -16,7 +16,9 @@ nonisolated public enum InputRoute: Equatable, Sendable {
 /// cover Scaleform menu navigation without binding to AppKit or a widget tree.
 nonisolated public enum MenuInputEvent: Equatable, Sendable {
     public enum Direction: Sendable { case up, down, left, right }
-    public enum Button: Sendable { case accept, cancel }
+    /// `xButton` is the install's `XButton` user event: the Ready Weapon key while a
+    /// menu is open (`Interface\Controls\PC\controlmap.txt`).
+    public enum Button: Sendable { case accept, cancel, xButton }
 
     case move(Direction)
     case button(Button)
