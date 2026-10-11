@@ -92,8 +92,9 @@ long frame is clamped to 100 ms, so it cannot jump.
   collision shapes, so this bends the walk direction instead. A neighbour ahead, within 96 units
   past touching, turns the walker to the side away from it. A neighbour dead ahead is passed on
   the right, so two actors walking at each other both turn right. Two that overlap push apart.
-  A marker another actor stands on counts as reached, or both would wait for it. These rules are
-  OpenSky's own.
+  A marker another actor stands on counts as reached, or both would wait for it. A rider, the
+  player included, is not a neighbour: it takes up its vehicle's space. Otherwise a horse steers
+  away from the rider in its own saddle. These rules are OpenSky's own.
 
 Progress is the distance to the next waypoint. Getting at least one unit closer resets the stuck
 timer. After two seconds with no progress, the mover searches again once, from where it is to the

@@ -39,15 +39,20 @@ final class AIWorldAdapter {
     }
 
     /// The living actors and the player, for walkers to steer around. Each mover is
-    /// dropped from this list by the movement runtime, which knows who walks.
+    /// dropped from this list by the movement runtime, which knows who walks. A rider
+    /// is left out: it takes up its vehicle's space, and a horse must not steer around
+    /// the rider in its own saddle.
     func standingActors() -> [NPCNeighbour] {
-        var actors = game.actorWorld.combatActors().filter { !$0.isDead }.map {
+        let links = game.vehicleWorld.vehicles.core.links
+        var actors = game.actorWorld.combatActors().filter {
+            !$0.isDead && links[$0.key] == nil
+        }.map {
             NPCNeighbour(
                 key: $0.key, position: SIMD2($0.feet.x, $0.feet.y),
                 radius: $0.capsule.radius * max($0.scale, 0)
             )
         }
-        if let feet = game.renderer?.locomotion.status.feetPosition {
+        if links[.player] == nil, let feet = game.renderer?.locomotion.status.feetPosition {
             actors.append(NPCNeighbour(
                 key: .player, position: SIMD2(feet.x, feet.y),
                 radius: PlayerCapsule.standard.radius
