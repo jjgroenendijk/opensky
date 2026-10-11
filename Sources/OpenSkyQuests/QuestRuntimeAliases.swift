@@ -49,7 +49,9 @@ extension QuestRuntime {
     /// The seam conditions read alias fills through, built the same way
     /// `resolution()` builds the quest-state seam.
     public func aliasResolution() -> QuestAliasResolution {
-        QuestAliasResolution(defaults: quests, tables: aliasTables())
+        store.derived(QuestAliasResolution.self, from: quests) {
+            QuestAliasResolution(defaults: quests, tables: aliasTables())
+        }
     }
 
     func aliasTables() -> [ReferenceKey: QuestAliasState] {
