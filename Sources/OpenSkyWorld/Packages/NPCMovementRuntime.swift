@@ -186,6 +186,25 @@ public struct NPCMovementRuntime {
         }
     }
 
+    /// A vehicle carried `actor`, so where it got off replaces where it last walked.
+    public mutating func rest(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
+        movers[actor] = nil
+        facings[actor] = nil
+        guard let old = parked[actor] else { return }
+        let readout = old.readout
+        parked[actor] = NPCParkedMovement(
+            readout: NPCMovementReadout(
+                actor: actor, state: readout.state,
+                feetPosition: transform.placement.position,
+                yaw: NPCYawMath.yaw(fromHeading: transform.placement.rotation.z),
+                waypointIndex: readout.waypointIndex, waypointCount: readout.waypointCount,
+                gait: readout.gait, repathCount: readout.repathCount
+            ),
+            transform: transform, formID: old.formID, scale: old.scale,
+            drawnPlacement: old.drawnPlacement
+        )
+    }
+
     public func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
         movers[actor]?.transform ?? facings[actor]?.transform ?? parked[actor]?.transform
     }

@@ -118,6 +118,11 @@ extension CellStreamer {
         return holdingRests { npcMovement.stop(actor) }
     }
 
+    /// Moves a still actor's rest to where a vehicle let it off.
+    public func restActor(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
+        npcMovement.rest(actor, at: transform)
+    }
+
     /// Turns a resident actor towards a world point.
     ///
     /// Reads the same placement `moveActor` reads and prefers the movement

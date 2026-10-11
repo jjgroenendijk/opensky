@@ -99,7 +99,8 @@ and this event is the one the graph sends at that moment.
 
 The link is the world state component `vehicleLink`. It is not written to a save. The game allows
 no save during the cart ride, so a save never holds one. When a follower leaves its carrier, its
-last pose is kept as a transform override.
+last pose is kept as a transform override. The follower also stands there: the walk it made
+before it got on no longer counts as where it is.
 
 ## Where OpenSky differs
 

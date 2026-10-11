@@ -145,6 +145,7 @@ extension VehicleWorldAdapter: VehicleWorld {
         let cell = game.streamer?.cellLocation(of: key)
         game.worldState.set(pose, for: key, in: cell)
         game.worldState.reset(.vehicleLink, for: key)
+        game.streamer?.restActor(key, at: pose)
     }
 }
 
