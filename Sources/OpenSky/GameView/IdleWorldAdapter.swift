@@ -83,7 +83,10 @@ extension IdleWorldAdapter: IdleWorld {
 
     func idleConditionContext() -> ConditionContext {
         guard let clock = game.renderer?.gameClock else { return ConditionContext() }
-        return game.aiWorld.packageConditionContext(clock: clock)
+        var context = game.aiWorld.packageConditionContext(clock: clock)
+        // Idle trees test keywords, such as the chopping block's `isExecutioner`.
+        context.data = game.runtimeStateWorld.conditionData()
+        return context
     }
 
     func actorPlayback(for actor: ReferenceKey) -> ActorAnimationPlayback? {

@@ -44,6 +44,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 80 | `GetLevel` | none | level; for the player, the character level |
 | 102 | `IsTorchOut` | none | 1 when the actor holds a torch out |
 | 103 | `IsShieldOut` | none | 1 when the actor holds a shield out |
+| 159 | `GetSitting` | none | 0 not sitting, 2 getting ready to sit, 3 sitting |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
 | 214 | `HasMagicEffect` | `MGEF` | 1 when that effect acts on the actor |
 | 223 | `IsSpellTarget` | `SPEL`, `ALCH`, `INGR`, or `ENCH` | 1 when an effect from it acts on the actor |
@@ -68,9 +69,14 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
 | 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
+| 613 | `IsFurnitureAnimType` | animation type | 1 when the actor's marker has that type |
+| 614 | `IsFurnitureEntryType` | entry | 1 when the actor enters from that side |
+| 631 | `IsEnteringInteractionQuick` | none | always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
+| 644 | `IsInFurnitureState` | animation type | 1 while seated on a marker of that type |
 | 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
+| 675 | `GetGraphVariableInt` | variable name (`CIS1`) | the actor's graph variable |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 
@@ -154,6 +160,25 @@ Not registered yet: `GetEquippedItemType` (597, 785 uses; equipment), `SpellHasK
 `SpellHasCastingPerk` (713, 75), `EPMagic_SpellHasSkill` (696, 39), `GetReplacedItemType`
 (664, 23), `EPMagic_IsAdvanceSkill` (681, 19), `IsDualCasting` (627, 4),
 `HasBoundWeaponEquipped` (706, 1), `EffectWasDualCast` (724, 1).
+
+## Furniture
+
+The furniture functions read how the actor uses a furniture marker. Only the idle runtime fills
+this data, when a package seats an actor ([Idle runtime](/engine/idle-runtime.md#furniture)).
+Elsewhere they fail with the furniture reason.
+
+- The `GetSitting` values come from the Creation Kit wiki page "GetSitting". OpenSky uses 0, 2,
+  and 3: 2 while the entry idle is picked, 3 after.
+- The parameter enums come from xEdit `wbDefinitionsTES5.pas`: animation type 1 Sit, 2 Lay,
+  4 Lean; entry `0x10000` Front, `0x20000` Behind, `0x40000` Right, `0x80000` Left,
+  `0x100000` Up. A NIF marker stores the same entry bits 16 places lower.
+- `IsEnteringInteractionQuick` is always 0, because OpenSky has no quick entry.
+- `GetGraphVariableInt` names its variable in `CIS1`. An NPC runs no live graph in OpenSky, so
+  each of its variables reads 0; the furniture tree tests `bInJumpState` == 0 this way. The
+  player's graph is not read yet, so the function fails for the player.
+- [WARNING] While an actor sits, `HasKeyword` also sees the furniture's keywords. The
+  chopping block's idle tree tests `FurnitureExecutioner`, a keyword of the block, on the
+  seated actor. This is OpenSky's reading of the data.
 
 ## Factions and crime
 
