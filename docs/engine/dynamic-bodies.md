@@ -88,7 +88,9 @@ clock. Inside a step:
    tunneling: a body cannot cross a wall it never had a substep inside.
 3. Each substep moves the poses, finds contacts, and solves them with accumulated sequential
    impulses over a fixed number of passes. The normal impulse never goes negative. Friction is
-   limited by the normal impulse so far.
+   limited by the normal impulse so far. The static shapes near a body are looked up once per
+   step, in a box widened by the step's travel. Each substep keeps the shapes its bounds overlap,
+   and looks up again only when the body has left that box, so the contacts do not change.
 4. Penetration that is left is pushed out of the positions, not the velocities. A first version
    used the textbook Baumgarte velocity bias. That leaves a resting body with an upward velocity
    fighting gravity forever, so it never falls below the sleep limit.

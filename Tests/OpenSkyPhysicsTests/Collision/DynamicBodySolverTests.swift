@@ -80,6 +80,25 @@ struct DynamicBodySolverTests {
         #expect(bodies[0].position.isFiniteVector)
     }
 
+    @Test
+    func aStepLooksUpStaticShapesOncePerBody() {
+        let counter = QueryCounter()
+        let shapes = [DynamicBodyScene.floor()]
+        let world = DynamicStepWorld(staticCandidates: { bounds in
+            counter.calls += 1
+            return shapes.filter { $0.bounds.overlaps(bounds) }
+        })
+        var bodies = [DynamicBodyScene.cube(key: .generated(1), center: SIMD3(0, 0, 200))]
+        bodies[0].linearVelocity = SIMD3(3000, 0, 0)
+
+        let stats = DynamicBodySolver.step(
+            bodies: &bodies, world: world, dt: PhysicsStep.fixedTimeStep
+        )
+
+        #expect(stats.substepCount > 1)
+        #expect(counter.calls == 1)
+    }
+
     /// The stress acceptance: dozens of bodies, a long run, no NaN, nothing
     /// through the floor, and the same resting state from the same inputs.
     @Test(.tags(.slow))
@@ -172,4 +191,8 @@ struct DynamicBodySolverTests {
         DynamicBodyScene.run(bodies: &bodies, world: world, steps: 600)
         return bodies
     }
+}
+
+private final class QueryCounter {
+    var calls = 0
 }
