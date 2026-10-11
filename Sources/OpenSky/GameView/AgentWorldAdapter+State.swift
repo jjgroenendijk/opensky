@@ -7,6 +7,7 @@ import OpenSkyAgentControl
 import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyDiagnostics
+import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -172,7 +173,9 @@ extension AgentWorldAdapter {
                 "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
                 "position": .init(actor.feet),
                 "distance": .init(distance),
-                "dead": .bool(actor.isDead)
+                "dead": .bool(actor.isDead),
+                "hostility": .string("\(game.factions.hostility(of: actor.key))"),
+                "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null
             ])
         }
         return ["actors": .array(rows.sorted { $0.0 < $1.0 }.map(\.1))]

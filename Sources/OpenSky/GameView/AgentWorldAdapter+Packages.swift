@@ -43,7 +43,9 @@ extension AgentWorldAdapter {
                 .string("\($0.chosen ?? "none") from \($0.source) "
                     + ($0.seconds.isFinite ? "for \($0.seconds) s" : "held")
                     + ($0.failure.map { ", failed: \($0)" } ?? ""))
-            } ?? .null
+            } ?? .null,
+            "idleTrace": .array((game.idleWorld.idles.idleSnapshot(for: key).report?.trace ?? [])
+                .map { .string(IdleReadout.traceLine($0)) })
         ]
     }
 
