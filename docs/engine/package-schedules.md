@@ -64,9 +64,13 @@ climbed onto a rock arch above the road this way and stopped. This is a guess at
 behavior, not a confirmed rule. That input is the last of the Patrol procedure's six inputs, by the
 `BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
 
-A patrol whose "Ride Horse if Possible?" input is true rides the actor's horse, when the actor
-has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the patrol, and its
-arrivals move the rider's patrol on. A package without the input takes the rider off.
+A package whose "Ride Horse if possible?" input is true rides the actor's horse, when the actor
+has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the package, and its
+arrivals move the rider's package on. The Travel and Patrol templates both have this input. It is
+found by its `BNAM` name in the template, because its index differs: 2 in Travel (`00016FAA`), 6
+in Patrol (`00017723`), read on the install. A package without the input, or with it false, takes
+the rider off, and the horse stops where it is. In the opening, the riders wait on their horses
+with a travel package (`MQ101TulliusHoldPosition`) before their patrols start.
 
 A walk over an exterior cell whose terrain is not loaded slides along its path line instead of
 falling. Without this, an actor ahead of the loaded area falls through the world.

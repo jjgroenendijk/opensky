@@ -20,7 +20,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public private(set) var machine: PackageProcedureMachine
     /// True for a static-pathing patrol, which walks straight between its markers.
     public let isDirect: Bool
-    /// True for a patrol that rides the actor's horse when it has one.
+    /// True for a package that rides the actor's horse when it has one.
     public let ridesHorse: Bool
 
     /// A patrol walks `path` and needs no place.
@@ -32,7 +32,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         let patrol = package.procedure == .patrol ? Self.patrolFlags(package.package) : []
         let flags = patrol.count == 4 ? patrol : [false, false, false, false]
         isDirect = flags[3]
-        ridesHorse = flags[2]
+        ridesHorse = package.ridesHorse
         let walk = flags[1] ? Self.startingAtNearest(path, to: start, loops: flags[0]) : path
         machine = PackageProcedureMachine(
             kind: package.procedure,

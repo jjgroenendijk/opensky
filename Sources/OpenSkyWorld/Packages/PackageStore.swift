@@ -28,6 +28,8 @@ nonisolated public struct ResolvedPackage: Equatable, Sendable {
     public let package: Package
     public let templateChain: [FormID]
     public let procedure: PackageProcedureKind
+    /// The template's "Ride Horse if possible?" input: Travel and Patrol both have one.
+    public let ridesHorse: Bool
 }
 
 nonisolated public struct PackageStore: Sendable {
@@ -101,8 +103,28 @@ nonisolated public struct PackageStore: Sendable {
         return ResolvedPackage(
             package: concrete,
             templateChain: chain,
-            procedure: Self.procedure(for: definition)
+            procedure: Self.procedure(for: definition),
+            ridesHorse: Self.ridesHorse(concrete, template: definition)
         )
+    }
+
+    /// Template inputs are matched by `UNAM` index, and named by the template's `BNAM`
+    /// (docs/engine/package-schedules.md). A package that omits the input keeps the default.
+    private static func ridesHorse(_ package: Package, template: Package) -> Bool {
+        guard
+            let index = template.details.templateInputs.first(where: {
+                $0.name?.lowercased() == "ride horse if possible?"
+            })?.index
+        else { return false }
+        for source in [package, template] {
+            if
+                let input = source.dataInputs.first(where: { $0.index == index }),
+                case let .boolean(value) = input.value
+            {
+                return value
+            }
+        }
+        return false
     }
 
     private static func procedure(for package: Package) -> PackageProcedureKind {

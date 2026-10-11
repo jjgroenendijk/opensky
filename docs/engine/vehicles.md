@@ -13,8 +13,8 @@ A vehicle is a reference that carries another reference. There are three kinds o
 - A rider on a vehicle: `SetVehicle(vehicle)` on an actor. `SetVehicle(None)` takes the actor
   off again.
 - A rider on a horse: a placed actor whose `ACHR` has an `XHOR` field
-  ([placed references](/formats/placed-references.md)) rides that horse while a package tells it
-  to ride.
+  ([placed references](/formats/placed-references.md)) rides that horse while its package's "Ride
+  Horse if possible?" input is true ([package schedules](/engine/package-schedules.md)).
 
 Sources: <https://ck.uesp.net/wiki/SetVehicle_-_Actor> and
 <https://ck.uesp.net/wiki/TetherToHorse_-_ObjectReference>.

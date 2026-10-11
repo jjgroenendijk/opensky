@@ -225,8 +225,12 @@ struct PackageCoordinatorTests {
                 Package.Location(rawKind: 0, value: 0x700, radius: 0)
             ))]
         )
+        var patrol = try PackageRuntimeFixture.package(
+            id: 0x104, editorID: "Patrol", procedureNames: ["Patrol"]
+        )
+        patrol.details.templateInputs = [.init(index: 3, name: "Ride Horse if Possible?")]
         let ride = try PackageRuntimeFixture.package(
-            id: 0x103, editorID: "RidePatrol", procedureNames: ["Patrol"],
+            id: 0x103, editorID: "RidePatrol", template: 0x104,
             dataInputs: [Package.DataInput(index: 0, type: "PTDA", value: .target(
                 Package.Target(rawKind: 0, value: 0x701, countOrDistance: 0)
             ))] + [false, false, true, true].enumerated().map { index, flag in
@@ -237,7 +241,7 @@ struct PackageCoordinatorTests {
         let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
         let coordinator = PackageCoordinator()
         coordinator.wire(store: PackageStore(
-            packages: [morning, fallback, walk, ride],
+            packages: [morning, fallback, walk, ride, patrol],
             actorTemplates: ActorTemplateResolver(
                 actors: [0x600: actor, 0x7: player], leveledActors: [:]
             )

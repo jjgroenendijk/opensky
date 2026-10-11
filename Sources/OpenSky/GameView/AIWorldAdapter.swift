@@ -296,7 +296,11 @@ extension AIWorldAdapter: AINavigationWorld {
         return horse
     }
 
+    /// The horse walked the rider's package, so it stops with it.
     func dismountPackageActor(_ rider: ReferenceKey) {
+        if let horse = vehicleCarrier(of: rider) {
+            _ = game.streamer?.stopActor(horse)
+        }
         game.vehicleWorld.vehicles.detach(rider)
         game.npcAnimation.dismount(rider)
     }
