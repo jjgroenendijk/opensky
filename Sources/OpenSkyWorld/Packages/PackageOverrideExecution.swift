@@ -51,10 +51,10 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     }
 
     /// A repeatable patrol is done after its first lap, though it keeps walking: a scene
-    /// waits for the package to end, not for the actor to stop. A seated actor is not
-    /// done, because the `SitTarget` tree waits after the sit.
+    /// waits for the package to end, not for the actor to stop.
     public var isDone: Bool {
-        machine.state == .complete || machine.state == .failed || machine.laps > 0
+        machine.state == .complete || machine.state == .failed || machine.state == .seated
+            || machine.laps > 0
     }
 
     public mutating func start() -> [PackageProcedureCommand] {

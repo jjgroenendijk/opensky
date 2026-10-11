@@ -52,7 +52,7 @@ does not own either system.
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
-| Sit | Move to a free seat of the target furniture, then sit; never done, it holds the seat |
+| Sit | Move to a free seat of the target furniture, then sit; done when seated |
 | Wait | Stay in place and send no move, until another package wins |
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
@@ -96,14 +96,12 @@ On arrival the actor is set at the seat's point, facing the marker heading plus 
 reference's own z rotation. Then the furniture is activated by the actor, so its scripts get
 `OnActivate`. A Creation Kit template whose procedure tree holds "Sit" is a sit package, even
 when the tree also holds "Wait", because the vanilla `SitTarget` tree is
-Sequence[Sit, Simultaneous[Sit, Wait]]. The Wait step has no end, so a sit package is never
-done: a scene phase that waits for it ends only through its end conditions.
+Sequence[Sit, Simultaneous[Sit, Wait]].
 
 Example: `ExecutionerChoppingBlock` (`FURN` `0002E8EB`) has three markers. Marker 0 has the
 keyword `isExecutioner` and marker 2 `isExecutionerGuard`; marker 1 has none, so the prisoner
-gets it. The keyword rule is OpenSky's reading of the record. The actor appears in the seat
-without walking the entry, then plays and holds the seat idle that the furniture tree picks
-([Idle runtime](/engine/idle-runtime.md#furniture)).
+gets it. The keyword rule is OpenSky's reading of the record. The entry points and the sit
+animations are not used yet: the actor appears in the seat and plays no sit idle.
 
 ## In a session
 
