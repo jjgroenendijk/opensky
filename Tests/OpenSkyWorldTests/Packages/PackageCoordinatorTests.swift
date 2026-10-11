@@ -18,6 +18,7 @@ private final class FakePackageWorld: PackageWorld {
     private(set) var moves: [SIMD3<Float>] = []
     private(set) var movers: [ReferenceKey] = []
     var horse: ReferenceKey?
+    var moverSlotsFull = false
     var drivesPlayer = false
     private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
     static let place = SIMD3<Float>(100, 0, 0)
@@ -33,10 +34,12 @@ private final class FakePackageWorld: PackageWorld {
         location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool) -> Bool {
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool
+    ) -> PackageMoveResult {
         moves.append(point)
         movers.append(actor)
-        return true
+        return moverSlotsFull ? .busy : .started
     }
 
     func packagePatrolPath(
@@ -162,6 +165,25 @@ struct PackageCoordinatorTests {
         // Leaving the package runs its change fragment, after the end of the walk.
         #expect(world.scriptEvents == [.begin, .end, .change])
         #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
+    }
+
+    /// A walk that finds every mover slot taken waits and asks again each tick.
+    @Test func aBusyMoveIsAskedAgainUntilItStarts() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        world.moverSlotsFull = true
+        let override = PackageOverride(
+            packages: [FormID(0x102)],
+            owner: PackageOverrideOwner(source: FormID(0x4000), slot: 0), aliasQuest: nil
+        )
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .running)
+        coordinator.advance(by: 0.1)
+        world.moverSlotsFull = false
+        coordinator.advance(by: 0.1)
+        coordinator.advance(by: 0.1)
+        #expect(world.moves == Array(repeating: FakePackageWorld.place, count: 3))
+        #expect(coordinator.executions[Self.guardKey]?.machine.state == .moving)
     }
 
     /// A patrol that rides the actor's horse walks the horse, and the horse's arrival

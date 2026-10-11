@@ -132,7 +132,9 @@ Only a held actor runs its procedure machine. The machine's place is the package
 location input (`PLDT`). OpenSky can place these kinds: near a reference, in a cell (the cell
 reference), a reference alias of the scene's quest, near the actor itself, and the actor's
 editor location. The `move` command goes to the NPC mover. The mover's arrival or give-up ends
-the move. A move that cannot start fails the machine.
+the move. At most eight actors walk a path at once, to bound the cost. A move that finds all
+eight slots taken waits and is asked again on each tick; this limit is OpenSky's, not the
+game's. A move that cannot start for another reason, such as no path, fails the machine.
 
 The action is done when the machine completes or fails. Travel completes on arrival. Wander,
 sandbox, sleep, and eat never complete. An unsupported procedure fails at once.

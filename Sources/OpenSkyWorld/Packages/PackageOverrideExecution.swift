@@ -115,6 +115,13 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     }
 }
 
+/// Whether a package walk started. `busy` means every mover slot is taken.
+nonisolated public enum PackageMoveResult: Equatable, Sendable {
+    case started
+    case busy
+    case failed
+}
+
 /// The furniture seat a sit package uses: the reference and its marker.
 nonisolated public struct PackageSeat: Equatable, Sendable {
     public let furniture: ReferenceKey

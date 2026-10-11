@@ -197,13 +197,19 @@ extension AIWorldAdapter {
         return point.map { PackagePlace(point: $0, radius: location.radius) }
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool {
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool
+    ) -> PackageMoveResult {
         if actor == .player {
-            return walkPlayer(to: point, direct: direct)
+            return walkPlayer(to: point, direct: direct) ? .started : .failed
         }
         let result = game.streamer?.moveActor(actor, to: point, direct: direct) ?? .actorNotResident
         lastPackageMoves[actor] = result
-        return result == .started
+        switch result {
+        case .started: return .started
+        case .moverCapReached: return .busy
+        default: return .failed
+        }
     }
 
     /// The player has no NPC mover, so the renderer walks the navmesh path. Without

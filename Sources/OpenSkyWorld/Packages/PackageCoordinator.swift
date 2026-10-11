@@ -22,9 +22,11 @@ public protocol PackageWorld: AnyObject {
     func packagePlace(
         of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
     ) -> PackagePlace?
-    /// False when the move could not start. A `direct` move walks the straight line on
-    /// the terrain, as a static-pathing patrol does.
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool
+    /// A `direct` move walks the straight line on the terrain, as a static-pathing
+    /// patrol does.
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool
+    ) -> PackageMoveResult
     /// The packages each filled quest alias adds to its actor.
     func packageAliasStacks() -> [ReferenceKey: PackageAliasStack]
     /// The points a patrol walks, from its start marker along the linked references.
@@ -143,6 +145,8 @@ public final class PackageCoordinator {
     public private(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
     /// Each rider's horse, which walks the rider's package for it.
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
+    /// Walks that found no free mover slot, by actor.
+    var waitingMoves: [ReferenceKey: SIMD3<Float>] = [:]
 
     weak var world: (any PackageWorld)?
     private var store: PackageStore?
@@ -197,6 +201,7 @@ public final class PackageCoordinator {
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
+            waitingMoves.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
             guard (try? runtime.register(actor: arrival.actor, base: arrival.base)) != nil else {
@@ -312,6 +317,7 @@ public final class PackageCoordinator {
 
     /// Drops the actor's machine and runs the change fragment of the package it left.
     private func leaveExecution(of actor: ReferenceKey) {
+        waitingMoves[actor] = nil
         guard let execution = executions.removeValue(forKey: actor) else { return }
         if let seat = execution.seat {
             world?.unseatPackageActor(actor, from: seat)
@@ -355,6 +361,9 @@ public final class PackageCoordinator {
         let ridden = Set(mounts.values)
         for actor in Set(executions.keys).union(held).sorted() where !ridden.contains(actor) {
             syncExecution(actor)
+            if let point = waitingMoves[actor] {
+                requestMove(actor, to: point)
+            }
             step(actor, with: .tick(delta))
         }
     }
@@ -394,19 +403,6 @@ public final class PackageCoordinator {
             kind: .begin, actor: actor, package: current.package
         ))
         apply(commands, actor: actor)
-    }
-
-    private func apply(_ commands: [PackageProcedureCommand], actor: ReferenceKey) {
-        for command in commands {
-            if command == .sit, let seat = executions[actor]?.seat {
-                world?.seatPackageActor(actor, in: seat)
-            }
-            guard case let .move(point) = command else { continue }
-            let direct = executions[actor]?.isDirect ?? false
-            if world?.movePackageActor(mounts[actor] ?? actor, to: point, direct: direct) != true {
-                movementSettled(actor: actor, reason: .giveUp)
-            }
-        }
     }
 
     private func updateMount(_ actor: ReferenceKey, rides: Bool) {
