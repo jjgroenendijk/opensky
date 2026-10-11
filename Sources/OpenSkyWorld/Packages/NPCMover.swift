@@ -26,6 +26,7 @@ public struct NPCMover {
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
     public let ignoresStatics: Bool
+    public let preferredGait: LocomotionGait?
     /// The other actors near this one for the step in progress.
     private var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
@@ -45,6 +46,7 @@ public struct NPCMover {
         configuration = start.configuration
         path = start.path
         ignoresStatics = start.ignoresStatics
+        preferredGait = start.gait
         legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(

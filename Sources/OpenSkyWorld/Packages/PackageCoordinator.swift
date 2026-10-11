@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldState
 import simd
 
@@ -25,7 +26,7 @@ public protocol PackageWorld: AnyObject {
     /// A `direct` move walks the straight line on the terrain, as a static-pathing
     /// patrol does.
     func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
     ) -> PackageMoveResult
     /// The packages each filled quest alias adds to its actor.
     func packageAliasStacks() -> [ReferenceKey: PackageAliasStack]

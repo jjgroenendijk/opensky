@@ -1,10 +1,12 @@
-// Alias packages run ahead of the actor's own, a patrol walks its whole path, and a
-// held package reports which quest its locations name. Synthetic records only.
+// Alias packages run ahead of the actor's own, a patrol walks its whole path, a held
+// package reports which quest its locations name, and its preferred speed sets the
+// gait. Synthetic records only.
 
 import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
+import OpenSkyPhysics
 @testable import OpenSkyWorld
 import OpenSkyWorldFixtures
 @testable import OpenSkyWorldState
@@ -103,5 +105,21 @@ struct PackageAliasStackTests {
         #expect(sit.start() == [.move(to: [5, 0, 0])])
         #expect(sit.handle(.arrived) == [.sit])
         #expect(sit.state == .seated)
+    }
+
+    @Test func thePreferredSpeedFlagSetsTheGait() {
+        func general(
+            _ speed: Package.PreferredSpeed, flags: Package.GeneralFlags = .usesPreferredSpeed
+        ) -> Package.GeneralData {
+            Package.GeneralData(
+                flags: flags, kind: .package, interruptOverride: 0,
+                preferredSpeed: speed, interruptFlags: 0
+            )
+        }
+        #expect(PackageOverrideExecution.gait(of: general(.run)) == .run)
+        #expect(PackageOverrideExecution.gait(of: general(.jog)) == .run)
+        #expect(PackageOverrideExecution.gait(of: general(.walk)) == .walk)
+        #expect(PackageOverrideExecution.gait(of: general(.fastWalk)) == .walk)
+        #expect(PackageOverrideExecution.gait(of: general(.run, flags: [])) == nil)
     }
 }

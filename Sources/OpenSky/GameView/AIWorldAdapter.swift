@@ -198,12 +198,13 @@ extension AIWorldAdapter {
     }
 
     func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
     ) -> PackageMoveResult {
         if actor == .player {
             return walkPlayer(to: point, direct: direct) ? .started : .failed
         }
-        let result = game.streamer?.moveActor(actor, to: point, direct: direct) ?? .actorNotResident
+        let result = game.streamer?.moveActor(actor, to: point, direct: direct, gait: gait)
+            ?? .actorNotResident
         lastPackageMoves[actor] = result
         switch result {
         case .started: return .started

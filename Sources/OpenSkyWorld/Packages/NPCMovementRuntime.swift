@@ -34,6 +34,8 @@ public struct NPCMoveStart {
     /// A marker walk follows the terrain through rocks and logs, as a static-pathing
     /// patrol keeps to its authored line.
     public var ignoresStatics = false
+    /// The gait a package asks for. Nil picks it by the length of each leg.
+    public var gait: LocomotionGait?
 }
 
 public struct NPCMovementRuntime {

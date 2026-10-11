@@ -77,8 +77,12 @@ terrain, collision, slope rules, and sliding as the player ([walk mode](/engine/
 long frame is clamped to 100 ms, so it cannot jump.
 
 - The mover turns toward the next waypoint, at most one full turn per second.
-- It sends the same movement intent the player does: forward, with a gait. A leg longer than 512
-  units runs. A shorter one walks.
+- It sends the same movement intent the player does: forward, with a gait. A package whose
+  "preferred speed" flag (`PKDT` general flag `0x2000`) is set picks the gait: walk and fast walk
+  walk, jog and run run. Example: Lokir's escape package in the opening sets the flag and run.
+  Without the flag, a leg longer than 512 units runs and a shorter one walks.
+- [WARNING] An NPC has only the walk and run gaits, so jog and fast walk use the nearest one.
+  The 512-unit rule is OpenSky's choice; the game's default speed rule is not documented.
 - A waypoint counts as reached within 12 units.
 - At a door, the mover reaches the door point, reports the door, and moves its capsule to the
   paired door.

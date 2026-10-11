@@ -82,7 +82,8 @@ extension CellStreamer {
     /// navmesh path or static collision.
     @discardableResult
     public func moveActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false,
+        gait: LocomotionGait? = nil
     ) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
@@ -105,7 +106,8 @@ extension CellStreamer {
             capsule: .standard,
             configuration: npcMovementConfiguration,
             path: path,
-            ignoresStatics: direct
+            ignoresStatics: direct,
+            gait: gait
         ))
         return started ? .started : .moverCapReached
     }

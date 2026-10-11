@@ -4,6 +4,7 @@
 // See docs/engine/package-schedules.md, "Scene packages".
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldInterface
 import simd
 
@@ -25,6 +26,8 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public let ridesHorse: Bool
     /// The furniture seat a sit package walks to.
     public let seat: PackageSeat?
+    /// The package's preferred speed, when its flag turns it on.
+    public let gait: LocomotionGait?
 
     /// A patrol walks `path` and needs no place; a sit package walks to `seat`.
     public init(
@@ -38,6 +41,7 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         let flags = patrol.count == 4 ? patrol : [false, false, false, false]
         isDirect = flags[3]
         ridesHorse = package.ridesHorse
+        gait = Self.gait(of: package.package.general)
         let walk = flags[1] ? Self.startingAtNearest(path, to: start, loops: flags[0]) : path
         machine = PackageProcedureMachine(
             kind: package.procedure,
@@ -55,6 +59,16 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public var isDone: Bool {
         machine.state == .complete || machine.state == .failed || machine.state == .seated
             || machine.laps > 0
+    }
+
+    /// Jog runs and fast walk walks, because an NPC has only the walk and run gaits.
+    static func gait(of general: Package.GeneralData) -> LocomotionGait? {
+        guard general.flags.contains(.usesPreferredSpeed) else { return nil }
+        return switch general.preferredSpeed {
+        case .walk, .fastWalk: .walk
+        case .jog, .run: .run
+        case .unknown: nil
+        }
     }
 
     public mutating func start() -> [PackageProcedureCommand] {

@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyPhysics
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
@@ -16,6 +17,7 @@ private final class FakePackageWorld: PackageWorld {
     var packageClock: GameClock? = GameClock(hour: 9)
     private(set) var contextReads = 0
     private(set) var moves: [SIMD3<Float>] = []
+    private(set) var gaits: [LocomotionGait?] = []
     private(set) var movers: [ReferenceKey] = []
     var horse: ReferenceKey?
     var moverSlotsFull = false
@@ -35,8 +37,9 @@ private final class FakePackageWorld: PackageWorld {
     }
 
     func movePackageActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?
     ) -> PackageMoveResult {
+        gaits.append(gait)
         moves.append(point)
         movers.append(actor)
         return moverSlotsFull ? .busy : .started
