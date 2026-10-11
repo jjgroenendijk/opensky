@@ -32,10 +32,11 @@ struct ConditionFunctionTests {
         #expect(registry.indices == [
             1, 14, 18, 27, 35, 45, 46, 47, 56, 58, 59, 60, 65, 69, 71, 72, 73, 74, 77, 80, 102, 103,
             170, 180, 181, 214, 223, 249, 263, 264, 277, 300, 313, 323, 359, 360, 365, 372, 375,
-            376, 391, 403, 407, 426, 444, 448, 449, 459, 515, 516, 517, 518, 522, 523, 543, 560,
+            376, 391, 403, 407, 426, 444, 448, 449, 459, 515, 516, 517, 518, 522, 523, 543, 555,
+            560,
             562, 565, 566, 567, 570, 571, 572, 576, 594, 603, 604, 605, 610, 632, 640, 659, 699, 719
         ])
-        #expect(registry.count == 74)
+        #expect(registry.count == 75)
         #expect(registry.sortedFunctions().map(\.name) == [
             "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight", "GetDisabled",
             "GetDetected", "GetDead", "GetItemCount", "GetQuestRunning", "GetStage", "GetStageDone",
@@ -49,7 +50,8 @@ struct ConditionFunctionTests {
             "GetIsVoiceType", "GetInCurrentLocFormList", "HasPerk", "GetFactionRelation",
             "GetCrimeGold", "GetVATSRightAreaFree", "GetVATSLeftAreaFree", "GetVATSBackAreaFree",
             "GetVATSFrontAreaFree", "GetVATSRightTargetVisible", "GetVATSLeftTargetVisible",
-            "GetQuestCompleted", "HasKeyword", "LocationHasKeyword", "GetIsEditorLocation",
+            "GetQuestCompleted", "HasLoaded3D", "HasKeyword", "LocationHasKeyword",
+            "GetIsEditorLocation",
             "GetIsAliasRef", "GetIsEditorLocAlias", "HasEquippedSpell", "GetCurrentCastingType",
             "GetCurrentDeliveryType", "GetEventData", "GetIsFlying", "IsInSameCurrentLocAsRef",
             "IsInSameCurrentLocAsRefAlias", "LocAliasIsLocation", "LocAliasHasKeyword", "IsCasting",
@@ -61,7 +63,8 @@ struct ConditionFunctionTests {
             4097, 4110, 4114, 4123, 4131, 4141, 4142, 4143, 4152, 4154, 4155, 4156, 4161, 4165,
             4167, 4168, 4169, 4170, 4173, 4176, 4198, 4199, 4266, 4276, 4277, 4310, 4319, 4345,
             4359, 4360, 4373, 4396, 4409, 4419, 4455, 4456, 4461, 4468, 4471, 4472, 4487, 4499,
-            4503, 4522, 4540, 4544, 4545, 4555, 4611, 4612, 4613, 4614, 4618, 4619, 4639, 4656,
+            4503, 4522, 4540, 4544, 4545, 4555, 4611, 4612, 4613, 4614, 4618, 4619, 4639, 4651,
+            4656,
             4658, 4661, 4662, 4663, 4666, 4667, 4668, 4672, 4690, 4699, 4700, 4701, 4706, 4728,
             4736, 4755, 4795, 4815
         ])
@@ -179,6 +182,23 @@ struct ConditionFunctionTests {
 
         var unknown = try ConditionEvaluator(context: ConditionEvaluatorFixture.populatedContext())
         #expect(!unknown.evaluate(condition).isConclusive)
+    }
+
+    // MARK: - HasLoaded3D
+
+    @Test func hasLoaded3DIsTrueForAReferenceInALoadedCell() throws {
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        let subject = try #require(context.subject)
+        let condition = try ConditionEvaluatorFixture.condition(
+            comparisonValue: Float(1).bitPattern, functionIndex: 555
+        )
+        context.data = ConditionDataResolution(interiors: [subject: false])
+        var loaded = ConditionEvaluator(context: context)
+        #expect(loaded.evaluate(condition).isTrue)
+
+        context.data = ConditionDataResolution()
+        var unloaded = ConditionEvaluator(context: context)
+        #expect(!unloaded.evaluate(condition).isTrue)
     }
 
     // MARK: - GetIsID
