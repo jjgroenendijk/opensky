@@ -22,6 +22,8 @@ final class JournalQuestControlsSection: PanelSectionViewController {
     let objectiveControl = NSTextField()
     let showObjectiveControl = NSButton(title: "Show", target: nil, action: nil)
     let hideObjectiveControl = NSButton(title: "Hide", target: nil, action: nil)
+    let trackControl = NSButton(title: "Track", target: nil, action: nil)
+    let showOnMapControl = NSButton(title: "Show on map", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "JournalControlsStatsLabel"
@@ -50,9 +52,11 @@ final class JournalQuestControlsSection: PanelSectionViewController {
     override func makeContentViews() -> [NSView] {
         startControl.toolTip = "Fails if a required alias cannot be filled."
         showObjectiveControl.toolTip = "Only shown objectives appear on the page."
+        trackControl.toolTip = "A tracked quest's targets show on the compass and the map."
         configureControls()
         return [
             PanelComponents.buttonRow([startControl, stopControl]),
+            PanelComponents.buttonRow([trackControl, showOnMapControl]),
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Stage", captionWidth: 70, field: stageControl
@@ -79,6 +83,18 @@ final class JournalQuestControlsSection: PanelSectionViewController {
 
     @objc private func stop() {
         provider?.stopSelectedQuest()
+        refreshReadout()
+        finishInteraction()
+    }
+
+    @objc private func track() {
+        provider?.toggleSelectedQuestTracking()
+        refreshReadout()
+        finishInteraction()
+    }
+
+    @objc private func showOnMap() {
+        provider?.showSelectedQuestOnMap()
         refreshReadout()
         finishInteraction()
     }
@@ -117,6 +133,14 @@ final class JournalQuestControlsSection: PanelSectionViewController {
         PanelComponents.configureButton(
             stopControl, target: self, action: #selector(stop),
             identifier: "JournalStopQuestControl"
+        )
+        PanelComponents.configureButton(
+            trackControl, target: self, action: #selector(track),
+            identifier: "JournalTrackQuestControl"
+        )
+        PanelComponents.configureButton(
+            showOnMapControl, target: self, action: #selector(showOnMap),
+            identifier: "JournalShowOnMapControl"
         )
         PanelComponents.configureTextField(
             stageControl, identifier: "JournalStageControl", width: 80, placeholder: "index"

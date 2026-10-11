@@ -49,13 +49,17 @@ extension QuestRuntime {
     /// The seam conditions read alias fills through, built the same way
     /// `resolution()` builds the quest-state seam.
     public func aliasResolution() -> QuestAliasResolution {
+        QuestAliasResolution(defaults: quests, tables: aliasTables())
+    }
+
+    func aliasTables() -> [ReferenceKey: QuestAliasState] {
         var tables: [ReferenceKey: QuestAliasState] = [:]
         for key in quests.sortedKeys {
             if let state = store.component(QuestAliasState.self, for: key) {
                 tables[key] = state
             }
         }
-        return QuestAliasResolution(defaults: quests, tables: tables)
+        return tables
     }
 
     // MARK: - Filling
@@ -80,11 +84,18 @@ extension QuestRuntime {
                 state: existing, skipped: QuestAliasTally(), unfilledRequired: []
             )
         }
+        let scope = referenceSearch?().map { search in
+            QuestAliasSearchScope(
+                search: search, questKey: key, quests: quests, otherTables: aliasTables(),
+                translation: quests.translation(of: quest.formID)
+            )
+        }
         let result = QuestAliasFiller.fill(
             quest,
             resolver: quests.sourceResolver(of: quest.formID),
             locations: locations,
-            event: event
+            event: event,
+            scope: scope
         )
         guard result.canStartQuest else {
             throw QuestError.aliasFillFailed(

@@ -53,19 +53,30 @@ nonisolated public enum HUDCore {
         HUDMovieBridge.normalizedDegrees(90 - yawRadians * 180 / .pi)
     }
 
+    /// The interaction target as a location marker, then each quest target.
     public static func markers(
         for target: InteractionTarget?,
+        questTargets: [SIMD3<Float>] = [],
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
-        guard let target else {
-            return []
+        let location = target.flatMap { target in
+            heading(to: target.interaction.position, from: cameraPosition)
+                .map { HUDCompassMarker(headingDegrees: $0, kind: .location) }
         }
-        let offset = target.interaction.position - cameraPosition
+        let quests = questTargets.compactMap { position in
+            heading(to: position, from: cameraPosition)
+                .map { HUDCompassMarker(headingDegrees: $0, kind: .quest) }
+        }
+        return (location.map { [$0] } ?? []) + quests
+    }
+
+    /// Nil when the point is straight above or below.
+    static func heading(to point: SIMD3<Float>, from camera: SIMD3<Float>) -> Float? {
+        let offset = point - camera
         guard simd_length_squared(SIMD2<Float>(offset.x, offset.y)) > 0.0001 else {
-            return []
+            return nil
         }
-        let heading = headingDegrees(atan2(offset.y, offset.x))
-        return [HUDCompassMarker(headingDegrees: heading, kind: .location)]
+        return headingDegrees(atan2(offset.y, offset.x))
     }
 
     public static func effectivePrompt(
@@ -78,9 +89,11 @@ nonisolated public enum HUDCore {
     public static func effectiveMarkers(
         _ settings: HUDSettings,
         target: InteractionTarget?,
+        questTargets: [SIMD3<Float>] = [],
         cameraPosition: SIMD3<Float>
     ) -> [HUDCompassMarker] {
-        settings.markersEnabled ? markers(for: target, cameraPosition: cameraPosition) : []
+        guard settings.markersEnabled else { return [] }
+        return markers(for: target, questTargets: questTargets, cameraPosition: cameraPosition)
     }
 
     /// A marker follows the camera, so it moves whenever the camera does while a

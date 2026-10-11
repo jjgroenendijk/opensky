@@ -23,26 +23,34 @@ nonisolated public struct StoryData: Sendable {
     public var storyManager: StoryManagerStore?
     /// Active plugins, lowest priority first.
     public var plugins: [StoryPlugin]
+    /// When NPCs start random conversations.
+    public var social: SocialSettings
 
     public init(
         scenes: SceneStore? = nil,
         storyManager: StoryManagerStore? = nil,
-        plugins: [StoryPlugin] = []
+        plugins: [StoryPlugin] = [],
+        social: SocialSettings = .documentedDefaults
     ) {
         self.scenes = scenes
         self.storyManager = storyManager
         self.plugins = plugins
+        self.social = social
     }
 
     /// - Parameter plugins: the active plugins, lowest priority first.
-    public static func load(plugins: [(name: String, file: ESMFile)]) -> StoryData {
+    public static func load(
+        plugins: [(name: String, file: ESMFile)],
+        settings: GameSettingStore? = nil
+    ) -> StoryData {
         StoryData(
             scenes: SceneStore(plugins: plugins),
             storyManager: StoryManagerStore(plugins: plugins),
             plugins: plugins.map { plugin in
                 let header = try? PluginHeader(tes4: plugin.file.tes4)
                 return StoryPlugin(name: plugin.name, masters: header?.masters ?? [])
-            }
+            },
+            social: settings.map(SocialSettings.resolve(store:)) ?? .documentedDefaults
         )
     }
 }

@@ -13,6 +13,7 @@ public enum PapyrusNativeFunctions {
         installUpdateTimers(into: &registry)
         installGlobalVariable(into: &registry)
         installGame(into: &registry)
+        installStats(into: &registry)
         installQuest(into: &registry)
         installActor(into: &registry)
         installSpell(into: &registry)

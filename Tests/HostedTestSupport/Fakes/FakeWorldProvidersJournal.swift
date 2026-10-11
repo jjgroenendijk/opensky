@@ -59,4 +59,12 @@ extension FakeWorldProviders {
     func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
         journal.journalAliasTable(editorID: editorID)
     }
+
+    func toggleSelectedQuestTracking() {
+        journal.toggleSelectedQuestTracking()
+    }
+
+    func showSelectedQuestOnMap() {
+        journal.showSelectedQuestOnMap()
+    }
 }

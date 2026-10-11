@@ -114,3 +114,32 @@ nonisolated public struct Scene: Equatable, Sendable {
         skipped = walk.fields.finish()
     }
 }
+
+nonisolated extension SceneActor {
+    /// DNAM bits: what the scene does when the actor dies, fights, talks to the player,
+    /// or watches a fight. Bit 0 (death pause) is unused.
+    public struct Behavior: OptionSet, Equatable, Sendable {
+        public let rawValue: UInt32
+
+        public init(rawValue: UInt32) {
+            self.rawValue = rawValue
+        }
+
+        public static let deathEnd = Behavior(rawValue: 0x02)
+        public static let combatPause = Behavior(rawValue: 0x04)
+        public static let combatEnd = Behavior(rawValue: 0x08)
+        public static let dialoguePause = Behavior(rawValue: 0x10)
+        public static let dialogueEnd = Behavior(rawValue: 0x20)
+        public static let observeCombatPause = Behavior(rawValue: 0x40)
+        public static let observeCombatEnd = Behavior(rawValue: 0x80)
+    }
+
+    public var behavior: Behavior {
+        Behavior(rawValue: behaviorFlags ?? 0)
+    }
+
+    /// LNAM 0x02: the scene does not wait for this actor to leave another scene.
+    public var isOptional: Bool {
+        (flags ?? 0) & 0x02 != 0
+    }
+}

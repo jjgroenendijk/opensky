@@ -131,6 +131,10 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
     public let movieMissingNames: Int
     public let movieUnhandledInvokes: Int
     public let movieDrawStats: SWFDrawStats
+    /// Editor IDs of the tracked quests, whose targets the compass shows.
+    public var trackedQuests: [String] = []
+    /// The counted misc stats, as "name value", for the Stats page.
+    public var statLines: [String] = []
 
     public init(
         hasQuestIndex: Bool,
@@ -158,8 +162,12 @@ nonisolated public struct JournalControlSnapshot: Equatable, Sendable {
         movieFaults: Int,
         movieMissingNames: Int,
         movieUnhandledInvokes: Int,
-        movieDrawStats: SWFDrawStats
+        movieDrawStats: SWFDrawStats,
+        trackedQuests: [String] = [],
+        statLines: [String] = []
     ) {
+        self.trackedQuests = trackedQuests
+        self.statLines = statLines
         self.hasQuestIndex = hasQuestIndex
         self.questCount = questCount
         self.runningCount = runningCount
@@ -240,4 +248,10 @@ public protocol JournalControlProviding: AnyObject {
     /// The selected quest's alias table, or nil when no loaded plugin defines
     /// a quest with that editor ID.
     func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection?
+
+    /// Tracks or untracks the selected quest, as the page's own toggle does.
+    func toggleSelectedQuestTracking()
+
+    /// Opens the map on the selected quest's first target.
+    func showSelectedQuestOnMap()
 }

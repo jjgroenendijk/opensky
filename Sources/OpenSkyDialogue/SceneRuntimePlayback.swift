@@ -21,13 +21,15 @@ extension SceneRuntime {
         var state: SceneRuntimeState
         /// Playback writes the store only when this changed, to keep cells from rebuilding.
         private let initial: SceneRuntimeState?
-        private var events: [SceneEvent] = []
+        let isNew: Bool
+        var events: [SceneEvent] = []
         private var ended = false
         var evaluator: ConditionEvaluator
 
         init(runtime: SceneRuntime, entry: CatalogScene, state: SceneRuntimeState, isNew: Bool) {
             self.runtime = runtime
             initial = isNew ? nil : state
+            self.isNew = isNew
             self.entry = entry
             self.state = state
             var context = runtime.dialogue.context
@@ -50,6 +52,7 @@ extension SceneRuntime {
 
         /// Moves through phases until one waits on a running action or the scene ends.
         mutating func advance() {
+            guard applyActorBehavior() else { return }
             var repeated = false
             var budget = scene.phases.count * 2 + 4
             while !ended, budget > 0 {
@@ -68,6 +71,7 @@ extension SceneRuntime {
                     end(.finished)
                     return
                 }
+                guard state.phaseEntered || claimActors() else { return }
                 guard enterPhaseIfNeeded() else { continue }
                 guard completePhaseIfDone() else { return }
             }

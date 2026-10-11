@@ -25,6 +25,12 @@ nonisolated public struct JournalObjectiveEntry: Equatable, Sendable {
     /// falls back to its own index so the row still names something.
     public let text: String
     public let state: State
+    /// The quest the objective belongs to, which a misc row needs.
+    public var quest = FormID(0)
+    /// Its quest is tracked and the objective is open: the movie's `Active` frame.
+    public var isActive = false
+    /// The objective declares a `QSTA` target, so "Show on map" can find it.
+    public var hasTargets = false
 }
 
 /// One quest row, with everything the page shows once it is selected.
@@ -41,10 +47,17 @@ nonisolated public struct JournalQuestEntry: Equatable, Sendable {
     public let stage: UInt16?
     /// Displayed objectives only. A quest whose objectives are all untouched
     /// shows none, which is what the vanilla page does.
-    public let objectives: [JournalObjectiveEntry]
+    public internal(set) var objectives: [JournalObjectiveEntry]
     /// CNAM text of every reached stage, oldest first — the journal's running
     /// account of the quest.
     public let logEntries: [String]
+    public var isTracked = false
+    /// The running misc quests this one row stands for. Empty on a quest row.
+    public var miscQuests: [FormID] = []
+
+    public var isMiscGroup: Bool {
+        !miscQuests.isEmpty
+    }
 
     /// The journal's description block: the log entries as one paragraph run,
     /// newest last, which is the order the reached stages come in.

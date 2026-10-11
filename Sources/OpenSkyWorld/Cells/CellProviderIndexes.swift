@@ -205,7 +205,7 @@ nonisolated extension CellProviderIndexes {
             lockTrap = LockTrapData.load(
                 plugins: plugins, baseFile: file, baseName: pluginName, settings: settings
             )
-            story = StoryData.load(plugins: plugins)
+            story = StoryData.load(plugins: plugins, settings: settings)
             quests = QuestStore(plugins: plugins)
         }
     }

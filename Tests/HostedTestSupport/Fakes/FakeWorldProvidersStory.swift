@@ -9,6 +9,7 @@ struct FakeStoryState {
     var scenePlaying = false
     var lastScene = "none"
     var fired: [String] = []
+    var socialPasses = 0
     var lastFilter = ""
 }
 
@@ -55,8 +56,13 @@ extension FakeWorldProviders {
             walkLines: story.fired.map { "\($0): entered" },
             droppedWalkLines: 0,
             sessionStart: "1 of 1 started, 0 plugins without a list, 0 broken",
-            lastOutcome: story.fired.last
+            lastOutcome: story.fired.last,
+            socialLines: ["Social events sent: ADIA \(story.socialPasses), AHEL 0, DEAD 0"]
         )
+    }
+
+    func runSocialPass() {
+        story.socialPasses += 1
     }
 
     func storyTree(event code: String) -> [String] {

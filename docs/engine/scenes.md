@@ -22,10 +22,48 @@ A scene starts when its quest starts and the scene has flag 0x01 (begin on quest
 a script calls `Scene.Start()` or `Scene.ForceStart()`, or from the Scenes control in the
 sidebar. A scene starts only while its quest runs. A scene that already plays is left as it is.
 
-`ForceStart()` acts like `Start()`. In the game it also stops other scenes that use the same
-actors. OpenSky does not track which actor is in which scene yet.
-
 Starting runs the begin fragment, then enters phase 1.
+
+## Actors in two scenes
+
+An actor plays in one scene at a time. A scene holds its actors from the moment it enters a
+phase until it ends. A second scene that needs a held actor waits before its first phase:
+
+- If the scene that holds the actor has flag 0x04 (interruptible), it is stopped, and the new
+  scene takes the actor.
+- Otherwise the new scene waits. It tries again on every tick.
+- An optional actor (actor `LNAM` flag 0x02) never makes a scene wait. Its actions are done at
+  once while another scene holds it, like an empty alias.
+
+`ForceStart()` stops every playing scene that shares an actor with the new scene, then starts
+it. Source: the Creation Kit pages "ForceStart - Scene" and "Scene".
+
+## Actor behaviour flags
+
+Each scene actor has a behaviour `DNAM`. The bits, from xEdit's `wbDefinitionsTES5.pas`:
+
+| Bit | Meaning |
+| --- | --- |
+| 0x02 | Death ends the scene |
+| 0x04 | Combat pauses the scene |
+| 0x08 | Combat ends the scene |
+| 0x10 | Dialogue with the player pauses the scene |
+| 0x20 | Dialogue with the player ends the scene |
+| 0x40 | Observing combat pauses the scene |
+| 0x80 | Observing combat ends the scene |
+
+Bit 0x01 (death pauses) is unused in the game. The record's `VNAM` holds only the editor's
+"set all" choice, so OpenSky reads the actor `DNAM` alone.
+
+On every tick, each actor of a playing scene is checked. An end flag that matches ends the
+scene. A pause flag that matches pauses it: no phase moves and no action finishes. When no
+pause flag matches any more, the scene resumes, and every running action's start time moves
+forward by the length of the pause. So a timer or a line keeps the time it had left.
+
+A dead actor's dialogue or package action is done at once. The game also lets a scene go on
+past a dead actor.
+
+OpenSky does not know yet when an actor observes combat, so bits 0x40 and 0x80 never match.
 
 ## Phases
 
@@ -112,9 +150,9 @@ playing has no component, so the baseline is "not playing" and costs nothing. Pl
 the component only when the state changed, because any write to a base record rebuilds the
 loaded cells.
 
-A save stores the playing scenes in the `SCNS` chunk
-([world chunks](/formats/opensky-save-world-chunks.md)). After a load, a scene goes on from the
-same phase with the same running actions.
+A save stores the playing scenes in the `SCNS` chunk, and the pause time of each paused scene
+in the `SCNP` chunk ([world chunks](/formats/opensky-save-world-chunks.md)). After a load, a
+scene goes on from the same phase with the same running actions, still paused if it was.
 
 ## Observed on the install
 
@@ -127,6 +165,4 @@ its two speakers and ends.
 
 - Scenes play no idles. A line turns the speaker's head toward its `HTID` alias
   ([head tracking](/engine/head-tracking.md)).
-- `ForceStart()` does not stop other scenes.
-- Actor behavior flags (`VNAM`, actor `DNAM`), such as "interrupt on combat", are decoded
-  but not used.
+- Observing combat is not known, so the observe-combat behaviour flags never act.

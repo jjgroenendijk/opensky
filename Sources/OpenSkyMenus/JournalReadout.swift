@@ -19,7 +19,12 @@ nonisolated public enum JournalReadout: Sendable {
         let dropped = snapshot.droppedRowCount > 0
             ? ["  ... and \(snapshot.droppedRowCount) more"]
             : []
-        return ([header] + snapshot.rows.map(line) + dropped).joined(separator: "\n")
+        let tracked = "Tracked: " + (snapshot.trackedQuests.isEmpty
+            ? "none" : snapshot.trackedQuests.joined(separator: ", "))
+        let stats = "Stats: " + (snapshot.statLines.isEmpty
+            ? "none counted" : snapshot.statLines.joined(separator: ", "))
+        return ([header] + snapshot.rows.map(line) + dropped + [tracked, stats])
+            .joined(separator: "\n")
     }
 
     private static func line(_ row: JournalQuestRow) -> String {

@@ -19,6 +19,8 @@ public struct QuestRuntime: QuestAccess {
     /// session-stable keys from.
     public let quests: QuestStore
     public let locations: LocationStore?
+    /// The loaded world for the Find Matching Reference fills. Nil skips them.
+    public var referenceSearch: (@MainActor () -> QuestReferenceSearch?)?
 
     public init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
         self.store = store
@@ -138,7 +140,12 @@ public struct QuestRuntime: QuestAccess {
     /// - Returns: the state as stored afterwards.
     @discardableResult
     public func completeQuest(_ id: FormID) throws -> QuestRuntimeState {
-        try apply(to: id, requiringRunning: true) { $0.completing() }
+        let wasCompleted = try state(of: id).isCompleted
+        let state = try apply(to: id, requiringRunning: true) { $0.completing() }
+        if !wasCompleted, let quest = quests.quest(id) {
+            countCompletion(of: quest)
+        }
+        return state
     }
 
     // MARK: - Stages
@@ -185,7 +192,13 @@ public struct QuestRuntime: QuestAccess {
         _ isDisplayed: Bool = true,
         on id: FormID
     ) throws -> QuestRuntimeState {
-        try applyToObjective(index, on: id) { $0.settingObjectiveDisplayed(index, isDisplayed) }
+        let state = try applyToObjective(index, on: id) {
+            $0.settingObjectiveDisplayed(index, isDisplayed)
+        }
+        if isDisplayed {
+            trackOnFirstObjective(id)
+        }
+        return state
     }
 
     /// Flags one objective completed, or clears that flag.
@@ -198,7 +211,14 @@ public struct QuestRuntime: QuestAccess {
         _ isCompleted: Bool = true,
         on id: FormID
     ) throws -> QuestRuntimeState {
-        try applyToObjective(index, on: id) { $0.settingObjectiveCompleted(index, isCompleted) }
+        let wasCompleted = try state(of: id).objective(index).isCompleted
+        let state = try applyToObjective(index, on: id) {
+            $0.settingObjectiveCompleted(index, isCompleted)
+        }
+        if isCompleted, !wasCompleted, quests.quest(id)?.kind == .miscellaneous {
+            store.incrementMiscStat("Misc Objectives Completed")
+        }
+        return state
     }
 
     /// Flags one objective failed, or clears that flag.

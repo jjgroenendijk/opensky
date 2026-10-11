@@ -1,8 +1,9 @@
 ---
 type: Subsystem
 title: Quest journal
-description: The Quests page of the vanilla quest_journal.swf driven from quest state - which
-  quests and objectives show, the measured AS2 list contract, alias text, and the journal key.
+description: The Quests and Stats pages of the vanilla quest_journal.swf driven from quest
+  state - which quests and objectives show, tracked quests, the misc row, the measured AS2
+  contract, the misc stats, alias text, and the journal key.
 tags: [engine, ui, menu, swf, quests, journal]
 ---
 
@@ -29,6 +30,20 @@ Two record facts decide what shows:
   wins over displayed.
 
 A quest can be on both lists. `CompleteQuest()` marks a quest complete but does not stop it.
+
+Running misc quests (type 6) share one row at the end of the active list, as in the game. Its
+objectives are the open objectives of all of them, and each keeps its own quest. The row has
+the shape the movie's own `onQuestsDataComplete` builds: text `$MISCELLANEOUS`, FormID 0, and
+type 0. Completed misc quests stay separate rows on the completed list; OpenSky did not confirm
+how the game lists them.
+
+### Tracked quests
+
+A tracked quest is "active" in the movie's words. Its targets show on the HUD compass and on
+the [map](/engine/world-map.md#quest-targets), and its open objectives use the `Active` frame.
+A journal quest is tracked when it first shows an objective, as a new quest is in the game. The
+player can untrack it, and it then stays untracked. Tracking is saved in the `QTRK` chunk
+([world chunks](/formats/opensky-save-world-chunks.md)).
 
 The log entries are the `CNAM` text of every reached stage, in stage order, joined into the
 description. When a stage has several `QSDT` entries, the first in file order is used. The
@@ -83,7 +98,7 @@ Row fields are the names the movie's own code uses, checked by driving them:
 | Row | Fields |
 | --- | --- |
 | Quest title | `text`, `formID`, `instance`, `type`, `completed`, `active` |
-| Objective | `text`, `instance`, `completed`, `failed`, `active` |
+| Objective | `text`, `formID`, `instance`, `completed`, `failed`, `active`, `questTargetID` |
 
 `text` is what the list base's `SetEntryText` draws. The System page's `SystemCategoriesList`
 fills the same field in this movie, which confirms the name.
@@ -91,12 +106,35 @@ fills the same field in this movie, which confirms the name.
 An objective entry clip stops on one of these frame labels: `Normal`, `NormalSelected`,
 `Completed`, `CompletedSelected`, `Failed`, `FailedSelected`, `Active`, `ActiveSelected`,
 `None`. With `openskycli swf quest-journal --objective-state completed` it moves from `Normal` to
-`Completed`, and with `failed` to `Failed`. That confirms `completed` and `failed`. `Active`
-marks the tracked objective. OpenSky does not track objectives, so it is always false.
+`Completed`, and with `failed` to `Failed`. That confirms `completed` and `failed`. `active`
+marks an open objective of a tracked quest.
 
-`questTitleEndpieces` has one frame label per quest type: `Main`, `MagesGuild`, `ThievesGuild`,
-`DarkBrotherhood`, `Companion`, `Favor`, `Daedric`, `Misc`, `CivilWar`, `DLC01`, `DLC02`. So the
-type maps by name. A type the movie does not know uses `Misc`.
+`questTitleEndpieces` has one frame label per quest type. The movie's `onQuestHighlight` picks
+the label from its own table, indexed by the row's `type`, which is the QUST `DNAM` type:
+
+| Type | Frame |
+| --- | --- |
+| 0 none, 8 side quest | `Misc` |
+| 1 main | `Main` |
+| 2, 3, 4, 5 | `MagesGuild`, `ThievesGuild`, `DarkBrotherhood`, `Companion` |
+| 6 miscellaneous | `Favor` |
+| 7 daedric | `Daedric` |
+| 9 civil war | `CivilWar` |
+| 10, 11 | `DLC01`, `DLC02` |
+
+A type the movie does not know uses `Misc`.
+
+The page also has two flags and two calls to the engine, read with `openskycli swf
+action-list --movie quest_journal.swf`:
+
+- `bHasMiscQuests` says a misc row ends the list. `bAllowShowOnMap` enables the "Show on map"
+  button. OpenSky sets both when it publishes the rows.
+- `ToggleQuestActiveStatus(formID, instance)` asks to flip tracking of the selected quest. The
+  answer is the new state, which the movie writes into the row's `active`.
+- "Show on map" closes the menu and calls `ShowTargetOnMap(questTargetID)` with the selected
+  objective's `questTargetID`. A row without that field offers no button. OpenSky sets it on
+  open objectives that declare a `QSTA` target: the quest FormID times 65536 plus the
+  objective index, which an AS2 number holds exactly. The map then opens on that target.
 
 ### Coverage
 
@@ -166,25 +204,51 @@ A script object property can bind only to a handle that already exists. Quests s
 session is set up, and cells stream in later. So a lever in a cell can reach its quest through an
 automatic `VMAD` property, but only if the quest started first.
 
+## Stats page
+
+The Stats page is `/QuestJournalFader/Menu_mc/StatsFader/Page_mc`. On load it builds six
+categories: General, Quest, Combat, Magic, Crafting, and Crime. When the page first opens and
+its `bUpdated` is false, it calls `updateStats` with the callback `PopulateStatsList`. That
+function reads its arguments in fours: the stat name without its `$`, the value, the category
+index, and one value it does not read. It appends, so OpenSky calls it once per open, right
+after the movie starts, and sets `bUpdated` so the page does not ask again.
+
+The stats are the misc stats `Game.QueryStat` reads. The names come from the Creation Kit page
+<https://ck.uesp.net/wiki/QueryStat_-_Game>, which lists 104 of them. The page does not give
+categories. The list runs in the six groups' order, so OpenSky splits it there: General ends at
+"Mauls", Quest at "Questlines Completed", Combat at "Bunnies Slaughtered", Magic at "Souls
+Trapped", Crafting at "Wings Plucked", and Crime holds the rest. The page leaves out the
+"Favorite" stats, which are text, and the ten per-hold bounties. Both are OpenSky's reading.
+
+The stats are saved in the `MSTS` chunk. OpenSky counts these:
+
+| Stat | Counted when |
+| --- | --- |
+| Quests Completed, and the quest type's own stat | A journal quest is completed the first time |
+| Misc Objectives Completed | An objective of a misc quest is completed the first time |
+| Locations Discovered | A map marker is discovered |
+| Bribes, Intimidations, Persuasions | The player wins a speech check |
+
+`Game.IncrementStat` and `Game.QueryStat` change and read any of them. The quest type's stat is
+the one its name gives: main quests count "Main Quests Completed", Dawnguard quests (type 10)
+"Dawnguard Quests Completed", and so on. Every other stat stays 0 until a script counts it.
+
 ## Not done yet
 
-- The Stats page has no data.
-- Quest markers on the HUD compass and the map.
-- Misc and side quests are not split into the vanilla groups. `QuestsPage` has
-  `bHasMiscQuests` and `IsViewingMiscObjectives` for that. Neither is driven.
-- The tracked objective's `Active` frame is never used.
 - A quest the runtime does not track is not shown. The page shows runtime state, not the plugin.
 - Vanilla quests move forward through dialogue. The page shows what the stage says, whatever
   set it.
+- The Stats page counts only the stats in the table above.
 
 ## Controls
 
-World > Quests & Journal has three sections:
+World > Quests & Journal has these sections:
 
 - Quests: every running or completed quest with its type, state, and stage, and the display state
   of each objective of the chosen quest.
-- Quest controls: choose a quest, start, stop, set a stage, show or hide an objective. The alias
-  table is the same text as in World > Scripts, so the two cannot disagree.
+- Quest controls: choose a quest, start, stop, set a stage, show or hide an objective, track
+  or untrack it, and show its target on the map. The alias table is the same text as in
+  World > Scripts, so the two cannot disagree.
 - Page: open, close, up, down, activate, and show completed quests. The readout shows the menu
   stack, the rows and selection, the movie's title field, the objective frames, and the fault,
   opcode, and invoke counts, even at zero.

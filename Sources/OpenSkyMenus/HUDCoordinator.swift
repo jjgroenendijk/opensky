@@ -13,6 +13,10 @@ public final class HUDCoordinator {
     public private(set) var isLoaded = false
     public private(set) var loadError: String?
     public private(set) var interactionTarget: InteractionTarget?
+    /// Where the tracked quests' targets stand, for the compass.
+    public private(set) var questTargets: [SIMD3<Float>] = []
+    /// Kept apart from the target's change, which `updateTarget` sets every frame.
+    private var questTargetsChanged = false
     public private(set) var sync = HUDSyncState()
     public private(set) var settings = HUDSettings()
     /// A loading screen hides the HUD, as `LoadingMenu` does in the game.
@@ -95,7 +99,7 @@ public final class HUDCoordinator {
         let heading = HUDCore.headingDegrees(camera.yaw)
         let update = HUDCore.frameUpdate(
             sync: sync,
-            hasTarget: interactionTarget != nil,
+            hasTarget: interactionTarget != nil || !questTargets.isEmpty,
             cameraPosition: camera.position,
             heading: heading
         )
@@ -151,7 +155,15 @@ public final class HUDCoordinator {
         let oldReference = interactionTarget?.interaction.reference
         interactionTarget = target
         sync.promptNeedsUpdate = oldPrompt != effectivePrompt
-        sync.markersNeedUpdate = oldReference != target?.interaction.reference
+        sync.markersNeedUpdate = questTargetsChanged
+            || oldReference != target?.interaction.reference
+    }
+
+    public func updateQuestTargets(_ positions: [SIMD3<Float>]) {
+        guard positions != questTargets else { return }
+        questTargets = positions
+        questTargetsChanged = true
+        sync.markersNeedUpdate = true
     }
 
     public var effectivePrompt: String? {
@@ -160,7 +172,8 @@ public final class HUDCoordinator {
 
     public func effectiveMarkers(cameraPosition: SIMD3<Float>) -> [HUDCompassMarker] {
         HUDCore.effectiveMarkers(
-            settings, target: interactionTarget, cameraPosition: cameraPosition
+            settings, target: interactionTarget, questTargets: questTargets,
+            cameraPosition: cameraPosition
         )
     }
 
@@ -238,6 +251,7 @@ public final class HUDCoordinator {
     private func markSynced(cameraPosition: SIMD3<Float>, heading: Float) {
         sync.promptNeedsUpdate = false
         sync.markersNeedUpdate = false
+        questTargetsChanged = false
         sync.lastCameraPosition = cameraPosition
         sync.lastHeadingDegrees = heading
     }

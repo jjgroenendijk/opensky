@@ -14,8 +14,9 @@ import OpenSkyScriptingInterface
 public protocol PapyrusStoryBridge: AnyObject {
     /// Fires one event. True when it started a quest.
     func sendStoryEvent(_ event: StoryEventData) -> Bool
-    /// True when the scene plays afterwards.
-    func startScene(_ scene: FormID) -> Bool
+    /// True when the scene plays afterwards. `force` first stops the scenes that
+    /// share an actor with it.
+    func startScene(_ scene: FormID, force: Bool) -> Bool
     func stopScene(_ scene: FormID)
     func isScenePlaying(_ scene: FormID) -> Bool
 }
@@ -34,10 +35,9 @@ extension PapyrusNativeFunctions {
             }
         }
         // `Start()` and `ForceStart()` (<https://ck.uesp.net/wiki/Scene_Script>).
-        // ForceStart does not stop the actors' other scenes, because nothing tracks them.
-        for name in ["Start", "ForceStart"] {
+        for (name, force) in [("Start", false), ("ForceStart", true)] {
             registerStory(&registry, script: "Scene", name) { _, world, scene in
-                _ = world.story?.startScene(scene)
+                _ = world.story?.startScene(scene, force: force)
                 return .returned(.none)
             }
         }

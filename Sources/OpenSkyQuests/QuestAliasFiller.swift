@@ -2,6 +2,7 @@
 // references its scripts, conditions, and journal text read. It is pure, so the
 // fill rules are unit-testable without a store or an actor.
 // The rules and the fill types not done yet are in docs/engine/quest-state.md.
+// The Find Matching Reference search is in `QuestReferenceSearch.swift`.
 
 import Foundation
 import OpenSkyConditions
@@ -9,22 +10,27 @@ import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
+import OpenSkyWorldState
 
 /// Fills one quest's reference aliases. The rules are in docs/engine/quest-state.md.
 nonisolated public enum QuestAliasFiller: Sendable {
     /// Runs the pass over `quest.aliases` in file order.
-    ///
     /// - Parameter resolver: master-list resolver of the plugin that defines
     ///   `quest`, which is what turns an ALFR FormID into a session-stable key.
     /// - Parameter event: the story-manager event that starts the quest, for the
     ///   "find matching reference from event" fill.
+    /// - Parameter scope: the loaded world for the match-condition fills. Nil skips them.
     public static func fill(
         _ quest: Quest,
         resolver: FormIDResolver,
         locations: LocationStore? = nil,
-        event: StoryEventData? = nil
+        event: StoryEventData? = nil,
+        scope: QuestAliasSearchScope? = nil
     ) -> QuestAliasFillResult {
-        var pass = FillPass(resolver: resolver, locations: locations, event: event)
+        var pass = FillPass(
+            resolver: resolver, locations: locations, event: event, scope: scope,
+            quest: quest.formID
+        )
         for alias in quest.aliases {
             pass.fill(alias)
         }
@@ -37,6 +43,8 @@ nonisolated public enum QuestAliasFiller: Sendable {
         let resolver: FormIDResolver
         let locations: LocationStore?
         let event: StoryEventData?
+        let scope: QuestAliasSearchScope?
+        let quest: FormID
         var state = QuestAliasState()
         var skipped = QuestAliasTally()
         var unfilledRequired: [UInt32] = []
@@ -58,6 +66,10 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 fillFromEvent(alias)
                 return
             }
+            if let scope, alias.isMatchSearch {
+                fillMatching(alias, scope: scope)
+                return
+            }
             let key: ReferenceKey?
             switch alias.fillType {
             case .specificReference:
@@ -72,11 +84,7 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 }
                 key = unique
             case .locationAliasReference where locations != nil:
-                // OpenSky does not search child locations yet, so a miss never fails a start.
-                guard let found = locationReference(of: alias) else {
-                    skipped.note(.unresolvedReference)
-                    return
-                }
+                guard let found = locationAliasKey(alias) else { return }
                 key = found
             default:
                 skipped.note(.unsupportedFillType(alias.fillType))
@@ -103,6 +111,21 @@ nonisolated public enum QuestAliasFiller: Sendable {
             }
         }
 
+        /// Notes why nothing was found. An empty location alias may be OpenSky's gap,
+        /// so only a searched location that lists no free reference fails the alias.
+        private mutating func locationAliasKey(_ alias: Quest.Alias) -> ReferenceKey? {
+            guard let place = locationOfAlias(alias) else {
+                skipped.note(.unresolvedReference)
+                return nil
+            }
+            guard let found = locationReference(of: alias, in: place) else {
+                skipped.note(.noMatch)
+                note(unfilled: alias)
+                return nil
+            }
+            return found
+        }
+
         /// `ALUA` names an NPC base; its one placed reference fills the alias.
         private func uniqueReference(of alias: Quest.Alias) -> ReferenceKey? {
             guard
@@ -114,14 +137,21 @@ nonisolated public enum QuestAliasFiller: Sendable {
 
         /// ALFA names a location alias and ALRT a location ref type. The first reference
         /// that location lists under the type, and that no other alias holds, fills it.
-        private func locationReference(of alias: Quest.Alias) -> ReferenceKey? {
+        private func locationOfAlias(_ alias: Quest.Alias) -> ResolvedFormID? {
+            guard let raw = alias.aliasReference, raw >= 0 else { return nil }
+            return state.location(forAlias: UInt32(raw))
+        }
+
+        /// The location and its child locations, in that order.
+        private func locationReference(
+            of alias: Quest.Alias, in place: ResolvedFormID
+        ) -> ReferenceKey? {
             guard
-                let locations, let raw = alias.aliasReference, raw >= 0,
-                let place = state.location(forAlias: UInt32(raw)),
+                let locations,
                 let type = alias.referenceType
                     .flatMap({ ReferenceKey.resolve($0, using: resolver) })
             else { return nil }
-            return locations.specialReferences(ofType: type, in: place).first {
+            return locations.specialReferencesWithChildren(ofType: type, in: place).first {
                 alias.flags.contains(.allowReuseInQuest) || !state.holds($0)
             }
         }
@@ -139,6 +169,12 @@ nonisolated public enum QuestAliasFiller: Sendable {
                 return
             }
             if alias.category == .reference, let key = event.reference(member) {
+                let match = scope?.match(alias, quest: quest, filled: state)
+                if let match, !match.conditionsPass(on: key) {
+                    skipped.note(.noMatch)
+                    note(unfilled: alias)
+                    return
+                }
                 store(alias.id, key)
             } else if alias.category != .reference, let location = event.location(member) {
                 state = state.fillingLocation(alias.id, with: location)
@@ -171,6 +207,43 @@ nonisolated public enum QuestAliasFiller: Sendable {
             }
         }
 
+        /// Find Matching Reference: the loaded candidates, or the near alias's linked
+        /// children, that pass the match conditions. A miss fails a required alias only
+        /// when the search is limited to the loaded area, because OpenSky does not
+        /// search persistent references outside it.
+        private mutating func fillMatching(_ alias: Quest.Alias, scope: QuestAliasSearchScope) {
+            let candidates: [ReferenceKey]
+            if case .nearAlias = alias.fillType {
+                // Only type 0, "Linked Ref Child", is searched.
+                guard
+                    let near = alias.nearAlias, near >= 0, (alias.nearType ?? 0) == 0,
+                    let parent = state.reference(forAlias: UInt32(near))
+                else {
+                    skipped.note(.unresolvedReference)
+                    return
+                }
+                candidates = scope.search.linkedChildren(of: parent)
+            } else {
+                candidates = scope.search.references.sortedKeys()
+            }
+            let match = scope.match(alias, quest: quest, filled: state)
+            let held = state
+            let found = match.choose(from: candidates.filter { candidate in
+                match.passes(candidate) { held.holds($0) }
+            })
+            guard let found else {
+                skipped.note(.noMatch)
+                if alias.flags.contains(.matchInLoadedArea) {
+                    note(unfilled: alias)
+                }
+                return
+            }
+            store(alias.id, found)
+            if let forced = alias.forceIntoAlias, forced >= 0 {
+                store(UInt32(bitPattern: forced), found)
+            }
+        }
+
         /// Records the fill, and the forced-into fill, under one rule so both
         /// land in the same normalized table.
         private mutating func store(_ aliasID: UInt32, _ key: ReferenceKey) {
@@ -182,6 +255,18 @@ nonisolated public enum QuestAliasFiller: Sendable {
         private mutating func note(unfilled alias: Quest.Alias) {
             guard !alias.flags.contains(.optional) else { return }
             unfilledRequired.append(alias.id)
+        }
+    }
+}
+
+nonisolated extension Quest.Alias {
+    /// Find Matching Reference: a near-alias fill, or no fill subrecord but match
+    /// conditions. An alias with neither is filled by script.
+    var isMatchSearch: Bool {
+        switch fillType {
+        case .nearAlias: true
+        case .none: !matchConditions.conditions.isEmpty
+        default: false
         }
     }
 }

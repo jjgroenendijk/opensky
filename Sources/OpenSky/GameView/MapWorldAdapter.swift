@@ -146,6 +146,14 @@ extension MapWorldAdapter: MapMenuWorld {
         _ = game.progression.awardCharacterExperience(Float(amount))
     }
 
+    func incrementStat(_ name: String) {
+        game.worldState.incrementMiscStat(name)
+    }
+
+    func showQuestMarkers(_ positions: [SIMD3<Float>]) {
+        game.hud.updateQuestTargets(positions)
+    }
+
     var fastTravelContext: FastTravelContext {
         var context = FastTravelContext()
         let combat = game.combat.combatLoopSnapshot
@@ -196,28 +204,40 @@ extension MapWorldAdapter: MapMenuWorld {
         text(records?.menuTexts[refusal.rawValue]) ?? refusal.rawValue
     }
 
-    /// Displayed, unfinished objectives of the quest the journal has selected.
+    /// Displayed, unfinished objectives of every tracked quest.
     var questTargets: [QuestTargetMarker] {
-        guard let entry = game.journal.selectedEntry(), let runtime = game.journal.runtime else {
-            return []
+        guard let runtime = game.journal.runtime else { return [] }
+        let requests = runtime.trackedQuests().flatMap { quest in
+            guard let state = try? runtime.state(of: quest.formID) else {
+                return [QuestTargetRequest]()
+            }
+            return QuestTargetResolver.requests(
+                quest: quest, state: state,
+                text: { [self] in text($0.displayText) ?? "Objective \($0.index)" },
+                conditionsPass: questTargetCheck(quest: quest.formID, runtime: runtime)
+            )
         }
-        let check = questTargetCheck(quest: entry.quest.formID, runtime: runtime)
-        let requests = QuestTargetResolver.requests(
-            quest: entry.quest, state: entry.state,
-            text: { [self] in text($0.displayText) ?? "Objective \($0.index)" },
-            conditionsPass: check
-        )
         return QuestTargetResolver.resolve(
             requests,
             alias: { quest, alias in
                 runtime.aliasReference(alias: UInt32(bitPattern: alias), in: quest)
             },
-            place: { [weak game] key in
-                game?.streamer?.referenceEntry(key: key)?.placedReference.map {
-                    .placed(position: $0.placement.position, cell: nil)
-                }
+            place: { [weak self] key in
+                self?.currentPosition(of: key).map { .placed(position: $0, cell: nil) }
             }
         )
+    }
+
+    /// Where a loaded object or actor stands now: moved, or as the plugin placed it.
+    private func currentPosition(of key: ReferenceKey) -> SIMD3<Float>? {
+        guard let streamer = game.streamer, let entry = streamer.referenceEntry(key: key) else {
+            return nil
+        }
+        let moved = streamer.npcTransform(for: key)
+            ?? game.worldState.component(ReferenceTransformOverride.self, for: key)
+        return moved?.position
+            ?? entry.placedReference?.placement.position
+            ?? entry.placedActor?.placement.position
     }
 }
 

@@ -115,6 +115,36 @@ public final class JournalCoordinator {
         }
     }
 
+    /// Flips tracking of a running quest. Nil when it does not run, which the
+    /// movie reads as "no change".
+    @discardableResult
+    public func toggleTracking(_ id: FormID) -> Bool? {
+        guard let runtime, (try? runtime.state(of: id))?.isRunning == true else { return nil }
+        let tracked = !runtime.isTracked(id)
+        runtime.setTracked(id, tracked)
+        let name = runtime.quests.quest(id)?.editorID ?? id.description
+        lastOutcome = "\(name): \(tracked ? "tracked" : "not tracked")"
+        return tracked
+    }
+
+    @discardableResult
+    public func toggleSelectedTracking() -> Bool {
+        guard let runtime, let quest = runtime.quests.quest(editorID: selectedEditorID) else {
+            lastOutcome = "track: no quest selected"
+            return false
+        }
+        guard toggleTracking(quest.formID) != nil else {
+            lastOutcome = "track: \(selectedEditorID) is not running"
+            return false
+        }
+        return true
+    }
+
+    /// Editor IDs of the tracked, running quests.
+    public var trackedEditorIDs: [String] {
+        runtime?.trackedQuests().compactMap(\.editorID) ?? []
+    }
+
     /// A `QuestError` is a stated outcome, never a thrown error out of a
     /// control action.
     private func applyChange(

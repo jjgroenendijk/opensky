@@ -1,8 +1,8 @@
 // Builds a `JournalMenuModel` from quest state. A quest is listed only when its
 // `Kind` is not `.none` (docs/formats/quest-records.md) and it has an objective
-// or a log entry to show; an objective only while `isDisplayed` is set. Text goes through
-// `LocalizedStrings`: FULL and
-// NNAM resolve from `.strings`, the CNAM paragraph from `.dlstrings`.
+// or a log entry to show; an objective only while `isDisplayed` is set. Running
+// misc quests share one row. FULL and NNAM resolve from `.strings`, the CNAM
+// paragraph from `.dlstrings`.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -54,25 +54,32 @@ extension JournalMenuModel {
     ) -> JournalMenuModel {
         var active: [JournalQuestEntry] = []
         var completed: [JournalQuestEntry] = []
+        var misc: [JournalQuestEntry] = []
         for quest in runtime.quests.journalQuests() {
             guard let state = try? runtime.state(of: quest.formID) else { continue }
             guard state.isRunning || state.isCompleted else { continue }
             // A DLC quest's text IDs point into its own plugin's tables.
-            let entry = makeEntry(
+            var entry = makeEntry(
                 quest: quest,
                 state: state,
                 strings: strings?.scoped(to: runtime.quests.sourcePlugin(of: quest.formID)),
                 aliases: aliases
             )
+            entry.track(state.isRunning && runtime.isTracked(quest.formID))
             // A background quest, such as one that tracks an achievement, has
             // nothing to show, so the game never lists it.
             guard !entry.objectives.isEmpty || !entry.logEntries.isEmpty else { continue }
-            if state.isRunning {
+            if state.isRunning, quest.kind == .miscellaneous {
+                misc.append(entry)
+            } else if state.isRunning {
                 active.append(entry)
             }
             if state.isCompleted {
                 completed.append(entry)
             }
+        }
+        if let group = miscGroup(misc) {
+            active.append(group)
         }
         return JournalMenuModel(
             active: active,
@@ -110,6 +117,29 @@ extension JournalMenuModel {
         )
     }
 
+    /// The game lists running misc quests as one last row, whose objectives are
+    /// the open objectives of them all. The movie's own row has the same shape.
+    public static func miscGroup(_ misc: [JournalQuestEntry]) -> JournalQuestEntry? {
+        let objectives = misc.flatMap { $0.objectives.filter { $0.state == .displayed } }
+        guard !objectives.isEmpty else { return nil }
+        return JournalQuestEntry(
+            formID: FormID(0),
+            editorID: miscGroupEditorID,
+            title: miscGroupTitle,
+            kind: .miscellaneous,
+            isCompleted: false,
+            stage: nil,
+            objectives: objectives,
+            logEntries: [],
+            isTracked: misc.contains(where: \.isTracked),
+            miscQuests: misc.map(\.formID)
+        )
+    }
+
+    public static let miscGroupEditorID = "Miscellaneous"
+    /// The movie's own label for the row, a translation key.
+    public static let miscGroupTitle = "$MISCELLANEOUS"
+
     // MARK: - Private
 
     private static func objectives(
@@ -134,7 +164,9 @@ extension JournalMenuModel {
             return JournalObjectiveEntry(
                 index: objective.index,
                 text: text ?? "objective \(objective.index)",
-                state: objectiveState(display)
+                state: objectiveState(display),
+                quest: quest.formID,
+                hasTargets: !objective.targets.isEmpty
             )
         }
     }
@@ -170,5 +202,17 @@ extension JournalMenuModel {
                 }
                 return substitute(text)
             }
+    }
+}
+
+nonisolated extension JournalQuestEntry {
+    /// Marks the quest and its open objectives tracked.
+    mutating func track(_ isTracked: Bool) {
+        self.isTracked = isTracked
+        objectives = objectives.map { objective in
+            var objective = objective
+            objective.isActive = isTracked && objective.state == .displayed
+            return objective
+        }
     }
 }

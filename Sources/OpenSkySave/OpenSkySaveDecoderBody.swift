@@ -85,11 +85,17 @@ nonisolated extension OpenSkySaveDecoder {
         public var relocations: [SaveRelocationEntry] = []
         /// Absent `SCNS`: no scene is playing.
         public var scenes: [SaveStoryEntry<SceneRuntimeState>] = []
+        /// Absent `SCNP`: no scene is paused. Each entry holds only `pausedAt`.
+        public var scenePauses: [SaveStoryEntry<SceneRuntimeState>] = []
         /// Absent `SMQS`: the story manager started no quest.
         public var storyManagerQuests: [SaveStoryEntry<StoryManagerQuestState>] = []
         /// Absent `DLBS`: no speaker is in an exclusive branch.
         public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
         public var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
+        /// Absent `MSTS`: no stat was counted.
+        public var miscStats: [SaveStoryEntry<MiscStatsState>] = []
+        /// Absent `QTRK`: the journal showed no quest.
+        public var questTracking: [SaveStoryEntry<QuestTrackingState>] = []
         /// Absent `PIDN`: the player is the vanilla `Player` record.
         public var identities: [SaveStoryEntry<PlayerIdentityState>] = []
         /// Absent `MRKS`: every marker is as its record flags say.

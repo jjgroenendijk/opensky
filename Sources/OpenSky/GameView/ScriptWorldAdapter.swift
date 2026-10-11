@@ -77,11 +77,13 @@ final class ScriptWorldAdapter {
     /// `PapyrusQuestBridgeError.noQuestData`.
     private func wireQuests(provider: any WorldDataProviding) {
         guard let store = (provider as? QuestDataProviding)?.questStore else { return }
-        game.scripts.attachQuests(QuestRuntime(
+        var runtime = QuestRuntime(
             store: game.worldState,
             quests: store,
             locations: (provider as? LocationDataProviding)?.locationStore
-        ))
+        )
+        runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
+        game.scripts.attachQuests(runtime)
     }
 
     /// Getters, not captured values: the runtimes behind them are wired after

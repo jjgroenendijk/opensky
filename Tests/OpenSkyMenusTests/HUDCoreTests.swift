@@ -44,6 +44,16 @@ struct HUDCoreTests {
         #expect(marker.kind == .location)
     }
 
+    /// Quest targets follow the location marker, each pointing from the camera.
+    @Test
+    func questTargetsBecomeQuestMarkers() {
+        let markers = HUDCore.markers(
+            for: nil, questTargets: [[100, 0, 0], [0, 0, 50]], cameraPosition: .zero
+        )
+        #expect(markers.map(\.kind) == [.quest])
+        #expect(markers.first?.headingDegrees == 90)
+    }
+
     @Test
     func markerIsDroppedWhenCameraStandsOnTarget() {
         let target = Self.target(position: [5, 5, 100])

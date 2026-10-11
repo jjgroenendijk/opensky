@@ -137,8 +137,9 @@ struct QuestAcceptanceTests {
         )
         #expect(activation.key == Chain.key(Chain.leverObjectID))
         #expect(activation.cell == Chain.cell)
-        // The quest write came after it, and belongs to no cell.
-        #expect(chain.session.worldState.journalEntries.last?.kind == .quest)
+        // The quest writes came after it. The first shown objective also tracks the quest.
+        let lastKinds = chain.session.worldState.journalEntries.suffix(2).map(\.kind)
+        #expect(lastKinds == [.quest, .questTracking])
 
         // Nothing in the chain reached for a native OpenSky has not written.
         #expect(chain.session.world.runtime.tally.unimplementedNativeTotal == 0)

@@ -131,12 +131,19 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let relocations = "RLOC"
         /// Playing scenes: phase, started actions, and completed actions.
         public static let scenes = "SCNS"
+        /// The pause time of each paused scene. Apart from `SCNS`, whose entries have no
+        /// per-entry length, so an older build skips it and loads the scene unpaused.
+        public static let scenePauses = "SCNP"
         /// Quests the story manager started: last start time and start count.
         public static let storyManagerQuests = "SMQS"
         /// Speakers in an exclusive dialogue branch.
         public static let dialogueBranches = "DLBS"
         /// Help messages per input event: times shown and whether the event happened.
         public static let helpMessages = "HELP"
+        /// The player's misc stats: name and value.
+        public static let miscStats = "MSTS"
+        /// Whether the player tracks each quest the journal showed.
+        public static let questTracking = "QTRK"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

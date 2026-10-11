@@ -24,6 +24,8 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
     var view: (eye: SIMD3<Float>, lookAt: SIMD3<Float>)?
     var notifications: [String] = []
     var experience = 0
+    var stats: [String] = []
+    var shownMarkers: [SIMD3<Float>] = []
     var travelled: [String] = []
 
     init(sites: [MapMarkerSite]) {
@@ -73,6 +75,14 @@ private final class FakeMapWorld: MapMenuWorld, MenuInputConsumer {
         experience += amount
     }
 
+    func incrementStat(_ name: String) {
+        stats.append(name)
+    }
+
+    func showQuestMarkers(_ positions: [SIMD3<Float>]) {
+        shownMarkers = positions
+    }
+
     func travel(to marker: MapMarkerSite) -> Bool {
         travelled.append(marker.name)
         return true
@@ -109,6 +119,7 @@ struct MapMenuCoordinatorTests {
         menu.tick()
         #expect(world.notifications == ["Discovered Riverwood"])
         #expect(world.experience == 10)
+        #expect(world.stats == ["Locations Discovered"])
         #expect(world.sites[0].state.canTravelTo)
         #expect(!world.sites[1].state.isVisible)
         #expect(world.localMapFog.exploredCount(.exterior(CellCoordinate(x: 0, y: 0))) > 0)
@@ -234,6 +245,27 @@ struct MapMenuCoordinatorTests {
             [request], alias: { _, _ in claw }, place: { _ in .heldBy(claw) }
         )
         #expect(loop.isEmpty)
+    }
+
+    /// The compass gets the tracked targets every few frames, and "Show on map"
+    /// opens the world map centred on the named objective's target.
+    @Test @MainActor
+    func trackedTargetsReachTheCompassAndCentreTheMap() {
+        let world = FakeMapWorld(sites: [])
+        world.questTargets = [QuestTargetMarker(
+            quest: FormID(0x10), objective: 20, text: "Find the claw",
+            anchor: Self.key(5), position: SIMD3(4000, -2000, 0)
+        )]
+        let menu = MapMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: world)
+        for _ in 0 ..< MapMenuCoordinator.questMarkerFrames {
+            menu.tick()
+        }
+        #expect(world.shownMarkers == [SIMD3(4000, -2000, 0)])
+        #expect(!menu.showQuestTarget(quest: FormID(0x10), objective: 10))
+        #expect(menu.showQuestTarget(quest: FormID(0x10), objective: 20))
+        #expect(menu.camera?.focus == SIMD2(4000, -2000))
+        #expect(menu.snapshot.questTargets == ["Find the claw at 4000, -2000"])
     }
 
     @Test

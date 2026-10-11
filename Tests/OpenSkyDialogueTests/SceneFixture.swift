@@ -66,7 +66,8 @@ enum SceneFixture {
         filled: Bool = true,
         questStopped: Bool = false,
         host: FakeSceneHost? = nil,
-        pendingLines: ScenePendingLines = ScenePendingLines()
+        pendingLines: ScenePendingLines = ScenePendingLines(),
+        others: [CatalogScene] = []
     ) throws -> SceneRuntime {
         let quests = try DialogueRuntimeFixture.questStore()
         let questKey = try #require(quests.key(for: FormID(DialogueRuntimeFixture.runningQuest)))
@@ -91,7 +92,7 @@ enum SceneFixture {
             registry: .dialogueTests
         )
         return SceneRuntime(
-            catalog: SceneCatalog(scenes: [scene]), dialogue: dialogue,
+            catalog: SceneCatalog(scenes: [scene] + others), dialogue: dialogue,
             host: host, pendingLines: pendingLines, now: now
         )
     }
@@ -178,6 +179,7 @@ final class FakeSceneHost: SceneHost {
     var packageDone = false
     private(set) var running: [ReferenceKey: [FormID]] = [:]
     private(set) var released: [ReferenceKey] = []
+    var statuses: [ReferenceKey: SceneActorStatus] = [:]
 
     func lineDuration(of info: TopicInfo, speaker: ReferenceKey) -> Float? {
         lineSeconds
@@ -195,5 +197,9 @@ final class FakeSceneHost: SceneHost {
     func releaseScenePackages(actor: ReferenceKey, owner: ScenePackageOwner) {
         running[actor] = nil
         released.append(actor)
+    }
+
+    func sceneActorStatus(_ actor: ReferenceKey) -> SceneActorStatus {
+        statuses[actor] ?? []
     }
 }

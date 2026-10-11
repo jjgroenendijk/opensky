@@ -16,17 +16,20 @@ nonisolated public struct QuestTargetRequest: Equatable, Sendable {
     public let aliasID: Int32
     /// The QSTA conditions, already evaluated; false hides the target.
     public let conditionsPass: Bool
+    public let objective: UInt16
 
     public init(
         quest: FormID,
         text: String,
         aliasID: Int32,
-        conditionsPass: Bool
+        conditionsPass: Bool,
+        objective: UInt16 = 0
     ) {
         self.quest = quest
         self.text = text
         self.aliasID = aliasID
         self.conditionsPass = conditionsPass
+        self.objective = objective
     }
 }
 
@@ -38,6 +41,8 @@ nonisolated public enum QuestTargetPlace: Equatable, Sendable {
 }
 
 nonisolated public struct QuestTargetMarker: Equatable, Sendable {
+    public var quest = FormID(0)
+    public var objective: UInt16 = 0
     public let text: String
     /// The reference the marker stands on: the target, or what holds it.
     public let anchor: ReferenceKey
@@ -62,6 +67,7 @@ nonisolated public enum QuestTargetResolver {
                 switch place(anchor) {
                 case let .placed(position, _):
                     return QuestTargetMarker(
+                        quest: request.quest, objective: request.objective,
                         text: request.text, anchor: anchor, position: position
                     )
                 case let .heldBy(holder):
@@ -90,7 +96,8 @@ nonisolated extension QuestTargetResolver {
             return objective.targets.map { target in
                 QuestTargetRequest(
                     quest: quest.formID, text: text(objective),
-                    aliasID: target.aliasID, conditionsPass: conditionsPass(target)
+                    aliasID: target.aliasID, conditionsPass: conditionsPass(target),
+                    objective: objective.index
                 )
             }
         }

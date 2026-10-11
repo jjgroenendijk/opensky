@@ -50,6 +50,14 @@ nonisolated public struct Quest: Sendable {
             self = index < Self.known.count ? Self.known[index] : .unknown(rawValue)
         }
 
+        /// The DNAM value.
+        public var rawValue: UInt32 {
+            if case let .unknown(raw) = self {
+                return raw
+            }
+            return Self.known.firstIndex(of: self).map { UInt32($0) } ?? 0
+        }
+
         public var name: String {
             switch self {
             case .none: "none"

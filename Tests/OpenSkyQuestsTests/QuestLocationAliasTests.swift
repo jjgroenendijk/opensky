@@ -100,4 +100,48 @@ struct QuestLocationAliasTests {
         #expect(table.reference(forAlias: 2) == key(0x701))
         #expect(table.reference(forAlias: 4) == key(0x702))
     }
+
+    /// A town lists nothing of the type, so its child location fills the alias. When
+    /// no location in the tree lists a free one, the required alias refuses the start.
+    @Test func aLocationAliasReferenceSearchesChildLocations() throws {
+        let town = ESMFixture.record(
+            "LCTN", formID: 0x0500, data: ESMFixture.field("EDID", ESMFixture.zstring("Town"))
+        )
+        let inn = ESMFixture.record(
+            "LCTN", formID: 0x0501,
+            data: ESMFixture.field("EDID", ESMFixture.zstring("Inn"))
+                + ESMFixture.field("PNAM", ESMFixture.words([0x0500]))
+                + ESMFixture.field("LCSR", ESMFixture.words([0x600, 0x700, 0x3C, 0]))
+        )
+        let locations = try LocationStore(plugins: [("Test.esm", ESMFile(
+            data: ESMFixture.tes4() + ESMFixture.topGroup("LCTN", contents: town + inn)
+        ))])
+        let start = { (extra: Data) in
+            let fields = QuestFixture.editorID("TownQuest")
+                + QuestFixture.alias(
+                    id: 3, name: "Town", location: true, fill: QuestFixture.word("ALFL", 0x0500)
+                )
+                + QuestFixture.alias(
+                    id: 1, name: "Keeper",
+                    fill: QuestFixture.word("ALFA", 3) + QuestFixture.word("ALRT", 0x600)
+                )
+                + extra
+            let quests = try QuestRuntime(
+                store: WorldStateStore(),
+                quests: QuestFixture.store(QuestFixture.record(formID: 0x0100, fields: fields)),
+                locations: locations
+            )
+            try quests.startQuest(FormID(0x0100))
+            return try quests.aliasState(of: FormID(0x0100))
+        }
+
+        let table = try start(Data())
+        let keeper = ReferenceKey(resolved: ResolvedFormID(plugin: "Test.esm", objectID: 0x700))
+        #expect(table.reference(forAlias: 1) == keeper)
+        let second = QuestFixture.alias(
+            id: 2, name: "Second",
+            fill: QuestFixture.word("ALFA", 3) + QuestFixture.word("ALRT", 0x600)
+        )
+        #expect(throws: QuestError.self) { try start(second) }
+    }
 }

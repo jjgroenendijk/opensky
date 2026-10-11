@@ -19,6 +19,7 @@ final class StoryManagerSection: PanelSectionViewController {
     let keywordControl = NSTextField()
     let valueControl = NSTextField()
     let fireControl = NSButton(title: "Fire", target: nil, action: nil)
+    let socialControl = NSButton(title: "Run social pass", target: nil, action: nil)
     private let treeLabel = PanelComponents.statsLabel(identifier: "StoryTreeStatsLabel")
     private let statsLabel = PanelComponents.statsLabel(identifier: "StoryManagerStatsLabel")
 
@@ -61,6 +62,12 @@ final class StoryManagerSection: PanelSectionViewController {
             fireControl, target: self, action: #selector(fire), identifier: "StoryFireControl"
         )
         fireControl.toolTip = "Fires the event with the player as actor 1."
+        PanelComponents.configureButton(
+            socialControl, target: self, action: #selector(runSocialPass),
+            identifier: "StorySocialPassControl"
+        )
+        socialControl.toolTip =
+            "Checks the loaded NPCs for conversations, hellos, and found bodies now."
         syncControls()
         return [
             PanelComponents.group([
@@ -77,7 +84,7 @@ final class StoryManagerSection: PanelSectionViewController {
                     captionWidth: 70,
                     field: valueControl
                 ),
-                PanelComponents.buttonRow([fireControl])
+                PanelComponents.buttonRow([fireControl, socialControl])
             ]),
             treeLabel,
             statsLabel
@@ -106,6 +113,12 @@ final class StoryManagerSection: PanelSectionViewController {
         finishInteraction()
     }
 
+    @objc private func runSocialPass() {
+        provider?.runSocialPass()
+        refreshReadout()
+        finishInteraction()
+    }
+
     override func refreshReadout() {
         guard let provider else {
             treeLabel.stringValue = ""
@@ -130,6 +143,7 @@ final class StoryManagerSection: PanelSectionViewController {
         if snapshot.droppedWalkLines > 0 {
             lines.append("and \(snapshot.droppedWalkLines) more steps")
         }
+        lines += snapshot.socialLines
         return lines.joined(separator: "\n")
     }
 }

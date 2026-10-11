@@ -20,4 +20,22 @@ nonisolated extension LocationStore {
             .compactMap { key($0.reference) }
             .filter { !removed.contains($0) }
     }
+
+    /// The references of `type` in `locationID`, then in its child locations, nearest
+    /// generation first and FormID order within one. A child is any location whose
+    /// PNAM chain reaches `locationID`.
+    public func specialReferencesWithChildren(
+        ofType type: ReferenceKey, in locationID: ResolvedFormID
+    ) -> [ReferenceKey] {
+        let children = locations.keys
+            .filter { $0 != locationID && isWithin($0, ancestor: locationID) }
+            .map { (id: $0, depth: parentChain(of: $0).count) }
+            .sorted { lhs, rhs in
+                (lhs.depth, lhs.id.plugin, lhs.id.objectID)
+                    < (rhs.depth, rhs.id.plugin, rhs.id.objectID)
+            }
+        return ([locationID] + children.map(\.id)).flatMap {
+            specialReferences(ofType: type, in: $0)
+        }
+    }
 }

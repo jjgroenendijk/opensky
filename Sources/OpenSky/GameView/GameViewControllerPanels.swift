@@ -466,56 +466,7 @@ extension GameViewController: DialogueCameraControlProviding {
     }
 }
 
-extension GameViewController: JournalControlProviding {
-    var journalSnapshot: JournalControlSnapshot {
-        journalMenu.snapshot
-    }
-
-    var journalQuestEditorID: String {
-        get { journal.editorID }
-        set { journalMenu.setEditorID(newValue) }
-    }
-
-    var journalQuestEditorIDs: [String] {
-        journal.questEditorIDs
-    }
-
-    func openJournal() {
-        journalMenu.open()
-    }
-
-    func closeJournal() {
-        journalMenu.close()
-    }
-
-    func sendJournalInput(_ event: MenuInputEvent) {
-        journalMenu.route(event)
-    }
-
-    func setJournalShowsCompleted(_ flag: Bool) {
-        journalMenu.setShowsCompleted(flag)
-    }
-
-    func startSelectedQuest() {
-        journalMenu.applied(journal.startSelectedQuest())
-    }
-
-    func stopSelectedQuest() {
-        journalMenu.applied(journal.stopSelectedQuest())
-    }
-
-    func setSelectedQuestStage(_ index: Int) {
-        journalMenu.applied(journal.setSelectedQuestStage(index))
-    }
-
-    func setSelectedQuestObjective(_ index: Int, displayed: Bool) {
-        journalMenu.applied(journal.setSelectedQuestObjective(index, displayed: displayed))
-    }
-
-    func journalAliasTable(editorID: String) -> ScriptQuestAliasInspection? {
-        scripts.questAliasTable(editorID: editorID)
-    }
-}
+extension GameViewController: JournalControlProviding, JournalMenuHosting {}
 
 extension GameViewController: ActorValueControlProviding {
     var actorValueControlSnapshot: ActorValueControlSnapshot {

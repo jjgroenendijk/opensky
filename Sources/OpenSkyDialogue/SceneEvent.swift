@@ -9,6 +9,11 @@ nonisolated public enum SceneEndReason: Equatable, Sendable {
     case finished
     case stopped
     case questStopped
+    /// `ForceStart()` of a scene with the same actors, or a new scene that needs an
+    /// actor of this interruptible one.
+    case interrupted
+    /// An actor's behaviour flags end the scene, for example on death.
+    case actorBehavior
 }
 
 /// A line a dialogue action selected and marked said.
@@ -41,6 +46,13 @@ nonisolated public enum SceneStep: Equatable, Sendable {
     case noLine(UInt32)
     /// The action's alias is empty, so it counts as done at once, as for a dead actor.
     case emptyAlias(UInt32)
+    /// The action's actor is dead, or optional and busy in another scene. Done at once.
+    case actorUnavailable(UInt32)
+    /// An actor this scene needs is in another scene, so the next phase waits.
+    case waitingForActors
+    /// An actor's behaviour flags paused the scene, for example in combat.
+    case paused
+    case resumed
     /// The actor runs the action's packages ahead of its schedule.
     case packageStarted(UInt32, actor: ReferenceKey)
     /// The package reached its Done state.

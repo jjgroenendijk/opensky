@@ -37,9 +37,15 @@ The map selects the visible marker nearest its center, like the game's cursor.
 
 ## Quest targets
 
-The targets come from the displayed, unfinished objectives of the quest selected in the
-journal. Each objective `QSTA` target names an alias; the alias's reference gives the
-place. A reference held in a container follows the holder, up to 8 holders deep.
+The targets come from the displayed, unfinished objectives of every tracked quest
+([journal](/engine/journal.md#tracked-quests)). Each objective `QSTA` target names an alias;
+the alias's reference gives the place. A reference held in a container follows the holder, up
+to 8 holders deep. An actor's place is where it stands now, and a moved object's place is
+where it was moved to, not where the plugin placed it.
+
+The targets are found again every 15 frames. They show on the map and as quest markers on the
+HUD compass. "Show on map" in the journal opens the world map centred on the chosen
+objective's first target.
 
 Each target's conditions (the `CTDA` records after `QSTA`) must pass, or the target is
 hidden. They run with the target's reference as the subject, the player as the Target

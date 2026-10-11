@@ -14,6 +14,8 @@ nonisolated public struct SceneRuntimeState: WorldStateComponent, Sendable {
     public var running: [SceneActionProgress]
     /// Actions that ended in the current scene run.
     public var completed: [UInt32]
+    /// Scene seconds when an actor's behaviour flags paused the scene. Nil: not paused.
+    public var pausedAt: Double?
 
     public static var componentKind: WorldStateComponentKind {
         .scene
@@ -23,12 +25,20 @@ nonisolated public struct SceneRuntimeState: WorldStateComponent, Sendable {
         phase: UInt32 = 0,
         phaseEntered: Bool = false,
         running: [SceneActionProgress] = [],
-        completed: [UInt32] = []
+        completed: [UInt32] = [],
+        pausedAt: Double? = nil
     ) {
         self.phase = phase
         self.phaseEntered = phaseEntered
         self.running = running.sorted { $0.action < $1.action }
         self.completed = Array(Set(completed)).sorted()
+        self.pausedAt = pausedAt
+    }
+
+    /// The scene entered a phase, so it holds its actors. A scene that waits
+    /// before its first phase holds nobody.
+    public var holdsActors: Bool {
+        phaseEntered || phase > 0 || !running.isEmpty || !completed.isEmpty
     }
 
     public func isRunning(_ action: UInt32) -> Bool {

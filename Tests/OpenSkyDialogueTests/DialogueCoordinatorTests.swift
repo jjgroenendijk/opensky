@@ -226,4 +226,8 @@ final class FakeDialogueWorld: DialogueWorld {
     func releaseFacing(of actor: ReferenceKey) {
         commands.append("release \(actor)")
     }
+
+    func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
+        commands.append("\(challenge.eventCode) \(speaker)")
+    }
 }

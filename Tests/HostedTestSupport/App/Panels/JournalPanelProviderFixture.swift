@@ -137,6 +137,14 @@ final class FakeJournalProvider: JournalControlProviding {
         mutations.append("start \(journalQuestEditorID)")
     }
 
+    func toggleSelectedQuestTracking() {
+        mutations.append("track \(journalQuestEditorID)")
+    }
+
+    func showSelectedQuestOnMap() {
+        mutations.append("map \(journalQuestEditorID)")
+    }
+
     func stopSelectedQuest() {
         mutations.append("stop \(journalQuestEditorID)")
     }
