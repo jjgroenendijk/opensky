@@ -52,6 +52,7 @@ does not own either system.
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
+| Sit | Move to a free seat of the target furniture, then sit; done when seated |
 | Wait | Stay in place and send no move, until another package wins |
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
@@ -78,6 +79,29 @@ falling. Without this, an actor ahead of the loaded area falls through the world
 A movement failure ends the machine as failed. An unsupported procedure also fails, on purpose.
 Random points are even over the area (the radius is `sqrt` of a random number), and use the same
 seeded generator as conditions.
+
+## Furniture
+
+A furniture mesh marks where an actor sits with its `BSFurnitureMarkerNode` block
+([NIF](/formats/nif.md#bsfurnituremarkernode)). Each marker is one seat. The `FURN` record lists
+the same markers by index (`ENAM`), and a marker can carry a keyword (`FNMK`). A sit package
+picks its seat by these rules:
+
+- A seat with a keyword is only for an actor whose base `NPC_` has that keyword (`KWDA`).
+- An actor with a matching keyword takes that seat first. Otherwise it takes a free seat with
+  no keyword.
+- Two package actors never share a seat.
+
+On arrival the actor is set at the seat's point, facing the marker heading plus the
+reference's own z rotation. Then the furniture is activated by the actor, so its scripts get
+`OnActivate`. A Creation Kit template whose procedure tree holds "Sit" is a sit package, even
+when the tree also holds "Wait", because the vanilla `SitTarget` tree is
+Sequence[Sit, Simultaneous[Sit, Wait]].
+
+Example: `ExecutionerChoppingBlock` (`FURN` `0002E8EB`) has three markers. Marker 0 has the
+keyword `isExecutioner` and marker 2 `isExecutionerGuard`; marker 1 has none, so the prisoner
+gets it. The keyword rule is OpenSky's reading of the record. The entry points and the sit
+animations are not used yet: the actor appears in the seat and plays no sit idle.
 
 ## In a session
 

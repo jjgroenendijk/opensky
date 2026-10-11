@@ -65,6 +65,8 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
     public let produce: HarvestProduce?
     /// XLOC of a DOOR or CONT reference. The plugin baseline; the runtime may have unlocked it.
     public let lock: LockData?
+    /// FURN markers in world space, in marker order. Empty for every other base.
+    public var seats: [FurnitureSeat] = []
 
     public init(
         reference: FormID,
@@ -90,6 +92,24 @@ nonisolated public struct PlacedInteraction: Equatable, Sendable {
         self.station = station
         self.produce = produce
         self.lock = lock
+    }
+}
+
+/// One place an actor uses a piece of furniture.
+nonisolated public struct FurnitureSeat: Equatable, Sendable {
+    public let position: SIMD3<Float>
+    /// The world z rotation the user faces, in the record's clockwise radians.
+    public let heading: Float
+    /// 1 sit, 2 sleep, 4 lean.
+    public let animationType: UInt16
+    /// FURN `FNMK`: only an actor with this keyword may use the seat.
+    public let keyword: FormID?
+
+    public init(position: SIMD3<Float>, heading: Float, animationType: UInt16, keyword: FormID?) {
+        self.position = position
+        self.heading = heading
+        self.animationType = animationType
+        self.keyword = keyword
     }
 }
 

@@ -19,6 +19,8 @@ nonisolated public enum PackageProcedureKind: Equatable, Sendable {
     case sandbox
     case sleep
     case eat
+    /// Walks to the furniture the package names and uses it.
+    case sit
     /// Stays where it is and moves nowhere, as a rider in a cart does.
     case wait
     case unsupported(String)
@@ -147,6 +149,10 @@ nonisolated public struct PackageStore: Sendable {
         }
         if names.contains("travel") {
             return .travel
+        }
+        // SitTarget's tree also holds a Wait, which runs once the actor sits.
+        if names.contains("sit") {
+            return .sit
         }
         if names.contains("wait") {
             return .wait

@@ -45,6 +45,8 @@ nonisolated public final class MeshLibrary {
     private var touchedKeys: Set<String> = []
     /// The behaviour project each object mesh names; nil inside means none.
     var behaviorProjects: [String: String?] = [:]
+    /// The furniture markers of each furniture mesh read so far.
+    var furnitureMarkerSets: [String: [NIFFurnitureMarker]] = [:]
     // Internal rather than private: the actor-facing loaders live in
     // MeshLibraryActors.swift (split for the type-body length cap) and a Swift
     // extension in another file cannot reach `private` members. Still
@@ -444,6 +446,19 @@ nonisolated extension MeshLibrary {
             .flatMap(NIFBehaviorGraphExtraData.projectPath(in:))
         behaviorProjects[pathKey] = .some(project)
         return project
+    }
+
+    /// The furniture markers a mesh holds. Each path is read once.
+    public func furnitureMarkers(forPath path: String) -> [NIFFurnitureMarker] {
+        guard let pathKey = try? meshKey(for: path) else { return [] }
+        if let known = furnitureMarkerSets[pathKey] {
+            return known
+        }
+        let markers = (try? fileSystem.contents(forPath: pathKey))
+            .flatMap { try? NIFFile(data: $0) }
+            .map(NIFFurnitureMarker.markers(in:)) ?? []
+        furnitureMarkerSets[pathKey] = markers
+        return markers
     }
 
     /// One reference's own copy of an animated object, with the meshes under

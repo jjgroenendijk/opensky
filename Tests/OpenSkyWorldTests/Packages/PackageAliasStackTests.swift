@@ -94,4 +94,14 @@ struct PackageAliasStackTests {
             == [points[1], points[2], points[0]])
         #expect(PackageOverrideExecution.startingAtNearest([], to: near, loops: true).isEmpty)
     }
+
+    /// A sit package walks to its seat, then sits and is done.
+    @Test func aSitPackageSitsOnArrival() {
+        var sit = PackageProcedureMachine(
+            kind: .sit, center: .zero, destination: [5, 0, 0], radius: 0, seed: 1
+        )
+        #expect(sit.start() == [.move(to: [5, 0, 0])])
+        #expect(sit.handle(.arrived) == [.sit])
+        #expect(sit.state == .seated)
+    }
 }

@@ -14,6 +14,8 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case moving
     case idleStop(secondsRemaining: Float)
     case looping(PackageLoopClip)
+    /// The actor sits in its furniture. A sit package is done here.
+    case seated
     /// A wait package holds here until another package wins.
     case waiting
     case complete
@@ -23,6 +25,8 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
 nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case move(to: SIMD3<Float>)
     case playLoop(PackageLoopClip)
+    /// Seat the actor in the furniture its package names.
+    case sit
 }
 
 nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
@@ -70,7 +74,7 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
     public mutating func start() -> [PackageProcedureCommand] {
         guard state == .ready else { return [] }
         switch kind {
-        case .travel, .patrol, .sleep, .eat:
+        case .travel, .patrol, .sleep, .eat, .sit:
             state = .moving
             return [.move(to: destination ?? center)]
         case .wander, .sandbox:
@@ -122,6 +126,9 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         case .eat:
             state = .looping(.eat)
             return [.playLoop(.eat)]
+        case .sit:
+            state = .seated
+            return [.sit]
         case .wander:
             state = .idleStop(secondsRemaining: Self.wanderIdleSeconds)
             return []

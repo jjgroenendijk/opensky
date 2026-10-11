@@ -26,6 +26,8 @@ final class AIWorldAdapter {
     unowned let game: GameViewController
     /// The newest package move result per actor, for `state packages`.
     private(set) var lastPackageMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
+    /// Who holds each furniture seat, so two package actors never share one.
+    var seatHolders: [SeatKey: ReferenceKey] = [:]
 
     init(game: GameViewController) {
         self.game = game
@@ -246,22 +248,29 @@ extension AIWorldAdapter {
     func packagePatrolPath(
         from start: Package.Target, actor _: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]? {
-        let key: ReferenceKey? = switch start.kind {
+        guard
+            let key = packageTargetKey(start, aliasQuest: aliasQuest),
+            let lookup = game.streamer?.placedRecords
+        else { return nil }
+        let path = lookup.linkedChain(from: key)
+        return path.isEmpty ? nil : path
+    }
+
+    /// The reference a package's single-reference input names.
+    func packageTargetKey(_ target: Package.Target, aliasQuest: FormID?) -> ReferenceKey? {
+        switch target.kind {
         case .specificReference:
             game.scripts.bridge?.formIDResolver.flatMap {
-                ReferenceKey.resolve(FormID(start.value), using: $0)
+                ReferenceKey.resolve(FormID(target.value), using: $0)
             }
         case .referenceAlias:
             aliasQuest.flatMap {
                 game.scripts.bridge?.questRuntime?.aliasResolution()
-                    .reference(alias: start.value, in: $0)
+                    .reference(alias: target.value, in: $0)
             }
         default:
             nil
         }
-        guard let key, let lookup = game.streamer?.placedRecords else { return nil }
-        let path = lookup.linkedChain(from: key)
-        return path.isEmpty ? nil : path
     }
 
     func packageProcedure(_ event: PackageScriptEvent) {
