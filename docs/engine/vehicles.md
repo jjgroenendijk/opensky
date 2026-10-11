@@ -34,8 +34,14 @@ moves the cart as a trailer instead:
   distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
   that turns on the spot does not swing the cart sideways.
 - The cart turns by the change of its heading toward the horse.
-- The cart keeps its height above the terrain, and it tilts with the slope between itself and the
-  horse. Without loaded terrain it keeps its height relative to the horse.
+- The cart's origin rests on the ground, and it tilts with the slope between itself and the
+  horse. The prisoner carriage's model bounds start at z 0, so its origin is its lowest point.
+  Plugins place carts a little above the terrain (`Cart1` sits 11.5 units up) and the game's
+  physics settles them; OpenSky drops the origin onto the ground instead.
+- The ground is the highest of the terrain and the static collision below a point 128 units
+  above the cart or the horse, so a bridge or a paved road counts and a roof above does not.
+  The carts and horses in a link are not ground. Without ground the cart keeps its height
+  relative to the horse.
 
 [WARNING] The trailer rule approximates the game's physics. It is not taken from an open spec.
 

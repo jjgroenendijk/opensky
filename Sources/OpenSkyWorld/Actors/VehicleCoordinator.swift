@@ -24,7 +24,9 @@ public protocol VehicleWorld: AnyObject {
     func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride)
     /// A bone of the reference's live pose, in its root frame; nil while it loads.
     func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>?
-    func vehicleGround(at point: SIMD2<Float>) -> Float?
+    /// The highest ground at or below `point`: terrain, or a road, bridge, or floor.
+    /// The references in `vehicles` are not ground.
+    func vehicleGround(at point: SIMD3<Float>, excluding vehicles: Set<ReferenceKey>) -> Float?
 }
 
 @MainActor
@@ -74,9 +76,10 @@ public final class VehicleCoordinator {
             let cartPose = currentPose(of: cart),
             let horsePose = currentPose(of: horse)
         else { return false }
+        let linked = linkedReferences.union([cart, horse])
         return core.tow(
             cart, by: horse, followerPose: cartPose, carrierPose: horsePose,
-            ground: { world.vehicleGround(at: $0) }
+            ground: { world.vehicleGround(at: $0, excluding: linked) }
         )
     }
 
@@ -89,6 +92,12 @@ public final class VehicleCoordinator {
         lastPoses[follower] = nil
     }
 
+    /// Every follower and carrier, read before `core` changes so the ground port
+    /// does not read `core` while it is being written.
+    private var linkedReferences: Set<ReferenceKey> {
+        Set(core.links.flatMap { [$0.key, $0.value.carrier] })
+    }
+
     public func advance() {
         guard let world else { return }
         guard !core.links.isEmpty else {
@@ -99,10 +108,11 @@ public final class VehicleCoordinator {
             }
             return
         }
+        let linked = linkedReferences
         lastPoses = core.advance(
             base: { world.vehiclePose(of: $0) },
             bone: { world.vehicleBone(of: $0, named: $1) },
-            ground: { world.vehicleGround(at: $0) }
+            ground: { world.vehicleGround(at: $0, excluding: linked) }
         )
         var placements: [UInt32: float4x4] = [:]
         for (key, pose) in lastPoses {

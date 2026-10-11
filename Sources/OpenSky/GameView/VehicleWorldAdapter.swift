@@ -140,9 +140,24 @@ extension VehicleWorldAdapter: VehicleWorld {
         return SIMD3(origin.x, origin.y, origin.z)
     }
 
-    func vehicleGround(at point: SIMD2<Float>) -> Float? {
-        game.streamer?.sampleTerrain(at: point)?.height
+    func vehicleGround(at point: SIMD3<Float>, excluding vehicles: Set<ReferenceKey>) -> Float? {
+        guard let streamer = game.streamer else { return nil }
+        let terrain = streamer.sampleTerrain(at: SIMD2(point.x, point.y))?.height
+        let depth = point.z - (terrain ?? point.z - Self.groundSearchDepth) + 1
+        guard depth > 0 else { return terrain }
+        let query = ShapeSweepQuery.sphere(
+            center: point, radius: 1, direction: SIMD3(0, 0, -1), maximumDistance: depth
+        )
+        // A cart's own collision stays where it was placed, so it is not ground.
+        let linked = Set(vehicles.compactMap { streamer.referenceEntry(key: $0)?.formID })
+        let shapes = streamer.staticCollisionCandidates(overlapping: query.bounds)
+            .filter { !linked.contains($0.reference) }
+        let floor = ShapeSweeper.firstHit(query: query, shapes: shapes).map(\.position.z)
+        return [terrain, floor].compactMap(\.self).max()
     }
+
+    /// How far below the search point a floor counts where no terrain answers.
+    private static let groundSearchDepth: Float = 4096
 
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
         guard key != .player else { return }

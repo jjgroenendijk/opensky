@@ -26,8 +26,7 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     public let orientation: float3x3
     public let linkHeading: Float
     public let linkSlope: Float
-    /// Height above the ground at the link, or above the carrier without ground.
-    public let clearance: Float
+    /// Height above the carrier, used where no ground answers.
     public let rise: Float
     public var position: SIMD3<Float>
     public var heading: Float
@@ -45,6 +44,9 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     public static let exitEvent = "ExitCartEnd"
     /// A chain longer than this is a loop in plugin or script data.
     private static let maximumDepth = 8
+    /// How far above a towed follower or its carrier the ground search starts, so a road
+    /// or bridge just above the last pose still counts and a roof above does not.
+    static let groundSearchHeight: Float = 128
 
     public private(set) var links: [ReferenceKey: VehicleLink] = [:]
 
@@ -85,7 +87,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         by carrier: ReferenceKey,
         followerPose: ReferenceTransformOverride,
         carrierPose: ReferenceTransformOverride,
-        ground: (SIMD2<Float>) -> Float? = { _ in nil }
+        ground: (SIMD3<Float>) -> Float? = { _ in nil }
     ) -> Bool {
         let cart = followerPose.position
         let hitch = carrierPose.position
@@ -97,7 +99,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
             )
         }
         let heading = atan2(flat.x, flat.y)
-        let cartGround = ground(SIMD2(cart.x, cart.y))
+        let cartGround = ground(cart + SIMD3(0, 0, Self.groundSearchHeight))
         let matrix = Self.matrix(followerPose)
         let tow = VehicleTow(
             length: length,
@@ -107,8 +109,9 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
                 SIMD3(matrix.columns.2.x, matrix.columns.2.y, matrix.columns.2.z)
             ),
             linkHeading: heading,
-            linkSlope: Self.slope(from: cartGround, to: ground(SIMD2(hitch.x, hitch.y)), length),
-            clearance: cartGround.map { cart.z - $0 } ?? 0,
+            linkSlope: Self.slope(
+                from: cartGround, to: ground(hitch + SIMD3(0, 0, Self.groundSearchHeight)), length
+            ),
             rise: cart.z - hitch.z,
             position: cart,
             heading: heading
@@ -134,7 +137,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     public mutating func advance(
         base: (ReferenceKey) -> ReferenceTransformOverride?,
         bone: (ReferenceKey, String) -> SIMD3<Float>? = { _, _ in nil },
-        ground: (SIMD2<Float>) -> Float? = { _ in nil }
+        ground: (SIMD3<Float>) -> Float? = { _ in nil }
     ) -> [ReferenceKey: ReferenceTransformOverride] {
         withoutActuallyEscaping(base) { base in
             withoutActuallyEscaping(bone) { bone in
@@ -152,7 +155,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     nonisolated private struct Frame {
         let base: (ReferenceKey) -> ReferenceTransformOverride?
         let bone: (ReferenceKey, String) -> SIMD3<Float>?
-        let ground: (SIMD2<Float>) -> Float?
+        let ground: (SIMD3<Float>) -> Float?
         var solved: [ReferenceKey: float4x4] = [:]
     }
 
@@ -189,7 +192,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     /// Moves a towed follower to `length` behind the hitch, along the line from where
     /// it was, so it trails the carrier's path. It sits on the ground and tilts with it.
     static func pull(
-        _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD2<Float>) -> Float?
+        _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?
     ) -> float4x4 {
         let flat = SIMD2(hitch.x - tow.position.x, hitch.y - tow.position.y)
         if simd_length(flat) > 0.001 {
@@ -197,11 +200,14 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         }
         let direction = SIMD2(sin(tow.heading), cos(tow.heading))
         let spot = SIMD2(hitch.x, hitch.y) - direction * tow.length
-        let below = ground(spot)
-        let height = below.map { $0 + tow.clearance } ?? hitch.z + tow.rise
+        let top = max(tow.position.z, hitch.z) + groundSearchHeight
+        let below = ground(SIMD3(spot.x, spot.y, top))
+        // A cart's model starts at its origin (the prisoner carriage's bounds start at
+        // z 0), so the origin rests on the ground, as the game's physics would set it.
+        let height = below ?? hitch.z + tow.rise
         tow.position = SIMD3(spot.x, spot.y, height)
-        let tilt = slope(from: below, to: ground(SIMD2(hitch.x, hitch.y)), tow.length)
-            - tow.linkSlope
+        let ahead = ground(SIMD3(hitch.x, hitch.y, hitch.z + groundSearchHeight))
+        let tilt = slope(from: below, to: ahead, tow.length) - tow.linkSlope
         let right = SIMD3(direction.y, -direction.x, 0)
         let turn = MatrixMath.rotation(radians: tilt, axis: right)
             * MatrixMath.rotationZ(radians: -(tow.heading - tow.linkHeading))

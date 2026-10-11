@@ -142,10 +142,31 @@ struct VehicleCoreTests {
     @Test func aTowedCartSitsOnTheGroundAndTilts() throws {
         var core = Self.towedCart()
         let ahead = ReferenceTransformOverride(position: [0, 100, 50])
-        let slope: (SIMD2<Float>) -> Float? = { $0.y / 4 }
+        let slope: (SIMD3<Float>) -> Float? = { $0.y / 4 }
         let cart = try #require(core.advance(base: { _ in ahead }, ground: slope)[Self.cart])
         #expect(Self.near(cart.position, [0, -100, -25]))
         #expect(abs(abs(cart.rotation.x) - atan2(50, 200)) < 0.01)
+    }
+
+    @Test func aCartPlacedAboveTheGroundRestsOnIt() throws {
+        var core = VehicleCore()
+        core.tow(
+            Self.cart, by: Self.horse,
+            followerPose: ReferenceTransformOverride(position: [0, -200, 11.5]),
+            carrierPose: ReferenceTransformOverride(position: .zero),
+            ground: { _ in 0 }
+        )
+        let ahead = ReferenceTransformOverride(position: [0, 100, 0])
+        let cart = try #require(core.advance(base: { _ in ahead }, ground: { _ in 0 })[Self.cart])
+        #expect(Self.near(cart.position, [0, -100, 0]))
+    }
+
+    @Test func aRoofAboveTheCartIsNotItsGround() throws {
+        var core = Self.towedCart()
+        let ahead = ReferenceTransformOverride(position: [0, 100, 0])
+        let roofed: (SIMD3<Float>) -> Float? = { $0.z >= 500 ? 500 : 0 }
+        let cart = try #require(core.advance(base: { _ in ahead }, ground: roofed)[Self.cart])
+        #expect(Self.near(cart.position, [0, -100, 0]))
     }
 
     @Test func aRiderOnATowedCartFollowsTheCart() throws {
