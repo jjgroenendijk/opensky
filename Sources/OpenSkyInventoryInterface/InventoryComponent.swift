@@ -235,6 +235,10 @@ nonisolated public struct ReferenceInventoryState: WorldStateComponent, Sendable
                 item, stolen: true, with: self.count(of: item, stolen: true) - split.stolen
             )
         }
+        // Nothing can stay worn once none of it is held.
+        if result.count(of: item) == 0 {
+            result.equipped.removeAll { $0 == item }
+        }
         return result
     }
 

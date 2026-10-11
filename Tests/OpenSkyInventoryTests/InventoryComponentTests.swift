@@ -54,6 +54,15 @@ struct InventoryComponentTests {
         #expect(inventory.count(of: gold) == Int32.max)
     }
 
+    @Test func removingTheLastWornCopyUnequipsIt() throws {
+        let worn = ReferenceInventoryState(
+            stacks: [InventoryStack(item: sword, count: 2)], equipped: [sword]
+        )
+        let one = try worn.removing(sword, count: 1, owner: owner)
+        #expect(one.equipped == [sword])
+        #expect(try one.removing(sword, count: 1, owner: owner).equipped.isEmpty)
+    }
+
     @Test func equippedSetIsSortedAndDeduplicated() {
         let inventory = ReferenceInventoryState(
             stacks: [],
