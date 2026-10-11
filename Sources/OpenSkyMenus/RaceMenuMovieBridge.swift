@@ -17,6 +17,7 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         "ChangeDoubleMorph", "ChangeWeight", "ChangeHeadPart", "ChangeHeadPreset",
         "ChangeTintingMask", "ChangeFaceDetails", "ChangePreset", "ChangeHairColorPreset"
     ]
+    static let pcPlatform = SystemMenuMovieBridge.pcPlatform
     /// A slider shows under each category whose flag it shares (`filterFlag & flag`).
     static let raceCategory = 1
     static let bodyCategory = 2
@@ -65,6 +66,13 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         forward("ConfirmDone") { _, _ in .done }
     }
 
+    /// Once the panels exist. The root forwards both to the panels, and `SetPlatform`
+    /// makes each button attach its key art.
+    public static func setPlatform(runtime: SWFMovieRuntime) {
+        runtime.callMovie("SetPlatform", arguments: [.number(pcPlatform), .boolean(false)])
+        runtime.callMovie("InitExtensions")
+    }
+
     /// The panel path that holds the movie's lists in the vanilla race menu.
     static let panelsPath = "RaceSexMenuBaseInstance.RaceSexPanelsInstance"
 
@@ -83,13 +91,14 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// Sends the categories, races, sliders, and name the model holds.
     public static func publish(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
+        let names = model.categoryNames
         runtime.callMovie("SetCategoriesList", arguments: [
-            .string("$RACE"), .integer(raceCategory), .string("$BODY"), .integer(bodyCategory),
-            .string("$HEAD"), .integer(headCategory)
+            .string(names.race), .integer(raceCategory), .string(names.body),
+            .integer(bodyCategory), .string(names.head), .integer(headCategory)
         ])
         runtime.callMovie("SetRaceList", arguments: model.races.flatMap { race in
             [
-                .string(race.name), .string(""),
+                .string(race.name), .string(race.description),
                 .integer(race.formID == model.identity.race ? 1 : 0)
             ]
         })

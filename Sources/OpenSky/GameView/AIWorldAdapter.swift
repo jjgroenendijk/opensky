@@ -26,6 +26,8 @@ final class AIWorldAdapter {
     unowned let game: GameViewController
     /// The newest package move result per actor, for `state packages`.
     private(set) var lastPackageMoves: [ReferenceKey: NPCMoveCommandResult] = [:]
+    /// Who holds each furniture seat, so two package actors never share one.
+    var seatHolders: [SeatKey: ReferenceKey] = [:]
 
     init(game: GameViewController) {
         self.game = game
@@ -39,15 +41,20 @@ final class AIWorldAdapter {
     }
 
     /// The living actors and the player, for walkers to steer around. Each mover is
-    /// dropped from this list by the movement runtime, which knows who walks.
+    /// dropped from this list by the movement runtime, which knows who walks. A rider
+    /// is left out: it takes up its vehicle's space, and a horse must not steer around
+    /// the rider in its own saddle.
     func standingActors() -> [NPCNeighbour] {
-        var actors = game.actorWorld.combatActors().filter { !$0.isDead }.map {
+        let links = game.vehicleWorld.vehicles.core.links
+        var actors = game.actorWorld.combatActors().filter {
+            !$0.isDead && links[$0.key] == nil
+        }.map {
             NPCNeighbour(
                 key: $0.key, position: SIMD2($0.feet.x, $0.feet.y),
                 radius: $0.capsule.radius * max($0.scale, 0)
             )
         }
-        if let feet = game.renderer?.locomotion.status.feetPosition {
+        if links[.player] == nil, let feet = game.renderer?.locomotion.status.feetPosition {
             actors.append(NPCNeighbour(
                 key: .player, position: SIMD2(feet.x, feet.y),
                 radius: PlayerCapsule.standard.radius
@@ -190,13 +197,20 @@ extension AIWorldAdapter {
         return point.map { PackagePlace(point: $0, radius: location.radius) }
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool {
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
+    ) -> PackageMoveResult {
         if actor == .player {
-            return walkPlayer(to: point, direct: direct)
+            return walkPlayer(to: point, direct: direct) ? .started : .failed
         }
-        let result = game.streamer?.moveActor(actor, to: point, direct: direct) ?? .actorNotResident
+        let result = game.streamer?.moveActor(actor, to: point, direct: direct, gait: gait)
+            ?? .actorNotResident
         lastPackageMoves[actor] = result
-        return result == .started
+        switch result {
+        case .started: return .started
+        case .moverCapReached: return .busy
+        default: return .failed
+        }
     }
 
     /// The player has no NPC mover, so the renderer walks the navmesh path. Without
@@ -241,22 +255,29 @@ extension AIWorldAdapter {
     func packagePatrolPath(
         from start: Package.Target, actor _: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]? {
-        let key: ReferenceKey? = switch start.kind {
+        guard
+            let key = packageTargetKey(start, aliasQuest: aliasQuest),
+            let lookup = game.streamer?.placedRecords
+        else { return nil }
+        let path = lookup.linkedChain(from: key)
+        return path.isEmpty ? nil : path
+    }
+
+    /// The reference a package's single-reference input names.
+    func packageTargetKey(_ target: Package.Target, aliasQuest: FormID?) -> ReferenceKey? {
+        switch target.kind {
         case .specificReference:
             game.scripts.bridge?.formIDResolver.flatMap {
-                ReferenceKey.resolve(FormID(start.value), using: $0)
+                ReferenceKey.resolve(FormID(target.value), using: $0)
             }
         case .referenceAlias:
             aliasQuest.flatMap {
                 game.scripts.bridge?.questRuntime?.aliasResolution()
-                    .reference(alias: start.value, in: $0)
+                    .reference(alias: target.value, in: $0)
             }
         default:
             nil
         }
-        guard let key, let lookup = game.streamer?.placedRecords else { return nil }
-        let path = lookup.linkedChain(from: key)
-        return path.isEmpty ? nil : path
     }
 
     func packageProcedure(_ event: PackageScriptEvent) {
@@ -274,8 +295,7 @@ extension AIWorldAdapter {
 }
 
 extension AIWorldAdapter: AINavigationWorld {
-    /// Used only for a horse without a `SaddleBone`, such as one whose skeleton did not load.
-    private static let riderSeatHeight: Float = 90
+    /// The rider's root sits on this node of the horse skeleton (docs/engine/vehicles.md).
     static let saddleBone = "SaddleBone"
 
     /// The horse a placed actor starts on, `ACHR` `XHOR` (docs/formats/placed-references.md).
@@ -285,33 +305,20 @@ extension AIWorldAdapter: AINavigationWorld {
                 .details.links["XHOR"],
             let resolver = game.scripts.bridge?.formIDResolver,
             let horse = ReferenceKey.resolve(raw, using: resolver),
-            game.vehicleWorld.vehicles.seat(
-                rider, on: horse, height: Self.riderSeatHeight, saddle: saddlePosition(of: horse)
-            )
+            game.vehicleWorld.vehicles.seat(rider, on: horse, bone: Self.saddleBone)
         else { return nil }
         _ = game.streamer?.stopActor(rider)
         game.npcAnimation.ride(rider, on: horse)
         return horse
     }
 
+    /// The horse walked the rider's package, so it stops with it.
     func dismountPackageActor(_ rider: ReferenceKey) {
+        if let horse = vehicleCarrier(of: rider) {
+            _ = game.streamer?.stopActor(horse)
+        }
         game.vehicleWorld.vehicles.detach(rider)
         game.npcAnimation.dismount(rider)
-    }
-
-    /// The horse's `SaddleBone` in world space, from its drawn pose
-    /// (docs/engine/vehicles.md).
-    private func saddlePosition(of horse: ReferenceKey) -> SIMD3<Float>? {
-        guard
-            let renderer = game.renderer,
-            let playback = game.actorPlayback(for: horse),
-            let pose = playback.skeletonPose(at: renderer.animationTime),
-            let index = pose.bones.index(of: Self.saddleBone),
-            pose.matrices.indices.contains(index)
-        else { return nil }
-        let delta = renderer.npcInstanceDeltas[playback.actor.rawValue] ?? matrix_identity_float4x4
-        let world = delta * playback.transform * pose.matrices[index].columns.3
-        return SIMD3(world.x, world.y, world.z)
     }
 
     func vehicleCarrier(of actor: ReferenceKey) -> ReferenceKey? {

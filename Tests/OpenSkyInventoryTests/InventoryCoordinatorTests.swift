@@ -202,6 +202,47 @@ struct InventoryCoordinatorTests {
         #expect(added.allSatisfy { $0.value1 == Float(StoryAcquireType.container.rawValue) })
     }
 
+    // MARK: - Script natives
+
+    @Test func aScriptEquipGivesTheItemFirst() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player))
+        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+        #expect(coordinator.equipment?.equipped(on: .player) == [Fixture.cuirass])
+        #expect(harness.world.refreshed == [.player])
+    }
+
+    @Test func removeAllItemsTakesWornItemsIntoTheOtherContainer() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        let chest = try #require(harness.references.referenceEntry(formID: Items.chestReference))
+        #expect(coordinator.scriptAddItem(Fixture.sword, count: 2, to: .player))
+        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player))
+        let before = coordinator.scriptItemCount(Fixture.sword, in: chest.key) ?? 0
+        #expect(coordinator.scriptRemoveAllItems(from: .player, to: chest.key))
+        #expect(coordinator.runtime?.inventory.inventory(of: .player).stacks.isEmpty == true)
+        #expect(coordinator.equipment?.equipped(on: .player).isEmpty == true)
+        #expect(coordinator.scriptItemCount(Fixture.sword, in: chest.key) == before + 2)
+    }
+
+    @Test func setOutfitGivesAndWearsTheOutfit() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptSetOutfit(Fixture.guardOutfit, on: .player))
+        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+        #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == true)
+        #expect(coordinator.scriptSetOutfit(Fixture.cuirass, on: .player) == false)
+    }
+
+    @Test func removeItemTakesNoMoreThanIsHeld() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptAddItem(Fixture.sword, count: 1, to: .player))
+        #expect(coordinator.scriptRemoveItem(Fixture.sword, count: 5, from: .player, to: nil))
+        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
+    }
+
     @Test func anUnresidentContainerHasNoHolder() throws {
         let harness = try Self.harness()
         let stray = Items.interaction(

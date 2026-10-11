@@ -203,7 +203,7 @@ extension StoryWorldAdapter: QuestStarting {
             deferredStarts?.append(quest)
             return
         }
-        game.scripts.bridge?.attachRunningQuestScripts()
+        game.scripts.bridge?.attachScripts(ofQuest: quest)
         finishStart(quest)
     }
 }
@@ -281,7 +281,10 @@ extension StoryWorldAdapter: SceneWorld {
         return voiceLocator.lines(info: record, voiceType: voiceType).map(\.path)
     }
 
+    /// A speaker that is not loaded has no body to speak from, so its line is neither
+    /// heard nor subtitled. The scene still times the line.
     func sceneLineSpoken(_ line: SceneLine) {
+        guard game.dialogueWorld.headPosition(of: line.speaker) != nil else { return }
         game.audio.speak(voicePaths(of: line.info, speaker: line.speaker), speaker: line.speaker)
         let info = game.dialogue.runtime?.dialogue.info(line.info)
         if let target = line.lookAt {

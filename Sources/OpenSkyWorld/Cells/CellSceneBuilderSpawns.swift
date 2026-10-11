@@ -30,7 +30,7 @@ nonisolated extension CellSceneBuilder {
         for entry in state.entries {
             guard
                 let spawn = entry.delta.component(ReferenceSpawnState.self),
-                spawn.location == location
+                spawn.location == location, !spawnsActor(spawn)
             else { continue }
             guard let formID = SpawnedReferenceIdentity.formID(for: entry.key) else {
                 counts.unaddressableSpawns += 1
@@ -56,5 +56,34 @@ nonisolated extension CellSceneBuilder {
         }
         counts.spawnedRefs = references.count
         return SpawnedReferenceBuild(references: references, entries: entries)
+    }
+}
+
+nonisolated extension CellSceneBuilder {
+    /// A spawn whose base is an `NPC_` is an actor, built with the cell's ACHRs.
+    nonisolated func spawnsActor(_ spawn: ReferenceSpawnState) -> Bool {
+        actorResolversBuildingIfNeeded().template.actors[spawn.base.rawValue] != nil
+    }
+
+    /// The actors the running game created in `location`, in key order.
+    nonisolated func spawnedActors(
+        in location: CellSceneLocation,
+        deltas: [ReferenceKey: ReferenceStateDelta]
+    ) -> [CollectedActor] {
+        let spawns = deltas.compactMap { key, delta -> (ReferenceKey, ReferenceSpawnState)? in
+            guard
+                let spawn = delta.component(ReferenceSpawnState.self),
+                spawn.location == location, spawnsActor(spawn)
+            else { return nil }
+            return (key, spawn)
+        }
+        return spawns.sorted { $0.0 < $1.0 }.compactMap { key, spawn in
+            guard let formID = SpawnedReferenceIdentity.formID(for: key) else { return nil }
+            let actor = PlacedActor(
+                spawnedBase: spawn.base, placement: spawn.placement, scale: spawn.scale,
+                formID: formID
+            )
+            return CollectedActor(actor: actor, isPersistent: true, spawnKey: key)
+        }
     }
 }

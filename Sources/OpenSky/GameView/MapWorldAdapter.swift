@@ -35,11 +35,12 @@ final class MapWorldAdapter {
         (game.worldData as? MenuDataProviding)?.menuRecords
     }
 
-    func text(_ value: LString?) -> String? {
+    /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
+    func text(_ value: LString?, kind: StringTable.Kind = .strings) -> String? {
         if strings == nil {
             strings = game.localizedStringsLoader?()
         }
-        return strings?.resolve(value)
+        return strings?.resolve(value, kind: kind)
     }
 
     private func sites() -> [MapMarkerSite] {

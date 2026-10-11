@@ -44,6 +44,28 @@ nonisolated public struct IdlePlaybackPlan: Equatable, Sendable {
     public let prop: IdleProp
     /// What the graph's state sends as the idle starts and ends, such as `ExitCartEnd`.
     public var notify = BehaviorStateNotify()
+    /// The state's clip loops, so the idle holds until another one replaces it.
+    public var loops = false
+    /// The graph state the event enters; nil when the clip was found by name.
+    public var state: String?
+    /// Events the clip's generator raises, such as `KillActor`.
+    public var triggers: [BehaviorClipTriggerEvent] = []
+    /// Clips that play after the first one, each a path in the virtual file system.
+    public var followUps: [IdlePlanSegment] = []
+    /// Where the actor's graph is when the chain ends.
+    public var position: BehaviorStatePosition?
+
+    /// Every clip path the plan plays, in order.
+    public var clipPaths: [String] {
+        (clipPath.map { [$0] } ?? []) + followUps.map(\.clipPath)
+    }
+}
+
+/// One clip that a plan plays after its first.
+nonisolated public struct IdlePlanSegment: Equatable, Sendable {
+    public let clipPath: String
+    public let loops: Bool
+    public let triggers: [BehaviorClipTriggerEvent]
 }
 
 /// Caches decoded behavior files and prop bones for the session.
@@ -52,7 +74,7 @@ nonisolated public final class IdlePlaybackResolver {
     private let animatedObjects: TypedRecordStore<AnimatedObject>
     /// One per project folder, because referenced behavior names are relative.
     private var indexes: [String: BehaviorEventClipIndex] = [:]
-    private var plans: [ResolvedFormID: IdlePlaybackPlan] = [:]
+    private var plans: [IdlePlanKey: IdlePlaybackPlan] = [:]
     private var propBones: [String: String?] = [:]
     private var skeletonBones: [String: [String]] = [:]
 
@@ -78,37 +100,31 @@ nonisolated public final class IdlePlaybackResolver {
         return index
     }
 
-    public func plan(for idle: ResolvedRecord<IdleAnimation>) -> IdlePlaybackPlan {
-        if let cached = plans[idle.id] {
+    public func plan(
+        for idle: ResolvedRecord<IdleAnimation>, from position: BehaviorStatePosition? = nil
+    ) -> IdlePlaybackPlan {
+        let key = IdlePlanKey(idle, from: position)
+        if let cached = plans[key] {
             return cached
         }
-        let plan = resolve(idle.record)
-        plans[idle.id] = plan
+        let plan = resolve(idle.record, from: position)
+        plans[key] = plan
         return plan
     }
 
-    private func resolve(_ idle: IdleAnimation) -> IdlePlaybackPlan {
+    private func resolve(
+        _ idle: IdleAnimation, from position: BehaviorStatePosition?
+    ) -> IdlePlaybackPlan {
         guard let event = idle.animationEvent, !event.isEmpty else {
             return IdlePlaybackPlan(event: nil, path: .none(.noEvent), clipPath: nil, prop: .none)
         }
         let project = Self.projectFolder(of: idle.fileName)
         if
             let behavior = idle.fileName,
-            let clip = index(project: project).clip(forEvent: event, behaviorFile: behavior)
+            let clip = index(project: project)
+                .clip(forEvent: event, behaviorFile: behavior, from: position)
         {
-            let path = Self.normalized(project + clip.animationName)
-            guard files.exists(path) else {
-                return IdlePlaybackPlan(
-                    event: event, path: .none(.clipMissing(path)), clipPath: nil, prop: .none
-                )
-            }
-            return IdlePlaybackPlan(
-                event: event,
-                path: .graphEvent(behaviorFiles: clip.behaviorFiles),
-                clipPath: path,
-                prop: prop(payloads: clip.payloads, project: project),
-                notify: clip.notify
-            )
+            return plan(event: event, clip: clip, project: project)
         }
         guard
             let named = Self.namedClipPaths(event: event, project: project)
@@ -119,6 +135,35 @@ nonisolated public final class IdlePlaybackResolver {
             )
         }
         return IdlePlaybackPlan(event: event, path: .namedClip, clipPath: named, prop: .none)
+    }
+
+    private func plan(
+        event: String, clip: BehaviorEventClip, project: String
+    ) -> IdlePlaybackPlan {
+        let path = Self.normalized(project + clip.animationName)
+        let followUps = clip.followUps.map { segment in
+            IdlePlanSegment(
+                clipPath: Self.normalized(project + segment.animationName),
+                loops: segment.loops, triggers: segment.triggers
+            )
+        }
+        if let missing = ([path] + followUps.map(\.clipPath)).first(where: { !files.exists($0) }) {
+            return IdlePlaybackPlan(
+                event: event, path: .none(.clipMissing(missing)), clipPath: nil, prop: .none
+            )
+        }
+        return IdlePlaybackPlan(
+            event: event,
+            path: .graphEvent(behaviorFiles: clip.behaviorFiles),
+            clipPath: path,
+            prop: prop(payloads: clip.payloads, project: project),
+            notify: clip.notify,
+            loops: followUps.last?.loops ?? clip.loops,
+            state: clip.stateName,
+            triggers: clip.triggers,
+            followUps: followUps,
+            position: clip.position
+        )
     }
 
     /// Clips named after an event no transition takes. The second form is the clip of the
@@ -213,20 +258,26 @@ nonisolated public final class IdlePlaybackResolver {
     }
 }
 
-/// One idle's plan request. Equal by record identity.
+/// One idle's plan request from where the actor's graph is. Equal by record identity.
 nonisolated public struct IdlePlanKey: Hashable, Sendable {
     public let idle: ResolvedRecord<IdleAnimation>
+    public let position: BehaviorStatePosition?
 
-    public init(_ idle: ResolvedRecord<IdleAnimation>) {
+    public init(
+        _ idle: ResolvedRecord<IdleAnimation>,
+        from position: BehaviorStatePosition? = nil
+    ) {
         self.idle = idle
+        self.position = position
     }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.idle.id == rhs.idle.id
+        lhs.idle.id == rhs.idle.id && lhs.position == rhs.position
     }
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(idle.id)
+        hasher.combine(position)
     }
 }
 
@@ -241,7 +292,7 @@ nonisolated extension IdlePlaybackResolver {
         let box = IdlePlaybackResolverBox(
             IdlePlaybackResolver(files: files, animatedObjects: animatedObjects)
         )
-        return { key in box.resolver.withLock { $0.plan(for: key.idle) } }
+        return { key in box.resolver.withLock { $0.plan(for: key.idle, from: key.position) } }
     }
 }
 

@@ -110,8 +110,9 @@ measured with `openskycli swf movie-probe`.
 
 | Engine calls | Values |
 | --- | --- |
+| `SetPlatform`, `InitExtensions` | On the root, at start. The root forwards both to the panels |
 | `SetCategoriesList` | Race, body, and head pages, with flags 1, 2, and 4 |
-| `SetRaceList` | Per race: name, description, and 1 for the current race |
+| `SetRaceList` | Per race: name, `RACE` `DESC`, and 1 for the current race |
 | `SetOptionSliders` | Per slider: 8 values, the name, page flag, callback, minimum, maximum, value, step, and id |
 | `SetNameText` | The character's name |
 
@@ -125,11 +126,33 @@ measured with `openskycli swf movie-probe`.
 Each change goes through the same model as the panel rows, so the head updates the same way.
 Sound and camera calls are accepted and ignored.
 
+The category names are the `sRSMRace`, `sRSMBody`, and `sRSMHead` settings, so they follow the
+game's language. The interface translation file has `$RACE` but no `$BODY` or `$HEAD`, and the
+movie only uses `$RACE` as placeholder text, so the names must arrive as plain text. The movie
+does not change their case.
+
+`SetPlatform` makes each `CrossPlatformButtons` clip attach its key art. Without it, the buttons
+show the placeholder text `TEXT`. An empty race description makes the movie print
+"No race description for" and the race name.
+
+The movie's Done button calls `ConfirmDone` only on a mouse click; its key handler does not
+look at the Done key. So the engine reads that key itself. The button's art is the `XButton`
+user event. The install's `controlmap.txt` binds `XButton` in menus to the Ready Weapon key,
+`R` on PC. That key closes the menu, as `ConfirmDone` does.
+
 Before it sends the lists, the engine checks that the movie built its category list. When
 it did not, the movie closes and the engine rows stay in charge. The sidebar race menu panel
 shows those rows, and the arrow keys move them.
 
+## The camera
+
+While the race menu is open, the view looks at the player's face from in front, at eye height,
+and the player's body is drawn even in first person. It uses the
+[dialogue camera](/engine/dialogue-camera.md) framing, taken from the side the player faces.
+[WARNING] The game's race menu camera is not documented, and `Skyrim.esm` has no setting for it,
+so this framing is OpenSky's choice.
+
 ## Not done yet
 
-- The `racesex_menu.swf` movie shows OpenSky's own rows. The movie's camera, zoom, and
-  preset buttons are not answered.
+- The `racesex_menu.swf` movie shows OpenSky's own rows. The movie's zoom and preset buttons
+  are not answered.

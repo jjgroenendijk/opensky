@@ -25,6 +25,8 @@ public struct CellStreamerNPCMovementState {
     /// Rest writes held while the runtime mutates. A listener that starts the next
     /// move would else write into a runtime copy that the mutation then overwrites.
     public var heldRests: [NPCMovementPersistence]?
+    /// Where a vehicle carries each actor riding one this frame.
+    public var carried: [ReferenceKey: ReferenceTransformOverride] = [:]
 }
 
 /// One NPC pose written to the store and drawn through a delta until the cell
@@ -80,7 +82,8 @@ extension CellStreamer {
     /// navmesh path or static collision.
     @discardableResult
     public func moveActor(
-        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool = false,
+        gait: LocomotionGait? = nil
     ) -> NPCMoveCommandResult {
         guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
             return .actorNotResident
@@ -103,7 +106,8 @@ extension CellStreamer {
             capsule: .standard,
             configuration: npcMovementConfiguration,
             path: path,
-            ignoresStatics: direct
+            ignoresStatics: direct,
+            gait: gait
         ))
         return started ? .started : .moverCapReached
     }
@@ -116,6 +120,11 @@ extension CellStreamer {
         return holdingRests { npcMovement.stop(actor) }
     }
 
+    /// Moves a still actor's rest to where a vehicle let it off.
+    public func restActor(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
+        npcMovement.rest(actor, at: transform)
+    }
+
     /// Turns a resident actor towards a world point.
     ///
     /// Reads the same placement `moveActor` reads and prefers the movement
@@ -124,7 +133,11 @@ extension CellStreamer {
     /// authored.
     @discardableResult
     public func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>) -> Bool {
-        guard let entry = referenceEntry(key: actor), entry.placedActor != nil else {
+        // A vehicle owns a rider's pose; the rider's seat idle sets where it looks.
+        guard
+            npcMovementState.carried[actor] == nil,
+            let entry = referenceEntry(key: actor), entry.placedActor != nil
+        else {
             return false
         }
         bindNPCMovementCallbacks()
@@ -161,8 +174,9 @@ extension CellStreamer {
         npcMovement.readouts()
     }
 
+    /// The actor's live pose: where its vehicle carries it, else where it walks.
     public func npcTransform(for actor: ReferenceKey) -> ReferenceTransformOverride? {
-        npcMovement.transform(for: actor)
+        npcMovementState.carried[actor] ?? npcMovement.transform(for: actor)
     }
 
     /// Writes all active actors once immediately before a save snapshot.

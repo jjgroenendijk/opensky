@@ -164,6 +164,30 @@ install: `meshes\traps\swingingblade\trapbladeswinging01.nif` names
 `Traps\SwingingBlade\TrapBladeSwinging01.hkx`, a path relative to `meshes\`. How OpenSky runs it:
 [object animation](/engine/object-animation.md).
 
+## BSFurnitureMarkerNode
+
+Marks where an actor sits, lies, or leans on a furniture mesh. After the `NiExtraData` name:
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| uint32 | Count | Number of markers |
+| marker x count | Markers | 20 bytes each, below |
+
+Each marker, for Skyrim (stream above 34):
+
+| Type | Field | Notes |
+| --- | --- | --- |
+| float x 3 | Offset | Model space, in game units |
+| float | Heading | Radians |
+| uint16 | Animation type | 1 sit, 2 sleep, 4 lean |
+| uint16 | Entry points | 0x01 front, 0x02 behind, 0x04 right, 0x08 left, 0x10 up |
+
+Reference: the `BSFurnitureMarker` and `FurniturePosition` entries of nif.xml (NifTools).
+Confirmed on the install: `meshes\furniture\headchoppingblock.nif` has one 68-byte block
+named `FRN` with three sit markers, 8 + 3 x 20 bytes. The `FURN` record's `ENAM`, `FNMK`,
+and `FNPR` fields describe the same markers by index ([world records](/formats/world-records.md)).
+How OpenSky uses them: [package schedules](/engine/package-schedules.md#furniture).
+
 ## BSTriShape
 
 Skyrim SE geometry, stream 100 only. After the shared fields:

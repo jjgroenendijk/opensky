@@ -5,6 +5,7 @@
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
+import OpenSkyPhysics
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
 import simd
@@ -16,8 +17,10 @@ private final class FakePackageWorld: PackageWorld {
     var packageClock: GameClock? = GameClock(hour: 9)
     private(set) var contextReads = 0
     private(set) var moves: [SIMD3<Float>] = []
+    private(set) var gaits: [LocomotionGait?] = []
     private(set) var movers: [ReferenceKey] = []
     var horse: ReferenceKey?
+    var moverSlotsFull = false
     var drivesPlayer = false
     private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
     static let place = SIMD3<Float>(100, 0, 0)
@@ -33,10 +36,13 @@ private final class FakePackageWorld: PackageWorld {
         location.formID == FormID(0x700) ? PackagePlace(point: Self.place, radius: 0) : nil
     }
 
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool) -> Bool {
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct _: Bool, gait: LocomotionGait?
+    ) -> PackageMoveResult {
+        gaits.append(gait)
         moves.append(point)
         movers.append(actor)
-        return true
+        return moverSlotsFull ? .busy : .started
     }
 
     func packagePatrolPath(
@@ -164,6 +170,25 @@ struct PackageCoordinatorTests {
         #expect(coordinator.runOverride(override, actor: Self.otherKey) == .notSimulated)
     }
 
+    /// A walk that finds every mover slot taken waits and asks again each tick.
+    @Test func aBusyMoveIsAskedAgainUntilItStarts() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        world.moverSlotsFull = true
+        let override = PackageOverride(
+            packages: [FormID(0x102)],
+            owner: PackageOverrideOwner(source: FormID(0x4000), slot: 0), aliasQuest: nil
+        )
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .running)
+        coordinator.advance(by: 0.1)
+        world.moverSlotsFull = false
+        coordinator.advance(by: 0.1)
+        coordinator.advance(by: 0.1)
+        #expect(world.moves == Array(repeating: FakePackageWorld.place, count: 3))
+        #expect(coordinator.executions[Self.guardKey]?.machine.state == .moving)
+    }
+
     /// A patrol that rides the actor's horse walks the horse, and the horse's arrival
     /// moves the rider's patrol on.
     @Test func aRidingPatrolWalksTheHorse() throws {
@@ -225,8 +250,12 @@ struct PackageCoordinatorTests {
                 Package.Location(rawKind: 0, value: 0x700, radius: 0)
             ))]
         )
+        var patrol = try PackageRuntimeFixture.package(
+            id: 0x104, editorID: "Patrol", procedureNames: ["Patrol"]
+        )
+        patrol.details.templateInputs = [.init(index: 3, name: "Ride Horse if Possible?")]
         let ride = try PackageRuntimeFixture.package(
-            id: 0x103, editorID: "RidePatrol", procedureNames: ["Patrol"],
+            id: 0x103, editorID: "RidePatrol", template: 0x104,
             dataInputs: [Package.DataInput(index: 0, type: "PTDA", value: .target(
                 Package.Target(rawKind: 0, value: 0x701, countOrDistance: 0)
             ))] + [false, false, true, true].enumerated().map { index, flag in
@@ -237,7 +266,7 @@ struct PackageCoordinatorTests {
         let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
         let coordinator = PackageCoordinator()
         coordinator.wire(store: PackageStore(
-            packages: [morning, fallback, walk, ride],
+            packages: [morning, fallback, walk, ride, patrol],
             actorTemplates: ActorTemplateResolver(
                 actors: [0x600: actor, 0x7: player], leveledActors: [:]
             )

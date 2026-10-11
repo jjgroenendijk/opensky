@@ -1,5 +1,7 @@
 // Per-reference draw-list extraction for exterior dynamic-body handoff.
 
+import simd
+
 nonisolated extension RenderScene {
     /// The ordinary scene with selected simulated references removed. Their
     /// instances are handed to the occupied cell separately, while terrain,
@@ -10,7 +12,8 @@ nonisolated extension RenderScene {
             alphaTested: Self.filter(alphaTested) {
                 !references.contains($0.referenceFormID)
             },
-            keepsAncillaryContent: true
+            keepsAncillaryContent: true,
+            placements: referencePlacements.filter { !references.contains($0.key) }
         )
     }
 
@@ -21,7 +24,8 @@ nonisolated extension RenderScene {
         replacingDrawGroups(
             opaque: Self.filter(opaque) { $0.referenceFormID == reference },
             alphaTested: Self.filter(alphaTested) { $0.referenceFormID == reference },
-            keepsAncillaryContent: false
+            keepsAncillaryContent: false,
+            placements: referencePlacements.filter { $0.key == reference }
         )
     }
 
@@ -44,7 +48,8 @@ nonisolated extension RenderScene {
     private func replacingDrawGroups(
         opaque: [DrawGroup],
         alphaTested: [DrawGroup],
-        keepsAncillaryContent: Bool
+        keepsAncillaryContent: Bool,
+        placements: [UInt32: float4x4]
     ) -> RenderScene {
         RenderScene(
             opaque: opaque,
@@ -57,7 +62,8 @@ nonisolated extension RenderScene {
             grass: keepsAncillaryContent ? grass : [],
             particles: keepsAncillaryContent ? particles : [],
             animations: keepsAncillaryContent ? animations : [],
-            rooms: keepsAncillaryContent ? rooms : nil
+            rooms: keepsAncillaryContent ? rooms : nil,
+            referencePlacements: placements
         )
     }
 
@@ -72,7 +78,8 @@ nonisolated extension RenderScene {
         grass: [GrassDrawGroup],
         particles: [ParticlePlayback],
         animations: [any RenderAnimation],
-        rooms: RoomPortalGraph?
+        rooms: RoomPortalGraph?,
+        referencePlacements: [UInt32: float4x4]
     ) {
         self.opaque = opaque
         self.alphaTested = alphaTested
@@ -85,5 +92,6 @@ nonisolated extension RenderScene {
         self.particles = particles
         self.animations = animations
         self.rooms = rooms
+        self.referencePlacements = referencePlacements
     }
 }

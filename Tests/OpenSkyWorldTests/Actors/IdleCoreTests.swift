@@ -1,5 +1,5 @@
 // The idle runtime's pure rules: which actors use markers, which marker they
-// take, how long an idle plays, and the readout wording.
+// take, how long an idle plays or whether it holds, and the readout wording.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -67,6 +67,22 @@ struct IdleCoreTests {
         #expect(IdleCore.playSeconds(clipDuration: 1.5, properties: nil, random: { _ in 0 }) == 1.5)
         #expect(IdleCore.nextSelection(after: 10, playSeconds: 6, timer: 20) == 30)
         #expect(IdleCore.nextSelection(after: 10, playSeconds: 6, timer: nil) == 16)
+        #expect(IdleCore.nextSelection(after: 10, playSeconds: .infinity, timer: 20) == 30)
+    }
+
+    @Test func aLoopingStateHoldsUnlessTheIdleCountsLoops() throws {
+        let looping = IdlePlaybackPlan(
+            event: "IdleCartPrisonerCIdle", path: .namedClip, clipPath: "a.hkx", prop: .none,
+            loops: true
+        )
+        var once = looping
+        once.loops = false
+        let counted = try IdleAnimation(record: ESMFixture.record("IDLE", fields: [
+            ("DATA", ESMFixture.u8(2, 4, 0, 0) + ESMFixture.u16(0))
+        ]))
+        #expect(IdleCore.holds(looping, properties: nil))
+        #expect(!IdleCore.holds(once, properties: nil))
+        #expect(!IdleCore.holds(looping, properties: counted.properties))
     }
 
     @Test func clipPathsFoldParentSegmentsAndFollowTheProject() {
@@ -106,5 +122,32 @@ struct IdleCoreTests {
             editorID: "AnimObjectLute", modelPath: "lute.nif", bone: "AnimObjectR"
         )) == "AnimObjectLute on AnimObjectR")
         #expect(IdleReadout.markersText(for: .unavailable) == "Idle markers: unavailable")
+    }
+
+    /// The `ActionActivate` tree holds the lever's idles beside the character's.
+    @Test func anIdleBelongsToTheGraphOfItsBehaviorFile() {
+        let character = "meshes\\actors\\character\\"
+        #expect(IdleCore.idle(
+            behaviorFile: "Actors\\Character\\Behaviors\\0_Master.hkx", belongsTo: character
+        ))
+        #expect(!IdleCore.idle(
+            behaviorFile: "Furniture\\Clutter\\LeverAnimating\\Behaviors\\LeverPushBehavior.hkx",
+            belongsTo: character
+        ))
+        #expect(IdleCore.idle(behaviorFile: nil, belongsTo: character))
+    }
+
+    @Test func theGraphProjectIsTheFolderAboveTheSkeletonAssets() {
+        let character = "meshes\\actors\\character\\"
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "Meshes\\Actors\\Character\\Character Assets\\skeleton.nif"
+        ) == character)
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "actors\\character\\character assets female\\skeleton_female.nif"
+        ) == character)
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "meshes\\actors\\canine\\character assets wolf\\skeleton.nif"
+        ) == "meshes\\actors\\canine\\")
+        #expect(IdleCore.graphProject(skeletonMeshPath: "meshes\\clutter\\bucket.nif") == nil)
     }
 }

@@ -18,6 +18,8 @@ nonisolated public struct CollectedReference: Sendable {
 nonisolated public struct CollectedActor: Sendable {
     public let actor: PlacedActor
     public let isPersistent: Bool
+    /// The generated key of an actor the running game created; nil for an ACHR.
+    public var spawnKey: ReferenceKey?
 }
 
 nonisolated extension CellSceneBuilder {
@@ -93,7 +95,13 @@ nonisolated extension CellSceneBuilder {
 
     nonisolated public func actorEntries(_ collected: [CollectedActor]) -> [RuntimeReferenceEntry] {
         collected.compactMap { entry in
-            runtimeEntry(
+            if let key = entry.spawnKey {
+                return RuntimeReferenceEntry(
+                    key: key, formID: entry.actor.formID, isPersistent: true,
+                    record: .actor(entry.actor), baseScripts: baseScripts(of: .actor(entry.actor))
+                )
+            }
+            return runtimeEntry(
                 formID: entry.actor.formID,
                 isPersistent: entry.isPersistent,
                 record: .actor(entry.actor)

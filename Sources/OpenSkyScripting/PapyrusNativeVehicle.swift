@@ -17,6 +17,8 @@ public protocol PapyrusActorAIBridge: AnyObject {
     /// False when the actor cannot play the idle.
     func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool
     func setPlayerAIDriven(_ driven: Bool)
+    /// `dependent` takes `owner`'s idle events too; false removes the link.
+    func linkDependentAnimation(_ dependent: ReferenceKey, to owner: ReferenceKey, linked: Bool)
 }
 
 extension PapyrusNativeFunctions {
@@ -96,6 +98,23 @@ extension PapyrusNativeFunctions {
             else { return failure(call, "TetherToHorse needs a horse") }
             ai.tether(cart, to: horse)
             return .returned(.none)
+        }
+        // Bethesda documents no rule; the chopping block script adds the executioner and
+        // guard to the prisoner, then plays the chop idle on the prisoner alone.
+        for script in ["ObjectReference", "Actor"] {
+            for (name, linked) in [
+                ("AddDependentAnimatedObjectReference", true),
+                ("RemoveDependentAnimatedObjectReference", false)
+            ] {
+                withActorAI(script, name, into: &registry) { call, world, ai, owner in
+                    guard
+                        let handle = objectArgument(call, at: 0),
+                        let dependent = world.referenceKey(for: handle)
+                    else { return .returned(.boolean(false)) }
+                    ai.linkDependentAnimation(dependent, to: owner, linked: linked)
+                    return .returned(.boolean(true))
+                }
+            }
         }
         withActorAI("Actor", "PlayIdle", into: &registry) { call, world, ai, actor in
             guard

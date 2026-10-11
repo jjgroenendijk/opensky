@@ -101,6 +101,14 @@ the oldest entry is dropped and counted, and sequence numbers keep rising, so a 
 "nothing happened" from "I missed it". Clearing the journal does not reset the numbers, because
 clearing the log does not mean the changes never happened.
 
+## Derived values
+
+Some readers scan every quest key each frame: condition contexts, scene ticks, and the script
+list. The store keeps such a derived value, for example the quest-state table, until the next
+delta write, reset, or restore. A restore does not move the journal sequence, so the store keeps
+its own revision counter for this. Global writes do not clear derived values, because globals
+live outside the deltas.
+
 ## The snapshot
 
 The snapshot is a read-only value that holds the dirty references in `ReferenceKey` order, the

@@ -116,6 +116,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var magicEffectStore: MagicEffectStore?
     /// Load-order FLST lookup, for the `FormList` natives. Nil fails them.
     public var formListStore: FormListStore?
+    /// Load-order KYWD and `KWDA` lookup, for `HasKeyword`. Nil fails it.
+    public var keywordStore: KeywordStore?
     /// Master-list resolver for the FormIDs written inside decoded records —
     /// XLKR links and their keywords. Nil in a synthetic session, which falls
     /// back to the reference index.
@@ -132,6 +134,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var presenter: (any PapyrusPresenting)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
+    /// Inventories and equipment, for the item natives.
+    public weak var inventory: (any PapyrusInventoryBridge)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
@@ -200,22 +204,6 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     public func triggerObjectCount(for key: ReferenceKey) -> Int {
         triggerOccupants[key]?.count ?? 0
-    }
-
-    public func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
-        guard
-            let formListStore,
-            case let .plugin(plugin, objectID) = key,
-            let resolved = formListStore.formList(ResolvedFormID(
-                plugin: plugin,
-                objectID: objectID
-            ))
-        else { return nil }
-        return resolved.list.entries.map { entry in
-            entry
-                .flatMap { formListStore.resolvedID($0, fromPlugin: resolved.sourcePlugin) }
-                .map(ReferenceKey.init(resolved:))
-        }
     }
 
     public func lockState(for key: ReferenceKey) -> ReferenceLockState? {

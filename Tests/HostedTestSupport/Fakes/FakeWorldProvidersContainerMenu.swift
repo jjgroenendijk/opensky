@@ -47,7 +47,7 @@ extension FakeWorldProviders {
         case .move(.left), .move(.right): switchContainerMenuSide()
         case .button(.accept): activateContainerMenuSelection()
         case .button(.cancel): closeContainerMenu()
-        case .pointer, .release: break
+        case .button(.xButton), .pointer, .release: break
         }
     }
 

@@ -92,6 +92,11 @@ extension Renderer {
         _modify { yield &session.playerBody }
     }
 
+    public var playerSeat: float4x4? {
+        get { session.playerSeat }
+        set { session.playerSeat = newValue }
+    }
+
     public var playerFirstPersonRig: PlayerFirstPersonRig? {
         get { session.playerFirstPersonRig }
         _modify { yield &session.playerFirstPersonRig }

@@ -47,7 +47,10 @@ extension RaceMenuCoordinator {
                 movieError = "The movie's lists did not build; the engine rows are in charge."
                 return
             }
-            try renderer.updateSWFRuntime { RaceMenuMovieBridge.publish(model, runtime: $0) }
+            try renderer.updateSWFRuntime {
+                RaceMenuMovieBridge.setPlatform(runtime: $0)
+                RaceMenuMovieBridge.publish(model, runtime: $0)
+            }
             movieLoaded = true
             movieError = nil
         } catch {

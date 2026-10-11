@@ -76,6 +76,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installInventory(&registry)
         ConditionFunctions.installLock(&registry)
         ConditionFunctions.installCamera(&registry)
+        ConditionFunctions.installFurniture(&registry)
         return registry
     }()
 }

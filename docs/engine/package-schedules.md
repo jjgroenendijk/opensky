@@ -52,18 +52,26 @@ does not own either system.
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
+| Sit | Move to a free seat of the target furniture, then sit; done when seated |
 | Wait | Stay in place and send no move, until another package wins |
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
 the navmesh otherwise. A straight leg ignores static walls, so a rock or a fallen log on the
 authored line does not stop it. It still stands on a static floor, such as a road or a bridge,
-when the floor is within a step of its feet. This is a guess at the game's
+when the floor is within a step of its feet and within a step of the leg's line between its two
+markers. The second limit matters where the line passes through a rock: without it, the rock's
+ledges lift the walker a step at a time onto the rock's top. On the opening ride, both cart horses
+climbed onto a rock arch above the road this way and stopped. This is a guess at the game's
 behavior, not a confirmed rule. That input is the last of the Patrol procedure's six inputs, by the
 `BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
 
-A patrol whose "Ride Horse if Possible?" input is true rides the actor's horse, when the actor
-has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the patrol, and its
-arrivals move the rider's patrol on. A package without the input takes the rider off.
+A package whose "Ride Horse if possible?" input is true rides the actor's horse, when the actor
+has one ([vehicles](/engine/vehicles.md#riders)). The horse then walks the package, and its
+arrivals move the rider's package on. The Travel and Patrol templates both have this input. It is
+found by its `BNAM` name in the template, because its index differs: 2 in Travel (`00016FAA`), 6
+in Patrol (`00017723`), read on the install. A package without the input, or with it false, takes
+the rider off, and the horse stops where it is. In the opening, the riders wait on their horses
+with a travel package (`MQ101TulliusHoldPosition`) before their patrols start.
 
 A walk over an exterior cell whose terrain is not loaded slides along its path line instead of
 falling. Without this, an actor ahead of the loaded area falls through the world.
@@ -71,6 +79,29 @@ falling. Without this, an actor ahead of the loaded area falls through the world
 A movement failure ends the machine as failed. An unsupported procedure also fails, on purpose.
 Random points are even over the area (the radius is `sqrt` of a random number), and use the same
 seeded generator as conditions.
+
+## Furniture
+
+A furniture mesh marks where an actor sits with its `BSFurnitureMarkerNode` block
+([NIF](/formats/nif.md#bsfurnituremarkernode)). Each marker is one seat. The `FURN` record lists
+the same markers by index (`ENAM`), and a marker can carry a keyword (`FNMK`). A sit package
+picks its seat by these rules:
+
+- A seat with a keyword is only for an actor whose base `NPC_` has that keyword (`KWDA`).
+- An actor with a matching keyword takes that seat first. Otherwise it takes a free seat with
+  no keyword.
+- Two package actors never share a seat.
+
+On arrival the actor is set at the seat's point, facing the marker heading plus the
+reference's own z rotation. Then the furniture is activated by the actor, so its scripts get
+`OnActivate`. A Creation Kit template whose procedure tree holds "Sit" is a sit package, even
+when the tree also holds "Wait", because the vanilla `SitTarget` tree is
+Sequence[Sit, Simultaneous[Sit, Wait]].
+
+Example: `ExecutionerChoppingBlock` (`FURN` `0002E8EB`) has three markers. Marker 0 has the
+keyword `isExecutioner` and marker 2 `isExecutionerGuard`; marker 1 has none, so the prisoner
+gets it. The keyword rule is OpenSky's reading of the record. The entry points and the sit
+animations are not used yet: the actor appears in the seat and plays no sit idle.
 
 ## In a session
 
@@ -101,7 +132,9 @@ Only a held actor runs its procedure machine. The machine's place is the package
 location input (`PLDT`). OpenSky can place these kinds: near a reference, in a cell (the cell
 reference), a reference alias of the scene's quest, near the actor itself, and the actor's
 editor location. The `move` command goes to the NPC mover. The mover's arrival or give-up ends
-the move. A move that cannot start fails the machine.
+the move. At most eight actors walk a path at once, to bound the cost. A move that finds all
+eight slots taken waits and is asked again on each tick; this limit is OpenSky's, not the
+game's. A move that cannot start for another reason, such as no path, fails the machine.
 
 The action is done when the machine completes or fails. Travel completes on arrival. Wander,
 sandbox, sleep, and eat never complete. An unsupported procedure fails at once.

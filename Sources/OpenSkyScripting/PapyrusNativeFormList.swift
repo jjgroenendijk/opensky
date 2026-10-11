@@ -6,8 +6,8 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
-    /// `int GetSize()` and `Form GetAt(int)`. A nested list counts as one entry, as the
-    /// list stores it.
+    /// `int GetSize()`, `Form GetAt(int)`, and `bool Form.HasKeyword(Keyword)`. A nested
+    /// list counts as one entry, as the list stores it.
     public static func installFormList(into registry: inout PapyrusNativeRegistry) {
         formList("GetSize", into: &registry) { _, entries, _ in
             .returned(.integer(Int32(clamping: entries.count)))
@@ -23,6 +23,20 @@ extension PapyrusNativeFunctions {
             else { return .returned(.none) }
             return .returned(.object(handle))
         }
+        // <https://ck.uesp.net/wiki/HasKeyword_-_Form>. A placed reference reads its base.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Form", functionName: "HasKeyword"
+        ) { call, context in
+            guard let target = worldTarget(call, context) else { return needsWorld(call) }
+            guard
+                let handle = objectArgument(call, at: 0),
+                let keyword = target.world.referenceKey(for: handle)
+            else { return .returned(.boolean(false)) }
+            guard let answer = target.world.formHasKeyword(target.key, keyword: keyword) else {
+                return failure(call, "HasKeyword needs keyword data")
+            }
+            return .returned(.boolean(answer))
+        })
     }
 
     private static func formList(

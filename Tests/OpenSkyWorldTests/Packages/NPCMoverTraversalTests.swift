@@ -1,4 +1,5 @@
-// A walking actor jumps across a navmesh ledge link and swims in deep water.
+// A walking actor jumps across a navmesh ledge link, swims in deep water, and keeps
+// the gait its package prefers.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -12,12 +13,24 @@ import Testing
 struct NPCMoverTraversalTests {
     private static let actor = ReferenceKey.plugin(name: "movement.esm", objectID: 1)
 
-    private static func mover(path: NavigationPath) -> NPCMover {
+    private static func mover(path: NavigationPath, gait: LocomotionGait? = nil) -> NPCMover {
         NPCMover(start: NPCMoveStart(
             actor: actor, formID: FormID(1),
             placement: PlacedReference.Placement(position: .zero, rotation: .zero),
-            scale: 1, capsule: .standard, configuration: .synthetic, path: path
+            scale: 1, capsule: .standard, configuration: .synthetic, path: path, gait: gait
         ))
+    }
+
+    @Test func aPreferredGaitWinsOverTheLegLength() {
+        let short = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(100, 0, 0)], target: SIMD3(100, 0, 0)
+        )
+        #expect(Self.mover(path: short).stepPlan(frameTime: 0.05).gait == .walk)
+        #expect(Self.mover(path: short, gait: .run).stepPlan(frameTime: 0.05).gait == .run)
+        let long = NPCMovementRuntimeTests.path(
+            waypoints: [SIMD3(2000, 0, 0)], target: SIMD3(2000, 0, 0)
+        )
+        #expect(Self.mover(path: long, gait: .walk).stepPlan(frameTime: 0.05).gait == .walk)
     }
 
     @Test func arcPeaksAboveTheHigherEndAndLands() {

@@ -154,7 +154,7 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
             close()
             lastOutcome = .resume
             return .resume
-        case .pointer, .release:
+        case .button(.xButton), .pointer, .release:
             return nil
         }
     }

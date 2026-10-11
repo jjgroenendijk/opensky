@@ -98,6 +98,13 @@ extension AgentWorldAdapter: AgentControlWorld {
             let known = GameInputAction.allCases.map(\.rawValue).joined(separator: ", ")
             throw AgentFailure(.invalidArgument, "unknown action '\(name)'; known: \(known)")
         }
+        // As from the keyboard, so a help message waiting for the action ends.
+        if
+            phase == .press, !game.menuMode.isMenuMode,
+            let event = GameMetalView.helpEvents[action]
+        {
+            game.messages.noteInputEvent(event)
+        }
         let outcome = dispatcher.apply(action, phase == .press ? .press : .release)
         if outcome == .noMenu {
             throw AgentFailure(.invalidArgument, "'\(name)' needs an open menu")
@@ -108,6 +115,9 @@ extension AgentWorldAdapter: AgentControlWorld {
     func look(yawDegrees: Float, pitchDegrees: Float) throws(AgentFailure) {
         guard !game.menuMode.isMenuMode else {
             throw AgentFailure(.invalidArgument, "a menu owns input; close it first")
+        }
+        if yawDegrees != 0 || pitchDegrees != 0 {
+            game.messages.noteInputEvent(GameMetalView.lookEvent)
         }
         let pointsPerDegree = Float.pi / 180 / FreeFlyCamera.lookSensitivity
         game.cameraInput.addLook(

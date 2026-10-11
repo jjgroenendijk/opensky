@@ -19,7 +19,7 @@ struct RaceMenuMovieBridgeTests {
     private static let model = RaceMenuModel(
         identity: PlayerIdentityState(race: FormID(0x13746), isFemale: false, name: "Prisoner"),
         races: [
-            RaceChoice(formID: FormID(0x13746), name: "Nord"),
+            RaceChoice(formID: FormID(0x13746), name: "Nord", description: "Tall and fair."),
             RaceChoice(formID: FormID(0x13748), name: "Redguard")
         ],
         limited: false
@@ -35,8 +35,12 @@ struct RaceMenuMovieBridgeTests {
             }
         }
         RaceMenuMovieBridge.publish(Self.model, runtime: runtime)
+        #expect(sent["SetCategoriesList"] == [
+            .string("Race"), .integer(1), .string("Body"), .integer(2), .string("Head"), .integer(4)
+        ])
         #expect(sent["SetRaceList"] == [
-            .string("Nord"), .string(""), .integer(1), .string("Redguard"), .string(""), .integer(0)
+            .string("Nord"), .string("Tall and fair."), .integer(1),
+            .string("Redguard"), .string(""), .integer(0)
         ])
         let sliders = try #require(sent["SetOptionSliders"])
         let sliderRows = Self.model.rows.filter {

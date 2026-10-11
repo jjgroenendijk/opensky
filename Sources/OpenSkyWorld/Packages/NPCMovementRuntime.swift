@@ -34,6 +34,8 @@ public struct NPCMoveStart {
     /// A marker walk follows the terrain through rocks and logs, as a static-pathing
     /// patrol keeps to its authored line.
     public var ignoresStatics = false
+    /// The gait a package asks for. Nil picks it by the length of each leg.
+    public var gait: LocomotionGait?
 }
 
 public struct NPCMovementRuntime {
@@ -184,6 +186,25 @@ public struct NPCMovementRuntime {
             guard let hold = facings[key] else { continue }
             onPersist?(hold.persistence(reason: .save))
         }
+    }
+
+    /// A vehicle carried `actor`, so where it got off replaces where it last walked.
+    public mutating func rest(_ actor: ReferenceKey, at transform: ReferenceTransformOverride) {
+        movers[actor] = nil
+        facings[actor] = nil
+        guard let old = parked[actor] else { return }
+        let readout = old.readout
+        parked[actor] = NPCParkedMovement(
+            readout: NPCMovementReadout(
+                actor: actor, state: readout.state,
+                feetPosition: transform.placement.position,
+                yaw: NPCYawMath.yaw(fromHeading: transform.placement.rotation.z),
+                waypointIndex: readout.waypointIndex, waypointCount: readout.waypointCount,
+                gait: readout.gait, repathCount: readout.repathCount
+            ),
+            transform: transform, formID: old.formID, scale: old.scale,
+            drawnPlacement: old.drawnPlacement
+        )
     }
 
     public func transform(for actor: ReferenceKey) -> ReferenceTransformOverride? {

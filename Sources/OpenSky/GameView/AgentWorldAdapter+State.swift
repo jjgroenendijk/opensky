@@ -4,11 +4,15 @@
 import Foundation
 import OpenSkyActors
 import OpenSkyAgentControl
+import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyDiagnostics
+import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
@@ -105,6 +109,16 @@ extension AgentWorldAdapter {
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
         result["firstPerson"] = firstPersonState(renderer: renderer)
+        let status = renderer.locomotion.status
+        result["graph"] = [
+            "attached": .bool(status.graphAvailable),
+            "raisedEvents": .array(status.raisedEvents.map(AgentJSON.string)),
+            "missingEvents": .array(status.missingEvents.map(AgentJSON.string)),
+            "recentEvents": .array(status.recentGraphEvents.map(AgentJSON.string)),
+            "activeStates": .array((renderer.locomotion.graph?.activeStates ?? []).map {
+                .string("\($0.machineName ?? "?") / \($0.stateName ?? "?")")
+            })
+        ]
         return .object(result)
     }
 
@@ -161,7 +175,12 @@ extension AgentWorldAdapter {
                 "name": .string(game.dialogueWorld.speakerLabel(for: actor.key)),
                 "position": .init(actor.feet),
                 "distance": .init(distance),
-                "dead": .bool(actor.isDead)
+                "dead": .bool(actor.isDead),
+                "hostility": .string("\(game.factions.hostility(of: actor.key))"),
+                "combat": game.combat.loop?.phase(of: actor.key).map { .string("\($0)") } ?? .null,
+                "detects": game.perception.runtime
+                    .map { .string("\($0.state(observer: actor.key, target: .player).state)") }
+                    ?? .null
             ])
         }
         return ["actors": .array(rows.sorted { $0.0 < $1.0 }.map(\.1))]

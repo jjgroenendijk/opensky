@@ -7,6 +7,7 @@ import OpenSkyAgentControl
 import OpenSkyAudio
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
@@ -118,9 +119,21 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
         (records?.playableRaces ?? []).map {
             RaceChoice(
                 formID: $0.formID,
-                name: game.mapWorld.text($0.name) ?? $0.editorID ?? "\($0.formID)"
+                name: game.mapWorld.text($0.name) ?? $0.editorID ?? "\($0.formID)",
+                description: game.mapWorld.text($0.details.description, kind: .dlstrings) ?? ""
             )
         }
+    }
+
+    var raceMenuCategoryNames: RaceMenuCategoryNames {
+        let english = RaceMenuCategoryNames.english
+        func text(_ editorID: String, _ fallback: String) -> String {
+            game.mapWorld.text(records?.menuTexts[editorID]) ?? fallback
+        }
+        return RaceMenuCategoryNames(
+            race: text("sRSMRace", english.race), body: text("sRSMBody", english.body),
+            head: text("sRSMHead", english.head)
+        )
     }
 
     func applyPlayerIdentity(_ identity: PlayerIdentityState) {

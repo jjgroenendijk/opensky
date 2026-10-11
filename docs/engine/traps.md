@@ -89,7 +89,7 @@ script runs on:
 - Records and world: `AddItem`, `BlockActivation`, `CreateDetectionEvent`,
   `SetActorCause`, `CalculateEncounterLevel` (1), `GetActorOwner`, `GetFactionOwner`,
   `GetParentCell` (None), `SetNoFavorAllowed`, `IsFurnitureInUse` (false),
-  `Form.HasKeyword` (false), `FormList.HasForm` (false), `Actor.GetEquippedItemType` (0),
+  `FormList.HasForm` (false), `Actor.GetEquippedItemType` (0),
   `Cell.IsAttached` (true).
 
 ## Placing with PlaceAtMe

@@ -4,6 +4,8 @@
 // See docs/engine/package-schedules.md, "Scene packages".
 
 import OpenSkyFormatsESM
+import OpenSkyPhysics
+import OpenSkyWorldInterface
 import simd
 
 nonisolated public enum PackageOverrideProgress: Equatable, Sendable {
@@ -20,19 +22,26 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public private(set) var machine: PackageProcedureMachine
     /// True for a static-pathing patrol, which walks straight between its markers.
     public let isDirect: Bool
-    /// True for a patrol that rides the actor's horse when it has one.
+    /// True for a package that rides the actor's horse when it has one.
     public let ridesHorse: Bool
+    /// The furniture seat a sit package walks to.
+    public let seat: PackageSeat?
+    /// The package's preferred speed, when its flag turns it on.
+    public let gait: LocomotionGait?
 
-    /// A patrol walks `path` and needs no place.
+    /// A patrol walks `path` and needs no place; a sit package walks to `seat`.
     public init(
         package: ResolvedPackage, start: SIMD3<Float>, place: PackagePlace?,
-        path: [SIMD3<Float>] = []
+        path: [SIMD3<Float>] = [], seat: PackageSeat? = nil
     ) {
+        self.seat = seat
+        let place = seat.map { PackagePlace(point: $0.seat.position, radius: 0) } ?? place
         self.package = package.package.formID
         let patrol = package.procedure == .patrol ? Self.patrolFlags(package.package) : []
         let flags = patrol.count == 4 ? patrol : [false, false, false, false]
         isDirect = flags[3]
-        ridesHorse = flags[2]
+        ridesHorse = package.ridesHorse
+        gait = Self.gait(of: package.package.general)
         let walk = flags[1] ? Self.startingAtNearest(path, to: start, loops: flags[0]) : path
         machine = PackageProcedureMachine(
             kind: package.procedure,
@@ -48,7 +57,18 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     /// A repeatable patrol is done after its first lap, though it keeps walking: a scene
     /// waits for the package to end, not for the actor to stop.
     public var isDone: Bool {
-        machine.state == .complete || machine.state == .failed || machine.laps > 0
+        machine.state == .complete || machine.state == .failed || machine.state == .seated
+            || machine.laps > 0
+    }
+
+    /// Jog runs and fast walk walks, because an NPC has only the walk and run gaits.
+    static func gait(of general: Package.GeneralData) -> LocomotionGait? {
+        guard general.flags.contains(.usesPreferredSpeed) else { return nil }
+        return switch general.preferredSpeed {
+        case .walk, .fastWalk: .walk
+        case .jog, .run: .run
+        case .unknown: nil
+        }
     }
 
     public mutating func start() -> [PackageProcedureCommand] {
@@ -97,14 +117,35 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         return nil
     }
 
-    /// The first single-reference input, which is the start marker a patrol names.
-    public static func patrolStart(of package: Package) -> Package.Target? {
+    /// The first single-reference input: the start marker a patrol names, or the
+    /// furniture a sit package names.
+    public static func targetInput(of package: Package) -> Package.Target? {
         for input in package.dataInputs {
             if case let .target(target) = input.value {
                 return target
             }
         }
         return nil
+    }
+}
+
+/// Whether a package walk started. `busy` means every mover slot is taken.
+nonisolated public enum PackageMoveResult: Equatable, Sendable {
+    case started
+    case busy
+    case failed
+}
+
+/// The furniture seat a sit package uses: the reference and its marker.
+nonisolated public struct PackageSeat: Equatable, Sendable {
+    public let furniture: ReferenceKey
+    public let index: Int
+    public let seat: FurnitureSeat
+
+    public init(furniture: ReferenceKey, index: Int, seat: FurnitureSeat) {
+        self.furniture = furniture
+        self.index = index
+        self.seat = seat
     }
 }
 

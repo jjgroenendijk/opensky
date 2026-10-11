@@ -141,9 +141,11 @@ nonisolated public final class BehaviorGraphInstance {
     /// imposing on the clips below the node being evaluated. `seedOnly` marks
     /// a transition's one-shot alignment apart from a blender's continuous one.
     public var pendingClipPhase: (value: Float, seedOnly: Bool)?
-    /// The state id a transition asks the next nested machine to start in,
-    /// consumed by the first machine that enters below it.
-    public var pendingNestedStateId: Int?
+    /// The start states a transition hands to the machines below it, outermost
+    /// first. Each machine that enters below it takes the first one.
+    public var pendingNestedStateIds: [Int] = []
+    /// Global wildcard routes per machine, built on first reach.
+    public var globalWildcardRouteCache: [HKXPointerTarget: [BehaviorGlobalWildcardRoute]] = [:]
 
     /// Seconds the animated-to-simulated blend takes, from the last evaluated
     /// `hkbRigidBodyRagdollControlsModifier`. Nil until one has run. Internal, because
@@ -269,7 +271,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStatesThisUpdate = []
         referencedResults = [:]
         pendingClipPhase = nil
-        pendingNestedStateId = nil
+        pendingNestedStateIds = []
         isWaitingForClip = false
         poweredRagdollControls = nil
         ragdollContactEvent = nil

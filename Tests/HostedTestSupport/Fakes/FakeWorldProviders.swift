@@ -420,7 +420,7 @@ extension FakeWorldProviders {
         case .move(.right): inventoryMenuModel.moveCategory(by: 1)
         case .button(.accept): activateInventoryMenuSelection()
         case .button(.cancel): closeInventoryMenu()
-        case .pointer, .release: break
+        case .button(.xButton), .pointer, .release: break
         }
     }
 

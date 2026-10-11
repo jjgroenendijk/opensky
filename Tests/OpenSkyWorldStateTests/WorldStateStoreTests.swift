@@ -286,6 +286,27 @@ struct WorldStateStoreTests {
         #expect(referenceChanges == 2)
         #expect(store.journalEntries.count == 2)
     }
+
+    @Test func aDerivedValueRebuildsOnlyAfterADeltaWrite() {
+        let store = WorldStateStore()
+        let source = DerivedSource()
+        var builds = 0
+        func read() -> Int {
+            store.derived(Int.self, from: source) {
+                builds += 1
+                return store.dirtyCount
+            }
+        }
+        #expect(read() == 0)
+        #expect(read() == 0)
+        store.set(ReferenceEnableState.disabled, for: key(0x200), in: whiterun)
+        #expect(read() == 1)
+        store.reset(key(0x200))
+        #expect(read() == 0)
+        store.restore(from: .empty)
+        #expect(read() == 0)
+        #expect(builds == 4)
+    }
 }
 
 /// A component kind that no cell build reads.
@@ -296,3 +317,5 @@ private struct OffScreenProbe: WorldStateComponent {
 
     var value: Int
 }
+
+private final class DerivedSource {}

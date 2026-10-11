@@ -166,4 +166,19 @@ extension CellSceneBuilderTests {
         )
         #expect(instanceTranslations(moved) == [SIMD3(70, 80, 90)])
     }
+
+    /// A spawn whose base is an `NPC_`, such as a quest's created actor, builds as an
+    /// actor under its generated key, not as an item.
+    @Test(.enabled(if: Self.hasDevice))
+    func spawnedActorBuildsAsAnActor() throws {
+        try writeLooseFile("meshes/torso_m.nif", unitNIF())
+        let scene = try build(
+            pluginData: plugin(modelBaseRecords: actorChainRecords(npc: 0x800)),
+            state: spawnState(base: 0x800, position: SIMD3(10, 20, 30))
+        )
+        #expect(scene.summary.actorDrawnCount == 1)
+        #expect(scene.summary.drawnRefCount == 0)
+        let entry = try #require(scene.references[.generated(1)])
+        #expect(entry.placedActor?.base == FormID(0x800))
+    }
 }

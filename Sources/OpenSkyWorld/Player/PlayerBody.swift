@@ -56,7 +56,10 @@ nonisolated public final class PlayerBody {
     /// Moves the body. Draw groups are rebuilt only when the transform actually
     /// changed, so a standing player costs one matrix comparison per frame.
     public func place(feetPosition: SIMD3<Float>, yaw: Float) {
-        let wanted = Self.transform(feetPosition: feetPosition, yaw: yaw)
+        place(at: Self.transform(feetPosition: feetPosition, yaw: yaw))
+    }
+
+    public func place(at wanted: float4x4) {
         guard !Self.isEqual(wanted, transform) else { return }
         transform = wanted
         render = RenderScene(instances: assembly.renderPlacements(

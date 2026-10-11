@@ -62,7 +62,7 @@ nonisolated public struct MenuRecordData: Sendable {
     /// Editor IDs of the master's WRLD records, for the marker inspector.
     public let worldspaceEditorIDs: [UInt32: String]
     public let mapSettings: MenuMapSettings
-    /// String GMSTs the menus show, such as `sNoFastTravelCombat`, by editor ID.
+    /// String GMSTs the menus show, such as `sNoFastTravelCombat` and `sRSMBody`, by editor ID.
     public let menuTexts: [String: LString]
 
     /// Every plugin's records; a later plugin's override wins.
@@ -90,7 +90,8 @@ nonisolated public struct MenuRecordData: Sendable {
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID
             guard
-                name.hasPrefix("sNoFastTravel") || name == "sFastTravelConfirm",
+                name.hasPrefix("sNoFastTravel") || name.hasPrefix("sRSM")
+                || name == "sFastTravelConfirm",
                 case let .string(text) = resolved.setting.value
             else { return }
             texts[name] = text

@@ -8,14 +8,21 @@ import simd
 
 // MARK: - Setup factories
 
+/// Skinned shapes with a blending alpha property, such as beards and brows.
+nonisolated public struct SkinnedBlendedPipelines: Sendable {
+    public let skinned: MTLRenderPipelineState
+    public let morphed: MTLRenderPipelineState
+}
+
 /// The scene pass's pipeline states, built together from one library.
 nonisolated public struct RenderPipelines: Sendable {
     public let sky: MTLRenderPipelineState
     public let clouds: MTLRenderPipelineState
     public let opaque: MTLRenderPipelineState
     public let alphaTest: MTLRenderPipelineState
-    /// Rigid shapes with a blending alpha property, drawn after water.
+    /// Shapes with a blending alpha property, drawn after water.
     public let blended: MTLRenderPipelineState
+    public let skinnedBlended: SkinnedBlendedPipelines
     public let skinnedOpaque: MTLRenderPipelineState
     public let skinnedAlphaTest: MTLRenderPipelineState
     public let morphedSkinnedOpaque: MTLRenderPipelineState
@@ -257,6 +264,21 @@ extension Renderer {
             blended: makeMeshPipeline(
                 MeshPipelineVariant(alphaTest: true, blended: true),
                 library: library, compiler: compiler, view: view
+            ),
+            skinnedBlended: SkinnedBlendedPipelines(
+                skinned: makeMeshPipeline(
+                    MeshPipelineVariant(alphaTest: true, skinned: true, blended: true),
+                    library: library, compiler: compiler, view: view
+                ),
+                morphed: makeMeshPipeline(
+                    MeshPipelineVariant(
+                        alphaTest: true,
+                        skinned: true,
+                        morphed: true,
+                        blended: true
+                    ),
+                    library: library, compiler: compiler, view: view
+                )
             ),
             skinnedOpaque: makeVariant(alphaTest: false, skinned: true),
             skinnedAlphaTest: makeVariant(alphaTest: true, skinned: true),

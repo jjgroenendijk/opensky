@@ -1,4 +1,5 @@
-// `FormList.GetSize` and `GetAt` over a synthetic FLST.
+// `FormList.GetSize` and `GetAt` over a synthetic FLST, and `Form.HasKeyword` over a
+// synthetic KWDA.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -35,6 +36,30 @@ struct PapyrusNativeFormListTests {
         guard case .failed = result else {
             Issue.record("GetSize without FLST data should fail: \(result)")
             return
+        }
+    }
+
+    @Test func hasKeywordReadsTheFormsKeywordList() throws {
+        let fixture = try Fixture.make()
+        let misc = ESMFixture.field("KSIZ", ESMFixture.u32(1))
+            + ESMFixture.field("KWDA", ESMFixture.u32(Fixture.keywordID))
+        let file = try ESMFile(data: ESMFixture.tes4()
+            + ESMFixture.topGroup("KYWD", contents: KeywordFixture.recordBytes(
+                formID: Fixture.keywordID, editorID: "isExecutioner"
+            ) + KeywordFixture.recordBytes(formID: Fixture.otherKeywordID, editorID: "Other"))
+            + ESMFixture.topGroup("MISC", contents: ESMFixture.record(
+                "MISC", formID: Self.listID, data: misc
+            )))
+        fixture.session.bridge.keywordStore = KeywordStore(index: RecordIndex(
+            plugins: [("Skyrim.esm", file)], recordTypes: RecordIndex.referenceRecordTypes
+        ))
+        let form = fixture.handle(Self.listID)
+        for (keyword, expected) in [(Fixture.keywordID, true), (Fixture.otherKeywordID, false)] {
+            let result = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "Form", "HasKeyword", receiver: form,
+                arguments: [.object(fixture.handle(keyword))], returnType: .boolean
+            ))
+            #expect(result == .returned(.boolean(expected)))
         }
     }
 

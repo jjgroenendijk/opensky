@@ -109,13 +109,19 @@ nonisolated public struct InventoryBaselineResolver {
         guard
             let resolved = try? actors.resolve(base: base),
             let outfitID = resolved.defaultOutfit.value,
-            let outfit = outfits[outfitID.rawValue]
+            let stacks = outfitStacks(outfitID)
         else { return .empty }
+        return ReferenceInventoryState(stacks: stacks, equipped: stacks.map(\.item))
+    }
+
+    /// One of each `OTFT` item, leveled entries expanded. Nil when no outfit has the ID.
+    public func outfitStacks(_ outfitID: FormID) -> [InventoryStack]? {
+        guard let outfit = outfits[outfitID.rawValue] else { return nil }
         var stacks: [InventoryStack] = []
         for item in outfit.items {
             expand(item, count: 1, into: &stacks)
         }
-        return ReferenceInventoryState(stacks: stacks, equipped: stacks.map(\.item))
+        return ReferenceInventoryState(stacks: stacks).stacks
     }
 
     // MARK: - Leveled expansion

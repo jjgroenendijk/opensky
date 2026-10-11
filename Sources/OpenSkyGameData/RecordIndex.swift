@@ -34,10 +34,16 @@ extension RecordIndexDecodeResult: Sendable where Value: Sendable {}
 
 nonisolated public struct RecordIndex: Sendable {
     /// Reference data loaded once for the stores and the Asset Browser.
-    public static let referenceRecordTypes: Set<FourCC> = [
+    public static let referenceRecordTypes = Set<FourCC>([
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
         "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP", "AVIF",
         "PERK", "FACT", "RELA", "ASTP"
+    ]).union(keywordedRecordTypes)
+
+    /// Base objects with a `KWDA` list, so `HasKeyword` can read actors and items.
+    public static let keywordedRecordTypes: Set<FourCC> = [
+        "NPC_", "RACE", "ACTI", "TACT", "FURN", "FLOR", "WEAP", "ARMO", "AMMO", "BOOK",
+        "MISC", "ALCH", "INGR", "KEYM", "SLGM"
     ]
 
     private static let logger = EngineLogger(

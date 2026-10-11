@@ -50,8 +50,8 @@ extension NPCMover {
             waypoint.y - controller.feetPosition.y
         )
         let distance = simd_length(delta)
-        let nextGait: LocomotionGait = isSwimming
-            ? .swim : distance > NPCMovementRuntime.runDistance ? .run : .walk
+        let byLeg: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
+        let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
         let speed = switch nextGait {
         case .swim: configuration.swimSpeed.value
         case .run: configuration.runSpeed.value

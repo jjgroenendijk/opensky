@@ -24,6 +24,14 @@ nonisolated extension ConditionFunctions {
                 return .success(Self.isTrue(interior))
             }
         })
+        // xEdit index 555, `HasLoaded3D`, no parameters. Returns 1 when the reference
+        // is drawn, which OpenSky reads as: it is in a loaded cell. A scene's first
+        // phase waits on it for the player (<https://ck.uesp.net/wiki/HasLoaded3D>).
+        registry.register(ConditionFunction(index: 555, name: "HasLoaded3D") { call in
+            call.referenceKey().map { reference in
+                Self.isTrue(call.context.data.isInInterior(reference) != nil)
+            }
+        })
     }
 
     private static func installDirectLocations(

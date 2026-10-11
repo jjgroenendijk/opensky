@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyPhysics
 import OpenSkyWorldState
 import simd
 
@@ -22,15 +23,24 @@ public protocol PackageWorld: AnyObject {
     func packagePlace(
         of location: Package.Location, actor: ReferenceKey, aliasQuest: FormID?
     ) -> PackagePlace?
-    /// False when the move could not start. A `direct` move walks the straight line on
-    /// the terrain, as a static-pathing patrol does.
-    func movePackageActor(_ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool) -> Bool
+    /// A `direct` move walks the straight line on the terrain, as a static-pathing
+    /// patrol does.
+    func movePackageActor(
+        _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
+    ) -> PackageMoveResult
     /// The packages each filled quest alias adds to its actor.
     func packageAliasStacks() -> [ReferenceKey: PackageAliasStack]
     /// The points a patrol walks, from its start marker along the linked references.
     func packagePatrolPath(
         from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]?
+    /// A free seat of the furniture a sit package names, or nil when none is loaded.
+    func packageSeat(
+        from target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> PackageSeat?
+    /// The actor sits down in `seat`, or leaves it and frees it.
+    func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat)
+    func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat)
     /// A held package started, finished, or was left. Its fragments run here.
     func packageProcedure(_ event: PackageScriptEvent)
     /// Seats `rider` on its horse and returns the horse, or nil when it has none loaded.
@@ -50,6 +60,16 @@ extension PackageWorld {
     ) -> [SIMD3<Float>]? {
         nil
     }
+
+    public func packageSeat(
+        from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
+    ) -> PackageSeat? {
+        nil
+    }
+
+    public func seatPackageActor(_: ReferenceKey, in _: PackageSeat) {}
+
+    public func unseatPackageActor(_: ReferenceKey, from _: PackageSeat) {}
 
     public func packageProcedure(_: PackageScriptEvent) {}
 
@@ -126,6 +146,8 @@ public final class PackageCoordinator {
     public private(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
     /// Each rider's horse, which walks the rider's package for it.
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
+    /// Walks that found no free mover slot, by actor.
+    var waitingMoves: [ReferenceKey: SIMD3<Float>] = [:]
 
     weak var world: (any PackageWorld)?
     private var store: PackageStore?
@@ -180,6 +202,7 @@ public final class PackageCoordinator {
             registeredActors.removeValue(forKey: actor)
             executions.removeValue(forKey: actor)
             mounts.removeValue(forKey: actor)
+            waitingMoves.removeValue(forKey: actor)
         }
         for arrival in change.arrived {
             guard (try? runtime.register(actor: arrival.actor, base: arrival.base)) != nil else {
@@ -295,7 +318,11 @@ public final class PackageCoordinator {
 
     /// Drops the actor's machine and runs the change fragment of the package it left.
     private func leaveExecution(of actor: ReferenceKey) {
+        waitingMoves[actor] = nil
         guard let execution = executions.removeValue(forKey: actor) else { return }
+        if let seat = execution.seat {
+            world?.unseatPackageActor(actor, from: seat)
+        }
         if let package = try? store?.resolve(execution.package).package {
             world?.packageProcedure(
                 PackageScriptEvent(kind: .change, actor: actor, package: package)
@@ -335,6 +362,9 @@ public final class PackageCoordinator {
         let ridden = Set(mounts.values)
         for actor in Set(executions.keys).union(held).sorted() where !ridden.contains(actor) {
             syncExecution(actor)
+            if let point = waitingMoves[actor] {
+                requestMove(actor, to: point)
+            }
             step(actor, with: .tick(delta))
         }
     }
@@ -355,12 +385,17 @@ public final class PackageCoordinator {
         let place = PackageOverrideExecution.location(of: current.package).flatMap {
             world.packagePlace(of: $0, actor: actor, aliasQuest: hold.aliasQuest)
         }
+        let target = PackageOverrideExecution.targetInput(of: current.package)
         let path = current.procedure == .patrol
-            ? PackageOverrideExecution.patrolStart(of: current.package).flatMap {
+            ? target.flatMap {
                 world.packagePatrolPath(from: $0, actor: actor, aliasQuest: hold.aliasQuest)
             } : nil
+        let seat = current.procedure == .sit
+            ? target.flatMap {
+                world.packageSeat(from: $0, actor: actor, aliasQuest: hold.aliasQuest)
+            } : nil
         var execution = PackageOverrideExecution(
-            package: current, start: start, place: place, path: path ?? []
+            package: current, start: start, place: place, path: path ?? [], seat: seat
         )
         updateMount(actor, rides: execution.ridesHorse)
         let commands = execution.start()
@@ -369,16 +404,6 @@ public final class PackageCoordinator {
             kind: .begin, actor: actor, package: current.package
         ))
         apply(commands, actor: actor)
-    }
-
-    private func apply(_ commands: [PackageProcedureCommand], actor: ReferenceKey) {
-        for command in commands {
-            guard case let .move(point) = command else { continue }
-            let direct = executions[actor]?.isDirect ?? false
-            if world?.movePackageActor(mounts[actor] ?? actor, to: point, direct: direct) != true {
-                movementSettled(actor: actor, reason: .giveUp)
-            }
-        }
     }
 
     private func updateMount(_ actor: ReferenceKey, rides: Bool) {

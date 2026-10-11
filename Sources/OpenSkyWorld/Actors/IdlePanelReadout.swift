@@ -45,11 +45,13 @@ nonisolated public enum IdleReadout {
         if let failure = report.failure {
             lines.append("Result: \(failure)")
         }
-        lines += report.trace.map { trace in
-            String(repeating: "  ", count: trace.depth + 1)
-                + "\(trace.editorID ?? trace.id.description): \(verdictText(trace.verdict))"
-        }
+        lines += report.trace.map(traceLine)
         return lines.joined(separator: "\n")
+    }
+
+    public static func traceLine(_ trace: IdleCandidateTrace) -> String {
+        String(repeating: "  ", count: trace.depth + 1)
+            + "\(trace.editorID ?? trace.id.description): \(verdictText(trace.verdict))"
     }
 
     public static func pathText(_ path: IdleServedPath) -> String {

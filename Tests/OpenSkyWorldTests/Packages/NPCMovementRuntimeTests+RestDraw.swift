@@ -1,5 +1,5 @@
 // An NPC that stops keeps drawing where it stopped through its draw delta, until
-// its cell is built with the saved pose.
+// its cell is built with the saved pose. A rider's rest moves to where it got off.
 
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -61,5 +61,29 @@ extension NPCMovementRuntimeTests {
         #expect(startedSecond)
         let delta = try #require(runtime.instanceDeltas()[1])
         #expect(abs(delta.columns.3.x - resting.position.x) < 0.01)
+    }
+
+    /// A rider stops walking when it mounts. Where it dismounts replaces that rest.
+    @Test
+    func aVehicleRestReplacesTheLastWalk() throws {
+        var runtime = NPCMovementRuntime()
+        let target = SIMD3<Float>(100, 0, 0)
+        let started = runtime.start(Self.start(
+            actor: actor, path: Self.path(waypoints: [target], target: target)
+        ))
+        #expect(started)
+        runtime.advance(by: 0.1, world: Self.world())
+        let stopped = runtime.stop(actor)
+        #expect(stopped)
+        let dismount = ReferenceTransformOverride(
+            position: SIMD3(5000, -200, 30), rotation: SIMD3(0, 0, 1), scale: 1
+        )
+
+        runtime.rest(actor, at: dismount)
+
+        #expect(runtime.transform(for: actor) == dismount)
+        #expect(runtime.readouts().first?.feetPosition == dismount.position)
+        let delta = try #require(runtime.instanceDeltas()[1])
+        #expect(abs(delta.columns.3.x - 5000) < 0.01)
     }
 }

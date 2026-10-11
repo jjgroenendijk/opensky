@@ -100,7 +100,7 @@ nonisolated extension CellSceneBuilder {
             byID.values.sorted { $0.actor.formID.rawValue < $1.actor.formID.rawValue },
             into: .exterior(coordinate),
             deltas: deltas
-        ), collision: collision)
+        ) + spawnedActors(in: .exterior(coordinate), deltas: deltas), collision: collision)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
@@ -120,7 +120,7 @@ nonisolated extension CellSceneBuilder {
         var malformed: [String] = []
         let collected = Self.standingOnFloors(relocating(
             decodeActors(in: cell, malformed: &malformed), into: location, deltas: deltas
-        ), collision: collision)
+        ) + spawnedActors(in: location, deltas: deltas), collision: collision)
         return resolvedBuild(
             collected, malformed: malformed, parents: parents, deltas: deltas, started: started
         )
@@ -322,7 +322,8 @@ nonisolated extension CellSceneBuilder {
         build.placements.append(contentsOf: assembly.renderPlacements(
             at: assembly.transform,
             faceMorphs: faceMorph?.bindings ?? [:],
-            owner: assembly.actor.rawValue
+            owner: assembly.actor.rawValue,
+            reference: assembly.actor.rawValue
         ))
         if let faceMorph {
             build.animations.append(faceMorph)

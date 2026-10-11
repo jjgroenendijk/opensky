@@ -14,6 +14,7 @@ public protocol RaceMenuWorld: AnyObject {
     /// The vanilla `Player` record's identity, before any change.
     var recordIdentity: PlayerIdentityState? { get }
     var playableRaces: [RaceChoice] { get }
+    var raceMenuCategoryNames: RaceMenuCategoryNames { get }
     /// Stores the identity and rebuilds the player's body.
     func applyPlayerIdentity(_ identity: PlayerIdentityState)
     /// Fires `OnRaceSwitchComplete` on the player's scripts.
@@ -118,6 +119,7 @@ public final class RaceMenuCoordinator {
     public func open(limited: Bool) -> Bool {
         guard model == nil, let world, let identity = world.playerIdentity else { return false }
         model = RaceMenuModel(identity: identity, races: world.playableRaces, limited: limited)
+        model?.categoryNames = world.raceMenuCategoryNames
         isEditingName = false
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
@@ -139,6 +141,11 @@ public final class RaceMenuCoordinator {
     }
 
     public func route(_ event: MenuInputEvent) {
+        // The movie's Done button only answers a click, so the engine reads its key.
+        if movieLoaded, event == .button(.xButton) {
+            close()
+            return
+        }
         if movieLoaded, let renderer = world?.renderer {
             routeMovie(event, renderer: renderer)
             return

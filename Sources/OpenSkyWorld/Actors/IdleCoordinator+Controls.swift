@@ -67,7 +67,16 @@ extension IdleCoordinator: IdleControlProviding {
         if ignoringConditions, selection.chosen == nil {
             selection = IdleSelection(chosen: record, trace: selection.trace, chosenEntry: nil)
         }
-        return play(selection, on: actor, source: "fired", now: now)
+        let report = play(selection, on: actor, source: "fired", now: now)
+        // A dependent takes the same event from wherever its own graph is.
+        guard let chosen = selection.chosen else { return report }
+        for dependent in withDependents(actor).dropFirst() {
+            play(
+                IdleSelection(chosen: chosen, trace: [], chosenEntry: nil),
+                on: dependent, source: "dependent", now: now
+            )
+        }
+        return report
     }
 
     @discardableResult

@@ -8,6 +8,7 @@ import Testing
 
 @MainActor
 private final class FakeRaceMenuWorld: RaceMenuWorld, MenuInputConsumer {
+    let raceMenuCategoryNames = RaceMenuCategoryNames.english
     var playerIdentity: PlayerIdentityState? = PlayerIdentityState(
         race: FormID(0x13746), isFemale: false, name: "Prisoner"
     )
@@ -184,6 +185,15 @@ struct RaceMenuCoordinatorTests {
         #expect(world.applied.last?.race == FormID(0x13748))
         menu.pendingMovieRequests = [.done]
         menu.applyMovieRequests(renderer: nil)
+        #expect(!menu.isOpen)
+    }
+
+    @Test @MainActor
+    func theDoneKeyCloses() {
+        let menu = RaceMenuCoordinator(menuMode: MenuModeController())
+        menu.attach(world: FakeRaceMenuWorld())
+        menu.open(limited: false)
+        menu.route(.button(.xButton))
         #expect(!menu.isOpen)
     }
 }

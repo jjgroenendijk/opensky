@@ -1,11 +1,14 @@
-// App side of the Find Matching Reference alias fill: the loaded references with
-// their dead and disabled state, and the player's feet for "Closest". The rules
-// live in `QuestReferenceSearch` (docs/engine/quest-state.md).
+// App side of the alias fills that read or change the world: the loaded references
+// for Find Matching Reference, and the new reference of Create Reference to Object.
+// The rules live in `QuestReferenceSearch` and `QuestAliasFiller`
+// (docs/engine/quest-state.md).
 
 import OpenSkyCombat
 import OpenSkyConditions
+import OpenSkyFormatsESM
 import OpenSkyQuests
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 
@@ -34,5 +37,20 @@ extension StoryWorldAdapter {
             dead: Set(game.actorWorld.combatActors().filter(\.isDead).map(\.key)),
             disabled: Set(entries.filter { !enable.isEnabled($0) }.map(\.key))
         )
+    }
+
+    /// A new reference of `base` where `anchor` stands, loaded or not. It is a spawn, so
+    /// the save keeps it and a cell build places it like a dropped item or an actor.
+    func createQuestReference(_ base: FormID, at anchor: ReferenceKey) -> ReferenceKey? {
+        guard
+            let placement = game.scripts.bridge?.placement(of: anchor),
+            let location = placement.location
+        else { return nil }
+        let spawn = ReferenceSpawnState(
+            base: base, location: location, placement: placement.state.transform.placement
+        )
+        let key = game.worldState.allocateGeneratedKey()
+        game.worldState.set(spawn, for: key, in: location)
+        return key
     }
 }

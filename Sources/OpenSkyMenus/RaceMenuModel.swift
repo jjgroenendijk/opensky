@@ -9,10 +9,28 @@ import OpenSkyFormatsESM
 nonisolated public struct RaceChoice: Equatable, Sendable {
     public let formID: FormID
     public let name: String
+    /// `RACE` `DESC`; the movie prints its own placeholder when this is empty.
+    public let description: String
 
-    public init(formID: FormID, name: String) {
+    public init(formID: FormID, name: String, description: String = "") {
         self.formID = formID
         self.name = name
+        self.description = description
+    }
+}
+
+/// The movie's category names: the `sRSMRace`, `sRSMBody`, and `sRSMHead` settings.
+nonisolated public struct RaceMenuCategoryNames: Equatable, Sendable {
+    public static let english = Self(race: "Race", body: "Body", head: "Head")
+
+    public let race: String
+    public let body: String
+    public let head: String
+
+    public init(race: String, body: String, head: String) {
+        self.race = race
+        self.body = body
+        self.head = head
     }
 }
 
@@ -50,6 +68,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
 
     public private(set) var identity: PlayerIdentityState
     public let races: [RaceChoice]
+    public var categoryNames = RaceMenuCategoryNames.english
     /// `ShowLimitedRaceMenu`: no name or sex change, and the race locks once
     /// the player leaves its row.
     public let isLimited: Bool
@@ -99,7 +118,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         case .move(.left): step(selectedRow, by: -1)
         case .move(.right): step(selectedRow, by: 1)
         case .button(.accept): return selectedRow == .name ? .editName : .done
-        case .button(.cancel): return .done
+        case .button(.cancel), .button(.xButton): return .done
         case .pointer, .release: break
         }
         return nil

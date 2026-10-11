@@ -21,6 +21,9 @@ public struct QuestRuntime: QuestAccess {
     public let locations: LocationStore?
     /// The loaded world for the Find Matching Reference fills. Nil skips them.
     public var referenceSearch: (@MainActor () -> QuestReferenceSearch?)?
+    /// Places a new reference of a base at an anchor, for "Create Reference to Object".
+    /// Nil leaves those aliases empty.
+    public var referenceCreator: (@MainActor (FormID, ReferenceKey) -> ReferenceKey?)?
 
     public init(store: WorldStateStore, quests: QuestStore, locations: LocationStore? = nil) {
         self.store = store
@@ -58,38 +61,44 @@ public struct QuestRuntime: QuestAccess {
 
     /// Every quest with runtime state, in `ReferenceKey` order, with its record.
     public func runtimeQuests() -> [(quest: Quest, state: QuestRuntimeState)] {
-        quests.sortedQuests().compactMap { quest in
-            guard
-                let key = quests.key(for: quest.formID),
-                let state = store.component(QuestRuntimeState.self, for: key)
-            else {
-                return nil
+        store.derived([(quest: Quest, state: QuestRuntimeState)].self, from: quests) {
+            quests.sortedQuests().compactMap { quest in
+                guard
+                    let key = quests.key(for: quest.formID),
+                    let state = store.component(QuestRuntimeState.self, for: key)
+                else {
+                    return nil
+                }
+                return (quest: quest, state: state)
             }
-            return (quest: quest, state: state)
         }
     }
 
     /// Every quest whose effective state is running, with its key, in editor-ID
     /// order. These are the quests the Papyrus side builds scripts for.
     public func runningQuests() -> [(quest: Quest, key: ReferenceKey)] {
-        quests.sortedQuests().compactMap { quest in
-            guard let key = quests.key(for: quest.formID) else { return nil }
-            let state = store.component(QuestRuntimeState.self, for: key)
-                ?? QuestRuntimeState.baseline(for: quest)
-            return state.isRunning ? (quest: quest, key: key) : nil
+        store.derived([(quest: Quest, key: ReferenceKey)].self, from: quests) {
+            quests.sortedQuests().compactMap { quest in
+                guard let key = quests.key(for: quest.formID) else { return nil }
+                let state = store.component(QuestRuntimeState.self, for: key)
+                    ?? QuestRuntimeState.baseline(for: quest)
+                return state.isRunning ? (quest: quest, key: key) : nil
+            }
         }
     }
 
     /// The seam condition functions read quest state through: this session's
     /// runtime states over the plugin baselines.
     public func resolution() -> QuestResolution {
-        var overrides: [ReferenceKey: QuestRuntimeState] = [:]
-        for key in quests.sortedKeys {
-            if let state = store.component(QuestRuntimeState.self, for: key) {
-                overrides[key] = state
+        store.derived(QuestResolution.self, from: quests) {
+            var overrides: [ReferenceKey: QuestRuntimeState] = [:]
+            for key in quests.sortedKeys {
+                if let state = store.component(QuestRuntimeState.self, for: key) {
+                    overrides[key] = state
+                }
             }
+            return QuestResolution(defaults: quests, overrides: overrides)
         }
-        return QuestResolution(defaults: quests, overrides: overrides)
     }
 
     // MARK: - Running state

@@ -136,6 +136,18 @@ lists no free reference of the type, its child locations are searched: every loc
 `PNAM` chain reaches it, nearest first. A miss in the whole tree fails a required alias. An empty
 location alias may be OpenSky's gap, so it is counted and never fails the start.
 
+Create Reference to Object (`ALCO` plus `ALCA`) makes a new reference of the `ALCO` base
+([Quest Alias Tab](https://ck.uesp.net/wiki/Quest_Alias_Tab)). The low 16 bits of `ALCA` name the
+alias to create at, and bit `0x8000` switches "create at" to "create in". `Skyrim.esm` has 630
+such aliases: 441 create at and 189 create in, and 365 of them create an `NPC_`. The Helgen
+headsman of `MQ101` is one. OpenSky creates at: the new reference is a spawn where the anchor
+alias's reference stands, loaded or not, so the save keeps it and a cell build places it. A
+spawn whose base is an `NPC_` builds as an actor with its cell's `ACHR`s. The reference is made
+only after the pass allows the start, so a refused start leaves nothing in the world.
+
+Not done for this fill: "create in" (the new item goes into the anchor's inventory), the level
+(`ALCL`) of a leveled base, and deleting the reference when the quest stops.
+
 ### Find Matching Reference
 
 An alias with no fill subrecord but with match conditions, or with a near alias (`ALNA`), is a

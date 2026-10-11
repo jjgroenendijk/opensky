@@ -158,18 +158,27 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         }
     }
 
-    /// Plays `clip` for `seconds`, then returns to idle. A second request replaces
-    /// the first, so a stagger takes an attack's clip away.
+    /// Plays `clip` for `seconds`, then returns to idle; infinite `seconds` hold it. A
+    /// second request replaces the first, so a stagger takes an attack's clip away.
     public func play(
         _ clip: ActorAnimationClip,
         startingAt time: Float,
         forSeconds seconds: Float
     ) {
-        guard seconds > 0, seconds.isFinite else { return }
+        guard seconds > 0, !seconds.isNaN else { return }
         state.withLock {
             $0.clip = clip
             $0.overrideStart = time
             $0.overrideEnd = time + seconds
+        }
+    }
+
+    /// Ends the playing override now, as when a held idle is released.
+    public func endOverride() {
+        state.withLock {
+            $0.clip = $0.locomotionClip
+            $0.overrideEnd = 0
+            $0.overrideStart = 0
         }
     }
 

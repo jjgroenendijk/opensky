@@ -29,7 +29,7 @@ nonisolated public struct ConfirmationModel: Equatable, Sendable {
             return .chose(selectedIndex)
         case .button(.cancel):
             return .cancelled
-        case .pointer, .release:
+        case .button(.xButton), .pointer, .release:
             break
         }
         return nil

@@ -126,6 +126,23 @@ extension PapyrusWorldStateBridge {
         return created
     }
 
+    /// Instantiates one running quest's scripts, as `attachRunningQuestScripts` does
+    /// for all. A single start uses it, so it does not revisit every running quest.
+    @discardableResult
+    public func attachScripts(ofQuest id: FormID) -> Int {
+        guard
+            let questRuntime,
+            let quest = questRuntime.quests.quest(id),
+            let key = questRuntime.quests.key(for: id)
+        else { return 0 }
+        do {
+            try questRuntime.fillAliases(of: quest, key: key)
+        } catch {
+            questAliasFillFailures += 1
+        }
+        return attachQuestScripts(quest, key: key)
+    }
+
     // MARK: - Private
 
     /// One quest named by a Papyrus handle: the record behind it and the

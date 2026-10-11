@@ -2,7 +2,8 @@
 // flight. The state changes at once; the blend only fades the old pose.
 // `FLAG_DELAY_STATE_CHANGE` (14 of 3,769 vanilla transitions) is tallied. Order:
 // highest `m_priority`, state transitions before wildcards, then array order. That
-// tie-break is ours (docs/engine/behavior-state-machines.md).
+// tie-break is ours, and a global wildcard below another state comes after both
+// (docs/engine/behavior-state-machines.md).
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -33,7 +34,7 @@ nonisolated extension BehaviorGraphInstance {
         if !state.isEntered {
             enterStartState(&state, machine: machine, bound: bound)
         }
-        selectTransition(&state, machine: machine)
+        selectTransition(&state, machine: machine, at: target)
         // The clock runs after selection, so a transition that starts this
         // update already shows one step of its crossfade rather than a frame of
         // the pose it is leaving, and one that reaches its duration is dropped
@@ -49,7 +50,7 @@ nonisolated extension BehaviorGraphInstance {
         let pose = machinePose(
             state, machine: machine, depth: depth, deltaTime: deltaTime
         )
-        pendingNestedStateId = nil
+        pendingNestedStateIds = []
         return pose
     }
 
@@ -73,9 +74,9 @@ nonisolated extension BehaviorGraphInstance {
         if machine.startStateMode == 2, state.currentStateId >= 0 {
             stateId = state.currentStateId
         }
-        if let nested = pendingNestedStateId {
+        if let nested = pendingNestedStateIds.first {
             stateId = nested
-            pendingNestedStateId = nil
+            pendingNestedStateIds.removeFirst()
         }
         state.isEntered = true
         state.previousStateId = -1
@@ -121,9 +122,13 @@ nonisolated extension BehaviorGraphInstance {
                 state.currentStateId, machine: machine, depth: depth, deltaTime: deltaTime
             )
         }
+        // The outgoing walk must not use up or clear the start states the
+        // transition handed to the incoming state's machines.
+        let pending = pendingNestedStateIds
         let outgoing = statePose(
             transition.fromStateId, machine: machine, depth: depth, deltaTime: deltaTime
         )
+        pendingNestedStateIds = pending
         if transition.synchronizes {
             let source = stateInfo(of: machine, id: transition.fromStateId)?.info.generator
             pendingClipPhase = clipPhase(under: source).map { ($0, true) }
@@ -155,13 +160,16 @@ nonisolated extension BehaviorGraphInstance {
     /// Picks and starts at most one transition per update.
     private func selectTransition(
         _ state: inout BehaviorMachineState,
-        machine: HKBStateMachine
+        machine: HKBStateMachine,
+        at target: HKXPointerTarget
     ) {
         if let transition = state.transition, transition.isUninterruptible {
             return
         }
         guard let choice = bestCandidate(machine: machine, state: state) else {
-            selectMachineEventTransition(&state, machine: machine)
+            if !selectGlobalWildcard(&state, machine: machine, at: target) {
+                selectMachineEventTransition(&state, machine: machine)
+            }
             return
         }
         begin(choice, in: &state, machine: machine)
@@ -246,7 +254,7 @@ nonisolated extension BehaviorGraphInstance {
             &state, to: info.toStateId, machine: machine, transition: effect(for: info)
         )
         if info.flags & BehaviorTransitionFlag.toNestedStateIsValid != 0 {
-            pendingNestedStateId = info.toNestedStateId
+            pendingNestedStateIds = [info.toNestedStateId]
         }
     }
 
@@ -271,7 +279,7 @@ nonisolated extension BehaviorGraphInstance {
     /// The crossfade a transition's `hkbTransitionEffect` asks for, or nil when
     /// it asks for an instant cut — a null pointer, or a zero duration, which is
     /// what 198 of the 397 blending effects in the vanilla player graph carry.
-    private func effect(for info: HKBStateMachineTransitionInfo) -> BehaviorTransition? {
+    func effect(for info: HKBStateMachineTransitionInfo) -> BehaviorTransition? {
         guard let target = info.transition else { return nil }
         guard let blending = object(at: target, as: HKBBlendingTransitionEffect.self) else {
             tally.note(.transitionEffectUnevaluated)

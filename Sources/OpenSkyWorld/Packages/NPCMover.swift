@@ -26,11 +26,14 @@ public struct NPCMover {
     private var occupiedTriggers: Set<ReferenceKey> = []
     public var currentCell: CellSceneLocation?
     public let ignoresStatics: Bool
+    public let preferredGait: LocomotionGait?
     /// The other actors near this one for the step in progress.
     private var neighbours: [NPCNeighbour] = []
     /// The jump across a ledge link in progress.
     public internal(set) var hop: NPCLedgeHop?
     public private(set) var isSwimming = false
+    /// Where the current leg began: the start, the last reached waypoint, or a repath.
+    private(set) var legStart: SIMD3<Float>
 
     /// `drawnPlacement` is where the cell build drew the actor, when that is not
     /// where it starts: an actor parked since the last build of its cell.
@@ -43,6 +46,8 @@ public struct NPCMover {
         configuration = start.configuration
         path = start.path
         ignoresStatics = start.ignoresStatics
+        preferredGait = start.gait
+        legStart = start.placement.position
         yaw = NPCYawMath.yaw(fromHeading: start.placement.rotation.z)
         controller = WalkController(
             cameraPosition: start.placement.position + SIMD3(0, 0, start.capsule.eyeHeight),
@@ -182,6 +187,7 @@ public struct NPCMover {
                 }
             }
             waypointIndex += 1
+            legStart = waypoint
             bestWaypointDistance = .greatestFiniteMagnitude
             secondsWithoutProgress = 0
         }
@@ -217,6 +223,7 @@ public struct NPCMover {
         }
         path = replacement
         waypointIndex = 0
+        legStart = controller.feetPosition
         state = .moving
         bestWaypointDistance = .greatestFiniteMagnitude
         secondsWithoutProgress = 0

@@ -75,6 +75,29 @@ struct RendererDynamicPoseTests {
         #expect(renderer.lastDrawStats.drawCalls == 1)
     }
 
+    /// A vehicle publishes where the crate is, not how far it moved; the renderer
+    /// measures the move from the placement its scene was built with.
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func aVehiclePoseIsMeasuredFromTheBuiltPlacement() throws {
+        let device = try #require(Self.device)
+        let renderer = try Self.makeRenderer(device: device)
+        renderer
+            .vehicleInstancePoses = [Self.reference: MatrixMath.translation(Self.shovedPosition)]
+        let carried = try OffscreenRendererFixture.pixels(of: renderer.renderOffscreen(
+            width: Self.width,
+            height: Self.height
+        )
+        )
+
+        #expect(try Self.isBackground(carried, at: #require(Self.project(Self.center(of:
+            Self.bakedPosition
+        )))))
+        #expect(try !Self.isBackground(carried, at: #require(Self.project(Self.center(of:
+            Self.shovedPosition
+        )))))
+    }
+
     /// The culling AABB travels with the instance, so a body that has left the
     /// frustum is culled and one that has entered it is not. Without this the
     /// bounds would keep answering for the pose the build baked.

@@ -35,10 +35,9 @@ nonisolated extension ConditionFunctions {
             else { return .failure(.unavailableData(.keyword)) }
             return call.reference().flatMap { entry in
                 guard
-                    case let .plugin(pluginName, _) = entry.key,
                     let base = store.resolvedID(
                         Self.baseForm(of: entry),
-                        fromPlugin: pluginName
+                        fromPlugin: Self.basePlugin(of: entry.key)
                     ),
                     let answer = store.hasKeyword(keyword, on: base)
                 else { return .failure(.unavailableData(.keyword)) }
@@ -66,14 +65,24 @@ nonisolated extension ConditionFunctions {
             else { return .failure(.unavailableData(.formList)) }
             return call.reference().flatMap { entry in
                 guard
-                    case let .plugin(pluginName, _) = entry.key,
                     let base = store.resolvedID(
                         Self.baseForm(of: entry),
-                        fromPlugin: pluginName
+                        fromPlugin: Self.basePlugin(of: entry.key)
                     )
                 else { return .failure(.unavailableData(.formList)) }
                 return .success(Self.isTrue(store.contains(base, in: listID)))
             }
         })
+    }
+}
+
+nonisolated extension ConditionFunctions {
+    /// The plugin a reference's base FormID is spelled in. A reference made at run
+    /// time names its base in load-order space.
+    public static func basePlugin(of key: ReferenceKey) -> String {
+        if case let .plugin(name, _) = key {
+            return name
+        }
+        return FormIDResolver.loadOrderSpaceName
     }
 }

@@ -110,7 +110,7 @@ nonisolated extension CellSceneBuilder {
                 .flatMap { $0.isEmpty ? nil : $0 }
             let name = resolvedText(base.name)
                 .flatMap { $0.isEmpty ? nil : $0 }
-            let interaction = PlacedInteraction(
+            var interaction = PlacedInteraction(
                 reference: ref.formID,
                 base: ref.base,
                 position: ref.placement.position,
@@ -125,6 +125,9 @@ nonisolated extension CellSceneBuilder {
                 produce: base.produce,
                 lock: action == .open || action == .search ? ref.lock : nil
             )
+            if base.recordType == "FURN" {
+                interaction.seats = seats(of: base, at: ref)
+            }
             interactions[ref.formID] = interaction
         }
         return interactions

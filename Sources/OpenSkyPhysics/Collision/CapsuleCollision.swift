@@ -175,6 +175,11 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
         transform: float4x4
     ) -> [CapsuleCollisionContact] {
         var result: [CapsuleCollisionContact] = []
+        // A triangle outside the segment's box grown by the contact reach cannot touch,
+        // so the box test skips the exact test without changing any result.
+        let reach = SIMD3<Float>(repeating: capsule.radius + Self.contactTolerance)
+        let low = simd_min(segment.first, segment.second) - reach
+        let high = simd_max(segment.first, segment.second) + reach
         for offset in stride(from: 0, to: indices.count - indices.count % 3, by: 3) {
             let first = DynamicCollisionMath.transform(
                 vertices[Int(indices[offset])],
@@ -188,6 +193,9 @@ nonisolated public struct CapsuleWorldCollider: Sendable {
                 vertices[Int(indices[offset + 2])],
                 by: transform
             )
+            let lowest = simd_min(simd_min(first, second), third)
+            let highest = simd_max(simd_max(first, second), third)
+            guard all(lowest .<= high), all(highest .>= low) else { continue }
             let triangle = CollisionTriangle(first: first, second: second, third: third)
             guard
                 let contact = triangleContact(

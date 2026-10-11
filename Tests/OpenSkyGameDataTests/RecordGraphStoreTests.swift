@@ -47,6 +47,20 @@ struct RecordGraphStoreTests {
         #expect(store.idles(of: marker).map(\.id) == [Self.id(0x11)])
     }
 
+    @Test func anIdleWithNoBehaviorFileUsesItsNearestAncestors() throws {
+        let master = "Actors\\Character\\Behaviors\\0_Master.hkx"
+        let store = try IdleStore(plugins: Self.plugin([
+            Self.idle(0x10, parent: 0, previous: 0, group: 0, behavior: master),
+            Self.idle(0x11, parent: 0x10, previous: 0, group: 0),
+            Self.idle(0x12, parent: 0x11, previous: 0, group: 0)
+        ]))
+        let leaf = try #require(store.idles.record(Self.id(0x12)))
+        #expect(leaf.record.fileName == nil)
+        #expect(store.inheritingBehaviorFile(leaf).record.fileName == master)
+        let root = try #require(store.idles.record(Self.id(0x10)))
+        #expect(store.inheritingBehaviorFile(root).record.fileName == master)
+    }
+
     @Test func resolvesCameraShotsAndCountsDanglingOnes() throws {
         let store = try CameraPathStore(plugins: Self.plugin([
             Fixture.recordBytes("CAMS", formID: 0x30, fields: []),
@@ -156,9 +170,11 @@ struct RecordGraphStoreTests {
         _ formID: UInt32,
         parent: UInt32,
         previous: UInt32,
-        group: UInt8
+        group: UInt8,
+        behavior: String? = nil
     ) -> Data {
-        Fixture.recordBytes("IDLE", formID: formID, fields: [
+        let file = behavior.map { [("DNAM", Fixture.zstring($0))] } ?? []
+        return Fixture.recordBytes("IDLE", formID: formID, fields: file + [
             ("ANAM", Fixture.u32(parent, previous)),
             ("DATA", Fixture.u8(0, 0, 0, group) + Fixture.u16(0))
         ])

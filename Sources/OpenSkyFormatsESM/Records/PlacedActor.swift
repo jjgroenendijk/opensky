@@ -39,6 +39,25 @@ nonisolated public struct PlacedActor: Sendable {
         skipped = actor.skipped
     }
 
+    /// An actor the running game created. No record backs it, so all file fields are
+    /// absent; `SpawnedReferenceIdentity` makes its `formID`.
+    public init(
+        spawnedBase base: FormID,
+        placement: PlacedReference.Placement,
+        scale: Float,
+        formID: FormID
+    ) {
+        self.formID = formID
+        self.base = base
+        self.placement = placement
+        self.scale = scale
+        isInitiallyDisabled = false
+        scriptData = ScriptData(ownerType: "ACHR")
+        enableParent = nil
+        details = PlacedReferenceDetails()
+        skipped = FieldTally()
+    }
+
     public init(record: ESMRecord) throws {
         guard record.type == "ACHR" else {
             throw ESMError.malformed("expected ACHR record, got \(record.type)")

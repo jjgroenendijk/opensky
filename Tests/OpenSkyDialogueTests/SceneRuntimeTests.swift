@@ -207,6 +207,22 @@ struct SceneRuntimeTests {
         #expect(host.released == [speaker])
     }
 
+    /// A package done before its end phase keeps its actor until that phase ends.
+    @Test func anEarlyDonePackageHoldsItsActorUntilItsEndPhase() throws {
+        let store = WorldStateStore()
+        let scene = try SceneFixture.packageScene(walkEndPhase: 1)
+        let host = FakeSceneHost()
+        host.packageDone = true
+        let speaker = DialogueRuntimeFixture.speakerKey
+        let started = try SceneFixture.runtime(store: store, scene: scene, host: host).start(walk)
+        #expect(steps(started).contains(.actionCompleted(0)))
+        #expect(steps(started).contains(.phaseStarted(1)))
+        #expect(host.released.isEmpty)
+
+        _ = try SceneFixture.runtime(store: store, scene: scene, now: 3, host: host).tick()
+        #expect(host.released == [speaker])
+    }
+
     /// Stopping a scene hands the package actor back to its schedule.
     @Test func stoppingASceneReleasesItsPackageActor() throws {
         let store = WorldStateStore()

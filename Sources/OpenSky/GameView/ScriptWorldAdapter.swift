@@ -83,6 +83,9 @@ final class ScriptWorldAdapter {
             locations: (provider as? LocationDataProviding)?.locationStore
         )
         runtime.referenceSearch = { [weak game] in game?.storyWorld.questReferenceSearch() }
+        runtime.referenceCreator = { [weak game] base, anchor in
+            game?.storyWorld.createQuestReference(base, at: anchor)
+        }
         game.scripts.attachQuests(runtime)
     }
 
@@ -107,6 +110,7 @@ final class ScriptWorldAdapter {
         bridge.casterRuntime = { [weak game] in game?.magic.caster }
         bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
         bridge.formListStore = (provider as? FactionDataProviding)?.formListStore
+        bridge.keywordStore = (provider as? LocationDataProviding)?.locationStore?.keywords
         bridge.dispelEffects = { [weak game] holder, predicate in
             game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }

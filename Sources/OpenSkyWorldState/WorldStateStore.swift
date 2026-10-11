@@ -22,6 +22,8 @@ public final class WorldStateStore {
     private var dirtyCountsByCell: [CellSceneLocation: Int] = [:]
     private var changeJournal: WorldStateJournal
     private var allocator: GeneratedReferenceAllocator
+    /// Values `derived(_:from:build:)` keeps until the next delta write.
+    let derivedCache = WorldStateDerivedCache()
 
     /// Fires per journalled mutation of a kind that `affectsCellBuild`, with its cell
     /// (or nil) and the next snapshot's sequence. `CellStreamer` rebuilds stale cells.
@@ -91,6 +93,7 @@ public final class WorldStateStore {
         guard delta[value.kind] != value else { return false }
         let wasClean = delta.isEmpty
         let previous = delta.set(value)
+        derivedCache.invalidate()
         let previousCell = delta.cell
         delta.record(cell: cell)
         deltas[key] = delta
@@ -120,6 +123,7 @@ public final class WorldStateStore {
     @discardableResult
     public func reset(_ kind: WorldStateComponentKind, for key: ReferenceKey) -> Bool {
         guard var delta = deltas[key], let previous = delta.clear(kind) else { return false }
+        derivedCache.invalidate()
         let cell = delta.cell
         if delta.isEmpty {
             deltas.removeValue(forKey: key)
@@ -155,14 +159,6 @@ public final class WorldStateStore {
         return true
     }
 
-    /// Drops every delta in the store. Journal sequence numbering continues,
-    /// because these resets did happen.
-    public func resetAll() {
-        for key in sortedDirtyKeys() {
-            reset(key)
-        }
-    }
-
     // MARK: - Global variables
 
     /// Runtime override for a global, or nil when it still holds its plugin
@@ -183,12 +179,6 @@ public final class WorldStateStore {
         changeJournal.recordGlobal(key: key, oldValue: previous, newValue: value)
         onGlobalMutation?(changeJournal.nextSequence)
         return true
-    }
-
-    /// Writes a raw number to a global of declared type `type`.
-    @discardableResult
-    public func setGlobal(_ raw: Float, type: Global.ValueType, for key: ReferenceKey) -> Bool {
-        setGlobal(GlobalValue(type: type, rawValue: raw), for: key)
     }
 
     /// Writes a raw number to the global `id` names, typed by `defaults`. A time
@@ -222,14 +212,6 @@ public final class WorldStateStore {
         changeJournal.recordGlobal(key: key, oldValue: previous, newValue: nil)
         onGlobalMutation?(changeJournal.nextSequence)
         return true
-    }
-
-    /// Drops every global override, in `ReferenceKey` total order so the
-    /// journal stays deterministic.
-    public func resetAllGlobals() {
-        for key in sortedOverriddenGlobalKeys() {
-            resetGlobal(for: key)
-        }
     }
 
     /// Number of globals deviating from plugin data.
@@ -266,6 +248,7 @@ public final class WorldStateStore {
     /// how a save becomes live. Nothing is journalled and the window is cleared, so
     /// `snapshot()` equals the input. One unattributed `onMutation` rebuilds all cells.
     public func restore(from snapshot: WorldStateSnapshot) {
+        derivedCache.invalidate()
         deltas = [:]
         dirtyCountsByCell = [:]
         for entry in snapshot.entries {

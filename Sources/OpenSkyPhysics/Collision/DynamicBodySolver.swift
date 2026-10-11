@@ -103,6 +103,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
         stats.substepCount = substeps
         let substepTime = dt / Float(substeps)
         let isRagdoll = !joints.isEmpty
+        var staticShapes = DynamicStaticShapes(bodyCount: bodies.count)
         for _ in 0 ..< substeps {
             for index in bodies.indices where !bodies[index].isSleeping {
                 integratePose(&bodies[index], dt: substepTime, stats: &stats)
@@ -110,6 +111,8 @@ nonisolated public enum DynamicBodySolver: Sendable {
             let contacts = gatherContacts(
                 bodies: bodies,
                 world: world,
+                staticShapes: &staticShapes,
+                dt: dt,
                 selfCollision: isRagdoll ? selfCollision : nil
             )
             stats.contactCount = max(stats.contactCount, contacts.count)
@@ -208,6 +211,8 @@ nonisolated public enum DynamicBodySolver: Sendable {
     private static func gatherContacts(
         bodies: [DynamicBody],
         world: DynamicStepWorld,
+        staticShapes: inout DynamicStaticShapes,
+        dt: Float,
         selfCollision: RagdollSelfCollision? = nil
     ) -> [DynamicContact] {
         // Sampling a body's collider allocates, so each body is sampled at most once
@@ -231,7 +236,7 @@ nonisolated public enum DynamicBodySolver: Sendable {
                 body: body,
                 index: index,
                 samples: sampled(index),
-                shapes: world.staticCandidates(body.worldBounds)
+                shapes: staticShapes.candidates(for: body, index: index, world: world, dt: dt)
             )
         }
         for (first, second) in pairs {

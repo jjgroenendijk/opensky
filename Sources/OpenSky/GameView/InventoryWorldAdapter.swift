@@ -16,6 +16,7 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -42,6 +43,7 @@ final class InventoryWorldAdapter {
             pricing: (provider as? BarterDataProviding)?.barterPricing,
             harvestRegrowth: items.harvestRegrowth
         )
+        game.scripts.bridge?.inventory = self
         coordinator.wireCrafting(
             catalog: items.craftingCatalog, conditions: self, skills: game.progression
         )
@@ -183,5 +185,37 @@ extension InventoryWorldAdapter: VendorWorld {
 
     var hourOfDay: Float? {
         game.renderer?.gameClock.hourOfDay
+    }
+}
+
+extension InventoryWorldAdapter: PapyrusInventoryBridge {
+    func addItem(_ item: FormID, count: Int32, to holder: ReferenceKey) -> Bool {
+        game.inventory.scriptAddItem(item, count: count, to: holder)
+    }
+
+    func removeItem(
+        _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
+    ) -> Bool {
+        game.inventory.scriptRemoveItem(item, count: count, from: holder, to: other)
+    }
+
+    func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool {
+        game.inventory.scriptRemoveAllItems(from: holder, to: other)
+    }
+
+    func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32? {
+        game.inventory.scriptItemCount(item, in: holder)
+    }
+
+    func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
+        game.inventory.scriptEquipItem(item, on: actor)
+    }
+
+    func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
+        game.inventory.scriptUnequipItem(item, on: actor)
+    }
+
+    func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
+        game.inventory.scriptSetOutfit(outfit, on: actor)
     }
 }
