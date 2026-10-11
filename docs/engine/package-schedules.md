@@ -57,7 +57,10 @@ does not own either system.
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
 the navmesh otherwise. A straight leg ignores static walls, so a rock or a fallen log on the
 authored line does not stop it. It still stands on a static floor, such as a road or a bridge,
-when the floor is within a step of its feet. This is a guess at the game's
+when the floor is within a step of its feet and within a step of the leg's line between its two
+markers. The second limit matters where the line passes through a rock: without it, the rock's
+ledges lift the walker a step at a time onto the rock's top. On the opening ride, both cart horses
+climbed onto a rock arch above the road this way and stopped. This is a guess at the game's
 behavior, not a confirmed rule. That input is the last of the Patrol procedure's six inputs, by the
 `BNAM` names in the vanilla `PatrolStaticPathing` template. The opening's cart horses use it.
 
