@@ -19,8 +19,9 @@ nonisolated public struct IdleAnimation: Equatable, Sendable {
     public let formID: FormID
     public let editorID: String?
     public let conditions: [Condition]
-    /// DNAM, the behavior file, relative to `Data/meshes`.
-    public let fileName: String?
+    /// DNAM, the behavior file, relative to `Data/meshes`. A child without one uses
+    /// its nearest ancestor's (`IdleStore.inheritingBehaviorFile`).
+    public var fileName: String?
     /// ENAM, the behavior-graph event the idle sends.
     public let animationEvent: String?
     /// ANAM first half: an IDLE or AACT. Nil for a root.

@@ -289,12 +289,13 @@ extension IdleCoordinator {
         now: Float
     ) -> IdleReport {
         sessions[actor]?.waiting = nil
-        guard let chosen = selection.chosen, let plans else {
+        guard let picked = selection.chosen, let plans else {
             return record(IdleReport(
                 actor: actor, source: source, trace: selection.trace, chosen: nil, plan: nil,
                 seconds: 0, failure: "no idle passed its conditions"
             ))
         }
+        let chosen = store?.inheritingBehaviorFile(picked) ?? picked
         let waiting = Waiting(selection: selection, source: source, timer: timer)
         let plan: IdlePlaybackPlan
         switch plans.state(of: IdlePlanKey(chosen, from: positions[actor])) {

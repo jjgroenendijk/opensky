@@ -59,7 +59,8 @@ and at least one second later.
 
 ## Playback
 
-An `IDLE` names a behavior file (`DNAM`) and an animation event (`ENAM`). OpenSky does not
+An `IDLE` names a behavior file (`DNAM`), or takes its nearest ancestor's
+([IDLE](/formats/idle.md#idle)), and an animation event (`ENAM`). OpenSky does not
 run a behavior graph for NPCs, so it resolves the clip statically:
 
 1. Open the behavior file and its project folder, for example

@@ -29,6 +29,11 @@ install with a field census.
 | `ANAM` | 2 FormIDs | Parent and previous sibling, each an `IDLE`, an `AACT`, or null |
 | `DATA` | 6 bytes | Loop min, loop max, flags, animation group section (uint8 each), replay delay (uint16) |
 
+Many child idles have no `DNAM`. They use the file of their nearest ancestor that has one:
+`IdleExecutioneeIdle` has none, and its ancestor `Chair` names
+`Actors\Character\Behaviors\0_Master.hkx`, which holds its event. This is OpenSky's reading
+of the data; no spec states it.
+
 The top idles of a tree usually name an `AACT` action as their parent, not null. The
 action is what starts the walk. Parent links can form a cycle in modded data, so a walk
 over them must stop at a node it has already seen.

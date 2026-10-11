@@ -60,6 +60,25 @@ nonisolated public struct IdleStore: Sendable {
         forest.roots.flatMap { actions.contains($0) ? forest.children(of: $0) : [$0] }
     }
 
+    /// An idle with no behavior file plays on its nearest ancestor's: the chopping
+    /// block's `IdleExecutioneeIdle` has none, and its ancestor `Chair` names `0_Master.hkx`.
+    public func inheritingBehaviorFile(
+        _ idle: ResolvedRecord<IdleAnimation>
+    ) -> ResolvedRecord<IdleAnimation> {
+        guard idle.record.fileName?.isEmpty ?? true else { return idle }
+        var visited: Set<ResolvedFormID> = [idle.id]
+        var next = forest.parent(of: idle.id)
+        while let id = next, visited.insert(id).inserted {
+            if let file = idles.record(id)?.record.fileName, !file.isEmpty {
+                var record = idle.record
+                record.fileName = file
+                return ResolvedRecord(id: idle.id, record: record, sourcePlugin: idle.sourcePlugin)
+            }
+            next = forest.parent(of: id)
+        }
+        return idle
+    }
+
     /// The top idles under one AACT action, in sibling order.
     public func roots(underAction action: ResolvedFormID) -> [ResolvedRecord<IdleAnimation>] {
         forest.children(of: action).compactMap { idles.record($0) }
