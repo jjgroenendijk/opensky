@@ -141,11 +141,11 @@ final class GameMetalView: MTKView {
     }
 
     /// The input event names a help message can wait for.
-    private static let helpEvents: [GameInputAction: String] = [
+    static let helpEvents: [GameInputAction: String] = [
         .activate: "Activate", .jump: "Jump", .sneak: "Sneak"
     ]
     /// Looking around with the pointer ends a "Look" help message, as in the game.
-    private static let lookEvent = "Look"
+    static let lookEvent = "Look"
 
     override func keyUp(with event: NSEvent) {
         // Menus act on key-down; a held direction's key-up reaches a menu that
