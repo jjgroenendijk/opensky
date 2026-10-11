@@ -8,7 +8,7 @@ import Testing
 
 struct BehaviorStateMachineNestingTests {
     private static let step: Float = 0.1
-    private static let events = ["go", "outerEnter", "outerExit", "innerEnter", "innerExit"]
+    private static let events = ["go", "outerEnter", "outerExit", "innerEnter", "innerExit", "sit"]
 
     /// Outer machine: state 0 "Outer_Idle" runs a clip, state 1 "Outer_Move"
     /// runs a nested machine whose two states run clips of their own. The
@@ -18,11 +18,11 @@ struct BehaviorStateMachineNestingTests {
         var table = BehaviorObjectTable()
         var root: HKXPointerTarget?
 
-        init(nestedStartStateId: Int = 0, toNestedStateId: Int = -1) {
+        init(nestedStartStateId: Int = 0, toNestedStateId: Int = -1, sitFlags: Int = 0) {
             let idle = table.add(
                 BehaviorFixture.clipGenerator("idle", animationName: "left"), at: 0x100
             )
-            let inner = addInnerMachine(startStateId: nestedStartStateId)
+            let inner = addInnerMachine(startStateId: nestedStartStateId, sitFlags: sitFlags)
             var flags = BehaviorTransitionFlag.disableCondition
             if toNestedStateId >= 0 {
                 flags |= BehaviorTransitionFlag.toNestedStateIsValid
@@ -70,8 +70,12 @@ struct BehaviorStateMachineNestingTests {
 
         /// The machine nested under the outer machine's second state: two
         /// states, each running a clip, the first carrying notify events of its
-        /// own so the order the two machines report is observable.
-        private mutating func addInnerMachine(startStateId: Int) -> HKXPointerTarget {
+        /// own so the order the two machines report is observable. A nonzero
+        /// `sitFlags` adds a wildcard on "sit" into the second state.
+        private mutating func addInnerMachine(
+            startStateId: Int,
+            sitFlags: Int
+        ) -> HKXPointerTarget {
             let walk = table.add(
                 BehaviorFixture.clipGenerator("walk", animationName: "right"), at: 0x110
             )
@@ -99,9 +103,16 @@ struct BehaviorStateMachineNestingTests {
                 ),
                 at: 0x310
             )
+            let wildcards = sitFlags == 0 ? nil : table.add(
+                BehaviorStateMachineFixture.transitions([
+                    BehaviorTransitionSpec(eventId: 5, toStateId: 1, flags: sitFlags)
+                ]),
+                at: 0x320
+            )
             return table.add(
                 BehaviorStateMachineFixture.machine(
-                    "inner", states: [walkState, runState], startStateId: startStateId
+                    "inner", states: [walkState, runState], startStateId: startStateId,
+                    wildcardTransitions: wildcards
                 ),
                 at: 0x400
             )
@@ -162,6 +173,30 @@ struct BehaviorStateMachineNestingTests {
         graph.raiseEvent(named: "go")
         #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 20)
         #expect(graph.activeStates.map(\.stateName) == ["Outer_Move", "Inner_Run"])
+    }
+
+    // MARK: - Global wildcards
+
+    /// A global wildcard of a machine that is not active moves the machine
+    /// above it into the state that holds it, then starts in its target.
+    @Test func aGlobalWildcardEntersItsMachineFromOutside() {
+        let flags = BehaviorTransitionFlag.globalWildcard | BehaviorTransitionFlag.localWildcard
+            | BehaviorTransitionFlag.disableCondition
+        let graph = NestedGraph(sitFlags: flags).instance()
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "sit")
+        #expect(graph.update(deltaTime: Self.step).bones[1].translation.x == 20)
+        #expect(graph.activeStates.map(\.stateName) == ["Outer_Move", "Inner_Run"])
+    }
+
+    /// A local wildcard fires only while its own machine is active.
+    @Test func aLocalWildcardStaysInsideItsMachine() {
+        let flags = BehaviorTransitionFlag.localWildcard | BehaviorTransitionFlag.disableCondition
+        let graph = NestedGraph(sitFlags: flags).instance()
+        graph.update(deltaTime: Self.step)
+        graph.raiseEvent(named: "sit")
+        graph.update(deltaTime: Self.step)
+        #expect(graph.activeStates.map(\.stateName) == ["Outer_Idle"])
     }
 
     // MARK: - Determinism

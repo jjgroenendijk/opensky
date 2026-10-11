@@ -55,6 +55,22 @@ Of the candidates that can fire, the highest `m_priority` wins. At equal priorit
 transition beats a wildcard. After that, array order wins. No source consulted documents Havok's
 own tie-break, so this order is a choice. A total order keeps two instances stepping the same way.
 
+### Global wildcards
+
+A wildcard with `FLAG_IS_GLOBAL_WILDCARD` (`0x400`) also fires while its own machine is not
+active. Each active machine above it looks for global wildcards below its other states. When one
+can fire, that machine moves into the state that holds the nested machine. The nested machines then
+start in the states on the path, and the last one starts in the wildcard's `m_toStateId`. The
+machine checks this only when none of its own transitions fire. A wildcard with only
+`FLAG_IS_LOCAL_WILDCARD` (`0x800`) fires only while its machine is active.
+
+Evidence from the install: in `0_master.hkx`, no `Master_Behavior` transition targets
+`Cart_State`. The `Cart` machine inside it has seven wildcards with flags `0xd00`, among them
+`IdleCartPrisonerCIdle`, `IdleCartDriverIdleStill`, and the five sway events. The other cart
+events carry `0x900`, without the global bit. The open sources name the bit but do not describe
+Havok's exact rule. The path rule above is ours, and it is what makes the player's seat idle reach
+`Cart_State`.
+
 The state changes when the transition starts: `currentStateId` becomes the destination, the exit
 and enter events fire, and the effect only fades out the old pose. That is why
 `FLAG_DELAY_STATE_CHANGE` exists as a separate flag. It is set on 14 of the 3,769 transitions in
