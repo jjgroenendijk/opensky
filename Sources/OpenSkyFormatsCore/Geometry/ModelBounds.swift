@@ -50,15 +50,21 @@ nonisolated public struct ModelBounds: Equatable, Sendable {
         return result
     }
 
-    /// AABB of this box under an affine transform: all 8 corners pushed
-    /// through, re-boxed. Conservative under rotation — exact enough for
-    /// camera framing.
+    /// AABB of this box under an affine transform: all 8 corners pushed through,
+    /// re-boxed. Builds no arrays, because shadow culling calls it per caster.
     public func transformed(by matrix: float4x4) -> ModelBounds {
-        let moved = corners.map { corner in
-            let out = matrix * SIMD4(corner, 1)
-            return SIMD3(out.x, out.y, out.z)
+        var lower = SIMD3<Float>(repeating: .infinity)
+        var upper = SIMD3<Float>(repeating: -.infinity)
+        for corner in 0 ..< 8 {
+            let point = SIMD3(
+                corner & 1 == 0 ? min.x : max.x,
+                corner & 2 == 0 ? min.y : max.y,
+                corner & 4 == 0 ? min.z : max.z
+            )
+            let out = matrix * SIMD4(point, 1)
+            lower = simd_min(lower, SIMD3(out.x, out.y, out.z))
+            upper = simd_max(upper, SIMD3(out.x, out.y, out.z))
         }
-        // corners is never empty, so containing cannot return nil.
-        return Self.containing(moved) ?? self
+        return ModelBounds(min: lower, max: upper)
     }
 }
