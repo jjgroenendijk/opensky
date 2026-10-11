@@ -128,16 +128,18 @@ extension SceneFixture {
 
     /// Three phases. A package action holds phase 1. Phase 2 says the ordinary
     /// line, and phase 3 the scene line.
-    static func packageScene() throws -> CatalogScene {
-        func action(type: UInt16, index: UInt32, phase: UInt32, payload: [(String, Data)])
-            -> [(String, Data)]
-        {
+    /// The walk package runs from phase 0 to `walkEndPhase`.
+    static func packageScene(walkEndPhase: UInt32 = 0) throws -> CatalogScene {
+        func action(
+            type: UInt16, index: UInt32, phase: UInt32, end: UInt32? = nil,
+            payload: [(String, Data)]
+        ) -> [(String, Data)] {
             [
                 ("ANAM", ESMFixture.u16(type)),
                 ("ALID", ESMFixture.i32(0)),
                 ("INAM", ESMFixture.u32(index)),
                 ("SNAM", ESMFixture.u32(phase)),
-                ("ENAM", ESMFixture.u32(phase))
+                ("ENAM", ESMFixture.u32(end ?? phase))
             ] + payload + [("ANAM", Data())]
         }
         func phase(_ name: String) -> [(String, Data)] {
@@ -151,7 +153,10 @@ extension SceneFixture {
         }
         let fields: [(String, Data)] = [("EDID", ESMFixture.zstring("WalkScene"))]
             + phase("Walk") + phase("Ask") + phase("Answer") + [("ALID", ESMFixture.i32(0))]
-            + action(type: 1, index: 1, phase: 0, payload: [("PNAM", ESMFixture.u32(walkPackage))])
+            + action(
+                type: 1, index: 1, phase: 0, end: walkEndPhase,
+                payload: [("PNAM", ESMFixture.u32(walkPackage))]
+            )
             + action(type: 0, index: 2, phase: 1, payload: [
                 ("DATA", ESMFixture.u32(DialogueRuntimeFixture.ordinaryTopic))
             ])

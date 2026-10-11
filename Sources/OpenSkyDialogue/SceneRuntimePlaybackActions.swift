@@ -124,8 +124,9 @@ extension SceneRuntime.Playback {
         )
     }
 
+    /// A done package action keeps its actor until its end phase ends.
     mutating func complete(_ index: UInt32) {
-        releaseAction(index)
+        runtime.pendingLines.lines[owner(index)] = nil
         state = SceneRuntimeState(
             phase: state.phase, phaseEntered: state.phaseEntered,
             running: state.running.filter { $0.action != index },
@@ -141,6 +142,16 @@ extension SceneRuntime.Playback {
         let action = scene.actions[Int(index)]
         guard case .package = action.payload, let actor = actor(of: action) else { return }
         runtime.host?.releaseScenePackages(actor: actor, owner: owner(index))
+    }
+
+    /// Releases the actors of the done actions that end at `phase`, or, with `through`,
+    /// at any phase from `phase` on.
+    mutating func releaseHeldActions(endingAt phase: UInt32, through: Bool = false) {
+        for index in state.completed {
+            let end = Self.endPhase(scene.actions[Int(index)])
+            guard end == phase || (through && end > phase) else { continue }
+            releaseAction(index)
+        }
     }
 
     mutating func completeDoneActions() {

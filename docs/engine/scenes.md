@@ -113,6 +113,12 @@ package is done when the actor arrives. Sandbox, wander, sleep, and eat never en
 phase needs completion conditions. A procedure that OpenSky cannot run yet counts as done at
 once. This is OpenSky's choice, so that a scene with such a package does not wait forever.
 
+[WARNING] A done package action keeps its actor until its end phase ends, or until the scene
+ends. The Creation Kit does not say this; it is OpenSky's reading. Without it, an actor who sits
+down in an early phase stands up and walks back to its schedule before the scene moves on. In
+`MQ101Scene4`, the first prisoner kneels at the block in one phase, and the action holds them
+for two more.
+
 ### Line length
 
 A line lasts as long as its voice file, as in the game. The file is

@@ -83,6 +83,7 @@ extension SceneRuntime {
             let index = state.phase
             guard evaluator.evaluate(scene.phases[Int(index)].startConditions).isTrue else {
                 note(.phaseSkipped(index))
+                releaseHeldActions(endingAt: index)
                 state.phase += 1
                 return false
             }
@@ -115,6 +116,7 @@ extension SceneRuntime {
             {
                 complete(progress.action)
             }
+            releaseHeldActions(endingAt: index)
             runPhaseFragments(index, flag: 0x02)
             note(.phaseCompleted(index, byConditions: byConditions))
             state.phase += 1
@@ -132,6 +134,7 @@ extension SceneRuntime {
             for progress in state.running {
                 releaseAction(progress.action)
             }
+            releaseHeldActions(endingAt: state.phase, through: true)
             runFragment(slot: 0x02)
             note(.ended(reason))
             let stopsQuest = scene.flags.contains(.stopQuestOnEnd)
