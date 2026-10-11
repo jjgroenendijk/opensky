@@ -73,6 +73,10 @@ public protocol PapyrusWorldBridge:
     /// FormIDs. Nil when `key` is no form list or the session has no FLST data.
     func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]?
 
+    /// Whether the `KWDA` of `form`, or of its base when it is placed, holds `keyword`.
+    /// Nil without keyword data or when either form is unknown.
+    func formHasKeyword(_ form: ReferenceKey, keyword: ReferenceKey) -> Bool?
+
     /// Writes one component through `WorldStateStore.set(_:for:in:)`,
     /// attributing it to the reference's resident cell when there is one.
     ///

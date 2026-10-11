@@ -4,7 +4,6 @@
 
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -55,23 +54,12 @@ extension AIWorldAdapter {
         }
     }
 
-    /// `KWDA` of the actor's base. The cell build reads bases in load-order space.
+    /// `KWDA` of the actor's base, as the Papyrus `HasKeyword` reads it.
     private func actorHasKeyword(_ actor: ReferenceKey, _ keyword: FormID) -> Bool? {
         guard
-            let store = (game.worldData as? LocationDataProviding)?.locationStore?.keywords,
-            let base = game.streamer?.referenceEntry(key: actor)?.placedActor?.base
+            let bridge = game.scripts.bridge,
+            let keywordKey = bridge.referenceKey(forFormID: keyword)
         else { return nil }
-        let plugin = if case let .plugin(name, _) = actor {
-            name
-        } else {
-            FormIDResolver.loadOrderSpaceName
-        }
-        guard
-            let resolvedBase = store.resolvedID(base, fromPlugin: plugin),
-            let resolvedKeyword = store.resolvedID(
-                keyword, fromPlugin: FormIDResolver.loadOrderSpaceName
-            )
-        else { return nil }
-        return store.hasKeyword(resolvedKeyword, on: resolvedBase)
+        return bridge.formHasKeyword(actor, keyword: keywordKey)
     }
 }

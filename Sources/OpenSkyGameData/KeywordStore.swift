@@ -55,7 +55,8 @@ nonisolated public struct KeywordStore: Sendable {
     /// Whether `form` carries `keyword` in its winning KWDA definition. Nil
     /// distinguishes a dangling form or keyword from a real non-membership.
     public func hasKeyword(_ keyword: ResolvedFormID, on form: ResolvedFormID) -> Bool? {
-        guard self.keyword(keyword) != nil else { return nil }
+        // The table's id spells the plugin name as the load order does.
+        guard let keyword = self.keyword(keyword)?.id else { return nil }
         guard case let .record(indexed) = index.lookup(form) else { return nil }
         guard let fields = try? indexed.record.fields() else { return nil }
         var list = KeywordList()

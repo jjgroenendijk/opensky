@@ -110,6 +110,7 @@ final class ScriptWorldAdapter {
         bridge.casterRuntime = { [weak game] in game?.magic.caster }
         bridge.magicEffectStore = (provider as? MagicDataProviding)?.magicEffectStore
         bridge.formListStore = (provider as? FactionDataProviding)?.formListStore
+        bridge.keywordStore = (provider as? LocationDataProviding)?.locationStore?.keywords
         bridge.dispelEffects = { [weak game] holder, predicate in
             game?.magic.withEffects { $0.dispel(on: holder, where: predicate) } ?? 0
         }

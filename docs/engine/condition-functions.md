@@ -86,7 +86,9 @@ Keyword, form-list, and location functions, with their use count in the active l
 | 605 | `LocAliasIsLocation` | 232 | 603 | `IsInSameCurrentLocAsRef` | 0 |
 | 565 | `GetIsEditorLocation` | 165 | 181 | `HasSameEditorLocAsRefAlias` | 150 |
 
-`HasKeyword` and `IsInList` test the base object. Form lists expand nested lists. Location
+`HasKeyword` and `IsInList` test the base object. The keyword data indexes the base types that
+carry `KWDA`: actors (`NPC_`, `RACE`), activators, furniture, flora, and items. The Papyrus
+`Form.HasKeyword` reads the same data. Form lists expand nested lists. Location
 checks walk the parent chain and stop on a loop.
 
 ## Time, quests, and enable state

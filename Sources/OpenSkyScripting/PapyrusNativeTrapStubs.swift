@@ -43,7 +43,6 @@ extension PapyrusNativeFunctions {
         TrapStub("Sound", "Play", .integer(0)),
         TrapStub("EffectShader", "Play", .none),
         TrapStub("Game", "ShakeController", .none),
-        TrapStub("Form", "HasKeyword", .boolean(false)),
         TrapStub("FormList", "HasForm", .boolean(false)),
         TrapStub("Actor", "GetEquippedItemType", .integer(0)),
         TrapStub("Cell", "IsAttached", .boolean(true))
