@@ -220,17 +220,13 @@ nonisolated public struct DrawGroup: Sendable {
     }
 
     public var drawsBlended: Bool {
-        Self.drawsBlended(mesh: mesh, material: material, faceMorph: faceMorph)
+        Self.drawsBlended(material)
     }
 
-    /// Blend without an alpha test, on a rigid shape. Foliage and hair often
-    /// set both, and keep the depth-writing alpha-test pass; only rigid shapes
-    /// have a blended pipeline.
-    static func drawsBlended(
-        mesh: RenderMesh, material: RenderMaterial, faceMorph: FaceMorphBuffer?
-    ) -> Bool {
-        material.alphaBlend && material.alphaTestThreshold == nil && !mesh.isSkinned
-            && faceMorph == nil
+    /// Blend without an alpha test, such as a beard or a waterfall. Foliage and
+    /// hair often set both, and keep the depth-writing alpha-test pass.
+    static func drawsBlended(_ material: RenderMaterial) -> Bool {
+        material.alphaBlend && material.alphaTestThreshold == nil
     }
 }
 
@@ -379,9 +375,7 @@ nonisolated public struct RenderScene: Sendable {
                     continue
                 }
                 let faceMorph = placement.faceMorphs[ObjectIdentifier(mesh)]
-                let blended = DrawGroup.drawsBlended(
-                    mesh: mesh, material: material, faceMorph: faceMorph
-                )
+                let blended = DrawGroup.drawsBlended(material)
                 let modelMatrix = placement.transform * mesh.localTransform
                 var instance = DrawInstance(
                     modelMatrix: modelMatrix,

@@ -1,4 +1,4 @@
-// Rigid shapes with a blending alpha property: stream water, foam, waterfalls.
+// Shapes with a blending alpha property: stream water, foam, waterfalls, beards, brows.
 // They draw after the cell water plane, farthest group first, and read depth
 // without writing it, so a surface behind another one still shows through.
 
@@ -11,8 +11,8 @@ extension Renderer {
         let order = Self.blendedDrawOrder(groups, eye: freeFlyCamera.position)
         guard !order.isEmpty else { return }
         let pipelines = GroupPipelines(
-            staticMesh: blendedPipeline, skinned: skinnedAlphaTestPipeline,
-            morphedSkinned: morphedSkinnedAlphaTestPipeline
+            staticMesh: blendedPipeline, skinned: skinnedBlendedPipelines.skinned,
+            morphedSkinned: skinnedBlendedPipelines.morphed
         ).resolved(debug: isRenderDebugActive ? debugPipelines : nil)
         let layers = effectiveRenderLayers
         state.cullList = .alphaTested
