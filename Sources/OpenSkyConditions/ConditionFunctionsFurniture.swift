@@ -25,11 +25,12 @@ nonisolated public struct FurnitureUse: Equatable, Sendable {
     /// The one entry the actor uses, in xEdit's entry enum: `0x10000` front,
     /// `0x20000` behind, `0x40000` right, `0x80000` left, `0x100000` up.
     public let entry: UInt32
-    /// The furniture's base record, whose keywords the actor also has while seated.
-    public let furniture: ResolvedFormID?
+    /// The furniture reference. An idle tree runs its furniture checks on it as the
+    /// Target, such as `HasKeyword FurnitureExecutioner` on the chopping block.
+    public let furniture: ReferenceKey?
 
     public init(
-        sitState: SitState, animationType: UInt32, entry: UInt32, furniture: ResolvedFormID?
+        sitState: SitState, animationType: UInt32, entry: UInt32, furniture: ReferenceKey?
     ) {
         self.sitState = sitState
         self.animationType = animationType
@@ -124,17 +125,5 @@ nonisolated extension ConditionFunctions {
                 let snapshot = call
                 return call.referenceKey().map { value(furniture.uses[$0], snapshot) }
             })
-    }
-
-    /// Whether the furniture `actor` sits in has `keyword`. The game's idle trees test
-    /// furniture keywords such as `FurnitureExecutioner` on the seated actor.
-    static func furnitureHasKeyword(
-        _ keyword: ResolvedFormID, actor: ReferenceKey, in call: ConditionCall
-    ) -> Bool {
-        guard
-            let furniture = call.context.furniture.uses[actor]?.furniture,
-            let store = call.context.data.keywords
-        else { return false }
-        return store.hasKeyword(keyword, on: furniture) == true
     }
 }

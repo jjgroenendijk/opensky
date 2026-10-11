@@ -176,9 +176,9 @@ Elsewhere they fail with the furniture reason.
 - `GetGraphVariableInt` names its variable in `CIS1`. An NPC runs no live graph in OpenSky, so
   each of its variables reads 0; the furniture tree tests `bInJumpState` == 0 this way. The
   player's graph is not read yet, so the function fails for the player.
-- [WARNING] While an actor sits, `HasKeyword` also sees the furniture's keywords. The
-  chopping block's idle tree tests `FurnitureExecutioner`, a keyword of the block, on the
-  seated actor. This is OpenSky's reading of the data.
+- While an actor sits, the furniture reference is the condition Target (run-on 1). The
+  chopping block's idle tree runs `HasKeyword FurnitureExecutioner` on the Target, and only
+  the block has that keyword.
 
 ## Factions and crime
 

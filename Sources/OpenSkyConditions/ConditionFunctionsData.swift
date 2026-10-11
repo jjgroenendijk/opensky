@@ -33,7 +33,6 @@ nonisolated extension ConditionFunctions {
                 let keyword = store.resolvedID(parameter.asFormID, fromPlugin: sourcePlugin),
                 store.keyword(keyword) != nil
             else { return .failure(.unavailableData(.keyword)) }
-            let snapshot = call
             return call.reference().flatMap { entry in
                 guard
                     let base = store.resolvedID(
@@ -42,9 +41,7 @@ nonisolated extension ConditionFunctions {
                     ),
                     let answer = store.hasKeyword(keyword, on: base)
                 else { return .failure(.unavailableData(.keyword)) }
-                return .success(Self.isTrue(
-                    answer || Self.furnitureHasKeyword(keyword, actor: entry.key, in: snapshot)
-                ))
+                return .success(Self.isTrue(answer))
             }
         })
 

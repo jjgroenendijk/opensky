@@ -144,8 +144,8 @@ functions ([Condition functions](/engine/condition-functions.md#furniture)):
 - `IsFurnitureAnimType` is the marker's animation type: 1 sit, 2 lay, 4 lean.
 - `IsFurnitureEntryType` is the one entry the actor uses. It is the allowed side of the marker
   that faces the actor most; "up" counts only when no side is allowed.
-- `HasKeyword` also sees the furniture's own keywords. The executioner tree tests
-  `FurnitureExecutioner` on the seated actor, and only the block has it.
+- The furniture reference is the Target. The executioner tree runs
+  `HasKeyword FurnitureExecutioner` on the Target, and only the block has that keyword.
 
 Example: on the chopping block, the prisoner's chain is `ActivateRootChar` > `Chair` >
 `ExecutioneeRoot` > `IdleExecutioneeIdle`. Its event enters the executionee machine, which plays

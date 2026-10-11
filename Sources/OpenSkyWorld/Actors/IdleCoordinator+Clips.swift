@@ -22,15 +22,21 @@ extension IdleCoordinator.Playing {
 }
 
 extension IdleCoordinator {
-    func selector(for actor: ReferenceKey) -> IdleSelector {
+    func conditionContext(for actor: ReferenceKey) -> ConditionContext {
         var context = world?.idleConditionContext() ?? ConditionContext()
         context.subject = actor
         context.furniture = FurnitureConditionResolution(uses: furnitureUses, isAvailable: true)
+        // A furniture idle tests the furniture as its Target, such as its keywords.
+        context.target = furnitureUses[actor]?.furniture
         // Only the player runs a live graph; another actor's variables read 0.
         if actor != .player {
             context.graphVariables.values[actor] = [:]
         }
-        let base = context
+        return context
+    }
+
+    func selector(for actor: ReferenceKey) -> IdleSelector {
+        let base = conditionContext(for: actor)
         let project = graphProject(of: actor)
         let check: IdleSelector.Check = { idle in
             // A tree such as `ActionActivate` mixes idles of several graphs, like a lever's.
