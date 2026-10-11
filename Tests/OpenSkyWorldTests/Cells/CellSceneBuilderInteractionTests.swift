@@ -78,6 +78,21 @@ extension CellSceneBuilderTests {
         // A z turn of a quarter maps model +x onto world -y, as the cell build places meshes.
         #expect(simd_distance(seats[1].position, [100, -10, 0]) < 0.01)
         #expect(abs(seats[1].heading - (.pi / 2 + 1)) < 0.0001)
+        #expect(seats[1].entryPoints == 2)
+    }
+
+    /// The actor uses the allowed side that faces it most; up only when no side is allowed.
+    @Test func aSeatEntryIsTheAllowedSideFacingTheActor() {
+        let seat = FurnitureSeat(
+            position: .zero, heading: 0, animationType: 1, keyword: nil, entryPoints: 0b0110
+        )
+        #expect(seat.entry(from: [5, 0, 0]) == 4)
+        #expect(seat.entry(from: [0, -5, 0]) == 2)
+        #expect(seat.entry(from: [0, 5, 0]) == 4)
+        let lift = FurnitureSeat(
+            position: .zero, heading: 0, animationType: 1, keyword: nil, entryPoints: 16
+        )
+        #expect(lift.entry(from: [5, 0, 0]) == 16)
     }
 
     private static var furnitureNIF: Data {

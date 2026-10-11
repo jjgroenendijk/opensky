@@ -2,8 +2,10 @@
 // there, and tell the furniture's scripts. See docs/engine/package-schedules.md,
 // "Furniture".
 
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
@@ -41,8 +43,15 @@ extension AIWorldAdapter {
     }
 
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat) {
+        let approach = packageActorPosition(actor) ?? seat.seat.position
         game.streamer?.restActor(actor, at: ReferenceTransformOverride(
             position: seat.seat.position, rotation: SIMD3(0, 0, seat.seat.heading)
+        ))
+        game.idleWorld.idles.enterFurniture(actor, use: FurnitureUse(
+            sitState: .readyToSit,
+            animationType: UInt32(seat.seat.animationType),
+            entry: UInt32(seat.seat.entry(from: approach)) << 16,
+            furniture: furnitureBase(seat.furniture)
         ))
         game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
     }
@@ -52,6 +61,19 @@ extension AIWorldAdapter {
         if seatHolders[key] == actor {
             seatHolders[key] = nil
         }
+        game.idleWorld.idles.leaveFurniture(actor)
+    }
+
+    /// The furniture's base record in load order, for its keywords.
+    private func furnitureBase(_ furniture: ReferenceKey) -> ResolvedFormID? {
+        guard
+            let store = (game.worldData as? LocationDataProviding)?.locationStore?.keywords,
+            let entry = game.streamer?.referenceEntry(key: furniture)
+        else { return nil }
+        return store.resolvedID(
+            ConditionFunctions.baseForm(of: entry),
+            fromPlugin: ConditionFunctions.basePlugin(of: furniture)
+        )
     }
 
     /// `KWDA` of the actor's base, as the Papyrus `HasKeyword` reads it.

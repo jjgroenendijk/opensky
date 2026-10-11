@@ -123,4 +123,17 @@ struct IdleCoreTests {
         )) == "AnimObjectLute on AnimObjectR")
         #expect(IdleReadout.markersText(for: .unavailable) == "Idle markers: unavailable")
     }
+
+    /// The `ActionActivate` tree holds the lever's idles beside the character's.
+    @Test func anIdleBelongsToTheGraphOfItsBehaviorFile() {
+        let character = "meshes\\actors\\character\\"
+        #expect(IdleCore.idle(
+            behaviorFile: "Actors\\Character\\Behaviors\\0_Master.hkx", belongsTo: character
+        ))
+        #expect(!IdleCore.idle(
+            behaviorFile: "Furniture\\Clutter\\LeverAnimating\\Behaviors\\LeverPushBehavior.hkx",
+            belongsTo: character
+        ))
+        #expect(IdleCore.idle(behaviorFile: nil, belongsTo: character))
+    }
 }

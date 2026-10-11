@@ -62,12 +62,30 @@ public final class IdleCoordinator {
         var playback: ObjectIdentifier?
         /// Annotations still to send, as absolute animation times.
         var events: [IdleAnimationEvent] = []
+        /// The clip's annotations and triggers inside one loop, which a held idle repeats.
+        var marks: [IdleAnimationEvent] = []
+        /// Clips still to play after this one, in order.
+        var followUps: [Segment] = []
+        /// The last clip of the chain holds until another idle replaces it.
+        var holdsLast = false
+    }
+
+    /// One loaded clip of an idle's chain and the triggers its generator raises.
+    struct Segment {
+        let clip: ActorAnimationClip
+        let triggers: [BehaviorClipTriggerEvent]
     }
 
     private(set) var store: IdleStore?
     private var plans: IdlePlanLoader?
     var clips: ActorClipLoader?
     var sessions: [ReferenceKey: Session] = [:]
+    /// Where each actor's graph is after its last idle, so the next event starts there.
+    var positions: [ReferenceKey: BehaviorStatePosition] = [:]
+    /// Actors on a furniture marker, for the furniture condition functions.
+    var furnitureUses: [ReferenceKey: FurnitureUse] = [:]
+    /// Actors that take each owner's idle events too, in the order they were added.
+    var dependents: [ReferenceKey: [ReferenceKey]] = [:]
     var reports: [ReferenceKey: IdleReport] = [:]
     /// Markers an actor could not path to, so it does not retry every frame.
     private var unreachable: [ReferenceKey: Set<ReferenceKey>] = [:]
@@ -198,7 +216,9 @@ public final class IdleCoordinator {
             playing.events.removeFirst(due.count)
             session.playing = playing
             due.forEach { onAnimationEvent?(actor.key, $0.name) }
-            if now >= playing.end {
+            if now >= playing.end, !playing.followUps.isEmpty {
+                session.playing = nextSegment(after: playing, on: actor.key)
+            } else if now >= playing.end {
                 endIdle(of: actor.key)
                 session.playing = nil
             } else if
@@ -227,7 +247,10 @@ public final class IdleCoordinator {
         }
         select(at: marker, for: actor.key, now: now)
     }
+}
 
+/// Picking and playing an idle.
+extension IdleCoordinator {
     /// Runs the marker's selection for `actor` and plays the winner.
     @discardableResult
     func select(at marker: IdleMarkerPlacement, for actor: ReferenceKey, now: Float) -> IdleReport {
@@ -274,7 +297,7 @@ public final class IdleCoordinator {
         }
         let waiting = Waiting(selection: selection, source: source, timer: timer)
         let plan: IdlePlaybackPlan
-        switch plans.state(of: IdlePlanKey(chosen)) {
+        switch plans.state(of: IdlePlanKey(chosen, from: positions[actor])) {
         case let .ready(ready): plan = ready
         case .loading: return wait(waiting, on: actor, chosen: chosen, plan: nil)
         case let .failed(failure):
@@ -283,27 +306,38 @@ public final class IdleCoordinator {
                 chosen: chosen.record.editorID, plan: nil, seconds: 0, failure: failure.reason
             ), timer: timer, now: now)
         }
-        let playback = world?.actorPlayback(for: actor)
-        let skeleton = playback?.clip.skeletonMeshPath
+        let skeleton = world?.actorPlayback(for: actor)?.clip.skeletonMeshPath
             ?? (actor == .player ? Self.playerSkeletonPath : nil)
-        var clipState: AssetLoadState<ActorAnimationClip>?
-        if let path = plan.clipPath, let skeleton {
-            clipState = clip(path, skeleton: skeleton)
-        }
-        if case .loading = clipState {
+        let clipStates = skeleton.map { skeleton in
+            plan.clipPaths.map { clip($0, skeleton: skeleton) }
+        } ?? []
+        if clipStates.contains(where: Self.isLoading) {
             return wait(waiting, on: actor, chosen: chosen, plan: plan)
         }
         var failure: String?
         var seconds: Float = 0
-        if let clip = clipState?.value {
-            seconds = IdleCore.holds(plan, properties: chosen.record.properties)
-                ? .infinity
-                : IdleCore.playSeconds(
-                    clipDuration: clip.animation.duration,
+        if let first = clipStates.first??.value {
+            let chain = Self.segments(of: plan, clips: clipStates.dropFirst().map { $0?.value })
+            let holds = IdleCore.holds(plan, properties: chosen.record.properties)
+            seconds = chain.isEmpty
+                ? (holds ? .infinity : IdleCore.playSeconds(
+                    clipDuration: first.animation.duration,
                     properties: chosen.record.properties,
                     random: random
-                )
-            start(clip, plan: plan, on: actor, for: seconds, now: now)
+                ))
+                : first.animation.duration
+            start(
+                Chain(
+                    first: Segment(clip: first, triggers: plan.triggers),
+                    followUps: chain, holdsLast: holds
+                ),
+                plan: plan, on: actor, for: seconds, now: now
+            )
+            positions[actor] = plan.position
+            if !chain.isEmpty {
+                seconds = holds ? .infinity : chain
+                    .reduce(seconds) { $0 + $1.clip.animation.duration }
+            }
         } else {
             failure = plan.clipPath == nil ? "no clip" : "the clip did not load"
         }
@@ -335,9 +369,11 @@ extension IdleCoordinator {
 
     /// The player has no playback; its clip only times the events.
     private func start(
-        _ clip: ActorAnimationClip, plan: IdlePlaybackPlan,
+        _ chain: Chain, plan: IdlePlaybackPlan,
         on actor: ReferenceKey, for seconds: Float, now: Float
     ) {
+        let segment = chain.first
+        let clip = segment.clip
         leaveState(of: actor, now: now)
         let playback = world?.actorPlayback(for: actor)
         playback?.play(clip, startingAt: now, forSeconds: seconds)
@@ -350,15 +386,18 @@ extension IdleCoordinator {
         }
         let held = !seconds.isFinite
         let duration = clip.animation.duration
+        let marks = Self.marks(of: segment)
+        let lastExit = held || !chain.followUps.isEmpty
         let events = IdleCore.playEvents(
-            annotations: clip.animation.annotations,
-            notify: held ? BehaviorStateNotify(enter: plan.notify.enter) : plan.notify,
+            marks: marks,
+            notify: lastExit ? BehaviorStateNotify(enter: plan.notify.enter) : plan.notify,
             clipDuration: duration, seconds: held ? duration : seconds
         ).map { IdleAnimationEvent(time: now + $0.time, name: $0.name) }
         sessions[actor, default: Session()].playing = Playing(
             clip: clip, start: now, end: now + seconds, hasProp: prop != nil,
             exitEvents: plan.notify.exit, loopEnd: held && duration > 0 ? now + duration : nil,
-            playback: playback.map(ObjectIdentifier.init), events: events
+            playback: playback.map(ObjectIdentifier.init), events: events, marks: marks,
+            followUps: chain.followUps, holdsLast: chain.holdsLast
         )
     }
 

@@ -20,6 +20,7 @@ private final class RecordingActorAI: PapyrusActorAIBridge {
     func setVehicle(_: ReferenceKey, vehicle _: ReferenceKey?) {}
     func tether(_: ReferenceKey, to _: ReferenceKey) {}
     func setPlayerAIDriven(_: Bool) {}
+    func linkDependentAnimation(_: ReferenceKey, to _: ReferenceKey, linked _: Bool) {}
 
     func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool {
         idles.append((idle, actor))

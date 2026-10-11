@@ -140,7 +140,7 @@ struct IdleRuntimeRealDataTests {
                 startIndex: 0, played: [], random: { _ in 0 }
             )
             #expect(selection.trace.count >= store.idles(of: marker).count)
-            let plan = selection.chosen.map(resolver.plan(for:))
+            let plan = selection.chosen.map { resolver.plan(for: $0) }
             selected += selection.chosen == nil ? 0 : 1
             log("\(marker.record.editorID ?? "?") for \(actor.key): "
                 + "\(selection.chosen?.record.editorID ?? "nothing"), "

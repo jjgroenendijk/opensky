@@ -30,7 +30,8 @@ nonisolated extension CellSceneBuilder {
                 position: SIMD3(world.x, world.y, world.z),
                 heading: ref.placement.rotation.z + marker.heading,
                 animationType: marker.animationType,
-                keyword: keywords[index]
+                keyword: keywords[index],
+                entryPoints: marker.entryPoints
             )
         }
     }

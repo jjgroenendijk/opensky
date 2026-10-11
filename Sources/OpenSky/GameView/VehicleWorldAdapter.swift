@@ -2,6 +2,7 @@
 // from the streamer, the world state, the idles, and the packages, and runs the
 // vehicle pass in the frame loop. See docs/engine/vehicles.md.
 
+import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -34,6 +35,9 @@ final class VehicleWorldAdapter {
         game.idleWorld.idles.onAnimationEvent = { [weak scripts, weak vehicles] actor, name in
             if name == VehicleCore.exitEvent {
                 vehicles?.detach(actor)
+            }
+            if name.caseInsensitiveCompare(IdleCore.killEvent) == .orderedSame {
+                scripts?.bridge?.killActor(actor, killer: nil)
             }
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
@@ -170,6 +174,14 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
 
     func playIdle(_ idle: ResolvedFormID, on actor: ReferenceKey) -> Bool {
         game.idleWorld.idles.fireIdle(idle, on: actor, ignoringConditions: true)?.chosen != nil
+    }
+
+    func linkDependentAnimation(_ dependent: ReferenceKey, to owner: ReferenceKey, linked: Bool) {
+        if linked {
+            game.idleWorld.idles.addDependent(dependent, of: owner)
+        } else {
+            game.idleWorld.idles.removeDependent(dependent, of: owner)
+        }
     }
 
     func setPlayerAIDriven(_ driven: Bool) {

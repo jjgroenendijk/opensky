@@ -2,6 +2,7 @@
 // view-ray target and emits a typed event when the use key activates it.
 // UI and future Papyrus consumers subscribe without owning targeting rules.
 
+import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import simd
@@ -104,12 +105,36 @@ nonisolated public struct FurnitureSeat: Equatable, Sendable {
     public let animationType: UInt16
     /// FURN `FNMK`: only an actor with this keyword may use the seat.
     public let keyword: FormID?
+    /// The marker's entry bits: 1 front, 2 behind, 4 right, 8 left, 16 up.
+    public var entryPoints: UInt16 = 0
 
-    public init(position: SIMD3<Float>, heading: Float, animationType: UInt16, keyword: FormID?) {
+    public init(
+        position: SIMD3<Float>, heading: Float, animationType: UInt16, keyword: FormID?,
+        entryPoints: UInt16 = 0
+    ) {
         self.position = position
         self.heading = heading
         self.animationType = animationType
         self.keyword = keyword
+        self.entryPoints = entryPoints
+    }
+
+    /// The one entry bit an actor at `point` uses: the allowed side that faces it most.
+    /// Up is used only when no side is allowed. The game's own choice is not documented.
+    public func entry(from point: SIMD3<Float>) -> UInt16 {
+        let forward = SIMD2(sin(heading), cos(heading))
+        let right = SIMD2(forward.y, -forward.x)
+        let offset = SIMD2(point.x - position.x, point.y - position.y)
+        let sides: [(bit: UInt16, direction: SIMD2<Float>)] = [
+            (1, forward), (2, -forward), (4, right), (8, -right)
+        ]
+        let allowed = sides.filter { entryPoints & $0.bit != 0 }
+        guard
+            let best = allowed.max(by: {
+                simd_dot($0.direction, offset) < simd_dot($1.direction, offset)
+            })
+        else { return entryPoints & 16 }
+        return best.bit
     }
 }
 

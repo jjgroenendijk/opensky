@@ -1,5 +1,6 @@
 // The idle selector, clip cache, and report book-keeping of `IdleCoordinator`.
 
+import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
@@ -12,8 +13,8 @@ extension IdleCoordinator.Playing {
     mutating func repeatLoops(until now: Float) {
         let duration = clip.animation.duration
         while let loopStart = loopEnd, loopStart <= now, duration > 0 {
-            events += IdleCore.annotationEvents(
-                clip.animation.annotations, clipDuration: duration, seconds: duration
+            events += IdleCore.markEvents(
+                marks, clipDuration: duration, seconds: duration
             ).map { IdleAnimationEvent(time: loopStart + $0.time, name: $0.name) }
             loopEnd = loopStart + duration
         }
@@ -24,8 +25,18 @@ extension IdleCoordinator {
     func selector(for actor: ReferenceKey) -> IdleSelector {
         var context = world?.idleConditionContext() ?? ConditionContext()
         context.subject = actor
+        context.furniture = FurnitureConditionResolution(uses: furnitureUses, isAvailable: true)
+        // Only the player runs a live graph; another actor's variables read 0.
+        if actor != .player {
+            context.graphVariables.values[actor] = [:]
+        }
         let base = context
+        let project = graphProject(of: actor)
         let check: IdleSelector.Check = { idle in
+            // A tree such as `ActionActivate` mixes idles of several graphs, like a lever's.
+            if let project, !IdleCore.idle(behaviorFile: idle.fileName, belongsTo: project) {
+                return "behavior graph"
+            }
             var evaluator = ConditionEvaluator(context: base)
             return evaluator.firstFailure(in: idle.conditions).map(evaluator.functionName(of:))
         }
@@ -33,6 +44,17 @@ extension IdleCoordinator {
             return IdleSelector(children: { _ in [] }, check: check)
         }
         return IdleSelector(store: store, check: check)
+    }
+
+    /// The project folder of the actor's graph, read from its skeleton path:
+    /// `meshes\actors\character\` for a human.
+    func graphProject(of actor: ReferenceKey) -> String? {
+        let skeleton = world?.actorPlayback(for: actor)?.clip.skeletonMeshPath
+            ?? (actor == .player ? Self.playerSkeletonPath : nil)
+        let path = IdlePlaybackResolver.normalized(skeleton ?? "")
+        guard let range = path.range(of: "character assets\\") else { return nil }
+        let folder = String(path[..<range.lowerBound])
+        return folder.hasPrefix("meshes\\") ? folder : "meshes\\" + folder
     }
 
     static func attachment(_ prop: IdleProp) -> ActorPropAttachment? {
@@ -43,6 +65,7 @@ extension IdleCoordinator {
     /// Drops the prop of the idle that ends. A finite clip retires on its own; a held
     /// one is stopped.
     func endIdle(of actor: ReferenceKey) {
+        positions[actor] = nil
         guard let playing = sessions[actor]?.playing else { return }
         if !playing.end.isFinite {
             world?.actorPlayback(for: actor)?.endOverride()
