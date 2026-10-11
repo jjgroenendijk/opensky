@@ -17,17 +17,19 @@ nonisolated public struct PlayerRigVisibility: Equatable, Sendable {
     /// The rig policy for `mode`. `armsEnabled` is the panel toggle. In a conversation
     /// the arms hide, and a first-person body stays hidden: the eye sits just behind
     /// the head, so the head and helmet would fill the view, and the game hides them too.
+    /// A camera that frames the player, as the race menu's does, draws the body.
     public static func resolve(
         mode: CameraMovementMode,
         hasBody: Bool,
         hasArms: Bool,
         armsEnabled: Bool = true,
-        dialogueCamera: Bool = false
+        dialogueCamera: Bool = false,
+        framesPlayer: Bool = false
     ) -> PlayerRigVisibility {
         // Fly draws the body so a developer can fly around the character and
         // look at it; first person hides it because the eye is inside its head.
         let firstPerson = mode == .walk && !dialogueCamera
-        let bodyVisible = hasBody && mode != .walk
+        let bodyVisible = hasBody && (mode != .walk || framesPlayer)
         return PlayerRigVisibility(
             drawsBody: bodyVisible,
             castsBodyShadow: hasBody && (mode.isPlayerControlled || bodyVisible),

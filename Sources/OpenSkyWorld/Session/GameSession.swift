@@ -166,7 +166,8 @@ public final class GameSession: RenderFrameDriver {
             hasBody: playerBody != nil,
             hasArms: playerFirstPersonRig != nil,
             armsEnabled: firstPersonArmsEnabled,
-            dialogueCamera: renderer.isDialogueCameraEngaged
+            dialogueCamera: renderer.isDialogueCameraEngaged,
+            framesPlayer: renderer.isDialogueCameraFramingPlayer
         )
     }
 

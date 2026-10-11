@@ -2,6 +2,7 @@
 // head every frame, because the head moves. The speaker focus that holds the
 // speaker still is a `DialogueCoordinator` call. See docs/engine/dialogue-camera.md.
 
+import Foundation
 import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
@@ -28,6 +29,10 @@ final class DialogueCameraController {
     /// nobody is.
     func refreshFocus() {
         guard let renderer = game.renderer else { return }
+        if game.raceMenu.isOpen {
+            renderer.setDialogueCameraFocus(Self.portrait(of: renderer))
+            return
+        }
         guard
             let speaker = speaker(),
             let head = game.dialogueWorld.headPosition(of: speaker)
@@ -38,6 +43,17 @@ final class DialogueCameraController {
         }
         renderer.setDialogueCameraFocus(DialogueCameraFocus(headPosition: head))
         game.dialogue.focus(on: speaker, playerEye: renderer.playerEyePosition)
+    }
+
+    /// The race menu shows the player's face from the front, at the player's eye height.
+    /// [WARNING] The game's race menu camera is not documented; this reuses the framing.
+    static func portrait(of renderer: Renderer) -> DialogueCameraFocus {
+        let head = renderer.playerEyePosition
+        let yaw = renderer.freeFlyCamera.yaw
+        let forward = SIMD3<Float>(cosf(yaw), sinf(yaw), 0)
+        return DialogueCameraFocus(
+            headPosition: head, viewpoint: head + forward, framesPlayer: true
+        )
     }
 
     /// The conversation outranks the force toggle, so forcing the camera and

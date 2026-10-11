@@ -82,4 +82,15 @@ struct PlayerRigVisibilityTests {
         #expect(!off.drawsBody)
         #expect(off.castsBodyShadow)
     }
+
+    /// A camera that frames the player, as the race menu's does, shows the body in
+    /// first person and hides the arms.
+    @Test
+    func aCameraOnThePlayerDrawsTheBodyInFirstPerson() {
+        let portrait = PlayerRigVisibility.resolve(
+            mode: .walk, hasBody: true, hasArms: true, dialogueCamera: true, framesPlayer: true
+        )
+        #expect(portrait.drawsBody)
+        #expect(!portrait.drawsArms)
+    }
 }
