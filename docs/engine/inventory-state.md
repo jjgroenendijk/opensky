@@ -109,3 +109,28 @@ Equipping moves nothing between owners, so carried weight and value do not chang
 still carried. The write belongs to the owner's cell, so only that cell rebuilds, and the rebuilt
 actor resolves its appearance from the equipped set instead of its default outfit
 ([actor resolution](/engine/actor-resolution.md)). The player uses the same API.
+
+Removing the last copy of a worn item also unequips it. An owner never wears what it does not hold.
+
+## Script item natives
+
+Papyrus scripts change inventories through `AddItem`, `RemoveItem`, `RemoveAllItems`,
+`GetItemCount`, `EquipItem`, `UnequipItem`, and `SetOutfit`. The behaviour follows the Creation Kit
+wiki pages for `ObjectReference Script` and `Actor Script`. The receiver can be the player, a placed
+actor, or any other placed reference, which then holds items as a container.
+
+- `RemoveItem` takes at most what is held. A request for more is not an error.
+- `RemoveItem` and `RemoveAllItems` move the items into the reference in their container argument,
+  when the script names one. Otherwise the items are gone.
+- `EquipItem` gives the actor one copy first when it holds none. This is the one place an item is
+  equipped "from nowhere". The wiki page says the game does the same, and the opening relies on
+  it: stage 10 of `MQ101` removes all the player's items, then equips the prisoner clothes.
+- OpenSky does not track quest items, so `RemoveAllItems` removes them too.
+- The `abSilent` flags do nothing, because OpenSky shows no item messages yet.
+
+`SetOutfit` replaces an actor's outfit. The pieces of the actor's default outfit (`DOFT`) leave its
+inventory, then one of each new piece is given and worn. A leveled entry resolves with the same
+fixed pick as a default outfit. The equip-slot rules unequip anything else the new pieces cover.
+OpenSky differs from the game in two ways. It does not remember an outfit a script set, so a
+second `SetOutfit` removes only the default outfit's pieces. Sleep outfits are not modelled, so a
+call with `abSleepOutfit` set does nothing.

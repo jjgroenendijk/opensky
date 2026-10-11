@@ -37,7 +37,6 @@ extension PapyrusNativeFunctions {
         TrapStub("ObjectReference", "GetParentCell", .none),
         TrapStub("ObjectReference", "SetNoFavorAllowed", .none),
         TrapStub("ObjectReference", "IsFurnitureInUse", .boolean(false)),
-        TrapStub("ObjectReference", "AddItem", .none),
         TrapStub("ObjectReference", "InterruptCast", .none),
         TrapStub("ObjectReference", "Say", .none),
         TrapStub("Weapon", "Fire", .none),

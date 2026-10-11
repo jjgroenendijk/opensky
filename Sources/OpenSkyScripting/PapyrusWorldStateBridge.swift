@@ -132,6 +132,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var presenter: (any PapyrusPresenting)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
+    /// Inventories and equipment, for the item natives.
+    public weak var inventory: (any PapyrusInventoryBridge)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
