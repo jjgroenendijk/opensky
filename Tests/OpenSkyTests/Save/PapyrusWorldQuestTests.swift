@@ -53,6 +53,15 @@ struct PapyrusWorldQuestTests {
         #expect(session.dispatch.notes.filter { $0 == "quest.oninit" }.count == 1)
     }
 
+    /// A story-manager start attaches the one quest it started.
+    @Test func attachingOneQuestCreatesItsInstances() throws {
+        let quest = try PapyrusQuestFixture.quest()
+        let session = PapyrusQuestFixture.session(quest: quest, attachQuests: false)
+        #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 2)
+        #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 0)
+        #expect(session.world.questInstanceKeys.count == 2)
+    }
+
     /// A script that casts a stopped quest to its script type reaches the quest's
     /// script, as in the game, where quest scripts exist whether the quest runs or not.
     @Test func castingAStoppedQuestAttachesItsScripts() throws {

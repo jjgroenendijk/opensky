@@ -203,7 +203,7 @@ extension StoryWorldAdapter: QuestStarting {
             deferredStarts?.append(quest)
             return
         }
-        game.scripts.bridge?.attachRunningQuestScripts()
+        game.scripts.bridge?.attachScripts(ofQuest: quest)
         finishStart(quest)
     }
 }
