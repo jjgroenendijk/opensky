@@ -146,6 +146,9 @@ functions ([Condition functions](/engine/condition-functions.md#furniture)):
   that faces the actor most; "up" counts only when no side is allowed.
 - The furniture reference is the Target. The executioner tree runs
   `HasKeyword FurnitureExecutioner` on the Target, and only the block has that keyword.
+- The tree mixes idles of other graphs, such as the lever's `PlayerLeverActivate`. An idle
+  plays only on the graph whose project folder holds its file. The actor's project is the folder
+  above its skeleton's assets folder, so `character assets female\` is a human too.
 
 Example: on the chopping block, the prisoner's chain is `ActivateRootChar` > `Chair` >
 `ExecutioneeRoot` > `IdleExecutioneeIdle`. Its event enters the executionee machine, which plays

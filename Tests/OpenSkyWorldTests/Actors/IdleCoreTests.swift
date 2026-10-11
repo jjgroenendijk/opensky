@@ -136,4 +136,18 @@ struct IdleCoreTests {
         ))
         #expect(IdleCore.idle(behaviorFile: nil, belongsTo: character))
     }
+
+    @Test func theGraphProjectIsTheFolderAboveTheSkeletonAssets() {
+        let character = "meshes\\actors\\character\\"
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "Meshes\\Actors\\Character\\Character Assets\\skeleton.nif"
+        ) == character)
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "actors\\character\\character assets female\\skeleton_female.nif"
+        ) == character)
+        #expect(IdleCore.graphProject(
+            skeletonMeshPath: "meshes\\actors\\canine\\character assets wolf\\skeleton.nif"
+        ) == "meshes\\actors\\canine\\")
+        #expect(IdleCore.graphProject(skeletonMeshPath: "meshes\\clutter\\bucket.nif") == nil)
+    }
 }

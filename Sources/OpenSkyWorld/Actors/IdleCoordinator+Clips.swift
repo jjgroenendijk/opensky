@@ -57,10 +57,7 @@ extension IdleCoordinator {
     func graphProject(of actor: ReferenceKey) -> String? {
         let skeleton = world?.actorPlayback(for: actor)?.clip.skeletonMeshPath
             ?? (actor == .player ? Self.playerSkeletonPath : nil)
-        let path = IdlePlaybackResolver.normalized(skeleton ?? "")
-        guard let range = path.range(of: "character assets\\") else { return nil }
-        let folder = String(path[..<range.lowerBound])
-        return folder.hasPrefix("meshes\\") ? folder : "meshes\\" + folder
+        return skeleton.flatMap(IdleCore.graphProject(skeletonMeshPath:))
     }
 
     static func attachment(_ prop: IdleProp) -> ActorPropAttachment? {

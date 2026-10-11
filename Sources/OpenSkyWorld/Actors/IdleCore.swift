@@ -133,6 +133,18 @@ nonisolated public enum IdleCore {
         plan.loops && (properties?.loopMaximum ?? 0) == 0
     }
 
+    /// The project folder above the skeleton's assets folder, such as
+    /// `meshes\actors\character\` for `character assets female\skeleton_female.nif`.
+    public static func graphProject(skeletonMeshPath: String) -> String? {
+        let path = IdlePlaybackResolver.normalized(skeletonMeshPath)
+        let parts = path.split(separator: "\\")
+        guard let assets = parts.firstIndex(where: CreatureClipNames.isAssetsFolder) else {
+            return nil
+        }
+        let folder = parts[..<assets].joined(separator: "\\") + "\\"
+        return folder.hasPrefix("meshes\\") ? folder : "meshes\\" + folder
+    }
+
     /// An idle plays only on the graph whose project folder holds its behavior file
     /// (`DNAM`). An idle with no file only groups others, so every graph may use it.
     public static func idle(behaviorFile: String?, belongsTo project: String) -> Bool {

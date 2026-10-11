@@ -62,7 +62,7 @@ nonisolated enum CreatureClipNames {
 
     private static let variantPrefix = "character assets "
 
-    private static func isAssetsFolder(_ part: Substring) -> Bool {
+    static func isAssetsFolder(_ part: Substring) -> Bool {
         part == "characterassets" || part == "character assets" || part.hasPrefix(variantPrefix)
     }
 }
