@@ -213,6 +213,12 @@ that call the protocol, so `globalValue(for:)` ran the `write(_:for:)` witness a
 with `EXC_BAD_ACCESS`. Add a requirement at the end of a protocol, or touch its callers
 before a local build. A clean CI build is not affected.
 
+The same happens to a struct's layout. Observed 2026-10-11: a stored property added to
+`CellStreamerNPCMovementState` recompiled its own file but not `CellStreamer.swift`, which stores
+the struct in the class. The app read the new field past the old layout and crashed with
+`EXC_BAD_ACCESS` at a small address. Touch the files that store a struct whose stored properties
+changed before a local build.
+
 ## A stopped signing step leaves a `.cstemp` file
 
 Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`
