@@ -124,16 +124,33 @@ struct DetectionFormulaTests {
         func value(noticer: Float, sneaker: Float) -> Float {
             DetectionFormula.breakdown(
                 inputs: DetectionInputs(
-                    distance: 9999, traits: DetectionTargetTraits(sneakSkill: sneaker),
-                    noticerSkill: noticer
+                    distance: 0, hasLineOfSight: false,
+                    traits: DetectionTargetTraits(sneakSkill: sneaker), noticerSkill: noticer
                 ),
                 settings: settings
             ).value
         }
-        // Out of range, only the (Noticer - Sneaker) term is left beside the base.
-        #expect(value(noticer: 15, sneaker: 15) == -15)
-        #expect(value(noticer: 15, sneaker: 75) == -15 + (7.5 - 37.5))
-        #expect(value(noticer: 55, sneaker: 15) == -15 + (27.5 - 7.5))
+        // Silent and unseen at zero distance: base + Noticer + (Noticer - Sneaker).
+        #expect(value(noticer: 15, sneaker: 15) == -15 + 7.5)
+        #expect(value(noticer: 15, sneaker: 75) == -15 + 7.5 + (7.5 - 37.5))
+        #expect(value(noticer: 55, sneaker: 15) == -15 + 27.5 + (27.5 - 7.5))
+    }
+
+    @Test func nothingIsPerceivedPastTheMaximumDistanceWhateverTheSkillGap() {
+        let exteriorRange = DetectionFormula.maximumDistance(settings: settings, isExterior: true)
+        #expect(exteriorRange == 2500 * 2.1)
+        for distance in [exteriorRange, 9000, 14000, .infinity] {
+            let breakdown = DetectionFormula.breakdown(
+                inputs: DetectionInputs(
+                    distance: distance, gait: .sprint,
+                    traits: DetectionTargetTraits(actionSound: 100, sneakSkill: 0),
+                    noticerSkill: 100
+                ),
+                settings: settings
+            )
+            #expect(breakdown.value == -15)
+            #expect(!breakdown.isPerceiving)
+        }
     }
 
     @Test func muffleSilencesTheArmourButNotTheSteps() {

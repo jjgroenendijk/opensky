@@ -66,6 +66,11 @@ Both skill factors are a Sneak skill, clamped to `fSneakPerceptionSkillMin` to
 sneaker is the target. So a skilled sneaker lowers the value at every distance, through the last
 term.
 
+At or past the maximum distance the value is `fSneakBaseValue` alone, so nothing is perceived. The
+last term is not attenuated. Without this cut, an observer with a much higher Sneak skill than the
+target would detect it at any range. UESP does not say how the game limits this; OpenSky's rule
+follows the observed behaviour that nobody notices a target outside the detection range.
+
 Muffle follows UESP "Skyrim:Muffle (effect)" and not the shorter Sneak page: it scales the armour
 weight by `1 - muffle`, so a fully muffled target still makes the base noise of its steps. Muffle
 is the `Movement Noise Mult` actor value, which every Muffle effect raises
