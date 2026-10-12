@@ -15,6 +15,16 @@ nonisolated public enum DetectionFormula: Sendable {
         return isExterior ? base * max(0, settings.exteriorDistanceMult.value) : base
     }
 
+    /// Whether `distance` is short enough for either sense to reach.
+    public static func isInRange(
+        distance: Float,
+        settings: DetectionSettings,
+        isExterior: Bool
+    ) -> Bool {
+        distance.isFinite && distance >= 0
+            && distance < maximumDistance(settings: settings, isExterior: isExterior)
+    }
+
     /// `((max - distance) / max) ^ exponent`, clamped to 0...1.
     ///
     /// Zero at and beyond the maximum distance, and 1 at zero distance. A
@@ -25,10 +35,10 @@ nonisolated public enum DetectionFormula: Sendable {
         settings: DetectionSettings,
         isExterior: Bool
     ) -> Float {
-        let maximum = maximumDistance(settings: settings, isExterior: isExterior)
-        guard distance.isFinite, distance >= 0, maximum > 0, distance < maximum else {
+        guard isInRange(distance: distance, settings: settings, isExterior: isExterior) else {
             return 0
         }
+        let maximum = maximumDistance(settings: settings, isExterior: isExterior)
         let linear = (maximum - distance) / maximum
         return powf(linear, max(0, settings.distanceAttenuationExponent.value))
     }
@@ -93,7 +103,9 @@ nonisolated public enum DetectionFormula: Sendable {
         value.isFinite ? max(0, value) : 0
     }
 
-    /// The whole formula, with its terms.
+    /// The whole formula, with its terms. Past the maximum distance the value is
+    /// `fSneakBaseValue` alone: the unattenuated skill gap must not let a skilled
+    /// observer notice a target at any range.
     public static func breakdown(
         inputs: DetectionInputs,
         settings: DetectionSettings
@@ -103,6 +115,17 @@ nonisolated public enum DetectionFormula: Sendable {
         )
         let sound = soundFactor(inputs: inputs, settings: settings)
         let visual = visualFactor(inputs: inputs, settings: settings)
+        guard
+            isInRange(
+                distance: inputs.distance,
+                settings: settings,
+                isExterior: inputs.isExterior
+            )
+        else {
+            return DetectionBreakdown(
+                soundFactor: sound, visualFactor: visual, value: settings.sneakBaseValue.value
+            )
+        }
         let noticer = skillFactor(level: inputs.noticerSkill, settings: settings)
         let sneaker = skillFactor(level: inputs.traits.sneakSkill, settings: settings)
         let value = settings.sneakBaseValue.value
