@@ -39,10 +39,41 @@ extension CellStreamer {
     public func staticCollisionCandidates(
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
+        fixedCollisionCandidates(overlapping: bounds)
+            + vehicleCollisionCandidates(overlapping: bounds)
+    }
+
+    /// Every candidate but the vehicles' moving collision, for an actor that rides
+    /// or pulls a vehicle.
+    public func collisionCandidatesIgnoringVehicles(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        fixedCollisionCandidates(overlapping: bounds)
+            + dynamicBodies.placedShapes(overlapping: bounds)
+    }
+
+    private func fixedCollisionCandidates(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
         if let collision = interiorScene?.staticCollision {
             return collision.candidates(overlapping: bounds)
         }
         return composition.collisionCandidates(overlapping: bounds)
+    }
+
+    /// Each vehicle follower's collision at its live pose; at the build's pose until
+    /// the vehicle pass first moves it.
+    public func vehicleCollisionCandidates(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        let vehicles = interiorScene.map(\.vehicleCollision)
+            ?? composition.cells.values.flatMap(\.vehicleCollision)
+        return vehicles.flatMap { vehicle in
+            vehicle.shapes(
+                at: npcMovementState.vehiclePoses[vehicle.reference] ?? vehicle.placement,
+                overlapping: bounds
+            )
+        }
     }
 
     public func updateInteractionTarget(ray: InteractionRay?) {

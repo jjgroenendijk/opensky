@@ -60,6 +60,25 @@ nonisolated public struct PlacedRecordLookup: Sendable {
         return decoded.scriptData.scripts
     }
 
+    /// The mesh key of the reference's base model, such as
+    /// `meshes\\furniture\\prisonercarriage\\prisonercarriage01.nif`.
+    public func baseModelPath(for key: ReferenceKey) -> String? {
+        guard
+            let base = entry(for: key)?.placedReference?.base,
+            let found = index.record(withFormID: base)
+        else { return nil }
+        let path: String? = if found.record.type == "STAT" {
+            (try? found.decode(StaticObject.init(record:)))?.modelPath
+        } else if ModelBase.supportedTypes.contains(found.record.type) {
+            (try? found.decode { try ModelBase(record: $0, localized: found.localized) })?
+                .modelPath
+        } else {
+            nil
+        }
+        guard let path, let normalized = try? VirtualFileSystem.normalize(path) else { return nil }
+        return normalized.hasPrefix("meshes\\") ? normalized : "meshes\\" + normalized
+    }
+
     /// The positions along the unkeyed linked references from `start`, which is the
     /// path a patrol walks. Stops at a loop, a missing link, or `limit` points.
     public func linkedChain(from start: ReferenceKey, limit: Int = 64) -> [SIMD3<Float>] {

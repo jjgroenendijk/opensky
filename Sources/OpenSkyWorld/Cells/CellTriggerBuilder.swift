@@ -22,6 +22,8 @@ nonisolated public struct CellCollisionBuild: Sendable {
     /// no reference retention, because a simulated body needs the
     /// `ReferenceKey` the entries carry.
     public var dynamicBodies: [DynamicBodyPlacement] = []
+    /// The collision of the references that ride a vehicle, moved with them each frame.
+    public var vehicles: [CellVehicleCollision] = []
 }
 
 nonisolated extension CellSceneBuilder {
@@ -39,12 +41,24 @@ nonisolated extension CellSceneBuilder {
                     keys[entry.formID] = entry.key
                 }
             )
+            let followers = resolved.vehicleFollowers
+            let split = CellVehicleCollision.split(
+                products.collision,
+                followers: resolved.references.reduce(into: [:]) { placements, ref in
+                    guard followers.contains(ref.formID.rawValue) else { return }
+                    placements[ref.formID] = MatrixMath.placement(
+                        position: ref.placement.position, rotation: ref.placement.rotation,
+                        scale: ref.scale
+                    )
+                }
+            )
             return CellCollisionBuild(
-                staticCollision: products.collision,
+                staticCollision: split.fixed,
                 triggerVolumes: buildTriggerVolumes(
                     refs: resolved.references, entries: resolved.entries, location: location
                 ),
-                dynamicBodies: products.dynamicBodies
+                dynamicBodies: products.dynamicBodies,
+                vehicles: split.vehicles
             )
         }
     }

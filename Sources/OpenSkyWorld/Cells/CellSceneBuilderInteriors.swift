@@ -153,10 +153,10 @@ nonisolated extension CellSceneBuilder {
             ),
             counts: counts
         )
-        scene.hazards = collectHazards(in: found, resolved: resolved)
         scene.imageSpace = found.cell.extras.imageSpace
-        scene.assets = drainTouchedAssets()
-        return scene
+        return finished(
+            scene, hazards: collectHazards(in: found, resolved: resolved), collision: collision
+        )
     }
 
     /// Source REFR XTEL -> destination door REFR -> owning CELL, then builds it.

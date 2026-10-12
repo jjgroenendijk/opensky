@@ -30,6 +30,10 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     public let rise: Float
     public var position: SIMD3<Float>
     public var heading: Float
+    /// Where the wheels touch the ground, in the model frame; nil until the model loads.
+    public var wheels: [SIMD2<Float>]?
+    /// How far the follower has rolled forward since the link, for its wheels' spin.
+    public var rolled: Float = 0
 }
 
 /// One follower's carrier and how it sits there.
@@ -127,6 +131,13 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return true
     }
 
+    /// The towed follower rests on these wheels from now on.
+    public mutating func setWheels(_ wheels: [SIMD2<Float>], for follower: ReferenceKey) {
+        guard case var .towed(tow)? = links[follower]?.seat else { return }
+        tow.wheels = wheels
+        links[follower]?.seat = .towed(tow)
+    }
+
     public mutating func detach(_ follower: ReferenceKey) {
         links[follower] = nil
     }
@@ -190,7 +201,8 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
     }
 
     /// Moves a towed follower to `length` behind the hitch, along the line from where
-    /// it was, so it trails the carrier's path. It sits on the ground and tilts with it.
+    /// it was, so it trails the carrier's path. It rests on the ground under its wheels,
+    /// or, before they are known, on the ground under its origin and the hitch.
     static func pull(
         _ tow: inout VehicleTow, hitch: SIMD4<Float>, ground: (SIMD3<Float>) -> Float?
     ) -> float4x4 {
@@ -200,7 +212,20 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         }
         let direction = SIMD2(sin(tow.heading), cos(tow.heading))
         let spot = SIMD2(hitch.x, hitch.y) - direction * tow.length
+        tow.rolled += simd_dot(spot - SIMD2(tow.position.x, tow.position.y), direction)
         let top = max(tow.position.z, hitch.z) + groundSearchHeight
+        let turn = MatrixMath.rotationZ(radians: -(tow.heading - tow.linkHeading))
+        if let wheels = tow.wheels {
+            let level = turn * VehicleWheels.levelled(tow.orientation)
+            if
+                let rest = VehicleWheels.rest(
+                    on: wheels, at: spot, orientation: level, top: top, ground: ground
+                )
+            {
+                tow.position = SIMD3(spot.x, spot.y, rest.height)
+                return MatrixMath.translation(tow.position) * rest.tilt * level
+            }
+        }
         let below = ground(SIMD3(spot.x, spot.y, top))
         // A cart's model starts at its origin (the prisoner carriage's bounds start at
         // z 0), so the origin rests on the ground, as the game's physics would set it.
@@ -209,14 +234,13 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         let ahead = ground(SIMD3(hitch.x, hitch.y, hitch.z + groundSearchHeight))
         let tilt = slope(from: below, to: ahead, tow.length) - tow.linkSlope
         let right = SIMD3(direction.y, -direction.x, 0)
-        let turn = MatrixMath.rotation(radians: tilt, axis: right)
-            * MatrixMath.rotationZ(radians: -(tow.heading - tow.linkHeading))
+        let tilted = MatrixMath.rotation(radians: tilt, axis: right) * turn
         let orientation = tow.orientation
         let rotation = float4x4(
             SIMD4(orientation.columns.0, 0), SIMD4(orientation.columns.1, 0),
             SIMD4(orientation.columns.2, 0), SIMD4(0, 0, 0, 1)
         )
-        return MatrixMath.translation(tow.position) * turn * rotation
+        return MatrixMath.translation(tow.position) * tilted * rotation
     }
 
     private static func slope(from low: Float?, to high: Float?, _ length: Float) -> Float {
@@ -238,7 +262,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return false
     }
 
-    static func matrix(_ pose: ReferenceTransformOverride) -> float4x4 {
+    public static func matrix(_ pose: ReferenceTransformOverride) -> float4x4 {
         MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
     }
 

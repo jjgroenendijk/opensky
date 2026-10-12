@@ -123,7 +123,7 @@ public struct NPCMover {
             frameTime: frameTime,
             yaw: yaw,
             sampleGround: ignoresStatics ? staticFloorSampler(world: world) : world.sampleGround,
-            collisionQuery: ignoresStatics ? { _ in [] } : world.collisionQuery
+            collisionQuery: ignoresStatics ? { _ in [] } : world.collisionQuery(for: actor)
         ) { state in
             var plan = LocomotionStepPlan()
             let remaining = SIMD2(

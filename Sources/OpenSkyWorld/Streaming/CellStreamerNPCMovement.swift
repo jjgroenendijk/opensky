@@ -27,6 +27,11 @@ public struct CellStreamerNPCMovementState {
     public var heldRests: [NPCMovementPersistence]?
     /// Where a vehicle carries each actor riding one this frame.
     public var carried: [ReferenceKey: ReferenceTransformOverride] = [:]
+    /// The live pose of each vehicle follower, which its collision moves to.
+    public var vehiclePoses: [FormID: float4x4] = [:]
+    /// The carriers and riders of every vehicle link. Their own walks do not collide
+    /// with a vehicle's collision, so a horse is not blocked by the cart it pulls.
+    public var vehicleLinkedActors: Set<ReferenceKey> = []
 }
 
 /// One NPC pose written to the store and drawn through a delta until the cell
@@ -221,7 +226,11 @@ extension CellStreamer {
                 self?.interiorScene != nil || self?.sampleTerrain(at: position) != nil
             },
             standingActors: { [weak self] in self?.npcStandingActors?() ?? [] },
-            sampleWater: { [weak self] position in self?.sampleWaterHeight(at: position) }
+            sampleWater: { [weak self] position in self?.sampleWaterHeight(at: position) },
+            vehicleActors: npcMovementState.vehicleLinkedActors,
+            collisionQueryIgnoringVehicles: { [weak self] bounds in
+                self?.collisionCandidatesIgnoringVehicles(overlapping: bounds) ?? []
+            }
         ))
     }
 

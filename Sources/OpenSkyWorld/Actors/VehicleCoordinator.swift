@@ -27,6 +27,13 @@ public protocol VehicleWorld: AnyObject {
     /// The highest ground at or below `point`: terrain, or a road, bridge, or floor.
     /// The references in `vehicles` are not ground.
     func vehicleGround(at point: SIMD3<Float>, excluding vehicles: Set<ReferenceKey>) -> Float?
+    /// `VehicleWheels.contacts` of the reference's model: nil while it loads, empty
+    /// when it has no wheels or no model.
+    func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]?
+    /// Turns the follower's wheels for `distance` rolled since the link.
+    func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float)
+    /// Every carrier and follower of a link, which do not collide with the vehicles.
+    func publishVehicleLinks(_ linked: Set<ReferenceKey>)
 }
 
 @MainActor
@@ -104,10 +111,12 @@ public final class VehicleCoordinator {
             if hasDeltas {
                 world.publishVehiclePoses([:])
                 world.publishCarriedPoses([:])
+                world.publishVehicleLinks([])
                 hasDeltas = false
             }
             return
         }
+        loadWheels(world: world)
         let linked = linkedReferences
         lastPoses = core.advance(
             base: { world.vehiclePose(of: $0) },
@@ -123,9 +132,26 @@ public final class VehicleCoordinator {
                 placements[formID] = VehicleCore.matrix(pose)
             }
         }
+        for (key, link) in core.links {
+            if case let .towed(tow) = link.seat {
+                world.spinVehicleWheels(of: key, rolled: tow.rolled)
+            }
+        }
         world.publishVehiclePoses(placements)
         world.publishCarriedPoses(lastPoses.filter { $0.key != .player })
+        world.publishVehicleLinks(linked)
         hasDeltas = true
+    }
+
+    /// A towed cart rests on its wheels once its model has loaded.
+    private func loadWheels(world: any VehicleWorld) {
+        for (key, link) in core.links {
+            guard
+                case let .towed(tow) = link.seat, tow.wheels == nil,
+                let wheels = world.vehicleWheels(of: key)
+            else { continue }
+            core.setWheels(wheels, for: key)
+        }
     }
 
     private func currentPose(of key: ReferenceKey) -> ReferenceTransformOverride? {

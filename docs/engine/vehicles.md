@@ -34,16 +34,54 @@ moves the cart as a trailer instead:
   distance behind the horse. So the cart trails the horse's path and cuts corners, and a horse
   that turns on the spot does not swing the cart sideways.
 - The cart turns by the change of its heading toward the horse.
-- The cart's origin rests on the ground, and it tilts with the slope between itself and the
-  horse. The prisoner carriage's model bounds start at z 0, so its origin is its lowest point.
-  Plugins place carts a little above the terrain (`Cart1` sits 11.5 units up) and the game's
-  physics settles them; OpenSky drops the origin onto the ground instead.
+- The cart rests on the ground under its wheels. A wheel is a mesh node whose name starts with
+  `Wheel`. In `meshes\furniture\prisonercarriage\prisonercarriage01.nif` (read on the install)
+  `WheelFrontLeft` and `WheelFrontRight` sit at y 0, under the `FrontBar` node, and
+  `WheelBackLeft` and `WheelBackRight` sit at y -215. So the cart's origin is on the front
+  axle. The model's bounds start at z 0, so each wheel touches the ground below its centre at
+  z 0.
+- Each frame the ground under every wheel is sampled. A plane is fitted to those points by least
+  squares, then raised until no wheel is below the ground. The cart's origin goes onto that
+  plane, and its up axis turns to the plane's normal. So it pitches on a slope or a change of
+  slope, and rolls on a side slope. On twisted ground one wheel can lift a little, as it would
+  for a real four-wheel cart.
+- Until the model has loaded, or for a model with fewer than three wheels, the origin rests on
+  the ground below it and the cart tilts with the slope between itself and the horse.
+- Plugins place carts a little above the terrain (`Cart1` sits 11.5 units up) and the game's
+  physics settles them; OpenSky drops the cart onto the ground instead.
 - The ground is the highest of the terrain and the static collision below a point 128 units
   above the cart or the horse, so a bridge or a paved road counts and a roof above does not.
   The carts and horses in a link are not ground. Without ground the cart keeps its height
   relative to the horse.
 
 [WARNING] The trailer rule approximates the game's physics. It is not taken from an open spec.
+
+## Wheels
+
+A towed cart whose mesh has wheel nodes turns its wheels as it rolls. The cell build gives such a
+cart its own copy of the mesh, with each wheel's shapes bound to its node, the way an animated
+object is drawn ([object animation](/engine/object-animation.md)). Each wheel turns about the
+model's X axis by the distance the cart rolled forward, divided by the wheel's radius. The radius
+is the height of the wheel node's centre: about 59 for the back wheels of the prisoner carriage and
+about 48 for the front ones.
+
+The front wheels do not steer. The cart already turns its whole body toward the horse each frame,
+so `FrontBar` would always point straight ahead.
+
+## Collision
+
+A towed cart's collision moves with the cart. The prisoner carriage's collision has several rigid
+bodies joined by hinge constraints, so the dynamic world does not simulate it. Instead the cell
+build takes the collision of every vehicle follower out of the static set. Each collision query
+places those shapes at the follower's live pose, moved from the pose the build placed them at.
+
+A horse is not blocked by the cart it pulls, and a rider by the cart it sits on: an actor that is
+a carrier or a follower of any link walks with a collision query that leaves out the vehicles'
+moving collision. The cart's own ground search also leaves it out. A seated player does not walk,
+so the cart cannot push the player out of the seat.
+
+When a follower leaves its carrier, it rests at its last pose. Until its cell is rebuilt, its
+collision stays at that pose; after the rebuild it is static again.
 
 ## Riders
 
@@ -113,4 +151,5 @@ before it got on no longer counts as where it is.
 - `Game.SetHudCartMode` and `Game.SetSittingRotation` do nothing yet. The HUD movie has a `CartMode`
   among its HUD modes, but OpenSky does not drive HUD modes yet. The second turns the player in the
   seat; the player keeps the view it had.
-- The cart's wheels do not turn, and the cart does not roll sideways on uneven ground.
+- The front axle does not swivel under the cart, and the wheels do not turn at different speeds
+  in a curve.

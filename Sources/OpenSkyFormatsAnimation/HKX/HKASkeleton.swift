@@ -46,6 +46,11 @@ nonisolated public struct HKABonePose: Equatable, Sendable {
 nonisolated public struct HKABone: Equatable, Sendable {
     public let name: String
     public let lockTranslation: Bool
+
+    public init(name: String, lockTranslation: Bool) {
+        self.name = name
+        self.lockTranslation = lockTranslation
+    }
 }
 
 /// Decoded hkaSkeleton: the bone hierarchy + bind pose one HKX packfile holds.
@@ -57,6 +62,16 @@ nonisolated public struct HKASkeleton: Sendable {
     public let bones: [HKABone]
     public let parentIndices: [Int]
     public let referencePose: [HKABonePose]
+
+    /// A rig built in code, such as one taken from a mesh's own nodes.
+    public init(
+        name: String?, bones: [HKABone], parentIndices: [Int], referencePose: [HKABonePose]
+    ) {
+        self.name = name
+        self.bones = bones
+        self.parentIndices = parentIndices
+        self.referencePose = referencePose
+    }
 
     public var boneNames: [String] {
         bones.map(\.name)

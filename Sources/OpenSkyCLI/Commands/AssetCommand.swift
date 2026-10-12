@@ -27,8 +27,9 @@ enum AssetCommand {
             + counts.map { "\($0.key) \($0.value)" }.joined(separator: ", "))
         for (index, block) in file.blocks.enumerated() {
             if let node = decodedNode(index, block, header: file.header) {
+                let offset = node.object.translation
                 print("block \(index): \(block.typeName) \(node.object.name ?? "-") "
-                    + "children \(node.children)")
+                    + "at (\(offset.x), \(offset.y), \(offset.z)) children \(node.children)")
             } else if let shape = decodedShape(index, block, header: file.header) {
                 print("block \(index): \(block.typeName) \(shape.object.name ?? "-") "
                     + "\(shape.positions.count) vertices, \(shape.indices.count / 3) triangles")

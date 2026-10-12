@@ -196,6 +196,8 @@ nonisolated extension CellSceneBuilder {
         geometry: CellGeometryBuild,
         counts: BuildCounts
     ) -> CellScene {
+        var instances = instances
+        let vehicles = animatedVehicles(&instances, followers: geometry.vehicleFollowers)
         let actors = geometry.actors
         let particles = makeParticlePlaybacks(instances: instances)
         // A simulated reference draws at its live pose, so it keeps its FormID.
@@ -208,7 +210,7 @@ nonisolated extension CellSceneBuilder {
         )
         let renderScene = RenderScene(
             instances: placed + actors.placements,
-            animations: actors.animations + objects.map(\.playback),
+            animations: actors.animations + objects.map(\.playback) + vehicles.map(\.playback),
             terrain: geometry.terrain?.items ?? [],
             water: geometry.water.map { [$0.item] } ?? [],
             sky: found.cell.isInterior ? nil : geometry.sky,
@@ -253,6 +255,7 @@ nonisolated extension CellSceneBuilder {
             stateSequence: geometry.stateSequence
         )
         scene.animatedObjects = objects.map(\.object)
+        scene.animatedVehicles = vehicles.map(\.vehicle)
         return scene
     }
 
