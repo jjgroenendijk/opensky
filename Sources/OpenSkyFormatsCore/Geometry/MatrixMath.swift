@@ -113,38 +113,36 @@ nonisolated public enum MatrixMath: Sendable {
         ))
     }
 
-    /// World transform of a placed reference (REFR): T * Rz(-z) * Ry(-y) * Rx(-x) * S.
-    /// Bethesda euler angles turn clockwise viewed from the positive axis end,
-    /// hence the negation against the CCW helpers above; order Z*Y*X with X
-    /// innermost. Sign/order rationale + verification plan:
-    /// docs/decisions/coordinates.md.
+    /// World transform of a placed reference (REFR): T * Rx(-x) * Ry(-y) * Rz(-z) * S.
+    /// Bethesda angles turn clockwise seen from the positive axis end, so they are
+    /// negated; Z is innermost. Why this order: docs/decisions/coordinates.md.
     public static func placement(
         position: SIMD3<Float>,
         rotation: SIMD3<Float>,
         scale: Float
     ) -> float4x4 {
         translation(position)
-            * rotationZ(radians: -rotation.z)
-            * rotationY(radians: -rotation.y)
             * rotationX(radians: -rotation.x)
+            * rotationY(radians: -rotation.y)
+            * rotationZ(radians: -rotation.z)
             * Self.scale(uniform: scale)
     }
 
-    /// The euler triple whose `Rz(-z) * Ry(-y) * Rx(-x)` reproduces `orientation`,
+    /// The euler triple whose `Rx(-x) * Ry(-y) * Rz(-z)` reproduces `orientation`,
     /// so a rigid body's quaternion can persist as record euler angles.
     /// Y comes back in `-pi/2 ... pi/2`; at gimbal lock X is pinned to zero.
     public static func eulerAngles(of orientation: simd_quatf) -> SIMD3<Float> {
         let matrix = float3x3(orientation)
         // matrix[column][row]; the derivation below reads row-major.
-        let row2Column0 = matrix[0][2]
-        let pitch = asinf(Swift.min(Swift.max(-row2Column0, -1), 1))
+        let row0Column2 = matrix[2][0]
+        let pitch = asinf(Swift.min(Swift.max(row0Column2, -1), 1))
         let yaw: Float
         let roll: Float
-        if abs(row2Column0) < 0.999_99 {
-            yaw = atan2f(matrix[0][1], matrix[0][0])
-            roll = atan2f(matrix[1][2], matrix[2][2])
+        if abs(row0Column2) < 0.999_99 {
+            yaw = atan2f(-matrix[1][0], matrix[0][0])
+            roll = atan2f(-matrix[2][1], matrix[2][2])
         } else {
-            yaw = atan2f(-matrix[1][0], matrix[1][1])
+            yaw = atan2f(matrix[0][1], matrix[1][1])
             roll = 0
         }
         return SIMD3<Float>(-roll, -pitch, -yaw)

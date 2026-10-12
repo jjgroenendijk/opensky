@@ -118,6 +118,19 @@ struct MatrixMathTests {
         #expect(simd_length(east - SIMD4<Float>(0, -1, 0, 0)) < 1e-6)
     }
 
+    @Test func placementTiltsAboutWorldXAfterTheYaw() {
+        // Z is innermost: the yaw sends east to south, then the X tilt lifts that
+        // south axis. Road pieces only fit the terrain in this order.
+        let matrix = MatrixMath.placement(
+            position: SIMD3(0, 0, 0),
+            rotation: SIMD3(0.3, 0, .pi / 2),
+            scale: 1
+        )
+        let east = matrix * SIMD4<Float>(1, 0, 0, 0)
+        let expected = SIMD4<Float>(0, -cosf(0.3), sinf(0.3), 0)
+        #expect(simd_length(east - expected) < 1e-6)
+    }
+
     @Test func placementRoundTripsTranslationRotationScale() {
         let position = SIMD3<Float>(-321.5, 88, 1024)
         let rotation = SIMD3<Float>(0.21, -0.4, 2.9)
