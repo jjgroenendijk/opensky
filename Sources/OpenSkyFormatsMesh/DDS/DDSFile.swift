@@ -1,6 +1,6 @@
 // DDS texture container: magic, DDS_HEADER, optional DXT10 header, then the
-// mip chain. Reads 2D BC1-BC5/BC7, 32-bit RGB, and 24-bit RGB; cubemaps,
-// volumes, and arrays throw `unsupported`. Layout and sources: docs/formats/dds.md.
+// mip chain. Reads 2D BC1-BC5/BC7, 32-bit RGB, and 24-bit RGB, and cubemaps when the
+// caller asks; volumes and arrays throw `unsupported`. Layout: docs/formats/dds.md.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -80,6 +80,7 @@ nonisolated public struct DDSFile: Sendable {
         static let bgraAlphaMask: UInt32 = 0xFF00_0000
         // DDS_HEADER.dwCaps2
         static let capsCubemap: UInt32 = 0x200 // DDSCAPS2_CUBEMAP
+        static let capsAllFaces: UInt32 = 0xFC00 // DDSCAPS2_CUBEMAP_POSITIVEX ... NEGATIVEZ
         static let capsVolume: UInt32 = 0x200000 // DDSCAPS2_VOLUME
         // DDS_HEADER_DXT10
         static let dimensionTexture2D: UInt32 = 3 // D3D10_RESOURCE_DIMENSION
@@ -113,6 +114,7 @@ nonisolated public struct DDSFile: Sendable {
         let pitchOrLinearSize: UInt32
         let mipCount: Int
         let pixelFormat: PixelFormatHeader
+        let isCubemap: Bool
     }
 
     public let width: Int
@@ -122,24 +124,30 @@ nonisolated public struct DDSFile: Sendable {
     /// DX10 header carried an `_SRGB` DXGI format. Advisory: the renderer
     /// picks color space per usage (diffuse sRGB, normal/data linear).
     public let declaresSRGB: Bool
+    /// 6 for a cubemap, in the order +X, -X, +Y, -Y, +Z, -Z; 1 otherwise.
+    public let faceCount: Int
 
     private let data: Data
     private let packing: TexelPacking
-    /// Byte range of each mip level within `data`, largest level first.
-    private let mipRanges: [Range<Int>]
+    /// Byte range of each mip level within `data`, largest level first, per face.
+    private let faceMipRanges: [[Range<Int>]]
 
-    public init(data: Data) throws {
+    /// A cubemap throws `unsupported` unless `allowsCubemap` is set.
+    public init(data: Data, allowsCubemap: Bool = false) throws {
         self.data = data
         var reader = BinaryReader(data)
         let header = try Self.readHeader(reader: &reader)
         width = header.width
         height = header.height
+        var isCubemap = header.isCubemap
 
         if header.pixelFormat.flags & Layout.flagFourCC != 0 {
-            (format, declaresSRGB) = try Self.resolveFormat(
+            let resolved = try Self.resolveFormat(
                 fourCC: header.pixelFormat.fourCC,
                 reader: &reader
             )
+            (format, declaresSRGB) = (resolved.format, resolved.sRGB)
+            isCubemap = isCubemap || resolved.isCubemap
             packing = .native
         } else {
             // DDS_PIXELFORMAT defines channel masks over the little-endian pixel
@@ -160,14 +168,26 @@ nonisolated public struct DDSFile: Sendable {
             throw DDSError.malformed("mip count \(claimedMips) exceeds full chain \(fullChain)")
         }
         mipCount = claimedMips
+        guard !isCubemap || allowsCubemap else { throw DDSError.unsupported("cubemap") }
+        guard !isCubemap || width == height else {
+            throw DDSError.malformed("cubemap faces \(width)x\(height) are not square")
+        }
+        faceCount = isCubemap ? 6 : 1
 
-        mipRanges = try Self.mipRanges(
-            header: header,
-            mipCount: mipCount,
-            bytesPerBlock: packing == .native ? format.bytesPerBlock : 3,
-            blockDimension: format.blockDimension,
-            bytes: reader.offset ..< data.count
-        )
+        var faces: [[Range<Int>]] = []
+        var start = reader.offset
+        for _ in 0 ..< faceCount {
+            let ranges = try Self.mipRanges(
+                header: header,
+                mipCount: mipCount,
+                bytesPerBlock: packing == .native ? format.bytesPerBlock : 3,
+                blockDimension: format.blockDimension,
+                bytes: start ..< data.count
+            )
+            faces.append(ranges)
+            start = ranges.last?.upperBound ?? start
+        }
+        faceMipRanges = faces
     }
 
     private static func readHeader(reader: inout BinaryReader) throws -> Header {
@@ -196,8 +216,9 @@ nonisolated public struct DDSFile: Sendable {
         reader.skip(4) // dwCaps
         let caps2 = try reader.readUInt32()
         reader.skip(3 * 4) // dwCaps3, dwCaps4, dwReserved2
-        if caps2 & Layout.capsCubemap != 0 {
-            throw DDSError.unsupported("cubemap")
+        let isCubemap = caps2 & Layout.capsCubemap != 0
+        if isCubemap, caps2 & Layout.capsAllFaces != Layout.capsAllFaces {
+            throw DDSError.unsupported("cubemap without all six faces")
         }
         if caps2 & Layout.capsVolume != 0 {
             throw DDSError.unsupported("volume texture")
@@ -208,7 +229,8 @@ nonisolated public struct DDSFile: Sendable {
             height: height,
             pitchOrLinearSize: pitchOrLinearSize,
             mipCount: mipCount,
-            pixelFormat: pixelFormat
+            pixelFormat: pixelFormat,
+            isCubemap: isCubemap
         )
     }
 
@@ -304,14 +326,24 @@ nonisolated extension DDSFile {
         return (.xrgb8888, .rgb24(red: red, green: green, blue: blue))
     }
 
+    private struct ResolvedFormat {
+        let format: DDSPixelFormat
+        let sRGB: Bool
+        let isCubemap: Bool
+    }
+
     /// FourCC -> format; "DX10" pulls the format out of DDS_HEADER_DXT10 and
-    /// rejects non-2D resources. Returns whether the file declared sRGB.
+    /// rejects non-2D resources.
     private static func resolveFormat(
         fourCC: FourCC,
         reader: inout BinaryReader
-    ) throws -> (DDSPixelFormat, sRGB: Bool) {
+    ) throws -> ResolvedFormat {
         guard fourCC == "DX10" else {
-            return try (resolveLegacyFormat(fourCC), false)
+            return try ResolvedFormat(
+                format: resolveLegacyFormat(fourCC),
+                sRGB: false,
+                isCubemap: false
+            )
         }
 
         // DDS_HEADER_DXT10 (20 bytes). sRGB DXGI codes are UNORM + 1.
@@ -324,13 +356,13 @@ nonisolated extension DDSFile {
         guard dimension == Layout.dimensionTexture2D else {
             throw DDSError.unsupported("resource dimension \(dimension)")
         }
-        if miscFlag & Layout.miscTextureCube != 0 {
-            throw DDSError.unsupported("cubemap")
-        }
         guard arraySize <= 1 else {
             throw DDSError.unsupported("texture array of \(arraySize)")
         }
-        return try resolveDXGIFormat(dxgiFormat)
+        let (format, sRGB) = try resolveDXGIFormat(dxgiFormat)
+        return ResolvedFormat(
+            format: format, sRGB: sRGB, isCubemap: miscFlag & Layout.miscTextureCube != 0
+        )
     }
 
     private static func resolveLegacyFormat(_ fourCC: FourCC) throws -> DDSPixelFormat {
@@ -401,11 +433,11 @@ nonisolated extension DDSFile {
         max(1, height >> level)
     }
 
-    /// Payload bytes of one mip level, in the layout `format` names.
-    public func mipData(level: Int) -> Data {
+    /// Payload bytes of one mip level of one face, in the layout `format` names.
+    public func mipData(level: Int, face: Int = 0) -> Data {
+        let range = faceMipRanges[face][level]
         let stored = data.subdata(
-            in: (data.startIndex + mipRanges[level].lowerBound)
-                ..< (data.startIndex + mipRanges[level].upperBound)
+            in: (data.startIndex + range.lowerBound) ..< (data.startIndex + range.upperBound)
         )
         guard case let .rgb24(red, green, blue) = packing else { return stored }
         return Self.widenRGB24(stored, channels: [blue, green, red])
