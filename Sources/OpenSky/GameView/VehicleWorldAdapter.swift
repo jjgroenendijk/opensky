@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsMesh
 import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyRendering
@@ -22,6 +23,8 @@ final class VehicleWorldAdapter {
     private var crossings: [ReferenceKey: CellCoordinate] = [:]
     /// The start of the seat idle the player's view was last turned for.
     private var facedIdleStart: Float?
+    /// Wheel contacts by model path, read off the main actor.
+    private var wheels: AssetLoader<String, [SIMD2<Float>]>?
 
     init(game: GameViewController) {
         self.game = game
@@ -41,6 +44,7 @@ final class VehicleWorldAdapter {
             }
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
+        wireWheels(renderer: renderer)
         let advanceWorld = renderer.onWorldUpdate
         renderer.onWorldUpdate = { [weak vehicles, weak renderer] delta in
             advanceWorld?(delta)
@@ -49,6 +53,17 @@ final class VehicleWorldAdapter {
                 renderer?.playerSeat = nil
             }
         }
+    }
+
+    private func wireWheels(renderer: Renderer) {
+        guard let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem else {
+            return
+        }
+        let wheels = AssetLoader<String, [SIMD2<Float>]> { path in
+            try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
+        }
+        self.wheels = wheels
+        renderer.session.assetDrains.add { _ in wheels.drain() }
     }
 }
 
@@ -158,6 +173,18 @@ extension VehicleWorldAdapter: VehicleWorld {
 
     /// How far below the search point a floor counts where no terrain answers.
     private static let groundSearchDepth: Float = 4096
+
+    func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]? {
+        guard
+            let wheels,
+            let path = game.streamer?.placedRecords?.baseModelPath(for: key)
+        else { return [] }
+        switch wheels.state(of: path) {
+        case .loading: return nil
+        case let .ready(contacts): return contacts
+        case .failed: return []
+        }
+    }
 
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
         guard key != .player else { return }
