@@ -1,7 +1,6 @@
-// The character-level natives: `Actor.GetLevel` and the SKSE perk-point
-// functions on `Game`. The perk-point pool has no vanilla Papyrus surface, so
-// only the SKSE calls reach it. A session with no progression is a failure with
-// a reason.
+// The character-level natives: `Actor.GetLevel`, the vanilla `Game.AddPerkPoints`
+// that the Dragonborn altar calls, and the SKSE perk-point functions. A session with
+// no progression is a failure with a reason.
 //
 // Documented in docs/engine/papyrus-vm.md and docs/engine/character-leveling.md.
 
@@ -61,9 +60,31 @@ extension PapyrusNativeFunctions {
             }
             return .returned(.none)
         })
+        installAddPerkPoints(into: &registry)
     }
 
-    /// The one failure the two perk-point natives return when the session runs
+    /// `Game.AddPerkPoints(aiPerkPoints)`, declared native in the install's `Game.pex`.
+    /// `DLC2MiraakAltarScript` refunds a cleared tree with it. The pool clamp is the one
+    /// `ModPerkPoints` uses.
+    static func installAddPerkPoints(into registry: inout PapyrusNativeRegistry) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "AddPerkPoints"
+        ) { call, context in
+            guard let delta = integer(call, at: 0) else {
+                return failure(call, "AddPerkPoints needs a perk-point count")
+            }
+            guard
+                let world = context.world,
+                world.modifyPlayerPerkPoints(by: Int(delta)) != nil
+            else {
+                return needsProgress(call)
+            }
+            return .returned(.none)
+        })
+    }
+
+    /// The one failure the perk-point natives return when the session runs
     /// no character leveling: nothing was read or written, and saying so is
     /// better than a script that believes it granted a perk point.
     private static func needsProgress(_ call: PapyrusNativeCall) -> PapyrusNativeResult {

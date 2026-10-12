@@ -18,23 +18,7 @@ struct ProgressionCoordinatorTests {
     private let oneHanded = PerkRuntimeFixture.oneHandedIndex
 
     private func coordinator(world: FakeProgressionWorld) throws -> ProgressionCoordinator {
-        let store = WorldStateStore()
-        let index = try PerkRuntimeFixture.index()
-        let information = PerkRuntimeFixture.informationStore(index: index)
-        let perkStore = PerkRuntimeFixture.perkStore(index: index)
-        let perks = PerkCoordinator()
-        perks.attach(world: world)
-        perks.wire(
-            PerkRuntime(store: store, perks: perkStore, conditionRegistry: .empty),
-            baselines: nil,
-            pluginName: PerkRuntimeFixture.pluginName
-        )
-        let coordinator = ProgressionCoordinator(perks: perks)
-        coordinator.attach(world: world)
-        let values = FixedActorValues(store: store, indexedValue: 15)
-        coordinator.wireSkills(values: values, information: information)
-        coordinator.wireLeveling(values: values, perkStore: perkStore, information: information)
-        return coordinator
+        try ProgressionCoordinatorFixture.make(world: world)
     }
 
     // MARK: - Without game data

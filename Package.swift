@@ -690,12 +690,12 @@ targets += feature(
     dependencies: [
         "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF",
         "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
-        "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyQuestsInterface",
-        "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
+        "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
     ],
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM",
+        "OpenSkyFormatsESM", "OpenSkyProgressionInterface",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
         "OpenSkyEngineTesting"

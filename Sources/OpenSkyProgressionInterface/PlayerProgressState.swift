@@ -31,6 +31,9 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
     /// Skill points gained over the session, which is the number a level-up
     /// screen counts and a trainer's per-level cap is checked against.
     public private(set) var skillIncreases: Int
+    /// How often each skill was made legendary, by actor-value index. The skills menu
+    /// shows the count beside the legendary mark (<https://en.uesp.net/wiki/Skyrim:Skills>).
+    public private(set) var legendaryCounts: [Int32: Int]
 
     public static var componentKind: WorldStateComponentKind {
         .playerProgress
@@ -45,7 +48,8 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         perkPoints: Int = 0,
         pendingAttributePicks: Int = 0,
         attributePicks: [ActorValueKind] = [],
-        skillIncreases: Int = 0
+        skillIncreases: Int = 0,
+        legendaryCounts: [Int32: Int] = [:]
     ) {
         self.level = max(PlayerLevelSource.startingLevel, level)
         self.experience = experience.isFinite ? max(0, experience) : 0
@@ -53,6 +57,7 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         self.pendingAttributePicks = max(0, pendingAttributePicks)
         self.attributePicks = attributePicks
         self.skillIncreases = max(0, skillIncreases)
+        self.legendaryCounts = legendaryCounts.filter { $0.value > 0 }
     }
 
     /// True when the component says nothing a fresh session would not, which is
@@ -67,7 +72,20 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         attributePicks.count { $0 == kind }
     }
 
+    public func legendaryCount(ofSkill index: Int32) -> Int {
+        legendaryCounts[index] ?? 0
+    }
+
     // MARK: - Deriving
+
+    public func makingLegendary(skill index: Int32) -> PlayerProgressState {
+        with { $0.legendaryCounts[index, default: 0] += 1 }
+    }
+
+    /// Sets the counts a save restores beside the rest of the progress.
+    public func withLegendaryCounts(_ counts: [Int32: Int]) -> PlayerProgressState {
+        with { $0.legendaryCounts = counts.filter { $0.value > 0 } }
+    }
 
     /// Banks `amount` toward the next level without spending it.
     ///

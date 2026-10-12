@@ -109,6 +109,7 @@ entry point ID evaluates to no change. What differs is whether a formula asks. T
 | Mod Attack Damage | 35 | melee and bow damage |
 | Mod Percent Blocked | 39 | the blocked fraction, for both sides of a fight |
 | Mod Spell Cost | 38 | the magicka cost of every cast |
+| Mod Skill Use | 22 | the experience of every skill use |
 
 Nothing asks about lockpicking, prices, detection, tempering, or enchanting yet, because those
 formulas do not exist.

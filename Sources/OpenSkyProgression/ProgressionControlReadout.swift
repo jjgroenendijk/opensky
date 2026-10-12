@@ -54,6 +54,7 @@ nonisolated public enum ProgressionControlReadout: Sendable {
                 : skill.name.padding(
                     toLength: Self.skillNameWidth, withPad: " ", startingAt: 0
                 )
+            let legendary = skill.legendaryCount > 0 ? "  legendary \(skill.legendaryCount)" : ""
             return String(
                 format: "%@ %@ %5.1f (base %5.1f)  %6.1f/%6.1f XP  perks %d/%d",
                 marker,
@@ -64,10 +65,11 @@ nonisolated public enum ProgressionControlReadout: Sendable {
                 skill.threshold,
                 skill.ownedPerks,
                 skill.treePerks
-            )
+            ) + legendary
         }
+        let rate = String(format: "XP rate: x%.2f", snapshot.experienceRate)
         return (["Skills (\(snapshot.skills.count)):"] + lines
-            + [snapshot.perkTreeCache.describedLine]).joined(separator: "\n")
+            + [rate, snapshot.perkTreeCache.describedLine]).joined(separator: "\n")
     }
 
     /// The selected skill's tree, one line per box, in `INAM` order. A list

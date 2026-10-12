@@ -63,6 +63,13 @@ extension AgentWorldAdapter {
                 rows: snapshot.rows,
                 selected: snapshot.selectedIndex
             )
+        case SkillsMenuCoordinator.identifier:
+            let snapshot = game.skillsMenu.snapshot
+            return AgentMenuRows(
+                menu: top.name,
+                rows: snapshot.rows,
+                selected: snapshot.selectedIndex ?? -1
+            )
         default:
             return nil
         }

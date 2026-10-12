@@ -169,6 +169,8 @@ final class GameViewController: NSViewController {
         return raceMenu
     }()
 
+    lazy var skillsMenu = makeSkillsMenu()
+
     lazy var mapMenu: MapMenuCoordinator = {
         let mapMenu = MapMenuCoordinator(menuMode: menuMode)
         mapMenu.attach(world: mapWorld)
@@ -516,8 +518,17 @@ extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     UILabControlForwarding, SystemMenuControlForwarding, SceneControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
     HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
-    TitleMenuControlForwarding, MapMenuControlForwarding, WorldLoadReportProviding,
+    TitleMenuControlForwarding, MapMenuControlForwarding, SkillsMenuControlForwarding,
+    WorldLoadReportProviding,
     AssetCacheControlProviding {}
+
+extension GameViewController {
+    func makeSkillsMenu() -> SkillsMenuCoordinator {
+        let skillsMenu = SkillsMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
+        skillsMenu.attach(world: menuWorld)
+        return skillsMenu
+    }
+}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
@@ -534,6 +545,8 @@ extension GameViewController: @MainActor SystemMenuWorld {
         switch action {
         case .map:
             mapMenu.open()
+        case .skills:
+            skillsMenu.open()
         case .quicksave:
             systemMenu.quicksave()
         case .quickload:
@@ -560,6 +573,7 @@ extension GameViewController: @MainActor SystemMenuWorld {
             let now = Date().timeIntervalSinceReferenceDate
             self?.titleMenu.tick(now: now)
             self?.raceMenu.tick(now: now)
+            self?.skillsMenu.tick(now: now)
             self?.menuWorld.refreshTitleBackdrop()
         }
     }
@@ -588,6 +602,8 @@ extension GameViewController: @MainActor SystemMenuWorld {
             raceMenu.route(event)
         case MapMenuCoordinator.identifier:
             mapMenu.route(event)
+        case SkillsMenuCoordinator.identifier:
+            skillsMenu.route(event)
         default:
             systemMenu.route(event)
         }

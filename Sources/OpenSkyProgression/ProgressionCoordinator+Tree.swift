@@ -34,7 +34,8 @@ extension ProgressionCoordinator {
                 experience: runtime.experience(forSkill: index, on: .player),
                 threshold: runtime.threshold(forSkill: index, on: .player),
                 ownedPerks: tree.owned,
-                treePerks: tree.total
+                treePerks: tree.total,
+                legendaryCount: leveling?.state.legendaryCount(ofSkill: index) ?? 0
             )
         }
         treeCounts = counts
@@ -111,7 +112,7 @@ extension ProgressionCoordinator {
     // MARK: - Private
 
     /// Every perk a skill's tree grants, in node order.
-    private func perkKeys(forSkill index: Int32) -> [ReferenceKey] {
+    func perkKeys(forSkill index: Int32) -> [ReferenceKey] {
         guard let record = skillInformation(index) else { return [] }
         return record.information.perkTree.compactMap { node in
             guard

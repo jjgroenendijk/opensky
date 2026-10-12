@@ -19,6 +19,7 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case camera
     case furniture
     case graphVariable
+    case skillUsage
 }
 
 /// Which half of the magic seam could not answer. Four cases, because each names a

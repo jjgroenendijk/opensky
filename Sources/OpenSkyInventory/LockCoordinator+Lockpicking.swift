@@ -48,7 +48,7 @@ extension LockCoordinator {
             if let items, let lockpickItem {
                 _ = try? items.inventory.remove(lockpickItem, count: 1, from: items.player)
             }
-            sessionExperience += report(uses: settings.brokenUses)
+            sessionExperience += report(uses: settings.brokenUses, action: .lockpickBroken)
             lastText = "A lockpick broke."
         case .opened:
             open()
@@ -64,7 +64,9 @@ extension LockCoordinator {
     private func open() {
         guard let target = sessionLock else { return }
         write(target.state, locked: false, for: target.key)
-        sessionExperience += report(uses: settings.successUses[target.state.difficulty] ?? 0)
+        sessionExperience += report(
+            uses: settings.successUses[target.state.difficulty] ?? 0, action: .lockpickSuccess
+        )
         let rewarded = rewardKey(target)
         if let items {
             storyEvents?.reportStoryEvent(.lockPick(actor: items.player.key, lock: target.key))
@@ -85,10 +87,10 @@ extension LockCoordinator {
         return (try? items.inventory.add(key, count: 1, to: items.player)) != nil
     }
 
-    private func report(uses: Float) -> Float {
+    private func report(uses: Float, action: SkillAdvanceAction) -> Float {
         guard uses > 0, let world, let items else { return 0 }
         return world.reportSkillUse(SkillUseEvent(
-            actor: items.player.key, action: .lockpick, amount: uses
+            actor: items.player.key, action: .lockpick, amount: uses, advanceAction: action
         ))
     }
 

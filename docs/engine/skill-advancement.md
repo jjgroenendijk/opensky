@@ -147,6 +147,30 @@ the limit gains nothing and carries nothing.
 Each point raises the base skill by one, stored as a distance from the record value. So a trained
 skill survives a level change, a race change, or a new load order.
 
+## Experience multipliers
+
+Rested, Well Rested, Lover's Comfort, and the Guardian Stones are not numbers in the engine.
+Each is a spell whose magic effect has a "perk to apply" (`MGEF DATA`). While the effect is
+active, its holder owns that perk. The perk changes the experience of each use through the
+`Mod Skill Use` entry point (22), observed in the install:
+
+| Spell | Perk | Function | Value |
+| --- | --- | --- | --- |
+| `Rested`, `WellRested` | `RestedPerk` | multiply value | 1.05 |
+| `MarriageRested` | `RestedMarriagePerk` | multiply value | 1.15 |
+| `doomWarriorAbility` | `doomWarriorPerk` | multiply value | 1.2 |
+
+The stones' perks choose their skills with condition 681 `EPMagic_IsAdvanceSkill`, in an OR
+group. Conditions 691 and 692 ask about the object and the action of the use
+([condition functions](/engine/condition-functions.md)). Every use passes its skill, its action
+(normal, power attack, bash, lock picked, lockpick broken), and its object where one exists.
+Melee does not tell power attacks and bashes apart yet, so it reports normal use.
+
+An effect whose archetype OpenSky does not implement still becomes active when it carries a
+perk, because the perk is the whole point of the effect.
+
+The Rested spells come from sleeping in vanilla (`PlayerSleepQuestScript`).
+
 ## Character experience
 
 Each point banks `level * fXPPerSkillRank` toward the character level. Character leveling spends it

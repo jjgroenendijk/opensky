@@ -189,7 +189,7 @@ public final class MapMenuCoordinator {
         case .button(.accept): travelToSelected()
         case .button(.cancel): close()
         case let .pointer(deltaX, deltaY): panBy(SIMD2(deltaX, -deltaY) * 0.002)
-        case .button(.xButton), .release: return
+        case .button(.xButton), .button(.yButton), .release: return
         }
     }
 

@@ -28,7 +28,10 @@ extension ProgressionCoordinator {
             treeNodes: perkTreeNodes(forSkill: skillSelection),
             selectedNode: nodeSelection,
             perk: perkInspection(node: nodeSelection, forSkill: skillSelection),
-            lastActionText: lastActionText
+            lastActionText: lastActionText,
+            experienceRate: perks.skillUseMultiplier(
+                SkillUsageConditionResolution(skill: skillSelection)
+            )
         )
     }
 
@@ -121,7 +124,36 @@ extension ProgressionCoordinator {
         changeSelectedPerk(granting: false)
     }
 
+    @discardableResult
+    public func makeSelectedSkillLegendary() -> String {
+        if case let .failure(refusal) = makeSkillLegendary(skillSelection) {
+            lastActionText = Self.text(for: refusal)
+        }
+        return lastActionText
+    }
+
+    @discardableResult
+    public func resetSelectedPerkTree() -> String {
+        if case let .failure(refusal) = resetPerkTree(skillSelection) {
+            lastActionText = Self.text(for: refusal)
+        }
+        return lastActionText
+    }
+
     // MARK: - Private
+
+    private static func text(for refusal: PerkTreeResetRefusal) -> String {
+        switch refusal {
+        case .notASkill: "Refused: not a skill."
+        case .noProgression: noProgressionText
+        case let .belowLegendaryLevel(base): String(
+                format: "Refused: the skill is %.0f, not 100.",
+                base
+            )
+        case .noDragonSoul: "Refused: no dragon soul to spend."
+        case .noPerksInTree: "Refused: no perks in this tree."
+        }
+    }
 
     private static let noProgressionText = "Progression unavailable: no game data loaded."
     private static let noPerkText = "This box grants no perk."

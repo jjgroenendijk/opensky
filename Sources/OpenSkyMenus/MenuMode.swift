@@ -17,8 +17,9 @@ nonisolated public enum InputRoute: Equatable, Sendable {
 nonisolated public enum MenuInputEvent: Equatable, Sendable {
     public enum Direction: Sendable { case up, down, left, right }
     /// `xButton` is the install's `XButton` user event: the Ready Weapon key while a
-    /// menu is open (`Interface\Controls\PC\controlmap.txt`).
-    public enum Button: Sendable { case accept, cancel, xButton }
+    /// menu is open (`Interface\Controls\PC\controlmap.txt`). `yButton` is the
+    /// gamepad Y button, which Jump shares; the skills menu makes a skill legendary with it.
+    public enum Button: Sendable { case accept, cancel, xButton, yButton }
 
     case move(Direction)
     case button(Button)

@@ -71,6 +71,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installData(&registry)
         ConditionFunctions.installMagic(&registry)
         ConditionFunctions.installPerk(&registry)
+        ConditionFunctions.installSkillUsage(&registry)
         ConditionFunctions.installCrime(&registry)
         ConditionFunctions.installFaction(&registry)
         ConditionFunctions.installInventory(&registry)

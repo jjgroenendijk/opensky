@@ -35,6 +35,7 @@ public final class ProgressionCoordinator {
     public internal(set) var lastActionText = "No leveling action yet."
 
     weak var world: (any ProgressionWorld)?
+    private var cachedStrings: LocalizedStrings??
     /// Takes `SKIL` and `LEVL`.
     public weak var storyEvents: (any StoryEventReporting)?
 
@@ -44,6 +45,17 @@ public final class ProgressionCoordinator {
 
     public func attach(world: any ProgressionWorld) {
         self.world = world
+        cachedStrings = nil
+    }
+
+    /// Loaded on first use, because loading reads every table file.
+    var strings: LocalizedStrings? {
+        if let cachedStrings {
+            return cachedStrings
+        }
+        let loaded = world?.localizedStrings()
+        cachedStrings = .some(loaded)
+        return loaded
     }
 
     public func wireSkills(
@@ -57,6 +69,7 @@ public final class ProgressionCoordinator {
             settings: settings
         )
         runtime.wornArmor = { [weak self] key in self?.world?.wornArmor(of: key) ?? .none }
+        runtime.useMultiplier = { [weak self] usage in self?.perks.skillUseMultiplier(usage) ?? 1 }
         runtime.leveling = leveling
         skills = runtime
     }

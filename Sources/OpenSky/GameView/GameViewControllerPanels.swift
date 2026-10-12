@@ -560,6 +560,16 @@ extension GameViewController: ProgressionControlProviding {
     }
 
     @discardableResult
+    func makeSelectedSkillLegendary() -> String {
+        progression.makeSelectedSkillLegendary()
+    }
+
+    @discardableResult
+    func resetSelectedPerkTree() -> String {
+        progression.resetSelectedPerkTree()
+    }
+
+    @discardableResult
     func grantSelectedPerk() -> String {
         progression.grantSelectedPerk()
     }

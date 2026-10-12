@@ -119,7 +119,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         case .move(.right): step(selectedRow, by: 1)
         case .button(.accept): return selectedRow == .name ? .editName : .done
         case .button(.cancel), .button(.xButton): return .done
-        case .pointer, .release: break
+        case .pointer, .release, .button(.yButton): break
         }
         return nil
     }

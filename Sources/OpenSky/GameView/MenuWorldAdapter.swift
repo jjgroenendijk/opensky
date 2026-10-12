@@ -12,6 +12,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkySave
 import OpenSkyScripting
@@ -102,7 +104,12 @@ extension MenuWorldAdapter: PlayerSettingsWorld {
     }
 }
 
-extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
+extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
+    /// Nil until leveling is wired, so the menu does not open on an empty card.
+    var skillsMenuSource: (any SkillsMenuSource)? {
+        game.progression.leveling == nil ? nil : game.progression
+    }
+
     var menuInputConsumer: (any MenuInputConsumer)? {
         game
     }
