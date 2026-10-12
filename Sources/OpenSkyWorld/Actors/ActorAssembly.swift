@@ -308,7 +308,8 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
         owner: UInt32 = 0,
         reference: UInt32 = 0
     ) -> [RenderPlacement] {
-        models.map {
+        let posed = poseBounds?.transformed(by: transform)
+        return models.map {
             let morphs: [ObjectIdentifier: FaceMorphBuffer] =
                 switch $0.role {
                 case .faceGenHead, .headPart: faceMorphs
@@ -317,15 +318,19 @@ nonisolated extension ActorAssembly where Asset == ActorRenderAsset {
             return RenderPlacement(
                 model: $0.asset.model,
                 transform: transform,
-                bounds: Self.isAttachment($0.role)
-                    ? nil
-                    : $0.asset.bounds?.transformed(by: transform),
+                bounds: Self.isAttachment($0.role) ? nil : posed,
                 referenceFormID: reference,
                 faceMorphs: morphs,
                 layer: .actors,
                 owner: owner
             )
         }
+    }
+
+    private var poseBounds: ModelBounds? {
+        ActorPoseBounds.containing(
+            models.filter { !Self.isAttachment($0.role) }.compactMap(\.asset.bounds)
+        )
     }
 
     public var worldBounds: ModelBounds? {

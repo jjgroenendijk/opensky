@@ -201,6 +201,10 @@ Not done yet: the `NAM0` to `NAM3` skin texture sets, and the `DNAM` weapon adju
   cache key is the path plus the skeleton.
 - Place every part with the ACHR position, rotation, and `XSCL` scale. The part bounds join
   into one world box.
+- Every part is culled with one cube around the root, whose half size is the farthest
+  bind-pose corner of any part. A part's own box holds only its bind pose. A seated actor
+  moves its head and hands out of their boxes, so those boxes culled the head and hands
+  while they were still in view.
 - An actor with at least one body or head model renders. An actor with no model fails with
   `noCoreGeometry`.
 
