@@ -101,7 +101,10 @@ FaceGen head, because the baked head belongs to the record's race and face.
 - The face part's color map is decoded on the CPU, the tint masks are scaled to its size,
   and the layers are painted over it ([DDS](/formats/dds.md), "CPU decode"). The result
   uploads under a texture key named after its inputs, so the same face reuses one upload.
-- The body keeps the race skin texture. The skin tone layer paints the face only.
+- The body keeps the race skin texture. The skin tone layer (`TINP` 6) paints the face, and
+  its colour becomes the body's skin tone, which an NPC stores as `QNAM`. Ralof's layer
+  colour divided by 255 equals his `QNAM`. The layer strength is not used for the body; for
+  vanilla NPCs it is 100, so its role there is not known.
 
 ## The race menu movie
 

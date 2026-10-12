@@ -348,6 +348,8 @@ nonisolated public struct PlayerAppearanceOverride: Equatable, Sendable {
     public var faceMorphs: [Float] = []
     public var faceParts: [Int32] = []
     public var tints: [PlayerAppearanceTint] = []
+    /// The body's skin colour. Nil keeps the record's `QNAM`.
+    public var skinTone: SIMD3<Float>?
 
     public init(race: FormID, isFemale: Bool, headParts: [FormID], hairColor: FormID?) {
         self.race = race
@@ -385,7 +387,24 @@ nonisolated extension ResolvedActorAppearance {
                 ?? hairColor,
             defaultOutfit: defaultOutfit,
             weight: weight,
-            skinTone: skinTone
+            skinTone: override.skinTone ?? skinTone
         )
+    }
+}
+
+nonisolated extension PlayerAppearanceOverride {
+    /// `TINP` 6, the race mask whose layer colours the face and the body alike.
+    public static let skinToneMaskType: UInt16 = 6
+
+    /// The skin tone layer's colour. An NPC's `QNAM` equals it: Ralof's layer is
+    /// (198, 176, 168) and his `QNAM` is that divided by 255.
+    public func skinToneLayerColour(masks: [RaceTintMask]) -> SIMD3<Float>? {
+        let skinMasks = Set(
+            masks.filter { $0.maskType == Self.skinToneMaskType }.compactMap(\.index)
+        )
+        guard let layer = tints.last(where: { skinMasks.contains($0.maskIndex) }) else {
+            return nil
+        }
+        return SIMD3(Float(layer.color.x), Float(layer.color.y), Float(layer.color.z)) / 255
     }
 }
