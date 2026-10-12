@@ -27,7 +27,7 @@ Sources:
 Perception runs on the same 1/60 s fixed step as combat and actor values, and stops when the
 world is paused. One evaluation of an observer and a target:
 
-1. Distance, feet to feet.
+1. Distance, feet to feet. A seated player's feet are where the vehicle seat holds them.
 2. View cone: a wedge of `viewConeHalfAngleDegrees` on each side of the observer's facing. It is
    flat in XY, because no actor tilts its head here.
 3. Line of sight: one ray from the observer's eye to the target's eye, against fixed collision.

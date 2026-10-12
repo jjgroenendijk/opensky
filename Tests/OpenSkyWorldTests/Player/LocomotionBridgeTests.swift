@@ -43,6 +43,20 @@ struct LocomotionBridgeTests {
         #expect(plan.motionSource == .idle)
     }
 
+    @Test
+    func aSeatedStepMovesTheStatusFeetWithTheSeat() {
+        let bridge = LocomotionBridge(configuration: .synthetic)
+        bridge.intent = LocomotionIntent(moveForward: 1)
+        _ = bridge.plan(Self.state())
+        let seat = SIMD3<Float>(4000, -2000, 300)
+        bridge.advanceSeated(deltaTime: WalkController.fixedTimeStep, feet: seat)
+        #expect(bridge.status.feetPosition == seat)
+        #expect(bridge.status.lastPlan == .still)
+        // A paused seated frame still reports where the seat is.
+        bridge.advanceSeated(deltaTime: 0, feet: seat + SIMD3(1, 0, 0))
+        #expect(bridge.status.feetPosition == seat + SIMD3(1, 0, 0))
+    }
+
     // MARK: - Zero dt
 
     @Test
