@@ -210,7 +210,12 @@ better name instead.
 - A performance idea, or a performance problem spotted mid-task, becomes a GitHub issue
   (`gh issue create`) rather than an inline fix. One issue per idea; the title states the
   win, the body states why it can be faster. No measurement is needed to file it.
-- A pre-existing bug found mid-task, one the current change did not cause, becomes a GitHub
+- When the task shows that something is missing, such as a shader term, a record field, or
+  a step of a game rule, check the same area for more gaps before you finish: the rest of
+  the shader, the other fields of the record, the other steps of the rule. Implement every
+  gap you find in the same PR, and list them in the PR body. One gap usually means its
+  neighbours were never built either, so adding only the first one leaves the result wrong.
+- A pre-existing bug found mid-task in an area the task does not touch becomes a GitHub
   issue with the `bug` label (`gh issue create --label bug`). One issue per bug; the body
   states how to reproduce it, what was observed, and what is expected. This keeps the bug from
   being lost and keeps the fix out of an unrelated PR. Fix it inline only when it blocks

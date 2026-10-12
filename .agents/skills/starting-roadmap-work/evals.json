@@ -92,5 +92,17 @@
       "Keeps the description to the scope, spec references, and legal notes",
       "Adds no dates, issue or PR numbers, outcome, or status to the description"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Fixing the skin colour bug, I found the mesh shader never applies the face tint. Is that all that is missing?",
+    "files": [],
+    "expected_behavior": [
+      "Checks the rest of the shader for more missing terms, such as normal maps and specular",
+      "Implements every gap found in the same PR instead of filing separate issues",
+      "Lists the gaps in the PR body"
+    ]
   }
 ]
