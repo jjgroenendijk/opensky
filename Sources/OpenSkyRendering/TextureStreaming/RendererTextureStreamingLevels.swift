@@ -84,7 +84,7 @@ extension Renderer {
     }
 
     /// The use of each texture the scene draws that needs the most texels per pixel.
-    private func nearestUses() -> [ObjectIdentifier: TextureUse] {
+    func nearestUses() -> [ObjectIdentifier: TextureUse] {
         let camera = freeFlyCamera.position
         var nearest: [ObjectIdentifier: TextureUse] = [:]
         func note(_ texture: MTLTexture, bounds: ModelBounds, uvPerUnit: Float) {
@@ -96,7 +96,8 @@ extension Renderer {
         }
         for group in [frameDrawGroups.opaque, frameDrawGroups.alphaTested].joined() {
             let uvScale = max(group.material.uvScale.x, group.material.uvScale.y)
-            for instance in group.instances {
+            // A rider or a walker is far from its baked bounds; measure where it draws.
+            for instance in group.instances.lazy.map(drawn) {
                 guard let bounds = instance.bounds else { continue }
                 let axis = instance.modelMatrix.columns.0
                 let scale = max(simd_length(SIMD3(axis.x, axis.y, axis.z)), 0.01)
