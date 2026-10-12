@@ -102,6 +102,8 @@ nonisolated public struct CellScene: Sendable {
     public var imageSpace: FormID?
     /// Activators and doors a behaviour graph animates, posed through their buffers.
     public var animatedObjects: [CellAnimatedObject] = []
+    /// Towed carts whose wheels turn, posed through their buffers.
+    public var animatedVehicles: [CellAnimatedVehicle] = []
 
     public init(
         renderScene: RenderScene,

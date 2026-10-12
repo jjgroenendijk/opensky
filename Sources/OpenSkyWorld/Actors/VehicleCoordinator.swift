@@ -30,6 +30,8 @@ public protocol VehicleWorld: AnyObject {
     /// `VehicleWheels.contacts` of the reference's model: nil while it loads, empty
     /// when it has no wheels or no model.
     func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]?
+    /// Turns the follower's wheels for `distance` rolled since the link.
+    func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float)
 }
 
 @MainActor
@@ -125,6 +127,11 @@ public final class VehicleCoordinator {
             } else if let formID = world.vehicleFormID(of: key) {
                 world.vehicleFollowerMoved(key, to: pose)
                 placements[formID] = VehicleCore.matrix(pose)
+            }
+        }
+        for (key, link) in core.links {
+            if case let .towed(tow) = link.seat {
+                world.spinVehicleWheels(of: key, rolled: tow.rolled)
             }
         }
         world.publishVehiclePoses(placements)

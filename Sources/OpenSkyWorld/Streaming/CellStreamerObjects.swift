@@ -6,4 +6,10 @@ extension CellStreamer {
         let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)
         return scenes.flatMap(\.animatedObjects)
     }
+
+    /// The towed carts with turning wheels, in the same scenes.
+    public func residentAnimatedVehicles() -> [CellAnimatedVehicle] {
+        let scenes = interiorScene.map { [$0] } ?? Array(composition.cells.values)
+        return scenes.flatMap(\.animatedVehicles)
+    }
 }

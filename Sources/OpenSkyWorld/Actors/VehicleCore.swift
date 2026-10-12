@@ -32,6 +32,8 @@ nonisolated public struct VehicleTow: Equatable, Sendable {
     public var heading: Float
     /// Where the wheels touch the ground, in the model frame; nil until the model loads.
     public var wheels: [SIMD2<Float>]?
+    /// How far the follower has rolled forward since the link, for its wheels' spin.
+    public var rolled: Float = 0
 }
 
 /// One follower's carrier and how it sits there.
@@ -210,6 +212,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         }
         let direction = SIMD2(sin(tow.heading), cos(tow.heading))
         let spot = SIMD2(hitch.x, hitch.y) - direction * tow.length
+        tow.rolled += simd_dot(spot - SIMD2(tow.position.x, tow.position.y), direction)
         let top = max(tow.position.z, hitch.z) + groundSearchHeight
         let turn = MatrixMath.rotationZ(radians: -(tow.heading - tow.linkHeading))
         if let wheels = tow.wheels {

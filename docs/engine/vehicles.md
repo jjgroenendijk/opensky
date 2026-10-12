@@ -56,6 +56,18 @@ moves the cart as a trailer instead:
 
 [WARNING] The trailer rule approximates the game's physics. It is not taken from an open spec.
 
+## Wheels
+
+A towed cart whose mesh has wheel nodes turns its wheels as it rolls. The cell build gives such a
+cart its own copy of the mesh, with each wheel's shapes bound to its node, the way an animated
+object is drawn ([object animation](/engine/object-animation.md)). Each wheel turns about the
+model's X axis by the distance the cart rolled forward, divided by the wheel's radius. The radius
+is the height of the wheel node's centre: about 59 for the back wheels of the prisoner carriage and
+about 48 for the front ones.
+
+The front wheels do not steer. The cart already turns its whole body toward the horse each frame,
+so `FrontBar` would always point straight ahead.
+
 ## Riders
 
 `SetVehicle` puts the rider's root on the vehicle's root. The rider's seat idle then moves the body
@@ -124,4 +136,5 @@ before it got on no longer counts as where it is.
 - `Game.SetHudCartMode` and `Game.SetSittingRotation` do nothing yet. The HUD movie has a `CartMode`
   among its HUD modes, but OpenSky does not drive HUD modes yet. The second turns the player in the
   seat; the player keeps the view it had.
-- The cart's wheels do not turn.
+- The front axle does not swivel under the cart, and the wheels do not turn at different speeds
+  in a curve.

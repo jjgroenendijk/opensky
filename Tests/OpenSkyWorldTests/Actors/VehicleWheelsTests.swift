@@ -1,6 +1,7 @@
 // A towed cart rests on the ground under its wheels: all of them touch on a slope,
 // a change of slope, or a side slope, and none sinks below the ground.
 
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
@@ -90,5 +91,48 @@ struct VehicleWheelsTests {
             strings: ["FrontBar", "WheelBackLeft", "WheelFrontRight"]
         ))
         #expect(try VehicleWheels.contacts(in: file) == [[-70, -215], [80, 1]])
+    }
+
+    @Test func theCartCountsHowFarItRolled() {
+        var core = VehicleCore()
+        core.tow(
+            Self.cart, by: Self.horse,
+            followerPose: ReferenceTransformOverride(position: [0, -200, 0]),
+            carrierPose: ReferenceTransformOverride(position: .zero)
+        )
+        let ahead = ReferenceTransformOverride(position: [0, 100, 0])
+        _ = core.advance(base: { _ in ahead })
+        guard case let .towed(tow)? = core.links[Self.cart]?.seat else {
+            Issue.record("the cart is not towed")
+            return
+        }
+        #expect(abs(tow.rolled - 100) < 0.01)
+    }
+
+    @Test func aWheelTurnsByTheArcItRolled() throws {
+        let file = try NIFFile(data: NIFFixture.file(
+            blocks: [
+                .init("NiNode", NIFFixture.niNode(children: [1])),
+                .init("NiNode", NIFFixture.niNode(
+                    prefix: NIFFixture.avObjectPrefix(nameIndex: 0, translation: [-70, -215, 50])
+                ))
+            ],
+            strings: ["WheelBackLeft"]
+        ))
+        let rig = try #require(try VehicleWheelRig(file: file))
+        #expect(rig.skeleton.boneNames == ["WheelBackLeft"])
+        let quarter = try #require(rig.pose(rolled: .pi * 50 / 2).first)
+        #expect(quarter.translation == [-70, -215, 50])
+        // Rolling forward along +Y carries the top of the wheel forward.
+        let top = quarter.rotation.act(SIMD3(0, 0, 1))
+        #expect(simd_length(top - SIMD3(0, 1, 0)) < 0.001)
+    }
+
+    @Test func aModelWithoutWheelsHasNoRig() throws {
+        let file = try NIFFile(data: NIFFixture.file(blocks: [.init(
+            "NiNode",
+            NIFFixture.niNode()
+        )]))
+        #expect(try VehicleWheelRig(file: file) == nil)
     }
 }

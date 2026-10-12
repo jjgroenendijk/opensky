@@ -186,6 +186,17 @@ extension VehicleWorldAdapter: VehicleWorld {
         }
     }
 
+    func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float) {
+        guard
+            let streamer = game.streamer,
+            let formID = vehicleFormID(of: key),
+            let vehicle = streamer.residentAnimatedVehicles().first(where: {
+                $0.reference == formID
+            })
+        else { return }
+        vehicle.pose.publish(vehicle.rig.pose(rolled: distance))
+    }
+
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {
         guard key != .player else { return }
         let cell = game.streamer?.cellLocation(of: key)
