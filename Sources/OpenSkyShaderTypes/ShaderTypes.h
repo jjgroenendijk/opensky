@@ -206,6 +206,8 @@ typedef NS_ENUM(EnumBackingType, ShadingTerm)
     ShadingTermVertexColorGamma = 1 << 16,
     /// Frame-only: add the single ambient colour on top of the directional ambient.
     ShadingTermBaseAmbient = 1 << 17,
+    /// The tint colour is a skin tone: it overlays the albedo instead of multiplying it.
+    ShadingTermSkinTint = 1 << 18,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.

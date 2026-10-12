@@ -13,7 +13,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     public let tint: SIMD3<Float>?
     /// Textures for single shapes, laid over the whole-model textures.
     public let shapes: [ShapeTextures]
-    /// The actor's skin colour, multiplied into the vertex colors of skin-tint shapes only.
+    /// The actor's skin colour, the tint colour of skin-tint shapes only.
     public let skinTone: SIMD3<Float>?
 
     /// The textures one named shape draws instead of its own.
@@ -77,17 +77,14 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     /// A shape with its own textures gets a material of its own, because other
     /// shapes may share the material it had.
     public func applied(to model: Model) -> Model {
-        var meshes = model.meshes.map { mesh in
-            let tintsSkin = model.materials.indices.contains(mesh.materialSlot)
-                && model.materials[mesh.materialSlot].tintsSkin
-            return tinted(mesh, by: Self.product(tint, tintsSkin ? skinTone : nil))
-        }
+        var meshes = model.meshes.map { tinted($0, by: tint) }
         var materials = model.materials.map {
             Self.retextured(
                 $0,
                 diffuse: diffuseTexture,
                 normal: normalTexture,
-                replacesTint: tint != nil || ($0.tintsSkin && skinTone != nil)
+                replacesTint: tint != nil,
+                skinTone: $0.tintsSkin ? skinTone : nil
             )
         }
         for index in meshes.indices {
@@ -101,7 +98,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
                 materials[mesh.materialSlot],
                 diffuse: swap.diffuseTexture,
                 normal: swap.normalTexture,
-                replacesTint: false
+                replacesTint: false,
+                skinTone: nil
             ))
             meshes[index] = Self.mesh(mesh, colors: mesh.colors, materialSlot: materials.count - 1)
         }
@@ -113,16 +111,21 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         )
     }
 
-    /// An actor's own colour replaces the tint colour the NIF stores.
+    /// An actor's own colour replaces the tint colour the NIF stores. The skin tone
+    /// stays a material colour, because the shader blends it unlike a vertex colour.
     private static func retextured(
         _ material: Material,
         diffuse: String?,
         normal: String?,
-        replacesTint: Bool
+        replacesTint: Bool,
+        skinTone: SIMD3<Float>?
     ) -> Material {
         var shading = material.shading
         if replacesTint {
             shading.tintColor = nil
+        }
+        if let skinTone {
+            shading.tintColor = skinTone
         }
         return Material(
             diffuseTexture: diffuse ?? material.diffuseTexture,
@@ -140,11 +143,6 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             tintsSkin: material.tintsSkin,
             shading: shading
         )
-    }
-
-    private static func product(_ first: SIMD3<Float>?, _ second: SIMD3<Float>?) -> SIMD3<Float>? {
-        guard let first else { return second }
-        return second.map { first * $0 } ?? first
     }
 
     /// A mesh without vertex colors draws white, so it gets the tint itself.

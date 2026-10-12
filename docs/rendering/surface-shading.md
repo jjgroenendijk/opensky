@@ -68,7 +68,15 @@ The albedo starts as diffuse times vertex colour. Then, in this order:
    and the result doubles where a detail map is used. These steps run in gamma space.
 3. The environment cube map adds its reflection, times the environment scale and the slot 5
    mask (or the normal alpha without a mask).
-4. A skin or hair tint colour multiplies the albedo.
+4. A hair tint colour multiplies the albedo. A skin tint colour (shader type 5) overlays
+   it in gamma space instead, the same blend as the face tint.
+
+The skin tint is the actor's `QNAM` colour, or the NIF's own tint colour without one.
+NifSkope multiplies it, but a multiply darkens the body far below the head: Ralof's
+`QNAM` is (0.78, 0.69, 0.66), which multiplies the body by about 0.5 in linear space,
+while the overlaid face tint brightens the head. The game shows no seam at the neck, so
+OpenSky blends the body like the face. This is a match to observed output, not a
+confirmed game formula.
 
 Parallax (type 3) shifts the texture coordinate before any sampling:
 `uv += V.xy * (height * 0.08 - 0.04)`, with V the view direction in the tangent frame.
@@ -80,7 +88,7 @@ right-handed, so the lookup swaps Y and Z.
 
 The game shades in gamma space. OpenSky samples sRGB textures into linear values, so a
 colour that the game multiplies in gamma space must be made linear first. Vertex colours,
-which hold baked ambient occlusion and the actor's skin colour, and the NIF tint colours are
+which hold baked ambient occlusion and the hair colour, and the hair tint colour are
 raised to the power 2.2 while "Vertex colours in gamma space" is on. The terrain's `LAND`
 vertex colours and the grass tint follow the same switch, and so does the base ambient
 switch for terrain, grass, and decals. Without that, a vertex

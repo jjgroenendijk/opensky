@@ -20,7 +20,7 @@ nonisolated public struct SurfaceShadingTerm: OptionSet, Hashable, Sendable {
     public static let softAndRimLight = Self(.softLighting, .rimLighting)
     public static let backLight = Self(.backLighting)
     public static let faceTint = Self(.faceTint, .faceDetail)
-    public static let tintColor = Self(.tintColor)
+    public static let tintColor = Self(.tintColor, .skinTint)
     public static let reflections = Self(.environment, .environmentMask)
     public static let parallax = Self(.parallax, .multiLayer)
     public static let vertexColorGamma = Self(.vertexColorGamma)
