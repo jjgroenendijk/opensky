@@ -2,6 +2,7 @@
 // nothing moves the body. See docs/engine/idle-runtime.md.
 
 import OpenSkyBehavior
+import simd
 
 nonisolated extension LocomotionBridge {
     /// Plays an idle on the graph, as `PlayIdle` does. A seated step raises it again
@@ -11,8 +12,15 @@ nonisolated extension LocomotionBridge {
     }
 
     /// A seated step runs the graph's seat state and nothing else: a seated player
-    /// neither walks nor falls, so no variable or edge event goes in.
-    public func advanceSeated(deltaTime: Float) {
+    /// neither walks nor falls, so no variable or edge event goes in. `feet` is where
+    /// the seat holds the player, so readers of `status` follow a moving vehicle.
+    public func advanceSeated(deltaTime: Float, feet: SIMD3<Float>) {
+        updateStatus { status in
+            status.feetPosition = feet
+            status.lastPlan = .still
+            status.verticalVelocity = 0
+            status.isGrounded = true
+        }
         guard deltaTime > 0 else { return }
         if let pendingIdle {
             raise(pendingIdle.event)

@@ -76,7 +76,9 @@ extension Renderer {
         case .walk where playerSeat != nil, .thirdPerson where playerSeat != nil:
             // The vehicle places a seated player; only the view turns.
             freeFlyCamera.applyLook(lookRight: frameInput.lookRight, lookUp: frameInput.lookUp)
-            locomotion.advanceSeated(deltaTime: lastCameraDelta)
+            locomotion.advanceSeated(
+                deltaTime: lastCameraDelta, feet: walkController.feetPosition
+            )
         case .walk, .thirdPerson:
             advancePlayer(frameInput)
         }

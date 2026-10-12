@@ -193,11 +193,12 @@ public final class PerceptionRuntime {
         // The ray is the expensive half, so it is skipped outright for a pair
         // already past the range where either sense could reach. The formula
         // would multiply everything by a zero attenuation anyway.
-        let maximum = DetectionFormula.maximumDistance(
-            settings: settings, isExterior: observer.isExterior
-        )
         let hasLineOfSight: Bool
-        if distance < maximum {
+        if
+            DetectionFormula.isInRange(
+                distance: distance, settings: settings, isExterior: observer.isExterior
+            )
+        {
             lineOfSightQueryCount += 1
             hasLineOfSight = world.perceptionHasLineOfSight(from: observer.eye, to: target.eye)
         } else {
