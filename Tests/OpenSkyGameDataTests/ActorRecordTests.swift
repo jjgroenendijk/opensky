@@ -245,6 +245,27 @@ struct ActorTemplateResolverTests {
         #expect(try npcs.resolve(base: FormID(0x200)).skinTone == SIMD3(0.9, 0.7, 0.6))
     }
 
+    @Test func thePlayersSkinToneLayerColoursTheBody() throws {
+        let npcs = try resolver(npcs: [npc(formID: 0x100, race: 0xA1, skinTone: [0.1, 0.1, 0.1])])
+        var lip = RaceTintMask()
+        (lip.index, lip.maskType) = (1, 1)
+        var skin = RaceTintMask()
+        (skin.index, skin.maskType) = (4, PlayerAppearanceOverride.skinToneMaskType)
+        var override = PlayerAppearanceOverride(
+            race: FormID(0xA1), isFemale: false, headParts: [], hairColor: nil
+        )
+        override.tints = [
+            PlayerAppearanceTint(maskIndex: 1, color: SIMD4(255, 0, 0, 0), strength: 1),
+            PlayerAppearanceTint(maskIndex: 4, color: SIMD4(255, 51, 0, 0), strength: 1)
+        ]
+        let base = try npcs.resolve(base: FormID(0x100))
+        #expect(base.applying(override).skinTone == SIMD3(0.1, 0.1, 0.1))
+        override.skinTone = override.skinToneLayerColour(masks: [lip, skin])
+        #expect(override.skinTone == SIMD3(1, 0.2, 0))
+        #expect(base.applying(override).skinTone == SIMD3(1, 0.2, 0))
+        #expect(override.skinToneLayerColour(masks: [lip]) == nil)
+    }
+
     @Test func useInventoryPullsOutfitFromTemplateOnly() throws {
         let template = try npc(formID: 0x200, race: 0xA2, defaultOutfit: 0xD2)
         let base = try npc(

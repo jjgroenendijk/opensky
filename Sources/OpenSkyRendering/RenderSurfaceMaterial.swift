@@ -84,6 +84,9 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         }
         if material.shading.tintColor != nil {
             bits |= UInt32(ShadingTerm.tintColor.rawValue)
+            if material.tintsSkin {
+                bits |= UInt32(ShadingTerm.skinTint.rawValue)
+            }
         }
         return bits
     }

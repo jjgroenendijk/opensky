@@ -74,15 +74,20 @@ nonisolated extension CellSceneBuilder {
         return buffers
     }
 
+    /// The tint masks of the player's race and sex.
+    func raceTintMasks(_ appearance: PlayerAppearanceOverride) -> [RaceTintMask] {
+        let head = actorVisualResolver?.races[appearance.race.rawValue]?.details.headData
+        return (appearance.isFemale ? head?.female : head?.male)?.tintMasks ?? []
+    }
+
     private static func meshKey(_ path: String) -> String {
         path.lowercased().hasPrefix("meshes\\") ? path : "meshes\\\(path)"
     }
 
     /// A key named after the face's inputs, so the same face reuses one upload.
     private func paintedFaceKey(base: String, appearance: PlayerAppearanceOverride) -> String? {
-        guard let resolver = actorVisualResolver, let fileSystem else { return nil }
-        let head = resolver.races[appearance.race.rawValue]?.details.headData
-        let masks = (appearance.isFemale ? head?.female : head?.male)?.tintMasks ?? []
+        guard actorVisualResolver != nil, let fileSystem else { return nil }
+        let masks = raceTintMasks(appearance)
         let layers = appearance.tints.compactMap { tint -> (String, PlayerAppearanceTint)? in
             let mask = masks.first { $0.index == tint.maskIndex }
             return mask?.texturePath.flatMap(NIFShaderTextureSet.vfsKey(for:)).map { ($0, tint) }

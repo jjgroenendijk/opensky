@@ -21,6 +21,7 @@ struct RendererTextureStreamingTests {
     private static let width = 320
     private static let height = 240
     private static let side = 1024
+    private static let reference: UInt32 = 0x100
 
     private static let camera = SceneCamera(
         eye: SIMD3(0, -400, 150),
@@ -52,7 +53,8 @@ struct RendererTextureStreamingTests {
 
     @MainActor
     private static func render(
-        texture: MTLTexture, prepare: (Renderer) -> Void
+        texture: MTLTexture, transform: float4x4 = matrix_identity_float4x4,
+        prepare: (Renderer) -> Void
     ) throws -> [UInt8] {
         let device = try #require(Self.device)
         let model = Model(
@@ -64,7 +66,10 @@ struct RendererTextureStreamingTests {
         let renderer = try OffscreenRendererFixture.makeSessionRenderer(
             device: device, width: width, height: height,
             scene: RenderScene(instances: [
-                RenderPlacement(model: render, transform: matrix_identity_float4x4, bounds: bounds)
+                RenderPlacement(
+                    model: render, transform: transform,
+                    bounds: bounds.transformed(by: transform), referenceFormID: Self.reference
+                )
             ]),
             camera: camera, shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
@@ -105,5 +110,21 @@ struct RendererTextureStreamingTests {
         let stats = try #require(streamingRenderer).textureStreaming.stats
         #expect(stats.streamedTextures == 1)
         #expect(stats.usedBytes > 0)
+    }
+
+    @Test(.enabled(if: Self.hasMetal4Device))
+    @MainActor
+    func aMovedInstanceIsMeasuredWhereItDraws() throws {
+        let device = try #require(Self.device)
+        let texture = try TextureLoader(device: device)
+            .texture(ready: Self.ready(), usage: .color, label: "moved")
+        let far = MatrixMath.translation(SIMD3(50000, 0, 0))
+        var moved: Renderer?
+        _ = try Self.render(texture: texture, transform: far) { renderer in
+            renderer.dynamicInstanceDeltas[Self.reference] = far.inverse
+            moved = renderer
+        }
+        let use = try #require(moved?.nearestUses()[ObjectIdentifier(texture)])
+        #expect(use.distance < 1000, "measured at \(use.distance), the baked bounds")
     }
 }

@@ -94,7 +94,8 @@ nonisolated extension CellSceneBuilder {
         let assembly: ActorAssembly<ActorRenderAsset>
         do {
             var appearance = try resolvers.template.resolve(base: PlayerBody.baseFormID)
-            if let override {
+            if var override {
+                override.skinTone = override.skinToneLayerColour(masks: raceTintMasks(override))
                 appearance = appearance.applying(override)
             }
             var visual = try resolvers.visual.resolve(appearance: appearance, equipped: equipped)

@@ -54,8 +54,9 @@ every texture whole.
    Texels per world unit come from the mesh's UV density: the square root of its UV area
    over its world area, measured once at load. A tree maps its whole branch texture onto
    each of many small cards, so its density is high, and the mesh size alone would pick a
-   level far too coarse. A landscape texture repeats every two terrain quads
-   ([terrain](/engine/terrain.md)).
+   level far too coarse. A moving instance, such as an actor on the opening cart, is
+   measured where it draws this frame, not at the bounds its cell was built with. A
+   landscape texture repeats every two terrain quads ([terrain](/engine/terrain.md)).
    A scene texture the rule does not measure, such as grass or particles, keeps all its
    levels. A grass texture keeps them even when a static far away shares it. A texture
    outside the scene lists, such as the player's first-person body, keeps the levels it

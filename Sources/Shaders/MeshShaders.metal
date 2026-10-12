@@ -343,7 +343,9 @@ fragment float4 staticMeshFragment(
     }
     albedo = faceAlbedo(albedo, uv, terms, maps, trilinear);
     albedo += reflection(normal.world, toEye, normal.mask, uv, terms, draw, maps, trilinear);
-    if (hasTerm(terms, ShadingTermTintColor)) {
+    if (hasTerm(terms, ShadingTermSkinTint)) {
+        albedo = toLinear(overlayGamma(toGamma(albedo), draw.tintColor.rgb));
+    } else if (hasTerm(terms, ShadingTermTintColor)) {
         albedo *= linearVertexColour(draw.tintColor.rgb, frame);
     }
     LitInput input = {albedo, toEye, uv, shadow, terms};
