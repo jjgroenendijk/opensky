@@ -92,17 +92,31 @@ REFRs:
 Convention (with our CCW-positive rotation helpers):
 
 ```text
-R = Rz(−rotZ) * Ry(−rotY) * Rx(−rotX)
+R = Rx(−rotX) * Ry(−rotY) * Rz(−rotZ)
 world = T(position) * R * S(scale)      // XSCL uniform scale, default 1
 ```
 
 Angles negated: Bethesda angles turn clockwise viewed from the positive axis end
-(left-handed sign in a RH space). Order Z·Y·X with X innermost. Source: community
-consensus — xEdit displays REFR angles as clockwise degrees; OpenMW (GPL clean-room
-engine for the same Gamebryo lineage) applies negated eulers in this order.
+(left-handed sign in a RH space). xEdit displays REFR angles as clockwise degrees.
+Order X·Y·Z with Z innermost: the yaw turns the model first, then Y and X tilt it about
+the world axes.
 
-Checked visually (a `WhiterunExterior06` offscreen render): city-wall
-segments placed at differing yaws join into one continuous curved run — wrong sign
-would mirror/scatter the joints, wrong order would tilt segments. Decision final.
+The order was measured on `Skyrim.esm`, not taken from a source. Road pieces
+(`RoadChunk*`, `Landscape\Roads`) lie flat on the terrain, so a correct placement puts their
+corners on the `LAND` height field. Over the 1,392 road pieces with an X or Y angle above
+0.15 rad, the spread of corner height minus terrain height was:
+
+| Order | Median | Mean |
+| --- | --- | --- |
+| `Rx(−x) * Ry(−y) * Rz(−z)` | 10.7 | 38.1 |
+| `Rz only`, tilt ignored | 13.6 | 38.1 |
+| `Rz(−z) * Ry(−y) * Rx(−x)` | 23.4 | 45.5 |
+| `Rz(z) * Ry(y) * Rx(x)` | 23.8 | 48.0 |
+| `Rx(x) * Ry(y) * Rz(z)` | 30.2 | 51.7 |
+
+Only this order fits better than ignoring the tilt. OpenMW uses `Rz(−z) * Ry(−y) * Rx(−x)` for
+Morrowind, which is why that order was tried first. In Skyrim it tips tilted rocks and logs the
+wrong way, which shows on the Helgen road. Objects that turn about Z only, such as city
+walls, look the same under every order, so they cannot check it.
 
 `MatrixMath.placement(position:rotation:scale:)` implements exactly this compose.
