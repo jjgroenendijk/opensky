@@ -204,7 +204,7 @@ extension Renderer {
         let descriptor = MTL4ArgumentTableDescriptor()
         // Highest buffer index is the image-space luminance counters.
         descriptor.maxBufferBindCount = BufferIndex.imageSpaceLuminance.rawValue + 1
-        // The terrain layer normal maps are the highest slots.
+        // The last terrain layer normal is the highest slot.
         descriptor.maxTextureBindCount = TextureIndex.terrainLayerNormal0.rawValue
             + TerrainConstant.maxLayers.rawValue
         // Trilinear + shadow-compare + UI clamp + SWF repeat.
@@ -224,6 +224,14 @@ extension Renderer {
     }
 
     /// Per-frame uniform ring: one aligned slot per in-flight frame.
+    /// The frame uniforms and the cube bound where a material has no cube map.
+    static func makeFrameResources(device: MTLDevice) throws -> (MTLBuffer, MTLTexture) {
+        try (
+            makeFrameUniformBuffer(device: device),
+            TextureLoader.makePlaceholder(device: device, usage: .cube)
+        )
+    }
+
     public static func makeFrameUniformBuffer(device: MTLDevice) throws -> MTLBuffer {
         try makeUniformBuffer(
             device: device,

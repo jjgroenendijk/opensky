@@ -28,6 +28,10 @@ nonisolated public struct RenderMaterial: Sendable {
     public let effect: RenderEffectMaterial?
     /// A water-shader shape: the water pass draws it, not a draw group.
     public let waterSurface: Bool
+    public let normal: MTLTexture?
+    /// The FaceGen tint the shader overlays on the diffuse; nil on other shapes.
+    public let faceTint: MTLTexture?
+    public let surface: RenderSurfaceMaterial
 
     public init(material: Material, textureProvider: TextureProvider) {
         diffuse = textureProvider(material.diffuseTexture, .color)
@@ -41,6 +45,14 @@ nonisolated public struct RenderMaterial: Sendable {
             RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
         }
         waterSurface = material.waterSurface
+        normal = material.normalTexture.map { textureProvider($0, .data) }
+        faceTint = material.tintTexture.map { textureProvider($0, .color) }
+        surface = RenderSurfaceMaterial(material: material, textureProvider: textureProvider)
+    }
+
+    /// Every texture a draw of this material binds, for the residency set.
+    public var textures: [MTLTexture] {
+        [diffuse] + [normal, faceTint, effect?.palette].compactMap(\.self) + surface.textures
     }
 }
 
@@ -548,9 +560,8 @@ nonisolated public struct RenderScene: Sendable {
             })
         }
         for group in opaque + alphaTested {
-            var resources: [MTLAllocation] = [
-                group.mesh.vertexBuffer, group.mesh.indexBuffer, group.material.diffuse
-            ]
+            var resources: [MTLAllocation] = [group.mesh.vertexBuffer, group.mesh.indexBuffer]
+                + group.material.textures
             if let skinning = group.mesh.skinningBuffer {
                 resources.append(skinning)
             }

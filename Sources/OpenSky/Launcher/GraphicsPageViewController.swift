@@ -57,6 +57,10 @@ final class GraphicsPageViewController: NSViewController {
     let toneMappingControl = NSButton(
         checkboxWithTitle: "HDR tone mapping", target: nil, action: nil
     )
+    let surfaceShadingControls = SurfaceShadingSetting.allCases.map {
+        (NSButton(checkboxWithTitle: $0.title, target: nil, action: nil), $0)
+    }
+
     let blinkingControl = NSButton(checkboxWithTitle: "Blinking", target: nil, action: nil)
     let expressionsControl = NSButton(
         checkboxWithTitle: "Dialogue expressions", target: nil, action: nil
@@ -158,6 +162,7 @@ final class GraphicsPageViewController: NSViewController {
                 layout.toggle(pipelineCacheControl),
                 layout.buttons([clearPipelineCacheControl])
             ]),
+            layout.group("Surface shading", surfaceShadingControls.map { layout.toggle($0.0) }),
             layout.group("Characters and objects", [
                 layout.toggle(blinkingControl), layout.toggle(expressionsControl),
                 layout.toggle(headTrackingControl), layout.toggle(objectAnimationControl)
@@ -213,6 +218,9 @@ final class GraphicsPageViewController: NSViewController {
         expressionsControl.state = store.bool(.characterDialogueExpressions) ? .on : .off
         headTrackingControl.state = store.bool(.characterHeadTracking) ? .on : .off
         objectAnimationControl.state = store.bool(.objectAnimation) ? .on : .off
+        for (button, setting) in surfaceShadingControls {
+            button.state = store.bool(setting.id) ? .on : .off
+        }
         pipelineCacheControl.state = store.bool(.pipelineCacheEnabled) ? .on : .off
         textureStreamingControl.state = store.bool(.textureStreaming) ? .on : .off
         textureBudgetControl.selectItem(at: Int(store.value(.textureBudget)))

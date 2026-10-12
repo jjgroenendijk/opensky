@@ -84,6 +84,13 @@ extension GraphicsPageViewController {
             "Large textures keep only the levels the camera needs; saves GPU memory"
         )
         checkbox(fullScreenControl, "FullScreen", "Play opens full screen")
+        configureShadingCheckboxes()
+    }
+
+    private func configureShadingCheckboxes() {
+        for (button, setting) in surfaceShadingControls {
+            checkbox(button, "Shading\(setting.controlName)", setting.toolTip)
+        }
     }
 
     private func configureCharacterCheckboxes() {
@@ -164,7 +171,7 @@ extension GraphicsPageViewController {
             (objectAnimationControl, .objectAnimation),
             (pipelineCacheControl, .pipelineCacheEnabled),
             (textureStreamingControl, .textureStreaming), (fullScreenControl, .fullScreen)
-        ]
+        ] + surfaceShadingControls.map { ($0.0, $0.1.id) }
     }
 
     private var popUpSettings: [(NSPopUpButton, PlayerSettingID)] {

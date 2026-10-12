@@ -71,10 +71,10 @@ fragment function, specialized by a function constant, so opaque draws pay nothi
 Alpha-test draws discard below the material's threshold. The [render debug](/rendering/render-debug.md)
 twins use a second function constant that no shipping pipeline defines.
 
-Shading is: diffuse texture times (directional Lambert plus base ambient plus six-axis directional
-ambient plus point lights). Vertex color is a baked tint, because Skyrim bakes ambient occlusion
-there. Material alpha is multiplied through. There is no normal mapping yet, because there are no
-tangents.
+Shading is: albedo times (sun and point-light diffuse plus six-axis directional ambient plus
+base ambient plus glow, back, rim, and soft light), plus specular. Vertex color is a baked tint,
+because Skyrim bakes ambient occlusion there. Material alpha is multiplied through. Normal maps,
+the terms, and their sources are in [surface shading](/rendering/surface-shading.md).
 
 Depth is `depth32Float`, less-compare, with writes on. Metal 4 sets the depth format at pass time,
 not in the pipeline. Near is 10 and far 65,536 ([coordinates](/decisions/coordinates.md)). The

@@ -24,6 +24,19 @@ static inline float3 directionalAmbient(float3 normal, constant FrameUniforms &f
     return x * weights.x + y * weights.y + z * weights.z;
 }
 
+// The game shades in gamma space, so a vertex colour multiplies a gamma value. Raising
+// it to 2.2 gives the same product on the linear samples (docs/rendering/surface-shading.md).
+static inline float3 linearVertexColour(float3 colour, constant FrameUniforms &frame)
+{
+    bool gamma = (frame.shadingTerms & uint(ShadingTermVertexColorGamma)) != 0;
+    return gamma ? pow(max(colour, 0.0), 2.2) : colour;
+}
+
+static inline float3 baseAmbient(constant FrameUniforms &frame)
+{
+    return (frame.shadingTerms & uint(ShadingTermBaseAmbient)) != 0 ? frame.ambientColor : 0.0;
+}
+
 static inline float3 pointLighting(
     float3 worldPosition, float3 normal, const device PointLightUniform *lights, uint count)
 {
@@ -247,6 +260,10 @@ typedef struct
     float3 worldPosition;
     float2 texcoord;
     float4 color;
+    /// Model-to-world rotation columns, for model-space normal maps.
+    float3 basisX;
+    float3 basisY;
+    float3 basisZ;
 } StaticVertexOut;
 
 typedef struct

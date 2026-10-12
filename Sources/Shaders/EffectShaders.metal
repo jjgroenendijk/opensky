@@ -96,7 +96,7 @@ fragment float4 decalFragment(
     float lambert = saturate(dot(normal, -frame.sunDirection));
     float shadow = sunShadowFactor(in.worldPosition, frame, shadowMap, shadowSampler);
     float3 illumination =
-        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame);
+        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame);
     return float4(applyFog(diffuse.rgb * illumination, in.worldPosition, frame), diffuse.a);
 }
 

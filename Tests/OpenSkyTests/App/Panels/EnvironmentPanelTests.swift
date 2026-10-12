@@ -170,6 +170,30 @@ struct EnvironmentPanelTests {
         )
     }
 
+    @Test @MainActor
+    func surfaceShadingTogglesWriteTheProviderAndShowAsOverride() throws {
+        let provider = FakeWorldProviders()
+        provider.surfaces.shadingDrawCounts[.normalMaps] = 12
+        let section = SurfaceShadingSection()
+        _ = section.view
+        section.provider = provider
+        let control = try #require(section.controls.first { $0.0 == .specular }?.1)
+        #expect(control.accessibilityIdentifier() == "ShadingSpecularControl")
+        #expect(section.controls.allSatisfy { $0.1.state == .on })
+        #expect(!SurfaceShadingSection.isOverridden(provider: provider))
+
+        control.performClick(nil)
+        #expect(!provider.isShadingEnabled(.specular))
+        #expect(provider.isShadingEnabled(.normalMaps))
+        #expect(SurfaceShadingSection.isOverridden(provider: provider))
+
+        SurfaceShadingSection.resetToDefaults(provider: provider)
+        #expect(provider.isShadingEnabled(.specular))
+        section.refreshReadout()
+        let readout = Self.label("SurfaceShadingStatsLabel", in: section.view)?.stringValue ?? ""
+        #expect(readout.hasPrefix("Surface normal maps: 12 draws\nSpecular highlights: 0 draws"))
+    }
+
     @MainActor
     private static func label(_ identifier: String, in view: NSView) -> NSTextField? {
         if let label = view as? NSTextField, label.accessibilityIdentifier() == identifier {

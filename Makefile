@@ -107,7 +107,8 @@ PRODUCTS          = $(DERIVED_DATA)/Build/Products/$(CONFIG)
 SHADER_LIBRARY   := $(DERIVED_DATA)/Build/Products/OpenSkyShaders.metallib
 export OPENSKY_SHADER_LIBRARY := $(SHADER_LIBRARY)
 SHADER_FILES     := $(sort $(wildcard Sources/Shaders/*.metal))
-SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) Sources/OpenSkyShaderTypes/ShaderTypes.h
+SHADER_SOURCES   := $(SHADER_FILES) $(wildcard Sources/Shaders/*.h) \
+	$(wildcard Sources/OpenSkyShaderTypes/*.h)
 # Mirrors the Metal settings in config/Build/*.xcconfig; change both together.
 METAL_FLAGS      := -mmacosx-version-min=26.0 -fmetal-math-mode=fast -Werror \
 	-I Sources/OpenSkyShaderTypes

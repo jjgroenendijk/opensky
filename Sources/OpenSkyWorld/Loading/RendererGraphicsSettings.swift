@@ -30,6 +30,7 @@ extension Renderer {
         meshShaderGrassEnabled = store.bool(.meshShaderGrass)
         waterDepth.enabled = store.bool(.waterDepth)
         terrainNormalMapsEnabled = store.bool(.terrainNormalMaps)
+        shadingTerms = SurfaceShadingSetting.terms(store: store)
         lightAnimationEnabled = store.bool(.lightAnimation)
         particleSortingEnabled = store.bool(.particleSorting)
         imageSpace.toneMapping.enabled = store.bool(.toneMapping)

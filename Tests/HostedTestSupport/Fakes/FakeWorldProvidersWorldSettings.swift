@@ -53,13 +53,33 @@ extension FakeWorldProviders {
         get { surfaces.terrainNormalMapCount }
         set { surfaces.terrainNormalMapCount = newValue }
     }
+
+    // SurfaceShadingControlProviding
+
+    func isShadingEnabled(_ setting: SurfaceShadingSetting) -> Bool {
+        !surfaces.disabledShading.contains(setting)
+    }
+
+    func setShading(_ setting: SurfaceShadingSetting, enabled: Bool) {
+        if enabled {
+            surfaces.disabledShading.remove(setting)
+        } else {
+            surfaces.disabledShading.insert(setting)
+        }
+    }
+
+    func shadingDrawCount(_ setting: SurfaceShadingSetting) -> Int {
+        surfaces.shadingDrawCounts[setting] ?? 0
+    }
 }
 
-/// Water depth and terrain shading switches and counts.
+/// Water depth, terrain shading, and surface shading switches and counts.
 struct FakeSurfaceState {
     var waterDepthEnabled = true
     var waterSurfaceCount = 0
     var terrainNormalMapsEnabled = true
     var terrainQuadrantCount = 0
     var terrainNormalMapCount = 0
+    var disabledShading: Set<SurfaceShadingSetting> = []
+    var shadingDrawCounts: [SurfaceShadingSetting: Int] = [:]
 }

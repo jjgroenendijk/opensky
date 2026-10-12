@@ -120,6 +120,9 @@ nonisolated public final class TextureLibrary {
     }
 
     private func load(path: String, usage: TextureUsage) -> MTLTexture {
+        if usage == .cube {
+            return loadDirect(path: path, usage: usage)
+        }
         if let streamed = streamedTexture(path: path, usage: usage) {
             loadedCount += 1
             return streamed
@@ -142,6 +145,11 @@ nonisolated public final class TextureLibrary {
             loadedCount += 1
             return loader.texture(ready: ready, usage: usage, label: path)
         }
+        return loadDirect(path: path, usage: usage)
+    }
+
+    /// The archive bytes, with no cache or streaming. Cubemaps always load this way.
+    private func loadDirect(path: String, usage: TextureUsage) -> MTLTexture {
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1
             return loader.missingTexture(usage: usage, label: path)

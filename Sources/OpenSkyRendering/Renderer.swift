@@ -306,6 +306,10 @@ public final class Renderer: NSObject {
     public var waterDepth = WaterDepthState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true
+    /// The lit-mesh terms the frame draws; the sidebar turns each off.
+    public var shadingTerms = SurfaceShadingTerm.all
+    /// Bound in the environment slot of a material without a cube map.
+    public let blackCube: MTLTexture
     /// Set by a benchmark to get each frame's GPU time; nil in normal play.
     public var gpuFrameLog: GPUFrameLog?
     /// A screenshot of the window frame in flight (RendererWindowCapture.swift).
@@ -369,7 +373,7 @@ public final class Renderer: NSObject {
 
         (self.scene, precipitation) = try Self.makeInitialScene(device: device, requested: scene)
         (self.camera, freeFlyCamera) = (camera ?? .demo, FreeFlyCamera(framing: camera ?? .demo))
-        frameUniformBuffer = try Self.makeFrameUniformBuffer(device: device)
+        (frameUniformBuffer, blackCube) = try Self.makeFrameResources(device: device)
         let rings = try Self.makeSceneRings(device: device, scene: self.scene)
         (drawUniformBuffer, pointLightBuffer) = (rings.drawBuffer, rings.pointLightBuffer)
         drawUniformSlotCapacity = rings.drawCapacity
@@ -386,7 +390,7 @@ public final class Renderer: NSObject {
                 shadow.map, uiResources.atlasTexture, uiResources.vertexBuffer,
                 uiResources.uniformBuffer, worldOverlayResources.vertexBuffer,
                 swf.whiteTexture, swf.fallbackRamp, imageSpacePass.uniformBuffer,
-                imageSpacePass.luminanceBuffer, effects.uniformBuffer
+                imageSpacePass.luminanceBuffer, effects.uniformBuffer, blackCube
             ]
                 + self.scene.residencyAllocations + precipitation.residencyAllocations
         )

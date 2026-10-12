@@ -73,8 +73,9 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & SWFLabControlProviding
     & SceneControlProviding & SceneStatsProviding
     & ScriptControlProviding & ShadowControlProviding & StoryManagerControlProviding
-    & SystemMenuControlProviding & TerrainLODControlProviding
-    & TerrainShadingControlProviding & TitleMenuControlProviding & TrapControlProviding
+    & SurfaceShadingControlProviding & SystemMenuControlProviding
+    & TerrainLODControlProviding & TerrainShadingControlProviding
+    & TitleMenuControlProviding & TrapControlProviding
     & TriggerControlProviding
     & UILabControlProviding & VisualEffectControlProviding & WaterControlProviding
     & WeatherControlProviding & WorldLoadReportProviding
@@ -279,6 +280,7 @@ enum DestinationRegistry {
                 panel.precipitationProvider = context.providers
                 panel.waterProvider = context.providers
                 panel.terrainProvider = context.providers
+                panel.surfaceShadingProvider = context.providers
                 panel.grassProvider = context.providers
                 return panel
             },

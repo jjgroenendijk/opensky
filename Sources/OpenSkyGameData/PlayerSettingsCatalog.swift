@@ -44,7 +44,8 @@ nonisolated public struct PlayerSettingsCatalog: Sendable {
     public static let textSettingIDs: Set<PlayerSettingID> = [.assetOptimisationFolder]
 
     public static let vanilla = PlayerSettingsCatalog(
-        definitions: gameplay + display + audio + opensky + GraphicsOptions.definitions
+        definitions: gameplay + display + audio + opensky + SurfaceShadingSetting.definitions
+            + GraphicsOptions.definitions
     )
 
     private static let unit = PlayerSettingKind.slider(range: 0 ... 1, step: 0.05)

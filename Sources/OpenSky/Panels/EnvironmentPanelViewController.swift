@@ -1,6 +1,6 @@
-// World > Environment: a composition of self-contained sections (shadows,
-// animation, weather, particles, precipitation, water, terrain, grass, distant LOD). Each
-// section reaches the renderer through its own narrow provider protocol.
+// World > Environment: a composition of self-contained sections (shadows, animation,
+// weather, particles, precipitation, water, terrain, surface shading, grass, distant
+// LOD). Each section reaches the renderer through its own narrow provider protocol.
 
 import AppKit
 import OpenSkyWorld
@@ -13,6 +13,7 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
     let precipitationSection = PrecipitationSection()
     let waterSection = WaterSection()
     let terrainSection = TerrainSection()
+    let surfaceShadingSection = SurfaceShadingSection()
     let grassSection = GrassSection()
     let terrainLODSection = TerrainLODSection()
 
@@ -50,6 +51,10 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
         didSet { terrainSection.provider = terrainProvider }
     }
 
+    weak var surfaceShadingProvider: (any SurfaceShadingControlProviding)? {
+        didSet { surfaceShadingSection.provider = surfaceShadingProvider }
+    }
+
     weak var grassProvider: (any GrassControlProviding)? {
         didSet { grassSection.provider = grassProvider }
     }
@@ -57,7 +62,8 @@ final class EnvironmentPanelViewController: InspectorPanelViewController {
     override func makeSections() -> [PanelSectionViewController] {
         [
             shadowSection, animationSection, weatherSection, particlesSection,
-            precipitationSection, waterSection, terrainSection, grassSection, terrainLODSection
+            precipitationSection, waterSection, terrainSection, surfaceShadingSection,
+            grassSection, terrainLODSection
         ]
     }
 

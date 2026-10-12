@@ -83,6 +83,19 @@ struct GraphicsPageTests {
         #expect(store.value(.frameRateCap) == 2)
     }
 
+    @Test func surfaceShadingSwitchesStartOnAndSaveTheirSettings() throws {
+        let store = PlayerSettingsStore(persistence: nil)
+        let page = makePage(store: store)
+        #expect(page.surfaceShadingControls.count == SurfaceShadingSetting.allCases.count)
+        #expect(page.surfaceShadingControls.allSatisfy { $0.0.state == .on })
+        let button = try #require(page.surfaceShadingControls.first { $0.1 == .normalMaps }?.0)
+        #expect(button.accessibilityIdentifier() == "GraphicsShadingNormalMapsControl")
+        button.state = .off
+        button.sendAction(button.action, to: page)
+        #expect(!store.bool(SurfaceShadingSetting.normalMaps.id))
+        #expect(store.bool(SurfaceShadingSetting.specular.id))
+    }
+
     /// Two keys of a preset file, written in code.
     private func presetFiles(near: String, trees: String) -> GraphicsPresetFiles {
         let text = "[TerrainManager]\nfBlockLevel0Distance=\(near)\nfTreeLoadDistance=\(trees)\n"

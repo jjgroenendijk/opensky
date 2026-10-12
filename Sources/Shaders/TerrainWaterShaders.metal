@@ -120,9 +120,9 @@ fragment float4 terrainFragment(
         shadow = min(shadow, traced);
     }
     float3 illumination =
-        frame.sunColor * lambert * shadow + frame.ambientColor + directionalAmbient(normal, frame) +
+        frame.sunColor * lambert * shadow + baseAmbient(frame) + directionalAmbient(normal, frame) +
         pointLighting(in.worldPosition, normal, pointLights, draw.pointLightCount);
-    float3 lit = albedo * in.color.rgb * illumination;
+    float3 lit = albedo * linearVertexColour(in.color.rgb, frame) * illumination;
     return float4(applyFog(lit, in.worldPosition, frame), 1.0);
 }
 
