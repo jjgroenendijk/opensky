@@ -153,7 +153,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             append(
                 path: part.modelPath,
                 role: .body(part),
-                surface: part.surface,
+                surface: .skinned(part.surface, skinTone: visual.appearance.skinTone),
                 bodyWeight: visual.appearance.weight / 100,
                 skeleton: skeleton,
                 models: &models,

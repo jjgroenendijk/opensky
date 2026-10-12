@@ -118,6 +118,52 @@ nonisolated public enum ModelCacheCodec {
             encode(effect, into: &out)
         }
         out.bool(material.waterSurface)
+        out.string(material.tintTexture)
+        out.bool(material.tintsSkin)
+        encode(material.shading, into: &out)
+    }
+
+    private static func encode(_ shading: SurfaceShading, into out: inout CachePayloadWriter) {
+        out.value(shading.terms.rawValue)
+        out.value(shading.emissiveColor)
+        out.value(shading.emissiveMultiple)
+        out.value(SIMD2(shading.lightingEffect1, shading.lightingEffect2))
+        out.array(shading.tintColor.map { [$0] } ?? [])
+        out.value(shading.environmentScale)
+        let layer = shading.multiLayer
+        out.value(SIMD4(layer.thickness, layer.refractionScale, layer.environmentStrength, 0))
+        out.value(layer.innerScale)
+        for texture in [
+            shading.glowTexture, shading.detailTexture, shading.environmentTexture,
+            shading.environmentMaskTexture, shading.innerLayerTexture, shading.backLightTexture
+        ] {
+            out.string(texture)
+        }
+    }
+
+    private static func surfaceShading(_ input: inout CachePayloadReader) throws -> SurfaceShading {
+        var shading = SurfaceShading()
+        shading.terms = try SurfaceShading.Terms(rawValue: input.value(UInt32.self))
+        shading.emissiveColor = try input.value(SIMD3<Float>.self)
+        shading.emissiveMultiple = try input.value(Float.self)
+        let effects = try input.value(SIMD2<Float>.self)
+        (shading.lightingEffect1, shading.lightingEffect2) = (effects.x, effects.y)
+        shading.tintColor = try input.array(SIMD3<Float>.self).first
+        shading.environmentScale = try input.value(Float.self)
+        let layer = try input.value(SIMD4<Float>.self)
+        shading.multiLayer = try SurfaceShading.MultiLayer(
+            thickness: layer.x,
+            refractionScale: layer.y,
+            innerScale: input.value(SIMD2<Float>.self),
+            environmentStrength: layer.z
+        )
+        shading.glowTexture = try input.string()
+        shading.detailTexture = try input.string()
+        shading.environmentTexture = try input.string()
+        shading.environmentMaskTexture = try input.string()
+        shading.innerLayerTexture = try input.string()
+        shading.backLightTexture = try input.string()
+        return shading
     }
 
     private static func encode(_ effect: EffectShading, into out: inout CachePayloadWriter) {
@@ -158,11 +204,15 @@ nonisolated public enum ModelCacheCodec {
         let threshold = try input.array(Float.self).first
         let shading = try input.bool() ? effect(&input) : nil
         let waterSurface = try input.bool()
+        let tintTexture = try input.string()
+        let tintsSkin = try input.bool()
+        let surface = try surfaceShading(&input)
         return Material(
             diffuseTexture: diffuse, normalTexture: normal, uvOffset: uvOffset, uvScale: uvScale,
             alpha: alpha, glossiness: glossiness, specularColor: specularColor,
             specularStrength: specularStrength, doubleSided: doubleSided, alphaBlend: alphaBlend,
-            alphaTestThreshold: threshold, effect: shading, waterSurface: waterSurface
+            alphaTestThreshold: threshold, effect: shading, waterSurface: waterSurface,
+            tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface
         )
     }
 

@@ -151,7 +151,7 @@ struct DDSFileTests {
         }
     }
 
-    @Test func rejectsCubemapCaps() {
+    @Test func rejectsACubemapWithoutAllSixFaces() {
         let data = DDSFixture.file(
             width: 4,
             height: 4,
@@ -159,7 +159,44 @@ struct DDSFileTests {
             caps2: 0x200,
             payload: Data(count: 8)
         )
+        #expect(throws: DDSError.unsupported("cubemap without all six faces")) {
+            try DDSFile(data: data)
+        }
+    }
+
+    @Test func readsAllSixCubemapFacesWhenAllowed() throws {
+        // One 8-byte BC1 block per face; each face's bytes carry its index.
+        let payload = Data((0 ..< 6).flatMap { [UInt8](repeating: UInt8($0), count: 8) })
+        let data = DDSFixture.file(
+            width: 4, height: 4, fourCC: "DXT1", caps2: 0x200 | 0xFC00, payload: payload
+        )
+        let file = try DDSFile(data: data, allowsCubemap: true)
+        #expect(file.faceCount == 6)
+        #expect(file.mipData(level: 0, face: 5) == Data(repeating: 5, count: 8))
         #expect(throws: DDSError.unsupported("cubemap")) { try DDSFile(data: data) }
+    }
+
+    @Test func rejectsACubemapWithMissingFaces() {
+        let data = DDSFixture.file(
+            width: 4, height: 4, fourCC: "DXT1", caps2: 0x200 | 0x400, payload: Data(count: 8)
+        )
+        #expect(throws: DDSError.unsupported("cubemap without all six faces")) {
+            try DDSFile(data: data, allowsCubemap: true)
+        }
+    }
+
+    @Test func readsADX10CubemapAndRejectsATruncatedOne() throws {
+        let face = Data(count: 16)
+        let whole = DDSFixture.file(
+            width: 4, height: 4, fourCC: "DX10", dx10: .init(dxgiFormat: 98, miscFlag: 0x4),
+            payload: Data((0 ..< 6).flatMap { _ in face })
+        )
+        #expect(try DDSFile(data: whole, allowsCubemap: true).faceCount == 6)
+        let cut = DDSFixture.file(
+            width: 4, height: 4, fourCC: "DX10", dx10: .init(dxgiFormat: 98, miscFlag: 0x4),
+            payload: face
+        )
+        #expect(throws: DDSError.self) { try DDSFile(data: cut, allowsCubemap: true) }
     }
 
     @Test func rejectsVolumeCaps() {

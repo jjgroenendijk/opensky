@@ -66,9 +66,11 @@ code itself.
 - Load the skill for the kind of work: `implementing-format-parsers`, `building-app-ui`,
   `testing-and-verifying`, and `committing-and-landing-work` to land it.
 - Scope changes are issue edits, not doc edits.
-- A problem found during the work that the current change did not cause becomes a new
-  issue (`gh issue create`, with the `bug` label for a bug). Do not fix it in this PR
-  unless it blocks the task, so the PR stays about one issue and the problem is not lost.
+- A gap found in the area the task touches, such as a missing shader term or record field,
+  goes in this PR, after a check of that area for more gaps (root `AGENTS.md`).
+- A problem found in an area the task does not touch becomes a new issue
+  (`gh issue create`, with the `bug` label for a bug). Do not fix it in this PR unless it
+  blocks the task, so the PR stays about one issue and the problem is not lost.
 - A performance idea becomes a new issue too, one issue per idea. The title states the
   win; the body states why it can be faster. No measurement is needed to file it. Do not
   make the change in this PR.

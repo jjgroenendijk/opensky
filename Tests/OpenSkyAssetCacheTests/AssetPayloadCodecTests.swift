@@ -37,10 +37,19 @@ struct AssetPayloadCodecTests {
             normals: [], tangents: [SIMD3(1, 0, 0)], bitangents: [SIMD3(0, 1, 0)], uvs: [],
             colors: [], indices: [0, 0, 0], materialSlot: 0
         )
+        var shading = SurfaceShading()
+        shading.terms = [.modelSpaceNormals, .softLighting, .environment]
+        shading.emissiveColor = SIMD3(0.1, 0.2, 0.3)
+        shading.lightingEffect1 = 0.4
+        shading.tintColor = SIMD3(0.7, 0.6, 0.5)
+        shading.multiLayer.innerScale = SIMD2(2, 3)
+        shading.glowTexture = "textures/a_sk.dds"
+        shading.environmentTexture = "textures/cubemaps/a.dds"
         let cutout = Material(
             diffuseTexture: "textures\\a.dds", normalTexture: nil, uvOffset: SIMD2(0.5, 0),
             uvScale: SIMD2(2, 2), alpha: 0.75, glossiness: 30, specularColor: SIMD3(1, 0.5, 0),
-            specularStrength: 2, doubleSided: true, alphaBlend: false, alphaTestThreshold: 0.5
+            specularStrength: 2, doubleSided: true, alphaBlend: false, alphaTestThreshold: 0.5,
+            tintTexture: "textures/facetint.dds", tintsSkin: true, shading: shading
         )
         let foam = Material(
             diffuseTexture: "textures/effects/foam.dds", normalTexture: nil, uvOffset: .zero,

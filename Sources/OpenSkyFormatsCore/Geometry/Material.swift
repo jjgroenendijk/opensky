@@ -28,6 +28,11 @@ nonisolated public struct Material: Hashable, Sendable {
     public let effect: EffectShading?
     /// A water-shader shape: the water pass draws it with the cell's water look.
     public let waterSurface: Bool
+    /// The FaceGen face tint, overlay-blended over the diffuse. Nil on other shapes.
+    public let tintTexture: String?
+    /// A skin-tint shape: the actor's skin colour multiplies its diffuse.
+    public let tintsSkin: Bool
+    public let shading: SurfaceShading
 
     public init(
         diffuseTexture: String?,
@@ -42,7 +47,10 @@ nonisolated public struct Material: Hashable, Sendable {
         alphaBlend: Bool,
         alphaTestThreshold: Float?,
         effect: EffectShading? = nil,
-        waterSurface: Bool = false
+        waterSurface: Bool = false,
+        tintTexture: String? = nil,
+        tintsSkin: Bool = false,
+        shading: SurfaceShading = .plain
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
@@ -57,6 +65,9 @@ nonisolated public struct Material: Hashable, Sendable {
         self.alphaTestThreshold = alphaTestThreshold
         self.effect = effect
         self.waterSurface = waterSurface
+        self.tintTexture = tintTexture
+        self.tintsSkin = tintsSkin
+        self.shading = shading
     }
 
     /// Neutral stand-in for shapes without a lighting shader: untextured,

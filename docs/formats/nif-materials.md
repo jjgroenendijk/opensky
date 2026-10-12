@@ -28,13 +28,33 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
 | int32 | Texture set ref | `BSShaderTextureSet` |
-| float x 4 | (Emissive color and multiplier) | |
+| float x 3 | Emissive colour | |
+| float | Emissive multiple | |
 | uint32 | (Clamp mode) | |
 | float | Alpha | 1 is opaque |
 | float | (Refraction) | |
 | float | Glossiness | Specular power |
-| float x 3 | Specular color | |
+| float x 3 | Specular colour | |
 | float | Specular strength | |
+| float | Lighting effect 1 | Soft-light wrap |
+| float | Lighting effect 2 | Rim-light power |
+
+Then a tail that depends on the shader type. A block that ends early keeps the defaults.
+
+| Type | Tail |
+| --- | --- |
+| 1 environment map | float environment map scale |
+| 5 skin tint | float x 3 skin tint colour |
+| 6 hair tint | float x 3 hair tint colour |
+| 7 parallax occlusion | (float max passes, float scale) |
+| 11 multi-layer parallax | float inner thickness, float refraction scale, float x 2 inner texture scale, float environment strength |
+| 14 sparkle snow | (float x 4 sparkle parameters) |
+| 16 eye | float eye cube map scale, (float x 3 left and right eye centres) |
+
+On the real install, Ralof's FaceGen head (`facegeom\skyrim.esm\0002bf9d.nif`) shows the
+layout: the eye shape ends `1.0, 10.0, 1.3, -2.40, 7.57, 3.75, 2.40, 7.57, 3.75` (lighting
+effects, cube map scale, two eye centres), and the hair shapes end with the tint colour
+`0.635, 0.604, 0.447`.
 
 A refraction shape bends the image behind it, such as the heat-haze dome in
 `fireplacewood01burning.nif` (flags 1 `0x82418309`, texture `VaporTileNormal_n.dds`). Its
@@ -44,9 +64,34 @@ A shape with the tree animation flag, such as a pine branch in `treepineforestde
 (flags 2 `0x22008031`), stores its wind weight in the vertex alpha. OpenSky sets that alpha
 to 1, so it does not cut the branch away.
 
-The fields after specular strength (lighting effects, and per-shader-type fields such as
-environment map scale, skin tint, parallax, and eye data) are not read. The block size
-bounds them.
+Which flag and slot turn on each lit-surface term is in "Lit-surface terms" below. How the
+renderer shades them is in [surface shading](/rendering/surface-shading.md).
+
+## Skin and face tints
+
+The shader type (`nif.xml` `BSLightingShaderType`) decides two tints. The blend rules
+follow NifSkope's open shaders (`sk_msn.frag`, and the slot numbers in `renderer.cpp`).
+
+| Type | Name | Tint |
+| --- | --- | --- |
+| 4 | FaceGen | Texture slot 6, the FaceGen tint, overlay-blended over the diffuse |
+| 5 | Skin tint | The actor's skin colour multiplies the diffuse |
+
+Overlay: where the base is below 0.5 the result is `2 * base * tint`, otherwise
+`1 - 2 * (1 - base) * (1 - tint)`. A tint of 0.5 leaves the base as it is. The game blends in
+gamma space, so OpenSky converts the linear samples to gamma 2.2 for the blend. A baked
+FaceGen head, such as `facegeom\skyrim.esm\<id8>.nif`, names its tint at slot 6 as
+`facegendata\facetint\skyrim.esm\<id8>.dds` ([FaceGen paths](/formats/actors.md)).
+
+The skin colour is the `NPC_ QNAM` texture lighting colour, a Traits-tab field. OpenSky
+multiplies it into the vertex colours of the skin-tint shapes only, so the armour shapes in
+the same model keep their colour. Ralof's is `0.776, 0.690, 0.659`; over all 5118 vanilla
+NPCs the values run from 0 to 1.
+
+The type 5 and 6 tails also store a tint colour. The shader multiplies the albedo by it. An
+actor's own colour replaces it: `QNAM` on a skin shape, and the hair colour on an assembled
+hair head part. A baked FaceGen head already holds the actor's hair colour in its hair
+shapes, as Ralof's does.
 
 ## BSEffectShaderProperty
 
@@ -97,9 +142,35 @@ does not decode the block. The shape gets the engine water-surface material, and
 
 ## BSShaderTextureSet
 
-A uint32 count, then one SizedString per slot. Slot 0 is diffuse, slot 1 normal and gloss.
-Slots 2 to 7 are glow or skin, height, environment, environment mask, subsurface, and back
-light. OpenSky keeps them but uses only slots 0 and 1.
+A uint32 count, then one SizedString per slot. Slot 0 is diffuse, slot 1 normal and
+specular mask (in alpha). Slots 2 to 7 are glow or light mask, detail or height,
+environment cube map, environment mask, face tint or inner layer, and back light or
+specular map. On a FaceGen shape, slot 3 is the detail map and slot 6 the face tint.
+
+## Lit-surface terms
+
+A term is on only when its texture slot names a texture. The rules follow NifSkope's
+`glproperty.cpp`. SLSF1 and SLSF2 are shader flags 1 and 2.
+
+| Term | Condition | Texture |
+| --- | --- | --- |
+| Model-space normals | SLSF1 bit 12 | Slot 1 |
+| Specular | SLSF1 bit 0 | Normal alpha, or slot 7 on a model-space shape without back light |
+| Emissive | SLSF1 bit 22 | None; colour times multiple |
+| Glow map | Type 2 and SLSF2 bit 6 | Slot 2 scales the emissive colour |
+| Soft light | SLSF2 bit 25 | Slot 2 light mask |
+| Rim light | SLSF2 bit 26 | Slot 2 light mask |
+| Back light | SLSF2 bit 27 | Slot 7 |
+| FaceGen detail | Type 4 | Slot 3 |
+| Parallax | Type 3 and SLSF1 bit 11 | Slot 3 height map |
+| Environment | Type 1 and SLSF1 bit 7, type 16 and SLSF1 bit 17, or multi-layer | Slot 4 cube map |
+| Environment mask | Environment | Slot 5; otherwise the normal alpha |
+| Multi-layer parallax | Type 11 and SLSF2 bit 24 | Slot 6 inner layer |
+| Tint colour | Type 5 or 6 | None; the tail colour |
+
+Ralof's head (type 4, flags 1 `0x82401703`, flags 2 `0x02008021`) uses model-space normals,
+specular from slot 7, soft light with the slot 2 mask, the slot 3 detail map, and the slot 6
+face tint. His body and hands (type 5) use the same terms without the face maps.
 
 Vanilla paths vary a lot: mixed case, `\` or `/`, with or without `textures\`, and
 sometimes a leading `data\`. Some are absolute paths from the exporter's machine, for
@@ -135,7 +206,8 @@ alpha test at 0.5.
 ## Engine material
 
 Each (shader, alpha) pair becomes one material: texture keys, UV transform, alpha,
-glossiness, specular, double-sided, and alpha blend and test. Water and sky shaders get a
+glossiness, specular, double-sided, alpha blend and test, and the lit-surface terms with
+their textures and constants. Water and sky shaders get a
 plain fallback material, untextured but drawn. Effect shaders used by particles go to the
 particle path instead (see [NIF particle systems](/formats/nif-particles.md)).
 

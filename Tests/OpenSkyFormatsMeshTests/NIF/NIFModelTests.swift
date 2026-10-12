@@ -144,6 +144,38 @@ struct NIFModelTests {
         #expect(abs(threshold - 64.0 / 255) < 1e-6)
     }
 
+    struct TintCase: Sendable {
+        let shaderType: UInt32
+        let tintTexture: String?
+        let tintsSkin: Bool
+    }
+
+    @Test(arguments: [
+        TintCase(
+            shaderType: 4,
+            tintTexture: "textures/actors/character/facegendata/facetint/skyrim.esm/0002bf9f.dds",
+            tintsSkin: false
+        ),
+        TintCase(shaderType: 5, tintTexture: nil, tintsSkin: true),
+        TintCase(shaderType: 0, tintTexture: nil, tintsSkin: false)
+    ])
+    func readsTheFaceTintAndSkinTintFromTheShaderType(_ tint: TintCase) throws {
+        let slots = ["head.dds", "head_msn.dds", "head_sk.dds", "detail.dds", "", "", "", ""]
+        var paths = slots
+        paths[6] = "Actors\\Character\\FaceGenData\\FaceTint\\Skyrim.esm\\0002BF9F.dds"
+        let file = try NIFFile(data: NIFFixture.file(blocks: [
+            .init("BSTriShape", shape(shaderPropertyRef: 1)),
+            .init(
+                "BSLightingShaderProperty",
+                NIFFixture.bsLightingShaderProperty(shaderType: tint.shaderType, textureSetRef: 2)
+            ),
+            .init("BSShaderTextureSet", NIFFixture.bsShaderTextureSet(paths: paths))
+        ]))
+        let material = try #require(file.model().materials.first)
+        #expect(material.tintTexture == tint.tintTexture)
+        #expect(material.tintsSkin == tint.tintsSkin)
+    }
+
     @Test func undecodableEffectShaderFallsBack() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
             .init("BSTriShape", shape(shaderPropertyRef: 1)),

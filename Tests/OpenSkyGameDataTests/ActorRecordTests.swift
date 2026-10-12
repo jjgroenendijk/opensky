@@ -234,6 +234,17 @@ struct ActorTemplateResolverTests {
             == ActorSourcedField(value: FormID(0xD1), source: FormID(0x100)))
     }
 
+    @Test func theSkinToneIsATraitField() throws {
+        let template = try npc(formID: 0x200, race: 0xA2, skinTone: [0.9, 0.7, 0.6])
+        let base = try npc(
+            formID: 0x100, templateFlags: 0x0001, template: 0x200, race: 0xA1,
+            skinTone: [0.1, 0.1, 0.1]
+        )
+        let npcs = resolver(npcs: [base, template])
+        #expect(try npcs.resolve(base: FormID(0x100)).skinTone == SIMD3(0.9, 0.7, 0.6))
+        #expect(try npcs.resolve(base: FormID(0x200)).skinTone == SIMD3(0.9, 0.7, 0.6))
+    }
+
     @Test func useInventoryPullsOutfitFromTemplateOnly() throws {
         let template = try npc(formID: 0x200, race: 0xA2, defaultOutfit: 0xD2)
         let base = try npc(
@@ -398,7 +409,8 @@ private func npc(
     voiceType: UInt32? = nil,
     wornArmor: UInt32? = nil,
     headParts: [UInt32] = [],
-    defaultOutfit: UInt32? = nil
+    defaultOutfit: UInt32? = nil,
+    skinTone: [Float]? = nil
 ) throws -> ActorBase {
     var fields = Data()
     if let editorID {
@@ -425,6 +437,9 @@ private func npc(
     }
     if let defaultOutfit {
         fields += formIDField("DOFT", defaultOutfit)
+    }
+    if let skinTone {
+        fields += ESMFixture.field("QNAM", ESMFixture.f32(skinTone))
     }
     return try ActorBase(
         record: ESMFixture.parseRecord(ESMFixture.record("NPC_", formID: formID, data: fields)),

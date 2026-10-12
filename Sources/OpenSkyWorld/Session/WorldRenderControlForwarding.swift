@@ -9,7 +9,7 @@ import OpenSkyRendering
 public protocol WorldRenderControlForwarding: ShadowControlProviding, TerrainLODControlProviding,
     WeatherControlProviding, AnimationControlProviding, ParticleControlProviding,
     PrecipitationControlProviding, WaterControlProviding, TerrainShadingControlProviding,
-    GrassControlProviding,
+    SurfaceShadingControlProviding, GrassControlProviding,
     RenderDebugControlProviding,
     CameraControlProviding, FrameStatsProviding, SceneStatsProviding, TriggerControlProviding,
     PhysicsControlProviding, RenderPerformanceControlProviding
@@ -155,6 +155,18 @@ extension WorldRenderControlForwarding {
     public var terrainNormalMapsEnabled: Bool {
         get { renderControls.terrainNormalMapsEnabled }
         set { renderControls.terrainNormalMapsEnabled = newValue }
+    }
+
+    public func isShadingEnabled(_ setting: SurfaceShadingSetting) -> Bool {
+        renderControls.isShadingEnabled(setting)
+    }
+
+    public func setShading(_ setting: SurfaceShadingSetting, enabled: Bool) {
+        renderControls.setShading(setting, enabled: enabled)
+    }
+
+    public func shadingDrawCount(_ setting: SurfaceShadingSetting) -> Int {
+        renderControls.shadingDrawCount(setting)
     }
 
     public var terrainQuadrantCount: Int {

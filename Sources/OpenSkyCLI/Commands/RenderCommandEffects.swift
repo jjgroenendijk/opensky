@@ -19,6 +19,7 @@ struct EffectCaptureOptions {
     var membrane: String?
     var weather: String?
     var frames = 1
+    var shadingOff: [SurfaceShadingSetting] = []
 
     var needsRecords: Bool {
         imageSpace != nil || modifier != nil || membrane != nil || weather != nil
@@ -38,7 +39,22 @@ struct EffectCaptureOptions {
             throw CLIError.usage("--frames expects 1-600")
         }
         options.frames = Int(frames)
+        options.shadingOff = try shadingSettings(arguments.shadingOff)
         return options
+    }
+
+    private static func shadingSettings(_ value: String?) throws -> [SurfaceShadingSetting] {
+        guard let value else { return [] }
+        if value == "all" {
+            return SurfaceShadingSetting.allCases
+        }
+        return try value.split(separator: ",").map { name in
+            guard let setting = SurfaceShadingSetting(rawValue: String(name)) else {
+                let names = SurfaceShadingSetting.allCases.map(\.rawValue).joined(separator: ", ")
+                throw CLIError.usage("--shading-off expects all or some of: \(names)")
+            }
+            return setting
+        }
     }
 
     private static func number(_ value: String?, name: String) throws -> Float? {
@@ -90,6 +106,9 @@ extension RenderCommand {
         let file = scene.file
         renderer.imageSpace.passEnabled = !options.imageSpaceOff
         renderer.imageSpace.toneMapping.enabled = !options.toneMappingOff
+        for setting in options.shadingOff {
+            renderer.shadingTerms.subtract(setting.term)
+        }
         guard options.needsRecords else { return }
         let records = EffectRecordStore(
             plugins: ActivePluginFiles.load(root: scene.context.root, baseFile: file)

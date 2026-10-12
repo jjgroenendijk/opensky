@@ -40,7 +40,7 @@ All integers are little-endian.
 | dwReserved1 | 44 | Skipped |
 | ddspf | 32 | `DDS_PIXELFORMAT`, below |
 | dwCaps | 4 | Skipped |
-| dwCaps2 | 4 | `0x200` cubemap and `0x200000` volume are not supported |
+| dwCaps2 | 4 | `0x200` cubemap, read only for a cube map use. `0x200000` volume is not supported |
 | dwCaps3, dwCaps4, dwReserved2 | 12 | Skipped |
 
 ### DDS_PIXELFORMAT (32 bytes)
@@ -86,7 +86,7 @@ still applies.
 | --- | --- |
 | dxgiFormat | See below |
 | resourceDimension | Must be 3 (`TEXTURE2D`) |
-| miscFlag | `0x4` (`TEXTURECUBE`) is not supported |
+| miscFlag | `0x4` (`TEXTURECUBE`) marks a cubemap, read only for a cube map use |
 | arraySize | More than 1 is not supported |
 | miscFlags2 | Alpha mode. Skipped |
 
@@ -115,8 +115,22 @@ A sweep of every `.dds` in the vanilla archives (about 33,000 files) found:
 - BCn files: mostly BC3, then BC1, and about 150 BC2.
 - About 10,000 uncompressed files: face `_msn` normal maps, tint masks, interface art, and
   LOD atlases. OpenSky reads the three 32-bit formats and 24-bit RGB (188 files).
-- 58 cubemaps and 1 volume texture throw `unsupported` and get a placeholder. Every other
-  vanilla texture parses (census of 32,918 files, 2026-10-07).
+- 58 cubemaps, such as `textures\cubemaps\EyeCubeMap.dds`, and 1 volume texture. The
+  volume, and a cubemap used as a 2D texture, throw `unsupported` and get a placeholder.
+  Every other vanilla texture parses (census of 32,918 files, 2026-10-07).
+
+## Cubemaps
+
+A cubemap stores six square faces one after another, each with its own full mip chain, in
+the order +X, -X, +Y, -Y, +Z, -Z. A legacy header sets `DDSCAPS2_CUBEMAP` (`0x200`) and one
+bit per face (`0xFC00`). OpenSky needs all six faces. A DX10 header sets `miscFlag` `0x4`
+instead. Source: Microsoft, "DDS file layout for textures" and `DDS_HEADER`.
+
+The parser reads a cubemap only when the caller asks for a cube map, because a 2D slot
+cannot sample one. The renderer loads environment maps that way and uploads them as a
+Metal cube texture. A missing or broken cube map gets a black cube, so it reflects
+nothing.
+
 - Some textures are 8192 pixels wide, not only 4096.
 
 ## Color space

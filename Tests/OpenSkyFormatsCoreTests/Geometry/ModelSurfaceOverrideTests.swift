@@ -76,4 +76,36 @@ struct ModelSurfaceOverrideTests {
         let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
         #expect(surface.cacheKey != plain.cacheKey)
     }
+
+    @Test func theSkinToneTintsOnlySkinTintShapes() {
+        let base = Self.model(colors: [])
+        var shading = SurfaceShading()
+        shading.terms = [.softLighting]
+        shading.tintColor = SIMD3(1, 1, 1)
+        let skin = Material(
+            diffuseTexture: "textures/body.dds", normalTexture: nil, uvOffset: .zero,
+            uvScale: SIMD2(1, 1), alpha: 1, glossiness: 80, specularColor: SIMD3(1, 1, 1),
+            specularStrength: 1, doubleSided: false, alphaBlend: false,
+            alphaTestThreshold: nil, tintsSkin: true, shading: shading
+        )
+        let hand = Mesh(
+            name: "Hands", transform: base.meshes[0].transform,
+            positions: base.meshes[0].positions, normals: [], tangents: [], bitangents: [],
+            uvs: [], colors: [], indices: [0, 1, 0], materialSlot: 1
+        )
+        let model = Model(
+            meshes: [base.meshes[0], hand], materials: base.materials + [skin],
+            skippedShapeCount: 0
+        )
+        let surface = ModelSurfaceOverride.skinned(nil, skinTone: SIMD3(1, 0.5, 0.25))
+        let result = surface?.applied(to: model)
+        #expect(result?.meshes[0].colors.isEmpty == true)
+        #expect(result?.meshes[1].colors == [SIMD4(1, 0.5, 0.25, 1), SIMD4(1, 0.5, 0.25, 1)])
+        #expect(result?.materials[1].tintsSkin == true)
+        // The actor's own colour replaces the NIF tint colour; the other terms stay.
+        #expect(result?.materials[1].shading.tintColor == nil)
+        #expect(result?.materials[1].shading.terms == [.softLighting])
+        #expect(surface?.cacheKey != ModelSurfaceOverride.skinned(nil, skinTone: .one)?.cacheKey)
+        #expect(ModelSurfaceOverride.skinned(nil, skinTone: nil) == nil)
+    }
 }

@@ -49,6 +49,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     /// NAM7, 0 (thin) to 100 (heavy), a Traits-tab field. A record without it
     /// reads as 50, which is an assumption: no source gives the default.
     public var weight: Float = 50
+    /// QNAM, the skin colour of the body's skin-tint shapes. A Traits-tab field.
+    public var skinTone: SIMD3<Float>?
 }
 
 /// Stat-relevant fields of one actor after template resolution. Separate from
@@ -184,6 +186,9 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             },
             weight: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.weight ?? 50, source: $0.formID)
+            }.value,
+            skinTone: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.textureLighting, source: $0.formID)
             }.value
         )
     }
@@ -379,7 +384,8 @@ nonisolated extension ResolvedActorAppearance {
             hairColor: override.hairColor.map { ActorSourcedField(value: $0, source: base) }
                 ?? hairColor,
             defaultOutfit: defaultOutfit,
-            weight: weight
+            weight: weight,
+            skinTone: skinTone
         )
     }
 }

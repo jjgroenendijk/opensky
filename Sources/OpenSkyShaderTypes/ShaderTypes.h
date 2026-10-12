@@ -4,15 +4,7 @@
 #ifndef ShaderTypes_h
 #define ShaderTypes_h
 
-#ifdef __METAL_VERSION__
-#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
-typedef metal::int32_t EnumBackingType;
-#else
-#import <Foundation/Foundation.h>
-typedef NSInteger EnumBackingType;
-#endif
-
-#include <simd/simd.h>
+#include "ShaderTypesPrelude.h"
 
 typedef NS_ENUM(EnumBackingType, BufferIndex)
 {
@@ -119,6 +111,16 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// Terrain normal maps (LTEX TXST TX01): the base, then one slot per layer slot.
     TextureIndexTerrainBaseNormal = 16,
     TextureIndexTerrainLayerNormal0 = 17,
+    /// A lit mesh binds NIF texture-set slot N at index N, over the terrain layer
+    /// slots, which only terrain draws read. Every draw binds all of them.
+    TextureIndexSurfaceNormal = 1,
+    TextureIndexSurfaceGlow = 2,
+    TextureIndexSurfaceDetail = 3,
+    TextureIndexSurfaceEnvironment = 4,
+    TextureIndexSurfaceEnvironmentMask = 5,
+    /// The FaceGen tint or the multi-layer inner layer.
+    TextureIndexSurfaceLayer = 6,
+    TextureIndexSurfaceBackLight = 7,
 };
 
 /// LAND splat: ATXT layer numbers run 0-7 (UESP LAND), so 8 additional layers
@@ -178,6 +180,32 @@ typedef NS_ENUM(EnumBackingType, EffectFlag)
     EffectFlagFalloff = 1 << 3,
     EffectFlagVertexColors = 1 << 4,
     EffectFlagVertexAlpha = 1 << 5,
+};
+
+/// Lit-mesh shading terms: DrawUniforms.materialFlags says which a material has,
+/// FrameUniforms.shadingTerms which the frame allows. docs/rendering/surface-shading.md.
+typedef NS_ENUM(EnumBackingType, ShadingTerm)
+{
+    ShadingTermFaceTint = 1 << 0,
+    ShadingTermNormalMap = 1 << 1,
+    ShadingTermModelSpaceNormals = 1 << 2,
+    ShadingTermSpecular = 1 << 3,
+    ShadingTermSpecularMap = 1 << 4,
+    ShadingTermEmissive = 1 << 5,
+    ShadingTermGlowMap = 1 << 6,
+    ShadingTermSoftLighting = 1 << 7,
+    ShadingTermRimLighting = 1 << 8,
+    ShadingTermBackLighting = 1 << 9,
+    ShadingTermFaceDetail = 1 << 10,
+    ShadingTermEnvironment = 1 << 11,
+    ShadingTermEnvironmentMask = 1 << 12,
+    ShadingTermParallax = 1 << 13,
+    ShadingTermMultiLayer = 1 << 14,
+    ShadingTermTintColor = 1 << 15,
+    /// Frame-only: vertex colours are gamma-space and get linearised.
+    ShadingTermVertexColorGamma = 1 << 16,
+    /// Frame-only: add the single ambient colour on top of the directional ambient.
+    ShadingTermBaseAmbient = 1 << 17,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.
@@ -280,6 +308,8 @@ typedef struct
     /// FunctionConstantDebugView; DebugViewModeOff outside the Render Debug
     /// section.
     unsigned int debugMode;
+    /// ShadingTerm bits the frame allows; the sidebar turns each off.
+    unsigned int shadingTerms;
 } FrameUniforms;
 
 /// One live CPU particle uploaded per frame. Vertex shader expands it into a
@@ -347,6 +377,18 @@ typedef struct
     /// Falloff start and stop cosines, then start and stop opacity.
     vector_float4 effectFalloff;
     float effectBaseColorScale;
+    /// ShadingTerm bits this material has.
+    unsigned int materialFlags;
+    /// rgb specular colour times strength, a glossiness.
+    vector_float4 specular;
+    /// rgb emissive colour, a its multiple.
+    vector_float4 emissive;
+    /// x soft-light wrap, y rim power, z environment scale.
+    vector_float4 lightingEffects;
+    /// rgb skin or hair tint colour.
+    vector_float4 tintColor;
+    /// x inner thickness, y refraction scale, zw inner texture scale.
+    vector_float4 multiLayer;
 } DrawUniforms;
 
 /// Per-GROUP GRAS material + mesh-height controls. Fade/wind are per-frame;
@@ -532,119 +574,6 @@ typedef struct
     float alphaThreshold;
 } ShadowDrawUniforms;
 
-/// One screen-space UI vertex. Position is in framebuffer pixels (origin
-/// top-left, y down); the vertex shader maps it to NDC via UIFrameUniforms.
-/// uv samples the r8 atlas (white texel -> solid fill, glyph cell -> text).
-/// color is straight (non-premultiplied) RGBA; the fragment premultiplies.
-typedef struct
-{
-    vector_float2 position;
-    vector_float2 uv;
-    vector_float4 color;
-} UIVertex;
-
-/// Per-frame UI uniforms. viewportSize is the framebuffer pixel size the
-/// vertex shader divides by to reach NDC.
-typedef struct
-{
-    vector_float2 viewportSize;
-} UIFrameUniforms;
-
-/// One world-space debug-overlay vertex. Position stays in engine coordinates
-/// and FrameUniforms.viewProjectionMatrix maps it to clip space. Color is
-/// straight RGBA; the fragment shader premultiplies before blending.
-typedef struct
-{
-    vector_float3 position;
-    vector_float4 color;
-} OverlayVertex;
-
-/// How the SWF fragment shader resolves a draw's color.
-typedef NS_ENUM(EnumBackingType, SWFFillMode)
-{
-    /// baseColor as-is (solid fill).
-    SWFFillModeSolid = 0,
-    /// Sample the per-draw bitmap texture at the fill-space position.
-    SWFFillModeBitmap = 1,
-    /// baseColor with alpha scaled by the UI glyph atlas coverage at uv.
-    SWFFillModeGlyph = 2,
-    /// Sample the gradient ramp at the linear-gradient parameter.
-    SWFFillModeLinearGradient = 3,
-    /// Sample the gradient ramp at the radial-gradient parameter.
-    SWFFillModeRadialGradient = 4,
-};
-
-/// GRADIENT SpreadMode (SWF spec v19 p. 135) applied to the ramp parameter.
-typedef NS_ENUM(EnumBackingType, SWFGradientSpread)
-{
-    SWFGradientSpreadPad = 0,
-    SWFGradientSpreadReflect = 1,
-    SWFGradientSpreadRepeat = 2,
-};
-
-/// One SWF display-list vertex. Shape meshes carry twip-space positions with
-/// unused uv; glyph quads carry framebuffer-pixel positions with UI-atlas uv.
-/// The per-draw transform maps either space to clip coordinates.
-typedef struct
-{
-    vector_float2 position;
-    vector_float2 uv;
-} SWFVertex;
-
-/// Per-draw uniforms for one SWF display-list draw. Both 2x3 affine
-/// transforms are stored as a rotation/scale block (a, b, c, d) plus a
-/// translation: out.x = a*x + c*y + tx, out.y = b*x + d*y + ty.
-typedef struct
-{
-    /// Vertex space -> clip (NDC) transform: the concatenated
-    /// place-matrix -> movie -> viewport -> NDC mapping.
-    vector_float4 transformRotation;
-    vector_float2 transformTranslation;
-    /// Vertex space -> fill space: bitmap fills reach normalized 0..1 texture
-    /// coordinates, gradient fills reach the -1..1 gradient square.
-    vector_float4 fillRotation;
-    vector_float2 fillTranslation;
-    /// CXFORM terms in the straight-alpha 0..1 domain: multiply then add.
-    vector_float4 colorMultiply;
-    vector_float4 colorAdd;
-    /// Straight-alpha fill color for solid fills and glyph text.
-    vector_float4 baseColor;
-    /// Ramp-row v coordinate for gradient fills.
-    float gradientV;
-    /// SWFFillMode.
-    unsigned int fillMode;
-    /// SWFGradientSpread for gradient fills.
-    unsigned int gradientSpread;
-    /// 1 -> the bound bitmap texture stores premultiplied alpha (Lossless2
-    /// ARGB); the shader unpremultiplies before applying the CXFORM.
-    unsigned int sourcePremultiplied;
-    /// 1 -> tiled bitmap fill (repeat sampler), 0 -> clipped (clamp).
-    unsigned int bitmapTiled;
-} SWFDrawUniforms;
-
-/// The image-space composite (docs/rendering/image-space.md). Colors are linear.
-typedef struct
-{
-    /// rgb tint color, a tint amount.
-    vector_float4 tint;
-    /// rgb fade color, a fade amount.
-    vector_float4 fade;
-    /// saturation, brightness, contrast, blur radius in target pixels.
-    vector_float4 grading;
-    /// x double-vision strength; yzw unused.
-    vector_float4 extra;
-    /// x exposure, y white point (0 is none), z 1 to measure luminance, w unused.
-    vector_float4 toneMapping;
-} ImageSpaceUniforms;
-
-/// One effect-shader membrane drawn additively over its target's meshes
-/// (docs/rendering/visual-effects.md). Colors are linear and premultiplied by alpha.
-typedef struct
-{
-    /// rgb fill color times the fill alpha; a unused.
-    vector_float4 fill;
-    /// rgb edge color times the edge alpha; a the edge falloff exponent.
-    vector_float4 edge;
-} MembraneUniforms;
+#include "ScreenShaderTypes.h"
 
 #endif /* ShaderTypes_h */

@@ -21,9 +21,10 @@ nonisolated public enum InterleavedVertexLayout: Sendable {
     public static func interleave(_ mesh: Mesh) -> [Float] {
         var floats: [Float] = []
         floats.reserveCapacity(mesh.positions.count * stride / MemoryLayout<Float>.size)
+        let normals = mesh.normals.isEmpty ? smoothNormals(of: mesh) : mesh.normals
         for index in mesh.positions.indices {
             let position = mesh.positions[index]
-            let normal = index < mesh.normals.count ? mesh.normals[index] : defaultNormal
+            let normal = index < normals.count ? normals[index] : defaultNormal
             let uv = index < mesh.uvs.count ? mesh.uvs[index] : .zero
             let color = index < mesh.colors.count ? mesh.colors[index] : defaultColor
             floats.append(contentsOf: [
@@ -34,5 +35,22 @@ nonisolated public enum InterleavedVertexLayout: Sendable {
             ])
         }
         return floats
+    }
+
+    /// Area-weighted vertex normals from the triangles. A model-space normal map
+    /// shape stores none, and its shadow and fallback lighting still need one.
+    public static func smoothNormals(of mesh: Mesh) -> [SIMD3<Float>] {
+        var sums = [SIMD3<Float>](repeating: .zero, count: mesh.positions.count)
+        for start in Swift.stride(from: 0, to: mesh.indices.count - 2, by: 3) {
+            let corners = (0 ..< 3).map { Int(mesh.indices[start + $0]) }
+            guard corners.allSatisfy(sums.indices.contains) else { continue }
+            let edgeA = mesh.positions[corners[1]] - mesh.positions[corners[0]]
+            let edgeB = mesh.positions[corners[2]] - mesh.positions[corners[0]]
+            let face = simd_cross(edgeA, edgeB)
+            for corner in corners {
+                sums[corner] += face
+            }
+        }
+        return sums.map { simd_length_squared($0) > 0 ? simd_normalize($0) : defaultNormal }
     }
 }

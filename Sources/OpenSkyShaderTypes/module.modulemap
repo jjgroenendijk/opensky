@@ -11,6 +11,8 @@
 // Metal shaders keep including the header directly: MTL_HEADER_SEARCH_PATHS points at
 // this directory, so `#import "ShaderTypes.h"` resolves the same file the module exports.
 module OpenSkyShaderTypes {
+    header "ShaderTypesPrelude.h"
+    header "ScreenShaderTypes.h"
     header "ShaderTypes.h"
     export *
 }

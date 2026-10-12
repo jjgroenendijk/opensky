@@ -8,7 +8,8 @@ public struct ScreenshotArguments: CLICommandArguments {
         abstract: "Save an offscreen world frame as a PNG.",
         discussion: "--zoom moves the eye toward the framed center. --neighbors adds the 8 "
             + "cells around it. The effect options force image space, a modifier, a "
-            + "membrane on the first actor, or a weather; --frames warms them up.",
+            + "membrane on the first actor, or a weather; --frames warms them up. "
+            + "--frame-actor frames the first actor without an effect.",
         aliases: ["render"]
     )
     @OptionGroup public var global: GlobalOptions
@@ -54,10 +55,20 @@ public struct EffectCaptureArguments: ParsableArguments, Sendable {
         help: ArgumentHelp("Put an EFSH membrane on the first actor.", valueName: "edid")
     )
     public var membrane: String?
+    @Flag(help: "Frame the first actor from about two meters away.")
+    public var frameActor = false
     @Option(parsing: .unconditional, help: ArgumentHelp("Force a weather.", valueName: "edid"))
     public var weather: String?
     @Option(parsing: .unconditional, help: ArgumentHelp("From 1 to 600.", valueName: "n"))
     public var frames: String?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp(
+            "Turn surface shading terms off: comma-separated names, or all.",
+            valueName: "terms"
+        )
+    )
+    public var shadingOff: String?
 
     public init() {}
 }

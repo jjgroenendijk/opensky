@@ -27,10 +27,13 @@ struct NIFMaterialBlockTests {
             uvOffset: SIMD2(0.25, -0.5),
             uvScale: SIMD2(2, 4),
             textureSetRef: 7,
+            emissiveColor: SIMD3(0.1, 0.2, 0.3),
+            emissiveMultiple: 4,
             alpha: 0.75,
             glossiness: 128,
             specularColor: SIMD3(0.5, 0.25, 1),
-            specularStrength: 2.5
+            specularStrength: 2.5,
+            tail: Self.floats([0.4, 10])
         )
         let property = try NIFLightingShaderProperty(
             data: payload,
@@ -48,18 +51,53 @@ struct NIFMaterialBlockTests {
         #expect(property.glossiness == 128)
         #expect(property.specularColor == SIMD3(0.5, 0.25, 1))
         #expect(property.specularStrength == 2.5)
+        #expect(property.emissiveColor == SIMD3(0.1, 0.2, 0.3))
+        #expect(property.emissiveMultiple == 4)
+        #expect(property.lightingEffect1 == 0.4)
+        #expect(property.lightingEffect2 == 10)
     }
 
-    @Test func ignoresShaderTypeConditionalTail() throws {
-        // Environment-map shader (type 1) appends a float tail the decoder
-        // must never touch — truncated or huge tails both parse.
+    private static func floats(_ values: [Float]) -> Data {
+        var out = Data()
+        for value in values {
+            out.appendFloat32(value)
+        }
+        return out
+    }
+
+    private static func tail(shaderType: UInt32, _ values: [Float]) throws
+        -> NIFLightingShaderProperty.Tail
+    {
         let payload = NIFFixture.bsLightingShaderProperty(
-            shaderType: 1,
-            tail: Data(count: 12) // lighting effects + env map scale
+            shaderType: shaderType, tail: floats([0.3, 2] + values)
         )
-        let property = try NIFLightingShaderProperty(data: payload, header: header())
-        #expect(property.shaderType == 1)
-        #expect(!property.isDoubleSided)
+        var reader = BinaryReader(NIFFixture.header())
+        return try NIFLightingShaderProperty(data: payload, header: NIFHeader(reader: &reader)).tail
+    }
+
+    @Test func readsTheTailOfEachShaderType() throws {
+        #expect(try Self.tail(shaderType: 1, [0.7]).environmentMapScale == 0.7)
+        #expect(try Self.tail(shaderType: 5, [0.8, 0.7, 0.6]).tintColor == SIMD3(0.8, 0.7, 0.6))
+        #expect(try Self.tail(shaderType: 6, [0.6, 0.5, 0.4]).tintColor == SIMD3(0.6, 0.5, 0.4))
+        let eye = try Self.tail(shaderType: 16, [1.3, -2.4, 7.6, 3.8, 2.4, 7.6, 3.8])
+        #expect(eye.environmentMapScale == 1.3)
+        let layer = try Self.tail(shaderType: 11, [3, 0.5, 2, 4, 0.8])
+        #expect(layer.innerLayerThickness == 3)
+        #expect(layer.refractionScale == 0.5)
+        #expect(layer.innerLayerScale == SIMD2(2, 4))
+        #expect(layer.environmentStrength == 0.8)
+    }
+
+    @Test func aShortTailKeepsTheDefaults() throws {
+        #expect(try Self.tail(shaderType: 5, []).tintColor == nil)
+        let layer = try Self.tail(shaderType: 11, [3])
+        #expect(layer.innerLayerThickness == 3)
+        #expect(layer.refractionScale == 0.25)
+        #expect(layer.innerLayerScale == SIMD2(1, 1))
+        let bare = NIFFixture.bsLightingShaderProperty(shaderType: 1, tail: Data())
+        let property = try NIFLightingShaderProperty(data: bare, header: header())
+        #expect(property.lightingEffect1 == 0.3)
+        #expect(property.tail.environmentMapScale == 1)
     }
 
     @Test func nonSkyrimStreamIsUnsupportedForShaderProperty() throws {

@@ -45,7 +45,8 @@ enum RenderCommand {
         let detection = options.detectionOverlay
             ? warmedDetection(cellScenes, context: context)
             : nil
-        let membrane = options.effects.membrane == nil ? nil : MembraneSubject(scene: scene)
+        let framesActor = options.effects.membrane != nil || arguments.effects.frameActor
+        let membrane = framesActor ? MembraneSubject(scene: scene) : nil
         let camera = membrane?.camera ?? SceneCamera.framing(bounds: built.bounds)
         let render = try renderOffscreen(
             device: device,

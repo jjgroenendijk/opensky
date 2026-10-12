@@ -413,9 +413,8 @@ extension NIFFixture {
         return out
     }
 
-    /// BSLightingShaderProperty payload, Skyrim stream layout. `tail` stands
-    /// in for lighting effects + the shader-type-conditional fields the
-    /// decoder never reads.
+    /// BSLightingShaderProperty payload, Skyrim stream layout. `tail` holds the
+    /// two lighting effect floats, then the shader-type fields.
     public static func bsLightingShaderProperty(
         shaderType: UInt32 = 0,
         nameIndex: UInt32 = 0xFFFF_FFFF,

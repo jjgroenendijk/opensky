@@ -274,7 +274,10 @@ nonisolated extension NIFFile.Flattener {
             doubleSided: shader?.isDoubleSided ?? false,
             alphaBlend: alpha?.blendEnabled ?? false,
             alphaTestThreshold: (alpha?.testEnabled ?? false)
-                ? alpha?.testThreshold : nil
+                ? alpha?.testThreshold : nil,
+            tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
+            tintsSkin: shader?.isSkinTint ?? false,
+            shading: shader?.surfaceShading(textures: textures) ?? .plain
         )
     }
 }
