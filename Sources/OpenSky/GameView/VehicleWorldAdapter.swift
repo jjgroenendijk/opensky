@@ -127,6 +127,9 @@ extension VehicleWorldAdapter: VehicleWorld {
     /// A follower drawn by a cell it left moves into the cell it is now in, so it does
     /// not vanish when the old cell unloads. The old cell drops it.
     func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride) {
+        if let formID = game.streamer?.referenceEntry(key: key)?.formID {
+            game.streamer?.npcMovementState.vehiclePoses[formID] = VehicleCore.matrix(pose)
+        }
         guard
             let streamer = game.streamer,
             case let .exterior(drawing)? = streamer.cellLocation(of: key)
@@ -195,6 +198,10 @@ extension VehicleWorldAdapter: VehicleWorld {
             })
         else { return }
         vehicle.pose.publish(vehicle.rig.pose(rolled: distance))
+    }
+
+    func publishVehicleLinks(_ linked: Set<ReferenceKey>) {
+        game.streamer?.npcMovementState.vehicleLinkedActors = linked
     }
 
     func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride) {

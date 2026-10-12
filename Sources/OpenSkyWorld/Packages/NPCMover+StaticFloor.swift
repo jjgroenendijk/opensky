@@ -16,6 +16,7 @@ extension NPCMover {
             ? path.waypoints[waypointIndex] : legStart
         let step = configuration.stepHeight.value
         let start = legStart
+        let query = world.collisionQuery(for: actor)
         return { position in
             let terrain = world.sampleGround(position)
             let line = Self.lineHeight(at: position, from: start, to: legEnd) + step
@@ -24,7 +25,7 @@ extension NPCMover {
                     at: position,
                     minimumHeight: terrain?.height ?? reach - capsule.height,
                     maximumHeight: min(reach, line),
-                    query: world.collisionQuery
+                    query: query
                 ),
                 floor.height > terrain?.height ?? -.greatestFiniteMagnitude
             else { return terrain }

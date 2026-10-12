@@ -44,4 +44,16 @@ nonisolated extension CellSceneBuilder {
         }
         return result
     }
+
+    /// The last steps of a cell build: hazards, the vehicles' moving collision, and
+    /// the touched assets, which must be drained after everything else loaded.
+    func finished(
+        _ scene: CellScene, hazards: [CellHazard], collision: CellCollisionBuild
+    ) -> CellScene {
+        var scene = scene
+        scene.hazards = hazards
+        scene.vehicleCollision = collision.vehicles
+        scene.assets = drainTouchedAssets()
+        return scene
+    }
 }

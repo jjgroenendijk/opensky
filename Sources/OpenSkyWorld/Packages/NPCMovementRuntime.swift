@@ -21,6 +21,17 @@ public struct NPCMovementWorld {
     public var standingActors: () -> [NPCNeighbour] = { [] }
     /// The water surface height over a point, or nil where there is no water.
     public var sampleWater: (SIMD2<Float>) -> Float? = { _ in nil }
+    /// The carriers and riders of the vehicle links, and the query they collide with:
+    /// one without the vehicles' moving collision.
+    public var vehicleActors: Set<ReferenceKey> = []
+    public var collisionQueryIgnoringVehicles: WalkController.CollisionQuery?
+
+    /// A horse is not blocked by the cart it pulls, nor a rider by the cart it sits on.
+    public func collisionQuery(for actor: ReferenceKey) -> WalkController.CollisionQuery {
+        guard vehicleActors.contains(actor), let ignoring = collisionQueryIgnoringVehicles
+        else { return collisionQuery }
+        return ignoring
+    }
 }
 
 public struct NPCMoveStart {

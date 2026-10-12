@@ -262,7 +262,7 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
         return false
     }
 
-    static func matrix(_ pose: ReferenceTransformOverride) -> float4x4 {
+    public static func matrix(_ pose: ReferenceTransformOverride) -> float4x4 {
         MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
     }
 

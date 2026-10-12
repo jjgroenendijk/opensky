@@ -68,6 +68,21 @@ about 48 for the front ones.
 The front wheels do not steer. The cart already turns its whole body toward the horse each frame,
 so `FrontBar` would always point straight ahead.
 
+## Collision
+
+A towed cart's collision moves with the cart. The prisoner carriage's collision has several rigid
+bodies joined by hinge constraints, so the dynamic world does not simulate it. Instead the cell
+build takes the collision of every vehicle follower out of the static set. Each collision query
+places those shapes at the follower's live pose, moved from the pose the build placed them at.
+
+A horse is not blocked by the cart it pulls, and a rider by the cart it sits on: an actor that is
+a carrier or a follower of any link walks with a collision query that leaves out the vehicles'
+moving collision. The cart's own ground search also leaves it out. A seated player does not walk,
+so the cart cannot push the player out of the seat.
+
+When a follower leaves its carrier, it rests at its last pose. Until its cell is rebuilt, its
+collision stays at that pose; after the rebuild it is static again.
+
 ## Riders
 
 `SetVehicle` puts the rider's root on the vehicle's root. The rider's seat idle then moves the body

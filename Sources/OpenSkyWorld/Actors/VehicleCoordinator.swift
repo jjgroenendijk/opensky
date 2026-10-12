@@ -32,6 +32,8 @@ public protocol VehicleWorld: AnyObject {
     func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]?
     /// Turns the follower's wheels for `distance` rolled since the link.
     func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float)
+    /// Every carrier and follower of a link, which do not collide with the vehicles.
+    func publishVehicleLinks(_ linked: Set<ReferenceKey>)
 }
 
 @MainActor
@@ -109,6 +111,7 @@ public final class VehicleCoordinator {
             if hasDeltas {
                 world.publishVehiclePoses([:])
                 world.publishCarriedPoses([:])
+                world.publishVehicleLinks([])
                 hasDeltas = false
             }
             return
@@ -136,6 +139,7 @@ public final class VehicleCoordinator {
         }
         world.publishVehiclePoses(placements)
         world.publishCarriedPoses(lastPoses.filter { $0.key != .player })
+        world.publishVehicleLinks(linked)
         hasDeltas = true
     }
 

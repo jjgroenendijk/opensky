@@ -104,6 +104,8 @@ nonisolated public struct CellScene: Sendable {
     public var animatedObjects: [CellAnimatedObject] = []
     /// Towed carts whose wheels turn, posed through their buffers.
     public var animatedVehicles: [CellAnimatedVehicle] = []
+    /// The collision of the vehicle followers, outside `staticCollision`.
+    public var vehicleCollision: [CellVehicleCollision] = []
 
     public init(
         renderScene: RenderScene,

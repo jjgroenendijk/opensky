@@ -248,7 +248,7 @@ nonisolated public final class CellSceneBuilder {
             )
         )
         let environment = buildEnvironment(found: found, worldspace: world.worldspace)
-        var scene = makeScene(
+        let scene = makeScene(
             found: found,
             grid: (x: gridX, y: gridY),
             instances: instances,
@@ -274,9 +274,8 @@ nonisolated public final class CellSceneBuilder {
             ),
             counts: counts
         )
-        scene.hazards = collectHazards(in: found, resolved: resolved, parentPool: parents)
-        scene.assets = drainTouchedAssets()
-        return scene
+        let hazards = collectHazards(in: found, resolved: resolved, parentPool: parents)
+        return finished(scene, hazards: hazards, collision: collision)
     }
 }
 
