@@ -58,6 +58,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `gmst list --prefix <s>` | Every resolved GMST starting with `<s>`, with its value and winning plugin. How a documented fallback is checked against the shipped number |
 | `archery [--census] [--ammo <substring>]` | Each `AMMO` with a flyable `PROJ`: damage, speed, `gravity`, `range`, and the drop each reading of `gravity` predicts. `--census` shows the distribution that settles the reading ([archery](/engine/archery.md)) |
 | `footstep [--set] [--armature] [--material]` | The footstep chain from set to sound file, per gait, with broken links reported ([footstep records](/formats/footstep.md), [material types](/formats/material-type.md)) |
+| `gaps [--only list] [--limit n]` | What the install's data uses that the engine does not do yet, per area: how much is done, and what is left ranked by use ([gap report](/tools/gaps.md)) |
 | `cell [--worldspace/--x/--y] [--refs]` | An exterior cell without Metal: reference count and base type histogram |
 | `actor [--worldspace/--x/--y] [--radius n] [--npc id]` | Placed actors in a block of cells: template chain, appearance sources, skeleton, parts, FaceGen path, and reason-tagged skips. Persistent actors are placed by position. `--npc` resolves one base record |
 | `actor-values [--npc id \| --race id] [--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |

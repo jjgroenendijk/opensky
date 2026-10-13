@@ -111,6 +111,19 @@ struct CommandLineTests {
         #expect(launch.mode == "developer")
     }
 
+    @Test func gapsRunsTheAskedSectionsInReportOrder() throws {
+        let all = try command(["gaps"], as: GapsArguments.self)
+        #expect(all.sections == GapsArguments.sectionKeys)
+        let some = try command(
+            ["gaps", "--only", "perks,Papyrus", "--limit", "5"],
+            as: GapsArguments.self
+        )
+        #expect(some.sections == ["papyrus", "perks"])
+        #expect(some.limit == 5)
+        #expect(exitCode(["gaps", "--only", "dance"]) == OpenSkyCommandLine.usageExitCode)
+        #expect(exitCode(["gaps", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
+    }
+
     @Test func nestedCommandsKeepTheirNames() throws {
         _ = try command(["vfs", "ls", "meshes"], as: VFSArguments.List.self)
         _ = try command(["vfs", "cat", "a.nif", "--out", "b"], as: VFSArguments.Cat.self)

@@ -399,7 +399,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark launch-sample
+        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -521,6 +521,10 @@ profile: link-shared ## Record a Time Profiler trace of a Release CLI bench [MOD
 benchmark: link-shared ## Run the shared load and frame time benchmark on a Release CLI [ARGS=...]
 	@$(MAKE) --no-print-directory build-cli CONFIG=Release
 	@./tools/benchmark.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(ARGS)
+
+gaps: link-shared ## Rank what the install uses and the engine does not do yet [ONLY=papyrus,perks,...] [LIMIT=n]
+	@$(MAKE) --no-print-directory build-cli CONFIG=Release
+	@./tools/gaps.sh "$(DERIVED_DATA)/Build/Products/Release/openskycli" $(if $(ONLY),--only $(ONLY),) $(if $(LIMIT),--limit $(LIMIT),)
 
 asset-cache-bench: link-shared ## Measure the asset cache on the benchmark block [CACHE=<dir>] [EXTERNAL=<dir>]
 	@test -n "$(CACHE)" || { echo "[ERROR] usage: make asset-cache-bench CACHE=<dir outside the repo> [EXTERNAL=<dir>]" >&2; exit 2; }

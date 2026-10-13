@@ -32,6 +32,12 @@ extension PluginsArguments: CLIRunnable {
     }
 }
 
+extension GapsArguments: CLIRunnable {
+    func execute() throws {
+        try GapsCommand.run(context: context(), arguments: self)
+    }
+}
+
 extension InstallArguments: CLIRunnable {
     func execute() throws {
         try InstallCommand.run(dataRoot: global.dataRoot)
