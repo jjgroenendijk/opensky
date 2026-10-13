@@ -134,7 +134,7 @@ With that in place, a menu movie focuses its own lists. Measured with `swf movie
 | --- | --- | --- |
 | `racesex_menu.swf` | The active list | None |
 | `quest_journal.swf`, System page | The settings list and the options list, on `StartState` | The first page and tab: their seed data is missing, so the engine focuses the category list |
-| `inventorymenu.swf`, `containermenu.swf` | The category list, after `InitExtensions` | Focus on the item list, because OpenSky changes the category itself |
+| `inventorymenu.swf`, `containermenu.swf` | The category list, a few ticks after `InitExtensions` | Focus on the item list after each publish, because OpenSky changes the category itself |
 | `startmenu.swf` | `Menu_mc`, where up and down move nothing | Focus on the list of the current state |
 | `levelupmenu.swf` | None | Focus on the highlighted button |
 

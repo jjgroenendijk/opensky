@@ -119,6 +119,8 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
 
     /// Focuses the item list, which up and down move. Focusing the category list
     /// moves nothing (measured), so the engine changes category and republishes.
+    /// The movie focuses the category list a few ticks after `InitExtensions`, so
+    /// each publish calls this again.
     public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
     }
@@ -152,6 +154,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
             atPath: itemListPath, runtime: runtime
         )
         publishTotals(model, runtime: runtime)
+        focusItemList(runtime: runtime)
     }
 
     /// One `EntriesA` row. `text`, `count`, `weight`, `value` and `equipped`
