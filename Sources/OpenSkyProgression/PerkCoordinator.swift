@@ -162,7 +162,7 @@ public final class PerkCoordinator {
     }
 
     /// `Mod Skill Use`, by its xEdit position.
-    public static let skillUseEntryPoint = PerkEntryPoint(rawValue: 22)
+    public static let skillUseEntryPoint = PerkEntryPoint.modSkillUse
 
     /// The multiplier form, which every combat surface folds in beside its
     /// fortify term.

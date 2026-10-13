@@ -73,9 +73,9 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
 nonisolated public enum CombatCore {
     /// `Mod Attack Damage` (35): Armsman, Barbarian and Overdraw
     /// (docs/formats/perks.md).
-    public static let attackDamageEntryPoint = PerkEntryPoint(rawValue: 35)
+    public static let attackDamageEntryPoint = PerkEntryPoint.modAttackDamage
     /// `Mod Percent Blocked` (39): Shield Wall.
-    public static let percentBlockedEntryPoint = PerkEntryPoint(rawValue: 39)
+    public static let percentBlockedEntryPoint = PerkEntryPoint.modPercentBlocked
 
     /// A readied spell wins, because readying it unequipped that hand. A
     /// two-handed weapon fills both hands, a second weapon is the off-hand one,
