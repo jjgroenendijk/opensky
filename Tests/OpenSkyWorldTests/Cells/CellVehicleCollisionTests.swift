@@ -6,7 +6,6 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyPhysics
 @testable import OpenSkyWorld
-import OpenSkyWorldState
 import simd
 import Testing
 

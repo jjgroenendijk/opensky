@@ -2,7 +2,6 @@
 // menu's words from the `sRSM` game settings. See docs/engine/race-menu.md.
 
 import Foundation
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 
 /// One colour choice: a `CLFM` colour with the strength it paints at.

@@ -2,7 +2,6 @@
 // records. No game data is embedded in these fixtures.
 
 import Foundation
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyWorld

@@ -17,7 +17,7 @@ struct SkillsMenuModelTests {
 
     static func skill(_ index: Int32, level: Float = 15) -> SkillsMenuSkill {
         SkillsMenuSkill(
-            index: index, name: "Skill \(index)", description: "", level: level, base: level,
+            index: index, name: "Skill \(index)", description: "", level: level,
             progress: 0, legendaryCount: 0, canMakeLegendary: level >= 100
         )
     }

@@ -57,21 +57,19 @@ nonisolated public struct SkillsMenuSkill: Equatable, Sendable {
     public let description: String
     /// The current value, fortify included, as the ring shows it.
     public let level: Float
-    public let base: Float
     /// Experience toward the next skill level, 0 to 1.
     public let progress: Float
     public let legendaryCount: Int
     public let canMakeLegendary: Bool
 
     public init(
-        index: Int32, name: String, description: String, level: Float, base: Float,
+        index: Int32, name: String, description: String, level: Float,
         progress: Float, legendaryCount: Int, canMakeLegendary: Bool
     ) {
         self.index = index
         self.name = name
         self.description = description
         self.level = level
-        self.base = base
         self.progress = progress
         self.legendaryCount = legendaryCount
         self.canMakeLegendary = canMakeLegendary

@@ -11,10 +11,6 @@ nonisolated public struct KeyboardNameTable: Equatable, Sendable {
     /// Scan code to name. A code listed twice keeps its first name.
     public let names: [UInt32: String]
 
-    public init(names: [UInt32: String]) {
-        self.names = names
-    }
-
     /// Lines are tab separated: name, hex scan code, and an optional Flash key code.
     /// `//` starts a comment. A line without a hex code is skipped.
     public init(data: Data) throws(ControlMapError) {

@@ -73,8 +73,6 @@ nonisolated public struct HKXPointerTarget: Equatable, Hashable, Sendable {
 /// registered object keyed by its location. Build one per file and hand out
 /// cursors; the indexes are shared by copy-on-write, so a cursor is cheap.
 nonisolated public struct HKXObjectGraph: Sendable {
-    /// Nil when the graph reads a tagfile.
-    public let file: HKXFile?
     /// The decoded tagfile behind a graph built with `init(tagfile:)`.
     public let tagfile: HKTagfile?
     /// Every registered object, in inventory order.
@@ -90,7 +88,6 @@ nonisolated public struct HKXObjectGraph: Sendable {
     private let classNames: [HKXPointerTarget: String]
 
     public init(file: HKXFile) throws {
-        self.file = file
         tagfile = nil
         objectRefs = file.objects
         var payloads: [Data] = []
@@ -129,7 +126,6 @@ nonisolated public struct HKXObjectGraph: Sendable {
     /// A graph over a tagfile's objects: each one sits in `tagSection` at its index,
     /// and a cursor reads its members by name instead of by offset.
     public init(tagfile: HKTagfile) {
-        file = nil
         self.tagfile = tagfile
         objectRefs = tagfile.objects.indices.map { index in
             HKXObjectRef(

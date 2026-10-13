@@ -64,10 +64,6 @@ public final class HeadTrackingCoordinator {
         }
     }
 
-    public func attach(world: any HeadTrackingWorld) {
-        self.world = world
-    }
-
     /// One panel line: what `actor` looks at and how far its head turns.
     public func readout(for actor: ReferenceKey?) -> String {
         guard let actor else { return "no selected actor" }

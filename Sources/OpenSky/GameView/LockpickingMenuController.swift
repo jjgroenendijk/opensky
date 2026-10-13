@@ -3,7 +3,6 @@
 // The rules live in the coordinator. See docs/engine/locks.md.
 
 import Foundation
-import OpenSkyAudio
 import OpenSkyFormatsESM
 import OpenSkyInventory
 import OpenSkyInventoryInterface

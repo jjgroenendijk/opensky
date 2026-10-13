@@ -1,14 +1,11 @@
 // Legendary skills and the Dragonborn altar over the fixture tree: who may reset a
 // tree, what it refunds, and what the skills menu reads back.
 
-import OpenSkyActorsInterface
-import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 import OpenSkyProgressionInterface
-@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

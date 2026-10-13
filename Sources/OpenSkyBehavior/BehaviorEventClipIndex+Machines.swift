@@ -119,7 +119,7 @@ nonisolated extension BehaviorEventClipIndex {
             else { break }
             result.followUps.append(BehaviorClipSegment(
                 animationName: next.animationName, loops: next.loops,
-                triggers: next.triggers, stateName: next.stateName
+                triggers: next.triggers
             ))
             result.position = next.position
             loops = next.loops

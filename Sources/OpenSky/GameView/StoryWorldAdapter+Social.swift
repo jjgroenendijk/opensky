@@ -6,7 +6,6 @@ import OpenSkyCombat
 import OpenSkyConditions
 import OpenSkyDialogue
 import OpenSkyFormatsESM
-import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyQuests
 import OpenSkyWorld

@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 import Testing

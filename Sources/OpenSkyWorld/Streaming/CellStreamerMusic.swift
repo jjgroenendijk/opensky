@@ -9,7 +9,7 @@ import OpenSkyGameData
 
 /// Cheap identity for diff: only the fields that drive `MusicSelection.resolve`.
 /// Equal keys never re-resolve, so a steady-state frame costs one comparison.
-nonisolated public struct MusicKey: Equatable, Sendable {
+nonisolated public struct MusicKey: Hashable, Sendable {
     public let isInterior: Bool
     public let interiorFormID: UInt32?
     public let exteriorCenter: CellCoordinate?

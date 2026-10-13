@@ -11,12 +11,6 @@ nonisolated public struct ChargenRecords: Sendable {
     public let formLists: [UInt32: FormList]
     public let colors: [UInt32: ColorForm]
 
-    public init(headParts: [HeadPart], formLists: [UInt32: FormList], colors: [UInt32: ColorForm]) {
-        self.headParts = headParts
-        self.formLists = formLists
-        self.colors = colors
-    }
-
     /// Every plugin's records; a later plugin's override wins.
     public init(loadOrder: LoadOrderPlugins, skipped: inout SkippedRecords) {
         let parts = loadOrder.indexRecords(of: "HDPT", skipped: &skipped) {

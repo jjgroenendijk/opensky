@@ -21,11 +21,9 @@ nonisolated public enum PerkTreeResetRefusal: Error, Equatable, Sendable {
 }
 
 nonisolated public struct PerkTreeResetReport: Equatable, Sendable {
-    public let skill: Int32
     /// One per rank, so a perk with three ranks refunds three points.
     public let refundedPoints: Int
     public let perkPoints: Int
-    public let skillLevel: Float
     public let legendaryCount: Int
 }
 
@@ -108,10 +106,8 @@ extension ProgressionCoordinator {
     private func finish(_ index: Int32, refunded: Int) -> PerkTreeResetReport {
         let state = leveling?.state ?? PlayerProgressState()
         return PerkTreeResetReport(
-            skill: index,
             refundedPoints: refunded,
             perkPoints: state.perkPoints,
-            skillLevel: leveling?.values.baseValue(at: index, on: .player) ?? 0,
             legendaryCount: state.legendaryCount(ofSkill: index)
         )
     }

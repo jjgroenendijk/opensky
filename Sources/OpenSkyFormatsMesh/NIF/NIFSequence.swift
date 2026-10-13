@@ -3,7 +3,6 @@
 // Layout: docs/formats/nif-sequences.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import simd
 
 /// One named animation of a mesh: its timing, its text keys, and its tracks.
@@ -42,12 +41,6 @@ nonisolated public struct NIFSequence: Equatable, Sendable {
             return timing.startTime + (phase <= span ? phase : 2 * span - phase)
         case .clamp: return timing.startTime + min(advanced, span)
         }
-    }
-
-    /// True once a clamped sequence has reached its stop time.
-    public func isFinished(after seconds: Float) -> Bool {
-        timing.cycle == .clamp && max(seconds, 0) * timing.frequency
-            >= timing.stopTime - timing.startTime
     }
 }
 

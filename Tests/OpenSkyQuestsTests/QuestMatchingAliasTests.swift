@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyEngineTesting
-import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData

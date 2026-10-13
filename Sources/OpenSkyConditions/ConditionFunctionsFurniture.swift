@@ -6,7 +6,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 /// How one actor uses one furniture marker.
 nonisolated public struct FurnitureUse: Equatable, Sendable {

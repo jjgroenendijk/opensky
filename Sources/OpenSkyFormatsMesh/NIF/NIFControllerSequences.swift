@@ -7,7 +7,6 @@ import OpenSkyFormatsCore
 
 /// One sequence's interpolators for one controller, by interpolator ID.
 nonisolated struct SequenceFeed: Equatable {
-    let sequenceName: String?
     let timing: ControllerTiming
     /// nif.xml `GetInterpolatorID()` -> interpolator block ref.
     var interpolators: [String: Int32] = [:]
@@ -77,7 +76,7 @@ nonisolated enum NIFControllerSequenceDecoder {
             stopTime: reader.readFloat32()
         )
         let feeds = interpolatorsByController.mapValues {
-            SequenceFeed(sequenceName: name, timing: timing, interpolators: $0)
+            SequenceFeed(timing: timing, interpolators: $0)
         }
         return DecodedSequence(name: name, cycle: timing.cycle, feeds: feeds)
     }

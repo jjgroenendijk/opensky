@@ -1,7 +1,6 @@
 // Where a towed cart's wheels touch the ground, and how the cart rests on them.
 // See docs/engine/vehicles.md.
 
-import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import simd
 

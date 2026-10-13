@@ -41,7 +41,6 @@ extension ProgressionCoordinator: SkillsMenuSource {
                     text($0.information.description, plugin: $0.sourcePlugin, kind: .dlstrings)
                 } ?? "",
                 level: skills.values.value(at: index, on: .player) ?? 0,
-                base: skills.level(ofSkill: index, on: .player),
                 progress: threshold > 0 ? min(1, max(0, experience / threshold)) : 0,
                 legendaryCount: state.legendaryCount(ofSkill: index),
                 canMakeLegendary: legendaryRefusal(forSkill: index) == nil

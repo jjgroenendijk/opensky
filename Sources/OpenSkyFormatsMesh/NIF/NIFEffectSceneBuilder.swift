@@ -36,7 +36,7 @@ nonisolated struct NIFEffectSceneBuilder {
                     Visit(ref: $0, parent: index, depth: visit.depth + 1)
                 }
             } else if NIFFile.Flattener.shapeTypes.contains(block.typeName) {
-                try appendShape(block, ref: Int(visit.ref), parent: visit.parent)
+                try appendShape(block, parent: visit.parent)
             }
         }
     }
@@ -65,7 +65,7 @@ nonisolated struct NIFEffectSceneBuilder {
         return nodes.count - 1
     }
 
-    private mutating func appendShape(_ block: NIFFile.Block, ref: Int, parent: Int?) throws {
+    private mutating func appendShape(_ block: NIFFile.Block, parent: Int?) throws {
         let shape: NIFTriShape = switch block.typeName {
         case "BSSubIndexTriShape":
             try NIFSubIndexTriShape(data: block.data, header: file.header).shape

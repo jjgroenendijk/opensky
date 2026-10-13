@@ -8,7 +8,6 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyProgression
 import OpenSkyProgressionInterface
-@testable import OpenSkyWorldState
 import Testing
 
 @MainActor

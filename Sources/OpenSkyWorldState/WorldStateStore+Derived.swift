@@ -2,7 +2,6 @@
 // writes built on the store's public API. See docs/engine/runtime-state.md.
 
 import OpenSkyFormatsESM
-import OpenSkyGameData
 
 extension WorldStateStore {
     /// A value built from the deltas and `source`, kept until the next delta write.

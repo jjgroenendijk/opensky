@@ -2,7 +2,6 @@
 // so they play non-positional. See docs/engine/world-sfx.md#region-sounds.
 
 import OpenSkyAudio
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 extension WorldAudioSoundDirector {

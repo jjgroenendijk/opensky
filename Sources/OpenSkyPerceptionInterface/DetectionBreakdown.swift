@@ -30,10 +30,6 @@ nonisolated public struct DetectionInputs: Equatable, Sendable {
     /// The observer's Sneak skill, which UESP calls the noticer skill.
     public let noticerSkill: Float
 
-    public var equippedWeight: Float {
-        traits.equippedWeight
-    }
-
     public init(
         distance: Float,
         hasLineOfSight: Bool = true,

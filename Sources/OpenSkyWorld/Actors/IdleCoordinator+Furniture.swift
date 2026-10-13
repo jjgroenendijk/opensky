@@ -34,10 +34,6 @@ extension IdleCoordinator {
         sessions[actor]?.waiting = nil
     }
 
-    public func furnitureUse(of actor: ReferenceKey) -> FurnitureUse? {
-        furnitureUses[actor]
-    }
-
     public func addDependent(_ dependent: ReferenceKey, of owner: ReferenceKey) {
         guard dependent != owner, dependents[owner]?.contains(dependent) != true else { return }
         dependents[owner, default: []].append(dependent)

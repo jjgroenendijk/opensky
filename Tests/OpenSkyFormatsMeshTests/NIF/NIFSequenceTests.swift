@@ -3,7 +3,6 @@
 // NifTools nif.xml; docs/formats/nif-sequences.md.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsMesh
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting

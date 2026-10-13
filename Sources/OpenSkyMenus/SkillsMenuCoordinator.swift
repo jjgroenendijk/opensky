@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyGameData
 import OpenSkyProgressionInterface
-import OpenSkyRendering
 
 public protocol SkillsMenuWorld: SWFLayerWorld {
     var skillsMenuSource: (any SkillsMenuSource)? { get }
@@ -75,10 +74,6 @@ public final class SkillsMenuCoordinator {
 
     public func attach(world: any SkillsMenuWorld) {
         self.world = world
-    }
-
-    public var isOpen: Bool {
-        model != nil
     }
 
     /// False before a world with progression loads.
