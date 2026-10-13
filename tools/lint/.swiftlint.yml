@@ -114,5 +114,24 @@ custom_rules:
     excluded: '(Sources/OpenSkyProgressionInterface/PerkEntryPoint\+Engine\.swift|Tests/.*)$'
     message: "Name the entry point in PerkEntryPoint+Engine.swift and add it to engineRead, so openskycli gaps sees it"
     severity: error
+  papyrus_event_literal:
+    name: "Papyrus event literal"
+    regex: '"On[A-Z][A-Za-z]+"'
+    included: 'Sources/OpenSkyScripting/.*\.swift$'
+    excluded: 'Sources/OpenSkyScripting/PapyrusEngineEvents\.swift$'
+    message: "Name the event in PapyrusEngineEvents and add it to sent, so openskycli gaps sees it"
+    severity: error
+  shader_flag_mask:
+    name: "Shader flag mask"
+    regex: 'shaderFlags[12]\s*&'
+    excluded: 'Tests/.*$'
+    message: "Read a shader flag through has(_:) and a NIFShaderFlag constant, and list it in lightingRead or effectRead"
+    severity: error
+  game_setting_reader:
+    name: "Game setting reader"
+    regex: '\.setting\(editorID:'
+    excluded: '(Tests/.*|Sources/OpenSky(CombatInterface/(Archery|Combat|Difficulty)Settings|GameData/(ActorValueDerivation|BarterPricing|CharacterLeveling|MenuRecordData|SkillAdvancement|SocialSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
+    message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
+    severity: error
 
 reporter: "xcode"

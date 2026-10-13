@@ -14,6 +14,49 @@ OpenSky is an early work in progress. You can load the world and walk around, bu
 the game are missing or incomplete, such as quests, magic, and crafting. Expect bugs. You cannot
 play the game from start to finish yet.
 
+### Completion progress
+
+The table shows, per area, how many of the things the game data uses OpenSky handles. "Done"
+means a program could check it. It does not mean the item behaves exactly like the game. A row
+with "-" has no total to count against: it lists failures or names to check. `make gaps` counts
+this on a real install and updates the table. The [gap report page](docs/tools/gaps.md) says what
+each area counts.
+
+<!-- gaps:begin -->
+
+Measured on 2026-10-13 by `make gaps`.
+
+| Area | Done | Left | Total | Done % |
+| --- | --: | --: | --: | --: |
+| Papyrus natives | 197 | 311 | 508 | 38% |
+| Papyrus events | 15 | 53 | 68 | 22% |
+| Condition functions | 80 | 178 | 258 | 31% |
+| Record types | 119 | 1 | 120 | 99% |
+| Game settings | 141 | 1507 | 1648 | 8% |
+| Magic effect archetypes | 3 | 34 | 37 | 8% |
+| Perk entry points | 8 | 60 | 68 | 11% |
+| Perk entry-point functions | 5 | 4 | 9 | 55% |
+| AI package procedures | 8 | 22 | 30 | 26% |
+| AI packages that do not resolve | - | 0 | - | - |
+| Behavior node classes | 22 | 29 | 51 | 43% |
+| Behavior features ignored | - | 251 | - | - |
+| Havok classes | 61 | 39 | 100 | 61% |
+| Animation events | 60 | 84 | 144 | 41% |
+| Behavior graph variables | 18 | 678 | 696 | 2% |
+| NIF block types | 82 | 63 | 145 | 56% |
+| Lighting shader types | 9 | 2 | 11 | 81% |
+| Lighting shader flags | 14 | 24 | 38 | 36% |
+| Effect shader flags | 6 | 11 | 17 | 35% |
+| Mesh decode failures | - | 6 | - | - |
+| Texture variants | 9 | 1 | 10 | 90% |
+| Sound file variants | 3 | 0 | 3 | 100% |
+| Lip sync data | 1 | 2 | 3 | 33% |
+| Menus with no bridge | 9 | 14 | 23 | 39% |
+| AS2 runtime | - | 223 | - | - |
+| SWF tags | 24 | 4 | 28 | 85% |
+
+<!-- gaps:end -->
+
 ## What you need
 
 - A Mac with Apple Silicon (M1 or newer).

@@ -20,6 +20,10 @@ enum GapsCommand {
         let lines = GapsReport.summary(sections)
             + sections.flatMap { GapsReport.lines($0, limit: arguments.limit) }
         print(lines.joined(separator: "\n"))
+        if let path = arguments.summaryOut {
+            let table = GapsReport.markdownSummary(sections).joined(separator: "\n") + "\n"
+            try Data(table.utf8).write(to: URL(fileURLWithPath: path))
+        }
     }
 
     private static func progress(_ line: String) {
@@ -39,16 +43,20 @@ final class GapsGatherer {
     }
 
     func sections(for key: String) throws -> [GapSection] {
-        switch key {
-        case "papyrus": try [papyrus()]
-        case "conditions": try [conditions()]
-        case "records": try [records()]
-        case "magic": try [magic()]
-        case "perks": try perks()
-        case "behavior": behavior()
-        case "swf": swf()
-        default: throw CLIError.usage("unknown section \(key)")
-        }
+        guard let build = builders[key] else { throw CLIError.usage("unknown section \(key)") }
+        return try build()
+    }
+
+    /// One builder per section key in `GapsArguments.sectionKeys`.
+    private var builders: [String: () throws -> [GapSection]] {
+        [
+            "papyrus": { try [self.papyrus()] }, "events": { [self.events()] },
+            "conditions": { try [self.conditions()] }, "records": { try [self.records()] },
+            "settings": { try [self.settings()] }, "magic": { try [self.magic()] },
+            "perks": perks, "packages": packages, "behavior": behavior,
+            "animations": animations, "meshes": meshes, "textures": textures,
+            "audio": audio, "swf": swf
+        ]
     }
 
     /// The active plugins, or a failure when none opened.
