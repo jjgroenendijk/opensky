@@ -163,20 +163,6 @@ public final class PapyrusWorldRuntime {
     /// that shows recent history rather than a whole session.
     public static let recentEventLimit = 8
 
-    public static let onInitEventName = "OnInit"
-    public static let onCellAttachEventName = "OnCellAttach"
-    public static let onLoadEventName = "OnLoad"
-    public static let onCellLoadEventName = "OnCellLoad"
-    public static let onAnimationEventName = "OnAnimationEvent"
-    public static let onActivateEventName = "OnActivate"
-    public static let onTriggerEnterEventName = "OnTriggerEnter"
-    public static let onTriggerLeaveEventName = "OnTriggerLeave"
-    public static let onUpdateEventName = "OnUpdate"
-    public static let onUpdateGameTimeEventName = "OnUpdateGameTime"
-    public static let onHitEventName = "OnHit"
-    public static let onDyingEventName = "OnDying"
-    public static let onDeathEventName = "OnDeath"
-
     /// Marks the depth every activation queued from inside this dispatch sits
     /// at. A latent handler that resumes on a later tick has lost the depth
     /// and re-enters at 0; that is a stated simplification, and the per-tick
@@ -243,7 +229,7 @@ public final class PapyrusWorldRuntime {
         }
         pendingOnInit.insert(key)
         eventQueue.append(PapyrusScriptEvent(
-            target: key, functionName: Self.onInitEventName, arguments: []
+            target: key, functionName: PapyrusEngineEvents.onInit, arguments: []
         ))
     }
 

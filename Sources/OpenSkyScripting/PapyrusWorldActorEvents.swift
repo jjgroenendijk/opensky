@@ -17,7 +17,7 @@ extension PapyrusWorldRuntime {
     @discardableResult
     public func queueOnHit(_ hit: ScriptHitEvent) -> Int {
         queueActorEvent(
-            Self.onHitEventName,
+            PapyrusEngineEvents.onHit,
             on: hit.target,
             arguments: [
                 .object(objectHandle(for: hit.aggressor)),
@@ -39,15 +39,15 @@ extension PapyrusWorldRuntime {
         let arguments: [PapyrusValue] = [
             killer.map { .object(objectHandle(for: $0)) } ?? .none
         ]
-        return queueActorEvent(Self.onDyingEventName, on: actor, arguments: arguments)
-            + queueActorEvent(Self.onDeathEventName, on: actor, arguments: arguments)
+        return queueActorEvent(PapyrusEngineEvents.onDying, on: actor, arguments: arguments)
+            + queueActorEvent(PapyrusEngineEvents.onDeath, on: actor, arguments: arguments)
     }
 
     /// Queues `OnRaceSwitchComplete()` on each script of `actor`, after the race menu
     /// changed the player's race. Returns the count.
     @discardableResult
     public func queueRaceSwitchComplete(actor: ReferenceKey) -> Int {
-        queueActorEvent("OnRaceSwitchComplete", on: actor, arguments: [])
+        queueActorEvent(PapyrusEngineEvents.onRaceSwitchComplete, on: actor, arguments: [])
     }
 
     /// Queues `OnPackageStart(akNewPackage)`, `OnPackageEnd(akOldPackage)`, or

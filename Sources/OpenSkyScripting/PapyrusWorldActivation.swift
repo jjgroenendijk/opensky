@@ -28,7 +28,7 @@ extension PapyrusWorldRuntime {
         for key in instanceKeys(on: target) {
             enqueue(PapyrusScriptEvent(
                 target: key,
-                functionName: Self.onActivateEventName,
+                functionName: PapyrusEngineEvents.onActivate,
                 arguments: [.object(handle)],
                 activationDepth: depth
             ))

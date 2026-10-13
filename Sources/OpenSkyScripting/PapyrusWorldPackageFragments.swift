@@ -69,9 +69,9 @@ extension PapyrusWorldStateBridge {
     public func queuePackageEvent(slot: UInt32, package: FormID, actor: ReferenceKey) -> Int {
         let name: String
         switch slot {
-        case 0x01: name = "OnPackageStart"
-        case 0x02: name = "OnPackageEnd"
-        case 0x04: name = "OnPackageChange"
+        case 0x01: name = PapyrusEngineEvents.onPackageStart
+        case 0x02: name = PapyrusEngineEvents.onPackageEnd
+        case 0x04: name = PapyrusEngineEvents.onPackageChange
         default: return 0
         }
         return world?.queuePackageEvent(name, package: package, actor: actor) ?? 0
