@@ -69,8 +69,8 @@ struct PapyrusWorldTriggerTests {
             volume: TriggerStreamFixture.volumeKey, actor: .player
         ) == 1)
         #expect(session.world.eventQueue.first?.functionName == "OnTriggerLeave")
-        #expect(PapyrusWorldRuntime.onTriggerEnterEventName == "OnTriggerEnter")
-        #expect(PapyrusWorldRuntime.onTriggerLeaveEventName == "OnTriggerLeave")
+        #expect(PapyrusEngineEvents.onTriggerEnter == "OnTriggerEnter")
+        #expect(PapyrusEngineEvents.onTriggerLeave == "OnTriggerLeave")
     }
 
     @Test

@@ -129,6 +129,11 @@ nonisolated public struct PackageStore: Sendable {
         return false
     }
 
+    /// Procedure names, lowercased, that `procedure(for:)` maps to a kind an actor runs.
+    public static let runnableProcedures: Set = [
+        "eat", "sleep", "sandbox", "wander", "patrol", "travel", "sit", "wait"
+    ]
+
     private static func procedure(for package: Package) -> PackageProcedureKind {
         let names = package.procedureTypes.map { $0.lowercased() }
         let editorID = package.editorID?.lowercased() ?? ""

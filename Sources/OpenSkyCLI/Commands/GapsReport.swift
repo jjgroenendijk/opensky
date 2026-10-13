@@ -2,6 +2,7 @@
 // left ranked by how often the data uses it, and a summary table on top.
 
 import Foundation
+import OpenSkyFormatsCore
 
 struct GapRow {
     let name: String
@@ -46,6 +47,39 @@ struct GapSection {
     }
 }
 
+extension GapSection {
+    /// Done and left from what a census counted: `handled` decides each item.
+    init(
+        title: String,
+        unit: String,
+        counts: GapCounts,
+        handled: (String) -> Bool,
+        usesUnit: String,
+        notes: [String] = []
+    ) {
+        self.init(
+            title: title,
+            unit: unit,
+            done: counts.done(where: handled),
+            left: counts.left(where: handled),
+            usesUnit: usesUnit,
+            notes: notes
+        )
+    }
+
+    /// A list with no whole to count against, such as decode failures.
+    init(title: String, unit: String, failures: GapCounts, usesUnit: String, notes: [String] = []) {
+        self.init(
+            title: title,
+            unit: unit,
+            done: nil,
+            left: GapCounts.ranked(failures.uses),
+            usesUnit: usesUnit,
+            notes: notes
+        )
+    }
+}
+
 enum GapsReport {
     static func summary(_ sections: [GapSection]) -> [String] {
         let width = max(24, sections.map(\.title.count).max() ?? 0)
@@ -61,6 +95,16 @@ enum GapsReport {
             )
         }
         return lines
+    }
+
+    /// The summary as a Markdown table, for the README.
+    static func markdownSummary(_ sections: [GapSection]) -> [String] {
+        ["| Area | Done | Left | Total | Done % |", "| --- | --: | --: | --: | --: |"]
+            + sections.map { section in
+                "| \(section.title) | \(section.done.map(String.init) ?? "-") "
+                    + "| \(section.left.count) | \(section.total.map(String.init) ?? "-") "
+                    + "| \(section.percentDone) |"
+            }
     }
 
     static func lines(_ section: GapSection, limit: Int?) -> [String] {

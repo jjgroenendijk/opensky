@@ -77,7 +77,7 @@ extension PapyrusWorldRuntime {
             .values.reduce(into: Set<ReferenceKey>()) { $0.formUnion($1) }
         for key in keys where loaded.contains(key.reference) {
             enqueue(PapyrusScriptEvent(
-                target: key, functionName: Self.onCellLoadEventName, arguments: []
+                target: key, functionName: PapyrusEngineEvents.onCellLoad, arguments: []
             ))
         }
     }

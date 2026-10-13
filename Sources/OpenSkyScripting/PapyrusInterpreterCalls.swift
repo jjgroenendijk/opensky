@@ -244,9 +244,9 @@ extension PapyrusInterpreter {
         instance: PapyrusInstance,
         receiver: PapyrusObjectHandle
     ) throws(PapyrusFault) {
-        let end = try stateHook("OnEndState", instance: instance)
+        let end = try stateHook(PapyrusEngineEvents.onEndState, instance: instance)
         instance.activeState = stateName
-        let begin = try stateHook("OnBeginState", instance: instance)
+        let begin = try stateHook(PapyrusEngineEvents.onBeginState, instance: instance)
         for hook in [begin, end].compactMap(\.self) {
             try pushFrame(hook, instanceHandle: receiver, arguments: [], completion: .discard)
         }

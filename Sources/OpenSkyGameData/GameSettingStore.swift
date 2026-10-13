@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import Synchronization
 
 nonisolated public struct ResolvedGameSetting: Equatable, Sendable {
     public let setting: GameSetting
@@ -14,6 +15,9 @@ nonisolated public struct ResolvedGameSetting: Equatable, Sendable {
 nonisolated public struct GameSettingStore: Sendable {
     public private(set) var values: [String: ResolvedGameSetting] = [:]
     public private(set) var skippedRecords = SkippedRecords()
+    /// Notes every editor ID a reader asks for, so `openskycli gaps` can list the
+    /// settings no code reads. Nil in play.
+    public var readLog: GameSettingReadLog?
 
     public init(plugins: [(name: String, file: ESMFile)]) {
         for plugin in plugins {
@@ -22,7 +26,8 @@ nonisolated public struct GameSettingStore: Sendable {
     }
 
     public func setting(editorID: String) -> ResolvedGameSetting? {
-        values[editorID.lowercased()]
+        readLog?.note(editorID)
+        return values[editorID.lowercased()]
     }
 
     private mutating func add(pluginName: String, file: ESMFile) {
@@ -40,6 +45,21 @@ nonisolated public struct GameSettingStore: Sendable {
                 sourcePlugin: pluginName
             )
         }
+    }
+}
+
+/// Editor IDs readers asked a `GameSettingStore` for, lowercased.
+nonisolated public final class GameSettingReadLog: Sendable {
+    private let names = Mutex<Set<String>>([])
+
+    public init() {}
+
+    public var editorIDs: Set<String> {
+        names.withLock(\.self)
+    }
+
+    func note(_ editorID: String) {
+        names.withLock { _ = $0.insert(editorID.lowercased()) }
     }
 }
 

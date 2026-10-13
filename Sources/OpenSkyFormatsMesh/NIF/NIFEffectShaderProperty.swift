@@ -48,49 +48,53 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
     public var isDoubleSided: Bool {
-        shaderFlags2 & 0x10 != 0
+        has(.doubleSided)
     }
 
     /// SLSF1 bit 30 Soft_Effect -> soft-particle depth fade.
     public var isSoftEffect: Bool {
-        shaderFlags1 & 0x4000_0000 != 0
+        has(.softEffect)
     }
 
     /// SLSF1 bit 4 Greyscale_To_PaletteColor -> RGB from palette texture.
     public var usesGreyscaleToPaletteColor: Bool {
-        shaderFlags1 & 0x10 != 0
+        has(.greyscaleToPaletteColor)
     }
 
     /// SLSF1 bit 5 Greyscale_To_PaletteAlpha -> alpha from palette texture.
     public var usesGreyscaleToPaletteAlpha: Bool {
-        shaderFlags1 & 0x20 != 0
+        has(.greyscaleToPaletteAlpha)
     }
 
     /// SLSF1 bit 6 Use_Falloff -> apply the angular falloff fields.
     public var usesFalloff: Bool {
-        shaderFlags1 & 0x40 != 0
+        has(.useFalloff)
     }
 
     /// SLSF1 bit 3 Vertex_Alpha -> vertex-color alpha modulates opacity.
     public var hasVertexAlpha: Bool {
-        shaderFlags1 & 0x08 != 0
+        has(.vertexAlpha)
     }
 
     /// SLSF2 bit 5 Vertex_Colors -> vertex color tints the effect.
     public var hasVertexColors: Bool {
-        shaderFlags2 & 0x20 != 0
+        has(.vertexColors)
     }
 
     /// SLSF1 bit 31 ZBuffer_Test (nif.xml places ZBuffer_Test in flags 1, not
     /// flags 2) -> depth test enabled.
     public var isZBufferTest: Bool {
-        shaderFlags1 & 0x8000_0000 != 0
+        has(.zBufferTest)
     }
 
     /// SLSF2 bit 0 ZBuffer_Write cleared -> no depth writes (typical for
     /// additive/transparent effects).
     public var isZBufferWriteDisabled: Bool {
-        shaderFlags2 & 0x01 == 0
+        !has(.zBufferWrite)
+    }
+
+    func has(_ flag: NIFShaderFlag) -> Bool {
+        (flag.word == 1 ? shaderFlags1 : shaderFlags2) & (1 << flag.bit) != 0
     }
 
     public init(data: Data, header: NIFHeader) throws {

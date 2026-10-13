@@ -207,7 +207,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text duplicates no-suppressions file-length ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text gap-registries duplicates no-suppressions file-length ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -289,6 +289,9 @@ comment-length: #| Check no comment block is over the line limit
 
 panel-text: #| Check app panels hold no prose paragraphs or long tooltips
 	@./tools/lint/panel-text.sh
+
+gap-registries: #| Check the NIF block types openskycli gaps counts as handled match the code
+	@./tools/lint/gap-registries.sh
 
 # The whole tree in under a second. A scan of changed files only would miss a new
 # copy of code that did not change.

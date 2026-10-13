@@ -4,7 +4,8 @@ import ArgumentParser
 
 public struct GapsArguments: CLICommandArguments {
     public static let sectionKeys = [
-        "papyrus", "conditions", "records", "magic", "perks", "behavior", "swf"
+        "papyrus", "events", "conditions", "records", "settings", "magic", "perks", "packages",
+        "behavior", "animations", "meshes", "textures", "audio", "swf"
     ]
 
     public static let configuration = CommandConfiguration(
@@ -24,6 +25,11 @@ public struct GapsArguments: CLICommandArguments {
         help: ArgumentHelp("Rows printed per section. Default: all.", valueName: "n")
     )
     public var limit: Int?
+    @Option(
+        parsing: .unconditional,
+        help: ArgumentHelp("Also write the summary as a Markdown table here.", valueName: "path")
+    )
+    public var summaryOut: String?
 
     public init() {}
 

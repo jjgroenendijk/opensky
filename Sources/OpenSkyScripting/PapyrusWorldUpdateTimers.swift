@@ -250,8 +250,8 @@ extension PapyrusWorldRuntime {
             enqueue(PapyrusScriptEvent(
                 target: firing.key,
                 functionName: firing.slot.family == .real
-                    ? Self.onUpdateEventName
-                    : Self.onUpdateGameTimeEventName,
+                    ? PapyrusEngineEvents.onUpdate
+                    : PapyrusEngineEvents.onUpdateGameTime,
                 arguments: [],
                 activationDepth: 0
             ))

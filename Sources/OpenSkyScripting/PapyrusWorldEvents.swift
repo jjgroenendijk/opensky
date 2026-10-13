@@ -124,7 +124,7 @@ extension PapyrusWorldRuntime {
             skips.note(.retiredEventTarget)
             return nil
         }
-        if PapyrusRuntime.matches(event.functionName, Self.onInitEventName) {
+        if PapyrusRuntime.matches(event.functionName, PapyrusEngineEvents.onInit) {
             guard !firedOnInit.contains(event.target) else {
                 return nil
             }

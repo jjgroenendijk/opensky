@@ -120,6 +120,12 @@ struct CommandLineTests {
         )
         #expect(some.sections == ["papyrus", "perks"])
         #expect(some.limit == 5)
+        let assets = try command(
+            ["gaps", "--only", "textures,meshes", "--summary-out", "summary.md"],
+            as: GapsArguments.self
+        )
+        #expect(assets.sections == ["meshes", "textures"])
+        #expect(assets.summaryOut == "summary.md")
         #expect(exitCode(["gaps", "--only", "dance"]) == OpenSkyCommandLine.usageExitCode)
         #expect(exitCode(["gaps", "--limit", "0"]) == OpenSkyCommandLine.usageExitCode)
     }

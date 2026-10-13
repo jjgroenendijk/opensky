@@ -53,6 +53,15 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
 nonisolated public struct MenuRecordData: Sendable {
     public static let playerBase = FormID(0x7)
     public static let tamrielEditorID = "Tamriel"
+    /// The menus read every setting that has this prefix, so `openskycli gaps` counts
+    /// them as read.
+    public static let statsPrefix = "fStats"
+
+    /// A string setting the fast-travel and race menus show.
+    public static func isMenuText(_ editorID: String) -> Bool {
+        editorID.hasPrefix("sNoFastTravel") || editorID.hasPrefix("sRSM")
+            || editorID == "sFastTravelConfirm"
+    }
 
     public let player: ActorBase?
     /// RACE records with the playable flag, sorted by editor ID.
@@ -95,15 +104,14 @@ nonisolated public struct MenuRecordData: Sendable {
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
             let name = resolved.setting.editorID
             guard
-                name.hasPrefix("sNoFastTravel") || name.hasPrefix("sRSM")
-                || name == "sFastTravelConfirm",
+                Self.isMenuText(name),
                 case let .string(text) = resolved.setting.value
             else { return }
             texts[name] = text
         }
         statsSettings = settings.values.values.reduce(into: [:]) { values, resolved in
             guard
-                resolved.setting.editorID.hasPrefix("fStats"),
+                resolved.setting.editorID.hasPrefix(Self.statsPrefix),
                 case let .float(value) = resolved.setting.value
             else { return }
             values[resolved.setting.editorID] = value

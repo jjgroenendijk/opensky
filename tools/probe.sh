@@ -136,6 +136,11 @@ gaps="$("$cli" --data-root "$data_root" gaps --only magic,perks --limit 3 2>>"$l
 printf '%s\n' "$gaps" | grep -q '^\[INFO\] gaps summary' || fail "gaps printed no summary"
 printf '%s\n' "$gaps" | grep -q '^== Perk entry points$' || fail "gaps printed no perk section"
 echo "[ OK ] gaps ($(printf '%s\n' "$gaps" | grep -c '^== ') sections)"
+rules="$("$cli" --data-root "$data_root" gaps --only settings,packages --limit 3 2>>"$log")" \
+  || fail "gaps settings,packages failed"
+printf '%s\n' "$rules" | grep -q '^== Game settings$' || fail "gaps printed no settings section"
+printf '%s\n' "$rules" | grep -q '^== AI package procedures$' || fail "gaps printed no package section"
+echo "[ OK ] gaps settings and packages"
 
 # Skyrim saves: read-only. Runs only when OPENSKY_SKYRIM_SAVES names a folder.
 if [ -n "${OPENSKY_SKYRIM_SAVES:-}" ]; then

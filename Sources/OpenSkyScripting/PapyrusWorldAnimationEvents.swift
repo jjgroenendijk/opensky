@@ -33,7 +33,7 @@ extension PapyrusWorldRuntime {
         for key in live {
             enqueue(PapyrusScriptEvent(
                 target: key,
-                functionName: Self.onAnimationEventName,
+                functionName: PapyrusEngineEvents.onAnimationEvent,
                 arguments: [.object(objectHandle(for: sender)), .string(name)],
                 activationDepth: 0
             ))

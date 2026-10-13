@@ -51,36 +51,32 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
 
     /// SLSF2 bit 4 Double_Sided -> cull mode none.
     public var isDoubleSided: Bool {
-        shaderFlags2 & 0x10 != 0
+        has(.doubleSided)
     }
 
     /// SLSF2 bit 29 Tree_Anim: the vertex alpha is the branch's wind weight, not opacity.
     public var isTreeAnimated: Bool {
-        shaderFlags2 & 0x2000_0000 != 0
+        has(.treeAnim)
     }
 
     /// SLSF1 bit 15 Refraction: the shape bends what is behind it, such as the
     /// heat haze over a fire, and its texture is a normal map.
     public var isRefraction: Bool {
-        shaderFlags1 & 0x8000 != 0
+        has(.refraction)
     }
 
     /// Shader type 4: a FaceGen head, tinted by texture slot 6.
     public var isFaceGen: Bool {
-        shaderType == 4
+        shaderType == NIFLightingShaderType.faceGen
     }
 
     /// Shader type 5: skin the actor's skin colour tints.
     public var isSkinTint: Bool {
-        shaderType == 5
+        shaderType == NIFLightingShaderType.skinTint
     }
 
-    public func hasFlag1(_ bit: Int) -> Bool {
-        shaderFlags1 & (1 << bit) != 0
-    }
-
-    public func hasFlag2(_ bit: Int) -> Bool {
-        shaderFlags2 & (1 << bit) != 0
+    func has(_ flag: NIFShaderFlag) -> Bool {
+        (flag.word == 1 ? shaderFlags1 : shaderFlags2) & (1 << flag.bit) != 0
     }
 
     public init(data: Data, header: NIFHeader) throws {

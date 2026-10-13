@@ -69,7 +69,7 @@ extension PapyrusWorldRuntime {
         for entry in references.sortedEntries() {
             for key in instanceKeys(on: entry.key) {
                 enqueue(PapyrusScriptEvent(
-                    target: key, functionName: Self.onCellLoadEventName, arguments: []
+                    target: key, functionName: PapyrusEngineEvents.onCellLoad, arguments: []
                 ))
             }
         }
@@ -230,12 +230,12 @@ extension PapyrusWorldRuntime {
                 enqueueOnInitIfNeeded(item.key)
                 enqueue(PapyrusScriptEvent(
                     target: item.key,
-                    functionName: Self.onCellAttachEventName,
+                    functionName: PapyrusEngineEvents.onCellAttach,
                     arguments: []
                 ))
                 enqueue(PapyrusScriptEvent(
                     target: item.key,
-                    functionName: Self.onLoadEventName,
+                    functionName: PapyrusEngineEvents.onLoad,
                     arguments: []
                 ))
             }

@@ -148,22 +148,20 @@ extension GapsGatherer {
             (name: "clip not found: \(entry.name)", count: entry.count)
         }
         let features = tally.rankedFeatureGaps + bindings + clips
+        let unreached = sweep.unreachedClasses.map { entry in
+            (name: "not reached: \(entry.name)", count: entry.count)
+        }
         return [
             GapSection(
                 title: "Behavior node classes",
                 unit: "node classes",
                 done: sweep.doneClasses.count,
-                left: sweep.leftClasses,
+                left: Self.ranked(sweep.leftClasses + unreached),
                 usesUnit: "graph nodes",
-                notes: [note, "done means reached by the sweep with no gap noted"]
-            ),
-            GapSection(
-                title: "Behavior classes not reached",
-                unit: "node classes",
-                done: nil,
-                left: sweep.unreachedClasses,
-                usesUnit: "graph nodes",
-                notes: ["no update reached these, so whether they work is unknown"]
+                notes: [
+                    note, "done means reached by the sweep with no gap noted",
+                    "not reached: no update reached it, so whether it works is unknown"
+                ]
             ),
             GapSection(
                 title: "Behavior features ignored",
@@ -198,7 +196,8 @@ extension GapsGatherer {
                     note,
                     "a name a movie reads before it sets it also counts, so not every row is a gap"
                 ]
-            )
+            ),
+            swfTags()
         ]
     }
 

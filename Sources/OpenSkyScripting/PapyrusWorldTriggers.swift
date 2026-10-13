@@ -12,14 +12,14 @@ extension PapyrusWorldRuntime {
     /// to `volume`. Returns how many events were queued.
     @discardableResult
     public func queueOnTriggerEnter(volume: ReferenceKey, actor: ReferenceKey) -> Int {
-        queueTriggerEvent(Self.onTriggerEnterEventName, volume: volume, actor: actor)
+        queueTriggerEvent(PapyrusEngineEvents.onTriggerEnter, volume: volume, actor: actor)
     }
 
     /// Queues `OnTriggerLeave(akActionRef)` on every script instance attached
     /// to `volume`. Returns how many events were queued.
     @discardableResult
     public func queueOnTriggerLeave(volume: ReferenceKey, actor: ReferenceKey) -> Int {
-        queueTriggerEvent(Self.onTriggerLeaveEventName, volume: volume, actor: actor)
+        queueTriggerEvent(PapyrusEngineEvents.onTriggerLeave, volume: volume, actor: actor)
     }
 
     /// Instance iteration is in `PapyrusInstanceKey` order, the same

@@ -45,4 +45,14 @@ struct GameSettingStoreTests {
         #expect(store.setting(editorID: "fMoveCharWalkBase")?.setting.value == .float(100))
         #expect(store.setting(editorID: "fMissing") == nil)
     }
+
+    @Test
+    func aReadLogNotesEveryNameAskedFor() {
+        var store = GameSettingStore(plugins: [])
+        let log = GameSettingReadLog()
+        store.readLog = log
+        _ = store.setting(editorID: "fMoveCharWalkBase")
+        _ = store.setting(editorID: "fMissing")
+        #expect(log.editorIDs == ["fmovecharwalkbase", "fmissing"])
+    }
 }
