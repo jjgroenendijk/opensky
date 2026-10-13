@@ -55,8 +55,8 @@ struct QuestAcceptanceRealDataTests {
     // MARK: - Assertions
 
     /// The quest's own scripts ran to their end with no fault. The last fragment
-    /// reaches two item natives OpenSky does not have yet, starts the next quest,
-    /// `MGRArniel02`, and stops this one. Every object property binds, because a
+    /// calls `Actor.AddItem` and `Actor.RemoveItem` among its eight natives, starts the
+    /// next quest, `MGRArniel02`, and stops this one. Every object property binds, because a
     /// reference in an unloaded cell gets a handle when a script first uses it.
     /// `MGRArniel02` fills one alias; its six other alias properties stay unfilled.
     @MainActor
@@ -68,7 +68,8 @@ struct QuestAcceptanceRealDataTests {
         #expect(world.runtime.tally.faultTotal == 0)
         #expect(world.bindingSkips.counts[.unresolvedReference] == nil)
         #expect(world.bindingSkips.counts[.aliasObject] == 6)
-        #expect(world.runtime.tally.unimplementedNativeTotal == 2)
+        #expect(world.runtime.tally.nativeCallTotal == 8)
+        #expect(world.runtime.tally.unimplementedNativeTotal == 0)
         #expect(world.questFragmentsQueued > 0, "no stage fragment ever ran")
         #expect(world.eventQueue.isEmpty, "the quest left work queued")
         #expect(world.aliasResolution.filledAliasCount == 1)
