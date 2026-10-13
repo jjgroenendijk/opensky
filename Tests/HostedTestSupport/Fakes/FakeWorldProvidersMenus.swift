@@ -10,6 +10,7 @@ final class FakeMenuCalls {
     var titleOpen = false
     var titleMovie = true
     var raceOpen = false
+    var skillsOpen = false
     var mapMode: String?
 }
 
@@ -79,6 +80,35 @@ extension FakeWorldProviders {
 
     func setRaceMenuMovieEnabled(_ enabled: Bool) {
         menuCalls.calls.append("race.movie(\(enabled))")
+    }
+
+    var skillsMenuSnapshot: SkillsMenuSnapshot {
+        menuCalls.skillsOpen
+            ? SkillsMenuSnapshot(
+                isOpen: true, page: "Skills (1 perk points)", rows: ["Alchemy 15, 0%"],
+                selectedIndex: 0
+            )
+            : SkillsMenuSnapshot()
+    }
+
+    func openSkillsMenu() {
+        menuCalls.skillsOpen = true
+        menuCalls.calls.append("skills.open")
+    }
+
+    func sendSkillsMenuInput(_ event: MenuInputEvent) {
+        if event == .button(.cancel) {
+            menuCalls.skillsOpen = false
+        }
+        menuCalls.calls.append("skills.input(\(event))")
+    }
+
+    func setSkillsMenuMovieEnabled(_ enabled: Bool) {
+        menuCalls.calls.append("skills.movie(\(enabled))")
+    }
+
+    func setSkillsMenuSkyEnabled(_ enabled: Bool) {
+        menuCalls.calls.append("skills.sky(\(enabled))")
     }
 
     var mapMenuSnapshot: MapMenuSnapshot {

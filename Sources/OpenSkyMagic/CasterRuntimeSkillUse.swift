@@ -26,7 +26,8 @@ extension CasterRuntime {
             world.reportSkillUse(SkillUseEvent(
                 actor: caster.key,
                 action: .spellEffect(skill: data.magicSkill),
-                amount: amount * multiplier
+                amount: amount * multiplier,
+                object: spell.id
             ))
         }
     }

@@ -27,6 +27,7 @@ extension Renderer {
         let runtime = SWFMovieRuntime(movieScene: movie.scene, limits: limits)
         runtime.textTranslator = swfTextTranslator
         prepare?(runtime)
+        registerMenuSounds(runtime)
         runtime.start()
         do {
             try updateSWFScene(runtime.makeScene())
@@ -151,6 +152,20 @@ extension Renderer {
         } catch {
             runtime.markDirty()
             throw error
+        }
+    }
+
+    /// After `prepare`, so the sound handler replaces a bridge's silent one.
+    private func registerMenuSounds(_ runtime: SWFMovieRuntime) {
+        guard let player = swf.soundPlayer else { return }
+        runtime.registerHostFunction("PlaySound") { call in
+            guard case let .string(name) = call.arguments.first else { return .undefined }
+            MainActor.assumeIsolated { player(name) }
+            return .undefined
+        }
+        runtime.registerHostFunction("PlayOKSound") { _ in
+            MainActor.assumeIsolated { player(nil) }
+            return .undefined
         }
     }
 }

@@ -75,14 +75,15 @@ extension PerkRuntime {
         subjects: PerkEvaluationSubjects
     ) -> [PerkEntryPointOperand] {
         let state = state(of: holder)
-        guard !state.isEmpty else { return [] }
+        let granted = effectPerks[holder.key] ?? []
+        guard !state.isEmpty || !granted.isEmpty else { return [] }
         var context = conditions
         let owned = ownership(of: subjects.boundReferences + [holder.key])
         var operands: [PerkEntryPointOperand] = []
         for match in perks.matches(at: entryPoint) {
             let key = ReferenceKey(resolved: match.perk)
             guard
-                state.owns(key),
+                state.owns(key) || granted.contains(key),
                 let owner = perks.perk(match.perk),
                 let effect = perks.effect(match)
             else { continue }

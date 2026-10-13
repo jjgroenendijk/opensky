@@ -28,6 +28,9 @@ nonisolated public struct CharacterLevelSettings: Equatable, Sendable {
     /// increases your carry weight by 5"
     /// (<https://en.uesp.net/wiki/Skyrim:Stamina>).
     public var carryWeightPerStaminaPick: Float
+    /// `fLegendarySkillResetValue`: the level a skill drops to when it is made legendary.
+    /// No plugin here authors it; UESP states 15 (<https://en.uesp.net/wiki/Skyrim:Skills>).
+    public var legendaryResetLevel: Float = 15
 
     /// What UESP documents for vanilla, which is also what this machine's
     /// `Skyrim.esm` authors for all four.
@@ -51,6 +54,9 @@ nonisolated public struct CharacterLevelSettings: Equatable, Sendable {
         }
         if let carry = Self.number(store, "fLevelUpCarryWeightMod"), carry >= 0 {
             settings.carryWeightPerStaminaPick = carry
+        }
+        if let reset = Self.number(store, "fLegendarySkillResetValue"), reset >= 0 {
+            settings.legendaryResetLevel = reset
         }
         return settings
     }

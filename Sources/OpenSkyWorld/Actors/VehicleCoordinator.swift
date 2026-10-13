@@ -49,18 +49,6 @@ public final class VehicleCoordinator {
         self.world = world
     }
 
-    /// False when either pose is unknown or the link would make a loop.
-    @discardableResult
-    public func attach(_ follower: ReferenceKey, to carrier: ReferenceKey) -> Bool {
-        guard
-            let followerPose = currentPose(of: follower),
-            let carrierPose = currentPose(of: carrier)
-        else { return false }
-        return core.attach(
-            follower, to: carrier, followerPose: followerPose, carrierPose: carrierPose
-        )
-    }
-
     /// Puts `rider` in its seat on `vehicle`, as `SetVehicle` does.
     @discardableResult
     public func board(_ rider: ReferenceKey, on vehicle: ReferenceKey) -> Bool {

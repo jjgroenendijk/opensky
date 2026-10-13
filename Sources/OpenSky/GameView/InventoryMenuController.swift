@@ -168,7 +168,7 @@ final class InventoryMenuController {
             activateSelection()
         case .button(.cancel):
             close()
-        case .button(.xButton), .pointer, .release:
+        case .button(.xButton), .button(.yButton), .pointer, .release:
             return
         case let .move(direction):
             move(direction)

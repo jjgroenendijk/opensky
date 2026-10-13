@@ -12,6 +12,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyLaunch
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkySave
 import OpenSkyScripting
@@ -22,6 +24,7 @@ final class MenuWorldAdapter {
     unowned let game: GameViewController
     /// Built on first use, because it walks the install.
     var titleMeshes: MeshLibrary?
+    var perkSky: PerkSkySource?
     /// The move a new game makes, polled each frame until the player stands.
     var newGameTeleport: AgentWait?
     /// A chosen test cell opens the race menu when the move ends; a quest's move does not.
@@ -102,9 +105,26 @@ extension MenuWorldAdapter: PlayerSettingsWorld {
     }
 }
 
-extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
+extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld, SkillsMenuWorld {
+    /// Nil until leveling is wired, so the menu does not open on an empty card.
+    var skillsMenuSource: (any SkillsMenuSource)? {
+        game.progression.leveling == nil ? nil : game.progression
+    }
+
     var menuInputConsumer: (any MenuInputConsumer)? {
         game
+    }
+
+    var perkSkySource: PerkSkySource? {
+        if perkSky == nil, let files = (game.worldData as? ScriptDataProviding)?.scriptFileSystem {
+            perkSky = PerkSkySource(fileSystem: files)
+        }
+        return perkSky
+    }
+
+    var perkSkySettings: PerkSkySettings {
+        let values = records?.statsSettings ?? [:]
+        return PerkSkySettings { values[$0] }
     }
 
     var renderer: Renderer? {
@@ -125,14 +145,25 @@ extension MenuWorldAdapter: RaceMenuWorld, TitleMenuWorld {
         }
     }
 
-    var raceMenuCategoryNames: RaceMenuCategoryNames {
-        let english = RaceMenuCategoryNames.english
-        func text(_ editorID: String, _ fallback: String) -> String {
-            game.mapWorld.text(records?.menuTexts[editorID]) ?? fallback
+    var raceMenuLabels: RaceMenuLabels {
+        var texts: [String: String] = [:]
+        for key in RaceMenuLabels.english.keys {
+            texts[key] = game.mapWorld.text(records?.menuTexts[key])
         }
-        return RaceMenuCategoryNames(
-            race: text("sRSMRace", english.race), body: text("sRSMBody", english.body),
-            head: text("sRSMHead", english.head)
+        return RaceMenuLabels(texts: texts)
+    }
+
+    func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
+        guard
+            let records,
+            let record = records.playableRaces.first(where: { $0.formID == race })
+        else { return .empty }
+        let chargen = records.chargen
+        return RaceMenuOptions.build(
+            head: isFemale ? record.details.headData.female : record.details.headData.male,
+            parts: { chargen.parts($0, race: race, isFemale: isFemale).map(\.formID) },
+            color: { chargen.colors[$0.rawValue]?.color },
+            presets: racePresets(race: race, isFemale: isFemale)
         )
     }
 

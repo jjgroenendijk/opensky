@@ -68,6 +68,9 @@ typedef NS_ENUM(EnumBackingType, BufferIndex)
     BufferIndexMeshletCounters = 25,
     /// Two atomic counters per frame slot: summed fixed-point log2 luminance, samples.
     BufferIndexImageSpaceLuminance = 26,
+    /// MenuSceneVertex array and MenuSceneUniforms of one menu-scene draw.
+    BufferIndexMenuSceneVertices = 27,
+    BufferIndexMenuSceneUniforms = 28,
 };
 
 typedef NS_ENUM(EnumBackingType, VertexAttribute)
@@ -577,5 +580,6 @@ typedef struct
 } ShadowDrawUniforms;
 
 #include "ScreenShaderTypes.h"
+#include "MenuSceneShaderTypes.h"
 
 #endif /* ShaderTypes_h */

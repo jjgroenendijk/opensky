@@ -12,6 +12,8 @@ import OpenSkyProgressionInterface
 final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
     var residents: [ReferenceKey: ActorValueHolder] = [:]
     var worn = WornArmorProfile.none
+    /// What the player's active magic effects grant.
+    var effectPerks: Set<ReferenceKey> = []
     private(set) var changeCount = 0
     private(set) var reconciled: [ReferenceKey] = []
     private(set) var wornArmorReads: [ReferenceKey] = []
@@ -26,6 +28,10 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
 
     func perksChanged(_: PerkRuntime) {
         changeCount += 1
+    }
+
+    func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey> {
+        holder.key == .player ? effectPerks : []
     }
 
     func reconcileAbilities(on holder: ActorValueHolder, perks _: PerkRuntime) {

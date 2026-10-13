@@ -103,6 +103,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// The player's level progress, only after level 1: level, banked experience,
         /// perk points, owed and made picks. A pick's points live in `AVOV`.
         public static let playerProgress = "PLVL"
+        /// Legendary counts per skill. A sibling of `PLVL`, whose entries have no
+        /// length, so appending a field there would break older readers.
+        public static let legendarySkills = "PLGD"
 
         /// Crime ledgers: per faction, the bounty and four crime counts. An unwitnessed
         /// crime moves a count but not the gold (<https://en.uesp.net/wiki/Skyrim:Crime>).

@@ -13,10 +13,6 @@ nonisolated public struct LocationCellMap: Sendable {
 
     private var owners: [Key: ResolvedFormID] = [:]
 
-    public static let empty = LocationCellMap()
-
-    private init() {}
-
     /// A cell two locations list goes to the one deeper in the parent chain, so a
     /// town wins over its hold. A tie keeps the first in FormID order, so the result is stable.
     public init(store: LocationStore) {

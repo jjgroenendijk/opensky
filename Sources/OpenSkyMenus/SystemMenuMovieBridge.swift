@@ -97,12 +97,21 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         {
             return true
         }
-        guard let key = event.swfKey else {
+        guard let key = event.swfKey ?? letterKey(event) else {
             return false
         }
         let down = runtime.handle(.keyDown(code: key.code, ascii: key.ascii))
         let up = runtime.handle(.keyUp(code: key.code))
         return down || up
+    }
+
+    /// The System page reads X as Delete and T as Characters, beside the gamepad buttons.
+    static func letterKey(_ event: MenuInputEvent) -> (code: Int, ascii: Int)? {
+        switch event {
+        case .button(.xButton): (88, 120)
+        case .button(.yButton): (84, 116)
+        default: nil
+        }
     }
 
     // MARK: - Readout
@@ -151,7 +160,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
         {
             // The vanilla host normally seeds these through the tab-button
             // group before `SwitchPageToFront`. That group has no engine data
-            // in OpenSky, so publish the same page/index pair explicitly.
+            // in OpenSky, so publish the same page/index pair and focus explicitly.
             menu.object.assign(.object(systemPage.object), for: "TopmostPage")
             menu.object.assign(.integer(systemTabIndex), for: "iCurrentTab")
             runtime.focusTarget = categoryList
@@ -178,10 +187,6 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
             return false
         }
         runtime.callMovie("StartState", atPath: systemPagePath, arguments: [state])
-        runtime.focusTarget = runtime.node(
-            atPath: settingsCategoryListPath,
-            from: runtime.root
-        )
         return true
     }
 

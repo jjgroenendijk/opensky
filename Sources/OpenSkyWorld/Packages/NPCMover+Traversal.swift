@@ -1,7 +1,6 @@
 // The parts of a mover's step that leave plain walking: the gait and speed plan,
 // swimming, ledge hops, gliding without ground, and the cell hand-off.
 
-import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd
 

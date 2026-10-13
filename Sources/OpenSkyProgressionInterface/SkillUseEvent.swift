@@ -64,6 +64,16 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     }
 }
 
+/// How a use happened, as the `EPModSkillUsage_IsAdvanceAction` condition asks. The raw
+/// value is the stored parameter (xEdit `wbPlayerActionEnum`).
+nonisolated public enum SkillAdvanceAction: Int32, Equatable, Sendable {
+    case normalUsage = 0
+    case powerAttack = 1
+    case bash = 2
+    case lockpickSuccess = 3
+    case lockpickBroken = 4
+}
+
 /// One skill use, from the system that simulated it.
 nonisolated public struct SkillUseEvent: Equatable, Sendable {
     /// Who used the skill. Only the player advances: "Advances the progress of
@@ -75,11 +85,23 @@ nonisolated public struct SkillUseEvent: Equatable, Sendable {
     /// The action's base experience, per the table quoted in this file's
     /// header. Zero or less is a use that is worth nothing and is dropped.
     public let amount: Float
+    public let advanceAction: SkillAdvanceAction
+    /// The form the use was made with, such as the spell cast. Nil when the emitter
+    /// cannot name one; `EPModSkillUsage_AdvanceObjectHasKeyword` then has no answer.
+    public let object: ResolvedFormID?
 
-    public init(actor: ReferenceKey, action: SkillUseAction, amount: Float) {
+    public init(
+        actor: ReferenceKey,
+        action: SkillUseAction,
+        amount: Float,
+        advanceAction: SkillAdvanceAction = .normalUsage,
+        object: ResolvedFormID? = nil
+    ) {
         self.actor = actor
         self.action = action
         self.amount = amount
+        self.advanceAction = advanceAction
+        self.object = object
     }
 }
 

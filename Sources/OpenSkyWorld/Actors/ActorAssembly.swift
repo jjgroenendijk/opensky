@@ -38,8 +38,7 @@ nonisolated public protocol ActorAssetProvider {
     /// A head part with its texture set and tint applied.
     func loadActorHeadPart(
         path: String,
-        diffuseTexture: String?,
-        normalTexture: String?,
+        textures: HeadPartTextures,
         tint: SIMD3<Float>?,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure>
@@ -49,8 +48,7 @@ nonisolated extension ActorAssetProvider {
     /// A provider that cannot retexture loads the plain mesh.
     public func loadActorHeadPart(
         path: String,
-        diffuseTexture _: String?,
-        normalTexture _: String?,
+        textures _: HeadPartTextures,
         tint _: SIMD3<Float>?,
         skeleton: Skeleton?
     ) -> Result<Asset, ActorAssetFailure> {
@@ -245,8 +243,10 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
         let role = ActorModelRole.headPart(part)
         switch provider.loadActorHeadPart(
             path: part.modelPath,
-            diffuseTexture: part.diffuseTexture,
-            normalTexture: part.normalTexture,
+            textures: HeadPartTextures(
+                diffuse: part.diffuseTexture, normal: part.normalTexture,
+                detail: part.detailTexture
+            ),
             tint: part.tint,
             skeleton: skeleton
         ) {

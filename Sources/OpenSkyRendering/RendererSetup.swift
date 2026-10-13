@@ -202,8 +202,8 @@ extension Renderer {
     /// Textures: base diffuse + the terrain layer array.
     public static func makeArgumentTable(device: MTLDevice) throws -> MTL4ArgumentTable {
         let descriptor = MTL4ArgumentTableDescriptor()
-        // Highest buffer index is the image-space luminance counters.
-        descriptor.maxBufferBindCount = BufferIndex.imageSpaceLuminance.rawValue + 1
+        // Highest buffer index is the menu-scene uniforms.
+        descriptor.maxBufferBindCount = BufferIndex.menuSceneUniforms.rawValue + 1
         // The last terrain layer normal is the highest slot.
         descriptor.maxTextureBindCount = TextureIndex.terrainLayerNormal0.rawValue
             + TerrainConstant.maxLayers.rawValue
@@ -311,19 +311,36 @@ extension Renderer {
         compiler: PipelineCache,
         view: MTKView
     ) throws -> ParticlePipelines {
-        try ParticlePipelines(
-            alpha: makeParticlePipeline(
-                library: library, compiler: compiler, view: view, mode: .alpha
+        try makeBlendPipelines(
+            BlendPipelineNames(
+                vertex: "particleVertex", fragment: "particleFragment", label: "Particles"
             ),
-            additive: makeParticlePipeline(
-                library: library, compiler: compiler, view: view, mode: .additive
-            ),
-            additiveOne: makeParticlePipeline(
-                library: library, compiler: compiler, view: view, mode: .additiveOne
-            ),
-            multiply: makeParticlePipeline(
-                library: library, compiler: compiler, view: view, mode: .multiply
+            library: library, compiler: compiler, view: view
+        )
+    }
+
+    /// The shader pair and label of a set of blend pipelines.
+    struct BlendPipelineNames {
+        let vertex: String
+        let fragment: String
+        let label: String
+    }
+
+    /// One pipeline per blend mode for a vertex and fragment function pair.
+    static func makeBlendPipelines(
+        _ names: BlendPipelineNames,
+        library: MTLLibrary,
+        compiler: PipelineCache,
+        view: MTKView
+    ) throws -> ParticlePipelines {
+        func make(_ mode: ParticleBlendMode) throws -> MTLRenderPipelineState {
+            try makeParticlePipeline(
+                library: library, compiler: compiler, view: view, mode: mode, names: names
             )
+        }
+        return try ParticlePipelines(
+            alpha: make(.alpha), additive: make(.additive), additiveOne: make(.additiveOne),
+            multiply: make(.multiply)
         )
     }
 
@@ -409,16 +426,17 @@ extension Renderer {
         library: MTLLibrary,
         compiler: PipelineCache,
         view: MTKView,
-        mode: ParticleBlendMode
+        mode: ParticleBlendMode,
+        names: BlendPipelineNames
     ) throws -> MTLRenderPipelineState {
         let vertexFunction = MTL4LibraryFunctionDescriptor()
         vertexFunction.library = library
-        vertexFunction.name = "particleVertex"
+        vertexFunction.name = names.vertex
         let fragmentFunction = MTL4LibraryFunctionDescriptor()
         fragmentFunction.library = library
-        fragmentFunction.name = "particleFragment"
+        fragmentFunction.name = names.fragment
         let descriptor = MTL4RenderPipelineDescriptor()
-        descriptor.label = "Particles.\(mode)"
+        descriptor.label = "\(names.label).\(mode)"
         descriptor.rasterSampleCount = view.sampleCount
         descriptor.vertexFunctionDescriptor = vertexFunction
         descriptor.fragmentFunctionDescriptor = fragmentFunction

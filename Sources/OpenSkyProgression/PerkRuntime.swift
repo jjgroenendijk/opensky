@@ -32,6 +32,9 @@ public struct PerkRuntime: PerkAccess {
     /// What the runtime did and declined to do. Not `private(set)`: the
     /// evaluation half lives in `PerkRuntimeEvaluation.swift`.
     public var tally = PerkRuntimeTally()
+    /// Perks an active magic effect applies (MGEF "Perk to Apply"), per holder. Owned
+    /// while the effect lasts and never saved: the effects come back from the save.
+    public var effectPerks: [ReferenceKey: Set<ReferenceKey>] = [:]
 
     private let worldState: WorldStateStore
 
@@ -58,7 +61,7 @@ public struct PerkRuntime: PerkAccess {
     }
 
     public func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool {
-        state(of: holder).owns(perk)
+        state(of: holder).owns(perk) || effectPerks[holder.key]?.contains(perk) == true
     }
 
     /// The record behind a stored key, or nil when this load order no longer
@@ -161,8 +164,10 @@ public struct PerkRuntime: PerkAccess {
     public func ownership(of holders: [ReferenceKey]) -> [ReferenceKey: Set<ReferenceKey>] {
         var owned: [ReferenceKey: Set<ReferenceKey>] = [:]
         for key in holders {
-            guard let state = worldState.component(PerkState.self, for: key) else { continue }
-            owned[key] = Set(state.owned)
+            let granted = effectPerks[key] ?? []
+            let state = worldState.component(PerkState.self, for: key)
+            guard state != nil || !granted.isEmpty else { continue }
+            owned[key] = Set(state?.owned ?? []).union(granted)
         }
         return owned
     }

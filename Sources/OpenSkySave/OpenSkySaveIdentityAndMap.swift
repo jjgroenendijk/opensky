@@ -39,6 +39,7 @@ nonisolated extension OpenSkySaveEncoder {
             writeString(state.name, into: &payload)
             writeFace(state.face, into: &payload)
         }
+        writeComplexions(entries, into: &writer)
         let markerTag = OpenSkySaveFormat.ChunkTag.mapMarkers
         writeStory(MapMarkerState.self, tag: markerTag, entries, &writer) { state, payload in
             let flags = (state.isVisible ? 1 : 0) | (state.isDiscovered ? 2 : 0)

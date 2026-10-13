@@ -688,14 +688,14 @@ targets += feature(
 targets += feature(
     "OpenSkyMenus",
     dependencies: [
-        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsSWF",
-        "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
-        "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyQuestsInterface",
-        "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
+        "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyFormatsMesh",
+        "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyRendering", "OpenSkyActorsInterface",
+        "OpenSkyDialogueInterface", "OpenSkyInventoryInterface", "OpenSkyProgressionInterface",
+        "OpenSkyQuestsInterface", "OpenSkyScriptingInterface", "OpenSkyWorldInterface"
     ],
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyActorsInterface", "OpenSkyFormatsCore",
-        "OpenSkyFormatsESM",
+        "OpenSkyFormatsESM", "OpenSkyProgressionInterface",
         "OpenSkyFormatsSWF", "OpenSkyGameData", "OpenSkyQuestsInterface", "OpenSkyRendering",
         "OpenSkyScriptingInterface", "OpenSkyShaderTypes", "OpenSkyWorldInterface",
         "OpenSkyEngineTesting"

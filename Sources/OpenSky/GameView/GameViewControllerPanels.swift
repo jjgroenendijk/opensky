@@ -6,7 +6,6 @@ import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyCombat
 import OpenSkyCrime
-import OpenSkyDialogue
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -17,9 +16,7 @@ import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgression
-import OpenSkyQuests
 import OpenSkyRendering
-import OpenSkyScripting
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 
@@ -557,6 +554,16 @@ extension GameViewController: ProgressionControlProviding {
     @discardableResult
     func spendPointOnSelectedPerk() -> String {
         progression.spendPointOnSelectedPerk()
+    }
+
+    @discardableResult
+    func makeSelectedSkillLegendary() -> String {
+        progression.makeSelectedSkillLegendary()
+    }
+
+    @discardableResult
+    func resetSelectedPerkTree() -> String {
+        progression.resetSelectedPerkTree()
     }
 
     @discardableResult

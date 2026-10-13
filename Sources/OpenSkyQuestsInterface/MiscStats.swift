@@ -44,8 +44,6 @@ nonisolated public enum MiscStats {
 
     /// `Game.QueryStat`'s name for each quest type's completion count.
     public static let questsCompleted = "Quests Completed"
-    public static let locationsDiscovered = "Locations Discovered"
-    public static let daysPassed = "Days Passed"
 
     private static let general = [
         "Locations Discovered", "Dungeons Cleared", "Days Passed", "Hours Slept", "Hours Waiting",

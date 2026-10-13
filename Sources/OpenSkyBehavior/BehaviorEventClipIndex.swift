@@ -48,7 +48,6 @@ nonisolated public struct BehaviorClipSegment: Equatable, Sendable {
     public let animationName: String
     public let loops: Bool
     public let triggers: [BehaviorClipTriggerEvent]
-    public let stateName: String?
 }
 
 /// An event a clip generator raises. A time from the end is negative.

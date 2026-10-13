@@ -8,7 +8,7 @@ import OpenSkyRendering
 nonisolated public enum GameInputAction: String, CaseIterable, Sendable {
     case forward, back, left, right, up, down
     case run, sprint, sneak, jump, activate, attack, block
-    case readyWeapon, cameraMode, journal, inventory
+    case readyWeapon, cameraMode, journal, inventory, skills
     case map, quicksave, quickload, pause
     case menuUp, menuDown, menuLeft, menuRight, menuAccept, menuCancel
 
@@ -68,7 +68,7 @@ public struct GameInputDispatcher {
     public let menuMode: MenuModeController?
     public let openJournal: (() -> Void)?
     public let openInventory: (() -> Void)?
-    /// Map, quicksave, quickload, and pause: commands the app carries out.
+    /// Map, quicksave, quickload, pause, and skills: commands the app carries out.
     public let onCommand: ((GameInputAction) -> Void)?
 
     public init(
@@ -104,6 +104,7 @@ public struct GameInputDispatcher {
         case (.menuAccept, .press): .button(.accept)
         case (.menuCancel, .press): .button(.cancel)
         case (.readyWeapon, .press): .button(.xButton)
+        case (.jump, .press): .button(.yButton)
         case (_, .press): action.menuDirection.map { .move($0) }
         case (_, .release): action.menuDirection.map { .release($0) }
         }
@@ -126,7 +127,7 @@ public struct GameInputDispatcher {
         case .cameraMode: input?.requestCameraModeCycle()
         case .journal: openJournal?()
         case .inventory: openInventory?()
-        case .map, .quicksave, .quickload, .pause: onCommand?(action)
+        case .map, .quicksave, .quickload, .pause, .skills: onCommand?(action)
         default: break
         }
     }

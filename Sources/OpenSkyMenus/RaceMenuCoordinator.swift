@@ -14,7 +14,10 @@ public protocol RaceMenuWorld: AnyObject {
     /// The vanilla `Player` record's identity, before any change.
     var recordIdentity: PlayerIdentityState? { get }
     var playableRaces: [RaceChoice] { get }
-    var raceMenuCategoryNames: RaceMenuCategoryNames { get }
+    /// The `sRSM` game settings the menu shows.
+    var raceMenuLabels: RaceMenuLabels { get }
+    /// The head parts, colours, tint masks, complexions, and presets of a race and sex.
+    func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions
     /// Stores the identity and rebuilds the player's body.
     func applyPlayerIdentity(_ identity: PlayerIdentityState)
     /// Fires `OnRaceSwitchComplete` on the player's scripts.
@@ -78,6 +81,8 @@ public final class RaceMenuCoordinator {
 
     public internal(set) var model: RaceMenuModel?
     public private(set) var isEditingName = false
+    /// The face shot, or the whole body after the movie's `ZoomPC(false)`.
+    public internal(set) var isZoomedIn = true
     public internal(set) var lastResult: String?
     /// The movie is the menu the player sees; the engine rows stay the fallback.
     public private(set) var movieEnabled = true
@@ -118,9 +123,13 @@ public final class RaceMenuCoordinator {
     @discardableResult
     public func open(limited: Bool) -> Bool {
         guard model == nil, let world, let identity = world.playerIdentity else { return false }
-        model = RaceMenuModel(identity: identity, races: world.playableRaces, limited: limited)
-        model?.categoryNames = world.raceMenuCategoryNames
+        model = RaceMenuModel(
+            identity: identity, races: world.playableRaces, limited: limited,
+            options: world.raceMenuOptions(race: identity.race, isFemale: identity.isFemale)
+        )
+        model?.labels = world.raceMenuLabels
         isEditingName = false
+        isZoomedIn = true
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
         if movieEnabled {
@@ -161,6 +170,7 @@ public final class RaceMenuCoordinator {
         }
         let before = model.identity
         let action = model.handle(event)
+        _ = refreshOptions(&model, before: (before.race, before.isFemale))
         self.model = model
         // A slider shows on the head at once, not only when the menu closes.
         if model.identity != before, action != .done {
@@ -302,6 +312,7 @@ extension RaceMenuControlForwarding {
 extension RaceMenuCoordinator {
     nonisolated static func faceLines(_ face: PlayerFace) -> [String] {
         let labels = RaceMenuModel.sliderLabels + ["Vampire"]
+        let complexion = face.faceTexture.map { "Complexion: \($0)" } ?? "Complexion: race default"
         let sliders = face.morphs.enumerated().filter { $0.element != 0 }.map { index, value in
             let label = labels.indices.contains(index) ? labels[index] : "Slider \(index)"
             return String(format: "%@ %.2f", label, value)
@@ -316,7 +327,10 @@ extension RaceMenuCoordinator {
             String(format: "Weight: %.0f", face.weight),
             "Sliders: " + (sliders.isEmpty ? "all 0" : sliders.joined(separator: ", ")),
             "Parts: " + face.parts.map(String.init).joined(separator: " "),
-            "Tints: " + (tints.isEmpty ? "none" : tints.joined(separator: "; "))
+            "Tints: " + (tints.isEmpty ? "none" : tints.joined(separator: "; ")),
+            "Head parts: " + (face.headParts.isEmpty
+                ? "record" : face.headParts.map { "\($0)" }.joined(separator: " ")),
+            "Hair color: " + (face.hairColor.map { "\($0)" } ?? "record"), complexion
         ]
     }
 }

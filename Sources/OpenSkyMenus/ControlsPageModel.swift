@@ -60,6 +60,16 @@ nonisolated public struct ControlsPageModel: Equatable, Sendable {
         return nil
     }
 
+    /// The movie's Controls list picked the row of `event`; the next key binds it.
+    public mutating func beginRemap(event: String) {
+        guard let index = InputBindings.slots.firstIndex(where: { $0.event == event }) else {
+            return
+        }
+        selectedIndex = index
+        confirmation = nil
+        waitingForKey = true
+    }
+
     /// The key pressed while waiting. Esc cancels instead of binding.
     public mutating func capture(scanCode: UInt32) -> ControlsPageAction? {
         guard waitingForKey, let slot = selectedSlot else { return nil }

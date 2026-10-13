@@ -130,10 +130,6 @@ public final class ObjectBehaviorCoordinator {
         return token
     }
 
-    public func hasGraph(_ reference: UInt32) -> Bool {
-        running[reference] != nil
-    }
-
     /// One row per running object, in reference order.
     public var rows: [ObjectAnimationRow] {
         running.keys.sorted().compactMap { reference in

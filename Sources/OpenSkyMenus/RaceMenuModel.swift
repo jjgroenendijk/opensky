@@ -1,5 +1,6 @@
-// The race menu rules: which rows show, how each one steps, and the limited
-// mode scripts open. See docs/engine/race-menu.md.
+// The race menu rules: which rows show, how the keys move between them, and the
+// limited mode scripts open. Each row's values are in RaceMenuModel+Values.swift.
+// See docs/engine/race-menu.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -19,29 +20,6 @@ nonisolated public struct RaceChoice: Equatable, Sendable {
     }
 }
 
-/// The movie's category names: the `sRSMRace`, `sRSMBody`, and `sRSMHead` settings.
-nonisolated public struct RaceMenuCategoryNames: Equatable, Sendable {
-    public static let english = Self(race: "Race", body: "Body", head: "Head")
-
-    public let race: String
-    public let body: String
-    public let head: String
-
-    public init(race: String, body: String, head: String) {
-        self.race = race
-        self.body = body
-        self.head = head
-    }
-}
-
-nonisolated public enum RaceMenuRow: Equatable, Sendable {
-    case race, sex, weight, name
-    /// A NAM9 slider by index.
-    case slider(Int)
-    /// A NAMA group by index: 0 nose, 2 eyes, 3 mouth.
-    case part(Int)
-}
-
 nonisolated public enum RaceMenuAction: Equatable, Sendable {
     case done
     /// Accept on the name row: the next keys type the name.
@@ -49,12 +27,12 @@ nonisolated public enum RaceMenuAction: Equatable, Sendable {
 }
 
 nonisolated public struct RaceMenuModel: Equatable, Sendable {
-    /// NAM9 sliders the menu shows; the last one, the vampire morph, stays hidden.
+    /// English names of the `NAM9` sliders, nose long or short first, for the readout.
     public static let sliderLabels = [
         "Nose Length", "Nose Height", "Jaw Height", "Jaw Width", "Jaw Forward",
-        "Cheekbone Height", "Cheekbone Width", "Eye Height", "Eye Depth In", "Brow Height",
+        "Cheekbone Height", "Cheekbone Width", "Eye Height", "Eye Width", "Brow Height",
         "Brow Width", "Brow Forward", "Mouth Height", "Mouth Forward", "Chin Width",
-        "Chin Height", "Chin Forward", "Eye Depth"
+        "Chin Length", "Chin Forward", "Eye Depth"
     ]
     public static let morphCount = 19
     /// Measured: the female chargen TRI has 30 nose, 28 eye, and 30 lip targets.
@@ -63,52 +41,54 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         2: 0 ... 28,
         3: 0 ... 30
     ]
-    public static let partLabels: [Int: String] = [0: "Nose Type", 2: "Eye Shape", 3: "Mouth Type"]
     public static let sliderStep: Float = 0.1
 
-    public private(set) var identity: PlayerIdentityState
+    public internal(set) var identity: PlayerIdentityState
     public let races: [RaceChoice]
-    public var categoryNames = RaceMenuCategoryNames.english
+    public var labels = RaceMenuLabels()
+    /// What the current race and sex offer. The coordinator replaces it after a change.
+    public internal(set) var options: RaceMenuOptions
     /// `ShowLimitedRaceMenu`: no name or sex change, and the race locks once
     /// the player leaves its row.
     public let isLimited: Bool
     public private(set) var raceLocked = false
     public private(set) var selectedIndex = 0
+    /// The preset face last applied; presets are not stored on the face.
+    public internal(set) var presetIndex = 0
 
-    public init(identity: PlayerIdentityState, races: [RaceChoice], limited: Bool) {
+    public init(
+        identity: PlayerIdentityState, races: [RaceChoice], limited: Bool,
+        options: RaceMenuOptions = .empty
+    ) {
         var identity = identity
-        if identity.face.morphs.count < Self.morphCount {
-            identity.face.morphs += Array(
-                repeating: 0, count: Self.morphCount - identity.face.morphs.count
-            )
-        }
-        if identity.face.parts.count < 4 {
-            identity.face.parts += Array(repeating: 0, count: 4 - identity.face.parts.count)
-        }
+        identity.face = Self.padded(identity.face)
         self.identity = identity
         self.races = races
+        self.options = options
         isLimited = limited
     }
 
+    /// The rows in the vanilla order, without those the race offers nothing for.
     public var rows: [RaceMenuRow] {
-        var rows: [RaceMenuRow] = []
-        if !raceLocked {
-            rows.append(.race)
+        Self.layout.map(\.row).filter(isShown) + (isLimited ? [] : [.name])
+    }
+
+    private func isShown(_ row: RaceMenuRow) -> Bool {
+        switch row {
+        case .race: !raceLocked
+        case .sex, .name: !isLimited
+        case .weight, .slider, .part: true
+        case .headPreset: !options.presets.isEmpty
+        case let .headPart(type): !(options.headParts[type] ?? []).isEmpty
+        case .hairColor: !options.hairColors.isEmpty
+        case .complexion: !options.complexions.isEmpty
+        case let .tintColor(type), let .tintMask(type): !options.masks(ofType: type).isEmpty
         }
-        if !isLimited {
-            rows.append(.sex)
-        }
-        rows.append(.weight)
-        rows += Self.sliderLabels.indices.map(RaceMenuRow.slider)
-        rows += [.part(0), .part(2), .part(3)]
-        if !isLimited {
-            rows.append(.name)
-        }
-        return rows
     }
 
     public var selectedRow: RaceMenuRow {
-        rows[min(selectedIndex, rows.count - 1)]
+        let rows = rows
+        return rows[min(selectedIndex, rows.count - 1)]
     }
 
     public mutating func handle(_ event: MenuInputEvent) -> RaceMenuAction? {
@@ -119,7 +99,7 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         case .move(.right): step(selectedRow, by: 1)
         case .button(.accept): return selectedRow == .name ? .editName : .done
         case .button(.cancel), .button(.xButton): return .done
-        case .pointer, .release: break
+        case .pointer, .release, .button(.yButton): break
         }
         return nil
     }
@@ -131,47 +111,6 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         if isLimited, leaving == .race, selectedRow != .race {
             raceLocked = true
             selectedIndex = max(0, selectedIndex - 1)
-        }
-    }
-
-    public mutating func step(_ row: RaceMenuRow, by delta: Int) {
-        switch row {
-        case .race:
-            guard !races.isEmpty else { return }
-            let current = races.firstIndex { $0.formID == identity.race } ?? 0
-            identity.race = races[((current + delta) % races.count + races.count) % races.count]
-                .formID
-        case .sex:
-            identity.isFemale.toggle()
-        case .weight:
-            identity.face.weight = min(max(identity.face.weight + Float(delta) * 5, 0), 100)
-        case let .slider(index):
-            let value = identity.face.morphs[index] + Float(delta) * Self.sliderStep
-            identity.face.morphs[index] = (min(max(value, -1), 1) * 10).rounded() / 10
-        case let .part(index):
-            guard let range = Self.partRanges[index] else { return }
-            identity.face.parts[index] = min(
-                max(identity.face.parts[index] + Int32(delta), range.lowerBound), range.upperBound
-            )
-        case .name:
-            return
-        }
-    }
-
-    /// A value the movie's slider sent, clamped like a step.
-    public mutating func set(_ row: RaceMenuRow, to value: Float) {
-        guard value.isFinite else { return }
-        switch row {
-        case .weight:
-            identity.face.weight = min(max(value, 0), 100)
-        case let .slider(index):
-            identity.face.morphs[index] = (min(max(value, -1), 1) * 10).rounded() / 10
-        case let .part(index):
-            guard let range = Self.partRanges[index] else { return }
-            let part = Int32(value.rounded())
-            identity.face.parts[index] = min(max(part, range.lowerBound), range.upperBound)
-        case .race, .sex, .name:
-            return
         }
     }
 
@@ -188,25 +127,39 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
         identity.name = String(trimmed.prefix(PlayerIdentityState.nameLimit))
     }
 
-    public func label(_ row: RaceMenuRow) -> String {
-        switch row {
-        case .race: "Race"
-        case .sex: "Sex"
-        case .weight: "Weight"
-        case .name: "Name"
-        case let .slider(index): Self.sliderLabels[index]
-        case let .part(index): Self.partLabels[index] ?? "Part"
+    /// New options after a race or sex change. The face takes the race's first
+    /// preset, so no head part of the old race stays on it.
+    public mutating func setOptions(_ options: RaceMenuOptions) {
+        self.options = options
+        presetIndex = 0
+        if let preset = options.presets.first {
+            applyPreset(preset)
+        } else {
+            identity.face.headParts = []
+            identity.face.tints = []
+            identity.face.faceTexture = nil
         }
+        selectedIndex = min(selectedIndex, rows.count - 1)
     }
 
-    public func value(_ row: RaceMenuRow) -> String {
-        switch row {
-        case .race: races.first { $0.formID == identity.race }?.name ?? "\(identity.race)"
-        case .sex: identity.isFemale ? "Female" : "Male"
-        case .weight: "\(Int(identity.face.weight))"
-        case .name: identity.name
-        case let .slider(index): String(format: "%.1f", identity.face.morphs[index])
-        case let .part(index): "\(identity.face.parts[index])"
+    mutating func applyPreset(_ preset: RacePreset) {
+        let weight = identity.face.weight
+        identity.face = Self.padded(preset.face)
+        identity.face.weight = weight
+    }
+
+    /// Every slider and part the menu edits, so a short record list reads as zeros.
+    static func padded(_ face: PlayerFace) -> PlayerFace {
+        var face = face
+        face.morphs += Array(repeating: 0, count: max(0, Self.morphCount - face.morphs.count))
+        face.parts += Array(repeating: 0, count: max(0, 4 - face.parts.count))
+        return face
+    }
+
+    public func label(_ row: RaceMenuRow) -> String {
+        if row == .name {
+            return labels.text("sRSMName")
         }
+        return Self.control(for: row).map { labels.text($0.labelKey) } ?? "\(row)"
     }
 }

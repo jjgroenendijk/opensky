@@ -76,7 +76,10 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         guard let data = effect.effect.data else {
             return .skip(.undecodedEffect)
         }
-        guard implementedArchetypes.contains(data.archetype) else {
+        // An effect that applies a perk must exist to own it, even when its values
+        // mean nothing to this engine.
+        let carriesPerk = data.perkToApply != nil
+        guard implementedArchetypes.contains(data.archetype) || carriesPerk else {
             return .skip(.unimplementedArchetype(data.archetype))
         }
         let duration = isConstant ? 0 : Float(entry.duration)
@@ -85,7 +88,20 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         } else {
             data.flags.contains(.recover) ? .modifier : .perSecond
         }
-        switch values(of: data, magnitude: entry.magnitude) {
+        let planned = implementedArchetypes.contains(data.archetype)
+            ? values(of: data, magnitude: entry.magnitude)
+            : .success([])
+        switch planned {
+        case .failure where carriesPerk:
+            return .apply(MagicEffectApplication(
+                effect: ReferenceKey(resolved: effect.id),
+                mode: mode,
+                isDetrimental: data.flags.contains(.detrimental),
+                duration: duration,
+                values: [],
+                stackKeyword: nil,
+                refusesRecast: data.flags.contains(.noRecast)
+            ))
         case let .failure(reason):
             return .skip(reason)
         case let .success(values):

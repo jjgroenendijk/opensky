@@ -17,6 +17,8 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
     let amountControl = NSTextField(string: "1")
     let advanceControl = NSButton(title: "Grant use", target: nil, action: nil)
     let incrementControl = NSButton(title: "Grant point", target: nil, action: nil)
+    let legendaryControl = NSButton(title: "Make legendary", target: nil, action: nil)
+    let resetTreeControl = NSButton(title: "Reset tree", target: nil, action: nil)
 
     private let statsLabel = PanelComponents.statsLabel(
         identifier: "ProgressionSkillsStatsLabel"
@@ -42,6 +44,8 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
     override func makeContentViews() -> [NSView] {
         advanceControl.toolTip = "Adds skill use, like a swing or a cast."
         incrementControl.toolTip = "Raises the skill by one point, like a trainer."
+        legendaryControl.toolTip = "At 100: resets the skill to 15 and refunds its perks."
+        resetTreeControl.toolTip = "Spends a dragon soul to refund this tree."
         configureControls()
         return [
             PanelComponents.group([
@@ -51,7 +55,8 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
                 PanelComponents.labeledFieldRow(
                     caption: "Use", captionWidth: 70, field: amountControl
                 ),
-                PanelComponents.buttonRow([advanceControl, incrementControl])
+                PanelComponents.buttonRow([advanceControl, incrementControl]),
+                PanelComponents.buttonRow([legendaryControl, resetTreeControl])
             ]),
             statsLabel
         ]
@@ -61,6 +66,8 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
         let available = provider != nil
         advanceControl.isEnabled = available
         incrementControl.isEnabled = available
+        legendaryControl.isEnabled = available
+        resetTreeControl.isEnabled = available
         amountControl.isEnabled = available
         skillControl.isEnabled = available
         reloadOptions()
@@ -92,6 +99,14 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
         PanelComponents.configureButton(
             incrementControl, target: self, action: #selector(increment),
             identifier: "ProgressionIncrementSkillControl"
+        )
+        PanelComponents.configureButton(
+            legendaryControl, target: self, action: #selector(makeLegendary),
+            identifier: "ProgressionLegendarySkillControl"
+        )
+        PanelComponents.configureButton(
+            resetTreeControl, target: self, action: #selector(resetTree),
+            identifier: "ProgressionResetPerkTreeControl"
         )
     }
 
@@ -140,6 +155,16 @@ final class ProgressionSkillsSection: ProgressionPanelSection {
 
     @objc private func increment() {
         provider?.incrementSelectedSkill()
+        finishInteraction()
+    }
+
+    @objc private func makeLegendary() {
+        provider?.makeSelectedSkillLegendary()
+        finishInteraction()
+    }
+
+    @objc private func resetTree() {
+        provider?.resetSelectedPerkTree()
         finishInteraction()
     }
 }

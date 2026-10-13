@@ -64,6 +64,10 @@ nonisolated public struct MenuRecordData: Sendable {
     public let mapSettings: MenuMapSettings
     /// String GMSTs the menus show, such as `sNoFastTravelCombat` and `sRSMBody`, by editor ID.
     public let menuTexts: [String: LString]
+    /// Head parts and colours for the race menu.
+    public let chargen: ChargenRecords
+    /// The `fStats` float GMSTs that shape the skills menu's perk sky.
+    public let statsSettings: [String: Float]
 
     /// Every plugin's records; a later plugin's override wins.
     public init(loadOrder: LoadOrderPlugins, settings: GameSettingStore) {
@@ -82,6 +86,7 @@ nonisolated public struct MenuRecordData: Sendable {
         worldspaceEditorIDs = worldspaces.reduce(into: [:]) { names, space in
             names[space.formID.rawValue] = space.editorID
         }
+        chargen = ChargenRecords(loadOrder: loadOrder, skipped: &skipped)
         self.player = player
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
         self.tamriel = tamriel
@@ -95,6 +100,13 @@ nonisolated public struct MenuRecordData: Sendable {
                 case let .string(text) = resolved.setting.value
             else { return }
             texts[name] = text
+        }
+        statsSettings = settings.values.values.reduce(into: [:]) { values, resolved in
+            guard
+                resolved.setting.editorID.hasPrefix("fStats"),
+                case let .float(value) = resolved.setting.value
+            else { return }
+            values[resolved.setting.editorID] = value
         }
     }
 }

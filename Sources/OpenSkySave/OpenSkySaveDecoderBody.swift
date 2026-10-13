@@ -67,6 +67,7 @@ nonisolated extension OpenSkySaveDecoder {
         public var relationships: [SaveRelationshipEntry] = []
         /// Absent `PLVL`: the player is still level 1.
         public var playerProgress: [SavePlayerProgressEntry] = []
+        public var legendarySkills: [ReferenceKey: [Int32: Int]] = [:]
         /// Absent `CRIM`: nobody owes anything.
         public var crimeLedgers: [SaveCrimeLedgerEntry] = []
         /// Absent `STOL`: every `INVN` item is honest.
@@ -98,6 +99,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var questTracking: [SaveStoryEntry<QuestTrackingState>] = []
         /// Absent `PIDN`: the player is the vanilla `Player` record.
         public var identities: [SaveStoryEntry<PlayerIdentityState>] = []
+        /// Absent `PCPX`: each identity keeps its race's default face texture.
+        public var complexions: [ReferenceKey: FormID] = [:]
         /// Absent `MRKS`: every marker is as its record flags say.
         public var markers: [SaveStoryEntry<MapMarkerState>] = []
         /// Absent `FOGM`: the local map is fogged everywhere.

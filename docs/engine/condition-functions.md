@@ -77,6 +77,9 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 644 | `IsInFurnitureState` | animation type | 1 while seated on a marker of that type |
 | 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
 | 675 | `GetGraphVariableInt` | variable name (`CIS1`) | the actor's graph variable |
+| 681 | `EPMagic_IsAdvanceSkill` | actor-value index | 1 when the credited use trains that skill |
+| 691 | `EPModSkillUsage_AdvanceObjectHasKeyword` | `KYWD` | 1 when the use's object has the keyword |
+| 692 | `EPModSkillUsage_IsAdvanceAction` | action | 1 when the use's action matches (0 normal to 4 lockpick broken) |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 
@@ -158,7 +161,7 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
 Not registered yet: `GetEquippedItemType` (597, 785 uses; equipment), `SpellHasKeyword`
 (596, 114), `IsWeaponMagicOut` (101, 113), `EPMagic_SpellHasKeyword` (693, 80),
 `SpellHasCastingPerk` (713, 75), `EPMagic_SpellHasSkill` (696, 39), `GetReplacedItemType`
-(664, 23), `EPMagic_IsAdvanceSkill` (681, 19), `IsDualCasting` (627, 4),
+(664, 23), `IsDualCasting` (627, 4),
 `HasBoundWeaponEquipped` (706, 1), `EffectWasDualCast` (724, 1).
 
 ## Furniture

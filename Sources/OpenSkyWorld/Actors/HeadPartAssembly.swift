@@ -24,6 +24,8 @@ nonisolated public struct ResolvedHeadPart: Equatable, Sendable {
     public let normalTexture: String?
     /// HCLF for hair, facial hair, and brows, else the part's CNAM; 0...1.
     public let tint: SIMD3<Float>?
+    /// TX04, the FaceGen detail map; a complexion changes it on the face part.
+    public var detailTexture: String?
 }
 
 nonisolated public struct HeadPartMiss: Equatable, Sendable {
@@ -164,7 +166,26 @@ nonisolated public struct HeadPartResolver: Sendable {
             modelPath: path,
             diffuseTexture: textures?.diffusePath,
             normalTexture: textures?.normalPath,
-            tint: tint
+            tint: tint,
+            detailTexture: textures.flatMap { $0.paths.count > 4 ? $0.paths[4] : nil }
         )
+    }
+}
+
+nonisolated extension HeadPartSet {
+    /// The face part drawn with a face texture set, such as an `FTST` complexion.
+    public func withFaceTextures(_ set: TextureSet?) -> HeadPartSet {
+        guard let set else { return self }
+        let parts = parts.map { part -> ResolvedHeadPart in
+            guard part.partType == .face else { return part }
+            return ResolvedHeadPart(
+                formID: part.formID, editorID: part.editorID, partType: part.partType,
+                origin: part.origin, modelPath: part.modelPath,
+                diffuseTexture: set.diffusePath ?? part.diffuseTexture,
+                normalTexture: set.normalPath ?? part.normalTexture, tint: part.tint,
+                detailTexture: set.paths.count > 4 ? set.paths[4] : part.detailTexture
+            )
+        }
+        return HeadPartSet(parts: parts, misses: misses)
     }
 }

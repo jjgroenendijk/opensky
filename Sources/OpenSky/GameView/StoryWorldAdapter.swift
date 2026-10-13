@@ -6,7 +6,6 @@
 import Foundation
 import OpenSkyActorsInterface
 import OpenSkyCombat
-import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyDialogue

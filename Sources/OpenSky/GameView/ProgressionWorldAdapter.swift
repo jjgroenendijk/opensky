@@ -95,6 +95,16 @@ extension ProgressionWorldAdapter: PerkWorld {
         game.magic.caster?.perks = runtime
     }
 
+    func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey> {
+        guard
+            let effects = game.magic.effects,
+            let perks = game.perks.runtime?.perks
+        else { return [] }
+        return ActiveEffectPerks.perks(
+            of: effects.active(on: holder), effects: effects.effects, perks: perks
+        )
+    }
+
     func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime) {
         guard let spells = game.magic.caster?.spellbook.spells else { return }
         _ = game.magic.withEffects { effects in
@@ -132,5 +142,13 @@ extension ProgressionWorldAdapter: ProgressionWorld {
 
     func conditionText(_ condition: Condition) -> String {
         RuntimeStateConditionRunner.describe(condition, registry: .standard)
+    }
+
+    func playerIdentity() -> (name: String, race: String) {
+        game.menuWorld.playerNameAndRace
+    }
+
+    func localizedStrings() -> LocalizedStrings? {
+        game.localizedStringsLoader?()
     }
 }

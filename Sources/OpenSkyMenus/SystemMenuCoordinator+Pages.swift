@@ -76,7 +76,13 @@ extension SystemMenuCoordinator {
         guard model.isOpen, model.page == .controls, controlsPage.waitingForKey else {
             return false
         }
-        routeControls(controlsPage.capture(scanCode: scanCode))
+        let action = controlsPage.capture(scanCode: scanCode)
+        routeControls(action)
+        if case let .rebind(rebound, code) = action {
+            finishMovieRemap(succeeded: settings?.bindings.scanCode(for: rebound) == code)
+        } else {
+            finishMovieRemap(succeeded: true)
+        }
         return true
     }
 
@@ -178,7 +184,7 @@ extension SystemMenuCoordinator {
     }
 
     /// Shows `running` until the file work ends. A finished load closes the menu.
-    private func perform(
+    func perform(
         _ running: String, done: String,
         _ body: @escaping @MainActor (SaveGameService) async throws -> Void
     ) {
@@ -248,7 +254,8 @@ extension SystemMenuCoordinator {
             let bindings = settings?.bindings ?? InputBindings()
             let rows = InputBindings.slots.map { slot in
                 let key = bindings.scanCode(for: slot.action)
-                    .map(DirectInputKeyCodes.fallbackName) ?? "none"
+                    .map { self.settings?.keyName($0) ?? DirectInputKeyCodes.fallbackName($0) }
+                    ?? "none"
                 return "\(slot.event): \(key)"
             } + [ControlsPageModel.resetTitle]
             return page(

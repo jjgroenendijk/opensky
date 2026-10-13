@@ -165,6 +165,12 @@ public struct PlayerLevelRuntime {
         return modified
     }
 
+    /// Counts one more legendary reset of `index`. The skill and perk changes are the
+    /// caller's; this only records the count the skills menu shows.
+    public func noteLegendary(skill index: Int32) {
+        write(state.makingLegendary(skill: index))
+    }
+
     // MARK: - Private
 
     /// Stores `state`, dropping the slot once it says nothing, and republishes

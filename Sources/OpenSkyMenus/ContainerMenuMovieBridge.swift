@@ -137,8 +137,9 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
     }
 
     /// Points the movie's focus at the item list, which is the list up and down
-    /// move. The same step `inventorymenu.swf` needs, and for the same reason:
-    /// there is no live `InputDelegate`, so nothing else routes a key into CLIK.
+    /// move. The same step `inventorymenu.swf` needs: the movie focuses its
+    /// category list a few ticks after `InitExtensions`, but OpenSky changes the
+    /// category itself, so each publish calls this again.
     public static func focusItemList(runtime: SWFMovieRuntime) {
         runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
     }
@@ -179,6 +180,7 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
             atPath: itemListPath, runtime: runtime
         )
         publishTotals(model, runtime: runtime)
+        focusItemList(runtime: runtime)
     }
 
     /// One `EntriesA` row: the inventory row plus the barter price. `value`

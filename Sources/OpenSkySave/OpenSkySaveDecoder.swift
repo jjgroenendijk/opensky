@@ -67,7 +67,11 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.relationships, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.playerProgress, into: entries)
+        // `PLGD` lays onto `PLVL`, the way `AVOV` lays onto `AVAL`.
+        let progress = OpenSkySaveProgressDecoder.mergeLegendary(
+            body.legendarySkills, into: body.playerProgress
+        )
+        entries = OpenSkySaveDeltaMerge.merge(progress, into: entries)
         // `CRVG` splits the `CRIM` totals before those reach the deltas, the
         // way `AVOV` lays onto `AVAL`.
         let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
@@ -89,7 +93,10 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
         entries = mergeJournal(body, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.identities, into: entries)
+        let identities = OpenSkySaveStoryDecoder.mergeComplexions(
+            body.complexions, into: body.identities
+        )
+        entries = OpenSkySaveDeltaMerge.merge(identities, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.markers, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.fog, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.temperedItems, into: entries)
@@ -273,6 +280,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         case OpenSkySaveFormat.ChunkTag.playerProgress:
             body.playerProgress = try OpenSkySaveProgressDecoder
                 .decodePlayerProgress(payload)
+        case OpenSkySaveFormat.ChunkTag.legendarySkills:
+            body.legendarySkills = try OpenSkySaveProgressDecoder
+                .decodeLegendarySkills(payload)
         case OpenSkySaveFormat.ChunkTag.crimeLedgers:
             body.crimeLedgers = try OpenSkySaveCrimeDecoder.decodeCrimeLedgers(payload)
         case OpenSkySaveFormat.ChunkTag.stolenGoods:

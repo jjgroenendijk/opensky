@@ -24,6 +24,8 @@ struct FakeProgressionState {
     var spendCount = 0
     var grantCount = 0
     var revokeCount = 0
+    var legendaryCount = 0
+    var resetTreeCount = 0
 }
 
 /// The conformance itself is declared by `WorldControlProviders` on the class,
@@ -91,6 +93,18 @@ extension FakeWorldProviders {
     func revokeSelectedPerk() -> String {
         progression.revokeCount += 1
         return record("Removed the selected perk.")
+    }
+
+    @discardableResult
+    func makeSelectedSkillLegendary() -> String {
+        progression.legendaryCount += 1
+        return record("Made the selected skill legendary.")
+    }
+
+    @discardableResult
+    func resetSelectedPerkTree() -> String {
+        progression.resetTreeCount += 1
+        return record("Reset the selected tree.")
     }
 
     /// Puts an action's outcome where the readout reads it, so a panel test

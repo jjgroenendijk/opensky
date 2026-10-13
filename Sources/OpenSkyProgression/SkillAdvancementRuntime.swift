@@ -63,6 +63,9 @@ public struct SkillAdvancementRuntime {
     /// Character leveling, where banked experience is spent. Nil in a session
     /// without leveling: experience is then reported but not banked.
     public var leveling: PlayerLevelRuntime?
+    /// The `Mod Skill Use` perk entry point for one use: Rested, Lover's Comfort and
+    /// the Guardian Stones multiply skill experience through it. One without perks.
+    public var useMultiplier: @MainActor (SkillUsageConditionResolution) -> Float = { _ in 1 }
     public private(set) var tally = SkillAdvancementTally()
 
     /// The player's stored progress, or a fresh one when this session runs no
@@ -136,7 +139,10 @@ public struct SkillAdvancementRuntime {
             tally.noteUnclaimed()
             return nil
         }
-        return advance(skill: credited.skill, byUse: credited.amount, on: player)
+        let usage = SkillUsageConditionResolution(
+            skill: credited.skill, action: use.advanceAction, object: use.object
+        )
+        return advance(skill: credited.skill, byUse: credited.amount, on: player, usage: usage)
     }
 
     /// Advances one skill by a use amount, `Game.AdvanceSkill`'s unit
@@ -146,7 +152,8 @@ public struct SkillAdvancementRuntime {
     public mutating func advance(
         skill index: Int32,
         byUse amount: Float,
-        on holder: ActorValueHolder
+        on holder: ActorValueHolder,
+        usage: SkillUsageConditionResolution? = nil
     ) -> SkillAdvanceReport? {
         guard
             ActorValueIdentity.isSkill(index: index),
@@ -157,7 +164,9 @@ public struct SkillAdvancementRuntime {
             return nil
         }
         tally.noteUse()
+        let multiplier = useMultiplier(usage ?? SkillUsageConditionResolution(skill: index))
         let gained = SkillAdvancement.experience(forUse: amount, parameters: use)
+            * (multiplier.isFinite ? max(0, multiplier) : 1)
         let previous = level(ofSkill: index, on: holder)
         let outcome = SkillAdvancement.advance(
             experience: experience(forSkill: index, on: holder) + gained,

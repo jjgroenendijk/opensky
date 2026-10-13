@@ -108,7 +108,6 @@ public protocol QuestAccess {
 
     /// Whether the player tracks the quest: its targets show on the compass and map.
     func isTracked(_ id: FormID) -> Bool
-    func setTracked(_ id: FormID, _ isTracked: Bool)
 }
 
 extension QuestAccess {

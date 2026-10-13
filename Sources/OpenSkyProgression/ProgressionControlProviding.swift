@@ -26,6 +26,8 @@ nonisolated public struct SkillProgressReadout: Equatable, Sendable {
     /// tree has.
     public let ownedPerks: Int
     public let treePerks: Int
+    /// How often the skill was made legendary.
+    public let legendaryCount: Int
 
     public init(
         name: String,
@@ -35,8 +37,10 @@ nonisolated public struct SkillProgressReadout: Equatable, Sendable {
         experience: Float,
         threshold: Float,
         ownedPerks: Int,
-        treePerks: Int
+        treePerks: Int,
+        legendaryCount: Int = 0
     ) {
+        self.legendaryCount = legendaryCount
         self.name = name
         self.index = index
         self.current = current
@@ -170,6 +174,8 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
     public let perk: PerkInspection?
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// What the "Mod Skill Use" perks multiply the selected skill's experience by now.
+    public let experienceRate: Float
 
     /// The reading with no runtime attached.
     public static let unavailable = ProgressionControlSnapshot(
@@ -218,8 +224,10 @@ nonisolated public struct ProgressionControlSnapshot: Equatable, Sendable {
         treeNodes: [PerkTreeNodeReadout],
         selectedNode: UInt32,
         perk: PerkInspection?,
-        lastActionText: String
+        lastActionText: String,
+        experienceRate: Float = 1
     ) {
+        self.experienceRate = experienceRate
         self.isAvailable = isAvailable
         self.level = level
         self.experience = experience
@@ -302,4 +310,12 @@ public protocol ProgressionControlProviding: AnyObject {
     /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
     func revokeSelectedPerk() -> String
+
+    /// Makes the selected skill legendary: back to its reset level, its tree refunded.
+    @discardableResult
+    func makeSelectedSkillLegendary() -> String
+
+    /// The Dragonborn altar: one dragon soul refunds the selected skill's tree.
+    @discardableResult
+    func resetSelectedPerkTree() -> String
 }

@@ -139,6 +139,18 @@ struct PapyrusNativeLevelTests {
         #expect(PapyrusWorldFixture.isInvalidArguments(game("ModPerkPoints", fixture)))
     }
 
+    /// The vanilla native the Dragonborn altar refunds a tree with.
+    @Test func addPerkPointsAddsToThePool() {
+        let fixture = Self.fixture()
+
+        #expect(game("AddPerkPoints", fixture, arguments: [.integer(4)]) == .returned(.none))
+        #expect(fixture.levels.perkPoints == 4)
+        #expect(PapyrusWorldFixture.isInvalidArguments(game("AddPerkPoints", fixture)))
+        #expect(PapyrusWorldFixture.isInvalidArguments(
+            game("AddPerkPoints", Self.fixture(wired: false), arguments: [.integer(1)])
+        ))
+    }
+
     /// A session with no character leveling refuses both natives rather than
     /// answering zero, which would read as a player who has spent everything.
     @Test func anUnwiredSessionRefusesBothPerkPointNatives() {

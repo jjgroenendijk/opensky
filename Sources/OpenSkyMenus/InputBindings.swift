@@ -43,6 +43,7 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         slot(.sprint, .gameplay, "Sprint"), slot(.sneak, .gameplay, "Sneak"),
         slot(.run, .gameplay, "Run"), slot(.journal, .gameplay, "Journal"),
         slot(.inventory, .gameplay, "Quick Inventory"), slot(.map, .gameplay, "Quick Map"),
+        slot(.skills, .gameplay, "Quick Stats"),
         slot(.quicksave, .gameplay, "Quicksave"), slot(.quickload, .gameplay, "Quickload"),
         slot(.pause, .gameplay, "Pause"),
         slot(.up, .opensky, "Fly Up"), slot(.down, .opensky, "Fly Down")
@@ -64,7 +65,8 @@ nonisolated public struct InputBindings: Equatable, Sendable {
         "Main Gameplay|Toggle POV": 0x21, "Main Gameplay|Jump": 0x39,
         "Main Gameplay|Sprint": 0x38, "Main Gameplay|Sneak": 0x1D, "Main Gameplay|Run": 0x2A,
         "Main Gameplay|Journal": 0x24, "Main Gameplay|Quick Inventory": 0x17,
-        "Main Gameplay|Quick Map": 0x32, "Main Gameplay|Quicksave": 0x3F,
+        "Main Gameplay|Quick Map": 0x32, "Main Gameplay|Quick Stats": 0x35,
+        "Main Gameplay|Quicksave": 0x3F,
         "Main Gameplay|Quickload": 0x43, "Main Gameplay|Pause": 0x01
     ]
 

@@ -61,6 +61,7 @@ nonisolated public final class SWFPassResources {
     public var scale: Float = 1
     public var opacity: Float = 1
     public var textTranslator: ((String) -> String)?
+    public var soundPlayer: (@MainActor (String?) -> Void)?
     public var movie: SWFMovieResources?
     /// The AS2 runtime driving `movie`, when one was started. nil keeps the
     /// layer on the static frame-1 path.

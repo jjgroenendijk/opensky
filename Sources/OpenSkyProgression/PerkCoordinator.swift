@@ -104,6 +104,7 @@ public final class PerkCoordinator {
     ) -> Float {
         guard runtime != nil else { return value }
         seed(holder)
+        refreshEffectPerks(on: holder)
         guard var runtime else { return value }
         let outcome = runtime.modify(
             value,
@@ -127,6 +128,7 @@ public final class PerkCoordinator {
     ) -> Float {
         guard runtime != nil else { return value }
         seed(holder)
+        refreshEffectPerks(on: holder)
         guard var runtime else { return value }
         runtime.conditions.locks = LockConditionResolution(levels: [lock: level])
         let outcome = runtime.modify(
@@ -140,6 +142,27 @@ public final class PerkCoordinator {
         store(runtime)
         return outcome.value
     }
+
+    /// `Mod Skill Use` for one credited use of the player's skill: how much faster the
+    /// skill improves. Rested, Lover's Comfort and the Guardian Stones work through it.
+    public func skillUseMultiplier(_ usage: SkillUsageConditionResolution) -> Float {
+        guard runtime != nil else { return 1 }
+        refreshEffectPerks(on: .player)
+        guard var runtime else { return 1 }
+        runtime.conditions.skillUsage = usage
+        let outcome = runtime.modify(
+            1,
+            at: Self.skillUseEntryPoint,
+            on: .player,
+            actorValue: { [weak world] index in world?.actorValue(at: index, on: .player) }
+        )
+        runtime.conditions.skillUsage = .empty
+        store(runtime)
+        return outcome.value
+    }
+
+    /// `Mod Skill Use`, by its xEdit position.
+    public static let skillUseEntryPoint = PerkEntryPoint(rawValue: 22)
 
     /// The multiplier form, which every combat surface folds in beside its
     /// fortify term.
@@ -158,7 +181,17 @@ public final class PerkCoordinator {
     public func ownership(of key: ReferenceKey) -> Set<ReferenceKey>? {
         guard runtime != nil, let holder = world?.actorValueHolder(for: key) else { return nil }
         seed(holder)
+        refreshEffectPerks(on: holder)
         return runtime.map { Set($0.state(of: holder).owned) }
+    }
+
+    /// Effects come and go every frame, so their perks are read when a question is asked.
+    private func refreshEffectPerks(on holder: ActorValueHolder) {
+        guard var runtime, let world else { return }
+        let granted = world.perksFromActiveEffects(on: holder)
+        guard runtime.effectPerks[holder.key] ?? [] != granted else { return }
+        runtime.effectPerks[holder.key] = granted.isEmpty ? nil : granted
+        store(runtime)
     }
 
     private func store(_ runtime: PerkRuntime) {

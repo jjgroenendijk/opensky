@@ -1,5 +1,6 @@
 #include "ShaderCommon.h"
 #include "SurfaceShading.h"
+#include "EffectShading.h"
 
 // Static-mesh path: diffuse * (directional sun + ambient),
 // vertex color as tint (Skyrim bakes AO there). Alpha-test pipeline variant
@@ -9,41 +10,6 @@ constant bool alphaTestEnabled [[function_constant(FunctionConstantAlphaTest)]];
 // Optional: only the blended static pipeline defines it. The others write alpha 1.
 constant bool alphaBlendValue [[function_constant(FunctionConstantAlphaBlend)]];
 constant bool alphaBlendEnabled = is_function_constant_defined(alphaBlendValue) && alphaBlendValue;
-
-// BSEffectShaderProperty shading: unlit, base color, palette, and falloff. The
-// model follows NifSkope's open-source effect shader (sk_effectshader.frag).
-static float4 effectShade(
-    float4 base,
-    float4 vertexColor,
-    float3 normal,
-    float3 toEye,
-    constant DrawUniforms &draw,
-    texture2d<float> palette)
-{
-    constexpr sampler paletteSampler(filter::linear, address::clamp_to_edge);
-    uint flags = draw.effectFlags;
-    float4 tint = (flags & EffectFlagVertexColors) != 0 ? vertexColor : float4(1.0);
-    tint.a = (flags & EffectFlagVertexAlpha) != 0 ? vertexColor.a : 1.0;
-    float falloff = 1.0;
-    if ((flags & EffectFlagFalloff) != 0) {
-        float4 range = draw.effectFalloff;
-        float facing = smoothstep(range.y, range.x, abs(dot(normal, toEye)));
-        falloff = mix(max(range.w, 0.0), min(range.z, 1.0), facing);
-    }
-    float4 glow = draw.effectBaseColor;
-    float alphaScale = glow.a * glow.a;
-    float3 rgb = base.rgb * tint.rgb * glow.rgb;
-    float alpha = base.a * tint.a * falloff * alphaScale;
-    if ((flags & EffectFlagPaletteColor) != 0) {
-        float2 at = saturate(float2(base.g, tint.g * falloff * glow.r));
-        rgb = palette.sample(paletteSampler, at).rgb;
-    }
-    if ((flags & EffectFlagPaletteAlpha) != 0) {
-        float2 at = saturate(float2(base.a, tint.a * falloff * alphaScale));
-        alpha = palette.sample(paletteSampler, at).a;
-    }
-    return float4(rgb * draw.effectBaseColorScale, alpha);
-}
 
 // Instanced: matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
@@ -301,7 +267,12 @@ fragment float4 staticMeshFragment(
     float4 effect = 0.0;
     float alpha = diffuse.a * in.color.a * draw.materialAlpha;
     if (isEffect) {
-        effect = effectShade(diffuse, in.color, normalize(in.normal), toEye, draw, effectPalette);
+        effect = effectShade(
+            diffuse, in.color, normalize(in.normal), toEye,
+            EffectTerms{
+                draw.effectFlags, draw.effectFalloff, draw.effectBaseColor,
+                draw.effectBaseColorScale},
+            effectPalette);
         alpha = effect.a * draw.materialAlpha;
     }
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {

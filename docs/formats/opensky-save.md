@@ -122,6 +122,7 @@ chunk cannot read into the next.
 | `SUMM` | save list row: name, level, race, location, play time | below |
 | `THMB` | save list picture | below |
 | `PIDN` | the player's race, sex, name, and face | world |
+| `PCPX` | the player's complexion | world |
 | `MRKS` | changed map markers | world |
 | `FOGM` | local map fog | world |
 
@@ -145,7 +146,8 @@ location name (strings), and the real play time in seconds (float64, finite, not
 pixels, top row first. The save list reads only these two chunks and `CLOK`; it skips the
 others by their length ([title menu](/engine/main-menu.md)).
 
-The code also defines `SPLB`, `PRKS`, and `PLVL` (layouts in `Sources/OpenSkySave/`).
+The code also defines `SPLB`, `PRKS`, `PLVL`, and `PLGD` (layouts in `Sources/OpenSkySave/`).
+`PLGD` holds legendary skill counts, merged onto the `PLVL` record of the same key.
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 
 `GALC` is exactly 8 bytes: a uint64, the next number the generated-reference allocator gives

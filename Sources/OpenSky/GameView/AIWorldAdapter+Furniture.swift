@@ -3,9 +3,7 @@
 // "Furniture".
 
 import OpenSkyConditions
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
-import OpenSkyGameData
 import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface

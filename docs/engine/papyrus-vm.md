@@ -140,6 +140,7 @@ pages linked at the top, and also in [crime](/engine/crime.md), [barter](/engine
 [perks](/engine/perks.md), [skill advancement](/engine/skill-advancement.md), and
 [character leveling](/engine/character-leveling.md).
 
+`Game.AddPerkPoints` is vanilla: the install's `Game.pex` declares it native.
 `Game.GetPerkPoints` and `Game.ModPerkPoints` are SKSE functions: the Creation Kit wiki declares
 both as SKSE additions to `Game`, and nothing else can read or write the perk point pool from a
 script. OpenSky aims to support SKSE at the script level, never at the binary level.

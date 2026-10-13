@@ -35,22 +35,18 @@ struct RaceMenuMovieBridgeTests {
             }
         }
         RaceMenuMovieBridge.publish(Self.model, runtime: runtime)
-        #expect(sent["SetCategoriesList"] == [
-            .string("Race"), .integer(1), .string("Body"), .integer(2), .string("Head"), .integer(4)
+        #expect(sent["SetCategoriesList"]?.count == RaceMenuCategory.allCases.count * 2)
+        #expect(sent["SetCategoriesList"]?.prefix(4) == [
+            .string("Race"), .integer(1), .string("Body"), .integer(2)
         ])
         #expect(sent["SetRaceList"] == [
             .string("Nord"), .string("Tall and fair."), .integer(1),
             .string("Redguard"), .string(""), .integer(0)
         ])
         let sliders = try #require(sent["SetOptionSliders"])
-        let sliderRows = Self.model.rows.filter {
-            switch $0 {
-            case .weight, .slider, .part: true
-            default: false
-            }
-        }
+        let sliderRows = Self.model.rows.filter { $0 != .race && $0 != .name }
         #expect(sliders.count == sliderRows.count * 8)
-        #expect(sliders[2] == .string("ChangeWeight"))
+        #expect(sliders[2] == .string("ChangeSex"))
         #expect(sent["SetNameText"] == [.string("Prisoner")])
     }
 

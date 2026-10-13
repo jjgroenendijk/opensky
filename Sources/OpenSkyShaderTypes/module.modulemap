@@ -13,6 +13,7 @@
 module OpenSkyShaderTypes {
     header "ShaderTypesPrelude.h"
     header "ScreenShaderTypes.h"
+    header "MenuSceneShaderTypes.h"
     header "ShaderTypes.h"
     export *
 }

@@ -59,7 +59,8 @@ class spreads over the three attributes.
 
 A player progress component holds the level, the experience toward the next level, the unspent
 perk points, the owed attribute picks, the picks already made, and a count of skill points
-gained. It is saved in the `PLVL` chunk. A session that never leveled writes no chunk
+gained. It is saved in the `PLVL` chunk. How often each skill was made legendary rides in a
+`PLGD` chunk beside it. A session that never leveled writes no chunk
 ([save chunks](/formats/opensky-save.md#chunks)).
 
 Skill progress is not here. It lives in the `Skill Advance` actor values, because the vanilla
@@ -168,17 +169,18 @@ potion cannot buy a perk requirement ([condition evaluation](/engine/conditions.
 | `Actor.GetLevel()` | Vanilla | The actor's level, through the same baseline as every actor value |
 | `Game.GetPerkPoints()` | SKSE | The player's unspent perk points |
 | `Game.ModPerkPoints(int)` | SKSE | Adds or removes points, clamped to 0 to 255 |
+| `Game.AddPerkPoints(int)` | Vanilla | Adds points with the same clamp; the Dragonborn altar refunds with it |
 
-The two perk point functions are not vanilla Papyrus. The Creation Kit wiki lists them as SKSE
+`GetPerkPoints` and `ModPerkPoints` are not vanilla Papyrus. The Creation Kit wiki lists them as SKSE
 additions to the `Game` script ([Papyrus VM](/engine/papyrus-vm.md)). `Game.SetPerkPoints` is not
 implemented. A session with no leveling refuses both, instead of answering 0, which would look
 like a player who spent everything.
 
-## Not done yet
+## Menus, legendary skills, and the altar
 
-- The in-game level-up and perk tree menus, and legendary skills.
-- The Dragonborn perk reset, which spends a dragon soul to clear one tree.
-- Experience multipliers: Rested, Well Rested, Lover's Comfort, and the Guardian Stones.
+The [skills menu](/engine/skills-menu.md) spends the pick and the points, and covers legendary
+skills and the Dragonborn altar. Experience multipliers are a perk entry point
+([skill advancement](/engine/skill-advancement.md#experience-multipliers)).
 
 ## Controls
 

@@ -157,10 +157,7 @@ nonisolated public struct NIFCameraTrack: Equatable, Sendable {
 nonisolated extension NIFCameraTrack {
     /// The camera's translation in the mesh at `time` seconds.
     public func translation(at time: Float) -> SIMD3<Float> {
-        let keyed = Self.sample(keys?.translations ?? [], at: time) { from, to, mix in
-            simd_mix(from, to, SIMD3(repeating: mix))
-        }
-        let node = keyed ?? restTranslation
+        let node = NIFKeySampler.vector(keys?.translations ?? [], at: time) ?? restTranslation
         return node + nodeRotation(at: time).act(offsetTranslation)
     }
 
@@ -169,35 +166,7 @@ nonisolated extension NIFCameraTrack {
         nodeRotation(at: time) * offsetRotation
     }
 
-    /// The animated node's rotation: slerp between quaternion keys, or X then
-    /// Y then Z angles for XYZ data.
     private func nodeRotation(at time: Float) -> simd_quatf {
-        guard let keys else { return restRotation }
-        if let rotation = Self.sample(keys.rotations, at: time, mix: { simd_slerp($0, $1, $2) }) {
-            return rotation
-        }
-        guard keys.eulerRotations.count == 3, keys.eulerRotations.contains(where: { !$0.isEmpty })
-        else { return restRotation }
-        let angles = keys.eulerRotations.map { axis in
-            Self.sample(axis, at: time) { $0 + ($1 - $0) * $2 } ?? 0
-        }
-        return simd_quatf(angle: angles[2], axis: [0, 0, 1])
-            * simd_quatf(angle: angles[1], axis: [0, 1, 0])
-            * simd_quatf(angle: angles[0], axis: [1, 0, 0])
-    }
-
-    private static func sample<Value>(
-        _ keys: [NIFKey<Value>],
-        at time: Float,
-        mix: (Value, Value, Float) -> Value
-    ) -> Value? {
-        guard let first = keys.first, let last = keys.last else { return nil }
-        guard time > first.time else { return first.value }
-        guard time < last.time else { return last.value }
-        let upper = keys.firstIndex { $0.time >= time } ?? keys.count - 1
-        let lower = keys[upper - 1]
-        let span = keys[upper].time - lower.time
-        let fraction = span > 0 ? (time - lower.time) / span : 1
-        return mix(lower.value, keys[upper].value, fraction)
+        keys?.rotation(at: time) ?? restRotation
     }
 }

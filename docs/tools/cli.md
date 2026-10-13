@@ -63,7 +63,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `actor-values [--npc id \| --race id] [--player-level n]` | How an actor's values are derived, with the record each part came from ([actor values](/engine/actor-values.md)) |
 | `collision [--worldspace/--x/--y] [--radius n]` | Collision for the center cell's models and the placed grid, with each surface's `MATT` ([collision world](/engine/collision-world.md)) |
 | `interior --out <file> [--radius n]` | Finds a door near the target, goes into the interior and back, and renders the arrival pose |
-| `nif <key>`, `dds <key>` | Container stats, each node with its local translation, and the flattened model; or the header and mip chain |
+| `nif <key> [--sequences]`, `dds <key>` | Container stats, each node with its local translation, and the flattened model; or the header and mip chain. `--sequences` adds every node's full transform, each effect shape's material, and each controller sequence with its tracks ([sequences](/formats/nif-sequences.md)) |
 | `hkx <key>` | Havok packfile header, sections, classes, objects, the behavior census, and the decoded node tree ([HKX container](/formats/hkx-container.md)) |
 | `hkt <key>`, `hkt sweep` | One Havok binary tagfile, or every archived `.hkt`: class versions, objects, cloth classes, and skeleton bones ([HKT tagfile](/formats/hkt-tagfile.md)) |
 | `skeleton <hkx-key> [--nif <nif-key>]` | Every `hkaSkeleton`, and with `--nif` how the rig's bone names map onto the NIF, both ways ([hkaSkeleton](/formats/hka-skeleton.md)) |
@@ -75,7 +75,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `swf action-run [--movie] [--ticks n] [--dump] [--dump-class] [--dump-proto] [--call]` | Brings one movie up and ticks it, then prints faults, missing names, classes, callbacks, invokes, and the display tree ([GameDelegate bridge](/engine/as2-game-delegate.md)) |
 | `swf inventory-menu`, `swf quest-journal`, `swf container-menu`, `swf dialogue-menu` | Drives one vanilla menu through its bridge against real records and reads the rows back out of the movie. In the CLI because the real-data test host is unreliable here |
 | `swf system-menu [--state] [--focus] [--row] [--ticks] [--dump]` | Opens `quest_journal.swf` on its System page, starts one page state, optionally accepts a row, and prints every GameDelegate call ([system menu](/engine/system-menu.md)) |
-| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, and `key:<code>` sends a key. Prints the host calls and dumped nodes. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
+| `swf movie-probe --movie <path> [--ticks] [--capture] [--then] [--dump]` | Starts any movie and runs steps split by `;`: `call:<path>:<method>[:<JSON args>]` calls a node method, an empty path calls a GameDelegate callback, and `key:<code>` sends a key. Prints the host calls, the dumped nodes, and the focus at the end. Used to measure the race menu movie ([race menu](/engine/race-menu.md)) |
 | `swf info <key>` | One movie's header and every tag |
 | `audio info <key>` | One `.xwm` or `.fuz`: its format fields and packet table. Framing only ([xWMA](/formats/xwm.md)) |
 | `audio sweep` | Frames and decodes every `.xwm`, one file at a time, keeping only counts ([audio](/engine/audio.md)) |

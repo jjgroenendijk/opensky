@@ -110,15 +110,15 @@ nonisolated extension MeshLibrary {
     /// paths are spelled as a TXST spells them.
     public func loadActorHeadPart(
         path: String,
-        diffuseTexture: String?,
-        normalTexture: String?,
+        textures: HeadPartTextures,
         tint: SIMD3<Float>?,
         skeleton: ActorSkeletonAsset?
     ) -> Result<ActorRenderAsset, ActorAssetFailure> {
         let surface = ModelSurfaceOverride(
-            diffuseTexture: diffuseTexture.flatMap(NIFShaderTextureSet.vfsKey(for:)),
-            normalTexture: normalTexture.flatMap(NIFShaderTextureSet.vfsKey(for:)),
-            tint: tint
+            diffuseTexture: textures.diffuse.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+            normalTexture: textures.normal.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+            tint: tint,
+            detailTexture: textures.detail.flatMap(NIFShaderTextureSet.vfsKey(for:))
         )
         do {
             let model = try loadModel(

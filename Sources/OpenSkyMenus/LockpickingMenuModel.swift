@@ -40,7 +40,7 @@ nonisolated public struct LockpickingMenuControls: Equatable, Sendable {
             pointerDegrees += deltaX * Self.pointerPickScale
         case .button(.cancel):
             cancelRequested = true
-        case .button(.accept), .button(.xButton):
+        case .button(.accept), .button(.xButton), .button(.yButton):
             break
         }
     }

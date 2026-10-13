@@ -67,6 +67,42 @@ struct MenuPanelsTests {
     }
 
     @Test @MainActor
+    func skillsMenuSectionPinsIdsAndDrivesTheMenu() {
+        let provider = FakeWorldProviders()
+        let panel = CharacterMenuPanelViewController()
+        panel.provider = provider
+        panel.loadViewIfNeeded()
+        let section = panel.skillsSection
+        #expect(section.sectionIdentifier == "skillsMenu")
+        #expect(section.statsLabel.accessibilityIdentifier() == "SkillsMenuStatsLabel")
+        #expect(section.buttons.map { $0.accessibilityIdentifier() } == [
+            "SkillsMenuOpenControl", "SkillsMenuMovieControl", "SkillsMenuSkyControl",
+            "SkillsMenuUpControl", "SkillsMenuDownControl", "SkillsMenuLeftControl",
+            "SkillsMenuRightControl", "SkillsMenuAcceptControl", "SkillsMenuLegendaryControl",
+            "SkillsMenuBackControl"
+        ])
+        section.refreshReadout()
+        #expect(!section.buttons[7].isEnabled, "Accept waits for an open menu")
+        send(section.buttons[0])
+        section.refreshReadout()
+        #expect(!section.buttons[0].isEnabled)
+        #expect(section.statsLabel.stringValue.contains("Alchemy 15"))
+        #expect(section.statsLabel.stringValue.contains("Sky: waiting"))
+        send(section.buttons[8])
+        #expect(DestinationRegistry.characterMenuOverrides.isOverridden(
+            WorldPanelContext(providers: provider)
+        ))
+        DestinationRegistry.characterMenuOverrides.resetToDefaults(
+            WorldPanelContext(providers: provider)
+        )
+        #expect(!provider.menuCalls.skillsOpen)
+        #expect(provider.menuCalls.calls.first == "skills.open")
+        #expect(provider.menuCalls.calls[1].contains("yButton"))
+        send(section.buttons[2])
+        #expect(provider.menuCalls.calls.last == "skills.sky(false)")
+    }
+
+    @Test @MainActor
     func mapPanelPinsIdsAndOpensAndCloses() {
         let provider = FakeWorldProviders()
         let panel = MapMenuPanelViewController()

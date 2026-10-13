@@ -18,6 +18,14 @@ public protocol PerkWorld: AnyObject {
     func perksChanged(_ runtime: PerkRuntime)
     /// Makes the constant abilities on `holder` match the perks it owns.
     func reconcileAbilities(on holder: ActorValueHolder, perks: PerkRuntime)
+    /// The perks `holder`'s active magic effects apply (MGEF "Perk to Apply").
+    func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey>
+}
+
+extension PerkWorld {
+    public func perksFromActiveEffects(on holder: ActorValueHolder) -> Set<ReferenceKey> {
+        []
+    }
 }
 
 /// What `ProgressionCoordinator` reads from the running world.
@@ -29,4 +37,18 @@ public protocol ProgressionWorld: AnyObject {
     func conditionContext() -> ConditionContext
     /// One perk condition as the panel prints it.
     func conditionText(_ condition: Condition) -> String
+    /// The player's name and race as the skills menu card prints them.
+    func playerIdentity() -> (name: String, race: String)
+    /// The plugin string tables, for perk and skill names. Nil without them.
+    func localizedStrings() -> LocalizedStrings?
+}
+
+extension ProgressionWorld {
+    public func playerIdentity() -> (name: String, race: String) {
+        (name: "", race: "")
+    }
+
+    public func localizedStrings() -> LocalizedStrings? {
+        nil
+    }
 }

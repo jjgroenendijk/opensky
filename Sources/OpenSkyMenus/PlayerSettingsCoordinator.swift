@@ -44,6 +44,9 @@ public final class PlayerSettingsCoordinator {
     /// The install's keys plus the player's remaps.
     public private(set) var bindings = InputBindings()
     private var controlMap: ControlMapFile?
+    /// Reads the install's key names on first use.
+    public var keyNamesLoader: () -> KeyboardNameTable? = { nil }
+    private lazy var keyNames = keyNamesLoader()
     /// The group the sidebar table shows.
     public var inspectedGroup = PlayerSettingGroup.gameplay
 
@@ -67,6 +70,11 @@ public final class PlayerSettingsCoordinator {
         let result = next.rebind(action, to: scanCode)
         store.replaceKeyBindings(next.overrides.mapValues(Int.init))
         return result
+    }
+
+    /// The install's name for a key, such as `L-Ctrl`, or a built-in one.
+    public func keyName(_ scanCode: UInt32) -> String {
+        keyNames?.name(scanCode) ?? DirectInputKeyCodes.fallbackName(scanCode)
     }
 
     public func resetBindings() {

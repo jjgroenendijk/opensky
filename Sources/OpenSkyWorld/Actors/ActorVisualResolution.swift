@@ -339,28 +339,10 @@ nonisolated public struct ActorVisualResolver: Sendable {
                 race: raceID,
                 hairColor: appearance.hairColor.value
             )
+            visual.headParts = visual.headParts
+                .withFaceTextures(complexion(appearance, race: race, female: female))
         }
         return visual
-    }
-
-    /// Expression-bearing HDPT records for one resolved actor. RACE supplies
-    /// the default head and mouth; NPC_ head parts supply the chosen eyes,
-    /// brows, hair, facial hair and marks. FormID order stays deterministic.
-    public func expressionHeadParts(for appearance: ResolvedActorAppearance) -> [HeadPart] {
-        guard
-            let raceID = appearance.race.value,
-            let race = races[raceID.rawValue]
-        else { return [] }
-        let defaults = appearance.isFemale.value
-            ? race.femaleHeadParts : race.maleHeadParts
-        var seen = Set<UInt32>()
-        return (defaults + appearance.headParts.value).compactMap { id in
-            guard seen.insert(id.rawValue).inserted else { return nil }
-            guard let part = headParts[id.rawValue], part.expressionMorphPath != nil else {
-                return nil
-            }
-            return part
-        }
     }
 
     /// The union of worn ARMO body slots — the mask that hides covered skin.
@@ -479,5 +461,34 @@ nonisolated extension ActorVisualResolver {
         HeadPartResolver(
             headParts: headParts, formLists: formLists, textureSets: textureSets, colors: colors
         )
+    }
+
+    /// The actor's own face texture set, else the race's default for the sex.
+    func complexion(
+        _ appearance: ResolvedActorAppearance, race: Race, female: Bool
+    ) -> TextureSet? {
+        let head = female ? race.details.headData.female : race.details.headData.male
+        let complexion = appearance.faceTexture ?? head.defaultFaceTexture
+        return complexion.flatMap { textureSets[$0.rawValue] }
+    }
+
+    /// Expression-bearing HDPT records for one resolved actor. RACE supplies
+    /// the default head and mouth; NPC_ head parts supply the chosen eyes,
+    /// brows, hair, facial hair and marks. FormID order stays deterministic.
+    public func expressionHeadParts(for appearance: ResolvedActorAppearance) -> [HeadPart] {
+        guard
+            let raceID = appearance.race.value,
+            let race = races[raceID.rawValue]
+        else { return [] }
+        let defaults = appearance.isFemale.value
+            ? race.femaleHeadParts : race.maleHeadParts
+        var seen = Set<UInt32>()
+        return (defaults + appearance.headParts.value).compactMap { id in
+            guard seen.insert(id.rawValue).inserted else { return nil }
+            guard let part = headParts[id.rawValue], part.expressionMorphPath != nil else {
+                return nil
+            }
+            return part
+        }
     }
 }

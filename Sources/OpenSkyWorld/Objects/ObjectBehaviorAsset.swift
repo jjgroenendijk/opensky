@@ -17,7 +17,6 @@ nonisolated public enum ObjectBehaviorAssetError: Error, Equatable {
 
 nonisolated public struct ObjectBehaviorAsset: Sendable {
     public let projectPath: String
-    public let behaviorPath: String
     public let objectGraph: HKXObjectGraph
     public let behavior: HKBBehaviorGraph
     public let skeleton: HKASkeleton
@@ -62,7 +61,6 @@ nonisolated public struct ObjectBehaviorAsset: Sendable {
         }
         return ObjectBehaviorAsset(
             projectPath: projectPath,
-            behaviorPath: behaviorPath,
             objectGraph: graph,
             behavior: behavior,
             skeleton: rig,

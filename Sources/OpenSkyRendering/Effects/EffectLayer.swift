@@ -69,6 +69,8 @@ public final class EffectLayer {
     /// Decals the last frame drew, for the readout.
     public internal(set) var lastDecalDraws = 0
 
+    /// The unlit scene a menu draws in place of the world, such as the perk sky.
+    public let menuScene: MenuSceneResources
     let staticPipeline: MTLRenderPipelineState
     let skinnedPipeline: MTLRenderPipelineState
     let morphedPipeline: MTLRenderPipelineState
@@ -94,6 +96,9 @@ public final class EffectLayer {
         )
         decalPipeline = try Self.makeDecalPipeline(
             library: library, compiler: compiler, view: view
+        )
+        menuScene = try MenuSceneResources(
+            device: device, library: library, view: view, compiler: compiler
         )
         let depth = MTLDepthStencilDescriptor()
         depth.label = "MembraneDepth"

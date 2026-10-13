@@ -100,8 +100,12 @@ extension DestinationRegistry {
     static let characterMenuOverrides = DestinationOverrideActions(
         isOverridden: { context in
             context.providers.titleMenuSnapshot.isOpen || context.providers.raceMenuSnapshot.isOpen
+                || context.providers.skillsMenuSnapshot.isOpen
         },
         resetToDefaults: { context in
+            if context.providers.skillsMenuSnapshot.isOpen {
+                context.providers.sendSkillsMenuInput(.button(.cancel))
+            }
             if context.providers.raceMenuSnapshot.isOpen {
                 context.providers.sendRaceMenuInput(.button(.cancel))
             }

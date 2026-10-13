@@ -63,7 +63,7 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
             return selectedRow.map { .adjust($0, direction: 1) }
         case .button(.cancel):
             openGroup = nil
-        case .button(.xButton), .pointer, .release:
+        case .button(.xButton), .button(.yButton), .pointer, .release:
             break
         }
         return nil
@@ -79,7 +79,7 @@ nonisolated public struct SettingsPageModel: Equatable, Sendable {
             openCategory(selectedCategory)
         case .button(.cancel):
             return .back
-        case .move(.left), .button(.xButton), .pointer, .release:
+        case .move(.left), .button(.xButton), .button(.yButton), .pointer, .release:
             break
         }
         return nil

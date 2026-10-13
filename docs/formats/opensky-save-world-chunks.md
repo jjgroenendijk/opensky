@@ -237,6 +237,12 @@ a uint32 tint count with per tint a uint16 mask index, four color bytes, and a f
 strength, then the float32 weight and height. See [race menu](/engine/race-menu.md).
 Minimum size: 12 bytes per entry.
 
+## PCPX: player complexion
+
+One entry for the player: the key, the cell, and the uint32 FormID of the chosen complexion,
+a `TXST` from the race's `FTSM` or `FTSF`. A save without it keeps the race default face
+texture. It merges onto the `PIDN` face of the same key. Minimum size: 11 bytes per entry.
+
 ## MRKS: map markers
 
 One entry per marker whose state is stored: the key, the cell, and one flag byte. Bit 0 is
@@ -250,5 +256,5 @@ the cell and a uint64 mask, one bit per square of an 8 by 8 grid. Rows are in sa
 exteriors before interiors, then by coordinate or FormID. Minimum size: 9 bytes per entry
 and per row.
 
-`PIDN`, `MRKS`, and `FOGM` merge into the `RDLT` deltas by key, like the other component
+`PIDN`, `PCPX`, `MRKS`, and `FOGM` merge into the `RDLT` deltas by key, like the other component
 chunks.

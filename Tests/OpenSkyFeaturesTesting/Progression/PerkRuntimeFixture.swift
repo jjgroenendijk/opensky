@@ -25,6 +25,9 @@ public enum PerkRuntimeFixture {
         /// A tree box gated on a skill requirement, like `Armsman20`'s
         /// `GetBaseActorValue One-Handed >= 50`.
         public static let skillGated: UInt32 = 0x0107
+        /// A Guardian Stone shape: One-Handed experience times 1.2, through
+        /// `Mod Skill Use` and `EPMagic_IsAdvanceSkill`.
+        public static let skillUse: UInt32 = 0x0108
     }
 
     /// AVIF identities. One record, carrying the One-Handed perk tree the
@@ -61,6 +64,7 @@ public enum PerkRuntimeFixture {
     public static let attackDamage = PerkEntryPoint(rawValue: 35)
     public static let percentBlocked = PerkEntryPoint(rawValue: 39)
     public static let spellCost = PerkEntryPoint(rawValue: 38)
+    public static let modSkillUse = PerkEntryPoint(rawValue: 22)
 
     public static func key(_ objectID: UInt32) -> ReferenceKey {
         .plugin(name: pluginName.lowercased(), objectID: objectID)
@@ -245,6 +249,24 @@ public enum PerkRuntimeFixture {
                         operatorBits: 3,
                         comparisonValue: 50,
                         parameter1: UInt32(bitPattern: oneHandedIndex)
+                    )]
+                )
+            ),
+            PerkFixture.perkRecord(
+                formID: Perk.skillUse,
+                fields: PerkFixture.fields(
+                    editorID: "SkillUse",
+                    name: "Warrior Stone",
+                    effects: [PerkFixture.entryPointEffect(
+                        entryPoint: modSkillUse.rawValue,
+                        function: 3,
+                        tabs: [(runOn: 0, conditions: [DialogueFixture.condition(
+                            functionIndex: 681,
+                            comparisonValue: 1,
+                            parameter1: UInt32(bitPattern: oneHandedIndex)
+                        )])],
+                        functionType: 1,
+                        functionData: PerkFixture.float(1.2)
                     )]
                 )
             )

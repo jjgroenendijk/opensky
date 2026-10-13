@@ -95,6 +95,12 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
         page = .main
     }
 
+    /// The movie opened a page by itself.
+    public mutating func show(_ page: SystemMenuPage) {
+        guard isOpen else { return }
+        self.page = page
+    }
+
     /// Vertical moves wrap, as the vanilla list does. Horizontal moves are
     /// accepted and ignored, so the caller still counts the event as handled.
     public mutating func moveSelection(_ direction: MenuInputEvent.Direction) {
@@ -154,7 +160,7 @@ nonisolated public struct SystemMenuModel: Equatable, Sendable {
             close()
             lastOutcome = .resume
             return .resume
-        case .button(.xButton), .pointer, .release:
+        case .button(.xButton), .button(.yButton), .pointer, .release:
             return nil
         }
     }

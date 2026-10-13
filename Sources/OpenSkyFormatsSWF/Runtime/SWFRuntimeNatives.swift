@@ -20,6 +20,7 @@ nonisolated public enum SWFRuntimeNatives: Sendable {
         installTextField(runtime, prototype: textFieldPrototype)
         installStage(runtime, movie: movie)
         installSelection(runtime)
+        installSystem(runtime)
         installKey(runtime)
         installMouse(runtime)
         installExternalInterface(runtime)
