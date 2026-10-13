@@ -59,7 +59,8 @@ struct RendererFrameInterpolationTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func theBuiltFrameLiesBetweenTheTwoRealFrames() throws {
+    func theBuiltFrameLiesBetweenTheTwoRealFrames() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         try #require(renderer.upscale.resources.interpolatorUnavailableReason == nil)
         renderer.frameInterpolationEnabled = true
@@ -83,7 +84,8 @@ struct RendererFrameInterpolationTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func itRunsOnlyWithTheTemporalUpscaler() throws {
+    func itRunsOnlyWithTheTemporalUpscaler() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         try #require(renderer.upscale.resources.interpolatorUnavailableReason == nil)
         renderer.frameInterpolationEnabled = true
