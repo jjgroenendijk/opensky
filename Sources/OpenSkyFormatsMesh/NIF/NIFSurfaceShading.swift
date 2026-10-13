@@ -5,31 +5,7 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated extension NIFLightingShaderProperty {
-    private enum Flag1 {
-        static let specular = 0
-        static let environmentMapping = 7
-        static let parallax = 11
-        static let modelSpaceNormals = 12
-        static let eyeEnvironmentMapping = 17
-        static let ownEmit = 22
-    }
-
-    private enum Flag2 {
-        static let glowMap = 6
-        static let multiLayerParallax = 24
-        static let softLighting = 25
-        static let rimLighting = 26
-        static let backLighting = 27
-    }
-
-    private enum ShaderType {
-        static let environmentMap: UInt32 = 1
-        static let glow: UInt32 = 2
-        static let parallax: UInt32 = 3
-        static let faceGen: UInt32 = 4
-        static let multiLayer: UInt32 = 11
-        static let eye: UInt32 = 16
-    }
+    private typealias ShaderType = NIFLightingShaderType
 
     /// A term whose texture slot is empty stays off.
     public func surfaceShading(textures: NIFShaderTextureSet?) -> SurfaceShading {
@@ -47,17 +23,17 @@ nonisolated extension NIFLightingShaderProperty {
             innerScale: tail.innerLayerScale,
             environmentStrength: tail.environmentStrength
         )
-        let modelSpace = hasFlag1(Flag1.modelSpaceNormals)
-        let backLight = hasFlag2(Flag2.backLighting) ? slot(7) : nil
-        let specularMap = hasFlag1(Flag1.specular) && modelSpace && backLight == nil ? slot(7) : nil
+        let modelSpace = has(.modelSpaceNormals)
+        let backLight = has(.backLighting) ? slot(7) : nil
+        let specularMap = has(.specular) && modelSpace && backLight == nil ? slot(7) : nil
         shading.backLightTexture = backLight ?? specularMap
-        let lightMask = hasFlag2(Flag2.softLighting) || hasFlag2(Flag2.rimLighting) ? slot(2) : nil
-        let glow = shaderType == ShaderType.glow && hasFlag2(Flag2.glowMap) ? slot(2) : nil
+        let lightMask = has(.softLighting) || has(.rimLighting) ? slot(2) : nil
+        let glow = shaderType == ShaderType.glow && has(.glowMap) ? slot(2) : nil
         shading.glowTexture = glow ?? lightMask
         let detail = shaderType == ShaderType.faceGen ? slot(3) : nil
-        let height = shaderType == ShaderType.parallax && hasFlag1(Flag1.parallax) ? slot(3) : nil
+        let height = shaderType == ShaderType.parallax && has(.parallax) ? slot(3) : nil
         shading.detailTexture = detail ?? height
-        let multiLayer = shaderType == ShaderType.multiLayer && hasFlag2(Flag2.multiLayerParallax)
+        let multiLayer = shaderType == ShaderType.multiLayer && has(.multiLayerParallax)
             ? slot(6) : nil
         shading.innerLayerTexture = multiLayer
         let environment = hasEnvironment(multiLayer: multiLayer != nil) ? slot(4) : nil
@@ -69,12 +45,12 @@ nonisolated extension NIFLightingShaderProperty {
 
         let enabled: [(Bool, SurfaceShading.Terms)] = [
             (modelSpace, .modelSpaceNormals),
-            (hasFlag1(Flag1.specular), .specular),
+            (has(.specular), .specular),
             (specularMap != nil, .specularMap),
-            (hasFlag1(Flag1.ownEmit), .emissive),
+            (has(.ownEmit), .emissive),
             (glow != nil, .glowMap),
-            (lightMask != nil && hasFlag2(Flag2.softLighting), .softLighting),
-            (lightMask != nil && hasFlag2(Flag2.rimLighting), .rimLighting),
+            (lightMask != nil && has(.softLighting), .softLighting),
+            (lightMask != nil && has(.rimLighting), .rimLighting),
             (backLight != nil, .backLighting),
             (detail != nil, .faceDetail),
             (height != nil, .parallax),
@@ -92,8 +68,8 @@ nonisolated extension NIFLightingShaderProperty {
 
     private func hasEnvironment(multiLayer: Bool) -> Bool {
         switch shaderType {
-        case ShaderType.environmentMap: hasFlag1(Flag1.environmentMapping)
-        case ShaderType.eye: hasFlag1(Flag1.eyeEnvironmentMapping)
+        case ShaderType.environmentMap: has(.environmentMapping)
+        case ShaderType.eye: has(.eyeEnvironmentMapping)
         case ShaderType.multiLayer: multiLayer
         default: false
         }
