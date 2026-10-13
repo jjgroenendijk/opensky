@@ -172,7 +172,7 @@ changes the cap.
 
 `make test-real` runs the `RealData` plan, which selects the `smoke` tag: one quick suite per
 format family and subsystem, so a change gets a real-data check in minutes. `ALL=1` runs
-`RealDataAll`, the whole bundle, for a milestone acceptance.
+`RealDataAll`, the whole bundle, for a goal acceptance.
 
 ## The RealData plan
 

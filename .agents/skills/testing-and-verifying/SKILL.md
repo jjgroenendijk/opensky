@@ -38,7 +38,7 @@ not touch but that calls into it. Reasonable defaults, not rules:
 | Behavior that only shows on the real install | `make test-real T='Class/method()'`, one run per affected test |
 | App UI | `building-app-ui` skill and `make build-app`; `make test-ui T='Suite/test()'` only for a UI test you added or whose control path changed (UI tests, below) |
 | A performance claim or a per-frame loop to speed up | `make profile` before and after, Release build (`docs/testing.md`, Profiling); one issue per finding |
-| Milestone acceptance | `make health`, `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR. A milestone about load or frame time adds `make launch-sample` on the installed Release app |
+| Goal acceptance | `make health`, `make test-real ALL=1`, `make test-ui`, and the acceptance record (format in `docs/tools/sidebar-acceptance.md`) in the closing PR. A goal about load or frame time adds `make launch-sample` on the installed Release app |
 
 The whole unit plan (`make test-unit PLAN=UnitTests`) and the sanitizers run in CI: the
 unit plan on every push, the sanitizers and `make health` weekly. Do not run them locally
@@ -113,7 +113,7 @@ screen while the user may be working.
 - Do not run it as a routine check for engine, parser, rendering, tooling, or docs changes.
   The unit tests and the `make build-*` targets cover those. Write `test-ui not run: no UI test
   path changed` in the `Tests:` section.
-- Milestone acceptance is the one place where the whole plan runs.
+- Goal acceptance is the one place where the whole plan runs.
 
 ## Real-data runs
 
@@ -123,7 +123,7 @@ These guard the machine and are not optional:
   under the memory watchdog; a raw `xcodebuild` against the install once ran to 30 GB and locked the
   machine.
 - `make test-real` runs the smoke set, the suites tagged `.smoke`. `ALL=1` runs every
-  real-data test, for a milestone acceptance. Iterate with `T=...` on one test, and rerun
+  real-data test, for a goal acceptance. Iterate with `T=...` on one test, and rerun
   it only after a change that could alter the result.
 - A perf gate carries the `.perf` tag; `make test-real PERF=1` runs every one, built optimized.
 - Captures and probe output go under `.logs/` (root `AGENTS.md`, Legal & IP boundary).

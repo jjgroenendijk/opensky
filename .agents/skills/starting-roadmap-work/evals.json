@@ -7,8 +7,8 @@
     "files": [],
     "expected_behavior": [
       "Loads starting-roadmap-work before answering",
-      "Lists open issues with gh issue list for the current milestone instead of reading a roadmap file in docs/",
-      "Picks the lowest open item by roadmap number, not by issue number"
+      "Lists the goal labels and a goal's issues with gh instead of reading a roadmap file in docs/",
+      "Picks the first open issue that the goal's acceptance issue lists, not the lowest issue number"
     ]
   },
   {
@@ -16,7 +16,7 @@
       "starting-roadmap-work",
       "committing-and-landing-work"
     ],
-    "query": "Start issue 9.1.2 and open a PR when it is done.",
+    "query": "Start issue 1305 and open a PR when it is done.",
     "files": [],
     "expected_behavior": [
       "Assigns the issue with gh issue edit --add-assignee @me before branching",
@@ -31,12 +31,12 @@
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "Every issue in milestone M9 is merged. Wrap it up.",
+    "query": "Every issue with the goal:opening label is closed except the acceptance issue. Wrap the goal up.",
     "files": [],
     "expected_behavior": [
-      "Checks that the closing PR carries the acceptance record from docs/tools/sidebar-acceptance.md",
-      "Records the outcome in the closing PR, not in the milestone description or docs/",
-      "Closes the milestone with gh"
+      "Checks that the PR closing the acceptance issue carries the acceptance record from docs/tools/sidebar-acceptance.md",
+      "Records the outcome in that PR, not in a milestone description or docs/",
+      "Does not close the area milestones, because areas never close"
     ]
   },
   {
@@ -63,30 +63,30 @@
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "Start the next issue in M30. The lowest open item already has a draft PR.",
+    "query": "Start the next issue of goal:opening. The first open issue it lists already has a draft PR.",
     "files": [],
     "expected_behavior": [
       "Checks gh pr list --state open before picking",
-      "Skips the item with the open PR and takes the next lowest roadmap number"
+      "Skips the issue with the open PR and takes the next open issue the acceptance issue lists"
     ]
   },
   {
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "While working issue 9.1.2 I noticed the BSA reader crashes on an empty folder name, and the record lookup could use a dictionary to be faster.",
+    "query": "While working issue 1305 I noticed the BSA reader crashes on an empty folder name, and the record lookup could use a dictionary to be faster.",
     "files": [],
     "expected_behavior": [
-      "Files the crash as a new issue with the bug label instead of fixing it in the 9.1.2 PR",
+      "Files the crash as a new issue with the bug label instead of fixing it in the 1305 PR",
       "Files the speed idea as its own issue whose title states the win",
-      "Keeps the current PR about issue 9.1.2 only"
+      "Keeps the current PR about issue 1305 only"
     ]
   },
   {
     "skills": [
       "starting-roadmap-work"
     ],
-    "query": "Update the M24 milestone description now that its acceptance PR merged.",
+    "query": "Update the Gameplay systems milestone description now that the magic work merged.",
     "files": [],
     "expected_behavior": [
       "Keeps the description to the scope, spec references, and legal notes",
@@ -103,6 +103,18 @@
       "Checks the rest of the shader for more missing terms, such as normal maps and specular",
       "Implements every gap found in the same PR instead of filing separate issues",
       "Lists the gaps in the PR body"
+    ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "File an issue: horse footsteps make no sound because the horse graph sends no footstep events.",
+    "files": [],
+    "expected_behavior": [
+      "Puts the issue in exactly one area milestone, the area of the root cause, such as Actors, animation + physics or Rendering + audio",
+      "Adds a goal label only when the issue blocks that goal",
+      "Gives the title no item number"
     ]
   }
 ]

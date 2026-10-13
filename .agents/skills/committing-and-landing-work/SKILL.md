@@ -58,7 +58,7 @@ or `Model:`. Allowed trailers:
    why, and cite the format specs used. Push each later atomic commit to it. CI runs the
    whole unit plan on every push, draft included, so push early and keep working while
    the runner tests; a newer push cancels the older run.
-5. Closing a milestone acceptance issue -> the PR body carries the acceptance record, in
+5. Closing a goal's acceptance issue -> the PR body carries the acceptance record, in
    the format defined by `docs/tools/sidebar-acceptance.md`. Nothing enforces this, so it
    is checked here.
 6. When the work is done and verified, `gh pr ready <pr>`, and read the last CI run with

@@ -481,7 +481,7 @@ sanitizer-shaders: $(SHADER_LIBRARY)
 	done
 
 # TSan and ASan with UBSan cannot share a build (issue #383), so SAN picks one. The
-# weekly CI workflow runs both; locally they are a milestone check.
+# weekly CI workflow runs both; locally they are a goal acceptance check.
 SANITIZER_CONFIG_thread  := Thread
 SANITIZER_CONFIG_address := Address
 test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanitizer SAN=thread|address [CAP=MB]
@@ -490,7 +490,7 @@ test-sanitize: link-shared sanitizer-shaders ## Run the unit tests under a sanit
 		$(or $(SANITIZER_CONFIG_$(SAN)),$(error SAN must be thread or address)) $(coverage_flag),$(DERIVED_DATA))
 
 # Real-data tests read the user's install, so they run on demand and before a
-# milestone acceptance, never in CI. The RealData plan is the smoke set, the tests
+# goal acceptance, never in CI. The RealData plan is the smoke set, the tests
 # tagged `.smoke`; ALL=1 runs the RealDataAll plan, every real-data test. PERF=1
 # runs the Perf plan, the tests tagged `.perf`, built optimized.
 # The checkout, for real-data tests that write into `.logs/`; the build cache is

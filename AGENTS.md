@@ -137,15 +137,16 @@ data to fall back to.
 
 ## Open work, docs, and the app sidebar
 
-- Open work lives in GitHub issues and milestones; there is no roadmap file. Load the
-  `starting-roadmap-work` skill to pick up or finish an item.
+- Open work lives in GitHub issues, area milestones, and goal labels; there is no roadmap
+  file. Load the `starting-roadmap-work` skill to pick up or finish an item.
 - `docs/` holds only what the code cannot show: sources of facts, design reasons, where
   OpenSky differs from the game, how subsystems work together, and tool usage. History
   lives in git. Load `writing-wiki-docs` before writing there.
-- Every new subsystem or user-verifiable behavior gets a control in the main app sidebar in
-  the same milestone. A user must be able to select, force, toggle, or inspect it without a
-  CLI command. Parser, math, and infrastructure-only work may wait for its first visible
-  consumer. `building-app-ui` has the placement rules and the acceptance record.
+- Every new subsystem or user-verifiable behavior gets a control in the main app sidebar
+  before its goal is accepted, or in the same PR when it belongs to no goal. A user must be
+  able to select, force, toggle, or inspect it without a CLI command. Parser, math, and
+  infrastructure-only work may wait for its first visible consumer. `building-app-ui` has the placement
+  rules and the acceptance record.
 
 ## Code quality
 
@@ -160,8 +161,8 @@ downgrading a rule: `make lint` fails on any suppression comment, on duplicated 
 on a comment block over 6 lines, with no baseline file
 (`docs/decisions/code-health-automation.md`). Parse and load failures use `throws` with typed
 errors, and malformed input must not crash: no force-unwrap, force-try, or force-cast on data
-from external files. `make health` (unused code) runs in the weekly CI workflow and once in a
-milestone's closing PR, not per change.
+from external files. `make health` (unused code) runs in the weekly CI workflow and once in the
+PR that finishes a goal, not per change.
 
 Size code to the lint limits while writing, not after a failed `make fix`; that has been
 the top recurring time sink. The thresholds are in `tools/lint/.swiftlint.yml`, and rules
@@ -233,7 +234,7 @@ the skill.
 
 | Skill | Load it when |
 | --- | --- |
-| `starting-roadmap-work` | Choosing the next item, starting an issue, or closing a milestone |
+| `starting-roadmap-work` | Choosing the next item, starting an issue, or finishing a goal |
 | `committing-and-landing-work` | Committing, pushing, or opening and merging a pull request |
 | `implementing-format-parsers` | Adding or changing any file format parser: ESM, BSA, NIF, DDS, HKX, PEX, SWF, audio, or LOD |
 | `writing-wiki-docs` | Adding or materially changing anything under `docs/` |

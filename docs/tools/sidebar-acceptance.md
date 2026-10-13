@@ -1,17 +1,17 @@
 ---
 type: Convention
 title: Sidebar acceptance record
-description: The record every milestone acceptance writes into its closing PR - sidebar path,
+description: The record every goal acceptance writes into its closing PR - sidebar path,
   destination and control accessibility ids, readout, and the tests that are the evidence.
 tags: [app-ui, verification, acceptance, convention]
 ---
 
 # Sidebar acceptance record
 
-Every milestone ships a surface in the main-app sidebar (`AGENTS.md`, "Open work, docs, and
-the app sidebar"). When the milestone is accepted, the closing PR or issue carries one record that
-says how a user reaches that surface. The record does not go in `docs/`. How to build the
-surface is in [Main-app UI framework](/tools/app-ui.md).
+Every goal ships a surface in the main-app sidebar (`AGENTS.md`, "Open work, docs, and the app
+sidebar"). A goal is a `goal:<name>` label on GitHub. The PR that closes its acceptance issue
+carries one record that says how a user reaches that surface. The record does not go in
+`docs/`. How to build the surface is in [Main-app UI framework](/tools/app-ui.md).
 
 ## Evidence
 
@@ -19,7 +19,7 @@ The record is mandatory. A screenshot is not.
 
 The deterministic tests are the evidence. These are the panel tests that check geometry and
 accessibility ids, the destination checks in `DestinationRegistryTests`, and any offscreen
-render test the milestone already has. If they pass, the gate passes.
+render test the goal already has. If they pass, the gate passes.
 
 An A/B capture (one frame before the change, one after) can still help a human reviewer.
 It is optional, it goes in `.logs/`, and it is never committed. A frame rendered from a real
@@ -29,7 +29,7 @@ content (`AGENTS.md`, "Legal & IP boundary").
 ## Format
 
 ```text
-Milestone: M8
+Goal: goal:opening
 Sidebar path: World > HUD & Interaction > Elements
 Destination id: Destination-hudInteraction
 Controls exercised: HUDLayerEnabledControl, HUDCrosshairControl, HUDScaleControl

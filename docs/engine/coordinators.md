@@ -23,7 +23,7 @@ The reference example is the vendor domain in `Sources/OpenSkyInventory/`: `Vend
 ## Why
 
 Logic in a `GameViewController+X` file runs only inside the app. A test must build the app
-host, and the CLI cannot call it. The view controller also grows with every milestone. A
+host, and the CLI cannot call it. The view controller also grows with every feature. A
 coordinator in a package module is tested with `make test-unit` in seconds.
 
 ## Parts

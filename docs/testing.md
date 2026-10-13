@@ -80,7 +80,7 @@ make test-real ALL=1
 
 `make test-real` runs the smoke set: the suites tagged `.smoke`, one quick suite per format family
 and subsystem, through the `RealData` plan. `ALL=1` runs the `RealDataAll` plan, the whole bundle,
-for a milestone acceptance.
+for a goal acceptance.
 
 `-only-testing` accepts a misspelled Swift Testing name and exits 0 after running nothing. Nothing
 checks this, so read the test count in the output.

@@ -43,7 +43,7 @@ if [ -n "$images" ]; then
     printf '[FAIL] Tracked image outside the app asset catalog:\n'
     printf '%s\n' "$images" | indent
     printf 'A frame OpenSky renders embeds Bethesda assets, so captures are\n'
-    printf 'game content even as milestone evidence.\n'
+    printf 'game content even as acceptance evidence.\n'
     printf 'Fix: write it to .logs/ (gitignored) and link the local path in the\n'
     printf 'PR body instead of committing it.\n'
   } >&2
