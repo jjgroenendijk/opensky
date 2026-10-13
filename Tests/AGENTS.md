@@ -67,7 +67,7 @@ smaller the plan, the quicker the run. `make test-unit PLAN=<name>` picks one:
 
 | Plan | Bundles |
 | --- | --- |
-| `Quick` (the default) | every package test target, skipping the `.slow` and `.gpu` tests; builds no app |
+| `Quick` (the default) | every package test target, set to skip the `.slow` and `.gpu` tests (Xcode runs them anyway: `docs/tools/environment.md`); builds no app |
 | `Formats` | the `OpenSkyFormats*Tests` targets |
 | `Engine` | game data, behavior, launch, agent control, physics, rendering, audio, world state |
 | `Features` | every feature's tests, save, menus, preview |

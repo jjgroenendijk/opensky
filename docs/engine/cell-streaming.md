@@ -218,7 +218,7 @@ set size. Real-data tests have two guards: sampling inside the process, and `too
 outside it, which reads the same number with `/usr/bin/footprint` and kills the process if
 sampling stops ([testing](/testing.md)).
 
-Limits: 1.5 GiB for the fly benchmark, 3.5 GiB inside a real-data test, 4 GiB for the outside
+Limits: 2500 MB for the fly benchmark, 3.5 GiB inside a real-data test, 4 GiB for the outside
 watchdog, and a final settled footprint below 1.6 times the start.
 
 The fly benchmark cap is the worst measured peak plus a fifth. It was 1 GiB when streamed cells
@@ -226,4 +226,8 @@ held only terrain and static meshes. Actors, grass, rain, particles, and collisi
 with them. Three Release runs on 2026-10-07 settled at 947 MB, 1016 to 1102 MB, and 1101 to
 1219 MB per waypoint, and peaked at 1145, 1272, and 1267 MB. GPU memory (`IOAccelerator`) grew
 from 242 MB to 728 MB of that during the flight (run `.logs/fly-footprint/20261007T021651Z`).
+The GPU features and the record coverage added after that raised it again. A Debug run on
+2026-10-13 went 1837, 2077, and 1944 MB per waypoint, and 1219 MB of a 1903 MB sample was GPU
+memory (`.logs/fly-footprint/20261013T124032Z` and `20261013T124232Z`). The heap stayed near the
+older runs, so the growth is GPU memory.
 The 1.6 times plateau check still fails a footprint that keeps growing.

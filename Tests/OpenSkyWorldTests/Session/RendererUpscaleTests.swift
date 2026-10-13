@@ -64,7 +64,8 @@ struct RendererUpscaleTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func upscaledFramesMatchTheNativeFrameStillAndPanning() throws {
+    func upscaledFramesMatchTheNativeFrameStillAndPanning() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         let start = renderer.freeFlyCamera
         var end = start
@@ -109,7 +110,8 @@ struct RendererUpscaleTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func aMovingObjectLeavesNoGhost() throws {
+    func aMovingObjectLeavesNoGhost() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         func move(_ step: Int) {
             renderer.dynamicInstanceDeltas[Self.movingReference] =
@@ -164,7 +166,8 @@ struct RendererUpscaleTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func aCameraCutResetsTheHistory() throws {
+    func aCameraCutResetsTheHistory() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         renderer.renderScale = RenderScale(percent: 67)
         let start = renderer.freeFlyCamera

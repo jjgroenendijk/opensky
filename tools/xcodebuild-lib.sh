@@ -71,6 +71,11 @@ opensky_try_lock() {
         printf '%s\n' "$$" >"$1/pid"
         return 0
     fi
+    # Without its parent folder, mkdir fails on every try and the caller waits forever.
+    if [ ! -d "$(dirname "$1")" ]; then
+        printf '[ERROR] cannot create the build lock %s\n' "$1" >&2
+        exit 1
+    fi
     owner="$(cat "$1/pid" 2>/dev/null || true)"
     if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
         rm -rf "$1"
@@ -81,7 +86,8 @@ opensky_try_lock() {
 # A lock is a directory, because mkdir is atomic. It holds the owner's pid; a
 # lock whose owner is gone is taken over.
 opensky_build_lock() {
-    mkdir -p "$OPENSKY_CACHE_ROOT"
+    # A fresh CI runner has no derived data folder yet, so the tree lock's parent is missing.
+    mkdir -p "$OPENSKY_CACHE_ROOT" "$(dirname "$OPENSKY_DERIVED_DATA")"
     slots="${OPENSKY_BUILD_SLOTS:-2}"
     tree_lock="$OPENSKY_DERIVED_DATA.build.lock"
     OPENSKY_BUILD_LOCK=""

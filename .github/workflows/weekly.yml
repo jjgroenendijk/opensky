@@ -62,7 +62,7 @@ jobs:
         run: tools/ci/metal-toolchain.sh wait
       - run: ${{ matrix.command }}
       - name: Upload logs
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.name }}-logs

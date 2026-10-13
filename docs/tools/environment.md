@@ -144,6 +144,33 @@ Observed 2026-08-06 on Xcode 26.5 (build 25F70):
 
 Retires when a later Xcode matches plan selection against Swift Testing names.
 
+## A plan's skippedTags skips nothing
+
+Observed 2026-10-13 on Xcode 27.0 (build 27A266a). The `Quick` plan skips the `slow` and `gpu`
+tags on every target, yet its runs still run the `.gpu` suites, such as `RendererUpscaleTests`.
+Both `"gpu"` and the spelling Xcode itself writes, `".gpu"`, behave the same. A plan's
+`selectedTags` works: the `GPU` plan runs only `.gpu` tests. So a `Quick` run builds the
+MetalFX scalers too, and needs the Neural Engine entry below.
+
+Retires when a `Quick` run no longer lists a `.gpu` suite in its transcript.
+
+## The Neural Engine compiler can stop answering
+
+Observed 2026-10-13 on macOS 27.0.1. `ANECompilerService`, the system service that compiles
+models for the Neural Engine, ran at 99% CPU and answered nothing for at least two hours: runs
+at 10:46 and 12:32 UTC both hung on it. It recovered on its own by 12:45, with no restart.
+MetalFX builds its temporal scaler through it, and the renderer builds the scaler on the main
+actor. So `RendererUpscaleTests` blocked the main actor, and every other main-actor test of the
+run waited behind it until one of them hit its 2-minute allowance. The spindump that
+`xcodebuild` attaches to that failure in the result bundle shows the stack:
+`newTemporalScalerWithDevice` waits on `aned`.
+
+`MetalFXCompilerProbe` asks the service off the main actor first, so only the MetalFX tests fail
+when it does not answer.
+
+Retires when MetalFX builds its scalers without the Neural Engine, or the renderer stops
+building them on the main actor.
+
 ## Package framework variants warn about declared dependencies
 
 Observed 2026-10-01 on Xcode 26 and on Xcode 27.0 (27A266a). A unit build printed hundreds of

@@ -22,7 +22,7 @@ enum BenchCommand {
     private static let defaultFrames = 360 // 3 full FrameStats windows
     private static let defaultFlyMaxFrames = 36000
     /// Worst measured fly-path peak plus a fifth (docs/engine/cell-streaming.md, "Memory").
-    private static let defaultFootprintCapMB = 1536.0
+    private static let defaultFootprintCapMB = 2500.0
     private static let defaultCollisionBuildBudgetMS = 750.0
     /// Debug budget for cold rig, clip, body, and FaceGen loads, with LZ4
     /// independent-block decoding. Measured p95: 2224 ms on the Whiterun fly path.
