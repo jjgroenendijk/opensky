@@ -34,7 +34,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
             + "Tamriel (6,-2), unless --worldspace, --x, and --y say otherwise.",
         subcommands: [
             VFSArguments.self, RecordArguments.self, PluginsArguments.self, InstallArguments.self,
-            GraphicsArguments.self,
+            GraphicsArguments.self, GapsArguments.self,
             ESSArguments.self, GMSTArguments.self, ArcheryArguments.self,
             FootstepArguments.self, CellArguments.self, ActorArguments.self,
             ActorValuesArguments.self, CollisionArguments.self, InteriorArguments.self,

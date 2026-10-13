@@ -70,6 +70,9 @@ struct PexNativeCensusTests {
         #expect(census.coverage(in: .standard) == PexNativeCoverage(
             implemented: 1, referenced: 1
         ))
+        #expect(census.missing(in: .empty).map(\.name) == ["Utility.Wait"])
+        #expect(census.missing(in: .empty).map(\.count) == [1])
+        #expect(census.missing(in: .standard).isEmpty)
     }
 
     private func callerObject() -> PexObject {

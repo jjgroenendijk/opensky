@@ -104,5 +104,17 @@
       "Implements every gap found in the same PR instead of filing separate issues",
       "Lists the gaps in the PR body"
     ]
+  },
+  {
+    "skills": [
+      "starting-roadmap-work"
+    ],
+    "query": "Which features are still missing that no issue covers yet?",
+    "files": [],
+    "expected_behavior": [
+      "Runs make gaps and reads the summary table in .logs/gaps/latest/gaps.txt",
+      "Ranks candidate work by the uses column instead of guessing from memory",
+      "Drafts any new issue in chat before creating it on GitHub"
+    ]
   }
 ]

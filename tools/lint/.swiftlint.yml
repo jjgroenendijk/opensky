@@ -108,5 +108,11 @@ custom_rules:
     excluded: 'Sources/OpenSky/GameView/GameViewController(Panels)?\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
+  perk_entry_point_literal:
+    name: "Perk entry point literal"
+    regex: 'PerkEntryPoint\(rawValue:\s*[0-9]'
+    excluded: '(Sources/OpenSkyProgressionInterface/PerkEntryPoint\+Engine\.swift|Tests/.*)$'
+    message: "Name the entry point in PerkEntryPoint+Engine.swift and add it to engineRead, so openskycli gaps sees it"
+    severity: error
 
 reporter: "xcode"

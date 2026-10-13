@@ -12,7 +12,7 @@ import OpenSkyProgressionInterface
 
 extension CasterRuntime {
     /// The `Mod Spell Cost` entry point, by its documented id.
-    public static let spellCostEntryPoint = PerkEntryPoint(rawValue: 38)
+    public static let spellCostEntryPoint = PerkEntryPoint.modSpellCost
 
     /// What casting `spell` costs `caster` right now, in magicka.
     ///

@@ -129,6 +129,14 @@ printf '%s\n' "$install" | grep -q '^\[INFO\] Version ' \
   || fail "install did not report a version line"
 echo "[ OK ] install ($(printf '%s\n' "$install" | sed -n 2p))"
 
+# Gap report (docs/tools/gaps.md): the quick sections print a summary and rows.
+expect_usage "gaps rejects an unknown section" "unknown section: dance" gaps --only dance
+gaps="$("$cli" --data-root "$data_root" gaps --only magic,perks --limit 3 2>>"$log")" \
+  || fail "gaps failed"
+printf '%s\n' "$gaps" | grep -q '^\[INFO\] gaps summary' || fail "gaps printed no summary"
+printf '%s\n' "$gaps" | grep -q '^== Perk entry points$' || fail "gaps printed no perk section"
+echo "[ OK ] gaps ($(printf '%s\n' "$gaps" | grep -c '^== ') sections)"
+
 # Skyrim saves: read-only. Runs only when OPENSKY_SKYRIM_SAVES names a folder.
 if [ -n "${OPENSKY_SKYRIM_SAVES:-}" ]; then
   saves="$("$cli" ess list "$OPENSKY_SKYRIM_SAVES" 2>>"$log")" \

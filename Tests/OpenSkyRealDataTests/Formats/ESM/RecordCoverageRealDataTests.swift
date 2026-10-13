@@ -12,61 +12,17 @@ import Testing
 
 @Suite(.tags(.smoke))
 struct RecordCoverageRealDataTests {
-    private struct Sweep {
-        var counts: [FourCC: Int] = [:]
-        var missing: [FourCC: Int] = [:]
-        var failures: [String] = []
-        var unread: [FourCC: [String: Int]] = [:]
-        var untallied: Set<FourCC> = []
-
-        var unknownFieldTotal: Int {
-            unread.values.flatMap(\.self)
-                .filter { $0.key.hasPrefix("unknown ") }
-                .reduce(0) { $0 + $1.value }
-        }
-
-        mutating func decode(_ record: ESMRecord, localized: Bool) {
-            counts[record.type, default: 0] += 1
-            guard let decode = RecordDecoders.decoder(for: record.type) else {
-                missing[record.type, default: 0] += 1
-                return
-            }
-            do {
-                let value = try decode(record, localized)
-                guard
-                    let tally = Mirror(reflecting: value).descendant("skipped")
-                    as? any RankedSkipReport
-                else {
-                    untallied.insert(record.type)
-                    return
-                }
-                for entry in tally.ranked {
-                    unread[record.type, default: [:]][entry.name, default: 0] += entry.count
-                }
-            } catch {
-                failures.append("\(record.type) \(FormID(record.formID)): \(error)")
-            }
-        }
-    }
-
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func decodesEveryRecordOfTheInstall() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
-        var sweep = Sweep()
+        var sweep = RecordCoverageSweep()
         for name in try InstallPlugins.names(root: root) {
-            let file = try ESMFile(url: root.dataURL.appending(path: name))
-            sweep.decode(file.tes4, localized: file.isLocalized)
-            ESMWalk.forEachRecord(in: file) { record in
-                if !record.isDeleted {
-                    sweep.decode(record, localized: file.isLocalized)
-                }
-                return true
-            }
+            try sweep.sweep(ESMFile(url: root.dataURL.appending(path: name)))
         }
         #expect(sweep.missing.isEmpty, "types with no decoder: \(sweep.missing)")
         #expect(sweep.failures.isEmpty, "records that threw: \(sweep.failures.prefix(10))")
         #expect(sweep.counts.count == 120, "record type count drift")
-        #expect(sweep.counts.values.reduce(0, +) == Self.pinnedTotal, "record count drift")
+        #expect(sweep.recordTotal == Self.pinnedTotal, "record count drift")
         #expect(sweep.untallied.isEmpty, "types with no skip tally: \(sweep.untallied)")
         #expect(sweep.unknownFieldTotal == Self.pinnedUnknownFields, "unread field drift")
         Self.writeReport(sweep)
@@ -76,10 +32,10 @@ struct RecordCoverageRealDataTests {
     /// Fields no decoder reads, summed over the install. docs/formats/records.md.
     private static let pinnedUnknownFields = 0
 
-    private static func writeReport(_ sweep: Sweep) {
+    private static func writeReport(_ sweep: RecordCoverageSweep) {
         var lines = [
-            "[INFO] records \(sweep.counts.values.reduce(0, +)), types \(sweep.counts.count)",
-            "[INFO] failures \(sweep.failures.count)",
+            "[INFO] records \(sweep.recordTotal), types \(sweep.counts.count)",
+            "[INFO] failures \(sweep.failureCounts.values.reduce(0, +))",
             "[INFO] unknown fields \(sweep.unknownFieldTotal)"
         ]
         lines += sweep.failures.prefix(50).map { "[ERROR] \($0)" }

@@ -62,10 +62,10 @@ nonisolated public struct LockpickingOutcome: Equatable, Sendable {
 
 /// The perk entry points lockpicking reads, by their xEdit index.
 nonisolated public enum LockpickingEntryPoint {
-    public static let sweetSpot = PerkEntryPoint(rawValue: 59)
-    public static let startingArc = PerkEntryPoint(rawValue: 63)
-    public static let unbreakable = PerkEntryPoint(rawValue: 65)
-    public static let keyReward = PerkEntryPoint(rawValue: 90)
+    public static let sweetSpot = PerkEntryPoint.modLockpickSweetSpot
+    public static let startingArc = PerkEntryPoint.setLockpickStartingArc
+    public static let unbreakable = PerkEntryPoint.makeLockpicksUnbreakable
+    public static let keyReward = PerkEntryPoint.modLockpickingKeyRewardChance
 }
 
 /// The lock a session is picking, as it stood when the session began.
