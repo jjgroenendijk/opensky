@@ -76,17 +76,19 @@ struct MenuPanelsTests {
         #expect(section.sectionIdentifier == "skillsMenu")
         #expect(section.statsLabel.accessibilityIdentifier() == "SkillsMenuStatsLabel")
         #expect(section.buttons.map { $0.accessibilityIdentifier() } == [
-            "SkillsMenuOpenControl", "SkillsMenuMovieControl", "SkillsMenuUpControl",
-            "SkillsMenuDownControl", "SkillsMenuLeftControl", "SkillsMenuRightControl",
-            "SkillsMenuAcceptControl", "SkillsMenuLegendaryControl", "SkillsMenuBackControl"
+            "SkillsMenuOpenControl", "SkillsMenuMovieControl", "SkillsMenuSkyControl",
+            "SkillsMenuUpControl", "SkillsMenuDownControl", "SkillsMenuLeftControl",
+            "SkillsMenuRightControl", "SkillsMenuAcceptControl", "SkillsMenuLegendaryControl",
+            "SkillsMenuBackControl"
         ])
         section.refreshReadout()
-        #expect(!section.buttons[6].isEnabled, "Accept waits for an open menu")
+        #expect(!section.buttons[7].isEnabled, "Accept waits for an open menu")
         send(section.buttons[0])
         section.refreshReadout()
         #expect(!section.buttons[0].isEnabled)
         #expect(section.statsLabel.stringValue.contains("Alchemy 15"))
-        send(section.buttons[7])
+        #expect(section.statsLabel.stringValue.contains("Sky: waiting"))
+        send(section.buttons[8])
         #expect(DestinationRegistry.characterMenuOverrides.isOverridden(
             WorldPanelContext(providers: provider)
         ))
@@ -96,6 +98,8 @@ struct MenuPanelsTests {
         #expect(!provider.menuCalls.skillsOpen)
         #expect(provider.menuCalls.calls.first == "skills.open")
         #expect(provider.menuCalls.calls[1].contains("yButton"))
+        send(section.buttons[2])
+        #expect(provider.menuCalls.calls.last == "skills.sky(false)")
     }
 
     @Test @MainActor

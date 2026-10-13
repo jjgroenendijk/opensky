@@ -91,6 +91,8 @@ extension PlayerWorldAdapter: PlayerWorld {
             )
             appearance.faceMorphs = identity.face.morphs
             appearance.faceParts = identity.face.parts
+            appearance.weight = identity.face.weight
+            appearance.faceTexture = identity.face.faceTexture
             appearance.tints = identity.face.tints.map {
                 PlayerAppearanceTint(
                     maskIndex: $0.maskIndex,

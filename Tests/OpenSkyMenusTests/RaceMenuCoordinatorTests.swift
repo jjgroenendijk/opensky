@@ -8,7 +8,7 @@ import Testing
 
 @MainActor
 private final class FakeRaceMenuWorld: RaceMenuWorld, MenuInputConsumer {
-    let raceMenuCategoryNames = RaceMenuCategoryNames.english
+    let raceMenuLabels = RaceMenuLabels()
     var playerIdentity: PlayerIdentityState? = PlayerIdentityState(
         race: FormID(0x13746), isFemale: false, name: "Prisoner"
     )
@@ -35,6 +35,10 @@ private final class FakeRaceMenuWorld: RaceMenuWorld, MenuInputConsumer {
             RacePreset(name: "NordPreset01", face: PlayerFace(morphs: [0.5], weight: 20)),
             RacePreset(name: "NordPreset02", face: PlayerFace(weight: 80))
         ] : []
+    }
+
+    func raceMenuOptions(race: FormID, isFemale: Bool) -> RaceMenuOptions {
+        RaceMenuOptions(presets: racePresets(race: race, isFemale: isFemale))
     }
 
     var menuInputConsumer: (any MenuInputConsumer)? {

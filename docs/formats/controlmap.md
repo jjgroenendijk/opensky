@@ -45,6 +45,16 @@ Source: the header comment of the install's own file, and the UESP page
 
 `Menu Mode` uses the `!0,...` form, so the menu keys follow the gameplay keys.
 
+## Key names
+
+`interface\controls\pc\keyboard_english.txt`, in the same archive, names each key. A line
+holds the name, the scan code in hex, and an optional Flash key code, separated by tabs:
+`Slash 0x35 191`. Some codes have no Flash code, such as `L-Windows 0xdb`.
+
+The name is also the symbol of the key's button art in the menu movies. The Controls list
+of `quest_journal.swf` attaches a clip named `L-Ctrl` or `Slash`, and falls back to
+`UnknownKey` with the hex code as its text.
+
 ## Where OpenSky differs
 
 - macOS sends Control-click as a right click, so Sneak moves from Left Control to C.

@@ -7,10 +7,12 @@ import OpenSkyDialogue
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyMenus
+import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
+import simd
 
 /// Holds the panel's force toggle and target for `game`.
 final class DialogueCameraController {
@@ -20,6 +22,12 @@ final class DialogueCameraController {
     private(set) var target: DialogueCameraTarget = .crosshair
     /// Kept across readout refreshes, so the user sees what they just did.
     private(set) var lastOutcome: String?
+    /// The player's facing when the race menu opened. Read once, because the
+    /// framed pose turns the view and would move the shot every frame.
+    private var portraitYaw: Float?
+    /// 1 frames the face, 0 the whole body; eased towards the movie's `ZoomPC`.
+    private var portraitZoom: Float = 1
+    private var lastPortraitTime: Double?
 
     init(game: GameViewController) {
         self.game = game
@@ -30,9 +38,17 @@ final class DialogueCameraController {
     func refreshFocus() {
         guard let renderer = game.renderer else { return }
         if game.raceMenu.isOpen {
-            renderer.setDialogueCameraFocus(Self.portrait(of: renderer))
+            let yaw = portraitYaw ?? Self.playerYaw(of: renderer)
+            portraitYaw = yaw
+            easePortraitZoom(towards: game.raceMenu.isZoomedIn ? 1 : 0)
+            renderer.setDialogueCameraFocus(
+                Self.portrait(of: renderer, yaw: yaw, zoom: portraitZoom)
+            )
             return
         }
+        portraitYaw = nil
+        portraitZoom = 1
+        lastPortraitTime = nil
         guard
             let speaker = speaker(),
             let head = game.dialogueWorld.headPosition(of: speaker)
@@ -47,13 +63,38 @@ final class DialogueCameraController {
 
     /// The race menu shows the player's face from the front, at the player's eye height.
     /// [WARNING] The game's race menu camera is not documented; this reuses the framing.
-    static func portrait(of renderer: Renderer) -> DialogueCameraFocus {
-        let head = renderer.playerEyePosition
-        let yaw = renderer.freeFlyCamera.yaw
+    /// Zoomed out, the shot aims at the middle of the body from far enough to fit it.
+    static func portrait(of renderer: Renderer, yaw: Float, zoom: Float) -> DialogueCameraFocus {
+        let eye = renderer.playerEyePosition
+        let capsule = renderer.walkController.capsule
         let forward = SIMD3<Float>(cosf(yaw), sinf(yaw), 0)
+        let body = eye - SIMD3<Float>(0, 0, capsule.eyeHeight / 2)
+        let target = simd_mix(body, eye, SIMD3(repeating: zoom))
+        let near = DialogueCamera.framingDistance(capsule: capsule)
+        let far = near * capsule.height / DialogueCamera.framedHeight(capsule: capsule)
+        let distance = near + (far - near) * (1 - zoom)
+        // The resolve stands off `distance` when the viewpoint is that far minus clearance.
+        let reach = max(1, distance - DialogueCamera.clearanceBehindPlayer)
         return DialogueCameraFocus(
-            headPosition: head, viewpoint: head + forward, framesPlayer: true
+            headPosition: target, viewpoint: target + forward * reach, framesPlayer: true
         )
+    }
+
+    /// About a third of a second from one framing to the other.
+    private func easePortraitZoom(towards goal: Float) {
+        let now = Date().timeIntervalSinceReferenceDate
+        defer { lastPortraitTime = now }
+        guard let last = lastPortraitTime else {
+            portraitZoom = goal
+            return
+        }
+        let step = Float(min(0.1, max(0, now - last)))
+        portraitZoom += (goal - portraitZoom) * min(1, step * 3)
+    }
+
+    /// The player's own view yaw, not the framed pose that stands in for it.
+    static func playerYaw(of renderer: Renderer) -> Float {
+        renderer.dialogueCameraState.restorePose?.yaw ?? renderer.freeFlyCamera.yaw
     }
 
     /// The conversation outranks the force toggle, so forcing the camera and

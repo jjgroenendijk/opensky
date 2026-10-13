@@ -15,6 +15,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     public let shapes: [ShapeTextures]
     /// The actor's skin colour, the tint colour of skin-tint shapes only.
     public let skinTone: SIMD3<Float>?
+    /// A texture set's FaceGen detail map (`TX04`), such as a complexion's.
+    public let detailTexture: String?
 
     /// The textures one named shape draws instead of its own.
     public struct ShapeTextures: Hashable, Sendable {
@@ -34,13 +36,15 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         normalTexture: String?,
         tint: SIMD3<Float>?,
         shapes: [ShapeTextures] = [],
-        skinTone: SIMD3<Float>? = nil
+        skinTone: SIMD3<Float>? = nil,
+        detailTexture: String? = nil
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
         self.tint = tint
         self.shapes = shapes
         self.skinTone = skinTone
+        self.detailTexture = detailTexture
     }
 
     /// `surface` with `skinTone` added, or nil when both are empty.
@@ -50,19 +54,21 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         guard let skinTone else { return surface }
         return ModelSurfaceOverride(
             diffuseTexture: surface?.diffuseTexture, normalTexture: surface?.normalTexture,
-            tint: surface?.tint, shapes: surface?.shapes ?? [], skinTone: skinTone
+            tint: surface?.tint, shapes: surface?.shapes ?? [], skinTone: skinTone,
+            detailTexture: surface?.detailTexture
         )
     }
 
     public var isEmpty: Bool {
         diffuseTexture == nil && normalTexture == nil && tint == nil && shapes.isEmpty
-            && skinTone == nil
+            && skinTone == nil && detailTexture == nil
     }
 
     /// Part of a mesh cache key: two overrides that draw alike key alike.
     public var cacheKey: String {
         let tint = tint.map(Self.colorKey) ?? "-"
         let skin = skinTone.map { "|skin:" + Self.colorKey($0) } ?? ""
+            + (detailTexture.map { "|detail:" + $0 } ?? "")
         let shapes = shapes.map {
             "\($0.shapeName.lowercased())=\($0.diffuseTexture ?? "-"),\($0.normalTexture ?? "-")"
         }
@@ -81,8 +87,9 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         var materials = model.materials.map {
             Self.retextured(
                 $0,
-                diffuse: diffuseTexture,
-                normal: normalTexture,
+                textures: Textures(
+                    diffuse: diffuseTexture, normal: normalTexture, detail: detailTexture
+                ),
                 replacesTint: tint != nil,
                 skinTone: $0.tintsSkin ? skinTone : nil
             )
@@ -96,8 +103,9 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             else { continue }
             materials.append(Self.retextured(
                 materials[mesh.materialSlot],
-                diffuse: swap.diffuseTexture,
-                normal: swap.normalTexture,
+                textures: Textures(
+                    diffuse: swap.diffuseTexture, normal: swap.normalTexture, detail: nil
+                ),
                 replacesTint: false,
                 skinTone: nil
             ))
@@ -111,12 +119,18 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         )
     }
 
+    /// The texture paths one material takes instead of its own; nil keeps the material's.
+    private struct Textures {
+        let diffuse: String?
+        let normal: String?
+        let detail: String?
+    }
+
     /// An actor's own colour replaces the tint colour the NIF stores. The skin tone
     /// stays a material colour, because the shader blends it unlike a vertex colour.
     private static func retextured(
         _ material: Material,
-        diffuse: String?,
-        normal: String?,
+        textures: Textures,
         replacesTint: Bool,
         skinTone: SIMD3<Float>?
     ) -> Material {
@@ -127,9 +141,12 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         if let skinTone {
             shading.tintColor = skinTone
         }
+        if let detail = textures.detail {
+            shading.detailTexture = detail
+        }
         return Material(
-            diffuseTexture: diffuse ?? material.diffuseTexture,
-            normalTexture: normal ?? material.normalTexture,
+            diffuseTexture: textures.diffuse ?? material.diffuseTexture,
+            normalTexture: textures.normal ?? material.normalTexture,
             uvOffset: material.uvOffset,
             uvScale: material.uvScale,
             alpha: material.alpha,

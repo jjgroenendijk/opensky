@@ -73,8 +73,8 @@ nonisolated public enum SettingsMovieBridge: Sendable {
         runtime.callMovie("InvalidateData", atPath: optionsListPath)
     }
 
-    /// Starts a `SystemPage` state by its constant name; the options state also
-    /// focuses the options list.
+    /// Starts a `SystemPage` state by its constant name. The movie focuses the
+    /// state's list itself.
     public static func startState(_ name: String, runtime: SWFMovieRuntime) {
         guard
             let value = runtime.runtime.registeredClass(named: "SystemPage")?
@@ -85,8 +85,5 @@ nonisolated public enum SettingsMovieBridge: Sendable {
             atPath: SystemMenuMovieBridge.systemPagePath,
             arguments: [value]
         )
-        let focus = name == optionsState
-            ? optionsListPath : SystemMenuMovieBridge.settingsCategoryListPath
-        runtime.focusTarget = runtime.node(atPath: focus, from: runtime.root)
     }
 }

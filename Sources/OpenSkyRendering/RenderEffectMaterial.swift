@@ -21,6 +21,14 @@ nonisolated public struct RenderEffectMaterial: Sendable {
         let hasPalette = shading.paletteTexture != nil
         palette = hasPalette && (shading.paletteColor || shading.paletteAlpha)
             ? textureProvider(shading.paletteTexture, .color) : nil
+        flags = Self.flags(shading, hasPalette: hasPalette)
+        baseColor = shading.baseColor
+        baseColorScale = shading.baseColorScale
+        falloff = shading.falloff ?? .zero
+    }
+
+    /// `EffectFlag` bits; a palette flag needs a palette to sample.
+    public static func flags(_ shading: EffectShading, hasPalette: Bool) -> UInt32 {
         let bits: [(Bool, EffectFlag)] = [
             (true, .enabled),
             (hasPalette && shading.paletteColor, .paletteColor),
@@ -29,9 +37,6 @@ nonisolated public struct RenderEffectMaterial: Sendable {
             (shading.vertexColors, .vertexColors),
             (shading.vertexAlpha, .vertexAlpha)
         ]
-        flags = bits.reduce(0) { $0 | ($1.0 ? UInt32($1.1.rawValue) : 0) }
-        baseColor = shading.baseColor
-        baseColorScale = shading.baseColorScale
-        falloff = shading.falloff ?? .zero
+        return bits.reduce(0) { $0 | ($1.0 ? UInt32($1.1.rawValue) : 0) }
     }
 }

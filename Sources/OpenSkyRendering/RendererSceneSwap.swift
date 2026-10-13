@@ -178,6 +178,7 @@ extension Renderer {
         live
             .formUnion((effects.loadingCover?.residencyAllocations ?? [])
                 .map(ObjectIdentifier.init))
+        live.formUnion(effects.menuScene.resident.keys)
         live.insert(ObjectIdentifier(frameUniformBuffer))
         live.insert(ObjectIdentifier(drawUniformBuffer))
         live.insert(ObjectIdentifier(pointLightBuffer))

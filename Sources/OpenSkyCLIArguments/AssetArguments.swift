@@ -9,6 +9,8 @@ public struct NIFArguments: CLICommandArguments {
     )
     @OptionGroup public var global: GlobalOptions
     @Argument public var key: String
+    @Flag(help: "Also print the node tree, unlit shapes, and controller sequences.")
+    public var sequences = false
 
     public init() {}
 }

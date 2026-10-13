@@ -1,6 +1,5 @@
-// `NiTransformData` keyframes: the rotation and translation keys of one
-// animated transform. Scale keys follow and are not read. Layout:
-// docs/formats/nif.md#camera-animation.
+// `NiTransformData` keyframes: the rotation, translation, and scale keys of one
+// animated transform. Layout: docs/formats/nif.md#camera-animation.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -35,6 +34,7 @@ nonisolated public struct NIFTransformData: Equatable, Sendable {
     /// X, Y, and Z angle keys in radians, used when `rotationType` is `xyzRotation`.
     public let eulerRotations: [[NIFKey<Float>]]
     public let translations: [NIFKey<SIMD3<Float>>]
+    public let scales: [NIFKey<Float>]
 
     public init(data: Data) throws {
         var reader = BinaryReader(data)
@@ -64,6 +64,8 @@ nonisolated public struct NIFTransformData: Equatable, Sendable {
         self.rotations = rotations
         eulerRotations = euler
         translations = try Self.keyGroup(&reader) { try $0.readVector3() }
+        scales = reader.bytesRemaining >= 4
+            ? try Self.keyGroup(&reader) { try $0.readFloat32() } : []
     }
 
     /// nif.xml stores w first; `simd_quatf` takes the vector part first.
@@ -115,5 +117,21 @@ nonisolated public struct NIFTransformData: Equatable, Sendable {
         guard count * stride <= reader.bytesRemaining else {
             throw NIFError.malformed("key count \(count) exceeds block size")
         }
+    }
+}
+
+nonisolated extension NIFTransformData {
+    /// Slerp between quaternion keys, or X then Y then Z angles for XYZ data. Nil
+    /// without rotation keys.
+    public func rotation(at time: Float) -> simd_quatf? {
+        if let rotation = NIFKeySampler.rotation(rotations, at: time) {
+            return rotation
+        }
+        guard eulerRotations.count == 3, eulerRotations.contains(where: { !$0.isEmpty })
+        else { return nil }
+        let angles = eulerRotations.map { NIFKeySampler.float($0, at: time) ?? 0 }
+        return simd_quatf(angle: angles[2], axis: [0, 0, 1])
+            * simd_quatf(angle: angles[1], axis: [0, 1, 0])
+            * simd_quatf(angle: angles[0], axis: [1, 0, 0])
     }
 }

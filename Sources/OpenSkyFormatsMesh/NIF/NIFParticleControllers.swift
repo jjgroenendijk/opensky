@@ -108,7 +108,7 @@ nonisolated enum NIFParticleControllerDecoder {
 
     /// `NiFloatInterpolator`: pose value, then a `NiFloatData` ref. Another
     /// interpolator type (a blend from a controller manager) gives no keys.
-    private static func floatKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Float>] {
+    static func floatKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Float>] {
         guard ref >= 0 else { return [] }
         let block = try Self.block(ref, file)
         guard block.typeName == "NiFloatInterpolator" else { return [] }
@@ -128,7 +128,7 @@ nonisolated enum NIFParticleControllerDecoder {
 
     /// `NiBoolInterpolator` or `NiBoolTimelineInterpolator`: pose byte (2 is unset),
     /// then a `NiBoolData` ref.
-    private static func boolKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Bool>] {
+    static func boolKeys(_ ref: Int32, file: NIFFile) throws -> [NIFKey<Bool>] {
         guard ref >= 0 else { return [] }
         let block = try Self.block(ref, file)
         guard boolInterpolatorTypes.contains(block.typeName) else { return [] }
@@ -146,7 +146,7 @@ nonisolated enum NIFParticleControllerDecoder {
         return value > 1 ? [] : [NIFKey(time: 0, value: value == 1)]
     }
 
-    private static func block(_ ref: Int32, _ file: NIFFile) throws -> NIFFile.Block {
+    static func block(_ ref: Int32, _ file: NIFFile) throws -> NIFFile.Block {
         guard ref >= 0, Int(ref) < file.blocks.count else {
             throw NIFError.malformed("block ref \(ref) out of range (\(file.blocks.count) blocks)")
         }

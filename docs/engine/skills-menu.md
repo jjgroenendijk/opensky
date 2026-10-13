@@ -81,12 +81,12 @@ The engine fills two arrays on the class before it calls the movie:
 selects `LEVEL_UP`. A colour argument is an HTML colour string; `undefined` leaves the
 text white.
 
-### Where OpenSky differs
+### The perk sky
 
 Vanilla draws the perk stars, their lines, and the sky behind the ring in 3D, outside the
-movie. The movie only calls `MoveCamera`. OpenSky has no 3D constellation scene yet. It places
-the perk names from the `AVIF` grid instead: the tree grows up from the bottom centre, owned
-perks are white, and the selected perk is bold. `MoveCamera` is a no-op.
+movie. OpenSky draws them too: the [perk sky](/engine/perk-sky.md) page has the meshes, the
+layout, and the camera. The movie places each perk name where its star lands on screen, and
+its `MoveCamera` calls drive the opening camera move.
 
 ## Legendary skills and the Dragonborn altar
 
@@ -110,7 +110,9 @@ field there would break older readers.
 ## Controls
 
 World > Character > Skills Menu opens the menu and sends each key. It also switches between
-the movies and OpenSky's rows; the readout shows the rows in either case.
+the movies and OpenSky's rows; the readout shows the rows in either case. Sky shows or hides
+the perk sky, and the readout's sky line gives its draw count, its turn, and whether the
+ring or a tree is in view.
 
 World > Progression > Skills has Make legendary and Reset tree for the chosen skill, and
 shows each skill's legendary count and the current experience rate.

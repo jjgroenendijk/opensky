@@ -11,8 +11,9 @@ import OpenSkyImageKernels
 import OpenSkyRendering
 
 nonisolated extension CellSceneBuilder {
-    /// Assembles the head from parts and swaps the face part's color map for the
-    /// painted one. A race without head parts keeps the baked head.
+    /// Assembles the head from parts and paints the face part's color map, which the
+    /// resolver already set to the complexion, with the tint layers. A race without head
+    /// parts keeps the baked head.
     func chargenVisual(
         _ visual: ResolvedActorVisual, appearance: PlayerAppearanceOverride
     ) -> ResolvedActorVisual {
@@ -29,7 +30,8 @@ nonisolated extension CellSceneBuilder {
             return ResolvedHeadPart(
                 formID: part.formID, editorID: part.editorID, partType: part.partType,
                 origin: part.origin, modelPath: part.modelPath, diffuseTexture: key,
-                normalTexture: part.normalTexture, tint: part.tint
+                normalTexture: part.normalTexture, tint: part.tint,
+                detailTexture: part.detailTexture
             )
         }
         visual.headParts = HeadPartSet(parts: parts, misses: visual.headParts.misses)

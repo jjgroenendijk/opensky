@@ -20,7 +20,7 @@ struct MenuStateSaveTests {
             morphs: [0.25, -0.5], parts: [2, -1], headParts: [FormID(0x1234)],
             hairColor: FormID(0x5678),
             tints: [PlayerTintLayer(maskIndex: 3, color: SIMD4(10, 20, 30, 255), strength: 0.5)],
-            weight: 75, height: 1.03
+            weight: 75, height: 1.03, faceTexture: FormID(0x9ABC)
         )
     )
     private static let marker = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_6E2A)
@@ -42,7 +42,7 @@ struct MenuStateSaveTests {
             bystanderCell: OpenSkySaveFixture.riverwood
         )
         let data = OpenSkySaveFixture.encode(original)
-        for tag in ["PIDN", "MRKS", "FOGM"] {
+        for tag in ["PIDN", "PCPX", "MRKS", "FOGM"] {
             #expect(data.range(of: Data(tag.utf8)) != nil, "\(tag) written")
         }
         let file = try OpenSkySaveDecoder.decode(data)

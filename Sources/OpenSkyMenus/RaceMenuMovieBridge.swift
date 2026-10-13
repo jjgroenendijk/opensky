@@ -8,26 +8,26 @@ import OpenSkyFormatsSWF
 
 nonisolated public enum RaceMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\racesex_menu.swf"
-    /// Movie-to-engine calls that only report sounds, camera zoom, and text focus.
+    /// Movie-to-engine calls that only report sounds and text focus.
     public static let sinkHostFunctions = [
-        "ZoomPC", "SetAllowTextInput", "ShowVirtualKeyboard", "PlaySound", "myLog"
+        "SetAllowTextInput", "ShowVirtualKeyboard", "PlaySound", "myLog"
     ]
-    /// Slider callbacks the movie may name; each is answered as a slider change.
+    /// Slider callbacks the engine names; each is answered as a slider change. The
+    /// movie's own test list uses the vanilla ones, so the same names are kept.
     public static let sliderHostFunctions = [
         "ChangeDoubleMorph", "ChangeWeight", "ChangeHeadPart", "ChangeHeadPreset",
-        "ChangeTintingMask", "ChangeFaceDetails", "ChangePreset", "ChangeHairColorPreset"
+        "ChangeTintingMask", "ChangeFaceDetails", "ChangePreset", "ChangeHairColorPreset",
+        "ChangeSex"
     ]
     static let pcPlatform = SystemMenuMovieBridge.pcPlatform
-    /// A slider shows under each category whose flag it shares (`filterFlag & flag`).
-    static let raceCategory = 1
-    static let bodyCategory = 2
-    static let headCategory = 4
 
     public enum Request: Equatable, Sendable {
         case race(Int)
         /// `id` is the slider's row in `RaceMenuModel.rows`.
         case slider(id: Int, value: Double)
         case name(String)
+        /// `ZoomPC(true)` on the Race and Head categories, `false` on Body.
+        case zoom(Bool)
         case done
     }
 
@@ -63,6 +63,16 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
             }
         }
         forward("ChangeName") { _, text in text.map { .name($0) } }
+        runtime.registerHostFunction("ZoomPC") { call in
+            let zoomIn: Bool? = switch call.arguments.first {
+            case let .boolean(flag): flag
+            case let .number(number): number != 0
+            default: nil
+            }
+            guard let zoomIn else { return .undefined }
+            MainActor.assumeIsolated { onRequest(.zoom(zoomIn)) }
+            return .undefined
+        }
         forward("ConfirmDone") { _, _ in .done }
     }
 
@@ -91,11 +101,9 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
 
     /// Sends the categories, races, sliders, and name the model holds.
     public static func publish(_ model: RaceMenuModel, runtime: SWFMovieRuntime) {
-        let names = model.categoryNames
-        runtime.callMovie("SetCategoriesList", arguments: [
-            .string(names.race), .integer(raceCategory), .string(names.body),
-            .integer(bodyCategory), .string(names.head), .integer(headCategory)
-        ])
+        runtime.callMovie("SetCategoriesList", arguments: RaceMenuCategory.allCases.flatMap {
+            [AS2Value.string(model.labels.text($0.labelKey)), .integer($0.rawValue)]
+        })
         runtime.callMovie("SetRaceList", arguments: model.races.flatMap { race in
             [
                 .string(race.name), .string(race.description),
@@ -110,45 +118,33 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
     }
 
     /// Eight values per slider: text, filter flag, callback, min, max, position,
-    /// interval, and id. Rows without a slider send nothing.
+    /// interval, and id. The race and name rows have their own lists.
     static func slider(id: Int, row: RaceMenuRow, model: RaceMenuModel) -> [AS2Value] {
-        let face = model.identity.face
-        let spec: SliderSpec
-        switch row {
-        case .weight:
-            spec = SliderSpec(
-                flag: bodyCategory,
-                callback: "ChangeWeight",
-                range: 0 ... 100,
-                value: Double(face.weight),
-                step: 5
-            )
-        case let .slider(index):
-            spec = SliderSpec(
-                flag: headCategory,
-                callback: "ChangeDoubleMorph",
-                range: -1 ... 1,
-                value: Double(face.morphs[index]),
-                step: 0.1
-            )
-        case let .part(index):
-            guard let range = RaceMenuModel.partRanges[index] else { return [] }
-            let bounds = Double(range.lowerBound) ... Double(range.upperBound)
-            spec = SliderSpec(
-                flag: headCategory,
-                callback: "ChangeHeadPart",
-                range: bounds,
-                value: Double(face.parts[index]),
-                step: 1
-            )
-        case .race, .sex, .name:
-            return []
-        }
+        guard
+            let control = RaceMenuModel.control(for: row), control.category != .race,
+            let range = model.range(row)
+        else { return [] }
         return [
-            .string(model.label(row)), .integer(spec.flag), .string(spec.callback),
-            .number(spec.range.lowerBound), .number(spec.range.upperBound), .number(spec.value),
-            .number(spec.step), .integer(id)
+            .string(model.label(row)), .integer(control.category.rawValue),
+            .string(callback(row)), .number(Double(range.bounds.lowerBound)),
+            .number(Double(range.bounds.upperBound)), .number(Double(model.position(row))),
+            .number(Double(range.step)), .integer(id)
         ]
+    }
+
+    static func callback(_ row: RaceMenuRow) -> String {
+        switch row {
+        case .weight: "ChangeWeight"
+        case .slider: "ChangeDoubleMorph"
+        case .part: "ChangePreset"
+        case .headPreset: "ChangeHeadPreset"
+        case .headPart: "ChangeHeadPart"
+        case .hairColor: "ChangeHairColorPreset"
+        case .complexion: "ChangeFaceDetails"
+        case .tintColor, .tintMask: "ChangeTintingMask"
+        case .sex: "ChangeSex"
+        case .race, .name: ""
+        }
     }
 
     @discardableResult
@@ -158,12 +154,4 @@ nonisolated public enum RaceMenuMovieBridge: Sendable {
         let up = runtime.handle(.keyUp(code: key.code))
         return down || up
     }
-}
-
-private struct SliderSpec {
-    let flag: Int
-    let callback: String
-    let range: ClosedRange<Double>
-    let value: Double
-    let step: Double
 }

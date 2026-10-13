@@ -10,6 +10,9 @@ import OpenSkyRendering
 public protocol SkillsMenuWorld: SWFLayerWorld {
     var skillsMenuSource: (any SkillsMenuSource)? { get }
     var menuInputConsumer: (any MenuInputConsumer)? { get }
+    /// The perk sky's meshes; nil without game data.
+    var perkSkySource: PerkSkySource? { get }
+    var perkSkySettings: PerkSkySettings { get }
 }
 
 nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
@@ -20,11 +23,14 @@ nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
     public let selectedIndex: Int?
     public let lastResult: String?
     public let movie: TitleMenuMovieSnapshot
+    public let isSkyEnabled: Bool
+    /// The perk sky's state, such as "812 draws, slot 3, tree view"; nil before it shows.
+    public let sky: String?
 
     public init(
         isOpen: Bool = false, page: String = "Closed", rows: [String] = [],
         selectedIndex: Int? = nil, lastResult: String? = nil,
-        movie: TitleMenuMovieSnapshot = .init()
+        movie: TitleMenuMovieSnapshot = .init(), isSkyEnabled: Bool = true, sky: String? = nil
     ) {
         self.isOpen = isOpen
         self.page = page
@@ -32,6 +38,8 @@ nonisolated public struct SkillsMenuSnapshot: Equatable, Sendable {
         self.selectedIndex = selectedIndex
         self.lastResult = lastResult
         self.movie = movie
+        self.isSkyEnabled = isSkyEnabled
+        self.sky = sky
     }
 }
 
@@ -41,6 +49,7 @@ public final class SkillsMenuCoordinator {
     public internal(set) var model: SkillsMenuModel?
     public internal(set) var lastResult: String?
     public private(set) var movieEnabled = true
+    public internal(set) var skyEnabled = true
     public internal(set) var movieLoaded = false
     public internal(set) var movieError: String?
     /// The movie on the layer now, because the level-up pick and the ring use two.
@@ -50,6 +59,7 @@ public final class SkillsMenuCoordinator {
     var framePacer = MenuMovieFramePacer()
     /// Buttons the level-up movie pressed, applied after it returns.
     var pendingChoices: [ActorValueKind] = []
+    var sky = PerkSkyState()
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
     private let menuMode: MenuModeController
@@ -76,6 +86,7 @@ public final class SkillsMenuCoordinator {
     public func open() -> Bool {
         guard model == nil, let world, let source = world.skillsMenuSource else { return false }
         model = SkillsMenuModel(player: source.skillsMenuPlayer, skills: source.skillsMenuSkills)
+        loadTrees(source)
         menuMode.inputConsumer = world.menuInputConsumer
         menuMode.present(Self.identifier)
         syncMovie()
@@ -86,6 +97,7 @@ public final class SkillsMenuCoordinator {
         guard model != nil else { return }
         model = nil
         stopMovie()
+        hideSky()
         menuMode.dismiss(Self.identifier)
     }
 
@@ -139,6 +151,7 @@ public final class SkillsMenuCoordinator {
             model.setPerks(source.skillsMenuPerks(forSkill: skill.index), keepSelection: true)
         }
         self.model = model
+        loadTrees(source)
     }
 
     private func report(_ outcome: SkillsMenuOutcome) {
@@ -149,7 +162,9 @@ public final class SkillsMenuCoordinator {
 
     public var snapshot: SkillsMenuSnapshot {
         guard let model else {
-            return SkillsMenuSnapshot(lastResult: lastResult, movie: movieSnapshot)
+            return SkillsMenuSnapshot(
+                lastResult: lastResult, movie: movieSnapshot, isSkyEnabled: skyEnabled
+            )
         }
         let rows: [String]
         let selected: Int?
@@ -174,7 +189,8 @@ public final class SkillsMenuCoordinator {
         }
         return SkillsMenuSnapshot(
             isOpen: true, page: page, rows: rows, selectedIndex: selected,
-            lastResult: lastResult, movie: movieSnapshot
+            lastResult: lastResult, movie: movieSnapshot, isSkyEnabled: skyEnabled,
+            sky: skyLine
         )
     }
 
@@ -203,6 +219,7 @@ public protocol SkillsMenuControlProviding: AnyObject {
     func openSkillsMenu()
     func sendSkillsMenuInput(_ event: MenuInputEvent)
     func setSkillsMenuMovieEnabled(_ enabled: Bool)
+    func setSkillsMenuSkyEnabled(_ enabled: Bool)
 }
 
 /// Lets the app's provider object stand in for its `SkillsMenuCoordinator`.
@@ -225,5 +242,9 @@ extension SkillsMenuControlForwarding {
 
     public func setSkillsMenuMovieEnabled(_ enabled: Bool) {
         skillsMenu.setMovieEnabled(enabled)
+    }
+
+    public func setSkillsMenuSkyEnabled(_ enabled: Bool) {
+        skillsMenu.setSkyEnabled(enabled)
     }
 }

@@ -119,6 +119,25 @@ a vanilla menu nests its list under a plain holder clip (`startmenu.swf`: `Menu_
 `MainListHolder`, then `List_mc`), and the movie forwards down `pathToFocus[0]`. The holder defines
 no `handleInput`, so an unfiltered path dropped every key.
 
+### Who sets the focus
+
+CLIK's `UIComponent.focused` setter reads `Selection.numFocusGroups` and
+`System.capabilities.numControllers`, then calls `Selection.setFocus` once per controller. GFx adds
+these fields; Flash has none of them. Without them, no CLIK control takes focus. OpenSky answers one
+controller in one focus group, and each focus change calls the `Selection` listeners'
+`onSetFocus(old, new, 0)`.
+
+With that in place, a menu movie focuses its own lists. Measured with `swf movie-probe` and
+`swf system-menu`:
+
+| Movie | Focus the movie sets | Engine step still needed |
+| --- | --- | --- |
+| `racesex_menu.swf` | The active list | None |
+| `quest_journal.swf`, System page | The settings list and the options list, on `StartState` | The first page and tab: their seed data is missing, so the engine focuses the category list |
+| `inventorymenu.swf`, `containermenu.swf` | The category list, after `InitExtensions` | Focus on the item list, because OpenSky changes the category itself |
+| `startmenu.swf` | `Menu_mc`, where up and down move nothing | Focus on the list of the current state |
+| `levelupmenu.swf` | None | Focus on the highlighted button |
+
 ## Timers
 
 `setInterval`, `clearInterval`, `setTimeout`, and `clearTimeout` are required. CLIK's

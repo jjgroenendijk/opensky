@@ -250,12 +250,6 @@ nonisolated extension OpenSkySaveDecoder {
             body.dialogueBranches = try OpenSkySaveStoryDecoder.decodeDialogueBranches(payload)
         case OpenSkySaveFormat.ChunkTag.helpMessages:
             body.helpMessages = try OpenSkySaveStoryDecoder.decodeHelpMessages(payload)
-        case OpenSkySaveFormat.ChunkTag.playerIdentity:
-            body.identities = try OpenSkySaveStoryDecoder.decodeIdentities(payload)
-        case OpenSkySaveFormat.ChunkTag.mapMarkers:
-            body.markers = try OpenSkySaveStoryDecoder.decodeMarkers(payload)
-        case OpenSkySaveFormat.ChunkTag.localMapFog:
-            body.fog = try OpenSkySaveStoryDecoder.decodeFog(payload)
         case OpenSkySaveFormat.ChunkTag.playerPlace:
             body.playerPlace = try decodePlayerPlace(payload)
         case OpenSkySaveFormat.ChunkTag.temperedItems:
@@ -263,7 +257,9 @@ nonisolated extension OpenSkySaveDecoder {
         case OpenSkySaveFormat.ChunkTag.relocations:
             body.relocations = try OpenSkySaveRelocationDecoder.decodeRelocations(payload)
         default:
-            try applyJournal(tag: tag, payload: payload, to: &body)
+            if try !applyIdentityAndMap(tag: tag, payload: payload, to: &body) {
+                try applyJournal(tag: tag, payload: payload, to: &body)
+            }
         }
     }
 }

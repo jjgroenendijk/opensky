@@ -14,20 +14,39 @@ on the player, so the save carries it. Each step of a row stores the identity at
 the drawn head follows the slider. Closing the menu queues `OnRaceSwitchComplete` on the
 player's scripts.
 
-## Rows
+## Controls
 
-| Row | Range |
-| --- | --- |
-| Race | The `RACE` records with the playable flag |
-| Sex | Male or female |
-| Weight | 0 to 100, `NPC_ NAM7` |
-| 18 face sliders | -1 to 1 in steps of 0.1, `NPC_ NAM9` |
-| Nose, eye, mouth type | `NPC_ NAMA` groups 0, 2, and 3 |
-| Name | Up to 64 characters |
+The menu has the vanilla seven categories, each a filter flag on its controls: Race 1,
+Body 2, Head 4, Face 8, Eyes 16, Brow 32, and Mouth 64. Each control's label is an `sRSM`
+game setting, so it follows the game's language. The order was read from the movie's own
+test list (`racesex_menu.swf`, `FaceChanges`), which names the callbacks the game uses.
+
+| Category | Controls, in order | Data |
+| --- | --- | --- |
+| Body | Sex, Skin Tone, Weight | Tint type 6; `NPC_ NAM7` 0 to 100 |
+| Head | Presets, Hair, Hair Color, Beard, Scars, Complexion, Dirt, Dirt Color, War Paint, War Paint Color, Laugh Lines, Forehead, Neck | `RPRM`/`RPRF`; `HDPT` hair, facial hair, scar; `AHCM`/`AHCF`; `FTSM`/`FTSF`; tint types 14, 7, 8, 13, 12 |
+| Face | Nose Type, Nose Height, Nose Length, Nose Color, Jaw Width, Height, Forward, Cheekbone Height, Width, Cheek Color, Lower Cheek Color, Chin Width, Length, Forward, Chin Color | `NAMA` 0; `NAM9` 1, 0, 3, 2, 4, 5, 6, 14, 15, 16; tint types 10, 2, 9, 11 |
+| Eyes | Eye Shape, Eye Color, Eye Height, Width, Depth, Eyeliner, Socket Upper, Socket Lower | `NAMA` 2; `HDPT` eyes; `NAM9` 7, 8, 17; tint types 3, 4, 5 |
+| Brow | Brow Type, Height, Width, Forward | `HDPT` eyebrows; `NAM9` 9, 10, 11 |
+| Mouth | Mouth Type, Mouth Height, Forward, Lip Color | `NAMA` 3; `NAM9` 12, 13; tint type 1 |
+
+- A head part control lists the playable `HDPT` records of that type whose sex flag fits
+  and whose valid-race `FLST` holds the race. Beard and scars start with "none".
+- A colour control picks one of the mask's `TINC` colours, painted at its `TINV` value.
+  Some records store `TINV` as a percent, so a value over 1 is divided by 100.
+- War paint and dirt pick one mask of their type, or none, and then a colour for it.
+- Complexion picks one of the race's `FTSM`/`FTSF` face texture sets, or the race default
+  (`DFTM`/`DFTF`). It replaces the face part's diffuse, normal, and detail maps.
+- A race or sex change brings that race's choices, and the face takes its first preset, so
+  no part of the old race stays. A preset keeps the weight.
+- A control the race offers nothing for is left out, so its slider does not show.
+- The 19th `NAM9` value is the vampire morph; the menu does not show it.
 
 The type ranges come from the chargen TRI of the female head: 30 nose targets, 28 eye
-targets, and 30 lip targets. The 19th `NAM9` value is the vampire morph; the menu does not
-show it.
+targets, and 30 lip targets.
+
+[WARNING] The vanilla Head category also has an Age control (`sRSMAge`). No record names what it
+changes, so OpenSky leaves it out.
 
 ## Limited mode
 
@@ -105,6 +124,9 @@ FaceGen head, because the baked head belongs to the record's race and face.
   its colour becomes the body's skin tone, which an NPC stores as `QNAM`. Ralof's layer
   colour divided by 255 equals his `QNAM`. The layer strength is not used for the body; for
   vanilla NPCs it is 100, so its role there is not known.
+- Each head part's texture set adds its detail map (`TX04`), which the lit shader already
+  reads for FaceGen faces. The player's complexion, or an NPC's `FTST`, replaces the face
+  part's texture set.
 
 ## The race menu movie
 
@@ -114,7 +136,7 @@ measured with `openskycli swf movie-probe`.
 | Engine calls | Values |
 | --- | --- |
 | `SetPlatform`, `InitExtensions` | On the root, at start. The root forwards both to the panels |
-| `SetCategoriesList` | Race, body, and head pages, with flags 1, 2, and 4 |
+| `SetCategoriesList` | The seven categories, each a name and its flag |
 | `SetRaceList` | Per race: name, `RACE` `DESC`, and 1 for the current race |
 | `SetOptionSliders` | Per slider: 8 values, the name, page flag, callback, minimum, maximum, value, step, and id |
 | `SetNameText` | The character's name |
@@ -122,17 +144,19 @@ measured with `openskycli swf movie-probe`.
 | Movie calls | Effect |
 | --- | --- |
 | `ChangeRace` | Picks a race by its place in the list, then sends the lists again |
-| A slider callback, such as `ChangeDoubleMorph` | Sets that slider's row, clamped to its range |
+| A slider callback | Sets that control, clamped to its range. `ChangeWeight`, `ChangeDoubleMorph` (sliders), `ChangePreset` (`NAMA` types), `ChangeHeadPreset`, `ChangeHeadPart`, `ChangeHairColorPreset`, `ChangeFaceDetails` (complexion), `ChangeTintingMask`, and `ChangeSex` |
+| `ZoomPC` | `true` frames the face, `false` the whole body |
+| `PlaySound` | Plays the named `SNDR` descriptor, as every menu does |
 | `ChangeName` | Sets the name |
 | `ConfirmDone` | Closes the menu |
 
 Each change goes through the same model as the panel rows, so the head updates the same way.
-Sound and camera calls are accepted and ignored.
+A race, sex, preset, or war paint change moves other controls, so the engine sends the
+sliders again.
 
-The category names are the `sRSMRace`, `sRSMBody`, and `sRSMHead` settings, so they follow the
-game's language. The interface translation file has `$RACE` but no `$BODY` or `$HEAD`, and the
-movie only uses `$RACE` as placeholder text, so the names must arrive as plain text. The movie
-does not change their case.
+The interface translation file has `$RACE` but no `$BODY` or `$HEAD`, and the movie only uses
+`$RACE` as placeholder text, so the names must arrive as plain text. The movie does not change
+their case.
 
 `SetPlatform` makes each `CrossPlatformButtons` clip attach its key art. Without it, the buttons
 show the placeholder text `TEXT`. An empty race description makes the movie print
@@ -157,5 +181,4 @@ so this framing is OpenSky's choice.
 
 ## Not done yet
 
-- The `racesex_menu.swf` movie shows OpenSky's own rows. The movie's zoom and preset buttons
-  are not answered.
+- The Age control, above.

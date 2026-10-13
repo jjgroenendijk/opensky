@@ -137,13 +137,7 @@ final class GameViewController: NSViewController {
         return uiLab
     }()
 
-    lazy var systemMenu: SystemMenuCoordinator = {
-        let systemMenu = SystemMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
-        systemMenu.attach(world: self)
-        systemMenu.attach(settings: playerSettings)
-        systemMenu.saves = saveGames
-        return systemMenu
-    }()
+    lazy var systemMenu = menuRouter.makeSystemMenu()
 
     /// The INI defaults under the player's own values. The AppDelegate sets the catalog.
     var settingsCatalog = PlayerSettingsCatalog.vanilla
@@ -156,26 +150,12 @@ final class GameViewController: NSViewController {
     lazy var saveGames = SaveGameWorldAdapter(game: self)
     lazy var menuWorld = MenuWorldAdapter(game: self)
     lazy var mapWorld = MapWorldAdapter(game: self)
-    lazy var titleMenu: TitleMenuCoordinator = {
-        let titleMenu = TitleMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
-        titleMenu.attach(world: menuWorld)
-        titleMenu.saves = saveGames
-        return titleMenu
-    }()
-
-    lazy var raceMenu: RaceMenuCoordinator = {
-        let raceMenu = RaceMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
-        raceMenu.attach(world: menuWorld)
-        return raceMenu
-    }()
-
-    lazy var skillsMenu = makeSkillsMenu()
-
-    lazy var mapMenu: MapMenuCoordinator = {
-        let mapMenu = MapMenuCoordinator(menuMode: menuMode)
-        mapMenu.attach(world: mapWorld)
-        return mapMenu
-    }()
+    /// Builds and routes the menu coordinators below.
+    lazy var menuRouter = MenuRouter(game: self)
+    lazy var titleMenu = menuRouter.makeTitleMenu()
+    lazy var raceMenu = menuRouter.makeRaceMenu()
+    lazy var skillsMenu = menuRouter.makeSkillsMenu()
+    lazy var mapMenu = menuRouter.makeMapMenu()
 
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)
@@ -397,7 +377,7 @@ extension GameViewController {
 
     private func wireSystems(session: CellSession?, renderer newRenderer: Renderer) {
         hud.start()
-        wireMenus(renderer: newRenderer)
+        menuRouter.wire(renderer: newRenderer)
         wireMenuMode(renderer: newRenderer)
         if let session {
             worldData = session.data
@@ -519,16 +499,7 @@ extension GameViewController: HUDControlForwarding, SWFLabControlForwarding,
     StoryManagerControlForwarding, DialogueBranchControlForwarding, IdleControlForwarding,
     HeadAssemblyControlForwarding, AgentControlForwarding, RaceMenuControlForwarding,
     TitleMenuControlForwarding, MapMenuControlForwarding, SkillsMenuControlForwarding,
-    WorldLoadReportProviding,
-    AssetCacheControlProviding {}
-
-extension GameViewController {
-    func makeSkillsMenu() -> SkillsMenuCoordinator {
-        let skillsMenu = SkillsMenuCoordinator(menuMode: menuMode, movies: swfMovies, hud: hud)
-        skillsMenu.attach(world: menuWorld)
-        return skillsMenu
-    }
-}
+    WorldLoadReportProviding, AssetCacheControlProviding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
     func quitApplication() {
@@ -540,83 +511,16 @@ extension GameViewController: @MainActor SystemMenuWorld {
         titleMenu.open()
     }
 
-    /// The bound keys that open a menu or save, outside any menu.
     func runCommand(_ action: GameInputAction) {
-        switch action {
-        case .map:
-            mapMenu.open()
-        case .skills:
-            skillsMenu.open()
-        case .quicksave:
-            systemMenu.quicksave()
-        case .quickload:
-            saveGames.quickload()
-        case .pause:
-            saveGames.autosave(.pause)
-            systemMenu.open()
-        default:
-            return
-        }
+        menuRouter.run(action)
     }
 
-    /// Settings, key bindings, menu text, the menu natives, map discovery, and
-    /// the menu movies' late calls.
-    private func wireMenus(renderer: Renderer) {
-        playerSettings.loadControlMap(try? controlMapLoader?())
-        playerSettings.attach(world: menuWorld)
-        audio.onEngineBuilt = { [weak self] in self?.playerSettings.applyAll() }
-        if let labels = menuTextLoader?() {
-            renderer.swfTextTranslator = { labels.label(for: $0) }
-        }
-        renderer.onFrame.add { [weak self] _ in
-            self?.mapMenu.tick()
-            let now = Date().timeIntervalSinceReferenceDate
-            self?.titleMenu.tick(now: now)
-            self?.raceMenu.tick(now: now)
-            self?.skillsMenu.tick(now: now)
-            self?.menuWorld.refreshTitleBackdrop()
-        }
-    }
-
-    /// The one menu input consumer routes by the top of the menu stack. Each
-    /// route checks that its own menu is open.
     func handleMenuInput(_ event: MenuInputEvent) {
-        switch menuMode.topMenu {
-        case InventoryMenuController.identifier:
-            inventoryMenu.route(event)
-        case ContainerMenuController.containerIdentifier, ContainerMenuController.barterIdentifier:
-            containerMenu.route(event)
-        case JournalMenuController.identifier:
-            journalMenu.route(event)
-        case DialogueMenuController.identifier:
-            dialogueMenu.route(event)
-        case LockpickingMenuController.identifier:
-            lockpickingMenu.route(event)
-        case MessageCoordinator.identifier:
-            messages.route(event)
-        case LoadingScreenWorldAdapter.identifier:
-            return
-        case TitleMenuCoordinator.identifier:
-            titleMenu.route(event)
-        case RaceMenuCoordinator.identifier:
-            raceMenu.route(event)
-        case MapMenuCoordinator.identifier:
-            mapMenu.route(event)
-        case SkillsMenuCoordinator.identifier:
-            skillsMenu.route(event)
-        default:
-            systemMenu.route(event)
-        }
+        menuRouter.route(event)
     }
 
-    /// The main menu movie hit tests the cursor. The other menus still take a
-    /// press as their accept button.
     func handleMenuPointer(_ event: MenuPointerEvent) {
-        if menuMode.topMenu == TitleMenuCoordinator.identifier {
-            titleMenu.route(event)
-        } else if event.phase == .pressed {
-            handleMenuInput(.button(.accept))
-        }
+        menuRouter.route(event)
     }
 }
 
@@ -658,9 +562,7 @@ extension GameViewController {
     var canWriteScreenshot: Bool {
         renderer != nil
     }
-}
 
-extension GameViewController {
     var scenes: SceneCoordinator {
         storyWorld.scenes
     }
@@ -668,9 +570,7 @@ extension GameViewController {
     var storyManager: StoryManagerCoordinator {
         storyWorld.storyManager
     }
-}
 
-extension GameViewController {
     var idles: IdleCoordinator {
         idleWorld.idles
     }

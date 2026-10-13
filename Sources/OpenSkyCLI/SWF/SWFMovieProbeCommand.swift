@@ -1,6 +1,7 @@
 // `swf movie-probe`: starts any interface movie, then runs steps that call movie
 // methods with JSON arguments and press keys, and prints every GameDelegate call
-// and the nodes asked for. This is how the race menu and map contracts were measured.
+// and the nodes asked for, and the focus at the end. This is how the race menu and map
+// contracts were measured.
 
 import Foundation
 import OpenSkyCLIArguments
@@ -39,6 +40,7 @@ enum SWFMovieProbeCommand {
         for path in dumps {
             SWFSystemMenuCommand.printNode(path, runtime: runtime)
         }
+        print("[INFO] swf probe focus: \(runtime.focusTarget?.targetPath ?? "none")")
         print("[INFO] swf probe callbacks: \(runtime.movieCallbackNames.joined(separator: " "))")
         let missing = runtime.tally.missingNames.keys.sorted()
         print("[INFO] swf probe missing: \(missing.joined(separator: " "))")

@@ -7,19 +7,19 @@ import simd
 
 nonisolated public struct EffectShading: Hashable, Sendable {
     /// Emissive color with alpha; multiplies the texture.
-    public let baseColor: SIMD4<Float>
+    public var baseColor: SIMD4<Float>
     /// RGB multiplier applied last.
-    public let baseColorScale: Float
+    public var baseColorScale: Float
     /// Normalized VFS key of the greyscale palette; nil = none.
-    public let paletteTexture: String?
+    public var paletteTexture: String?
     /// RGB comes from the palette, indexed by the texture's green channel.
-    public let paletteColor: Bool
+    public var paletteColor: Bool
     /// Alpha comes from the palette, indexed by the texture's alpha channel.
-    public let paletteAlpha: Bool
+    public var paletteAlpha: Bool
     /// Start and stop cosines, then start and stop opacity; nil = no falloff.
-    public let falloff: SIMD4<Float>?
-    public let vertexColors: Bool
-    public let vertexAlpha: Bool
+    public var falloff: SIMD4<Float>?
+    public var vertexColors: Bool
+    public var vertexAlpha: Bool
 
     public init(
         baseColor: SIMD4<Float>,

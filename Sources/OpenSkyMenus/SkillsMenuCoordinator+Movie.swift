@@ -51,9 +51,11 @@ extension SkillsMenuCoordinator {
         guard let renderer = world?.renderer, model != nil else { return }
         do {
             let started = try renderer.startMenuMovie(result.get()) { [weak self] runtime in
-                Self.prepare(runtime, path: path) { kind in
+                Self.prepare(runtime, path: path, onCamera: { alpha in
+                    self?.sky.movieAlpha = alpha
+                }, onChoice: { kind in
                     self?.pendingChoices.append(kind)
-                }
+                })
             }
             guard started else {
                 movieError = "SWF runtime unavailable."
@@ -93,7 +95,9 @@ extension SkillsMenuCoordinator {
                 if model.page == .levelUp {
                     LevelUpMenuMovieBridge.highlight(model.selectedAttribute, runtime: runtime)
                 } else {
-                    StatsMenuMovieBridge.publish(model, runtime: runtime)
+                    StatsMenuMovieBridge.publish(
+                        model, namePoints: sky.namePoints, runtime: runtime
+                    )
                 }
             }
         } catch {
@@ -103,6 +107,7 @@ extension SkillsMenuCoordinator {
 
     /// Steps the movie, then applies the buttons it pressed.
     public func tick(now: Double) {
+        tickSky(now: now)
         guard movieLoaded, let renderer = world?.renderer else {
             framePacer = MenuMovieFramePacer()
             return
@@ -132,12 +137,13 @@ extension SkillsMenuCoordinator {
     private static func prepare(
         _ runtime: SWFMovieRuntime,
         path: String,
+        onCamera: @escaping @MainActor @Sendable (Float) -> Void,
         onChoice: @escaping @MainActor @Sendable (ActorValueKind) -> Void
     ) {
         if path == LevelUpMenuMovieBridge.moviePath {
             LevelUpMenuMovieBridge.prepare(runtime: runtime, onChoice: onChoice)
         } else {
-            StatsMenuMovieBridge.prepare(runtime: runtime)
+            StatsMenuMovieBridge.prepare(runtime: runtime, onCamera: onCamera)
         }
     }
 }

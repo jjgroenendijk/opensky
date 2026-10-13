@@ -139,3 +139,21 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
         return GameText.decode(bytes)
     }
 }
+
+nonisolated extension NIFEffectShaderProperty {
+    /// The unlit terms both the static path and effect scenes draw with.
+    public var shading: EffectShading {
+        EffectShading(
+            baseColor: baseColor,
+            baseColorScale: baseColorScale,
+            paletteTexture: greyscaleTexturePath,
+            paletteColor: usesGreyscaleToPaletteColor,
+            paletteAlpha: usesGreyscaleToPaletteAlpha,
+            falloff: usesFalloff ? SIMD4(
+                falloffStartAngle, falloffStopAngle, falloffStartOpacity, falloffStopOpacity
+            ) : nil,
+            vertexColors: hasVertexColors,
+            vertexAlpha: hasVertexAlpha
+        )
+    }
+}

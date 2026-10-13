@@ -36,6 +36,9 @@ enum AssetCommand {
             }
         }
         printModelSummary(file: file)
+        if arguments.sequences {
+            NIFSequenceReport.print(file: file)
+        }
     }
 
     private static func decodedNode(

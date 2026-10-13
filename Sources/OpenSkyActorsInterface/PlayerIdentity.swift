@@ -35,12 +35,16 @@ nonisolated public struct PlayerFace: Equatable, Sendable {
     public var weight: Float
     /// NAM6, a scale; 1 is the race height.
     public var height: Float
+    /// FTST, the complexion: a face texture set from the race's `FTSM` or `FTSF` list.
+    /// Nil uses the race default (`DFTM` or `DFTF`).
+    public var faceTexture: FormID?
 
     public init(
         morphs: [Float] = [], parts: [Int32] = [], headParts: [FormID] = [],
         hairColor: FormID? = nil, tints: [PlayerTintLayer] = [], weight: Float = 50,
-        height: Float = 1
+        height: Float = 1, faceTexture: FormID? = nil
     ) {
+        self.faceTexture = faceTexture
         self.morphs = morphs
         self.parts = parts
         self.headParts = headParts
@@ -77,7 +81,7 @@ nonisolated public struct PlayerIdentityState: WorldStateComponent, Sendable {
                 morphs: details.faceMorphs, parts: details.faceParts,
                 headParts: record.headParts, hairColor: details.hairColor,
                 tints: details.tintLayers.compactMap(Self.tint), weight: details.weight ?? 50,
-                height: details.height ?? 1
+                height: details.height ?? 1, faceTexture: details.headTexture
             )
         } ?? PlayerFace(headParts: record.headParts)
         self.init(

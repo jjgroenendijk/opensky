@@ -51,6 +51,8 @@ nonisolated public struct ResolvedActorAppearance: Equatable, Sendable {
     public var weight: Float = 50
     /// QNAM, the skin colour of the body's skin-tint shapes. A Traits-tab field.
     public var skinTone: SIMD3<Float>?
+    /// FTST, the face texture set (complexion). A Traits-tab field; nil uses the race's.
+    public var faceTexture: FormID?
 }
 
 /// Stat-relevant fields of one actor after template resolution. Separate from
@@ -189,6 +191,9 @@ nonisolated public struct ActorTemplateResolver: Sendable {
             }.value,
             skinTone: resolveField(in: npcs, flag: .useTraits) {
                 ActorSourcedField(value: $0.details.textureLighting, source: $0.formID)
+            }.value,
+            faceTexture: resolveField(in: npcs, flag: .useTraits) {
+                ActorSourcedField(value: $0.details.headTexture, source: $0.formID)
             }.value
         )
     }
@@ -348,6 +353,10 @@ nonisolated public struct PlayerAppearanceOverride: Equatable, Sendable {
     public var faceMorphs: [Float] = []
     public var faceParts: [Int32] = []
     public var tints: [PlayerAppearanceTint] = []
+    /// NAM7, 0 to 100; nil keeps the record's.
+    public var weight: Float?
+    /// FTST, the complexion texture set; nil uses the race default.
+    public var faceTexture: FormID?
     /// The body's skin colour. Nil keeps the record's `QNAM`.
     public var skinTone: SIMD3<Float>?
 
@@ -386,8 +395,9 @@ nonisolated extension ResolvedActorAppearance {
             hairColor: override.hairColor.map { ActorSourcedField(value: $0, source: base) }
                 ?? hairColor,
             defaultOutfit: defaultOutfit,
-            weight: weight,
-            skinTone: override.skinTone ?? skinTone
+            weight: override.weight ?? weight,
+            skinTone: override.skinTone ?? skinTone,
+            faceTexture: override.faceTexture ?? faceTexture
         )
     }
 }

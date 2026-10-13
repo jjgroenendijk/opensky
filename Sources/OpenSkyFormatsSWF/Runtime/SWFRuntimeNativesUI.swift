@@ -114,6 +114,7 @@ nonisolated extension SWFRuntimeNatives {
         }
         AS2Natives.method(runtime, on: selection, name: "setSelection") { _ in .undefined }
         installListenerList(runtime, on: selection)
+        installSelectionControllers(runtime, on: selection)
         runtime.globalObject.define(.object(selection), for: "Selection", flags: .dontEnumerate)
     }
 }
@@ -123,6 +124,8 @@ nonisolated extension SWFMovieRuntime {
     /// Passing null clears focus, which Flash treats as a successful call.
     @discardableResult
     public func setFocus(_ target: AS2Value) -> Bool {
+        let old = focusTarget
+        defer { announceFocusChange(from: old) }
         switch target {
         case .null, .undefined:
             focusTarget = nil

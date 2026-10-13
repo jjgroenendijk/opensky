@@ -323,19 +323,7 @@ nonisolated extension NIFFile.Flattener {
         let effect = try NIFEffectShaderProperty(data: block.data, header: file.header)
         let alpha = try alphaProperty(at: alphaBlock)
         let fallback = Material.fallback
-        let shading = EffectShading(
-            baseColor: effect.baseColor,
-            baseColorScale: effect.baseColorScale,
-            paletteTexture: effect.greyscaleTexturePath,
-            paletteColor: effect.usesGreyscaleToPaletteColor,
-            paletteAlpha: effect.usesGreyscaleToPaletteAlpha,
-            falloff: effect.usesFalloff ? SIMD4(
-                effect.falloffStartAngle, effect.falloffStopAngle,
-                effect.falloffStartOpacity, effect.falloffStopOpacity
-            ) : nil,
-            vertexColors: effect.hasVertexColors,
-            vertexAlpha: effect.hasVertexAlpha
-        )
+        let shading = effect.shading
         return Material(
             diffuseTexture: effect.sourceTexturePath,
             normalTexture: nil,

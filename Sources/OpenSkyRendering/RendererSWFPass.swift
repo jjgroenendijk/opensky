@@ -42,6 +42,13 @@ extension Renderer {
         }
     }
 
+    /// Plays a menu movie's `PlaySound` descriptor; nil means `PlayOKSound`.
+    /// Applies to movies started after it is set.
+    public var swfSoundPlayer: (@MainActor (String?) -> Void)? {
+        get { swf.soundPlayer }
+        set { swf.soundPlayer = newValue }
+    }
+
     /// The movie package assigned via `setSWFMovie`; nil -> no SWF draws.
     public var swfScene: SWFMovieScene? {
         swf.movie?.scene

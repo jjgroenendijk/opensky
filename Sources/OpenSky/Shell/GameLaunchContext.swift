@@ -133,6 +133,9 @@ final class GameLaunchContext {
             controller.controlMapLoader = {
                 try ControlMapFile(data: vfs.contents(forPath: ControlMapFile.path))
             }
+            controller.playerSettings.keyNamesLoader = {
+                try? KeyboardNameTable(data: vfs.contents(forPath: KeyboardNameTable.path))
+            }
             // World > Audio picker and playback source.
             controller.audioFileSystem = vfs
             controller.assetCache = assetCache

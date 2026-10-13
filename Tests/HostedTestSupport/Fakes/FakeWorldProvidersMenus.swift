@@ -107,6 +107,10 @@ extension FakeWorldProviders {
         menuCalls.calls.append("skills.movie(\(enabled))")
     }
 
+    func setSkillsMenuSkyEnabled(_ enabled: Bool) {
+        menuCalls.calls.append("skills.sky(\(enabled))")
+    }
+
     var mapMenuSnapshot: MapMenuSnapshot {
         MapMenuSnapshot(
             mode: menuCalls.mapMode, markerCount: 2, visibleCount: 1, discoveredCount: 1,

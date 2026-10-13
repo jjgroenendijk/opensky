@@ -99,6 +99,8 @@ nonisolated extension OpenSkySaveDecoder {
         public var questTracking: [SaveStoryEntry<QuestTrackingState>] = []
         /// Absent `PIDN`: the player is the vanilla `Player` record.
         public var identities: [SaveStoryEntry<PlayerIdentityState>] = []
+        /// Absent `PCPX`: each identity keeps its race's default face texture.
+        public var complexions: [ReferenceKey: FormID] = [:]
         /// Absent `MRKS`: every marker is as its record flags say.
         public var markers: [SaveStoryEntry<MapMarkerState>] = []
         /// Absent `FOGM`: the local map is fogged everywhere.

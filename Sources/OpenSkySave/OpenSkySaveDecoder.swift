@@ -93,7 +93,10 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.dialogueBranches, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.helpMessages, into: entries)
         entries = mergeJournal(body, into: entries)
-        entries = OpenSkySaveDeltaMerge.merge(body.identities, into: entries)
+        let identities = OpenSkySaveStoryDecoder.mergeComplexions(
+            body.complexions, into: body.identities
+        )
+        entries = OpenSkySaveDeltaMerge.merge(identities, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.markers, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.fog, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.temperedItems, into: entries)

@@ -1,5 +1,5 @@
 // World > Character > Skills Menu: open the level-up and skills menu, step it,
-// and switch between the game's movies and OpenSky's rows.
+// switch between the game's movies and OpenSky's rows, and show or hide the perk sky.
 
 import AppKit
 import OpenSkyMenus
@@ -36,6 +36,13 @@ final class SkillsMenuSection: MenuButtonSection {
                 ) { [weak self] in
                     guard let provider = self?.provider else { return }
                     provider.setSkillsMenuMovieEnabled(!provider.skillsMenuSnapshot.movie.isEnabled)
+                },
+                Action(
+                    title: "Sky", identifier: "SkillsMenuSkyControl",
+                    toolTip: "Show or hide the 3D perk sky behind the menu."
+                ) { [weak self] in
+                    guard let provider = self?.provider else { return }
+                    provider.setSkillsMenuSkyEnabled(!provider.skillsMenuSnapshot.isSkyEnabled)
                 }
             ],
             [
@@ -62,7 +69,7 @@ final class SkillsMenuSection: MenuButtonSection {
     override func isEnabled(_ identifier: String) -> Bool {
         let isOpen = provider?.skillsMenuSnapshot.isOpen == true
         switch identifier {
-        case "SkillsMenuMovieControl": return provider != nil
+        case "SkillsMenuMovieControl", "SkillsMenuSkyControl": return provider != nil
         case "SkillsMenuOpenControl": return provider != nil && !isOpen
         default: return isOpen
         }
@@ -75,6 +82,7 @@ final class SkillsMenuSection: MenuButtonSection {
 
     nonisolated static func readout(for snapshot: SkillsMenuSnapshot) -> String {
         let result = "\n" + TitleMenuSection.movieLine(snapshot.movie)
+            + "\nSky: \(snapshot.isSkyEnabled ? snapshot.sky ?? "waiting" : "off")"
             + (snapshot.lastResult.map { "\nLast result: \($0)" } ?? "")
         guard snapshot.isOpen else { return "Skills menu: closed\(result)" }
         return "Skills menu: \(snapshot.page)\n"

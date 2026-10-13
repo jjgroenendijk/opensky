@@ -122,6 +122,7 @@ chunk cannot read into the next.
 | `SUMM` | save list row: name, level, race, location, play time | below |
 | `THMB` | save list picture | below |
 | `PIDN` | the player's race, sex, name, and face | world |
+| `PCPX` | the player's complexion | world |
 | `MRKS` | changed map markers | world |
 | `FOGM` | local map fog | world |
 

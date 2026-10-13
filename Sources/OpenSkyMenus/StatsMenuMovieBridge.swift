@@ -1,7 +1,7 @@
 // The measured AS2 contract of `Interface\statsmenu.swf`, the skills menu. The engine
 // fills `StatsMenu.SkillStatsA` and `StatsMenu.PerkNamesA` and calls the movie's
-// `GameDelegate` callbacks. Vanilla draws the perk stars in 3D outside the movie;
-// OpenSky places only the perk names. See docs/engine/skills-menu.md.
+// `GameDelegate` callbacks. The perk stars are 3D, outside the movie; the names sit
+// where the stars land on screen. See docs/engine/skills-menu.md.
 
 import Foundation
 import OpenSkyFormatsSWF
@@ -10,16 +10,24 @@ import OpenSkyProgressionInterface
 nonisolated public enum StatsMenuMovieBridge: Sendable {
     public static let moviePath = "interface\\statsmenu.swf"
     public static let className = "StatsMenu"
-    /// Camera moves belong to the 3D sky vanilla draws behind the movie.
-    public static let sinkHostFunctions = ["MoveCamera", "SetFadedIn", "PlaySound", "myLog"]
+    public static let sinkHostFunctions = ["SetFadedIn", "PlaySound", "myLog"]
     /// Degrees between two skills on the ring (`SKILL_ANGLE`).
     public static let skillAngle = 20.0
     /// Values per skill in `SkillStatsA`: level, name, meter, colour, legendary count.
     public static let skillStride = 5
 
-    public static func prepare(runtime: SWFMovieRuntime) {
+    /// `onCamera` gets `MoveCamera`'s 0 to 1 progress through the opening move.
+    public static func prepare(
+        runtime: SWFMovieRuntime, onCamera: @escaping @MainActor @Sendable (Float) -> Void
+    ) {
         for name in sinkHostFunctions {
             runtime.registerHostFunction(name) { _ in .undefined }
+        }
+        runtime.registerHostFunction("MoveCamera") { call in
+            if case let .number(alpha)? = call.arguments.first {
+                MainActor.assumeIsolated { onCamera(Float(alpha)) }
+            }
+            return .undefined
         }
     }
 
@@ -29,6 +37,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         )
         runtime.callMovie("InitExtensions")
         runtime.callMovie("ShowLegendaryButtonHint")
+        runtime.callMovie("StartCameraAnimation")
     }
 
     /// The `StatsMenu` class, or nil when the movie did not define it.
@@ -37,7 +46,11 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
     }
 
     /// Sends the whole model: the card, the ring, the tree's names, and the mode.
-    public static func publish(_ model: SkillsMenuModel, runtime: SWFMovieRuntime) {
+    /// `namePoints` holds each star's place on screen, 0 to 1 with y down.
+    public static func publish(
+        _ model: SkillsMenuModel, namePoints: [UInt32: SIMD2<Float>] = [:],
+        runtime: SWFMovieRuntime
+    ) {
         guard let menuClass = menuClass(runtime: runtime) else { return }
         publishPlayer(model.player, runtime: runtime)
         let ring = model.skills.flatMap(skillValues)
@@ -47,8 +60,7 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
             "SetDirection", arguments: [.number(Double(model.skillPosition) * skillAngle)]
         )
         let inTree = model.page == .perks
-        let names = inTree ? model.perks.flatMap { perkValues($0, model: model) } : []
-        menuClass.assign(.object(runtime.runtime.makeArray(names)), for: "PerkNamesA")
+        publishPerkNames(model, points: namePoints, runtime: runtime)
         runtime.callMovie(
             "SetStatsMode",
             arguments: [.boolean(true), .integer(model.player.perkPoints)]
@@ -97,17 +109,29 @@ nonisolated public enum StatsMenuMovieBridge: Sendable {
         ]
     }
 
-    /// One name per box, as `[html, x, y]` on a 0 to 1 stage. The tree grows up from
-    /// the bottom centre; owned boxes are white and the selected one is bold.
-    static func perkValues(_ perk: SkillsMenuPerk, model: SkillsMenuModel) -> [AS2Value] {
+    /// `PerkNamesA` alone, sent again each frame the tree camera moves.
+    public static func publishPerkNames(
+        _ model: SkillsMenuModel, points: [UInt32: SIMD2<Float>], runtime: SWFMovieRuntime
+    ) {
+        guard let menuClass = menuClass(runtime: runtime) else { return }
+        let names = model.page == .perks
+            ? model.perks.flatMap { perkValues($0, model: model, point: points[$0.node]) } : []
+        menuClass.assign(.object(runtime.runtime.makeArray(names)), for: "PerkNamesA")
+    }
+
+    /// One name per box, as `[html, x, y]` on a 0 to 1 stage. Without a star on screen
+    /// the tree grows up from the bottom centre. Owned boxes are white, the selected bold.
+    static func perkValues(
+        _ perk: SkillsMenuPerk, model: SkillsMenuModel, point: SIMD2<Float>? = nil
+    ) -> [AS2Value] {
         let colour = perk.isOwned ? "#FFFFFF" : "#8C8C8C"
         var text = "<font color='\(colour)'>\(escaped(perk.name))</font>"
         if perk.node == model.selectedPerk?.node {
             text = "<b>\(text)</b>"
         }
-        let x = 0.5 + (Double(perk.gridX) - 2) * 0.12
-        let y = 0.85 - Double(perk.gridY) * 0.11
-        return [.string(text), .number(min(0.95, max(0.05, x))), .number(min(0.95, max(0.05, y)))]
+        let x = point.map { Double($0.x) } ?? 0.5 + (Double(perk.gridX) - 2) * 0.12
+        let y = point.map { Double($0.y) } ?? 0.85 - Double(perk.gridY) * 0.11
+        return [.string(text), .number(min(0.98, max(0.02, x))), .number(min(0.98, max(0.02, y)))]
     }
 
     /// `UpdatePerkText(show)` is a method of the menu instance, not a callback.

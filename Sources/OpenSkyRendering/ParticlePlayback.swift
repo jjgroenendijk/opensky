@@ -25,11 +25,17 @@ nonisolated public enum ParticleBlendMode: Equatable, Hashable, Sendable {
     }
 
     public init(alpha: NIFAlphaProperty?) {
-        guard alpha?.blendEnabled == true else {
+        guard let alpha, alpha.blendEnabled else {
             self = .alpha
             return
         }
-        switch (alpha?.sourceBlendMode, alpha?.destinationBlendMode) {
+        self.init(blend: NIFBlend(
+            source: alpha.sourceBlendMode, destination: alpha.destinationBlendMode
+        ))
+    }
+
+    public init(blend: NIFBlend) {
+        switch (blend.source, blend.destination) {
         case (6, 0): self = .additive
         case (0, 0): self = .additiveOne
         case (4, 1): self = .multiply

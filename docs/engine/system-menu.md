@@ -100,6 +100,31 @@ The sidebar can turn it off; the engine selector then remains the only surface.
 No movie problem throws out of a control. A missing install, a movie that does not decode, or a
 call the runtime cannot answer becomes a message in the panel readout.
 
+## The movie's own pages
+
+With the movie up, the Save, Load, Controls, and Quit pages are the movie's own. Each row press
+calls the engine, and the engine answers with data, as the game does. Calls measured with
+`openskycli swf system-menu` and read from the movie's `SystemPage` class:
+
+| Movie calls | Engine answer |
+| --- | --- |
+| `SAVE` or `LOAD` with the list and a batch size | Fills the `SaveLoadPanel` list, newest first, then `onSaveLoadBatchComplete`. Saving adds a `[NEW SAVE]` row at the top |
+| `SaveGame`, `LoadGame`, `DeleteSave` with a row | Writes, loads, or deletes that save. When saving, row 0 is a new save |
+| `ShowScreenshot` | Puts the save's `THMB` picture in the movie's image slot, then `ScreenshotReady` |
+| `RequestInputMappings` with the list | One entry per remappable gameplay event: its text, its key art, the key code, and a sort index |
+| `StartRemapMode` with an event | The engine waits for the next key, rebinds it, and calls `FinishRemapMode(true)`; a reserved key gives `false` |
+| `ResetControlsToDefaults` | Restores the default bindings and fills the list again |
+| `QuitToMainMenu`, `QuitToDesktop` | Opens the title menu, or quits |
+
+A mapping entry's key art is the key's name in `interface\controls\pc\keyboard_english.txt`,
+such as `L-Ctrl` or `Mouse1` ([control map](/formats/controlmap.md), "Key names"). The movie
+draws the button with that name. The engine reads the page's `iCurrentState` each frame, so the
+sidebar readout follows the page the movie shows. The X key deletes a save and T lists the
+characters, as in the movie's own key handler.
+
+The Settings page stays the engine's, because its values are the
+[player settings](/engine/settings.md).
+
 ## Controls
 
 World > System Menu has a Menu section (Open, Resume, Up, Down, Activate, vanilla movie on and off),
@@ -110,5 +135,4 @@ menu or an active movie marks the panel as changed, and Reset returns to gamepla
 
 ## Not done yet
 
-- The movie mirrors the System page rows; the sub-pages are drawn by the engine readout, not by
-  the movie's own Save, Load, and Controls lists.
+- `PrepSaveGameScreenshot` is answered without a fresh picture of the current frame.

@@ -51,7 +51,13 @@ public final class SystemMenuCoordinator {
     public private(set) var movieLoaded = false
     /// Bumped by each open and close, so a movie decoded late opens only the newest.
     private var movieRequest = 0
-    public private(set) var movieError: String?
+    public internal(set) var movieError: String?
+    /// Calls the movie made during the last event or frame, answered after it.
+    var pendingMovieCalls: [SystemMenuMovieBridge.Call] = []
+    /// The movie's save list in its own order, without the New Save row.
+    var movieSaveRows: [SaveSlotRow] = []
+    var movieListSaving = false
+    var framePacer = MenuMovieFramePacer()
     /// Called once; finding the data root walks the file system.
     public var locateDataRoot: () -> GameDataRoot? = { try? GameDataLocator.locate() }
     private var dataRoot: GameDataRoot?
@@ -90,6 +96,9 @@ public final class SystemMenuCoordinator {
         model.open()
         menuMode.inputConsumer = world
         menuMode.present(Self.identifier)
+        if let saves {
+            Task { await saves.refreshSaveRows() }
+        }
         if movieEnabled {
             startMovie()
         }
@@ -130,19 +139,12 @@ public final class SystemMenuCoordinator {
     /// engine row the movie shows. A sub-page has its own model.
     public func route(_ event: MenuInputEvent) {
         guard model.isOpen else { return }
-        guard model.page == .main else {
-            routePage(event)
+        if sendsToMovie(event) {
+            sendToMovie(event)
             return
         }
-        if movieLoaded, let renderer, case .move = event {
-            do {
-                try SystemMenuMovieBridge.send(event, renderer: renderer)
-            } catch {
-                movieError = String(describing: error)
-                Self.logger.error(
-                    "[ERROR] system menu input: \(String(describing: error), privacy: .public)"
-                )
-            }
+        guard model.page == .main else {
+            routePage(event)
             return
         }
         if
@@ -226,6 +228,9 @@ public final class SystemMenuCoordinator {
                 }
                 SettingsMovieBridge.register(runtime: runtime) { [weak self] group in
                     self?.openSettingsCategory(group)
+                }
+                SystemMenuMovieBridge.registerCalls(runtime: runtime) { [weak self] call in
+                    self?.pendingMovieCalls.append(call)
                 }
             }
             for _ in 0 ..< SystemMenuMovieBridge.activationTicks {

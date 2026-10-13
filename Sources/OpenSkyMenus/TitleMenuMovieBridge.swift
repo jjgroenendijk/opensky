@@ -63,7 +63,8 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
         }
     }
 
-    /// Opens the movie on its Main state with the list focused.
+    /// Opens the movie on its Main state with the list focused. The movie focuses
+    /// `Menu_mc`, where keys move nothing; the game routes them to the list.
     public static func activate(runtime: SWFMovieRuntime, hasSaves: Bool, version: String) {
         runtime.callMovie("SetPlatform", arguments: [.number(0), .boolean(false)])
         runtime.callMovie("InitExtensions")

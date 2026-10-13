@@ -83,35 +83,47 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
     // MARK: - Answers
 
     /// `PopulateCharacterList([entryList, batchSize])`.
-    public static func fillCharacters(_ names: [String], runtime: SWFMovieRuntime) {
+    public static func fillCharacters(
+        _ names: [String], runtime: SWFMovieRuntime,
+        listPath: String = TitleMenuMovieBridge.saveLoadListPath
+    ) {
         let arguments = runtime.lastHostArguments[Request.characters.rawValue] ?? []
         let rows = names.enumerated().map { index, name -> [String: AS2Value] in
             ["text": .string(name), "id": .integer(index), "flags": .integer(0)]
         }
         fill(rows, list: arguments.first, runtime: runtime)
         runtime.callMovie("onFillCharacterListComplete", arguments: [.boolean(true)])
-        selectFirstRow(count: rows.count, runtime: runtime)
+        selectFirstRow(count: rows.count, listPath: listPath, runtime: runtime)
     }
 
     /// `CharacterSelected([id, flags, isSaving, entryList, batchSize])`.
-    public static func fillSaves(_ saves: [SaveSlotRow], runtime: SWFMovieRuntime) {
+    public static func fillSaves(
+        _ saves: [SaveSlotRow], runtime: SWFMovieRuntime,
+        listPath: String = TitleMenuMovieBridge.saveLoadListPath
+    ) {
         let arguments = runtime.lastHostArguments[Request.characterSelected.rawValue] ?? []
-        let list = arguments.count > 3 ? arguments[3] : nil
+        fillSaves(
+            saves, list: arguments.count > 3 ? arguments[3] : nil, listPath: listPath,
+            runtime: runtime
+        )
+    }
+
+    /// Fills the movie's `entryList` and tells the save panel the batch is done.
+    public static func fillSaves(
+        _ saves: [SaveSlotRow], list: AS2Value?, listPath: String, runtime: SWFMovieRuntime
+    ) {
         let entries = saves.enumerated().map { entry(index: $0.offset, row: $0.element) }
         fill(entries, list: list, runtime: runtime)
         let count = AS2Value.integer(saves.count)
         runtime.callMovie("onSaveLoadBatchComplete", arguments: [.boolean(true), count, count])
-        selectFirstRow(count: saves.count, runtime: runtime)
+        selectFirstRow(count: saves.count, listPath: listPath, runtime: runtime)
     }
 
     /// The filled list starts with no row selected, and a key does not move it
     /// from there, so the first row is picked as the game shows it.
-    private static func selectFirstRow(count: Int, runtime: SWFMovieRuntime) {
+    private static func selectFirstRow(count: Int, listPath: String, runtime: SWFMovieRuntime) {
         guard count > 0 else { return }
-        runtime.callMovie(
-            "__set__selectedIndex", atPath: TitleMenuMovieBridge.saveLoadListPath,
-            arguments: [.integer(0)]
-        )
+        runtime.callMovie("__set__selectedIndex", atPath: listPath, arguments: [.integer(0)])
     }
 
     static func entry(index: Int, row: SaveSlotRow) -> [String: AS2Value] {
@@ -126,7 +138,7 @@ nonisolated public enum TitleMenuLoadBridge: Sendable {
         ]
     }
 
-    private static func fill(
+    static func fill(
         _ rows: [[String: AS2Value]],
         list: AS2Value?,
         runtime: SWFMovieRuntime
