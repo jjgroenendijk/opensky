@@ -210,6 +210,8 @@ nonisolated public struct ConditionList: Equatable, Sendable {
     public private(set) var declaredCount: Int?
     public private(set) var conditions: [Condition] = []
 
+    public init() {}
+
     public var isEmpty: Bool {
         conditions.isEmpty
     }

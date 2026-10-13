@@ -82,6 +82,17 @@ nonisolated public struct PexNativeCensus: Equatable, Sendable {
         )
     }
 
+    /// Called natives `registry` does not bind, most call sites first, ties by name.
+    @MainActor
+    public func missing(in registry: PapyrusNativeRegistry) -> [(name: String, count: Int)] {
+        referenceCounts
+            .filter { target, _ in
+                !registry.contains(scriptName: target.scriptName, functionName: target.functionName)
+            }
+            .map { (name: $0.key.name, count: $0.value) }
+            .sorted { $0.count == $1.count ? $0.name < $1.name : $0.count > $1.count }
+    }
+
     private mutating func recordDeclarations(_ objects: [PexObject]) {
         for object in objects {
             for state in object.states {

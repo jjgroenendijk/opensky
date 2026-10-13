@@ -19,7 +19,9 @@ Sources:
   (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CTDA_Field>). The page name is
   `CTDA_Field`; the bare `CTDA` page is empty.
 - xEdit (TES5Edit), `wbDefinitionsTES5.pas`, `wbCTDA` and the deciders around it
-  (<https://github.com/TES5Edit/TES5Edit>).
+  (<https://github.com/TES5Edit/TES5Edit>). Its `wbConditionFunctions` table gives the name
+  of each stored function index; `ConditionFunctionNames` holds those names, and a test
+  checks that every registered function uses the same name.
 - Creation Kit wiki, Conditions category (<https://ck.uesp.net/wiki/Category:Conditions>).
 
 ## CTDA payload

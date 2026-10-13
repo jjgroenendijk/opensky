@@ -41,6 +41,12 @@ nonisolated public enum PerkEntryPointEvaluator: Sendable {
         )
     }
 
+    /// Whether `apply` computes `function` at all, whatever its payload.
+    public static func supports(_ function: PerkFunction) -> Bool {
+        let probe = PerkEntryPointOperand(function: function, data: nil)
+        return apply(probe, to: 0) { _ in nil } != .failure(.unsupportedFunction(function))
+    }
+
     /// Descending priority, ties in the caller's order.
     ///
     /// Sorted on the index alongside the element because Swift's `sort` is not

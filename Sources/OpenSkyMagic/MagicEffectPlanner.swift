@@ -63,6 +63,12 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         .valueModifier, .dualValueModifier, .peakValueModifier
     ]
 
+    /// Whether a planned effect does anything. An effect that applies a perk must
+    /// exist to own it, even when its values mean nothing to this engine.
+    public static func applies(_ data: MagicEffectData) -> Bool {
+        implementedArchetypes.contains(data.archetype) || data.perkToApply != nil
+    }
+
     /// Plans one EFID/EFIT/CTDA `entry` of the resolved MGEF `effect`.
     /// `isConstant` marks a worn enchantment, whose zero duration means "while
     /// worn". `resolveKeyword` turns the plugin-relative keyword link into a key,
@@ -76,10 +82,8 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         guard let data = effect.effect.data else {
             return .skip(.undecodedEffect)
         }
-        // An effect that applies a perk must exist to own it, even when its values
-        // mean nothing to this engine.
         let carriesPerk = data.perkToApply != nil
-        guard implementedArchetypes.contains(data.archetype) || carriesPerk else {
+        guard applies(data) else {
             return .skip(.unimplementedArchetype(data.archetype))
         }
         let duration = isConstant ? 0 : Float(entry.duration)
