@@ -29,6 +29,15 @@ struct FUZFileTests {
         #expect(audio.packetCount == 2)
     }
 
+    @Test("packing loose lip and audio bytes builds the same container")
+    func pack() {
+        let audio = XWMFixture.file(packetCount: 2)
+        #expect(FUZFile.pack(lip: FUZFixture.lip(byteCount: 16), audio: audio)
+            == FUZFixture.file(lipByteCount: 16, audio: audio))
+        #expect(FUZFile.pack(lip: nil, audio: audio)
+            == FUZFixture.file(lipByteCount: 0, audio: audio))
+    }
+
     @Test("a zero-length lip chunk is legal and reports no lip data")
     func zeroLengthLip() throws {
         let file = try FUZFile(data: FUZFixture.file(lipByteCount: 0))

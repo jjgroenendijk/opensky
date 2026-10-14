@@ -90,4 +90,16 @@ nonisolated extension FUZFile {
     public func audio() throws -> XWMFile {
         try XWMFile(data: audioData)
     }
+
+    /// A container around loose `.lip` and `.xwm` bytes, the way the Creation Kit
+    /// joins them.
+    public static func pack(lip: Data?, audio: Data) -> Data {
+        var data = Data()
+        for field in [Layout.magic.rawValue, Layout.supportedVersion, UInt32(lip?.count ?? 0)] {
+            withUnsafeBytes(of: field.littleEndian) { data.append(contentsOf: $0) }
+        }
+        data.append(lip ?? Data())
+        data.append(audio)
+        return data
+    }
 }

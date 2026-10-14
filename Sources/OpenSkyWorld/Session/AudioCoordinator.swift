@@ -146,7 +146,11 @@ public final class AudioCoordinator {
             ?? AudioAssetLoader(immediate: { throw VFSError.fileNotFound(path: $0) })
         self.assets = assets
         voiceFiles = fileSystem.map { files in
-            AssetLoader { path in try files.contents(forPath: path) }
+            AssetLoader { path in
+                try VoiceLineFiles.contents(
+                    forPath: path, exists: files.exists, read: files.contents(forPath:)
+                )
+            }
         }
         let director = WorldAudioSoundDirector(
             engine: engine,
