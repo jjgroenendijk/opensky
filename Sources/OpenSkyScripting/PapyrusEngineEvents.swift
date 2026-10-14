@@ -28,12 +28,18 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onCellDetach = "OnCellDetach"
     public static let onPlayerLoadGame = "OnPlayerLoadGame"
     public static let onLocationChange = "OnLocationChange"
+    public static let onItemAdded = "OnItemAdded"
+    public static let onItemRemoved = "OnItemRemoved"
+    public static let onObjectEquipped = "OnObjectEquipped"
+    public static let onObjectUnequipped = "OnObjectUnequipped"
+    public static let onCombatStateChanged = "OnCombatStateChanged"
 
     /// Every event above, lowercased, as Papyrus matches names.
     public static let sent: Set<String> = Set([
         onInit, onCellAttach, onLoad, onCellLoad, onAnimationEvent, onActivate, onTriggerEnter,
         onTriggerLeave, onUpdate, onUpdateGameTime, onHit, onDying, onDeath, onRaceSwitchComplete,
         onPackageStart, onPackageEnd, onPackageChange, onBeginState, onEndState, onUnload,
-        onCellDetach, onPlayerLoadGame, onLocationChange
+        onCellDetach, onPlayerLoadGame, onLocationChange, onItemAdded, onItemRemoved,
+        onObjectEquipped, onObjectUnequipped, onCombatStateChanged
     ].map { $0.lowercased() })
 }

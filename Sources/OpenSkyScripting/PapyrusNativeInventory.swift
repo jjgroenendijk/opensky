@@ -5,6 +5,7 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 
 /// What the item natives reach. Items are load-order FormIDs.
@@ -28,6 +29,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func unequipAll(on actor: ReferenceKey) -> Bool
     /// Nil for a form that is no item.
     func goldValue(of item: FormID) -> Int32?
+    /// The plugin inventory of `holder`, before any runtime change; nil when not resident.
+    func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState?
 }
 
 extension PapyrusNativeFunctions {

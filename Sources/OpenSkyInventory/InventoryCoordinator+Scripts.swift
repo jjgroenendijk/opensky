@@ -153,6 +153,12 @@ extension InventoryCoordinator {
         return true
     }
 
+    /// The plugin inventory of a resident holder, for a diff against its first write.
+    public func scriptBaselineInventory(of key: ReferenceKey) -> ReferenceInventoryState? {
+        guard let runtime, let holder = scriptHolder(key) else { return nil }
+        return runtime.inventory.baselines.baseline(for: holder.owner)
+    }
+
     /// The player, a resident actor, or any other resident reference as a container.
     func scriptHolder(_ key: ReferenceKey) -> InventoryHolder? {
         guard key != .player else { return .player }

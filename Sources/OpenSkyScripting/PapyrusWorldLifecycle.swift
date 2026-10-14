@@ -291,6 +291,7 @@ extension PapyrusWorldRuntime {
         updateTimers.removeAll(for: key)
         pendingOnInit.remove(key)
         retiringKeys.remove(key)
+        handledEvents[key] = nil
         scheduler.cancel(suspensionTracker.forget(instance: key))
     }
 }

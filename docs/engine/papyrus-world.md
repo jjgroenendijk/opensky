@@ -136,6 +136,35 @@ frame compares the location of the player's cell with the last frame's. A change
 first frame after a load only records the location. A frame whose player cell is not resident yet
 is skipped, so a cell that streams in is not read as a trip through the wilderness.
 
+## Combat events
+
+Each frame reads the combat activity of every actor whose scripts handle `OnCombatStateChanged`.
+A change from the last frame queues `OnCombatStateChanged(akTarget, aeCombatState)`, with 0 for not
+fighting, 1 for fighting, and 2 for searching. The combat loop fights only the player, so
+`akTarget` is the player while the actor fights, and `None` otherwise. Which events an instance
+handles is remembered until it retires, so the frame does not resolve the script chain again.
+
+## Item events
+
+Each frame reads the inventory writes in the world-state journal since the last frame. For each
+holder with scripts, the old and new inventory give a count change per item and the equip changes:
+
+- A count that went up queues `OnItemAdded(akBaseItem, aiItemCount, akItemReference,
+  akSourceContainer)`. A count that went down queues `OnItemRemoved` with `akDestContainer` last.
+- An item that became equipped queues `OnObjectEquipped(akBaseObject, akReference)`, and one that
+  stopped queues `OnObjectUnequipped`.
+
+A transfer writes the source and then the destination, next to each other in the journal. When a
+neighbouring write moved the same count of the item the other way, its holder is the container
+argument. Otherwise the container is `None`. `akItemReference` is always `None`, because inventory
+items are counts, not references. A holder's first write has no old value in the journal, so the
+plugin inventory stands in for it.
+
+`AddInventoryEventFilter` stores a filter in the holder's script state, one per script and form, so
+it survives a save. A script with a filter hears `OnItemAdded` and `OnItemRemoved` only for an item
+the filter names, directly or through a form list. A load moves the journal cursor to the end, so
+restoring inventories is not read as item moves.
+
 ## Script state in a save
 
 Instance states are sorted by key, and variables by script and name, so an unchanged runtime saves

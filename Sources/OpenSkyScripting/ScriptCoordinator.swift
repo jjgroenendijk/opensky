@@ -100,6 +100,8 @@ public final class ScriptCoordinator {
     /// The renderer gates `delta`, so a menu-paused frame advances nothing.
     public func advance(delta: Float) {
         queueLocationChange()
+        bridge?.queueInventoryEvents()
+        bridge?.queueCombatStateEvents()
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 
@@ -111,6 +113,7 @@ public final class ScriptCoordinator {
         runtime?.restore(instanceStates: instances)
         runtime?.restore(timerStates: timers)
         runtime?.queuePlayerLoadGame()
+        bridge?.skipInventoryJournal()
         lastPlayerLocation = nil
     }
 

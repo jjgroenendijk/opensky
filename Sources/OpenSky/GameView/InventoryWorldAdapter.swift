@@ -197,6 +197,10 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
         game.inventory.scriptRemoveAllItems(from: holder, to: other)
     }
 
+    func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {
+        game.inventory.scriptBaselineInventory(of: holder)
+    }
+
     func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32? {
         game.inventory.scriptItemCount(item, in: holder)
     }
