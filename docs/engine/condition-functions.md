@@ -27,54 +27,79 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 14 | `GetActorValue` | actor-value index | current value |
 | 18 | `GetCurrentTime` | none | game hour, 0 to 24; 4:30 am is 4.5 |
 | 27 | `GetLineOfSight` | reference | 1 when the sight line is clear |
+| 32 | `GetInSameCell` | reference | 1 when both stand in the same loaded cell |
 | 35 | `GetDisabled` | none | 1 when the reference is disabled |
 | 45 | `GetDetected` | actor | 1 when the run-on actor has detected the parameter |
 | 46 | `GetDead` | none | 1 when the actor is dead |
 | 47 | `GetItemCount` | item | how many the run-on holds |
+| 48 | `GetGold` | none | how many `Gold001` the run-on holds |
 | 56 | `GetQuestRunning` | `QUST` | 1 when the quest runs |
 | 58 | `GetStage` | `QUST` | highest stage reached, 0 for none |
 | 59 | `GetStageDone` | `QUST`, stage | 1 when that stage was visited |
 | 60 | `GetFactionRankDifference` | `FACT`, actor | own rank minus the parameter actor's rank |
+| 62 | `IsRaining` | none | 1 when the current weather is rainy |
+| 67 | `GetInCell` | `CELL` | 1 when the reference stands in that cell |
 | 69 | `GetIsRace` | `RACE` | 1 when the actor's race matches |
+| 70 | `GetIsSex` | 0 male, 1 female | 1 when the actor has that sex |
 | 71 | `GetInFaction` | `FACT` | 1 when a member |
 | 72 | `GetIsID` | base object | 1 when the reference's base form matches |
 | 73 | `GetFactionRank` | `FACT` | rank, -1 when not a member |
 | 74 | `GetGlobalValue` | `GLOB` | the global's value |
+| 75 | `IsSnowing` | none | 1 when the current weather is snowy |
 | 77 | `GetRandomPercent` | none | integer 0 to 99 |
 | 80 | `GetLevel` | none | level; for the player, the character level |
 | 102 | `IsTorchOut` | none | 1 when the actor holds a torch out |
 | 103 | `IsShieldOut` | none | 1 when the actor holds a shield out |
+| 130 | `GetPCIsRace` | `RACE` | 1 when the player's race matches |
+| 131 | `GetPCIsSex` | 0 male, 1 female | 1 when the player has that sex |
+| 136 | `GetIsReference` | reference | 1 when the run-on is that reference |
+| 149 | `GetIsCurrentWeather` | `WTHR` | 1 when that weather is current or coming in |
 | 159 | `GetSitting` | none | 0 not sitting, 2 getting ready to sit, 3 sitting |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
+| 182 | `GetEquipped` | item | 1 when the actor has it equipped |
 | 214 | `HasMagicEffect` | `MGEF` | 1 when that effect acts on the actor |
 | 223 | `IsSpellTarget` | `SPEL`, `ALCH`, `INGR`, or `ENCH` | 1 when an effect from it acts on the actor |
+| 248 | `IsScenePlaying` | `SCEN` | 1 while the scene plays |
 | 249 | `IsInDialogueWithPlayer` | none | 1 when the player talks to this actor |
 | 263 | `IsWeaponOut` | none | 0 nothing drawn, 2 weapon in a hand |
 | 264 | `HasSpell` | `SPEL` | 1 when the actor knows the spell |
+| 266 | `IsPleasant` | none | 1 when the current weather is pleasant |
 | 277 | `GetBaseActorValue` | actor-value index | base value, without modifiers |
+| 286 | `IsSneaking` | none | 1 while the actor sneaks |
+| 289 | `IsInCombat` | none | 1 while fighting or searching |
+| 310 | `GetInWorldspace` | `WRLD` | 1 in an exterior cell of that worldspace |
 | 313 | `GetPairedAnimation` | none | 1 while the actor plays a paired animation; always 0 |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
+| 353 | `IsActor` | none | 1 when the run-on is an actor |
+| 362 | `HasLinkedRef` | `KYWD` or null | 1 when an `XLKR` link has that keyword |
 | 365 | `IsChild` | none | 1 when the actor's race has the child flag |
 | 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
 | 375 | `GetCrimeGoldViolent` | `FACT` or null | violent part of the bounty |
 | 376 | `GetCrimeGoldNonviolent` | `FACT` or null | non-violent part of the bounty |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
 | 426 | `GetIsVoiceType` | `VTYP` | 1 when the actor's `VTCK` matches |
+| 430 | `GetHealthPercentage` | none | health over its maximum, 0 to 1 |
 | 448 | `HasPerk` | `PERK` | 1 when the actor has the perk |
 | 449 | `GetFactionRelation` | actor | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend |
 | 459 | `GetCrimeGold` | `FACT` or null | bounty owed to the faction |
 | 543 | `GetQuestCompleted` | `QUST` | 1 when the quest is completed |
+| 550 | `IsSceneActionComplete` | `SCEN`, action | 1 when that action is done in this run |
+| 561 | `HasRefType` | `LCRT` | 1 when the reference has that location ref type |
 | 566 | `GetIsAliasRef` | alias number | 1 when the reference fills that alias |
 | 570 | `HasEquippedSpell` | casting source | 1 when that source holds a spell |
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
+| 590 | `IsInScene` | none | 1 while a playing scene holds the actor |
 | 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
 | 613 | `IsFurnitureAnimType` | animation type | 1 when the actor's marker has that type |
 | 614 | `IsFurnitureEntryType` | entry | 1 when the actor enters from that side |
+| 629 | `GetVMQuestVariable` | `QUST`, variable (`CIS2`) | the quest script's variable |
+| 630 | `GetVMScriptVariable` | reference, variable (`CIS2`) | the object script's variable |
 | 631 | `IsEnteringInteractionQuick` | none | always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
 | 644 | `IsInFurnitureState` | animation type | 1 while seated on a marker of that type |
+| 650 | `IsLinkedTo` | reference, `KYWD` or null | 1 when the run-on links to it |
 | 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
 | 675 | `GetGraphVariableInt` | variable name (`CIS1`) | the actor's graph variable |
 | 681 | `EPMagic_IsAdvanceSkill` | actor-value index | 1 when the credited use trains that skill |
@@ -99,6 +124,55 @@ Keyword, form-list, and location functions, with their use count in the active l
 carry `KWDA`: actors (`NPC_`, `RACE`), activators, furniture, flora, and items. The Papyrus
 `Form.HasKeyword` reads the same data. Form lists expand nested lists. Location
 checks walk the parent chain and stop on a loop.
+
+## Script variables
+
+`GetVMQuestVariable` and `GetVMScriptVariable` read a Papyrus variable. The `CTDA` word
+for parameter 2 is not a name. In `Skyrim.esm` every one of these conditions (4,584 and
+91) carries a `CIS2` with the variable, for example `::MarkarthMarket_var`, the hidden
+variable behind an auto property. The Creation Kit wiki says only `Int`, `Float`, and
+`Bool` properties work, so OpenSky offers only those, with `Bool` as 0 or 1. A variable
+that no live script instance declares fails as unavailable. `GetVMScriptVariable` reads
+the object parameter 1 names, not the run-on reference.
+
+## Scenes
+
+`IsSceneActionComplete` takes the action's `INAM` index, which the wiki calls the
+"SceneActionID". A scene that does not play answers 0, because a new run starts with no
+action done. `IsInScene` is true while a playing scene holds the actor, the same rule that
+keeps a held actor out of a second scene ([dialogue](/engine/dialogue.md)).
+
+## Places
+
+`GetInCell`, `GetInWorldspace`, and `GetInSameCell` read the loaded cell that holds the
+reference. A reference outside the loaded cells fails as unavailable. The wiki notes that
+`GetInCell` needs an exact cell, not a name prefix as in older games. `GetInWorldspace` is 0
+in an interior.
+
+## References
+
+- `GetIsReference` and `IsLinkedTo` accept a parameter that is not loaded: OpenSky resolves
+  the FormID to its key, and `PlayerRef` means the player.
+- `HasLinkedRef` and `IsLinkedTo` read `XLKR` as the plugin wrote it. A link a script sets at
+  run time is not seen yet. A null keyword asks for the untagged link.
+- `IsLinkedTo` has no wiki page. xEdit gives a reference and a keyword. OpenSky reads it as
+  "the run-on links to the reference under the keyword". Vanilla uses it in quest alias
+  conditions with an alias as the reference.
+- `HasRefType` reads the reference's own `XLRT`, and every location that lists it under
+  `LCSR` or `ACSR`, without the ones `RCSR` removes.
+
+## Weather
+
+The weather functions read the weather the sky is moving toward. The wiki says
+`GetIsCurrentWeather` "will return true as soon as the weather starts transitioning into the
+specified weather". `IsPleasant`, `IsRaining`, and `IsSnowing` read the `WTHR DATA`
+classification ([weather](/formats/weather.md)). Indoors no weather runs, so they fail as
+unavailable; the game keeps the outside weather.
+
+## Inventory
+
+`GetGold` counts `Gold001` (`Skyrim.esm` 0x0F). It and `GetEquipped` read the player only;
+another actor fails as unavailable.
 
 ## Time, quests, and enable state
 
@@ -132,6 +206,13 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
   sheathed, or an NPC that is not fighting, holds nothing out and both return 0. An NPC
   in a fight has no tracked draw state, so both fail as unavailable. Vanilla idle markers
   test these two, for example the sweeping and warm-hands idles.
+- `GetIsSex` reads the `ACBS` female flag after template inheritance through "use traits".
+  For the player, it and `GetPCIsSex` read the race menu choice. `GetPCIsRace` ignores the
+  run-on.
+- `IsInCombat` is 1 while fighting and while searching, the two non-zero `GetCombatState`
+  values. The wiki only says "currently in combat".
+- `IsSneaking` reads the player's gait. No NPC gait is tracked, so an NPC fails as
+  unavailable.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.

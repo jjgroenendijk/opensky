@@ -1,7 +1,8 @@
 // Quest-state condition functions, each a pure read of the quest seam. An
 // undefined quest is `ConditionFailure.unresolvedQuest`, never a throw. Raw
 // stored indices from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: 56
-// `GetQuestRunning`, 58 `GetStage`, 59 `GetStageDone`, 543 `GetQuestCompleted`.
+// `GetQuestRunning`, 58 `GetStage`, 59 `GetStageDone`, 543 `GetQuestCompleted`,
+// 629 `GetVMQuestVariable`.
 // Return rules come from the wiki pages cited at each registration.
 
 import Foundation
@@ -60,6 +61,20 @@ nonisolated extension ConditionFunctions {
             parameter1: .formID
         ) { call in
             Self.questState(call, index: 543).map { Self.isTrue($0.isCompleted) }
+        })
+
+        // A `Conditional` property of the quest's script; `CIS2` names its variable,
+        // such as "::MarkarthMarket_var" (<https://ck.uesp.net/wiki/GetVMQuestVariable>).
+        registry.register(ConditionFunction(
+            index: 629, name: "GetVMQuestVariable", parameter1: .formID
+        ) { call in
+            guard let parameter = call.parameter1 else {
+                return .failure(.unresolvedParameter(629))
+            }
+            guard let quest = call.context.quests.key(for: parameter.asFormID) else {
+                return .failure(.unresolvedQuest(parameter.asFormID))
+            }
+            return Self.scriptVariable(call, on: quest)
         })
     }
 

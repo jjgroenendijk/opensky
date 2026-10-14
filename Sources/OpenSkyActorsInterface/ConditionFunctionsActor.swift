@@ -78,6 +78,7 @@ nonisolated extension ConditionFunctions {
 
         installLevelAndBaseValue(&registry)
         installActorBody(&registry)
+        installActorIdentity(&registry)
     }
 
     /// Vanilla perk requirements use these: `Armsman20` reads

@@ -14,6 +14,7 @@ nonisolated public struct ConditionDataResolution: Sendable {
     private let currentLocations: [ReferenceKey: ResolvedFormID]
     private let editorLocations: [ReferenceKey: ResolvedFormID]
     private let interiors: [ReferenceKey: Bool]
+    private let cells: [ReferenceKey: ReferenceCell]
 
     public static let empty = ConditionDataResolution()
 
@@ -24,7 +25,8 @@ nonisolated public struct ConditionDataResolution: Sendable {
         sourcePlugin: String? = nil,
         currentLocations: [ReferenceKey: ResolvedFormID] = [:],
         editorLocations: [ReferenceKey: ResolvedFormID] = [:],
-        interiors: [ReferenceKey: Bool] = [:]
+        interiors: [ReferenceKey: Bool] = [:],
+        cells: [ReferenceKey: ReferenceCell] = [:]
     ) {
         self.keywords = keywords
         self.formLists = formLists
@@ -33,6 +35,7 @@ nonisolated public struct ConditionDataResolution: Sendable {
         self.currentLocations = currentLocations
         self.editorLocations = editorLocations
         self.interiors = interiors
+        self.cells = cells
     }
 
     public func currentLocation(of reference: ReferenceKey) -> ResolvedFormID? {
@@ -48,6 +51,11 @@ nonisolated public struct ConditionDataResolution: Sendable {
         interiors[reference]
     }
 
+    /// The loaded cell that holds `reference`; nil when it is not loaded.
+    public func cell(of reference: ReferenceKey) -> ReferenceCell? {
+        cells[reference]
+    }
+
     /// A copy that reads FormIDs from `plugin` and puts `reference` in `location`,
     /// for a check about a place the reference is going to.
     public func with(
@@ -60,7 +68,19 @@ nonisolated public struct ConditionDataResolution: Sendable {
         return Self(
             keywords: keywords, formLists: formLists, locations: locations,
             sourcePlugin: plugin, currentLocations: current, editorLocations: editorLocations,
-            interiors: interiors
+            interiors: interiors, cells: cells
         )
+    }
+}
+
+/// The cell a reference stands in, in the load-order FormID space.
+nonisolated public struct ReferenceCell: Equatable, Sendable {
+    public let cell: FormID
+    /// Nil for an interior cell.
+    public let worldspace: FormID?
+
+    public init(cell: FormID, worldspace: FormID?) {
+        self.cell = cell
+        self.worldspace = worldspace
     }
 }

@@ -11,6 +11,8 @@ nonisolated extension ConditionFunctions {
     public static func installData(_ registry: inout ConditionFunctionRegistry) {
         installKeywordAndFormList(&registry)
         installLocationData(&registry)
+        installPlaces(&registry)
+        installReferenceData(&registry)
     }
 
     private static func installKeywordAndFormList(

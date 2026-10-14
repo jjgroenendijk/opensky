@@ -39,3 +39,29 @@ nonisolated extension LocationStore {
         }
     }
 }
+
+nonisolated extension LocationStore {
+    /// Every listed reference with its ref types, without the ones `RCSR` removes.
+    static func referenceTypes(
+        in locations: some Sequence<ResolvedLocation>,
+        index: RecordIndex
+    ) -> [ReferenceKey: Set<ReferenceKey>] {
+        var types: [ReferenceKey: Set<ReferenceKey>] = [:]
+        for resolved in locations {
+            let key = { (raw: FormID) in
+                index.resolvedID(raw, fromPlugin: resolved.sourcePlugin)
+                    .map(ReferenceKey.init(resolved:))
+            }
+            let place = resolved.location
+            let removed = Set(place.removedSpecialReferences.compactMap(key))
+            for special in place.specialReferences + place.addedSpecialReferences {
+                guard
+                    let reference = key(special.reference), !removed.contains(reference),
+                    let type = key(special.type)
+                else { continue }
+                types[reference.namingPlayer, default: []].insert(type)
+            }
+        }
+        return types
+    }
+}

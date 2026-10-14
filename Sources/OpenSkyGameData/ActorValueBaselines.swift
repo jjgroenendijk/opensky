@@ -59,6 +59,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public let isChild: Bool
     /// The race the derivation used, which `GetIsRace` reports.
     public let race: FormID?
+    /// The traits-resolved `ACBS` female flag, which `GetIsSex` reports. Nil when unknown.
+    public let isFemale: Bool?
 
     public init(
         maximums: ActorValues,
@@ -66,7 +68,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
         general: [Int32: Float] = [:],
         level: Int = PlayerLevelSource.startingLevel,
         isChild: Bool = false,
-        race: FormID? = nil
+        race: FormID? = nil,
+        isFemale: Bool? = nil
     ) {
         self.maximums = maximums
         self.regenPercentPerSecond = regenPercentPerSecond
@@ -74,6 +77,7 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
         self.level = max(PlayerLevelSource.startingLevel, level)
         self.isChild = isChild
         self.race = race
+        self.isFemale = isFemale
     }
 
     /// The base value `index` starts from: what the records author, or the vanilla
@@ -226,7 +230,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             level: resolved.level,
             isChild: resolved.race
                 .flatMap { resolver.races[$0.rawValue]?.flags.contains(.child) } ?? false,
-            race: resolved.race
+            race: resolved.race,
+            isFemale: (try? resolver.templates.resolve(base: base))?.isFemale.value
         )
     }
 }

@@ -20,6 +20,11 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case furniture
     case graphVariable
     case skillUsage
+    case scriptVariable
+    case scene
+    case cell
+    case weather
+    case reference
 }
 
 /// Which half of the magic seam could not answer. Four cases, because each names a
