@@ -264,6 +264,8 @@ typedef struct
     float3 basisX;
     float3 basisY;
     float3 basisZ;
+    /// InstanceTransform.instanceColor: a static's emittance, alpha 1 when set.
+    float4 instanceColor [[flat]];
 } StaticVertexOut;
 
 typedef struct

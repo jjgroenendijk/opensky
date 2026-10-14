@@ -70,10 +70,19 @@ struct LightGeometry
 {
     float3 normal;
     float3 toEye;
+    /// The hair strand direction, along +v, for anisotropic specular.
+    float3 strand;
     float gloss;
     float softWrap;
     float rimPower;
 };
+
+// Kajiya-Kay: the highlight follows the strand, so it is a band, not a spot.
+static inline float strandSpecular(LightGeometry geometry, float3 halfway)
+{
+    float along = dot(geometry.strand, halfway);
+    return pow(sqrt(saturate(1.0 - along * along)), geometry.gloss);
+}
 
 static void
 addLight(thread LightSums &sums, LightGeometry geometry, float3 toLight, float3 colour, uint terms)
@@ -84,8 +93,10 @@ addLight(thread LightSums &sums, LightGeometry geometry, float3 toLight, float3 
     sums.diffuse += colour * lambert;
     if (hasTerm(terms, ShadingTermSpecular)) {
         float3 halfway = normalize(toLight + geometry.toEye);
-        sums.specular +=
-            colour * pow(max(dot(n, halfway), 0.0), geometry.gloss) * step(0.0, facing);
+        float highlight = hasTerm(terms, ShadingTermAnisotropicLighting)
+                              ? strandSpecular(geometry, halfway)
+                              : pow(max(dot(n, halfway), 0.0), geometry.gloss);
+        sums.specular += colour * highlight * step(0.0, facing);
     }
     if (hasTerm(terms, ShadingTermBackLighting)) {
         sums.back += colour * max(-facing, 0.0);
@@ -139,4 +150,30 @@ static float2 innerLayerCoordinate(
     float depth = draw.multiLayer.x * alpha / max(abs(transmitted.z), 0.0001);
     float2 texel = 1.0 / (1024.0 * max(draw.multiLayer.zw, 0.0001));
     return (uv + texel * depth * transmitted.xy) * draw.multiLayer.zw;
+}
+
+// Sparkle snow (shader type 14): each small texture cell tilts its normal at random,
+// and a cell that mirrors the sun into the eye flashes. OpenSky reads parameter x as
+// cells per 1/64 of the texture, y as the glint power, z as its strength; w is unused.
+static float sparkle(float2 uv, LightGeometry geometry, float3 toSun, float4 params)
+{
+    float2 cell = floor(uv * 64.0 * max(params.x, 0.01));
+    float3 jitter = fract(
+                        sin(float3(
+                            dot(cell, float2(12.9898, 78.233)), dot(cell, float2(39.346, 11.135)),
+                            dot(cell, float2(73.156, 52.235)))) *
+                        43758.5453) -
+                    0.5;
+    float3 tilted = normalize(geometry.normal + jitter * 0.6);
+    float3 halfway = normalize(toSun + geometry.toEye);
+    float facing = step(0.0, dot(geometry.normal, toSun));
+    return pow(saturate(dot(tilted, halfway)), max(params.y, 1.0)) * params.z * facing;
+}
+
+// Screen-door fade: a 4x4 ordered dither turns alpha into a share of whole pixels.
+static inline float screenDoorThreshold(float2 pixel)
+{
+    const float pattern[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
+    uint2 cell = uint2(pixel) % 4;
+    return (pattern[cell.y * 4 + cell.x] + 0.5) / 16.0;
 }

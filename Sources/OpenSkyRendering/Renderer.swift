@@ -60,8 +60,13 @@ public final class Renderer: NSObject {
     /// screenshots and bench runs render the shipping frame however the dev
     /// shell is currently set; the device-gated debug-view tests turn it on.
     public var renderDebugAppliesOffscreen = false
-    public let depthState: MTLDepthStencilState
+    /// The scene's own depth state: test and write.
+    public var depthState: MTLDepthStencilState {
+        materialDepthStates.state(test: true, write: true)
+    }
+
     public let waterDepthState: MTLDepthStencilState
+    let materialDepthStates: MaterialDepthStates
     public let sampler: MTLSamplerState
     /// Screen-space UI overlay: pipeline (fills and text premultiplied over the 3D frame,
     /// depth off), sampler, r8 glyph atlas, and the triple-buffered rings. Encode and
@@ -304,6 +309,7 @@ public final class Renderer: NSObject {
     var eyeAdaptationClock = FrameSimClock()
     /// Scene depth under the water surface (RendererWaterPass.swift).
     public var waterDepth = WaterDepthState()
+    var refraction = RefractionState()
     /// Terrain bends its lighting by the TX01 normal maps of its texture sets.
     public var terrainNormalMapsEnabled = true
     /// The lit-mesh terms the frame draws; the sidebar turns each off.
@@ -361,7 +367,7 @@ public final class Renderer: NSObject {
         )
         (terrainPipeline, waterPipeline) = (pipelines.terrain, pipelines.water)
         (particlePipelines, debugPipelines) = (pipelines.particles, pipelines.debug)
-        (depthState, waterDepthState) = try Self.makeDepthStates(device: device)
+        (materialDepthStates, waterDepthState) = try Self.makeDepthStates(device: device)
         sampler = try Self.makeSampler(device: device)
         ((shadow, uiResources), (worldOverlayResources, swf)) =
             try Self.makeAuxiliaryResources(view: view, library: library, compiler: compiler)

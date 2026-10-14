@@ -33,6 +33,7 @@ nonisolated public struct Material: Hashable, Sendable {
     /// A skin-tint shape: the actor's skin colour multiplies its diffuse.
     public let tintsSkin: Bool
     public let shading: SurfaceShading
+    public let drawState: MaterialDrawState
 
     public init(
         diffuseTexture: String?,
@@ -50,7 +51,8 @@ nonisolated public struct Material: Hashable, Sendable {
         waterSurface: Bool = false,
         tintTexture: String? = nil,
         tintsSkin: Bool = false,
-        shading: SurfaceShading = .plain
+        shading: SurfaceShading = .plain,
+        drawState: MaterialDrawState = .standard
     ) {
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
@@ -68,6 +70,7 @@ nonisolated public struct Material: Hashable, Sendable {
         self.tintTexture = tintTexture
         self.tintsSkin = tintsSkin
         self.shading = shading
+        self.drawState = drawState
     }
 
     /// Neutral stand-in for shapes without a lighting shader: untextured,

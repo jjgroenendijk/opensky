@@ -137,73 +137,17 @@ extension Renderer {
         state: ScenePassState,
         frameOffset: Int
     ) -> ScenePassState? {
-        state.encoder.endEncoding()
-        guard
-            let depth = descriptor.depthAttachment.texture,
-            let copy = waterDepthCopy(matching: depth),
-            let blit = commandBuffer.makeComputeCommandEncoder()
-        else { return nil }
-        blit.label = "WaterDepthCopy"
-        blit.barrier(afterQueueStages: .fragment, beforeStages: .blit, visibilityOptions: .device)
-        blit.copy(sourceTexture: depth, destinationTexture: copy)
-        blit.barrier(afterStages: .blit, beforeQueueStages: .fragment, visibilityOptions: .device)
-        blit.endEncoding()
-        guard
-            let encoder = commandBuffer.makeRenderCommandEncoder(
-                descriptor: Self.continuingDescriptor(after: descriptor)
-            )
-        else { return nil }
-        bindScenePassFrameArguments(encoder: encoder, frameOffset: frameOffset)
-        encoder.label = "Water"
-        encoder.setTriangleFillMode(state.fillMode)
-        argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.waterDepth.rawValue)
-        var next = ScenePassState(encoder: encoder, slot: state.slot, frustum: state.frustum)
-        next.fillMode = state.fillMode
-        next.drawCursor = state.drawCursor
-        next.instanceCursor = state.instanceCursor
-        next.stats = state.stats
-        return next
-    }
-
-    private func waterDepthCopy(matching depth: MTLTexture) -> MTLTexture? {
-        if
-            let copy = waterDepth.copy, copy.width == depth.width, copy.height == depth.height,
-            copy.pixelFormat == depth.pixelFormat
-        {
-            return copy
+        guard let depth = descriptor.depthAttachment.texture else {
+            state.encoder.endEncoding()
+            return nil
         }
-        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-            pixelFormat: depth.pixelFormat, width: depth.width, height: depth.height,
-            mipmapped: false
+        let split = splitScenePass(
+            descriptor: descriptor, state: state, frameOffset: frameOffset,
+            copy: ScenePassCopy(source: depth, target: \.waterDepth.copy, label: "Water")
         )
-        descriptor.usage = .shaderRead
-        descriptor.storageMode = .private
-        guard let texture = device.makeTexture(descriptor: descriptor) else { return nil }
-        texture.label = "WaterDepthCopy"
-        if let old = waterDepth.copy {
-            residencySet.removeAllocation(old)
+        if let copy = waterDepth.copy {
+            argumentTable.setTexture(copy.gpuResourceID, index: TextureIndex.waterDepth.rawValue)
         }
-        residencySet.addAllocation(texture)
-        residencySet.commit()
-        waterDepth.copy = texture
-        return texture
-    }
-
-    /// The same targets, loading the color and depth drawn so far and keeping both.
-    private static func continuingDescriptor(
-        after descriptor: MTL4RenderPassDescriptor
-    ) -> MTL4RenderPassDescriptor {
-        let next = MTL4RenderPassDescriptor()
-        next.colorAttachments[0].texture = descriptor.colorAttachments[0].texture
-        next.colorAttachments[0].loadAction = .load
-        next.colorAttachments[0].storeAction = .store
-        next.depthAttachment.texture = descriptor.depthAttachment.texture
-        next.depthAttachment.loadAction = .load
-        next.depthAttachment.storeAction = .store
-        next.stencilAttachment.texture = descriptor.stencilAttachment.texture
-        next.stencilAttachment.loadAction = .clear
-        next.stencilAttachment.storeAction = .dontCare
-        next.stencilAttachment.clearStencil = 0
-        return next
+        return split
     }
 }

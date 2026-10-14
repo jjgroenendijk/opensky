@@ -45,11 +45,15 @@ struct AssetPayloadCodecTests {
         shading.multiLayer.innerScale = SIMD2(2, 3)
         shading.glowTexture = "textures/a_sk.dds"
         shading.environmentTexture = "textures/cubemaps/a.dds"
+        shading.sparkle = SIMD4(7.2, 150, 1.2, 1.1)
+        var drawState = MaterialDrawState()
+        (drawState.depthWrite, drawState.decal, drawState.screenDoor) = (false, true, true)
         let cutout = Material(
             diffuseTexture: "textures\\a.dds", normalTexture: nil, uvOffset: SIMD2(0.5, 0),
             uvScale: SIMD2(2, 2), alpha: 0.75, glossiness: 30, specularColor: SIMD3(1, 0.5, 0),
             specularStrength: 2, doubleSided: true, alphaBlend: false, alphaTestThreshold: 0.5,
-            tintTexture: "textures/facetint.dds", tintsSkin: true, shading: shading
+            tintTexture: "textures/facetint.dds", tintsSkin: true, shading: shading,
+            drawState: drawState
         )
         let foam = Material(
             diffuseTexture: "textures/effects/foam.dds", normalTexture: nil, uvOffset: .zero,

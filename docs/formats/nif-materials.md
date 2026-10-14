@@ -23,8 +23,8 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 
 | Type | Field | Notes |
 | --- | --- | --- |
-| uint32 | Shader flags 1 | Bit 15: refraction, so the shape is skipped |
-| uint32 | Shader flags 2 | Bit 4: double-sided, so no culling. Bit 29: tree animation |
+| uint32 | Shader flags 1 | `SkyrimShaderPropertyFlags1`; see "Draw state" and "Lit-surface terms" |
+| uint32 | Shader flags 2 | `SkyrimShaderPropertyFlags2` |
 | float x 2 | UV offset | |
 | float x 2 | UV scale | |
 | int32 | Texture set ref | `BSShaderTextureSet` |
@@ -32,7 +32,7 @@ A quirk: for this block only, a uint32 shader type comes before the `NiObjectNET
 | float | Emissive multiple | |
 | uint32 | (Clamp mode) | |
 | float | Alpha | 1 is opaque |
-| float | (Refraction) | |
+| float | Refraction strength | 0 to 1 |
 | float | Glossiness | Specular power |
 | float x 3 | Specular colour | |
 | float | Specular strength | |
@@ -48,7 +48,7 @@ Then a tail that depends on the shader type. A block that ends early keeps the d
 | 6 hair tint | float x 3 hair tint colour |
 | 7 parallax occlusion | (float max passes, float scale) |
 | 11 multi-layer parallax | float inner thickness, float refraction scale, float x 2 inner texture scale, float environment strength |
-| 14 sparkle snow | (float x 4 sparkle parameters) |
+| 14 sparkle snow | float x 4 sparkle parameters |
 | 16 eye | float eye cube map scale, (float x 3 left and right eye centres) |
 
 On the real install, Ralof's FaceGen head (`facegeom\skyrim.esm\0002bf9d.nif`) shows the
@@ -58,7 +58,8 @@ effects, cube map scale, two eye centres), and the hair shapes end with the tint
 
 A refraction shape bends the image behind it, such as the heat-haze dome in
 `fireplacewood01burning.nif` (flags 1 `0x82418309`, texture `VaporTileNormal_n.dds`). Its
-texture is a normal map. OpenSky has no refraction pass, so it does not draw the shape.
+slot 0 texture is a normal map, so OpenSky loads it as the normal map and draws the shape
+in the [refraction pass](/rendering/surface-shading.md).
 
 A shape with the tree animation flag, such as a pine branch in `treepineforestdead01.nif`
 (flags 2 `0x22008031`), stores its wind weight in the vertex alpha. OpenSky sets that alpha
@@ -75,7 +76,9 @@ follow NifSkope's open shaders (`sk_msn.frag`, and the slot numbers in `renderer
 | Type | Name | Tint |
 | --- | --- | --- |
 | 4 | FaceGen | Texture slot 6, the FaceGen tint, overlay-blended over the diffuse |
-| 5 | Skin tint | The actor's skin colour multiplies the diffuse |
+| 5 | Skin tint | The actor's skin colour, when SLSF1 bit 21 (`FaceGen_RGB_Tint`) is set |
+
+All 1684 vanilla type 5 shapes set bit 21, and no other type does.
 
 Overlay: where the base is below 0.5 the result is `2 * base * tint`, otherwise
 `1 - 2 * (1 - base) * (1 - tint)`. A tint of 0.5 leaves the base as it is. The game blends in
@@ -147,6 +150,51 @@ specular mask (in alpha). Slots 2 to 7 are glow or light mask, detail or height,
 environment cube map, environment mask, face tint or inner layer, and back light or
 specular map. On a FaceGen shape, slot 3 is the detail map and slot 6 the face tint.
 
+## Draw state
+
+These flags change how a shape draws, not how it is lit. The first set of rows come from
+`nif.xml`. The counts are over every lit shape in the vanilla archives.
+
+| Flag | Meaning in OpenSky |
+| --- | --- |
+| SLSF1 bit 31 `ZBuffer_Test` | Depth test. Cleared: the shape draws over everything |
+| SLSF2 bit 0 `ZBuffer_Write` | Depth write. 8281 shapes clear it, nearly all with an alpha property |
+| SLSF1 bits 26, 27 `Decal`, `Dynamic_Decal` | Depth pulled toward the eye, as in the decal pass. Mostly hair cards and skin overlays |
+| SLSF1 bit 9 `Cast_Shadows` | Casts a sun shadow |
+| SLSF1 bit 8 `Recieve_Shadows` | Takes the sun shadow |
+| SLSF2 bit 7 `Assume_Shadowmask` | Takes the sun shadow too. The game reads it from its screen shadow mask, OpenSky from the shadow map |
+| SLSF2 bits 1, 2, 31 LOD | Terrain and object LOD: no shadows and no point lights |
+| SLSF1 bit 19 `Screendoor_Alpha_Fade` | Alpha becomes a 4 x 4 dither of whole pixels instead of a blend |
+| SLSF1 bit 3 `Vertex_Alpha` | Without it the vertex alpha is ignored |
+| SLSF2 bit 5 `Vertex_Colors` | Without it the vertex colour is ignored |
+| SLSF1 bit 15 `Refraction` | Drawn in the refraction pass: the scene behind, bent by the slot 0 normal map |
+| SLSF1 bit 16 `Fire_Refraction` | With bit 15, the normal map scrolls upward, as heat over a fire |
+
+`nif.xml` describes bit 3 as "Enables using alpha component of vertex colors". 40424 vanilla
+shapes store a vertex alpha below 1 without the bit, among them 6709 hair shapes and every
+terrain LOD shape. With bit 29 (tree animation) the alpha is wind weight and is ignored too.
+No vanilla shape stores a vertex colour below 0.95 without bit 5.
+
+`BSEffectShaderProperty` shapes read the same depth and decal bits. The "Material depth and
+decal flags" switch in Surface Shading turns the depth, decal, and dither flags off.
+
+## Flags with no read
+
+OpenSky already behaves as these flags ask, so it does not read them:
+
+| Flag | Why no read is needed |
+| --- | --- |
+| SLSF1 bit 1 `Skinned` | The skin instance decides skinning. Every vanilla shape with a skin instance sets the bit, and no other shape does |
+| SLSF1 bit 25 `Remappable_Textures` | Alternate textures (`MODS`) apply to any shape. 2311 of 2322 vanilla swaps target a shape with the bit. The other 11 are the ash-covered logs of Dragonborn, whose swap is wanted |
+| SLSF2 bit 3 `No_Fade` | OpenSky does not fade objects out with distance, so every shape behaves as if it set the bit |
+| SLSF2 bit 28 `Unused02` | `nif.xml` marks it unused |
+
+The Fallout 3 flags in `nif.xml` describe bit 16 as "switches on refraction power/period",
+and the period as the "rate of texture movement for refraction shader". Skyrim blocks have
+no period field, so OpenSky picks the scroll rate. 51 vanilla shapes set bit 16 without bit
+15, such as the flame atronach's body. With nothing to scroll they draw as plain lit shapes.
+The block's refraction strength (0 to 1, "the amount of distortion") scales the bend.
+
 ## Lit-surface terms
 
 A term is on only when its texture slot names a texture. The rules follow NifSkope's
@@ -161,12 +209,22 @@ A term is on only when its texture slot names a texture. The rules follow NifSko
 | Soft light | SLSF2 bit 25 | Slot 2 light mask |
 | Rim light | SLSF2 bit 26 | Slot 2 light mask |
 | Back light | SLSF2 bit 27 | Slot 7 |
-| FaceGen detail | Type 4 | Slot 3 |
+| FaceGen detail | Type 4 and SLSF1 bit 10 | Slot 3 |
 | Parallax | Type 3 and SLSF1 bit 11 | Slot 3 height map |
 | Environment | Type 1 and SLSF1 bit 7, type 16 and SLSF1 bit 17, or multi-layer | Slot 4 cube map |
 | Environment mask | Environment | Slot 5; otherwise the normal alpha |
 | Multi-layer parallax | Type 11 and SLSF2 bit 24 | Slot 6 inner layer |
 | Tint colour | Type 5 or 6 | None; the tail colour |
+| Hair soft light | SLSF1 bit 18 | None; caps the direct light |
+| Anisotropic specular | SLSF2 bit 21 | None; the highlight follows the strand |
+| Reflection lit with the surface | Environment and SLSF2 bit 15 | Without the bit the reflection adds unlit |
+| External emittance | SLSF1 bit 29 | None; the reference's `XEMI` light colour replaces the emissive colour |
+| Sparkle | Type 14 | None; the tail parameters |
+| Landscape noise | Type 18 | `textures\terrain\noise.dds`, which the shape does not name |
+
+nif.xml describes bit 18 as "keeps from going too bright under lights (hair shader only)".
+The 406 vanilla shapes with bit 29 are mostly lit windows (type 2), and their own emissive
+colour is black, so without the reference colour they do not glow.
 
 Ralof's head (type 4, flags 1 `0x82401703`, flags 2 `0x02008021`) uses model-space normals,
 specular from slot 7, soft light with the slot 2 mask, the slot 3 detail map, and the slot 6

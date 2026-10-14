@@ -262,13 +262,15 @@ nonisolated extension CellSceneBuilder {
         simulated: Set<UInt32>
     ) -> [RenderPlacement] {
         instances.filter { !$0.model.meshes.isEmpty }.map { instance in
-            RenderPlacement(
+            var placement = RenderPlacement(
                 model: instance.model,
                 transform: instance.transform,
                 bounds: meshes.bounds(forPath: instance.modelPath, surface: instance.surface)?
                     .transformed(by: instance.transform),
                 referenceFormID: simulated.contains(instance.formID) ? instance.formID : 0
             )
+            placement.emittance = instance.emittance
+            return placement
         }
     }
 

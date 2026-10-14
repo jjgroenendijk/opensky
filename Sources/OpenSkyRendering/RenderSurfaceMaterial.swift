@@ -28,7 +28,7 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
             key.map { textureProvider($0, usage) }
         }
         glow = load(shading.glowTexture, .color)
-        let height = terms.contains(.parallax)
+        let height = !terms.isDisjoint(with: [.parallax, .landscapeNoise])
         detail = load(shading.detailTexture, height ? .data : .color)
         environment = load(shading.environmentTexture, .cube)
         environmentMask = load(shading.environmentMaskTexture, .data)
@@ -39,11 +39,12 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         specular = SIMD4(material.specularColor * material.specularStrength, material.glossiness)
         emissive = SIMD4(shading.emissiveColor, shading.emissiveMultiple)
         lightingEffects = SIMD4(
-            shading.lightingEffect1, shading.lightingEffect2, shading.environmentScale, 0
+            shading.lightingEffect1, shading.lightingEffect2, shading.environmentScale,
+            shading.refractionStrength
         )
         tintColor = SIMD4(shading.tintColor ?? SIMD3(1, 1, 1), 1)
         let layer = shading.multiLayer
-        multiLayer = SIMD4(
+        multiLayer = terms.contains(.sparkle) ? shading.sparkle : SIMD4(
             layer.thickness,
             layer.refractionScale,
             layer.innerScale.x,
@@ -68,13 +69,24 @@ nonisolated public struct RenderSurfaceMaterial: Sendable {
         (.environment, .environment),
         (.environmentMask, .environmentMask),
         (.parallax, .parallax),
-        (.multiLayer, .multiLayer)
+        (.multiLayer, .multiLayer),
+        (.hairSoftLighting, .hairSoftLighting),
+        (.anisotropicLighting, .anisotropicLighting),
+        (.environmentLightFade, .environmentLightFade),
+        (.externalEmittance, .externalEmittance),
+        (.sparkle, .sparkle),
+        (.landscapeNoise, .landscapeNoise),
+        (.refraction, .refraction),
+        (.fireRefraction, .fireRefraction)
     ]
 
     private static func flags(material: Material) -> UInt32 {
         let terms = material.shading.terms
         var bits = termBits.reduce(UInt32(0)) { bits, pair in
             terms.contains(pair.0) ? bits | UInt32(pair.1.rawValue) : bits
+        }
+        if material.drawState.screenDoor {
+            bits |= UInt32(ShadingTerm.screenDoor.rawValue)
         }
         if material.tintTexture != nil {
             bits |= UInt32(ShadingTerm.faceTint.rawValue)

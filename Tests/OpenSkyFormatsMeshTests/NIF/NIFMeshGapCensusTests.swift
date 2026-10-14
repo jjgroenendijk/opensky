@@ -15,7 +15,7 @@ struct NIFMeshGapCensusTests {
         census.record(data: NIFFixture.file(blocks: [
             .init("BSTriShape", NIFFixture.staticTriangleShape(shaderPropertyRef: 1)),
             .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty(
-                shaderType: 14, shaderFlags1: 0x1, shaderFlags2: 0x2
+                shaderType: 7, shaderFlags1: 0x2001, shaderFlags2: 0
             )),
             .init("BSXFlags", Data(count: 8))
         ]))
@@ -24,11 +24,25 @@ struct NIFMeshGapCensusTests {
         #expect(census.blockTypes.uses["BSXFlags"] == 1)
         #expect(census.blockTypes.left(where: NIFBlockTypes.handled.contains).map(\.name)
             == ["BSXFlags"])
-        #expect(census.lightingTypes.uses == ["14 Sparkle Snow": 1])
-        #expect(!NIFMeshGapCensus.readLightingTypes.contains("14 Sparkle Snow"))
+        #expect(census.lightingTypes.uses == ["7 Parallax Occ": 1])
+        #expect(!NIFMeshGapCensus.readLightingTypes.contains("7 Parallax Occ"))
         #expect(census.lightingFlags.uses.keys.sorted()
-            == ["SLSF1 0 Specular", "SLSF2 1 LOD_Landscape"])
+            == ["SLSF1 0 Specular", "SLSF1 13 Non_Projective_Shadows"])
         #expect(census.lightingFlags.done(where: NIFMeshGapCensus.readLightingFlags.contains) == 1)
+    }
+
+    @Test func everyFlagTheVanillaMeshesSetCountsAsDone() {
+        let vanilla: [(word: Int, bit: Int)] = [
+            (1, 1), (1, 3), (1, 8), (1, 9), (1, 10), (1, 16), (1, 18), (1, 19), (1, 21),
+            (1, 25), (1, 26), (1, 27), (1, 29), (1, 31), (2, 0), (2, 1), (2, 2), (2, 3),
+            (2, 5), (2, 7), (2, 15), (2, 21), (2, 28), (2, 31)
+        ]
+        for flag in vanilla.map({ NIFShaderFlag(word: $0.word, bit: $0.bit) }) {
+            #expect(NIFMeshGapCensus.readLightingFlags.contains(flag.name), "\(flag.name)")
+        }
+        #expect(NIFMeshGapCensus.readLightingTypes.isSuperset(of: [
+            "14 Sparkle Snow", "18 LOD Landscape Noise"
+        ]))
     }
 
     @Test func aFileThatDoesNotOpenIsOneFailure() {

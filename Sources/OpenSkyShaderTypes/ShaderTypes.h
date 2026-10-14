@@ -105,7 +105,7 @@ typedef NS_ENUM(EnumBackingType, TextureIndex)
     /// SWF gradient ramp atlas: one 256-texel row per gradient fill in the
     /// active movie (rgba8Unorm, straight alpha).
     TextureIndexSWFGradient = 12,
-    /// The scene color copied before the image-space composite reads it.
+    /// A scene color copy: for refraction shapes, then for the image-space composite.
     TextureIndexSceneColor = 13,
     /// Greyscale palette of an effect shape; the diffuse stands in when it has none.
     TextureIndexEffectPalette = 14,
@@ -211,6 +211,20 @@ typedef NS_ENUM(EnumBackingType, ShadingTerm)
     ShadingTermBaseAmbient = 1 << 17,
     /// The tint colour is a skin tone: it overlays the albedo instead of multiplying it.
     ShadingTermSkinTint = 1 << 18,
+    ShadingTermHairSoftLighting = 1 << 19,
+    ShadingTermAnisotropicLighting = 1 << 20,
+    /// Shows the scene behind, bent by the normal map; fire refraction scrolls the map.
+    ShadingTermRefraction = 1 << 27,
+    ShadingTermFireRefraction = 1 << 28,
+    /// The reflection is lit with the albedo; without it the reflection adds unlit.
+    ShadingTermEnvironmentLightFade = 1 << 21,
+    ShadingTermExternalEmittance = 1 << 22,
+    ShadingTermSparkle = 1 << 23,
+    ShadingTermLandscapeNoise = 1 << 24,
+    /// Alpha discards whole pixels in a dither pattern instead of blending.
+    ShadingTermScreenDoor = 1 << 25,
+    /// Frame-only, read on the CPU: draw with each material's depth and decal flags.
+    ShadingTermMaterialDrawState = 1 << 26,
 };
 
 /// Which channel a render-debug pipeline writes instead of the shaded surface.
@@ -388,11 +402,12 @@ typedef struct
     vector_float4 specular;
     /// rgb emissive colour, a its multiple.
     vector_float4 emissive;
-    /// x soft-light wrap, y rim power, z environment scale.
+    /// x soft-light wrap, y rim power, z environment scale, w refraction strength.
     vector_float4 lightingEffects;
     /// rgb skin or hair tint colour.
     vector_float4 tintColor;
-    /// x inner thickness, y refraction scale, zw inner texture scale.
+    /// x inner thickness, y refraction scale, zw inner texture scale. A sparkle
+    /// shape stores its four sparkle parameters here instead.
     vector_float4 multiLayer;
 } DrawUniforms;
 
@@ -456,7 +471,7 @@ typedef struct
     matrix_float4x4 modelMatrix;
     /// Inverse-transpose of modelMatrix: transforms normals to world space.
     matrix_float4x4 normalMatrix;
-    /// rgb LAND/GRAS tint, a unused. Static/shadow paths ignore both extras.
+    /// rgb LAND/GRAS tint. On a static: rgb its reference's emittance, a 1 when set.
     vector_float4 instanceColor;
     /// x=wave period, y=motion phase, z/w reserved.
     vector_float4 grassParameters;

@@ -16,6 +16,7 @@ extension Renderer {
         ).resolved(debug: isRenderDebugActive ? debugPipelines : nil)
         let layers = effectiveRenderLayers
         state.cullList = .alphaTested
+        state.materialDepth = .readOnly
         state.encoder.setDepthStencilState(waterDepthState)
         var boundPipeline: ObjectIdentifier?
         for index in order where layers.contains(groups[index].layer) {
@@ -25,7 +26,7 @@ extension Renderer {
             )
         }
         state.cullList = nil
-        state.encoder.setDepthStencilState(depthState)
+        endMaterialDrawState(state: &state)
     }
 
     /// Indices of the blended groups, farthest first, so a nearer surface blends

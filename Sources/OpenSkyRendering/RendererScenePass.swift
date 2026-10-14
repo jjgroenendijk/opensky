@@ -25,6 +25,8 @@ extension Renderer {
         /// The scene list `encode(groups:)` draws, so the GPU-culled groups take the
         /// indirect path. Nil for lists outside the scene.
         var cullList: GPUCullList?
+        /// Set while a scene list draws: each group then sets its material's depth flags.
+        var materialDepth: MaterialDepthMode?
     }
 
     /// Writes this frame's uniforms into its 256-byte-aligned slot and
@@ -199,7 +201,7 @@ extension Renderer {
             var transforms = InstanceTransform(
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
-                instanceColor: SIMD4(1, 1, 1, 1),
+                instanceColor: instance.instanceColor,
                 grassParameters: .zero
             )
             instanceTransformBuffer.contents()
@@ -255,7 +257,9 @@ extension Renderer {
         // ordering is retained, so switch only when rigid/skinned kind does.
         var boundPipeline: ObjectIdentifier?
         for (index, group) in groups.enumerated() where layers.contains(group.layer) {
-            guard !skippingBlended || !group.drawsBlended else { continue }
+            guard !skippingBlended || !(group.drawsBlended || group.drawsRefraction) else {
+                continue
+            }
             encode(
                 group: group, at: index, pipelines: pipelines,
                 boundPipeline: &boundPipeline, state: &state
@@ -306,6 +310,9 @@ extension Renderer {
             index: BufferIndex.pointLights.rawValue
         )
         bindMaterialTextures(group.material)
+        if let mode = state.materialDepth {
+            applyDrawState(of: group.material, mode: mode, state: state)
+        }
         state.encoder.setCullMode(group.material.doubleSided ? .none : .back)
         state.encoder.drawInstances(of: group.mesh, visible)
     }
@@ -334,6 +341,10 @@ extension Renderer {
         argumentTable.setTexture(
             (surface.environment ?? blackCube).gpuResourceID,
             index: TextureIndex.surfaceEnvironment.rawValue
+        )
+        argumentTable.setTexture(
+            refraction.copy?.gpuResourceID ?? diffuse,
+            index: TextureIndex.sceneColor.rawValue
         )
     }
 
@@ -418,6 +429,7 @@ extension Renderer {
     /// The opaque groups, the terrain, and the alpha-tested groups, in that order.
     private func encodeSceneGeometry(state: inout ScenePassState) {
         state.cullList = .opaque
+        state.materialDepth = .writes
         let rayTraced = rayTracedPipelines
         encode(
             groups: frameDrawGroups.opaque,
@@ -426,8 +438,10 @@ extension Renderer {
             morphedSkinnedPipeline: morphedSkinnedOpaquePipeline,
             state: &state
         )
+        endMaterialDrawState(state: &state)
         encodeTerrain(items: scene.terrain, state: &state)
         state.cullList = .alphaTested
+        state.materialDepth = .writes
         encode(
             groups: frameDrawGroups.alphaTested,
             staticPipeline: rayTraced?.alphaTest ?? alphaTestPipeline,
@@ -437,6 +451,7 @@ extension Renderer {
             state: &state
         )
         state.cullList = nil
+        endMaterialDrawState(state: &state)
     }
 
     public func encodeScenePass(
@@ -461,9 +476,10 @@ extension Renderer {
             ?? target
         let grade = imageSpaceGrade(descriptor: sceneTarget, slot: slot)
         let waterDepth = waterReadsDepth(projection: projection)
+        refraction.splits = refractionSplits()
         guard
             let descriptor = scenePassDescriptor(
-                sceneTarget, grade: grade, storesDepth: waterDepth
+                sceneTarget, grade: grade, storesDepth: waterDepth || refraction.splits
             ),
             let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return false }
@@ -537,6 +553,9 @@ extension Renderer {
             )
         else { return false }
         encodeBlendedGroups(state: &state)
+        guard
+            encodeRefraction(descriptor: descriptor, frameOffset: frameOffset, state: &state)
+        else { return false }
         encodeParticles(
             items: sortedParticles(scene.particles + effects.particles),
             enabled: particlesEnabled,

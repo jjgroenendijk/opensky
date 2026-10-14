@@ -24,13 +24,13 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-13 by `make gaps`.
+Measured on 2026-10-14 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
 | Papyrus natives | 197 | 311 | 508 | 38% |
 | Papyrus events | 15 | 53 | 68 | 22% |
-| Condition functions | 80 | 178 | 258 | 31% |
+| Condition functions | 105 | 153 | 258 | 40% |
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 141 | 1507 | 1648 | 8% |
 | Magic effect archetypes | 3 | 34 | 37 | 8% |
@@ -44,9 +44,9 @@ Measured on 2026-10-13 by `make gaps`.
 | Animation events | 60 | 84 | 144 | 41% |
 | Behavior graph variables | 18 | 678 | 696 | 2% |
 | NIF block types | 82 | 63 | 145 | 56% |
-| Lighting shader types | 9 | 2 | 11 | 81% |
-| Lighting shader flags | 14 | 24 | 38 | 36% |
-| Effect shader flags | 6 | 11 | 17 | 35% |
+| Lighting shader types | 11 | 0 | 11 | 100% |
+| Lighting shader flags | 38 | 0 | 38 | 100% |
+| Effect shader flags | 10 | 7 | 17 | 58% |
 | Mesh decode failures | - | 6 | - | - |
 | Texture variants | 9 | 1 | 10 | 90% |
 | Sound file variants | 3 | 0 | 3 | 100% |

@@ -52,11 +52,24 @@ Each light, the sun and the eight nearest point lights, adds:
 | Back light | `colour * max(-N.L, 0)` | Albedo times the slot 7 back light map |
 | Rim light | `colour * pow(1 - N.V, LE2) * smoothstep(-0.2, 1, -L.V)` | Albedo times the slot 2 light mask |
 | Soft light | `colour * wrap * smoothstep(1, 0, N.L) * sqrt(LE1)` with `wrap = max((N.L + LE1) / (1 + LE1), 0)` | Albedo times the slot 2 light mask |
+| Hair specular | `colour * pow(sqrt(1 - (T.H)^2), glossiness)` replaces the specular row | As specular |
+| Sparkle (sun only) | `colour * pow(N'.H, y) * z`, with N' the normal tilted at random per texture cell | Added to the specular |
 
-LE1 and LE2 are the two lighting effect floats of the shader property. Ambient is the
-six-axis directional ambient (`DALC`), plus the single ambient colour while "Base ambient
-light" is on. The emissive colour times its multiple adds to the light, scaled by the slot 2
-glow map on a glow shape. The sun terms use the sun shadow.
+LE1 and LE2 are the two lighting effect floats of the shader property. T is the strand
+direction of an anisotropic hair shape, along +v of the texture (Kajiya-Kay model). A hair
+soft-lighting shape caps the summed direct diffuse light at 1, because `nif.xml` says the
+flag keeps hair "from going too bright under lights".
+
+The sparkle parameters of shader type 14 have no public description. Their vanilla values
+are, for example, (7.2, 150, 1.2, 1.1) on the ice icicles and (3, 100, 5, 100) in Windhelm.
+OpenSky reads x as cells per 1/64 of the texture, y as the glint power, and z as its
+strength, and does not use w. This is an OpenSky model, not the game's formula.
+
+Ambient is the six-axis directional ambient (`DALC`), plus the single ambient colour while
+"Base ambient light" is on. The emissive colour times its multiple adds to the light, scaled
+by the slot 2 glow map on a glow shape. An external-emittance shape uses the colour of its
+reference's `XEMI` light instead; a reference without one keeps the NIF colour. The sun terms
+use the sun shadow.
 
 ## Albedo
 
@@ -67,7 +80,8 @@ The albedo starts as diffuse times vertex colour. Then, in this order:
 2. FaceGen: the slot 3 detail map, then the slot 6 face tint, overlay-blend over the albedo,
    and the result doubles where a detail map is used. These steps run in gamma space.
 3. The environment cube map adds its reflection, times the environment scale and the slot 5
-   mask (or the normal alpha without a mask).
+   mask (or the normal alpha without a mask). With SLSF2 bit 15 (`EnvMap_Light_Fade`) it
+   adds to the albedo, so the light scales it. Without the bit it adds to the lit colour.
 4. A hair tint colour multiplies the albedo. A skin tint colour (shader type 5) overlays
    it in gamma space instead, the same blend as the face tint.
 
@@ -77,6 +91,11 @@ NifSkope multiplies it, but a multiply darkens the body far below the head: Ralo
 while the overlaid face tint brightens the head. The game shows no seam at the neck, so
 OpenSky blends the body like the face. This is a match to observed output, not a
 confirmed game formula.
+
+Distant terrain (type 18) multiplies the albedo by `mix(1, noise / 0.215, 0.5)`. The noise is
+`textures\terrain\noise.dds`, a 512 x 512 grey texture with mean 0.215, tiled once per cell
+(4096 units). Dividing by the mean keeps the average colour of the land. The game's blend is
+not documented, so the strength and the tiling are OpenSky choices.
 
 Parallax (type 3) shifts the texture coordinate before any sampling:
 `uv += V.xy * (height * 0.08 - 0.04)`, with V the view direction in the tangent frame.
@@ -95,6 +114,17 @@ switch for terrain, grass, and decals. Without that, a vertex
 colour of 0.5 darkens a surface to 0.5 of its linear value instead of about 0.22, and baked
 shading looks washed out and grey.
 
+## Refraction
+
+A refraction shape, such as the heat haze over a fire, shows the scene behind it. After the
+blended shapes, the scene pass ends, its colour is copied, and a second encoder draws each
+refraction shape as that copy, sampled at an offset. The water pass splits the same way for
+its depth copy. The offset is the slot 0 normal map's red and green, times the refraction
+strength, times a tenth of the screen, times the vertex and material alpha. A fire
+refraction shape scrolls the normal map half a texture per second. The reach and the scroll
+rate are OpenSky choices: the game's formula is not documented. A refraction shape casts no
+sun shadow.
+
 ## Controls
 
 `World > Environment > Surface Shading` has one switch per term group and counts the scene
@@ -104,7 +134,4 @@ as a mask over each material's terms, so turning a term off costs no rebuild.
 
 ## Not modelled
 
-- Anisotropic hair specular (SLSF2 bit 21). NifSkope has no model for it, so hair uses the
-  plain specular.
-- Parallax occlusion (type 7) and sparkle snow (type 14). Their tails are skipped.
-- Refraction shapes are still skipped ([NIF materials](/formats/nif-materials.md)).
+- Parallax occlusion (type 7). No vanilla shape uses it, and its tail is skipped.

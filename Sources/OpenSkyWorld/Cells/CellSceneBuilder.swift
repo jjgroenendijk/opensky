@@ -74,6 +74,8 @@ nonisolated public struct ResolvedInstance {
     public let transform: float4x4
     /// The behaviour set when `model` is this reference's own node-skinned copy.
     public var animated: ObjectBehaviorAsset?
+    /// The colour of the reference's `XEMI` light, for external-emittance shapes.
+    public var emittance: SIMD3<Float>?
 }
 
 /// A located CELL and its cell-children group; nil children means no references.
@@ -538,7 +540,8 @@ nonisolated extension CellSceneBuilder {
                     rotation: ref.placement.rotation,
                     scale: ref.scale
                 ),
-                animated: animated == nil ? nil : behavior
+                animated: animated == nil ? nil : behavior,
+                emittance: emittanceColour(of: ref)
             )
         } catch MeshLibraryError.editorMarkerOnly {
             counts.markers += 1

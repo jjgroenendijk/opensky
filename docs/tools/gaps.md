@@ -77,7 +77,9 @@ complete, so a new reader cannot be missed:
 
 A new settings reader adds its call to `GapsGatherer.settingsRead` and its file to the
 `game_setting_reader` rule. A new shader flag reader adds the flag to `lightingRead` or
-`effectRead` when a draw term depends on it; decoding a flag alone does not count.
+`effectRead` when a draw term depends on it; decoding a flag alone does not count. A flag
+whose behaviour OpenSky has without a read goes in `lightingMatchedByDefault`, with the
+reason in [NIF materials](/formats/nif-materials.md), "Flags with no read".
 
 ### Perk entry points
 

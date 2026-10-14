@@ -11,6 +11,15 @@ constant bool alphaTestEnabled [[function_constant(FunctionConstantAlphaTest)]];
 constant bool alphaBlendValue [[function_constant(FunctionConstantAlphaBlend)]];
 constant bool alphaBlendEnabled = is_function_constant_defined(alphaBlendValue) && alphaBlendValue;
 
+// Shader type 18 tiles textures/terrain/noise.dds once per cell. Its mean is 0.215, so
+// dividing by it keeps the average colour of the land.
+constant float landscapeNoiseTile = 1.0 / 4096.0;
+constant float landscapeNoiseMean = 0.215;
+// Refraction strength 1 moves the scene by a tenth of the screen; fire refraction
+// scrolls its normal map half a texture per second. Both are OpenSky choices.
+constant float refractionReach = 0.1;
+constant float fireRefractionScroll = 0.5;
+
 // Instanced: matrices come from the per-instance transform
 // array, bound at the draw group's base offset — instance_id starts at 0
 // per draw call, so it indexes straight into the group's visible instances.
@@ -31,6 +40,7 @@ vertex StaticVertexOut staticMeshVertex(
     out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
+    out.instanceColor = instance.instanceColor;
     setBasis(out, upper3x3(instance.normalMatrix));
     return out;
 }
@@ -64,6 +74,7 @@ vertex StaticVertexOut skinnedMeshVertex(
     out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
+    out.instanceColor = instance.instanceColor;
     setBasis(out, upper3x3(instance.normalMatrix) * skinBasis);
     return out;
 }
@@ -96,6 +107,7 @@ vertex StaticVertexOut morphedSkinnedMeshVertex(
     out.worldPosition = world.xyz;
     out.texcoord = in.texcoord * draw.uvScale + draw.uvOffset;
     out.color = in.color;
+    out.instanceColor = instance.instanceColor;
     setBasis(out, upper3x3(instance.normalMatrix) * skinBasis);
     return out;
 }
@@ -182,10 +194,31 @@ struct LitInput
 {
     float3 albedo;
     float3 toEye;
+    float3 strand;
     float2 uv;
     float shadow;
     uint terms;
 };
+
+// The emissive colour, or the reference's emittance on an external-emittance shape.
+static float3 emittedLight(
+    StaticVertexOut in,
+    LitInput input,
+    constant DrawUniforms &draw,
+    SurfaceMaps maps,
+    sampler trilinear)
+{
+    uint terms = input.terms;
+    bool external = hasTerm(terms, ShadingTermExternalEmittance) && in.instanceColor.a > 0.0;
+    if (!hasTerm(terms, ShadingTermEmissive) && !external) {
+        return 0.0;
+    }
+    float3 emitted = (external ? in.instanceColor.rgb : draw.emissive.rgb) * draw.emissive.a;
+    if (hasTerm(terms, ShadingTermGlowMap)) {
+        emitted *= maps.glow.sample(trilinear, input.uv).rgb;
+    }
+    return emitted;
+}
 
 static float3 litSurface(
     StaticVertexOut in,
@@ -198,20 +231,18 @@ static float3 litSurface(
     sampler trilinear)
 {
     uint terms = input.terms;
-    LightGeometry geometry = {
-        normal.world, input.toEye, max(draw.specular.a, 1.0), draw.lightingEffects.x,
-        draw.lightingEffects.y};
+    LightGeometry geometry = {normal.world,           input.toEye,
+                              input.strand,           max(draw.specular.a, 1.0),
+                              draw.lightingEffects.x, draw.lightingEffects.y};
     LightSums sums = {0.0, 0.0, 0.0, 0.0, 0.0};
     addLight(sums, geometry, -frame.sunDirection, frame.sunColor * input.shadow, terms);
     addPointLights(sums, geometry, in.worldPosition, pointLights, draw.pointLightCount, terms);
-    float3 ambient = directionalAmbient(normal.world, frame) + baseAmbient(frame);
-    float3 emitted = 0.0;
-    if (hasTerm(terms, ShadingTermEmissive)) {
-        emitted = draw.emissive.rgb * draw.emissive.a;
-        if (hasTerm(terms, ShadingTermGlowMap)) {
-            emitted *= maps.glow.sample(trilinear, input.uv).rgb;
-        }
+    if (hasTerm(terms, ShadingTermHairSoftLighting)) {
+        // nif.xml: keeps hair from going too bright under lights.
+        sums.diffuse = min(sums.diffuse, 1.0);
     }
+    float3 ambient = directionalAmbient(normal.world, frame) + baseAmbient(frame);
+    float3 emitted = emittedLight(in, input, draw, maps, trilinear);
     float3 lightMask = maps.glow.sample(trilinear, input.uv).rgb;
     float3 back = 0.0;
     if (hasTerm(terms, ShadingTermBackLighting)) {
@@ -227,7 +258,40 @@ static float3 litSurface(
         }
         specular = draw.specular.rgb * mask * sums.specular;
     }
+    if (hasTerm(terms, ShadingTermSparkle)) {
+        float glint = sparkle(input.uv, geometry, -frame.sunDirection, draw.multiLayer);
+        specular += frame.sunColor * input.shadow * glint;
+    }
     return input.albedo * illumination + specular;
+}
+
+struct RefractionInput
+{
+    float2 pixel;
+    float2 uv;
+    float fade;
+    uint terms;
+};
+
+// The scene copy, bent by the normal map. Fire refraction scrolls the map upward, and
+// the vertex and material alpha fade the bend out toward the shape's edges.
+static float3 refracted(
+    RefractionInput input,
+    constant FrameUniforms &frame,
+    constant DrawUniforms &draw,
+    texture2d<float> normalMap,
+    texture2d<float> scene,
+    sampler trilinear)
+{
+    float2 uv = input.uv;
+    if (hasTerm(input.terms, ShadingTermFireRefraction)) {
+        uv.y += frame.animationTime * fireRefractionScroll;
+    }
+    float2 bend = normalMap.sample(trilinear, uv).xy * 2.0 - 1.0;
+    float2 size = float2(scene.get_width(), scene.get_height());
+    float reach = draw.lightingEffects.w * refractionReach * saturate(input.fade);
+    constexpr sampler clamped(filter::linear, address::clamp_to_edge);
+    return scene.sample(clamped, input.pixel / size + bend * reach).rgb;
 }
 
 fragment float4 staticMeshFragment(
@@ -244,6 +308,7 @@ fragment float4 staticMeshFragment(
     texture2d<float> environmentMask [[texture(TextureIndexSurfaceEnvironmentMask)]],
     texture2d<float> layerMap [[texture(TextureIndexSurfaceLayer)]],
     texture2d<float> backLightMap [[texture(TextureIndexSurfaceBackLight)]],
+    texture2d<float> sceneColour [[texture(TextureIndexSceneColor)]],
     depth2d_array<float> shadowMap [[texture(TextureIndexShadowMap)]],
     sampler trilinear [[sampler(SamplerIndexTrilinear)]],
     sampler shadowSampler [[sampler(SamplerIndexShadowCompare)]],
@@ -278,11 +343,21 @@ fragment float4 staticMeshFragment(
     if (alphaTestEnabled && alpha < draw.alphaThreshold) {
         discard_fragment();
     }
+    if (hasTerm(terms, ShadingTermScreenDoor)) {
+        if (alpha < screenDoorThreshold(in.position.xy)) {
+            discard_fragment();
+        }
+        alpha = 1.0;
+    }
     if (debugViewActive) {
         DebugSurface surface = {
             in.worldPosition, in.normal, in.texcoord,
             diffuseMap.calculate_unclamped_lod(trilinear, in.texcoord), draw.layerCategory};
         return debugViewColor(frame, surface);
+    }
+    if (hasTerm(terms, ShadingTermRefraction)) {
+        RefractionInput refraction = {in.position.xy, uv, alpha, terms};
+        return float4(refracted(refraction, frame, draw, normalMap, sceneColour, trilinear), 1.0);
     }
     if (isEffect) {
         float3 shaded = applyFog(effect.rgb, in.worldPosition, frame);
@@ -304,6 +379,10 @@ fragment float4 staticMeshFragment(
     }
     float3 vertexColour = linearVertexColour(in.color.rgb, frame);
     float3 albedo = diffuse.rgb * vertexColour;
+    if (hasTerm(terms, ShadingTermLandscapeNoise)) {
+        float noise = detailMap.sample(trilinear, in.worldPosition.xy * landscapeNoiseTile).r;
+        albedo *= mix(1.0, noise / landscapeNoiseMean, 0.5);
+    }
     if (hasTerm(terms, ShadingTermMultiLayer)) {
         float innerAlpha = layerMap.sample(trilinear, uv).a;
         float2 inner =
@@ -313,14 +392,18 @@ fragment float4 staticMeshFragment(
         albedo = mix(innerColour, albedo, outerMix);
     }
     albedo = faceAlbedo(albedo, uv, terms, maps, trilinear);
-    albedo += reflection(normal.world, toEye, normal.mask, uv, terms, draw, maps, trilinear);
+    float3 reflected =
+        reflection(normal.world, toEye, normal.mask, uv, terms, draw, maps, trilinear);
+    bool reflectionLit = hasTerm(terms, ShadingTermEnvironmentLightFade);
+    albedo += reflectionLit ? reflected : 0.0;
     if (hasTerm(terms, ShadingTermSkinTint)) {
         albedo = toLinear(overlayGamma(toGamma(albedo), draw.tintColor.rgb));
     } else if (hasTerm(terms, ShadingTermTintColor)) {
         albedo *= linearVertexColour(draw.tintColor.rgb, frame);
     }
-    LitInput input = {albedo, toEye, uv, shadow, terms};
+    LitInput input = {albedo, toEye, tangentFrame[1], uv, shadow, terms};
     float3 lit = litSurface(in, input, normal, frame, draw, pointLights, maps, trilinear);
+    lit += reflectionLit ? 0.0 : reflected;
     // Opaque: alpha only gates the test above. The frame is premultiplied, so
     // a lower alpha would show as white or black. The blended pass blends it.
     return float4(applyFog(lit, in.worldPosition, frame), alphaBlendEnabled ? alpha : 1.0);
