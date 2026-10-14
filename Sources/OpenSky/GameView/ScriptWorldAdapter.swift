@@ -47,6 +47,8 @@ final class ScriptWorldAdapter {
         wireSpellNatives(bridge: bridge, provider: provider)
         let resolver = scriptSource.scriptFormIDResolver
         bridge.formIDResolver = resolver
+        bridge.effectPresenter = game.effectsWorld
+        bridge.weather = self
         let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)

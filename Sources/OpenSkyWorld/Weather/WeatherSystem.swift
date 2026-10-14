@@ -160,6 +160,22 @@ nonisolated public final class WeatherSystem {
         beginTransition(to: weather, transition: transition)
     }
 
+    /// Starts `weather` without holding it, so the next reroll may replace it. A forced
+    /// weather wins, as an override does in the game.
+    public func startWeather(_ weather: FormID, transition: Transition) {
+        guard forced == nil else { return }
+        gameHoursSinceRoll = 0
+        beginTransition(to: weather, transition: transition)
+    }
+
+    /// The weathers the current regions and climate may pick, for `Weather.FindWeather`.
+    public func candidateWeathers() -> [FormID] {
+        WeatherSelection.candidates(
+            worldspace: worldspaceFormID, regionIDs: currentRegions, store: store,
+            globals: globalResolution
+        ).map(\.weather)
+    }
+
     /// Advances the transition by `deltaTime` seconds and rerolls by `elapsedGameHours`,
     /// then resolves the blend at `hour`. A still clock never rerolls, so forced weather
     /// stays deterministic.

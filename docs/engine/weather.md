@@ -166,6 +166,22 @@ The dome draws right after the sky, with alpha blending and no depth writes, at 
 the depth range. The dome and the textures load off the main actor; until they land, the sky
 draws without clouds. Interiors draw no clouds.
 
+## Scripts
+
+The `Weather` natives reach the weather system through the script world adapter
+(<https://ck.uesp.net/wiki/Weather_Script>):
+
+- `SetActive(bool abOverride = false, bool abAccelerate = false)` starts the weather with a
+  transition. `ForceActive(bool abOverride = false)` snaps to it. With the override, the weather is
+  forced, as from the Weather control, and stays until `ReleaseOverride()`. Without it, the next
+  reroll may replace the weather, and a forced weather wins over it.
+- `GetCurrentWeather()` returns the weather the sky shows or moves to.
+- `FindWeather(int auiType)` returns the first candidate of the current regions with that
+  classification: 0 pleasant, 1 cloudy, 2 rainy, 3 snow. `GetClassification()` reads the same
+  codes from the `DATA` flags, and -1 for none.
+
+`abAccelerate` is not used: the transition takes its normal time.
+
 ## Controls
 
 World > Environment > Weather:

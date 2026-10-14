@@ -58,6 +58,8 @@ At most 16 modifiers run at once. The oldest goes first. This is OpenSky's own l
 | A spell hit on the player | 1, from the `MGEF` image-space modifier |
 | An explosion | 1 at the center, falling linearly to 0 at the `EXPL` image-space radius, measured to the camera; a zero radius plays at 1 |
 | The Effects panel | The panel's strength slider |
+| `ImageSpaceModifier.Apply(float afStrength = 1.0)` or `PopTo(ImageSpaceModifier, float)` | The script's strength, clamped to 0 to 1 |
+| `ImageSpaceModifier.ApplyCrossFade(float)` | 1, held until `Remove` or the global `RemoveCrossFade` |
 
 A spell hit on another actor starts no modifier, because the modifier describes what the
 player sees.
@@ -68,6 +70,8 @@ player sees.
   Bloom, the sunlight scale, and the sky scale are decoded and blended but not drawn.
 - Depth of field, radial blur, and motion blur are decoded but not drawn. The blur radius
   is a 12-tap disc blur, and double vision is one ghost image offset to the side.
+- `ApplyCrossFade` and `RemoveCrossFade` start and stop at once; the fade time is not used.
+  Only one cross-faded modifier is held, as in the game, and a new one replaces it.
 - The tint mixes the color toward its own brightness times the tint color, by the tint
   amount. The fade mixes toward the fade color by its alpha. The game's exact math is not
   documented, so these are approximations.

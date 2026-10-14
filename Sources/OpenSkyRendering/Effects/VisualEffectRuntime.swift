@@ -17,7 +17,7 @@ nonisolated public enum EffectAnchor: Hashable, Sendable {
 
 /// Why an effect is live, for the readout and for removing one source's effects.
 nonisolated public enum VisualEffectCause: String, Equatable, Sendable, CaseIterable {
-    case race, spellHit, explosion, impact, debug
+    case race, spellHit, explosion, impact, script, debug
 }
 
 /// The resolved look of one `RFCT` (or one `EFSH` alone).
@@ -112,6 +112,14 @@ nonisolated public struct VisualEffectRuntime: Sendable {
     /// Removes every effect on `anchor`, for an actor that unloads or dies.
     public mutating func detachAll(from anchor: EffectAnchor) {
         instances.removeAll { $0.anchor == anchor }
+    }
+
+    /// Removes the effects of `spec` on `anchor`. Returns how many went.
+    @discardableResult
+    public mutating func detach(_ spec: VisualEffectSpec, from anchor: EffectAnchor) -> Int {
+        let before = instances.count
+        instances.removeAll { $0.spec == spec && $0.anchor == anchor }
+        return before - instances.count
     }
 
     public mutating func removeAll(cause: VisualEffectCause? = nil) {

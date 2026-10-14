@@ -17,6 +17,12 @@ extension PapyrusNativeFunctions {
         installQuestStages(into: &registry)
         installQuestObjectives(into: &registry)
         installQuestObjectiveReads(into: &registry)
+        // `bool UpdateCurrentInstanceGlobal(GlobalVariable)` copies a global into the
+        // quest's text replacement. OpenSky builds no replaced text, so there is nothing
+        // to update; it answers true, the success value.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Quest", functionName: "UpdateCurrentInstanceGlobal"
+        ) { _, _ in .returned(.boolean(true)) })
     }
 
     /// `bool IsRunning()`, `bool IsCompleted()`, `int GetCurrentStageID()` and

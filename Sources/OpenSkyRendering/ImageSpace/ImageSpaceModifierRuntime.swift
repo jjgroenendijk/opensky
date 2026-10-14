@@ -51,6 +51,11 @@ nonisolated public struct ImageSpaceModifierRuntime: Equatable, Sendable {
         ))
     }
 
+    /// Stops every running instance of the record `key`.
+    public mutating func stop(key: ReferenceKey) {
+        instances.removeAll { $0.key == key }
+    }
+
     public mutating func stopAll() {
         instances.removeAll()
     }
