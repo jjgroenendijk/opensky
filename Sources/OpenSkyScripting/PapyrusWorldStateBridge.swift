@@ -136,6 +136,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.
     public weak var inventory: (any PapyrusInventoryBridge)?
+    /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
+    /// `GetParentCell`, and `GetWorldSpace`. Nil without a world.
+    public var conditionData: (() -> ConditionDataResolution)?
+    /// Where the player or a moving actor stands now, which its record no longer says.
+    public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.

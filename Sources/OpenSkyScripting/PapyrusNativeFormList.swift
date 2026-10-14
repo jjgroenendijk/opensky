@@ -6,8 +6,9 @@ import OpenSkyFormatsESM
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
-    /// `int GetSize()`, `Form GetAt(int)`, and `bool Form.HasKeyword(Keyword)`. A nested
-    /// list counts as one entry, as the list stores it.
+    /// `int GetSize()`, `Form GetAt(int)`, `int Find(Form)`, `bool HasForm(Form)`, and
+    /// `bool Form.HasKeyword(Keyword)`. A nested list counts as one entry, as the list
+    /// stores it, so `Find` does not look inside it.
     public static func installFormList(into registry: inout PapyrusNativeRegistry) {
         formList("GetSize", into: &registry) { _, entries, _ in
             .returned(.integer(Int32(clamping: entries.count)))
@@ -23,6 +24,13 @@ extension PapyrusNativeFunctions {
             else { return .returned(.none) }
             return .returned(.object(handle))
         }
+        formList("Find", into: &registry) { call, entries, world in
+            let index = formListIndex(call, entries, world)
+            return .returned(.integer(index.map { Int32(clamping: $0) } ?? -1))
+        }
+        formList("HasForm", into: &registry) { call, entries, world in
+            .returned(.boolean(formListIndex(call, entries, world) != nil))
+        }
         // <https://ck.uesp.net/wiki/HasKeyword_-_Form>. A placed reference reads its base.
         registry.register(PapyrusNativeFunction(
             scriptName: "Form", functionName: "HasKeyword"
@@ -37,6 +45,19 @@ extension PapyrusNativeFunctions {
             }
             return .returned(.boolean(answer))
         })
+    }
+
+    /// The first index of the form argument 0 names, or nil when it is not listed.
+    private static func formListIndex(
+        _ call: PapyrusNativeCall,
+        _ entries: [ReferenceKey?],
+        _ world: any PapyrusWorldBridge
+    ) -> Int? {
+        guard
+            let handle = objectArgument(call, at: 0),
+            let form = world.referenceKey(for: handle)
+        else { return nil }
+        return entries.firstIndex { $0?.namingPlayer == form.namingPlayer }
     }
 
     private static func formList(

@@ -226,6 +226,33 @@ struct PapyrusNativeQuestTests {
         )))
     }
 
+    /// The objective reads answer each flag on its own, and `FailAllObjectives`
+    /// fails a shown objective that is not completed.
+    @Test func objectiveReadsAndFailAll() throws {
+        let fixture = try fixture()
+        let index: [PapyrusValue] = [.integer(Int32(PapyrusQuestFixture.objectiveIndex))]
+        func read(_ name: String) -> PapyrusNativeResult {
+            call(name, fixture, receiver: fixture.handle, arguments: index, returnType: .boolean)
+        }
+        #expect(read("IsObjectiveDisplayed") == .returned(.boolean(false)))
+        call("SetObjectiveDisplayed", fixture, receiver: fixture.handle, arguments: index)
+        #expect(read("IsObjectiveDisplayed") == .returned(.boolean(true)))
+        #expect(read("IsObjectiveCompleted") == .returned(.boolean(false)))
+
+        call("FailAllObjectives", fixture, receiver: fixture.handle)
+        #expect(read("IsObjectiveFailed") == .returned(.boolean(true)))
+        #expect(read("IsObjectiveCompleted") == .returned(.boolean(false)))
+    }
+
+    @Test func isStoppedIsTheOppositeOfRunning() throws {
+        let fixture = try fixture()
+        #expect(call("IsStopped", fixture, receiver: fixture.handle, returnType: .boolean)
+            == .returned(.boolean(false)))
+        call("Stop", fixture, receiver: fixture.handle)
+        #expect(call("IsStopped", fixture, receiver: fixture.handle, returnType: .boolean)
+            == .returned(.boolean(true)))
+    }
+
     /// Every quest native refuses a handle no quest in this session is behind,
     /// rather than answering for a quest that does not exist.
     @Test func everyNativeRefusesAnUnknownQuestHandle() throws {

@@ -54,13 +54,16 @@ extension PapyrusNativeFunctions {
         )
     }
 
-    /// `Enable(bool abFadeIn = false)`, `Disable(bool abFadeOut = false)`, and
-    /// `bool IsEnabled()`. The fade argument is ignored: there is no fade, and the
-    /// stored state is the same either way.
+    /// `Enable(bool abFadeIn = false)`, `Disable(bool abFadeOut = false)`, their
+    /// `NoWait` forms, and `bool IsEnabled()`. There is no fade, so the fade argument
+    /// is ignored and a call never waits; the stored state is the same either way.
     private static func installEnableState(
         into registry: inout PapyrusNativeRegistry
     ) {
-        for (functionName, isEnabled) in [("Enable", true), ("Disable", false)] {
+        let writes = [
+            ("Enable", true), ("EnableNoWait", true), ("Disable", false), ("DisableNoWait", false)
+        ]
+        for (functionName, isEnabled) in writes {
             registry.register(PapyrusNativeFunction(
                 scriptName: "ObjectReference",
                 functionName: functionName
@@ -91,9 +94,9 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    /// `Delete()`. Writes a `ReferenceDeletionState` delta at once, which the save
-    /// keeps. It differs from the record header's deleted flag. OpenSky has no
-    /// reference counting, so it does not wait until nothing holds the reference.
+    /// `Delete()` and `bool IsDeleted()`. Writes a `ReferenceDeletionState` delta at
+    /// once, which the save keeps. It differs from the record header's deleted flag.
+    /// OpenSky has no reference counting, so it does not wait until nothing holds it.
     private static func installDeletion(
         into registry: inout PapyrusNativeRegistry
     ) {
@@ -106,6 +109,18 @@ extension PapyrusNativeFunctions {
             }
             target.world.write(ReferenceDeletionState.deleted.erased, for: target.key)
             return .returned(.none)
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "ObjectReference",
+            functionName: "IsDeleted"
+        ) { call, context in
+            guard let target = worldTarget(call, context) else {
+                return needsWorld(call)
+            }
+            guard let state = target.world.referenceState(for: target.key) else {
+                return needsResidentReference(call)
+            }
+            return .returned(.boolean(state.deletion.isDeleted))
         })
     }
 }
