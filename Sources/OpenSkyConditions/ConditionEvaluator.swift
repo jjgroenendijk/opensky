@@ -21,6 +21,7 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case graphVariable
     case skillUsage
     case scriptVariable
+    case scriptState
     case scene
     case cell
     case weather

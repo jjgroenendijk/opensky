@@ -11,6 +11,18 @@ extension PapyrusWorldStateBridge {
         worldState.component(ScriptedReferenceState.self, for: key) ?? ScriptedReferenceState()
     }
 
+    /// Every form's script state, for the conditions. Rebuilt only after a state write.
+    public func scriptedStateResolution() -> ScriptedStateConditionResolution {
+        let store = worldState
+        return store.derived(ScriptedStateConditionResolution.self, from: self) {
+            var states: [ReferenceKey: ScriptedReferenceState] = [:]
+            for key in store.sortedDirtyKeys() {
+                states[key] = store.component(ScriptedReferenceState.self, for: key)
+            }
+            return ScriptedStateConditionResolution(states: states)
+        }
+    }
+
     /// Applies `change` to the state of `key`. An empty result is stored as no component.
     public func updateScriptedState(
         of key: ReferenceKey, _ change: (inout ScriptedReferenceState) -> Void

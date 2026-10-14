@@ -93,6 +93,9 @@ final class RuntimeStateWorldAdapter {
             race: baseline.race
         )
         state.isFemale = baseline.isFemale
+        if holder.key != .player {
+            state.recordFlags = baseline.recordFlags
+        }
         return state
     }
 

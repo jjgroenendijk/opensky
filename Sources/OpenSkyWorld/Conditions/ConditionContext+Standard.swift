@@ -13,6 +13,7 @@ import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
+import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 nonisolated extension ConditionContext {
@@ -79,6 +80,7 @@ nonisolated extension ConditionFunctionRegistry {
         ConditionFunctions.installLock(&registry)
         ConditionFunctions.installCamera(&registry)
         ConditionFunctions.installFurniture(&registry)
+        ConditionFunctions.installScriptState(&registry)
         return registry
     }()
 }

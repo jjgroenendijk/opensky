@@ -615,7 +615,10 @@ targets += feature(
         "OpenSkyPerceptionInterface", "OpenSkyProgressionInterface", "OpenSkyQuestsInterface",
         "OpenSkyWorldInterface", "DequeModule"
     ],
-    interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
+    interface: [
+        "OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState", "OpenSkyConditions",
+        "OpenSkyGameData"
+    ],
     swiftSettings: optimizedInDebug,
     tests: [
         "OpenSkyFormatsTesting", "OpenSkyConditions", "OpenSkyCrimeInterface", "OpenSkyFormatsCore",
