@@ -91,6 +91,7 @@ private final class FakeScriptWorld: ScriptWorld {
     var crosshairReference: FormID?
     var residentKeys: [FormID: ReferenceKey] = [:]
     var gameClock: GameClock?
+    var playerLocation: ResolvedFormID??
 
     func referenceKey(formID: FormID) -> ReferenceKey? {
         residentKeys[formID]

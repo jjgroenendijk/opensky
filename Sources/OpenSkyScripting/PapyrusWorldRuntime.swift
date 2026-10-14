@@ -49,6 +49,9 @@ public final class PapyrusWorldRuntime {
     /// Instances created from an `isPersistent` reference entry; these
     /// survive `detach`.
     public var persistentKeys: Set<PapyrusInstanceKey> = []
+    /// Detached instances that wait for their `OnUnload` or `OnCellDetach` to run, then
+    /// retire. A new attach of the cell keeps them.
+    public var retiringKeys: Set<PapyrusInstanceKey> = []
     /// Instances belonging to a quest rather than a placed reference. Only
     /// `detachQuest(key:)` retires them. See `PapyrusWorldQuests.swift`.
     public var questInstanceKeys: Set<PapyrusInstanceKey> = []

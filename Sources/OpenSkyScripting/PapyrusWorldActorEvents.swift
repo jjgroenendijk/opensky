@@ -62,7 +62,7 @@ extension PapyrusWorldRuntime {
     /// Instance iteration is in `PapyrusInstanceKey` order, the same
     /// deterministic order `queueOnActivate` uses, so a reference carrying
     /// several scripts always queues them the same way.
-    private func queueActorEvent(
+    func queueActorEvent(
         _ functionName: String,
         on reference: ReferenceKey,
         arguments: [PapyrusValue]

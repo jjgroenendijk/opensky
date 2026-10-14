@@ -121,8 +121,20 @@ reference's flags win, so a removed flag drops the base script. Source: the Crea
 `CONT`, and `DOOR`, and from an actor's `NPC_` base after its template chain
 ([actor resolution](/engine/actor-resolution.md)).
 
-Detach retires the cell's instances in sorted order: the instance leaves, its queued events drop, and
-its waiting calls leave the scheduler, so none of them resumes on a missing instance.
+Detach queues `OnUnload` then `OnCellDetach` on each instance in sorted order, the reverse of the
+attach order. An instance that handles neither retires at once. One that handles either retires at
+the end of the first step in which it has no queued event and no waiting call, so its handlers run
+on a live instance. An attach of the cell before that keeps the instance. Retiring removes the
+instance, its queued events, and its waiting calls, so none of them resumes on a missing instance. A
+persistent instance gets both events and stays.
+
+## Player events
+
+After a save loads, each script on the player, alias scripts included, gets `OnPlayerLoadGame`. Each
+frame compares the location of the player's cell with the last frame's. A change queues
+`OnLocationChange(akOldLoc, akNewLoc)` on the player's scripts, with `None` for the wilderness. The
+first frame after a load only records the location. A frame whose player cell is not resident yet
+is skipped, so a cell that streams in is not read as a trip through the wilderness.
 
 ## Script state in a save
 
@@ -160,6 +172,8 @@ destination counts as overridden while paused, and Reset unpauses.
 - Objects and arrays are not saved. Their identity is made at run time and means nothing in the
   world, so they save as `None` and restore to the compiled default.
 - A persistent reference's instances are never retired, not even by a world space change.
+- Only the player gets `OnLocationChange`. In the game, every actor's scripts get it when that actor
+  moves to another location.
 - A reference in an unloaded cell gets its scripts when a script first casts it to one of them or
   uses a member through a variable of that type. It keeps them, and its cell's later attach fires
   no second `OnInit`. In the game, a persistent reference has its scripts from the first load.

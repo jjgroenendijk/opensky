@@ -180,4 +180,13 @@ extension ScriptWorldAdapter: ScriptWorld {
     var gameClock: GameClock? {
         game.renderer?.gameClock
     }
+
+    var playerLocation: ResolvedFormID?? {
+        guard
+            let streamer = game.streamer,
+            let current = streamer.currentCellLocation,
+            let scene = streamer.residentScene(at: current)
+        else { return nil }
+        return .some(game.runtimeStateWorld.location(of: scene))
+    }
 }

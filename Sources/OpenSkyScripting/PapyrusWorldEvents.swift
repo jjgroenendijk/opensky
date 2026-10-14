@@ -24,6 +24,7 @@ extension PapyrusWorldRuntime {
         var dispatched = 0
         var faulted = resumes.faulted
         drainQueue(dispatched: &dispatched, faulted: &faulted)
+        retireDrainedInstances()
         let report = PapyrusTickReport(
             steps: 1,
             dispatched: dispatched,
@@ -142,6 +143,15 @@ extension PapyrusWorldRuntime {
                 event.functionName, on: handle, arguments: event.arguments
             )
         }
+    }
+
+    /// Whether the script chain of `key`'s instance declares `name`.
+    func definesFunction(_ name: String, key: PapyrusInstanceKey) -> Bool {
+        guard
+            let handle = instancesByKey[key],
+            let instance = runtime.instance(for: handle)
+        else { return false }
+        return definesFunction(name, instance: instance)
     }
 
     private func definesFunction(
