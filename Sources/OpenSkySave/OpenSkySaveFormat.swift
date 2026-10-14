@@ -147,6 +147,8 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         public static let miscStats = "MSTS"
         /// Whether the player tracks each quest the journal showed.
         public static let questTracking = "QTRK"
+        /// Flags, values, and form links scripts set on forms.
+        public static let scriptedStates = "SCRS"
     }
 
     /// Discriminator byte in front of a serialized `ReferenceKey`.

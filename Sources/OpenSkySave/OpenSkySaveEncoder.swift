@@ -84,45 +84,6 @@ nonisolated public enum OpenSkySaveEncoder: Sendable {
         return writer.data
     }
 
-    /// Every component that has its own chunk instead of `RDLT`, in file order. Each
-    /// writer emits nothing when no entry has its component, so untouched sessions match
-    /// older builds' bytes.
-    private static func writeComponentChunks(
-        _ entries: [WorldStateSnapshotEntry],
-        into writer: inout BinaryWriter
-    ) {
-        writeInventories(entries, into: &writer)
-        writeSpawnedReferences(entries, into: &writer)
-        writeQuestStates(entries, into: &writer)
-        writeQuestAliases(entries, into: &writer)
-        writeQuestLocationAliases(entries, into: &writer)
-        writeActorValues(entries, into: &writer)
-        writeActorValueOverrides(entries, into: &writer)
-        writeDeaths(entries, into: &writer)
-        writeCombatStates(entries, into: &writer)
-        writeDialogueStates(entries, into: &writer)
-        writeActiveEffects(entries, into: &writer)
-        writeSpellbooks(entries, into: &writer)
-        writeEnchantedItems(entries, into: &writer)
-        writePerks(entries, into: &writer)
-        writeFactionMemberships(entries, into: &writer)
-        writeRelationshipRanks(entries, into: &writer)
-        writeProgressChunks(entries, into: &writer)
-        writeCrimeLedgers(entries, into: &writer)
-        writeStolenGoods(entries, into: &writer)
-        OpenSkySaveTemperedItems.write(entries, into: &writer)
-        writeViolentCrimeGold(entries, into: &writer)
-        writeHarvests(entries, into: &writer)
-        writeLocks(entries, into: &writer)
-        writeRelocations(entries, into: &writer)
-        writeSceneChunks(entries, into: &writer)
-        writeStoryManagerQuests(entries, into: &writer)
-        writeDialogueBranches(entries, into: &writer)
-        writeHelpMessages(entries, into: &writer)
-        writeJournal(entries, into: &writer)
-        writeIdentityAndMap(entries, into: &writer)
-    }
-
     // MARK: - Header
 
     private static func writeHeader(

@@ -28,6 +28,10 @@ dirty counts, and the save by the same path as any other change.
 | `StopCombat()` | Ends the fight and leaves hostility alone | [StopCombat - Actor](https://www.creationkit.com/index.php?title=StopCombat_-_Actor) |
 | `bool IsWeaponDrawn()` | The melee draw state | [IsWeaponDrawn - Actor](https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor) |
 | `Kill(Actor akKiller = None)` | Empties health, then kills | [Kill - Actor](https://www.creationkit.com/index.php?title=Kill_-_Actor) |
+| `int GetCombatState()` | 0 not fighting, 1 fighting, 2 searching; a dead actor is 0 | [GetCombatState - Actor](https://ck.uesp.net/wiki/GetCombatState_-_Actor) |
+| `Actor GetCombatTarget()` | The player while the actor fights, because the combat loop fights the player alone; `None` for the player | [GetCombatTarget - Actor](https://ck.uesp.net/wiki/GetCombatTarget_-_Actor) |
+| `StopCombatAlarm()` | Ends the fight, as `StopCombat` does; OpenSky keeps no separate alarm | [StopCombatAlarm - Actor](https://ck.uesp.net/wiki/StopCombatAlarm_-_Actor) |
+| `bool IsBleedingOut()`, `bool IsCommandedActor()` | False: OpenSky has no bleedout and no commanded actors | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 
 `SetActorValue`, `ModActorValue`, `ForceActorValue`, and `GetLevel` are registered too. Their rules
 are on [actor values](/engine/actor-values.md) and [character leveling](/engine/character-leveling.md).

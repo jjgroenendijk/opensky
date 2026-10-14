@@ -4,7 +4,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 
 extension PapyrusWorldStateBridge {
-    public func formListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
+    func pluginFormListEntries(of key: ReferenceKey) -> [ReferenceKey?]? {
         guard
             let formListStore,
             case let .plugin(plugin, objectID) = key,

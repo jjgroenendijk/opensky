@@ -57,8 +57,9 @@ A refused change becomes a native failure, and the call returns its declared def
 `SetStage` that is false, which matches the documented "returns false and the stage is unchanged".
 
 Absent on purpose, and left in the unimplemented tally: `Reset`, `IsStarting`, `IsStopping`,
-`GetAlias`, `GetAliasedRef`, and `SetActive`. They need more alias support or a latent window
-OpenSky does not have.
+`GetAlias`, and `GetAliasedRef`. They need more alias support or a latent window OpenSky does not
+have. `SetActive` and `IsActive` keep a flag in the
+[script state](/engine/papyrus-script-state.md); no journal reads it yet.
 
 A method call on an instance runs under the script that declares the function. So
 `someQuest.SetStage(10)` reaches the `Quest` natives only when `Quest.pex` is loaded. That is why a

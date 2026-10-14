@@ -30,6 +30,9 @@ public struct CrimeFactionPanelState {
 @MainActor
 public final class CrimeCoordinator {
     public private(set) var reporter: CrimeReporter?
+    /// The owner a script set on a reference with `SetActorOwner` or `SetFactionOwner`.
+    /// `.some(nil)` means a script cleared the owner; nil means no script set one.
+    public var scriptedOwner: ((ReferenceKey) -> ReferenceOwner??)?
     var ownership: OwnershipResolver?
     var crimeFactions: CrimeFactionResolver?
     var pluginName: String?
@@ -189,8 +192,12 @@ public final class CrimeCoordinator {
 }
 
 extension CrimeCoordinator: CrimeWorld {
-    /// A reference's own `XOWN` first, then the owner of the cell it stands in.
+    /// A script-set owner first, then the reference's own `XOWN`, then the owner of the
+    /// cell it stands in.
     public func crimeOwner(of key: ReferenceKey) -> ReferenceOwner? {
+        if let scripted = scriptedOwner?(key) {
+            return scripted
+        }
         guard let ownership else { return nil }
         let reference = world?.references?.referenceEntry(key: key)?.placedReference
         let cell = crimeCell(of: key).flatMap { world?.cellOwnership(at: $0) }

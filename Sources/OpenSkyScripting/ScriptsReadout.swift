@@ -21,6 +21,17 @@ nonisolated public enum ScriptsReadout: Sendable {
         """
     }
 
+    /// What scripts set on a form, such as "script state: ghost, alpha 0.25". Nil
+    /// when no script set anything, so a clean form adds nothing to the target line.
+    public static func scriptStateText(_ state: ScriptedReferenceState) -> String? {
+        guard !state.isEmpty else { return nil }
+        let flags = state.flags.filter(\.value).keys.sorted()
+        let values = state.values.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }
+        let forms = state.forms.keys.sorted()
+        let added = state.addedForms.isEmpty ? [] : ["\(state.addedForms.count) added forms"]
+        return "script state: " + (flags + values + forms + added).joined(separator: ", ")
+    }
+
     /// Quest script instances, their quests, and stage-fragment dispatch. Running quests
     /// and quests with instances differ on purpose: a quest needs no scripts to run.
     public static func questsText(for snapshot: ScriptsSnapshot) -> String {

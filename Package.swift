@@ -618,10 +618,10 @@ targets += feature(
     interface: ["OpenSkyFormatsCore", "OpenSkyFormatsESM", "OpenSkyWorldState"],
     swiftSettings: optimizedInDebug,
     tests: [
-        "OpenSkyFormatsTesting", "OpenSkyConditions", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
-        "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyPhysics",
-        "OpenSkyFeaturesTesting", "OpenSkyScriptingFixtures", "OpenSkyScriptingInterface",
-        "OpenSkyWorldInterface", "OpenSkyWorldState"
+        "OpenSkyFormatsTesting", "OpenSkyConditions", "OpenSkyCrimeInterface", "OpenSkyFormatsCore",
+        "OpenSkyFormatsESM", "OpenSkyFormatsPEX", "OpenSkyGameData", "OpenSkyInventoryInterface",
+        "OpenSkyPhysics", "OpenSkyFeaturesTesting", "OpenSkyScriptingFixtures",
+        "OpenSkyScriptingInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
     ]
 )
 

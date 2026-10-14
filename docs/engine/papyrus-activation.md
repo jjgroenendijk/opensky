@@ -128,6 +128,13 @@ that a record with that ID exists.
 
 `Utility.GetCurrentGameTime` returns the days passed, the value of `GameDaysPassed`.
 
+`SetScale(float)` and `SetAngle(float, float, float)` write the whole transform, as `SetPosition`
+does; angles are in degrees. `MoveToMyEditorLocation()` drops the script's moves, so the plugin
+placement shows again. `SetOpen(bool abOpen = true)` writes the open flag of the activation state,
+and `GetOpenState()` reads it as 1 (open) or 3 (closed). OpenSky has no opening or closing phase,
+so it never answers 2 or 4. `BlockActivation(bool abBlocked = true)` keeps `OnActivate` but stops
+an activation from opening or closing the reference.
+
 ## Stated gaps
 
 | Behavior | What OpenSky does | Why |

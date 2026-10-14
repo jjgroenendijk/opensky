@@ -93,6 +93,8 @@ nonisolated extension OpenSkySaveDecoder {
         /// Absent `DLBS`: no speaker is in an exclusive branch.
         public var dialogueBranches: [SaveStoryEntry<DialogueBranchState>] = []
         public var helpMessages: [SaveStoryEntry<HelpMessageState>] = []
+        /// Absent `SCRS`: no script set a flag the save keeps.
+        public var scriptedStates: [SaveStoryEntry<ScriptedReferenceState>] = []
         /// Absent `MSTS`: no stat was counted.
         public var miscStats: [SaveStoryEntry<MiscStatsState>] = []
         /// Absent `QTRK`: the journal showed no quest.

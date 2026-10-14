@@ -4,8 +4,10 @@
 // install. The empty cases matter most: an idle VM and an absent target have to
 // read as stated conditions rather than as blanks.
 
+@testable import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
+import OpenSkyScriptingInterface
 import Testing
 
 struct ScriptsReadoutTests {
@@ -155,5 +157,19 @@ struct ScriptsReadoutTests {
         #expect(text.contains("Implemented names: 37  Unimplemented calls: 12"))
         #expect(text.contains("1. Game.GetPlayer 8"))
         #expect(text.contains("2. ObjectReference.PlayAnimation 4"))
+    }
+
+    /// A clean form adds nothing to the target line; a changed one lists what changed.
+    @Test
+    func scriptStateTextListsWhatAScriptSet() {
+        #expect(ScriptsReadout.scriptStateText(ScriptedReferenceState()) == nil)
+        let state = ScriptedReferenceState(
+            flags: ["ghost": true],
+            values: ["setalpha": 0.25],
+            forms: ["crimeFaction": .player],
+            addedForms: [.player]
+        )
+        #expect(ScriptsReadout.scriptStateText(state)
+            == "script state: ghost, setalpha 0.25, crimefaction, 1 added forms")
     }
 }

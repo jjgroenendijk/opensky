@@ -22,7 +22,6 @@ extension PapyrusNativeFunctions {
     private static let trapStubs: [TrapStub] = [
         TrapStub("ObjectReference", "SetMotionType", .none),
         TrapStub("ObjectReference", "Reset", .none),
-        TrapStub("ObjectReference", "BlockActivation", .none),
         TrapStub("ObjectReference", "SetAnimationVariableFloat", .none),
         TrapStub("ObjectReference", "GetAnimationVariableFloat", .float(0)),
         TrapStub("ObjectReference", "ClearDestruction", .none),
@@ -32,9 +31,6 @@ extension PapyrusNativeFunctions {
         TrapStub("ObjectReference", "CreateDetectionEvent", .none),
         TrapStub("ObjectReference", "SetActorCause", .none),
         TrapStub("ObjectReference", "CalculateEncounterLevel", .integer(1)),
-        TrapStub("ObjectReference", "GetActorOwner", .none),
-        TrapStub("ObjectReference", "GetFactionOwner", .none),
-        TrapStub("ObjectReference", "SetNoFavorAllowed", .none),
         TrapStub("ObjectReference", "IsFurnitureInUse", .boolean(false)),
         TrapStub("ObjectReference", "InterruptCast", .none),
         TrapStub("ObjectReference", "Say", .none),

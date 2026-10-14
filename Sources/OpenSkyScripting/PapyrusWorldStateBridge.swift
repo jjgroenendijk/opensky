@@ -327,7 +327,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             ?? referenceState(for: target)?.activation
             ?? .untouched
         let recorded = write(
-            current.activated(by: activator, togglesOpen: togglesOpen).erased,
+            current.activated(
+                by: activator,
+                togglesOpen: togglesOpen && !isActivationBlocked(target)
+            )
+            .erased,
             for: target
         )
         return PapyrusActivationOutcome(

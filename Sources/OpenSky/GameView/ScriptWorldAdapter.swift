@@ -156,6 +156,7 @@ final class ScriptWorldAdapter {
         }
         bridge.crimeReporter = { [weak game] in game?.crime.reporter }
         bridge.arrestSession = { [weak game] in game?.crime }
+        game.crime.scriptedOwner = { [weak bridge] key in bridge?.scriptedOwner(of: key) }
         bridge.showBarterMenu = { [weak game] actor in
             guard let game, game.inventory.vendors != nil else { return nil }
             let text = game.containerMenu.openBarter(with: actor)
