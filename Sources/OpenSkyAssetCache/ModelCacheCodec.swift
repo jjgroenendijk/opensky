@@ -121,6 +121,7 @@ nonisolated public enum ModelCacheCodec {
         out.string(material.tintTexture)
         out.bool(material.tintsSkin)
         encode(material.shading, into: &out)
+        encode(material.drawState, into: &out)
     }
 
     private static func encode(_ shading: SurfaceShading, into out: inout CachePayloadWriter) {
@@ -133,6 +134,8 @@ nonisolated public enum ModelCacheCodec {
         let layer = shading.multiLayer
         out.value(SIMD4(layer.thickness, layer.refractionScale, layer.environmentStrength, 0))
         out.value(layer.innerScale)
+        out.value(shading.sparkle)
+        out.value(shading.refractionStrength)
         for texture in [
             shading.glowTexture, shading.detailTexture, shading.environmentTexture,
             shading.environmentMaskTexture, shading.innerLayerTexture, shading.backLightTexture
@@ -157,6 +160,8 @@ nonisolated public enum ModelCacheCodec {
             innerScale: input.value(SIMD2<Float>.self),
             environmentStrength: layer.z
         )
+        shading.sparkle = try input.value(SIMD4<Float>.self)
+        shading.refractionStrength = try input.value(Float.self)
         shading.glowTexture = try input.string()
         shading.detailTexture = try input.string()
         shading.environmentTexture = try input.string()
@@ -207,12 +212,13 @@ nonisolated public enum ModelCacheCodec {
         let tintTexture = try input.string()
         let tintsSkin = try input.bool()
         let surface = try surfaceShading(&input)
+        let state = try drawState(&input)
         return Material(
             diffuseTexture: diffuse, normalTexture: normal, uvOffset: uvOffset, uvScale: uvScale,
             alpha: alpha, glossiness: glossiness, specularColor: specularColor,
             specularStrength: specularStrength, doubleSided: doubleSided, alphaBlend: alphaBlend,
             alphaTestThreshold: threshold, effect: shading, waterSurface: waterSurface,
-            tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface
+            tintTexture: tintTexture, tintsSkin: tintsSkin, shading: surface, drawState: state
         )
     }
 

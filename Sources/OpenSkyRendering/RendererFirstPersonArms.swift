@@ -51,6 +51,7 @@ extension Renderer {
             originX: 0, originY: 0, width: width, height: height,
             znear: 0, zfar: Double(FirstPersonCamera.depthSlice)
         ))
+        state.materialDepth = .writes
         encode(
             groups: rig.render.opaque,
             staticPipeline: opaquePipeline,
@@ -65,6 +66,7 @@ extension Renderer {
             morphedSkinnedPipeline: morphedSkinnedAlphaTestPipeline,
             state: &state
         )
+        endMaterialDrawState(state: &state)
         state.encoder.setViewport(MTLViewport(
             originX: 0, originY: 0, width: width, height: height, znear: 0, zfar: 1
         ))

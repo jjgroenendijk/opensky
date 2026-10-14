@@ -466,25 +466,12 @@ extension Renderer {
         return try compiler.makeRenderPipelineState(descriptor: descriptor)
     }
 
-    /// Standard opaque depth: write-through, closer fragment wins. Metal 4
-    /// binds the depth attachment format at pass time (MTKView
-    /// `depth32Float`), not in the pipeline descriptor.
-    public static func makeDepthState(device: MTLDevice) throws -> MTLDepthStencilState {
-        let descriptor = MTLDepthStencilDescriptor()
-        descriptor.label = "OpaqueDepth"
-        descriptor.depthCompareFunction = .less
-        descriptor.isDepthWriteEnabled = true
-        guard let state = device.makeDepthStencilState(descriptor: descriptor) else {
-            throw RendererError.depthStateAllocationFailed
-        }
-        return state
-    }
-
-    /// The scene depth state, then the water one.
+    /// The scene's material depth states, then the water one. Metal 4 binds the depth
+    /// attachment format at pass time (MTKView `depth32Float`), not in the pipeline.
     static func makeDepthStates(
         device: MTLDevice
-    ) throws -> (MTLDepthStencilState, MTLDepthStencilState) {
-        try (makeDepthState(device: device), makeWaterDepthState(device: device))
+    ) throws -> (MaterialDepthStates, MTLDepthStencilState) {
+        try (MaterialDepthStates(device: device), makeWaterDepthState(device: device))
     }
 
     /// Water tests opaque depth but does not write depth while blending.

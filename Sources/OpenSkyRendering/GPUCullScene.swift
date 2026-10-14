@@ -326,7 +326,7 @@ private struct GPUCullSceneBuilder {
             transform: InstanceTransform(
                 modelMatrix: instance.modelMatrix,
                 normalMatrix: instance.normalMatrix,
-                instanceColor: SIMD4(1, 1, 1, 1),
+                instanceColor: instance.instanceColor,
                 grassParameters: .zero
             ),
             boundsMin: SIMD4(bounds?.min ?? .zero, 0),

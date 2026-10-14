@@ -261,9 +261,11 @@ nonisolated extension NIFFile.Flattener {
         let alpha = try alphaProperty(at: key.alphaPropertyBlock)
 
         let fallback = Material.fallback
+        // A refraction shape's slot 0 is the normal map that bends the scene.
+        let refracts = shader?.isRefraction ?? false
         return Material(
-            diffuseTexture: textures?.diffusePath,
-            normalTexture: textures?.normalPath,
+            diffuseTexture: refracts ? nil : textures?.diffusePath,
+            normalTexture: refracts ? textures?.diffusePath : textures?.normalPath,
             uvOffset: shader?.uvOffset ?? fallback.uvOffset,
             uvScale: shader?.uvScale ?? fallback.uvScale,
             alpha: shader?.alpha ?? fallback.alpha,
@@ -277,7 +279,8 @@ nonisolated extension NIFFile.Flattener {
                 ? alpha?.testThreshold : nil,
             tintTexture: shader?.isFaceGen == true ? textures?.faceTintPath : nil,
             tintsSkin: shader?.isSkinTint ?? false,
-            shading: shader?.surfaceShading(textures: textures) ?? .plain
+            shading: shader?.surfaceShading(textures: textures) ?? .plain,
+            drawState: shader?.drawState ?? .standard
         )
     }
 }
@@ -288,26 +291,24 @@ nonisolated extension NIFFile {
 }
 
 nonisolated extension NIFFile.Flattener {
-    /// The static path has no additive blend, no texture-less effect look, and no
-    /// refraction, so those shapes are skipped. Drawn anyway, an effect shows as a flat
-    /// card and a heat-haze dome shows its normal map as colour.
-    /// A tree-animated shape's vertex alpha is wind weight, so it must not cut the branches.
+    /// A lit shape uses its vertex colour and alpha only when its flags say so.
     func opacityColours(_ colours: [SIMD4<Float>], shape: NIFTriShape) throws -> [SIMD4<Float>] {
         guard shape.shaderPropertyRef >= 0 else { return colours }
         let block = try block(at: Int(shape.shaderPropertyRef))
-        guard
-            block.typeName == "BSLightingShaderProperty",
-            try NIFLightingShaderProperty(data: block.data, header: file.header).isTreeAnimated
-        else { return colours }
-        return colours.map { SIMD4($0.x, $0.y, $0.z, 1) }
+        guard block.typeName == "BSLightingShaderProperty" else { return colours }
+        let shader = try NIFLightingShaderProperty(data: block.data, header: file.header)
+        let (rgb, alpha) = (shader.usesVertexColors, shader.usesVertexAlpha)
+        guard !rgb || !alpha else { return colours }
+        return colours.map {
+            SIMD4(rgb ? $0.x : 1, rgb ? $0.y : 1, rgb ? $0.z : 1, alpha ? $0.w : 1)
+        }
     }
 
+    /// The static path has no additive blend and no texture-less effect look, so those
+    /// effect shapes are skipped. Drawn anyway, they show as flat cards.
     func isUndrawableShape(_ shape: NIFTriShape) throws -> Bool {
         guard shape.shaderPropertyRef >= 0 else { return false }
         let block = try block(at: Int(shape.shaderPropertyRef))
-        if block.typeName == "BSLightingShaderProperty" {
-            return try NIFLightingShaderProperty(data: block.data, header: file.header).isRefraction
-        }
         guard
             block.typeName == NIFFile.effectShaderType,
             let effect = try? NIFEffectShaderProperty(data: block.data, header: file.header)
@@ -336,7 +337,8 @@ nonisolated extension NIFFile.Flattener {
             doubleSided: effect.isDoubleSided,
             alphaBlend: alpha?.blendEnabled ?? false,
             alphaTestThreshold: (alpha?.testEnabled ?? false) ? alpha?.testThreshold : nil,
-            effect: shading
+            effect: shading,
+            drawState: effect.drawState
         )
     }
 

@@ -8,54 +8,6 @@ import OpenSkyFormatsCore
 import OpenSkyShaderTypes
 import simd
 
-/// Resolves a material's texture key to a ready MTLTexture. `key` nil means
-/// the material has no texture — implementations return a placeholder.
-public typealias TextureProvider = (_ key: String?, _ usage: TextureUsage) -> MTLTexture
-
-/// GPU-side material: resolved diffuse texture + the scalar parameters the
-/// shader consumes. A blended static shape draws in the blended pass after water.
-nonisolated public struct RenderMaterial: Sendable {
-    public let diffuse: MTLTexture
-    public let uvOffset: SIMD2<Float>
-    public let uvScale: SIMD2<Float>
-    public let alpha: Float
-    /// nil -> opaque pipeline; set -> alpha-test pipeline variant.
-    public let alphaTestThreshold: Float?
-    /// Render both faces (cull mode none for this draw).
-    public let doubleSided: Bool
-    public let alphaBlend: Bool
-    /// Set for an effect shape, which draws unlit.
-    public let effect: RenderEffectMaterial?
-    /// A water-shader shape: the water pass draws it, not a draw group.
-    public let waterSurface: Bool
-    public let normal: MTLTexture?
-    /// The FaceGen tint the shader overlays on the diffuse; nil on other shapes.
-    public let faceTint: MTLTexture?
-    public let surface: RenderSurfaceMaterial
-
-    public init(material: Material, textureProvider: TextureProvider) {
-        diffuse = textureProvider(material.diffuseTexture, .color)
-        uvOffset = material.uvOffset
-        uvScale = material.uvScale
-        alpha = material.alpha
-        alphaTestThreshold = material.alphaTestThreshold
-        doubleSided = material.doubleSided
-        alphaBlend = material.alphaBlend
-        effect = material.effect.map {
-            RenderEffectMaterial(shading: $0, textureProvider: textureProvider)
-        }
-        waterSurface = material.waterSurface
-        normal = material.normalTexture.map { textureProvider($0, .data) }
-        faceTint = material.tintTexture.map { textureProvider($0, .color) }
-        surface = RenderSurfaceMaterial(material: material, textureProvider: textureProvider)
-    }
-
-    /// Every texture a draw of this material binds, for the residency set.
-    public var textures: [MTLTexture] {
-        [diffuse] + [normal, faceTint, effect?.palette].compactMap(\.self) + surface.textures
-    }
-}
-
 /// One uploaded engine Model: GPU meshes and materials, shared across instances. The mesh
 /// library keys these by VFS path.
 nonisolated public final class RenderModel: Sendable {
@@ -118,6 +70,8 @@ nonisolated public struct RenderPlacement: Sendable {
     /// The actor reference this placement draws, or zero. A membrane overlay finds its
     /// target's meshes by it.
     public let owner: UInt32
+    /// The reference's emittance colour (`XEMI`), for shapes with external emittance.
+    public var emittance: SIMD3<Float>?
 
     public init(
         model: RenderModel,
@@ -167,6 +121,13 @@ nonisolated public struct DrawInstance: Sendable {
     public var owner: UInt32 = 0
     /// The interior room this static instance sits in, or `RoomPortalGraph.noRoom`.
     public var room = RoomPortalGraph.noRoom
+    /// See `RenderPlacement.emittance`.
+    public var emittance: SIMD3<Float>?
+
+    /// The `InstanceTransform.instanceColor` of a static: the emittance, alpha 1 when set.
+    public var instanceColor: SIMD4<Float> {
+        emittance.map { SIMD4($0, 1) } ?? SIMD4(1, 1, 1, 0)
+    }
 }
 
 /// One instanced draw call. Grouped by mesh and diffuse identity: a mesh belongs to one
@@ -238,7 +199,16 @@ nonisolated public struct DrawGroup: Sendable {
     /// Blend without an alpha test, such as a beard or a waterfall. Foliage and
     /// hair often set both, and keep the depth-writing alpha-test pass.
     static func drawsBlended(_ material: RenderMaterial) -> Bool {
-        material.alphaBlend && material.alphaTestThreshold == nil
+        material.alphaBlend && material.alphaTestThreshold == nil && !material.drawState.screenDoor
+    }
+
+    /// A refraction shape reads the scene drawn before it, so it draws in its own pass.
+    public var drawsRefraction: Bool {
+        Self.drawsRefraction(material)
+    }
+
+    static func drawsRefraction(_ material: RenderMaterial) -> Bool {
+        material.surface.flags & UInt32(ShadingTerm.refraction.rawValue) != 0
     }
 }
 
@@ -387,24 +357,27 @@ nonisolated public struct RenderScene: Sendable {
                     continue
                 }
                 let faceMorph = placement.faceMorphs[ObjectIdentifier(mesh)]
-                let blended = DrawGroup.drawsBlended(material)
+                let seeThrough = DrawGroup.drawsBlended(material)
+                    || DrawGroup.drawsRefraction(material)
                 let modelMatrix = placement.transform * mesh.localTransform
+                let state = material.drawState
                 var instance = DrawInstance(
                     modelMatrix: modelMatrix,
                     normalMatrix: MatrixMath.normalMatrix(modelMatrix),
                     bounds: placement.bounds,
                     // A see-through surface casts no sun shadow.
-                    castsShadows: placement.castsShadows && !blended,
-                    receivesPointLights: placement.receivesPointLights,
-                    receivesShadows: placement.receivesShadows,
+                    castsShadows: placement.castsShadows && !seeThrough && state.castsShadows,
+                    receivesPointLights: placement.receivesPointLights && !state.distantLOD,
+                    receivesShadows: placement.receivesShadows && state.receivesShadows,
                     referenceFormID: placement.referenceFormID,
                     layer: placement.layer,
                     owner: placement.owner
                 )
                 instance.room = Self.room(of: placement, in: rooms)
+                instance.emittance = placement.emittance
                 // Blended groups ride the alpha-tested list, so culling and
                 // streaming need no third list; the scene pass draws them last.
-                if material.alphaTestThreshold == nil, !blended {
+                if material.alphaTestThreshold == nil, !seeThrough {
                     opaque.add(
                         mesh: mesh, material: material, faceMorph: faceMorph, instance: instance
                     )

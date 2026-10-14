@@ -144,12 +144,6 @@ struct NIFModelTests {
         #expect(abs(threshold - 64.0 / 255) < 1e-6)
     }
 
-    struct TintCase: Sendable {
-        let shaderType: UInt32
-        let tintTexture: String?
-        let tintsSkin: Bool
-    }
-
     @Test(arguments: [
         TintCase(
             shaderType: 4,
@@ -157,6 +151,7 @@ struct NIFModelTests {
             tintsSkin: false
         ),
         TintCase(shaderType: 5, tintTexture: nil, tintsSkin: true),
+        TintCase(shaderType: 5, tintTexture: nil, tintsSkin: false, flags1: 0x8240_0301),
         TintCase(shaderType: 0, tintTexture: nil, tintsSkin: false)
     ])
     func readsTheFaceTintAndSkinTintFromTheShaderType(_ tint: TintCase) throws {
@@ -167,7 +162,9 @@ struct NIFModelTests {
             .init("BSTriShape", shape(shaderPropertyRef: 1)),
             .init(
                 "BSLightingShaderProperty",
-                NIFFixture.bsLightingShaderProperty(shaderType: tint.shaderType, textureSetRef: 2)
+                NIFFixture.bsLightingShaderProperty(
+                    shaderType: tint.shaderType, shaderFlags1: tint.flags1, textureSetRef: 2
+                )
             ),
             .init("BSShaderTextureSet", NIFFixture.bsShaderTextureSet(paths: paths))
         ]))
@@ -285,6 +282,16 @@ struct NIFModelTests {
         let model = try file.model()
         #expect(model.meshes.isEmpty)
         #expect(model.materials.isEmpty)
+    }
+}
+
+extension NIFModelTests {
+    struct TintCase: Sendable {
+        let shaderType: UInt32
+        let tintTexture: String?
+        let tintsSkin: Bool
+        /// SLSF1 bit 21 FaceGen_RGB_Tint, which every vanilla skin-tint shape sets.
+        var flags1: UInt32 = 0x8260_0301
     }
 }
 

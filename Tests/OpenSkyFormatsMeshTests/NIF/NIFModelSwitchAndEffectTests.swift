@@ -114,22 +114,26 @@ struct NIFModelSwitchAndEffectTests {
         #expect(effect.vertexColors && effect.vertexAlpha)
     }
 
-    /// A fire's heat-haze dome sets SLSF1 bit 15. With no refraction pass it would
-    /// draw its normal map as colour, so it is skipped.
-    @Test func refractionShapeIsSkipped() throws {
+    /// The flags of the heat-haze dome over `fireplacewood01burning.nif`. Its slot 0
+    /// texture is the normal map that bends the scene.
+    @Test func aRefractionShapeDrawsThroughItsNormalMap() throws {
         let file = try NIFFile(data: NIFFixture.file(blocks: [
-            .init("NiNode", NIFFixture.niNode(children: [1, 2])),
-            .init("BSTriShape", shape(shaderPropertyRef: 3)),
-            .init("BSTriShape", shape(shaderPropertyRef: 4)),
-            .init(
-                "BSLightingShaderProperty",
-                NIFFixture.bsLightingShaderProperty(shaderFlags1: 0x8241_8309)
-            ),
-            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty())
+            .init("BSTriShape", shape(shaderPropertyRef: 1)),
+            .init("BSLightingShaderProperty", NIFFixture.bsLightingShaderProperty(
+                shaderFlags1: 0x8241_8309, textureSetRef: 2, refractionStrength: 0.4
+            )),
+            .init("BSShaderTextureSet", NIFFixture.bsShaderTextureSet(paths: [
+                "effects/vaportilenormal_n.dds", "", "", "", "", "", "", ""
+            ]))
         ]))
         let model = try file.model()
-        #expect(model.meshes.count == 1)
-        #expect(model.skippedShapeCount == 1)
+        let material = try #require(model.materials.first)
+        #expect(model.skippedShapeCount == 0)
+        #expect(material.diffuseTexture == nil)
+        #expect(material.normalTexture == "textures/effects/vaportilenormal_n.dds")
+        #expect(material.shading.terms.isSuperset(of: [.refraction, .fireRefraction]))
+        #expect(material.shading.refractionStrength == 0.4)
+        #expect(!material.drawState.castsShadows)
     }
 
     /// Tree branches carry wind weight in vertex alpha; it must not cut them away.
@@ -165,7 +169,7 @@ struct NIFModelSwitchAndEffectTests {
 
 extension NIFModelSwitchAndEffectTests {
     /// The static triangle with an RGBA vertex colour after the tangent.
-    static func colouredShape(shaderPropertyRef: Int32, alpha: UInt8) -> Data {
+    static func colouredShape(shaderPropertyRef: Int32, alpha: UInt8, rgb: UInt8 = 255) -> Data {
         var record = Data()
         record.appendFloat32(1)
         record.appendFloat32(2)
@@ -175,7 +179,7 @@ extension NIFModelSwitchAndEffectTests {
         record.appendFloat16(0)
         record.append(contentsOf: [128, 128, 255, 128])
         record.append(contentsOf: [255, 128, 128, 128])
-        record.append(contentsOf: [255, 255, 255, alpha])
+        record.append(contentsOf: [rgb, rgb, rgb, alpha])
         return NIFFixture.bsTriShape(
             shaderPropertyRef: shaderPropertyRef,
             attributes: 0x3B,

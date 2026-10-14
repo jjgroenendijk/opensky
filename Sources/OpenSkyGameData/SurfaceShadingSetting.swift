@@ -13,6 +13,11 @@ nonisolated public enum SurfaceShadingSetting: String, CaseIterable, Sendable {
     case parallax
     case vertexColorGamma
     case baseAmbient
+    case hairLighting
+    case sparkle
+    case landscapeNoise
+    case materialDrawState
+    case refraction
 
     public var id: PlayerSettingID {
         PlayerSettingID("rendering.shading.\(rawValue)")
@@ -36,6 +41,11 @@ nonisolated public enum SurfaceShadingSetting: String, CaseIterable, Sendable {
         case .parallax: "Parallax and layered surfaces"
         case .vertexColorGamma: "Vertex colours in gamma space"
         case .baseAmbient: "Base ambient light"
+        case .hairLighting: "Hair lighting"
+        case .sparkle: "Snow and ice sparkle"
+        case .landscapeNoise: "Distant terrain noise"
+        case .materialDrawState: "Material depth and decal flags"
+        case .refraction: "Refraction and heat haze"
         }
     }
 
@@ -52,6 +62,12 @@ nonisolated public enum SurfaceShadingSetting: String, CaseIterable, Sendable {
         case .parallax: "Height-mapped surfaces and the layer under ice and glass"
         case .vertexColorGamma: "Treat baked vertex colours as gamma values, as the game does"
         case .baseAmbient: "Add the single ambient colour on top of the six-axis ambient"
+        case .hairLighting: "Soft, capped light on hair and highlights along its strands"
+        case .sparkle: "Small glints on snow and ice surfaces"
+        case .landscapeNoise: "A noise texture that breaks up the colour of distant land"
+        case .materialDrawState:
+            "Each model's own depth test, depth write, decal offset, and dither fade"
+        case .refraction: "Glass-like shapes and the heat over fires that bend the view behind"
         }
     }
 

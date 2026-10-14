@@ -158,7 +158,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             alphaTestThreshold: material.alphaTestThreshold,
             tintTexture: material.tintTexture,
             tintsSkin: material.tintsSkin,
-            shading: shading
+            shading: shading,
+            drawState: material.drawState
         )
     }
 

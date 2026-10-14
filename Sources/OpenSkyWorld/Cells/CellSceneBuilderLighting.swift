@@ -147,6 +147,13 @@ nonisolated extension CellSceneBuilder {
         return index
     }
 
+    /// The colour of the `XEMI` light, faded as a point light is. A region has none.
+    nonisolated func emittanceColour(of reference: PlacedReference) -> SIMD3<Float>? {
+        reference.emittance
+            .flatMap { lightIndexBuildingIfNeeded()[$0.rawValue] }
+            .map { $0.color * max(0, $0.fade) }
+    }
+
     nonisolated public func lightIndexBuildingIfNeeded() -> [UInt32: LightRecord] {
         if let lightIndex {
             return lightIndex

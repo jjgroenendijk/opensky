@@ -22,7 +22,9 @@ nonisolated public struct NIFMeshGapCensus: Sendable {
     public static let readLightingTypes = Set(
         NIFLightingShaderType.engineRead.map(NIFLightingShaderType.name)
     )
-    public static let readLightingFlags = Set(NIFShaderFlag.lightingRead.map(\.name))
+    public static let readLightingFlags = Set(
+        NIFShaderFlag.lightingRead.union(NIFShaderFlag.lightingMatchedByDefault).map(\.name)
+    )
     public static let readEffectFlags = Set(NIFShaderFlag.effectRead.map(\.name))
 
     public mutating func record(data: Data) {

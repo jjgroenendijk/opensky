@@ -7,8 +7,7 @@ import OpenSkyFormatsCore
 import simd
 
 nonisolated public struct NIFLightingShaderProperty: Sendable {
-    /// nif.xml BSLightingShaderType: 1 environment map, 2 glow, 3 parallax,
-    /// 4 FaceGen, 5 skin tint, 6 hair tint, 11 multi-layer parallax, 16 eye.
+    /// nif.xml `BSLightingShaderType`; `NIFLightingShaderType` names the values.
     public let shaderType: UInt32
     public let name: String?
     /// Raw SkyrimShaderPropertyFlags1/2; derived accessors below for the
@@ -24,6 +23,8 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
     /// Material opacity, 1 = opaque (vanilla range reaches past 1 to shape
     /// alpha falloff).
     public let alpha: Float
+    /// How far a refraction shape bends the scene behind it, 0 to 1.
+    public let refractionStrength: Float
     /// Specular power.
     public let glossiness: Float
     public let specularColor: SIMD3<Float>
@@ -45,6 +46,8 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         public var refractionScale: Float = 0.25
         public var innerLayerScale = SIMD2<Float>(1, 1)
         public var environmentStrength: Float = 1
+        /// Type 14. The field meanings are not documented.
+        public var sparkle = SIMD4<Float>.zero
 
         public init() {}
     }
@@ -60,7 +63,7 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
     }
 
     /// SLSF1 bit 15 Refraction: the shape bends what is behind it, such as the
-    /// heat haze over a fire, and its texture is a normal map.
+    /// heat haze over a fire, and its slot 0 texture is a normal map.
     public var isRefraction: Bool {
         has(.refraction)
     }
@@ -70,9 +73,33 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         shaderType == NIFLightingShaderType.faceGen
     }
 
-    /// Shader type 5: skin the actor's skin colour tints.
+    /// Shader type 5 with SLSF1 bit 21: skin the actor's skin colour tints.
     public var isSkinTint: Bool {
-        shaderType == NIFLightingShaderType.skinTint
+        shaderType == NIFLightingShaderType.skinTint && has(.faceGenRGBTint)
+    }
+
+    /// SLSF1 bit 3: without it the vertex alpha is ignored. SLSF2 bit 5: the same for
+    /// the vertex colour. Tree animation stores wind weight in the alpha.
+    public var usesVertexAlpha: Bool {
+        has(.vertexAlpha) && !isTreeAnimated
+    }
+
+    public var usesVertexColors: Bool {
+        has(.vertexColors)
+    }
+
+    public var drawState: MaterialDrawState {
+        var state = MaterialDrawState()
+        state.depthTest = has(.zBufferTest)
+        state.depthWrite = has(.zBufferWrite)
+        state.decal = has(.decal) || has(.dynamicDecal)
+        state.distantLOD = has(.lodLandscape) || has(.lodObjects) || has(.hdLODObjects)
+        state.castsShadows = has(.castShadows) && !state.distantLOD && !isRefraction
+        // Assume_Shadowmask: the game shades it from its screen shadow mask instead.
+        state.receivesShadows = (has(.receiveShadows) || has(.assumeShadowmask))
+            && !state.distantLOD
+        state.screenDoor = has(.screendoorAlphaFade)
+        return state
     }
 
     func has(_ flag: NIFShaderFlag) -> Bool {
@@ -99,7 +126,7 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
         emissiveMultiple = try reader.readFloat32()
         reader.skip(4) // texture clamp mode
         alpha = try reader.readFloat32()
-        reader.skip(4) // refraction strength
+        refractionStrength = try reader.readFloat32()
         glossiness = try reader.readFloat32()
         specularColor = try reader.readVector3()
         specularStrength = try reader.readFloat32()
@@ -116,6 +143,15 @@ nonisolated public struct NIFLightingShaderProperty: Sendable {
             tail.environmentMapScale = (try? reader.readFloat32()) ?? 1
         case 5, 6:
             tail.tintColor = try? reader.readVector3()
+        case 14:
+            if
+                let sparkle = try? SIMD4(
+                    reader.readFloat32(), reader.readFloat32(), reader.readFloat32(),
+                    reader.readFloat32()
+                )
+            {
+                tail.sparkle = sparkle
+            }
         case 11:
             tail.innerLayerThickness = (try? reader.readFloat32()) ?? 5
             tail.refractionScale = (try? reader.readFloat32()) ?? 0.25

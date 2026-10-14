@@ -26,6 +26,11 @@ nonisolated extension SurfaceShadingSetting {
         case .parallax: .parallax
         case .vertexColorGamma: .vertexColorGamma
         case .baseAmbient: .baseAmbient
+        case .hairLighting: .hairLighting
+        case .sparkle: .sparkle
+        case .landscapeNoise: .landscapeNoise
+        case .materialDrawState: .materialDrawState
+        case .refraction: .refraction
         }
     }
 }

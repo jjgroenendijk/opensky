@@ -93,6 +93,14 @@ nonisolated public struct NIFEffectShaderProperty: Equatable, Sendable {
         !has(.zBufferWrite)
     }
 
+    public var drawState: MaterialDrawState {
+        var state = MaterialDrawState()
+        state.depthTest = isZBufferTest
+        state.depthWrite = !isZBufferWriteDisabled
+        state.decal = has(.decal) || has(.dynamicDecal)
+        return state
+    }
+
     func has(_ flag: NIFShaderFlag) -> Bool {
         (flag.word == 1 ? shaderFlags1 : shaderFlags2) & (1 << flag.bit) != 0
     }

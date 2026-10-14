@@ -77,7 +77,7 @@ final class SurfaceShadingSection: PanelSectionViewController {
         }
         let counted: [SurfaceShadingSetting] = [
             .normalMaps, .specular, .glow, .softAndRimLight, .backLight, .faceTint, .tintColor,
-            .reflections, .parallax
+            .reflections, .parallax, .hairLighting, .sparkle, .landscapeNoise, .refraction
         ]
         statsLabel.stringValue = counted.map {
             "\($0.title): \(provider.shadingDrawCount($0)) draws"

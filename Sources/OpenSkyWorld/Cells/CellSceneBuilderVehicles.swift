@@ -29,7 +29,7 @@ nonisolated extension CellSceneBuilder {
             instances[index] = ResolvedInstance(
                 sortKey: instance.sortKey, formID: instance.formID,
                 modelPath: instance.modelPath, model: model, surface: instance.surface,
-                transform: instance.transform
+                transform: instance.transform, emittance: instance.emittance
             )
             let pose = PlayerPoseBuffer()
             let playback = PlayerAnimationPlayback(
