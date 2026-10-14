@@ -143,12 +143,6 @@ extension InventoryWorldAdapter: RecipeConditionChecking {
         var context = game.runtimeState.conditionContext()
         context.subject = .player
         context.tempering = TemperingConditionResolution(isEnchanted: temperingEnchanted)
-        if let runtime = game.inventory.runtime {
-            let stacks = runtime.inventory.inventory(of: runtime.player).stacks
-            context.inventory = InventoryConditionResolution(counts: [
-                .player: stacks.reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
-            ])
-        }
         var evaluator = ConditionEvaluator(context: context)
         return evaluator.firstFailure(in: conditions.conditions).map(evaluator.functionName(of:))
     }

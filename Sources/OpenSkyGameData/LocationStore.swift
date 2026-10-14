@@ -21,6 +21,8 @@ nonisolated public struct LocationStore: Sendable {
     /// location that names an actor wins. A base the lists miss, such as `Ralof`,
     /// falls back to its one persistent placed actor.
     public let uniqueActorReferences: [ReferenceKey: ReferenceKey]
+    /// The location ref types each reference is listed under, over every location.
+    private let referenceTypes: [ReferenceKey: Set<ReferenceKey>]
 
     public var locations: [ResolvedFormID: ResolvedLocation] {
         table.values
@@ -43,6 +45,12 @@ nonisolated public struct LocationStore: Sendable {
         uniqueActorReferences = persistentActors.merging(
             Self.uniqueActors(in: table.values.values, index: index)
         ) { _, listed in listed }
+        referenceTypes = Self.referenceTypes(in: table.values.values, index: index)
+    }
+
+    /// The ref types `reference` is listed under in any location's `LCSR` or `ACSR`.
+    public func specialReferenceTypes(of reference: ReferenceKey) -> Set<ReferenceKey> {
+        referenceTypes[reference] ?? []
     }
 
     private static func uniqueActors(

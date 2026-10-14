@@ -222,11 +222,8 @@ nonisolated extension CellSceneBuilder {
             rooms: geometry.rooms
         )
         let summary = makeSummary(
-            found: found,
-            grid: grid,
-            instanceCount: instances.count,
-            geometry: geometry,
-            counts: counts
+            found: found, grid: grid, instanceCount: instances.count,
+            geometry: geometry, counts: counts
         )
         Self.logger.info("\(summary.summaryLine, privacy: .public)")
         var scene = CellScene(
@@ -254,6 +251,7 @@ nonisolated extension CellSceneBuilder {
             references: geometry.referenceIndex,
             stateSequence: geometry.stateSequence
         )
+        scene.cellFormID = FormID(found.formID)
         scene.animatedObjects = objects.map(\.object)
         scene.animatedVehicles = vehicles.map(\.vehicle)
         return scene

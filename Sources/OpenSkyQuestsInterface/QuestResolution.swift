@@ -39,6 +39,11 @@ nonisolated public struct QuestResolution: Sendable {
         return override
     }
 
+    /// The session key of the quest `id` names, which its script instances run under.
+    public func key(for id: FormID) -> ReferenceKey? {
+        defaults.key(for: id)
+    }
+
     /// The QUST record `id` names, or nil.
     public func quest(_ id: FormID) -> Quest? {
         defaults.quest(id)

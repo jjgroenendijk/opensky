@@ -2,6 +2,7 @@
 // world AABB for camera placement.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -61,6 +62,13 @@ nonisolated public struct CellScene: Sendable {
     public let worldspaceMusicType: FormID?
     /// The WRLD's load-order FormID, which a location's `LCEC` cell list names. Nil indoors.
     public let worldspace: FormID?
+    /// The CELL's load-order FormID. Nil for a scene built without a cell record.
+    public var cellFormID: FormID?
+
+    /// Where a reference in this scene stands, for `GetInCell` and `GetInWorldspace`.
+    public var referenceCell: ReferenceCell? {
+        cellFormID.map { ReferenceCell(cell: $0, worldspace: isInterior ? nil : worldspace) }
+    }
 
     public var isInterior: Bool {
         if case .interior = location {

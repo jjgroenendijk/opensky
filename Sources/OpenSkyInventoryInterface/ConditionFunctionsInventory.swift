@@ -1,5 +1,6 @@
-// The inventory condition functions: 47 `GetItemCount` (ptInventoryObject) and 659
-// `EPTemperingItemIsEnchanted`, from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas.
+// The inventory condition functions: 47 `GetItemCount` (ptInventoryObject), 48 `GetGold`,
+// 182 `GetEquipped`, and 659 `EPTemperingItemIsEnchanted`, from xEdit dev-4.1.6
+// Core/wbDefinitionsTES5.pas.
 // Recipes use them. See docs/engine/condition-functions.md.
 
 import Foundation
@@ -11,15 +12,21 @@ nonisolated public struct InventoryConditionResolution: Sendable {
     public static let empty = InventoryConditionResolution()
 
     private let counts: [ReferenceKey: [FormID: Int32]]
+    private let equipped: [ReferenceKey: Set<FormID>]
     public let isAvailable: Bool
 
-    public init(counts: [ReferenceKey: [FormID: Int32]]) {
+    public init(
+        counts: [ReferenceKey: [FormID: Int32]],
+        equipped: [ReferenceKey: Set<FormID>] = [:]
+    ) {
         self.counts = counts
+        self.equipped = equipped
         isAvailable = true
     }
 
     private init() {
         counts = [:]
+        equipped = [:]
         isAvailable = false
     }
 
@@ -27,6 +34,11 @@ nonisolated public struct InventoryConditionResolution: Sendable {
     public func count(of item: FormID, in holder: ReferenceKey) -> Int32? {
         guard isAvailable else { return nil }
         return counts[holder]?[item] ?? 0
+    }
+
+    /// Nil without equipment data for `holder`.
+    public func isEquipped(_ item: FormID, on holder: ReferenceKey) -> Bool? {
+        equipped[holder]?.contains(item)
     }
 }
 
@@ -86,6 +98,33 @@ nonisolated extension ConditionFunctions {
                 return .failure(.unavailableData(.inventory))
             }
             return .success(enchanted ? 1 : 0)
+        })
+        installGoldAndEquipment(&registry)
+    }
+
+    /// `Gold001`, the septim, in `Skyrim.esm` (UESP "Skyrim:Gold").
+    public static let goldItem = FormID(0x0000_000F)
+
+    private static func installGoldAndEquipment(_ registry: inout ConditionFunctionRegistry) {
+        // How many `Gold001` the run-on holds.
+        registry.register(ConditionFunction(index: 48, name: "GetGold") { call in
+            call.referenceKey().flatMap { holder in
+                guard let count = call.context.inventory.count(of: Self.goldItem, in: holder)
+                else { return .failure(.unavailableData(.inventory)) }
+                return .success(Float(count))
+            }
+        })
+
+        // xEdit `ptInventoryObject`: 1 when the run-on actor has the item equipped.
+        registry.register(ConditionFunction(
+            index: 182, name: "GetEquipped", parameter1: .formID
+        ) { call in
+            guard let item = call.parameter1 else { return .failure(.unresolvedParameter(182)) }
+            return call.referenceKey().flatMap { holder in
+                guard let equipped = call.context.inventory.isEquipped(item.asFormID, on: holder)
+                else { return .failure(.unavailableData(.inventory)) }
+                return .success(Self.isTrue(equipped))
+            }
         })
     }
 }

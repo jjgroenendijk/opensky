@@ -147,7 +147,7 @@ extension AIWorldAdapter: PackageWorld {
     }
 
     func packageConditionContext(clock: GameClock) -> ConditionContext {
-        ConditionContext(
+        var context = ConditionContext(
             globals: game.runtimeState.globalResolution(),
             quests: game.scripts.bridge?.questRuntime?.resolution() ?? .empty,
             aliases: game.scripts.bridge?.questRuntime?.aliasResolution() ?? .empty,
@@ -158,6 +158,8 @@ extension AIWorldAdapter: PackageWorld {
             references: game.streamer?.residentReferenceIndex()
                 ?? RuntimeReferenceIndex(entries: [])
         )
+        game.runtimeStateWorld.addLiveSeams(to: &context)
+        return context
     }
 }
 

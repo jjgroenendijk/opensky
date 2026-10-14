@@ -195,4 +195,21 @@ struct QuestConditionFunctionTests {
         #expect(!outcome.isTrue)
         #expect(outcome.failures == [.unresolvedQuest(mainQuest)])
     }
+
+    // MARK: - GetVMQuestVariable
+
+    @Test func getVMQuestVariableReadsTheQuestScriptByItsCIS2Name() throws {
+        var context = try context()
+        context.scriptVariables = ScriptVariableResolution(values: [
+            GlobalFixture.key(0x0100): ["::markarthmarket_var": 2]
+        ])
+        var condition = try condition(629, quest: mainQuest, equals: 2)
+        condition.parameter2Name = "::MarkarthMarket_var"
+        #expect(evaluate(condition, context) == .true)
+
+        condition.parameter2Name = "::Missing_var"
+        #expect(evaluate(condition, context).failures == [.unavailableData(.scriptVariable)])
+        condition.parameter2Name = nil
+        #expect(evaluate(condition, context).failures == [.unresolvedParameter(629)])
+    }
 }

@@ -88,4 +88,41 @@ struct ConditionActorBodyFunctionTests {
         #expect(try Self
             .outcome(Self.isChild, equals: 0, state: Self.state(hand: .nothing)) == .true)
     }
+
+    @Test func sexAndRaceReadTheActorAndThePlayer() throws {
+        var npc = Self.state(hand: .nothing)
+        npc.isFemale = true
+        var player = Self.state(hand: .nothing)
+        player.isFemale = false
+        player.race = FormID(0x13746)
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.actors = ActorStateResolution(states: [Self.subject: npc, .player: player])
+        var evaluator = ConditionEvaluator(context: context)
+        let isSex = { (index: UInt16, sex: UInt32) in
+            try ConditionEvaluatorFixture.comparing(functionIndex: index, 0, 1, parameter1: sex)
+        }
+        #expect(try evaluator.evaluate(isSex(70, 1)) == .true)
+        #expect(try evaluator.evaluate(isSex(131, 0)) == .true)
+        #expect(try evaluator.evaluate(isSex(70, 7)).failures == [.unresolvedParameter(70)])
+        #expect(try evaluator.evaluate(isSex(130, 0x13746)) == .true)
+        npc.isFemale = nil
+        context.actors = ActorStateResolution(states: [Self.subject: npc])
+        evaluator = ConditionEvaluator(context: context)
+        #expect(try evaluator.evaluate(isSex(70, 1)).failures == [.unavailableActorState])
+    }
+
+    @Test func combatHealthAndSneakReadTheState() throws {
+        var state = ActorConditionState(
+            current: ActorValues(health: 25, magicka: 100, stamina: 100),
+            maximums: ActorValues(repeating: 100), combatActivity: .searching
+        )
+        #expect(try Self.outcome(289, equals: 1, state: state) == .true)
+        #expect(try Self.outcome(430, equals: 0.25, state: state) == .true)
+        #expect(try Self.outcome(286, equals: 0, state: state).failures
+            == [.unavailableActorState])
+        state.isSneaking = true
+        #expect(try Self.outcome(286, equals: 1, state: state) == .true)
+        state.isDead = true
+        #expect(try Self.outcome(289, equals: 0, state: state) == .true)
+    }
 }

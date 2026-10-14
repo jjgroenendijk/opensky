@@ -58,6 +58,21 @@ public final class PapyrusInstance {
         return false
     }
 
+    /// Every Int, Float, and Bool variable as a number, by folded name. Conditions
+    /// read only these types (<https://ck.uesp.net/wiki/GetVMQuestVariable>).
+    public func numericVariables(into values: inout [String: Float]) {
+        for variables in variablesByScript.values {
+            for (name, value) in variables {
+                switch value {
+                case let .boolean(flag): values[name] = flag ? 1 : 0
+                case let .integer(number): values[name] = Float(number)
+                case let .float(number): values[name] = number
+                default: continue
+                }
+            }
+        }
+    }
+
     /// Deterministic snapshot of every variable for save serialization,
     /// sorted by lowercased declaring-script key then variable key. Values are
     /// raw runtime values; the caller decides what is persistable.

@@ -50,9 +50,9 @@ final class RuntimeStateWorldAdapter {
     /// filled in both directions.
     func actorResolution() -> ActorStateResolution {
         guard let values = game.actorValues.runtime else { return .empty }
-        var states: [ReferenceKey: ActorConditionState] = [
-            .player: actorConditionState(holder: .player, values: values)
-        ]
+        var player = actorConditionState(holder: .player, values: values)
+        playerConditionTraits(&player)
+        var states: [ReferenceKey: ActorConditionState] = [.player: player]
         for observation in game.actorWorld.combatActors() {
             guard let holder = game.actorWorld.actorValueHolder(for: observation.key) else {
                 continue
@@ -79,7 +79,7 @@ final class RuntimeStateWorldAdapter {
         let activity = game.combat.loop?.activity(of: holder.key) ?? .notFighting
         let drawState = holder.key == .player ? game.combat.melee?.state.drawState : nil
         let handIsEmpty = drawState.map { !$0.isWeaponInHand } ?? (activity == .notFighting)
-        return ActorConditionState(
+        var state = ActorConditionState(
             current: values.current(of: holder),
             maximums: values.maximums(of: holder),
             isDead: isDead,
@@ -92,6 +92,8 @@ final class RuntimeStateWorldAdapter {
             leftHandOut: handIsEmpty ? .nothing : nil,
             race: baseline.race
         )
+        state.isFemale = baseline.isFemale
+        return state
     }
 
     private func store() async throws -> OpenSkySaveStore {
@@ -195,6 +197,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             target: crosshair?.key
         )
         context.data = conditionData()
+        addLiveSeams(to: &context)
         return context
     }
 
@@ -300,6 +303,7 @@ private struct ResidentReferencePlaces {
 private struct ReferencePlaces {
     var locations: [ReferenceKey: ResolvedFormID] = [:]
     var interiors: [ReferenceKey: Bool] = [:]
+    var cells: [ReferenceKey: ReferenceCell] = [:]
 }
 
 /// The record data every live condition reads. Each evaluator translates a record's
@@ -314,7 +318,8 @@ extension RuntimeStateWorldAdapter {
             locations: locationStore,
             sourcePlugin: FormIDResolver.loadOrderSpaceName,
             currentLocations: places.locations,
-            interiors: places.interiors
+            interiors: places.interiors,
+            cells: places.cells
         )
     }
 
@@ -355,6 +360,7 @@ extension RuntimeStateWorldAdapter {
         {
             places.locations[.player] = location(of: scene)
             places.interiors[.player] = scene.isInterior
+            places.cells[.player] = scene.referenceCell
         }
         return places
     }
@@ -363,8 +369,10 @@ extension RuntimeStateWorldAdapter {
         var places = ReferencePlaces()
         places.locations = cellLocationResolver()?.referenceLocations(in: scenes) ?? [:]
         for scene in scenes {
+            let cell = scene.referenceCell
             for entry in scene.references.sortedEntries() {
                 places.interiors[entry.key] = scene.isInterior
+                places.cells[entry.key] = cell
             }
         }
         return places

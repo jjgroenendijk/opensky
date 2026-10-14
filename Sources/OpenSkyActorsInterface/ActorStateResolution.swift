@@ -45,6 +45,10 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     /// yet, so both stay false until those systems set them.
     public var isInPairedAnimation = false
     public var isFlying = false
+    /// Nil when the actor's traits did not resolve.
+    public var isFemale: Bool?
+    /// Nil when nothing tracks the actor's gait; only the player's is.
+    public var isSneaking: Bool?
 
     public init(
         current: ActorValues,
