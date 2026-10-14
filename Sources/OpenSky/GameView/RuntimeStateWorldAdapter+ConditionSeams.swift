@@ -13,11 +13,13 @@ import OpenSkyInventoryInterface
 import OpenSkyPhysics
 import OpenSkyQuestsInterface
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 
 extension RuntimeStateWorldAdapter {
     func addLiveSeams(to context: inout ConditionContext) {
         context.scriptVariables = game.scripts.runtime?.scriptVariableResolution() ?? .empty
+        context.scriptedState = game.scripts.bridge?.scriptedStateResolution() ?? .empty
         context.scenes = game.scenes.conditionResolution(aliases: context.aliases)
         context.weather = weatherResolution()
         if let inventory = playerInventoryResolution() {
@@ -53,6 +55,9 @@ extension RuntimeStateWorldAdapter {
             state.isFemale = identity.isFemale
             state.race = identity.race
         }
-        state.isSneaking = game.renderer.map { $0.locomotion.status.gait == .sneak }
+        let gait = game.renderer?.locomotion.status.gait
+        state.isSneaking = gait.map { $0 == .sneak }
+        state.isSprinting = gait.map { $0 == .sprint }
+        state.isSwimming = gait.map { $0 == .swim }
     }
 }

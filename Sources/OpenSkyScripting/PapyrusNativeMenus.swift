@@ -20,6 +20,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     func race(of actor: ReferenceKey) -> FormID?
     /// 0 male, 1 female, or nil for an unknown base.
     func sex(ofBase base: FormID) -> Int?
+    /// The race after `useTraits` inheritance.
+    func race(ofBase base: FormID) -> FormID?
+    /// The base record's own `ACBS` flags, or nil for an unknown base.
+    func recordFlags(ofBase base: FormID) -> ActorBase.Flags?
     func name(of form: FormID) -> String?
     /// Moves the player next to `target`, loading its cell when it is not loaded.
     func movePlayer(to target: ReferenceKey)
@@ -138,10 +142,26 @@ extension PapyrusNativeFunctions {
                 return .returned(.object(handle))
             }
         }
-        withForm("ActorBase", "GetSex", into: &registry) { _, menus, form in
+        withForm("ActorBase", "GetSex", into: &registry) { _, _, menus, form in
             .returned(.integer(Int32(menus.sex(ofBase: form) ?? -1)))
         }
-        withForm("Form", "GetName", into: &registry) { _, menus, form in
+        withForm("ActorBase", "GetRace", into: &registry) { _, world, menus, form in
+            .returned(menus.race(ofBase: form).map { formHandle($0, in: world) } ?? .none)
+        }
+        withForm("ActorBase", "IsUnique", into: &registry) { _, _, menus, form in
+            .returned(.boolean(menus.recordFlags(ofBase: form)?.contains(.unique) == true))
+        }
+        // A script's `SetEssential` on the base wins over the record flag.
+        withReference("Actor", "IsEssential", into: &registry) { _, world, menus, key in
+            guard key != .player, let base = world.baseObject(of: key) else {
+                return .returned(.boolean(false))
+            }
+            let scripted = world.referenceKey(forFormID: base)
+                .flatMap { world.scriptedState(of: $0).flag(ScriptedStateName.essential) }
+            let recorded = menus.recordFlags(ofBase: base)?.contains(.essential)
+            return .returned(.boolean(scripted ?? recorded ?? false))
+        }
+        withForm("Form", "GetName", into: &registry) { _, _, menus, form in
             .returned(.string(menus.name(of: form) ?? ""))
         }
     }
@@ -184,8 +204,9 @@ extension PapyrusNativeFunctions {
     private static func withForm(
         _ script: String, _ name: String,
         into registry: inout PapyrusNativeRegistry,
-        body: @escaping @MainActor (PapyrusNativeCall, any PapyrusMenuBridge, FormID)
-            -> PapyrusNativeResult
+        body: @escaping @MainActor (
+            PapyrusNativeCall, PapyrusWorldStateBridge, any PapyrusMenuBridge, FormID
+        ) -> PapyrusNativeResult
     ) {
         registry.register(PapyrusNativeFunction(
             scriptName: script,
@@ -199,7 +220,7 @@ extension PapyrusNativeFunctions {
                     of: ResolvedFormID(plugin: plugin, objectID: objectID)
                 )
             else { return failure(call, "\(name) needs the menu bridge and a form") }
-            return body(call, menus, form)
+            return body(call, world, menus, form)
         })
     }
 }

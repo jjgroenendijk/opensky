@@ -119,6 +119,14 @@ Papyrus scripts change inventories through `AddItem`, `RemoveItem`, `RemoveAllIt
 wiki pages for `ObjectReference Script` and `Actor Script`. The receiver can be the player, a placed
 actor, or any other placed reference, which then holds items as a container.
 
+Scripts read equipment through `IsEquipped`, `GetEquippedWeapon`, and `GetEquippedShield`,
+and take everything off with `UnequipAll`. `Form.GetGoldValue` answers the item's `DATA` value.
+
+- `GetEquippedWeapon(abLeftHand = false)` answers a weapon in the right hand, two-handed
+  weapons included. With `abLeftHand` it answers a weapon that takes only the left hand.
+- `GetEquippedShield` answers the worn armour in biped slot 39.
+- `GetGoldValue` answers -1 for a form that is no item. This is OpenSky's choice; no source
+  this project reached says what the game answers.
 - `RemoveItem` takes at most what is held. A request for more is not an error.
 - `RemoveItem` and `RemoveAllItems` move the items into the reference in their container argument,
   when the script names one. Otherwise the items are gone.

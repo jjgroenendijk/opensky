@@ -48,6 +48,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 75 | `IsSnowing` | none | 1 when the current weather is snowy |
 | 77 | `GetRandomPercent` | none | integer 0 to 99 |
 | 80 | `GetLevel` | none | level; for the player, the character level |
+| 91 | `GetIsAlerted` | none | 1 after a script called `SetAlert` |
 | 102 | `IsTorchOut` | none | 1 when the actor holds a torch out |
 | 103 | `IsShieldOut` | none | 1 when the actor holds a shield out |
 | 130 | `GetPCIsRace` | `RACE` | 1 when the player's race matches |
@@ -57,10 +58,14 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 159 | `GetSitting` | none | 0 not sitting, 2 getting ready to sit, 3 sitting |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
 | 182 | `GetEquipped` | item | 1 when the actor has it equipped |
+| 185 | `IsSwimming` | none | 1 while the actor swims |
 | 214 | `HasMagicEffect` | `MGEF` | 1 when that effect acts on the actor |
 | 223 | `IsSpellTarget` | `SPEL`, `ALCH`, `INGR`, or `ENCH` | 1 when an effect from it acts on the actor |
+| 237 | `GetIsGhost` | none | 1 after a script called `SetGhost` |
+| 244 | `GetRestrained` | none | 1 after a script called `SetRestrained` |
 | 248 | `IsScenePlaying` | `SCEN` | 1 while the scene plays |
 | 249 | `IsInDialogueWithPlayer` | none | 1 when the player talks to this actor |
+| 250 | `GetLocationCleared` | `LCTN` | 1 after a script called `SetCleared` |
 | 263 | `IsWeaponOut` | none | 0 nothing drawn, 2 weapon in a hand |
 | 264 | `HasSpell` | `SPEL` | 1 when the actor knows the spell |
 | 266 | `IsPleasant` | none | 1 when the current weather is pleasant |
@@ -71,26 +76,34 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 313 | `GetPairedAnimation` | none | 1 while the actor plays a paired animation; always 0 |
 | 323 | `GetCombatState` | none | 0 not in combat, 1 in combat, 2 searching |
 | 353 | `IsActor` | none | 1 when the run-on is an actor |
+| 354 | `IsEssential` | none | 1 when the base record has the essential flag |
 | 362 | `HasLinkedRef` | `KYWD` or null | 1 when an `XLKR` link has that keyword |
 | 365 | `IsChild` | none | 1 when the actor's race has the child flag |
-| 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
 | 375 | `GetCrimeGoldViolent` | `FACT` or null | violent part of the bounty |
 | 376 | `GetCrimeGoldNonviolent` | `FACT` or null | non-violent part of the bounty |
+| 391 | `IsPC1stPerson` | none | 1 when the player uses the first-person camera; camera paths only |
+| 402 | `IsBribedbyPlayer` | none | 1 after a script called `SetBribed` |
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
 | 426 | `GetIsVoiceType` | `VTYP` | 1 when the actor's `VTCK` matches |
 | 430 | `GetHealthPercentage` | none | health over its maximum, 0 to 1 |
 | 448 | `HasPerk` | `PERK` | 1 when the actor has the perk |
 | 449 | `GetFactionRelation` | actor | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend |
+| 453 | `GetPlayerTeammate` | none | 1 after a script called `SetPlayerTeammate` |
 | 459 | `GetCrimeGold` | `FACT` or null | bounty owed to the faction |
+| 476 | `IsProtected` | none | 1 when the base record has the protected flag |
 | 543 | `GetQuestCompleted` | `QUST` | 1 when the quest is completed |
 | 550 | `IsSceneActionComplete` | `SCEN`, action | 1 when that action is done in this run |
 | 561 | `HasRefType` | `LCRT` | 1 when the reference has that location ref type |
 | 566 | `GetIsAliasRef` | alias number | 1 when the reference fills that alias |
+| 568 | `IsSprinting` | none | 1 while the actor sprints |
 | 570 | `HasEquippedSpell` | casting source | 1 when that source holds a spell |
 | 571 | `GetCurrentCastingType` | casting source | 0 constant, 1 fire and forget, 2 concentration |
 | 572 | `GetCurrentDeliveryType` | casting source | 0 self, 1 contact, 2 aimed, 3 target actor, 4 target location |
+| 580 | `IsBleedingOut` | none | 1 while the actor bleeds out; always 0 |
 | 590 | `IsInScene` | none | 1 while a playing scene holds the actor |
 | 594 | `GetIsFlying` | none | 1 while the actor flies; always 0 |
+| 606 | `GetKeywordDataForLocation` | `LCTN`, `KYWD` | the location's keyword data |
+| 608 | `GetKeywordDataForAlias` | location alias, `KYWD` | the keyword data of the alias's location |
 | 613 | `IsFurnitureAnimType` | animation type | 1 when the actor's marker has that type |
 | 614 | `IsFurnitureEntryType` | entry | 1 when the actor enters from that side |
 | 629 | `GetVMQuestVariable` | `QUST`, variable (`CIS2`) | the quest script's variable |
@@ -98,14 +111,18 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 631 | `IsEnteringInteractionQuick` | none | always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
+| 641 | `IsUnique` | none | 1 when the base record has the unique flag |
 | 644 | `IsInFurnitureState` | animation type | 1 while seated on a marker of that type |
 | 650 | `IsLinkedTo` | reference, `KYWD` or null | 1 when the run-on links to it |
+| 651 | `GetKeywordDataForCurrentLocation` | `KYWD` | the keyword data of the run-on's location |
 | 659 | `EPTemperingItemIsEnchanted` | none | 1 when the item a tempering recipe improves is enchanted |
 | 675 | `GetGraphVariableInt` | variable name (`CIS1`) | the actor's graph variable |
 | 681 | `EPMagic_IsAdvanceSkill` | actor-value index | 1 when the credited use trains that skill |
 | 691 | `EPModSkillUsage_AdvanceObjectHasKeyword` | `KYWD` | 1 when the use's object has the keyword |
 | 692 | `EPModSkillUsage_IsAdvanceAction` | action | 1 when the use's action matches (0 normal to 4 lockpick broken) |
+| 698 | `IsAllowedToFly` | none | 1 after a script called `SetAllowFlying` |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
+| 700 | `IsCommandedActor` | none | 1 while a caster commands the actor; always 0 |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 
 Keyword, form-list, and location functions, with their use count in the active load order:
@@ -134,6 +151,16 @@ variable behind an auto property. The Creation Kit wiki says only `Int`, `Float`
 `Bool` properties work, so OpenSky offers only those, with `Bool` as 0 or 1. A variable
 that no live script instance declares fails as unavailable. `GetVMScriptVariable` reads
 the object parameter 1 names, not the run-on reference.
+
+## Script state
+
+`GetIsGhost`, `GetIsAlerted`, `GetRestrained`, `IsBribedbyPlayer`, `GetPlayerTeammate`,
+`IsAllowedToFly`, `GetLocationCleared`, and the three keyword-data functions read what a
+Papyrus native stored ([script state](/engine/papyrus-script-state.md)). They answer exactly what
+the matching native reads back: an unset flag is 0, and unset keyword data is 0. So a flag the
+record sets but no script set reads 0, as `IsGhost` does. Keyword data is per location and
+keyword; a parent location's data is not inherited, because no source says it is. With no
+script runtime wired, every one fails as unavailable.
 
 ## Scenes
 
@@ -213,6 +240,13 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
   values. The wiki only says "currently in combat".
 - `IsSneaking` reads the player's gait. No NPC gait is tracked, so an NPC fails as
   unavailable.
+- `IsSprinting` and `IsSwimming` read the player's gait, like `IsSneaking`. An NPC fails as
+  unavailable.
+- `IsEssential`, `IsProtected`, and `IsUnique` read the `ACBS` flags 0x02, 0x800, and 0x20 of
+  the actor's own `NPC_` record (UESP "Skyrim Mod:Mod File Format/NPC_"), not a template's.
+  A script's `SetEssential` is not read here yet. The player fails as unavailable.
+- `IsBleedingOut` and `IsCommandedActor` return 0. OpenSky has no bleedout and no commanded
+  actors yet, and the `Actor` natives of the same names answer the same.
 - `IsChild` reads the race's `DATA` flag 0x04 (xEdit `dev-4.1.6`, `wbRACE_DATAFlags01`).
 - `GetIsRace` compares the race the actor's values were derived from. An actor whose race
   is not known fails as unavailable.

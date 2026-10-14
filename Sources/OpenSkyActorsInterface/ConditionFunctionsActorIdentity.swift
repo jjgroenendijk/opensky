@@ -1,6 +1,6 @@
 // Actor identity and activity condition functions, from xEdit wbDefinitionsTES5.pas:
 // 70 GetIsSex, 130 GetPCIsRace, 131 GetPCIsSex, 286 IsSneaking, 289 IsInCombat,
-// 430 GetHealthPercentage. Dialogue tests them most.
+// 430 GetHealthPercentage, and the gait and record-flag reads below. Dialogue tests them most.
 // See docs/engine/condition-functions.md#actors.
 
 import Foundation
@@ -53,14 +53,46 @@ nonisolated extension ConditionFunctions {
             }
         })
 
-        registry.register(ConditionFunction(index: 286, name: "IsSneaking") { call in
-            call.actorState().flatMap { state in
-                guard let sneaking = state.isSneaking else {
-                    return .failure(.unavailableActorState)
+        let gaits: [String: (UInt16, @Sendable (ActorConditionState) -> Bool?)] = [
+            "IsSwimming": (185, \.isSwimming),
+            "IsSneaking": (286, \.isSneaking),
+            "IsSprinting": (568, \.isSprinting)
+        ]
+        for (name, (index, read)) in gaits.sorted(by: { $0.key < $1.key }) {
+            registry.register(ConditionFunction(index: index, name: name) { call in
+                call.actorState().flatMap { state in
+                    guard let value = read(state) else { return .failure(.unavailableActorState) }
+                    return .success(Self.isTrue(value))
                 }
-                return .success(Self.isTrue(sneaking))
-            }
-        })
+            })
+        }
+        // OpenSky has no bleedout and no commanded actors yet, so nobody is either; the
+        // `Actor` natives of the same names answer the same.
+        for (index, name) in [(UInt16(580), "IsBleedingOut"), (700, "IsCommandedActor")] {
+            registry.register(ConditionFunction(index: index, name: name) { call in
+                call.actorState().map { _ in 0 }
+            })
+        }
+        installRecordFlags(&registry)
+    }
+
+    /// The base record's `ACBS` flags (<https://ck.uesp.net/wiki/IsEssential>).
+    private static func installRecordFlags(_ registry: inout ConditionFunctionRegistry) {
+        let flags: [String: (UInt16, ActorBase.Flags)] = [
+            "IsEssential": (354, .essential),
+            "IsProtected": (476, .protected),
+            "IsUnique": (641, .unique)
+        ]
+        for (name, (index, flag)) in flags.sorted(by: { $0.key < $1.key }) {
+            registry.register(ConditionFunction(index: index, name: name) { call in
+                call.actorState().flatMap { state in
+                    guard let recordFlags = state.recordFlags else {
+                        return .failure(.unavailableActorState)
+                    }
+                    return .success(Self.isTrue(recordFlags.contains(flag)))
+                }
+            })
+        }
     }
 
     private static func isSex(

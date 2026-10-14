@@ -16,6 +16,8 @@ nonisolated public struct ActorBase: Sendable {
         }
 
         public static let female = Flags(rawValue: 0x0000_0001)
+        /// UESP NPC_ ACBS: an essential actor bleeds out instead of dying.
+        public static let essential = Flags(rawValue: 0x0000_0002)
         /// "Auto calc stats": the actor's health/magicka/stamina come from
         /// race + class + level rather than from race plus the ACBS offsets
         /// alone (UESP NPC_ ACBS; CK "Stats Tab").
@@ -25,6 +27,8 @@ nonisolated public struct ActorBase: Sendable {
         /// the player's level instead of a fixed level. The Creation Kit
         /// forces auto-calc on whenever this is set (CK "Stats Tab").
         public static let pcLevelMult = Flags(rawValue: 0x0000_0080)
+        /// UESP NPC_ ACBS: only the player can kill a protected actor.
+        public static let protected = Flags(rawValue: 0x0000_0800)
     }
 
     /// The ACBS words the actor-value derivation reads: one Creation Kit tab and

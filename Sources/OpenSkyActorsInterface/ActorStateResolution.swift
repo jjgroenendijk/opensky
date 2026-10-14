@@ -49,6 +49,10 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isFemale: Bool?
     /// Nil when nothing tracks the actor's gait; only the player's is.
     public var isSneaking: Bool?
+    public var isSprinting: Bool?
+    public var isSwimming: Bool?
+    /// The base record's `ACBS` flags. Nil for the player, who has no NPC_ record here.
+    public var recordFlags: ActorBase.Flags?
 
     public init(
         current: ActorValues,

@@ -197,6 +197,10 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
         game.inventory.scriptRemoveAllItems(from: holder, to: other)
     }
 
+    func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {
+        game.inventory.scriptBaselineInventory(of: holder)
+    }
+
     func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32? {
         game.inventory.scriptItemCount(item, in: holder)
     }
@@ -211,5 +215,25 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
 
     func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
         game.inventory.scriptSetOutfit(outfit, on: actor)
+    }
+
+    func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
+        game.inventory.scriptIsEquipped(item, on: actor)
+    }
+
+    func equippedWeapon(on actor: ReferenceKey, leftHand: Bool) -> FormID?? {
+        game.inventory.scriptEquippedWeapon(on: actor, leftHand: leftHand)
+    }
+
+    func equippedShield(on actor: ReferenceKey) -> FormID?? {
+        game.inventory.scriptEquippedShield(on: actor)
+    }
+
+    func unequipAll(on actor: ReferenceKey) -> Bool {
+        game.inventory.scriptUnequipAll(on: actor)
+    }
+
+    func goldValue(of item: FormID) -> Int32? {
+        game.inventory.scriptGoldValue(of: item)
     }
 }

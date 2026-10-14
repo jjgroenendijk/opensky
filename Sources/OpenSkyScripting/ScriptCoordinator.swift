@@ -19,6 +19,9 @@ public protocol ScriptWorld: AnyObject {
     /// Nil when the reference is not resident.
     func referenceKey(formID: FormID) -> ReferenceKey?
     var gameClock: GameClock? { get }
+    /// The location of the player's cell, `.some(nil)` in the wilderness. Nil while the
+    /// cell is not resident, so a cell that streams in is not a move.
+    var playerLocation: ResolvedFormID?? { get }
 }
 
 @MainActor
@@ -30,6 +33,8 @@ public final class ScriptCoordinator {
     /// Scripts with their ancestors, loaded off the main actor once play starts.
     private var scripts: AssetLoader<String, [PexFile]>?
     weak var world: (any ScriptWorld)?
+    /// The player's location at the last frame. The outer nil means no frame has read it.
+    private var lastPlayerLocation: ResolvedFormID??
 
     public init() {}
 
@@ -94,15 +99,30 @@ public final class ScriptCoordinator {
 
     /// The renderer gates `delta`, so a menu-paused frame advances nothing.
     public func advance(delta: Float) {
+        queueLocationChange()
+        bridge?.queueInventoryEvents()
+        bridge?.queueCombatStateEvents()
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 
     /// Quest instances first, so saved variables have somewhere to go. Timers
-    /// last, because each one names an instance that must already exist.
+    /// last, because each one names an instance that must already exist. The
+    /// player's scripts then hear `OnPlayerLoadGame`.
     public func restore(instances: [PapyrusInstanceState], timers: [PapyrusTimerState]) {
         bridge?.attachRunningQuestScripts()
         runtime?.restore(instanceStates: instances)
         runtime?.restore(timerStates: timers)
+        runtime?.queuePlayerLoadGame()
+        bridge?.skipInventoryJournal()
+        lastPlayerLocation = nil
+    }
+
+    /// The first frame only records the location: the player started there and did not move.
+    private func queueLocationChange() {
+        guard let runtime, case let .some(location) = world?.playerLocation else { return }
+        defer { lastPlayerLocation = .some(location) }
+        guard case let .some(previous) = lastPlayerLocation, previous != location else { return }
+        runtime.queueLocationChange(actor: .player, from: previous, to: location)
     }
 
     /// A script that fails to load is logged once, because `PapyrusWorldRuntime`

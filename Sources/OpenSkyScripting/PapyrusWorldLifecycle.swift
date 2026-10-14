@@ -45,6 +45,7 @@ extension PapyrusWorldRuntime {
         var created: Set<PapyrusInstanceKey> = []
         for item in plan {
             attached.insert(item.key)
+            retiringKeys.remove(item.key)
             if item.isPersistent {
                 persistentKeys.insert(item.key)
             }
@@ -75,17 +76,44 @@ extension PapyrusWorldRuntime {
         }
     }
 
-    /// Retires the cell's instances. Instances whose reference entry was
-    /// `isPersistent` survive with their variables intact — including across
-    /// world-space transitions, since nothing ever retires them; everything
-    /// else is removed from the runtime and from the event queue.
+    /// Queues `OnUnload` then `OnCellDetach`, the reverse of the attach order, and retires
+    /// the cell's instances. A persistent instance survives with its variables. Any other
+    /// instance that handles one of the two events retires once they have run.
     public func detach(cell: CellSceneLocation) {
         deferredScriptWork.removeAll { $0.cell == cell }
         cellLoadedReferences[cell] = nil
         guard let keys = attachedByCell.removeValue(forKey: cell) else {
             return
         }
-        for key in keys.sorted() where !persistentKeys.contains(key) {
+        for key in keys.sorted() {
+            let handles = enqueueDetachEvents(key)
+            guard !persistentKeys.contains(key) else { continue }
+            if handles {
+                retiringKeys.insert(key)
+            } else {
+                retire(key)
+            }
+        }
+    }
+
+    /// True when the instance defines either event.
+    private func enqueueDetachEvents(_ key: PapyrusInstanceKey) -> Bool {
+        var handles = false
+        for name in [PapyrusEngineEvents.onUnload, PapyrusEngineEvents.onCellDetach]
+            where definesFunction(name, key: key)
+        {
+            enqueue(PapyrusScriptEvent(target: key, functionName: name, arguments: []))
+            handles = true
+        }
+        return handles
+    }
+
+    /// Retires each detached instance whose queued events have all run.
+    func retireDrainedInstances() {
+        guard !retiringKeys.isEmpty else { return }
+        let waiting = Set(eventQueue.map(\.target)).union(busyInstances)
+        for key in retiringKeys.sorted() where !waiting.contains(key) {
+            retiringKeys.remove(key)
             retire(key)
         }
     }
@@ -262,6 +290,8 @@ extension PapyrusWorldRuntime {
         eventQueue.removeAll { $0.target == key }
         updateTimers.removeAll(for: key)
         pendingOnInit.remove(key)
+        retiringKeys.remove(key)
+        handledEvents[key] = nil
         scheduler.cancel(suspensionTracker.forget(instance: key))
     }
 }

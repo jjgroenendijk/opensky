@@ -93,6 +93,9 @@ final class RuntimeStateWorldAdapter {
             race: baseline.race
         )
         state.isFemale = baseline.isFemale
+        if holder.key != .player {
+            state.recordFlags = baseline.recordFlags
+        }
         return state
     }
 
@@ -269,6 +272,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         // After the world state, so the fired `OnInit` set is in place before the
         // queued cell rebuilds re-attach scripts.
         game.scripts.restore(instances: file.scripts, timers: file.timers)
+        game.scripts.bridge?.publishFactionReactions()
         game.combat.loop?.prepareForPersistence()
         game.messages.reloadHelpRecords()
         // `AVOV` keeps no temporary modifiers, so the restored effects rebuild

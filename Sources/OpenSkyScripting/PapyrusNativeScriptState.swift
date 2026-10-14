@@ -32,15 +32,20 @@ extension PapyrusNativeFunctions {
     }
 
     private static let scriptedFlags: [ScriptedFlag] = [
-        ScriptedFlag("Actor", "SetGhost", "IsGhost", "ghost"),
-        ScriptedFlag("Actor", "SetPlayerTeammate", "IsPlayerTeammate", "playerTeammate"),
+        ScriptedFlag("Actor", "SetGhost", "IsGhost", ScriptedStateName.ghost),
+        ScriptedFlag(
+            "Actor",
+            "SetPlayerTeammate",
+            "IsPlayerTeammate",
+            ScriptedStateName.playerTeammate
+        ),
         ScriptedFlag("Actor", "SetDoingFavor", "IsDoingFavor", "doingFavor"),
-        ScriptedFlag("Actor", "SetAlert", "IsAlerted", "alerted"),
-        ScriptedFlag("Actor", "SetAllowFlying", "IsAllowedToFly", "allowFlying"),
+        ScriptedFlag("Actor", "SetAlert", "IsAlerted", ScriptedStateName.alerted),
+        ScriptedFlag("Actor", "SetAllowFlying", "IsAllowedToFly", ScriptedStateName.allowFlying),
         ScriptedFlag("Actor", "SetIntimidated", "IsIntimidated", "intimidated"),
-        ScriptedFlag("Actor", "SetBribed", "IsBribed", "bribed"),
+        ScriptedFlag("Actor", "SetBribed", "IsBribed", ScriptedStateName.bribed),
         ScriptedFlag("Actor", "SetUnconscious", "IsUnconscious", "unconscious"),
-        ScriptedFlag("Actor", "SetRestrained", "restrained"),
+        ScriptedFlag("Actor", "SetRestrained", ScriptedStateName.restrained),
         ScriptedFlag("Actor", "SetNoBleedoutRecovery", "noBleedoutRecovery"),
         ScriptedFlag("Actor", "SetNotShowOnStealthMeter", "notShowOnStealthMeter"),
         ScriptedFlag("Actor", "SetDontMove", "dontMove"),
@@ -51,10 +56,10 @@ extension PapyrusNativeFunctions {
         ScriptedFlag("Actor", "AllowPCDialogue", "pcDialogue"),
         ScriptedFlag("ObjectReference", "IgnoreFriendlyHits", "ignoreFriendlyHits"),
         ScriptedFlag("ObjectReference", "SetNoFavorAllowed", "noFavorAllowed"),
-        ScriptedFlag("ActorBase", "SetEssential", "essential"),
+        ScriptedFlag("ActorBase", "SetEssential", ScriptedStateName.essential),
         ScriptedFlag("ActorBase", "SetInvulnerable", "invulnerable"),
-        ScriptedFlag("ActorBase", "SetProtected", "protected"),
-        ScriptedFlag("Location", "SetCleared", "IsCleared", "cleared"),
+        ScriptedFlag("ActorBase", "SetProtected", ScriptedStateName.protected),
+        ScriptedFlag("Location", "SetCleared", "IsCleared", ScriptedStateName.cleared),
         ScriptedFlag("Cell", "SetPublic", "public"),
         ScriptedFlag("Quest", "SetActive", "IsActive", "active")
     ]
@@ -122,19 +127,16 @@ extension PapyrusNativeFunctions {
                 let keyword = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
                 let number = float(call, at: 1), number.isFinite
             else { return failure(call, "SetKeywordData needs a keyword and a number") }
-            bridge.updateScriptedState(of: key) { $0.setValue(keywordDataName(keyword), number) }
+            let name = ScriptedStateName.keywordData(keyword)
+            bridge.updateScriptedState(of: key) { $0.setValue(name, number) }
             return .returned(.none)
         }
         scriptState("Location", "GetKeywordData", into: &registry) { call, bridge, key in
             guard let keyword = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
             else { return failure(call, "GetKeywordData needs a keyword") }
             let state = bridge.scriptedState(of: key)
-            return .returned(.float(state.value(keywordDataName(keyword)) ?? 0))
+            return .returned(.float(state.value(ScriptedStateName.keywordData(keyword)) ?? 0))
         }
-    }
-
-    static func keywordDataName(_ keyword: ReferenceKey) -> String {
-        "keywordData:\(keyword)"
     }
 
     /// Registers a native that reads or writes the script state of its receiver's form,

@@ -13,6 +13,8 @@ nonisolated public struct FactionRelationIndex: Sendable {
     /// names. Counted rather than guessed at, and reported so a load order that
     /// carries one is a fact somebody can see rather than a silent neutral.
     public private(set) var unnamedReactionCount = 0
+    /// Reactions scripts set with `Faction.SetEnemy` and its siblings. They win over XNAM.
+    private var scripted: [ReferenceKey: [ReferenceKey: ActorReaction]] = [:]
 
     public var count: Int {
         reactions.values.reduce(0) { $0 + $1.count }
@@ -30,7 +32,15 @@ nonisolated public struct FactionRelationIndex: Sendable {
     /// What a member of `from` makes of a member of `to`, or nil when neither record
     /// names the other. Nil is not `.neutral`: only the second is authored.
     public func reaction(of from: ReferenceKey, toward to: ReferenceKey) -> ActorReaction? {
-        reactions[from]?[to]
+        scripted[from]?[to] ?? reactions[from]?[to]
+    }
+
+    /// Replaces every scripted reaction with `entries`.
+    public mutating func setScriptedReactions(_ entries: [FactionReactionOverride]) {
+        scripted = [:]
+        for entry in entries {
+            scripted[entry.from, default: [:]][entry.toward] = entry.reaction
+        }
     }
 
     private mutating func add(
@@ -53,5 +63,18 @@ nonisolated public struct FactionRelationIndex: Sendable {
         // Load order already decided which FACT record wins, so the last
         // relation written for a pair by that winner is the one kept.
         reactions[from, default: [:]][ReferenceKey(resolved: target)] = reaction
+    }
+}
+
+/// One reaction a script set between two factions.
+nonisolated public struct FactionReactionOverride: Equatable, Sendable {
+    public let from: ReferenceKey
+    public let toward: ReferenceKey
+    public let reaction: ActorReaction
+
+    public init(from: ReferenceKey, toward: ReferenceKey, reaction: ActorReaction) {
+        self.from = from
+        self.toward = toward
+        self.reaction = reaction
     }
 }

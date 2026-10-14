@@ -121,8 +121,49 @@ reference's flags win, so a removed flag drops the base script. Source: the Crea
 `CONT`, and `DOOR`, and from an actor's `NPC_` base after its template chain
 ([actor resolution](/engine/actor-resolution.md)).
 
-Detach retires the cell's instances in sorted order: the instance leaves, its queued events drop, and
-its waiting calls leave the scheduler, so none of them resumes on a missing instance.
+Detach queues `OnUnload` then `OnCellDetach` on each instance in sorted order, the reverse of the
+attach order. An instance that handles neither retires at once. One that handles either retires at
+the end of the first step in which it has no queued event and no waiting call, so its handlers run
+on a live instance. An attach of the cell before that keeps the instance. Retiring removes the
+instance, its queued events, and its waiting calls, so none of them resumes on a missing instance. A
+persistent instance gets both events and stays.
+
+## Player events
+
+After a save loads, each script on the player, alias scripts included, gets `OnPlayerLoadGame`. Each
+frame compares the location of the player's cell with the last frame's. A change queues
+`OnLocationChange(akOldLoc, akNewLoc)` on the player's scripts, with `None` for the wilderness. The
+first frame after a load only records the location. A frame whose player cell is not resident yet
+is skipped, so a cell that streams in is not read as a trip through the wilderness.
+
+## Combat events
+
+Each frame reads the combat activity of every actor whose scripts handle `OnCombatStateChanged`.
+A change from the last frame queues `OnCombatStateChanged(akTarget, aeCombatState)`, with 0 for not
+fighting, 1 for fighting, and 2 for searching. The combat loop fights only the player, so
+`akTarget` is the player while the actor fights, and `None` otherwise. Which events an instance
+handles is remembered until it retires, so the frame does not resolve the script chain again.
+
+## Item events
+
+Each frame reads the inventory writes in the world-state journal since the last frame. For each
+holder with scripts, the old and new inventory give a count change per item and the equip changes:
+
+- A count that went up queues `OnItemAdded(akBaseItem, aiItemCount, akItemReference,
+  akSourceContainer)`. A count that went down queues `OnItemRemoved` with `akDestContainer` last.
+- An item that became equipped queues `OnObjectEquipped(akBaseObject, akReference)`, and one that
+  stopped queues `OnObjectUnequipped`.
+
+A transfer writes the source and then the destination, next to each other in the journal. When a
+neighbouring write moved the same count of the item the other way, its holder is the container
+argument. Otherwise the container is `None`. `akItemReference` is always `None`, because inventory
+items are counts, not references. A holder's first write has no old value in the journal, so the
+plugin inventory stands in for it.
+
+`AddInventoryEventFilter` stores a filter in the holder's script state, one per script and form, so
+it survives a save. A script with a filter hears `OnItemAdded` and `OnItemRemoved` only for an item
+the filter names, directly or through a form list. A load moves the journal cursor to the end, so
+restoring inventories is not read as item moves.
 
 ## Script state in a save
 
@@ -160,6 +201,8 @@ destination counts as overridden while paused, and Reset unpauses.
 - Objects and arrays are not saved. Their identity is made at run time and means nothing in the
   world, so they save as `None` and restore to the compiled default.
 - A persistent reference's instances are never retired, not even by a world space change.
+- Only the player gets `OnLocationChange`. In the game, every actor's scripts get it when that actor
+  moves to another location.
 - A reference in an unloaded cell gets its scripts when a script first casts it to one of them or
   uses a member through a variable of that type. It keeps them, and its cell's later attach fires
   no second `OnInit`. In the game, a persistent reference has its scripts from the first load.

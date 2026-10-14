@@ -1,9 +1,11 @@
 // The item natives a script calls: `AddItem`, `RemoveItem`, `RemoveAllItems`,
-// `GetItemCount`, `EquipItem`, `UnequipItem`, and `SetOutfit`. Each one names its holder by
+// `GetItemCount`, `EquipItem`, `UnequipItem`, `SetOutfit`, and the equipment reads. Each one names
+// its holder by
 // reference, so the player, a placed actor, and a container all work.
 // Rules: docs/engine/inventory-state.md, "Script item natives".
 
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -71,6 +73,48 @@ extension InventoryCoordinator {
         return true
     }
 
+    /// `Form.GetGoldValue`: the item's `DATA` value. Nil for a form that is no item.
+    public func scriptGoldValue(of item: FormID) -> Int32? {
+        runtime?.inventory.baselines.items.definition(item)?.value
+    }
+
+    /// `Actor.IsEquipped`. Nil without a holder.
+    public func scriptIsEquipped(_ item: FormID, on key: ReferenceKey) -> Bool? {
+        guard let equipment, let holder = scriptHolder(key) else { return nil }
+        return equipment.isEquipped(item, on: holder)
+    }
+
+    /// `Actor.GetEquippedWeapon(abLeftHand)`. A two-handed weapon is in the right hand.
+    /// The outer nil means no holder; the inner nil means an empty hand.
+    public func scriptEquippedWeapon(on key: ReferenceKey, leftHand: Bool) -> FormID?? {
+        guard let equipment, let holder = scriptHolder(key) else { return nil }
+        return .some(equipment.equipped(on: holder).first { item in
+            guard
+                let equippable = equipment.catalog.item(item),
+                equippable.animationType != nil
+            else { return false }
+            let hands = equippable.occupancy.hands
+            return leftHand ? hands == .leftHand : hands.contains(.rightHand)
+        })
+    }
+
+    /// `Actor.GetEquippedShield`: the worn armour in biped slot 39.
+    public func scriptEquippedShield(on key: ReferenceKey) -> FormID?? {
+        guard let equipment, let holder = scriptHolder(key) else { return nil }
+        return .some(equipment.equipped(on: holder).first {
+            equipment.occupancy(of: $0).slots.contains(.shield)
+        })
+    }
+
+    /// `Actor.UnequipAll`. The items stay in the inventory.
+    public func scriptUnequipAll(on key: ReferenceKey) -> Bool {
+        guard let equipment, let holder = scriptHolder(key) else { return false }
+        if equipment.unequipAll(on: holder) {
+            world?.equipmentChanged(on: holder)
+        }
+        return true
+    }
+
     /// `Actor.UnequipItem`. Unequipping what is not worn changes nothing.
     public func scriptUnequipItem(_ item: FormID, on key: ReferenceKey) -> Bool {
         guard let equipment, let holder = scriptHolder(key) else { return false }
@@ -107,6 +151,12 @@ extension InventoryCoordinator {
         world?.equipmentChanged(on: holder)
         scriptNote("Script set the outfit of \(holderName(holder)).")
         return true
+    }
+
+    /// The plugin inventory of a resident holder, for a diff against its first write.
+    public func scriptBaselineInventory(of key: ReferenceKey) -> ReferenceInventoryState? {
+        guard let runtime, let holder = scriptHolder(key) else { return nil }
+        return runtime.inventory.baselines.baseline(for: holder.owner)
     }
 
     /// The player, a resident actor, or any other resident reference as a container.

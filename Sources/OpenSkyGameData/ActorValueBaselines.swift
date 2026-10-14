@@ -61,6 +61,9 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     public let race: FormID?
     /// The traits-resolved `ACBS` female flag, which `GetIsSex` reports. Nil when unknown.
     public let isFemale: Bool?
+    /// The NPC_ record's own `ACBS` flags, not followed through a template. Empty for
+    /// the player and for a subject with no record.
+    public var recordFlags: ActorBase.Flags = []
 
     public init(
         maximums: ActorValues,
@@ -223,7 +226,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         else {
             return fallback
         }
-        return ActorValueBaseline(
+        var baseline = ActorValueBaseline(
             maximums: resolved.maximums,
             regenPercentPerSecond: resolved.regenPercentPerSecond,
             general: resolved.generalBaseValues,
@@ -233,5 +236,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             race: resolved.race,
             isFemale: (try? resolver.templates.resolve(base: base))?.isFemale.value
         )
+        baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
+        return baseline
     }
 }

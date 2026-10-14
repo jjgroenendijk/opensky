@@ -50,6 +50,8 @@ final class FactionWorldAdapter {
         }
         bridge.actorSocialBase = { [weak factions] key in factions?.relationshipBase(of: key) }
         bridge.factionRelationIndex = { [weak factions] in factions?.relations }
+        bridge.factionReactionsChanged = { [weak factions] in factions?.setScriptedReactions($0) }
+        bridge.publishFactionReactions()
         bridge.socialProfile = { [weak factions] key in factions?.profile(of: key) }
     }
 }

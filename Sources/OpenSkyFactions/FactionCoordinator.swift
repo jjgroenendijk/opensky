@@ -51,6 +51,12 @@ public final class FactionCoordinator {
         )
     }
 
+    /// Applies the reactions scripts set, replacing the earlier set.
+    public func setScriptedReactions(_ entries: [FactionReactionOverride]) {
+        relations?.setScriptedReactions(entries)
+        runtime?.derivation.relations.setScriptedReactions(entries)
+    }
+
     // MARK: - Seeding
 
     /// Copies the authored `SNAM` run into the store the first time this
