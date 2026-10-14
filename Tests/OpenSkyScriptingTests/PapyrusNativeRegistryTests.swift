@@ -13,10 +13,18 @@ struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
         // Pinned so an added or lost native is a visible change.
-        #expect(standard.count == 228)
+        #expect(standard.count == 258)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
+        // `Alias` and `ActiveMagicEffect` declare their own timer natives.
+        for script in ["alias", "ACTIVEMAGICEFFECT"] {
+            #expect(standard.contains(scriptName: script, functionName: "registerforsingleupdate"))
+            #expect(standard.contains(
+                scriptName: script,
+                functionName: "UnregisterForUpdateGameTime"
+            ))
+        }
         #expect(standard.contains(scriptName: "utility", functionName: "WAIT"))
         #expect(standard.contains(scriptName: "math", functionName: "sqrt"))
         #expect(standard.contains(scriptName: "objectreference", functionName: "DISABLE"))

@@ -4,6 +4,7 @@
 
 import OpenSkyActors
 import OpenSkyCombat
+import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -100,6 +101,14 @@ final class ScriptWorldAdapter {
         bridge.weaponDrawState = { [weak game] key in
             guard key == .player else { return nil }
             return game?.combat.melee?.state.drawState
+        }
+        bridge.conditionData = { [weak game] in
+            game?.runtimeStateWorld.conditionData() ?? .empty
+        }
+        bridge.livePosition = { [weak game] key in
+            guard let game else { return nil }
+            guard key != .player else { return game.renderer?.locomotion.status.feetPosition }
+            return game.actorWorld.combatActors().first { $0.key == key }?.feet
         }
     }
 

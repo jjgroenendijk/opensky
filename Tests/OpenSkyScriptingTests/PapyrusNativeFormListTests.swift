@@ -1,4 +1,5 @@
-// `FormList.GetSize` and `GetAt` over a synthetic FLST, and `Form.HasKeyword` over a
+// `FormList.GetSize`, `GetAt`, `Find`, and `HasForm` over a synthetic FLST, and `Form.HasKeyword`
+// over a
 // synthetic KWDA.
 
 import Foundation
@@ -28,6 +29,26 @@ struct PapyrusNativeFormListTests {
         #expect(first == .returned(.object(fixture.receiver)))
         #expect(call(fixture, "GetAt", on: list, [.integer(1)]) == .returned(.none))
         #expect(call(fixture, "GetAt", on: list, [.integer(9)]) == .returned(.none))
+    }
+
+    @Test func findAndHasFormSearchTheDirectEntries() throws {
+        let fixture = try Fixture.make()
+        let file = try KeywordFixture.plugin(formLists: [
+            FormListFixture.recordBytes(formID: Self.listID, entries: [0, Fixture.leverID])
+        ])
+        fixture.session.bridge.formListStore = FormListStore(plugins: [("Skyrim.esm", file)])
+        let list = fixture.handle(Self.listID)
+        let lever: [PapyrusValue] = [.object(fixture.receiver)]
+        let door: [PapyrusValue] = [.object(fixture.handle(Fixture.doorID))]
+
+        #expect(call(fixture, "Find", on: list, lever, returnType: .integer)
+            == .returned(.integer(1)))
+        #expect(call(fixture, "Find", on: list, door, returnType: .integer)
+            == .returned(.integer(-1)))
+        #expect(call(fixture, "HasForm", on: list, lever, returnType: .boolean)
+            == .returned(.boolean(true)))
+        #expect(call(fixture, "HasForm", on: list, door, returnType: .boolean)
+            == .returned(.boolean(false)))
     }
 
     @Test func withoutFormListDataTheyFail() throws {

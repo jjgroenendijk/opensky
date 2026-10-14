@@ -3,6 +3,7 @@ import Foundation
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -38,5 +39,26 @@ struct PapyrusWorldRetireTests {
             #expect(world.stepFixed().resumed == 0)
         }
         #expect(probe.notes.isEmpty)
+    }
+
+    @Test("a retired instance's handle still names its reference")
+    func aRetiredHandleStillNamesItsReference() throws {
+        let entry = try PapyrusWorldFixture.referenceEntry(
+            objectID: 2, scripts: [.init("LeverScript", properties: [])]
+        )
+        let world = PapyrusWorldFixture.worldRuntime(
+            objects: [PapyrusWorldFixture.eventScript("LeverScript", events: [])],
+            nativeDispatch: PapyrusWorldProbeDispatch()
+        )
+        world.attach(
+            cell: PapyrusWorldFixture.cell,
+            references: PapyrusWorldFixture.index([entry]),
+            formIDResolver: PapyrusWorldFixture.resolver,
+            firstIntegration: false
+        )
+        let handle = world.objectHandle(for: entry.key)
+
+        world.detach(cell: PapyrusWorldFixture.cell)
+        #expect(world.referenceKey(for: handle) == entry.key)
     }
 }

@@ -16,6 +16,7 @@ extension PapyrusNativeFunctions {
         installQuestRunState(into: &registry)
         installQuestStages(into: &registry)
         installQuestObjectives(into: &registry)
+        installQuestObjectiveReads(into: &registry)
     }
 
     /// `bool IsRunning()`, `bool IsCompleted()`, `int GetCurrentStageID()` and
@@ -30,6 +31,10 @@ extension PapyrusNativeFunctions {
         }
         register(&registry, ["IsCompleted"]) { _, state in
             .returned(.boolean(state.isCompleted))
+        }
+        // A stop finishes at once in OpenSky, so a quest that is not running is stopped.
+        register(&registry, ["IsStopped"]) { _, state in
+            .returned(.boolean(!state.isRunning))
         }
         register(&registry, ["GetCurrentStageID", "GetStage"]) { _, state in
             .returned(.integer(Int32(state.stageValue)))
@@ -113,6 +118,34 @@ extension PapyrusNativeFunctions {
                 try world.setQuestObjectiveCompleted(objective, true, for: key)
             }
             return .returned(.none)
+        }
+        // Fails the shown objectives that are still open; a completed one stays completed.
+        registerMutation(&registry, ["FailAllObjectives"]) { _, world, key in
+            let open = try world.questState(for: key).objectives.filter { !$0.isCompleted }
+            for objective in open.map(\.index) {
+                try world.setQuestObjectiveFailed(objective, true, for: key)
+            }
+            return .returned(.none)
+        }
+    }
+
+    /// `bool IsObjectiveDisplayed(int)`, `IsObjectiveCompleted(int)`, and
+    /// `IsObjectiveFailed(int)`. An objective nothing touched reads all false.
+    private static func installQuestObjectiveReads(
+        into registry: inout PapyrusNativeRegistry
+    ) {
+        let reads: [(String, @Sendable (QuestObjectiveState) -> Bool)] = [
+            ("IsObjectiveDisplayed", \.isDisplayed),
+            ("IsObjectiveCompleted", \.isCompleted),
+            ("IsObjectiveFailed", \.isFailed)
+        ]
+        for (name, flag) in reads {
+            register(&registry, [name]) { call, state in
+                guard let objective = stageArgument(call, at: 0) else {
+                    return failure(call, "\(name) needs an objective index")
+                }
+                return .returned(.boolean(flag(state.objective(objective))))
+            }
         }
     }
 

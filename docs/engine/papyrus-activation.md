@@ -100,8 +100,33 @@ identity. It returns false only when the recursion cap refused it.
 at the `Int32` bounds. Reads fail for an unknown global, because zero is a value a script would act
 on. Writes do not fail, because with no global store the first write creates the override.
 
+`EnableNoWait` and `DisableNoWait` write the same state as `Enable` and `Disable`. Without a fade,
+neither form waits. `IsDeleted` reads the deletion state that `Delete` writes.
+
 `Game.GetPlayer` returns the player's handle, stable for the session, so the usual
 `akActionRef == Game.GetPlayer()` check works.
+
+## Place natives
+
+`GetCurrentLocation`, `GetParentCell`, and `GetWorldSpace` read the place snapshot the condition
+functions read, so a script and a condition agree on where a reference is. Each returns `None` for a
+reference no resident cell holds. `GetWorldSpace` returns `None` in an interior, as the game does.
+
+`GetDistance` and `GetHeadingAngle` take the player's and an actor's position from where they stand
+now, and any other reference's position from its record with the session's moves on top. When both
+cells are known and lie in different worldspaces or interiors, `GetDistance` returns the largest
+finite float. The game's value there is not documented, and any range check fails on it.
+`GetHeadingAngle` is in degrees from -180 to 180: the bearing to the other reference, with north as
+0 and east as 90, minus the receiver's `GetAngleZ`.
+
+`Location.IsChild(akOther)` is true when `akOther` sits below the receiver in the `LCTN PNAM` chain
+(<https://ck.uesp.net/wiki/IsChild_-_Location>). A location is not its own child.
+
+`Game.GetFormFromFile` returns `None` for a file outside the load order, which is how mods test
+for a DLC. For a loaded file it returns the form with the low 24 bits of the ID. It does not check
+that a record with that ID exists.
+
+`Utility.GetCurrentGameTime` returns the days passed, the value of `GameDaysPassed`.
 
 ## Stated gaps
 

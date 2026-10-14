@@ -19,7 +19,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// `int GetTriggerObjectCount()`, `Form GetBaseObject()`, `float GetAngleX()`,
-    /// `float GetAngleZ()`, `ObjectReference GetNthLinkedRef(int)`, `bool IsLockBroken()`,
+    /// `GetAngleY()`, `GetAngleZ()`, `ObjectReference GetNthLinkedRef(int)`, `bool IsLockBroken()`,
     /// and `float Utility.GetCurrentRealTime()`.
     private static func installTrapReads(into registry: inout PapyrusNativeRegistry) {
         reference("GetTriggerObjectCount", into: &registry) { _, target in
@@ -33,7 +33,7 @@ extension PapyrusNativeFunctions {
             else { return .returned(.none) }
             return .returned(.object(handle))
         }
-        for (functionName, axis) in [("GetAngleX", 0), ("GetAngleZ", 2)] {
+        for (functionName, axis) in [("GetAngleX", 0), ("GetAngleY", 1), ("GetAngleZ", 2)] {
             reference(functionName, into: &registry) { call, target in
                 guard let state = target.world.referenceState(for: target.key) else {
                     return needsResidentReference(call)

@@ -33,6 +33,7 @@ public enum PapyrusNativeFunctions {
         installReferenceAlias(into: &registry)
         installVehicle(into: &registry)
         installInventory(into: &registry)
+        installWorldPlace(into: &registry)
     }
 
     public static func failure(

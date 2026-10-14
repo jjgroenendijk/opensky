@@ -20,6 +20,10 @@ Form.UnregisterForUpdate() native
 Form.UnregisterForUpdateGameTime() native
 ```
 
+`Alias` and `ActiveMagicEffect` extend no `Form`, so the Creation Kit declares the same six natives
+on each of them. OpenSky registers all six under all three scripts, and each one arms the timer of
+the calling script instance.
+
 The timer registry sits beside the [VM scheduler](/engine/papyrus-vm.md#scheduler), not inside it.
 A timer has an interval and a slot, never a suspended call.
 

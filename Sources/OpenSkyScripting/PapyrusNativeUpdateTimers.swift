@@ -1,13 +1,15 @@
-// The `Form` update-timer natives: the `RegisterForUpdate` and
-// `UnregisterForUpdate` families. They register under `Form`, where the Creation
-// Kit declares them. A timer targets the calling script instance, not the whole
-// reference; an opaque handle is a no-op. Slot rules live in
+// The update-timer natives: the `RegisterForUpdate` and `UnregisterForUpdate`
+// families. `Alias` and `ActiveMagicEffect` extend no `Form`, so the Creation Kit
+// declares the same natives on each of the three. A timer targets the calling
+// script instance, not the whole reference; an opaque handle is a no-op. Slot rules live in
 // `PapyrusWorldUpdateTimers.swift`.
 
 import Foundation
 import OpenSkyScriptingInterface
 
 extension PapyrusNativeFunctions {
+    static let updateTimerScripts = ["Form", "Alias", "ActiveMagicEffect"]
+
     public static func installUpdateTimers(into registry: inout PapyrusNativeRegistry) {
         let slots: [(String, PapyrusUpdateTimerSlot)] = [
             ("RegisterForUpdate", .realRepeating),
@@ -15,9 +17,19 @@ extension PapyrusNativeFunctions {
             ("RegisterForUpdateGameTime", .gameTimeRepeating),
             ("RegisterForSingleUpdateGameTime", .gameTimeSingleShot)
         ]
+        for script in updateTimerScripts {
+            installUpdateTimers(on: script, slots: slots, into: &registry)
+        }
+    }
+
+    private static func installUpdateTimers(
+        on script: String,
+        slots: [(String, PapyrusUpdateTimerSlot)],
+        into registry: inout PapyrusNativeRegistry
+    ) {
         for (functionName, slot) in slots {
             registry.register(PapyrusNativeFunction(
-                scriptName: "Form",
+                scriptName: script,
                 functionName: functionName
             ) { call, context in
                 registerTimer(call, context, slot: slot)
@@ -29,7 +41,7 @@ extension PapyrusNativeFunctions {
         ]
         for (functionName, family) in families {
             registry.register(PapyrusNativeFunction(
-                scriptName: "Form",
+                scriptName: script,
                 functionName: functionName
             ) { call, context in
                 guard let world = context.world, let receiver = call.receiver else {

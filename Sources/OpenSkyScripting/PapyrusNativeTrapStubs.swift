@@ -34,7 +34,6 @@ extension PapyrusNativeFunctions {
         TrapStub("ObjectReference", "CalculateEncounterLevel", .integer(1)),
         TrapStub("ObjectReference", "GetActorOwner", .none),
         TrapStub("ObjectReference", "GetFactionOwner", .none),
-        TrapStub("ObjectReference", "GetParentCell", .none),
         TrapStub("ObjectReference", "SetNoFavorAllowed", .none),
         TrapStub("ObjectReference", "IsFurnitureInUse", .boolean(false)),
         TrapStub("ObjectReference", "InterruptCast", .none),
@@ -43,7 +42,6 @@ extension PapyrusNativeFunctions {
         TrapStub("Sound", "Play", .integer(0)),
         TrapStub("EffectShader", "Play", .none),
         TrapStub("Game", "ShakeController", .none),
-        TrapStub("FormList", "HasForm", .boolean(false)),
         TrapStub("Actor", "GetEquippedItemType", .integer(0)),
         TrapStub("Cell", "IsAttached", .boolean(true))
     ]

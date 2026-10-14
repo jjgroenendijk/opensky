@@ -246,11 +246,14 @@ extension PapyrusWorldRuntime {
         }
     }
 
+    /// Another script may still hold the handle, for example a property naming a quest
+    /// that stopped, so the handle stays a name for its reference.
     public func retire(_ key: PapyrusInstanceKey) {
         guard let handle = instancesByKey.removeValue(forKey: key) else {
             return
         }
         keysByHandle.removeValue(forKey: handle)
+        opaqueKeysByHandle[handle] = key.reference
         runtime.instances.removeValue(forKey: handle)
         if let cursor = drainCursor {
             drainCursor = cursor - eventQueue.prefix(cursor).count { $0.target == key }

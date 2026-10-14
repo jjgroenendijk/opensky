@@ -40,20 +40,25 @@ first casts the quest to one of its script types. Hearthfire's adoption script r
 ## The Quest natives
 
 `IsRunning`, `IsCompleted`, `GetCurrentStageID`, `IsStageDone`, `Start`, `Stop`, `CompleteQuest`,
-`SetCurrentStageID`, `SetObjectiveDisplayed`, `SetObjectiveCompleted`, `SetObjectiveFailed`, and
-`CompleteAllObjectives` are registered, plus `GetStage`, `GetStageDone`, and `SetStage`, the wrapper
-names shipped `Quest.psc` declares around three of them. Each makes one call into the quest runtime,
-so the stage and objective rules live in one place.
+`SetCurrentStageID`, `SetObjectiveDisplayed`, `SetObjectiveCompleted`, `SetObjectiveFailed`,
+`IsObjectiveDisplayed`, `IsObjectiveCompleted`, `IsObjectiveFailed`, `CompleteAllObjectives`,
+`FailAllObjectives`, and `IsStopped` are registered, plus `GetStage`, `GetStageDone`, and
+`SetStage`, the wrapper names shipped `Quest.psc` declares around three of them. Each makes one call
+into the quest runtime, so the stage and objective rules live in one place.
 
 `CompleteAllObjectives` completes the objectives the quest has shown. An objective never shown has
-no journal row, so leaving it out changes nothing the player sees.
+no journal row, so leaving it out changes nothing the player sees. `FailAllObjectives` fails the
+shown objectives that are not completed, so a finished step keeps its tick in the journal. The wiki
+page does not say which objectives it touches; this is the reading that keeps the journal sensible.
+
+`IsStopped` is true whenever the quest is not running, because a stop finishes at once in OpenSky.
 
 A refused change becomes a native failure, and the call returns its declared default. For
 `SetStage` that is false, which matches the documented "returns false and the stage is unchanged".
 
-Absent on purpose, and left in the unimplemented tally: `Reset`, `IsObjectiveDisplayed`,
-`IsObjectiveCompleted`, `IsStarting`, `IsStopping`, `GetAlias`, `GetAliasedRef`, and `SetActive`.
-They need more alias support or a latent window OpenSky does not have.
+Absent on purpose, and left in the unimplemented tally: `Reset`, `IsStarting`, `IsStopping`,
+`GetAlias`, `GetAliasedRef`, and `SetActive`. They need more alias support or a latent window
+OpenSky does not have.
 
 A method call on an instance runs under the script that declares the function. So
 `someQuest.SetStage(10)` reaches the `Quest` natives only when `Quest.pex` is loaded. That is why a
