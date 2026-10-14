@@ -93,6 +93,40 @@ struct LipSyncPlaybackTests {
     }
 }
 
+extension LipSyncPlaybackTests {
+    @Test("head angles reach the skeleton, decay, and clear")
+    func headMotion() throws {
+        let morph = LipMorphSink()
+        let head = LipHeadSink()
+        let playback = LipSyncPlayback(faceMorph: morph, head: head)
+        let track = try LIPFile(data: LIPFixture.file(body: LIPFixture.body(cells: [
+            .init(frame: 0, slot: 30, value: 0.1),
+            .init(frame: 0, slot: 32, value: -0.2)
+        ])))
+        playback.start(track: track, clock: VoicePlaybackClock(), line: "nod", animationTime: 0)
+
+        _ = playback.update(at: 0)
+        #expect(head.speechHeadMotion == LipHeadMotion(pitch: 0.1, roll: 0, yaw: -0.2))
+        #expect(playback.snapshot.head == head.speechHeadMotion)
+
+        playback.finish(at: 0)
+        _ = playback.update(at: LipSyncPlayback.decayDuration / 2)
+        #expect(abs(head.speechHeadMotion.pitch - 0.05) < 0.0001)
+
+        _ = playback.update(at: LipSyncPlayback.decayDuration)
+        #expect(head.speechHeadMotion == .zero)
+    }
+}
+
+nonisolated private final class LipHeadSink: LipHeadMotionApplying {
+    private let motion = Mutex(LipHeadMotion.zero)
+
+    var speechHeadMotion: LipHeadMotion {
+        get { motion.withLock { $0 } }
+        set { motion.withLock { $0 = newValue } }
+    }
+}
+
 nonisolated private final class LipMorphSink: LipMorphWeightApplying {
     let actor = FormID(0x14)
     let targetNames = ["Aah", "BigAah"]

@@ -6,6 +6,7 @@
 
 import AppKit
 import OpenSkyAudio
+import OpenSkyFormatsAnimation
 import OpenSkyWorld
 
 final class AudioVoiceSection: PanelSectionViewController {
@@ -236,6 +237,15 @@ final class AudioVoiceSection: PanelSectionViewController {
             ),
             "Weights: \(weights.isEmpty ? "none" : weights)"
         ]
+        if snapshot.head != .zero {
+            let degrees = 180 / Float.pi
+            lines.append(String(
+                format: "Head: pitch %.1f°, roll %.1f°, yaw %.1f°",
+                snapshot.head.pitch * degrees,
+                snapshot.head.roll * degrees,
+                snapshot.head.yaw * degrees
+            ))
+        }
         if let layout = snapshot.layout {
             lines.append("Layout: \(layout)")
         }

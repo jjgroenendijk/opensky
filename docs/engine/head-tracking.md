@@ -43,6 +43,10 @@ The neck bone `NPC Neck [Neck]` turns first, about its own position, with every 
 Then `NPC Head [Head]` turns about its new position, with every bone under it, such as the eyes.
 A skeleton without these bones, such as a horse, is left as it is.
 
+A speaking actor's [lip track](/formats/lip.md) adds a small pitch, yaw, and roll on top of
+the look, through the same two bones and shares. Roll tilts around the forward axis. The lip
+track's turn has no limit and no speed: it follows the recorded curve.
+
 [WARNING] The limits, the shares, and the speed are OpenSky's own. They are not read from the
 game, which drives the head through its behaviour graph.
 

@@ -1,6 +1,6 @@
 // Dialogue acceptance, budget half. Lip tracks and morphs ride
 // `animationUpdateBudgetMS`; voice rides `audioUpdateBudgetMS`. Bounds are
-// checked on the types: one weight per viseme, a finished line costs nothing,
+// checked on the types: one weight per mapped target, a finished line costs nothing,
 // a disabled seam costs nothing, one vertex range per active target.
 
 import Foundation
@@ -59,7 +59,7 @@ struct DialogueAcceptanceBudgetTests {
     // MARK: - Bounded by construction
 
     /// However long a line runs, one update writes at most one weight per
-    /// viseme the mapping knows. The cost of a talking face is therefore a
+    /// target the mapping knows. The cost of a talking face is therefore a
     /// property of the mapping table, not of the recording.
     @Test
     func onelipSyncUpdateWritesAtMostOneWeightPerMappedViseme() throws {
@@ -69,14 +69,14 @@ struct DialogueAcceptanceBudgetTests {
         let track = try LIPFile(data: LIPFixture.file())
         playback.start(track: track, clock: clock, line: "budget", animationTime: 0)
 
-        let ceiling = LipVisemeMapping.entries.count
+        let ceiling = LipCurveMapping.slotTargets.count
         #expect(ceiling > 0)
         for step in 0 ... 40 {
             clock.publish(Double(step) * track.duration / 40)
             _ = playback.update(at: Float(step) * 0.05)
             #expect(
                 sink.weights.count <= ceiling,
-                "an update wrote \(sink.weights.count) weights, past the \(ceiling) visemes"
+                "an update wrote \(sink.weights.count) weights, past the \(ceiling) targets"
             )
         }
         #expect(sink.maximumWeightCount > 0, "the track never wrote a weight at all")

@@ -5,6 +5,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
+import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyWorld
 import Testing
@@ -108,9 +109,10 @@ struct AudioVoicePanelTests {
             trackTime: 0.5,
             clockMode: .audio,
             liveWeights: ["Aah": 0.75],
-            unmappedActiveSlots: [31],
+            unmappedActiveSlots: [20],
             isDecaying: false,
-            layout: "header 25 B · tuple 2 · vocab 16 · 33 slots/frame"
+            layout: "16 targets · 33 slots/frame · 90 frames from -5",
+            head: LipHeadMotion(pitch: .pi / 36, roll: 0, yaw: 0)
         )
         panel.audioProvider = provider
         panel.loadViewIfNeeded()
@@ -120,7 +122,8 @@ struct AudioVoicePanelTests {
         #expect(!provider.lipSyncEnabled)
         #expect(panel.voiceSection.isOverridden)
         #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("Aah 0.75"))
-        #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("Unmapped slots: 31"))
+        #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("Unmapped slots: 20"))
+        #expect(panel.voiceSection.lipSyncStatsLabel.stringValue.contains("pitch 5.0°"))
 
         panel.voiceSection.performResetToDefaults()
         #expect(provider.lipSyncEnabled)

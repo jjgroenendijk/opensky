@@ -107,7 +107,7 @@ struct DialogueAcceptanceRealDataTests {
                     return (offer, VoiceEvidence(
                         path: voice.path,
                         declaredSeconds: voice.declaredSeconds,
-                        lipKeyCount: voice.lipKeyCount,
+                        lipValueCount: voice.lipValueCount,
                         unmappedSlotCount: voice.unmappedSlotCount,
                         skippedCandidates: skipped
                     ))
@@ -131,13 +131,16 @@ struct DialogueAcceptanceRealDataTests {
         let lip = try LIPFile(data: lipData)
         #expect(lip.duration > 0)
         let sample = lip.sample(at: lip.duration / 2)
-        let finite = sample.weightsBySlot.values.allSatisfy(\.isFinite)
+        let finite = sample.values.allSatisfy(\.isFinite)
         #expect(finite)
-        let mapped = LipVisemeMapping.map(sample, availableTargets: morphTargets)
+        let binding = LipCurveMapping.binding(
+            slotsPerFrame: lip.header.slotsPerFrame, availableTargets: morphTargets
+        )
+        let mapped = LipCurveMapping.map(sample, binding: binding)
         return VoiceEvidence(
             path: path,
             declaredSeconds: audio.declaredDuration ?? 0,
-            lipKeyCount: lip.keys.count,
+            lipValueCount: lip.values.count { $0 != 0 },
             unmappedSlotCount: mapped.unmappedActiveSlots.count,
             skippedCandidates: []
         )
@@ -234,7 +237,7 @@ extension DialogueAcceptanceRealDataTests {
     private struct VoiceEvidence {
         let path: String
         let declaredSeconds: Double
-        let lipKeyCount: Int
+        let lipValueCount: Int
         let unmappedSlotCount: Int
         /// Derived names walked past before this one, with why, so the report
         /// states what the install could not play.
@@ -246,9 +249,9 @@ extension DialogueAcceptanceRealDataTests {
         let stage: UInt16
     }
 
-    /// The morph targets a vanilla head carries for speech, which is what
-    /// decides whether a lip slot is mapped or unmapped.
-    private static let morphTargets = Set(LipVisemeMapping.entries.map(\.target))
+    /// The morph targets a vanilla head carries, which is what decides whether a
+    /// lip slot is mapped or unmapped.
+    private static let morphTargets = Set(LipCurveMapping.slotTargets.values)
 
     private static var speakerKey: ReferenceKey {
         .plugin(name: "skyrim.esm", objectID: delphineReference)
@@ -318,7 +321,7 @@ extension DialogueAcceptanceRealDataTests {
             "[INFO] chosen line: \(voice.path)",
             "[INFO] chosen line: "
                 + String(format: "%.2f s declared", voice.declaredSeconds)
-                + ", \(voice.lipKeyCount) lip keys, "
+                + ", \(voice.lipValueCount) nonzero lip values, "
                 + "\(voice.unmappedSlotCount) unmapped viseme slots",
             "[INFO] candidates skipped before it: \(voice.skippedCandidates.count)"
         ] + voice.skippedCandidates.prefix(5).map { "[INFO] skipped \($0)" } + [

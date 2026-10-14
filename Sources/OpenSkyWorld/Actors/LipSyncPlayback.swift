@@ -1,7 +1,7 @@
 // Actor-local `.lip` evaluator. It samples the audio source's thread-safe
 // clock snapshot, falls back once to the render-animation clock if that source
-// stops answering, maps positional speech slots to TRI names, and writes the
-// result into the actor's existing FaceMorphPlayback.
+// stops answering, maps the track's slots to TRI names and head angles, and
+// writes them into the actor's FaceMorphPlayback and skeleton.
 
 import Foundation
 import OpenSkyAudio
@@ -9,6 +9,11 @@ import OpenSkyFormatsAnimation
 import OpenSkyFormatsESM
 import OpenSkyRendering
 import Synchronization
+
+/// A skeleton whose head a lip track turns, on top of its clip and head tracking.
+nonisolated public protocol LipHeadMotionApplying: AnyObject, Sendable {
+    var speechHeadMotion: LipHeadMotion { get set }
+}
 
 nonisolated public enum LipSyncClockMode: String, Equatable, Sendable {
     case audio
@@ -24,7 +29,8 @@ nonisolated public struct LipSyncSnapshot: Equatable, Sendable {
         liveWeights: [:],
         unmappedActiveSlots: [],
         isDecaying: false,
-        layout: nil
+        layout: nil,
+        head: .zero
     )
 
     public let actor: FormID?
@@ -37,24 +43,27 @@ nonisolated public struct LipSyncSnapshot: Equatable, Sendable {
     /// How the active track framed itself: header size, tuple width, vocabulary and slot
     /// stride. The corpus has several of each, so the panel shows which one this used.
     public let layout: String?
+    public let head: LipHeadMotion
 }
 
 nonisolated extension LIPFile {
     /// One line naming the layout this track decoded as.
     public var layoutDescription: String {
-        "header \(header.headerSize) B · tuple \(header.tupleWidth) · "
-            + "vocab \(header.targetCount) · \(header.slotsPerFrame) slots/frame"
+        "\(header.targetCount) targets · \(header.slotsPerFrame) slots/frame · "
+            + "\(header.frameCount) frames from \(header.firstFrame)"
     }
 }
 
 nonisolated private struct LipSyncSession: Sendable {
     let track: LIPFile
+    let binding: LipTargetBinding
     let clock: VoicePlaybackClock
     let line: String
     let startAnimationTime: Float
     var clockMode = LipSyncClockMode.audio
     var finishAnimationTime: Float?
     var lastWeights: [String: Float] = [:]
+    var lastHead = LipHeadMotion.zero
 }
 
 nonisolated public final class LipSyncPlayback: RenderAnimation {
@@ -70,6 +79,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
 
     public let actor: FormID
     private let faceMorph: any LipMorphWeightApplying
+    private let head: (any LipHeadMotionApplying)?
     private let state: Mutex<State>
 
     public var snapshot: LipSyncSnapshot {
@@ -82,13 +92,16 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             state.withLock { $0.isEnabled = newValue }
             if !newValue {
                 _ = faceMorph.clearLipWeights()
+                head?.speechHeadMotion = .zero
             }
         }
     }
 
-    public init(faceMorph: any LipMorphWeightApplying) {
+    /// `head` is the skeleton the head angles turn, or nil to drive the face only.
+    public init(faceMorph: any LipMorphWeightApplying, head: (any LipHeadMotionApplying)? = nil) {
         actor = faceMorph.actor
         self.faceMorph = faceMorph
+        self.head = head
         state = Mutex(State(snapshot: Self.idleSnapshot(actor: faceMorph.actor)))
     }
 
@@ -101,7 +114,8 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             liveWeights: [:],
             unmappedActiveSlots: [],
             isDecaying: false,
-            layout: nil
+            layout: nil,
+            head: .zero
         )
     }
 
@@ -113,6 +127,10 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
     ) {
         let session = LipSyncSession(
             track: track,
+            binding: LipCurveMapping.binding(
+                slotsPerFrame: track.header.slotsPerFrame,
+                availableTargets: faceMorph.targetNames
+            ),
             clock: clock,
             line: line,
             startAnimationTime: animationTime
@@ -125,7 +143,8 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             liveWeights: [:],
             unmappedActiveSlots: [],
             isDecaying: false,
-            layout: track.layoutDescription
+            layout: track.layoutDescription,
+            head: .zero
         )
         state.withLock {
             $0.session = session
@@ -152,11 +171,9 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             trackTime = Double(max(0, time - current.startAnimationTime))
         }
         let sampled = current.track.sample(at: trackTime)
-        let mapped = LipVisemeMapping.map(
-            sampled,
-            availableTargets: Set(faceMorph.targetNames)
-        )
+        let mapped = LipCurveMapping.map(sampled, binding: current.binding)
         current.lastWeights = mapped.weights
+        current.lastHead = mapped.head
         if trackTime + 0.000_001 >= current.track.duration {
             current.finishAnimationTime = time
         }
@@ -168,12 +185,14 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             liveWeights: mapped.weights,
             unmappedActiveSlots: mapped.unmappedActiveSlots,
             isDecaying: false,
-            layout: current.track.layoutDescription
+            layout: current.track.layoutDescription,
+            head: mapped.head
         )
         state.withLock { [current] in
             $0.session = current
             $0.snapshot = snapshot
         }
+        head?.speechHeadMotion = mapped.head
         return faceMorph.setLipWeights(mapped.weights)
     }
 
@@ -184,6 +203,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
             $0.session = nil
             $0.snapshot = idle
         }
+        head?.speechHeadMotion = .zero
         return faceMorph.clearLipWeights()
     }
 
@@ -193,6 +213,7 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
         guard elapsed + 0.000_001 < Self.decayDuration else { return resetToBindPose() }
         let scale = 1 - elapsed / Self.decayDuration
         let weights = current.lastWeights.mapValues { $0 * scale }
+        let headMotion = current.lastHead.scaled(by: scale)
         state.withLock {
             $0.snapshot = LipSyncSnapshot(
                 actor: actor,
@@ -202,9 +223,11 @@ nonisolated public final class LipSyncPlayback: RenderAnimation {
                 liveWeights: weights,
                 unmappedActiveSlots: $0.snapshot.unmappedActiveSlots,
                 isDecaying: true,
-                layout: current.track.layoutDescription
+                layout: current.track.layoutDescription,
+                head: headMotion
             )
         }
+        head?.speechHeadMotion = headMotion
         return faceMorph.setLipWeights(weights)
     }
 }
