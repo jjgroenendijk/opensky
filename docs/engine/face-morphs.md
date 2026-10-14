@@ -89,6 +89,13 @@ to 6 seconds, at a gap and an offset from its FormID, so a crowd does not blink 
 blink timing is OpenSky's own. The weights are uploaded only when they change, so a face between
 blinks costs nothing.
 
+## Lip sync
+
+A voice line's [lip track](/formats/lip.md) writes the lip layer. It drives the speech targets
+and the blink, brow, look, and squint targets of the face, and it turns the head. Its blinks add
+to the automatic blinks, clamped like any other weight. When the line ends the lip weights fade
+out over 0.15 seconds.
+
 ## Controls
 
 World > Dialogue & Voice > Face Morphs follows the current dialogue speaker, or else the actor
@@ -107,7 +114,6 @@ The failures are kept for the readout. Any pair that worked still morphs.
 
 ## Not done yet
 
-- `.lip` timing, and turning dialogue time into weights.
 - Race sliders and character creation morphs.
 - Body morphs other than weight ([actor resolution](/engine/actor-resolution.md)).
 - Mood and combat expressions (`Mood*`, `CombatAnger`, `CombatShout`).

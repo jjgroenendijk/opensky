@@ -3,20 +3,28 @@
 // each bone's own axes point. Limits, shares, and speed are OpenSky's own.
 // See docs/engine/head-tracking.md.
 
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 import simd
 
 /// How far the head turns from the body's forward axis, in radians. Positive yaw
-/// turns left, positive pitch looks up.
+/// turns left, positive pitch looks up, and roll tilts around the forward axis.
 nonisolated public struct HeadLook: Equatable, Sendable {
     public var yaw: Float
     public var pitch: Float
+    public var roll: Float
 
     public static let forward = HeadLook(yaw: 0, pitch: 0)
 
-    public init(yaw: Float, pitch: Float) {
+    public init(yaw: Float, pitch: Float, roll: Float = 0) {
         self.yaw = yaw
         self.pitch = pitch
+        self.roll = roll
+    }
+
+    /// This look with a lip track's head motion added on top.
+    public func adding(_ motion: LipHeadMotion) -> HeadLook {
+        HeadLook(yaw: yaw + motion.yaw, pitch: pitch + motion.pitch, roll: roll + motion.roll)
     }
 }
 
@@ -96,6 +104,11 @@ nonisolated public enum HeadTrackingCore {
     private static func rotation(_ look: HeadLook, share: Float) -> float4x4 {
         let yaw = look.yaw * share
         let pitch = look.pitch * share
+        let roll = look.roll * share
+        let aroundY = float4x4(
+            SIMD4(cosf(roll), 0, -sinf(roll), 0), SIMD4(0, 1, 0, 0),
+            SIMD4(sinf(roll), 0, cosf(roll), 0), SIMD4(0, 0, 0, 1)
+        )
         let aroundZ = float4x4(
             SIMD4(cosf(yaw), sinf(yaw), 0, 0), SIMD4(-sinf(yaw), cosf(yaw), 0, 0),
             SIMD4(0, 0, 1, 0), SIMD4(0, 0, 0, 1)
@@ -104,7 +117,7 @@ nonisolated public enum HeadTrackingCore {
             SIMD4(1, 0, 0, 0), SIMD4(0, cosf(pitch), sinf(pitch), 0),
             SIMD4(0, -sinf(pitch), cosf(pitch), 0), SIMD4(0, 0, 0, 1)
         )
-        return aroundZ * aroundX
+        return aroundZ * aroundX * aroundY
     }
 
     private static func translation(_ offset: SIMD3<Float>) -> float4x4 {

@@ -107,7 +107,9 @@ nonisolated public enum ActorAnimationLoadError: LocalizedError {
     }
 }
 
-nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
+nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation,
+    LipHeadMotionApplying
+{
     nonisolated private struct State {
         /// The idle clip, or a bounded combat override.
         var clip: ActorAnimationClip
@@ -118,6 +120,7 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         /// Animation time the override ends at. Zero when none is playing.
         var overrideEnd: Float = 0
         var headLook = HeadLook.forward
+        var speechHeadMotion = LipHeadMotion.zero
         var weaponsDrawn = false
     }
 
@@ -232,7 +235,9 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
         _ pose: SkeletonPose,
         updating updatedMeshes: inout Set<ObjectIdentifier>
     ) -> Int {
-        let (look, clip, drawn) = state.withLock { ($0.headLook, $0.clip, $0.weaponsDrawn) }
+        let (look, clip, drawn) = state.withLock {
+            ($0.headLook.adding($0.speechHeadMotion), $0.clip, $0.weaponsDrawn)
+        }
         let sheathed = WeaponSheathing.apply(sheathNodes, drawn: drawn, to: pose)
         let posed = HeadTrackingCore.apply(look, to: sheathed, parents: clip.skeleton.parentIndices)
         return meshes.applySkinningPose(posed, updating: &updatedMeshes)
@@ -248,6 +253,12 @@ nonisolated public final class ActorAnimationPlayback: SharedPoseAnimation {
     public var headLook: HeadLook {
         get { state.withLock { $0.headLook } }
         set { state.withLock { $0.headLook = newValue } }
+    }
+
+    /// The head turn the current voice line's lip track adds.
+    public var speechHeadMotion: LipHeadMotion {
+        get { state.withLock { $0.speechHeadMotion } }
+        set { state.withLock { $0.speechHeadMotion = newValue } }
     }
 
     @discardableResult

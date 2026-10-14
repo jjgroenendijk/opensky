@@ -16,13 +16,10 @@ struct LipSyncRealDataTests {
         let paths = vfs.archiveEntries().map(\.path).filter { $0.hasSuffix(".fuz") }
         var lipBlobCount = 0
         var lipCount = 0
-        var keyCount = 0
-        var duplicateCount = 0
-        var markerCount = 0
-        var unmappedKeyCount = 0
-        var firstFrames: [Int: Int] = [:]
-        var unknownValues: [UInt16: Int] = [:]
         var layouts: [String: Int] = [:]
+        var firstFrames: [Int: Int] = [:]
+        var activeSlots: [Int: Int] = [:]
+        var outOfRange = 0
         var failureTallies: [String: Int] = [:]
         var failureExamples: [String] = []
 
@@ -33,27 +30,17 @@ struct LipSyncRealDataTests {
                 lipBlobCount += 1
                 let lip = try LIPFile(data: lipData)
                 lipCount += 1
-                keyCount += lip.keys.count
-                duplicateCount += lip.duplicateValueCount
-                markerCount += lip.markerCount
-                unmappedKeyCount += lip.unmappedKeyCount
-                firstFrames[lip.header.firstFrame, default: 0] += 1
-                unknownValues[lip.header.unknownValue, default: 0] += 1
                 layouts[
-                    "header \(lip.header.headerSize)B tuple \(lip.header.tupleWidth) "
-                        + "vocab \(lip.header.targetCount) "
-                        + "stride \(lip.header.slotsPerFrame)", default: 0
+                    "targets \(lip.header.targetCount) stride \(lip.header.slotsPerFrame)",
+                    default: 0
                 ] += 1
-                // Spelled as an explicit closure rather than a key path: the
-                // `#expect` expansion of `allSatisfy(\.isFinite)` inside a
-                // `do`/`catch` is read as a throwing call the enclosing context
-                // does not handle, and the build fails (Swift 6.3.3).
-                let finite = lip.sample(at: lip.duration / 2).weightsBySlot.values
-                    .allSatisfy(\.isFinite)
-                #expect(finite)
+                firstFrames[lip.header.firstFrame, default: 0] += 1
+                for slot in lip.activeSlots {
+                    activeSlots[slot, default: 0] += 1
+                }
+                outOfRange += lip.values.count { $0 < -1 || $0 > 2 }
             } catch {
-                let category = Self.failureCategory(error)
-                failureTallies[category, default: 0] += 1
+                failureTallies[String(describing: error), default: 0] += 1
                 if failureExamples.count < 5 {
                     failureExamples.append("\(path): \(String(describing: error))")
                 }
@@ -61,19 +48,17 @@ struct LipSyncRealDataTests {
         }
 
         #expect(lipBlobCount == 74070, "embedded lip count drifted to \(lipBlobCount)")
-        // 70,926 decoded, measured on 2026-08-12.
-        #expect(lipCount > 70000, "only \(lipCount) tracks decoded")
+        // Every vanilla track decoded on 2026-10-15.
+        #expect(lipCount == lipBlobCount, "only \(lipCount) tracks decoded")
+        #expect(outOfRange == 0, "\(outOfRange) curve values outside -1...2")
         let failureCount = failureTallies.values.reduce(0, +)
-        #expect(lipCount + failureCount == lipBlobCount)
         let report = """
         [INFO] lip sweep: \(paths.count) FUZ entries, \(lipBlobCount) lip blobs, \
-        \(lipCount) standard tracks decoded, \(failureCount) typed parse failures
-        [INFO] lip tokens: \(keyCount) keys, \(duplicateCount) duplicates, \
-        \(markerCount) markers, \(unmappedKeyCount) keys in unmapped slots
+        \(lipCount) tracks decoded, \(failureCount) typed parse failures
         [INFO] lip layouts: \(Self.histogram(layouts))
         [INFO] lip first frames: \(Self.histogram(firstFrames))
-        [INFO] lip unknown header values: \(Self.histogram(unknownValues))
-        [INFO] lip failure categories: \(Self.histogram(failureTallies))
+        [INFO] lip tracks per active slot: \(Self.histogram(activeSlots))
+        [INFO] lip failures: \(Self.histogram(failureTallies))
         [INFO] lip failure examples: \(failureExamples.joined(separator: " | "))
         """
         print(report)
@@ -84,30 +69,6 @@ struct LipSyncRealDataTests {
         values.sorted { $0.key < $1.key }
             .map { "\($0.key)x\($0.value)" }
             .joined(separator: " ")
-    }
-
-    private static func failureCategory(_ error: Error) -> String {
-        guard let lipError = error as? LIPError else {
-            return "container: \(String(describing: type(of: error)))"
-        }
-        switch lipError {
-        case let .unsupported(reason):
-            return "unsupported: \(reason)"
-        case let .malformed(reason):
-            if reason.hasPrefix("non-finite") {
-                return "malformed: non-finite token"
-            }
-            if reason.hasPrefix("curve stream overruns") {
-                return "malformed: terminal overrun"
-            }
-            if reason.hasPrefix("curve position") {
-                return "malformed: grid overrun"
-            }
-            if reason.contains("trailing payload bytes") {
-                return "malformed: trailing bytes"
-            }
-            return "malformed: \(reason)"
-        }
     }
 
     private static func writeReport(_ report: String) throws {

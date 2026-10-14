@@ -66,6 +66,11 @@ The plugin is the one that defines the `INFO`: `skyrim.esm`, `dawnguard.esm`,
 speaker's `VTYP`. So one line can have many recordings, one per voice type. All vanilla
 voice files are in `Skyrim - Voices_en0.bsa`.
 
+A mod may ship a line as a loose `.xwm` with an optional `.lip` beside it, which is what the
+Creation Kit writes before it joins them. When the `.fuz` is missing, OpenSky reads those two
+files and joins them into the same container in memory. A `.fuz` always wins over loose
+files. A loose `.wav` voice line is not read.
+
 ## The file name rule
 
 ```text

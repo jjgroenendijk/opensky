@@ -7,6 +7,7 @@
 import AppKit
 @testable import OpenSky
 @testable import OpenSkyAudio
+import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyMenus
 import OpenSkyTagsTesting
@@ -251,7 +252,8 @@ struct DialogueAcceptancePanelTests {
         liveWeights: ["Aah": 0.75],
         unmappedActiveSlots: [],
         isDecaying: false,
-        layout: "header 24 B · tuple 3 · vocab 16 · 33 slots/frame"
+        layout: "16 targets · 33 slots/frame · 90 frames from -5",
+        head: .zero
     )
 
     private static let audioStats = AudioStatsSnapshot(

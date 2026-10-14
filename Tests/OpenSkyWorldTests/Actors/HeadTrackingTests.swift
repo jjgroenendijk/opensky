@@ -1,5 +1,6 @@
 // Head tracking: the look angles, their limits, the easing, and the bones it turns.
 
+import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
 @testable import OpenSkyWorld
 import simd
@@ -49,6 +50,23 @@ struct HeadTrackingTests {
         #expect(abs(moved.x + 10) < 0.001)
         #expect(abs(moved.y) < 0.001)
         #expect(abs(moved.z - 130) < 0.001)
+    }
+
+    @Test func rollTiltsAroundTheForwardAxis() {
+        let bones = SkeletonBoneIndex(names: ["NPC Neck [Neck]", "NPC Head [Head]", "Eye"])
+        func at(_ y: Float, _ z: Float) -> float4x4 {
+            var matrix = matrix_identity_float4x4
+            matrix.columns.3 = SIMD4(0, y, z, 1)
+            return matrix
+        }
+        let pose = SkeletonPose(bones: bones, matrices: [at(0, 100), at(0, 110), at(10, 130)])
+        let look = HeadLook(yaw: 0, pitch: 0).adding(LipHeadMotion(pitch: 0, roll: 0.3, yaw: 0))
+        let turned = HeadTrackingCore.apply(look, to: pose, parents: [-1, 0, 1])
+        let moved = turned.matrices[2].columns.3
+        #expect(abs(moved.y - 10) < 0.001)
+        #expect(abs(moved.x) > 1)
+        let head = turned.matrices[1].columns.3
+        #expect(abs(simd_distance(moved, head) - simd_length(SIMD2<Float>(10, 20))) < 0.001)
     }
 
     @Test func aSkeletonWithoutTheBonesIsUnchanged() {

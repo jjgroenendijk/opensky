@@ -325,19 +325,23 @@ nonisolated extension CellSceneBuilder {
             owner: assembly.actor.rawValue,
             reference: assembly.actor.rawValue
         ))
-        if let faceMorph {
-            build.animations.append(faceMorph)
-            build.animations.append(LipSyncPlayback(faceMorph: faceMorph))
-        }
+        var skeleton: ActorAnimationPlayback?
         switch makeAnimationPlayback(assembly: assembly) {
         case let .success(playback):
             build.counts.animated += 1
-            build.animations.append(playback)
+            skeleton = playback
         case let .failure(error):
             build.counts.animationFailures += 1
             build.counts.animationFailureReasons.append(
                 "ACHR \(id): \(error.localizedDescription)"
             )
+        }
+        if let faceMorph {
+            build.animations.append(faceMorph)
+            build.animations.append(LipSyncPlayback(faceMorph: faceMorph, head: skeleton))
+        }
+        if let skeleton {
+            build.animations.append(skeleton)
         }
     }
 
