@@ -58,7 +58,7 @@ extension PapyrusNativeFunctions {
     }
 
     /// `float GetActorValue(string)`, `float GetBaseActorValue(string)`, and
-    /// `float GetActorValuePercentage(string)`
+    /// `float GetActorValuePercentage(string)`, and `float GetActorValueMax(string)`
     /// (<https://www.creationkit.com/index.php?title=GetActorValue_-_Actor>). The
     /// base is the re-derived maximum; the percentage divides by the maximum.
     private static func installActorValueReads(
@@ -67,7 +67,9 @@ extension PapyrusNativeFunctions {
         let reads: [(String, @Sendable (PapyrusActorState, Int32) -> Float?)] = [
             ("GetActorValue", { state, index in state.value(at: index) }),
             ("GetBaseActorValue", { state, index in state.baseValue(at: index) }),
-            ("GetActorValuePercentage", { state, index in state.fraction(at: index) })
+            ("GetActorValuePercentage", { state, index in state.fraction(at: index) }),
+            // The value with every modifier and no damage.
+            ("GetActorValueMax", { state, index in state.entry(at: index)?.undamagedValue })
         ]
         for (functionName, read) in reads {
             registry.register(PapyrusNativeFunction(

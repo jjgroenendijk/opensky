@@ -102,6 +102,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// reads. Separate from `factionRuntime` because it is asked about two
     /// factions rather than about an actor, so there is nothing to seed.
     public var factionRelationIndex: (() -> FactionRelationIndex?)?
+    /// Receives every scripted faction reaction after one changes.
+    public var factionReactionsChanged: (([FactionReactionOverride]) -> Void)?
     /// One actor's seeded social profile, for `GetCrimeFaction` and `IsGuard`. Nil
     /// without faction data.
     public var socialProfile: ((ReferenceKey) -> ActorSocialProfile?)?

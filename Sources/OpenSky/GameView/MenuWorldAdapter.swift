@@ -252,6 +252,15 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         return isFemale.map { $0 ? 1 : 0 }
     }
 
+    func race(ofBase base: FormID) -> FormID? {
+        base == MenuRecordData.playerBase
+            ? playerIdentity?.race : identityRecords?.race(ofBase: base)
+    }
+
+    func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
+        identityRecords?.templates.actors[base.rawValue]?.flags
+    }
+
     func name(of form: FormID) -> String? {
         if form == MenuRecordData.playerBase {
             return playerIdentity?.name

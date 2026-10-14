@@ -43,6 +43,14 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
         nil
     }
 
+    func race(ofBase base: FormID) -> FormID? {
+        nil
+    }
+
+    func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
+        nil
+    }
+
     func name(of form: FormID) -> String? {
         nil
     }

@@ -48,6 +48,31 @@ Signatures and defaults are from the Creation Kit wiki script pages, for example
 
 `GetCrimeFaction` answers a faction a script set before the `CRIF` of the actor's base.
 
+Condition functions read some of these flags too, such as `GetIsGhost` and
+`GetKeywordDataForLocation` ([condition functions](/engine/condition-functions.md#script-state)).
+
+## Faction reactions
+
+`Faction.SetEnemy(Faction akOther, bool abSelfIsNeutralToOther = false, bool
+abOtherIsNeutralToSelf = false)` sets both directions to enemy; a true flag makes that side
+neutral instead. `SetAlly` has the same shape, and a true flag makes that side a friend.
+`SetReaction(Faction, int)` sets one direction, numbered as `GetReaction` answers: 0 neutral,
+1 enemy, 2 ally, 3 friend. `SetPlayerEnemy(bool abIsEnemy = true)` pairs the faction with
+`PlayerFaction` (Skyrim.esm `000DB1`) in both directions, and false sets them neutral.
+
+The reaction is a value and a form link on the faction's state, so the save keeps it. After
+each change, and after a load, the faction runtime receives every scripted reaction. A
+scripted reaction wins over the `XNAM` relation of the record, in the hostility derivation
+and in `GetReaction` ([hostility](/engine/hostility.md)).
+
+## Words and shouts
+
+`Game.TeachWord(WordOfPower)` and `Game.UnlockWord(WordOfPower)` set a flag per word on the
+player, and `Game.IsWordUnlocked` reads the second. `Actor.AddShout`, `RemoveShout`,
+`EquipShout`, `UnequipShout`, and `GetEquippedShout` keep the shouts an actor knows and wears.
+`RemoveShout` answers whether the actor knew the shout, and takes it off when it was equipped.
+OpenSky casts no shout yet, so nothing else reads these.
+
 ## Ownership
 
 `SetActorOwner(ActorBase)` and `SetFactionOwner(Faction)` work on a reference and on a cell. A form
@@ -82,6 +107,10 @@ way.
   the HUD does not read `SetNotShowOnStealthMeter`, and leveled lists do not read added forms.
 - A read does not fall back to the record. `IsGhost` on an actor whose `NPC_` record has the ghost
   flag reads false until a script sets it.
+- `UnlockWord` does not also teach the word. No source this project checked says whether it
+  does.
+- A shout an actor's record gives is not known to `RemoveShout` or `GetEquippedShout`; only
+  the shouts a script added are.
 - A leveled-list entry keeps its form, not its level or count.
 - No open source says where `AddForm` puts a form in `GetAt` order. OpenSky puts it after the
   plugin entries.

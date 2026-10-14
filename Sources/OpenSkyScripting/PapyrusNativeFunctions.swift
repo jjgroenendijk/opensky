@@ -24,6 +24,8 @@ public enum PapyrusNativeFunctions {
         installGuard(into: &registry)
         installBarter(into: &registry)
         installFaction(into: &registry)
+        installFactionRelations(into: &registry)
+        installShouts(into: &registry)
         installLock(into: &registry)
         installTrap(into: &registry)
         installFormList(into: &registry)
