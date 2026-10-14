@@ -38,6 +38,8 @@ public final class PapyrusRuntime {
     /// Another script instance on the same form that is of the named type. The game keeps
     /// all scripts of one form in one object, so a cast between them succeeds.
     public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
+    /// The alias script of the named type that serves the alias slot behind a handle.
+    public var aliasSlotInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
     /// The world identity behind a handle, for fault text.
     public var describeHandle: ((PapyrusObjectHandle) -> String?)?
     /// Registers a script no attached script has named yet, such as the global script of a

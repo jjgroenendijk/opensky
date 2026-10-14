@@ -60,6 +60,7 @@ extension PapyrusWorldRuntime {
     /// world runtime never handed out.
     public func referenceKey(for handle: PapyrusObjectHandle) -> ReferenceKey? {
         keysByHandle[handle]?.reference ?? opaqueKeysByHandle[handle]
+            ?? aliasSlotsByHandle[handle].flatMap(aliasReference(in:))
     }
 
     /// Lowest-script-name instance handle for a reference, matching
@@ -84,6 +85,9 @@ extension PapyrusWorldRuntime {
     /// An opaque handle of a stopped quest or an unloaded reference attaches its
     /// scripts first, as they exist in the game (`attachOnUse`).
     func sibling(of handle: PapyrusObjectHandle, as typeName: String) -> PapyrusObjectHandle? {
+        if let slot = aliasSlotsByHandle[handle] {
+            return aliasInstance(of: slot, as: typeName)
+        }
         guard let reference = referenceKey(for: handle) else { return nil }
         let aliasKeys = aliasInstanceKeys
         let isAlias = keysByHandle[handle].map(aliasKeys.contains) ?? false
@@ -106,7 +110,7 @@ extension PapyrusWorldRuntime {
         questAliasInstanceKeys.values.reduce(into: []) { $0.formUnion($1) }
     }
 
-    private func allocateOpaqueHandle() -> PapyrusObjectHandle {
+    func allocateOpaqueHandle() -> PapyrusObjectHandle {
         while
             opaqueKeysByHandle[PapyrusObjectHandle(nextOpaqueHandleValue)] != nil
             || runtime.instance(for: PapyrusObjectHandle(nextOpaqueHandleValue)) != nil

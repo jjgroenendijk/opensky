@@ -135,6 +135,28 @@ struct ScriptDataBindingTests {
         #expect(binding.skipped.total == 0)
     }
 
+    /// With a slot seam, an empty alias binds to its slot, so `ForceRefTo` has a receiver.
+    @Test("an alias property binds to its slot, filled or not")
+    func aliasPropertiesBindToTheirSlot() throws {
+        let runtime = makeRuntime()
+        let slot = PapyrusObjectHandle(55)
+        var asked: [(ReferenceKey, UInt32)] = []
+        let binding = try script(properties: [
+            .init("Target", .object(VMADFixture.object(0x0000_1200, alias: 3)))
+        ]).binding(
+            in: runtime, formIDResolver: resolver,
+            aliasSlot: { quest, alias in
+                asked.append((quest, alias))
+                return slot
+            },
+            objectHandle: { _ in nil }
+        )
+        #expect(binding.initialValues["::opaque_backing_17"] == .object(slot))
+        #expect(asked.map(\.1) == [3])
+        #expect(asked.map(\.0) == [.plugin(name: "skyrim.esm", objectID: 0x1200)])
+        #expect(binding.skipped.ranked.first?.name == "unfilled quest alias")
+    }
+
     @Test("removed and unknown VMAD properties preserve PEX defaults")
     func preservesDefaultsForRemovedAndMissingProperties() throws {
         let runtime = makeRuntime()

@@ -48,6 +48,8 @@ nonisolated public enum QuestError: Error, Equatable {
     case unknownStage(quest: FormID, stage: UInt16)
     /// The quest defines no objective with this index.
     case unknownObjective(quest: FormID, objective: UInt16)
+    /// The quest defines no alias with this ID.
+    case unknownAlias(quest: FormID, alias: UInt32)
     /// A mutation that only means something on a running quest.
     case questNotRunning(FormID)
     /// The quest could not start because a non-optional alias stayed empty; carries

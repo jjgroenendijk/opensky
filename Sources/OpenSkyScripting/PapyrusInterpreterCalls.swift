@@ -295,11 +295,28 @@ extension PapyrusInterpreter {
     ) -> PapyrusNativeCall {
         nativeCall(
             kind: .method,
-            script: receiverScriptName(receiverOperand, frame: frame),
+            script: nativeOwner(
+                of: functionName, from: receiverScriptName(receiverOperand, frame: frame)
+            ),
             function: functionName,
             receiver: receiver,
             arguments: arguments
         )
+    }
+
+    /// The script in `declared`'s parent chain that declares `functionName` native, as a
+    /// call on an instance resolves it. `declared` itself when no loaded script does.
+    private func nativeOwner(of functionName: String, from declared: String) -> String {
+        guard let chain = try? runtime.scriptChain(from: declared) else { return declared }
+        let owner = chain.first { object in
+            object.states.contains { state in
+                state.functions.contains {
+                    PapyrusRuntime.matches($0.name, functionName)
+                        && $0.function.flags.contains(.native)
+                }
+            }
+        }
+        return owner?.name ?? declared
     }
 
     private func resolvedMethodFlow(

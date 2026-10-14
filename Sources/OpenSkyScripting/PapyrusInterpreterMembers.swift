@@ -146,9 +146,13 @@ extension PapyrusInterpreter {
         operand: PexValue,
         frame: PapyrusFrame
     ) -> PapyrusObjectHandle {
+        guard case let .object(typeName) = declaredType(of: operand, frame: frame) else {
+            return handle
+        }
+        guard runtime.instance(for: handle) != nil else {
+            return runtime.aliasSlotInstance?(handle, typeName) ?? handle
+        }
         guard
-            runtime.instance(for: handle) != nil,
-            case let .object(typeName) = declaredType(of: operand, frame: frame),
             !runtime.resolvesObject(handle, as: typeName),
             let sibling = runtime.siblingInstance?(handle, typeName)
         else { return handle }
