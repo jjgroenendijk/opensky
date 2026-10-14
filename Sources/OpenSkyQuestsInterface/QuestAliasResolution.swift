@@ -39,6 +39,11 @@ nonisolated public struct QuestAliasResolution: Sendable {
         return tables[key] ?? .empty
     }
 
+    /// The filled table of the quest stored under `key`, empty when nothing filled it.
+    public func table(forKey key: ReferenceKey) -> QuestAliasState {
+        tables[key] ?? .empty
+    }
+
     /// Reference filling one alias by number, or nil when it is empty.
     public func reference(alias aliasID: UInt32, in id: FormID) -> ReferenceKey? {
         table(for: id)?.reference(forAlias: aliasID)

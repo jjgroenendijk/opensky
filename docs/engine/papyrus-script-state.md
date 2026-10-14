@@ -1,0 +1,89 @@
+---
+type: Subsystem
+title: Papyrus script state
+description: The flags, values, form links, and added forms that Papyrus natives set when no other
+  runtime holds them, how they are read back and saved, and where OpenSky differs from the game.
+tags: [engine, papyrus, save]
+---
+
+# Papyrus script state
+
+Many natives set something that no OpenSky runtime models yet. `Actor.SetGhost` is an example:
+no system reads the ghost flag, but a script may read it back with `IsGhost`. OpenSky keeps such
+values in one world-state component, `ScriptedReferenceState`, on the form the script changed. A
+`Game` function keeps its value on the player. The `SCRS` save chunk stores the component
+([world chunks](/formats/opensky-save-world-chunks.md#scrs-script-state)).
+
+The component has four parts:
+
+| Part | Example native | Read back by |
+| --- | --- | --- |
+| Flags | `SetGhost(bool abIsGhost = true)` | `IsGhost()` |
+| Values | `SetVoiceRecoveryTime(float)` | `GetVoiceRecoveryTime()` |
+| Form links | `SetCrimeFaction(Faction)` | `GetCrimeFaction()` |
+| Added forms | `FormList.AddForm(Form)` | `GetSize()`, `GetAt(int)`, `HasForm(Form)`, `Find(Form)` |
+
+A flag that is not set reads false, and a value that is not set reads 0. A setter that clears the
+last value removes the component, so an untouched form stays clean in the save. Names are
+case-insensitive.
+
+Signatures and defaults are from the Creation Kit wiki script pages, for example
+<https://ck.uesp.net/wiki/Actor_Script> and <https://ck.uesp.net/wiki/Game_Script>.
+
+## Flags and values
+
+| Script | Setters | Reads |
+| --- | --- | --- |
+| `Actor` | `SetGhost`, `SetPlayerTeammate`, `SetDoingFavor`, `SetAlert`, `SetAllowFlying`, `SetIntimidated`, `SetBribed`, `SetUnconscious` | `IsGhost`, `IsPlayerTeammate`, `IsDoingFavor`, `IsAlerted`, `IsAllowedToFly`, `IsIntimidated`, `IsBribed`, `IsUnconscious` |
+| `Actor` | `SetRestrained`, `SetNoBleedoutRecovery`, `SetNotShowOnStealthMeter`, `SetDontMove`, `SetAttackActorOnSight`, `SetHeadTracking`, `SetPlayerResistingArrest`, `AllowBleedoutDialogue`, `AllowPCDialogue` | none |
+| `Actor` | `EnableAI(bool abEnable = true)` | `IsAIEnabled` |
+| `Actor` | `SetAlpha`, `SetVoiceRecoveryTime`, `SetCriticalStage` | `GetVoiceRecoveryTime` |
+| `Actor` | `SetForcedLandingMarker`, `SetCrimeFaction`, `SetLookAt`, `ClearLookAt` | `GetCrimeFaction` |
+| `ActorBase` | `SetEssential`, `SetInvulnerable`, `SetProtected` | none |
+| `ObjectReference` | `IgnoreFriendlyHits`, `SetNoFavorAllowed`, `BlockActivation` | `IsActivationBlocked` |
+| `Location` | `SetCleared`, `SetKeywordData(Keyword, float)` | `IsCleared`, `GetKeywordData(Keyword)` |
+| `Cell` | `SetPublic` | none |
+| `Quest` | `SetActive` | `IsActive` |
+| `Game` | `SetInChargen`, `SetBeastForm` | none |
+
+`GetCrimeFaction` answers a faction a script set before the `CRIF` of the actor's base.
+
+## Ownership
+
+`SetActorOwner(ActorBase)` and `SetFactionOwner(Faction)` work on a reference and on a cell. A form
+has one owner at a time, so setting one clears the other. A `None` argument clears the owner.
+
+The crime check reads the owner a script set on a reference before the reference's own `XOWN`
+([crime](/engine/crime.md#ownership)). So `SetActorOwner` with the player's base makes taking an
+item no theft. A faction owner set by a script needs rank 0.
+
+`GetActorOwner` and `GetFactionOwner` answer the script's owner first. With no script owner, a
+reference answers the owner the crime check uses, and a cell answers `None`, counted as a stub.
+
+## Player controls
+
+`DisablePlayerControls` and `EnablePlayerControls` take eight Bool arguments, one per control
+group: movement, fighting, camera switch, looking, sneaking, menu, activate, and journal. For
+`DisablePlayerControls` the defaults are true for movement, fighting, menu, and activate, and false
+for the rest. For `EnablePlayerControls` every default is true. Only an argument that is true
+changes its group. `IsMovementControlsEnabled` and the seven other reads answer the stored state.
+
+## Added forms
+
+`FormList.AddForm` appends a form once. `RemoveAddedForm` removes a form a script added, and
+`Revert` removes every added form. The `FormList` reads see the plugin entries first, then the
+added forms. `LeveledItem`, `LeveledActor`, and `LeveledSpell` keep `AddForm` and `Revert` the same
+way.
+
+## Where OpenSky differs
+
+- The state is recorded, and in most cases nothing else reads it yet. The input layer does not
+  read the player controls, the AI does not read `EnableAI`, death does not read `SetEssential`,
+  the HUD does not read `SetNotShowOnStealthMeter`, and leveled lists do not read added forms.
+- A read does not fall back to the record. `IsGhost` on an actor whose `NPC_` record has the ghost
+  flag reads false until a script sets it.
+- A leveled-list entry keeps its form, not its level or count.
+- No open source says where `AddForm` puts a form in `GetAt` order. OpenSky puts it after the
+  plugin entries.
+- `SetCrimeFaction(None)` removes the script's faction, so `GetCrimeFaction` answers the `CRIF`
+  again. The game may instead keep the actor without a crime faction.

@@ -59,6 +59,12 @@ public final class PapyrusWorldRuntime {
     /// Filled quest aliases that VMAD binding resolves alias properties through. A
     /// value, so binding stays nonisolated. `.empty` without a quest layer.
     public var aliasResolution: QuestAliasResolution = .empty
+    /// One handle per alias slot, filled or not, so an alias property is never None and
+    /// `ForceRefTo` on an empty alias has a receiver. See `PapyrusWorldAliasSlots.swift`.
+    public var aliasSlotHandles: [PapyrusAliasSlot: PapyrusObjectHandle] = [:]
+    public var aliasSlotsByHandle: [PapyrusObjectHandle: PapyrusAliasSlot] = [:]
+    /// The alias slot each alias script instance serves.
+    public var aliasSlotsByInstance: [PapyrusInstanceKey: PapyrusAliasSlot] = [:]
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
     public var lastQuestAliasFill: String?
@@ -187,6 +193,9 @@ public final class PapyrusWorldRuntime {
             tracker.noteResume(of: call, outcome: outcome)
         }
         runtime.siblingInstance = { [weak self] in self?.sibling(of: $0, as: $1) }
+        runtime.aliasSlotInstance = { [weak self] handle, typeName in
+            self?.aliasSlotsByHandle[handle].flatMap { self?.aliasInstance(of: $0, as: typeName) }
+        }
         runtime.describeHandle = { [weak self] in self?.referenceKey(for: $0)?.description }
         runtime.loadScript = { [weak self] in self?.resolveScript(named: $0) ?? false }
     }

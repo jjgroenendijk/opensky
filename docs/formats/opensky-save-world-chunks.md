@@ -224,8 +224,17 @@ stat.
 One entry per quest the journal has shown: the QUST key, the cell, and a byte, 1 when the
 player tracks the quest. A quest with no entry was never shown. Size: 9 bytes per entry.
 
-`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, and `QTRK` merge into the `RDLT` deltas by
-key, like the other component chunks.
+## SCRS: script state
+
+One entry per form a script changed through a native that has no other home, such as
+`SetGhost` or `FormList.AddForm` ([script state](/engine/papyrus-script-state.md)): the key,
+the cell, then four lists. Flags: a uint32 count, then per flag its name as a string and a
+byte, 1 for true. Values: a uint32 count, then a name and a float32. Form links: a uint32
+count, then a name and a key. Added forms: a uint32 count, then that many keys, in the order
+the script added them. Names are lowercased and sorted. Minimum size: 24 bytes per entry.
+
+`SCNS`, `SCNP`, `SMQS`, `DLBS`, `HELP`, `MSTS`, `QTRK`, and `SCRS` merge into the `RDLT` deltas
+by key, like the other component chunks.
 
 ## PIDN: player identity
 

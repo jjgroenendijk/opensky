@@ -197,6 +197,7 @@ extension PapyrusWorldRuntime {
                 formIDResolver: formIDResolver,
                 aliases: aliasResolution,
                 aliasHandle: { self.aliasInstanceHandle(for: $0) ?? self.objectHandle(for: $0) },
+                aliasSlot: { self.aliasSlotHandle(PapyrusAliasSlot(quest: $0, aliasID: $1)) },
                 objectHandle: { handles[$0] ?? self.objectHandle(for: $0) }
             )
             bindingSkips.merge(binding.skipped)

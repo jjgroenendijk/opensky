@@ -12,6 +12,7 @@ import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldState
 import simd
@@ -189,7 +190,13 @@ extension EffectsWorldAdapter: EffectsWorld {
             )
         }
         guard let observed = game.actorWorld.combatActors().first(where: { $0.key == actor }) else {
-            return nil
+            // A script plays effects on objects too; they stand where their record and
+            // the session's moves put them.
+            return game.scripts.bridge?.referenceState(for: actor).map {
+                MatrixMath.placement(
+                    position: $0.transform.position, rotation: $0.transform.rotation, scale: 1
+                )
+            }
         }
         return Self.transform(feet: observed.feet, yaw: observed.facing)
     }

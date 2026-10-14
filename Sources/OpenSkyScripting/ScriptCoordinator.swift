@@ -189,8 +189,13 @@ extension ScriptCoordinator: ScriptControlProviding {
                 questAliasFillFailures: failures
             )
         }
+        let state = bridge.flatMap { ScriptsReadout.scriptStateText($0.scriptedState(of: key)) }
         return runtime.scriptsSnapshot(
-            target: key, runningQuestCount: running, questAliasFillFailures: failures
+            target: key,
+            targetDescription: [key.description, state].compactMap(\.self)
+                .joined(separator: "  "),
+            runningQuestCount: running,
+            questAliasFillFailures: failures
         )
     }
 

@@ -110,6 +110,8 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumStoryManagerQuestEntrySize = 20
     /// `DLBS` entry: the smallest key and cell (8) and the branch FormID (4).
     public static let minimumDialogueBranchEntrySize = 12
+    /// `SCRS` entry: the smallest key and cell (8) and four counts (16).
+    public static let minimumScriptedStateEntrySize = 24
     /// `HELP` entry: the smallest key and cell (8) and the record count (4).
     public static let minimumHelpMessageEntrySize = 12
     /// One `HELP` record: an empty event name (2), the count (4), the done byte.

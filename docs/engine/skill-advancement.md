@@ -187,6 +187,7 @@ reported, but not banked.
 | --- | --- | --- |
 | `Game.AdvanceSkill(asSkillName, afMagnitude)` | Skill use | Converted through `AVSK`. May or may not reach the threshold |
 | `Game.IncrementSkill(asSkillName)` | One whole point | Raises the skill and banks character experience. Leaves stored progress alone |
+| `Game.IncrementSkillBy(asSkillName, aiCount)` | `aiCount` whole points | `IncrementSkill` repeated, at most 100 times, because a skill stops at 100 |
 
 `IncrementSkill` leaves progress alone on purpose. The point came from a trainer, a book, or a quest,
 not from use. Spending the stored progress would take away something the point did not pay for.

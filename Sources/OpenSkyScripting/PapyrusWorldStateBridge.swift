@@ -132,6 +132,10 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var objectAnimation: (any PapyrusObjectAnimationBridge)?
     /// Notifications, message boxes, and camera effects. Nil in a headless session.
     public weak var presenter: (any PapyrusPresenting)?
+    /// Visual effects, effect shaders, and image-space modifiers. Nil in a headless session.
+    public weak var effectPresenter: (any PapyrusEffectPresenting)?
+    /// The sky, for the `Weather` natives. Nil in a headless session.
+    public weak var weather: (any PapyrusWeatherControlling)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.
@@ -327,7 +331,11 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             ?? referenceState(for: target)?.activation
             ?? .untouched
         let recorded = write(
-            current.activated(by: activator, togglesOpen: togglesOpen).erased,
+            current.activated(
+                by: activator,
+                togglesOpen: togglesOpen && !isActivationBlocked(target)
+            )
+            .erased,
             for: target
         )
         return PapyrusActivationOutcome(

@@ -1,7 +1,7 @@
 // The alias half of `QuestRuntime`: when a quest's alias table is filled,
-// cleared, and read. `QuestAliasFiller` derives the table; nothing else writes a
-// `QuestAliasState`. Aliases fill when the quest starts and clear when it stops
-// (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
+// cleared, and read. `QuestAliasFiller` derives the table at a start, and
+// `ForceRefTo` and `Clear` change one alias. Aliases fill when the quest starts and
+// clear when it stops (<https://ck.uesp.net/wiki/Alias>). See docs/engine/quest-state.md.
 
 import Foundation
 import OpenSkyConditions
@@ -126,6 +126,44 @@ extension QuestRuntime {
             state: state, skipped: result.skipped, unfilledRequired: result.unfilledRequired,
             creations: result.creations
         )
+    }
+
+    // MARK: - Forcing
+
+    @discardableResult
+    public func forceAlias(
+        _ aliasID: UInt32, to reference: ReferenceKey?, on id: FormID
+    ) throws -> QuestAliasState {
+        try changeAlias(aliasID, on: id) { state in
+            reference.map { state.filling(aliasID, with: $0) } ?? state.clearing(aliasID)
+        }
+    }
+
+    @discardableResult
+    public func forceLocationAlias(
+        _ aliasID: UInt32, to location: ResolvedFormID?, on id: FormID
+    ) throws -> QuestAliasState {
+        try changeAlias(aliasID, on: id) { state in
+            location.map { state.fillingLocation(aliasID, with: $0) } ?? state.clearing(aliasID)
+        }
+    }
+
+    /// An empty table is stored as no component, like a stopped quest's.
+    private func changeAlias(
+        _ aliasID: UInt32, on id: FormID, _ change: (QuestAliasState) -> QuestAliasState
+    ) throws -> QuestAliasState {
+        guard let quest = quests.quest(id) else { throw QuestError.unknownQuest(id) }
+        guard quest.alias(id: aliasID) != nil else {
+            throw QuestError.unknownAlias(quest: id, alias: aliasID)
+        }
+        guard let key = quests.key(for: id) else { throw QuestError.unresolvedQuestKey(id) }
+        let state = change(store.component(QuestAliasState.self, for: key) ?? .empty)
+        if state.isEmpty {
+            store.reset(.questAliases, for: key)
+        } else {
+            store.set(state, for: key)
+        }
+        return state
     }
 
     /// Drops the quest's alias table. Called by `stopQuest`, and by nothing

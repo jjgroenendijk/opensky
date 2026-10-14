@@ -34,6 +34,11 @@ public enum PapyrusNativeFunctions {
         installVehicle(into: &registry)
         installInventory(into: &registry)
         installWorldPlace(into: &registry)
+        installScriptState(into: &registry)
+        installEffects(into: &registry)
+        installReferenceState(into: &registry)
+        installActorState(into: &registry)
+        installWeather(into: &registry)
     }
 
     public static func failure(

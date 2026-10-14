@@ -106,6 +106,19 @@ public protocol QuestAccess {
     @discardableResult
     func fillAliases(of quest: Quest, key: ReferenceKey) throws -> QuestAliasFillResult
 
+    /// Puts `reference` in one reference alias, or empties the alias for nil, as
+    /// `ForceRefTo` and `Clear` do (<https://ck.uesp.net/wiki/ForceRefTo_-_ReferenceAlias>).
+    /// - Throws: `QuestError.unknownQuest`, `QuestError.unknownAlias`.
+    @discardableResult
+    func forceAlias(_ aliasID: UInt32, to reference: ReferenceKey?, on id: FormID) throws
+        -> QuestAliasState
+
+    /// Puts `location` in one location alias, or empties it for nil.
+    /// - Throws: `QuestError.unknownQuest`, `QuestError.unknownAlias`.
+    @discardableResult
+    func forceLocationAlias(_ aliasID: UInt32, to location: ResolvedFormID?, on id: FormID)
+        throws -> QuestAliasState
+
     /// Whether the player tracks the quest: its targets show on the compass and map.
     func isTracked(_ id: FormID) -> Bool
 }

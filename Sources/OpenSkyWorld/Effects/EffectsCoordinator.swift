@@ -67,6 +67,14 @@ public final class EffectsCoordinator {
         return visualEffects.attach(spec, to: anchor, cause: cause, duration: duration)
     }
 
+    /// Removes the `RFCT`, `EFSH`, or `ARTO` named by `key` from `anchor`. Returns how
+    /// many instances went.
+    @discardableResult
+    public func detach(_ key: ReferenceKey, from anchor: EffectAnchor) -> Int {
+        guard let spec = records.visualEffectSpec(key) else { return 0 }
+        return visualEffects.detach(spec, from: anchor)
+    }
+
     public func removeAll(cause: VisualEffectCause? = nil) {
         visualEffects.removeAll(cause: cause)
     }
@@ -97,6 +105,11 @@ public final class EffectsCoordinator {
         guard let adapter = records.imageSpaceAdapters.record(key) else { return false }
         imageSpace.modifiers.start(adapter.record, key: key, strength: strength, looping: looping)
         return true
+    }
+
+    /// Stops every running instance of the `IMAD` `key` on `imageSpace`.
+    public func stopModifier(_ key: ReferenceKey, on imageSpace: inout ImageSpaceState) {
+        imageSpace.modifiers.stop(key: key)
     }
 
     /// One landed spell: the modifier when the player was hit, the hit shader and art

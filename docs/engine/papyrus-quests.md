@@ -57,8 +57,9 @@ A refused change becomes a native failure, and the call returns its declared def
 `SetStage` that is false, which matches the documented "returns false and the stage is unchanged".
 
 Absent on purpose, and left in the unimplemented tally: `Reset`, `IsStarting`, `IsStopping`,
-`GetAlias`, `GetAliasedRef`, and `SetActive`. They need more alias support or a latent window
-OpenSky does not have.
+`GetAlias`, and `GetAliasedRef`. They need more alias support or a latent window OpenSky does not
+have. `SetActive` and `IsActive` keep a flag in the
+[script state](/engine/papyrus-script-state.md); no journal reads it yet.
 
 A method call on an instance runs under the script that declares the function. So
 `someQuest.SetStage(10)` reaches the `Quest` natives only when `Quest.pex` is loaded. That is why a
@@ -100,14 +101,29 @@ A fragment naming a script the quest has no instance of is counted as
 ## Aliases in scripts
 
 A `VMAD` object property whose alias word is not -1 names an alias slot on the quest its form ID
-identifies. It binds to the filled reference's live handle, like a direct property. A filled
-reference with no scripts gets its opaque handle, so a marker alias is not `None`. The property holds
-the reference itself, not an alias object. So `GetRef`, `GetReference`, `GetActorRef`, and
-`GetActorReference` on `ReferenceAlias` return their receiver. An empty alias,
-because the quest is not running or its fill type is not implemented, keeps the compiler default and
-is counted as an unfilled quest alias. The world runtime holds the current alias answers, and the
-session refreshes them after every fill or stop. So binding stays nonisolated and never calls back
-into the main-actor session.
+identifies. It binds to an alias slot handle: one handle per quest and alias ID, filled or not.
+The binding still counts an empty alias as an unfilled quest alias, for the readout.
+
+A slot handle stands for the alias, and a call on it goes one of three ways:
+
+- The declared type is the alias script, for example `myAliasScript Property Helper`. The call
+  reaches that script's instance on the filled reference.
+- The declared type is `ReferenceAlias` or `LocationAlias`. The call reaches the alias natives.
+- The call needs a reference, for example `Helper.GetRef().Disable()`. The slot resolves to the
+  reference that fills it now. An empty slot resolves to nothing, and the native fails.
+
+`GetRef` and `GetReference` on a slot return the filled reference, or `None` when the alias is
+empty. `ForceRefTo(ObjectReference)` and `Clear()` change one alias through the quest runtime.
+Then the alias scripts on the old reference retire, and the quest attaches fresh ones on the new
+reference. `LocationAlias.GetLocation`, `ForceLocationTo`, and `Clear` work on location aliases. A
+quest the load order does not define, or an alias ID the quest does not define, is refused.
+
+Inside an alias script, `Self` is the alias script's own handle. The alias natives accept it too,
+so an alias script can call `Clear()` on itself.
+
+The world runtime holds the current alias answers, and the session refreshes them after every
+fill, force, or stop. So binding stays nonisolated and never calls back into the main-actor
+session.
 
 Alias script sections become instances when the quest attaches. Unlike other quest scripts they are
 keyed by the filled reference, not by the quest. A `ReferenceAlias` script runs on the reference in

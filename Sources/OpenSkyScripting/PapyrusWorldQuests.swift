@@ -49,7 +49,7 @@ extension PapyrusWorldRuntime {
                 created.insert(item.key)
             }
         }
-        let aliasPlan = questAliasAttachPlan(quest, aliases: aliases)
+        let aliasPlan = questAliasAttachPlan(quest, key: key, aliases: aliases)
         for item in aliasPlan {
             persistentKeys.insert(item.key)
             questAliasInstanceKeys[key, default: []].insert(item.key)
@@ -94,6 +94,7 @@ extension PapyrusWorldRuntime {
         keys.formUnion(aliasKeys)
         for instanceKey in keys.sorted() {
             retire(instanceKey)
+            aliasSlotsByInstance.removeValue(forKey: instanceKey)
             persistentKeys.remove(instanceKey)
             questInstanceKeys.remove(instanceKey)
             firedOnInit.remove(instanceKey)
@@ -157,6 +158,7 @@ extension PapyrusWorldRuntime {
     /// naming a different quest is skipped.
     private func questAliasAttachPlan(
         _ quest: Quest,
+        key questKey: ReferenceKey,
         aliases: QuestAliasState
     ) -> [PapyrusAttachItem] {
         var plan: [PapyrusAttachItem] = []
@@ -183,6 +185,9 @@ extension PapyrusWorldRuntime {
                     reference: reference, scriptName: script.name
                 )
                 guard seen.insert(instanceKey).inserted else { continue }
+                aliasSlotsByInstance[instanceKey] = PapyrusAliasSlot(
+                    quest: questKey, aliasID: UInt32(aliasID)
+                )
                 plan.append(PapyrusAttachItem(
                     key: instanceKey, script: script, isPersistent: true
                 ))

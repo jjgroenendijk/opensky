@@ -149,6 +149,14 @@ nonisolated public struct QuestAliasState: WorldStateComponent, Sendable {
         )
     }
 
+    /// This table with `aliasID` empty, as `Clear` leaves it.
+    public func clearing(_ aliasID: UInt32) -> Self {
+        QuestAliasState(
+            fills: fills.filter { $0.aliasID != aliasID },
+            locationFills: locationFills.filter { $0.aliasID != aliasID }
+        )
+    }
+
     public func fillingLocation(_ aliasID: UInt32, with location: ResolvedFormID) -> Self {
         QuestAliasState(
             fills: fills.filter { $0.aliasID != aliasID },

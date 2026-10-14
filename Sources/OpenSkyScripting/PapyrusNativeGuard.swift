@@ -21,12 +21,16 @@ extension PapyrusNativeFunctions {
         // `Faction Function GetCrimeFaction() native`
         // (<https://ck.uesp.net/wiki/GetCrimeFaction_-_Actor>). An actor with
         // no `CRIF` answers None, which is a fact about the actor rather than a
-        // failure.
+        // failure. A faction `SetCrimeFaction` set wins over `CRIF`.
         registry.register(PapyrusNativeFunction(
             scriptName: "Actor",
             functionName: "GetCrimeFaction"
         ) { call, context in
             guard let actor = actorTarget(call, context) else { return needsActor(call) }
+            let bridge = actor.world as? PapyrusWorldStateBridge
+            if let scripted = bridge?.scriptedState(of: actor.key).form("crimeFaction") {
+                return .returned(handle(scripted, in: actor.world))
+            }
             guard let faction = actor.world.crimeFaction(ofActor: actor.key) else {
                 return failure(call, "GetCrimeFaction needs a session with faction data")
             }

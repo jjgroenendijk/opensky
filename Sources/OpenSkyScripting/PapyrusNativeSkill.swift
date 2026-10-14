@@ -1,4 +1,4 @@
-// The skill natives: `Game.AdvanceSkill` and `Game.IncrementSkill`, which act on
+// The skill natives: `Game.AdvanceSkill`, `IncrementSkill`, and `IncrementSkillBy`, on
 // the player only (<https://ck.uesp.net/wiki/AdvanceSkill_-_Game>).
 // `AdvanceSkill` passes skill use, which the AVIF multipliers convert;
 // `IncrementSkill` passes one whole point. Both run the same path as a landed hit.
@@ -38,6 +38,26 @@ extension PapyrusNativeFunctions {
             skillCall(call, context) { world, index in
                 guard world.advancePlayerSkill(.increment, at: index, by: 1) else {
                     return needsProgression(call)
+                }
+                return .returned(.none)
+            }
+        })
+
+        // "Function IncrementSkillBy(string asSkillName, int aiCount) native global":
+        // `aiCount` whole points, one at a time, so each passes the level-up check. A skill
+        // tops out at 100, so more than 100 steps change nothing.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "IncrementSkillBy"
+        ) { call, context in
+            skillCall(call, context) { world, index in
+                guard let count = integer(call, at: 1), count >= 0 else {
+                    return failure(call, "IncrementSkillBy needs a count of zero or more")
+                }
+                for _ in 0 ..< min(count, 100) {
+                    guard world.advancePlayerSkill(.increment, at: index, by: 1) else {
+                        return needsProgression(call)
+                    }
                 }
                 return .returned(.none)
             }

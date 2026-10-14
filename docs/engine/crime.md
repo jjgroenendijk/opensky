@@ -18,9 +18,11 @@ Ownership answers one question: does this actor own, or may it freely use, that 
 
 The first match wins:
 
-1. The reference's own `XOWN`.
-2. The `XOWN` of the cell it stands in.
-3. No owner.
+1. The owner a script set on the reference with `SetActorOwner` or `SetFactionOwner`, including
+   no owner ([script state](/engine/papyrus-script-state.md#ownership)).
+2. The reference's own `XOWN`.
+3. The `XOWN` of the cell it stands in.
+4. No owner.
 
 The rules do not merge. A chest in an owned shop that names its own owner belongs to that owner
 only.
@@ -152,6 +154,8 @@ disagree about what is a first strike.
 - `doNotReportCrimesAgainstMembers` does not see an actor-owned reference. The flag checks the
   victim's memberships, which are stored per placed actor, but `XOWN` names a base record. A
   faction-owned reference works, because a faction counts as its own member.
+- A cell owner set by `Cell.SetActorOwner` or `Cell.SetFactionOwner` is kept in the script state,
+  but the crime check does not read it. It reads a script owner on the reference only.
 - Crafting does not clear the stolen mark. UESP says an item fully used up in crafting loses it.
   There is no crafting yet.
 

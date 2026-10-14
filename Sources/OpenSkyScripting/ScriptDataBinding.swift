@@ -93,11 +93,13 @@ extension AttachedScript {
     }
 
     /// `aliasHandle` answers filled-alias properties; nil means `objectHandle` does.
+    /// `aliasSlot`, when set, answers every alias property with its slot's handle.
     public func binding(
         in runtime: PapyrusRuntime,
         formIDResolver: FormIDResolver,
         aliases: QuestAliasResolution = .empty,
         aliasHandle: ((ReferenceKey) -> PapyrusObjectHandle?)? = nil,
+        aliasSlot: ((ReferenceKey, UInt32) -> PapyrusObjectHandle?)? = nil,
         objectHandle: @escaping (ReferenceKey) -> PapyrusObjectHandle?
     ) throws -> ScriptBinding {
         guard !isRemoved else {
@@ -112,7 +114,8 @@ extension AttachedScript {
             formIDResolver: formIDResolver,
             aliases: aliases,
             objectHandle: objectHandle,
-            aliasHandle: aliasHandle ?? objectHandle
+            aliasHandle: aliasHandle ?? objectHandle,
+            aliasSlot: aliasSlot
         )
         for property in properties {
             builder.bind(property, chain: chain, runtime: runtime)
@@ -134,6 +137,7 @@ private struct ScriptBindingBuilder {
     let aliases: QuestAliasResolution
     let objectHandle: (ReferenceKey) -> PapyrusObjectHandle?
     let aliasHandle: (ReferenceKey) -> PapyrusObjectHandle?
+    let aliasSlot: ((ReferenceKey, UInt32) -> PapyrusObjectHandle?)?
     var initialValues: [String: PapyrusValue] = [:]
     var propertySettings: [PapyrusPropertySetting] = []
     var resolvedReferences: [ReferenceKey] = []
@@ -295,15 +299,21 @@ private struct ScriptBindingBuilder {
         propertyName: String
     ) -> ResolvedScriptValue? {
         if value.isAlias {
-            guard
-                value.alias >= 0,
-                let key = aliases.reference(
-                    alias: UInt32(value.alias), in: value.formID
-                )
-            else {
+            let filled = value.alias >= 0
+                ? aliases.reference(alias: UInt32(value.alias), in: value.formID) : nil
+            if filled == nil {
                 skip(.aliasObject, property: propertyName)
-                return nil
             }
+            if
+                value.alias >= 0,
+                let quest = ReferenceKey.resolve(value.formID, using: formIDResolver),
+                let slot = aliasSlot?(quest, UInt32(value.alias))
+            {
+                return ResolvedScriptValue(
+                    value: .object(slot), references: filled.map { [$0] } ?? []
+                )
+            }
+            guard let key = filled else { return nil }
             return handleValue(aliasHandle(key), for: key, propertyName: propertyName)
         }
         guard !value.formID.isNull else {

@@ -25,6 +25,7 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | A race ability | The same links of each `RACE SPLO` ability, on each resident actor of the race | While the actor is resident |
 | An explosion | The `EXPL` model at the blast point | 2 s |
 | An impact | The `IPCT` model at the contact point ([impacts and decals](/rendering/decals.md)) | 2 s |
+| A script | `VisualEffect.Play` or `EffectShader.Play` on a reference | The `afTime` argument, or until `Stop` when it is negative |
 | The Effects panel | Any `RFCT`, `EFSH`, `ADDN`, or `ARTO`, on the player or the nearest actor | Until cleared |
 
 An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. A lasting effect that is
