@@ -233,9 +233,10 @@ nonisolated extension SWFMovieRuntime {
 
     // MARK: - Keys
 
-    /// A key down goes to the `Key` broadcaster (CLIK's `InputDelegate`), then
-    /// to the menu's `handleInput`. Listeners only observe: vanilla registers
-    /// unrelated `Key` listeners, so only `handleInput` reports consumption.
+    /// A key down goes to the `Key` broadcaster (CLIK's `InputDelegate`), then,
+    /// when the movie built no `InputDelegate`, to the menu's `handleInput`.
+    /// Listeners only observe: vanilla registers unrelated `Key` listeners, so
+    /// only `handleInput` reports consumption.
     private func keyDown(code: Int, ascii: Int) -> Bool {
         input.lastKeyCode = code
         input.lastKeyAscii = ascii
@@ -244,9 +245,13 @@ nonisolated extension SWFMovieRuntime {
         markDirty()
         let observed = broadcastKey("onKeyDown") > 0
         var handled = dispatchKeyClipEvent(.keyDown, code: code)
-        handled = routeToMenuHandler(code: code, value: "keyDown") || handled
-        if !handled {
-            handled = routeToFocusHandler(code: code, value: "keyDown")
+        // A movie with its own `InputDelegate` heard the key on `Key` above and
+        // drove its focus path; a second route would move a list twice.
+        if !hasLiveInputDelegate {
+            handled = routeToMenuHandler(code: code, value: "keyDown") || handled
+            if !handled {
+                handled = routeToFocusHandler(code: code, value: "keyDown")
+            }
         }
         if !handled, let focus = focusTarget {
             handled = dispatch("onKeyDown", to: focus)

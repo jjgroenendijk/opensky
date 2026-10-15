@@ -35,6 +35,14 @@ nonisolated extension SWFMovieRuntime {
         return value
     }
 
+    /// Whether the movie built CLIK's `InputDelegate`, which listens on `Key` and
+    /// sends each key down the focus path itself. Read without the getter, which
+    /// would create one.
+    public var hasLiveInputDelegate: Bool {
+        globalPath(["gfx", "managers", "InputDelegate"])?.lookup("_instance")?.property.value
+            .objectValue != nil
+    }
+
     /// `gfx.managers.FocusHandler.instance`. The singleton is behind a getter,
     /// so reading it means calling the accessor — and calling it is also what
     /// creates it, which is why this is not a plain property read.
