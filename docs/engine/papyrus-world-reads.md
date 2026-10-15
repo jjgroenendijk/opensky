@@ -92,6 +92,20 @@ script and the instruction it was on. The game names the function and the source
 instead; OpenSky does not read the debug line table. Severity 1 logs a warning and 2 an
 error.
 
+## Interior fog
+
+`Cell.SetFogColor(aiNearRed, aiNearGreen, aiNearBlue, aiFarRed, aiFarGreen, aiFarBlue)`,
+`SetFogPlanes(afNear, afFar)`, and `SetFogPower(afPower)` change the fog of the loaded
+interior. The argument names come from the install's `Cell.pex`. Colour channels are 0 to
+255. A near plane past the far one swaps the two, as the wiki page for `SetFogPlanes` says.
+A cell that is not the loaded interior does not change.
+
+The change lives in the renderer, beside the lighting it was made from. When the scene
+gets other lighting, such as after a move to another cell, the cell's recorded fog draws
+again. The game's rule for how long a change lasts is not documented, so OpenSky keeps it
+only while the cell stays loaded. A cell without recorded fog shows the new fog only after
+`SetFogPlanes` gives it a far plane.
+
 ## User logs and the HUD toggle
 
 `Debug.OpenUserLog(asLogName)` opens a named user log and answers false when it is already

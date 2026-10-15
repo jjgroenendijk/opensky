@@ -42,6 +42,7 @@ public enum PapyrusNativeFunctions {
         installMusic(into: &registry)
         installMounts(into: &registry)
         installSneak(into: &registry)
+        installCellFog(into: &registry)
         installActiveMagicEffect(into: &registry)
         installActorAwareness(into: &registry)
         installTranslation(into: &registry)

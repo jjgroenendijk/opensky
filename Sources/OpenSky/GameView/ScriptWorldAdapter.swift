@@ -128,6 +128,7 @@ final class ScriptWorldAdapter {
             let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight * 0.5)
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
+        bridge.cellFog = { [weak self] cell, change in self?.changeFog(change, in: cell) ?? false }
         bridge.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
             game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in

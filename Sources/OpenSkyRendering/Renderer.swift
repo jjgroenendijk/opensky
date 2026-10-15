@@ -179,6 +179,8 @@ public final class Renderer: NSObject {
 
     /// All maps in one, so a drawn instance costs one lookup.
     var instanceDeltas: [UInt32: float4x4] = [:]
+    /// A script's fog for the loaded interior; ignored once the scene's lighting changes.
+    public var interiorFogOverride: InteriorFogOverride?
     /// This frame's resolved weather (exterior only). nil -> no weather active.
     public var currentResolvedWeather: ResolvedWeather?
     /// The weather's cloud layers; nil keeps the plain sky gradient.

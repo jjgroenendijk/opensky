@@ -13,6 +13,11 @@ extension Renderer {
         public let enabled: UInt32
     }
 
+    /// The loaded interior's fog, with a script's change when it still applies.
+    var interiorFog: FogParameters? {
+        interiorFogOverride?.fog(for: scene.lighting) ?? scene.lighting?.fog
+    }
+
     public static func resolvedFog(
         weatherLight: ResolvedWeather?,
         interior: FogParameters?

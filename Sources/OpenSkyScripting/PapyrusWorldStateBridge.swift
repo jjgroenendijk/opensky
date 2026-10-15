@@ -177,6 +177,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var packageTemplate: ((FormID) -> FormID?)?
     /// The 0...1 light detection reads on an actor whose feet are here. Nil without a renderer.
     public var lightLevel: ((SIMD3<Float>) -> Float)?
+    /// Changes a cell's fog; false when the cell is not the loaded interior. Nil headless.
+    public var cellFog: ((FormID, PapyrusFogChange) -> Bool)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
     /// Hands the drawn pose of every moving reference to the renderer, after each change.
@@ -298,43 +300,6 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         }
     }
 
-    // MARK: - Globals
-
-    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
-        guard let globals, let id = globalFormID(for: key) else {
-            return worldState.globalValue(for: key)
-        }
-        return worldState
-            .globalResolution(defaults: globals, clock: clockSource?())
-            .value(for: id)
-    }
-
-    /// A write with no GLOB record behind it — a synthetic session, or a key
-    /// the loaded plugins do not define — keeps whatever type an existing
-    /// override declared and otherwise treats the value as a float, rather
-    /// than inventing a `short`/`long` rounding rule the plugin never stated.
-    @discardableResult
-    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
-        if let globals, let id = globalFormID(for: key) {
-            return worldState.setGlobal(raw, formID: id, defaults: globals)
-        }
-        let type = worldState.globalValue(for: key)?.type ?? .float
-        return worldState.setGlobal(raw, type: type, for: key)
-    }
-
-    private func globalFormID(for key: ReferenceKey) -> FormID? {
-        if let globalFormIDsByKey {
-            return globalFormIDsByKey[key]
-        }
-        var map: [ReferenceKey: FormID] = [:]
-        for global in globals?.sortedGlobals() ?? [] {
-            guard let globalKey = globals?.key(for: global.formID) else { continue }
-            map[globalKey] = global.formID
-        }
-        globalFormIDsByKey = map
-        return map[key]
-    }
-
     // MARK: - Activation
 
     /// Records one activation, queues `OnActivate` on the target's scripts, and
@@ -424,5 +389,42 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             by: playerKey,
             togglesOpen: interaction.action == .open
         )
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
+        guard let globals, let id = globalFormID(for: key) else {
+            return worldState.globalValue(for: key)
+        }
+        return worldState
+            .globalResolution(defaults: globals, clock: clockSource?())
+            .value(for: id)
+    }
+
+    /// A write with no GLOB record behind it — a synthetic session, or a key
+    /// the loaded plugins do not define — keeps whatever type an existing
+    /// override declared and otherwise treats the value as a float, rather
+    /// than inventing a `short`/`long` rounding rule the plugin never stated.
+    @discardableResult
+    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
+        if let globals, let id = globalFormID(for: key) {
+            return worldState.setGlobal(raw, formID: id, defaults: globals)
+        }
+        let type = worldState.globalValue(for: key)?.type ?? .float
+        return worldState.setGlobal(raw, type: type, for: key)
+    }
+
+    private func globalFormID(for key: ReferenceKey) -> FormID? {
+        if let globalFormIDsByKey {
+            return globalFormIDsByKey[key]
+        }
+        var map: [ReferenceKey: FormID] = [:]
+        for global in globals?.sortedGlobals() ?? [] {
+            guard let globalKey = globals?.key(for: global.formID) else { continue }
+            map[globalKey] = global.formID
+        }
+        globalFormIDsByKey = map
+        return map[key]
     }
 }
