@@ -1,5 +1,5 @@
-// World > Environment > Actor animation: enable toggle and playback readout, plus
-// the flicker and pulse of placed lights.
+// World > Environment > Actor animation: enable toggle and playback readout, the
+// flicker and pulse of placed lights, and the clip events that reach the engine.
 
 import AppKit
 import OpenSkyWorld
@@ -17,7 +17,12 @@ final class AnimationSection: PanelSectionViewController {
     let lightsControl = NSButton(
         checkboxWithTitle: "Flickering lights", target: nil, action: nil
     )
+    let eventsControl = NSButton(checkboxWithTitle: "Animation events", target: nil, action: nil)
+    let eventField = NSTextField(string: "")
+    let sendEventControl = NSButton(title: "Send as player", target: nil, action: nil)
     private let statsLabel = PanelComponents.statsLabel(identifier: "AnimationStatsLabel")
+    private let eventsLabel = PanelComponents.statsLabel(identifier: "AnimationEventsStatsLabel")
+    private var sendResult = "Sent: none"
 
     override var sectionTitle: String {
         "Actor animation"
@@ -37,11 +42,13 @@ final class AnimationSection: PanelSectionViewController {
 
     static func isOverridden(provider: (any AnimationControlProviding)?) -> Bool {
         provider?.actorAnimationsEnabled == false || provider?.lightAnimationEnabled == false
+            || provider?.animationEventsEnabled == false
     }
 
     static func resetToDefaults(provider: (any AnimationControlProviding)?) {
         provider?.actorAnimationsEnabled = true
         provider?.lightAnimationEnabled = true
+        provider?.animationEventsEnabled = true
     }
 
     override func makeContentViews() -> [NSView] {
@@ -53,7 +60,32 @@ final class AnimationSection: PanelSectionViewController {
             lightsControl, target: self, action: #selector(lightsChanged),
             identifier: "LightAnimationEnabledControl"
         )
-        return [PanelComponents.group([enabledControl, lightsControl]), statsLabel]
+        eventsControl.toolTip = "Clip events play sounds, shake the camera, and stop head turns."
+        PanelComponents.configureCheckbox(
+            eventsControl, target: self, action: #selector(eventsChanged),
+            identifier: "AnimationEventsEnabledControl"
+        )
+        PanelComponents.configureTextField(
+            eventField, identifier: "AnimationEventNameControl", width: 220,
+            placeholder: "CameraShake.0.5"
+        )
+        sendEventControl.toolTip = "Runs the event at the player, as if the player's clip sent it."
+        PanelComponents.configureButton(
+            sendEventControl, target: self, action: #selector(sendEvent),
+            identifier: "AnimationEventSendControl"
+        )
+        return [
+            PanelComponents.group([enabledControl, lightsControl]),
+            statsLabel,
+            PanelComponents.group([
+                eventsControl,
+                PanelComponents.labeledFieldRow(
+                    caption: "Event", captionWidth: 60, field: eventField
+                ),
+                PanelComponents.buttonRow([sendEventControl])
+            ]),
+            eventsLabel
+        ]
     }
 
     override func syncControls() {
@@ -61,13 +93,19 @@ final class AnimationSection: PanelSectionViewController {
         enabledControl.state = provider?.actorAnimationsEnabled == true ? .on : .off
         lightsControl.isEnabled = provider != nil
         lightsControl.state = provider?.lightAnimationEnabled == true ? .on : .off
+        eventsControl.isEnabled = provider != nil
+        eventsControl.state = provider?.animationEventsEnabled == true ? .on : .off
+        sendEventControl.isEnabled = provider != nil
     }
 
     override func refreshReadout() {
         guard let provider else {
             statsLabel.stringValue = "Animation: unavailable"
+            eventsLabel.stringValue = "Animation events: unavailable"
             return
         }
+        eventsLabel.stringValue = ([sendResult] + provider.animationEventReadout)
+            .joined(separator: "\n")
         let snapshot = provider.animationSnapshot
         let state = provider.actorAnimationsEnabled ? "playing" : "bind pose"
         statsLabel.stringValue = "Animation: \(snapshot.playbackCount) playbacks, "
@@ -78,6 +116,21 @@ final class AnimationSection: PanelSectionViewController {
 
     @objc private func lightsChanged() {
         provider?.lightAnimationEnabled = lightsControl.state == .on
+        finishInteraction()
+    }
+
+    @objc private func eventsChanged() {
+        provider?.animationEventsEnabled = eventsControl.state == .on
+        refreshOverrideState()
+        finishInteraction()
+    }
+
+    @objc private func sendEvent() {
+        let name = eventField.stringValue
+        guard !name.isEmpty, let provider else { return }
+        let ran = provider.sendPlayerAnimationEvent(name)
+        sendResult = ran ? "Sent: \(name)" : "Sent: \(name) asks for nothing"
+        refreshReadout()
         finishInteraction()
     }
 

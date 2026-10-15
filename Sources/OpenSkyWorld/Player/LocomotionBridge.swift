@@ -86,6 +86,8 @@ nonisolated public final class LocomotionBridge {
     public let archeryEventConsumer: LocomotionGraphEventQueue.Consumer
     /// The ragdoll runtime's cursor.
     public let ragdollEventConsumer: LocomotionGraphEventQueue.Consumer
+    /// The animation event coordinator's cursor: sounds, camera shake, head tracking.
+    public let animationEventConsumer: LocomotionGraphEventQueue.Consumer
 
     private var previousYaw: Float?
     var wasMoving = false
@@ -119,34 +121,12 @@ nonisolated public final class LocomotionBridge {
         meleeEventConsumer = events.addConsumer()
         archeryEventConsumer = events.addConsumer()
         ragdollEventConsumer = events.addConsumer()
+        animationEventConsumer = events.addConsumer()
         self.configuration = configuration
         self.graph = graph
         self.sampleWater = sampleWater
         status = LocomotionStatus(graphAvailable: graph != nil)
         seedPerspectiveVariables()
-    }
-
-    /// Takes this frame's intent from the drained camera input. Jump is latched
-    /// here rather than consumed, so a press between two rendered frames still
-    /// reaches a fixed step.
-    public func acceptFrame(_ input: CameraInput) {
-        intent = LocomotionIntent(
-            moveForward: input.moveForward,
-            moveRight: input.moveRight,
-            run: input.boost,
-            sprint: input.sprint,
-            sneak: input.sneak,
-            jump: input.jump
-        )
-        meleeIntent = MeleeIntent(
-            attack: input.attack,
-            block: input.block,
-            toggleWeaponDrawn: input.toggleWeaponDrawn
-        )
-        archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
-        if input.jump {
-            pendingJump = true
-        }
     }
 
     /// Plans one fixed step: writes engine state into the graph, advances the
@@ -328,7 +308,7 @@ nonisolated public final class LocomotionBridge {
         guard let graph else { return nil }
         let result = graph.update(deltaTime: deltaTime)
         status.noteGraphUpdate(events: result.firedEvents)
-        graphEvents.enqueue(result.firedEvents)
+        graphEvents.enqueue(result.firedEvents, unbound: result.unboundEvents)
         pose.publish(result.bones)
         return result.rootMotion
     }
@@ -388,6 +368,31 @@ nonisolated public final class LocomotionBridge {
             raise(LocomotionGraphNames.jumpLand)
         } else if hasGroundSample, !grounded, wasGrounded {
             raise(LocomotionGraphNames.jumpFall)
+        }
+    }
+}
+
+nonisolated extension LocomotionBridge {
+    /// Takes this frame's intent from the drained camera input. Jump is latched
+    /// here rather than consumed, so a press between two rendered frames still
+    /// reaches a fixed step.
+    public func acceptFrame(_ input: CameraInput) {
+        intent = LocomotionIntent(
+            moveForward: input.moveForward,
+            moveRight: input.moveRight,
+            run: input.boost,
+            sprint: input.sprint,
+            sneak: input.sneak,
+            jump: input.jump
+        )
+        meleeIntent = MeleeIntent(
+            attack: input.attack,
+            block: input.block,
+            toggleWeaponDrawn: input.toggleWeaponDrawn
+        )
+        archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
+        if input.jump {
+            pendingJump = true
         }
     }
 }

@@ -106,7 +106,7 @@ public final class ObjectBehaviorCoordinator {
             if !result.bones.isEmpty {
                 entry.object.pose.publish(result.bones)
             }
-            for name in result.firedEvents.compactMap(\.name) {
+            for name in result.firedEvents.compactMap(\.name) + result.unboundEvents {
                 onAnimationEvent?(reference, name)
                 finishWaits(on: reference, event: name)
             }

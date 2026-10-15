@@ -55,7 +55,12 @@ public final class WorldAudioSoundDirector {
     /// The request each interaction loop is for. A loop that arrives after its door
     /// closed finds another token, or none, and does not start.
     private var interactionLoopTokens: [FormID: Int] = [:]
-    private var nextLoopToken = 0
+    var nextLoopToken = 0
+    /// Animation loops by source and descriptor, like the interaction loops above.
+    var animationLoopTokens: [AnimationSoundKey: Int] = [:]
+    var animationLoopSourceIDs: [AnimationSoundKey: Int] = [:]
+    /// Lowercased SNDR editor ID -> FormID, built on the first animation sound.
+    var soundIDsByEditorID: [String: FormID]?
 
     /// SFX on use-key activation. Off by default until the user enables audio;
     /// the panel control writes back here.
@@ -81,7 +86,7 @@ public final class WorldAudioSoundDirector {
 
     /// Most recent SFX outcome, surfaced through the World > Audio readout.
     public private(set) var lastSFXDescription: String?
-    public private(set) var lastSFXError: String?
+    public internal(set) var lastSFXError: String?
     /// The routing the last one-shot took, and why, for the readout.
     public private(set) var lastRouting: String?
     /// Resolves an SNDR's raw `ONAM` link; nil leaves the channel-count rule in charge.

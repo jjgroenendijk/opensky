@@ -54,8 +54,11 @@ generator, so:
 - its time is measured in the animation, so the window start is subtracted before the test;
 - an annotation outside the window was cut away and never fires.
 
-A graph that declares no event by the annotation's name drops it quietly. This is not an error: one
-animation is played by behavior files that care about different marks.
+A graph that declares no event by the annotation's name does not react to it. This is not an error:
+one animation is played by behavior files that care about different marks. The name still leaves
+the update in `unboundEvents`, because the engine reads some annotations no graph declares, such as
+`SoundPlay.<editor ID>` ([animation events](/engine/animation-events.md)). A child graph's event
+that its parent does not declare leaves the same way.
 
 One exception to the half-open interval applies to annotations only. The update that starts a clip
 covers the closed interval from its start time. Vanilla places marks on the first frame and means

@@ -46,12 +46,12 @@ nonisolated public final class LocomotionGraphEventQueue {
         return consumer
     }
 
-    /// Appends this step's fired events, oldest dropped first past the cap.
-    /// Events the graph reports with no name carry nothing a consumer could
-    /// match a footstep tag or a hit frame against, so they are not queued.
-    public func enqueue(_ events: [BehaviorEvent]) {
-        guard !events.isEmpty else { return }
-        names += events.compactMap(\.name)
+    /// Appends this step's fired events, then the names the graph declares no event
+    /// for, oldest dropped first past the cap. Events the graph reports with no name
+    /// carry nothing a consumer could match, so they are not queued.
+    public func enqueue(_ events: [BehaviorEvent], unbound: [String] = []) {
+        guard !events.isEmpty || !unbound.isEmpty else { return }
+        names += events.compactMap(\.name) + unbound
         trim()
     }
 

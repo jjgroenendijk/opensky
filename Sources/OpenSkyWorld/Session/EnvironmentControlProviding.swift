@@ -68,6 +68,12 @@ public protocol AnimationControlProviding: AnyObject {
     var lightAnimationEnabled: Bool { get set }
     /// Scene point lights that have a flicker or pulse.
     var animatedLightCount: Int { get }
+    /// Clip annotations play sounds, shake the camera, and stop head tracking.
+    var animationEventsEnabled: Bool { get set }
+    /// One line per action kind, then the last event and the sounds no record has.
+    var animationEventReadout: [String] { get }
+    /// Runs `name` as if the player's graph fired it. False when it asks for nothing.
+    func sendPlayerAnimationEvent(_ name: String) -> Bool
 }
 
 nonisolated public struct ParticleControlSnapshot: Equatable, Sendable {

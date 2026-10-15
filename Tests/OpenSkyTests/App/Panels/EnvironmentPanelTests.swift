@@ -194,6 +194,30 @@ struct EnvironmentPanelTests {
         #expect(readout.hasPrefix("Surface normal maps: 12 draws\nSpecular highlights: 0 draws"))
     }
 
+    @Test @MainActor
+    func animationEventControlsWriteTheProviderAndSendAnEvent() {
+        let provider = FakeWorldProviders()
+        let section = AnimationSection()
+        _ = section.view
+        section.provider = provider
+        #expect(section.eventsControl.accessibilityIdentifier() == "AnimationEventsEnabledControl")
+        #expect(section.eventField.accessibilityIdentifier() == "AnimationEventNameControl")
+        #expect(section.sendEventControl.accessibilityIdentifier() == "AnimationEventSendControl")
+        #expect(section.eventsControl.state == .on)
+
+        section.eventsControl.performClick(nil)
+        #expect(!provider.animationEventsEnabled)
+        #expect(AnimationSection.isOverridden(provider: provider))
+        AnimationSection.resetToDefaults(provider: provider)
+        #expect(provider.animationEventsEnabled)
+
+        section.eventField.stringValue = "SoundPlay.TestClap"
+        section.sendEventControl.performClick(nil)
+        #expect(provider.livingEnvironment.sentAnimationEvents == ["SoundPlay.TestClap"])
+        let readout = Self.label("AnimationEventsStatsLabel", in: section.view)?.stringValue
+        #expect(readout == "Sent: SoundPlay.TestClap\nsound play: 1")
+    }
+
     @MainActor
     private static func label(_ identifier: String, in view: NSView) -> NSTextField? {
         if let label = view as? NSTextField, label.accessibilityIdentifier() == identifier {

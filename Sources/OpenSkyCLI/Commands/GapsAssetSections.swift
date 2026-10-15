@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyAudio
+import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyFormatsAnimation
 import OpenSkyFormatsCore
@@ -61,7 +62,8 @@ extension GapsGatherer {
         let unread = forEachFile(suffixes: [".hkx"]) { census.record(data: $1) }
         let handledEvents = Set(
             (CombatGraphNames.observedEvents + ArcheryGraphNames.observedEvents
-                + RagdollGraphNames.handOffEvents).map { $0.lowercased() }
+                + RagdollGraphNames.handOffEvents + AnimationEventAction.handledEvents)
+                .map { $0.lowercased() }
         ).union(footstepTags())
         let boundVariables = Set(
             (CombatGraphNames.variables + ArcheryGraphNames.variables

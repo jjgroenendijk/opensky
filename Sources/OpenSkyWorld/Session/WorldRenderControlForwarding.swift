@@ -110,6 +110,19 @@ extension WorldRenderControlForwarding {
         renderControls.animatedLightCount
     }
 
+    public var animationEventsEnabled: Bool {
+        get { renderControls.animationEventsEnabled }
+        set { renderControls.animationEventsEnabled = newValue }
+    }
+
+    public var animationEventReadout: [String] {
+        renderControls.animationEventReadout
+    }
+
+    public func sendPlayerAnimationEvent(_ name: String) -> Bool {
+        renderControls.sendPlayerAnimationEvent(name)
+    }
+
     public var particlesEnabled: Bool {
         get { renderControls.particlesEnabled }
         set { renderControls.particlesEnabled = newValue }
