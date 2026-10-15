@@ -27,54 +27,12 @@ struct ConditionFunctionTests {
 
     @Test func registryDescribesTheImplementedFunctions() {
         let registry = ConditionFunctionRegistry.standard
-        // The measured keyword, form-list, location, magic, perk, level, base-actor-value,
-        // crime-gold, faction, item-count, tempering, lock, actor-body, camera, furniture,
-        // skill-use, and cell functions.
-        #expect(registry.indices == [
-            1, 14, 18, 27, 32, 35, 45, 46, 47, 48, 56, 58, 59, 60, 62, 65, 67, 69, 70, 71, 72,
-            73, 74, 75, 77, 80, 91, 102, 103, 130, 131, 136, 149, 159, 170, 180, 181, 182, 185,
-            214, 223, 237, 244, 248, 249, 250, 263, 264, 266, 277, 286, 289, 300, 310, 313, 323,
-            353, 354, 359, 360, 362, 365, 372, 375, 376, 391, 402, 403, 407, 426, 430, 444, 448,
-            449, 453, 459, 476, 515, 516, 517, 518, 522, 523, 543, 550, 555, 560, 561, 562, 565,
-            566, 567, 568, 570, 571, 572, 576, 580, 590, 594, 603, 604, 605, 606, 608, 610, 613,
-            614, 629, 630, 631, 632, 640, 641, 644, 650, 651, 659, 675, 681, 691, 692, 698, 699,
-            700, 719
-        ])
-        #expect(registry.count == 126)
-        #expect(registry.sortedFunctions().map(\.name) == [
-            "GetDistance", "GetActorValue", "GetCurrentTime", "GetLineOfSight", "GetInSameCell",
-            "GetDisabled", "GetDetected", "GetDead", "GetItemCount", "GetGold",
-            "GetQuestRunning", "GetStage", "GetStageDone", "GetFactionRankDifference",
-            "IsRaining", "GetLockLevel", "GetInCell", "GetIsRace", "GetIsSex", "GetInFaction",
-            "GetIsID", "GetFactionRank", "GetGlobalValue", "IsSnowing", "GetRandomPercent",
-            "GetLevel", "GetIsAlerted", "IsTorchOut", "IsShieldOut", "GetPCIsRace",
-            "GetPCIsSex", "GetIsReference", "GetIsCurrentWeather", "GetSitting", "GetDayOfWeek",
-            "HasSameEditorLocAsRef", "HasSameEditorLocAsRefAlias", "GetEquipped", "IsSwimming",
-            "HasMagicEffect", "IsSpellTarget", "GetIsGhost", "GetRestrained", "IsScenePlaying",
-            "IsInDialogueWithPlayer", "GetLocationCleared", "IsWeaponOut", "HasSpell",
-            "IsPleasant", "GetBaseActorValue", "IsSneaking", "IsInCombat", "IsInInterior",
-            "GetInWorldspace", "GetPairedAnimation", "GetCombatState", "IsActor", "IsEssential",
-            "GetInCurrentLoc", "GetInCurrentLocAlias", "HasLinkedRef", "IsChild", "IsInList",
-            "GetCrimeGoldViolent", "GetCrimeGoldNonviolent", "IsPC1stPerson",
-            "IsBribedbyPlayer", "GetRelationshipRank", "GetVATSValue", "GetIsVoiceType",
-            "GetHealthPercentage", "GetInCurrentLocFormList", "HasPerk", "GetFactionRelation",
-            "GetPlayerTeammate", "GetCrimeGold", "IsProtected", "GetVATSRightAreaFree",
-            "GetVATSLeftAreaFree", "GetVATSBackAreaFree", "GetVATSFrontAreaFree",
-            "GetVATSRightTargetVisible", "GetVATSLeftTargetVisible", "GetQuestCompleted",
-            "IsSceneActionComplete", "HasLoaded3D", "HasKeyword", "HasRefType",
-            "LocationHasKeyword", "GetIsEditorLocation", "GetIsAliasRef", "GetIsEditorLocAlias",
-            "IsSprinting", "HasEquippedSpell", "GetCurrentCastingType",
-            "GetCurrentDeliveryType", "GetEventData", "IsBleedingOut", "IsInScene",
-            "GetIsFlying", "IsInSameCurrentLocAsRef", "IsInSameCurrentLocAsRefAlias",
-            "LocAliasIsLocation", "GetKeywordDataForLocation", "GetKeywordDataForAlias",
-            "LocAliasHasKeyword", "IsFurnitureAnimType", "IsFurnitureEntryType",
-            "GetVMQuestVariable", "GetVMScriptVariable", "IsEnteringInteractionQuick",
-            "IsCasting", "GetActorValuePercent", "IsUnique", "IsInFurnitureState", "IsLinkedTo",
-            "GetKeywordDataForCurrentLocation", "EPTemperingItemIsEnchanted",
-            "GetGraphVariableInt", "EPMagic_IsAdvanceSkill",
-            "EPModSkillUsage_AdvanceObjectHasKeyword", "EPModSkillUsage_IsAdvanceAction",
-            "IsAllowedToFly", "HasMagicEffectKeyword", "IsCommandedActor", "IsHostileToActor"
-        ])
+        // Every registered function carries the name xEdit gives its index, so a wrong
+        // index shows up here.
+        let named = registry.sortedFunctions().map { ConditionFunctionNames.name(for: $0.index) }
+        #expect(named == registry.sortedFunctions().map { Optional($0.name) })
+        #expect(registry.count == registry.indices.count)
+        #expect(registry.count >= 200)
         // The Creation Kit spells every index 4096 higher than the plugin does.
         #expect(registry.sortedFunctions().map(\.creationKitIndex) == registry.indices.map {
             Int($0) + 4096

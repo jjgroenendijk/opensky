@@ -1,11 +1,12 @@
 // Actor-body condition functions, from xEdit wbDefinitionsTES5.pas: 69 GetIsRace,
 // 102 IsTorchOut, 103 IsShieldOut, 313 GetPairedAnimation, 365 IsChild, 594
-// GetIsFlying. Idle markers and camera paths test them.
+// GetIsFlying, 715 IsUndead. Idle markers and camera paths test them.
 // See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     public static func installActorBody(_ registry: inout ConditionFunctionRegistry) {
@@ -43,6 +44,21 @@ nonisolated extension ConditionFunctions {
 
         registry.register(ConditionFunction(index: 594, name: "GetIsFlying") { call in
             call.actorState().map { Self.isTrue($0.isFlying) }
+        })
+
+        // The race carries `ActorTypeUndead`, as draugr and skeletons do.
+        registry.register(ConditionFunction(index: 715, name: "IsUndead") { call in
+            call.actorState().flatMap { state in
+                guard
+                    let keywords = state.raceKeywords,
+                    let store = call.context.data.keywords,
+                    let plugin = call.context.data.sourcePlugin,
+                    let undead = store.keyword(editorID: "ActorTypeUndead")?.id
+                else { return .failure(.unavailableActorState) }
+                return .success(Self.isTrue(keywords.contains {
+                    store.resolvedID($0, fromPlugin: plugin) == undead
+                }))
+            }
         })
     }
 

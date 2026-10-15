@@ -236,6 +236,11 @@ public struct NPCMovementRuntime {
         facings[actor]
     }
 
+    /// The motion of every actor following a path.
+    public func motionFacts() -> [ReferenceKey: ReferenceMotionFacts] {
+        movers.mapValues(\.motionFacts)
+    }
+
     public func readouts() -> [NPCMovementReadout] {
         let live = movers.values.map(\.readout) + facings.values.map(\.readout)
         let held = parked.filter { facings[$0.key] == nil }.values.map(\.readout)

@@ -51,16 +51,28 @@ public enum HostilityFixture {
         }
     }
 
+    /// The two ASTP records every load order with pairs carries.
+    public enum Associations {
+        /// `ParentChild`, a family association.
+        public static let parentChild: UInt32 = 0x950
+        /// A non-family association.
+        public static let courier: UInt32 = 0x951
+    }
+
     /// One authored RELA, parent toward child.
-    public struct Pair {
+    public struct Pair: Sendable {
         public let parent: UInt32
         public let child: UInt32
         public let rank: UInt16
+        public let association: UInt32
 
-        public init(_ parent: UInt32, _ child: UInt32, _ rank: RelationshipRank) {
+        public init(
+            _ parent: UInt32, _ child: UInt32, _ rank: RelationshipRank, association: UInt32 = 0
+        ) {
             self.parent = parent
             self.child = child
             self.rank = rank.rawValue
+            self.association = association
         }
     }
 
@@ -99,11 +111,17 @@ public enum HostilityFixture {
                     formID: UInt32(0x900 + offset),
                     editorID: "Rela\(offset)",
                     body: RelationshipFixture.data(
-                        parent: pair.parent, child: pair.child, rank: pair.rank
+                        parent: pair.parent, child: pair.child, rank: pair.rank,
+                        associationType: pair.association
                     )
                 )
             }
             data += ESMFixture.topGroup("RELA", contents: records.reduce(Data(), +))
+            data += ESMFixture.topGroup("ASTP", contents: RelationshipFixture.associationType(
+                formID: Associations.parentChild, editorID: "ParentChild", flags: 1
+            ) + RelationshipFixture.associationType(
+                formID: Associations.courier, editorID: "Courier", flags: 0
+            ))
         }
         return try ESMFile(data: data)
     }

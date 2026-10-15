@@ -1,6 +1,7 @@
 // The seam other features read perks through. `PerkRuntime` in OpenSkyProgression
 // conforms, and the composition root hands it to Magic as this protocol.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 
@@ -9,6 +10,9 @@ import OpenSkyGameData
 public protocol PerkAccess {
     /// The perk records the load order defines.
     var perks: PerkStore { get }
+
+    /// The seams the entry-point conditions read, such as the spell being cast.
+    var conditions: ConditionContext { get set }
 
     /// Whether `holder` owns `perk`.
     func owns(_ perk: ReferenceKey, on holder: ActorValueHolder) -> Bool

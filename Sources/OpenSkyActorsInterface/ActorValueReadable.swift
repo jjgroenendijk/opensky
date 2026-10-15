@@ -38,6 +38,12 @@ nonisolated extension ActorValueReadable {
         entry(at: index)?.base
     }
 
+    /// What `GetPermanentActorValue` reports: the base plus permanent modifiers, without
+    /// damage or temporary modifiers.
+    public func permanentValue(at index: Int32) -> Float? {
+        entry(at: index).map { $0.base + $0.permanent }
+    }
+
     /// `index`'s stored entry, or the unmodified entry its records author. Nil only
     /// for an index outside the table. A primary without a baseline falls back to
     /// `maximums`.

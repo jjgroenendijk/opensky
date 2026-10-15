@@ -20,6 +20,23 @@ extension NPCMover {
         NPCDrawDelta.from(drawn: authoredPlacement, to: transform, scale: scale)
     }
 
+    /// Moving along its heading at its gait's speed, toward the next waypoint.
+    public var motionFacts: ReferenceMotionFacts {
+        let transform = transform
+        let target = state == .moving && path.waypoints.indices.contains(waypointIndex)
+            ? path.waypoints[waypointIndex] : nil
+        let gaitSpeed = speed(of: gait)
+        let heading = transform.rotation.z
+        return ReferenceMotionFacts(
+            position: transform.position,
+            rotation: transform.rotation,
+            velocity: SIMD3(sin(heading), cos(heading), 0) * (target == nil ? 0 : gaitSpeed),
+            pathTarget: target,
+            pathTargetSpeed: gaitSpeed,
+            pathTurnSpeed: NPCMovementRuntime.maximumYawSpeed
+        )
+    }
+
     public var readout: NPCMovementReadout {
         readout(as: state)
     }

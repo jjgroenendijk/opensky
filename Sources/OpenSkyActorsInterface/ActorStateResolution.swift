@@ -41,6 +41,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var leftHandOut: ActorLeftHandOut?
     /// The actor's race, which `GetIsRace` compares, or nil when it is not known.
     public var race: FormID?
+    /// The race's keywords, nil when the race is not known.
+    public var raceKeywords: [FormID]?
     /// OpenSky plays no paired animation (kill moves) and moves no actor in flight
     /// yet, so both stay false until those systems set them.
     public var isInPairedAnimation = false
@@ -53,6 +55,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var isSwimming: Bool?
     /// The base record's `ACBS` flags. Nil for the player, who has no NPC_ record here.
     public var recordFlags: ActorBase.Flags?
+    /// What the actor is doing in a fight. Nil when nothing observes it.
+    public var action: ActorActionFacts?
 
     public init(
         current: ActorValues,

@@ -92,6 +92,10 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
     /// Capsule bottom after the last planned step.
     public var feetPosition = SIMD3<Float>()
     public var verticalVelocity: Float = 0
+    /// The last step's horizontal travel per second, world units.
+    public var horizontalVelocity = SIMD2<Float>()
+    /// Walk yaw of the last step, counter-clockwise from +X.
+    public var yaw: Float = 0
     public var isGrounded = true
     /// Water surface height where the capsule stands, when it is over water.
     public var waterSurfaceHeight: Float?
@@ -153,6 +157,8 @@ nonisolated public struct LocomotionStatus: Equatable, Sendable {
         lastPlan = plan
         feetPosition = state.feetPosition
         verticalVelocity = state.verticalVelocity
+        horizontalVelocity = state.dt > 0 ? plan.horizontalDisplacement / state.dt : .zero
+        yaw = state.yaw
         isGrounded = state.isGrounded
         waterSurfaceHeight = waterSurface
         recordMotion(plan: plan, changed: changed || motionTrace.isEmpty)

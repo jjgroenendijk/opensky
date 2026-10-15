@@ -12,6 +12,8 @@ nonisolated public struct Package: Equatable, Sendable {
             self.rawValue = rawValue
         }
 
+        /// UESP "Skyrim Mod:Mod File Format/PACK".
+        public static let offersServices = GeneralFlags(rawValue: 0x0000_0001)
         public static let mustComplete = GeneralFlags(rawValue: 0x0000_0004)
         public static let maintainSpeedAtGoal = GeneralFlags(rawValue: 0x0000_0008)
         public static let oncePerDay = GeneralFlags(rawValue: 0x0000_0400)

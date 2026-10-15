@@ -64,6 +64,8 @@ nonisolated public struct ActorValueBaseline: Equatable, Sendable {
     /// The NPC_ record's own `ACBS` flags, not followed through a template. Empty for
     /// the player and for a subject with no record.
     public var recordFlags: ActorBase.Flags = []
+    /// The race's `KWDA` keywords, which `IsUndead` tests.
+    public var raceKeywords: [FormID] = []
 
     public init(
         maximums: ActorValues,
@@ -191,7 +193,7 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
         else {
             return fallback.atLevel(playerLevel.level)
         }
-        return ActorValueBaseline(
+        var baseline = ActorValueBaseline(
             maximums: ActorValues(
                 health: max(0, race.stats.startingHealth),
                 magicka: max(0, race.stats.startingMagicka),
@@ -217,6 +219,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             isChild: race.flags.contains(.child),
             race: playerRace
         )
+        baseline.raceKeywords = race.details.keywords
+        return baseline
     }
 
     private func actorBaseline(base: FormID) -> ActorValueBaseline {
@@ -237,6 +241,8 @@ nonisolated public struct ActorValueBaselineResolver: Sendable {
             isFemale: (try? resolver.templates.resolve(base: base))?.isFemale.value
         )
         baseline.recordFlags = resolver.templates.actors[base.rawValue]?.flags ?? []
+        baseline.raceKeywords = resolved.race
+            .flatMap { resolver.races[$0.rawValue]?.details.keywords } ?? []
         return baseline
     }
 }

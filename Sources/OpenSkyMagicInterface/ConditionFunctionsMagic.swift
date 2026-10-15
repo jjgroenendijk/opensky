@@ -15,6 +15,7 @@ nonisolated extension ConditionFunctions {
         installSpellKnowledge(&registry)
         installEffectPresence(&registry)
         installCastingState(&registry)
+        installSpellProperties(&registry)
     }
 
     // MARK: - Knowing a spell, and being its target

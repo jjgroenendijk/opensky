@@ -67,6 +67,7 @@ extension CrimeCoordinator: CrimeArrestSession {
     private func serve(_ settlement: ArrestSettlement) {
         // Before the sentence passes: the cooldown counts from the arrest.
         let now = world?.gameSeconds ?? 0
+        lastSentenceDays = settlement.sentenceDays
         if settlement.sentenceDays > 0 {
             world?.passGameTime(days: settlement.sentenceDays)
         }

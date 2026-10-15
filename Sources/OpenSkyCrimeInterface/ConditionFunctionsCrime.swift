@@ -20,6 +20,7 @@ nonisolated extension ConditionFunctions {
         registerCrimeGold(
             index: 376, name: "GetCrimeGoldNonviolent", violent: false, into: &registry
         )
+        installCrimeSituation(&registry)
     }
 
     /// One crime-gold reader: the whole bounty when `violent` is nil, one half

@@ -6,6 +6,7 @@ import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing
@@ -80,6 +81,40 @@ struct ConditionActorBodyFunctionTests {
         let state = Self.state(hand: .nothing)
         #expect(try Self.outcome(313, equals: 0, state: state) == .true)
         #expect(try Self.outcome(594, equals: 0, state: state) == .true)
+    }
+
+    @Test func isUndeadReadsTheRaceKeyword() throws {
+        let file = try KeywordFixture.plugin(keywords: [
+            KeywordFixture.recordBytes(formID: 0x13796, editorID: "ActorTypeUndead"),
+            KeywordFixture.recordBytes(formID: 0x13794, editorID: "ActorTypeNPC")
+        ])
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.data = ConditionDataResolution(
+            keywords: KeywordStore(plugins: [("Skyrim.esm", file)]), sourcePlugin: "Skyrim.esm"
+        )
+        func undead(_ keywords: [FormID]?) -> ConditionOutcome {
+            var state = Self.state(hand: .nothing)
+            state.raceKeywords = keywords
+            context.actors = ActorStateResolution(states: [Self.subject: state])
+            var evaluator = ConditionEvaluator(context: context)
+            return (try? evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+                functionIndex: 715, 0, 1
+            ))) ?? .false
+        }
+        #expect(undead([FormID(0x13796)]) == .true)
+        #expect(undead([FormID(0x13794)]).isTrue == false)
+        #expect(undead(nil).failures == [.unavailableActorState])
+    }
+
+    @Test func permanentValueSkipsDamageAndTemporaryModifiers() throws {
+        var state = Self.state(hand: .nothing)
+        state.general[24] = ActorValueEntry(base: 50, permanent: 10, temporary: 5, damage: -3)
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.actors = ActorStateResolution(states: [Self.subject: state])
+        var evaluator = ConditionEvaluator(context: context)
+        #expect(try evaluator.evaluate(ConditionEvaluatorFixture.comparing(
+            functionIndex: 494, 0, 60, parameter1: 24
+        )) == .true)
     }
 
     @Test func isChildReadsTheRaceFlag() throws {

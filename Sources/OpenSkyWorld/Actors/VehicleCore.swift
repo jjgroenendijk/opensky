@@ -56,6 +56,17 @@ nonisolated public struct VehicleCore: Equatable, Sendable {
 
     public init() {}
 
+    /// Rider to mount, for each follower on a saddle bone. A cart passenger rides no mount.
+    public var mounts: [ReferenceKey: ReferenceKey] {
+        links.compactMapValues { link in
+            if case .bone = link.seat {
+                link.carrier
+            } else {
+                nil
+            }
+        }
+    }
+
     /// Keeps the follower's current offset to the carrier. False when the link would
     /// make a loop.
     @discardableResult

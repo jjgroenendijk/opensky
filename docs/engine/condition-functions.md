@@ -10,7 +10,8 @@ tags: [engine, conditions, runtime]
 
 These are the condition functions OpenSky can answer. How a list is evaluated is on
 [condition evaluation](/engine/conditions.md). The `CTDA` layout is on
-[conditions](/formats/conditions.md).
+[conditions](/formats/conditions.md). The functions that read fights, equipment, motion,
+crime, and locations are on [condition functions on world state](/engine/condition-functions-world.md).
 
 "Stored" is the index in the plugin. The Creation Kit number is 4096 higher. Each function
 reads one snapshot in the context. A function whose snapshot is missing fails with a reason;
@@ -273,12 +274,6 @@ Creation Kit wiki says it always returned 0 before patch 1.9.32.
   selectable parameter for the Spell ID". In vanilla, 34 of its 52 conditions leave the word
   zero, which is the left hand.
 
-Not registered yet: `GetEquippedItemType` (597, 785 uses; equipment), `SpellHasKeyword`
-(596, 114), `IsWeaponMagicOut` (101, 113), `EPMagic_SpellHasKeyword` (693, 80),
-`SpellHasCastingPerk` (713, 75), `EPMagic_SpellHasSkill` (696, 39), `GetReplacedItemType`
-(664, 23), `IsDualCasting` (627, 4),
-`HasBoundWeaponEquipped` (706, 1), `EffectWasDualCast` (724, 1).
-
 ## Furniture
 
 The furniture functions read how the actor uses a furniture marker. Only the idle runtime fills
@@ -315,7 +310,6 @@ Elsewhere they fail with the furniture reason.
   data, an unknown faction, or no hold fails. The violent and non-violent parts add up to it
   ([crime](/engine/crime.md)).
 
-Not registered on purpose: `GetIsInFactionList` is not in xEdit's table. The five `GetPC*`
-faction functions (132, 193, 195, 197, 199) need records of expulsion and faction crimes
-that OpenSky does not keep. `GetKeywordDataForLocation` (606, 783 uses) returns a float
-stored per location and keyword, which OpenSky does not keep.
+Not registered on purpose: `GetIsInFactionList` is not in xEdit's table. Four `GetPC*`
+faction functions (193, 195, 197, 199) need records of expulsion and faction crimes that
+OpenSky does not keep.

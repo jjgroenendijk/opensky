@@ -35,6 +35,12 @@ nonisolated public struct KeywordStore: Sendable {
         self.init(index: RecordIndex(plugins: plugins, recordTypes: ["KYWD"]))
     }
 
+    /// The record type of an indexed form, such as `NPC_` for an actor base.
+    public func recordType(of form: ResolvedFormID) -> FourCC? {
+        guard case let .record(indexed) = index.lookup(form) else { return nil }
+        return indexed.record.type
+    }
+
     public func keyword(_ id: ResolvedFormID) -> ResolvedKeyword? {
         table.value(id)
     }
