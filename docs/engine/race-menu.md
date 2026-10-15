@@ -177,6 +177,11 @@ look at the Done key. So the engine reads that key itself. The button's art is t
 user event. The install's `controlmap.txt` binds `XButton` in menus to the Ready Weapon key,
 `R` on PC. That key closes the menu, as `ConfirmDone` does.
 
+On PC the categories change only with a click on the arrows beside the category name. The
+movie's key handler moves between categories only on a gamepad, with the triggers. The arrow keys,
+`W`, and `S` move inside the open list, and `Tab` moves focus to the second list. While the race
+menu or the title menu is open, the engine frees the mouse cursor so a click reaches the movie.
+
 Before it sends the lists, the engine checks that the movie built its category list. When
 it did not, the movie closes and the engine rows stay in charge. The sidebar race menu panel
 shows those rows, and the arrow keys move them.

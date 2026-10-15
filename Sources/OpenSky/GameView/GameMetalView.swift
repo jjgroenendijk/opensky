@@ -52,6 +52,7 @@ final class GameMetalView: MTKView {
     var pointerCapture = PointerCapture.system
 
     private var captured = false
+    private var freedForMenu = false
 
     /// World-mode inventory key, an accelerator like `onJournalKey` for
     /// `World > Menus > Inventory Menu > Open`.
@@ -281,6 +282,18 @@ final class GameMetalView: MTKView {
         // Hides the cursor and detaches it from the pointer so we read pure
         // deltas and the cursor cannot leave the window.
         pointerCapture.engage()
+    }
+
+    /// A cursor menu shows the cursor; leaving it for play captures the cursor again,
+    /// but only when that menu freed it.
+    func setMenuCursorFree(_ free: Bool) {
+        if free, captured {
+            releaseCapture()
+            freedForMenu = true
+        } else if !free, freedForMenu {
+            freedForMenu = false
+            captureCursor()
+        }
     }
 
     private func releaseCapture() {
