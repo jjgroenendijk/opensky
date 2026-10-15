@@ -49,12 +49,17 @@ extension SceneRuntime {
     }
 
     /// The other playing scene that holds `reference`, if any.
-    func holder(of reference: ReferenceKey, except scene: FormID) -> CatalogScene? {
+    func holder(of reference: ReferenceKey, except scene: FormID? = nil) -> CatalogScene? {
         playingScenes().first { other in
             other.formID != scene
                 && store.component(SceneRuntimeState.self, for: other.key)?.holdsActors == true
                 && filledActors(of: other).contains { $0.reference == reference }
         }
+    }
+
+    /// The playing scene `reference` acts in, as `GetCurrentScene` reads it.
+    public func scene(holding reference: ReferenceKey) -> FormID? {
+        holder(of: reference)?.formID
     }
 
     /// Starts the scene after stopping every playing scene that shares an actor

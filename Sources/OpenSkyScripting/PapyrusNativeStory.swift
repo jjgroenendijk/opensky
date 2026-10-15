@@ -19,6 +19,8 @@ public protocol PapyrusStoryBridge: AnyObject {
     func startScene(_ scene: FormID, force: Bool) -> Bool
     func stopScene(_ scene: FormID)
     func isScenePlaying(_ scene: FormID) -> Bool
+    /// The playing scene `reference` acts in.
+    func currentScene(of reference: ReferenceKey) -> FormID?
 }
 
 extension PapyrusNativeFunctions {
@@ -48,6 +50,16 @@ extension PapyrusNativeFunctions {
         registerStory(&registry, script: "Scene", "IsPlaying") { _, world, scene in
             .returned(.boolean(world.story?.isScenePlaying(scene) ?? false))
         }
+        // `Scene GetCurrentScene()` (<https://ck.uesp.net/wiki/GetCurrentScene_-_ObjectReference>).
+        registry.register(PapyrusNativeFunction(
+            scriptName: "ObjectReference", functionName: "GetCurrentScene"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge, let story = world.story,
+                let key = call.receiver.flatMap(world.referenceKey(for:))
+            else { return failure(call, "GetCurrentScene needs a reference and the scene runtime") }
+            return .returned(story.currentScene(of: key).map { formHandle($0, in: world) } ?? .none)
+        })
     }
 
     private static func storyEvent(

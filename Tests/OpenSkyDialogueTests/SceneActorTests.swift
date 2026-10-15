@@ -86,6 +86,19 @@ struct SceneActorTests {
         #expect(steps(events, of: second).contains(.phaseStarted(0)))
     }
 
+    /// `GetCurrentScene` names the scene that holds the actor, not one that waits for it.
+    @Test func theCurrentSceneIsTheOneHoldingTheActor() throws {
+        let store = WorldStateStore()
+        let first = try timerScene(0x4100)
+        let second = try timerScene(0x4101)
+        let runtime = try SceneFixture.runtime(store: store, scene: first, others: [second])
+        #expect(runtime.scene(holding: speaker) == nil)
+        try runtime.start(first.formID)
+        try runtime.start(second.formID)
+        #expect(runtime.scene(holding: speaker) == first.formID)
+        #expect(runtime.scene(holding: .player) == nil)
+    }
+
     @Test func forceStartStopsScenesWithTheSameActors() throws {
         let store = WorldStateStore()
         let first = try timerScene(0x4100)

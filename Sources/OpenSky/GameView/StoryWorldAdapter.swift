@@ -363,4 +363,8 @@ extension StoryWorldAdapter: PapyrusStoryBridge {
     func isScenePlaying(_ scene: FormID) -> Bool {
         scenes.playing.contains(scene)
     }
+
+    func currentScene(of reference: ReferenceKey) -> FormID? {
+        scenes.scene(holding: reference)
+    }
 }
