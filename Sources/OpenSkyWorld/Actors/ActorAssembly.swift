@@ -245,7 +245,7 @@ nonisolated public struct ActorAssembler<Provider: ActorAssetProvider> {
             path: part.modelPath,
             textures: HeadPartTextures(
                 diffuse: part.diffuseTexture, normal: part.normalTexture,
-                detail: part.detailTexture
+                detail: part.detailTexture, faceTint: part.faceTintTexture
             ),
             tint: part.tint,
             skeleton: skeleton

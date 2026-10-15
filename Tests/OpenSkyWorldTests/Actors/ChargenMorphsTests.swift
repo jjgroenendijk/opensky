@@ -65,6 +65,15 @@ struct ChargenMorphsTests {
         #expect(painted == [100, 50, 25, 255, 100, 100, 100, 255])
     }
 
+    @Test func composeStartsFromWhiteSoTheSkinToneLayerSetsTheFace() {
+        let layers = [
+            ChargenTintLayer(mask: [255, 0], color: SIMD4(198, 176, 168, 0), strength: 1)
+        ]
+        #expect(ChargenTints.compose(width: 2, height: 1, layers: layers)
+            == [198, 176, 168, 255, 255, 255, 255, 255])
+        #expect(ChargenTints.compose(width: 0, height: 0, layers: layers).isEmpty)
+    }
+
     @Test func coverageTakesTheRedChannelAndScalesByNearestTexel() {
         let mask: [UInt8] = [10, 0, 0, 255, 200, 0, 0, 255]
         #expect(ChargenTints.coverage(rgba: mask, width: 2, height: 1, toWidth: 4, toHeight: 2)

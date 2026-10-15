@@ -24,8 +24,10 @@ nonisolated public struct HeadPartTextures: Equatable, Sendable {
     public let diffuse: String?
     public let normal: String?
     public let detail: String?
+    public let faceTint: String?
 
-    public init(diffuse: String?, normal: String?, detail: String?) {
+    public init(diffuse: String?, normal: String?, detail: String?, faceTint: String? = nil) {
+        self.faceTint = faceTint
         self.diffuse = diffuse
         self.normal = normal
         self.detail = detail

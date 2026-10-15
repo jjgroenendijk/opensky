@@ -38,6 +38,19 @@ struct ModelSurfaceOverrideTests {
         #expect(result.meshes.first?.colors == [SIMD4(0.5, 1, 0, 1), SIMD4(0.25, 0.5, 0, 0.2)])
     }
 
+    @Test func aFaceTintKeepsTheDiffuseAndSetsTheTintTexture() {
+        let surface = ModelSurfaceOverride(
+            diffuseTexture: nil, normalTexture: nil, tint: nil,
+            faceTintTexture: "textures/opensky/facetint/a.dds"
+        )
+        let result = surface.applied(to: Self.model(colors: []))
+        #expect(result.materials.first?.diffuseTexture == "textures/old_d.dds")
+        #expect(result.materials.first?.tintTexture == "textures/opensky/facetint/a.dds")
+        #expect(!surface.isEmpty)
+        let plain = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
+        #expect(surface.cacheKey != plain.cacheKey)
+    }
+
     @Test func aMeshWithoutColorsTakesTheTintAndAnEmptyOverrideKeysAlike() {
         let surface = ModelSurfaceOverride(
             diffuseTexture: nil,
