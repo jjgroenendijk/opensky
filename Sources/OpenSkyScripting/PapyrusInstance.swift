@@ -8,23 +8,38 @@ import Foundation
 import OpenSkyFormatsPEX
 import OpenSkyScriptingInterface
 
+/// Rises on every variable change of the instances that share it, so a cached
+/// read of their variables knows when it is stale.
+public final class PapyrusVariableGeneration {
+    public private(set) var value = 0
+
+    public init() {}
+
+    public func advance() {
+        value &+= 1
+    }
+}
+
 public final class PapyrusInstance {
     public let handle: PapyrusObjectHandle
     public let rootScriptName: String
     public var activeState: String
 
     private var variablesByScript: [String: [String: PapyrusValue]]
+    private let generation: PapyrusVariableGeneration?
 
     public init(
         handle: PapyrusObjectHandle,
         rootScriptName: String,
         activeState: String,
-        variablesByScript: [String: [String: PapyrusValue]]
+        variablesByScript: [String: [String: PapyrusValue]],
+        generation: PapyrusVariableGeneration? = nil
     ) {
         self.handle = handle
         self.rootScriptName = rootScriptName
         self.activeState = activeState
         self.variablesByScript = variablesByScript
+        self.generation = generation
     }
 
     public func value(named name: String, declaredBy scriptName: String) -> PapyrusValue? {
@@ -38,10 +53,12 @@ public final class PapyrusInstance {
     ) -> Bool {
         let scriptKey = Self.key(scriptName)
         let nameKey = Self.key(name)
-        guard variablesByScript[scriptKey]?[nameKey] != nil else {
+        guard let old = variablesByScript[scriptKey]?[nameKey] else {
             return false
         }
+        guard old != value else { return true }
         variablesByScript[scriptKey]?[nameKey] = value
+        generation?.advance()
         return true
     }
 

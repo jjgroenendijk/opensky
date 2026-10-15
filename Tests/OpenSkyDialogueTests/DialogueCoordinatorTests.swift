@@ -113,6 +113,7 @@ struct DialogueCoordinatorTests {
         _ = coordinator.begin(with: speaker)
         let spent = FormID(DialogueRuntimeFixture.urgentFirstInfo)
         #expect(coordinator.choose(spent, speaker: speaker) != nil)
+        #expect(world.commands == ["spoke \(speaker)"])
 
         let end = coordinator.finishResponse(speaker: speaker)
         guard case let .topics(selection) = end else {
@@ -229,5 +230,9 @@ final class FakeDialogueWorld: DialogueWorld {
 
     func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey) {
         commands.append("\(challenge.eventCode) \(speaker)")
+    }
+
+    func spokeToPlayer(_ speaker: ReferenceKey) {
+        commands.append("spoke \(speaker)")
     }
 }

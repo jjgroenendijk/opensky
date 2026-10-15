@@ -42,6 +42,14 @@ extension NPCMover {
         controller.reset(cameraPosition: moved + SIMD3(0, 0, capsule.eyeHeight))
     }
 
+    func speed(of gait: LocomotionGait) -> Float {
+        switch gait {
+        case .swim: configuration.swimSpeed.value
+        case .run: configuration.runSpeed.value
+        default: configuration.walkSpeed.value
+        }
+    }
+
     func stepPlan(frameTime: Float) -> NPCMoverStepPlan {
         let waypoint = path.waypoints[waypointIndex]
         let delta = SIMD2(
@@ -51,11 +59,7 @@ extension NPCMover {
         let distance = simd_length(delta)
         let byLeg: LocomotionGait = distance > NPCMovementRuntime.runDistance ? .run : .walk
         let nextGait = isSwimming ? .swim : preferredGait ?? byLeg
-        let speed = switch nextGait {
-        case .swim: configuration.swimSpeed.value
-        case .run: configuration.runSpeed.value
-        default: configuration.walkSpeed.value
-        }
+        let speed = speed(of: nextGait)
         let targetYaw = distance > 0 ? atan2f(delta.y, delta.x) : yaw
         let turnedYaw = NPCYawMath.turn(
             from: yaw,

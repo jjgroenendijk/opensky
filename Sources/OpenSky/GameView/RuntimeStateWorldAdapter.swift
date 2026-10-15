@@ -93,10 +93,23 @@ final class RuntimeStateWorldAdapter {
             race: baseline.race
         )
         state.isFemale = baseline.isFemale
+        state.raceKeywords = baseline.race == nil ? nil : baseline.raceKeywords
         if holder.key != .player {
             state.recordFlags = baseline.recordFlags
         }
+        state.action = actionFacts(of: holder.key, isDead: isDead)
         return state
+    }
+
+    /// The player's from its melee graph state; an NPC's from its combat behaviour, and
+    /// standing still when it has none.
+    private func actionFacts(of key: ReferenceKey, isDead: Bool) -> ActorActionFacts? {
+        if key == .player {
+            return game.combat.melee?.state.actionFacts
+        }
+        guard let loop = game.combat.loop else { return nil }
+        guard !isDead, let phase = loop.phase(of: key) else { return .still }
+        return phase.actionFacts
     }
 
     private func store() async throws -> OpenSkySaveStore {
@@ -185,6 +198,7 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
     ) -> ConditionContext {
         let quests = game.scripts.bridge?.questRuntime
+        let references = references(crosshair: crosshair)
         var context = ConditionContext(
             globals: globals,
             quests: quests?.resolution() ?? .empty,
@@ -192,10 +206,10 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             actors: actorResolution(),
             detection: game.perception.perceptionResolution(),
             magic: game.magic.magicConditionResolution(),
-            crime: game.crime.conditionResolution(),
+            crime: game.crime.conditionResolution(owning: references.sortedKeys()),
             factions: game.factions.conditionResolution(),
             clock: game.renderer?.gameClock,
-            references: references(crosshair: crosshair),
+            references: references,
             subject: crosshair?.key,
             target: crosshair?.key
         )

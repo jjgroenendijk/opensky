@@ -6,6 +6,7 @@
 
 import DequeModule
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyFormatsPEX
@@ -31,9 +32,15 @@ public final class PapyrusWorldRuntime {
     /// `Renderer.worldSimPaused`, which pauses the whole simulation.
     public var isPaused = false
 
-    // Stored state is internal rather than private because the lifecycle,
-    // event, and persistence satellites live in separate files.
-    public var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:]
+    /// The last script-variable snapshot and the generation it was built at.
+    var cachedScriptVariables: (generation: Int, resolution: ScriptVariableResolution)?
+
+    /// Stored state is internal rather than private because the lifecycle,
+    /// event, and persistence satellites live in separate files.
+    public var instancesByKey: [PapyrusInstanceKey: PapyrusObjectHandle] = [:] {
+        didSet { runtime.variableGeneration.advance() }
+    }
+
     public var keysByHandle: [PapyrusObjectHandle: PapyrusInstanceKey] = [:]
     /// Instances whose `OnInit` has been delivered. Persists in the save
     /// chunk so a restore never refires it.

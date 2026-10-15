@@ -39,7 +39,7 @@ extension PapyrusNativeFunctions {
             "IsPlayerTeammate",
             ScriptedStateName.playerTeammate
         ),
-        ScriptedFlag("Actor", "SetDoingFavor", "IsDoingFavor", "doingFavor"),
+        ScriptedFlag("Actor", "SetDoingFavor", "IsDoingFavor", ScriptedStateName.doingFavor),
         ScriptedFlag("Actor", "SetAlert", "IsAlerted", ScriptedStateName.alerted),
         ScriptedFlag("Actor", "SetAllowFlying", "IsAllowedToFly", ScriptedStateName.allowFlying),
         ScriptedFlag("Actor", "SetIntimidated", "IsIntimidated", "intimidated"),

@@ -79,6 +79,7 @@ nonisolated extension ConditionFunctions {
         installLevelAndBaseValue(&registry)
         installActorBody(&registry)
         installActorIdentity(&registry)
+        installActorAction(&registry)
     }
 
     /// Vanilla perk requirements use these: `Armsman20` reads
@@ -95,6 +96,11 @@ nonisolated extension ConditionFunctions {
             parameter1: .integer
         ) { call in
             Self.actorValue(call, index: 277) { state, value in state.baseValue(at: value) }
+        })
+        registry.register(ConditionFunction(
+            index: 494, name: "GetPermanentActorValue", parameter1: .integer
+        ) { call in
+            Self.actorValue(call, index: 494) { state, value in state.permanentValue(at: value) }
         })
 
         // "Gets the actor's current level."

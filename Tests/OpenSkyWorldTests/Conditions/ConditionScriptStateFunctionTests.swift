@@ -54,6 +54,24 @@ struct ConditionScriptStateFunctionTests {
         #expect(unwired.failures == [.unavailableData(.scriptState)])
     }
 
+    @Test func actorFlagsAndTheEquippedShoutReadTheScriptState() throws {
+        let shout = ConditionEvaluatorFixture.key(Self.keyword)
+        let state = ScriptedReferenceState(
+            flags: ["doingFavor": true, "talkedToPlayer": true, "eaten": true],
+            forms: ["equippedShout": shout]
+        )
+        let set = Self.states([Self.subject: state])
+        for function: UInt16 in [635, 50, 127] {
+            #expect(try Self.evaluate(function, equals: 1, set) == .true)
+        }
+        #expect(try Self.evaluate(579, equals: 1, parameter1: Self.keyword, set) == .true)
+        #expect(try Self.evaluate(579, equals: 0, parameter1: Self.location, set) == .true)
+        for function: UInt16 in [676, 226, 227] {
+            #expect(try Self.evaluate(function, equals: 0, set) == .true)
+        }
+        #expect(try Self.evaluate(50, equals: 0, Self.states([:])) == .true)
+    }
+
     @Test func locationFunctionsReadTheLocationsScriptState() throws {
         let locationKey = ConditionEvaluatorFixture.key(Self.location)
         let keywordKey = ConditionEvaluatorFixture.key(Self.keyword)

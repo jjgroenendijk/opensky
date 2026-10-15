@@ -16,6 +16,7 @@ import OpenSkyPhysics
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
+import OpenSkyScriptingInterface
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -195,5 +196,11 @@ extension DialogueWorldAdapter: DialogueWorld {
         event.actor1 = speaker
         game.storyWorld.reportStoryEvent(event)
         game.worldState.incrementMiscStat(challenge.statName)
+    }
+
+    func spokeToPlayer(_ speaker: ReferenceKey) {
+        game.scripts.bridge?.updateScriptedState(of: speaker) {
+            $0.setFlag(ScriptedStateName.talkedToPlayer, true)
+        }
     }
 }

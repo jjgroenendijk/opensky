@@ -199,6 +199,19 @@ extension AIWorldAdapter {
         return point.map { PackagePlace(point: $0, radius: location.radius) }
     }
 
+    /// Whether the actor stands inside one package location input, by its radius.
+    /// An "in cell" input names an interior cell, so it compares cells, not distance.
+    func isWithin(_ location: Package.Location, actor: ReferenceKey) -> Bool {
+        if location.kind == .inCell, let cell = location.formID {
+            return game.streamer?.cellLocation(of: actor) == .interior(cell)
+        }
+        guard
+            let place = packagePlace(of: location, actor: actor, aliasQuest: nil),
+            let position = packageActorPosition(actor)
+        else { return false }
+        return simd_distance(place.point, position) <= Float(max(0, place.radius))
+    }
+
     func movePackageActor(
         _ actor: ReferenceKey, to point: SIMD3<Float>, direct: Bool, gait: LocomotionGait?
     ) -> PackageMoveResult {

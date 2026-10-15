@@ -102,6 +102,14 @@ struct VehicleCoreTests {
         #expect(try Self.near(#require(poses[.player]).position, [100, 10, 125]))
     }
 
+    @Test func onlyASaddleSeatIsAMount() {
+        var core = VehicleCore()
+        core.seat(.player, on: Self.horse, bone: "SaddleBone")
+        let passenger = ReferenceKey.plugin(name: "test.esm", objectID: 3)
+        core.board(passenger, on: Self.cart)
+        #expect(core.mounts == [.player: Self.horse])
+    }
+
     /// A cart 200 units behind its horse, on flat ground at height 0.
     private static func towedCart() -> VehicleCore {
         var core = VehicleCore()

@@ -53,7 +53,7 @@ extension PapyrusNativeFunctions {
         }
     }
 
-    static let equippedShoutName = "equippedShout"
+    static let equippedShoutName = ScriptedStateName.equippedShout
 
     /// A native on the receiver's script state (the player's for `Game`) whose argument
     /// 0 is a form.

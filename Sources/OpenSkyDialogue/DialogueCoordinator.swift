@@ -87,6 +87,7 @@ public final class DialogueCoordinator {
         guard let runtime else { return }
         do {
             _ = try runtime.choose(info, speaker: speaker)
+            world?.spokeToPlayer(speaker)
         } catch {
             lastOutcome = "greeting not recorded: \(String(describing: error))"
         }
@@ -108,6 +109,7 @@ public final class DialogueCoordinator {
             selection = choice.next
             followUp = choice
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
+            world?.spokeToPlayer(speaker)
             if let challenge = SpeechChallenge.won(by: info) {
                 world?.speechChallengeWon(challenge, speaker: speaker)
             }

@@ -2,6 +2,7 @@
 // restore, and the `PapyrusInstanceKey` order.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
 @testable import OpenSkyFormatsPEX
 @testable import OpenSkyFormatsTesting
@@ -64,6 +65,26 @@ struct PapyrusWorldRuntimeTests {
         )
         PapyrusWorldFixture.drain(restored)
         #expect(!restoredProbe.notes.contains("stateful.oninit"))
+    }
+
+    @Test("the script-variable snapshot is rebuilt only after a variable changes")
+    func scriptVariableSnapshotFollowsWrites() throws {
+        let world = try makeWorld(probe: PapyrusWorldProbeDispatch())
+        PapyrusWorldFixture.drain(world)
+        let key = PapyrusWorldFixture.key(objectID: 1, script: "StatefulScript")
+        let handle = try #require(world.instancesByKey[key])
+        let instance = try #require(world.runtime.instance(for: handle))
+        #expect(instance.setValue(.integer(4), named: "count", declaredBy: "StatefulScript"))
+        #expect(world.scriptVariableResolution().value(named: "Count", on: key.reference) == 4)
+
+        let generation = world.runtime.variableGeneration.value
+        _ = world.scriptVariableResolution()
+        #expect(instance.setValue(.integer(4), named: "count", declaredBy: "StatefulScript"))
+        #expect(world.runtime.variableGeneration.value == generation)
+
+        #expect(instance.setValue(.integer(9), named: "count", declaredBy: "StatefulScript"))
+        #expect(world.runtime.variableGeneration.value != generation)
+        #expect(world.scriptVariableResolution().value(named: "count", on: key.reference) == 9)
     }
 
     @Test("object and array values persist as .none")

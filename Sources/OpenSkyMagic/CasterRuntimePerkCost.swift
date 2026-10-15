@@ -6,8 +6,10 @@
 
 import Foundation
 import OpenSkyActorsInterface
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
 
 extension CasterRuntime {
@@ -30,6 +32,7 @@ extension CasterRuntime {
         {
             cost /= 2
         }
+        perks.conditions.spellEvaluation = SpellEvaluationResolution(spell: spell)
         let outcome = perks.modify(
             cost,
             at: Self.spellCostEntryPoint,
@@ -37,6 +40,7 @@ extension CasterRuntime {
             subjects: PerkEvaluationSubjects(owner: caster.key),
             actorValue: { [values] index in values.value(at: index, on: caster) }
         )
+        perks.conditions.spellEvaluation = .empty
         // The tally advanced inside the copy, so hand it back rather than
         // dropping what the evaluation counted.
         self.perks = perks

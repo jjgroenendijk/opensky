@@ -12,6 +12,7 @@ nonisolated extension ConditionFunctions {
     public static func installFaction(_ registry: inout ConditionFunctionRegistry) {
         installMemberships(&registry)
         installRelations(&registry)
+        installRelationshipRecords(&registry)
     }
 
     /// The three membership functions, all `ptFaction` on the run-on actor.
@@ -129,7 +130,7 @@ nonisolated extension ConditionFunctions {
     ///
     /// A nil from `read` is `.unavailableFactions` — the parameter and the run-on
     /// both resolved and the seam simply carries nothing about them.
-    private static func factionQuery(
+    static func factionQuery(
         _ call: ConditionCall,
         index: UInt16,
         read: (FactionConditionResolution, ReferenceKey, ReferenceKey) -> Float?
@@ -150,7 +151,7 @@ nonisolated extension ConditionFunctions {
 
     /// One pair query: resolve parameter 1 and the run-on, then `read` the two.
     /// The run-on is the observer, because a relationship need not be symmetric.
-    private static func actorPair(
+    static func actorPair(
         _ call: ConditionCall,
         index: UInt16,
         read: (FactionConditionResolution, ReferenceKey, ReferenceKey) -> Float?

@@ -34,6 +34,7 @@ nonisolated extension ConditionFunctions {
         })
 
         installLinkedReferences(&registry)
+        installObjectType(&registry)
 
         // "HasRefType returns 1 if the calling ref has been flagged as being the
         // specified location ref type." (<https://ck.uesp.net/wiki/HasRefType>)

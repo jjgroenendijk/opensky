@@ -48,6 +48,10 @@ public final class CrimeCoordinator {
 
     /// So a trespass is noticed on arrival rather than once per frame.
     var lastPlayerCell: CellSceneLocation?
+    /// The player stands in a cell whose owner they may not use.
+    var isPlayerTrespassing = false
+    /// Days served in the last jail sentence, for `GetDaysInJail`.
+    var lastSentenceDays = 0
     public internal(set) var guards = GuardResponseState()
     /// Where each pursuing guard was last sent.
     var pursuitTargets: [ReferenceKey: SIMD3<Float>] = [:]
@@ -97,19 +101,6 @@ public final class CrimeCoordinator {
 
     public func crimeGold(of faction: ReferenceKey) -> Int32 {
         reporter?.runtime.crimeGold(of: faction) ?? 0
-    }
-
-    /// Only the player's ledger travels: nothing gives an NPC a bounty, so a
-    /// whole table would be a per-frame walk for rows that are all empty.
-    public func conditionResolution() -> CrimeConditionResolution {
-        guard let reporter else { return .empty }
-        let ledger = reporter.runtime.ledger()
-        return CrimeConditionResolution(
-            factions: reporter.runtime.factions,
-            sourcePlugin: pluginName,
-            currentCrimeFaction: crimeFaction(in: world?.currentCellLocation),
-            ledgers: ledger.isEmpty ? [:] : [.player: ledger]
-        )
     }
 
     public func ownershipVerdict(on reference: ReferenceKey) -> OwnershipVerdict {
@@ -170,6 +161,8 @@ public final class CrimeCoordinator {
         let location = world?.currentCellLocation
         guard lastPlayerCell != location else { return }
         lastPlayerCell = location
+        isPlayerTrespassing = cellOwner(at: location).map { !crimeActor(.player).mayUse($0) }
+            ?? false
         reportTrespass(in: location)
     }
 

@@ -40,6 +40,8 @@ public protocol VehicleWorld: AnyObject {
 public final class VehicleCoordinator {
     public private(set) var core = VehicleCore()
     public private(set) var lastPoses: [ReferenceKey: ReferenceTransformOverride] = [:]
+    /// The horse the player sat on last, kept after they dismount.
+    public private(set) var playersLastMount: ReferenceKey?
     weak var world: (any VehicleWorld)?
     private var hasDeltas = false
 
@@ -60,7 +62,11 @@ public final class VehicleCoordinator {
     @discardableResult
     public func seat(_ rider: ReferenceKey, on horse: ReferenceKey, bone: String) -> Bool {
         lastPoses[rider] = nil
-        return core.seat(rider, on: horse, bone: bone)
+        guard core.seat(rider, on: horse, bone: bone) else { return false }
+        if rider == .player {
+            playersLastMount = horse
+        }
+        return true
     }
 
     /// `TetherToHorse`: the cart trails the horse at the distance it has now.

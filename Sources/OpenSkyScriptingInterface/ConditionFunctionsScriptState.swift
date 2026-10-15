@@ -42,6 +42,10 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let cleared = "cleared"
     public static let essential = "essential"
     public static let protected = "protected"
+    public static let equippedShout = "equippedShout"
+    public static let doingFavor = "doingFavor"
+    public static let talkedToPlayer = "talkedToPlayer"
+    public static let eaten = "eaten"
 
     /// The value `Location.SetKeywordData` stores for one keyword.
     public static func keywordData(_ keyword: ReferenceKey) -> String {
@@ -58,7 +62,10 @@ nonisolated extension ConditionFunctions {
             "GetRestrained": (244, ScriptedStateName.restrained),
             "IsBribedbyPlayer": (402, ScriptedStateName.bribed),
             "GetPlayerTeammate": (453, ScriptedStateName.playerTeammate),
-            "IsAllowedToFly": (698, ScriptedStateName.allowFlying)
+            "IsAllowedToFly": (698, ScriptedStateName.allowFlying),
+            "IsInFavorState": (635, ScriptedStateName.doingFavor),
+            "GetTalkedToPC": (50, ScriptedStateName.talkedToPlayer),
+            "HasBeenEaten": (127, ScriptedStateName.eaten)
         ]
         for (name, entry) in flags.sorted(by: { $0.key < $1.key }) {
             registry.register(ConditionFunction(index: entry.index, name: name) { call in
@@ -79,6 +86,34 @@ nonisolated extension ConditionFunctions {
             }
         })
         installKeywordData(&registry)
+        installShout(&registry)
+    }
+
+    private static func installShout(_ registry: inout ConditionFunctionRegistry) {
+        // `ptShout`: true when the run-on's equipped shout is the parameter.
+        registry.register(ConditionFunction(
+            index: 579, name: "GetEquippedShout", parameter1: .formID
+        ) { call in
+            guard let shout = Self.parameterKey(call, call.parameter1) else {
+                return .failure(.unresolvedParameter(579))
+            }
+            return call.referenceKey().flatMap { key in
+                Self.scriptState(call, of: key).map {
+                    Self.isTrue($0.form(ScriptedStateName.equippedShout) == shout)
+                }
+            }
+        })
+        // OpenSky shouts no variations, and feeding plays no animation, so the actor is
+        // never in the middle of it: these read 0.
+        let acts: [String: UInt16] = [
+            "GetCurrentShoutVariation": 676, "GetVampireFeed": 226, "GetCannibal": 227
+        ]
+        for (name, index) in acts.sorted(by: { $0.key < $1.key }) {
+            registry.register(ConditionFunction(index: index, name: name) { call in
+                call.referenceKey()
+                    .flatMap { key in Self.scriptState(call, of: key).map { _ in 0 } }
+            })
+        }
     }
 
     /// Keyword data reads 0 until `SetKeywordData` stores a value, as `GetKeywordData` does.

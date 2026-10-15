@@ -13,21 +13,41 @@ nonisolated public struct InventoryConditionResolution: Sendable {
 
     private let counts: [ReferenceKey: [FormID: Int32]]
     private let equipped: [ReferenceKey: Set<FormID>]
+    private let equipment: [ReferenceKey: ActorEquipmentFacts]
+    /// Items per KWDA keyword, summed over each holder's stacks.
+    private let keywordCounts: [ReferenceKey: [FormID: Int32]]
     public let isAvailable: Bool
 
     public init(
         counts: [ReferenceKey: [FormID: Int32]],
-        equipped: [ReferenceKey: Set<FormID>] = [:]
+        equipped: [ReferenceKey: Set<FormID>] = [:],
+        equipment: [ReferenceKey: ActorEquipmentFacts] = [:],
+        keywordCounts: [ReferenceKey: [FormID: Int32]] = [:]
     ) {
         self.counts = counts
         self.equipped = equipped
+        self.equipment = equipment
+        self.keywordCounts = keywordCounts
         isAvailable = true
     }
 
     private init() {
         counts = [:]
         equipped = [:]
+        equipment = [:]
+        keywordCounts = [:]
         isAvailable = false
+    }
+
+    /// Nil without equipment data for `actor`.
+    public func equipment(of actor: ReferenceKey) -> ActorEquipmentFacts? {
+        equipment[actor]
+    }
+
+    /// Nil without inventory data for `holder`.
+    public func count(ofKeyword keyword: FormID, in holder: ReferenceKey) -> Int32? {
+        guard counts[holder] != nil else { return nil }
+        return keywordCounts[holder]?[keyword] ?? 0
     }
 
     /// Nil without inventory data. A holder with no entry holds nothing.
@@ -100,6 +120,7 @@ nonisolated extension ConditionFunctions {
             return .success(enchanted ? 1 : 0)
         })
         installGoldAndEquipment(&registry)
+        installEquipment(&registry)
     }
 
     /// `Gold001`, the septim, in `Skyrim.esm` (UESP "Skyrim:Gold").

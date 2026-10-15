@@ -29,4 +29,6 @@ public protocol DialogueWorld: AnyObject {
     func releaseFacing(of actor: ReferenceKey)
     /// The player said a line that wins a speech challenge against `speaker`.
     func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey)
+    /// `speaker` said a line to the player, which `GetTalkedToPC` reads.
+    func spokeToPlayer(_ speaker: ReferenceKey)
 }
