@@ -39,6 +39,18 @@ public struct ActiveEffectRuntime {
     /// The tick walks holders in key order; this keeps that order between frames.
     /// Internal, because the tick half reads it from another file.
     var holderOrder = ReferenceKeyOrder()
+    /// World changes the effects asked for, oldest first. The coordinator drains
+    /// them after each change.
+    public var worldActions: [MagicWorldAction] = []
+    /// The actor-value holder of a caster, for Absorb. Only the player without a world.
+    public var holderResolver: (ReferenceKey) -> ActorValueHolder? = { key in
+        key == .player ? .player : nil
+    }
+
+    /// What kind of record a source is, for the cures.
+    public var sourceCategory: (ActiveEffectSource) -> ActiveEffectSourceCategory = { _ in .other }
+    /// Whether an actor carries `ActorTypeUndead`, for Turn Undead.
+    public var isUndead: (ActorValueHolder) -> Bool = { _ in false }
 
     public init(
         values: any ActorValueAccess,
@@ -109,16 +121,22 @@ public struct ActiveEffectRuntime {
             switch outcome {
             case let .skip(reason):
                 tally.note(reason)
-            case let .apply(application) where application.isInstant:
-                applyInstant(application, on: target)
             case let .apply(application):
-                let effect = storeTimed(
-                    application,
-                    source: source,
-                    caster: caster,
-                    on: target
-                )
-                if let effect {
+                if let reason = refusal(of: application, on: target) {
+                    tally.note(reason)
+                    continue
+                }
+                actOnce(application, caster: caster, on: target)
+                if application.isInstant {
+                    tally.noteInstant()
+                } else if
+                    let effect = storeTimed(
+                        application,
+                        source: source,
+                        caster: caster,
+                        on: target
+                    )
+                {
                     stored.append(effect)
                 }
             }
@@ -188,21 +206,6 @@ public struct ActiveEffectRuntime {
         return outcome.isTrue
     }
 
-    /// Applies a zero-duration effect once and stores nothing.
-    private mutating func applyInstant(
-        _ application: MagicEffectApplication,
-        on target: ActorValueHolder
-    ) {
-        for value in application.values {
-            if application.isDetrimental {
-                values.damage(at: value.index, by: value.magnitude, on: target)
-            } else {
-                values.restore(at: value.index, by: value.magnitude, on: target)
-            }
-        }
-        tally.noteInstant()
-    }
-
     /// Stores a timed effect, applying the stacking rules first.
     ///
     /// - Returns: the stored effect, or nil when a stacking rule refused it.
@@ -212,11 +215,12 @@ public struct ActiveEffectRuntime {
         caster: ReferenceKey?,
         on target: ActorValueHolder
     ) -> ActiveEffect? {
-        var state = state(of: target)
-        if application.refusesRecast, state.hasEffect(application.effect) {
+        if application.refusesRecast, state(of: target).hasEffect(application.effect) {
             tally.noteRecastRefused()
             return nil
         }
+        clearRivals(of: application, on: target)
+        var state = state(of: target)
         if let keyword = application.stackKeyword {
             let rivals = state.effects.filter { $0.stackKeyword == keyword }
             let strongest = rivals.map(\.peakMagnitude).max() ?? -.greatestFiniteMagnitude
@@ -242,19 +246,27 @@ public struct ActiveEffectRuntime {
             values: application.values,
             stackKeyword: application.stackKeyword
         )
-        if application.mode.ownsModifierSlot {
+        if application.mode.ownsModifierSlot, !grows(application) {
             effect = effect.owningModifiers(claim(effect, on: target))
         }
         write(state.adding(effect), for: target)
+        if let action = worldAction(.began, of: effect, on: target) {
+            worldActions.append(action)
+        }
         tally.noteApplied()
         return effect
+    }
+
+    /// Whether the held value starts at zero and grows on each tick.
+    private func grows(_ application: MagicEffectApplication) -> Bool {
+        application.rule == .accumulate && application.mode != .constant
     }
 
     /// Adds each of `effect`'s values to the temporary modifier slot, reporting
     /// what it now owns.
     private func claim(_ effect: ActiveEffect, on target: ActorValueHolder) -> [Int32: Float] {
         var owned: [Int32: Float] = [:]
-        for value in effect.values {
+        for value in effect.values where ActorValueIdentity.isVanilla(index: value.index) {
             let delta = effect.delta(of: value)
             guard values.addModifier(delta, to: .temporary, at: value.index, on: target) else {
                 continue
@@ -267,8 +279,11 @@ public struct ActiveEffectRuntime {
     /// Returns every slot `doomed` holds, so the value goes back where it was. A
     /// primary's current value drops with its maximum but stays at least 1
     /// (<https://en.uesp.net/wiki/Skyrim:Fortify_Health>), so expiry never kills.
-    public func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
+    public mutating func release(_ doomed: [ActiveEffect], on holder: ActorValueHolder) {
         for effect in doomed {
+            if let action = worldAction(.ended, of: effect, on: holder) {
+                worldActions.append(action)
+            }
             for value in effect.values where value.applied != 0 {
                 let kind = ActorValueIdentity.kind(at: value.index)
                 let before = kind.map { values.current(of: holder)[$0] }

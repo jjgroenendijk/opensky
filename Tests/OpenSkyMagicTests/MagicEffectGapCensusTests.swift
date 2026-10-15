@@ -10,7 +10,7 @@ import Testing
 
 @MainActor
 struct MagicEffectGapCensusTests {
-    /// Raw archetypes: 0 value modifier, 1 script, 21 paralysis.
+    /// Raw archetypes: 0 value modifier, 18 summon creature, 12 light.
     private func effect(archetype: UInt32) throws -> MagicEffect {
         let fields = ESMFixture.field("EDID", ESMFixture.zstring("Fixture"))
             + ESMFixture.field("DATA", ActiveEffectFixture.data(archetype: archetype))
@@ -21,7 +21,8 @@ struct MagicEffectGapCensusTests {
 
     @Test func countsUnappliedArchetypesByEffects() throws {
         let census = try MagicEffectGapCensus(effects: [
-            effect(archetype: 0), effect(archetype: 1), effect(archetype: 1), effect(archetype: 21)
+            effect(archetype: 0), effect(archetype: 18), effect(archetype: 18),
+            effect(archetype: 12)
         ])
 
         #expect(census.effectTotal == 4)
@@ -29,6 +30,7 @@ struct MagicEffectGapCensusTests {
         #expect(census.archetypes.count == 3)
         #expect(census.appliedArchetypeCount == 1)
         #expect(census.rankedUnapplied.map(\.count) == [2, 1])
-        #expect(census.rankedUnapplied.first?.name == MagicEffectArchetype.script.description)
+        #expect(census.rankedUnapplied.first?.name == MagicEffectArchetype.summonCreature
+            .description)
     }
 }

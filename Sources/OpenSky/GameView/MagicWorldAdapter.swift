@@ -43,9 +43,10 @@ final class MagicWorldAdapter {
         )
         // Chained after regeneration and the Papyrus VM, on the same delta.
         let advanceOthers = renderer.onWorldUpdate
-        renderer.onWorldUpdate = { [weak coordinator] delta in
+        renderer.onWorldUpdate = { [weak coordinator, weak renderer] delta in
             advanceOthers?(delta)
             coordinator?.advanceEffects(delta: delta)
+            renderer?.isPlayerParalysed = coordinator?.influence(of: .player).isParalysed ?? false
         }
     }
 

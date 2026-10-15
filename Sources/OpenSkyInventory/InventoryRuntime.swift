@@ -102,6 +102,16 @@ public struct InventoryRuntime: InventoryAccess {
         return updated
     }
 
+    /// `add` for an item that was not stolen, as `InventoryAccess` asks it.
+    @discardableResult
+    public func add(
+        _ item: FormID,
+        count: Int32,
+        to holder: InventoryHolder
+    ) throws -> ReferenceInventoryState {
+        try add(item, count: count, to: holder, stolen: false)
+    }
+
     /// Removes `consumed` and adds `produced` on one holder in one write, so a
     /// craft or a harvest is all or nothing.
     /// - Throws: the inventory arithmetic errors; nothing is written then.

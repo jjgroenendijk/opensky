@@ -4,6 +4,7 @@
 // See docs/engine/combat-behavior.md.
 
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import simd
 
@@ -164,6 +165,8 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
     public var isForced: Bool
     /// What the actor could cast and what it can pay for.
     public var casting: CombatCastingProfile
+    /// What running magic effects force on the actor, such as fear.
+    public var influence: ActorMagicInfluence
 
     public init(
         actorPosition: SIMD3<Float>,
@@ -173,7 +176,8 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
         healthFraction: Float = 1,
         isTargetAlive: Bool = true,
         isForced: Bool = false,
-        casting: CombatCastingProfile = .none
+        casting: CombatCastingProfile = .none,
+        influence: ActorMagicInfluence = .none
     ) {
         self.actorPosition = actorPosition
         self.targetPosition = targetPosition
@@ -183,6 +187,7 @@ nonisolated public struct CombatBehaviorInputs: Equatable, Sendable {
         self.isTargetAlive = isTargetAlive
         self.isForced = isForced
         self.casting = casting
+        self.influence = influence
     }
 
     /// Ground-plane distance between the actor and its target.

@@ -138,14 +138,18 @@ struct MagicEffectPlannerTests {
         #expect(plainApplication.stackKeyword == nil)
     }
 
-    /// Every archetype this milestone does not implement is counted rather than
-    /// approximated.
+    /// Every archetype with no rule is counted rather than approximated.
     @Test func unimplementedArchetypeIsCountedNotApplied() throws {
-        let outcome = try MagicEffectPlanner.plan(
-            effect: resolved(ActiveEffectFixture.paralyze),
-            entry: entry(ActiveEffectFixture.paralyze, magnitude: 1, duration: 10)
+        let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.archetypeRecords)
+        let store = MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)])
+        let summon = ActiveEffectFixture.Archetype.summon
+        let effect = try #require(store.effect(
+            ResolvedFormID(plugin: ActiveEffectFixture.pluginName, objectID: summon)
+        ))
+        let outcome = MagicEffectPlanner.plan(
+            effect: effect, entry: entry(summon, magnitude: 1, duration: 10)
         )
-        #expect(outcome == .skip(.unimplementedArchetype(.paralysis)))
+        #expect(outcome == .skip(.unimplementedArchetype(.summonCreature)))
     }
 
     /// A held modifier on health applies like any other: the primaries store a

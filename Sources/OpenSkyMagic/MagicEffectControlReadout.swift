@@ -2,6 +2,7 @@
 // them without a window. See docs/engine/magic.md.
 
 import Foundation
+import OpenSkyMagicInterface
 
 nonisolated public enum MagicEffectControlReadout: Sendable {
     /// The player's effect list, one line per effect, or the honest absence of
@@ -28,6 +29,27 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
         let lines = snapshot.nearestActorEffects.map { "  \($0.line)" }.joined(separator: "\n")
         return "Nearest actor effects — \(name) (\(snapshot.nearestActorEffects.count)):"
             + "\n\(lines)"
+    }
+
+    /// What the player's and the nearest actor's effects force on them.
+    public static func influenceText(for snapshot: MagicEffectControlSnapshot) -> String {
+        guard snapshot.isAvailable else { return "Forced behaviour: unavailable" }
+        let player = words(of: snapshot.playerInfluence)
+        let nearest = snapshot.nearestActorName.map { name in
+            "; \(name): " + words(of: snapshot.nearestActorInfluence)
+        } ?? ""
+        return "Forced behaviour: player: \(player)\(nearest)"
+    }
+
+    /// The influence as words, such as "calmed, paralysed", or "none".
+    public static func words(of influence: ActorMagicInfluence) -> String {
+        let flags: [(Bool, String)] = [
+            (influence.isCalmed, "calmed"), (influence.isFrenzied, "frenzied"),
+            (influence.isFrightened, "frightened"), (influence.isRallied, "rallied"),
+            (influence.isParalysed, "paralysed"), (influence.isEthereal, "ethereal")
+        ]
+        let set = flags.filter(\.0).map(\.1)
+        return set.isEmpty ? "none" : set.joined(separator: ", ")
     }
 
     /// What the runtime has done this session.
@@ -60,6 +82,7 @@ nonisolated public enum MagicEffectControlReadout: Sendable {
         [
             effectsText(for: snapshot),
             nearestActorEffectsText(for: snapshot),
+            influenceText(for: snapshot),
             activityText(for: snapshot),
             coverageText(for: snapshot),
             lastActionText(for: snapshot)

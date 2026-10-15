@@ -7,6 +7,7 @@
 @testable import OpenSkyCombat
 @testable import OpenSkyCombatInterface
 @testable import OpenSkyFormatsESM
+@testable import OpenSkyMagicInterface
 @testable import OpenSkyProgressionInterface
 import simd
 
@@ -18,6 +19,7 @@ public final class FakeCombatWorld: CombatLoopWorld {
     public var blocks: [ReferenceKey: MeleeBlockKind] = [:]
     public var awareness: [ReferenceKey: CombatAwareness] = [:]
     public var healthFractions: [ReferenceKey: Float] = [:]
+    public var influences: [ReferenceKey: ActorMagicInfluence] = [:]
     public var weapons: [ReferenceKey: MeleeWeaponProfile] = [:]
     public var styles: [ReferenceKey: CombatStyleTuning] = [:]
     /// What each actor could cast, and what it can pay for.
@@ -226,5 +228,9 @@ public final class FakeCombatWorld: CombatLoopWorld {
 
     public func setCombatMusicActive(_ active: Bool) {
         musicChanges.append(active)
+    }
+
+    public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
+        influences[key] ?? .none
     }
 }

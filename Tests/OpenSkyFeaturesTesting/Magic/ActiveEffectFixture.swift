@@ -21,7 +21,7 @@ public enum ActiveEffectFixture {
     public static let fortifyResistFire: UInt32 = 0x12
     /// A dual value modifier over resist fire and resist frost.
     public static let dualResist: UInt32 = 0x13
-    /// An archetype this milestone does not implement.
+    /// Paralysis, with Recover set as the archetype needs.
     public static let paralyze: UInt32 = 0x14
     /// A peak value modifier sharing keyword 0x900.
     public static let peakResist: UInt32 = 0x15

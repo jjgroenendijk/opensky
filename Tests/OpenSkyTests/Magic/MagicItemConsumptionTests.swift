@@ -163,4 +163,46 @@ struct MagicItemConsumptionTests {
         }
         #expect(effects.values.current(of: .player).health == 100)
     }
+
+    /// A potion from a later plugin names that plugin as its effects' source,
+    /// even when its effects resolve against the master.
+    @Test func aPotionFromALaterPluginNamesThatPlugin() throws {
+        let laterPotion = FormID(0x0100_0700)
+        let later = try ActiveEffectFixture.plugin(records: [
+            ActiveEffectFixture.ingestible(
+                formID: 0x700,
+                editorID: "TestLaterPotion",
+                effects: [ActiveEffectFixture.EffectSpec(
+                    ActiveEffectFixture.fortifyHealth, magnitude: 10, duration: 30
+                )]
+            )
+        ])
+        let master = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
+        let store = WorldStateStore()
+        var effects = ActiveEffectRuntime(
+            values: ActorValueRuntime(store: store, baselines: ActorValueBaselineFixture.flat()),
+            effects: MagicEffectStore(plugins: [
+                (ActiveEffectFixture.pluginName, master), ("Later.esp", later)
+            ]),
+            conditionRegistry: .magicTests
+        )
+        let inventory = InventoryRuntime(
+            store: store,
+            baselines: InventoryBaselineResolver.build(from: LoadOrderPlugins([
+                (ActiveEffectFixture.pluginName, master), ("Later.esp", later)
+            ]))
+        )
+        try inventory.add(laterPotion, count: 1, to: .player)
+
+        let outcome = try effects.consume(
+            laterPotion,
+            from: .player,
+            on: .player,
+            inventory: inventory,
+            fromPlugin: ActiveEffectFixture.pluginName
+        )
+        #expect(outcome.stored.map(\.source.record) == [
+            .plugin(name: "later.esp", objectID: 0x700)
+        ])
+    }
 }

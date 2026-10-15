@@ -102,7 +102,7 @@ struct EnchantmentAcceptanceRealDataTests {
                 else { return false }
                 if
                     implementedOnly,
-                    !MagicEffectPlanner.implementedArchetypes.contains(data.archetype)
+                    !MagicEffectPlanner.implements(data.archetype)
                 {
                     return false
                 }

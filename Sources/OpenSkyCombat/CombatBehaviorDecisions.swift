@@ -7,6 +7,7 @@ import Foundation
 import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import simd
 
 nonisolated extension CombatBehaviorInputs {
@@ -16,9 +17,16 @@ nonisolated extension CombatBehaviorInputs {
         max(0, reach - settings.reachSlack)
     }
 
-    /// Whether the actor is hurt enough to break off.
+    /// Whether the actor is hurt enough to break off, or a spell frightened it.
+    /// Rally "maxes the Confidence", so a rallied actor never breaks off.
     public func shouldFlee(settings: CombatBehaviorSettings) -> Bool {
-        healthFraction.isFinite && healthFraction <= settings.fleeHealthFraction
+        if influence.isRallied {
+            return false
+        }
+        if influence.isFrightened {
+            return true
+        }
+        return healthFraction.isFinite && healthFraction <= settings.fleeHealthFraction
     }
 
     /// The spell this actor would cast now: the costliest it can afford and reach, ties

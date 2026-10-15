@@ -23,6 +23,11 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var aimRequests: [(range: Float, caster: ReferenceKey)] = []
     private(set) var skillUses: [SkillUseEvent] = []
     private(set) var probedFunctions: [UInt16] = []
+    var nearbyHostiles: [ReferenceKey] = []
+    var undead: Set<ReferenceKey> = []
+    private(set) var staggered: [ReferenceKey] = []
+    private(set) var hazards: [(hazard: ReferenceKey, target: ReferenceKey)] = []
+    private(set) var cloakRadii: [Float] = []
 
     @discardableResult
     func reportSkillUse(_ use: SkillUseEvent) -> Float {
@@ -76,5 +81,26 @@ final class FakeMagicWorld: MagicWorld {
     ) -> String {
         probedFunctions.append(function)
         return "probed"
+    }
+
+    @discardableResult
+    func staggerActor(_ key: ReferenceKey, magnitude _: Float) -> Bool {
+        staggered.append(key)
+        return true
+    }
+
+    @discardableResult
+    func spawnHazard(_ hazard: ReferenceKey, at key: ReferenceKey) -> Bool {
+        hazards.append((hazard, key))
+        return true
+    }
+
+    func cloakTargets(around _: ReferenceKey, radius: Float) -> [ReferenceKey] {
+        cloakRadii.append(radius)
+        return nearbyHostiles
+    }
+
+    func actorHasKeyword(_: String, on holder: ActorValueHolder) -> Bool {
+        undead.contains(holder.key)
     }
 }

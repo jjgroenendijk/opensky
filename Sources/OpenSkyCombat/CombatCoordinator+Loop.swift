@@ -5,6 +5,7 @@
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import simd
 
@@ -44,6 +45,10 @@ extension CombatCoordinator: CombatLoopWorld {
     @discardableResult
     public func applyCombatDamage(_ amount: Float, to key: ReferenceKey) -> Bool {
         applyHealthDamage(amount, to: key, attacker: nil)
+    }
+
+    public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
+        world?.magicInfluence(of: key) ?? .none
     }
 
     public func combatBlock(of key: ReferenceKey) -> MeleeBlockKind? {

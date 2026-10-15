@@ -7,6 +7,7 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
@@ -231,6 +232,8 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
     /// combat selects the combat MUSC and leaving it returns to the previous
     /// selection.
     func setCombatMusicActive(_ active: Bool)
+    /// What `key`'s running magic effects force on it, such as Calm or Paralysis.
+    func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence
 }
 
 nonisolated extension CombatLoopWorld {
@@ -243,5 +246,10 @@ nonisolated extension CombatLoopWorld {
     /// A session that resolves no combat styles fights with the base settings.
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
         nil
+    }
+
+    /// A session with no magic forces no behaviour.
+    public func combatInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
+        .none
     }
 }

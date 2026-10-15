@@ -8,6 +8,7 @@ import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
 import simd
@@ -30,13 +31,21 @@ extension CombatLoopRuntime {
         }
         let player = world.combatPlayer
         var hostility: [ReferenceKey: ActorHostility] = [:]
+        var influences: [ReferenceKey: ActorMagicInfluence] = [:]
         for actor in actors where !actor.isDead && actor.key != player.key {
             hostility[actor.key] = world.combatHostility(of: actor.key)
+            influences[actor.key] = world.combatInfluence(of: actor.key)
+        }
+        for actor in actors where influences[actor.key]?.refusesCombat == true {
+            holdStill(actor.key, world: world)
         }
         let candidates = actors
             .filter { actor in
                 guard let stance = hostility[actor.key] else { return false }
-                return stance == .hostile || engagesWithoutPerceiving(actor.key)
+                let influence = influences[actor.key] ?? .none
+                guard !influence.refusesCombat else { return false }
+                return stance == .hostile || influence.isFrenzied
+                    || engagesWithoutPerceiving(actor.key)
             }
             .sorted {
                 (simd_distance($0.feet, player.feet), $0.key)
@@ -44,9 +53,22 @@ extension CombatLoopRuntime {
             }
         noteCrowdedOut(max(0, candidates.count - Self.maximumEngagedActors))
         for actor in candidates.prefix(Self.maximumEngagedActors) {
-            drive(actor: actor, player: player, world: world)
+            drive(
+                actor: actor,
+                influence: influences[actor.key] ?? .none,
+                player: player,
+                world: world
+            )
         }
         return hostility
+    }
+
+    /// Calm "lowers the Aggression" and Paralysis stops all movement: an actor in a
+    /// fight leaves it and stands where it is.
+    private func holdStill(_ key: ReferenceKey, world: any CombatLoopWorld) {
+        guard let machine = behaviors[key], machine.phase != .idle else { return }
+        parkBehavior(of: key)
+        world.stopCombatMovement(of: key)
     }
 
     /// One actor: build what it knows, step its machine, act on the answer.
@@ -57,6 +79,7 @@ extension CombatLoopRuntime {
     /// says so rather than half-simulating it.
     private func drive(
         actor: CombatActorObservation,
+        influence: ActorMagicInfluence,
         player: MeleeAttacker,
         world: any CombatLoopWorld
     ) {
@@ -71,13 +94,14 @@ extension CombatLoopRuntime {
             healthFraction: world.combatHealthFraction(of: actor.key),
             isTargetAlive: true,
             isForced: engagesWithoutPerceiving(actor.key),
-            casting: world.combatCasting(of: actor.key)
+            casting: world.combatCasting(of: actor.key),
+            influence: influence
         ))
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
         }
         resolveCast(step, actor: actor.key, world: world)
-        if step.reachedContact {
+        if step.reachedContact, !influence.isEthereal {
             resolveContact(actor: actor, weapon: weapon, player: player, world: world)
         }
         if step.endedPursuit {

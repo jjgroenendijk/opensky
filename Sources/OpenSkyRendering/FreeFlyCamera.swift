@@ -78,6 +78,18 @@ nonisolated public struct CameraInput: Sendable {
         self.toggleWeaponDrawn = toggleWeaponDrawn
         self.dt = dt
     }
+
+    /// This input with every move and action dropped. The view still turns and the
+    /// camera mode still cycles, because paralysis holds the body, not the camera.
+    public var holdingStill: CameraInput {
+        CameraInput(
+            lookRight: lookRight,
+            lookUp: lookUp,
+            sneak: sneak,
+            cycleCameraMode: cycleCameraMode,
+            dt: dt
+        )
+    }
 }
 
 /// Camera pose + free-fly integration. Yaw rotates about world +Z (0 -> +X

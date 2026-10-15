@@ -17,7 +17,7 @@ extension ActiveEffectFixture {
     ) throws -> (ActiveEffectRuntime, WorldStateStore) {
         let store = WorldStateStore()
         let values = ActorValueRuntime(store: store, baselines: ActorValueBaselineFixture.flat())
-        let file = try plugin(records: effectRecords)
+        let file = try plugin(records: effectRecords + archetypeRecords)
         let effects = MagicEffectStore(plugins: [(pluginName, file)])
         return (
             ActiveEffectRuntime(

@@ -19,9 +19,18 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
     public let remaining: Float
     /// Vanilla names of the actor values it acts on, in the MGEF's order.
     public let valueNames: [String]
+    /// The MGEF archetype, spelled as xEdit spells it: "calm", "cloak".
+    public let archetype: String
 
-    /// One line, the shape the readout joins with newlines.
+    /// One line, the shape the readout joins with newlines. An archetype that
+    /// acts on no actor value names itself instead.
     public var line: String {
+        guard !valueNames.isEmpty else {
+            return String(
+                format: "%@ (%@) %@ at magnitude %.1f, %.1fs of %.1fs left",
+                name, sourceName, archetype, magnitude, remaining, duration
+            )
+        }
         let direction = isDetrimental ? "damages" : "restores"
         let behaviour = mode == .modifier ? "held" : "per second"
         let values = valueNames.joined(separator: ", ")
@@ -39,7 +48,8 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
         magnitude: Float,
         duration: Float,
         remaining: Float,
-        valueNames: [String]
+        valueNames: [String],
+        archetype: String = ""
     ) {
         self.name = name
         self.sourceName = sourceName
@@ -49,6 +59,7 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
         self.duration = duration
         self.remaining = remaining
         self.valueNames = valueNames
+        self.archetype = archetype
     }
 }
 
@@ -85,6 +96,10 @@ nonisolated public struct MagicEffectControlSnapshot: Equatable, Sendable {
     public let unimplementedLines: [String]
     /// Human-readable result of the last panel action.
     public let lastActionText: String
+    /// What the player's effects force on the player, such as paralysis.
+    public var playerInfluence = ActorMagicInfluence.none
+    /// What the nearest actor's effects force on it, such as fear.
+    public var nearestActorInfluence = ActorMagicInfluence.none
 
     /// The reading with no runtime attached.
     public static let unavailable = MagicEffectControlSnapshot(
