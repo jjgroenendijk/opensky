@@ -1,6 +1,6 @@
-// `OnTriggerEnter` / `OnTriggerLeave` dispatch, like `queueOnActivate` without depth: a
-// trigger edge comes from the streamer's capsule test, not script code, so events queue
-// at depth 0. Handlers a script lacks are counted no-ops.
+// `OnTriggerEnter` / `OnTriggerLeave` dispatch, and the repeating `OnTrigger`, like
+// `queueOnActivate` without depth: a trigger edge comes from the streamer's capsule test,
+// not script code, so events queue at depth 0. Handlers a script lacks are counted no-ops.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -62,5 +62,40 @@ extension PapyrusWorldStateBridge {
             }
             return world?.queueOnTriggerLeave(volume: event.reference, actor: actor) ?? 0
         }
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    /// "Approximately two times a second" while a reference stays inside
+    /// (<https://ck.uesp.net/wiki/OnTrigger_-_ObjectReference>).
+    public static let triggerRepeatSeconds: Float = 0.5
+
+    /// Queues `OnTrigger(akActionRef)` per occupant once each repeat interval. An instance
+    /// that has not run the last one yet gets no new one, so a slow handler cannot pile up.
+    @discardableResult
+    public func queueTriggerRepeats(after seconds: Float) -> Int {
+        guard let world, !triggerOccupants.isEmpty, seconds.isFinite, seconds > 0 else { return 0 }
+        triggerRepeatElapsed += seconds
+        guard triggerRepeatElapsed >= Self.triggerRepeatSeconds else { return 0 }
+        triggerRepeatElapsed = triggerRepeatElapsed
+            .truncatingRemainder(dividingBy: Self.triggerRepeatSeconds)
+        let name = PapyrusEngineEvents.onTrigger
+        let waiting = Set(world.eventQueue.filter { $0.functionName == name }.map(\.target))
+        var queued = 0
+        for volume in triggerOccupants.keys.sorted() {
+            let actors = (triggerOccupants[volume] ?? []).sorted()
+            for key in world.instanceKeys(on: volume)
+                where !waiting.contains(key) && world.handlesEvent(name, key: key)
+            {
+                for actor in actors {
+                    world.enqueue(PapyrusScriptEvent(
+                        target: key, functionName: name,
+                        arguments: [.object(world.objectHandle(for: actor))], activationDepth: 0
+                    ))
+                    queued += 1
+                }
+            }
+        }
+        return queued
     }
 }

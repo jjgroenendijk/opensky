@@ -33,6 +33,17 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onObjectEquipped = "OnObjectEquipped"
     public static let onObjectUnequipped = "OnObjectUnequipped"
     public static let onCombatStateChanged = "OnCombatStateChanged"
+    public static let onEffectStart = "OnEffectStart"
+    public static let onEffectFinish = "OnEffectFinish"
+    public static let onMagicEffectApply = "OnMagicEffectApply"
+    public static let onTranslationAlmostComplete = "OnTranslationAlmostComplete"
+    public static let onTranslationComplete = "OnTranslationComplete"
+    public static let onTranslationFailed = "OnTranslationFailed"
+    public static let onOpen = "OnOpen"
+    public static let onClose = "OnClose"
+    public static let onLockStateChanged = "OnLockStateChanged"
+    public static let onContainerChanged = "OnContainerChanged"
+    public static let onTrigger = "OnTrigger"
 
     /// Every event above, lowercased, as Papyrus matches names.
     public static let sent: Set<String> = Set([
@@ -40,6 +51,9 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
         onTriggerLeave, onUpdate, onUpdateGameTime, onHit, onDying, onDeath, onRaceSwitchComplete,
         onPackageStart, onPackageEnd, onPackageChange, onBeginState, onEndState, onUnload,
         onCellDetach, onPlayerLoadGame, onLocationChange, onItemAdded, onItemRemoved,
-        onObjectEquipped, onObjectUnequipped, onCombatStateChanged
+        onObjectEquipped, onObjectUnequipped, onCombatStateChanged, onEffectStart, onEffectFinish,
+        onMagicEffectApply, onTranslationAlmostComplete, onTranslationComplete, onTranslationFailed,
+        onOpen, onClose, onLockStateChanged,
+        onContainerChanged, onTrigger
     ].map { $0.lowercased() })
 }

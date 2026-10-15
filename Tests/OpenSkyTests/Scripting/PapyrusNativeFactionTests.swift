@@ -70,6 +70,42 @@ struct PapyrusNativeFactionTests {
         #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == nil)
     }
 
+    /// `ModFactionRank` moves a member's rank, held inside the rank byte, and "will not
+    /// remove an actor from a faction" (<https://ck.uesp.net/wiki/ModFactionRank_-_Actor>).
+    @Test func modFactionRankMovesAMembersRankAndLeavesANonMemberOut() throws {
+        let fixture = try Self.fixture()
+        let guards = try handle(fixture, faction: Self.guards)
+        let bandits = try handle(fixture, faction: Self.bandits)
+        fixture.factions.join(fixture.actorKey, to: Self.guards, rank: 2)
+
+        call("Actor", "ModFactionRank", fixture, receiver: fixture.actor, arguments: [
+            .object(guards), .integer(3)
+        ])
+        call("Actor", "ModFactionRank", fixture, receiver: fixture.actor, arguments: [
+            .object(bandits), .integer(1)
+        ])
+
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == 5)
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.bandits) == nil)
+        call("Actor", "ModFactionRank", fixture, receiver: fixture.actor, arguments: [
+            .object(guards), .integer(-500)
+        ])
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == Int8.min)
+    }
+
+    /// "Remove this actor from all factions they are a member of."
+    /// (<https://ck.uesp.net/wiki/RemoveFromAllFactions_-_Actor>)
+    @Test func removeFromAllFactionsEndsEveryMembership() throws {
+        let fixture = try Self.fixture()
+        fixture.factions.join(fixture.actorKey, to: Self.guards, rank: 1)
+        fixture.factions.join(fixture.actorKey, to: Self.bandits, rank: 0)
+
+        call("Actor", "RemoveFromAllFactions", fixture, receiver: fixture.actor)
+
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.guards) == nil)
+        #expect(fixture.factions.rank(of: fixture.actorKey, in: Self.bandits) == nil)
+    }
+
     /// "-2 if the Actor is not in the faction. -1 if the Actor is in the faction,
     /// with a rank set to -1."
     /// (<https://ck.uesp.net/wiki/GetFactionRank_-_Actor>) The two have to stay

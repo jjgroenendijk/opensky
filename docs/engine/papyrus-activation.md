@@ -39,7 +39,7 @@ The use key goes through [interaction](/engine/interaction.md). The handler maps
 to a `ReferenceKey`, records the activation with the player as activator, and queues `OnActivate`.
 The open flag is set only for a door-style open action.
 
-## OnTriggerEnter and OnTriggerLeave
+## OnTriggerEnter, OnTriggerLeave, and OnTrigger
 
 A trigger edge queues `OnTriggerEnter` or `OnTriggerLeave` on every script on the volume's reference,
 with the actor as argument 0. The player's own occupancy resolves to `ReferenceKey.player`, and an
@@ -48,6 +48,11 @@ streamer's per-frame test, not from scripts, so a handler cannot cause another e
 the recursion cap. Where occupancy comes from is on the
 [collision world](/engine/collision-world.md) and [trigger volumes](/engine/trigger-volumes.md)
 pages.
+
+While an actor stays inside, `OnTrigger(akActionRef)` repeats every 0.5 s of unpaused time, from
+the wiki's "approximately two times a second"
+([OnTrigger](https://ck.uesp.net/wiki/OnTrigger_-_ObjectReference)). An instance that has not run
+the last repeat yet gets no new one, so a slow handler cannot fill the queue.
 
 ## The world bridge
 
@@ -142,7 +147,6 @@ an activation from opening or closing the reference.
 | `Enable(abFadeIn)`, `Disable(abFadeOut)` | Ignores the fade | There is no fade. The reference changes on the next cell rebuild, and the state is the same either way |
 | `Activate(_, abDefaultProcessingOnly)` | Ignores the flag | This path has no built-in activation behavior to limit |
 | `Activate` and the open state | Never opens | Only the use key knows the action was an open. A scripted activation records itself without claiming the target opened |
-| `TranslateTo`, `TranslateToRef`, `SplineTranslateTo` | Not installed | Moving over time and `OnTranslationComplete` need a mover the runtime does not have |
 | `XESP` enable parents | Not followed | `Enable` and `Disable` act on the receiver alone |
 | A constant global | Written anyway | The Creation Kit rule stops editing a constant in the editor. Nothing open says the engine refuses a scripted write |
 | `Delete` | Writes the change at once | The wiki says it waits until nothing holds the reference. OpenSky has no reference counting |

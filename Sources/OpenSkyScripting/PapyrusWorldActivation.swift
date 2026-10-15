@@ -65,11 +65,11 @@ extension PapyrusWorldRuntime {
 
     /// Lowest-script-name instance handle for a reference, matching
     /// `referenceHandleMap()`'s deterministic choice without building the
-    /// whole map. Alias scripts are not `ObjectReference` scripts, so they never answer.
+    /// whole map. Alias and effect scripts are not `ObjectReference` scripts, so they never answer.
     private func instanceHandle(for key: ReferenceKey) -> PapyrusObjectHandle? {
-        let aliasKeys = aliasInstanceKeys
+        let otherKeys = aliasInstanceKeys.union(effectScripts.instanceKeys)
         return instancesByKey.keys
-            .filter { $0.reference == key && !aliasKeys.contains($0) }
+            .filter { $0.reference == key && !otherKeys.contains($0) }
             .min()
             .flatMap { instancesByKey[$0] }
     }
@@ -89,11 +89,10 @@ extension PapyrusWorldRuntime {
             return aliasInstance(of: slot, as: typeName)
         }
         guard let reference = referenceKey(for: handle) else { return nil }
-        let aliasKeys = aliasInstanceKeys
-        let isAlias = keysByHandle[handle].map(aliasKeys.contains) ?? false
+        let group = keysByHandle[handle].map(instanceGroup) ?? .form
         let find = {
             self.instancesByKey.keys
-                .filter { $0.reference == reference && aliasKeys.contains($0) == isAlias }
+                .filter { $0.reference == reference && self.instanceGroup($0) == group }
                 .sorted()
                 .lazy
                 .compactMap { self.instancesByKey[$0] }
@@ -104,6 +103,14 @@ extension PapyrusWorldRuntime {
         }
         guard keysByHandle[handle] == nil, attachOnUse?(reference) == true else { return nil }
         return find()
+    }
+
+    /// Form, alias, and magic effect scripts on one reference never pair as siblings.
+    func instanceGroup(_ key: PapyrusInstanceKey) -> PapyrusInstanceGroup {
+        if effectScripts.contains(instance: key) {
+            return .effect
+        }
+        return aliasInstanceKeys.contains(key) ? .alias : .form
     }
 
     var aliasInstanceKeys: Set<PapyrusInstanceKey> {
@@ -120,4 +127,11 @@ extension PapyrusWorldRuntime {
         defer { nextOpaqueHandleValue &-= 1 }
         return PapyrusObjectHandle(nextOpaqueHandleValue)
     }
+}
+
+/// What kind of script an instance on a reference is.
+enum PapyrusInstanceGroup {
+    case form
+    case alias
+    case effect
 }

@@ -49,8 +49,8 @@ extension PapyrusNativeFunctions {
     }
 
     private static func installAnimationEvents(into registry: inout PapyrusNativeRegistry) {
-        // `Alias` declares its own copy, which a rider alias such as `MQ101CartRiderScript` calls.
-        for script in ["Form", "Alias"] {
+        // `Alias` and `ActiveMagicEffect` extend no `Form`, so each declares its own copy.
+        for script in ["Form", "Alias", "ActiveMagicEffect"] {
             for name in ["RegisterForAnimationEvent", "UnregisterForAnimationEvent"] {
                 installAnimationEvent(name, on: script, into: &registry)
             }

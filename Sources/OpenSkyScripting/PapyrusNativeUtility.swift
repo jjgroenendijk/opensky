@@ -11,15 +11,20 @@ extension PapyrusNativeFunctions {
     }
 
     private static func installWaits(into registry: inout PapyrusNativeRegistry) {
-        registry.register(PapyrusNativeFunction(
-            scriptName: "Utility",
-            functionName: "Wait"
-        ) { call, _ in
-            guard let seconds = float(call, at: 0), seconds.isFinite else {
-                return failure(call, "Wait needs a finite duration")
-            }
-            return .suspended(.realSeconds(Double(max(0, seconds))))
-        })
+        // `WaitMenuMode` also counts time spent in a menu
+        // (<https://ck.uesp.net/wiki/WaitMenuMode_-_Utility>). A menu pauses the whole VM
+        // here, so both waits count the same time.
+        for name in ["Wait", "WaitMenuMode"] {
+            registry.register(PapyrusNativeFunction(
+                scriptName: "Utility",
+                functionName: name
+            ) { call, _ in
+                guard let seconds = float(call, at: 0), seconds.isFinite else {
+                    return failure(call, "\(name) needs a finite duration")
+                }
+                return .suspended(.realSeconds(Double(max(0, seconds))))
+            })
+        }
         registry.register(PapyrusNativeFunction(
             scriptName: "Utility",
             functionName: "WaitGameTime"
@@ -29,6 +34,11 @@ extension PapyrusNativeFunctions {
             }
             return .suspended(.gameHours(Double(max(0, hours))))
         })
+        // A menu pauses the VM, so a running script is never in menu mode.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Utility",
+            functionName: "IsInMenuMode"
+        ) { _, _ in .returned(.boolean(false)) })
     }
 
     private static func installRandom(into registry: inout PapyrusNativeRegistry) {

@@ -142,33 +142,37 @@ extension PapyrusNativeFunctions {
     }
 
     /// `Cast(ObjectReference akSource, ObjectReference akTarget = None)`
-    /// (<https://ck.uesp.net/wiki/Cast_-_Spell>). The receiver is the SPEL and the
-    /// caster is argument 0. With no target, the cast follows the caster's aim.
+    /// (<https://ck.uesp.net/wiki/Cast_-_Spell>) and `RemoteCast(ObjectReference akSource,
+    /// Actor akBlameActor, ObjectReference akTarget = None)`
+    /// (<https://ck.uesp.net/wiki/RemoteCast_-_Spell>). Both cast "instantaneously"; the
+    /// blamed actor is not used, because a landed spell reports no crime yet.
     private static func installSpellCast(into registry: inout PapyrusNativeRegistry) {
-        registry.register(PapyrusNativeFunction(
-            scriptName: "Spell",
-            functionName: "Cast"
-        ) { call, context in
-            guard
-                let world = context.world,
-                let receiver = call.receiver,
-                let spell = world.referenceKey(for: receiver)
-            else {
-                return failure(call, "Cast needs a world runtime and a spell receiver")
-            }
-            guard
-                let source = objectArgument(call, at: 0),
-                let caster = world.referenceKey(for: source)
-            else {
-                return failure(call, "Cast needs an object reference to cast from")
-            }
-            let target = objectArgument(call, at: 1)
-                .flatMap { world.referenceKey(for: $0) }
-            guard world.castSpell(spell, from: caster, at: target) else {
-                return failure(call, "Cast has no caster runtime or no such spell")
-            }
-            return .returned(.none)
-        })
+        for (name, targetIndex) in [("Cast", 1), ("RemoteCast", 2)] {
+            registry.register(PapyrusNativeFunction(
+                scriptName: "Spell",
+                functionName: name
+            ) { call, context in
+                guard
+                    let world = context.world,
+                    let receiver = call.receiver,
+                    let spell = world.referenceKey(for: receiver)
+                else {
+                    return failure(call, "\(name) needs a world runtime and a spell receiver")
+                }
+                guard
+                    let source = objectArgument(call, at: 0),
+                    let caster = world.referenceKey(for: source)
+                else {
+                    return failure(call, "\(name) needs an object reference to cast from")
+                }
+                let target = objectArgument(call, at: targetIndex)
+                    .flatMap { world.referenceKey(for: $0) }
+                guard world.castSpell(spell, from: caster, at: target) else {
+                    return failure(call, "\(name) has no caster runtime or no such spell")
+                }
+                return .returned(.none)
+            })
+        }
     }
 
     // MARK: - Shared

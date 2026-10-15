@@ -24,16 +24,16 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-14 by `make gaps`.
+Measured on 2026-10-15 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
-| Papyrus natives | 197 | 311 | 508 | 38% |
-| Papyrus events | 15 | 53 | 68 | 22% |
-| Condition functions | 105 | 153 | 258 | 40% |
+| Papyrus natives | 361 | 147 | 508 | 71% |
+| Papyrus events | 35 | 33 | 68 | 51% |
+| Condition functions | 121 | 137 | 258 | 46% |
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 141 | 1507 | 1648 | 8% |
-| Magic effect archetypes | 3 | 34 | 37 | 8% |
+| Magic effect archetypes | 21 | 16 | 37 | 56% |
 | Perk entry points | 8 | 60 | 68 | 11% |
 | Perk entry-point functions | 5 | 4 | 9 | 55% |
 | AI package procedures | 8 | 22 | 30 | 26% |
@@ -50,7 +50,7 @@ Measured on 2026-10-14 by `make gaps`.
 | Mesh decode failures | - | 6 | - | - |
 | Texture variants | 9 | 1 | 10 | 90% |
 | Sound file variants | 3 | 0 | 3 | 100% |
-| Lip sync data | 1 | 2 | 3 | 33% |
+| Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 9 | 14 | 23 | 39% |
 | AS2 runtime | - | 223 | - | - |
 | SWF tags | 24 | 4 | 28 | 85% |

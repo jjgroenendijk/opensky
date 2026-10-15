@@ -101,7 +101,11 @@ public final class ScriptCoordinator {
     public func advance(delta: Float) {
         queueLocationChange()
         bridge?.queueInventoryEvents()
+        bridge?.queueMagicEffectEvents()
+        bridge?.queueReferenceStateEvents()
         bridge?.queueCombatStateEvents()
+        bridge?.advanceTranslations(by: delta)
+        bridge?.queueTriggerRepeats(after: delta)
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 
@@ -114,6 +118,9 @@ public final class ScriptCoordinator {
         runtime?.restore(timerStates: timers)
         runtime?.queuePlayerLoadGame()
         bridge?.skipInventoryJournal()
+        bridge?.skipMagicEffectJournal()
+        bridge?.skipReferenceStateJournal()
+        bridge?.clearTranslations()
         lastPlayerLocation = nil
     }
 
@@ -194,6 +201,12 @@ extension ScriptCoordinator: ScriptControlProviding {
     /// Targets the crosshair. An unresolved FormID still shows as itself, so the
     /// readout never goes blank while the crosshair is on something.
     public var scriptsSnapshot: ScriptsSnapshot {
+        var snapshot = targetedSnapshot
+        snapshot.scriptedMoveCount = bridge?.translations.count ?? 0
+        return snapshot
+    }
+
+    private var targetedSnapshot: ScriptsSnapshot {
         guard let runtime else { return .empty }
         let running = bridge?.questRuntime?.runningQuests().count ?? 0
         let failures = bridge?.questAliasFillFailures ?? 0

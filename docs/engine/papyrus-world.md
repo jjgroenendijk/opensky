@@ -165,6 +165,26 @@ it survives a save. A script with a filter hears `OnItemAdded` and `OnItemRemove
 the filter names, directly or through a form list. A load moves the journal cursor to the end, so
 restoring inventories is not read as item moves.
 
+## Reference events
+
+The same journal read gives three more events on a reference's scripts:
+
+- A change of the open flag queues `OnOpen(akActionRef)` or `OnClose(akActionRef)`. The action
+  reference is the last activator, or `None`.
+- A change of the locked flag queues `OnLockStateChanged()`. A new lock level alone sends nothing.
+- A take adds the item to the taker and then deletes the reference. A deletion right after an
+  inventory write that added the reference's base object queues
+  `OnContainerChanged(akNewContainer, akOldContainer)`, with the taker and `None`.
+
+Sources: the Creation Kit wiki pages
+[OnOpen](https://ck.uesp.net/wiki/OnOpen_-_ObjectReference),
+[OnLockStateChanged](https://ck.uesp.net/wiki/OnLockStateChanged_-_ObjectReference), and
+[OnContainerChanged](https://ck.uesp.net/wiki/OnContainerChanged_-_ObjectReference).
+
+An item inside an inventory is a count, not a reference, so it has no script instance. The game
+keeps the picked-up reference and its script alive in the container. OpenSky retires the instance
+when the cell detaches, so a later drop, equip, or second move sends nothing.
+
 ## Script state in a save
 
 Instance states are sorted by key, and variables by script and name, so an unchanged runtime saves

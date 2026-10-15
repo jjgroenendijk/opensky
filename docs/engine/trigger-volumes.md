@@ -11,7 +11,7 @@ tags: [engine, world, collision, triggers, papyrus, streaming]
 A trigger volume is an invisible shape. When the player walks in or out, a script gets
 `OnTriggerEnter` or `OnTriggerLeave`. Each cell has a trigger set beside its
 [static collision](/engine/collision-world.md). The Papyrus side is on the
-[Papyrus activation](/engine/papyrus-activation.md#ontriggerenter-and-ontriggerleave) page.
+[Papyrus activation](/engine/papyrus-activation.md#ontriggerenter-ontriggerleave-and-ontrigger) page.
 
 ## Two sources
 

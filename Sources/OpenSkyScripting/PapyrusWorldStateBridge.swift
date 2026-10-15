@@ -13,6 +13,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPerceptionInterface
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
@@ -43,6 +44,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var questAliasFillFailures = 0
     /// Who stands in each trigger volume, kept from the enter and leave events.
     public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// Seconds since the last `OnTrigger` repeat.
+    var triggerRepeatElapsed: Float = 0
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?
@@ -144,11 +147,25 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var inventory: (any PapyrusInventoryBridge)?
     /// The first journal entry `queueInventoryEvents` has not read; nil before its first call.
     var inventoryJournalCursor: UInt64?
+    /// The first journal entry `queueMagicEffectEvents` has not read; nil before its first call.
+    var effectJournalCursor: UInt64?
+    /// The first journal entry `queueReferenceStateEvents` has not read.
+    var referenceJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
     /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
     /// `GetParentCell`, and `GetWorldSpace`. Nil without a world.
     public var conditionData: (() -> ConditionDataResolution)?
+    /// What perception knows about pairs of actors, for `HasLOS` and `IsDetectedBy`. Nil
+    /// without a perception pass.
+    public var detection: (() -> DetectionResolution?)?
+    /// The PACK an actor runs now, as a load-order FormID, for `GetCurrentPackage`. Nil
+    /// without a package runtime.
+    public var currentPackage: ((ReferenceKey) -> FormID?)?
+    /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
+    public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
+    /// Hands the drawn pose of every moving reference to the renderer, after each change.
+    public var publishTranslationPoses: (([ReferenceKey: ReferenceTransformOverride]) -> Void)?
     /// Where the player or a moving actor stands now, which its record no longer says.
     public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
 
@@ -184,10 +201,14 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
 
     // MARK: - Reading
 
-    /// The enabled flag follows a resident `XESP` parent, as the cell build does.
+    /// The enabled flag follows a resident `XESP` parent, as the cell build does. A
+    /// scripted move shows its live pose.
     public func referenceState(for key: ReferenceKey) -> ReferenceState? {
         guard let entry = references?.referenceEntry(key: key) else { return nil }
         var state = worldState.resolvedState(for: entry)
+        if let move = translations[key] {
+            state.transform = move.pose(scale: state.transform.scale)
+        }
         guard entry.enableParent != nil else { return state }
         let store = worldState
         let resolver = EnableParentResolver(
@@ -237,7 +258,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Stores a component the VM holds. A spawn uses its own cell; quests, aliases and
     /// dialogue have none; placed state uses the reference's cell. Gameplay natives use
     /// their runtimes instead. Spellbook, enchantment, perk, faction, progress and
-    /// crime kinds are refused.
+    /// crime kinds are refused. A transform write ends a scripted move.
     @discardableResult
     public func write(
         _ component: WorldStateComponentValue, for key: ReferenceKey
@@ -248,7 +269,10 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             return worldState.set(spawn, for: key, in: spawn.location)
         case .quest, .questAliases, .dialogue:
             return worldState.set(component.base, for: key)
-        case .enableState, .transform, .activation, .deletion, .inventory,
+        case .transform:
+            endTranslation(of: key)
+            return worldState.set(component.base, for: key, in: cellLocation(of: key))
+        case .enableState, .activation, .deletion, .inventory,
              .actorValues, .death, .combat, .activeEffects, .lock:
             return worldState.set(component.base, for: key, in: cellLocation(of: key))
         default:

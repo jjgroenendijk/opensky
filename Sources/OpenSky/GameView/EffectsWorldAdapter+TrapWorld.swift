@@ -1,4 +1,4 @@
-// The trap natives' world: `PlaceAtMe` spawns hazards and detonates explosions,
+// The trap natives' world: `PlaceAtMe` spawns hazards, detonates explosions, or places objects,
 // impulses push simulated bodies, and pushback knocks the player back
 // (docs/engine/traps.md).
 
@@ -25,7 +25,11 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
             }
             return last
         }
-        guard let spec = explosions.spec(for: base) else { return nil }
+        guard let spec = explosions.spec(for: base) else { return spawn(
+            base,
+            at: anchor,
+            count: count
+        ) }
         for _ in 0 ..< max(1, count) {
             explosions.detonate(spec, at: position, cause: .script)
         }
@@ -54,6 +58,16 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
         guard simd_length(flat) > 0 else { return false }
         renderer.walkController.knock(simd_normalize(flat) * speed)
         return true
+    }
+
+    /// Any other base becomes `count` spawned references, and the last one is answered.
+    private func spawn(_ base: ReferenceKey, at anchor: ReferenceKey, count: Int) -> ReferenceKey? {
+        guard let bridge = game.scripts.bridge else { return nil }
+        var last: ReferenceKey?
+        for _ in 0 ..< max(1, count) {
+            last = bridge.spawnReference(of: base, at: anchor) ?? last
+        }
+        return last
     }
 
     private func trapPosition(of reference: ReferenceKey) -> SIMD3<Float>? {

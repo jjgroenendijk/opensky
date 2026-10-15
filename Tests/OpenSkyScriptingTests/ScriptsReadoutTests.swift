@@ -14,7 +14,16 @@ struct ScriptsReadoutTests {
     @Test
     func instancesTextStatesAnAbsentTarget() {
         let text = ScriptsReadout.instancesText(for: makeScriptsSnapshot(instanceCount: 9))
-        #expect(text == "Instances: 9\nTarget: none")
+        #expect(text == "Instances: 9  Scripted moves: 0\nTarget: none")
+    }
+
+    @Test
+    func instancesTextCountsScriptedMoves() {
+        var snapshot = makeScriptsSnapshot(instanceCount: 2)
+        snapshot.scriptedMoveCount = 3
+        #expect(ScriptsReadout.instancesText(for: snapshot).hasPrefix(
+            "Instances: 2  Scripted moves: 3"
+        ))
     }
 
     /// A targeted reference carrying no scripts is a different fact from no

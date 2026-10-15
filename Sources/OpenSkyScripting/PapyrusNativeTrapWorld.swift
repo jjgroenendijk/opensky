@@ -37,6 +37,7 @@ extension PapyrusNativeFunctions {
 
     static func installTrapWorld(into registry: inout PapyrusNativeRegistry) {
         installPlaceAtMe(into: &registry)
+        installPlaceActorAtMe(into: &registry)
         trapWorldReference("ApplyHavokImpulse", into: &registry) { call, target in
             let direction = vector(call, from: 0)
             guard let magnitude = float(call, at: 3), magnitude.isFinite, let direction else {
@@ -71,6 +72,22 @@ extension PapyrusNativeFunctions {
             guard
                 let placed = target.trapWorld.placeAtMe(base, at: target.key, count: count),
                 let result = target.world.objectHandle(for: placed)
+            else { return .returned(.none) }
+            return .returned(.object(result))
+        }
+    }
+
+    /// `Actor PlaceActorAtMe(ActorBase akActorToPlace, int aiLevelMod = 4, EncounterZone
+    /// akZone = None)`. The level modifier and zone are not read (docs/engine/traps.md).
+    private static func installPlaceActorAtMe(into registry: inout PapyrusNativeRegistry) {
+        scriptState("ObjectReference", "PlaceActorAtMe", into: &registry) { call, bridge, key in
+            guard
+                let handle = objectArgument(call, at: 0),
+                let base = bridge.referenceKey(for: handle)
+            else { return failure(call, "PlaceActorAtMe needs an actor base") }
+            guard
+                let placed = bridge.spawnReference(of: base, at: key),
+                let result = bridge.objectHandle(for: placed)
             else { return .returned(.none) }
             return .returned(.object(result))
         }

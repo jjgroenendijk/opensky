@@ -39,6 +39,8 @@ struct PapyrusNativeSignatureRealDataTests {
         Expected("Actor", "IsInFaction", 1),
         Expected("Actor", "GetFactionRank", 1),
         Expected("Actor", "SetFactionRank", 2),
+        Expected("Actor", "ModFactionRank", 2),
+        Expected("Actor", "RemoveFromAllFactions", 0),
         Expected("Actor", "GetRelationshipRank", 1),
         Expected("Actor", "SetRelationshipRank", 2),
         Expected("Actor", "GetFactionReaction", 1),
@@ -51,7 +53,6 @@ struct PapyrusNativeSignatureRealDataTests {
     /// each is reported, so the next implementation starts from an observation
     /// rather than from a guess.
     private static let unregistered = [
-        Expected("Actor", "ModFactionRank", 2),
         Expected("Faction", "SetReaction", 2),
         Expected("Faction", "ModReaction", 2)
     ]

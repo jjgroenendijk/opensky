@@ -181,6 +181,20 @@ struct PapyrusNativeSpellEffectTests {
         #expect(fixture.casterWorld.aimCasters.isEmpty)
     }
 
+    /// `RemoteCast(akSource, akBlameActor, akTarget)` takes its target third.
+    @Test func remoteCastAtANamedTargetLandsOnThatTarget() throws {
+        let fixture = try PapyrusNativeSpellTests.fixture()
+        let spell = fixture.session.world.objectHandle(
+            for: SpellbookFixture.key(SpellbookFixture.Spell.firebolt)
+        )
+        let target = fixture.session.world.objectHandle(for: fixture.targetKey)
+        #expect(call(
+            "Spell", "RemoteCast", fixture, receiver: spell,
+            arguments: [.object(fixture.receiver), .none, .object(target)]
+        ) == .returned(.none))
+        #expect(fixture.casterWorld.spellHits.first?.targets.map(\.key) == [fixture.targetKey])
+    }
+
     @Test func castingASpellThisLoadOrderDoesNotCarryFails() throws {
         let fixture = try PapyrusNativeSpellTests.fixture()
         let stranger = fixture.session.world.objectHandle(
@@ -219,5 +233,6 @@ struct PapyrusNativeSpellEffectTests {
             #expect(registry.contains(scriptName: "Actor", functionName: name))
         }
         #expect(registry.contains(scriptName: "Spell", functionName: "Cast"))
+        #expect(registry.contains(scriptName: "Spell", functionName: "RemoteCast"))
     }
 }

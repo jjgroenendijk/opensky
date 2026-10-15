@@ -11,6 +11,7 @@ extension PapyrusNativeFunctions {
     public static func installFaction(into registry: inout PapyrusNativeRegistry) {
         installFactionMemberships(into: &registry)
         installFactionRanks(into: &registry)
+        installFactionBulkChanges(into: &registry)
         installRelationshipRanks(into: &registry)
         installSocialReads(into: &registry)
     }
@@ -109,6 +110,41 @@ extension PapyrusNativeFunctions {
                 }
                 return .returned(.none)
             }
+        })
+    }
+
+    /// `ModFactionRank(Faction akFaction, int aiMod)` and `RemoveFromAllFactions()`
+    /// (<https://ck.uesp.net/wiki/RemoveFromAllFactions_-_Actor>).
+    private static func installFactionBulkChanges(
+        into registry: inout PapyrusNativeRegistry
+    ) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor",
+            functionName: "ModFactionRank"
+        ) { call, context in
+            memberFactionTarget(call, context) { actor, faction in
+                guard let delta = integer(call, at: 1) else {
+                    return failure(call, "ModFactionRank needs an integer change")
+                }
+                guard actor.world.modFactionRank(delta, of: actor.key, in: faction) != nil else {
+                    return needsFactionRuntime(call)
+                }
+                return .returned(.none)
+            }
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor",
+            functionName: "RemoveFromAllFactions"
+        ) { call, context in
+            guard
+                let bridge = context.world as? PapyrusWorldStateBridge,
+                let receiver = call.receiver,
+                let actor = bridge.referenceKey(for: receiver)
+            else { return needsActor(call) }
+            guard bridge.removeFromAllFactions(actor) != nil else {
+                return needsFactionRuntime(call)
+            }
+            return .returned(.none)
         })
     }
 
