@@ -1,5 +1,5 @@
-// The `Game` family: `GetPlayer` and `GetForm`. The rest of `Game` lives with the
-// system it reaches, such as menus, skills, and levels.
+// The `Game` family: `GetPlayer`, `GetForm`, and `UsingGamepad`. The rest of `Game` lives
+// with the system it reaches, such as menus, skills, and levels.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -37,5 +37,10 @@ extension PapyrusNativeFunctions {
             else { return .returned(.none) }
             return .returned(.object(handle))
         })
+        // OpenSky reads only the keyboard and mouse.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Game",
+            functionName: "UsingGamepad"
+        ) { _, _ in .returned(.boolean(false)) })
     }
 }

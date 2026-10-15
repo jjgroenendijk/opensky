@@ -59,6 +59,6 @@ so sources 2 and 3 are a tallied failure, not a silent no-op.
 | `Spell.Cast` and magicka | Never charges the caster | The wiki describes a cast that does not animate the actor and works whether or not the source knows the spell. Nothing in it says the caster pays |
 | `Spell.Cast` with `akTarget` | Applies to that actor, with no area sweep | A script that names a target is not aiming. Nothing knows where an impact was, and an invented spot could catch bystanders |
 | `Actor.DoCombatSpellApply` | Not installed | It asks the combat controller to fit a spell into what it is doing. The caster AI picks its own spells, so an instant cast would bypass its decisions |
-| `Spell.Preload`, `Spell.Unload` | Not installed | The asset lifecycle they name does not exist |
+| `Spell.Preload`, `Spell.Unload` | Return at once | OpenSky loads spell art when it is first drawn, so there is nothing to start early |
 | The `ActiveMagicEffect` script | Not installed | No script archetype `MGEF` runs yet, so there is no receiver |
 | `HasMagicEffect`, `HasMagicEffectWithKeyword` | Answer "is it acting", not "is it carried" | The same narrowing the condition functions use, cited on [condition evaluation](/engine/conditions.md) |
