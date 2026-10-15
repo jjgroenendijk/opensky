@@ -105,6 +105,7 @@ public final class ScriptCoordinator {
         bridge?.queueReferenceStateEvents()
         bridge?.queueCombatStateEvents()
         bridge?.advanceTranslations(by: delta)
+        bridge?.queueTriggerRepeats(after: delta)
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
     }
 

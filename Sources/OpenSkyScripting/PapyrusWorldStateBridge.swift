@@ -44,6 +44,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var questAliasFillFailures = 0
     /// Who stands in each trigger volume, kept from the enter and leave events.
     public internal(set) var triggerOccupants: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// Seconds since the last `OnTrigger` repeat.
+    var triggerRepeatElapsed: Float = 0
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?

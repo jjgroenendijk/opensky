@@ -39,7 +39,7 @@ The use key goes through [interaction](/engine/interaction.md). The handler maps
 to a `ReferenceKey`, records the activation with the player as activator, and queues `OnActivate`.
 The open flag is set only for a door-style open action.
 
-## OnTriggerEnter and OnTriggerLeave
+## OnTriggerEnter, OnTriggerLeave, and OnTrigger
 
 A trigger edge queues `OnTriggerEnter` or `OnTriggerLeave` on every script on the volume's reference,
 with the actor as argument 0. The player's own occupancy resolves to `ReferenceKey.player`, and an
@@ -48,6 +48,11 @@ streamer's per-frame test, not from scripts, so a handler cannot cause another e
 the recursion cap. Where occupancy comes from is on the
 [collision world](/engine/collision-world.md) and [trigger volumes](/engine/trigger-volumes.md)
 pages.
+
+While an actor stays inside, `OnTrigger(akActionRef)` repeats every 0.5 s of unpaused time, from
+the wiki's "approximately two times a second"
+([OnTrigger](https://ck.uesp.net/wiki/OnTrigger_-_ObjectReference)). An instance that has not run
+the last repeat yet gets no new one, so a slow handler cannot fill the queue.
 
 ## The world bridge
 
