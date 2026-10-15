@@ -55,7 +55,7 @@ final class ScriptWorldAdapter {
         bridge.weather = self
         bridge.music = self
         bridge.playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
-        bridge.startPlayerSneaking = { [weak game] in game?.player.isSneaking = true }
+        bridge.togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
         bridge.toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
         game.magic.onSpellCast = { [weak game] spell, caster in
             game?.scripts.runtime?.queueSpellCast(spell, by: caster)
