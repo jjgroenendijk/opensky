@@ -62,6 +62,11 @@ nonisolated public struct RaceMenuModel: Equatable, Sendable {
     ) {
         var identity = identity
         identity.face = Self.padded(identity.face)
+        // A made face has tint layers. Without them the face shows its bare
+        // grey texture, so it takes the race's first preset tints.
+        if identity.face.tints.isEmpty, let preset = options.presets.first {
+            identity.face.tints = preset.face.tints
+        }
         self.identity = identity
         self.races = races
         self.options = options
