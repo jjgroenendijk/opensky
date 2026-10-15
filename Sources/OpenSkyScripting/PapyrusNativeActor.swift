@@ -177,9 +177,39 @@ extension PapyrusNativeFunctions {
             actor.world.killActor(actor.key, killer: killer)
             return .returned(.none)
         })
+        // `KillSilent(Actor akKiller = None)` kills "without a kill event", and
+        // `Resurrect()` brings the actor back (Creation Kit wiki, Actor Script).
+        withBridgeActor("KillSilent", into: &registry) { call, bridge, key in
+            let killer = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:))
+            bridge.killActorSilently(key, killer: killer)
+            return .returned(.none)
+        }
+        withBridgeActor("Resurrect", into: &registry) { call, bridge, key in
+            guard bridge.resurrectActor(key) else {
+                return failure(call, "Resurrect needs an actor with actor values")
+            }
+            return .returned(.none)
+        }
     }
 
     // MARK: - Shared
+
+    private static func withBridgeActor(
+        _ name: String, into registry: inout PapyrusNativeRegistry,
+        body: @escaping @MainActor (
+            PapyrusNativeCall, PapyrusWorldStateBridge, ReferenceKey
+        ) -> PapyrusNativeResult
+    ) {
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Actor", functionName: name
+        ) { call, context in
+            guard
+                let bridge = context.world as? PapyrusWorldStateBridge,
+                let key = call.receiver.flatMap(bridge.referenceKey(for:))
+            else { return needsActor(call) }
+            return body(call, bridge, key)
+        })
+    }
 
     /// The world façade plus the world identity of `self`, for an `Actor`
     /// method. Identical in shape to `worldTarget(_:_:)`; named separately so

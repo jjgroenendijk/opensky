@@ -28,6 +28,8 @@ dirty counts, and the save by the same path as any other change.
 | `StopCombat()` | Ends the fight and leaves hostility alone | [StopCombat - Actor](https://www.creationkit.com/index.php?title=StopCombat_-_Actor) |
 | `bool IsWeaponDrawn()` | The melee draw state | [IsWeaponDrawn - Actor](https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor) |
 | `Kill(Actor akKiller = None)` | Empties health, then kills | [Kill - Actor](https://www.creationkit.com/index.php?title=Kill_-_Actor) |
+| `KillSilent(Actor akKiller = None)` | The same death, but the story manager gets no `KILL` event. `OnDying` and `OnDeath` still fire, because the wiki names only the kill event | [KillSilent - Actor](https://ck.uesp.net/wiki/KillSilent_-_Actor) |
+| `Resurrect()` | Clears the death latch and refills every actor value. A ragdoll keeps its pose until the cell reloads | [Resurrect - Actor](https://ck.uesp.net/wiki/Resurrect_-_Actor) |
 | `int GetCombatState()` | 0 not fighting, 1 fighting, 2 searching; a dead actor is 0 | [GetCombatState - Actor](https://ck.uesp.net/wiki/GetCombatState_-_Actor) |
 | `Actor GetCombatTarget()` | The player while the actor fights, because the combat loop fights the player alone; `None` for the player | [GetCombatTarget - Actor](https://ck.uesp.net/wiki/GetCombatTarget_-_Actor) |
 | `StopCombatAlarm()` | Ends the fight, as `StopCombat` does; OpenSky keeps no separate alarm | [StopCombatAlarm - Actor](https://ck.uesp.net/wiki/StopCombatAlarm_-_Actor) |

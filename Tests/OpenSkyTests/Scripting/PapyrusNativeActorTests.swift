@@ -28,7 +28,7 @@ struct PapyrusNativeActorTests {
     private static let killerID: UInt32 = 0x0000_0C33
     /// Every actor in a session with no record indexes derives the fallback
     /// baseline, which is 100 of each (`vanillaPlayerStartingValues`).
-    private static let fullHealth: Float = 100
+    static let fullHealth: Float = 100
 
     struct Fixture {
         let session: PapyrusWorldFixture.Session

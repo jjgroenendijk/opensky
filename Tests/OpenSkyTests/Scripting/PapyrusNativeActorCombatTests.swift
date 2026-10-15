@@ -14,6 +14,33 @@ import Testing
 
 @MainActor
 extension PapyrusNativeActorTests {
+    /// `KillSilent` takes the same death path, flagged so the host skips the story
+    /// event; `Resurrect` clears the latch and refills health.
+    @Test func killSilentFlagsTheDeathAndResurrectUndoesIt() throws {
+        let fixture = try Self.fixture()
+        let events = fixture.ragdollWorld.deathEvents
+        var silent: [ReferenceKey?] = []
+        fixture.ragdollWorld.deathEvents = { [bridge = fixture.session.bridge] key, killer in
+            silent.append(bridge.silentDeath)
+            return events?(key, killer) ?? 0
+        }
+        call("KillSilent", fixture, receiver: fixture.receiver)
+        #expect(silent == [fixture.key])
+        #expect(fixture.session.bridge.silentDeath == nil)
+        #expect(call(
+            "IsDead", fixture, receiver: fixture.receiver, returnType: .boolean
+        ) == .returned(.boolean(true)))
+
+        call("Resurrect", fixture, receiver: fixture.receiver)
+        #expect(call(
+            "IsDead", fixture, receiver: fixture.receiver, returnType: .boolean
+        ) == .returned(.boolean(false)))
+        #expect(call(
+            "GetActorValue", fixture, receiver: fixture.receiver,
+            arguments: [.string("Health")], returnType: .float
+        ) == .returned(.float(Self.fullHealth)))
+    }
+
     /// `IsInCombat` reads what the actor is *doing*, not what it feels: an
     /// actor made hostile without a fight running answers false, and only
     /// `StartCombat` (or perceiving the player) turns it true.

@@ -117,6 +117,26 @@ extension PapyrusWorldStateBridge {
         return ragdoll.noteZeroHealth(of: key, killer: killer)
     }
 
+    /// `KillSilent`: the same death, but the story manager hears no `KILL` event.
+    @discardableResult
+    public func killActorSilently(_ key: ReferenceKey, killer: ReferenceKey?) -> Bool {
+        silentDeath = key
+        defer { silentDeath = nil }
+        return killActor(key, killer: killer)
+    }
+
+    /// `Resurrect`: clears the death latch and refills every actor value. A ragdoll keeps
+    /// its pose until the cell reloads.
+    @discardableResult
+    public func resurrectActor(_ key: ReferenceKey) -> Bool {
+        guard let values = actorValueRuntime?(), let holder = actorHolder(for: key) else {
+            return false
+        }
+        _ = worldState.reset(ActorDeathState.componentKind, for: key)
+        _ = values.restoreAll(on: holder)
+        return true
+    }
+
     // MARK: - Perks
 
     @discardableResult

@@ -57,6 +57,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// `PapyrusWorldStateBridgeActors.swift`.
     public var actorValueRuntime: (() -> (any ActorValueAccess)?)?
     public var ragdollRuntime: (() -> (any DeathReporting)?)?
+    /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
+    public internal(set) var silentDeath: ReferenceKey?
     /// The combat loop behind `StartCombat`, `StopCombat` and `IsInCombat`. Nil leaves
     /// them tallied failures.
     public var combatRuntime: (() -> (any CombatControlling)?)?
