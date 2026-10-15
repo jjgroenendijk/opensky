@@ -122,13 +122,13 @@ jobs:
           docs-length agent-files comment-length panel-text gap-registries duplicates no-suppressions
       - if: success() || failure()
         run: make file-length ALL=1
-      # The Python tools pin ruff and pytest in their uv.lock, so CI needs only uv.
+      # The Python tools pin ruff in their uv.lock, so CI needs only uv.
       - if: success() || failure()
         uses: astral-sh/setup-uv@v10.3.0
         with:
           version: ${{ env.UV_VERSION }}
       - if: success() || failure()
-        run: make py-format-check py-lint test-python
+        run: make py-format-check py-lint
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
   # skills, the Python tools, the markdownlint config, or the Renovate config skips it.

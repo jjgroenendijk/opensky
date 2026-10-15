@@ -2,7 +2,7 @@
 type: Decision
 title: Python tools as one uv project
 description: Repository tools that outgrow a shell script are Python in a uv project, linted
-  and formatted by ruff and tested by pytest, with pandoc as an external binary.
+  and formatted by ruff, with pandoc as an external binary.
 tags: [decision, tooling, dependency, python]
 ---
 
@@ -16,11 +16,12 @@ does not belong in the Swift engine or `openskycli`, because it never touches ga
 
 - Such a tool is Python in a [uv](https://docs.astral.sh/uv/) project, starting with
   `tools/ck-wiki/`. The tool code uses only the standard library.
-- `uv.lock` pins the dev tools: [ruff](https://docs.astral.sh/ruff/) (MIT) formats and lints with
-  every rule on, and [pytest](https://pytest.org) (MIT) runs the tests. CI installs only uv, so
-  local runs and CI use the same ruff without a separate version pin.
-- `make py-format`, `make py-format-check`, `make py-lint`, and `make test-python` run them. The
-  first three are part of `make fix` and `make check`; CI runs all four in the Static checks job.
+- `uv.lock` pins [ruff](https://docs.astral.sh/ruff/) (MIT), which formats and lints with every
+  rule on. CI installs only uv, so local runs and CI use the same ruff without a separate pin.
+- `make py-format`, `make py-format-check`, and `make py-lint` run it. They are part of `make fix`
+  and `make check`, and CI runs the checks in the Static checks job.
+- The tools have no unit tests. They do not ship in the app. Their output is checked by running
+  them and reading the result; a sync reports every page that failed.
 - The ruff configuration lives in the project's `pyproject.toml`, next to the code it checks. Its
   few ignored rules each carry a reason there.
 - [pandoc](https://pandoc.org) (GPL-2.0-or-later) converts HTML to Markdown. It runs as a separate

@@ -152,7 +152,7 @@ MD_GLOB          := **/*.md
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
 METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
-# The Python tools are one uv project; uv.lock pins ruff and pytest. The uv cache is on
+# The Python tools are one uv project; uv.lock pins ruff. The uv cache is on
 # the boot disk and the project on the data volume, so uv copies instead of hard-linking.
 PY_PROJECT       := tools/ck-wiki
 UV_RUN           := UV_LINK_MODE=copy uv run --locked --quiet --project $(PY_PROJECT)
@@ -416,7 +416,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample test-python ck-wiki
+        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -527,9 +527,6 @@ test-report: ## Summarize the newest test result bundle, failures included
 
 test-perms: ## Check the one-time macOS permission grants tests need
 	@./tools/test-perms.sh
-
-test-python: ## Run the Python tool tests with pytest
-	@$(UV_RUN) pytest $(PY_PROJECT)
 
 ck-wiki: ## Download or update the offline Creation Kit wiki in Markdown [ARGS='--source wayback']
 	@$(UV_RUN) ck-wiki $(ARGS)

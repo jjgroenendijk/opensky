@@ -10,7 +10,7 @@ dependencies = []
 ck-wiki = "ck_wiki.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.17"]
+dev = ["ruff>=0.17"]
 
 [build-system]
 requires = ["uv_build>=0.9,<0.14"]
@@ -32,11 +32,3 @@ ignore = [
   # Flags every subprocess call; the commands here are fixed argument lists.
   "S603",
 ]
-
-[tool.ruff.lint.per-file-ignores]
-# Tests use bare asserts and private helpers.
-"tests/**" = ["S101", "PLR2004", "D", "SLF001", "INP001"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = ["-q", "-p", "no:cacheprovider"]
