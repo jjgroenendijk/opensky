@@ -30,7 +30,7 @@ Measured on 2026-10-15 by `make gaps`.
 | --- | --: | --: | --: | --: |
 | Papyrus natives | 361 | 147 | 508 | 71% |
 | Papyrus events | 35 | 33 | 68 | 51% |
-| Condition functions | 121 | 137 | 258 | 46% |
+| Condition functions | 228 | 30 | 258 | 88% |
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 141 | 1507 | 1648 | 8% |
 | Magic effect archetypes | 21 | 16 | 37 | 56% |
@@ -41,7 +41,7 @@ Measured on 2026-10-15 by `make gaps`.
 | Behavior node classes | 22 | 29 | 51 | 43% |
 | Behavior features ignored | - | 251 | - | - |
 | Havok classes | 61 | 39 | 100 | 61% |
-| Animation events | 60 | 84 | 144 | 41% |
+| Animation events | 68 | 76 | 144 | 47% |
 | Behavior graph variables | 18 | 678 | 696 | 2% |
 | NIF block types | 82 | 63 | 145 | 56% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
@@ -52,7 +52,7 @@ Measured on 2026-10-15 by `make gaps`.
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 9 | 14 | 23 | 39% |
-| AS2 runtime | - | 223 | - | - |
+| AS2 runtime | - | 222 | - | - |
 | SWF tags | 24 | 4 | 28 | 85% |
 
 <!-- gaps:end -->
