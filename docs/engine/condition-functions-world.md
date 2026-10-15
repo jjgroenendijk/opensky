@@ -44,6 +44,10 @@ fight. The combat loop fills this for NPCs, and the melee state for the player.
 - `GetIsObjectType` (432) takes xEdit's `wbFormTypeEnum` (0 `ACTI`, 3 `CONT`, 4 `DOOR`,
   13 `NPC_`, 22 `FURN`, and more) and tests the record type of the base form. A base type
   that the record index does not hold, such as `STAT`, fails as unavailable.
+- `IsCarryable` (487) is 1 when the base is an item record: `WEAP`, `ARMO`, `BOOK`, `INGR`,
+  `MISC`, `ALCH`, `KEYM`, `AMMO`, `SLGM`, `SCRL`, or `APPA`. A light can be carried only when
+  its `DATA` flag says so. The record index does not hold that flag, so a `LIGH` base fails
+  as unavailable.
 
 ## Packages
 
@@ -159,3 +163,47 @@ letter: 88 X, 89 Y, 90 Z.
 - `LocationHasRefType` (563), `GetRefTypeAliveCount` (592), and
   `GetLocAliasRefTypeAliveCount` (601) read the location's `LCSR` references of a type.
   A reference counts as alive until its actor dies.
+
+## Recorded events
+
+Some functions ask about something that happened earlier. The engine records it on the form
+when it happens, in the [script state](/engine/papyrus-script-state.md), and the function
+reads it back.
+
+- `IsKiller` (408) is 1 when the run-on killed the parameter actor. The ragdoll step records
+  the killer when an actor dies.
+- `GetFriendHit` (288) counts the player's blows on the run-on while it was not hostile.
+  OpenSky never resets the count; the game's reset rule is not documented.
+- `IsLastHostileActor` (674) is 1 when the run-on is the last actor that hit the player.
+- `GetDestroyed` (203) and `GetDestructionStage` (470) read the state the destruction
+  natives keep ([Papyrus destruction](/engine/papyrus-destruction.md)). An object no script
+  damaged reads 0.
+
+## Actor situation
+
+- `IsOverEncumbered` (734) uses the fast-travel weight rule for the player. NPCs carry no
+  weight limit in OpenSky, so they read 0.
+- `GetGroupMemberCount` (415) counts the actors in the run-on's fight. OpenSky has no combat
+  groups, so every NPC in combat counts as one group: the count of NPCs that fight now. The
+  player counts as a group of 1, and an actor out of combat reads 0.
+- OpenSky models no injury, attack types, item-use reactions, player actions, or bump
+  reactions. So `GetIsInjured` (645), `IsAttackType` (697), `GetIsUsedItemType` (247),
+  `GetPlayerAction` (305), `IsSmallBump` (274), and `GetLastBumpDirection` (642) read 0.
+- `GetBribeSuccess` (654) and `GetIntimidateSuccess` (655) follow the
+  [speech checks](/engine/speech-checks.md).
+
+## Dialogue lines
+
+`IsTalking` (141), `IsGreetingPlayer` (123), `GetDialogueEmotion` (434), and
+`GetDialogueEmotionValue` (435) read the line the dialogue speaker says now. The coordinator
+sets the line when the speaker greets the player or answers a topic, and clears it when the
+response ends. An actor that is not the speaker reads 0. The emotion codes are the `TRDT`
+emotion type (0 Neutral to 7 Puzzled, xEdit `wbEmotionTypeEnum`) and the emotion value.
+OpenSky has no NPC-to-NPC talk, so only the player's partner can talk.
+
+## Interface and player
+
+- `MenuMode` (36) with parameter 0 is 1 while any menu is open. xEdit does not list the
+  codes for single menu types, so any other parameter fails as unresolved.
+- `IsPlayerMovingIntoNewSpace` (358) is 1 only while a loading screen shows, as the Creation
+  Kit wiki page says.

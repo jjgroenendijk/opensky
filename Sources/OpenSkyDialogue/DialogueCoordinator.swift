@@ -26,6 +26,8 @@ public final class DialogueCoordinator {
     public private(set) var heldSpeaker: ReferenceKey?
     /// The actor the player talks to, which `IsInDialogueWithPlayer` reads.
     public private(set) var conversationSpeaker: ReferenceKey?
+    /// The line being said, which `IsTalking` and the emotion functions read.
+    public private(set) var spokenLine: DialogueSpokenLine?
     /// Kept across readout refreshes, so the user sees what they just did.
     public var lastOutcome: String?
     private var cachedStrings: LocalizedStrings?
@@ -55,6 +57,7 @@ public final class DialogueCoordinator {
         guard let index, let world, let quests = world.questStates() else { return nil }
         var context = world.conditionContext()
         context.dialogue = context.dialogue.talking(to: conversationSpeaker)
+            .saying(spokenLine)
         return DialogueRuntime(
             store: store,
             dialogue: index,
@@ -88,6 +91,7 @@ public final class DialogueCoordinator {
         do {
             _ = try runtime.choose(info, speaker: speaker)
             world?.spokeToPlayer(speaker)
+            spokenLine = Self.line(runtime.dialogue.info(info), speaker: speaker, greeting: true)
         } catch {
             lastOutcome = "greeting not recorded: \(String(describing: error))"
         }
@@ -110,6 +114,7 @@ public final class DialogueCoordinator {
             followUp = choice
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
             world?.spokeToPlayer(speaker)
+            spokenLine = Self.line(info, speaker: speaker, greeting: false)
             if let challenge = SpeechChallenge.won(by: info) {
                 world?.speechChallengeWon(challenge, speaker: speaker)
             }
@@ -126,6 +131,7 @@ public final class DialogueCoordinator {
     public func finishResponse(speaker: ReferenceKey?) -> DialogueResponseEnd {
         let follow = followUp
         followUp = nil
+        spokenLine = nil
         if follow?.endsConversation == true {
             return .close
         }
@@ -140,7 +146,20 @@ public final class DialogueCoordinator {
 
     public func endConversation() {
         followUp = nil
+        spokenLine = nil
         conversationSpeaker = nil
+    }
+
+    private static func line(
+        _ info: TopicInfo?, speaker: ReferenceKey, greeting: Bool
+    ) -> DialogueSpokenLine {
+        let response = info?.responses.first
+        return DialogueSpokenLine(
+            speaker: speaker,
+            emotion: response?.emotion.rawValue ?? 0,
+            emotionValue: response?.emotionValue ?? 0,
+            isGreeting: greeting
+        )
     }
 
     // MARK: - Speaker focus

@@ -1,9 +1,13 @@
 // The furniture condition functions read how the subject uses a furniture marker,
 // and fail with the furniture domain when no furniture seam is set.
 
+import Foundation
 @testable import OpenSkyConditions
 import OpenSkyFeaturesTesting
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyFormatsTesting
+import OpenSkyGameData
 @testable import OpenSkyWorld
 import Testing
 
@@ -67,5 +71,51 @@ struct FurnitureConditionFunctionTests {
         #expect(try Self.returns(675, value: 0, context: context, name: "bInJumpState").isTrue)
         context.graphVariables.values[Self.actor] = ["bInJumpState": 1]
         #expect(try !Self.returns(675, value: 0, context: context, name: "bInJumpState").isTrue)
+    }
+
+    @Test func aFloatGraphVariableReadsTheActorsFloats() throws {
+        var context = ConditionContext()
+        #expect(try Self.returns(447, value: 0, context: context, name: "Speed")
+            .failures == [.unavailableData(.graphVariable)])
+        context.graphVariables.floats[Self.actor] = ["Speed": 2.5]
+        #expect(try Self.returns(447, value: 2.5, context: context, name: "Speed").isTrue)
+        #expect(try Self.returns(447, value: 0, context: context, name: "Direction").isTrue)
+    }
+
+    @Test func theCurrentFurnitureIsComparedByReferenceAndByBase() throws {
+        let chair = ConditionEvaluatorFixture.subjectFormID
+        let other = ConditionEvaluatorFixture.targetFormID
+        var context = try ConditionEvaluatorFixture.populatedContext()
+        context.furniture = FurnitureConditionResolution(
+            uses: [Self.actor: FurnitureUse(
+                sitState: .sitting, animationType: 1, entry: 0x10000,
+                furniture: ConditionEvaluatorFixture.key(chair)
+            )],
+            isAvailable: true
+        )
+        let file = try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup(
+            "FURN", contents: ESMFixture.record(
+                "FURN", formID: ConditionEvaluatorFixture.subjectBase, data: Data()
+            )
+        ))
+        context.data = ConditionDataResolution(
+            keywords: KeywordStore(index: RecordIndex(
+                plugins: [("Skyrim.esm", file)], recordTypes: ["FURN"]
+            )),
+            sourcePlugin: "Skyrim.esm"
+        )
+        #expect(try Self.returns(162, chair, value: 1, context: context).isTrue)
+        #expect(try Self.returns(162, other, value: 0, context: context).isTrue)
+        let base = ConditionEvaluatorFixture.subjectBase
+        #expect(try Self.returns(163, base, value: 1, context: context).isTrue)
+        #expect(try Self.returns(
+            163,
+            ConditionEvaluatorFixture.targetBase,
+            value: 0,
+            context: context
+        ).isTrue)
+        for function: UInt16 in [637, 703] {
+            #expect(try Self.returns(function, value: 0, context: context).isTrue)
+        }
     }
 }

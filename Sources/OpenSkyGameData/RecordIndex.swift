@@ -37,7 +37,7 @@ nonisolated public struct RecordIndex: Sendable {
     public static let referenceRecordTypes = Set<FourCC>([
         "KYWD", "FLST", "LCTN", "LCRT", "ECZN", "AACT", "COLL", "DOBJ", "MGEF",
         "SPEL", "SCRL", "ENCH", "SHOU", "WOOP", "LVSP", "DUAL", "EQUP", "AVIF",
-        "PERK", "FACT", "RELA", "ASTP", "CONT", "DOOR", "LIGH", "APPA"
+        "PERK", "FACT", "RELA", "ASTP", "CONT", "DOOR", "LIGH", "APPA", "MSTT"
     ]).union(keywordedRecordTypes)
 
     /// Base objects with a `KWDA` list, so `HasKeyword` can read actors and items.

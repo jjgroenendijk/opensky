@@ -10,6 +10,7 @@ import OpenSkyFormatsESM
 
 nonisolated extension ConditionFunctions {
     public static func installDialogue(_ registry: inout ConditionFunctionRegistry) {
+        installDialogueLine(&registry)
         // "Returns true if the actor's voice type matches the specified voice type."
         // (<https://ck.uesp.net/wiki/GetIsVoiceType>) An actor with no resolved voice
         // type is `.unavailableDialogue`, not 0.

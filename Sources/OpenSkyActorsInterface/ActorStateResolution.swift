@@ -57,6 +57,8 @@ nonisolated public struct ActorConditionState: ActorValueReadable, Equatable, Se
     public var recordFlags: ActorBase.Flags?
     /// What the actor is doing in a fight. Nil when nothing observes it.
     public var action: ActorActionFacts?
+    /// Carried weight above the carry weight. Nil when nothing weighs the inventory.
+    public var isOverEncumbered: Bool?
 
     public init(
         current: ActorValues,
@@ -149,6 +151,14 @@ nonisolated public struct ActorStateResolution: Sendable {
     /// `key`'s state, or nil when this resolution carries none for it.
     public func state(for key: ReferenceKey) -> ActorConditionState? {
         states[key]
+    }
+
+    /// Living NPCs that fight now. Every fight in OpenSky is one side against the player,
+    /// so they form one combat group.
+    public var fightingNonPlayerCount: Int {
+        states.count { $0.key != .player && !$0.value.isDead
+            && $0.value.combatActivity != .notFighting
+        }
     }
 
     /// Who `key` is fighting, or nil when it is fighting nobody and when

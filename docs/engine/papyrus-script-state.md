@@ -51,6 +51,11 @@ Signatures and defaults are from the Creation Kit wiki script pages, for example
 Condition functions read some of these flags too, such as `GetIsGhost` and
 `GetKeywordDataForLocation` ([condition functions](/engine/condition-functions.md#script-state)).
 
+The engine writes some entries itself, for conditions that ask about the past: the killer of
+an actor, the player's friendly hits, the last actor that hit the player, and the destruction
+progress ([recorded events](/engine/condition-functions-world.md#recorded-events),
+[Papyrus destruction](/engine/papyrus-destruction.md)).
+
 ## Faction reactions
 
 `Faction.SetEnemy(Faction akOther, bool abSelfIsNeutralToOther = false, bool

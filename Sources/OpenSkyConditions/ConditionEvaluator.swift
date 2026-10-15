@@ -30,6 +30,8 @@ nonisolated public enum ConditionDataDomain: String, Equatable, Sendable {
     case motion
     case alchemy
     case mount
+    case menu
+    case speech
 }
 
 /// Which half of the magic seam could not answer. Four cases, because each names a

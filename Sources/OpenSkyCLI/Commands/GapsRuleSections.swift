@@ -78,6 +78,7 @@ extension GapsGatherer {
         _ = MenuMapSettings(store: store)
         _ = SkillAdvancementSettings.resolve(store: store)
         _ = SocialSettings.resolve(store: store)
+        _ = SpeechCheckSettings.resolve(store: store)
         _ = HarvestRegrowth.resolve(store: store)
         _ = LockpickingSettings.resolve(store: store)
         _ = DetectionSettings.resolve(store: store)

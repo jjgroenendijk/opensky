@@ -2,6 +2,7 @@
 // script variables, scenes, weather, and the player's inventory.
 
 import Foundation
+import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyConditions
 import OpenSkyDialogue
@@ -11,6 +12,7 @@ import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPhysics
 import OpenSkyQuestsInterface
 import OpenSkyScripting
@@ -34,6 +36,13 @@ extension RuntimeStateWorldAdapter {
         let vehicles = game.vehicleWorld.vehicles
         context.mounts = MountConditionResolution(
             mounts: vehicles.core.mounts, playersLastMount: vehicles.playersLastMount
+        )
+        context.menus = MenuConditionResolution(
+            isMenuOpen: game.menuMode.topMenu != nil,
+            isLoading: game.menuMode.topMenu == LoadingScreenWorldAdapter.identifier
+        )
+        context.dialogue = DialogueResolution(
+            speakerInDialogue: game.dialogue.conversationSpeaker, line: game.dialogue.spokenLine
         )
         context.packages = game.packages.runtime?.conditionResolution { location, actor in
             game.aiWorld.isWithin(location, actor: actor)
@@ -101,6 +110,19 @@ extension RuntimeStateWorldAdapter {
             return CombatHandType(weapon: weapon.animationType).rawValue
         }
         return spell ? CombatHandType.spell.rawValue : CombatHandType.handToHand.rawValue
+    }
+
+    /// Nil without an inventory or actor values, which `IsOverEncumbered` reports.
+    func playerIsOverEncumbered() -> Bool? {
+        guard
+            let items = game.inventory.runtime,
+            let capacity = game.actorValues.runtime?.value(
+                at: ActorValueIdentity.carryWeightIndex, on: .player
+            )
+        else { return nil }
+        return FastTravelRule.isOverencumbered(
+            carried: items.inventory.carriedWeight(of: items.player), capacity: capacity
+        )
     }
 
     /// The player's sex and race from the race menu, and the gait the walk uses.

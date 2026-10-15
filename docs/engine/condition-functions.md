@@ -48,6 +48,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 74 | `GetGlobalValue` | `GLOB` | the global's value |
 | 75 | `IsSnowing` | none | 1 when the current weather is snowy |
 | 77 | `GetRandomPercent` | none | integer 0 to 99 |
+| 79 | `GetQuestVariable` | `QUST`, variable (`CIS2`) | the same read as `GetVMQuestVariable` |
 | 80 | `GetLevel` | none | level; for the player, the character level |
 | 91 | `GetIsAlerted` | none | 1 after a script called `SetAlert` |
 | 102 | `IsTorchOut` | none | 1 when the actor holds a torch out |
@@ -57,6 +58,8 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 136 | `GetIsReference` | reference | 1 when the run-on is that reference |
 | 149 | `GetIsCurrentWeather` | `WTHR` | 1 when that weather is current or coming in |
 | 159 | `GetSitting` | none | 0 not sitting, 2 getting ready to sit, 3 sitting |
+| 162 | `IsCurrentFurnitureRef` | reference | 1 when the actor uses that furniture |
+| 163 | `IsCurrentFurnitureObj` | base form | 1 when the actor's furniture has that base |
 | 170 | `GetDayOfWeek` | none | 0 Sundas to 6 Loredas |
 | 182 | `GetEquipped` | item | 1 when the actor has it equipped |
 | 185 | `IsSwimming` | none | 1 while the actor swims |
@@ -87,6 +90,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 403 | `GetRelationshipRank` | reference | 4 Lover to -4 Archnemesis |
 | 426 | `GetIsVoiceType` | `VTYP` | 1 when the actor's `VTCK` matches |
 | 430 | `GetHealthPercentage` | none | health over its maximum, 0 to 1 |
+| 447 | `GetGraphVariableFloat` | variable name (`CIS1`) | the actor's float graph variable |
 | 448 | `HasPerk` | `PERK` | 1 when the actor has the perk |
 | 449 | `GetFactionRelation` | actor | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend |
 | 453 | `GetPlayerTeammate` | none | 1 after a script called `SetPlayerTeammate` |
@@ -111,6 +115,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 630 | `GetVMScriptVariable` | reference, variable (`CIS2`) | the object script's variable |
 | 631 | `IsEnteringInteractionQuick` | none | always 0 |
 | 632 | `IsCasting` | none | 1 while a hand charges, is ready, or concentrates |
+| 637 | `IsExitingInstant` | none | always 0 |
 | 640 | `GetActorValuePercent` | actor-value index | current divided by maximum, 0 to 1 |
 | 641 | `IsUnique` | none | 1 when the base record has the unique flag |
 | 644 | `IsInFurnitureState` | animation type | 1 while seated on a marker of that type |
@@ -124,6 +129,7 @@ Wayback Machine (see `docs/tools/environment.md`).
 | 698 | `IsAllowedToFly` | none | 1 after a script called `SetAllowFlying` |
 | 699 | `HasMagicEffectKeyword` | `KYWD` | 1 when an effect with that keyword acts on the actor |
 | 700 | `IsCommandedActor` | none | 1 while a caster commands the actor; always 0 |
+| 703 | `IsExitingInteractionQuick` | none | always 0 |
 | 719 | `IsHostileToActor` | actor | 1 when hostile to the parameter actor |
 
 Keyword, form-list, and location functions, with their use count in the active load order:
@@ -145,7 +151,9 @@ checks walk the parent chain and stop on a loop.
 
 ## Script variables
 
-`GetVMQuestVariable` and `GetVMScriptVariable` read a Papyrus variable. The `CTDA` word
+`GetVMQuestVariable`, `GetQuestVariable`, and `GetVMScriptVariable` read a Papyrus variable.
+`GetQuestVariable` (79) is the older name; xEdit gives it the same parameters, so OpenSky
+answers it with the same read. The `CTDA` word
 for parameter 2 is not a name. In `Skyrim.esm` every one of these conditions (4,584 and
 91) carries a `CIS2` with the variable, for example `::MarkarthMarket_var`, the hidden
 variable behind an auto property. The Creation Kit wiki says only `Int`, `Float`, and
@@ -285,10 +293,14 @@ Elsewhere they fail with the furniture reason.
 - The parameter enums come from xEdit `wbDefinitionsTES5.pas`: animation type 1 Sit, 2 Lay,
   4 Lean; entry `0x10000` Front, `0x20000` Behind, `0x40000` Right, `0x80000` Left,
   `0x100000` Up. A NIF marker stores the same entry bits 16 places lower.
-- `IsEnteringInteractionQuick` is always 0, because OpenSky has no quick entry.
+- `IsEnteringInteractionQuick`, `IsExitingInstant`, and `IsExitingInteractionQuick` are
+  always 0, because OpenSky has no quick entry or exit.
+- `IsCurrentFurnitureObj` compares the base of the furniture reference, resolved in its
+  plugin's space, with the parameter.
 - `GetGraphVariableInt` names its variable in `CIS1`. An NPC runs no live graph in OpenSky, so
   each of its variables reads 0; the furniture tree tests `bInJumpState` == 0 this way. The
-  player's graph is not read yet, so the function fails for the player.
+  player's graph is not read yet, so the function fails for the player. `GetGraphVariableFloat`
+  works the same way over float variables.
 - While an actor sits, the furniture reference is the condition Target (run-on 1). The
   chopping block's idle tree runs `HasKeyword FurnitureExecutioner` on the Target, and only
   the block has that keyword.

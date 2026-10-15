@@ -12,7 +12,11 @@ import OpenSkyFactions
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyPhysics
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
@@ -154,8 +158,29 @@ extension DialogueWorldAdapter: DialogueWorld {
 
     func conditionContext() -> ConditionContext {
         var context = game.runtimeState.conditionContext()
-        context.dialogue = DialogueResolution(voiceTypes: residentVoiceTypes())
+        context.dialogue = DialogueResolution(
+            voiceTypes: residentVoiceTypes(),
+            speakerInDialogue: context.dialogue.speakerInDialogue,
+            line: context.dialogue.line
+        )
+        context.speechChecks = speechCheckResolution()
         return context
+    }
+
+    /// The perk factors are for the actor the player talks to.
+    private func speechCheckResolution() -> SpeechCheckResolution {
+        let speaker = game.dialogue.conversationSpeaker
+        let gold = game.inventory.runtime.map { runtime in
+            Int(runtime.inventory.count(of: runtime.inventory.goldFormID, in: runtime.player))
+        }
+        return SpeechCheckResolution(
+            settings: (game.worldData as? WorldDataStores)?.speechCheckSettings,
+            playerGold: gold,
+            intimidationFactor: game.perks.multiplier(
+                at: .modPlayerIntimidation, on: .player, target: speaker
+            ),
+            bribeFactor: game.perks.multiplier(at: .modBribeAmount, on: .player, target: speaker)
+        )
     }
 
     var conditionRegistry: ConditionFunctionRegistry {

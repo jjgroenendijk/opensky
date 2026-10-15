@@ -73,6 +73,20 @@ nonisolated public struct TopicInfo: Sendable {
                 default: self = .unknown(rawValue)
                 }
             }
+
+            public var rawValue: UInt32 {
+                switch self {
+                case .neutral: 0
+                case .anger: 1
+                case .disgust: 2
+                case .fear: 3
+                case .sad: 4
+                case .happy: 5
+                case .surprise: 6
+                case .puzzled: 7
+                case let .unknown(value): value
+                }
+            }
         }
 
         public let emotion: Emotion

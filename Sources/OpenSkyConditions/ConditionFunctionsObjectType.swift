@@ -1,5 +1,6 @@
-// 432 GetIsObjectType, from xEdit wbDefinitionsTES5.pas. The parameter is xEdit's
-// `wbFormTypeEnum`. See docs/engine/condition-functions-world.md#reference-state.
+// 432 GetIsObjectType and 487 IsCarryable, from xEdit wbDefinitionsTES5.pas. The
+// parameter is xEdit's `wbFormTypeEnum`.
+// See docs/engine/condition-functions-world.md#reference-state.
 
 import Foundation
 import OpenSkyFormatsCore
@@ -20,6 +21,13 @@ nonisolated extension ConditionFunctions {
         return names.mapValues { FourCC(stringLiteral: $0) }
     }()
 
+    /// Base types that go into an inventory when taken. A light is carried only with
+    /// its `DATA` flag, which the record index does not hold.
+    static let carryableTypes: Set<FourCC> = [
+        "WEAP", "ARMO", "BOOK", "INGR", "MISC", "ALCH", "KEYM", "AMMO", "SLGM", "SCRL",
+        "APPA"
+    ]
+
     static func installObjectType(_ registry: inout ConditionFunctionRegistry) {
         registry.register(ConditionFunction(
             index: 432, name: "GetIsObjectType", parameter1: .integer
@@ -27,22 +35,33 @@ nonisolated extension ConditionFunctions {
             guard let wanted = call.parameter1.flatMap({ objectTypes[$0.asInt32] }) else {
                 return .failure(.unresolvedParameter(432))
             }
-            return call.referenceKey().flatMap { key in
-                if key.namingPlayer == .player {
-                    return .success(Self.isTrue(wanted == "NPC_"))
-                }
-                guard let entry = call.context.references[key] else {
-                    return .failure(.unresolvedReference(call.condition.runOn))
-                }
-                guard
-                    let store = call.context.data.keywords,
-                    let base = store.resolvedID(
-                        Self.baseForm(of: entry), fromPlugin: Self.basePlugin(of: entry.key)
-                    ),
-                    let type = store.recordType(of: base)
-                else { return .failure(.unavailableData(.keyword)) }
-                return .success(Self.isTrue(type == wanted))
+            return baseRecordType(call).map { isTrue($0 == wanted) }
+        })
+        registry.register(ConditionFunction(index: 487, name: "IsCarryable") { call in
+            baseRecordType(call).flatMap { type in
+                guard type != "LIGH" else { return .failure(.unavailableData(.keyword)) }
+                return .success(isTrue(carryableTypes.contains(type)))
             }
         })
+    }
+
+    /// The record type of the run-on's base form. The player is an `NPC_`.
+    private static func baseRecordType(_ call: ConditionCall) -> Result<FourCC, ConditionFailure> {
+        call.referenceKey().flatMap { key in
+            if key.namingPlayer == .player {
+                return .success("NPC_")
+            }
+            guard let entry = call.context.references[key] else {
+                return .failure(.unresolvedReference(call.condition.runOn))
+            }
+            guard
+                let store = call.context.data.keywords,
+                let base = store.resolvedID(
+                    baseForm(of: entry), fromPlugin: basePlugin(of: entry.key)
+                ),
+                let type = store.recordType(of: base)
+            else { return .failure(.unavailableData(.keyword)) }
+            return .success(type)
+        }
     }
 }

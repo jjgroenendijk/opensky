@@ -41,6 +41,19 @@ nonisolated public struct KeywordStore: Sendable {
         return indexed.record.type
     }
 
+    /// The `DEST` group of an indexed base form, decoded on each call. Nil when the
+    /// record has none or is not indexed.
+    public func destructible(of form: ResolvedFormID) -> Destructible? {
+        guard
+            case let .decoded(value, _) = index.decodeIndexed(form, using: { indexed in
+                var fields = try RecordFields(
+                    record: indexed.record, type: indexed.record.type, localized: indexed.localized
+                )
+                return fields.destructible()
+            }) else { return nil }
+        return value
+    }
+
     public func keyword(_ id: ResolvedFormID) -> ResolvedKeyword? {
         table.value(id)
     }
