@@ -102,6 +102,7 @@ public final class ScriptCoordinator {
         queueLocationChange()
         bridge?.queueInventoryEvents()
         bridge?.queueMagicEffectEvents()
+        bridge?.queueReferenceStateEvents()
         bridge?.queueCombatStateEvents()
         bridge?.advanceTranslations(by: delta)
         _ = runtime?.advance(delta: delta, gameClock: world?.gameClock)
@@ -117,6 +118,7 @@ public final class ScriptCoordinator {
         runtime?.queuePlayerLoadGame()
         bridge?.skipInventoryJournal()
         bridge?.skipMagicEffectJournal()
+        bridge?.skipReferenceStateJournal()
         bridge?.clearTranslations()
         lastPlayerLocation = nil
     }

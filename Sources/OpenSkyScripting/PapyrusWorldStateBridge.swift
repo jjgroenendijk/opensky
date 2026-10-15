@@ -147,6 +147,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var inventoryJournalCursor: UInt64?
     /// The first journal entry `queueMagicEffectEvents` has not read; nil before its first call.
     var effectJournalCursor: UInt64?
+    /// The first journal entry `queueReferenceStateEvents` has not read.
+    var referenceJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
     /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
