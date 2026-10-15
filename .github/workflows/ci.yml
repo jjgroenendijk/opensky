@@ -131,7 +131,8 @@ jobs:
         run: make py-format-check py-lint test-python
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
-  # skills, or the Renovate config skips it. Any other event always builds.
+  # skills, the Python tools, the markdownlint config, or the Renovate config skips it.
+  # Static checks still lint and test those. Any other event always builds.
   changes:
     name: Changes
     runs-on: ubuntu-latest
@@ -153,6 +154,7 @@ jobs:
             for file in $files; do
               case "$file" in
                 *.md | docs/* | .agents/* | .claude/* | .github/renovate.json) ;;
+                tools/ck-wiki/* | tools/markdown/*) ;;
                 *) build=true ;;
               esac
             done
