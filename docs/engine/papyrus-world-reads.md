@@ -30,6 +30,7 @@ itself, so this is OpenSky's reading.
 | Native | Reads |
 | --- | --- |
 | `ObjectReference.GetWidth`, `GetLength`, `GetHeight` | The base record's `OBND` box along X, Y, and Z, times the reference's scale |
+| `ObjectReference.GetMass` | The Havok mass in kilograms of a loose dynamic body, or the sum of a ragdoll's bone bodies. 0 when Havok does not move the reference, as the wiki states ([GetMass - ObjectReference](https://ck.uesp.net/wiki/GetMass_-_ObjectReference)) |
 | `ObjectReference.GetVoiceType` | The actor base's `VTCK` after template inheritance |
 | `ActorBase.GetGiftFilter` | The actor base's own `GNAM` form list |
 

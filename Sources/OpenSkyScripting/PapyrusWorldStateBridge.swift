@@ -179,6 +179,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var lightLevel: ((SIMD3<Float>) -> Float)?
     /// Changes a cell's fog; false when the cell is not the loaded interior. Nil headless.
     public var cellFog: ((FormID, PapyrusFogChange) -> Bool)?
+    /// Kilograms of a body Havok moves, or nil when none does. Nil without physics.
+    public var havokMass: ((ReferenceKey) -> Float?)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
     /// Hands the drawn pose of every moving reference to the renderer, after each change.

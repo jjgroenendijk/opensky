@@ -129,6 +129,13 @@ final class ScriptWorldAdapter {
             return game?.aiWorld.lightLevel(at: feet + body) ?? 1
         }
         bridge.cellFog = { [weak self] cell, change in self?.changeFog(change, in: cell) ?? false }
+        bridge.havokMass = { [weak game] key in
+            if let body = game?.streamer?.dynamicBodies.body(for: key) {
+                return body.definition.mass
+            }
+            return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?
+                .instance.bodies.reduce(0) { $0 + $1.definition.mass }
+        }
         bridge.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
             game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in

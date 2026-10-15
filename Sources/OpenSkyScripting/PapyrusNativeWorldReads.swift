@@ -44,6 +44,13 @@ extension PapyrusNativeFunctions {
                 return .returned(.float(size * scale))
             }
         }
+        // "The object has to be controlled by Havok ... or this function will always return 0."
+        scriptState("ObjectReference", "GetMass", into: &registry) { call, bridge, key in
+            guard let mass = bridge.havokMass else {
+                return failure(call, "GetMass needs the physics world")
+            }
+            return .returned(.float(mass(key) ?? 0))
+        }
         scriptState("Actor", "GetBribeAmount", into: &registry) { call, bridge, key in
             guard let amount = bridge.conditionEvaluator?().context.bribeAmount(of: key) else {
                 return failure(call, "GetBribeAmount needs both actors' values and the settings")
