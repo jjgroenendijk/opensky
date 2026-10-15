@@ -53,7 +53,7 @@ struct PerkGapCensusTests {
     }
 
     @Test func engineReadListsEveryNamedEntryPoint() {
-        #expect(PerkEntryPoint.engineRead.count == 8)
+        #expect(PerkEntryPoint.engineRead.count == 10)
         let unnamed = PerkEntryPoint.engineRead.filter { !$0.isKnown }
         #expect(unnamed.isEmpty)
     }
