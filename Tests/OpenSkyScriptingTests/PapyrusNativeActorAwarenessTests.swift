@@ -23,9 +23,23 @@ struct PapyrusNativeActorAwarenessTests {
         ))
     }
 
+    private struct Sight {
+        let observer: ReferenceKey
+        let target: ReferenceKey
+        let sees: Bool
+        let detected: Bool
+
+        init(_ observer: ReferenceKey, _ target: ReferenceKey, _ sees: Bool, _ detected: Bool) {
+            self.observer = observer
+            self.target = target
+            self.sees = sees
+            self.detected = detected
+        }
+    }
+
     private func pairs(
         _ fixture: PapyrusNativeReferenceFixture,
-        _ entries: [(observer: ReferenceKey, target: ReferenceKey, sees: Bool, detected: Bool)]
+        _ entries: [Sight]
     ) {
         var map: [DetectionPairKey: DetectionPairState] = [:]
         for entry in entries {
@@ -41,8 +55,8 @@ struct PapyrusNativeActorAwarenessTests {
         let fixture = try PapyrusNativeReferenceFixture.make()
         let other = PapyrusNativeReferenceFixture.key(Self.otherID)
         pairs(fixture, [
-            (fixture.key, other, true, false),
-            (other, fixture.key, false, true)
+            Sight(fixture.key, other, true, false),
+            Sight(other, fixture.key, false, true)
         ])
         let argument = PapyrusValue.object(fixture.handle(Self.otherID))
         #expect(call(fixture, "HasLOS", arguments: [argument]) == .returned(.boolean(true)))

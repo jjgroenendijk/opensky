@@ -71,7 +71,7 @@ extension PapyrusNativeFunctions {
                 let handle = objectArgument(call, at: 0),
                 let other = bridge.referenceKey(for: handle)
             else { return failure(call, "\(name) needs a reference argument") }
-            guard let detection = bridge.detection?() ?? nil else {
+            guard let detection = bridge.detection?() else {
                 return failure(call, "\(name) needs a perception pass")
             }
             guard let answer = read(actor, other, detection) else {
