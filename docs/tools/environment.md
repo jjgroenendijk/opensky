@@ -44,6 +44,10 @@ Quirks that cost time in every format parser session. Each retires when the host
   (`https://web.archive.org/web/2023/https://ck.uesp.net/wiki/<Page>`). Pages the Wayback Machine
   never saved cannot be reached from here. For a Papyrus signature, the install's own compiled
   script is the better source anyway ([actor natives](/engine/papyrus-actor-natives.md)).
+- Observed 2026-10-15: `ck.uesp.net/wiki/<Page>` answers `curl` with HTTP 403, but the MediaWiki
+  API at `https://ck.uesp.net/w/api.php` answers with JSON, `action=parse` included. Read pages
+  from the offline mirror ([offline Creation Kit wiki](/tools/ck-wiki.md)); `make ck-wiki` uses
+  the API and falls back to the Wayback Machine.
 - Observed 2026-10-09: `skyrimck.uesp.net` also answers `curl` with the Cloudflare page, and the
   Wayback Machine has no snapshot of `ck.uesp.net/wiki/Papyrus_INI_Settings`. A web search still
   returns the page's text in its summary.

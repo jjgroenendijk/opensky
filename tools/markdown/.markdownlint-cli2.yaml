@@ -28,6 +28,8 @@ ignores:
   - DerivedData-index       # the uncached index build `make health` scans
   - .logs           # gitignored scratch output; agents drop free-form notes here
   - .vendor         # vendored upstream sources built by make bootstrap, not ours to lint
+  - .cache          # caches, among them the Creation Kit wiki mirror (make ck-wiki)
+  - "**/.venv"      # uv environments of the Python tools
   - .claude/worktrees  # linked worktrees nested below the main checkout
   - "**/._*"        # macOS AppleDouble junk on this volume
   - "._*"

@@ -1,0 +1,50 @@
+[
+  {
+    "skills": ["consulting-creation-kit-wiki"],
+    "query": "What does the CK wiki say about the parameters of ObjectReference.OnHit?",
+    "files": [],
+    "expected_behavior": [
+      "Reads OnHit - ObjectReference.md from the .cache/ck-wiki mirror of the main checkout",
+      "Does not use WebFetch or curl on ck.uesp.net or web.archive.org",
+      "Gives the page's url from the frontmatter as the source"
+    ]
+  },
+  {
+    "skills": ["consulting-creation-kit-wiki"],
+    "query": "Implement the GetIsID condition function. Check the Creation Kit wiki for how it behaves.",
+    "files": [],
+    "expected_behavior": [
+      "Finds the condition function page by file name in the mirror, searching when the title is unsure",
+      "Treats the wiki's description as a claim to confirm against observed data, not as fact",
+      "Cites the live url, not the local mirror path, in any docs page or commit"
+    ]
+  },
+  {
+    "skills": ["consulting-creation-kit-wiki"],
+    "query": "Look up Actor.GetActorValuePercentage on ck.uesp.net.",
+    "files": [],
+    "expected_behavior": [
+      "Checks for index.md in the mirror before anything else",
+      "When the mirror is missing, runs make ck-wiki in a background shell instead of fetching pages one by one",
+      "Does not copy any wiki page into the repository"
+    ]
+  },
+  {
+    "skills": ["consulting-creation-kit-wiki", "testing-and-verifying"],
+    "query": "Code blocks in the offline CK wiki lose their language. Fix the converter.",
+    "files": [],
+    "expected_behavior": [
+      "Changes tools/ck-wiki and raises CONVERTER_VERSION",
+      "Runs make py-format-check py-lint test-python and fixes what they report",
+      "Reconverts with make ck-wiki and reads a converted page to check the result"
+    ]
+  },
+  {
+    "skills": [],
+    "query": "Fix the BSA folder record parser for version 105 archives.",
+    "files": [],
+    "expected_behavior": [
+      "Does not load consulting-creation-kit-wiki, because the CK wiki does not document BSA layouts"
+    ]
+  }
+]

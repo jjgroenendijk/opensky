@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["github-actions", "swift", "custom.regex"],
+  "enabledManagers": ["github-actions", "swift", "custom.regex", "pep621"],
   "customManagers": [
     {
       "customType": "regex",
