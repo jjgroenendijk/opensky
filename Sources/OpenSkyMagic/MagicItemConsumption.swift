@@ -59,10 +59,9 @@ extension ActiveEffectRuntime {
         let stored = apply(
             use.effects,
             fromPlugin: pluginName,
-            source: ActiveEffectSource(kind: use.kind, record: ReferenceKey.plugin(
-                name: pluginName.lowercased(),
-                objectID: item.objectID
-            )),
+            source: ActiveEffectSource(
+                kind: use.kind, record: sourceKey(of: item, fallbackPlugin: pluginName)
+            ),
             on: target
         )
         return MagicItemConsumeOutcome(
@@ -70,5 +69,12 @@ extension ActiveEffectRuntime {
             entryCount: use.effects.count,
             stored: stored
         )
+    }
+
+    /// The plugin that defines `item`, which sits in the load-order FormID space.
+    private func sourceKey(of item: FormID, fallbackPlugin pluginName: String) -> ReferenceKey {
+        effects.resolvedID(item, fromPlugin: FormIDResolver.loadOrderSpaceName)
+            .map(ReferenceKey.init(resolved:))
+            ?? .plugin(name: pluginName.lowercased(), objectID: item.objectID)
     }
 }
