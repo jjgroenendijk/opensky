@@ -101,7 +101,7 @@ nonisolated public enum QuestJournalMovieBridge: Sendable {
             // engine data, which OpenSky has none of.
             menu.object.assign(.object(page.object), for: "TopmostPage")
             menu.object.assign(.integer(questsTabIndex), for: "iCurrentTab")
-            runtime.focusTarget = titleList
+            runtime.focus(titleList)
         }
         for path in [SystemMenuMovieBridge.systemFaderPath, SystemMenuMovieBridge.statsFaderPath] {
             runtime.callMovie("gotoAndStop", atPath: path, arguments: [.string("hide")])

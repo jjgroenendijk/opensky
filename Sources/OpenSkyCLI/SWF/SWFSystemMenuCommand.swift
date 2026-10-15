@@ -44,9 +44,9 @@ enum SWFSystemMenuCommand {
             "StartState", atPath: SystemMenuMovieBridge.systemPagePath, arguments: [value]
         )
         if let focus {
-            runtime.focusTarget = runtime.node(
+            runtime.focus(runtime.node(
                 atPath: "\(SystemMenuMovieBridge.systemPagePath)/\(focus)", from: runtime.root
-            )
+            ))
         }
         tick(runtime, ticks)
         printLog(runtime, stage: "state \(state)")
@@ -85,10 +85,10 @@ enum SWFSystemMenuCommand {
                 parts[1], atPath: "\(SystemMenuMovieBridge.systemPagePath)/\(parts[0])"
             )
         } else if step.hasPrefix("focus:") {
-            runtime.focusTarget = runtime.node(
+            runtime.focus(runtime.node(
                 atPath: "\(SystemMenuMovieBridge.systemPagePath)/\(step.dropFirst(6))",
                 from: runtime.root
-            )
+            ))
         } else if let event = menuEvent(step) {
             SystemMenuMovieBridge.handle(event, runtime: runtime)
         } else {

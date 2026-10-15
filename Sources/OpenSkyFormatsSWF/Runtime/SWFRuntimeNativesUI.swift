@@ -120,6 +120,12 @@ nonisolated extension SWFRuntimeNatives {
 }
 
 nonisolated extension SWFMovieRuntime {
+    /// Moves focus as `Selection.setFocus` does, so CLIK's `FocusHandler` hears
+    /// it. An engine bridge uses this rather than setting `focusTarget`.
+    public func focus(_ node: SWFDisplayObject?) {
+        setFocus(node.map { .object($0.object) } ?? .null)
+    }
+
     /// `Selection.setFocus(target)`: accepts a display object or a path string.
     /// Passing null clears focus, which Flash treats as a successful call.
     @discardableResult

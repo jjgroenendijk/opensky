@@ -72,7 +72,7 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
             "sendMenuProperties",
             arguments: menuProperties(hasSaves: hasSaves, version: version)
         )
-        runtime.focusTarget = runtime.node(atPath: listPath, from: runtime.root)
+        runtime.focus(runtime.node(atPath: listPath, from: runtime.root))
     }
 
     /// The game moves key focus when the movie changes state; OpenSky owns the
@@ -88,13 +88,13 @@ nonisolated public enum TitleMenuMovieBridge: Sendable {
             let node = runtime.node(atPath: path, from: runtime.root),
             runtime.focusTarget !== node
         else { return }
-        runtime.focusTarget = node
+        runtime.focus(node)
     }
 
     /// Leaves a row OpenSky does not draw yet, such as the credits.
     public static func returnToMain(runtime: SWFMovieRuntime) {
         runtime.callMovie("StartState", atPath: menuPath, arguments: [.string(mainState)])
-        runtime.focusTarget = runtime.node(atPath: listPath, from: runtime.root)
+        runtime.focus(runtime.node(atPath: listPath, from: runtime.root))
     }
 
     @discardableResult

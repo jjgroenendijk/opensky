@@ -51,10 +51,10 @@ enum SWFMovieProbeCommand {
     /// empty path calls a GameDelegate callback.
     private static func perform(_ step: String, runtime: SWFMovieRuntime) throws {
         if step.hasPrefix("focus:") {
-            runtime.focusTarget = runtime.node(
+            runtime.focus(runtime.node(
                 atPath: String(step.dropFirst(6)),
                 from: runtime.root
-            )
+            ))
             return
         }
         if step.hasPrefix("key:"), let code = Int(step.dropFirst(4)) {
