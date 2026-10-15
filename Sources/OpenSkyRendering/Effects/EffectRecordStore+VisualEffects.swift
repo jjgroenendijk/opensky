@@ -16,7 +16,9 @@ nonisolated extension EffectRecordStore {
                     name: resolved.record.editorID ?? "\(key)",
                     artModel: resolve(resolved.record.effectArt, from: resolved)
                         .flatMap(artModel),
-                    membrane: resolve(resolved.record.shader, from: resolved).flatMap(membrane)
+                    membrane: resolve(resolved.record.shader, from: resolved).flatMap(membrane),
+                    attachesToCamera: resolved.record.attachesToCamera,
+                    inheritsRotation: resolved.record.inheritsRotation
                 )
             }
         case "EFSH":

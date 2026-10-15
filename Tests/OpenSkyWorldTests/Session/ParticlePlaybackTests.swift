@@ -48,6 +48,29 @@ struct ParticlePlaybackTests {
         #expect(repeatRun.particles == calm.particles)
     }
 
+    /// A moving emitter leaves world-space particles where they were born, as the
+    /// opening's camera fog must not ride along with the cart.
+    @Test func movingAnEmitterMovesOnlyLocalSpaceParticles() {
+        var moved = matrix_identity_float4x4
+        moved.columns.3 = SIMD4(500, 0, 0, 1)
+        for worldSpace in [true, false] {
+            var simulator = ParticleSimulator(
+                definition: makeDefinition(windStrength: 0, worldSpace: worldSpace),
+                placementTransform: matrix_identity_float4x4,
+                seed: 7
+            )
+            for _ in 0 ..< 10 {
+                simulator.advance(deltaTime: 0.05, wind: .calm, emissionScale: 1)
+            }
+            let before = simulator.particles.map(\.position)
+            simulator.move(to: moved)
+            let shift = worldSpace ? SIMD3<Float>.zero : SIMD3(500, 0, 0)
+            #expect(!before.isEmpty)
+            #expect(simulator.particles.map(\.position) == before.map { $0 + shift })
+            #expect(simulator.placementTransform == moved)
+        }
+    }
+
     /// A colour ramp replaces the emitter's opaque birth colour, so smoke that
     /// peaks at alpha 0.4 never draws opaque.
     @Test func colourRampTintsAndFadesLiveParticles() {
@@ -122,12 +145,12 @@ struct ParticlePlaybackTests {
     }()
 
     private func makeDefinition(
-        windStrength: Float, extraModifiers: [ParticleModifier] = []
+        windStrength: Float, extraModifiers: [ParticleModifier] = [], worldSpace: Bool = true
     ) -> ParticleSystemDefinition {
         ParticleSystemDefinition(
             name: "Synthetic flame",
             worldTransform: matrix_identity_float4x4,
-            worldSpace: true,
+            worldSpace: worldSpace,
             maxParticles: 32,
             emitters: [ParticleEmitter(
                 name: "Flame emitter",

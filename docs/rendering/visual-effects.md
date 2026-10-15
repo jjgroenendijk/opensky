@@ -28,8 +28,14 @@ The records are in [visual effect records](/formats/visual-effects.md),
 | A script | `VisualEffect.Play` or `EffectShader.Play` on a reference | The `afTime` argument, or until `Stop` when it is negative |
 | The Effects panel | Any `RFCT`, `EFSH`, `ADDN`, or `ARTO`, on the player or the nearest actor | Until cleared |
 
-An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. A lasting effect that is
-already on the same anchor is not attached twice, so a reload does not stack race glows.
+An `RFCT` is resolved to its `ARTO` model and its `EFSH` membrane. Its flag 0x02 (attach to
+camera) draws the art at the camera eye instead of the target. With flag 0x04 (inherit
+rotation) the art also turns with the view: its +Y points along the view and +Z up. The
+opening cart ride plays two such effects through `FXCameraAttachScript`:
+`FXCameraAttachBlowingFogEffect` and `FXCameraAttachUpSnowEffect`, both with flags 6. Their
+models are particle systems whose box emitter sits 300 units in front of the eye. A lasting
+effect that is already on the same anchor is not attached twice, so a reload does not stack
+race glows.
 At most 32 effects live at once; the oldest timed one goes first. This is OpenSky's limit.
 
 ## Membrane
@@ -55,10 +61,14 @@ draws no membrane.
 - The membrane and particle textures of the `EFSH` are not sampled. The membrane is a flat
   color with a rim term.
 - The fill color has three keys in the record. OpenSky uses key 1 only.
-- The NIF particle systems inside an effect model run while the effect lives, and move
-  with its anchor. `EFSH` particles are not drawn.
+- The NIF particle systems inside an effect model run while the effect lives. When the anchor
+  moves, the emitter moves with it. A world-space system (nif.xml `World Space`, the default)
+  keeps its born particles where they are; a local-space one carries them along. `EFSH`
+  particles are not drawn.
 - Art and membranes follow the actor's feet and facing, not a named bone. The `RFCT` node
   index is not used.
+- [WARNING] The `RFCT` flag 0x01 (rotate to face target) is not used, because
+  `VisualEffect.Play` does not pass its facing object on yet.
 - An actor's membrane covers every mesh drawn for that actor, including worn armor.
 
 ## Checking it in the app

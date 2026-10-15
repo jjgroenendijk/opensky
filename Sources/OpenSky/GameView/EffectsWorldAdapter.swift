@@ -179,6 +179,10 @@ extension EffectsWorldAdapter: ExplosionWorld {
 }
 
 extension EffectsWorldAdapter: EffectsWorld {
+    var effectCamera: VisualEffectRuntime.CameraPose? {
+        game.renderer.map { .init(eye: $0.camera.eye, target: $0.camera.target) }
+    }
+
     /// An actor's feet turned to its facing; the player's turn with the camera.
     func effectTransform(of actor: ReferenceKey) -> float4x4? {
         if actor == .player {
