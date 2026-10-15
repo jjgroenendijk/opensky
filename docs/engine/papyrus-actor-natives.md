@@ -59,7 +59,7 @@ name outside it is a tallied failure that names the value, never a zero.
 
 | Behavior | What OpenSky does | Why |
 | --- | --- | --- |
-| `Resurrect` | Not installed | Nothing clears the death latch. `RestoreActorValue` on a dead actor writes health and leaves it dead |
+| `StartSneaking` on an NPC | No change | Only the player has a sneak gait. On the player it turns sneak on |
 | `StartCombat` with a target other than the player | Tallied failure | OpenSky simulates no fight between two NPCs. Hostility has two cases and both are about the player |
 | `Game.GetPlayer().IsInCombat()` | False during a fight | A combat behavior machine belongs to an NPC. Whether the player is in a fight is derived from every loaded actor, not stored on one |
 | `IsWeaponDrawn()` on an NPC | Tallied failure | Only the player has a behavior graph that tracks drawing. "Sheathed" would be invented |

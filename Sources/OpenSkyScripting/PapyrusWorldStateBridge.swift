@@ -147,6 +147,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var music: (any PapyrusMusicControlling)?
     /// The horse the player rode last, for `GetPlayersLastRiddenHorse`. Nil when not wired.
     public var playersLastMount: (() -> ReferenceKey?)?
+    /// Puts the player into sneak, for `StartSneaking`. Nil when not wired.
+    public var startPlayerSneaking: (() -> Void)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.
