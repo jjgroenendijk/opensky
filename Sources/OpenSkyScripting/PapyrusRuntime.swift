@@ -34,7 +34,12 @@ public final class PapyrusRuntime {
     /// runtime sets it for each step; outside a step nothing limits it.
     public var stepInstructionsLeft = Int.max
 
-    public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:]
+    public var instances: [PapyrusObjectHandle: PapyrusInstance] = [:] {
+        didSet { variableGeneration.advance() }
+    }
+
+    /// Rises when an instance comes or goes, or one of their variables changes.
+    public let variableGeneration = PapyrusVariableGeneration()
     /// Another script instance on the same form that is of the named type. The game keeps
     /// all scripts of one form in one object, so a cast between them succeeds.
     public var siblingInstance: ((PapyrusObjectHandle, String) -> PapyrusObjectHandle?)?
@@ -68,15 +73,6 @@ public final class PapyrusRuntime {
         }
     }
 
-    /// Adds a decoded file's objects to the script library, last writer wins,
-    /// which is how a lazily loaded script joins a runtime built with an empty
-    /// (or partial) file list.
-    public func register(_ file: PexFile) {
-        for object in file.objects {
-            scripts[Self.key(object.name)] = object
-        }
-    }
-
     @discardableResult
     public func makeInstance(
         scriptName: String,
@@ -100,7 +96,8 @@ public final class PapyrusRuntime {
             rootScriptName: root.name,
             // A child with no auto state starts in its parent's (CK wiki, "States (Papyrus)").
             activeState: chain.lazy.map(\.automaticStateName).first { !$0.isEmpty } ?? "",
-            variablesByScript: storage
+            variablesByScript: storage,
+            generation: variableGeneration
         )
         for (name, value) in initialValues {
             guard let declaration = variable(named: name, in: chain) else {
@@ -306,5 +303,16 @@ public final class PapyrusRuntime {
             }
         }
         return nil
+    }
+}
+
+extension PapyrusRuntime {
+    /// Adds a decoded file's objects to the script library, last writer wins,
+    /// which is how a lazily loaded script joins a runtime built with an empty
+    /// (or partial) file list.
+    public func register(_ file: PexFile) {
+        for object in file.objects {
+            scripts[Self.key(object.name)] = object
+        }
     }
 }
