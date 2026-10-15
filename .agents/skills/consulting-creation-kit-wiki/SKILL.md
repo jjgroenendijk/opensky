@@ -41,8 +41,9 @@ The file name is the page title. Common title patterns:
 | A Papyrus function or event | `GetActorValue - Actor.md`, `OnHit - ObjectReference.md` |
 | A Papyrus script object | `Actor Script.md`, `ObjectReference Script.md` |
 | A condition function | `GetIsID.md`, `GetActorValue.md` (no script suffix) |
-| A form type or editor window | `Actor.md`, `AI Data Tab.md` |
-| Everything in a category | `Category/Condition Functions.md` lists its member pages |
+| A form type or editor window | `Armor.md`, `AI Data Tab.md` |
+| Every condition function | `Condition Functions.md` |
+| Everything in a category | `Category/Papyrus.md` lists its member pages |
 
 When the exact title is unknown, search. File names first, then text:
 
@@ -65,9 +66,15 @@ is not mirrored, such as an image or a talk page, points at the live wiki.
 - The text is CC BY-SA 4.0. Quote a few lines with a citation when that helps. Never copy pages
   or the mirror into the repository.
 
-## When the tool itself breaks
+## When a page reads wrong
 
-The sync code is the uv project `tools/ck-wiki/`. Its design and the mirror layout are in
-`docs/tools/ck-wiki.md`. After changing the converter, raise `CONVERTER_VERSION` and run
-`make ck-wiki`; it converts the stored pages again without the network. Check with
-`make py-format-check py-lint test-python`, fix what they report, and run them again.
+Fix it in the tool, never in the mirror file. A sync overwrites the file, and the same fault is
+usually on other pages too. The sync code is the uv project `tools/ck-wiki/`; the conversion steps
+and their reasons are in `docs/tools/ck-wiki.md`.
+
+1. Find the cause in the stored HTML under `.sync/pages/` and fix the converter.
+2. Raise `CONVERTER_VERSION` and run `make ck-wiki`. It converts every stored page again without
+   the network.
+3. Search the whole mirror for the fault, not only the page you saw, for example
+   `grep -rlF --include='*.md' '[TABLE]' "$wiki"`. Fix and repeat until none is left.
+4. Run `make py-format py-lint` and fix what it reports.

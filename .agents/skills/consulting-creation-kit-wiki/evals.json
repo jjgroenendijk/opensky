@@ -30,13 +30,13 @@
     ]
   },
   {
-    "skills": ["consulting-creation-kit-wiki", "testing-and-verifying"],
+    "skills": ["consulting-creation-kit-wiki"],
     "query": "Code blocks in the offline CK wiki lose their language. Fix the converter.",
     "files": [],
     "expected_behavior": [
-      "Changes tools/ck-wiki and raises CONVERTER_VERSION",
-      "Runs make py-format-check py-lint test-python and fixes what they report",
-      "Reconverts with make ck-wiki and reads a converted page to check the result"
+      "Fixes the converter in tools/ck-wiki and raises CONVERTER_VERSION, without editing any mirror file",
+      "Reconverts with make ck-wiki and searches the whole mirror for the same fault",
+      "Runs make py-format py-lint and fixes what it reports"
     ]
   },
   {

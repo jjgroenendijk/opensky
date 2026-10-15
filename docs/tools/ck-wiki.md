@@ -45,6 +45,7 @@ the mirror's `fetched_from:` key.
 | `index.md` | A link to every page, grouped by namespace |
 | `<Title>.md` | A main-namespace page, such as `GetActorValue - Actor.md` |
 | `Category/<Name>.md` | A category page, followed by a list of its member pages |
+| | For a category with no page on the wiki, a generated member list (`generated:` in the frontmatter) |
 | `CreationKit/`, `Help/` | The project and help namespaces |
 | `<Title>/<Subpage>.md` | A subpage, such as `SKSE/Plugin ABI.md` |
 | `.sync/` | The fetched HTML of every page and the state of the last sync |
@@ -100,10 +101,22 @@ and it sends a user agent that names the project.
 ## Conversion
 
 `.sync/` keeps the rendered HTML of each page. Conversion runs pandoc (`html` to `gfm` without raw
-HTML) plus a Lua filter for code fences. Before pandoc, the tool removes the table of contents,
-edit links, and image zoom links, and it turns a first table row of header cells into the table
-header. A heading level 1 inside a page moves down one level, so the page title stays the only
-level 1 heading.
+HTML) with the Lua filter `tools/ck-wiki/src/ck_wiki/markdown.lua`. Each step exists because the
+plain conversion lost or garbled content:
 
-A change to the converter raises `CONVERTER_VERSION` in `tools/ck-wiki/src/ck_wiki/convert.py`.
-The next sync then converts every stored page again without fetching it.
+| Step | Why |
+| --- | --- |
+| Remove the table of contents, edit links, and image zoom links | Wiki chrome, not content |
+| Make a first row of header cells the table header | Otherwise the table gets an empty header |
+| Unwrap a one-row or one-column table into its cells | GFM cannot hold the notice and layout boxes; pandoc wrote `[TABLE]` |
+| Flatten other table cells to one line, `/` between parts | GFM table cells hold one line; pandoc wrote `[TABLE]` |
+| Fence every code block with its language | The gfm writer drops languages it does not know, such as `papyrus` |
+| Drop line breaks that start or end a block | They became lone `\` lines |
+| Rewrite section links to GitHub heading anchors | MediaWiki ids such as `#Undo_.28CTRL.2BZ.29` match no Markdown heading |
+| Move level 1 headings in a page down one level | The page title stays the only level 1 heading |
+| Drop trailing spaces and repeated blank lines outside code | Noise from the HTML layout |
+
+Fix the output only through the tool, never by editing a mirror file: the next sync overwrites the
+file, and the same fault is on other pages too. A change to the converter raises
+`CONVERTER_VERSION` in `tools/ck-wiki/src/ck_wiki/convert.py`. The next sync then converts every
+stored page again without fetching it.

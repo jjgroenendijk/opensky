@@ -14,7 +14,7 @@ from .markup import remove_elements
 from .sources import SITE, FetchedPage, page_url
 
 # Raise when the Markdown output changes, so the next sync converts every stored page again.
-CONVERTER_VERSION = 2
+CONVERTER_VERSION = 9
 LICENSE = "CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)"
 WIKI_HREF = re.compile(r'href="/wiki/([^"#]*)(#[^"]*)?"')
 SITE_RELATIVE = re.compile(r'(href|src)="/(?!/)')
@@ -22,16 +22,22 @@ SRCSET = re.compile(r'\ssrcset="[^"]*"')
 HIGHLIGHT_BLOCK = re.compile(
     r'<div[^>]*class="mw-highlight(?:[^"]*?mw-highlight-lang-([\w-]+))?[^"]*"[^>]*>\s*<pre[^>]*>'
 )
+# MediaWiki writes a section id byte as a dot and two hex digits: "(" becomes ".28".
+MEDIAWIKI_ESCAPE = re.compile(r"\.([0-9A-F]{2})")
+SAME_PAGE_HREF = re.compile(r'href="(#[^"]*)"')
 PLAIN_PRE = re.compile(r"<pre\b[^>]*>(?!<code)")
 LINK_TITLE = re.compile(r'(<a\b[^>]*?)\stitle="[^"]*"')
 EMPTY_PARAGRAPH = re.compile(r"<p>\s*(?:<br\s*/?>\s*)*</p>")
 LEADING_BREAK = re.compile(r"<p>\s*<br\s*/?>")
+# A line break that ends a block, or a run of them, becomes a stray backslash line in Markdown.
+TRAILING_BREAKS = re.compile(r"(?:\s*<br\s*/?>)+\s*(?=</(?:p|li|td|th|dd|div)>)")
+REPEATED_BREAKS = re.compile(r"(?:<br\s*/?>\s*){2,}")
 # A table whose first body row holds only header cells: that row becomes the header.
 HEADER_ROW = re.compile(
     r"(<table\b[^>]*>\s*)<tbody>\s*(<tr\b[^>]*>(?:(?!</tr>).)*?</tr>)", re.DOTALL
 )
 PANDOC_TIMEOUT = 120
-FENCE_FILTER = Path(__file__).with_name("fence.lua")
+MARKDOWN_FILTER = Path(__file__).with_name("markdown.lua")
 
 
 @dataclass(frozen=True)
@@ -50,7 +56,16 @@ class LinkMap:
             return None
         relative = posixpath.relpath(path, posixpath.dirname(here) or ".")
         anchor = fragment or (f"#{redirect_fragment}" if redirect_fragment else "")
-        return quote(relative) + anchor
+        return quote(relative) + heading_anchor(anchor)
+
+
+def heading_anchor(fragment: str) -> str:
+    """Turn a MediaWiki section id, such as `#Undo_.28CTRL.2BZ.29`, into a GitHub heading anchor."""
+    if not fragment.lstrip("#"):
+        return ""
+    text = MEDIAWIKI_ESCAPE.sub(lambda match: chr(int(match.group(1), 16)), fragment.lstrip("#"))
+    text = unquote(text).replace("_", " ").strip().lower()
+    return "#" + re.sub(r"[^\w\- ]", "", text).replace(" ", "-")
 
 
 def prepare_html(html: str, here: str, links: LinkMap) -> str:
@@ -70,11 +85,14 @@ def prepare_html(html: str, here: str, links: LinkMap) -> str:
         href = links.local_href(title, fragment, here)
         return f'href="{href or SITE + "/wiki/" + match.group(1) + fragment}"'
 
+    html = SAME_PAGE_HREF.sub(lambda match: f'href="{heading_anchor(match.group(1))}"', html)
     html = WIKI_HREF.sub(rewrite, html)
     html = SRCSET.sub("", html)
     html = LINK_TITLE.sub(r"\1", html)
     html = EMPTY_PARAGRAPH.sub("", html)
     html = LEADING_BREAK.sub("<p>", html)
+    html = TRAILING_BREAKS.sub("", html)
+    html = REPEATED_BREAKS.sub("<br>", html)
     html = HEADER_ROW.sub(_promote_header, html)
     return SITE_RELATIVE.sub(lambda match: f'{match.group(1)}="{SITE}/', html)
 
@@ -103,7 +121,7 @@ def html_to_markdown(pandoc: str, html: str) -> str:
             "--to=gfm-raw_html",
             "--wrap=none",
             f"--shift-heading-level-by={shift}",
-            f"--lua-filter={FENCE_FILTER}",
+            f"--lua-filter={MARKDOWN_FILTER}",
         ],
         input=html,
         capture_output=True,
@@ -114,7 +132,26 @@ def html_to_markdown(pandoc: str, html: str) -> str:
     if result.returncode != 0:
         message = f"pandoc failed: {result.stderr.strip()}"
         raise RuntimeError(message)
-    return result.stdout.strip()
+    return tidy_markdown(result.stdout)
+
+
+def tidy_markdown(text: str) -> str:
+    """Drop trailing spaces and repeated blank lines, but never inside a code fence."""
+    lines: list[str] = []
+    fence = ""
+    for line in text.splitlines():
+        marker = re.match(r"\s*(`{3,})", line)
+        if fence:
+            lines.append(line)
+            if marker and marker.group(1) == fence and not line.strip().strip("`"):
+                fence = ""
+            continue
+        if marker:
+            fence = marker.group(1)
+        stripped = line.rstrip()
+        if stripped or (lines and lines[-1]):
+            lines.append(stripped)
+    return "\n".join(lines).strip()
 
 
 def frontmatter(fields: dict[str, object]) -> str:
@@ -147,6 +184,19 @@ def render_page(
         names = [f"Category:{name}" for name in page.categories]
         parts.append("## Categories\n\n" + link_list(names, here, links))
     return "\n\n".join(part for part in parts if part) + "\n"
+
+
+def render_category(title: str, here: str, links: LinkMap, members: list[str]) -> str:
+    """Return a member list for a category that the wiki has no page for."""
+    fields: dict[str, object] = {
+        "title": title,
+        "url": page_url(title),
+        "source": "Creation Kit wiki (ck.uesp.net)",
+        "license": LICENSE,
+        "generated": "member list built from the categories of the mirrored pages",
+    }
+    listing = "## Pages in this category\n\n" + link_list(members, here, links)
+    return "\n\n".join([frontmatter(fields), f"# {title}", listing]) + "\n"
 
 
 def link_list(titles: list[str], here: str, links: LinkMap) -> str:

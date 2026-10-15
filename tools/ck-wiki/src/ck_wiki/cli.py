@@ -18,7 +18,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from .client import Http
-from .convert import CONVERTER_VERSION, LICENSE, LinkMap, frontmatter, link_list, render_page
+from .convert import (
+    CONVERTER_VERSION,
+    LICENSE,
+    LinkMap,
+    frontmatter,
+    link_list,
+    render_category,
+    render_page,
+)
 from .mirror import INDEX_NAME, Entry, Mirror, State, assign_paths, link_key
 from .sources import (
     CATEGORY_NAMESPACE,
@@ -172,7 +180,7 @@ class Sync:
             self.forget_missing(listed, state)
             state.redirects = self.source.redirects(self.namespaces)
         present = [title for title in state.pages if self.mirror.has_page(title)]
-        paths = assign_paths(present)
+        paths = assign_paths(present + self.listless_categories(present, state))
         key = link_key(paths, state.redirects)
         links = LinkMap(paths, state.redirects)
         reconvert_all = (
@@ -180,7 +188,7 @@ class Sync:
         )
         convert = [
             title
-            for title in present
+            for title in paths
             if reconvert_all
             or title in fetched
             or namespace_of(title) == CATEGORY_NAMESPACE
@@ -189,7 +197,7 @@ class Sync:
         ]
         changed = self.convert(convert, links, state)
         self.mirror.remove_markdown(set(state.paths.values()) - set(paths.values()))
-        self.write_index(present, links)
+        self.write_index(list(paths), links)
         state.converter, state.link_key, state.paths = CONVERTER_VERSION, key, paths
         self.mirror.save_state(state)
         return self.report(len(present), len(fetched), changed)
@@ -239,17 +247,27 @@ class Sync:
             self.mirror.forget_page(title)
             del state.pages[title]
 
+    def listless_categories(self, present: list[str], state: State) -> list[str]:
+        """Return the categories that pages use but that have no page or redirect of their own."""
+        if CATEGORY_NAMESPACE not in self.namespaces:
+            return []
+        used = {f"Category:{name}" for title in present for name in state.pages[title].categories}
+        return sorted(used - set(present) - set(state.redirects))
+
     def convert(self, titles: list[str], links: LinkMap, state: State) -> int:
         """Write the Markdown of the given pages and return how many files changed."""
         members: dict[str, list[str]] = defaultdict(list)
         for title in links.paths:
-            for category in state.pages[title].categories:
+            for category in state.pages[title].categories if title in state.pages else []:
                 members[f"Category:{category}"].append(title)
 
         def work(title: str) -> bool:
-            page = self.mirror.load_page(title)
             path = links.paths[title]
-            text = render_page(page, path, links, members.get(title, []), self.pandoc)
+            if title not in state.pages:
+                text = render_category(title, path, links, members[title])
+            else:
+                page = self.mirror.load_page(title)
+                text = render_page(page, path, links, members.get(title, []), self.pandoc)
             return self.mirror.write_markdown(path, text)
 
         changed = 0
