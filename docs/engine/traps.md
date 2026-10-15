@@ -56,7 +56,7 @@ Implemented for traps:
 | --- | --- |
 | `ObjectReference.GetTriggerObjectCount` | Actors standing in the volume, from the trigger enter and leave events |
 | `ObjectReference.ProcessTrapHit` | Takes the damage off the receiver's Health and knocks it back. Stagger is dropped |
-| `ObjectReference.PlaceAtMe` | Spawns a hazard or detonates an explosion, see below |
+| `ObjectReference.PlaceAtMe` | Spawns a hazard, detonates an explosion, or places an object, see below |
 | `ObjectReference.ApplyHavokImpulse` | Pushes the receiver's simulated body |
 | `ObjectReference.PushActorAway` | Knocks the actor argument back, away from the receiver |
 | `ObjectReference.GetBaseObject` | The base form |
@@ -95,10 +95,15 @@ script runs on:
 ## Placing with PlaceAtMe
 
 `ObjectReference.PlaceAtMe(form, count)` places `count` copies of `form` at the receiver.
-OpenSky places two kinds of base form. A `HAZD` hazard spawns at the receiver and lives out
-its lifetime; the call answers the last spawned hazard. An `EXPL` explosion detonates at the
-receiver; the call answers None, because an explosion leaves no reference a script can hold.
-The placed object takes the receiver's position, not its rotation.
+A `HAZD` hazard spawns at the receiver and lives out its lifetime; the call answers the last
+spawned hazard. An `EXPL` explosion detonates at the receiver; the call answers None, because an
+explosion leaves no reference a script can hold. A hazard or an explosion takes the receiver's
+position, not its rotation.
+
+Any other base becomes `count` spawned references at the receiver's position and rotation, and
+the call answers the last one. A spawn is saved and built like a dropped item, so an actor base
+places an actor. `PlaceActorAtMe(base, levelMod, zone)` places one actor the same way. It does not
+read the level modifier or the encounter zone.
 
 ## Impulses and pushback
 
@@ -180,6 +185,4 @@ and `PHZD`.
 A swinging blade or a battering ram swings, but its blade does not hit: the graph moves the
 mesh, not a collision body, so `ProcessTrapHit` comes only from the trigger. `SetMotionType`
 stays stubbed: OpenSky cannot turn a static object into a dynamic body at runtime.
-`Weapon.Fire` stays stubbed: projectiles fire only from actors. `PlaceAtMe` of any base other
-than a hazard or an explosion answers None: OpenSky has no runtime-spawned references for other
-forms yet.
+`Weapon.Fire` stays stubbed: projectiles fire only from actors.

@@ -34,6 +34,11 @@ extension PapyrusNativeFunctions {
             }
             return .suspended(.gameHours(Double(max(0, hours))))
         })
+        // A menu pauses the VM, so a running script is never in menu mode.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Utility",
+            functionName: "IsInMenuMode"
+        ) { _, _ in .returned(.boolean(false)) })
     }
 
     private static func installRandom(into registry: inout PapyrusNativeRegistry) {
