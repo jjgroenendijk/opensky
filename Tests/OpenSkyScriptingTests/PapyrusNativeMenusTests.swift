@@ -75,6 +75,10 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
     func movePlayer(to target: ReferenceKey) {
         calls.append("move(\(target))")
     }
+
+    func openInventory(of actor: ReferenceKey) {
+        calls.append("inventory(\(actor))")
+    }
 }
 
 @MainActor
@@ -115,6 +119,27 @@ struct PapyrusNativeMenusTests {
         menus.travelMarkers = [fixture.key]
         #expect(fixture
             .call("CanFastTravelToMarker", returnType: .boolean) == .returned(.boolean(true)))
+    }
+
+    @Test func openInventoryNeedsATeammateOrForce() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let open = { (force: Bool) in
+            fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "Actor", "OpenInventory", receiver: fixture.receiver,
+                arguments: [.boolean(force)], returnType: .none
+            ))
+        }
+        #expect(open(false) == .returned(.none))
+        #expect(menus.calls.isEmpty)
+        #expect(open(true) == .returned(.none))
+        fixture.session.bridge.updateScriptedState(of: fixture.key) {
+            $0.setFlag(ScriptedStateName.playerTeammate, true)
+        }
+        #expect(open(false) == .returned(.none))
+        let opened = "inventory(\(fixture.key))"
+        #expect(menus.calls == [opened, opened])
     }
 
     @Test func withoutTheBridgeANativeDoesNothing() {

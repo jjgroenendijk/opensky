@@ -294,6 +294,10 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         teleportPlayer(.reference(String(format: "0x%06X", objectID)), openingRaceMenu: false)
     }
 
+    func openInventory(of actor: ReferenceKey) {
+        game.containerMenu.openInventory(of: actor)
+    }
+
     private var identityRecords: ActorIdentityRecords? {
         (game.worldData as? ActorValueDataProviding)?.actorValueBaselines?.resolver
             .map(ActorIdentityRecords.init(resolver:))

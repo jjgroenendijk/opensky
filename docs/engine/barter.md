@@ -18,6 +18,10 @@ The row list is the [inventory menu](/engine/inventory-menu.md)'s. Container tra
 [interaction](/engine/interaction.md) container sessions. Merchants are on the
 [vendor factions](/engine/vendor-factions.md) page.
 
+`Actor.OpenInventory` opens the container menu on a living actor's own items, the way a
+follower's trade does. The actor uses the same holder as a corpse search. Without
+`abForceOpen`, only an actor a script made a teammate with `SetPlayerTeammate` opens.
+
 ## The price formula
 
 From UESP "Skyrim:Speech", section "Prices" (<https://en.uesp.net/wiki/Skyrim:Speech#Prices>):

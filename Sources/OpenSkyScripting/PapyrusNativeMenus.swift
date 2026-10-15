@@ -35,6 +35,8 @@ public protocol PapyrusMenuBridge: AnyObject {
     func name(of form: FormID) -> String?
     /// Moves the player next to `target`, loading its cell when it is not loaded.
     func movePlayer(to target: ReferenceKey)
+    /// Opens the container menu on the actor's inventory, as a follower's trade does.
+    func openInventory(of actor: ReferenceKey)
 }
 
 extension PapyrusNativeFunctions {
@@ -69,6 +71,7 @@ extension PapyrusNativeFunctions {
         installMarkerNatives(into: &registry)
         installIdentityNatives(into: &registry)
         installMoveTo(into: &registry)
+        installOpenInventory(into: &registry)
     }
 
     /// `MoveTo(akTarget, afX, afY, afZ, abMatchRotation)`. The opening quest moves the
@@ -118,6 +121,17 @@ extension PapyrusNativeFunctions {
             world.relocate(key, to: destination)
         }
         return .returned(.none)
+    }
+
+    /// Without `abForceOpen`, only a player teammate opens.
+    private static func installOpenInventory(into registry: inout PapyrusNativeRegistry) {
+        withReference("Actor", "OpenInventory", into: &registry) { call, world, menus, key in
+            let isTeammate = world.scriptedState(of: key).flag(ScriptedStateName.playerTeammate)
+            if key != .player, boolean(call, at: 0, default: false) || isTeammate == true {
+                menus.openInventory(of: key)
+            }
+            return .returned(.none)
+        }
     }
 
     private static func installMarkerNatives(into registry: inout PapyrusNativeRegistry) {
