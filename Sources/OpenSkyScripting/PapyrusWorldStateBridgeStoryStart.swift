@@ -4,7 +4,10 @@
 
 import Foundation
 import OpenSkyConditions
+import OpenSkyFormatsCore
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 
 extension PapyrusWorldStateBridge {

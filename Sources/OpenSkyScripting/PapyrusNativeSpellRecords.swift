@@ -4,6 +4,7 @@
 // hints have nothing to start and answer at once.
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyMagicInterface
 import OpenSkyScriptingInterface
 
