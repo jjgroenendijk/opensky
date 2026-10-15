@@ -2,8 +2,8 @@
 type: Subsystem
 title: Magic and active effects
 description: How a magic effect acts on an actor - where the rules come from, the two timed
-  behaviors the Recover flag chooses, which archetypes run, the expiry floor, ticking, condition
-  gating, stacking, drinking a potion or eating an ingredient, and what a save keeps.
+  behaviors the Recover flag chooses, the actor-value archetypes, the expiry floor, ticking,
+  condition gating, stacking, drinking a potion or eating an ingredient, and what a save keeps.
 tags: [engine, magic, effects, actors, alchemy]
 ---
 
@@ -72,8 +72,10 @@ numbers are used as written.
 
 ## Which archetypes run
 
-Three. Every other archetype applies nothing and adds to a count per archetype, so the missing work
-is measured.
+Value Modifier, Dual Value Modifier, and Peak Value Modifier move actor values as this page
+describes. Every other archetype is on the [archetypes](/engine/magic-archetypes.md) page. An
+archetype with no rule applies nothing and adds to a count per archetype, so the missing work is
+measured.
 
 | Archetype | Quoted behavior | What OpenSky does |
 | --- | --- | --- |

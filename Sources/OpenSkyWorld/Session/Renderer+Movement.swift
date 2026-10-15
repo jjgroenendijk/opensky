@@ -66,6 +66,9 @@ extension Renderer {
         let dt = cameraClock.advance(to: wallClock.now, paused: worldSimPaused)
         lastCameraDelta = min(max(dt, 0), WalkController.maximumFrameTime)
         var frameInput = input.makeInput(dt: dt)
+        if isPlayerParalysed, movementMode.isPlayerControlled {
+            frameInput = frameInput.holdingStill
+        }
         steerPlayerWalk(&frameInput)
         if frameInput.cycleCameraMode {
             setMovementMode(movementMode.next)

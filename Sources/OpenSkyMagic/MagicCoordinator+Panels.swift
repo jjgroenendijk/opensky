@@ -14,7 +14,7 @@ extension MagicCoordinator: MagicEffectControlProviding {
         guard let runtime = effects else { return .unavailable }
         let tally = runtime.tally
         let nearest = world?.nearestActorValueHolder()
-        return MagicEffectControlSnapshot(
+        var snapshot = MagicEffectControlSnapshot(
             isAvailable: true,
             playerEffects: runtime.active(on: .player).map { readout(of: $0, runtime: runtime) },
             nearestActorName: nearest.map { world?.actorName($0) ?? $0.key.description },
@@ -34,6 +34,9 @@ extension MagicCoordinator: MagicEffectControlProviding {
             },
             lastActionText: effectActionText
         )
+        snapshot.playerInfluence = runtime.influence(on: .player)
+        snapshot.nearestActorInfluence = nearest.map { runtime.influence(on: $0) } ?? .none
+        return snapshot
     }
 
     @discardableResult
@@ -73,7 +76,11 @@ extension MagicCoordinator: MagicEffectControlProviding {
             magnitude: effect.values.first?.magnitude ?? 0,
             duration: effect.duration,
             remaining: effect.remaining,
-            valueNames: effect.values.map { ActorValueIdentity.description(of: $0.index) }
+            valueNames: effect.values
+                .filter { ActorValueIdentity.isVanilla(index: $0.index) }
+                .map { ActorValueIdentity.description(of: $0.index) },
+            archetype: runtime.effects.effect(key: effect.effect)?.effect.data?
+                .archetype.description ?? "unknown"
         )
     }
 

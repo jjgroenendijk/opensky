@@ -221,6 +221,8 @@ public final class Renderer: NSObject {
     public var playerWalkPath: [SIMD3<Float>] = []
     /// A straight package walk ignores static collision, as an NPC's straight leg does.
     public var playerWalkIgnoresStatics = false
+    /// Paralysis: the player can look around but not move, jump, or attack.
+    public var isPlayerParalysed = false
     /// Called once when the player reaches the last waypoint of `playerWalkPath`.
     public var onPlayerWalkArrived: (() -> Void)?
     /// The simulation side of each frame (`RenderFrameDriver.swift`). The

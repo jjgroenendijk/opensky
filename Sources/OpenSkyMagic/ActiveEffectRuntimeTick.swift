@@ -52,7 +52,8 @@ extension ActiveEffectRuntime {
             var advanced: [ActiveEffect] = []
             advanced.reserveCapacity(state.effects.count)
             for effect in state.effects {
-                advanced.append(pay(effect.advanced(by: seconds), on: holder))
+                let moved = effect.advanced(by: seconds)
+                advanced.append(accumulate(pay(moved, on: holder), on: holder))
             }
             var updated = state.replacing(advanced)
             let expired = updated.expired
@@ -71,9 +72,12 @@ extension ActiveEffectRuntime {
     private mutating func pay(_ effect: ActiveEffect, on holder: ActorValueHolder) -> ActiveEffect {
         let owed = effect.unpaidSeconds
         guard owed > 0 else { return effect }
-        for value in effect.values {
+        let absorbs = rule(of: effect) == .absorb
+        for value in effect.values where ActorValueIdentity.isVanilla(index: value.index) {
             let amount = value.magnitude * Float(owed)
-            if effect.isDetrimental {
+            if absorbs {
+                absorb(amount, at: value.index, effect.isDetrimental, effect.caster, holder)
+            } else if effect.isDetrimental {
                 values.damage(at: value.index, by: amount, on: holder)
             } else {
                 values.restore(at: value.index, by: amount, on: holder)

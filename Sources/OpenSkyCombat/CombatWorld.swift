@@ -104,4 +104,13 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     /// Trims ragdolls and awake bodies, and returns how many of each went.
     func trimBodyTransients(to limits: CombatTransientLimits) -> CombatTransientCounts
     func resetRagdolls()
+    /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
+    func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+}
+
+extension CombatWorld {
+    /// A session with no magic forces no behaviour.
+    public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
+        .none
+    }
 }

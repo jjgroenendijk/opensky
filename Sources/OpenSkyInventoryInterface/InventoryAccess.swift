@@ -25,6 +25,13 @@ public protocol InventoryAccess {
     /// How much gold `holder` carries.
     func goldCount(of holder: InventoryHolder) -> Int32
 
+    /// Gives `holder` `count` more of `item`.
+    ///
+    /// - Throws: `InventoryError` for a non-positive count or an overflow.
+    @discardableResult
+    func add(_ item: FormID, count: Int32, to holder: InventoryHolder) throws
+        -> ReferenceInventoryState
+
     /// Takes `count` of `item` out of `holder`.
     ///
     /// - Throws: `InventoryError` when `holder` has fewer, which writes nothing.
@@ -47,6 +54,12 @@ public protocol EquipmentAccess {
 
     /// What `item` occupies.
     func occupancy(of item: FormID) -> EquipmentOccupancy
+
+    /// Equips `item` on `holder`, unequipping what it displaces.
+    ///
+    /// - Throws: `EquipmentError` when `holder` does not carry it or it cannot be worn.
+    @discardableResult
+    func equip(_ item: FormID, on holder: InventoryHolder) throws -> EquipmentChange
 
     /// Unequips `item` on `holder`. Returns true when the stored state changed.
     @discardableResult

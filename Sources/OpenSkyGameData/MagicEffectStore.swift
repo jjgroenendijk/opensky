@@ -97,6 +97,17 @@ nonisolated public struct MagicEffectStore: Sendable {
         resolve(itemEffect.effect, fromPlugin: pluginName)
     }
 
+    /// `effect`'s first associated item, such as a Bound Weapon's `WEAP`.
+    public func associatedItem(of effect: ResolvedMagicEffect) -> ResolvedFormID? {
+        effect.effect.data?.associatedItem
+            .flatMap { resolvedID($0, fromPlugin: effect.sourcePlugin) }
+    }
+
+    /// `id` in the load-order FormID space that inventories use.
+    public func loadOrderFormID(_ id: ResolvedFormID) -> FormID? {
+        index.resolver(ofPlugin: FormIDResolver.loadOrderSpaceName)?.localFormID(of: id)
+    }
+
     public func displayString(for id: FormID, fromPlugin pluginName: String) -> String {
         resolve(id, fromPlugin: pluginName)?.displayName ?? "[UNRESOLVED] \(id)"
     }

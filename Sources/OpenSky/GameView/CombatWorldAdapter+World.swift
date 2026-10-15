@@ -145,6 +145,10 @@ extension CombatWorldAdapter: CombatWorld {
         game.inventory.equipment
     }
 
+    func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence {
+        game.magic.influence(of: key)
+    }
+
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         game.magic.enchantmentProfile(of: item)
     }

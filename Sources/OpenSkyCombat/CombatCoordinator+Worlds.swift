@@ -85,12 +85,14 @@ extension CombatCoordinator: MeleeCombatWorld {
     }
 
     /// Every weapon, arrow, and explosion hit passes here, so difficulty scales
-    /// health damage at one point. A nil attacker is never the player.
+    /// health damage at one point. A nil attacker is never the player. An ethereal
+    /// actor deals and takes none.
     @discardableResult
     public func applyHealthDamage(
         _ amount: Float, to target: ReferenceKey, attacker: ReferenceKey?
     ) -> Bool {
-        guard amount > 0 else { return false }
+        guard amount > 0, !isEthereal(target), !(attacker.map(isEthereal) ?? false)
+        else { return false }
         let scaled = DifficultyDamage.scaled(
             amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
             multipliers: difficultyMultipliers
@@ -100,6 +102,10 @@ extension CombatCoordinator: MeleeCombatWorld {
             playerStruckTarget = target
         }
         return landed
+    }
+
+    private func isEthereal(_ key: ReferenceKey) -> Bool {
+        world?.magicInfluence(of: key).isEthereal ?? false
     }
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

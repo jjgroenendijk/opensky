@@ -1,9 +1,8 @@
 // Archetype dispatch: one decoded MGEF plus its EFIT numbers becomes what the
-// runtime does. Pure. Value Modifier, Dual Value Modifier, and Peak Value
-// Modifier follow <https://ck.uesp.net/wiki/Magic_Effect>; every other archetype
-// is counted. The Detrimental flag sets direction. No Magnitude and No Duration
-// are ignored, as the wiki says they change only the editor.
-// See docs/engine/magic.md.
+// runtime does. Pure. Each archetype's rule is `MagicArchetypeRule`, from
+// <https://ck.uesp.net/wiki/Magic_Effect>. The Detrimental flag sets direction.
+// No Magnitude and No Duration are ignored, as the wiki says they change only
+// the editor. See docs/engine/magic.md and docs/engine/magic-archetypes.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -14,13 +13,17 @@ import OpenSkyMagicInterface
 nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     /// The MGEF being applied.
     public let effect: ReferenceKey
+    public let archetype: MagicEffectArchetype
+    /// Nil for an effect that only carries a perk.
+    public let rule: MagicArchetypeRule?
     /// Which of the two documented timed behaviours applies. Meaningless for an
     /// instant application, which is applied once and stored nowhere.
     public let mode: ActiveEffectMode
     public let isDetrimental: Bool
     /// EFIT duration in seconds; zero for an instantaneous effect.
     public let duration: Float
-    /// The actor values acted on, first value first.
+    /// The actor values acted on, first value first. An archetype that acts on
+    /// no actor value carries one value at `noneIndex` holding the magnitude.
     public let values: [ActiveEffectValue]
     /// Peak Value Modifier's second associated item.
     public let stackKeyword: ReferenceKey?
@@ -34,6 +37,11 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
     public var isInstant: Bool {
         mode != .constant && duration <= 0
     }
+
+    /// The EFIT magnitude, which a level cap or a cloak radius reads.
+    public var magnitude: Float {
+        values.first?.magnitude ?? 0
+    }
 }
 
 /// Why one effect entry produced no application. Every case is a tally bucket,
@@ -42,13 +50,22 @@ nonisolated public struct MagicEffectApplication: Equatable, Sendable {
 /// The `Error` conformance exists only so these can ride in a `Result`; nothing
 /// here ever throws one, exactly as `ConditionFailure` documents.
 nonisolated public enum MagicEffectPlanFailure: Equatable, Error, Hashable, Sendable {
-    /// The archetype has no implementation in this milestone.
+    /// The archetype has no implementation yet.
     case unimplementedArchetype(MagicEffectArchetype)
     /// The archetype is implemented but the record names no actor value inside
     /// the vanilla table — usually -1, "none".
     case unaddressableValue(Int32)
     /// The MGEF carried no readable DATA, so nothing about it is known.
     case undecodedEffect
+    /// The archetype only acts while it runs, and the entry has no duration.
+    case needsDuration(MagicEffectArchetype)
+    /// Paralysis "only works if the 'Recover' flag is set".
+    case needsRecover(MagicEffectArchetype)
+    /// The target's level is above the magnitude: "up to level <MAG>".
+    case aboveLevelCap(MagicEffectArchetype)
+    /// Turn Undead "is hard-coded to require that the target have the
+    /// ActorTypeUndead keyword".
+    case notUndead
 }
 
 nonisolated public enum MagicEffectPlanner: Sendable {
@@ -57,16 +74,16 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         case skip(MagicEffectPlanFailure)
     }
 
-    /// The archetypes this milestone implements. Everything else is counted and
-    /// applies nothing.
-    public static let implementedArchetypes: Set<MagicEffectArchetype> = [
-        .valueModifier, .dualValueModifier, .peakValueModifier
-    ]
+    /// Whether `archetype` has a rule. Everything else is counted and applies
+    /// nothing.
+    public static func implements(_ archetype: MagicEffectArchetype) -> Bool {
+        MagicArchetypeRule.rule(for: archetype) != nil
+    }
 
     /// Whether a planned effect does anything. An effect that applies a perk must
     /// exist to own it, even when its values mean nothing to this engine.
     public static func applies(_ data: MagicEffectData) -> Bool {
-        implementedArchetypes.contains(data.archetype) || data.perkToApply != nil
+        implements(data.archetype) || data.perkToApply != nil
     }
 
     /// Plans one EFID/EFIT/CTDA `entry` of the resolved MGEF `effect`.
@@ -82,54 +99,111 @@ nonisolated public enum MagicEffectPlanner: Sendable {
         guard let data = effect.effect.data else {
             return .skip(.undecodedEffect)
         }
-        let carriesPerk = data.perkToApply != nil
         guard applies(data) else {
             return .skip(.unimplementedArchetype(data.archetype))
         }
+        let rule = MagicArchetypeRule.rule(for: data.archetype)
         let duration = isConstant ? 0 : Float(entry.duration)
-        let mode: ActiveEffectMode = if isConstant {
-            .constant
-        } else {
-            data.flags.contains(.recover) ? .modifier : .perSecond
-        }
-        let planned = implementedArchetypes.contains(data.archetype)
-            ? values(of: data, magnitude: entry.magnitude)
-            : .success([])
-        switch planned {
-        case .failure where carriesPerk:
-            return .apply(MagicEffectApplication(
-                effect: ReferenceKey(resolved: effect.id),
-                mode: mode,
-                isDetrimental: data.flags.contains(.detrimental),
-                duration: duration,
-                values: [],
-                stackKeyword: nil,
-                refusesRecast: data.flags.contains(.noRecast)
-            ))
-        case let .failure(reason):
+        if let reason = refusal(of: rule, data: data, duration: duration, isConstant: isConstant) {
             return .skip(reason)
-        case let .success(values):
-            // A timed Recover effect on health, magicka, or stamina applies like any held
-            // modifier: a primary's temporary slot moves its maximum and the current value.
-            // Expiry's floor is `ActiveEffectRuntime.release`.
-            return .apply(MagicEffectApplication(
-                effect: ReferenceKey(resolved: effect.id),
-                mode: mode,
-                isDetrimental: data.flags.contains(.detrimental),
-                duration: duration,
-                values: values,
-                stackKeyword: data.archetype == .peakValueModifier
-                    ? data.associatedItem.flatMap(resolveKeyword)
-                    : nil,
-                refusesRecast: data.flags.contains(.noRecast)
-            ))
         }
+        let planned = rule.map { values(of: $0, data: data, magnitude: entry.magnitude) }
+            ?? .success([])
+        let values: [ActiveEffectValue]
+        switch planned {
+        case let .success(planned):
+            values = planned
+        case let .failure(reason) where data.perkToApply == nil:
+            return .skip(reason)
+        case .failure:
+            values = []
+        }
+        // A timed Recover effect on health, magicka, or stamina applies like any held
+        // modifier: a primary's temporary slot moves its maximum and the current value.
+        // Expiry's floor is `ActiveEffectRuntime.release`.
+        return .apply(MagicEffectApplication(
+            effect: ReferenceKey(resolved: effect.id),
+            archetype: data.archetype,
+            rule: rule,
+            mode: mode(of: rule, flags: data.flags, isConstant: isConstant),
+            isDetrimental: rule.map { isDetrimental($0, flags: data.flags) }
+                ?? data.flags.contains(.detrimental),
+            duration: duration,
+            values: values,
+            stackKeyword: data.archetype == .peakValueModifier
+                ? data.associatedItem.flatMap(resolveKeyword)
+                : nil,
+            refusesRecast: data.flags.contains(.noRecast)
+        ))
     }
 
     // MARK: - Private
 
-    /// The actor values one archetype acts on, or why it acts on none.
+    private static func refusal(
+        of rule: MagicArchetypeRule?,
+        data: MagicEffectData,
+        duration: Float,
+        isConstant: Bool
+    ) -> MagicEffectPlanFailure? {
+        guard let rule else { return nil }
+        if rule.needsDuration, !isConstant, duration <= 0 {
+            return .needsDuration(data.archetype)
+        }
+        if rule == .influence(.paralysis), !data.flags.contains(.recover) {
+            return .needsRecover(data.archetype)
+        }
+        return nil
+    }
+
+    /// A held flag, paralysis, and a growing value hold their slot whatever the
+    /// Recover flag says; Absorb pays out each second, because it moves health
+    /// between two actors and a held slot cannot.
+    private static func mode(
+        of rule: MagicArchetypeRule?,
+        flags: MagicEffectFlags,
+        isConstant: Bool
+    ) -> ActiveEffectMode {
+        if isConstant {
+            return .constant
+        }
+        switch rule {
+        case .heldFlag, .influence(.paralysis), .accumulate: return .modifier
+        case .absorb: return .perSecond
+        default: return flags.contains(.recover) ? .modifier : .perSecond
+        }
+    }
+
+    /// A flag is set to 1, never taken to -1, whatever the Detrimental flag says.
+    private static func isDetrimental(_ rule: MagicArchetypeRule, flags: MagicEffectFlags) -> Bool {
+        switch rule {
+        case .heldFlag, .influence(.paralysis), .accumulate: false
+        default: flags.contains(.detrimental)
+        }
+    }
+
+    /// The actor values one rule acts on, or why it acts on none.
     private static func values(
+        of rule: MagicArchetypeRule,
+        data: MagicEffectData,
+        magnitude: Float
+    ) -> Result<[ActiveEffectValue], MagicEffectPlanFailure> {
+        switch rule {
+        case let .heldFlag(index):
+            .success([ActiveEffectValue(index: index, magnitude: 1)])
+        case .influence(.paralysis):
+            .success([
+                ActiveEffectValue(index: MagicArchetypeRule.paralysisActorValue, magnitude: 1)
+            ])
+        case .actorValues, .absorb, .accumulate:
+            actorValues(of: data, magnitude: magnitude)
+        case .influence, .dispel, .carrier, .world:
+            .success([
+                ActiveEffectValue(index: ActorValueIdentity.noneIndex, magnitude: magnitude)
+            ])
+        }
+    }
+
+    private static func actorValues(
         of data: MagicEffectData,
         magnitude: Float
     ) -> Result<[ActiveEffectValue], MagicEffectPlanFailure> {

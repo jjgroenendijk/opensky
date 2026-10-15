@@ -38,6 +38,8 @@ public final class MagicCoordinator {
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
+    /// Seconds since the last cloak pulse.
+    var cloakClock: Float = 0
     var profiles = ItemEnchantmentProfileCache()
     var spellBaselines: ActorSpellBaselineResolver?
     /// Actors whose authored spell list was granted, so it happens once.
@@ -65,6 +67,7 @@ public final class MagicCoordinator {
             conditionRegistry: conditionRegistry
         )
         self.pluginName = pluginName
+        wireArchetypeLookups()
     }
 
     public func wireCasting(
@@ -91,8 +94,20 @@ public final class MagicCoordinator {
     ) rethrows -> Result? {
         guard var runtime = effects else { return nil }
         // Written back on a throw too, as an `inout` argument would be.
-        defer { effects = runtime }
+        defer {
+            effects = runtime
+            performWorldActions()
+        }
         return try body(&runtime)
+    }
+
+    /// Takes the world actions the runtime queued, leaving none.
+    func takeWorldActions() -> [MagicWorldAction] {
+        guard var runtime = effects, !runtime.worldActions.isEmpty else { return [] }
+        let actions = runtime.worldActions
+        runtime.worldActions = []
+        effects = runtime
+        return actions
     }
 
     /// Whole effect steps for the delta this frame simulated, over the player
@@ -105,6 +120,8 @@ public final class MagicCoordinator {
             over: world?.regeneratingHolders() ?? [.player]
         )
         effects = runtime
+        performWorldActions()
+        pulseCloaks(delta: delta)
     }
 
     /// One frame of casting. A frame in a menu or in free-fly charges nothing
@@ -216,8 +233,10 @@ extension MagicCoordinator: CasterWorld {
         world?.aimedSpellTarget(within: range, for: caster) ?? .none
     }
 
-    /// The wiki says only the player's casts count.
+    /// Casting breaks the caster's invisibility. The wiki says only the player's
+    /// casts count as a story event.
     public func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
+        breakInvisibility(of: caster)
         guard caster == .player, let storyEvents else { return }
         storyEvents.reportStoryEvent(.castMagic(
             caster: caster,

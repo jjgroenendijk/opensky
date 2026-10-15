@@ -8,6 +8,7 @@
 import Foundation
 import OpenSkyCombatInterface
 import OpenSkyConditions
+import OpenSkyMagicInterface
 import simd
 
 /// The decision layer for one actor in one fight.
@@ -126,11 +127,16 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
 
     /// Not in a fight: engage when the target is perceived or a script says so.
     /// Hostility itself is still entered only by a blow, the panel, or a script. An
-    /// actor under the flee threshold does not start a fight.
+    /// actor under the flee threshold does not start a fight. A frightened actor
+    /// "will not flee until combat begins", and then runs at once.
     private mutating func advanceWaiting(_ inputs: CombatBehaviorInputs) -> CombatBehaviorStep {
-        guard !inputs.shouldFlee(settings: settings) else { return unchanged() }
+        let isAfraid = inputs.influence.flees
+        guard isAfraid || !inputs.shouldFlee(settings: settings) else { return unchanged() }
         guard inputs.isForced || inputs.awareness.isDetected else { return unchanged() }
         fightCount += 1
+        if isAfraid {
+            return enterFlee(inputs)
+        }
         enter(.approaching)
         var step = unchanged()
         step.startedFight = true
@@ -368,7 +374,9 @@ nonisolated public struct CombatBehaviorMachine: Equatable, Sendable {
         secondsSinceCommand = 0
         return issued
     }
+}
 
+nonisolated extension CombatBehaviorMachine {
     private func unchanged() -> CombatBehaviorStep {
         CombatBehaviorStep(phase: phase)
     }
