@@ -203,6 +203,9 @@ extension StoryWorldAdapter: QuestStarting {
             return
         }
         game.scripts.bridge?.attachScripts(ofQuest: quest)
+        if let event {
+            game.scripts.bridge?.queueStoryStartEvent(quest: quest, event: event)
+        }
         finishStart(quest)
     }
 }
