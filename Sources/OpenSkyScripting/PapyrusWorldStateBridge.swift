@@ -144,6 +144,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var effectPresenter: (any PapyrusEffectPresenting)?
     /// The sky, for the `Weather` natives. Nil in a headless session.
     public weak var weather: (any PapyrusWeatherControlling)?
+    public weak var music: (any PapyrusMusicControlling)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.

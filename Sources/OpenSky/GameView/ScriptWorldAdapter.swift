@@ -53,6 +53,7 @@ final class ScriptWorldAdapter {
         bridge.formIDResolver = resolver
         bridge.effectPresenter = game.effectsWorld
         bridge.weather = self
+        bridge.music = self
         let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)
