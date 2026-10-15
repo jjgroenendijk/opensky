@@ -4,6 +4,7 @@
 // reference, so the player, a placed actor, and a container all work.
 // Rules: docs/engine/inventory-state.md, "Script item natives".
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
@@ -36,6 +37,24 @@ extension InventoryCoordinator {
             world?.equipmentChanged(on: holder)
         }
         return changed
+    }
+
+    /// `ObjectReference.DropObject`: up to `count` land in front of the player as one
+    /// stack. Only the player drops, because only the player has a drop placement.
+    /// - Returns: the dropped reference, or nil when nothing was dropped.
+    public func scriptDropObject(
+        _ item: FormID, count: Int32, from key: ReferenceKey
+    ) -> ReferenceKey? {
+        guard key == .player, let runtime, let placement = world?.dropPlacement() else {
+            return nil
+        }
+        let dropped = min(count, runtime.inventory.count(of: item, in: runtime.player))
+        guard dropped > 0, let spawned = try? runtime.drop(item, count: dropped, at: placement)
+        else { return nil }
+        world?.equipmentChanged(on: runtime.player)
+        storyEvents?.reportStoryEvent(.removeItem(item, reference: nil, owner: nil, how: .dropped))
+        scriptNote("Script dropped \(dropped) \(name(of: item)).")
+        return spawned
     }
 
     /// `ObjectReference.RemoveAllItems`: empties the holder, worn items too,
@@ -119,6 +138,25 @@ extension InventoryCoordinator {
     public func scriptUnequipItem(_ item: FormID, on key: ReferenceKey) -> Bool {
         guard let equipment, let holder = scriptHolder(key) else { return false }
         if equipment.unequip(item, on: holder) {
+            world?.equipmentChanged(on: holder)
+        }
+        return true
+    }
+
+    /// `Actor.UnequipItemSlot(aiSlot)`: takes off every worn item that covers biped slot
+    /// `aiSlot`, 30 to 61. The items stay in the inventory.
+    public func scriptUnequipSlot(_ slot: Int32, on key: ReferenceKey) -> Bool {
+        guard (30 ... 61).contains(slot), let equipment, let holder = scriptHolder(key) else {
+            return false
+        }
+        let mask = BodySlots(rawValue: 1 << UInt32(slot - 30))
+        let worn = equipment.equipped(on: holder).filter {
+            !equipment.occupancy(of: $0).slots.isDisjoint(with: mask)
+        }
+        for item in worn {
+            _ = equipment.unequip(item, on: holder)
+        }
+        if !worn.isEmpty {
             world?.equipmentChanged(on: holder)
         }
         return true

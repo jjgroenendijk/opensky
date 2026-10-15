@@ -193,6 +193,14 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
         game.inventory.scriptRemoveItem(item, count: count, from: holder, to: other)
     }
 
+    func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool {
+        game.inventory.scriptUnequipSlot(slot, on: actor)
+    }
+
+    func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey? {
+        game.inventory.scriptDropObject(item, count: count, from: holder)
+    }
+
     func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool {
         game.inventory.scriptRemoveAllItems(from: holder, to: other)
     }

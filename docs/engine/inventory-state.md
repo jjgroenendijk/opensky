@@ -120,7 +120,9 @@ wiki pages for `ObjectReference Script` and `Actor Script`. The receiver can be 
 actor, or any other placed reference, which then holds items as a container.
 
 Scripts read equipment through `IsEquipped`, `GetEquippedWeapon`, and `GetEquippedShield`,
-and take everything off with `UnequipAll`. `Form.GetGoldValue` answers the item's `DATA` value.
+and take everything off with `UnequipAll`. `UnequipItemSlot(aiSlot)` takes off every worn item
+that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
+`Form.GetGoldValue` answers the item's `DATA` value.
 
 - `GetEquippedWeapon(abLeftHand = false)` answers a weapon in the right hand, two-handed
   weapons included. With `abLeftHand` it answers a weapon that takes only the left hand.
@@ -134,6 +136,9 @@ and take everything off with `UnequipAll`. `Form.GetGoldValue` answers the item'
   equipped "from nowhere". The wiki page says the game does the same, and the opening relies on
   it: stage 10 of `MQ101` removes all the player's items, then equips the prisoner clothes.
 - OpenSky does not track quest items, so `RemoveAllItems` removes them too.
+- `DropObject(akObject, aiCount = 1)` drops at most what the player carries, as one stack in front
+  of the player, and returns the new reference. Only the player drops, because OpenSky places a
+  drop only in front of the player's camera. A drop from another holder fails with that reason.
 - The `abSilent` flags do nothing, because OpenSky shows no item messages yet.
 
 `SetOutfit` replaces an actor's outfit. The pieces of the actor's default outfit (`DOFT`) leave its
