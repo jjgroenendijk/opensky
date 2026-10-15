@@ -17,6 +17,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
     public let skinTone: SIMD3<Float>?
     /// A texture set's FaceGen detail map (`TX04`), such as a complexion's.
     public let detailTexture: String?
+    /// A FaceGen face tint, such as the player's tint layers; it turns on the face tint overlay.
+    public let faceTintTexture: String?
 
     /// The textures one named shape draws instead of its own.
     public struct ShapeTextures: Hashable, Sendable {
@@ -37,8 +39,10 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         tint: SIMD3<Float>?,
         shapes: [ShapeTextures] = [],
         skinTone: SIMD3<Float>? = nil,
-        detailTexture: String? = nil
+        detailTexture: String? = nil,
+        faceTintTexture: String? = nil
     ) {
+        self.faceTintTexture = faceTintTexture
         self.diffuseTexture = diffuseTexture
         self.normalTexture = normalTexture
         self.tint = tint
@@ -55,13 +59,13 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         return ModelSurfaceOverride(
             diffuseTexture: surface?.diffuseTexture, normalTexture: surface?.normalTexture,
             tint: surface?.tint, shapes: surface?.shapes ?? [], skinTone: skinTone,
-            detailTexture: surface?.detailTexture
+            detailTexture: surface?.detailTexture, faceTintTexture: surface?.faceTintTexture
         )
     }
 
     public var isEmpty: Bool {
         diffuseTexture == nil && normalTexture == nil && tint == nil && shapes.isEmpty
-            && skinTone == nil && detailTexture == nil
+            && skinTone == nil && detailTexture == nil && faceTintTexture == nil
     }
 
     /// Part of a mesh cache key: two overrides that draw alike key alike.
@@ -69,6 +73,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         let tint = tint.map(Self.colorKey) ?? "-"
         let skin = skinTone.map { "|skin:" + Self.colorKey($0) } ?? ""
             + (detailTexture.map { "|detail:" + $0 } ?? "")
+            + (faceTintTexture.map { "|facetint:" + $0 } ?? "")
         let shapes = shapes.map {
             "\($0.shapeName.lowercased())=\($0.diffuseTexture ?? "-"),\($0.normalTexture ?? "-")"
         }
@@ -88,7 +93,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             Self.retextured(
                 $0,
                 textures: Textures(
-                    diffuse: diffuseTexture, normal: normalTexture, detail: detailTexture
+                    diffuse: diffuseTexture, normal: normalTexture, detail: detailTexture,
+                    faceTint: faceTintTexture
                 ),
                 replacesTint: tint != nil,
                 skinTone: $0.tintsSkin ? skinTone : nil
@@ -104,7 +110,8 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             materials.append(Self.retextured(
                 materials[mesh.materialSlot],
                 textures: Textures(
-                    diffuse: swap.diffuseTexture, normal: swap.normalTexture, detail: nil
+                    diffuse: swap.diffuseTexture, normal: swap.normalTexture, detail: nil,
+                    faceTint: nil
                 ),
                 replacesTint: false,
                 skinTone: nil
@@ -124,6 +131,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
         let diffuse: String?
         let normal: String?
         let detail: String?
+        let faceTint: String?
     }
 
     /// An actor's own colour replaces the tint colour the NIF stores. The skin tone
@@ -156,7 +164,7 @@ nonisolated public struct ModelSurfaceOverride: Hashable, Sendable {
             doubleSided: material.doubleSided,
             alphaBlend: material.alphaBlend,
             alphaTestThreshold: material.alphaTestThreshold,
-            tintTexture: material.tintTexture,
+            tintTexture: textures.faceTint ?? material.tintTexture,
             tintsSkin: material.tintsSkin,
             shading: shading,
             drawState: material.drawState

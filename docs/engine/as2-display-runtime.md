@@ -62,6 +62,10 @@ the race menu: its panel constructor reads the category list from a sibling clip
 the game shows that list, so the sibling must exist when the constructor runs. A clip a script
 makes, with `attachMovie` or `duplicateMovieClip`, is constructed before the call returns,
 because the script uses it next.
+Every constructor of a frame runs before any `load` event of that frame. The race menu needs this
+too: the panels' `onLoad` adds a `click` listener to the Done button, a sibling clip whose
+constructor gives it `addEventListener`. In the other order the listener is lost, and Done and
+the category arrows ignore a click.
 A registered class may not extend `MovieClip`, so the built-in clip methods are also reachable
 through the host after the prototype chain misses. Flash resolves those natively too.
 

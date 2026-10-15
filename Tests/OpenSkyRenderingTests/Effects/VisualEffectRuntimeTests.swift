@@ -27,6 +27,23 @@ struct VisualEffectRuntimeTests {
         #expect(runtime.instances.isEmpty)
     }
 
+    @Test func aCameraEffectRidesTheEyeAndTurnsOnlyWhenItInheritsRotation() {
+        let camera = VisualEffectRuntime.CameraPose(eye: SIMD3(1, 2, 3), target: SIMD3(11, 2, 3))
+        for turning in [true, false] {
+            var runtime = VisualEffectRuntime()
+            let fog = VisualEffectSpec(
+                name: "Fog", artModel: "fx/fog.nif", membrane: nil,
+                attachesToCamera: true, inheritsRotation: turning
+            )
+            runtime.attach(fog, to: .actor(.player), cause: .script, duration: nil)
+            let transform = runtime.models(camera: camera) { _ in matrix_identity_float4x4 }
+                .first?.transform
+            #expect(transform?.columns.3 == SIMD4(1, 2, 3, 1))
+            #expect(transform?.columns.1 == (turning ? SIMD4(1, 0, 0, 0) : SIMD4(0, 1, 0, 0)))
+            #expect(transform?.columns.2 == SIMD4(0, 0, 1, 0))
+        }
+    }
+
     @Test func anUnplacedAnchorDrawsNothing() {
         var runtime = VisualEffectRuntime()
         runtime.attach(Self.glow, to: .actor(Self.actor), cause: .race, duration: nil)

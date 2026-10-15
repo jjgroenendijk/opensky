@@ -1,5 +1,5 @@
-// Paints race tint layers (skin tone, war paint, dirt) over a face color map on
-// the CPU. Each mask is one byte per pixel; see docs/engine/race-menu.md.
+// Composes race tint layers (skin tone, war paint, dirt) into a face tint picture
+// on the CPU. Each mask is one byte per pixel; see docs/engine/race-menu.md.
 
 nonisolated public struct ChargenTintLayer: Equatable, Sendable {
     /// One coverage byte per pixel, the same size as the base picture.
@@ -17,6 +17,12 @@ nonisolated public struct ChargenTintLayer: Equatable, Sendable {
 }
 
 nonisolated public enum ChargenTints {
+    /// The face tint the face overlays: the layers painted over white. The skin tone
+    /// layer covers the whole face, so white shows only where no layer reaches.
+    public static func compose(width: Int, height: Int, layers: [ChargenTintLayer]) -> [UInt8] {
+        paint(rgba: [UInt8](repeating: 255, count: max(width * height, 0) * 4), layers: layers)
+    }
+
     /// Layers paint in order over `rgba`, a straight alpha blend per pixel. A layer
     /// whose mask size differs is skipped, so a bad mask cannot crash the build.
     public static func paint(rgba: [UInt8], layers: [ChargenTintLayer]) -> [UInt8] {

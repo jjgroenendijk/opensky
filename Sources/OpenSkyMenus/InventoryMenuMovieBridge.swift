@@ -122,7 +122,7 @@ nonisolated public enum InventoryMenuMovieBridge: Sendable {
     /// The movie focuses the category list a few ticks after `InitExtensions`, so
     /// each publish calls this again.
     public static func focusItemList(runtime: SWFMovieRuntime) {
-        runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
+        runtime.focus(runtime.node(atPath: itemListPath, from: runtime.root))
     }
 
     // MARK: - Publishing

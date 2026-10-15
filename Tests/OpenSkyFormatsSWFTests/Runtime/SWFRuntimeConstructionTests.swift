@@ -50,4 +50,47 @@ struct SWFRuntimeConstructionTests {
         let sibling = panel.object.lookup("sibling")?.property.value.objectValue
         #expect(sibling === bar.object)
     }
+
+    /// A clip's `onLoad` reads a sibling whose constructor runs later in the same
+    /// frame. The race menu's panels add their Done listener this way.
+    @Test func onLoadRunsAfterEveryConstructorOfTheFrame() throws {
+        let readBar: [Action] = [
+            AS2Fixture.push([.string("this")]), AS2Fixture.opcode(0x1C),
+            AS2Fixture.push([.string("sawBar"), .string("this")]), AS2Fixture.opcode(0x1C),
+            AS2Fixture.push([.string("_parent")]), AS2Fixture.opcode(0x4E),
+            AS2Fixture.push([.string("bar")]), AS2Fixture.opcode(0x4E),
+            AS2Fixture.push([.string("built")]), AS2Fixture.opcode(0x4E),
+            AS2Fixture.opcode(0x4F)
+        ]
+        let onLoad = SWFActionFixture.ClipHandler(
+            events: .load,
+            actions: SWFActionFixture.stream(readBar)
+        )
+        var panel = SWFDisplayFixture.Place2()
+        panel.depth = 1
+        panel.characterId = 2
+        panel.name = "panel"
+        panel.clipActions = SWFActionFixture.clipActions(
+            version: 6,
+            allEvents: .load,
+            handlers: [onLoad]
+        )
+        let sprite: (UInt16) -> SWFFixture.Tag = { id in
+            SWFDisplayFixture.spriteTag(characterId: id, frameCount: 1, tags: [
+                SWFRuntimeFixture.place(1, depth: 1), SWFDisplayFixture.showFrameTag
+            ])
+        }
+        let runtime = try SWFRuntimeFixture.started(tags: [
+            SWFRuntimeFixture.rectangle(id: 1), sprite(2), sprite(3),
+            SWFDisplayFixture.exportAssetsTag([(3, "BarClip")]),
+            SWFActionFixture.doInitActionTag(
+                spriteId: 3, SWFRuntimeFixture.registerClass(name: "BarClass", linkage: "BarClip")
+            ),
+            SWFDisplayFixture.placeObject2Tag(panel),
+            SWFRuntimeFixture.place(3, depth: 2, name: "bar"),
+            SWFDisplayFixture.showFrameTag
+        ])
+        let loaded = try #require(runtime.root.child(atDepth: 1))
+        #expect(loaded.object.lookup("sawBar")?.property.value == .number(1))
+    }
 }

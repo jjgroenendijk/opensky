@@ -141,7 +141,7 @@ nonisolated public enum ContainerMenuMovieBridge: Sendable {
     /// category list a few ticks after `InitExtensions`, but OpenSky changes the
     /// category itself, so each publish calls this again.
     public static func focusItemList(runtime: SWFMovieRuntime) {
-        runtime.focusTarget = runtime.node(atPath: itemListPath, from: runtime.root)
+        runtime.focus(runtime.node(atPath: itemListPath, from: runtime.root))
     }
 
     // MARK: - Publishing

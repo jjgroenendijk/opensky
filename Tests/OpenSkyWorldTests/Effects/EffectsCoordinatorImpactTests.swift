@@ -12,6 +12,10 @@ import Testing
 
 @MainActor
 private final class FeetWorld: EffectsWorld {
+    var effectCamera: VisualEffectRuntime.CameraPose? {
+        nil
+    }
+
     func effectTransform(of _: ReferenceKey) -> float4x4? {
         var transform = matrix_identity_float4x4
         transform.columns.3 = SIMD4(10, 20, -5, 1)

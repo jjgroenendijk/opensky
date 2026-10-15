@@ -16,6 +16,8 @@ import simd
 public protocol EffectsWorld: AnyObject {
     /// An actor's feet, facing its heading; nil when it is not resident.
     func effectTransform(of actor: ReferenceKey) -> float4x4?
+    /// The view, for effects that ride the camera; nil before a renderer exists.
+    var effectCamera: VisualEffectRuntime.CameraPose? { get }
     /// The meshes a membrane on `actor` covers; nil when none are drawn.
     func membraneTarget(of actor: ReferenceKey) -> MembraneTarget?
     func detonateEffectExplosion(_ explosion: ReferenceKey, at position: SIMD3<Float>)
@@ -153,7 +155,7 @@ public final class EffectsCoordinator {
     ) throws {
         visualEffects.advance(seconds)
         let world = world
-        let models = visualEffects.models { anchor in
+        let models = visualEffects.models(camera: world?.effectCamera) { anchor in
             switch anchor {
             case let .actor(key): world?.effectTransform(of: key)
             case let .point(position): Self.translation(position)

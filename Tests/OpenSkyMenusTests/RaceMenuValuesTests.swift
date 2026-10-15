@@ -66,4 +66,27 @@ struct RaceMenuValuesTests {
         model.set(.tintMask(paint), to: 0)
         #expect(model.identity.face.tints.isEmpty)
     }
+
+    /// A face with no tint layers would show its bare grey texture, so the menu
+    /// opens with the first preset's tints and keeps the face's own parts.
+    @Test func anUnmadeFaceOpensWithThePresetTints() {
+        let skin = PlayerTintLayer(maskIndex: 6, color: [220, 180, 160, 255], strength: 1)
+        let preset = RacePreset(
+            name: "Nord", face: PlayerFace(headParts: [FormID(0xA9)], tints: [skin])
+        )
+        var identity = Self.identity
+        identity.face.headParts = [FormID(0xA1)]
+        let fresh = RaceMenuModel(
+            identity: identity, races: [], limited: false,
+            options: RaceMenuOptions(presets: [preset])
+        )
+        #expect(fresh.identity.face.tints == [skin])
+        #expect(fresh.identity.face.headParts == [FormID(0xA1)])
+        identity.face.tints = [PlayerTintLayer(maskIndex: 6, color: [90, 60, 40, 255], strength: 1)]
+        let made = RaceMenuModel(
+            identity: identity, races: [], limited: false,
+            options: RaceMenuOptions(presets: [preset])
+        )
+        #expect(made.identity.face.tints == identity.face.tints)
+    }
 }

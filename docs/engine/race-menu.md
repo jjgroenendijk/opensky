@@ -103,10 +103,17 @@ slider left out. Results are in `.logs/chargen-morph-order/fit.txt`:
   little better with it at weight 1 even where the value is 0, so what the value means is
   not known.
 
-Body weight blends the thin `_0` and heavy `_1` meshes linearly. Tint layers paint over the
-face color map in record order, each as a straight blend of its mask, color, and strength
+Body weight blends the thin `_0` and heavy `_1` meshes linearly. Tint layers paint in record
+order into a face tint picture, each as a straight blend of its mask, color, and strength
 (`TINV` divided by 100). The fourth `TINC` byte is 0 in every vanilla NPC seen, for example
 the `Player` record and `Hulda`, so it is not used as alpha.
+
+A real-data probe rebuilt the face tint of six vanilla NPCs this way (`Ralof`, `Hadvar`,
+`Ysolda`, `Belethor`, `Nazeem`, `Faendal`) and compared it with their baked
+`facegendata\facetint` texture. The mean error was 1.5 to 2.8 out of 255 per channel. The
+skin tone layer covers the whole face, so the starting colour does not matter for them.
+`Hulda` has no skin tone layer; a white start fits her texture best, so OpenSky starts from
+white.
 
 ## The drawn head
 
@@ -117,9 +124,12 @@ FaceGen head, because the baked head belongs to the record's race and face.
   skinned mesh, set to the slider weights. The buffer is the one expressions use, so the
   vertex shader adds the deltas before skinning. A TRI whose vertex count differs from the
   mesh is skipped and logged.
-- The face part's color map is decoded on the CPU, the tint masks are scaled to its size,
-  and the layers are painted over it ([DDS](/formats/dds.md), "CPU decode"). The result
-  uploads under a texture key named after its inputs, so the same face reuses one upload.
+- The tint masks are decoded on the CPU ([DDS](/formats/dds.md), "CPU decode") and painted
+  into a face tint picture at the first mask's size. It uploads under a texture key named
+  after the layers, so the same face reuses one upload. The face part keeps its color map and
+  overlays the face tint, the same way an NPC's baked face overlays its `facetint` texture.
+  Painting the layers straight over the color map instead makes the face the flat skin
+  tone colour, much paler than the body.
 - The body keeps the race skin texture. The skin tone layer (`TINP` 6) paints the face, and
   its colour becomes the body's skin tone, which an NPC stores as `QNAM`. Ralof's layer
   colour divided by 255 equals his `QNAM`. The layer strength is not used for the body; for
@@ -166,6 +176,11 @@ The movie's Done button calls `ConfirmDone` only on a mouse click; its key handl
 look at the Done key. So the engine reads that key itself. The button's art is the `XButton`
 user event. The install's `controlmap.txt` binds `XButton` in menus to the Ready Weapon key,
 `R` on PC. That key closes the menu, as `ConfirmDone` does.
+
+On PC the categories change only with a click on the arrows beside the category name. The
+movie's key handler moves between categories only on a gamepad, with the triggers. The arrow keys,
+`W`, and `S` move inside the open list, and `Tab` moves focus to the second list. While the race
+menu or the title menu is open, the engine frees the mouse cursor so a click reaches the movie.
 
 Before it sends the lists, the engine checks that the movie built its category list. When
 it did not, the movie closes and the engine rows stay in charge. The sidebar race menu panel

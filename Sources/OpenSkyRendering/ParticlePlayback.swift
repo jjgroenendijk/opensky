@@ -122,6 +122,21 @@ nonisolated public struct ParticleSimulator: Sendable {
         }
     }
 
+    /// Moves the emitter to `placement`. A world-space system's particles stay where
+    /// they were born, so only new ones start from the new place; a local-space
+    /// system's particles move and turn with it.
+    public mutating func move(to placement: float4x4) {
+        let change = placement * placementTransform.inverse
+        placementTransform = placement
+        guard !definition.worldSpace else { return }
+        for index in particles.indices {
+            let position = change * SIMD4(particles[index].position, 1)
+            let velocity = change * SIMD4(particles[index].velocity, 0)
+            particles[index].position = SIMD3(position.x, position.y, position.z)
+            particles[index].velocity = SIMD3(velocity.x, velocity.y, velocity.z)
+        }
+    }
+
     public mutating func advance(deltaTime: Float, wind: WindState, emissionScale: Float) {
         let deltaTime = simd_clamp(deltaTime, 0, 0.1)
         guard deltaTime > 0 else { return }
@@ -414,6 +429,10 @@ nonisolated public final class ParticlePlayback: Sendable {
 
     public func translate(by delta: SIMD3<Float>) {
         state.withLock { $0.simulator.translate(by: delta) }
+    }
+
+    public func move(to placement: float4x4) {
+        state.withLock { $0.simulator.move(to: placement) }
     }
 
     public func setSpawnScale(_ scale: PrecipitationScale) {

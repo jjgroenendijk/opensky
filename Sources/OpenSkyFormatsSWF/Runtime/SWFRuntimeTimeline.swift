@@ -178,8 +178,9 @@ nonisolated extension SWFMovieRuntime {
         pendingConstructions.append(node)
     }
 
-    /// Runs `body`, then constructs what it placed, children before parents. The
-    /// event order is the one the `ClipEventFlags` table implies.
+    /// Runs `body`, then constructs what it placed, children before parents. Every
+    /// constructor runs before any `onLoad`: the race menu's panels add listeners
+    /// in `onLoad` to a bottom-bar button that a later constructor sets up.
     func inPlacementBatch(_ body: () -> Void) {
         let outer = pendingConstructions
         pendingConstructions = []
@@ -189,6 +190,8 @@ nonisolated extension SWFMovieRuntime {
         for node in placed {
             dispatchPlacementLifecycle(node, phase: .initialize)
             constructRegisteredClass(for: node)
+        }
+        for node in placed {
             dispatchPlacementLifecycle(node, phase: .constructed)
             if let first = frames(of: node).first {
                 runActions(of: first, on: node)

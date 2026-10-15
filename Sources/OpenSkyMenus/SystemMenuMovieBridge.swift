@@ -163,7 +163,7 @@ nonisolated public enum SystemMenuMovieBridge: Sendable {
             // in OpenSky, so publish the same page/index pair and focus explicitly.
             menu.object.assign(.object(systemPage.object), for: "TopmostPage")
             menu.object.assign(.integer(systemTabIndex), for: "iCurrentTab")
-            runtime.focusTarget = categoryList
+            runtime.focus(categoryList)
         }
         for path in [questsFaderPath, statsFaderPath] {
             runtime.callMovie("gotoAndStop", atPath: path, arguments: [.string("hide")])

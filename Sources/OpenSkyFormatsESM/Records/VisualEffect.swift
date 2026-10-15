@@ -46,6 +46,14 @@ nonisolated public struct VisualEffect: Equatable, Sendable {
     public let flags: UInt32
     public let skipped: FieldTally
 
+    public var attachesToCamera: Bool {
+        flags & 0x02 != 0
+    }
+
+    public var inheritsRotation: Bool {
+        flags & 0x04 != 0
+    }
+
     public init(record: ESMRecord) throws {
         var fields = try RecordFields(record: record, type: "RFCT")
         formID = fields.formID

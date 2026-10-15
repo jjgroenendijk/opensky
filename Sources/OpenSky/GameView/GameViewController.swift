@@ -433,8 +433,9 @@ extension GameViewController {
     /// Menu mode drives the renderer's world-sim pause and clears held world
     /// input on entry, so no key sticks while the menu owns input.
     private func wireMenuMode(renderer: Renderer) {
-        menuMode.onModeChange = { [weak renderer, weak cameraInput] route, paused in
+        menuMode.onModeChange = { [weak self, weak renderer, weak cameraInput] route, paused in
             renderer?.worldSimPaused = paused
+            self?.menuRouter.modeChanged(to: route)
             // Released on the route flip, not the pause: the dialogue menu
             // captures input without stopping the world.
             if route == .menu {

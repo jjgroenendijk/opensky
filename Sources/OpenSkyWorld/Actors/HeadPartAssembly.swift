@@ -26,6 +26,8 @@ nonisolated public struct ResolvedHeadPart: Equatable, Sendable {
     public let tint: SIMD3<Float>?
     /// TX04, the FaceGen detail map; a complexion changes it on the face part.
     public var detailTexture: String?
+    /// The face tint built from the player's tint layers; the face part only.
+    public var faceTintTexture: String?
 }
 
 nonisolated public struct HeadPartMiss: Equatable, Sendable {

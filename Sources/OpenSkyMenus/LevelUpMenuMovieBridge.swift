@@ -40,7 +40,7 @@ nonisolated public enum LevelUpMenuMovieBridge: Sendable {
 
     /// Moves the movie's focus to the button of `kind`, which draws its highlight.
     public static func highlight(_ kind: ActorValueKind, runtime: SWFMovieRuntime) {
-        runtime.focusTarget = runtime.node(atPath: buttonPath(kind), from: runtime.root)
+        runtime.focus(runtime.node(atPath: buttonPath(kind), from: runtime.root))
     }
 
     public static func buttonPath(_ kind: ActorValueKind) -> String {

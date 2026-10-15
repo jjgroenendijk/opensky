@@ -118,7 +118,8 @@ nonisolated extension MeshLibrary {
             diffuseTexture: textures.diffuse.flatMap(NIFShaderTextureSet.vfsKey(for:)),
             normalTexture: textures.normal.flatMap(NIFShaderTextureSet.vfsKey(for:)),
             tint: tint,
-            detailTexture: textures.detail.flatMap(NIFShaderTextureSet.vfsKey(for:))
+            detailTexture: textures.detail.flatMap(NIFShaderTextureSet.vfsKey(for:)),
+            faceTintTexture: textures.faceTint
         )
         do {
             let model = try loadModel(

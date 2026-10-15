@@ -102,6 +102,13 @@ missing `InputDelegate` step, with the movie's own constants: it reads `gfx.ui.N
 the others from the movie, and builds a real `gfx.ui.InputDetails` when the movie has the class, or
 a plain object with the same five fields when it does not.
 
+A movie that builds its own `InputDelegate`, as `racesex_menu.swf` does, already hears the key on
+`Key` and sends it down its focus path. The engine then skips both targets below, because a second
+route would move a list two rows for one key press. That route reads the focus from CLIK's
+`FocusHandler`, which learns it only from `Selection` listeners. So an engine bridge moves focus
+through `Selection.setFocus` too, never by setting the runtime's focus alone. Otherwise
+`startmenu.swf` sends each key to its menu clip with an empty focus path, and the list stays put.
+
 Two targets, in order:
 
 1. The menu root's `handleInput(details, pathToFocus)`. Every vanilla menu class has that

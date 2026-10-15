@@ -24,7 +24,7 @@ nonisolated public enum ImpactSurface: Equatable, Sendable {
 /// The particle systems one live effect owns, and where they were placed.
 struct EffectParticles {
     let playbacks: [ParticlePlayback]
-    var origin: SIMD3<Float>
+    var placement: float4x4
 }
 
 extension EffectsCoordinator {
@@ -119,7 +119,7 @@ extension EffectsCoordinator {
         ))
     }
 
-    /// Starts the particle systems of new effects, moves those of moving ones, and
+    /// Starts the particle systems of new effects, moves the emitters of moving ones, and
     /// drops those of effects that ended.
     func syncParticles(_ models: [VisualEffectModel], renderer: Renderer) {
         guard let meshes else { return }
@@ -127,16 +127,10 @@ extension EffectsCoordinator {
         var changed = false
         for model in models {
             guard let id = model.instanceID else { continue }
-            let origin = SIMD3(
-                model.transform.columns.3.x,
-                model.transform.columns.3.y,
-                model.transform.columns.3.z
-            )
             if var existing = effectParticles[id] {
-                let delta = origin - existing.origin
-                if simd_length_squared(delta) > 0 {
-                    existing.playbacks.forEach { $0.translate(by: delta) }
-                    existing.origin = origin
+                if existing.placement != model.transform {
+                    existing.playbacks.forEach { $0.move(to: model.transform) }
+                    existing.placement = model.transform
                 }
                 live[id] = existing
                 continue
@@ -144,7 +138,7 @@ extension EffectsCoordinator {
             let playbacks = (try? meshes.particlePlaybacks(
                 path: model.path, placementTransform: model.transform, formID: UInt32(id)
             )) ?? []
-            live[id] = EffectParticles(playbacks: playbacks, origin: origin)
+            live[id] = EffectParticles(playbacks: playbacks, placement: model.transform)
             changed = changed || !playbacks.isEmpty
         }
         changed = changed || effectParticles.keys.contains { id in

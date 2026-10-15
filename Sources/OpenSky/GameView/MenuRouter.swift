@@ -135,6 +135,17 @@ final class MenuRouter {
         }
     }
 
+    /// The menus whose movie hit tests the cursor, so it must be visible.
+    static let cursorMenus: [MenuIdentifier] = [
+        TitleMenuCoordinator.identifier, RaceMenuCoordinator.identifier
+    ]
+
+    /// A script opens the race menu during play, while look holds the cursor.
+    func modeChanged(to route: InputRoute) {
+        let free = route == .menu && game.menuMode.topMenu.map(Self.cursorMenus.contains) == true
+        (game.view as? GameMetalView)?.setMenuCursorFree(free)
+    }
+
     /// The main menu movie hit tests the cursor. The other menus still take a
     /// press as their accept button.
     func route(_ event: MenuPointerEvent) {
