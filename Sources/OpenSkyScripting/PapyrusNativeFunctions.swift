@@ -46,6 +46,9 @@ public enum PapyrusNativeFunctions {
         installActorState(into: &registry)
         installWeather(into: &registry)
         installConditionTwins(into: &registry)
+        installLineOfSight(into: &registry)
+        installTrackedStats(into: &registry)
+        installStateChanges(into: &registry)
     }
 
     public static func failure(

@@ -47,6 +47,7 @@ final class ScriptWorldAdapter {
         )
         bridge.clockSource = { [weak renderer] in renderer?.gameClock }
         wireActorNatives(bridge: bridge)
+        wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
         let resolver = scriptSource.scriptFormIDResolver
         bridge.formIDResolver = resolver

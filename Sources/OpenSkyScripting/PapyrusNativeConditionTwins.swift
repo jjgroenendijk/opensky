@@ -46,6 +46,10 @@ extension PapyrusNativeFunctions {
             script: "Actor", native: "GetSleepState", function: 49, returnType: .integer
         ),
         ConditionTwin(script: "Actor", native: "GetGoldAmount", function: 48, returnType: .integer),
+        ConditionTwin(script: "Actor", native: "IsSneaking", function: 286, returnType: .boolean),
+        ConditionTwin(
+            script: "Actor", native: "IsTrespassing", function: 145, returnType: .boolean
+        ),
         ConditionTwin(
             script: "Actor", native: "WornHasKeyword", function: 682, returnType: .boolean,
             parameter1: .object(0)

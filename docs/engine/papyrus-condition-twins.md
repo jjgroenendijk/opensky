@@ -35,6 +35,8 @@ the native and the function.
 | `Actor.GetSitState` | `GetSitting` (159) | none |
 | `Actor.GetSleepState` | `GetSleeping` (49) | none |
 | `Actor.GetGoldAmount` | `GetGold` (48) | none |
+| `Actor.IsSneaking` | `IsSneaking` (286) | none |
+| `Actor.IsTrespassing` | `IsTrespassing` (145) | none |
 | `Actor.WornHasKeyword` | `WornHasKeyword` (682) | keyword |
 | `Actor.HasFamilyRelationship` | `HasFamilyRelationship` (259) | other actor |
 | `Actor.HasParentRelationship` | `HasParentRelationship` (261) | other actor |

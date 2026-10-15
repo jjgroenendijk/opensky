@@ -152,6 +152,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var effectJournalCursor: UInt64?
     /// The first journal entry `queueReferenceStateEvents` has not read.
     var referenceJournalCursor: UInt64?
+    var statsJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
     /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
@@ -169,6 +170,9 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var publishTranslationPoses: (([ReferenceKey: ReferenceTransformOverride]) -> Void)?
     /// Where the player or a moving actor stands now, which its record no longer says.
     public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
+    /// Whether the viewer sees the target now, for the `RegisterForLOS` family. Nil when
+    /// this session cannot tell. See docs/engine/papyrus-registrations.md#line-of-sight.
+    public var seesTarget: ((ReferenceKey, ReferenceKey) -> Bool?)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.

@@ -32,7 +32,7 @@ struct PapyrusEventCensusTests {
 
     @Test func everySentEventIsListed() {
         #expect(PapyrusEventCensus.isSent(PapyrusEngineEvents.onTriggerEnter))
-        #expect(PapyrusEngineEvents.sent.count == 40)
+        #expect(PapyrusEngineEvents.sent.count == 45)
     }
 
     private func script(_ name: String, handles events: [String]) -> PexObject {
