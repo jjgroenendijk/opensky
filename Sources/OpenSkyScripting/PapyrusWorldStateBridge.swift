@@ -49,13 +49,16 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?
-    /// Picks which log entry of a stage runs its fragment. Nil runs every entry's fragment.
-    public var logEntryEvaluator: (() -> ConditionEvaluator)?
+    /// The runtime condition context: it picks the log entry a stage runs, and answers
+    /// the natives that share a condition function. Nil runs every log entry.
+    public var conditionEvaluator: (() -> ConditionEvaluator)?
     /// The `Actor` native collaborators, as closures so they can be wired in any order.
     /// Nil makes every actor native a tallied failure, not a fake zero. See
     /// `PapyrusWorldStateBridgeActors.swift`.
     public var actorValueRuntime: (() -> (any ActorValueAccess)?)?
     public var ragdollRuntime: (() -> (any DeathReporting)?)?
+    /// The actor `KillSilent` is killing, so the host skips the story-manager `KILL` event.
+    public internal(set) var silentDeath: ReferenceKey?
     /// The combat loop behind `StartCombat`, `StopCombat` and `IsInCombat`. Nil leaves
     /// them tallied failures.
     public var combatRuntime: (() -> (any CombatControlling)?)?
@@ -141,6 +144,13 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public weak var effectPresenter: (any PapyrusEffectPresenting)?
     /// The sky, for the `Weather` natives. Nil in a headless session.
     public weak var weather: (any PapyrusWeatherControlling)?
+    public weak var music: (any PapyrusMusicControlling)?
+    /// The horse the player rode last, for `GetPlayersLastRiddenHorse`. Nil when not wired.
+    public var playersLastMount: (() -> ReferenceKey?)?
+    /// Turns the player's sneak on or off, for `StartSneaking`. Nil when not wired.
+    public var togglePlayerSneaking: (() -> Void)?
+    /// Shows or hides the HUD, for `Debug.ToggleMenus`. Nil when not wired.
+    public var toggleMenus: (() -> Void)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.
@@ -151,6 +161,7 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     var effectJournalCursor: UInt64?
     /// The first journal entry `queueReferenceStateEvents` has not read.
     var referenceJournalCursor: UInt64?
+    var statsJournalCursor: UInt64?
     /// Each scripted actor's combat activity at the last `queueCombatStateEvents`.
     var lastCombatActivity: [ReferenceKey: ActorCombatActivity] = [:]
     /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
@@ -162,12 +173,23 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// The PACK an actor runs now, as a load-order FormID, for `GetCurrentPackage`. Nil
     /// without a package runtime.
     public var currentPackage: ((ReferenceKey) -> FormID?)?
+    /// A PACK's `PKCU` template, for `Package.GetTemplate`. Nil without package records.
+    public var packageTemplate: ((FormID) -> FormID?)?
+    /// The 0...1 light detection reads on an actor whose feet are here. Nil without a renderer.
+    public var lightLevel: ((SIMD3<Float>) -> Float)?
+    /// Changes a cell's fog; false when the cell is not the loaded interior. Nil headless.
+    public var cellFog: ((FormID, PapyrusFogChange) -> Bool)?
+    /// Kilograms of a body Havok moves, or nil when none does. Nil without physics.
+    public var havokMass: ((ReferenceKey) -> Float?)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
     /// Hands the drawn pose of every moving reference to the renderer, after each change.
     public var publishTranslationPoses: (([ReferenceKey: ReferenceTransformOverride]) -> Void)?
     /// Where the player or a moving actor stands now, which its record no longer says.
     public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
+    /// Whether the viewer sees the target now, for the `RegisterForLOS` family. Nil when
+    /// this session cannot tell. See docs/engine/papyrus-registrations.md#line-of-sight.
+    public var seesTarget: ((ReferenceKey, ReferenceKey) -> Bool?)?
 
     /// Lazily built reverse map for the global lookups, which are keyed by
     /// `ReferenceKey` on the Papyrus side and by `FormID` on the store side.
@@ -280,43 +302,6 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
         }
     }
 
-    // MARK: - Globals
-
-    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
-        guard let globals, let id = globalFormID(for: key) else {
-            return worldState.globalValue(for: key)
-        }
-        return worldState
-            .globalResolution(defaults: globals, clock: clockSource?())
-            .value(for: id)
-    }
-
-    /// A write with no GLOB record behind it — a synthetic session, or a key
-    /// the loaded plugins do not define — keeps whatever type an existing
-    /// override declared and otherwise treats the value as a float, rather
-    /// than inventing a `short`/`long` rounding rule the plugin never stated.
-    @discardableResult
-    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
-        if let globals, let id = globalFormID(for: key) {
-            return worldState.setGlobal(raw, formID: id, defaults: globals)
-        }
-        let type = worldState.globalValue(for: key)?.type ?? .float
-        return worldState.setGlobal(raw, type: type, for: key)
-    }
-
-    private func globalFormID(for key: ReferenceKey) -> FormID? {
-        if let globalFormIDsByKey {
-            return globalFormIDsByKey[key]
-        }
-        var map: [ReferenceKey: FormID] = [:]
-        for global in globals?.sortedGlobals() ?? [] {
-            guard let globalKey = globals?.key(for: global.formID) else { continue }
-            map[globalKey] = global.formID
-        }
-        globalFormIDsByKey = map
-        return map[key]
-    }
-
     // MARK: - Activation
 
     /// Records one activation, queues `OnActivate` on the target's scripts, and
@@ -406,5 +391,42 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
             by: playerKey,
             togglesOpen: interaction.action == .open
         )
+    }
+}
+
+extension PapyrusWorldStateBridge {
+    public func globalValue(for key: ReferenceKey) -> GlobalValue? {
+        guard let globals, let id = globalFormID(for: key) else {
+            return worldState.globalValue(for: key)
+        }
+        return worldState
+            .globalResolution(defaults: globals, clock: clockSource?())
+            .value(for: id)
+    }
+
+    /// A write with no GLOB record behind it — a synthetic session, or a key
+    /// the loaded plugins do not define — keeps whatever type an existing
+    /// override declared and otherwise treats the value as a float, rather
+    /// than inventing a `short`/`long` rounding rule the plugin never stated.
+    @discardableResult
+    public func setGlobal(_ raw: Float, for key: ReferenceKey) -> Bool {
+        if let globals, let id = globalFormID(for: key) {
+            return worldState.setGlobal(raw, formID: id, defaults: globals)
+        }
+        let type = worldState.globalValue(for: key)?.type ?? .float
+        return worldState.setGlobal(raw, type: type, for: key)
+    }
+
+    private func globalFormID(for key: ReferenceKey) -> FormID? {
+        if let globalFormIDsByKey {
+            return globalFormIDsByKey[key]
+        }
+        var map: [ReferenceKey: FormID] = [:]
+        for global in globals?.sortedGlobals() ?? [] {
+            guard let globalKey = globals?.key(for: global.formID) else { continue }
+            map[globalKey] = global.formID
+        }
+        globalFormIDsByKey = map
+        return map[key]
     }
 }

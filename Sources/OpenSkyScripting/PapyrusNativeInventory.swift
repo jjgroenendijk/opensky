@@ -17,6 +17,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
         _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
     ) -> Bool
     func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool
+    /// Drops up to `count` in front of the holder. Nil when nothing was dropped.
+    func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey?
     func itemCount(_ item: FormID, in holder: ReferenceKey) -> Int32?
     /// Gives the actor one first when it holds none.
     func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool
@@ -27,6 +29,8 @@ public protocol PapyrusInventoryBridge: AnyObject {
     func equippedWeapon(on actor: ReferenceKey, leftHand: Bool) -> FormID??
     func equippedShield(on actor: ReferenceKey) -> FormID??
     func unequipAll(on actor: ReferenceKey) -> Bool
+    /// Takes off what covers biped slot `slot`. False without an actor or a valid slot.
+    func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool
     /// Nil for a form that is no item.
     func goldValue(of item: FormID) -> Int32?
     /// The plugin inventory of `holder`, before any runtime change; nil when not resident.
@@ -55,6 +59,7 @@ extension PapyrusNativeFunctions {
                 return .returned(.integer(count))
             }
             installRemoveAllItems(on: script, into: &registry)
+            installDropObject(on: script, into: &registry)
         }
         withItem("Actor", "EquipItem", into: &registry) { call, _, bridge, actor, item in
             bridge.equipItem(item, on: actor)
@@ -124,6 +129,13 @@ extension PapyrusNativeFunctions {
                 "UnequipAll needs an inventory"
             )
         }
+        // `UnequipItemSlot(int aiSlot)`: a biped slot from 30 to 61.
+        withHolder("Actor", "UnequipItemSlot", into: &registry) { call, _, bridge, actor in
+            guard let slot = integer(call, at: 0), bridge.unequipSlot(slot, on: actor) else {
+                return failure(call, "UnequipItemSlot needs an actor and a slot from 30 to 61")
+            }
+            return .returned(.none)
+        }
     }
 
     /// A load-order FormID as a form handle, or `None` when the session cannot name it.
@@ -175,6 +187,19 @@ extension PapyrusNativeFunctions {
     }
 
     /// Registers a native whose receiver holds items and whose argument 0 is the item.
+    private static func installDropObject(
+        on script: String, into registry: inout PapyrusNativeRegistry
+    ) {
+        // `ObjectReference DropObject(Form akObject, int aiCount = 1)`.
+        withItem(script, "DropObject", into: &registry) { call, world, bridge, holder, item in
+            let count = integer(call, at: 1) ?? 1
+            guard let dropped = bridge.dropItem(item, count: count, from: holder) else {
+                return failure(call, "DropObject drops only an item the player carries")
+            }
+            return .returned(world.objectHandle(for: dropped).map { .object($0) } ?? .none)
+        }
+    }
+
     private static func withItem(
         _ script: String, _ name: String,
         into registry: inout PapyrusNativeRegistry,

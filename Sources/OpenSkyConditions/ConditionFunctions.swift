@@ -18,6 +18,7 @@ nonisolated public enum ConditionFunctions: Sendable {
         installEventData(&registry)
         installWeather(&registry)
         installScriptVariables(&registry)
+        installMenuMode(&registry)
     }
 
     // MARK: - Reference identity

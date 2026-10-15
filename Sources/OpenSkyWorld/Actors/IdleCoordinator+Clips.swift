@@ -31,6 +31,7 @@ extension IdleCoordinator {
         // Only the player runs a live graph; another actor's variables read 0.
         if actor != .player {
             context.graphVariables.values[actor] = [:]
+            context.graphVariables.floats[actor] = [:]
         }
         return context
     }

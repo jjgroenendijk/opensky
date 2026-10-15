@@ -25,12 +25,18 @@ extension PapyrusNativeFunctions {
         installGameTimeAndForms(into: &registry)
     }
 
-    /// `Location GetCurrentLocation()`, `Cell GetParentCell()`, and `WorldSpace
+    /// `Location GetCurrentLocation()`, `Location GetEditorLocation()`, `Cell GetParentCell()`, and
+    /// `WorldSpace
     /// GetWorldSpace()`. Each is None for a reference no resident cell holds, and the
     /// worldspace is None in an interior, as in the game.
     private static func installPlaceReads(into registry: inout PapyrusNativeRegistry) {
         withPlace("GetCurrentLocation", into: &registry) { target, data, world in
             data.currentLocation(of: target).flatMap { location in
+                world.objectHandle(for: ReferenceKey(resolved: location))
+            }
+        }
+        withPlace("GetEditorLocation", into: &registry) { target, data, world in
+            data.editorLocation(of: target).flatMap { location in
                 world.objectHandle(for: ReferenceKey(resolved: location))
             }
         }
@@ -80,7 +86,8 @@ extension PapyrusNativeFunctions {
     }
 
     /// `bool IsChild(Location akOther)`: whether `akOther` sits below this location in the
-    /// `PNAM` parent chain. A location is not its own child.
+    /// `PNAM` parent chain. A location is not its own child. `HasCommonParent` asks
+    /// whether two chains share a parent, one with the filter keyword when one is given.
     private static func installLocationReads(into registry: inout PapyrusNativeRegistry) {
         registry.register(PapyrusNativeFunction(
             scriptName: "Location", functionName: "IsChild"
@@ -102,6 +109,33 @@ extension PapyrusNativeFunctions {
                 return .returned(.boolean(false))
             }
             return .returned(.boolean(store.isWithin(child, ancestor: parent)))
+        })
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Location", functionName: "HasCommonParent"
+        ) { call, context in
+            guard
+                let target = worldTarget(call, context),
+                let bridge = context.world as? PapyrusWorldStateBridge,
+                let store = bridge.conditionData?().locations,
+                case let .plugin(plugin, objectID) = target.key
+            else { return failure(call, "HasCommonParent needs location data and a location") }
+            guard
+                let handle = objectArgument(call, at: 0),
+                case let .plugin(otherPlugin, otherObject) = target.world.referenceKey(for: handle)
+            else { return .returned(.boolean(false)) }
+            var filter: ResolvedFormID?
+            if
+                let keyword = objectArgument(call, at: 1),
+                case let .plugin(keywordPlugin, keywordObject) = target.world
+                    .referenceKey(for: keyword)
+            {
+                filter = ResolvedFormID(plugin: keywordPlugin, objectID: keywordObject)
+            }
+            return .returned(.boolean(store.hasCommonParent(
+                ResolvedFormID(plugin: plugin, objectID: objectID),
+                ResolvedFormID(plugin: otherPlugin, objectID: otherObject),
+                carrying: filter
+            )))
         })
     }
 
@@ -135,7 +169,7 @@ extension PapyrusNativeFunctions {
         })
     }
 
-    private static func position(
+    static func position(
         of key: ReferenceKey, _ world: PapyrusWorldStateBridge
     ) -> SIMD3<Float>? {
         world.livePosition?(key) ?? world.referenceState(for: key)?.transform.position

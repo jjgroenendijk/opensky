@@ -71,6 +71,13 @@ interrupt the fight music. A load order with no combat playlist keeps the curren
 why. The `MUSCombat` prefix has the same limits as the town prefix. See
 [combat](/engine/combat.md).
 
+Scripts add music with `MusicType.Add()` and take it away with `MusicType.Remove()`. The
+director keeps these types in a stack. The newest one plays over the cell's music, and a cell
+change only updates what the stack returns to. Removing the newest type plays the next one,
+or the cell's music when the stack is empty. Combat still wins: scripted music waits for the
+fight to end. The game orders the stack by each `MUSC` priority; OpenSky does not read the
+priority yet and plays the newest type. The stack is not saved.
+
 There is no dungeon state. Vanilla has `MUSDungeon...` records, but game systems OpenSky does not
 have yet start them. Adding a state for them now would be a guess.
 

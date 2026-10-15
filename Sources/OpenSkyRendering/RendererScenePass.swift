@@ -43,7 +43,7 @@ extension Renderer {
         let weatherSky = scene.sky != nil ? weatherLight : nil
         let ambient = weatherLight?.directionalAmbient
             ?? interiorLighting?.directionalAmbient ?? .black
-        let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorLighting?.fog)
+        let fog = Self.resolvedFog(weatherLight: weatherLight, interior: interiorFog)
         let grassDistance = simd_clamp(
             grassDrawDistance,
             GrassRenderPolicy.minimumDrawDistance,

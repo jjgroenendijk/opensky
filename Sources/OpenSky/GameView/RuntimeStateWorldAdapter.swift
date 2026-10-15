@@ -98,6 +98,8 @@ final class RuntimeStateWorldAdapter {
             state.recordFlags = baseline.recordFlags
         }
         state.action = actionFacts(of: holder.key, isDead: isDead)
+        // OpenSky weighs only the player's load; an NPC carries any weight.
+        state.isOverEncumbered = holder.key == .player ? playerIsOverEncumbered() : false
         return state
     }
 

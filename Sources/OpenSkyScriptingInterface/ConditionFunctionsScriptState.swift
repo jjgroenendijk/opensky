@@ -46,6 +46,15 @@ nonisolated public enum ScriptedStateName: Sendable {
     public static let doingFavor = "doingFavor"
     public static let talkedToPlayer = "talkedToPlayer"
     public static let eaten = "eaten"
+    /// Who killed an actor, set on the victim as it dies.
+    public static let killer = "killer"
+    public static let destroyed = "destroyed"
+    public static let destructionStage = "destructionStage"
+    public static let destructionDamage = "destructionDamage"
+    /// How often the player hit an actor that was not hostile to them.
+    public static let friendHits = "friendHits"
+    /// On the player: the last actor that attacked them.
+    public static let lastHostileActor = "lastHostileActor"
 
     /// The value `Location.SetKeywordData` stores for one keyword.
     public static func keywordData(_ keyword: ReferenceKey) -> String {
@@ -87,6 +96,7 @@ nonisolated extension ConditionFunctions {
         })
         installKeywordData(&registry)
         installShout(&registry)
+        installRecordedEvents(&registry)
     }
 
     private static func installShout(_ registry: inout ConditionFunctionRegistry) {
@@ -176,7 +186,7 @@ nonisolated extension ConditionFunctions {
         return ReferenceKey(resolved: resolved)
     }
 
-    private static func scriptState(
+    static func scriptState(
         _ call: ConditionCall, of key: ReferenceKey
     ) -> Result<ScriptedReferenceState, ConditionFailure> {
         guard let state = call.context.scriptedState.state(of: key) else {

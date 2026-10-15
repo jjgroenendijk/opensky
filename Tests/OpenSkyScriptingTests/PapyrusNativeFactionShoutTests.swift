@@ -42,6 +42,20 @@ struct PapyrusNativeFactionShoutTests {
         #expect(published.count == 2)
     }
 
+    @Test func setReactionSetsOneSideFromItsCombatReactionCode() throws {
+        let fixture = try Fixture.make()
+        let door = Fixture.key(Fixture.doorID)
+        let other = PapyrusValue.object(fixture.handle(Fixture.doorID))
+        #expect(call(fixture, "Faction", "SetReaction", [other, .integer(3)])
+            == .returned(.none))
+        #expect(fixture.session.bridge.scriptedFactionReactions().map {
+            "\($0.from)>\($0.toward)=\($0.reaction)"
+        } == ["\(fixture.key)>\(door)=friend"])
+        #expect(PapyrusWorldFixture.isInvalidArguments(
+            call(fixture, "Faction", "SetReaction", [other, .integer(-50)])
+        ))
+    }
+
     @Test func setPlayerEnemyPairsWithThePlayerFaction() throws {
         let fixture = try Fixture.make()
         _ = call(fixture, "Faction", "SetPlayerEnemy")

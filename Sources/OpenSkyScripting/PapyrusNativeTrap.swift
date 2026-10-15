@@ -16,6 +16,7 @@ extension PapyrusNativeFunctions {
         installTrapHit(into: &registry)
         installTrapWorld(into: &registry)
         installTrapStubs(into: &registry)
+        installDestruction(into: &registry)
     }
 
     /// `int GetTriggerObjectCount()`, `Form GetBaseObject()`, `float GetAngleX()`,

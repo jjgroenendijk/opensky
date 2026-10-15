@@ -243,6 +243,32 @@ struct InventoryCoordinatorTests {
         #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
     }
 
+    @Test func dropObjectDropsOnlyWhatThePlayerCarries() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptAddItem(Fixture.sword, count: 2, to: .player))
+        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: .player) == nil)
+        harness.world.placement = DropPlacement(
+            location: Items.cell, position: .zero, rotation: .zero
+        )
+        #expect(coordinator.scriptDropObject(Fixture.sword, count: 5, from: .player) != nil)
+        #expect(coordinator.scriptItemCount(Fixture.sword, in: .player) == 0)
+        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: .player) == nil)
+        let chest = ReferenceKey.plugin(name: "test.esp", objectID: 0x99)
+        #expect(coordinator.scriptDropObject(Fixture.sword, count: 1, from: chest) == nil)
+    }
+
+    @Test func unequipSlotTakesOffWhatCoversTheSlot() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptSetOutfit(Fixture.guardOutfit, on: .player))
+        #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == true)
+        #expect(coordinator.scriptUnequipSlot(29, on: .player) == false)
+        #expect(coordinator.scriptUnequipSlot(32, on: .player))
+        #expect(coordinator.equipment?.equipped(on: .player).contains(Fixture.cuirass) == false)
+        #expect(coordinator.scriptItemCount(Fixture.cuirass, in: .player) == 1)
+    }
+
     @Test func anUnresidentContainerHasNoHolder() throws {
         let harness = try Self.harness()
         let stray = Items.interaction(

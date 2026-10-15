@@ -13,7 +13,7 @@ struct PapyrusNativeRegistryTests {
     @Test func standardInstallIsCaseInsensitiveAndEmptyIsEmpty() {
         let standard = PapyrusNativeRegistry.standard
         // Pinned so an added or lost native is a visible change.
-        #expect(standard.count == 414)
+        #expect(standard.count == 510)
         #expect(standard.contains(
             scriptName: "form", functionName: "REGISTERFORUPDATE"
         ))
@@ -99,6 +99,42 @@ struct PapyrusNativeRegistryTests {
             returnType: .integer
         )
         #expect(installedFirst.invoke(random) == installedSecond.invoke(random))
+    }
+
+    @Test func traceStackReceivesTheCallersAndLogsAtItsSeverity() {
+        final class Capture: PapyrusNativeDispatch {
+            var calls: [PapyrusNativeCall] = []
+            func invoke(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
+                calls.append(call)
+                return .returned(.none)
+            }
+        }
+        let run = PexFixture.runtimeFunction(
+            returnType: "None",
+            instructions: [PapyrusTestSupport.instruction(
+                .callStatic, .identifier("Debug"), .identifier("TraceStack"),
+                .identifier("::NoneVar"), .integer(2), .string("look"), .integer(1)
+            )]
+        )
+        let script = PexFixture.runtimeObject(
+            name: "Tracer", states: [PapyrusTestSupport.state(functions: [("Run", run)])]
+        )
+        let capture = Capture()
+        let (runtime, handle) = PapyrusTestSupport.runtime(
+            objects: [script],
+            nativeDispatch: capture
+        )
+        _ = runtime.invoke("Run", on: handle)
+        let traced = capture.calls.first
+        #expect(traced?.arguments.count == 3)
+        #expect(traced?.arguments[2] == .string("  Tracer at instruction 0"))
+
+        var registry = PapyrusNativeRegistry()
+        PapyrusNativeFunctions.install(into: &registry)
+        if let traced {
+            #expect(registry.invoke(traced) == .returned(.none))
+        }
+        #expect(registry.context.log.messages == ["TraceStack: look\n  Tracer at instruction 0"])
     }
 
     @Test func invalidArgumentsReturnTheDeclaredDefaultAndReasonTally() {

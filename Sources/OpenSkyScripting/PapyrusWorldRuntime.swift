@@ -114,6 +114,10 @@ public final class PapyrusWorldRuntime {
     public var updateTimers = PapyrusUpdateTimerRegistry()
     /// Who listens for each lowercased animation event, by the reference that sends it.
     public var animationEventListeners: [ReferenceKey: [String: Set<PapyrusInstanceKey>]] = [:]
+    /// The `RegisterForLOS` family, checked once a frame.
+    public var lineOfSight = LineOfSightWatch()
+    /// Instances that called `RegisterForTrackedStatsEvent`.
+    public var trackedStatListeners: Set<PapyrusInstanceKey> = []
     /// Master-list resolver from the latest attach, so an event argument naming a
     /// base record (`OnHit`'s `akSource`) becomes world identity. Nil until the
     /// first attach. One resolver per session.

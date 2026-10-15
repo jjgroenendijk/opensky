@@ -2,7 +2,7 @@
 // undefined quest is `ConditionFailure.unresolvedQuest`, never a throw. Raw
 // stored indices from xEdit dev-4.1.6 Core/wbDefinitionsTES5.pas: 56
 // `GetQuestRunning`, 58 `GetStage`, 59 `GetStageDone`, 543 `GetQuestCompleted`,
-// 629 `GetVMQuestVariable`.
+// 629 `GetVMQuestVariable`, 79 `GetQuestVariable`.
 // Return rules come from the wiki pages cited at each registration.
 
 import Foundation
@@ -65,17 +65,21 @@ nonisolated extension ConditionFunctions {
 
         // A `Conditional` property of the quest's script; `CIS2` names its variable,
         // such as "::MarkarthMarket_var" (<https://ck.uesp.net/wiki/GetVMQuestVariable>).
-        registry.register(ConditionFunction(
-            index: 629, name: "GetVMQuestVariable", parameter1: .formID
-        ) { call in
-            guard let parameter = call.parameter1 else {
-                return .failure(.unresolvedParameter(629))
-            }
-            guard let quest = call.context.quests.key(for: parameter.asFormID) else {
-                return .failure(.unresolvedQuest(parameter.asFormID))
-            }
-            return Self.scriptVariable(call, on: quest)
-        })
+        // The older `GetQuestVariable` (79) stores its `ptString` the same way.
+        for (index, name) in [(629, "GetVMQuestVariable"), (79, "GetQuestVariable")] {
+            let index = UInt16(index)
+            registry.register(ConditionFunction(
+                index: index, name: name, parameter1: .formID
+            ) { call in
+                guard let parameter = call.parameter1 else {
+                    return .failure(.unresolvedParameter(index))
+                }
+                guard let quest = call.context.quests.key(for: parameter.asFormID) else {
+                    return .failure(.unresolvedQuest(parameter.asFormID))
+                }
+                return Self.scriptVariable(call, on: quest)
+            })
+        }
     }
 
     /// The quest parameter 1 names, or the reason it could not be read: a CIS1

@@ -14,6 +14,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     /// True when the trip started; a refusal shows its message and returns false.
     func fastTravel(to marker: ReferenceKey) -> Bool
     func setFastTravelEnabled(_ enabled: Bool)
+    /// False while a script has fast travel switched off with `EnableFastTravel(false)`.
+    var isFastTravelEnabled: Bool { get }
+    /// The marker is on the map and the player may travel to it.
+    func canFastTravel(to marker: ReferenceKey) -> Bool
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool)
     func isMapMarkerVisible(_ marker: ReferenceKey) -> Bool
     /// The player's chosen race for the player, else the actor's record race.
@@ -24,9 +28,15 @@ public protocol PapyrusMenuBridge: AnyObject {
     func race(ofBase base: FormID) -> FormID?
     /// The base record's own `ACBS` flags, or nil for an unknown base.
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags?
+    /// The `VTCK` voice type after template inheritance.
+    func voiceType(ofBase base: FormID) -> FormID?
+    /// The base record's own `GNAM` gift filter form list.
+    func giftFilter(ofBase base: FormID) -> FormID?
     func name(of form: FormID) -> String?
     /// Moves the player next to `target`, loading its cell when it is not loaded.
     func movePlayer(to target: ReferenceKey)
+    /// Opens the container menu on the actor's inventory, as a follower's trade does.
+    func openInventory(of actor: ReferenceKey)
 }
 
 extension PapyrusNativeFunctions {
@@ -43,6 +53,9 @@ extension PapyrusNativeFunctions {
             menus.setFastTravelEnabled(boolean(call, at: 0, default: true))
             return .returned(.none)
         }
+        game("IsFastTravelControlsEnabled", into: &registry) { _, menus in
+            .returned(.boolean(menus.isFastTravelEnabled))
+        }
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
             functionName: "FastTravel"
@@ -58,6 +71,7 @@ extension PapyrusNativeFunctions {
         installMarkerNatives(into: &registry)
         installIdentityNatives(into: &registry)
         installMoveTo(into: &registry)
+        installOpenInventory(into: &registry)
     }
 
     /// `MoveTo(akTarget, afX, afY, afZ, abMatchRotation)`. The opening quest moves the
@@ -109,6 +123,17 @@ extension PapyrusNativeFunctions {
         return .returned(.none)
     }
 
+    /// Without `abForceOpen`, only a player teammate opens.
+    private static func installOpenInventory(into registry: inout PapyrusNativeRegistry) {
+        withReference("Actor", "OpenInventory", into: &registry) { call, world, menus, key in
+            let isTeammate = world.scriptedState(of: key).flag(ScriptedStateName.playerTeammate)
+            if key != .player, boolean(call, at: 0, default: false) || isTeammate == true {
+                menus.openInventory(of: key)
+            }
+            return .returned(.none)
+        }
+    }
+
     private static func installMarkerNatives(into registry: inout PapyrusNativeRegistry) {
         withReference("ObjectReference", "AddToMap", into: &registry) { call, _, menus, key in
             menus.addToMap(key, allowFastTravel: boolean(call, at: 0, default: false))
@@ -120,6 +145,13 @@ extension PapyrusNativeFunctions {
             into: &registry
         ) { _, _, menus, key in
             .returned(.boolean(menus.isMapMarkerVisible(key)))
+        }
+        withReference(
+            "ObjectReference",
+            "CanFastTravelToMarker",
+            into: &registry
+        ) { _, _, menus, key in
+            .returned(.boolean(menus.canFastTravel(to: key)))
         }
     }
 
@@ -160,6 +192,16 @@ extension PapyrusNativeFunctions {
                 .flatMap { world.scriptedState(of: $0).flag(ScriptedStateName.essential) }
             let recorded = menus.recordFlags(ofBase: base)?.contains(.essential)
             return .returned(.boolean(scripted ?? recorded ?? false))
+        }
+        withForm("ActorBase", "GetGiftFilter", into: &registry) { _, world, menus, form in
+            .returned(menus.giftFilter(ofBase: form).map { formHandle($0, in: world) } ?? .none)
+        }
+        // A talking activator's voice is not read, so it answers None.
+        withReference("ObjectReference", "GetVoiceType", into: &registry) { _, world, menus, key in
+            let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+            return .returned(base.flatMap(menus.voiceType(ofBase:)).map {
+                formHandle($0, in: world)
+            } ?? .none)
         }
         withForm("Form", "GetName", into: &registry) { _, _, menus, form in
             .returned(.string(menus.name(of: form) ?? ""))

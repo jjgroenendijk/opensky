@@ -120,4 +120,26 @@ struct ConditionScriptStateFunctionTests {
         }
         #expect(unknown.failures == [.unavailableActorState])
     }
+
+    @Test func recordedKillsHitsAndDestructionAreReadBack() throws {
+        let victim = ConditionEvaluatorFixture.key(ConditionEvaluatorFixture.targetFormID)
+        let set = Self.states([
+            victim: ScriptedReferenceState(forms: [ScriptedStateName.killer: Self.subject]),
+            Self.subject: ScriptedReferenceState(
+                flags: [ScriptedStateName.destroyed: true],
+                values: [ScriptedStateName.destructionStage: 2, ScriptedStateName.friendHits: 3]
+            ),
+            .player: ScriptedReferenceState(
+                forms: [ScriptedStateName.lastHostileActor: Self.subject]
+            )
+        ])
+        let victimID = ConditionEvaluatorFixture.targetFormID
+        #expect(try Self.evaluate(408, equals: 1, parameter1: victimID, set) == .true)
+        #expect(try Self.evaluate(408, equals: 0, parameter1: Self.location, set) == .true)
+        #expect(try Self.evaluate(203, equals: 1, set) == .true)
+        #expect(try Self.evaluate(470, equals: 2, set) == .true)
+        #expect(try Self.evaluate(288, equals: 3, set) == .true)
+        #expect(try Self.evaluate(674, equals: 1, set) == .true)
+        #expect(try Self.evaluate(203, equals: 0, Self.states([:])) == .true)
+    }
 }

@@ -71,6 +71,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     public var difficultySettings = DifficultySettings.synthetic
     /// GMST-derived harvest regrowth, vanilla on a synthetic scene.
     public var harvestRegrowth = HarvestRegrowth.vanilla
+    /// The bribe and intimidation settings; OpenSky's fallbacks on a synthetic scene.
+    public var speechCheckSettings = SpeechCheckSettings.fallback
     /// The player record, races, and map markers; nil on a synthetic scene.
     public var menuRecords: MenuRecordData?
     /// RACE/CLAS/NPC_ stat indexes; nil on the same synthetic

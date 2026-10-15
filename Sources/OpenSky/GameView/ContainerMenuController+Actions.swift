@@ -108,6 +108,28 @@ extension ContainerMenuController {
         return note("Bartering with \(counterparty.vendor.factionName).")
     }
 
+    /// Opens the container menu on a living actor's own items, as a follower's
+    /// trade does. The holder is the one a corpse search uses.
+    func openInventory(of actor: ReferenceKey) {
+        guard
+            game.inventory.runtime != nil,
+            let entry = game.streamer?.referenceEntry(key: actor),
+            let placed = entry.placedActor
+        else { return }
+        game.dialogueMenu.close()
+        close()
+        target(
+            InventoryHolder(
+                key: actor, owner: .actor(base: placed.base),
+                cell: game.streamer?.cellLocation(of: actor)
+            ),
+            name: game.dialogueWorld.speakerLabel(for: actor),
+            reference: entry.formID
+        )
+        setMode(.container)
+        open()
+    }
+
     // MARK: - Transactions
 
     /// Take, store, buy or sell, according to the mode and the side.

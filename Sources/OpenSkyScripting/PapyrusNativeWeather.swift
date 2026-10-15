@@ -26,6 +26,12 @@ extension PapyrusNativeFunctions {
         weather("GetCurrentWeather", into: &registry) { _, sky, _, bridge in
             .returned(sky.currentWeather.map { handle($0, in: bridge) } ?? .none)
         }
+        weather("GetOutgoingWeather", into: &registry) { _, sky, _, bridge in
+            .returned(sky.outgoingWeather.map { handle($0, in: bridge) } ?? .none)
+        }
+        weather("GetCurrentWeatherTransition", into: &registry) { _, sky, _, _ in
+            .returned(.float(sky.transitionFraction))
+        }
         // `Weather FindWeather(int auiType)`: the first candidate of that classification.
         weather("FindWeather", into: &registry) { call, sky, _, bridge in
             guard let type = integer(call, at: 0) else {

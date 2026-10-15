@@ -30,11 +30,9 @@ extension CombatWorldAdapter: CombatWorld {
     /// Every landed blow passes here, so assault is noticed in one place.
     @discardableResult
     func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        game.crime.reportAssault(
-            on: hit.target,
-            wasHostile: hostility(of: hit.target) == .hostile,
-            aggressor: hit.aggressor
-        )
+        let wasHostile = hostility(of: hit.target) == .hostile
+        game.crime.reportAssault(on: hit.target, wasHostile: wasHostile, aggressor: hit.aggressor)
+        game.scripts.bridge?.recordHit(hit, targetWasHostile: wasHostile)
         return game.scripts.runtime?.queueOnHit(hit) ?? 0
     }
 

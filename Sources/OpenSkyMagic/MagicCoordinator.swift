@@ -35,6 +35,8 @@ public final class MagicCoordinator {
     weak var world: (any MagicWorld)?
     /// Takes `CAST`.
     public weak var storyEvents: (any StoryEventReporting)?
+    /// Hears every cast, as spell then caster, for the `OnSpellCast` event.
+    public var onSpellCast: ((ReferenceKey, ReferenceKey) -> Void)?
     /// Owned here, not by the runtime, because the runtime is a value and a
     /// per-copy accumulator would split the simulation.
     var accumulator: Double = 0
@@ -236,6 +238,7 @@ extension MagicCoordinator: CasterWorld {
     /// Casting breaks the caster's invisibility. The wiki says only the player's
     /// casts count as a story event.
     public func spellWasCast(_ spell: ReferenceKey, by caster: ReferenceKey) {
+        onSpellCast?(spell, caster)
         breakInvisibility(of: caster)
         guard caster == .player, let storyEvents else { return }
         storyEvents.reportStoryEvent(.castMagic(

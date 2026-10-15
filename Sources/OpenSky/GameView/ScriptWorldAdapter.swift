@@ -15,6 +15,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
@@ -47,11 +48,19 @@ final class ScriptWorldAdapter {
         )
         bridge.clockSource = { [weak renderer] in renderer?.gameClock }
         wireActorNatives(bridge: bridge)
+        wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
         let resolver = scriptSource.scriptFormIDResolver
         bridge.formIDResolver = resolver
         bridge.effectPresenter = game.effectsWorld
         bridge.weather = self
+        bridge.music = self
+        bridge.playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
+        bridge.togglePlayerSneaking = { [weak game] in game?.player.isSneaking.toggle() }
+        bridge.toggleMenus = { [weak game] in game?.hud.update { $0.layerEnabled.toggle() } }
+        game.magic.onSpellCast = { [weak game] spell, caster in
+            game?.scripts.runtime?.queueSpellCast(spell, by: caster)
+        }
         let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)
@@ -113,6 +122,19 @@ final class ScriptWorldAdapter {
         bridge.detection = { [weak game] in game?.perception.perceptionResolution() }
         bridge.currentPackage = { [weak game] actor in
             game?.packages.runtime?.currentPackage(for: actor)?.package.formID
+        }
+        bridge.packageTemplate = { [weak game] package in game?.packages.template(of: package) }
+        bridge.lightLevel = { [weak game] feet in
+            let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight * 0.5)
+            return game?.aiWorld.lightLevel(at: feet + body) ?? 1
+        }
+        bridge.cellFog = { [weak self] cell, change in self?.changeFog(change, in: cell) ?? false }
+        bridge.havokMass = { [weak game] key in
+            if let body = game?.streamer?.dynamicBodies.body(for: key) {
+                return body.definition.mass
+            }
+            return game?.ragdoll.runtime?.world.ragdolls.first { $0.key == key }?
+                .instance.bodies.reduce(0) { $0 + $1.definition.mass }
         }
         bridge.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }

@@ -80,6 +80,8 @@ nonisolated extension ConditionFunctions {
         installActorBody(&registry)
         installActorIdentity(&registry)
         installActorAction(&registry)
+        installActorSituation(&registry)
+        installSpeechCheck(&registry)
     }
 
     /// Vanilla perk requirements use these: `Armsman20` reads

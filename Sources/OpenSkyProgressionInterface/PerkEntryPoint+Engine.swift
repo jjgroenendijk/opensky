@@ -10,6 +10,8 @@ nonisolated extension PerkEntryPoint {
     public static let modAttackDamage = PerkEntryPoint(rawValue: 35)
     public static let modSpellCost = PerkEntryPoint(rawValue: 38)
     public static let modPercentBlocked = PerkEntryPoint(rawValue: 39)
+    public static let modPlayerIntimidation = PerkEntryPoint(rawValue: 43)
+    public static let modBribeAmount = PerkEntryPoint(rawValue: 46)
     public static let modLockpickSweetSpot = PerkEntryPoint(rawValue: 59)
     public static let setLockpickStartingArc = PerkEntryPoint(rawValue: 63)
     public static let makeLockpicksUnbreakable = PerkEntryPoint(rawValue: 65)
@@ -17,7 +19,8 @@ nonisolated extension PerkEntryPoint {
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
-        modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked, modLockpickSweetSpot,
+        modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked, modPlayerIntimidation,
+        modBribeAmount, modLockpickSweetSpot,
         setLockpickStartingArc, makeLockpicksUnbreakable, modLockpickingKeyRewardChance
     ]
 }

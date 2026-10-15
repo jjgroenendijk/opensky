@@ -39,12 +39,23 @@ public enum PapyrusNativeFunctions {
         installWorldPlace(into: &registry)
         installScriptState(into: &registry)
         installEffects(into: &registry)
+        installMusic(into: &registry)
+        installMounts(into: &registry)
+        installSneak(into: &registry)
+        installCellFog(into: &registry)
         installActiveMagicEffect(into: &registry)
         installActorAwareness(into: &registry)
         installTranslation(into: &registry)
         installReferenceState(into: &registry)
         installActorState(into: &registry)
         installWeather(into: &registry)
+        installConditionTwins(into: &registry)
+        installLineOfSight(into: &registry)
+        installTrackedStats(into: &registry)
+        installStateChanges(into: &registry)
+        installWorldReads(into: &registry)
+        installFindReferences(into: &registry)
+        installSpellRecords(into: &registry)
     }
 
     public static func failure(

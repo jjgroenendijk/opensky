@@ -86,7 +86,7 @@ final class StoryWorldAdapter {
         game.scripts.bridge?.story = self
         game.scripts.bridge?.menus = game.menuWorld
         game.scripts.bridge?.trapWorld = game.effectsWorld
-        game.scripts.bridge?.logEntryEvaluator = { [weak self] in
+        game.scripts.bridge?.conditionEvaluator = { [weak self] in
             ConditionEvaluator(
                 context: self?.conditionContext() ?? ConditionContext(), registry: .standard
             )
@@ -203,6 +203,9 @@ extension StoryWorldAdapter: QuestStarting {
             return
         }
         game.scripts.bridge?.attachScripts(ofQuest: quest)
+        if let event {
+            game.scripts.bridge?.queueStoryStartEvent(quest: quest, event: event)
+        }
         finishStart(quest)
     }
 }
@@ -359,5 +362,9 @@ extension StoryWorldAdapter: PapyrusStoryBridge {
 
     func isScenePlaying(_ scene: FormID) -> Bool {
         scenes.playing.contains(scene)
+    }
+
+    func currentScene(of reference: ReferenceKey) -> FormID? {
+        scenes.scene(holding: reference)
     }
 }

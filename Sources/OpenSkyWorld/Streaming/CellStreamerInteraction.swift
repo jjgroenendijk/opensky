@@ -187,6 +187,10 @@ extension CellStreamer {
         return composition.referenceEntry(key: key)
     }
 
+    public func residentEntries() -> [RuntimeReferenceEntry] {
+        interiorScene?.references.sortedEntries() ?? composition.referenceEntries()
+    }
+
     public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
         guard
             let placedRecords, let entry = placedRecords.entry(for: key),

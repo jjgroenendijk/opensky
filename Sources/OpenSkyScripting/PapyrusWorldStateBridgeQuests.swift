@@ -198,7 +198,7 @@ extension PapyrusWorldStateBridge {
     /// fragment. -1 when none passes; nil when there is no evaluator or no choice to make.
     func chosenLogEntry(of quest: Quest, stage: UInt16) -> Int32? {
         let entries = quest.stages.first { $0.index == stage }?.logEntries ?? []
-        guard entries.count > 1, var evaluator = logEntryEvaluator?() else { return nil }
+        guard entries.count > 1, var evaluator = conditionEvaluator?() else { return nil }
         evaluator.context.subject = .player
         evaluator.context.aliasQuest = quest.formID
         evaluator.context.formIDTranslation = questRuntime?.quests.translation(of: quest.formID)

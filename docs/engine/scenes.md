@@ -38,6 +38,10 @@ phase until it ends. A second scene that needs a held actor waits before its fir
 `ForceStart()` stops every playing scene that shares an actor with the new scene, then starts
 it. Source: the Creation Kit pages "ForceStart - Scene" and "Scene".
 
+`ObjectReference.GetCurrentScene()` returns the playing scene that holds the reference. A
+scene that still waits for the actor does not count, so the read agrees with the one-scene
+rule above.
+
 ## Actor behaviour flags
 
 Each scene actor has a behaviour `DNAM`. The bits, from xEdit's `wbDefinitionsTES5.pas`:

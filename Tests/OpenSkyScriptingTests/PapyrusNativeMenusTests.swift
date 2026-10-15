@@ -16,6 +16,8 @@ import Testing
 private final class FakeMenuBridge: PapyrusMenuBridge {
     var calls: [String] = []
     var races: [ReferenceKey: FormID] = [:]
+    var voiceTypes: [FormID: FormID] = [:]
+    var giftFilters: [FormID: FormID] = [:]
 
     func showRaceMenu(limited: Bool) {
         calls.append("race(\(limited))")
@@ -27,6 +29,13 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
 
     func setFastTravelEnabled(_ enabled: Bool) {
         calls.append("travel(\(enabled))")
+    }
+
+    var isFastTravelEnabled = true
+    var travelMarkers: Set<ReferenceKey> = []
+
+    func canFastTravel(to marker: ReferenceKey) -> Bool {
+        travelMarkers.contains(marker)
     }
 
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool) {}
@@ -51,12 +60,24 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
         nil
     }
 
+    func voiceType(ofBase base: FormID) -> FormID? {
+        voiceTypes[base]
+    }
+
+    func giftFilter(ofBase base: FormID) -> FormID? {
+        giftFilters[base]
+    }
+
     func name(of form: FormID) -> String? {
         nil
     }
 
     func movePlayer(to target: ReferenceKey) {
         calls.append("move(\(target))")
+    }
+
+    func openInventory(of actor: ReferenceKey) {
+        calls.append("inventory(\(actor))")
     }
 }
 
@@ -84,6 +105,43 @@ struct PapyrusNativeMenusTests {
         #expect(menus.calls == ["race(false)", "race(true)", "travel(false)"])
     }
 
+    @Test func fastTravelReadsAnswerFromTheMenus() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let read = Self.game("IsFastTravelControlsEnabled")
+        #expect(fixture.registry.invoke(read) == .returned(.boolean(true)))
+        menus.isFastTravelEnabled = false
+        #expect(fixture.registry.invoke(read) == .returned(.boolean(false)))
+
+        #expect(fixture
+            .call("CanFastTravelToMarker", returnType: .boolean) == .returned(.boolean(false)))
+        menus.travelMarkers = [fixture.key]
+        #expect(fixture
+            .call("CanFastTravelToMarker", returnType: .boolean) == .returned(.boolean(true)))
+    }
+
+    @Test func openInventoryNeedsATeammateOrForce() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let open = { (force: Bool) in
+            fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+                "Actor", "OpenInventory", receiver: fixture.receiver,
+                arguments: [.boolean(force)], returnType: .none
+            ))
+        }
+        #expect(open(false) == .returned(.none))
+        #expect(menus.calls.isEmpty)
+        #expect(open(true) == .returned(.none))
+        fixture.session.bridge.updateScriptedState(of: fixture.key) {
+            $0.setFlag(ScriptedStateName.playerTeammate, true)
+        }
+        #expect(open(false) == .returned(.none))
+        let opened = "inventory(\(fixture.key))"
+        #expect(menus.calls == [opened, opened])
+    }
+
     @Test func withoutTheBridgeANativeDoesNothing() {
         var registry = PapyrusNativeRegistry(context: PapyrusNativeContext())
         PapyrusNativeFunctions.installMenus(into: &registry)
@@ -106,6 +164,25 @@ struct PapyrusNativeMenusTests {
         #expect(actor("GetRace") == base)
         menus.races = [:]
         #expect(actor("GetRace") == .returned(.none))
+    }
+
+    @Test func voiceTypeAndGiftFilterReadTheBase() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        let door = FormID(PapyrusNativeReferenceFixture.doorID)
+        menus.voiceTypes[FormID(0x100)] = door
+        menus.giftFilters[FormID(0x100)] = door
+        fixture.session.bridge.menus = menus
+        let doorHandle = PapyrusNativeResult.returned(
+            .object(fixture.handle(PapyrusNativeReferenceFixture.doorID))
+        )
+        #expect(fixture.call("GetVoiceType", returnType: .object("VoiceType")) == doorHandle)
+        #expect(fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "ActorBase", "GetGiftFilter", receiver: fixture.handle(0x100),
+            returnType: .object("FormList")
+        )) == doorHandle)
+        menus.voiceTypes = [:]
+        #expect(fixture.call("GetVoiceType", returnType: .object("VoiceType")) == .returned(.none))
     }
 
     /// A placed actor is an `ACHR`, not a `REFR`, and still names its NPC base.

@@ -120,6 +120,19 @@ public final class ObjectBehaviorCoordinator {
         running[reference]?.instance.raiseEvent(named: event) ?? false
     }
 
+    /// Sets a graph variable. False when the object has no graph or the graph lacks it.
+    @discardableResult
+    public func setVariable(
+        _ value: BehaviorVariableValue, named name: String, on reference: UInt32
+    ) -> Bool {
+        running[reference]?.instance.setVariable(value, named: name) ?? false
+    }
+
+    /// A graph variable, or nil when the object has no graph or the graph lacks it.
+    public func variable(named name: String, on reference: UInt32) -> BehaviorVariableValue? {
+        running[reference]?.instance.variable(named: name)
+    }
+
     /// A token answered through `onWaitFinished` when the graph fires `event`.
     /// Nil when the object runs no graph, so the caller can fall back.
     public func awaitEvent(_ event: String, on reference: UInt32) -> UInt64? {

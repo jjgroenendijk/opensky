@@ -41,6 +41,11 @@ public final class WorldMusicDirector {
     /// The selection combat interrupted, held for as long as the fight lasts.
     /// Non-nil is also what "combat music is playing" means.
     private var preCombatSelection: MusicSelection?
+    /// The music types scripts added with `MusicType.Add`, newest last. The newest plays
+    /// over the cell's music until a script removes it.
+    public private(set) var scriptedMusic: [FormID] = []
+    /// What the cell's music chain chose, kept for when the scripted music ends.
+    private var contextSelection = MusicSelection.silent(state: .exploration)
     /// Index into `desiredSelection.tracks` of the track that should sound.
     private var trackIndex = 0
     /// The one source this director considers current. Nil while silent.
@@ -109,6 +114,8 @@ public final class WorldMusicDirector {
         let selection = MusicSelection.resolve(
             context: context, musicStore: musicStore, weatherStore: weatherStore
         )
+        contextSelection = selection
+        guard scriptedMusic.isEmpty else { return }
         // A cell crossed mid-fight updates what leaving combat will return to
         // rather than interrupting the fight's own music.
         guard preCombatSelection == nil else {
@@ -429,4 +436,49 @@ private enum TrackStart {
     case started(Int)
     case waiting
     case failed
+}
+
+// MARK: - Scripted music
+
+extension WorldMusicDirector {
+    /// `MusicType.Add`: the type plays over the cell's music. Adding it again moves it to
+    /// the top. Returns nil on success or a short failure reason.
+    @discardableResult
+    public func addScriptedMusic(_ id: FormID) -> String? {
+        guard let musicStore else {
+            lastMusicError = "no music data"
+            return lastMusicError
+        }
+        let selection = MusicSelection.resolve(musicType: id, musicStore: musicStore)
+        guard !selection.isSilent else {
+            lastMusicError = "no playable track for \(id.description)"
+            return lastMusicError
+        }
+        scriptedMusic.removeAll { $0 == id }
+        scriptedMusic.append(id)
+        play(selection)
+        return nil
+    }
+
+    /// `MusicType.Remove`: the next scripted type plays, or the cell's music when none is left.
+    public func removeScriptedMusic(_ id: FormID) {
+        guard let index = scriptedMusic.lastIndex(of: id) else { return }
+        let wasPlaying = index == scriptedMusic.count - 1
+        scriptedMusic.remove(at: index)
+        guard wasPlaying else { return }
+        if let next = scriptedMusic.last, let musicStore {
+            play(MusicSelection.resolve(musicType: next, musicStore: musicStore))
+        } else {
+            play(contextSelection)
+        }
+    }
+
+    /// Combat keeps its own music; the selection waits for the fight to end.
+    private func play(_ selection: MusicSelection) {
+        if preCombatSelection != nil {
+            preCombatSelection = selection
+        } else {
+            adopt(selection, force: true)
+        }
+    }
 }

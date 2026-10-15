@@ -56,6 +56,8 @@ public final class PapyrusNativeContext {
     /// The world a native may read and change, or nil in a headless runtime. A native
     /// that needs it fails rather than guessing.
     public let world: (any PapyrusWorldBridge)?
+    /// The user logs `Debug.OpenUserLog` opened; `TraceUser` writes only to these.
+    var openUserLogs: Set<String> = []
 
     public init(
         seed: UInt64 = ConditionRandom.defaultSeed,

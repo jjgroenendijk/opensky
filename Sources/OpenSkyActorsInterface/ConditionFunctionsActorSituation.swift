@@ -1,0 +1,49 @@
+// Actor condition functions over load, fights, and reactions, indices from xEdit
+// wbDefinitionsTES5.pas: 734 `IsOverEncumbered`, 645 `GetIsInjured`, 415
+// `GetGroupMemberCount`, 697 `IsAttackType`, 247 `GetIsUsedItemType`, 305
+// `GetPlayerAction`, 274 `IsSmallBump`, and 642 `GetLastBumpDirection`.
+// See docs/engine/condition-functions-world.md#actor-situation.
+
+import Foundation
+import OpenSkyConditions
+import OpenSkyFormatsESM
+
+nonisolated extension ConditionFunctions {
+    static func installActorSituation(_ registry: inout ConditionFunctionRegistry) {
+        registry.register(ConditionFunction(index: 734, name: "IsOverEncumbered") { call in
+            call.actorState().flatMap { state in
+                guard let isOver = state.isOverEncumbered else {
+                    return .failure(.unavailableActorState)
+                }
+                return .success(Self.isTrue(isOver))
+            }
+        })
+        // Each fighting side is one group. A fighting NPC is in the group of every NPC
+        // that fights the player; the player fights alone.
+        registry.register(ConditionFunction(index: 415, name: "GetGroupMemberCount") { call in
+            call.referenceKey().flatMap { key in
+                call.actorState().map { state in
+                    guard !state.isDead, state.combatActivity != .notFighting else { return 0 }
+                    return key == .player ? 1 : Float(call.context.actors.fightingNonPlayerCount)
+                }
+            }
+        })
+        // OpenSky has no injured walk, no attack data on an attack, no item use by an
+        // actor, no reaction to a player action, and no bump reaction, so these read 0.
+        for function in [
+            unmodelled(645, "GetIsInjured"), unmodelled(697, "IsAttackType", .formID),
+            unmodelled(247, "GetIsUsedItemType", .integer), unmodelled(305, "GetPlayerAction"),
+            unmodelled(274, "IsSmallBump"), unmodelled(642, "GetLastBumpDirection")
+        ] {
+            registry.register(function)
+        }
+    }
+
+    private static func unmodelled(
+        _ index: UInt16, _ name: String, _ parameter: ConditionParameterType = .unused
+    ) -> ConditionFunction {
+        ConditionFunction(index: index, name: name, parameter1: parameter) { call in
+            call.actorState().map { _ in 0 }
+        }
+    }
+}

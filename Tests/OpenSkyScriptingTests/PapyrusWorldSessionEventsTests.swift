@@ -98,6 +98,24 @@ struct PapyrusWorldSessionEventsTests {
         Fixture.drain(world)
         #expect(probe.notes == ["onplayerloadgame", "onlocationchange"])
     }
+
+    @Test func actorScriptsHearFurnitureSpellsAndFastTravel() throws {
+        let probe = PapyrusWorldProbeDispatch()
+        let world = Self.world(
+            probe, events: ["OnSit", "OnGetUp", "OnSpellCast", "OnPlayerFastTravelEnd"]
+        )
+        try Self.attach(world, key: .player)
+        Fixture.drain(world)
+        let chair = ReferenceKey.plugin(name: Fixture.pluginName, objectID: 0x30)
+
+        #expect(world.queueFurnitureEvent(sitting: true, actor: .player, furniture: chair) == 1)
+        #expect(world.queueFurnitureEvent(sitting: false, actor: .player, furniture: chair) == 1)
+        #expect(world.queueSpellCast(chair, by: .player) == 1)
+        #expect(world.queuePlayerFastTravelEnd(gameHours: 2.5) == 1)
+        #expect(world.queueFurnitureEvent(sitting: true, actor: chair, furniture: chair) == 0)
+        Fixture.drain(world)
+        #expect(probe.notes == ["onsit", "ongetup", "onspellcast", "onplayerfasttravelend"])
+    }
 }
 
 private final class FakePlayerWorld: ScriptWorld {

@@ -68,6 +68,11 @@ the air, and being overencumbered, checked in that order. Overencumbered means t
 weight is above the `CarryWeight` actor value. An alarm means guards pursue the player for
 a crime. The message is the matching `sNoFastTravel*` GMST string.
 
+Two natives read this state. `Game.IsFastTravelControlsEnabled()` is false while a script
+block from `EnableFastTravel(false)` holds. `ObjectReference.CanFastTravelToMarker()` is true
+for a marker that the map shows and that allows fast travel. It does not check combat or
+the other refusals, because those belong to the trip, not to the marker.
+
 The trip moves the clock by the walk time:
 
 ```text

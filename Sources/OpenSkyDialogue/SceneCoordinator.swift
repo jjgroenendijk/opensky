@@ -104,6 +104,12 @@ public final class SceneCoordinator {
         return runtime.actorsInPlayingScenes()
     }
 
+    /// The playing scene `reference` acts in, or nil.
+    public func scene(holding reference: ReferenceKey) -> FormID? {
+        guard !playing.isEmpty else { return nil }
+        return runtime?.scene(holding: reference)
+    }
+
     /// Finds playing scenes from the store, after a load or a reset.
     public func rescan() {
         ticksSinceScan = 0

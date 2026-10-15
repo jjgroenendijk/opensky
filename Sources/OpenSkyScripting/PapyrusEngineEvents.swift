@@ -44,6 +44,23 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onLockStateChanged = "OnLockStateChanged"
     public static let onContainerChanged = "OnContainerChanged"
     public static let onTrigger = "OnTrigger"
+    public static let onDestructionStageChanged = "OnDestructionStageChanged"
+    public static let onGainLOS = "OnGainLOS"
+    public static let onLostLOS = "OnLostLOS"
+    public static let onTrackedStatsEvent = "OnTrackedStatsEvent"
+    public static let onLycanthropyStateChanged = "OnLycanthropyStateChanged"
+    public static let onVampirismStateChanged = "OnVampirismStateChanged"
+    public static let onStoryKillActor = "OnStoryKillActor"
+    public static let onStoryChangeLocation = "OnStoryChangeLocation"
+    public static let onStoryAddToPlayer = "OnStoryAddToPlayer"
+    public static let onStoryAssaultActor = "OnStoryAssaultActor"
+    public static let onStoryCrimeGold = "OnStoryCrimeGold"
+    public static let onStoryIncreaseSkill = "OnStoryIncreaseSkill"
+    public static let onStoryScript = "OnStoryScript"
+    public static let onSit = "OnSit"
+    public static let onGetUp = "OnGetUp"
+    public static let onSpellCast = "OnSpellCast"
+    public static let onPlayerFastTravelEnd = "OnPlayerFastTravelEnd"
 
     /// Every event above, lowercased, as Papyrus matches names.
     public static let sent: Set<String> = Set([
@@ -54,6 +71,10 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
         onObjectEquipped, onObjectUnequipped, onCombatStateChanged, onEffectStart, onEffectFinish,
         onMagicEffectApply, onTranslationAlmostComplete, onTranslationComplete, onTranslationFailed,
         onOpen, onClose, onLockStateChanged,
-        onContainerChanged, onTrigger
+        onContainerChanged, onTrigger, onDestructionStageChanged, onGainLOS, onLostLOS,
+        onTrackedStatsEvent, onLycanthropyStateChanged, onVampirismStateChanged,
+        onStoryKillActor, onStoryChangeLocation, onStoryAddToPlayer, onStoryAssaultActor,
+        onStoryCrimeGold, onStoryIncreaseSkill, onStoryScript, onSit, onGetUp, onSpellCast,
+        onPlayerFastTravelEnd
     ].map { $0.lowercased() })
 }

@@ -212,4 +212,16 @@ struct QuestConditionFunctionTests {
         condition.parameter2Name = nil
         #expect(evaluate(condition, context).failures == [.unresolvedParameter(629)])
     }
+
+    @Test func getQuestVariableReadsTheSameScriptVariable() throws {
+        var context = try context()
+        context.scriptVariables = ScriptVariableResolution(values: [
+            GlobalFixture.key(0x0100): ["::markarthmarket_var": 2]
+        ])
+        var condition = try condition(79, quest: mainQuest, equals: 2)
+        condition.parameter2Name = "::MarkarthMarket_var"
+        #expect(evaluate(condition, context) == .true)
+        condition.parameter2Name = nil
+        #expect(evaluate(condition, context).failures == [.unresolvedParameter(79)])
+    }
 }

@@ -230,6 +230,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         game.mapMenu.fastTravelEnabled = enabled
     }
 
+    var isFastTravelEnabled: Bool {
+        game.mapMenu.fastTravelEnabled
+    }
+
+    func canFastTravel(to marker: ReferenceKey) -> Bool {
+        game.mapMenu.canTravel(to: marker)
+    }
+
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool) {
         game.mapMenu.addToMap(marker, allowFastTravel: allowFastTravel)
     }
@@ -261,6 +269,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         identityRecords?.templates.actors[base.rawValue]?.flags
     }
 
+    func voiceType(ofBase base: FormID) -> FormID? {
+        identityRecords?.voiceType(ofBase: base)
+    }
+
+    func giftFilter(ofBase base: FormID) -> FormID? {
+        identityRecords?.templates.actors[base.rawValue]?.details.giftFilter
+    }
+
     func name(of form: FormID) -> String? {
         if form == MenuRecordData.playerBase {
             return playerIdentity?.name
@@ -276,6 +292,10 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
             return
         }
         teleportPlayer(.reference(String(format: "0x%06X", objectID)), openingRaceMenu: false)
+    }
+
+    func openInventory(of actor: ReferenceKey) {
+        game.containerMenu.openInventory(of: actor)
     }
 
     private var identityRecords: ActorIdentityRecords? {

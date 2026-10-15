@@ -52,6 +52,9 @@ extension AIWorldAdapter {
             furniture: seat.furniture
         ))
         game.scripts.bridge?.activate(seat.furniture, by: actor, togglesOpen: false)
+        game.scripts.runtime?.queueFurnitureEvent(
+            sitting: true, actor: actor, furniture: seat.furniture
+        )
     }
 
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat) {
@@ -60,6 +63,9 @@ extension AIWorldAdapter {
             seatHolders[key] = nil
         }
         game.idleWorld.idles.leaveFurniture(actor)
+        game.scripts.runtime?.queueFurnitureEvent(
+            sitting: false, actor: actor, furniture: seat.furniture
+        )
     }
 
     /// `KWDA` of the actor's base, as the Papyrus `HasKeyword` reads it.

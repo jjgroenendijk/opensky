@@ -152,6 +152,14 @@ public final class MapMenuCoordinator {
         world?.mapMarkerSites().first { $0.key == key }?.state.isVisible ?? false
     }
 
+    /// Shown on the map and open for fast travel, which is what `CanFastTravelToMarker` reads.
+    public func canTravel(to key: ReferenceKey) -> Bool {
+        guard let state = world?.mapMarkerSites().first(where: { $0.key == key })?.state else {
+            return false
+        }
+        return state.isVisible && state.canTravelTo
+    }
+
     // MARK: - Menu
 
     /// The world map needs map data; inside an interior it opens the local map.

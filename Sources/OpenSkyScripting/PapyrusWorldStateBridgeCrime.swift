@@ -43,6 +43,21 @@ extension PapyrusWorldStateBridge {
         alarm(.trespass, witness: witness, criminal: criminal)
     }
 
+    /// The thief taking `reference` as a witnessed theft. Zero when the thief may take it.
+    @discardableResult
+    public func sendStealAlarm(on reference: ReferenceKey, thief: ReferenceKey) -> Int? {
+        guard let reporter = crimeReporter?(), let world = reporter.world else { return nil }
+        guard case let .forbidden(owner) = reporter.verdict(on: reference, by: thief) else {
+            return 0
+        }
+        let cell = world.crimeCell(of: reference)
+        return Int(reporter.report(CrimeEvent(
+            kind: .theft, perpetrator: thief, victim: owner.key,
+            crimeFaction: world.crimeFaction(in: cell), cell: cell, witnessed: true,
+            stolenValue: baseObject(of: reference).map(world.crimeItemValue(of:)) ?? 0
+        )).gold)
+    }
+
     /// Both alarms are one operation with a different crime kind. They count as
     /// witnessed without asking perception, because the script asserts the witness
     /// saw it.

@@ -28,6 +28,8 @@ dirty counts, and the save by the same path as any other change.
 | `StopCombat()` | Ends the fight and leaves hostility alone | [StopCombat - Actor](https://www.creationkit.com/index.php?title=StopCombat_-_Actor) |
 | `bool IsWeaponDrawn()` | The melee draw state | [IsWeaponDrawn - Actor](https://www.creationkit.com/index.php?title=IsWeaponDrawn_-_Actor) |
 | `Kill(Actor akKiller = None)` | Empties health, then kills | [Kill - Actor](https://www.creationkit.com/index.php?title=Kill_-_Actor) |
+| `KillSilent(Actor akKiller = None)` | The same death, but the story manager gets no `KILL` event. `OnDying` and `OnDeath` still fire, because the wiki names only the kill event | [KillSilent - Actor](https://ck.uesp.net/wiki/KillSilent_-_Actor) |
+| `Resurrect()` | Clears the death latch and refills every actor value. A ragdoll keeps its pose until the cell reloads | [Resurrect - Actor](https://ck.uesp.net/wiki/Resurrect_-_Actor) |
 | `int GetCombatState()` | 0 not fighting, 1 fighting, 2 searching; a dead actor is 0 | [GetCombatState - Actor](https://ck.uesp.net/wiki/GetCombatState_-_Actor) |
 | `Actor GetCombatTarget()` | The player while the actor fights, because the combat loop fights the player alone; `None` for the player | [GetCombatTarget - Actor](https://ck.uesp.net/wiki/GetCombatTarget_-_Actor) |
 | `StopCombatAlarm()` | Ends the fight, as `StopCombat` does; OpenSky keeps no separate alarm | [StopCombatAlarm - Actor](https://ck.uesp.net/wiki/StopCombatAlarm_-_Actor) |
@@ -38,6 +40,8 @@ dirty counts, and the save by the same path as any other change.
 | `bool HasLOS(ObjectReference)` | The perception pair's line of sight; a pair perception does not track fails | [HasLOS - Actor](https://ck.uesp.net/wiki/HasLOS_-_Actor) |
 | `bool IsDetectedBy(Actor)` | Whether the other actor's pair with this one is detected | [IsDetectedBy - Actor](https://ck.uesp.net/wiki/IsDetectedBy_-_Actor) |
 | `Package GetCurrentPackage()` | The package the AI runs now, or `None` | [GetCurrentPackage - Actor](https://ck.uesp.net/wiki/GetCurrentPackage_-_Actor) |
+| `float GetLightLevel()` | The light level detection reads on the actor, times 100. The wiki gives 0 to 150, and how the game scales it is not confirmed | [GetLightLevel - Actor](https://ck.uesp.net/wiki/GetLightLevel_-_Actor) |
+| `Package Package.GetTemplate()` | The package's `PKCU` template, or `None` for a package built without one | [GetTemplate - Package](https://ck.uesp.net/wiki/GetTemplate_-_Package) |
 | `ResetHealthAndLimbs()` | Health back to its maximum; OpenSky has no limb damage | [ResetHealthAndLimbs - Actor](https://ck.uesp.net/wiki/ResetHealthAndLimbs_-_Actor) |
 
 `SetActorValue`, `ModActorValue`, `ForceActorValue`, and `GetLevel` are registered too. Their rules
@@ -57,7 +61,7 @@ name outside it is a tallied failure that names the value, never a zero.
 
 | Behavior | What OpenSky does | Why |
 | --- | --- | --- |
-| `Resurrect` | Not installed | Nothing clears the death latch. `RestoreActorValue` on a dead actor writes health and leaves it dead |
+| `StartSneaking` on an NPC | No change | Only the player has a sneak gait. On the player it turns sneak on, or off when the player already sneaks, as the wiki states. It does not wait for a fall, swim, or attack to end |
 | `StartCombat` with a target other than the player | Tallied failure | OpenSky simulates no fight between two NPCs. Hostility has two cases and both are about the player |
 | `Game.GetPlayer().IsInCombat()` | False during a fight | A combat behavior machine belongs to an NPC. Whether the player is in a fight is derived from every loaded actor, not stored on one |
 | `IsWeaponDrawn()` on an NPC | Tallied failure | Only the player has a behavior graph that tracks drawing. "Sheathed" would be invented |

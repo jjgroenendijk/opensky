@@ -28,13 +28,13 @@ Measured on 2026-10-15 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
-| Papyrus natives | 361 | 147 | 508 | 71% |
-| Papyrus events | 35 | 33 | 68 | 51% |
-| Condition functions | 228 | 30 | 258 | 88% |
+| Papyrus natives | 442 | 66 | 508 | 87% |
+| Papyrus events | 52 | 16 | 68 | 76% |
+| Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
-| Game settings | 141 | 1507 | 1648 | 8% |
+| Game settings | 144 | 1504 | 1648 | 8% |
 | Magic effect archetypes | 21 | 16 | 37 | 56% |
-| Perk entry points | 8 | 60 | 68 | 11% |
+| Perk entry points | 9 | 59 | 68 | 13% |
 | Perk entry-point functions | 5 | 4 | 9 | 55% |
 | AI package procedures | 8 | 22 | 30 | 26% |
 | AI packages that do not resolve | - | 0 | - | - |

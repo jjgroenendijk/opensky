@@ -423,3 +423,10 @@ public final class PackageCoordinator {
         readouts().first { $0.actor == actor }
     }
 }
+
+extension PackageCoordinator {
+    /// The `PKCU` template of `package`, or nil for a package built without one.
+    public func template(of package: FormID) -> FormID? {
+        store?.package(package)?.template
+    }
+}

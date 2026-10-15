@@ -94,7 +94,7 @@ extension PapyrusWorldStateBridge {
         return stacks.filter { $0.item == item }.reduce(0) { $0 + Int64($1.count) }
     }
 
-    private func queueReferenceEvent(
+    func queueReferenceEvent(
         _ name: String, on key: ReferenceKey, _ arguments: [PapyrusValue],
         in world: PapyrusWorldRuntime
     ) -> Int {

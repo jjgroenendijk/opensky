@@ -16,6 +16,7 @@ import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyQuestsInterface
 import OpenSkyRendering
+import OpenSkyScripting
 import OpenSkyWorld
 import OpenSkyWorldInterface
 import OpenSkyWorldState
@@ -197,6 +198,7 @@ extension MapWorldAdapter: MapMenuWorld {
             renderer.camera = camera
             renderer.reseedMovement(camera: camera)
         }
+        game.scripts.runtime?.queuePlayerFastTravelEnd(gameHours: Float(seconds / 3600))
         game.saveGames.autosave(.travel)
         return true
     }

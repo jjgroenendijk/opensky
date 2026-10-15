@@ -115,7 +115,9 @@ Each signature is quoted from the Creation Kit wiki:
 | `Faction.SetCrimeGold` | `Function SetCrimeGold(int aiGold) native`, the non-violent half |
 | `Faction.SetCrimeGoldViolent` | `Function SetCrimeGoldViolent(int aiGold) native` |
 | `Actor.SendAssaultAlarm` | `Function SendAssaultAlarm() native` |
+| `Faction.SendAssaultAlarm` | `Function SendAssaultAlarm() native`. The wiki says it "finds a nearby member of this faction". OpenSky picks the resident member nearest the player, and charges the assault as `Actor.SendAssaultAlarm` does. With no resident member nothing happens |
 | `Actor.SendTrespassAlarm` | `Function SendTrespassAlarm(Actor akCriminal) native` |
+| `ObjectReference.SendStealAlarm` | `Function SendStealAlarm(Actor akThief)`. A theft of the object, charged only when it belongs to someone else |
 | `Actor.GetCrimeFaction` | `Faction Function GetCrimeFaction() native`. `None` with no `CRIF` |
 | `Actor.IsGuard` | `bool Function IsGuard() native` |
 | `Faction.CanPayCrimeGold` | `bool Function CanPayCrimeGold() native` |
@@ -125,7 +127,7 @@ Each signature is quoted from the Creation Kit wiki:
 A refused payment, or a sentence with no bounty, fails with a reason, so the script log says why
 nothing happened.
 
-Both alarms count as seen, without asking perception. The script says this actor caught the
+The three alarms count as seen, without asking perception. The script says this actor caught the
 criminal: "have this actor pretend he caught the specified criminal". Asking detection would let a
 scripted alarm fail silently because the witness faced away. The wiki also notes the trespass alarm
 "will not result in the 'time to go' dialogue that precedes the crime", so nothing warns first.

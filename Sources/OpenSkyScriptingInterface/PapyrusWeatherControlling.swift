@@ -9,6 +9,12 @@ public protocol PapyrusWeatherControlling: AnyObject {
     /// The weather the sky shows or is moving to. Nil before the first weather.
     var currentWeather: ReferenceKey? { get }
 
+    /// The weather a blend moves away from. Nil when no blend runs.
+    var outgoingWeather: ReferenceKey? { get }
+
+    /// How far the blend has come, 0 to 1. 1 when no blend runs.
+    var transitionFraction: Float { get }
+
     /// Moves to `weather`. A held weather stays until released; `instant` skips the
     /// blend. False when the form is no `WTHR`.
     @discardableResult

@@ -1,11 +1,14 @@
 // The furniture condition functions an idle tree tests as an actor sits down:
 // 159 `GetSitting`, 613 `IsFurnitureAnimType`, 614 `IsFurnitureEntryType`,
-// 631 `IsEnteringInteractionQuick`, 644 `IsInFurnitureState`, and 675
-// `GetGraphVariableInt`, from xEdit dev-4.1.6 wbDefinitionsTES5.pas.
+// 631 `IsEnteringInteractionQuick`, 644 `IsInFurnitureState`, 162 `IsCurrentFurnitureRef`,
+// 163 `IsCurrentFurnitureObj`, 637 `IsExitingInstant`, 703 `IsExitingInteractionQuick`,
+// and the graph variables 675 and 447, from xEdit dev-4.1.6 wbDefinitionsTES5.pas.
 // See docs/engine/condition-functions.md.
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
+import OpenSkyWorldState
 
 /// How one actor uses one furniture marker.
 nonisolated public struct FurnitureUse: Equatable, Sendable {
@@ -52,15 +55,20 @@ nonisolated public struct FurnitureConditionResolution: ConditionResolution {
     }
 }
 
-/// Integer behavior-graph variables per actor. An actor listed with no value for a
-/// name reads 0, as an actor whose graph does not run does.
+/// Behavior-graph variables per actor. An actor listed with no value for a name reads
+/// 0, as an actor whose graph does not run does.
 nonisolated public struct GraphVariableResolution: ConditionResolution {
     public var values: [ReferenceKey: [String: Int]] = [:]
+    public var floats: [ReferenceKey: [String: Float]] = [:]
 
     public static let empty = GraphVariableResolution()
 
-    public init(values: [ReferenceKey: [String: Int]] = [:]) {
+    public init(
+        values: [ReferenceKey: [String: Int]] = [:],
+        floats: [ReferenceKey: [String: Float]] = [:]
+    ) {
         self.values = values
+        self.floats = floats
     }
 }
 
@@ -87,9 +95,12 @@ nonisolated extension ConditionFunctions {
         registerFurniture(&registry, index: 614, name: "IsFurnitureEntryType") { use, call in
             isTrue(use?.entry == call.condition.parameter1.rawValue)
         }
-        // OpenSky has no quick entry, so no actor enters furniture that way.
-        registerFurniture(&registry, index: 631, name: "IsEnteringInteractionQuick") { _, _ in
-            0
+        // OpenSky has no quick entry or exit and no instant exit, so these read 0.
+        for (index, name) in [
+            (631, "IsEnteringInteractionQuick"), (637, "IsExitingInstant"),
+            (703, "IsExitingInteractionQuick")
+        ] {
+            registerFurniture(&registry, index: UInt16(index), name: name) { _, _ in 0 }
         }
         registerFurniture(&registry, index: 644, name: "IsInFurnitureState") { use, call in
             isTrue(
@@ -98,16 +109,73 @@ nonisolated extension ConditionFunctions {
             )
         }
         registry.register(ConditionFunction(index: 675, name: "GetGraphVariableInt") { call in
-            guard let name = call.condition.parameter1Name else {
-                return .failure(.unresolvedParameter(675))
-            }
-            return call.referenceKey().flatMap { actor in
-                guard let values = call.context.graphVariables.values[actor] else {
-                    return .failure(.unavailableData(.graphVariable))
-                }
-                return .success(Float(values[name] ?? 0))
+            graphVariable(call, index: 675) { graph, actor, name in
+                graph.values[actor].map { $0[name].map(Float.init) ?? 0 }
             }
         })
+        registry.register(ConditionFunction(
+            index: 447, name: "GetGraphVariableFloat"
+        ) { call in
+            graphVariable(call, index: 447) { graph, actor, name in
+                graph.floats[actor].map { $0[name] ?? 0 }
+            }
+        })
+        installCurrentFurniture(&registry)
+    }
+
+    /// `CIS1` names the variable. `read` answers nil for an actor with no graph snapshot.
+    private static func graphVariable(
+        _ call: ConditionCall,
+        index: UInt16,
+        read: (GraphVariableResolution, ReferenceKey, String) -> Float?
+    ) -> Result<Float, ConditionFailure> {
+        guard let name = call.condition.parameter1Name else {
+            return .failure(.unresolvedParameter(index))
+        }
+        return call.referenceKey().flatMap { actor in
+            guard let value = read(call.context.graphVariables, actor, name) else {
+                return .failure(.unavailableData(.graphVariable))
+            }
+            return .success(value)
+        }
+    }
+
+    /// `ptReference` names the furniture reference; `ptFurniture` names its base form.
+    private static func installCurrentFurniture(_ registry: inout ConditionFunctionRegistry) {
+        registry.register(ConditionFunction(
+            index: 162, name: "IsCurrentFurnitureRef", parameter1: .formID
+        ) { call in
+            guard let wanted = parameterKey(call, call.parameter1) else {
+                return .failure(.unresolvedParameter(162))
+            }
+            return currentFurniture(call).map { isTrue($0 == wanted) }
+        })
+        registry.register(ConditionFunction(
+            index: 163, name: "IsCurrentFurnitureObj", parameter1: .formID
+        ) { call in
+            guard let wanted = parameterKey(call, call.parameter1) else {
+                return .failure(.unresolvedParameter(163))
+            }
+            return currentFurniture(call).flatMap { furniture in
+                guard let entry = furniture.flatMap({ call.context.references[$0] }) else {
+                    return .success(0)
+                }
+                guard
+                    let base = call.context.data.keywords?.resolvedID(
+                        baseForm(of: entry), fromPlugin: basePlugin(of: entry.key)
+                    ) else { return .failure(.unavailableData(.keyword)) }
+                return .success(isTrue(ReferenceKey(resolved: base) == wanted))
+            }
+        })
+    }
+
+    /// The furniture reference the run-on uses, nil when it uses none.
+    private static func currentFurniture(
+        _ call: ConditionCall
+    ) -> Result<ReferenceKey?, ConditionFailure> {
+        let furniture = call.context.furniture
+        guard furniture.isAvailable else { return .failure(.unavailableData(.furniture)) }
+        return call.referenceKey().map { furniture.uses[$0]?.furniture }
     }
 
     private static func registerFurniture(

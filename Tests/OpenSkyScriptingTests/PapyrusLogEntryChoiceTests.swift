@@ -25,7 +25,7 @@ struct PapyrusLogEntryChoiceTests {
         let bridge = PapyrusWorldStateBridge(worldState: WorldStateStore())
         let quest = try Self.quest(firstEntryConditioned: true)
         #expect(bridge.chosenLogEntry(of: quest, stage: 10) == nil)
-        bridge.logEntryEvaluator = {
+        bridge.conditionEvaluator = {
             ConditionEvaluator(context: ConditionContext(), registry: .empty)
         }
         #expect(bridge.chosenLogEntry(of: quest, stage: 10) == 1)

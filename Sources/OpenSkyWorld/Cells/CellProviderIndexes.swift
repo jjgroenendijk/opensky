@@ -54,6 +54,7 @@ nonisolated public struct CellProviderIndexes {
         let characterLevel: CharacterLevelSettings
         let level: ActorValueLevelSettings
         let harvestRegrowth: HarvestRegrowth
+        let speechChecks: SpeechCheckSettings
         /// Kept for `LockTrapData`, which reads the lockpicking settings off it.
         let store: GameSettingStore
 
@@ -72,6 +73,7 @@ nonisolated public struct CellProviderIndexes {
             characterLevel = CharacterLevelSettings.resolve(store: settings)
             level = ActorValueLevelSettings.resolve(store: settings)
             harvestRegrowth = HarvestRegrowth.resolve(store: settings)
+            speechChecks = SpeechCheckSettings.resolve(store: settings)
             store = settings
         }
     }
@@ -184,6 +186,7 @@ nonisolated public struct CellProviderIndexes {
         stores.menuRecords = records.loadOrder.menus
         stores.difficultySettings = tuning.difficulty
         stores.harvestRegrowth = tuning.harvestRegrowth
+        stores.speechCheckSettings = tuning.speechChecks
         return stores
     }
 }

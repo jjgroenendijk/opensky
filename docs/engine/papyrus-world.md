@@ -136,6 +136,17 @@ frame compares the location of the player's cell with the last frame's. A change
 first frame after a load only records the location. A frame whose player cell is not resident yet
 is skipped, so a cell that streams in is not read as a trip through the wilderness.
 
+A finished fast travel queues `OnPlayerFastTravelEnd(afTravelGameTimeHours)` on the player's
+scripts, with the game hours the trip took.
+
+## Furniture and spell events
+
+An actor that a package seats in furniture gets `OnSit(akFurniture)`, and `OnGetUp(akFurniture)`
+when it stands up. The player does not sit in furniture yet, so the player gets neither. Every
+cast that the caster runtime completes, fire-and-forget or the start of a concentration spell,
+queues `OnSpellCast(akSpell)` on the caster's scripts. Sources: the Creation Kit wiki pages
+"OnSit - Actor", "OnGetUp - Actor", and "OnSpellCast - ObjectReference".
+
 ## Combat events
 
 Each frame reads the combat activity of every actor whose scripts handle `OnCombatStateChanged`.

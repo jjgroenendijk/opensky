@@ -186,11 +186,13 @@ struct WeatherRuntimeTests {
         system.forceWeather(FormID(0x200), transition: .timed)
         system.update(deltaTime: 0, hour: 12)
         #expect(system.transitionFraction == 0)
+        #expect(system.outgoingWeatherID == FormID(0x100))
         #expect(abs(system.currentWind.speed - windA.speed) < 1e-4, "t=0 wind is still A")
 
         // Advance well past the derived duration -> fully settled on B.
         system.update(deltaTime: 100, hour: 12)
         #expect(system.transitionFraction == 1)
+        #expect(system.outgoingWeatherID == nil)
         #expect(system.currentWeatherID == FormID(0x200))
         #expect(system.currentWind.speed > windA.speed)
     }

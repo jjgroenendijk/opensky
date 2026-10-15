@@ -61,11 +61,18 @@ cell brings a new pose buffer, and its object starts again at its first state.
 | `PlayAnimationAndWait(event, done)` | Raises `event`, waits until the graph fires `done` | Answers true at once |
 | `WaitForAnimationEvent(done)` | Waits until the graph fires `done` | Waits one second, answers true |
 | `PlayGamebryoAnimation` | Answers true at once | Answers true at once |
+| `Debug.SendAnimationEvent(ref, event)` | Raises the event on `ref` | Does nothing |
+| `GetAnimationVariableBool`, `Int`, `Float` | Reads the graph variable | Fails |
+| `SetAnimationVariableBool`, `Int`, `Float` | Writes the graph variable | Fails |
 
 A wait ends with true when the event fires, and with false when the object's cell unloads.
 Every event a graph fires also reaches `OnAnimationEvent` of the scripts that registered
 for it. `PlayAnimation` of an event the graph does not declare falls back to the answer
 without a graph, so a script never waits for an event that cannot come.
+
+A variable read or write converts between the graph's type and the type the native names,
+as a Papyrus cast does: true is 1, and any number other than 0 is true. A variable the graph
+does not declare fails the native, so the script gets the default value.
 
 ## Where OpenSky differs
 
