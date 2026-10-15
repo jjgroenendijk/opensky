@@ -292,6 +292,10 @@ extension PapyrusWorldRuntime {
         pendingOnInit.remove(key)
         retiringKeys.remove(key)
         handledEvents[key] = nil
+        // A later run of the effect makes a new instance, which gets its own `OnInit`.
+        if effectScripts.forget(instance: key) {
+            firedOnInit.remove(key)
+        }
         scheduler.cancel(suspensionTracker.forget(instance: key))
     }
 }

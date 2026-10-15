@@ -73,6 +73,9 @@ public final class PapyrusWorldRuntime {
     /// Newest alias filled and bound, worded like a `recentEvents` entry, for
     /// the Scripts readout. Nil until a quest with an alias starts.
     public var lastQuestAliasFill: String?
+    /// Running magic effects with scripts, and the `ActiveMagicEffect` instances that
+    /// serve them. See `PapyrusWorldEffectScripts.swift`.
+    public var effectScripts = PapyrusEffectScripts()
     /// Script instances belonging to a dialogue response. Nothing retires them; see
     /// `PapyrusWorldDialogue.swift`.
     public var dialogueInstanceKeys: Set<PapyrusInstanceKey> = []
@@ -312,12 +315,12 @@ public final class PapyrusWorldRuntime {
 
     /// One handle per world reference for VMAD object-property binding. A
     /// reference carrying several scripts resolves to the instance with the
-    /// lowest script name, chosen deterministically. Alias scripts are left out.
+    /// lowest script name, chosen deterministically. Alias and effect scripts are left out.
     public func referenceHandleMap() -> [ReferenceKey: PapyrusObjectHandle] {
         var map: [ReferenceKey: PapyrusObjectHandle] = [:]
-        let aliasKeys = aliasInstanceKeys
+        let otherKeys = aliasInstanceKeys.union(effectScripts.instanceKeys)
         for key in instancesByKey.keys.sorted()
-            where map[key.reference] == nil && !aliasKeys.contains(key)
+            where map[key.reference] == nil && !otherKeys.contains(key)
         {
             map[key.reference] = instancesByKey[key]
         }

@@ -81,6 +81,12 @@ nonisolated public struct MagicEffectStore: Sendable {
         table.value(editorID: editorID)
     }
 
+    /// The master list the FormIDs inside `effect`'s record, such as its VMAD
+    /// properties, are relative to.
+    public func sourceResolver(of effect: ResolvedMagicEffect) -> FormIDResolver? {
+        index.resolver(ofPlugin: effect.sourcePlugin)
+    }
+
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
         index.resolvedID(id, fromPlugin: pluginName)
     }
