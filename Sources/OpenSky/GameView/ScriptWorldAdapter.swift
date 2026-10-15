@@ -54,6 +54,7 @@ final class ScriptWorldAdapter {
         bridge.effectPresenter = game.effectsWorld
         bridge.weather = self
         bridge.music = self
+        bridge.playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
         let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)

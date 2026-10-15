@@ -20,6 +20,9 @@ struct PapyrusNativeConditionTwinTests {
         registry.register(ConditionFunction(index: 159, name: "GetSitting") { call in
             call.referenceKey().map { _ in 3 }
         })
+        registry.register(ConditionFunction(index: 633, name: "GetFlyingState") { call in
+            call.referenceKey().map { _ in 0 }
+        })
         registry.register(ConditionFunction(
             index: 682, name: "WornHasKeyword", parameter1: .formID
         ) { call in
@@ -54,6 +57,8 @@ struct PapyrusNativeConditionTwinTests {
         let fixture = try Self.fixture()
         #expect(Self.call(fixture, "GetSitState", returnType: .integer)
             == .returned(.integer(3)))
+        #expect(Self.call(fixture, "GetFlyingState", returnType: .integer)
+            == .returned(.integer(0)))
     }
 
     @Test func anObjectArgumentReachesTheConditionAsItsForm() throws {

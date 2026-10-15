@@ -61,6 +61,10 @@ so these hints have nothing to start and return at once.
   `XNAM` combat reaction: 0 neutral, 1 enemy, 2 ally, 3 friend. Any other value fails. The
   reaction is stored like the one `SetEnemy` stores.
 
+- `Game.GetPlayersLastRiddenHorse` returns the horse the vehicle runtime last saw the player
+  mount, the same horse the `IsPlayersLastRiddenMount` condition reads. None before the
+  first ride.
+
 ## Radius searches
 
 `Game.FindClosestActor`, `FindRandomActor`, `FindClosestReferenceOfType`,

@@ -39,6 +39,10 @@ extension PapyrusNativeFunctions {
         ConditionTwin(script: "Actor", native: "IsFlying", function: 594, returnType: .boolean),
         ConditionTwin(script: "Actor", native: "IsOnMount", function: 327, returnType: .boolean),
         ConditionTwin(
+            script: "Actor", native: "GetFlyingState", function: 633, returnType: .integer
+        ),
+        ConditionTwin(script: "Actor", native: "CanFlyHere", function: 731, returnType: .boolean),
+        ConditionTwin(
             script: "Actor", native: "IsBeingRidden", function: 714, returnType: .boolean
         ),
         ConditionTwin(script: "Actor", native: "GetSitState", function: 159, returnType: .integer),

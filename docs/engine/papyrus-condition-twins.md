@@ -31,6 +31,8 @@ the native and the function.
 | --- | --- | --- |
 | `Actor.IsFlying` | `GetIsFlying` (594) | none |
 | `Actor.IsOnMount` | `IsRidingMount` (327) | none |
+| `Actor.GetFlyingState` | `GetFlyingState` (633) | none. OpenSky has no flight, so the answer is 0, not flying |
+| `Actor.CanFlyHere` | `CanFlyHere` (731) | none. False for the same reason |
 | `Actor.IsBeingRidden` | `IsBeingRidden` (714) | none |
 | `Actor.GetSitState` | `GetSitting` (159) | none |
 | `Actor.GetSleepState` | `GetSleeping` (49) | none |
