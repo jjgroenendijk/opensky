@@ -28,8 +28,8 @@ Measured on 2026-10-15 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
-| Papyrus natives | 427 | 81 | 508 | 84% |
-| Papyrus events | 48 | 20 | 68 | 70% |
+| Papyrus natives | 442 | 66 | 508 | 87% |
+| Papyrus events | 52 | 16 | 68 | 76% |
 | Condition functions | 256 | 2 | 258 | 99% |
 | Record types | 119 | 1 | 120 | 99% |
 | Game settings | 144 | 1504 | 1648 | 8% |
