@@ -14,6 +14,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     /// True when the trip started; a refusal shows its message and returns false.
     func fastTravel(to marker: ReferenceKey) -> Bool
     func setFastTravelEnabled(_ enabled: Bool)
+    /// False while a script has fast travel switched off with `EnableFastTravel(false)`.
+    var isFastTravelEnabled: Bool { get }
+    /// The marker is on the map and the player may travel to it.
+    func canFastTravel(to marker: ReferenceKey) -> Bool
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool)
     func isMapMarkerVisible(_ marker: ReferenceKey) -> Bool
     /// The player's chosen race for the player, else the actor's record race.
@@ -46,6 +50,9 @@ extension PapyrusNativeFunctions {
         game("EnableFastTravel", into: &registry) { call, menus in
             menus.setFastTravelEnabled(boolean(call, at: 0, default: true))
             return .returned(.none)
+        }
+        game("IsFastTravelControlsEnabled", into: &registry) { _, menus in
+            .returned(.boolean(menus.isFastTravelEnabled))
         }
         registry.register(PapyrusNativeFunction(
             scriptName: "Game",
@@ -124,6 +131,13 @@ extension PapyrusNativeFunctions {
             into: &registry
         ) { _, _, menus, key in
             .returned(.boolean(menus.isMapMarkerVisible(key)))
+        }
+        withReference(
+            "ObjectReference",
+            "CanFastTravelToMarker",
+            into: &registry
+        ) { _, _, menus, key in
+            .returned(.boolean(menus.canFastTravel(to: key)))
         }
     }
 

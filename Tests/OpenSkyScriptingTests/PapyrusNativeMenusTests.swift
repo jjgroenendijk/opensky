@@ -31,6 +31,13 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
         calls.append("travel(\(enabled))")
     }
 
+    var isFastTravelEnabled = true
+    var travelMarkers: Set<ReferenceKey> = []
+
+    func canFastTravel(to marker: ReferenceKey) -> Bool {
+        travelMarkers.contains(marker)
+    }
+
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool) {}
 
     func isMapMarkerVisible(_ marker: ReferenceKey) -> Bool {
@@ -92,6 +99,22 @@ struct PapyrusNativeMenusTests {
         let enable = Self.game("EnableFastTravel", [.boolean(false)])
         #expect(registry.invoke(enable) == .returned(.none))
         #expect(menus.calls == ["race(false)", "race(true)", "travel(false)"])
+    }
+
+    @Test func fastTravelReadsAnswerFromTheMenus() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        fixture.session.bridge.menus = menus
+        let read = Self.game("IsFastTravelControlsEnabled")
+        #expect(fixture.registry.invoke(read) == .returned(.boolean(true)))
+        menus.isFastTravelEnabled = false
+        #expect(fixture.registry.invoke(read) == .returned(.boolean(false)))
+
+        #expect(fixture
+            .call("CanFastTravelToMarker", returnType: .boolean) == .returned(.boolean(false)))
+        menus.travelMarkers = [fixture.key]
+        #expect(fixture
+            .call("CanFastTravelToMarker", returnType: .boolean) == .returned(.boolean(true)))
     }
 
     @Test func withoutTheBridgeANativeDoesNothing() {

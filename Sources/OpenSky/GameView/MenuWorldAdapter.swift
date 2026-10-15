@@ -230,6 +230,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         game.mapMenu.fastTravelEnabled = enabled
     }
 
+    var isFastTravelEnabled: Bool {
+        game.mapMenu.fastTravelEnabled
+    }
+
+    func canFastTravel(to marker: ReferenceKey) -> Bool {
+        game.mapMenu.canTravel(to: marker)
+    }
+
     func addToMap(_ marker: ReferenceKey, allowFastTravel: Bool) {
         game.mapMenu.addToMap(marker, allowFastTravel: allowFastTravel)
     }
