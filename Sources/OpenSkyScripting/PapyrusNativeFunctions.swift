@@ -41,6 +41,7 @@ public enum PapyrusNativeFunctions {
         installEffects(into: &registry)
         installActiveMagicEffect(into: &registry)
         installActorAwareness(into: &registry)
+        installTranslation(into: &registry)
         installReferenceState(into: &registry)
         installActorState(into: &registry)
         installWeather(into: &registry)

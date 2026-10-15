@@ -37,19 +37,21 @@ extension Renderer {
         return instance.moved(by: delta)
     }
 
-    /// A vehicle follower wins over a walking pose, because a rider does not walk.
+    /// A vehicle follower wins over a walking pose, because a rider does not walk. A
+    /// scripted move wins over both, because a script placed it on purpose.
     func mergeInstanceDeltas() {
-        let moving = npcInstanceDeltas.isEmpty
+        var moving = npcInstanceDeltas.isEmpty
             ? dynamicInstanceDeltas
             : dynamicInstanceDeltas.merging(npcInstanceDeltas) { _, npc in npc }
-        instanceDeltas = vehicleInstancePoses.isEmpty
-            ? moving
-            : moving.merging(vehicleDeltas()) { _, vehicle in vehicle }
+        for poses in [vehicleInstancePoses, scriptedInstancePoses] where !poses.isEmpty {
+            moving.merge(deltas(from: poses)) { _, posed in posed }
+        }
+        instanceDeltas = moving
     }
 
     /// A rebuilt cell bakes a newer placement, so the delta follows the current scene.
-    private func vehicleDeltas() -> [UInt32: float4x4] {
-        vehicleInstancePoses.reduce(into: [:]) { deltas, entry in
+    private func deltas(from poses: [UInt32: float4x4]) -> [UInt32: float4x4] {
+        poses.reduce(into: [:]) { deltas, entry in
             guard let built = scene.referencePlacements[entry.key] else { return }
             deltas[entry.key] = entry.value * Self.rigid(built).inverse
         }

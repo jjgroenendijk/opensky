@@ -8,14 +8,16 @@ nonisolated public enum ScriptsReadout: Sendable {
     /// to it. An untargeted session and a targeted reference carrying no
     /// scripts read as two different stated conditions, never as a blank.
     public static func instancesText(for snapshot: ScriptsSnapshot) -> String {
+        let counts = "Instances: \(snapshot.instanceCount)"
+            + "  Scripted moves: \(snapshot.scriptedMoveCount)"
         guard let target = snapshot.targetDescription else {
-            return "Instances: \(snapshot.instanceCount)\nTarget: none"
+            return "\(counts)\nTarget: none"
         }
         let scripts = snapshot.targetScripts.isEmpty
             ? "none"
             : snapshot.targetScripts.joined(separator: ", ")
         return """
-        Instances: \(snapshot.instanceCount)
+        \(counts)
         Target: \(target)
         Target scripts: \(scripts)
         """

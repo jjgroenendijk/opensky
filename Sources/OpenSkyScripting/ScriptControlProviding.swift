@@ -156,6 +156,8 @@ nonisolated public struct ScriptsSnapshot: Equatable, Sendable {
     public var lastFault: String?
     /// Instructions all scripts ran in the latest fixed step, out of `budgetInstructions`.
     public var lastStepInstructions = 0
+    /// References a `TranslateTo` is moving now.
+    public var scriptedMoveCount = 0
 }
 
 /// Live-renderer seam for the World > Scripts panel.

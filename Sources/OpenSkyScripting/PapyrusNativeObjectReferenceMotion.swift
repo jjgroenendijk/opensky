@@ -1,6 +1,5 @@
-// Position natives of the `ObjectReference` family: instant placement only.
-// `TranslateTo` and the other motion natives need an interpolator, so they stay
-// unregistered rather than faked (docs/engine/papyrus-activation.md).
+// Position natives of the `ObjectReference` family: instant placement. Moves over time
+// are in `PapyrusNativeTranslation.swift`.
 
 import Foundation
 import OpenSkyScriptingInterface

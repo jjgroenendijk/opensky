@@ -171,6 +171,12 @@ public final class Renderer: NSObject {
         didSet { mergeInstanceDeltas() }
     }
 
+    /// Where scripted moves (`TranslateTo`) have carried references, as placements
+    /// without scale.
+    public var scriptedInstancePoses: [UInt32: float4x4] = [:] {
+        didSet { mergeInstanceDeltas() }
+    }
+
     /// All maps in one, so a drawn instance costs one lookup.
     var instanceDeltas: [UInt32: float4x4] = [:]
     /// This frame's resolved weather (exterior only). nil -> no weather active.

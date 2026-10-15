@@ -142,7 +142,6 @@ an activation from opening or closing the reference.
 | `Enable(abFadeIn)`, `Disable(abFadeOut)` | Ignores the fade | There is no fade. The reference changes on the next cell rebuild, and the state is the same either way |
 | `Activate(_, abDefaultProcessingOnly)` | Ignores the flag | This path has no built-in activation behavior to limit |
 | `Activate` and the open state | Never opens | Only the use key knows the action was an open. A scripted activation records itself without claiming the target opened |
-| `TranslateTo`, `TranslateToRef`, `SplineTranslateTo` | Not installed | Moving over time and `OnTranslationComplete` need a mover the runtime does not have |
 | `XESP` enable parents | Not followed | `Enable` and `Disable` act on the receiver alone |
 | A constant global | Written anyway | The Creation Kit rule stops editing a constant in the editor. Nothing open says the engine refuses a scripted write |
 | `Delete` | Writes the change at once | The wiki says it waits until nothing holds the reference. OpenSky has no reference counting |
