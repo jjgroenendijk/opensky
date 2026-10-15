@@ -56,6 +56,15 @@ nonisolated public struct ConditionDataResolution: Sendable {
         cells[reference]
     }
 
+    /// A copy that reads FormIDs from `plugin`.
+    public func with(sourcePlugin plugin: String?) -> Self {
+        Self(
+            keywords: keywords, formLists: formLists, locations: locations,
+            sourcePlugin: plugin, currentLocations: currentLocations,
+            editorLocations: editorLocations, interiors: interiors, cells: cells
+        )
+    }
+
     /// A copy that reads FormIDs from `plugin` and puts `reference` in `location`,
     /// for a check about a place the reference is going to.
     public func with(

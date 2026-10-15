@@ -49,8 +49,9 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// Game clock the five time globals project from, matching how every other
     /// consumer builds a `GlobalResolution`.
     public var clockSource: (() -> GameClock?)?
-    /// Picks which log entry of a stage runs its fragment. Nil runs every entry's fragment.
-    public var logEntryEvaluator: (() -> ConditionEvaluator)?
+    /// The runtime condition context: it picks the log entry a stage runs, and answers
+    /// the natives that share a condition function. Nil runs every log entry.
+    public var conditionEvaluator: (() -> ConditionEvaluator)?
     /// The `Actor` native collaborators, as closures so they can be wired in any order.
     /// Nil makes every actor native a tallied failure, not a fake zero. See
     /// `PapyrusWorldStateBridgeActors.swift`.
