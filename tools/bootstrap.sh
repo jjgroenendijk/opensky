@@ -13,7 +13,8 @@ fi
 
 # Formatters + linters are mandatory (AGENTS.md "Code quality"). jscpd and
 # periphery are the code-health gates (docs/decisions/code-health-automation.md).
-for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint jscpd periphery; do
+# uv runs the Python tools and their linter; pandoc converts the Creation Kit wiki (make ck-wiki).
+for tool in swiftformat swiftlint markdownlint-cli2 shellcheck actionlint jscpd periphery uv pandoc; do
   if command -v "$tool" >/dev/null 2>&1; then
     echo "  [ OK ] $tool"
   else
