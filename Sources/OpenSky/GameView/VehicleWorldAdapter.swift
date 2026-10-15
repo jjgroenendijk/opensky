@@ -35,7 +35,12 @@ final class VehicleWorldAdapter {
     func wireVehicles(renderer: Renderer) {
         game.scripts.bridge?.actorAI = self
         let scripts = game.scripts
+        let events = renderer.session.animationEvents
         game.idleWorld.idles.onAnimationEvent = { [weak scripts, weak vehicles] actor, name in
+            // The player's idles run on its graph, whose events arrive through the bridge.
+            if actor != .player {
+                events.handle(name, from: actor)
+            }
             if name == VehicleCore.exitEvent {
                 vehicles?.detach(actor)
             }

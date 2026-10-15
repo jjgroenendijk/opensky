@@ -254,8 +254,8 @@ nonisolated extension BehaviorGraphInstance {
     }
 
     /// Raises each clip annotation the update stepped over, by name, measured from the
-    /// window start. An unknown event name is ignored. The seeding update is closed at
-    /// its start, so `1HM_Equip.hkx`'s `BeginWeaponDraw` at 0.0 fires; later ones are half-open.
+    /// window start; an undeclared name goes to `unboundEvents`. The seeding update is
+    /// closed at its start, so `1HM_Equip.hkx`'s `BeginWeaponDraw` at 0.0 fires.
     private func fireAnnotations(
         _ clip: any BehaviorClip,
         state: BehaviorNodeState,
@@ -273,7 +273,9 @@ nonisolated extension BehaviorGraphInstance {
             else {
                 continue
             }
-            events.raise(named: annotation.text)
+            if !events.raise(named: annotation.text) {
+                unboundEvents.append(annotation.text)
+            }
         }
     }
 

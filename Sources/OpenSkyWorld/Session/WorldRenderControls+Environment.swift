@@ -90,6 +90,23 @@ extension WorldRenderControls: AnimationControlProviding {
         (renderer?.scene.pointLights ?? []).count { $0.animation != nil }
     }
 
+    public var animationEventsEnabled: Bool {
+        get { renderer?.session.animationEvents.isEnabled ?? true }
+        set { renderer?.session.animationEvents.isEnabled = newValue }
+    }
+
+    public var animationEventReadout: [String] {
+        guard let events = renderer?.session.animationEvents else { return [] }
+        return events.readout + [
+            "Last event: \(events.lastEvent ?? "none")",
+            "Sounds not found: \(events.missingSounds.count)"
+        ]
+    }
+
+    public func sendPlayerAnimationEvent(_ name: String) -> Bool {
+        renderer?.session.animationEvents.handle(name, from: .player) != nil
+    }
+
     public var animationSnapshot: AnimationControlSnapshot {
         AnimationControlSnapshot(
             playbackCount: renderer?.scene.animations.count ?? 0,

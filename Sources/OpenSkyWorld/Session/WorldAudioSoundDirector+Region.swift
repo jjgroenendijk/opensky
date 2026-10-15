@@ -37,11 +37,9 @@ extension WorldAudioSoundDirector {
         guard let descriptor = try? soundStore?.resolveAny(entry.sound).descriptor else {
             return nil
         }
-        let loops = switch descriptor.looping {
-        case .some(.loop), .some(.envelopeFast), .some(.envelopeSlow): true
-        default: false
-        }
-        return RegionSound(entry: entry, loops: loops, conditions: descriptor.conditions)
+        return RegionSound(
+            entry: entry, loops: Self.loops(descriptor), conditions: descriptor.conditions
+        )
     }
 
     /// The weather is read once per decision, not once per sound.

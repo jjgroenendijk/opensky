@@ -76,6 +76,9 @@ nonisolated public struct BehaviorUpdateResult: Equatable, Sendable {
     public let rootMotion: BehaviorRootMotion
     /// Events visible during this update, in the order they were raised.
     public let firedEvents: [BehaviorEvent]
+    /// Clip annotations and child graph events this graph declares no event for. The
+    /// engine still acts on them, such as `SoundPlay.<editor ID>` in any clip.
+    public let unboundEvents: [String]
 }
 
 /// One graph instance: decoded objects in, poses and events out.
@@ -163,6 +166,8 @@ nonisolated public final class BehaviorGraphInstance {
     /// The list being built by the update in progress.
     public var activeStatesThisUpdate: [BehaviorActiveState] = []
 
+    /// What the update in progress raised that this graph declares no event for.
+    public var unboundEvents: [String] = []
     /// True when the update in progress reached a clip that is still loading.
     public var isWaitingForClip = false
     /// The bones of the last update that had every clip it reached, held while
@@ -271,6 +276,7 @@ nonisolated public final class BehaviorGraphInstance {
         activeStatesThisUpdate = []
         referencedResults = [:]
         pendingClipPhase = nil
+        unboundEvents = []
         pendingNestedStateIds = []
         isWaitingForClip = false
         poweredRagdollControls = nil
@@ -288,14 +294,16 @@ nonisolated public final class BehaviorGraphInstance {
         }
         if isWaitingForClip, let held = lastCompleteBones {
             return BehaviorUpdateResult(
-                bones: held, rootMotion: .identity, firedEvents: events.endUpdate()
+                bones: held, rootMotion: .identity, firedEvents: events.endUpdate(),
+                unboundEvents: unboundEvents
             )
         }
         lastCompleteBones = bones
         return BehaviorUpdateResult(
             bones: bones,
             rootMotion: pose.rootMotion,
-            firedEvents: events.endUpdate()
+            firedEvents: events.endUpdate(),
+            unboundEvents: unboundEvents
         )
     }
 

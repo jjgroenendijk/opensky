@@ -127,10 +127,13 @@ public enum WorldAudioDirectorFixture {
         descriptorID: UInt32,
         tracks: [String],
         category: AudioCategory = .effects,
-        loops: Bool = false
+        loops: Bool = false,
+        editorID: String? = nil
     ) -> SoundRecordStore {
         let categoryID: UInt32 = 0xCCC
-        var descriptorFields = ESMFixture.field("GNAM", uint32(categoryID))
+        var descriptorFields = editorID.map { ESMFixture.field("EDID", ESMFixture.zstring($0)) }
+            ?? Data()
+        descriptorFields += ESMFixture.field("GNAM", uint32(categoryID))
         if loops {
             descriptorFields += ESMFixture.field("LNAM", Data([0, 8, 0, 0])) // selector 8: loop
         }
