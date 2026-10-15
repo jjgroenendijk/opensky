@@ -57,6 +57,10 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
     public static let onStoryCrimeGold = "OnStoryCrimeGold"
     public static let onStoryIncreaseSkill = "OnStoryIncreaseSkill"
     public static let onStoryScript = "OnStoryScript"
+    public static let onSit = "OnSit"
+    public static let onGetUp = "OnGetUp"
+    public static let onSpellCast = "OnSpellCast"
+    public static let onPlayerFastTravelEnd = "OnPlayerFastTravelEnd"
 
     /// Every event above, lowercased, as Papyrus matches names.
     public static let sent: Set<String> = Set([
@@ -70,6 +74,7 @@ nonisolated public enum PapyrusEngineEvents: Sendable {
         onContainerChanged, onTrigger, onDestructionStageChanged, onGainLOS, onLostLOS,
         onTrackedStatsEvent, onLycanthropyStateChanged, onVampirismStateChanged,
         onStoryKillActor, onStoryChangeLocation, onStoryAddToPlayer, onStoryAssaultActor,
-        onStoryCrimeGold, onStoryIncreaseSkill, onStoryScript
+        onStoryCrimeGold, onStoryIncreaseSkill, onStoryScript, onSit, onGetUp, onSpellCast,
+        onPlayerFastTravelEnd
     ].map { $0.lowercased() })
 }

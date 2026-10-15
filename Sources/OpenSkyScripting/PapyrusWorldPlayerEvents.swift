@@ -1,6 +1,6 @@
-// Events the player's scripts get from the session rather than from a reference: a save
-// that loaded, and a move into another location. Alias scripts on the player share the
-// player's key, so they get them too.
+// Events actor scripts get from the session rather than from a reference: a save that
+// loaded, a move into another location, the end of fast travel, furniture use, and a
+// spell cast. Alias scripts on the player share the player's key, so they get them too.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -23,6 +23,36 @@ extension PapyrusWorldRuntime {
             PapyrusEngineEvents.onLocationChange,
             on: actor,
             arguments: [locationValue(old), locationValue(new)]
+        )
+    }
+
+    /// `OnPlayerFastTravelEnd(float afTravelGameTimeHours)` on the player's scripts.
+    @discardableResult
+    public func queuePlayerFastTravelEnd(gameHours: Float) -> Int {
+        queueActorEvent(
+            PapyrusEngineEvents.onPlayerFastTravelEnd, on: .player, arguments: [.float(gameHours)]
+        )
+    }
+
+    /// `OnSit(ObjectReference akFurniture)` or `OnGetUp(ObjectReference akFurniture)` on
+    /// the actor's scripts.
+    @discardableResult
+    public func queueFurnitureEvent(
+        sitting: Bool, actor: ReferenceKey, furniture: ReferenceKey
+    ) -> Int {
+        queueActorEvent(
+            sitting ? PapyrusEngineEvents.onSit : PapyrusEngineEvents.onGetUp,
+            on: actor,
+            arguments: [.object(objectHandle(for: furniture))]
+        )
+    }
+
+    /// `OnSpellCast(Form akSpell)` on the caster's scripts.
+    @discardableResult
+    public func queueSpellCast(_ spell: ReferenceKey, by caster: ReferenceKey) -> Int {
+        queueActorEvent(
+            PapyrusEngineEvents.onSpellCast, on: caster,
+            arguments: [.object(objectHandle(for: spell))]
         )
     }
 

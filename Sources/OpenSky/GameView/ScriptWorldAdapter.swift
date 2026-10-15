@@ -55,6 +55,9 @@ final class ScriptWorldAdapter {
         bridge.weather = self
         bridge.music = self
         bridge.playersLastMount = { [weak game] in game?.vehicleWorld.vehicles.playersLastMount }
+        game.magic.onSpellCast = { [weak game] spell, caster in
+            game?.scripts.runtime?.queueSpellCast(spell, by: caster)
+        }
         let world = game.scripts.start(bridge: bridge, fileSystem: fileSystem)
         streamer.onInteraction.add { [weak bridge] event in
             bridge?.handleInteraction(event)

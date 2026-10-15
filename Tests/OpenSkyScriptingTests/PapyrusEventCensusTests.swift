@@ -16,23 +16,24 @@ struct PapyrusEventCensusTests {
         let native = PexFixture.runtimeFunction(flags: .native, instructions: [])
         let engineClass = PexFixture.runtimeObject(name: "ObjectReference", states: [
             PapyrusTestSupport.state(functions: [
-                ("GetPositionX", native), ("OnHit", empty), ("OnSit", empty)
+                ("GetPositionX", native), ("OnHit", empty), ("OnSleepStart", empty)
             ])
         ])
-        let door = script("DoorScript", handles: ["OnHit", "OnSit", "OnCustom"])
+        let door = script("DoorScript", handles: ["OnHit", "OnSleepStart", "OnCustom"])
         let chest = script("ChestScript", handles: ["onhit"])
         let census = PapyrusEventCensus(
             files: [PexFixture.runtimeFile(objects: [engineClass, door, chest])]
         )
 
         #expect(census.declaredEventCount == 2)
-        #expect(census.handlers.uses == ["OnHit": 2, "OnSit": 1])
-        #expect(census.handlers.left(where: PapyrusEventCensus.isSent).map(\.name) == ["OnSit"])
+        #expect(census.handlers.uses == ["OnHit": 2, "OnSleepStart": 1])
+        #expect(census.handlers.left(where: PapyrusEventCensus.isSent)
+            .map(\.name) == ["OnSleepStart"])
     }
 
     @Test func everySentEventIsListed() {
         #expect(PapyrusEventCensus.isSent(PapyrusEngineEvents.onTriggerEnter))
-        #expect(PapyrusEngineEvents.sent.count == 52)
+        #expect(PapyrusEngineEvents.sent.count == 56)
     }
 
     private func script(_ name: String, handles events: [String]) -> PexObject {
