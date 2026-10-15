@@ -35,6 +35,10 @@ dirty counts, and the save by the same path as any other change.
 | `bool IsEssential()` | A script's `SetEssential` on the base, else the `ACBS` essential flag; false for the player | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
 | `Race ActorBase.GetRace()`, `bool ActorBase.IsUnique()` | The race after "use traits" inheritance; the base record's own `ACBS` unique flag | [ActorBase Script](https://ck.uesp.net/wiki/ActorBase_Script) |
 | `bool IsBleedingOut()`, `bool IsCommandedActor()` | False: OpenSky has no bleedout and no commanded actors | [Actor Script](https://ck.uesp.net/wiki/Actor_Script) |
+| `bool HasLOS(ObjectReference)` | The perception pair's line of sight; a pair perception does not track fails | [HasLOS - Actor](https://ck.uesp.net/wiki/HasLOS_-_Actor) |
+| `bool IsDetectedBy(Actor)` | Whether the other actor's pair with this one is detected | [IsDetectedBy - Actor](https://ck.uesp.net/wiki/IsDetectedBy_-_Actor) |
+| `Package GetCurrentPackage()` | The package the AI runs now, or `None` | [GetCurrentPackage - Actor](https://ck.uesp.net/wiki/GetCurrentPackage_-_Actor) |
+| `ResetHealthAndLimbs()` | Health back to its maximum; OpenSky has no limb damage | [ResetHealthAndLimbs - Actor](https://ck.uesp.net/wiki/ResetHealthAndLimbs_-_Actor) |
 
 `SetActorValue`, `ModActorValue`, `ForceActorValue`, and `GetLevel` are registered too. Their rules
 are on [actor values](/engine/actor-values.md) and [character leveling](/engine/character-leveling.md).
@@ -96,6 +100,8 @@ These sit on the faction model behind [hostility](/engine/hostility.md).
 | `bool IsInFaction(Faction)` | Membership | [IsInFaction - Actor](https://ck.uesp.net/wiki/IsInFaction_-_Actor) |
 | `int GetFactionRank(Faction)` | The rank. -2 for a non-member, -1 for a member ranked -1 | [GetFactionRank - Actor](https://ck.uesp.net/wiki/GetFactionRank_-_Actor) |
 | `SetFactionRank(Faction, int)` | Sets the rank, joining if needed | [SetFactionRank - Actor](https://ck.uesp.net/wiki/SetFactionRank_-_Actor) |
+| `ModFactionRank(Faction, int)` | Adds the change to a member's rank, held inside -128 to 127. A non-member stays out | [ModFactionRank - Actor](https://ck.uesp.net/wiki/ModFactionRank_-_Actor) |
+| `RemoveFromAllFactions()` | Drops every membership, the authored ones included | [RemoveFromAllFactions - Actor](https://ck.uesp.net/wiki/RemoveFromAllFactions_-_Actor) |
 | `int GetRelationshipRank(Actor)` | The signed rank, scripted over authored | [GetRelationshipRank - Actor](https://ck.uesp.net/wiki/GetRelationshipRank_-_Actor) |
 | `SetRelationshipRank(Actor, int)` | Writes the rank to both actors | [SetRelationshipRank - Actor](https://ck.uesp.net/wiki/SetRelationshipRank_-_Actor) |
 | `int GetFactionReaction(Actor)` | 0 Neutral, 1 Enemy, 2 Ally, 3 Friend | [GetFactionReaction - Actor](https://ck.uesp.net/wiki/GetFactionReaction_-_Actor) |
@@ -129,6 +135,6 @@ The check changed two decisions the first time it ran:
 | Behavior | What OpenSky does | Why |
 | --- | --- | --- |
 | `Faction.SetReaction`, `Faction.ModReaction` | Not installed | No reachable source says whether they write the combat reaction or the `XNAM` modifier. `SetEnemy`, `SetAlly`, and `SetPlayerEnemy` are installed ([script state](/engine/papyrus-script-state.md#faction-reactions)) |
-| `Actor.ModFactionRank` | Not installed | No source says what the delta means for a non-member: join at the delta, or at zero. A guess would put a wrong rank in the save |
+| `Actor.ModFactionRank` on a non-member | No effect | The page says only that it "will not remove an actor from a faction". Joining would be a guess, and a wrong rank would stay in the save |
 | A scripted relationship rank | Stored per reference pair, not per `NPC_` base | The player is one side in nearly every vanilla call and has no base record here. Vanilla scripts name unique actors, so nothing seen tests the difference |
 | `RemoveFromFaction` on a crime faction | No effect | The crime faction comes from the place ([crime](/engine/crime.md)), so there is nothing to clear |

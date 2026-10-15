@@ -201,6 +201,21 @@ struct PapyrusNativeActorTests {
         ) == .returned(.float(Self.fullHealth)))
     }
 
+    /// "Resets this actor's health and restores all his limbs."
+    /// (<https://ck.uesp.net/wiki/ResetHealthAndLimbs_-_Actor>)
+    @Test func resetHealthAndLimbsRefillsHealth() throws {
+        let fixture = try Self.fixture()
+        call(
+            "DamageActorValue", fixture, receiver: fixture.receiver,
+            arguments: [.string("Health"), .float(40)]
+        )
+        call("ResetHealthAndLimbs", fixture, receiver: fixture.receiver)
+        #expect(call(
+            "GetActorValue", fixture, receiver: fixture.receiver,
+            arguments: [.string("Health")], returnType: .float
+        ) == .returned(.float(Self.fullHealth)))
+    }
+
     @Test func aNonFiniteAmountFailsRatherThanPoisoningTheStore() throws {
         let fixture = try Self.fixture()
         #expect(PapyrusWorldFixture.isInvalidArguments(call(

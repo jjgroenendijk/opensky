@@ -8,6 +8,7 @@ import OpenSkyConditions
 import OpenSkyFactionsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyWorldState
 
 extension PapyrusWorldStateBridge {
     @discardableResult
@@ -42,6 +43,32 @@ extension PapyrusWorldStateBridge {
     ) -> Bool? {
         guard let runtime = factionRuntime?(actor) else { return nil }
         return runtime.join(actor, to: faction, rank: rank, in: cellLocation(of: actor))
+    }
+
+    /// The rank stays inside the rank byte. "Will not remove an actor from a faction"
+    /// (<https://ck.uesp.net/wiki/ModFactionRank_-_Actor>). The page does not say what
+    /// happens to a non-member.
+    @discardableResult
+    public func modFactionRank(
+        _ delta: Int32,
+        of actor: ReferenceKey,
+        in faction: ReferenceKey
+    ) -> Bool? {
+        guard let runtime = factionRuntime?(actor) else { return nil }
+        guard let rank = runtime.rank(of: actor, in: faction) else { return false }
+        let moved = min(max(Int32(rank) + delta, Int32(Int8.min)), Int32(Int8.max))
+        return runtime.join(actor, to: faction, rank: Int8(moved), in: cellLocation(of: actor))
+    }
+
+    /// Leaves every faction, including the authored ones the accessor seeds first.
+    /// - Returns: how many memberships ended.
+    @discardableResult
+    public func removeFromAllFactions(_ actor: ReferenceKey) -> Int? {
+        guard let runtime = factionRuntime?(actor) else { return nil }
+        let memberships = worldState.component(ActorFactionState.self, for: actor)?
+            .memberships ?? []
+        let cell = cellLocation(of: actor)
+        return memberships.count { runtime.leave(actor, from: $0.faction, in: cell) }
     }
 
     public func relationshipRank(of actor: ReferenceKey, toward other: ReferenceKey) -> Int8?? {

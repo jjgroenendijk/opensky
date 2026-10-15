@@ -47,6 +47,11 @@ public protocol PapyrusWorldFactionBridge {
     @discardableResult
     func setFactionRank(_ rank: Int8, of actor: ReferenceKey, in faction: ReferenceKey) -> Bool?
 
+    /// Adds `delta` to a member's rank; a non-member is left out.
+    /// - Returns: true when memberships changed, or nil without a faction runtime.
+    @discardableResult
+    func modFactionRank(_ delta: Int32, of actor: ReferenceKey, in faction: ReferenceKey) -> Bool?
+
     /// The signed relationship rank between two actors, or nil when nothing names
     /// the pair.
     ///

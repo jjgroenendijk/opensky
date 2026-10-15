@@ -13,6 +13,7 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyPerceptionInterface
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface
@@ -151,6 +152,12 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// The location and cell snapshot conditions read, for `GetCurrentLocation`,
     /// `GetParentCell`, and `GetWorldSpace`. Nil without a world.
     public var conditionData: (() -> ConditionDataResolution)?
+    /// What perception knows about pairs of actors, for `HasLOS` and `IsDetectedBy`. Nil
+    /// without a perception pass.
+    public var detection: (() -> DetectionResolution?)?
+    /// The PACK an actor runs now, as a load-order FormID, for `GetCurrentPackage`. Nil
+    /// without a package runtime.
+    public var currentPackage: ((ReferenceKey) -> FormID?)?
     /// Where the player or a moving actor stands now, which its record no longer says.
     public var livePosition: ((ReferenceKey) -> SIMD3<Float>?)?
 

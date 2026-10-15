@@ -12,6 +12,8 @@ import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyPerception
+import OpenSkyPerceptionInterface
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
@@ -106,6 +108,10 @@ final class ScriptWorldAdapter {
         }
         bridge.conditionData = { [weak game] in
             game?.runtimeStateWorld.conditionData() ?? .empty
+        }
+        bridge.detection = { [weak game] in game?.perception.perceptionResolution() }
+        bridge.currentPackage = { [weak game] actor in
+            game?.packages.runtime?.currentPackage(for: actor)?.package.formID
         }
         bridge.livePosition = { [weak game] key in
             guard let game else { return nil }
