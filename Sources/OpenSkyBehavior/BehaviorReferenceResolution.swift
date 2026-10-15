@@ -44,6 +44,7 @@ nonisolated extension BehaviorGraphInstance {
             isWaitingForClip = true
         }
         referencedResults[name] = result
+        unboundEvents += result.unboundEvents
         pullEvents(from: child, key: key)
         activeStatesThisUpdate += child.activeStates
         return BehaviorPose(bones: result.bones, rootMotion: result.rootMotion)
@@ -104,6 +105,8 @@ nonisolated extension BehaviorGraphInstance {
             guard let name = event.name else { continue }
             if events.raise(named: name, payload: event.payload) {
                 raised.insert(name)
+            } else {
+                unboundEvents.append(name)
             }
         }
         pulledEventNames[key] = raised

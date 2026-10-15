@@ -35,6 +35,8 @@ env:
   ACTIONLINT_VERSION: 1.7.12
   # renovate: datasource=npm depName=jscpd
   JSCPD_VERSION: 5.4.0
+  # renovate: datasource=github-releases depName=astral-sh/uv
+  UV_VERSION: 0.13.1
   # The image holds several Xcodes and its default moves. Name the one that matches the
   # local Xcode; `make swift-baseline` fails when the Swift versions differ.
   DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
@@ -120,9 +122,17 @@ jobs:
           docs-length agent-files comment-length panel-text gap-registries duplicates no-suppressions
       - if: success() || failure()
         run: make file-length ALL=1
+      # The Python tools pin ruff in their uv.lock, so CI needs only uv.
+      - if: success() || failure()
+        uses: astral-sh/setup-uv@v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - if: success() || failure()
+        run: make py-format-check py-lint
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
-  # skills, or the Renovate config skips it. Any other event always builds.
+  # skills, the Python tools, the markdownlint config, or the Renovate config skips it.
+  # Static checks still lint and test those. Any other event always builds.
   changes:
     name: Changes
     runs-on: ubuntu-latest
@@ -144,6 +154,7 @@ jobs:
             for file in $files; do
               case "$file" in
                 *.md | docs/* | .agents/* | .claude/* | .github/renovate.json) ;;
+                tools/ck-wiki/* | tools/markdown/*) ;;
                 *) build=true ;;
               esac
             done

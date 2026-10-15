@@ -1,11 +1,12 @@
 #!/bin/sh
-# Game-content lint (AGENTS.md "Legal & IP boundary"). Two rules, one source of
+# Game-content lint (AGENTS.md "Legal & IP boundary"). Three rules, one source of
 # truth for `make lint` and CI:
 #
 #   1. Extracted Bethesda assets must never be committed, in any form.
 #   2. A frame OpenSky renders embeds the user's own game textures and meshes,
 #      so a rendered capture is game content too. Only the app icon set is a
 #      legitimately tracked image; verification captures go to gitignored .logs/.
+#   3. Pages of the offline Creation Kit wiki mirror are someone else's text.
 #
 # Checks every tracked file, so it also catches a blob that arrived by merge or
 # rebase rather than by `git add`.
@@ -46,6 +47,22 @@ if [ -n "$images" ]; then
     printf 'game content even as milestone evidence.\n'
     printf 'Fix: write it to .logs/ (gitignored) and link the local path in the\n'
     printf 'PR body instead of committing it.\n'
+  } >&2
+  exit 1
+fi
+
+# Rule 3: the Creation Kit wiki mirror (docs/tools/ck-wiki.md) is CC BY-SA text that is not
+# ours. Its pages are the only Markdown files with a `fetched_from:` key in the frontmatter.
+mirrored="$(printf '%s\n' "$files" | grep -E '\.md$' | while IFS= read -r f; do
+  [ -f "$f" ] && awk 'NR == 1 && $0 != "---" { exit 1 } NR > 1 && $0 == "---" { exit 1 }
+    /^fetched_from: / { found = 1; exit } END { exit !found }' "$f" && printf '%s\n' "$f"
+done || true)"
+if [ -n "$mirrored" ]; then
+  {
+    printf '[FAIL] Pages from the Creation Kit wiki mirror are tracked:\n'
+    printf '%s\n' "$mirrored" | indent
+    printf 'The mirror stays in the gitignored .cache/ck-wiki of the main checkout.\n'
+    printf 'Fix: git rm --cached <file>, and cite the url from its frontmatter instead.\n'
   } >&2
   exit 1
 fi

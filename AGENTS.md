@@ -27,9 +27,11 @@ Reversing formats is fine. Redistributing Bethesda content or code is not. There
 - The game install is read-only external input: located at runtime, never bundled, cached
   into the repo, or copied into build output.
 - About to add a binary blob -> stop, ask.
+- The offline Creation Kit wiki mirror is CC BY-SA text by others. It stays in the gitignored
+  `.cache/ck-wiki/`; cite a page's `url`, never commit the page.
 
-`make no-game-content` (part of `make check` and CI) enforces the first and third rules over
-the whole tracked tree. Nothing enforces the second one; that is on you.
+`make no-game-content` (part of `make check` and CI) enforces the first and third rules and the
+wiki mirror rule over the whole tracked tree. Nothing enforces the second one; that is on you.
 
 A task that seems to require committing or embedding game data -> do not. Surface the
 conflict.
@@ -241,4 +243,5 @@ the skill.
 | `driving-the-running-game` | Playing, testing, or debugging the live app window through `openskycli game` |
 | `building-app-ui` | Adding or changing main-app UI — sidebar destinations, control panels, inspectors |
 | `testing-and-verifying` | Running any test, build check, or verification, and before pushing |
+| `consulting-creation-kit-wiki` | Looking up anything on the Creation Kit wiki (ck.uesp.net), or syncing its offline copy |
 | `writing-agent-instructions` | Adding, editing, or reviewing an `AGENTS.md`, skill, or memory, or learning a new rule |

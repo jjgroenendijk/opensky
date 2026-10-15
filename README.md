@@ -41,7 +41,7 @@ Measured on 2026-10-15 by `make gaps`.
 | Behavior node classes | 22 | 29 | 51 | 43% |
 | Behavior features ignored | - | 251 | - | - |
 | Havok classes | 61 | 39 | 100 | 61% |
-| Animation events | 60 | 84 | 144 | 41% |
+| Animation events | 68 | 76 | 144 | 47% |
 | Behavior graph variables | 18 | 678 | 696 | 2% |
 | NIF block types | 82 | 63 | 145 | 56% |
 | Lighting shader types | 11 | 0 | 11 | 100% |

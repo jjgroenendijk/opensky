@@ -132,7 +132,8 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   built with `model()`, its particles, collision, and animation sequences.
 - Animation events are clip annotations. The payload after `.` or `@` is folded, so
   `SoundPlay.X` counts as `SoundPlay.*`. An event counts as done when combat, archery, or
-  ragdoll code observes it, or a footstep (`FSTP` `ANAM`) answers it. The graph itself
+  ragdoll code observes it, a footstep (`FSTP` `ANAM`) answers it, or it asks for a sound, a
+  camera shake, or head tracking ([animation events](/engine/animation-events.md)). The graph itself
   reacts to many events, so these rows need a check before they become an issue. The same
   holds for graph variables: the graph sets many of them itself.
 - A voice `.fuz` counts by the audio inside it. Its lip data counts in the lip sync section.

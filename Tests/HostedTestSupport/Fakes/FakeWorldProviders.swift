@@ -530,6 +530,8 @@ extension FakeWorldProviders {
 struct FakeLivingEnvironmentState {
     var lightAnimationEnabled = true
     var animatedLightCount = 0
+    var animationEventsEnabled = true
+    var sentAnimationEvents: [String] = []
     var particleSortingEnabled = true
     var controlledParticleSystemCount = 0
 }
@@ -542,6 +544,20 @@ extension FakeWorldProviders {
 
     var animatedLightCount: Int {
         livingEnvironment.animatedLightCount
+    }
+
+    var animationEventsEnabled: Bool {
+        get { livingEnvironment.animationEventsEnabled }
+        set { livingEnvironment.animationEventsEnabled = newValue }
+    }
+
+    var animationEventReadout: [String] {
+        ["sound play: \(livingEnvironment.sentAnimationEvents.count)"]
+    }
+
+    func sendPlayerAnimationEvent(_ name: String) -> Bool {
+        livingEnvironment.sentAnimationEvents.append(name)
+        return name.hasPrefix("SoundPlay.")
     }
 
     var particleSortingEnabled: Bool {

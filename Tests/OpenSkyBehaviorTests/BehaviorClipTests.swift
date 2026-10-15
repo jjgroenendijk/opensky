@@ -189,18 +189,22 @@ struct BehaviorClipTests {
         #expect(graph.update(deltaTime: 0.1).firedEvents.isEmpty)
     }
 
-    /// A graph that declares no event by the annotation's name is not an error.
-    /// One animation is played by behavior files that care about different
-    /// marks, so an unmatched name is dropped rather than tallied.
-    @Test func anAnnotationTheGraphDoesNotDeclareIsDropped() throws {
+    /// A graph that declares no event by the annotation's name is not an error: the
+    /// graph does not react, but the engine still reads the name, as it reads
+    /// `SoundPlay.<editor ID>` in any clip. It comes out on the update that crossed it.
+    @Test func anAnnotationTheGraphDoesNotDeclareComesOutUnbound() throws {
         let (graph, _) = try annotatedGraph(
-            annotations: [(time: 0.5, text: "FootLeft")], events: ["somethingElse"]
+            annotations: [(time: 0.5, text: "SoundPlay.TestClap")], events: ["somethingElse"]
         )
         var fired = 0
+        var unbound: [String] = []
         for _ in 0 ..< 30 {
-            fired += graph.update(deltaTime: 0.1).firedEvents.count
+            let result = graph.update(deltaTime: 0.1)
+            fired += result.firedEvents.count
+            unbound += result.unboundEvents
         }
         #expect(fired == 0)
+        #expect(unbound == Array(repeating: "SoundPlay.TestClap", count: 3))
     }
 
     // MARK: - Root motion

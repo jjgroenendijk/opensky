@@ -57,6 +57,7 @@ final class ObjectAnimationWorldAdapter {
         guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
             return
         }
+        game.renderer?.session.animationEvents.handle(name, from: key)
         game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
     }
 

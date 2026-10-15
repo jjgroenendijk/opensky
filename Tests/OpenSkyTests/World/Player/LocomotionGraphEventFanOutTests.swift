@@ -78,6 +78,16 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(first) == ["FootLeft", "HitFrame"])
     }
 
+    @Test func unboundNamesFollowTheStepsEvents() {
+        let queue = LocomotionGraphEventQueue()
+        let consumer = queue.addConsumer()
+
+        queue.enqueue([Self.event("HitFrame")], unbound: ["SoundPlay.TestClap"])
+        queue.enqueue([], unbound: ["CameraShake.0.2"])
+
+        #expect(queue.drain(consumer) == ["HitFrame", "SoundPlay.TestClap", "CameraShake.0.2"])
+    }
+
     @Test func unnamedEventsAreNotQueued() {
         let queue = LocomotionGraphEventQueue()
         let consumer = queue.addConsumer()
@@ -87,11 +97,11 @@ struct LocomotionGraphEventFanOutTests {
         #expect(queue.drain(consumer) == ["HitFrame"])
     }
 
-    /// Footsteps, melee, archery, and ragdoll, registered at construction: the
-    /// queue drops what no cursor can read, so a lazy cursor would find nothing.
+    /// Footsteps, melee, archery, ragdoll, and animation events, registered at construction:
+    /// the queue drops what no cursor can read, so a lazy cursor would find nothing.
     @Test func theBridgeRegistersEveryCursorAtConstruction() {
         let bridge = LocomotionBridge(configuration: .synthetic)
-        #expect(bridge.graphEvents.consumerCount == 4)
+        #expect(bridge.graphEvents.consumerCount == 5)
     }
 
     /// The fourth consumer must not displace the first three either.

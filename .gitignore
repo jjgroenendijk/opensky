@@ -29,6 +29,9 @@ xcuserdata/
 /Packages/
 
 # ── Tooling / OS ──────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+.ruff_cache/
 .DS_Store
 ._*
 *.swp

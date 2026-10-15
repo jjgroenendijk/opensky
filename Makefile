@@ -152,6 +152,10 @@ MD_GLOB          := **/*.md
 SWIFTLINT        ?= swiftlint
 CLANG_FORMAT     ?= xcrun clang-format
 METAL_FILES      := $(shell find Sources -name '*.metal' 2>/dev/null) $(wildcard Sources/Shaders/*.h)
+# The Python tools are one uv project; uv.lock pins ruff. The uv cache is on
+# the boot disk and the project on the data volume, so uv copies instead of hard-linking.
+PY_PROJECT       := tools/ck-wiki
+UV_RUN           := UV_LINK_MODE=copy uv run --locked --quiet --project $(PY_PROJECT)
 
 .DEFAULT_GOAL := help
 
@@ -187,6 +191,7 @@ link-shared: #| Point this worktree's ffmpeg and compile cache at the main check
 
 .PHONY: fix check format format-check swift-format-check metal-format-check lint \
         swift-baseline swift-format swift-lint metal-format md-format md-lint sh-lint \
+        py-format py-format-check py-lint \
         cli-boundary module-graph realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content \
         docs-links docs-length agent-files workflow-lint comment-length panel-text comment-blocks comment-apply \
         duplicates no-suppressions file-length
@@ -195,9 +200,9 @@ fix: format lint ## Autoformat, then run every linter (the everyday gate)
 
 check: swift-baseline format-check lint docs-links ## The same gate without writing files [ALL=1 lints every Swift file]
 
-format: swift-format metal-format md-format ## Autoformat Swift, Metal, and Markdown
+format: swift-format metal-format md-format py-format ## Autoformat Swift, Metal, Markdown, and Python
 
-format-check: swift-format-check metal-format-check md-lint #| Fail if anything is unformatted, without writing
+format-check: swift-format-check metal-format-check md-lint py-format-check #| Fail if anything is unformatted, without writing
 
 swift-format-check: #| Fail if any changed Swift file is unformatted [ALL=1 whole tree]
 	@files="$(LINT_SWIFT)"; [ -n "$$files" ] || { echo "[ OK ] no changed Swift file to check"; exit 0; }; \
@@ -207,7 +212,7 @@ metal-format-check: #| Fail if any Metal shader is unformatted
 	@[ -z "$(METAL_FILES)" ] || $(CLANG_FORMAT) --style=file:$(CLANGFORMAT_CFG) \
 		--dry-run --Werror $(METAL_FILES)
 
-lint: swift-lint md-lint sh-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text gap-registries duplicates no-suppressions file-length ## Run every linter (warnings fail)
+lint: swift-lint md-lint sh-lint py-lint cli-boundary realdata-plan lint-test-plans lint-test-tags lint-test-targets no-game-content docs-length agent-files workflow-lint comment-length panel-text gap-registries duplicates no-suppressions file-length ## Run every linter (warnings fail)
 	@./tools/lint/module-graph.sh
 
 swift-baseline: #| Check for the Apple Swift that CI uses and Swift 6 mode in every target
@@ -233,7 +238,16 @@ md-lint: #| Lint Markdown strictly
 	@markdownlint-cli2 --config $(MD_CFG) "$(MD_GLOB)"
 
 sh-lint: #| Shellcheck the tools/ scripts
-	@shellcheck -s sh $$(find tools -type f -name '*.sh')
+	@shellcheck -s sh $$(find tools -type f -name '*.sh' -not -path '*/.venv/*')
+
+py-format: #| Autoformat the Python tools with ruff
+	@$(UV_RUN) ruff format $(PY_PROJECT)
+
+py-format-check: #| Fail if a Python tool file is unformatted
+	@$(UV_RUN) ruff format --check $(PY_PROJECT)
+
+py-lint: #| Lint the Python tools strictly with ruff
+	@$(UV_RUN) ruff check $(PY_PROJECT) && echo "[ OK ] Python tools clean"
 
 # Every Sources/ folder except OpenSky/ is built into or linked by OpenSkyCLI, so an
 # app-only import there breaks the CLI build. This catches it without building.
@@ -402,7 +416,7 @@ icon: #| Regenerate the AppIcon PNGs from ICON_SVG (needs librsvg)
 # runs. T adds -only-testing. A typo in T runs zero tests and still passes.
 
 .PHONY: test-unit test-rerun test-package test-ui test-sanitize test-real test-report test-perms \
-        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample
+        coverage-floor sanitizer-shaders profile benchmark gaps launch-sample ck-wiki
 
 # The result bundle of one run, in its own run directory (issue #347).
 test_bundle = -resultBundlePath "$$($(RUN_DIR) -b $(TEST_RESULTS) $(1))/$(1).xcresult"
@@ -513,6 +527,9 @@ test-report: ## Summarize the newest test result bundle, failures included
 
 test-perms: ## Check the one-time macOS permission grants tests need
 	@./tools/test-perms.sh
+
+ck-wiki: ## Download or update the offline Creation Kit wiki in Markdown [ARGS='--source wayback']
+	@$(UV_RUN) ck-wiki $(ARGS)
 
 coverage-floor: ## Fail when a parser module is under COVERAGE_FLOOR in the last `test-unit COVERAGE=1` run
 	@./tools/lint/coverage-floor.sh $(COVERAGE_FLOOR) $(DERIVED_DATA)

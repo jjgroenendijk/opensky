@@ -17,6 +17,7 @@ final class WorldSessionWiring {
     unowned let game: GameViewController
     /// Actor clips for idles, gaits, and combat reactions, loaded off the main actor.
     private(set) var animationClips: ActorClipLoader?
+    private(set) lazy var animationEvents = AnimationEventWorldAdapter(game: game)
 
     init(game: GameViewController) {
         self.game = game
@@ -166,6 +167,7 @@ final class WorldSessionWiring {
         game.idleWorld.wireIdles(provider: provider, renderer: renderer)
         game.vehicleWorld.wireVehicles(renderer: renderer)
         game.objectAnimationWorld.wire(renderer: renderer)
+        animationEvents.wire(renderer: renderer)
         // The perception pass answers "did anybody see it" for every crime.
         game.crimeWorld.attachWitnesses(perception: game.perception.runtime)
         // The Talk filter reads the death and hostility state the systems above keep.

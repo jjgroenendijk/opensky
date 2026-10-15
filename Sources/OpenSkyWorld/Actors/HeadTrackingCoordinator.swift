@@ -51,6 +51,8 @@ public final class HeadTrackingCoordinator {
     }
 
     private var targets: [ReferenceKey: HeldTarget] = [:]
+    /// Actors whose clip sent `HeadTrackingOff`: they look ahead until `HeadTrackingOn`.
+    public private(set) var heldForward: Set<ReferenceKey> = []
     private var clock: Float = 0
     public private(set) var looks: [ReferenceKey: HeadLook] = [:]
     /// The target each actor looked at in the last tick, for the readout.
@@ -83,6 +85,16 @@ public final class HeadTrackingCoordinator {
         targets[actor] = target.map { HeldTarget(target: $0, until: seconds.map { clock + $0 }) }
     }
 
+    /// A clip's `HeadTrackingOff` holds the head forward, so an attack aims where the body
+    /// faces; `HeadTrackingOn` lets it turn again.
+    public func setHeadTracking(_ enabled: Bool, for actor: ReferenceKey) {
+        if enabled {
+            heldForward.remove(actor)
+        } else {
+            heldForward.insert(actor)
+        }
+    }
+
     public func tick(deltaTime: Float) {
         clock += max(deltaTime, 0)
         targets = targets.filter { $0.value.until.map { $0 > clock } ?? true }
@@ -111,6 +123,7 @@ public final class HeadTrackingCoordinator {
         of subject: HeadTrackingSubject,
         player: SIMD3<Float>?
     ) -> ReferenceKey? {
+        guard !heldForward.contains(subject.key) else { return nil }
         if let held = targets[subject.key] {
             return held.target
         }
