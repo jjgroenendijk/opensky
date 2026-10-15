@@ -94,7 +94,7 @@ extension AIWorldAdapter {
     }
 
     /// The same ambient, directional, and point light the scene pass shades with.
-    private func lightLevel(at position: SIMD3<Float>) -> Float {
+    func lightLevel(at position: SIMD3<Float>) -> Float {
         guard let renderer = game.renderer, let settings = game.perception.runtime?.settings else {
             return 1
         }

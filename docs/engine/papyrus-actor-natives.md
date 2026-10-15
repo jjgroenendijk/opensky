@@ -40,6 +40,7 @@ dirty counts, and the save by the same path as any other change.
 | `bool HasLOS(ObjectReference)` | The perception pair's line of sight; a pair perception does not track fails | [HasLOS - Actor](https://ck.uesp.net/wiki/HasLOS_-_Actor) |
 | `bool IsDetectedBy(Actor)` | Whether the other actor's pair with this one is detected | [IsDetectedBy - Actor](https://ck.uesp.net/wiki/IsDetectedBy_-_Actor) |
 | `Package GetCurrentPackage()` | The package the AI runs now, or `None` | [GetCurrentPackage - Actor](https://ck.uesp.net/wiki/GetCurrentPackage_-_Actor) |
+| `float GetLightLevel()` | The light level detection reads on the actor, times 100. The wiki gives 0 to 150, and how the game scales it is not confirmed | [GetLightLevel - Actor](https://ck.uesp.net/wiki/GetLightLevel_-_Actor) |
 | `Package Package.GetTemplate()` | The package's `PKCU` template, or `None` for a package built without one | [GetTemplate - Package](https://ck.uesp.net/wiki/GetTemplate_-_Package) |
 | `ResetHealthAndLimbs()` | Health back to its maximum; OpenSky has no limb damage | [ResetHealthAndLimbs - Actor](https://ck.uesp.net/wiki/ResetHealthAndLimbs_-_Actor) |
 

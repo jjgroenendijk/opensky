@@ -15,6 +15,7 @@ import OpenSkyMagicInterface
 import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyQuests
 import OpenSkyRendering
@@ -123,6 +124,10 @@ final class ScriptWorldAdapter {
             game?.packages.runtime?.currentPackage(for: actor)?.package.formID
         }
         bridge.packageTemplate = { [weak game] package in game?.packages.template(of: package) }
+        bridge.lightLevel = { [weak game] feet in
+            let body = SIMD3<Float>(0, 0, PlayerCapsule.standard.eyeHeight * 0.5)
+            return game?.aiWorld.lightLevel(at: feet + body) ?? 1
+        }
         bridge.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
             game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in

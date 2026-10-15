@@ -1,5 +1,6 @@
 // What an actor sees and runs: `HasLOS`, `IsDetectedBy`, `GetCurrentPackage`,
-// `Package.GetTemplate`, and `ResetHealthAndLimbs` (<https://ck.uesp.net/wiki/Actor_Script>). A
+// `GetLightLevel`, `Package.GetTemplate`, and `ResetHealthAndLimbs`
+// (<https://ck.uesp.net/wiki/Actor_Script>). A
 // pair perception
 // does not track is a failure, not a false. See docs/engine/papyrus-actor-natives.md.
 
@@ -28,6 +29,13 @@ extension PapyrusNativeFunctions {
                 .flatMap(bridge.referenceKey(forFormID:))
                 .flatMap(bridge.objectHandle(for:))
             return .returned(handle.map { .object($0) } ?? .none)
+        }
+        // The wiki gives 0 to 150. Detection's 0...1 level times 100 is a guess at that scale.
+        withActorBridge("GetLightLevel", into: &registry) { call, bridge, actor in
+            guard let light = bridge.lightLevel, let feet = position(of: actor, bridge) else {
+                return failure(call, "GetLightLevel needs the renderer and the actor's position")
+            }
+            return .returned(.float(light(feet) * 100))
         }
         // The `PKCU` template package, or None for a package built without one.
         scriptState("Package", "GetTemplate", into: &registry) { call, bridge, key in

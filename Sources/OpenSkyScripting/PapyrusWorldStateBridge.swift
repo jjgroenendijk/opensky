@@ -175,6 +175,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var currentPackage: ((ReferenceKey) -> FormID?)?
     /// A PACK's `PKCU` template, for `Package.GetTemplate`. Nil without package records.
     public var packageTemplate: ((FormID) -> FormID?)?
+    /// The 0...1 light detection reads on an actor whose feet are here. Nil without a renderer.
+    public var lightLevel: ((SIMD3<Float>) -> Float)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
     /// Hands the drawn pose of every moving reference to the renderer, after each change.

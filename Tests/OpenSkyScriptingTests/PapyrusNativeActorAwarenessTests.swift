@@ -1,5 +1,5 @@
-// `HasLOS`, `IsDetectedBy`, `GetCurrentPackage`, and `Utility.WaitMenuMode` over
-// synthetic perception and package answers.
+// `HasLOS`, `IsDetectedBy`, `GetCurrentPackage`, `GetLightLevel`, and
+// `Utility.WaitMenuMode` over synthetic perception, light, and package answers.
 
 import Foundation
 @testable import OpenSkyFormatsESM
@@ -7,6 +7,7 @@ import Foundation
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
+import OpenSkyWorldState
 import Testing
 
 @MainActor
@@ -96,5 +97,21 @@ struct PapyrusNativeActorAwarenessTests {
             receiver: nil, arguments: [.float(2)], returnType: .none
         ))
         #expect(result == .suspended(.realSeconds(2)))
+    }
+
+    @Test func lightLevelScalesTheDetectionLevel() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        guard case .failed = call(fixture, "GetLightLevel") else {
+            Issue.record("GetLightLevel answered without the renderer")
+            return
+        }
+        var sampled: SIMD3<Float>?
+        fixture.session.bridge.lightLevel = { feet in
+            sampled = feet
+            return 0.25
+        }
+        #expect(call(fixture, "GetLightLevel") == .returned(.float(25)))
+        #expect(sampled == fixture.session.bridge.referenceState(for: fixture.key)?.transform
+            .position)
     }
 }
