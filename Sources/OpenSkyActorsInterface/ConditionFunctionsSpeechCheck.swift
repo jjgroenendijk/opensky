@@ -36,6 +36,22 @@ nonisolated extension ConditionContext {
     }
 }
 
+nonisolated extension ConditionContext {
+    /// The gold `actor` asks as a bribe, with the player's perk factor. Nil without the
+    /// settings or either actor's values.
+    public func bribeAmount(of actor: ReferenceKey) -> Float? {
+        guard
+            let settings = speechChecks.settings,
+            let npc = actors.state(for: actor),
+            let player = actors.state(for: .player)
+        else { return nil }
+        let values = SpeechCheckValues.actors(
+            player: player, playerLevel: player.level, npc: npc, npcLevel: npc.level
+        )
+        return settings.bribeAmount(values) * speechChecks.bribeFactor
+    }
+}
+
 /// Actor value indices the checks read (UESP "Actor Value Indices").
 nonisolated public enum SpeechCheckValues {
     public static let confidence: Int32 = 1

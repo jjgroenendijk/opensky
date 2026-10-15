@@ -16,6 +16,8 @@ import Testing
 private final class FakeMenuBridge: PapyrusMenuBridge {
     var calls: [String] = []
     var races: [ReferenceKey: FormID] = [:]
+    var voiceTypes: [FormID: FormID] = [:]
+    var giftFilters: [FormID: FormID] = [:]
 
     func showRaceMenu(limited: Bool) {
         calls.append("race(\(limited))")
@@ -49,6 +51,14 @@ private final class FakeMenuBridge: PapyrusMenuBridge {
 
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags? {
         nil
+    }
+
+    func voiceType(ofBase base: FormID) -> FormID? {
+        voiceTypes[base]
+    }
+
+    func giftFilter(ofBase base: FormID) -> FormID? {
+        giftFilters[base]
     }
 
     func name(of form: FormID) -> String? {
@@ -106,6 +116,25 @@ struct PapyrusNativeMenusTests {
         #expect(actor("GetRace") == base)
         menus.races = [:]
         #expect(actor("GetRace") == .returned(.none))
+    }
+
+    @Test func voiceTypeAndGiftFilterReadTheBase() throws {
+        let fixture = try PapyrusNativeReferenceFixture.make()
+        let menus = FakeMenuBridge()
+        let door = FormID(PapyrusNativeReferenceFixture.doorID)
+        menus.voiceTypes[FormID(0x100)] = door
+        menus.giftFilters[FormID(0x100)] = door
+        fixture.session.bridge.menus = menus
+        let doorHandle = PapyrusNativeResult.returned(
+            .object(fixture.handle(PapyrusNativeReferenceFixture.doorID))
+        )
+        #expect(fixture.call("GetVoiceType", returnType: .object("VoiceType")) == doorHandle)
+        #expect(fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "ActorBase", "GetGiftFilter", receiver: fixture.handle(0x100),
+            returnType: .object("FormList")
+        )) == doorHandle)
+        menus.voiceTypes = [:]
+        #expect(fixture.call("GetVoiceType", returnType: .object("VoiceType")) == .returned(.none))
     }
 
     /// A placed actor is an `ACHR`, not a `REFR`, and still names its NPC base.

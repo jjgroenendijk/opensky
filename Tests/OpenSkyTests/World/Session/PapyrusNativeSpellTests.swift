@@ -126,6 +126,18 @@ struct PapyrusNativeSpellTests {
 
     // MARK: - Knowing
 
+    @Test func isHostileReadsTheEffectFlags() throws {
+        let fixture = try Self.fixture()
+        for (spell, hostile) in [
+            (SpellbookFixture.Spell.fireball, true), (SpellbookFixture.Spell.healing, false)
+        ] {
+            let receiver = fixture.session.world.objectHandle(for: SpellbookFixture.key(spell))
+            #expect(call("Spell", "IsHostile", fixture, receiver: receiver, returnType: .boolean)
+                == .returned(.boolean(hostile)))
+        }
+        #expect(call("Spell", "Preload", fixture, receiver: nil) == .returned(.none))
+    }
+
     @Test func addSpellIsVisibleToASubsequentHasSpell() throws {
         let fixture = try Self.fixture()
         let spell = spellHandle(SpellbookFixture.Spell.fastHealing, fixture)

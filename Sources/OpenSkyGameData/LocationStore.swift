@@ -216,6 +216,18 @@ nonisolated public struct LocationStore: Sendable {
         return chain
     }
 
+    /// Whether the two `PNAM` chains share a parent above both locations. With a keyword,
+    /// the shared parent must carry it.
+    public func hasCommonParent(
+        _ left: ResolvedFormID, _ right: ResolvedFormID, carrying keyword: ResolvedFormID?
+    ) -> Bool {
+        let rightParents = parentChain(of: right).dropFirst()
+        return parentChain(of: left).dropFirst().contains { parent in
+            rightParents.contains { sameIdentity($0.id, parent.id) }
+                && keyword.map { hasKeyword($0, in: parent.id) } ?? true
+        }
+    }
+
     private func parentID(of id: ResolvedFormID) -> ResolvedFormID? {
         guard
             let resolved = location(id),

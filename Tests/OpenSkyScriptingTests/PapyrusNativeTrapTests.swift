@@ -24,6 +24,18 @@ private final class FakeObjectAnimation: PapyrusObjectAnimationBridge {
         awaited.append(event)
         return hasGraph ? 77 : nil
     }
+
+    var variables: [String: PapyrusValue] = [:]
+
+    func animationVariable(_ name: String, on _: ReferenceKey) -> PapyrusValue? {
+        variables[name]
+    }
+
+    func setAnimationVariable(_ name: String, to value: PapyrusValue, on _: ReferenceKey) -> Bool {
+        guard variables[name] != nil else { return false }
+        variables[name] = value
+        return true
+    }
 }
 
 private final class FakeTrapWorld: PapyrusTrapWorldBridge {
@@ -161,6 +173,43 @@ struct PapyrusNativeTrapTests {
         #expect(paced == .suspended(.realSecondsAnswering(
             PapyrusNativeFunctions.animationEventWaitSeconds, .boolean(true)
         )))
+    }
+
+    @Test func animationVariablesReadAndWriteTheGraphInTheNamedType() throws {
+        let fixture = try Fixture.make()
+        let graphs = FakeObjectAnimation()
+        graphs.variables = ["bOpen": .boolean(false), "iState": .integer(2)]
+        fixture.session.bridge.objectAnimation = graphs
+        #expect(fixture.call(
+            "SetAnimationVariableBool",
+            arguments: [.string("bOpen"), .boolean(true)]
+        )
+            == .returned(.none))
+        #expect(graphs.variables["bOpen"] == .boolean(true))
+        #expect(fixture.call(
+            "GetAnimationVariableInt",
+            arguments: [.string("bOpen")],
+            returnType: .integer
+        )
+            == .returned(.integer(1)))
+        #expect(fixture.call("SetAnimationVariableInt", arguments: [.string("iState"), .integer(5)])
+            == .returned(.none))
+        #expect(fixture.call(
+            "GetAnimationVariableFloat",
+            arguments: [.string("iState")],
+            returnType: .float
+        )
+            == .returned(.float(5)))
+        #expect(PapyrusWorldFixture.isInvalidArguments(fixture.call(
+            "SetAnimationVariableFloat", arguments: [.string("fMissing"), .float(1)]
+        )))
+
+        let send = fixture.registry.invoke(PapyrusWorldFixture.methodCall(
+            "Debug", "SendAnimationEvent", receiver: nil,
+            arguments: [.object(fixture.receiver), .string("Open")]
+        ))
+        #expect(send == .returned(.none))
+        #expect(graphs.played == ["Open"])
     }
 
     @Test func processTrapHitNeedsAnActor() throws {

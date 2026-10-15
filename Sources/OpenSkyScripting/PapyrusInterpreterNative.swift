@@ -90,7 +90,7 @@ extension PapyrusInterpreter {
 
     private func dispatch(_ call: PapyrusNativeCall) -> PapyrusNativeResult {
         runtime.tally.noteNative(call)
-        let result = runtime.nativeDispatch.invoke(call)
+        let result = runtime.nativeDispatch.invoke(withStack(call))
         switch result {
         case let .failed(failure):
             runtime.tally.noteNativeFailure(failure, call: call)
@@ -100,6 +100,29 @@ extension PapyrusInterpreter {
             break
         }
         return result
+    }
+
+    /// `Debug.TraceStack` prints the callers, which only the interpreter knows.
+    private func withStack(_ call: PapyrusNativeCall) -> PapyrusNativeCall {
+        guard
+            call.scriptName.caseInsensitiveCompare("Debug") == .orderedSame,
+            call.functionName.caseInsensitiveCompare("TraceStack") == .orderedSame
+        else { return call }
+        let lines = frames.reversed().map { frame in
+            "  \(frame.ownerScript.name) at instruction \(max(0, frame.instructionIndex - 1))"
+        }
+        var arguments = Array(call.arguments.prefix(2))
+        while arguments.count < 2 {
+            arguments.append(arguments.isEmpty ? .string("Tracing stack on request") : .integer(0))
+        }
+        return PapyrusNativeCall(
+            kind: call.kind,
+            scriptName: call.scriptName,
+            functionName: call.functionName,
+            receiver: call.receiver,
+            arguments: arguments + [.string(lines.joined(separator: "\n"))],
+            returnType: call.returnType
+        )
     }
 
     func nativeReturnType(_ destination: PexValue) -> PapyrusType {

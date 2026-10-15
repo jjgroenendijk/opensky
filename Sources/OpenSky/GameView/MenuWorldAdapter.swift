@@ -261,6 +261,14 @@ extension MenuWorldAdapter: PapyrusMenuBridge {
         identityRecords?.templates.actors[base.rawValue]?.flags
     }
 
+    func voiceType(ofBase base: FormID) -> FormID? {
+        identityRecords?.voiceType(ofBase: base)
+    }
+
+    func giftFilter(ofBase base: FormID) -> FormID? {
+        identityRecords?.templates.actors[base.rawValue]?.details.giftFilter
+    }
+
     func name(of form: FormID) -> String? {
         if form == MenuRecordData.playerBase {
             return playerIdentity?.name

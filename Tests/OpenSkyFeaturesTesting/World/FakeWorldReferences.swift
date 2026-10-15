@@ -44,6 +44,10 @@ nonisolated public final class FakeWorldReferences: PapyrusWorldReferenceSource 
         index[key].map { index.sortedEntries().activateChildren(of: $0.formID) } ?? []
     }
 
+    public func residentEntries() -> [RuntimeReferenceEntry] {
+        index.sortedEntries()
+    }
+
     public func pluginPlacement(of key: ReferenceKey) -> PluginPlacement? {
         pluginPlacements[key]
     }

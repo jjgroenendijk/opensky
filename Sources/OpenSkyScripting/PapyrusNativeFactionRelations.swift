@@ -30,6 +30,17 @@ extension PapyrusNativeFunctions {
                 return .returned(.none)
             }
         }
+        // `SetReaction(Faction akOther, int aiNewValue)` sets one side only. The wiki says 3
+        // makes friends, so the value is read as an `XNAM` combat reaction code.
+        scriptState("Faction", "SetReaction", into: &registry) { call, bridge, faction in
+            guard
+                let other = objectArgument(call, at: 0).flatMap(bridge.referenceKey(for:)),
+                let code = integer(call, at: 1), code >= 0,
+                let reaction = ActorReaction(Faction.CombatReaction(rawValue: UInt32(code)))
+            else { return failure(call, "SetReaction needs a faction and a reaction from 0 to 3") }
+            bridge.setFactionReaction(reaction, of: faction, toward: other)
+            return .returned(.none)
+        }
         // `SetPlayerEnemy(bool abIsEnemy = true)`: enemies of the player's faction, or
         // neutral to it again.
         scriptState("Faction", "SetPlayerEnemy", into: &registry) { call, bridge, faction in

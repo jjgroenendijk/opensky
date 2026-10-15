@@ -18,9 +18,15 @@ nonisolated public protocol PapyrusWorldReferenceSource: AnyObject {
     func activateChildren(of key: ReferenceKey) -> [ReferenceKey]
     /// The plugin record behind `key` and the cell that draws it there, loaded or not.
     func pluginPlacement(of key: ReferenceKey) -> PluginPlacement?
+    /// Every resident reference, in key order, for the radius searches.
+    func residentEntries() -> [RuntimeReferenceEntry]
 }
 
 nonisolated extension PapyrusWorldReferenceSource {
+    public func residentEntries() -> [RuntimeReferenceEntry] {
+        []
+    }
+
     public func pluginPlacement(of _: ReferenceKey) -> PluginPlacement? {
         nil
     }

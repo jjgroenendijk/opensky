@@ -43,6 +43,8 @@ private final class FakeEffects: PapyrusEffectPresenting {
 @MainActor
 private final class FakeSky: PapyrusWeatherControlling {
     var currentWeather: ReferenceKey?
+    var outgoingWeather: ReferenceKey?
+    var transitionFraction: Float = 1
     var held = false
     var codes: [ReferenceKey: Int32] = [:]
 
@@ -141,6 +143,32 @@ struct PapyrusNativeEffectsWeatherTests {
             == .returned(.object(rain)))
         #expect(call(fixture, "Weather", "GetClassification", on: rain, returnType: .integer)
             == .returned(.integer(2)))
+    }
+
+    @Test func aBlendReportsTheOutgoingWeatherAndItsProgress() throws {
+        let fixture = try Fixture.make()
+        let sky = FakeSky()
+        fixture.session.bridge.weather = sky
+        #expect(call(
+            fixture,
+            "Weather",
+            "GetOutgoingWeather",
+            on: nil,
+            returnType: .object("Weather")
+        )
+            == .returned(.none))
+        sky.outgoingWeather = Fixture.key(Fixture.doorID)
+        sky.transitionFraction = 0.25
+        #expect(call(
+            fixture,
+            "Weather",
+            "GetOutgoingWeather",
+            on: nil,
+            returnType: .object("Weather")
+        )
+            == .returned(.object(fixture.handle(Fixture.doorID))))
+        #expect(call(fixture, "Weather", "GetCurrentWeatherTransition", on: nil, returnType: .float)
+            == .returned(.float(0.25)))
     }
 
     @Test func weatherWithoutASkyFails() throws {

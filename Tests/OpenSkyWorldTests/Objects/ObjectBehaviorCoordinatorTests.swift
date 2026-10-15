@@ -1,5 +1,6 @@
 // The object behaviour coordinator without a graph, and the project path rules.
 
+import OpenSkyBehavior
 @testable import OpenSkyWorld
 import Testing
 
@@ -19,6 +20,8 @@ struct ObjectBehaviorCoordinatorTests {
         objects.tick(deltaTime: 1 / 60)
         #expect(!objects.send("Trigger", to: 0x10))
         #expect(objects.awaitEvent("Done", on: 0x10) == nil)
+        #expect(!objects.setVariable(.bool(true), named: "bOpen", on: 0x10))
+        #expect(objects.variable(named: "bOpen", on: 0x10) == nil)
         #expect(objects.rows.isEmpty)
     }
 

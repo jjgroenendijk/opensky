@@ -15,6 +15,12 @@ public protocol PapyrusObjectAnimationBridge: AnyObject {
     /// A token the app answers through `PapyrusScheduler.answer` when the graph
     /// fires `event`. Nil when the object runs no graph.
     func awaitAnimationEvent(_ event: String, on reference: ReferenceKey) -> UInt64?
+    /// A graph variable as a Papyrus value. Nil when the object runs no graph or the
+    /// graph declares no such variable.
+    func animationVariable(_ name: String, on reference: ReferenceKey) -> PapyrusValue?
+    /// False when the object runs no graph or the graph declares no such variable.
+    func setAnimationVariable(_ name: String, to value: PapyrusValue, on reference: ReferenceKey)
+        -> Bool
 }
 
 extension PapyrusNativeFunctions {
@@ -47,6 +53,23 @@ extension PapyrusNativeFunctions {
             else { return nil }
             return .suspended(.external(token))
         }
+        // `Debug.SendAnimationEvent(ObjectReference arRef, string asEventName)` raises the
+        // event like `PlayAnimation` does.
+        registry.register(PapyrusNativeFunction(
+            scriptName: "Debug", functionName: "SendAnimationEvent"
+        ) { call, context in
+            if
+                let world = context.world as? PapyrusWorldStateBridge,
+                let bridge = world.objectAnimation,
+                let key = objectArgument(call, at: 0).flatMap(world.referenceKey(for:)),
+                let event = string(call, at: 1), bridge.playAnimation(event, on: key)
+            {
+                return .returned(.none)
+            }
+            context.log.append("Deferred animation \(call.qualifiedName)")
+            return .deviated(.none, .deferredAnimation)
+        })
+        installAnimationVariables(into: &registry)
         registry.register(PapyrusNativeFunction(
             scriptName: "ObjectReference",
             functionName: "PlayGamebryoAnimation"

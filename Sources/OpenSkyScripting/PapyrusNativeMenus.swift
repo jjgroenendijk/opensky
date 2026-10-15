@@ -24,6 +24,10 @@ public protocol PapyrusMenuBridge: AnyObject {
     func race(ofBase base: FormID) -> FormID?
     /// The base record's own `ACBS` flags, or nil for an unknown base.
     func recordFlags(ofBase base: FormID) -> ActorBase.Flags?
+    /// The `VTCK` voice type after template inheritance.
+    func voiceType(ofBase base: FormID) -> FormID?
+    /// The base record's own `GNAM` gift filter form list.
+    func giftFilter(ofBase base: FormID) -> FormID?
     func name(of form: FormID) -> String?
     /// Moves the player next to `target`, loading its cell when it is not loaded.
     func movePlayer(to target: ReferenceKey)
@@ -160,6 +164,16 @@ extension PapyrusNativeFunctions {
                 .flatMap { world.scriptedState(of: $0).flag(ScriptedStateName.essential) }
             let recorded = menus.recordFlags(ofBase: base)?.contains(.essential)
             return .returned(.boolean(scripted ?? recorded ?? false))
+        }
+        withForm("ActorBase", "GetGiftFilter", into: &registry) { _, world, menus, form in
+            .returned(menus.giftFilter(ofBase: form).map { formHandle($0, in: world) } ?? .none)
+        }
+        // A talking activator's voice is not read, so it answers None.
+        withReference("ObjectReference", "GetVoiceType", into: &registry) { _, world, menus, key in
+            let base = key == .player ? FormID(0x7) : world.baseObject(of: key)
+            return .returned(base.flatMap(menus.voiceType(ofBase:)).map {
+                formHandle($0, in: world)
+            } ?? .none)
         }
         withForm("Form", "GetName", into: &registry) { _, _, menus, form in
             .returned(.string(menus.name(of: form) ?? ""))

@@ -34,8 +34,10 @@ struct PapyrusNativeCrimeTests {
         var cell: CellSceneLocation? = .interior(FormID(0x50))
         var faction: ReferenceKey? = CrimeFixture.key(CrimeFixture.Factions.hold)
 
+        var owner: ReferenceOwner?
+
         func crimeOwner(of key: ReferenceKey) -> ReferenceOwner? {
-            nil
+            owner
         }
 
         func crimeFaction(in cell: CellSceneLocation?) -> ReferenceKey? {
@@ -46,8 +48,10 @@ struct PapyrusNativeCrimeTests {
             cell
         }
 
+        var itemValue: Int64 = 0
+
         func crimeItemValue(of item: FormID) -> Int64 {
-            0
+            itemValue
         }
 
         func crimeActor(_: ReferenceKey) -> CrimeActor {
@@ -253,6 +257,28 @@ struct PapyrusNativeCrimeTests {
 
         #expect(fixture.reporter.runtime.crimeGold(of: hold) == 5)
         #expect(fixture.reporter.runtime.crimeCounts(of: hold).trespass == 1)
+    }
+
+    /// `SendStealAlarm(Actor akThief)` charges a witnessed theft only when the object
+    /// belongs to someone else.
+    @Test func theStealAlarmChargesAForbiddenTakeOnly() throws {
+        let fixture = try Self.fixture()
+        let player = try #require(fixture.session.bridge.objectHandle(for: .player))
+        let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+
+        call(
+            "ObjectReference", "SendStealAlarm", fixture,
+            receiver: fixture.actor, arguments: [.object(player)]
+        )
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
+
+        fixture.world.owner = .actor(CrimeFixture.key(0x0004_0002))
+        fixture.world.itemValue = 50
+        call(
+            "ObjectReference", "SendStealAlarm", fixture,
+            receiver: fixture.actor, arguments: [.object(player)]
+        )
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) > 0)
     }
 
     /// A trespass alarm with no criminal argument is refused rather than

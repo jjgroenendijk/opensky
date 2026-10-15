@@ -20,6 +20,17 @@ extension PapyrusWorldStateBridge {
         }
     }
 
+    /// The base form of a placed reference, read in its plugin's space.
+    func resolvedBase(of reference: ReferenceKey) -> ReferenceKey? {
+        guard let keywordStore, let base = baseObject(of: reference) else { return nil }
+        let space = if case let .plugin(plugin, _) = reference {
+            plugin
+        } else {
+            FormIDResolver.loadOrderSpaceName
+        }
+        return keywordStore.resolvedID(base, fromPlugin: space).map(ReferenceKey.init(resolved:))
+    }
+
     public func formHasKeyword(_ form: ReferenceKey, keyword: ReferenceKey) -> Bool? {
         guard
             let keywordStore,

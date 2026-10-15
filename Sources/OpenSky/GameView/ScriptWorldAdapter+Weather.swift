@@ -23,6 +23,15 @@ extension ScriptWorldAdapter: PapyrusWeatherControlling {
         return ReferenceKey.resolve(id, using: resolver)
     }
 
+    var outgoingWeather: ReferenceKey? {
+        guard let id = weatherSystem?.outgoingWeatherID, let resolver else { return nil }
+        return ReferenceKey.resolve(id, using: resolver)
+    }
+
+    var transitionFraction: Float {
+        weatherSystem?.transitionFraction ?? 1
+    }
+
     func setWeather(_ weather: ReferenceKey, held: Bool, instant: Bool) -> Bool {
         guard let system = weatherSystem, let id = weatherFormID(weather) else { return false }
         if held {

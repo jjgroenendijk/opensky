@@ -131,6 +131,24 @@ extension PapyrusNativeFunctions {
             return .returned(.none)
         })
 
+        // "Has this object behave as if the actor had just tried to steal it." —
+        // `Function SendStealAlarm(Actor akThief)`
+        // (<https://ck.uesp.net/wiki/SendStealAlarm_-_ObjectReference>)
+        registry.register(PapyrusNativeFunction(
+            scriptName: "ObjectReference",
+            functionName: "SendStealAlarm"
+        ) { call, context in
+            guard
+                let world = context.world as? PapyrusWorldStateBridge,
+                let item = call.receiver.flatMap(world.referenceKey(for:)),
+                let thief = objectArgument(call, at: 0).flatMap(world.referenceKey(for:))
+            else { return failure(call, "SendStealAlarm needs an object and a thief") }
+            guard world.sendStealAlarm(on: item, thief: thief) != nil else {
+                return failure(call, "SendStealAlarm needs a session with a crime runtime")
+            }
+            return .returned(.none)
+        })
+
         // "Have this actor pretend he caught the specified criminal
         // trespassing." —
         // `Function SendTrespassAlarm(Actor akCriminal) native`

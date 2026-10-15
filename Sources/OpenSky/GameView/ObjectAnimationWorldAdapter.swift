@@ -2,6 +2,7 @@
 // animated objects, steps it in the world update, and answers Papyrus waits.
 // The rules live in `ObjectBehaviorCoordinator` (docs/engine/object-animation.md).
 
+import OpenSkyBehavior
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyMenus
@@ -78,5 +79,29 @@ extension ObjectAnimationWorldAdapter: PapyrusObjectAnimationBridge {
 
     func awaitAnimationEvent(_ event: String, on key: ReferenceKey) -> UInt64? {
         reference(of: key).flatMap { objects.awaitEvent(event, on: $0) }
+    }
+
+    func animationVariable(_ name: String, on key: ReferenceKey) -> PapyrusValue? {
+        switch reference(of: key).flatMap({ objects.variable(named: name, on: $0) }) {
+        case let .bool(flag): .boolean(flag)
+        case let .int(integer): .integer(integer)
+        case let .real(real): .float(real)
+        case .quad, nil: nil
+        }
+    }
+
+    func setAnimationVariable(
+        _ name: String,
+        to value: PapyrusValue,
+        on key: ReferenceKey
+    ) -> Bool {
+        guard let reference = reference(of: key) else { return false }
+        let graphValue: BehaviorVariableValue? = switch value {
+        case let .boolean(flag): .bool(flag)
+        case let .integer(integer): .int(integer)
+        case let .float(real): .real(real)
+        default: nil
+        }
+        return graphValue.map { objects.setVariable($0, named: name, on: reference) } ?? false
     }
 }

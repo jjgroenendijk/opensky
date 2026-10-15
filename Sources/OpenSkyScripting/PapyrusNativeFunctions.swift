@@ -49,6 +49,9 @@ public enum PapyrusNativeFunctions {
         installLineOfSight(into: &registry)
         installTrackedStats(into: &registry)
         installStateChanges(into: &registry)
+        installWorldReads(into: &registry)
+        installFindReferences(into: &registry)
+        installSpellRecords(into: &registry)
     }
 
     public static func failure(

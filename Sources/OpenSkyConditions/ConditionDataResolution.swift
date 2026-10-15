@@ -56,6 +56,11 @@ nonisolated public struct ConditionDataResolution: Sendable {
         cells[reference]
     }
 
+    /// Whether `cell` is an interior; nil when no loaded reference sits in it.
+    public func isInterior(cell: FormID) -> Bool? {
+        cells.values.first { $0.cell == cell }.map { $0.worldspace == nil }
+    }
+
     /// A copy that reads FormIDs from `plugin`.
     public func with(sourcePlugin plugin: String?) -> Self {
         Self(

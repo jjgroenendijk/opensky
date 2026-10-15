@@ -97,6 +97,12 @@ nonisolated public final class WeatherSystem {
         toWeather
     }
 
+    /// The weather an unfinished blend moves away from; nil when settled.
+    public var outgoingWeatherID: FormID? {
+        guard transitionProgress < 1, fromWeather != toWeather else { return nil }
+        return fromWeather
+    }
+
     public var currentWeatherEditorID: String? {
         toWeather.flatMap { store.weather($0)?.editorID }
     }
