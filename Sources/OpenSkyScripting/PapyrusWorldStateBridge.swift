@@ -149,6 +149,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     public var playersLastMount: (() -> ReferenceKey?)?
     /// Puts the player into sneak, for `StartSneaking`. Nil when not wired.
     public var startPlayerSneaking: (() -> Void)?
+    /// Shows or hides the HUD, for `Debug.ToggleMenus`. Nil when not wired.
+    public var toggleMenus: (() -> Void)?
     /// Packages, vehicles, and idles for the actor AI natives.
     public weak var actorAI: (any PapyrusActorAIBridge)?
     /// Inventories and equipment, for the item natives.

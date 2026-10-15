@@ -91,3 +91,15 @@ log. The interpreter adds the stack, because only it knows the callers. Each lin
 script and the instruction it was on. The game names the function and the source line
 instead; OpenSky does not read the debug line table. Severity 1 logs a warning and 2 an
 error.
+
+## User logs and the HUD toggle
+
+`Debug.OpenUserLog(asLogName)` opens a named user log and answers false when it is already
+open. `TraceUser(asLogName, asText)` writes `name: text` to the native log and answers
+false when that log is not open. `CloseUserLog` closes it. The game writes each user log
+to its own file under `Logs/Script/User/`
+([OpenUserLog - Debug](https://ck.uesp.net/wiki/OpenUserLog_-_Debug)). OpenSky keeps one
+log, so the name is a prefix instead.
+
+`Debug.ToggleMenus()` shows or hides the HUD layer, as the `tm` console command does. It
+is the same switch as the HUD layer control in the sidebar.
