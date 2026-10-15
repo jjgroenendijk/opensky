@@ -34,7 +34,7 @@
     "query": "Code blocks in the offline CK wiki lose their language. Fix the converter.",
     "files": [],
     "expected_behavior": [
-      "Fixes the converter in tools/ck-wiki and raises CONVERTER_VERSION, without editing any mirror file",
+      "Fixes the converter in tools/ck-wiki without editing any mirror file",
       "Reconverts with make ck-wiki and searches the whole mirror for the same fault",
       "Runs make py-format py-lint and fixes what it reports"
     ]

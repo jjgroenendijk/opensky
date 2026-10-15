@@ -33,8 +33,6 @@ class Entry:
 class State:
     """Everything a sync needs to know about the previous one."""
 
-    converter: int = 0
-    link_key: str = ""
     redirects: dict[str, str] = field(default_factory=dict)
     pages: dict[str, Entry] = field(default_factory=dict)
     paths: dict[str, str] = field(default_factory=dict)
@@ -66,12 +64,6 @@ def assign_paths(titles: list[str]) -> dict[str, str]:
     return paths
 
 
-def link_key(paths: dict[str, str], redirects: dict[str, str]) -> str:
-    """Return a hash that changes whenever any link target in the mirror can change."""
-    payload = json.dumps([sorted(paths.items()), sorted(redirects.items())])
-    return hashlib.sha256(payload.encode()).hexdigest()
-
-
 class Mirror:
     """Reads and writes one mirror folder."""
 
@@ -89,8 +81,6 @@ class Mirror:
         if data.get("format") != STATE_FORMAT:
             return State()
         return State(
-            converter=data["converter"],
-            link_key=data["link_key"],
             redirects=data["redirects"],
             pages={title: Entry(**entry) for title, entry in data["pages"].items()},
             paths=data["paths"],
@@ -125,10 +115,6 @@ class Mirror:
             return False
         self._write_atomic(target, text)
         return True
-
-    def markdown_exists(self, path: str) -> bool:
-        """Return whether the Markdown file at a mirror path exists."""
-        return (self.root / path).is_file()
 
     def remove_markdown(self, paths: set[str]) -> None:
         """Delete Markdown files, then any folder they leave empty."""

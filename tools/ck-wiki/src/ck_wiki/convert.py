@@ -13,8 +13,6 @@ from urllib.parse import quote, unquote
 from .markup import remove_elements
 from .sources import SITE, FetchedPage, page_url
 
-# Raise when the Markdown output changes, so the next sync converts every stored page again.
-CONVERTER_VERSION = 9
 LICENSE = "CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)"
 WIKI_HREF = re.compile(r'href="/wiki/([^"#]*)(#[^"]*)?"')
 SITE_RELATIVE = re.compile(r'(href|src)="/(?!/)')

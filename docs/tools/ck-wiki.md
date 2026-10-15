@@ -17,9 +17,12 @@ Markdown, so an agent or a person can search it with `grep` and read it without 
 ```sh
 make ck-wiki                          # first run: all pages; later runs: changed pages only
 make ck-wiki ARGS='--source wayback'  # force the Wayback Machine
-make ck-wiki ARGS='--reconvert'       # convert the stored HTML again, offline
-make ck-wiki ARGS='--help'            # every option
 ```
+
+Every run converts all stored pages again, which takes about a minute, so a converter change
+reaches every page without a new download. The tool has two options, `--out` and `--source`;
+the namespaces, the request rate, and the number of workers are constants in
+`tools/ck-wiki/src/ck_wiki/cli.py`, each with its reason.
 
 The tool needs `uv` and `pandoc`; `make bootstrap` installs both. Its code is the uv project in
 `tools/ck-wiki/`.
@@ -53,8 +56,8 @@ the mirror's `fetched_from:` key.
 The file name is the page title. Characters a file name cannot hold become `_`. Two titles that
 differ only in case get `(2)` added, because the data volume is case-insensitive.
 
-Translations (`/fr`, `/ja`, and other language subpages) are skipped unless `--translations` is
-given. Talk, user, file, and template pages are never mirrored.
+Translations (`/fr`, `/ja`, and other language subpages) are skipped. Talk, user, file, and
+template pages are never mirrored.
 
 ## A page file
 
@@ -117,6 +120,5 @@ plain conversion lost or garbled content:
 | Drop trailing spaces and repeated blank lines outside code | Noise from the HTML layout |
 
 Fix the output only through the tool, never by editing a mirror file: the next sync overwrites the
-file, and the same fault is on other pages too. A change to the converter raises
-`CONVERTER_VERSION` in `tools/ck-wiki/src/ck_wiki/convert.py`. The next sync then converts every
-stored page again without fetching it.
+file, and the same fault is on other pages too. After a converter change, `make ck-wiki` applies
+it to every page.

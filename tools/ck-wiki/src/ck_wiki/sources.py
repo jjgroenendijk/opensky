@@ -48,7 +48,6 @@ NAMESPACE_NAMES = {
     2303: "Gadget definition talk",
 }
 NAMESPACE_IDS = {name: number for number, name in NAMESPACE_NAMES.items() if name}
-CATEGORY_NAMESPACE = 14
 MAXLAG_ATTEMPTS = 5
 
 

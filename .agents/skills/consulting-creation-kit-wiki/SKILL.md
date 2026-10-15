@@ -73,8 +73,7 @@ usually on other pages too. The sync code is the uv project `tools/ck-wiki/`; th
 and their reasons are in `docs/tools/ck-wiki.md`.
 
 1. Find the cause in the stored HTML under `.sync/pages/` and fix the converter.
-2. Raise `CONVERTER_VERSION` and run `make ck-wiki`. It converts every stored page again without
-   the network.
+2. Run `make ck-wiki`. It converts every stored page again; only changed pages are fetched.
 3. Search the whole mirror for the fault, not only the page you saw, for example
    `grep -rlF --include='*.md' '[TABLE]' "$wiki"`. Fix and repeat until none is left.
 4. Run `make py-format py-lint` and fix what it reports.
