@@ -6,6 +6,9 @@ import Foundation
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
+import OpenSkyWorldInterface
+import OpenSkyWorldState
+import simd
 
 extension PapyrusNativeFunctions {
     /// `PlayerFaction`, Skyrim.esm `000DB1`, which `SetPlayerEnemy` pairs with.
@@ -49,5 +52,38 @@ extension PapyrusNativeFunctions {
             bridge.setFactionReaction(reaction, of: playerFaction, toward: faction)
             return .returned(.none)
         }
+        // `SendAssaultAlarm()` "finds a nearby member of this faction" and has it react as
+        // if the player assaulted it. The member is the resident actor nearest the player.
+        scriptState("Faction", "SendAssaultAlarm", into: &registry) { call, bridge, faction in
+            guard let members = residentMembers(of: faction, bridge) else {
+                return failure(call, "SendAssaultAlarm needs a session with a faction runtime")
+            }
+            guard let witness = members.first else { return .returned(.none) }
+            guard bridge.sendAssaultAlarm(witness: witness, criminal: bridge.playerKey) != nil
+            else { return failure(call, "SendAssaultAlarm needs a session with a crime runtime") }
+            return .returned(.none)
+        }
+    }
+
+    /// Resident actors in `faction`, nearest the player first; nil without a faction runtime.
+    private static func residentMembers(
+        of faction: ReferenceKey, _ bridge: PapyrusWorldStateBridge
+    ) -> [ReferenceKey]? {
+        let actors = (bridge.references?.residentEntries() ?? []).compactMap { entry in
+            entry.placedActor == nil ? nil : entry.key
+        }
+        var members: [ReferenceKey] = []
+        for actor in actors {
+            guard let isMember = bridge.isInFaction(actor, faction: faction) else { return nil }
+            if isMember {
+                members.append(actor)
+            }
+        }
+        let centre = position(of: bridge.playerKey, bridge)
+        let distance = { (key: ReferenceKey) -> Float in
+            guard let centre, let here = position(of: key, bridge) else { return .infinity }
+            return simd_distance(centre, here)
+        }
+        return members.sorted { (distance($0), $0) < (distance($1), $1) }
     }
 }

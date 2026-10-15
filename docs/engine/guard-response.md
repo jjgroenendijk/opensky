@@ -115,6 +115,7 @@ Each signature is quoted from the Creation Kit wiki:
 | `Faction.SetCrimeGold` | `Function SetCrimeGold(int aiGold) native`, the non-violent half |
 | `Faction.SetCrimeGoldViolent` | `Function SetCrimeGoldViolent(int aiGold) native` |
 | `Actor.SendAssaultAlarm` | `Function SendAssaultAlarm() native` |
+| `Faction.SendAssaultAlarm` | `Function SendAssaultAlarm() native`. The wiki says it "finds a nearby member of this faction". OpenSky picks the resident member nearest the player, and charges the assault as `Actor.SendAssaultAlarm` does. With no resident member nothing happens |
 | `Actor.SendTrespassAlarm` | `Function SendTrespassAlarm(Actor akCriminal) native` |
 | `ObjectReference.SendStealAlarm` | `Function SendStealAlarm(Actor akThief)`. A theft of the object, charged only when it belongs to someone else |
 | `Actor.GetCrimeFaction` | `Faction Function GetCrimeFaction() native`. `None` with no `CRIF` |

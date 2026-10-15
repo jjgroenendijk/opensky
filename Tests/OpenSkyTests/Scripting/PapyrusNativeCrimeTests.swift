@@ -6,6 +6,8 @@
 import Foundation
 @testable import OpenSkyCrime
 @testable import OpenSkyCrimeInterface
+@testable import OpenSkyFactions
+@testable import OpenSkyFactionsInterface
 @testable import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
@@ -240,6 +242,34 @@ struct PapyrusNativeCrimeTests {
             fixture.reporter.runtime
                 .crimeGold(of: CrimeFixture.key(CrimeFixture.Factions.hold)) == 40
         )
+    }
+
+    /// `Faction.SendAssaultAlarm()` finds a resident member of the faction and charges
+    /// the assault price; a faction with no resident member charges nothing.
+    @Test func theFactionAssaultAlarmUsesAResidentMember() throws {
+        let fixture = try Self.fixture()
+        let hold = CrimeFixture.key(CrimeFixture.Factions.hold)
+        let store = try CrimeFixture.factionStore()
+        let factions = try FactionRuntime(
+            store: fixture.session.worldState,
+            factions: store,
+            derivation: HostilityDerivation(
+                relations: FactionRelationIndex(store: store),
+                relationships: RelationshipStore(
+                    plugins: [(CrimeFixture.pluginName, CrimeFixture.file())]
+                )
+            )
+        )
+        fixture.session.bridge.factionRuntime = { _ in factions }
+        let faction = try factionHandle(fixture)
+
+        call("Faction", "SendAssaultAlarm", fixture, receiver: faction)
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 0)
+
+        let actor = try #require(fixture.session.bridge.referenceKey(for: fixture.actor))
+        factions.join(actor, to: hold, rank: 0, in: nil)
+        call("Faction", "SendAssaultAlarm", fixture, receiver: faction)
+        #expect(fixture.reporter.runtime.crimeGold(of: hold) == 40)
     }
 
     /// `SendTrespassAlarm(Actor akCriminal)` names its criminal, and the alarm
