@@ -1,5 +1,6 @@
-// What an actor sees and runs: `HasLOS`, `IsDetectedBy`, `GetCurrentPackage`, and
-// `ResetHealthAndLimbs` (<https://ck.uesp.net/wiki/Actor_Script>). A pair perception
+// What an actor sees and runs: `HasLOS`, `IsDetectedBy`, `GetCurrentPackage`,
+// `Package.GetTemplate`, and `ResetHealthAndLimbs` (<https://ck.uesp.net/wiki/Actor_Script>). A
+// pair perception
 // does not track is a failure, not a false. See docs/engine/papyrus-actor-natives.md.
 
 import Foundation
@@ -27,6 +28,17 @@ extension PapyrusNativeFunctions {
                 .flatMap(bridge.referenceKey(forFormID:))
                 .flatMap(bridge.objectHandle(for:))
             return .returned(handle.map { .object($0) } ?? .none)
+        }
+        // The `PKCU` template package, or None for a package built without one.
+        scriptState("Package", "GetTemplate", into: &registry) { call, bridge, key in
+            guard
+                case let .plugin(plugin, objectID) = key,
+                let package = bridge.formIDResolver?.localFormID(
+                    of: ResolvedFormID(plugin: plugin, objectID: objectID)
+                ),
+                let lookup = bridge.packageTemplate
+            else { return failure(call, "GetTemplate needs the package records") }
+            return .returned(lookup(package).map { formHandle($0, in: bridge) } ?? .none)
         }
         // "Resets this actor's health and restores all his limbs." OpenSky has no limb
         // damage, so only health moves.

@@ -122,6 +122,7 @@ final class ScriptWorldAdapter {
         bridge.currentPackage = { [weak game] actor in
             game?.packages.runtime?.currentPackage(for: actor)?.package.formID
         }
+        bridge.packageTemplate = { [weak game] package in game?.packages.template(of: package) }
         bridge.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
             game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in

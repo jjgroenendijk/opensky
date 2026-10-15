@@ -173,6 +173,8 @@ public final class PapyrusWorldStateBridge: PapyrusWorldBridge {
     /// The PACK an actor runs now, as a load-order FormID, for `GetCurrentPackage`. Nil
     /// without a package runtime.
     public var currentPackage: ((ReferenceKey) -> FormID?)?
+    /// A PACK's `PKCU` template, for `Package.GetTemplate`. Nil without package records.
+    public var packageTemplate: ((FormID) -> FormID?)?
     /// Scripted moves in progress. See `PapyrusWorldTranslations.swift`.
     public internal(set) var translations: [ReferenceKey: PapyrusTranslation] = [:]
     /// Hands the drawn pose of every moving reference to the renderer, after each change.
