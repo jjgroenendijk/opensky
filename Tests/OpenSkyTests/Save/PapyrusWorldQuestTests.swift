@@ -2,7 +2,9 @@
 // are in `PapyrusNativeQuestTests`.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsCore
+import OpenSkyFormatsPEX
 import OpenSkyFormatsTesting
 @testable import OpenSkyQuestsInterface
 @testable import OpenSkySave
@@ -60,6 +62,35 @@ struct PapyrusWorldQuestTests {
         #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 2)
         #expect(session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID) == 0)
         #expect(session.world.questInstanceKeys.count == 2)
+    }
+
+    /// A quest a story event started hears the matching `OnStory` event; an event with
+    /// no Papyrus twin sends nothing.
+    @Test func aStoryStartedQuestHearsItsStoryEvent() throws {
+        let story = PexFixture.runtimeObject(
+            name: PapyrusQuestFixture.questScript,
+            parent: "Quest",
+            states: [PapyrusTestSupport.state(functions: [
+                ("OnStoryScript", PapyrusWorldFixture.probeBody(note: "quest.onstoryscript"))
+            ])]
+        )
+        let objects = PapyrusQuestFixture.objects()
+            .filter { $0.name != PapyrusQuestFixture.questScript } + [story]
+        let session = try PapyrusQuestFixture.session(
+            quest: PapyrusQuestFixture.quest(), objects: objects, attachQuests: false
+        )
+        _ = session.bridge.attachScripts(ofQuest: PapyrusQuestFixture.questFormID)
+        PapyrusWorldFixture.drain(session.world)
+        let quest = PapyrusQuestFixture.questFormID
+
+        #expect(session.bridge.queueStoryStartEvent(
+            quest: quest, event: StoryEventData(event: "LOCK")
+        ) == 0)
+        #expect(session.bridge.queueStoryStartEvent(
+            quest: quest, event: StoryEventData(event: "SCPT")
+        ) == 2)
+        PapyrusWorldFixture.drain(session.world)
+        #expect(session.dispatch.notes.contains("quest.onstoryscript"))
     }
 
     /// A script that casts a stopped quest to its script type reaches the quest's

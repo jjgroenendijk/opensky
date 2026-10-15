@@ -123,6 +123,26 @@ These have vanilla nodes, but OpenSky has no system that does what they describe
 `PFIN`, `STIJ`, `INFC`, `CURE`, and `QSTR` exist in the event list, but `Skyrim.esm` has no
 node for them, so firing them would start nothing.
 
+## Papyrus events for a started quest
+
+When an event node starts a quest, the quest's scripts attach first. Then each script hears
+the matching `OnStory` event, with the event data as its arguments. The order follows the
+Creation Kit wiki page for each event.
+
+| Code | Papyrus event | Arguments |
+| --- | --- | --- |
+| `KILL` | `OnStoryKillActor` | `R2` victim, `R1` killer, `L1`, `V1` crime status, `V2` relationship rank |
+| `CLOC` | `OnStoryChangeLocation` | `R1`, `L1` old, `L2` new |
+| `AIPL` | `OnStoryAddToPlayer` | `R2` owner, `R1` container, `L1`, `F1` item, `V1` acquire type |
+| `ASSU` | `OnStoryAssaultActor` | `R2` victim, `R1` attacker, `L1`, `V1` crime |
+| `ADCR` | `OnStoryCrimeGold` | `R2` victim, `R1` criminal, `F1` faction, `V1` gold, `V2` crime type |
+| `SKIL` | `OnStoryIncreaseSkill` | the skill name as a string |
+| `SCPT` | `OnStoryScript` | `K1`, `L1`, `R1`, `R2`, `V1`, `V2` |
+
+The skill name drops spaces and hyphens, as in `OneHanded`. Archery is sent as `Marksman`
+and Speech as `Speechcraft`, the names `Actor.GetActorValue` uses. The wiki does not
+confirm this spelling. Other codes send no event.
+
 ## Start-game pass
 
 When a world loads, OpenSky reads the `.seq` file of each active plugin and starts every
