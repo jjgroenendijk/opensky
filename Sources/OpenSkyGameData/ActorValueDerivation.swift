@@ -8,7 +8,7 @@
 import Foundation
 import OpenSkyFormatsESM
 
-/// The two game settings the per-level derivation reads, resolved once.
+/// The game settings the actor value derivation reads, resolved once.
 ///
 /// Carried as a value rather than looked up per actor: deriving stats for a
 /// cell full of actors must not walk the GMST table a thousand times, and a
@@ -23,6 +23,9 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
     /// `iAVDSkillsLevelUp`: skill points per level above 1, "the fixed 8"
     /// (<https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format/CLAS>).
     public var skillPointsPerLevel = 8
+    /// `fDefaultBowSpeedBonus`: the base of `Bow Speed Bonus`, the time scale while
+    /// zoomed with a bow. Steady Hand lowers it.
+    public var defaultBowSpeedBonus: Float = 1
 
     /// The values the Creation Kit documents as the defaults, used when no
     /// loaded plugin defines the setting.
@@ -50,6 +53,7 @@ nonisolated public struct ActorValueLevelSettings: Equatable, Sendable {
         {
             settings.skillPointsPerLevel = max(0, Int(points))
         }
+        store.read("fDefaultBowSpeedBonus", into: &settings, \.defaultBowSpeedBonus)
         return settings
     }
 }

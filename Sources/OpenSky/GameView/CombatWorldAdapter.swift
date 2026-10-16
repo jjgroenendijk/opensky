@@ -55,6 +55,9 @@ final class CombatWorldAdapter {
     func wireArchery(provider: any WorldDataProviding, renderer: Renderer) {
         guard let settings = (provider as? CombatDataProviding)?.archerySettings else { return }
         let combat = game.combat
+        combat.arrows = (provider as? WorldDataStores).map {
+            ArrowSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         combat.attach(world: self)
         combat.wireArchery(
             settings: settings,

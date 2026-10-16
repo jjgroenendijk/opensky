@@ -36,6 +36,8 @@ public final class CombatCoordinator {
     public var stamina = StaminaSettings.vanilla
     /// Power attacks and bashes; the app sets them before `wireMelee`.
     public var powerAttacks = PowerAttackSettings.vanilla
+    /// What a landed arrow does; the app sets it before `wireArchery`.
+    public var arrows = ArrowSettings.vanilla
     /// The actor the player last hurt. The HUD shows its name and health.
     public internal(set) var playerStruckTarget: ReferenceKey?
 
@@ -66,6 +68,7 @@ public final class CombatCoordinator {
         let projectiles = ProjectileRuntime(settings: settings)
         projectiles.impacts = impacts
         projectiles.explosions = explosions
+        projectiles.arrows = arrows
         let runtime = ArcheryRuntime(settings: settings, projectiles: projectiles)
         self.items = items ?? self.items
         archery = runtime

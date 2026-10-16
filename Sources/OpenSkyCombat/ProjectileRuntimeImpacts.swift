@@ -38,6 +38,7 @@ extension ProjectileRuntime {
             actor: target, action: .armorHit, amount: arrow.damage.applied
         ))
         applyBowEnchantment(arrow, projectile: projectile, impact: impact, world: world)
+        recoverArrow(arrow, from: projectile.shooter, into: target, world: world)
         return arrow.damage.applied
     }
 

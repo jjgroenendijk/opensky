@@ -142,3 +142,25 @@ The impact sound uses the same `IPCT` chain as footsteps and melee. `AMMO` has n
 an arrow's impact is silent for now. The lookup stays, so giving `AMMO` an impact link is a small
 change. The material is the one the sweep hit reports: the `MATT` type of the static shape struck.
 An actor carries no material yet, so a hit on an actor uses the `IPDS` default entry.
+
+## After the impact
+
+These settings come from `Skyrim.esm`. Their names say what they do; no source gives a formula.
+
+| Setting | Vanilla | What OpenSky does with it |
+| --- | --- | --- |
+| `fCombatMissileStickDepth` | 20 | A stuck arrow sits this far past the contact point, along its flight |
+| `fAttachedArrowAgeMax` | 10 | An arrow stuck in an actor comes out after this many seconds |
+| `iArrowInventoryChance` | 33 | Percent chance an arrow that hits an actor joins its inventory |
+| `sNoArrows`, `sNoBolts` | text | The HUD notice for a press with no arrow; the bow does not draw |
+
+UESP "Skyrim:Archery" confirms the 33% chance: "Arrows and bolts that hit an enemy have a 33% chance
+of entering their inventory". The roll uses a seeded random source, so a test replays it. The
+Hunter's Discipline perk doubles the chance through the `Mod Recover Arrow Chance` entry point
+(21); the shooter's perks multiply the chance.
+
+OpenSky reads the stick depth as how deep the shaft goes in. Where the `AMMO` model has its origin
+is not confirmed, so the depth may need a sign or an offset once a capture shows the arrow.
+
+An arrow stuck in an actor does not follow its bones, so it would float after the actor moves. The
+age limit removes it after 10 seconds. A wall arrow has no age limit; only the cap of 15 removes it.

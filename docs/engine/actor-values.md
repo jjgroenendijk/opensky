@@ -111,6 +111,7 @@ An untouched value reads a baseline from records, where records give one:
 | `Carry Weight` (32) | `RACE` `DATA` 0x30 "Base Carry Weight" |
 | `Unarmed Damage` (35) | `RACE` `DATA` 0x60 "Unarmed Damage" |
 | `Mass` (36) | `RACE` `DATA` 0x34 "Base Mass" |
+| `Bow Speed Bonus` (78) | GMST `fDefaultBowSpeedBonus`, 1 in `Skyrim.esm` |
 | Everything else | 0 |
 
 The skill formula is quoted: "Skill = 15 + [Racial bonus] + 8\*(Level-1)/(Sum of class' skill
@@ -123,6 +124,9 @@ is `iAVDSkillsLevelUp`, which `Skyrim.esm` sets to exactly that.
 Example: `NordRace` gives Two-Handed +10, and One-Handed, Block, Smithing, Light Armor, and Speech
 +5, as UESP documents. Every playable race gives 300 carry weight, mass 1, and a 35-point skill
 bonus budget.
+
+`Bow Speed Bonus` is the time scale while zoomed with a bow. The Steady Hand abilities lower it by
+0.5 and 0.25 (UESP "Skyrim:Archery", bug notes), so its base must be 1, not 0.
 
 Zero for everything else is a real value, not a placeholder. An actor value adds things up: a
 resistance nothing grants is 0%, and a bonus nothing gives is +0. An actor with no record behind it,

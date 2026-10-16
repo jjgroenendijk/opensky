@@ -77,6 +77,7 @@ extension GapsGatherer {
         _ = CombatSettings.resolve(store: store)
         _ = WeaponDamageSettings.resolve(store: store)
         _ = PowerAttackSettings.resolve(store: store)
+        _ = ArrowSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)

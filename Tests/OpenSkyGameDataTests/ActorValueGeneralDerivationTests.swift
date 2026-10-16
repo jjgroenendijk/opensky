@@ -45,6 +45,18 @@ struct ActorValueGeneralDerivationTests {
         #expect(skills.allSatisfy { values[$0] != nil })
     }
 
+    /// `Bow Speed Bonus` starts at `fDefaultBowSpeedBonus`, so Steady Hand has a base to lower.
+    @Test func bowSpeedBonusStartsAtTheGameSetting() {
+        var settings = ActorValueLevelSettings.documentedDefaults
+        #expect(ActorValueDerivation.generalBaseValues(inputs: ActorValueInputs())[78] == 1)
+        settings.defaultBowSpeedBonus = 0.5
+        let values = ActorValueDerivation.generalBaseValues(
+            inputs: ActorValueInputs(), settings: settings
+        )
+        #expect(values[ActorValueIndex.bowSpeedBonus] == 0.5)
+        #expect(ActorValueIdentity.name(at: ActorValueIndex.bowSpeedBonus) == "Bow Speed Bonus")
+    }
+
     /// The four record fields that are actor values by name: RACE DATA's carry
     /// weight, mass and unarmed damage, and ACBS's speed multiplier.
     @Test func theRecordAuthoredValuesComeFromTheirOwnFields() {

@@ -111,6 +111,10 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func resetRagdolls()
     /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
+    /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
+    @discardableResult
+    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
+    func showNotification(_ text: String)
 }
 
 extension CombatWorld {
@@ -121,6 +125,13 @@ extension CombatWorld {
 
     /// A session with no stamina pays nothing to block.
     public func damageStamina(by _: Float, of _: ReferenceKey) {}
+
+    @discardableResult
+    public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {
+        false
+    }
+
+    public func showNotification(_: String) {}
 
     /// A session with no perks owns none.
     public func ownsPerk(editorID _: String, on _: ReferenceKey) -> Bool {

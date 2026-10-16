@@ -189,4 +189,18 @@ extension CombatCoordinator: ProjectileWorld {
     public func writeArcheryVariable(_ value: BehaviorVariableValue, named name: String) {
         writeCombatVariable(value, named: name)
     }
+
+    @discardableResult
+    public func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool {
+        world?.addItem(ammunition, count: 1, to: target) ?? false
+    }
+
+    public func showArcheryNotice(_ text: String) {
+        world?.showNotification(text)
+    }
+
+    /// Hunter's Discipline doubles the chance through this entry point.
+    public func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
+        world?.perkMultiplier(at: .modRecoverArrowChance, on: shooter) ?? 1
+    }
 }

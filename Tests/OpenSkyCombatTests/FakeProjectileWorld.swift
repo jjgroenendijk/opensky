@@ -139,6 +139,25 @@ final class FakeProjectileWorld: ProjectileWorld {
         variables[name] = value
     }
 
+    private(set) var recovered: [ReferenceKey] = []
+    private(set) var notices: [String] = []
+
+    @discardableResult
+    func giveRecoveredArrow(_: FormID, to target: ReferenceKey) -> Bool {
+        recovered.append(target)
+        return true
+    }
+
+    func showArcheryNotice(_ text: String) {
+        notices.append(text)
+    }
+
+    var recoveryMultiplier: Float = 1
+
+    func arrowRecoveryMultiplier(of _: ReferenceKey) -> Float {
+        recoveryMultiplier
+    }
+
     /// Records the landed spell instead of applying it. What the
     /// projectile suites need to know is which actors the runtime *reached* and
     /// at what distance; whether the effect runtime then stored anything is

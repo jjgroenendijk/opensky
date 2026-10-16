@@ -5,6 +5,7 @@
 // See docs/engine/archery.md.
 
 import Foundation
+import OpenSkyActorsInterface
 import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
@@ -33,7 +34,7 @@ public final class ArcheryRuntime {
     public var bow = MeleeWeaponProfile.unarmed
     /// The arrow the player has selected: its AMMO damage, the PROJ it
     /// launches, and the FormID the inventory consumes. Nil with an empty
-    /// quiver, and then a draw is allowed and a loose does nothing.
+    /// quiver, and then a press shows `sNoArrows` instead of drawing.
     public var arrow: ArcheryAmmunition?
     /// The shooter's fortify multiplier, `ArcheryDamage`'s `bonusMultiplier`. Written by
     /// the session on the same frame as `bow` and `arrow`; 1 until then.
@@ -41,6 +42,7 @@ public final class ArcheryRuntime {
 
     private weak var world: (any ProjectileWorld)?
     private var wasDrawing = false
+    private var wasPressed = false
 
     public init(
         settings: ArcherySettings,
@@ -63,7 +65,15 @@ public final class ArcheryRuntime {
 
     /// Takes one frame of archery intent and raises the events its edges imply.
     public func acceptFrame(_ intent: ArcheryIntent) {
-        let drawing = intent.drawing && intent.hasBowEquipped
+        let pressed = intent.drawing && intent.hasBowEquipped
+        if pressed, !wasPressed, arrow == nil {
+            let arrows = projectiles.arrows
+            world?.showArcheryNotice(
+                bow.handType == .crossbow ? arrows.noBoltsText : arrows.noArrowsText
+            )
+        }
+        wasPressed = pressed
+        let drawing = pressed && arrow != nil
         if drawing {
             heldSeconds += max(0, intent.deltaTime.isFinite ? intent.deltaTime : 0)
         }
@@ -140,6 +150,7 @@ public final class ArcheryRuntime {
         lastHeldSeconds = 0
         drawRequestCount = 0
         wasDrawing = false
+        wasPressed = false
         projectiles.despawnAll()
     }
 

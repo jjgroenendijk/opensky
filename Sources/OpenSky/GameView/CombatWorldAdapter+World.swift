@@ -15,6 +15,7 @@ import OpenSkyInventory
 import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
+import OpenSkyMenus
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
@@ -190,6 +191,19 @@ extension CombatWorldAdapter: CombatWorld {
     func playerCarriedItems() -> [FormID] {
         guard let runtime = game.inventory.runtime else { return [] }
         return runtime.inventory.inventory(of: runtime.player).stacks.map(\.item)
+    }
+
+    @discardableResult
+    func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool {
+        guard
+            let runtime = game.inventory.runtime,
+            let holder = game.streamer?.inventoryHolder(of: key)
+        else { return false }
+        return (try? runtime.inventory.add(item, count: count, to: holder)) != nil
+    }
+
+    func showNotification(_ text: String) {
+        game.hud.showNotification(text)
     }
 
     @discardableResult

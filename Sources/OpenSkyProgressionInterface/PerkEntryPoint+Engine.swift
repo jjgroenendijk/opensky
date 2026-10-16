@@ -6,6 +6,7 @@ import Foundation
 import OpenSkyFormatsESM
 
 nonisolated extension PerkEntryPoint {
+    public static let modRecoverArrowChance = PerkEntryPoint(rawValue: 21)
     public static let modSkillUse = PerkEntryPoint(rawValue: 22)
     public static let modAttackDamage = PerkEntryPoint(rawValue: 35)
     public static let modSpellCost = PerkEntryPoint(rawValue: 38)
@@ -19,7 +20,8 @@ nonisolated extension PerkEntryPoint {
 
     /// Every entry point above. An entry point outside this set changes nothing in game.
     public static let engineRead: Set<PerkEntryPoint> = [
-        modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked, modPlayerIntimidation,
+        modRecoverArrowChance, modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked,
+        modPlayerIntimidation,
         modBribeAmount, modLockpickSweetSpot,
         setLockpickStartingArc, makeLockpicksUnbreakable, modLockpickingKeyRewardChance
     ]

@@ -69,6 +69,18 @@ extension CombatCoordinator: MeleeCombatControlProviding {
         meleeActionText = "Cleared the hit trace."
     }
 
+    /// The arrow settings, and what they did this session.
+    static func arrowLines(_ projectiles: ProjectileRuntime) -> [String] {
+        let arrows = projectiles.arrows
+        return [
+            String(format: "fCombatMissileStickDepth = %.3f", arrows.stickDepth),
+            String(format: "fAttachedArrowAgeMax = %.3f", arrows.attachedAgeMax),
+            "iArrowInventoryChance = \(arrows.inventoryChance)",
+            "Arrows in actors: \(projectiles.attached.expiry.count), "
+                + "kept by targets: \(projectiles.attached.recoveredCount)"
+        ]
+    }
+
     static func settingLine(_ entry: (editorID: String, setting: MovementSetting)) -> String {
         String(
             format: "%@ = %.3f [%@]",
@@ -144,6 +156,7 @@ extension CombatCoordinator: ArcheryControlProviding {
             stuckCount: projectiles.stuck.count,
             trace: projectiles.trace.map(Self.readout),
             settings: archery.settings.report.map(Self.settingLine)
+                + Self.arrowLines(projectiles)
         )
     }
 
