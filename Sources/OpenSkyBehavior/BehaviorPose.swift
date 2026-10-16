@@ -60,14 +60,28 @@ nonisolated public struct BehaviorSkeleton: Equatable, Sendable {
     /// The bone whose animated travel is extracted rather than composed. On
     /// every vanilla Skyrim rig this is bone 0, `NPC Root [Root]`.
     public let rootBoneIndex: Int
+    /// Parent per bone, -1 for a root. Empty means every bone is a root, which
+    /// only the bone modifiers that work in model space notice.
+    public let parentIndices: [Int]
 
-    public init(referencePose: [HKABonePose], rootBoneIndex: Int = 0) {
+    public init(
+        referencePose: [HKABonePose], rootBoneIndex: Int = 0, parentIndices: [Int] = []
+    ) {
         self.referencePose = referencePose
         self.rootBoneIndex = rootBoneIndex
+        self.parentIndices = parentIndices
     }
 
     public init(_ skeleton: HKASkeleton, rootBoneIndex: Int = 0) {
-        self.init(referencePose: skeleton.referencePose, rootBoneIndex: rootBoneIndex)
+        self.init(
+            referencePose: skeleton.referencePose, rootBoneIndex: rootBoneIndex,
+            parentIndices: skeleton.parentIndices
+        )
+    }
+
+    /// The parent of `bone`, or -1 for a root or an index out of range.
+    public func parent(of bone: Int) -> Int {
+        parentIndices.indices.contains(bone) ? parentIndices[bone] : -1
     }
 
     /// A pose holding nothing but the reference pose. This is what a generator

@@ -1,7 +1,7 @@
-// Modifier evaluation. Only modifiers computable from evaluator state are run: lists,
-// event wrapping, timers, deactivation events and event counting. Others pass the pose
-// through with a `BehaviorTally.passthroughModifiers` entry, which is the worklist. A
-// missing foot-IK reads as a foot that does not plant, not an invented one.
+// Modifier evaluation: the routing, the list and event modifiers, and deactivation.
+// The variable modifiers are in `BehaviorVariableModifiers.swift`, the bone modifiers
+// in `BehaviorBoneModifiers.swift` and `BehaviorAimModifiers.swift`. A class with no
+// semantics passes the pose through with a `BehaviorTally.passthroughModifiers` entry.
 
 import Foundation
 import OpenSkyFormatsAnimation
@@ -25,47 +25,45 @@ nonisolated extension BehaviorGraphInstance {
         guard let node = compiledNode(at: target) else { return pose }
         markReached(target)
         tally.noteModifier()
-        guard isEnabled(node.object), !isDisabled(node) else { return pose }
-        return run(node.object, at: target, to: pose, deltaTime: deltaTime, depth: depth)
+        let bound = boundValues(of: node)
+        guard bound.bool("enable", or: isEnabled(node.object)), !isDisabled(node) else {
+            return pose
+        }
+        let step = BehaviorModifierStep(
+            target: target, node: node, bound: bound, deltaTime: deltaTime, depth: depth
+        )
+        return run(node.object, step, to: pose)
     }
 
-    /// `hkbModifier::m_enable`, read through the class header each modifier
-    /// carries. A class that is not a modifier at all counts as enabled.
+    /// `hkbModifier::m_enable`. A class that is not a modifier at all counts as enabled.
     private func isEnabled(_ object: any HKBClass) -> Bool {
-        switch object {
-        case let value as HKBModifierList: value.modifier.enable
-        case let value as HKBEventDrivenModifier: value.modifier.enable
-        case let value as HKBTimerModifier: value.modifier.enable
-        case let value as BSEventOnDeactivateModifier: value.modifier.enable
-        case let value as BSEventEveryNEventsModifier: value.modifier.enable
-        case let value as HKBPoweredRagdollControlsModifier: value.modifier.enable
-        case let value as BSRagdollContactListenerModifier: value.modifier.enable
-        default: true
-        }
+        (object as? any HKBModifierClass)?.modifier.enable ?? true
     }
 
     private func run(
         _ object: any HKBClass,
-        at target: HKXPointerTarget,
-        to pose: BehaviorPose,
-        deltaTime: Float,
-        depth: Int
+        _ step: BehaviorModifierStep,
+        to pose: BehaviorPose
     ) -> BehaviorPose {
+        let target = step.target
         switch object {
         case let list as HKBModifierList:
             var result = pose
             for child in list.modifiers.compactMap(\.self) {
                 result = applyModifier(
-                    at: child, to: result, deltaTime: deltaTime, depth: depth + 1
+                    at: child, to: result, deltaTime: step.deltaTime, depth: step.depth + 1
                 )
             }
             return result
         case let driven as HKBEventDrivenModifier:
             return applyEventDriven(
-                driven, at: target, to: pose, deltaTime: deltaTime, depth: depth
+                driven, at: target, to: pose, deltaTime: step.deltaTime, depth: step.depth
             )
         case let timer as HKBTimerModifier:
-            applyTimer(timer, at: target, deltaTime: deltaTime)
+            applyTimer(
+                at: target, alarm: step.bound.float("alarmTimeSeconds", or: timer.alarmTimeSeconds),
+                event: timer.alarmEvent, repeating: false, deltaTime: step.deltaTime
+            )
             return pose
         case is BSEventOnDeactivateModifier:
             // The event fires on deactivation, which `noteDeactivation` below
@@ -85,8 +83,7 @@ nonisolated extension BehaviorGraphInstance {
             ragdollContactEvent = events.names.indices.contains(id) ? events.names[id] : nil
             return pose
         default:
-            tally.notePassthroughModifier(object.className)
-            return pose
+            return runVariableModifier(object, step, to: pose)
         }
     }
 
@@ -120,29 +117,29 @@ nonisolated extension BehaviorGraphInstance {
         )
     }
 
-    /// `hkbTimerModifier`: raises `m_alarmEvent` once `m_alarmTimeSeconds` have
-    /// passed since activation, then stays quiet until it is reactivated.
-    private func applyTimer(
-        _ timer: HKBTimerModifier,
+    /// `hkbTimerModifier` and `BSTimerModifier`: raises `event` once `alarm`
+    /// seconds have passed since activation. A repeating timer starts again each
+    /// time it fires; the other stays quiet until it is reactivated.
+    func applyTimer(
         at target: HKXPointerTarget,
+        alarm: Float,
+        event: HKBEventProperty,
+        repeating: Bool,
         deltaTime: Float
     ) {
         var state = markReached(target)
         state.elapsed += deltaTime
-        if !state.hasFiredAlarm, state.elapsed >= timer.alarmTimeSeconds {
-            state.hasFiredAlarm = true
-            events.raise(
-                id: timer.alarmEvent.id, payload: payload(at: timer.alarmEvent.payload)
-            )
+        if !state.hasFiredAlarm, state.elapsed >= alarm {
+            state.hasFiredAlarm = !repeating
+            state.elapsed = repeating && alarm > 0 ? state.elapsed - alarm : state.elapsed
+            raise(event)
         }
         nodeStates[target] = state
     }
 
-    /// `BSEventEveryNEventsModifier`: counts occurrences of
-    /// `m_eventToCheckFor` and raises `m_eventToSend` every N of them.
-    /// `m_randomizeNumberOfEvents` is honoured as its non-random maximum,
-    /// because an engine that decides animation timing from an unseeded random
-    /// source cannot be stepped deterministically; the choice is tallied.
+    /// `BSEventEveryNEventsModifier`: counts occurrences of `m_eventToCheckFor`
+    /// and raises `m_eventToSend` every N of them. With `m_randomizeNumberOfEvents`,
+    /// each N is drawn from the minimum to the maximum with the instance's seeded source.
     private func applyEventCounter(
         _ counter: BSEventEveryNEventsModifier,
         at target: HKXPointerTarget
@@ -153,19 +150,23 @@ nonisolated extension BehaviorGraphInstance {
             nodeStates[target] = state
             return
         }
-        if counter.randomizeNumberOfEvents {
-            tally.notePassthroughModifier(BSEventEveryNEventsModifier.className)
+        if state.eventThreshold == 0 {
+            state.eventThreshold = nextThreshold(of: counter)
         }
-        let threshold = max(counter.numberOfEventsBeforeSend, 1)
         state.eventCount += occurrences
-        while state.eventCount >= threshold {
-            state.eventCount -= threshold
-            events.raise(
-                id: counter.eventToSend.id,
-                payload: payload(at: counter.eventToSend.payload)
-            )
+        while state.eventCount >= state.eventThreshold {
+            state.eventCount -= state.eventThreshold
+            state.eventThreshold = nextThreshold(of: counter)
+            raise(counter.eventToSend)
         }
         nodeStates[target] = state
+    }
+
+    private func nextThreshold(of counter: BSEventEveryNEventsModifier) -> Int {
+        let maximum = max(counter.numberOfEventsBeforeSend, 1)
+        guard counter.randomizeNumberOfEvents else { return maximum }
+        let minimum = min(max(counter.minimumNumberOfEventsBeforeSend, 1), maximum)
+        return random.next(in: minimum ... maximum)
     }
 
     /// `hkbRigidBodyRagdollControlsModifier`: publishes the authored blend duration so
@@ -182,6 +183,9 @@ nonisolated extension BehaviorGraphInstance {
     public func noteDeactivation(of object: any HKBClass, at target: HKXPointerTarget) {
         if let machine = object as? HKBStateMachine {
             noteMachineDeactivation(of: machine, at: target)
+            return
+        }
+        if noteModifierDeactivation(of: object, at: target) {
             return
         }
         guard

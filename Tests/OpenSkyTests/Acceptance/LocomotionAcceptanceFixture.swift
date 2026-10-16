@@ -145,7 +145,12 @@ nonisolated enum LocomotionAcceptanceFixture {
         BehaviorVariableSpec(LocomotionGraphNames.inJumpState, .bool, 0),
         BehaviorVariableSpec(LocomotionGraphNames.speedWalk, .real, 0),
         BehaviorVariableSpec(LocomotionGraphNames.speedRun, .real, 0),
-        BehaviorVariableSpec(LocomotionGraphNames.isFirstPerson, .bool, 0)
+        BehaviorVariableSpec(LocomotionGraphNames.isFirstPerson, .bool, 0),
+        BehaviorVariableSpec(LocomotionGraphNames.isPlayer, .bool, 0),
+        BehaviorVariableSpec(LocomotionGraphNames.isPlayerInt, .int32, 0),
+        BehaviorVariableSpec(LocomotionGraphNames.isNPC, .bool, 0),
+        BehaviorVariableSpec(LocomotionGraphNames.timeDelta, .real, 0),
+        BehaviorVariableSpec(LocomotionGraphNames.velocityZ, .real, 0)
     ]
 
     /// Every event the bridge can raise, in `LocomotionGraphNames` order, so an

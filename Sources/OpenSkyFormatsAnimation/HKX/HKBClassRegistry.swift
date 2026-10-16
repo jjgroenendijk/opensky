@@ -79,6 +79,9 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(HKBFootIkControlsModifier.decode),
             entry(HKBPoweredRagdollControlsModifier.decode),
             entry(HKBRigidBodyRagdollControlsModifier.decode),
+            entry(HKBFootIkModifier.decode),
+            entry(HKBTransformVectorModifier.decode),
+            entry(HKBReferencePoseGenerator.decode),
             // Bethesda generators.
             entry(BSSynchronizedClipGenerator.decode),
             entry(BSiStateTaggingGenerator.decode),
@@ -96,7 +99,14 @@ nonisolated public enum HKBClassRegistry: Sendable {
             entry(BSSpeedSamplerModifier.decode),
             entry(BSRagdollContactListenerModifier.decode),
             entry(BSDirectAtModifier.decode),
-            entry(BSLookAtModifier.decode)
+            entry(BSLookAtModifier.decode),
+            entry(BSTimerModifier.decode),
+            entry(BSDecomposeVectorModifier.decode),
+            entry(BSGetTimeStepModifier.decode),
+            entry(BSIStateManagerModifier.decode),
+            entry(BSTweenerModifier.decode),
+            entry(BSPassByTargetTriggerModifier.decode),
+            entry(BSLimbIKModifier.decode)
         ]
     )
 

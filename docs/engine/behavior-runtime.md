@@ -102,6 +102,11 @@ Member paths in the vanilla files have no `m_` prefix: `blendParameter`, `startS
 `m_` is removed from both sides before lookup. This was measured: an early version resolved every
 binding and then looked each one up under the wrong key.
 
+Bindings also run the other way. A member that a modifier computes, such as
+`BSIsActiveModifier.bIsActive0` or `BSInterpValueModifier.result`, is copied back to its bound
+variable after the modifier runs. A bit-addressed binding sets or clears one bit. Without this,
+a graph's own state flags never change.
+
 A binding that cannot be applied is counted, not guessed. Examples: a character property, a
 variable index out of range, a bit index past 32, or an empty path that binds the whole object.
 
@@ -116,27 +121,58 @@ variable index out of range, a bit index past 32, or an empty path that binds th
 | `hkbPoseMatchingGenerator` | Runs as its blender base, and is counted |
 | `hkbStateMachine` | See [state machines](/engine/behavior-state-machines.md) |
 | `BSiStateTaggingGenerator` | Runs its default generator |
-| `BSBoneSwitchGenerator` | Default generator only. Per-bone children are ignored and counted |
-| `BSCyclicBlendTransitionGenerator` | The wrapped blender only, counted |
-| `BSOffsetAnimationGenerator` | Default generator only. The offset clip is ignored and counted |
+| `BSBoneSwitchGenerator` | Default generator, with each child's pose replacing it on the bones its bone weights cover |
+| `BSCyclicBlendTransitionGenerator` | Its blender. `m_EventToCrossBlend` starts a crossfade from the pose of that moment, over `m_fTransitionDuration` with `m_eBlendCurve` |
+| `BSOffsetAnimationGenerator` | Default generator plus the offset clip's difference from the reference pose. The clip is held at the fraction `m_fOffsetVariable` makes of the offset range |
+| `hkbReferencePoseGenerator` | The reference pose |
 | `BSSynchronizedClipGenerator` | The wrapped clip, phase-synchronized. Marker alignment is counted |
 | `hkbBehaviorReferenceGenerator` | Runs another behavior file ([behavior references](/engine/behavior-clips.md)) |
 | Anything else | The reference pose, and the class is named in the tally |
 
 ## Modifiers
 
-These modifiers run:
+Event and timer modifiers:
 
 - `hkbModifierList`: its children, in order.
 - `hkbEventDrivenModifier`: `m_activateEventId`, `m_deactivateEventId`, and `m_activeByDefault`
   turn the wrapped modifier on and off.
-- `hkbTimerModifier`: raises `m_alarmEvent` once, after `m_alarmTimeSeconds`.
+- `hkbTimerModifier` raises `m_alarmEvent` once after `m_alarmTimeSeconds`. `BSTimerModifier`
+  does the same, and again every alarm period when `resetAlarm` is set.
 - `BSEventOnDeactivateModifier`: raises its event on deactivation.
 - `BSEventEveryNEventsModifier`: counts `m_eventToCheckFor` and raises `m_eventToSend` every N.
+- `BSEventOnFalseToTrueModifier`: each enabled slot raises its event when its bool rises.
+- `hkbEventsFromRangeModifier`: the bands run from `m_lowerBound` through each `m_upperBound`.
+  Mode 0 raises the band's event on entry, mode 1 on every update inside it.
 
-Every other modifier passes its input through and is named in the tally. This is not a hidden
-approximation. A missing foot correction looks like a foot that does not plant, which is visibly
-wrong. An invented correction would look plausible and be wrong.
+Variable modifiers, which write their outputs back through the bindings:
+
+- `hkbEvaluateExpressionModifier` runs each statement in order. `var = expr` assigns a variable.
+  `event if cond` raises an event by event mode: 0 once, 1 every update the condition holds,
+  2 when it turns true, 3 every update after it first held. The grammar has numbers, variables,
+  `+ - * / %`, comparisons, `&& || !`, and the functions in `BehaviorExpressionFunctions`. An
+  event name the graph does not declare, such as `SoundPlay.X`, goes to `unboundEvents`.
+- `BSIsActiveModifier`, `BSInterpValueModifier`, `hkbDampingModifier`, `BSSpeedSamplerModifier`,
+  `BSDecomposeVectorModifier`, `BSGetTimeStepModifier`, `hkbTransformVectorModifier`,
+  `BSIStateManagerModifier`, and `BSModifyOnceModifier`.
+
+Bone modifiers work in model space: Havok's +Y forward, +X right, +Z up.
+
+- `hkbTwistModifier` and `hkbRotateCharacterModifier`; the second turns the root motion.
+- `BSLookAtModifier` turns the head bones, then the eye bones, towards the target, limited per
+  bone and eased by the on and off gains. `BSDirectAtModifier` spreads a heading and pitch over
+  its bone chain.
+- `hkbFootIkModifier` moves each ankle by the difference between the probed ground and
+  `m_originalGroundHeightMS`, with a two-bone solve from hip to ankle. Without a ground probe the
+  ground is flat at that height, so the pose does not change.
+- `BSLimbIKModifier` bends a chain back from geometry the ground probe reports.
+- `BSTweenerModifier` and `BSPassByTargetTriggerModifier` read world positions from the
+  character context the engine sets before each update.
+- `hkbKeyframeBonesModifier`, `hkbGetUpModifier`, and `hkbFootIkControlsModifier` only hand
+  data to physics, through `BehaviorPhysicsRequests`.
+
+Any other modifier passes its input through and is named in the tally. A missing foot
+correction looks like a foot that does not plant, which is visibly wrong. An invented
+correction would look plausible and be wrong.
 
 ## Output
 
@@ -177,9 +213,16 @@ These are guesses, marked as guesses:
   class is not decoded.
 - The root bone is bone 0, which is `NPC Root [Root]` in every vanilla rig. The index can be
   configured, but nothing reads it from the character file yet.
-- `BSEventEveryNEventsModifier.m_randomizeNumberOfEvents` uses its maximum, not a random count. A
-  graph that decides timing from an unseeded random source cannot be stepped the same way twice.
-  The choice is counted.
+- `BSEventEveryNEventsModifier.m_randomizeNumberOfEvents` draws each N from a random source with
+  a fixed seed, so two instances stepped the same way give the same events.
+- Several Bethesda modifiers have no public description. Their behaviour is read from their
+  member names and from how the vanilla graphs bind them: `BSIsActiveModifier` (true while
+  running, false after), `BSInterpValueModifier` (moves by `gain` per second),
+  `BSSpeedSamplerModifier` (passes `goalSpeed` to `speedOut`), `hkbDampingModifier` (one PID
+  step per update), `BSTweenerModifier`, `BSLimbIKModifier`, and the aim axis conventions of the
+  look-at and direct-at modifiers.
+- `BSCyclicBlendTransitionGenerator.m_EventToFreezeBlendValue` changes nothing, because only a
+  parametric blend reads the frozen parameter.
 - A state machine does not write its current state back to `m_syncVariableIndex`. In vanilla data
   that variable is an engine input, and writing it back would overwrite the input on the next
   update. No source says whether Havok syncs it both ways.

@@ -37,4 +37,11 @@ struct HKXGapCensusTests {
         #expect(HKXGapCensus.event("PIE@SGVF|x") == "PIE.*")
         #expect(HKXGapCensus.event("HitFrame") == "HitFrame")
     }
+
+    @Test func expressionAssignmentsNameTheirVariable() {
+        #expect(HKXGapCensus
+            .assignedVariable("turnSpeedMult = fabs(TurnDelta/90)") == "turnSpeedMult")
+        #expect(HKXGapCensus.assignedVariable("weaponDraw if (iCombatStance == 1)") == nil)
+        #expect(HKXGapCensus.assignedVariable("x if (a >= 1)") == nil)
+    }
 }

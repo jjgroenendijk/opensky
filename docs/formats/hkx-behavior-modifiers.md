@@ -76,11 +76,26 @@ Stock modifiers. All come from `hkbModifier`, so their own members start at 0x50
 | `hkbKeyframeBonesModifier` | 104 | `m_keyframeInfo` 0x50 (stride 48), `m_keyframedBonesList` 0x60 |
 | `hkbGetUpModifier` | 128 | `hkVector4 m_groundNormal` 0x50, `hkReal m_duration` 0x60, `hkReal m_alignWithGroundDuration` 0x64, `i16` bone indices 0x68, 0x6A, 0x6C |
 | `hkbFootIkControlsModifier` | 176 | `m_controlData.m_gains` (12 `hkReal`) 0x50, `m_legs` 0x80 (stride 48), `hkVector4 m_errorOutTranslation` 0x90, `hkQuaternion m_alignWithGroundRotation` 0xA0 |
+| `hkbFootIkModifier` | 256 | `m_gains` (12 `hkReal`) 0x50, `m_legs` 0x80 (stride 160), `hkReal m_raycastDistanceUp` 0x90, `m_raycastDistanceDown` 0x94, `m_originalGroundHeightMS` 0x98, `m_verticalOffset` 0xC0, `hkBool m_useTrackData` 0xD4, `hkBool m_lockFeetWhenPlanted` 0xD5, `i8 m_alignMode` 0xD7 |
+| `hkbTransformVectorModifier` | 160 | `hkQuaternion m_rotation` 0x50, `hkVector4 m_translation` 0x60, `m_vectorIn` 0x70, `m_vectorOut` 0x80, `hkBool` `m_rotateOnly` 0x90, `m_inverse` 0x91, `m_computeOnActivate` 0x92, `m_computeOnModify` 0x93 |
 | `hkbPoweredRagdollControlsModifier` | 144 | control data floats 0x50-0x60, `m_bones` 0x70, world-from-model mode data 0x78-0x7E, `m_boneWeights` 0x80 |
 | `hkbRigidBodyRagdollControlsModifier` | 160 | `m_controlData.m_durationToBlend` 0x80, `m_bones` 0x90 |
 
 `hkbKeyframeBonesModifierKeyframeInfo`, 48 bytes: `hkVector4 m_keyframedPosition` 0x00,
 `hkQuaternion m_keyframedRotation` 0x10, `i16 m_boneIndex` 0x20, `hkBool m_isValid` 0x22.
+
+`hkbReferencePoseGenerator`, 80 bytes, has only the `hkbGenerator` header.
+
+`hkbFootIkModifierLeg`, 160 bytes: `hkVector4 m_kneeAxisLS` 0x40, `m_footEndLS` 0x50,
+`hkbEventProperty m_ungroundedEvent` 0x60, `hkReal` planted, raised, maximum, and minimum
+ankle heights 0x70-0x7C, `m_maxKneeAngleDegrees` 0x80, `m_minKneeAngleDegrees` 0x84,
+`m_maxAnkleAngleDegrees` 0x8C, `i16` hip, knee, and ankle indexes 0x90, 0x92, 0x94.
+
+The twelve foot IK gains, in order: `onOffGain`, `groundAscendingGain`,
+`groundDescendingGain`, `footPlantedGain`, `footRaisedGain`, `footUnlockGain`,
+`worldFromModelFeedbackGain`, `errorUpDownBias`, `alignWorldFromModelGain`,
+`hipOrientationGain`, `maxKneeAngleDifference`, `ankleOrientationGain`. Vanilla bindings use
+these names, for example `controlData/gains/onOffGain`.
 
 `hkbFootIkControlsModifierLeg`, 48 bytes: `hkVector4 m_groundPosition` 0x00,
 `hkbEventProperty m_ungroundedEvent` 0x10, `hkReal m_verticalError` 0x20,
@@ -88,7 +103,7 @@ Stock modifiers. All come from `hkbModifier`, so their own members start at 0x50
 
 ## Bethesda extension classes
 
-12 of the 55 classes in the vanilla player behavior files are Bethesda's own. They are
+The `BS*` classes are Bethesda's own. They are
 stored like stock classes and come from the stock bases.
 
 | class | size | members |
@@ -109,6 +124,13 @@ stored like stock classes and come from the stock bases.
 | `BSRagdollContactListenerModifier` | 136 | `m_contactEvent` 0x58, `m_bones` 0x68 |
 | `BSDirectAtModifier` | 224 | `hkBool m_directAtTarget` 0x50, `i16` bone indices 0x52, 0x54, 0x56, four `hkReal` limits and offsets 0x58-0x64, `m_onGain` 0x68, `m_offGain` 0x6C, `hkVector4 m_targetLocation` 0x70, `u32 m_userInfo` 0x80, `hkBool m_directAtCamera` 0x84, camera X/Y/Z 0x88/0x8C/0x90, `hkBool m_active` 0x94, `m_currentHeadingOffset` 0x98, `m_currentPitchOffset` 0x9C |
 | `BSLookAtModifier` | 224 | `hkBool m_lookAtTarget` 0x50, `m_bones` 0x58, `m_eyeBones` 0x68 (both stride 64), `m_limitAngleDegrees` 0x78, `m_limitAngleThresholdDegrees` 0x7C, `hkBool m_continueLookOutsideOfLimit` 0x80, `m_onGain` 0x84, `m_offGain` 0x88, `hkBool m_useBoneGains` 0x8C, `hkVector4 m_targetLocation` 0x90, `hkBool m_targetOutsideLimits` 0xA0, `m_targetOutOfLimitEvent` 0xA8, `hkBool m_lookAtCamera` 0xB8, camera X/Y/Z 0xBC/0xC0/0xC4 |
+| `BSTimerModifier` | 112 | `hkReal alarmTimeSeconds` 0x50, `alarmEvent` 0x58, `hkBool resetAlarm` 0x68 |
+| `BSDecomposeVectorModifier` | 112 | `hkVector4 vector` 0x50, `hkReal` `x`, `y`, `z`, `w` 0x60-0x6C |
+| `BSGetTimeStepModifier` | 96 | `hkReal timeStep` 0x50 |
+| `BSIStateManagerModifier` | 128 | `i32 iStateVar` 0x50, `stateData` 0x58 (stride 16: `pStateMachine` 0x00, `i32 StateID` 0x08, `i32 iStateToSetAs` 0x0C) |
+| `BSTweenerModifier` | 208 | `hkBool` `tweenPosition` 0x50, `tweenRotation` 0x51, `useTweenDuration` 0x52, `hkReal tweenDuration` 0x54, `hkVector4 targetPosition` 0x60, `hkQuaternion targetRotation` 0x70 |
+| `BSPassByTargetTriggerModifier` | 160 | `hkVector4 targetPosition` 0x50, `hkReal radius` 0x60, `hkVector4 movementDirection` 0x70, `triggerEvent` 0x80 |
+| `BSLimbIKModifier` | 128 | `hkReal limitAngleDegrees` 0x50, `i16 startBoneIndex` 0x58, `i16 endBoneIndex` 0x5A, `hkReal` `gain` 0x5C, `boneRadius` 0x60, `castOffset` 0x64 |
 
 `BSLookAtModifierBoneData`, 64 bytes: `i16 m_index` 0x00, `hkVector4 m_fwdAxisLS` 0x10,
 `hkReal m_limitAngleDegrees` 0x20, `m_onGain` 0x24, `m_offGain` 0x28, `hkBool m_enabled`
@@ -128,8 +150,8 @@ clip from the body.
 - `hkbRigidBodyRagdollControlsModifier::m_controlData` holds a 48-byte
   `hkaKeyFrameHierarchyUtilityControlData`. This is a physics class, and its members are not
   confirmed against vanilla files. OpenSky skips it.
-- `hkbFootIkControlData::m_gains` is read as twelve floats in Havok's order, not as named
-  members. Nothing reads a single gain, and twelve guessed names could be wrong.
+- `BSIStateManagerModifier` ends with a listener object at 0x68 whose members are
+  `SERIALIZE_IGNORED`, so the size 128 is from HKX2Library, not from a vanilla value.
 - `hkbStateMachineStateInfo::m_listeners` is empty in every vanilla file, so its elements
   are not decoded.
 - `SERIALIZE_IGNORED` members (current state, elapsed time, cached values) are zeros on disk

@@ -58,6 +58,9 @@ struct HKBNodeClassTests {
         HKBClassCase(name: "hkbFootIkControlsModifier", size: 176),
         HKBClassCase(name: "hkbPoweredRagdollControlsModifier", size: 144),
         HKBClassCase(name: "hkbRigidBodyRagdollControlsModifier", size: 160),
+        HKBClassCase(name: "hkbFootIkModifier", size: 256),
+        HKBClassCase(name: "hkbTransformVectorModifier", size: 160),
+        HKBClassCase(name: "hkbReferencePoseGenerator", size: 80),
         HKBClassCase(name: "BSSynchronizedClipGenerator", size: 304),
         HKBClassCase(name: "BSiStateTaggingGenerator", size: 96),
         HKBClassCase(name: "BSBoneSwitchGenerator", size: 112),
@@ -73,7 +76,14 @@ struct HKBNodeClassTests {
         HKBClassCase(name: "BSSpeedSamplerModifier", size: 96),
         HKBClassCase(name: "BSRagdollContactListenerModifier", size: 136),
         HKBClassCase(name: "BSDirectAtModifier", size: 224),
-        HKBClassCase(name: "BSLookAtModifier", size: 224)
+        HKBClassCase(name: "BSLookAtModifier", size: 224),
+        HKBClassCase(name: "BSTimerModifier", size: 112),
+        HKBClassCase(name: "BSDecomposeVectorModifier", size: 112),
+        HKBClassCase(name: "BSGetTimeStepModifier", size: 96),
+        HKBClassCase(name: "BSIStateManagerModifier", size: 128),
+        HKBClassCase(name: "BSTweenerModifier", size: 208),
+        HKBClassCase(name: "BSPassByTargetTriggerModifier", size: 160),
+        HKBClassCase(name: "BSLimbIKModifier", size: 128)
     ]
 
     /// Bytes left in the section for the truncated case; every class in the set

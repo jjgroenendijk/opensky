@@ -24,7 +24,7 @@ each area counts.
 
 <!-- gaps:begin -->
 
-Measured on 2026-10-15 by `make gaps`.
+Measured on 2026-10-16 by `make gaps`.
 
 | Area | Done | Left | Total | Done % |
 | --- | --: | --: | --: | --: |
@@ -38,11 +38,11 @@ Measured on 2026-10-15 by `make gaps`.
 | Perk entry-point functions | 5 | 4 | 9 | 55% |
 | AI package procedures | 8 | 22 | 30 | 26% |
 | AI packages that do not resolve | - | 0 | - | - |
-| Behavior node classes | 22 | 29 | 51 | 43% |
-| Behavior features ignored | - | 251 | - | - |
-| Havok classes | 61 | 39 | 100 | 61% |
+| Behavior node classes | 52 | 2 | 54 | 96% |
+| Behavior features ignored | - | 256 | - | - |
+| Havok classes | 71 | 29 | 100 | 71% |
 | Animation events | 68 | 76 | 144 | 47% |
-| Behavior graph variables | 18 | 678 | 696 | 2% |
+| Behavior graph variables | 565 | 131 | 696 | 81% |
 | NIF block types | 82 | 63 | 145 | 56% |
 | Lighting shader types | 11 | 0 | 11 | 100% |
 | Lighting shader flags | 38 | 0 | 38 | 100% |

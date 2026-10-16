@@ -126,6 +126,12 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         /// A generator's `m_enable`-equivalent binding disabled it, which the
         /// evaluator honours by returning the reference pose.
         case disabledNode
+        /// An `hkbEvaluateExpressionModifier` statement did not fit the grammar.
+        case expressionUnparsed
+        /// An expression statement named a variable this graph does not declare.
+        case expressionUnresolved
+        /// A non-additive `hkbTwistModifier` with a model-space axis was run as additive.
+        case twistModelAxisAsAdditive
         /// Recursion stopped at the depth cap, which means the graph is deeper
         /// than the cap or contains a generator cycle.
         case depthCapReached

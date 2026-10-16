@@ -57,6 +57,9 @@ classes are listed in [HKX behavior graph objects](/formats/hkx-behavior.md).
 | `hkbKeyframeBonesModifier` | `0x95F66629` |
 | `hkbGetUpModifier` | `0x61CB7AC0` |
 | `hkbFootIkControlsModifier` | `0xE5B6F544` |
+| `hkbFootIkModifier` | `0xED8966C0` |
+| `hkbTransformVectorModifier` | `0xF93E0E24` |
+| `hkbReferencePoseGenerator` | `0x26A5675A` |
 | `hkbPoweredRagdollControlsModifier` | `0x7CB54065` |
 | `hkbRigidBodyRagdollControlsModifier` | `0xAA87D1EB` |
 
@@ -81,3 +84,10 @@ classes are listed in [HKX behavior graph objects](/formats/hkx-behavior.md).
 | `BSDirectAtModifier` | `0x19A005C0` |
 | `BSLookAtModifier` | `0xD756FC25` |
 | `BSLookAtModifierBoneData` | `0x29EFEE59` |
+| `BSTimerModifier` | `0x531F3292` |
+| `BSDecomposeVectorModifier` | `0x31F6B8B6` |
+| `BSGetTimeStepModifier` | `0xBDA33BFE` |
+| `BSIStateManagerModifier` | `0x6CB24F2E` |
+| `BSTweenerModifier` | `0x0D2D9A04` |
+| `BSPassByTargetTriggerModifier` | `0x703D7B66` |
+| `BSLimbIKModifier` | `0x8EA971E5` |

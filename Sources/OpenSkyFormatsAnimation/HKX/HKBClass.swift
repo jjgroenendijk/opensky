@@ -153,3 +153,41 @@ nonisolated public struct HKBEventProperty: Equatable, Sendable {
         HKBReference.optional("\(member).m_payload", payload)
     }
 }
+
+/// A class that derives `hkbModifier`, so it carries the modifier header.
+nonisolated public protocol HKBModifierClass: HKBClass {
+    var modifier: HKBModifierHeader { get }
+}
+
+extension HKBModifierList: HKBModifierClass {}
+extension HKBEventDrivenModifier: HKBModifierClass {}
+extension HKBEvaluateExpressionModifier: HKBModifierClass {}
+extension HKBEventsFromRangeModifier: HKBModifierClass {}
+extension HKBTimerModifier: HKBModifierClass {}
+extension HKBDampingModifier: HKBModifierClass {}
+extension HKBTwistModifier: HKBModifierClass {}
+extension HKBRotateCharacterModifier: HKBModifierClass {}
+extension HKBKeyframeBonesModifier: HKBModifierClass {}
+extension HKBGetUpModifier: HKBModifierClass {}
+extension HKBFootIkControlsModifier: HKBModifierClass {}
+extension HKBFootIkModifier: HKBModifierClass {}
+extension HKBTransformVectorModifier: HKBModifierClass {}
+extension HKBPoweredRagdollControlsModifier: HKBModifierClass {}
+extension HKBRigidBodyRagdollControlsModifier: HKBModifierClass {}
+extension BSIsActiveModifier: HKBModifierClass {}
+extension BSEventEveryNEventsModifier: HKBModifierClass {}
+extension BSEventOnDeactivateModifier: HKBModifierClass {}
+extension BSEventOnFalseToTrueModifier: HKBModifierClass {}
+extension BSInterpValueModifier: HKBModifierClass {}
+extension BSModifyOnceModifier: HKBModifierClass {}
+extension BSSpeedSamplerModifier: HKBModifierClass {}
+extension BSRagdollContactListenerModifier: HKBModifierClass {}
+extension BSDirectAtModifier: HKBModifierClass {}
+extension BSLookAtModifier: HKBModifierClass {}
+extension BSTimerModifier: HKBModifierClass {}
+extension BSDecomposeVectorModifier: HKBModifierClass {}
+extension BSGetTimeStepModifier: HKBModifierClass {}
+extension BSIStateManagerModifier: HKBModifierClass {}
+extension BSTweenerModifier: HKBModifierClass {}
+extension BSPassByTargetTriggerModifier: HKBModifierClass {}
+extension BSLimbIKModifier: HKBModifierClass {}
