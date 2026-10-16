@@ -149,4 +149,6 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   script without natives.
 - A package tree can hold several procedures, but an actor runs one. The others count as left.
 - A game setting counts as read when a settings reader asks for it, or when the menus read it
-  by prefix (`fStats`, the fast-travel and race menu texts).
+  by prefix (`fStats`, the fast-travel and race menu texts). A setting the game never uses,
+  such as a Fallout leftover, counts as done too
+  ([settings the game never uses](/formats/gmst.md#settings-the-game-never-uses)).

@@ -48,3 +48,37 @@ OpenSky uses 32 and labels it as its own fallback. It does not guess a name.
 In one physics step, the player moves `(running ? runSpeed : walkSpeed) * fixedTimeStep`.
 
 `openskycli gmst movement` prints each value, its units, and which plugin set it.
+
+## Reading a setting
+
+A settings struct holds the vanilla values and lays each setting the load order defines over
+one field. A missing setting, a wrongly typed one, or a float that is not finite keeps the
+vanilla value. An integer setting may fill a float field. A float with no fraction may fill an
+integer field.
+
+A string setting holds a string-table ID in a localized plugin. It resolves through the string
+table of the plugin that set it ([string tables](/formats/strings.md)).
+
+## Settings the game never uses
+
+`Skyrim.esm` keeps settings of older games, and texts of consoles and online services. The
+Creation Kit [settings list](https://ck.uesp.net/wiki/Category:Settings) says: "Note that while
+all game settings are loaded, not all of them are used. It seems that Bethesda doesn't remove
+game settings from older games". Its "Featured Games" column and its descriptions mark most of
+them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading screens".
+
+`GameSettingsUnused` lists these settings with one reason each:
+
+| Reason | Examples | Why OpenSky does not read them |
+| --- | --- | --- |
+| V.A.T.S. | `fVATSPlaybackDelay` | Fallout targeting. Skyrim has none |
+| Action points | `fActionPointsReload` | Only V.A.T.S. spends them |
+| Firearms | `fGunSpreadArmBase`, `fWeaponConditionJam1` | Guns, grenades, and item condition are Fallout systems |
+| Fallout systems | `fKarmaModStealing`, `sRepairCost` | Karma, chems, repair, the Pip-Boy, radio, hacking, traits |
+| Oblivion | `fMoveEncumEffect` | The wiki marks them "Unused" |
+| Marked unused | `sHeavyArmorSink` | The wiki says "Unused"; `sHairColor0` to `15` hold their own names |
+| Creations | `sReportModConfirm` | The Bethesda.net Creations manager. OpenSky does not connect to it |
+| Consoles | `sKinectCantInit`, `sNoDeviceSelected` | Xbox, Kinect, and console storage texts |
+
+A setting on this list counts as done in the [gap report](/tools/gaps.md). A setting the wiki
+does not mark, and whose system Skyrim has, stays off the list even if OpenSky lacks the system.

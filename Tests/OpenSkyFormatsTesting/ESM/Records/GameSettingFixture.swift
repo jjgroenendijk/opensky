@@ -21,3 +21,35 @@ public enum GameSettingFixture: Sendable {
         ))
     }
 }
+
+/// One synthetic GMST value, typed by its editor ID's first letter in the game.
+public enum GameSettingFixtureValue: Sendable {
+    case float(Float)
+    case integer(Int32)
+    case boolean(Bool)
+    /// An inline string; the plugin is not localized.
+    case text(String)
+
+    var data: Data {
+        var data = Data()
+        switch self {
+        case let .float(value): data.appendUInt32(value.bitPattern)
+        case let .integer(value): data.appendUInt32(UInt32(bitPattern: value))
+        case let .boolean(value): data.appendUInt32(value ? 1 : 0)
+        case let .text(value): data = ESMFixture.zstring(value)
+        }
+        return data
+    }
+}
+
+extension GameSettingFixture {
+    /// A plugin with one GMST per entry, in editor ID order.
+    public static func plugin(settings: [String: GameSettingFixtureValue]) throws -> ESMFile {
+        let records = settings.sorted { $0.key < $1.key }.enumerated().reduce(into: Data()) {
+            let fields = ESMFixture.field("EDID", ESMFixture.zstring($1.element.key))
+                + ESMFixture.field("DATA", $1.element.value.data)
+            $0 += ESMFixture.record("GMST", formID: UInt32($1.offset + 1), data: fields)
+        }
+        return try ESMFile(data: ESMFixture.tes4() + ESMFixture.topGroup("GMST", contents: records))
+    }
+}

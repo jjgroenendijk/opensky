@@ -35,14 +35,18 @@ extension GapsGatherer {
             }
         }
         let read = Self.settingsRead(plugins: plugins)
+        let unused = defined.uses.keys.filter { GameSettingsUnused.reason(for: $0) != nil }
         return GapSection(
             title: "Game settings", unit: "settings", counts: defined,
             handled: {
                 read.contains($0.lowercased()) || $0.hasPrefix(MenuRecordData.statsPrefix)
-                    || MenuRecordData.isMenuText($0)
+                    || MenuRecordData.isMenuText($0) || GameSettingsUnused.reason(for: $0) != nil
             },
             usesUnit: "plugins that set it",
-            notes: ["done means a settings reader asks for it; \(read.count) names asked for"]
+            notes: [
+                "done means a settings reader asks for it; \(read.count) names asked for",
+                "\(unused.count) more are done: the game never uses them (GameSettingsUnused)"
+            ]
         )
     }
 
