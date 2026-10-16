@@ -40,6 +40,9 @@ final class DialogueWorldAdapter {
     /// list is built here, not in streaming.
     func wireDialogue(provider: any WorldDataProviding, streamer: CellStreamer) {
         game.dialogue.index = (provider as? DialogueDataProviding)?.dialogueStore
+        game.dialogue.topicSubtypes = (provider as? WorldDataStores).map {
+            TopicSubtypeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         streamer.talk.candidateSource = { [weak self] in
             self?.talkCandidates() ?? []
         }

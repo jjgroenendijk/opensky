@@ -109,7 +109,8 @@ struct DialogueSectionTests {
             rejections: [
                 DialogueRejectionRow(
                     topic: FormID(0x1360E),
-                    reasons: ["conditions failed", "not reached"]
+                    reasons: ["conditions failed", "not reached"],
+                    subtype: "Hello"
                 )
             ],
             unresolvedConditionCount: 3
@@ -118,7 +119,7 @@ struct DialogueSectionTests {
         panel.dialogueSection.refreshReadout()
         let text = panel.dialogueSection.conditionsReadout
         #expect(text.contains("Unresolved condition calls: 3"))
-        #expect(text.contains("0001360E: conditions failed, not reached"))
+        #expect(text.contains("0001360E (Hello): conditions failed, not reached"))
     }
 
     @Test
