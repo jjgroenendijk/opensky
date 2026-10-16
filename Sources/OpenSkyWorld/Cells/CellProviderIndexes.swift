@@ -193,6 +193,7 @@ nonisolated public struct CellProviderIndexes {
         stores.difficultySettings = tuning.difficulty
         stores.harvestRegrowth = tuning.harvestRegrowth
         stores.speechCheckSettings = tuning.speechChecks
+        stores.gameSettings = tuning.store
         return stores
     }
 }

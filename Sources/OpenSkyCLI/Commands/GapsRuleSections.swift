@@ -87,6 +87,7 @@ extension GapsGatherer {
         _ = LockpickingSettings.resolve(store: store)
         _ = DetectionSettings.resolve(store: store)
         _ = PlayerMovementConfiguration.resolve(store: store)
+        _ = RegenerationSettings.resolve(store: store)
         return log.editorIDs
     }
 }

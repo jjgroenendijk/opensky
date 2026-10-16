@@ -14,4 +14,6 @@ public protocol ActorValueWorld: AnyObject {
     /// Nil when no actor is resident.
     func nearestActorValueHolder() -> ActorValueHolder?
     func isCasting(_ key: ReferenceKey) -> Bool
+    /// The player is in combat while any actor fights it.
+    func isInCombat(_ key: ReferenceKey) -> Bool
 }

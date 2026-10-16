@@ -17,6 +17,9 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     public let store: WorldStateStore
     public let baselines: ActorValueBaselineResolver
+    public let regeneration: RegenerationSettings
+    /// Seconds each holder still waits before a damaged value regenerates again.
+    private let delays = RegenerationDelays()
     /// Regeneration reads every actor's baseline each step. A `PC Level Mult` actor
     /// scales with the player, so the key holds the player level too.
     private let actorBaselines = BaselineMemo<ActorBaselineKey, ActorValueBaseline>()
@@ -96,7 +99,10 @@ public struct ActorValueRuntime: ActorValueAccess {
         by amount: Float,
         on holder: ActorValueHolder
     ) -> ActorValueState {
-        write(state(of: holder).damaging(kind, by: amount), for: holder)
+        if amount.isFinite, amount > 0 {
+            delays.pause(kind, of: holder.key, for: regeneration.delay(after: kind))
+        }
+        return write(state(of: holder).damaging(kind, by: amount), for: holder)
     }
 
     /// Adds `amount` to one of `holder`'s values, capped at its maximum.
@@ -158,10 +164,14 @@ public struct ActorValueRuntime: ActorValueAccess {
 
     /// Advances regeneration one fixed step for each holder, in `ReferenceKey` order,
     /// adding `maximum * percent / 100 * step` with no drift. Health at zero does not
-    /// regenerate; death decides that. Returns the holders that changed.
+    /// regenerate; death decides that. `situation` says who fights and who casts.
+    /// Returns the holders that changed.
     @discardableResult
-    public func stepRegeneration(over holders: [ActorValueHolder]) -> [ActorValueHolder] {
-        regenerate(over: holders, seconds: Self.fixedStepSeconds)
+    public func stepRegeneration(
+        over holders: [ActorValueHolder],
+        situation: (ActorValueHolder) -> RegenerationSituation = { _ in .calm }
+    ) -> [ActorValueHolder] {
+        regenerate(over: holders, seconds: Self.fixedStepSeconds, situation: situation)
     }
 
     /// Runs whole fixed steps from a wall delta, capped at `maximumStepsPerAdvance`; the
@@ -171,14 +181,15 @@ public struct ActorValueRuntime: ActorValueAccess {
     public func advance(
         delta: Float,
         accumulator: inout Double,
-        over holders: [ActorValueHolder]
+        over holders: [ActorValueHolder],
+        situation: (ActorValueHolder) -> RegenerationSituation = { _ in .calm }
     ) -> Int {
         guard delta.isFinite, delta > 0 else { return 0 }
         accumulator += Double(delta)
         var steps = 0
         while accumulator >= Self.fixedStepSeconds, steps < Self.maximumStepsPerAdvance {
             accumulator -= Self.fixedStepSeconds
-            stepRegeneration(over: holders)
+            stepRegeneration(over: holders, situation: situation)
             steps += 1
         }
         // After a capped hitch, keep at most one more burst of debt so a long
@@ -221,7 +232,8 @@ public struct ActorValueRuntime: ActorValueAccess {
     /// order.
     private func regenerate(
         over holders: [ActorValueHolder],
-        seconds: Double
+        seconds: Double,
+        situation: (ActorValueHolder) -> RegenerationSituation
     ) -> [ActorValueHolder] {
         guard seconds > 0 else { return [] }
         var changed: [ActorValueHolder] = []
@@ -229,19 +241,22 @@ public struct ActorValueRuntime: ActorValueAccess {
             let baseline = baseline(of: holder)
             let state = state(of: holder)
             let maximums = Self.maximums(derived: baseline.maximums, state: state)
+            let rates = rateMultipliers(of: holder, situation: situation(holder))
             var updated = state.current
             for kind in ActorValueKind.allCases {
                 let maximum = maximums[kind]
-                let percent = baseline.regenPercentPerSecond[kind]
-                guard maximum.isFinite, maximum > 0, percent.isFinite, percent > 0 else {
-                    continue
-                }
+                let percent = baseline.regenPercentPerSecond[kind] * rates[kind]
+                guard
+                    maximum.isFinite, maximum > 0, percent.isFinite, percent > 0,
+                    !delays.isPaused(kind, of: holder.key)
+                else { continue }
                 if kind == .health, updated.health <= 0 {
                     continue
                 }
                 let gain = maximum * percent / 100 * Float(seconds)
                 updated[kind] = min(maximum, updated[kind] + gain)
             }
+            delays.advance(holder.key, by: Float(seconds))
             guard updated != state.current else { continue }
             // Keep the override table in the write, or 60 regeneration writes a second
             // would drop a magic effect's temporary modifier.
@@ -255,9 +270,42 @@ public struct ActorValueRuntime: ActorValueAccess {
         return changed
     }
 
-    public init(store: WorldStateStore, baselines: ActorValueBaselineResolver) {
+    /// What combat and casting leave of each regeneration rate. The player's health
+    /// in combat follows its `Combat Health Regen Multiply` actor value instead of the
+    /// NPC setting (UESP "Skyrim:Health", "Passive Regeneration").
+    private func rateMultipliers(
+        of holder: ActorValueHolder,
+        situation: RegenerationSituation
+    ) -> ActorValues {
+        var rates = ActorValues(repeating: 1)
+        let isPlayer = holder.subject == .player
+        if situation.isInCombat {
+            rates.health = isPlayer ? playerCombatHealthMult() : regeneration.combatHealthMult
+            rates.magicka = regeneration.combatMagickaMult
+            rates.stamina = regeneration.combatStaminaMult
+        }
+        if situation.isCasting, isPlayer || !regeneration.npcMagickaDuringCast {
+            rates.magicka = 0
+        }
+        return rates
+    }
+
+    private func playerCombatHealthMult() -> Float {
+        guard
+            let index = ActorValueIdentity.index(named: "Combat Health Regen Multiply"),
+            let value = value(at: index, on: .player), value > 0
+        else { return RegenerationSettings.playerCombatHealthMult }
+        return value
+    }
+
+    public init(
+        store: WorldStateStore,
+        baselines: ActorValueBaselineResolver,
+        regeneration: RegenerationSettings = .vanilla
+    ) {
         self.store = store
         self.baselines = baselines
+        self.regeneration = regeneration
     }
 }
 

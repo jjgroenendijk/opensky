@@ -199,7 +199,8 @@ struct ActorValueOverrideTests {
         regenerating.setBase(at: Self.health, to: 200, on: holder)
         regenerating.damage(at: Self.health, by: 100, on: holder)
         #expect(regenerating.current(of: holder).health == 100)
-        for _ in 0 ..< 10 {
+        // 30 steps sit out the pause after damage, then 5 fill the gap.
+        for _ in 0 ..< 40 {
             regenerating.stepRegeneration(over: [holder])
         }
         #expect(regenerating.current(of: holder).health == 200)

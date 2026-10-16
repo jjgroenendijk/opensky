@@ -183,6 +183,11 @@ public final class CombatLoopRuntime: CombatControlling {
     }
 
     /// `key`'s combat state as `GetCombatState` and `IsInCombat` read it.
+    /// Every fight is against the player, so it fights while any actor is engaged.
+    public var isPlayerInCombat: Bool {
+        behaviors.values.contains { $0.phase.isEngaged }
+    }
+
     public func activity(of key: ReferenceKey) -> ActorCombatActivity {
         guard let phase = behaviors[key]?.phase, phase.isEngaged else { return .notFighting }
         return phase == .searching ? .searching : .fighting

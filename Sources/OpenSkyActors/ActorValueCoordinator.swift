@@ -36,20 +36,25 @@ public final class ActorValueCoordinator {
         self.world = world
     }
 
-    public func wire(baselines: ActorValueBaselineResolver) {
-        runtime = ActorValueRuntime(store: store, baselines: baselines)
+    public func wire(
+        baselines: ActorValueBaselineResolver,
+        regeneration: RegenerationSettings = .vanilla
+    ) {
+        runtime = ActorValueRuntime(
+            store: store, baselines: baselines, regeneration: regeneration
+        )
     }
 
-    /// Runs whole regeneration steps for the delta this frame simulated.
-    ///
-    /// A caster does not regenerate: "Magicka will not regenerate while you
-    /// are casting a spell" (<https://en.uesp.net/wiki/Skyrim:Magicka>). NPCs
-    /// follow the same rule; docs/engine/spellcasting.md records the deviation.
+    /// Runs whole regeneration steps for the delta this frame simulated. Combat
+    /// slows each value, and casting stops magicka (`RegenerationSettings`).
     public func advance(delta: Float) {
         guard let runtime, let world else { return }
         let holders = holderOrder.sorted(world.regeneratingHolders(), by: \.key)
-            .filter { !world.isCasting($0.key) }
-        runtime.advance(delta: delta, accumulator: &regenAccumulator, over: holders)
+        runtime.advance(delta: delta, accumulator: &regenAccumulator, over: holders) {
+            RegenerationSituation(
+                isInCombat: world.isInCombat($0.key), isCasting: world.isCasting($0.key)
+            )
+        }
     }
 
     /// The NPC_ base FormID, which is what the user types into the record dump.

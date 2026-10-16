@@ -39,7 +39,11 @@ final class ActorWorldAdapter {
         guard let baselines = (provider as? ActorValueDataProviding)?.actorValueBaselines
         else { return }
         let coordinator = game.actorValues
-        coordinator.wire(baselines: baselines)
+        let settings = (provider as? WorldDataStores)?.gameSettings
+        coordinator.wire(
+            baselines: baselines,
+            regeneration: settings.map(RegenerationSettings.resolve) ?? .vanilla
+        )
         // Chained after the Papyrus VM, so neither unhooks the other. The
         // renderer gates the delta, so a menu-paused frame regenerates nothing.
         let advanceScripts = renderer.onWorldUpdate
@@ -181,5 +185,10 @@ extension ActorWorldAdapter: ActorValueWorld {
 
     func isCasting(_ key: ReferenceKey) -> Bool {
         game.magic.caster?.isCasting(key) == true
+    }
+
+    func isInCombat(_ key: ReferenceKey) -> Bool {
+        guard let loop = game.combat.loop else { return false }
+        return key == .player ? loop.isPlayerInCombat : loop.activity(of: key) != .notFighting
     }
 }

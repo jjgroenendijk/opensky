@@ -133,9 +133,9 @@ Every refusal has a sentence, is counted, and is shown on the panel. Nothing fai
 | `abilityNotCastable` | An ability is carried, not cast |
 | `powerAlreadyUsedToday` | The once-per-day rule |
 
-UESP: "Magicka will not regenerate while you are casting a spell." The player leaves the whole
-regeneration set while either hand is casting. That is wider than the source, which names only
-magicka. No source says health and stamina keep going.
+UESP: "Magicka will not regenerate while you are casting a spell." So a casting player stops only
+magicka; health and stamina keep going. An NPC follows `bRegenNPCMagickaDuringCast`, which is false
+in `Skyrim.esm`, so it stops too ([regeneration](/engine/actor-value-store.md#regeneration)).
 
 ## Abilities and powers
 

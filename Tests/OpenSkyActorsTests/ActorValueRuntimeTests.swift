@@ -16,13 +16,17 @@ struct ActorValueRuntimeTests {
 
     private func runtime(
         maximums: ActorValues = ActorValues(health: 100, magicka: 80, stamina: 60),
-        regen: ActorValues = .zero
+        regen: ActorValues = .zero,
+        regeneration: RegenerationSettings = .vanilla
     ) -> (ActorValueRuntime, WorldStateStore) {
         let store = WorldStateStore()
         let baselines = ActorValueBaselineResolver(
             fallback: ActorValueBaseline(maximums: maximums, regenPercentPerSecond: regen)
         )
-        return (ActorValueRuntime(store: store, baselines: baselines), store)
+        return (
+            ActorValueRuntime(store: store, baselines: baselines, regeneration: regeneration),
+            store
+        )
     }
 
     private func holder() -> ActorValueHolder {
@@ -142,15 +146,48 @@ struct ActorValueRuntimeTests {
 
     /// "Health Regen: The percentage of total Health that is regenerated each
     /// second" (<https://ck.uesp.net/wiki/Race>), so one second of 5%/s on a
-    /// 60-stamina actor restores 3.
-    @Test func regenerationRestoresThePercentPerSecond() {
+    /// 60-stamina actor restores 3. `fDamagedStaminaRegenDelay` pauses the first
+    /// 0.5 s, so only 1.5 comes back.
+    @Test func regenerationRestoresThePercentPerSecondAfterTheDamagePause() {
         let (runtime, _) = self.runtime(regen: ActorValues(health: 0, magicka: 0, stamina: 5))
         let holder = holder()
         runtime.damage(.stamina, by: 30, on: holder)
         for _ in 0 ..< 60 {
             runtime.stepRegeneration(over: [holder])
         }
-        #expect(abs(runtime.current(of: holder).stamina - 33) < 0.001)
+        #expect(abs(runtime.current(of: holder).stamina - 31.5) < 0.001)
+    }
+
+    @Test func combatMultipliesEachRate() {
+        var settings = RegenerationSettings.vanilla
+        settings.staminaDelay = 0
+        let (runtime, _) = self.runtime(
+            regen: ActorValues(health: 0, magicka: 0, stamina: 5), regeneration: settings
+        )
+        let holder = holder()
+        runtime.damage(.stamina, by: 30, on: holder)
+        for _ in 0 ..< 60 {
+            runtime.stepRegeneration(over: [holder]) { _ in
+                RegenerationSituation(isInCombat: true, isCasting: false)
+            }
+        }
+        #expect(abs(runtime.current(of: holder).stamina - 31.05) < 0.001)
+    }
+
+    @Test func anNPCCastingRegeneratesMagickaOnlyWhenTheSettingAllowsIt() {
+        var settings = RegenerationSettings.vanilla
+        settings.magickaDelay = 0
+        let casting = RegenerationSituation(isInCombat: false, isCasting: true)
+        let (still, _) = runtime(regen: ActorValues(repeating: 50), regeneration: settings)
+        still.damage(.magicka, by: 40, on: holder())
+        still.stepRegeneration(over: [holder()]) { _ in casting }
+        #expect(still.current(of: holder()).magicka == 40)
+
+        settings.npcMagickaDuringCast = true
+        let (moving, _) = runtime(regen: ActorValues(repeating: 50), regeneration: settings)
+        moving.damage(.magicka, by: 40, on: holder())
+        moving.stepRegeneration(over: [holder()]) { _ in casting }
+        #expect(moving.current(of: holder()).magicka > 40)
     }
 
     @Test func regenerationCapsAtTheMaximum() {

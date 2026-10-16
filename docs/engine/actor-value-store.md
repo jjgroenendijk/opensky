@@ -144,6 +144,23 @@ Health does not regenerate at zero. An actor at zero is dead or bleeding out, an
 [death](/engine/ragdoll.md) to decide. Only the player and actors in loaded cells regenerate. An
 actor in an unloaded cell is not simulated.
 
+Three game settings slow it in combat (values from `Skyrim.esm`):
+
+| Setting | Value | Effect |
+| --- | --- | --- |
+| `fCombatHealthRegenRateMult` | 0 | NPC health in combat. "Most NPCs do not regenerate health during combat" |
+| `fCombatMagickaRegenRateMult` | 0.33 | 3% a second becomes 0.99% (UESP "Skyrim:Magicka") |
+| `fCombatStaminaRegenRateMult` | 0.35 | 5% a second becomes 1.75% (UESP "Skyrim:Stamina") |
+
+The player's health uses its `Combat Health Regen Multiply` actor value instead, which UESP gives
+as 0.7: "0.70% of your maximum health each second outside of combat and 0.49% during combat"
+("Skyrim:Health"). No record sets it, so OpenSky starts it at 0.7. The player is in combat while
+any actor fights it, because every fight in OpenSky is against the player.
+
+Damage pauses the damaged value: `fDamagedHealthRegenDelay`, `fDamagedMagickaRegenDelay`, and
+`fDamagedStaminaRegenDelay` (0.5 s each), and `fDamagedAVRegenDelay` (1 s) when one of them is
+missing. The pause is not saved. Casting stops magicka ([spellcasting](/engine/spellcasting.md)).
+
 Each step rewrites the whole component and keeps the override table, so a buff survives. Refill
 fills to the effective maximum and keeps the table. "Reset to records" drops it.
 

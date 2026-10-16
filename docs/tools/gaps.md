@@ -71,7 +71,7 @@ complete, so a new reader cannot be missed:
 | --- | --- |
 | `PerkEntryPoint.engineRead` | SwiftLint `perk_entry_point_literal`: no raw entry-point number elsewhere |
 | `PapyrusEngineEvents.sent` | SwiftLint `papyrus_event_literal`: no `"On..."` event name elsewhere in the scripting module |
-| Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` |
+| Game settings | SwiftLint `game_setting_reader`: only the files of known readers call `setting(editorID:)` or declare `resolve(store:)` |
 | `NIFShaderFlag.lightingRead`, `effectRead` | SwiftLint `shader_flag_mask`: flags are read through `has(_:)` and a named constant |
 | `NIFBlockTypes.handled` | `make gap-registries`: the list holds exactly the NIF type names the code names |
 

@@ -64,4 +64,18 @@ struct GameSettingValuesTests {
         #expect(GameSettingsUnused.reason(for: "SKINECTCANTINIT") == .consoles)
         #expect(GameSettingsUnused.reason(for: "fCombatDistance") == nil)
     }
+
+    @Test func regenerationSettingsComeFromTheLoadOrder() throws {
+        let store = try GameSettingFixture.store([
+            "fCombatStaminaRegenRateMult": .float(0.5),
+            "fDamagedAVRegenDelay": .float(2),
+            "fDamagedHealthRegenDelay": .float(0.25),
+            "bRegenNPCMagickaDuringCast": .boolean(true)
+        ])
+        let settings = RegenerationSettings.resolve(store: store)
+        #expect(settings.combatStaminaMult == 0.5)
+        #expect(settings.healthDelay == 0.25)
+        #expect(settings.magickaDelay == 2)
+        #expect(settings.npcMagickaDuringCast)
+    }
 }
