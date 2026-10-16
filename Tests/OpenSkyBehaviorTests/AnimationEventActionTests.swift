@@ -15,6 +15,15 @@ struct AnimationEventActionTests {
             == .playSound(editorID: "TestSaw", node: "Node01"))
     }
 
+    /// A door mesh's sequence text key names its sound after `Sound:`.
+    @Test func aSequenceTextKeyPlaysItsSound() {
+        #expect(AnimationEventAction.parse("Sound: TestGateOpen")
+            == .playSound(editorID: "TestGateOpen", node: nil))
+        #expect(AnimationEventAction.parse("sound:TestGateOpen")
+            == .playSound(editorID: "TestGateOpen", node: nil))
+        #expect(AnimationEventAction.parse("Sound: ") == nil)
+    }
+
     @Test func stopAndReleaseEndTheLoop() {
         #expect(AnimationEventAction.parse("SoundStop.TestLoopLPM")
             == .stopSound(editorID: "TestLoopLPM"))

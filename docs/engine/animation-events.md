@@ -47,6 +47,8 @@ or an object's placed position. A source that is not loaded does nothing.
 | `HeadTrackingOn`, `HeadTrackingOff` | none | Lets the head turn, or holds it forward |
 
 A `SoundPlay` key means the same in a NIF text key ([NIF sequences](/formats/nif-sequences.md)).
+A door mesh's sequences write a sound as `Sound: <editor ID>` instead, which plays the same way
+([sequence doors](/engine/object-animation.md#sequence-doors)).
 A descriptor whose `LNAM` loops keeps playing until the same source stops it. A one-shot is not
 tracked. A `SoundStop` for a sound that is not looping does nothing.
 
