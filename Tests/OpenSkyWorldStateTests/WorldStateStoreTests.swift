@@ -41,12 +41,14 @@ struct WorldStateStoreTests {
     private func referenceEntry(
         objectID: UInt32 = 0x200,
         position: SIMD3<Float> = SIMD3(1, 2, 3),
-        scale: Float? = 2
+        scale: Float? = 2,
+        opensByDefault: Bool = false
     ) throws -> RuntimeReferenceEntry {
         let bytes = ESMFixture.record(
             "REFR",
             formID: objectID,
             data: placementFields(position: position, scale: scale)
+                + (opensByDefault ? ESMFixture.field("ONAM", Data()) : Data())
         )
         return try RuntimeReferenceEntry(
             key: key(objectID),
@@ -164,6 +166,14 @@ struct WorldStateStoreTests {
 
         store.reset(entry.key)
         #expect(store.resolvedState(for: entry) == baseline)
+    }
+
+    /// `ONAM`, the editor's "Open by Default", starts the reference open.
+    @Test func openByDefaultStartsOpen() throws {
+        let store = WorldStateStore()
+        let open = try referenceEntry(opensByDefault: true)
+        #expect(store.resolvedState(for: open).activation.isOpen)
+        #expect(try !store.resolvedState(for: referenceEntry()).activation.isOpen)
     }
 
     @Test func actorBaselineHonoursTheInitiallyDisabledFlag() throws {
