@@ -65,6 +65,21 @@ nonisolated public struct BehaviorNodeState: Equatable, Sendable {
     /// `localTime` rather than derived because the window length lives in the
     /// generator rather than in the state.
     public var phase: Float = 0
+    /// PID error terms, for a damping modifier. A scalar uses `x`.
+    public var errorSum = SIMD4<Float>()
+    public var previousError = SIMD4<Float>()
+    /// Last seen truth per slot, for edge detectors and expression event modes.
+    public var flags: [Bool] = []
+    /// Per slot: true once the slot has sent its event since activation.
+    public var sentFlags: [Bool] = []
+    /// Per-bone or per-axis blend weights, for the aiming and IK modifiers.
+    public var weights: [Float] = []
+    /// The band an events-from-range modifier was in last update.
+    public var rangeIndex: Int?
+    /// Events to count before the next send, for the every-N-events modifier.
+    public var eventThreshold = 0
+    /// The pose a cyclic blend crossfades away from, while it does.
+    public var crossBlendSource: BehaviorPose?
 }
 
 /// What one update produced: the pose, the root travel kept beside it, and the
@@ -158,6 +173,22 @@ nonisolated public final class BehaviorGraphInstance {
     public var poweredRagdollControls: HKBPoweredRagdollControlsModifier?
     /// The event the last update's `BSRagdollContactListenerModifier` raises on contact.
     public var ragdollContactEvent: String?
+    /// Where the character stands and what ground it stands on.
+    public var characterContext = BehaviorCharacterContext()
+    /// The physics hand-offs the last update's modifiers asked for.
+    public var physicsRequests = BehaviorPhysicsRequests()
+    /// Variable indexes a node wrote back this update, so a deactivating node
+    /// does not overwrite what a newly active one just wrote.
+    public var variablesWrittenThisUpdate: Set<Int> = []
+    /// Parsed `hkbEvaluateExpressionModifier` statements per expression array.
+    public var statementCache: [HKXPointerTarget: [BehaviorExpressionStatement?]] = [:]
+    /// Mean ankle correction of the last foot IK solve, model space.
+    public var footIkError = SIMD3<Float>()
+    /// The pose each cyclic blend generator produced last, so a crossfade can start from it.
+    public var cyclicLastPoses: [HKXPointerTarget: BehaviorPose] = [:]
+    /// The source of every random choice the graph makes. Seeded the same for
+    /// every instance, so two runs with the same input stay identical.
+    public var random = BehaviorRandom()
 
     /// What every state machine the last update reached is doing, in walk
     /// order. This is the state path items 14.5 and 14.6 read, and what the
@@ -214,25 +245,6 @@ nonisolated public final class BehaviorGraphInstance {
         )
     }
 
-    // MARK: - External input
-
-    /// Sets a graph variable by name. False when the graph declares no such variable, so a
-    /// caller learns an input has no home instead of losing it silently.
-    @discardableResult
-    public func setVariable(_ value: BehaviorVariableValue, named name: String) -> Bool {
-        variables.setValue(value, of: name)
-    }
-
-    public func variable(named name: String) -> BehaviorVariableValue? {
-        variables.value(of: name)
-    }
-
-    /// Raises an event by name, visible to the *next* update.
-    @discardableResult
-    public func raiseEvent(named name: String, payload: String? = nil) -> Bool {
-        events.raise(named: name, payload: payload)
-    }
-
     // MARK: - Lifecycle
 
     /// Starts the graph. Idempotent; a second call on a running instance does
@@ -281,6 +293,8 @@ nonisolated public final class BehaviorGraphInstance {
         isWaitingForClip = false
         poweredRagdollControls = nil
         ragdollContactEvent = nil
+        physicsRequests = BehaviorPhysicsRequests()
+        variablesWrittenThisUpdate = []
         let pose = evaluateGenerator(at: root, depth: 0, deltaTime: step)
         activeStates = activeStatesThisUpdate
         deactivateNodes(previouslyReached.subtracting(reachedThisUpdate))
@@ -397,7 +411,8 @@ nonisolated public final class BehaviorGraphInstance {
     public func boundValues(of node: BehaviorCompiledNode) -> [String: BehaviorVariableValue] {
         guard let compiled = node.bindings else { return [:] }
         var values: [String: BehaviorVariableValue] = [:]
-        for index in compiled.bindings.indices {
+        // `isDisabled` already reads the enable binding.
+        for index in compiled.bindings.indices where index != compiled.enableIndex {
             let binding = compiled.bindings[index]
             guard let value = resolve(binding) else { continue }
             guard let path = compiled.paths[index], let memberPath = binding.memberPath else {
@@ -472,5 +487,46 @@ nonisolated extension [String: BehaviorVariableValue] {
 
     private func value(_ path: String) -> BehaviorVariableValue? {
         self[BehaviorGraphInstance.normalizedMemberPath(path)]
+    }
+}
+
+nonisolated extension BehaviorGraphInstance {
+    // MARK: - External input
+
+    /// Sets a graph variable by name. False when the graph declares no such variable, so a
+    /// caller learns an input has no home instead of losing it silently.
+    @discardableResult
+    public func setVariable(_ value: BehaviorVariableValue, named name: String) -> Bool {
+        variables.setValue(value, of: name)
+    }
+
+    public func variable(named name: String) -> BehaviorVariableValue? {
+        variables.value(of: name)
+    }
+
+    /// Writes a variable by index from inside the graph. A non-negative `bit`
+    /// sets or clears that bit of the stored word.
+    public func writeVariable(_ value: BehaviorVariableValue, at index: Int, bit: Int = -1) {
+        guard let current = variables.value(at: index) else { return }
+        variablesWrittenThisUpdate.insert(index)
+        guard bit >= 0 else {
+            variables.setValue(value, at: index)
+            return
+        }
+        guard bit < 32 else { return }
+        let mask = 1 << bit
+        let word = value.boolValue ? current.intValue | mask : current.intValue & ~mask
+        variables.setValue(.int(Int32(truncatingIfNeeded: word)), at: index)
+    }
+
+    /// The value of the variable at `index`, or nil when out of range.
+    public func variable(at index: Int) -> BehaviorVariableValue? {
+        variables.value(at: index)
+    }
+
+    /// Raises an event by name, visible to the *next* update.
+    @discardableResult
+    public func raiseEvent(named name: String, payload: String? = nil) -> Bool {
+        events.raise(named: name, payload: payload)
     }
 }

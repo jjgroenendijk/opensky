@@ -85,7 +85,7 @@ nonisolated extension BehaviorGraphInstance {
             )
         default:
             return evaluateBethesda(
-                object, bound: bound, depth: next, deltaTime: deltaTime
+                object, at: target, bound: bound, depth: next, deltaTime: deltaTime
             )
         }
     }
@@ -94,6 +94,7 @@ nonisolated extension BehaviorGraphInstance {
     /// switch so neither routing function grows past the complexity limit.
     private func evaluateBethesda(
         _ object: any HKBClass,
+        at target: HKXPointerTarget,
         bound: [String: BehaviorVariableValue],
         depth: Int,
         deltaTime: Float
@@ -106,20 +107,15 @@ nonisolated extension BehaviorGraphInstance {
                 at: tagging.defaultGenerator, depth: depth, deltaTime: deltaTime
             )
         case let switcher as BSBoneSwitchGenerator:
-            tally.notePartialGenerator(BSBoneSwitchGenerator.className)
-            return evaluateGenerator(
-                at: switcher.defaultGenerator, depth: depth, deltaTime: deltaTime
-            )
+            return evaluateBoneSwitch(switcher, depth: depth, deltaTime: deltaTime)
         case let cyclic as BSCyclicBlendTransitionGenerator:
-            tally.notePartialGenerator(BSCyclicBlendTransitionGenerator.className)
-            return evaluateGenerator(
-                at: cyclic.blenderGenerator, depth: depth, deltaTime: deltaTime
+            return evaluateCyclicBlend(
+                cyclic, at: target, bound: bound, depth: depth, deltaTime: deltaTime
             )
         case let offset as BSOffsetAnimationGenerator:
-            tally.notePartialGenerator(BSOffsetAnimationGenerator.className)
-            return evaluateGenerator(
-                at: offset.defaultGenerator, depth: depth, deltaTime: deltaTime
-            )
+            return evaluateOffsetAnimation(offset, bound: bound, depth: depth, deltaTime: deltaTime)
+        case is HKBReferencePoseGenerator:
+            return skeleton.restPose
         case let synced as BSSynchronizedClipGenerator:
             return evaluateSynchronizedClip(
                 synced, depth: depth, deltaTime: deltaTime
@@ -127,7 +123,6 @@ nonisolated extension BehaviorGraphInstance {
         case let reference as HKBBehaviorReferenceGenerator:
             return evaluateBehaviorReference(reference, deltaTime: deltaTime)
         default:
-            _ = bound
             tally.noteUnevaluatedGenerator(object.className)
             return skeleton.restPose
         }
