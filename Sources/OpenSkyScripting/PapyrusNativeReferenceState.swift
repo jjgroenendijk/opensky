@@ -4,11 +4,13 @@
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldState
 
 extension PapyrusNativeFunctions {
-    /// `GetOpenState` codes: 1 open, 3 closed. OpenSky has no opening or closing phase.
+    /// `GetOpenState` codes: 1 open, 3 closed. A sequence door also answers 2 opening
+    /// and 4 closing.
     static let openStateOpen: Int32 = 1
     static let openStateClosed: Int32 = 3
 
@@ -38,7 +40,8 @@ extension PapyrusNativeFunctions {
 
     static let activationBlockedName = "activationBlocked"
 
-    /// `SetOpen(bool abOpen = true)` and `int GetOpenState()`.
+    /// `SetOpen(bool abOpen = true)` and `int GetOpenState()`. Opening also unlocks,
+    /// per <https://ck.uesp.net/wiki/SetOpen_-_ObjectReference>.
     private static func installOpenState(into registry: inout PapyrusNativeRegistry) {
         scriptState("ObjectReference", "SetOpen", into: &registry) { call, bridge, key in
             let current = bridge.worldState.component(ReferenceActivationState.self, for: key)
@@ -46,9 +49,16 @@ extension PapyrusNativeFunctions {
             var next = current
             next.isOpen = boolean(call, at: 0, default: true)
             bridge.write(next.erased, for: key)
+            if next.isOpen, var lock = bridge.lockState(for: key), lock.isLocked {
+                lock.isLocked = false
+                bridge.write(lock.erased, for: key)
+            }
             return .returned(.none)
         }
         scriptState("ObjectReference", "GetOpenState", into: &registry) { call, bridge, key in
+            if let code = bridge.objectAnimation?.openStateCode(of: key) {
+                return .returned(.integer(code))
+            }
             guard let state = bridge.referenceState(for: key) else {
                 return needsResidentReference(call)
             }

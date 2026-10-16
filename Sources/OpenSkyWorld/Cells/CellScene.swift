@@ -114,6 +114,9 @@ nonisolated public struct CellScene: Sendable {
     public var animatedVehicles: [CellAnimatedVehicle] = []
     /// The collision of the vehicle followers, outside `staticCollision`.
     public var vehicleCollision: [CellVehicleCollision] = []
+    public var sequenceDoors: [CellSequenceDoor] = []
+    /// The sequence doors' collision, moved with their leaves.
+    public var doorCollision: [CellDoorCollision] = []
 
     public init(
         renderScene: RenderScene,

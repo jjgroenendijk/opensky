@@ -32,14 +32,16 @@ nonisolated public struct ReferenceState: Equatable, Sendable {
                 placement: reference.placement,
                 scale: reference.scale
             )
+            // `ONAM`: the editor's "Open by Default" for a door or container.
+            activation = ReferenceActivationState(isOpen: reference.details.opensByDefault)
         case let .actor(actor):
             enableState = ReferenceEnableState(isEnabled: !actor.isInitiallyDisabled)
             transform = ReferenceTransformOverride(
                 placement: actor.placement,
                 scale: actor.scale
             )
+            activation = .untouched
         }
-        activation = .untouched
         deletion = .notDeleted
     }
 

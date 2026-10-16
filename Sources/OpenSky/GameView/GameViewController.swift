@@ -581,20 +581,4 @@ extension GameViewController {
     }
 }
 
-extension GameViewController: ObjectAnimationControlProviding {
-    var objectAnimationEnabled: Bool {
-        get { objectAnimationWorld.objects.isEnabled }
-        set {
-            objectAnimationWorld.objects.isEnabled = newValue
-            playerSettingsStore.set(.objectAnimation, to: newValue ? 1 : 0)
-        }
-    }
-
-    var objectAnimationRows: [ObjectAnimationRow] {
-        objectAnimationWorld.objects.rows
-    }
-
-    func sendObjectAnimationEvent(_ event: String, to reference: UInt32) -> Bool {
-        objectAnimationWorld.objects.send(event, to: reference)
-    }
-}
+extension GameViewController: ObjectAnimationControlForwarding {}

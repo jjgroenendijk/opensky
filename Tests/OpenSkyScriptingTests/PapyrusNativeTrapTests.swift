@@ -36,6 +36,12 @@ private final class FakeObjectAnimation: PapyrusObjectAnimationBridge {
         variables[name] = value
         return true
     }
+
+    var openState: Int32?
+
+    func openStateCode(of _: ReferenceKey) -> Int32? {
+        openState
+    }
 }
 
 private final class FakeTrapWorld: PapyrusTrapWorldBridge {

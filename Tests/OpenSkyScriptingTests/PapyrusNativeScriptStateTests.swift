@@ -127,6 +127,26 @@ struct PapyrusNativeScriptStateTests {
         #expect(fixture.call("GetScale", returnType: .float) == .returned(.float(1)))
     }
 
+    /// Opening a locked reference unlocks it; closing leaves the lock alone.
+    @Test func setOpenUnlocks() throws {
+        let fixture = try Fixture.make()
+        #expect(fixture.call("Lock") == .returned(.none))
+        #expect(fixture.call("SetOpen", arguments: [.boolean(false)]) == .returned(.none))
+        #expect(fixture.call("IsLocked", returnType: .boolean) == .returned(.boolean(true)))
+        #expect(fixture.call("SetOpen") == .returned(.none))
+        #expect(fixture.call("IsLocked", returnType: .boolean) == .returned(.boolean(false)))
+    }
+
+    /// A door whose sequences are moving answers opening or closing.
+    @Test func getOpenStateReadsAMovingDoor() throws {
+        let fixture = try Fixture.make()
+        let doors = MovingDoors()
+        fixture.session.bridge.objectAnimation = doors
+        #expect(fixture.call("GetOpenState", returnType: .integer) == .returned(.integer(2)))
+        doors.code = nil
+        #expect(fixture.call("GetOpenState", returnType: .integer) == .returned(.integer(3)))
+    }
+
     /// A blocked reference still records the activation, but it does not open.
     @Test func blockedActivationDoesNotOpen() throws {
         let fixture = try Fixture.make()
@@ -149,5 +169,30 @@ struct PapyrusNativeScriptStateTests {
         #expect(PapyrusWorldFixture.isInvalidArguments(
             call(fixture, "Actor", "GetCombatState", returnType: .integer)
         ))
+    }
+}
+
+@MainActor
+private final class MovingDoors: PapyrusObjectAnimationBridge {
+    var code: Int32? = 2
+
+    func playAnimation(_: String, on _: ReferenceKey) -> Bool {
+        false
+    }
+
+    func awaitAnimationEvent(_: String, on _: ReferenceKey) -> UInt64? {
+        nil
+    }
+
+    func animationVariable(_: String, on _: ReferenceKey) -> PapyrusValue? {
+        nil
+    }
+
+    func setAnimationVariable(_: String, to _: PapyrusValue, on _: ReferenceKey) -> Bool {
+        false
+    }
+
+    func openStateCode(of _: ReferenceKey) -> Int32? {
+        code
     }
 }

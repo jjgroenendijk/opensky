@@ -31,6 +31,8 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
     static let cameraShake = "CameraShake"
     static let headTrackingOn = "HeadTrackingOn"
     static let headTrackingOff = "HeadTrackingOff"
+    /// A NIF sequence text key, such as `Sound: DRSWoodGateHelgenOpen` on a door.
+    static let textKeySound = "sound:"
 
     /// Nil for an annotation the graph or another runtime handles, or an empty payload.
     public static func parse(_ text: String) -> AnimationEventAction? {
@@ -39,6 +41,10 @@ nonisolated public enum AnimationEventAction: Equatable, Sendable {
         }
         if text.caseInsensitiveCompare(headTrackingOff) == .orderedSame {
             return .headTracking(enabled: false)
+        }
+        if text.lowercased().hasPrefix(textKeySound) {
+            let editorID = text.dropFirst(textKeySound.count).trimmingCharacters(in: .whitespaces)
+            return editorID.isEmpty ? nil : .playSound(editorID: editorID, node: nil)
         }
         guard let dot = text.firstIndex(of: ".") else { return nil }
         let event = text[..<dot].lowercased()

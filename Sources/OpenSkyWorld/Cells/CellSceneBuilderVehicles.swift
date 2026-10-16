@@ -53,6 +53,7 @@ nonisolated extension CellSceneBuilder {
         var scene = scene
         scene.hazards = hazards
         scene.vehicleCollision = collision.vehicles
+        scene.doorCollision = collision.doors
         scene.assets = drainTouchedAssets()
         return scene
     }

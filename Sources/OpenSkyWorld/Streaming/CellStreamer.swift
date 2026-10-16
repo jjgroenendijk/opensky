@@ -15,6 +15,10 @@ import OpenSkyWorldInterface
 import OpenSkyWorldState
 import simd
 
+public typealias SettledBodyHandler = (
+    ReferenceKey, ReferenceTransformOverride, CellSceneLocation
+) -> Void
+
 public final class CellStreamer {
     /// Receives the recomposed scene whenever it changes (integration or
     /// unload). `camera` is non-nil only on the first integrated cell -- the
@@ -124,6 +128,8 @@ public final class CellStreamer {
     /// Source placement retained across an asynchronous door build. Runtime
     /// state rebuilds have no player interaction and leave this nil.
     public var doorMotionInteraction: PlacedInteraction?
+    /// Each sequence door's leaf moves from rest, by reference; its collision follows.
+    public var sequenceDoorLeaves: [UInt32: [float4x4]] = [:]
     /// A cell joined the live world. True for a first integration, false for a rebuild or
     /// interior refresh, so scripts attach once. Emitted in CellStreamerPapyrus.
     public var onCellAttached: ((CellScene, Bool) -> Void)?
@@ -155,9 +161,7 @@ public final class CellStreamer {
     public var actorProps: [FormID: ActorPropDraw] = [:]
     /// A body came to rest and its transform should be persisted under the
     /// reference's `.transform` component. `bind(to:)` wires it to the store.
-    public var onBodySettled: ((
-        ReferenceKey, ReferenceTransformOverride, CellSceneLocation
-    ) -> Void)?
+    public var onBodySettled: SettledBodyHandler?
     /// True while a settled body's transform is written. The body already draws
     /// at that pose, so the write rebuilds no cell; a later build bakes it in.
     public var isRecordingSettledBody = false
