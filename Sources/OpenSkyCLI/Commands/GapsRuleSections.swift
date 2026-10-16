@@ -80,6 +80,7 @@ extension GapsGatherer {
         _ = ArrowSettings.resolve(store: store)
         _ = TrainingSettings.resolve(store: store)
         _ = CraftingSkillUseSettings.resolve(store: store)
+        _ = CalendarTexts.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)

@@ -4,6 +4,7 @@
 
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyWorldState
 
 @MainActor
@@ -12,6 +13,8 @@ public final class RuntimeStateCoordinator {
     /// scrub then writes the renderer's clock directly.
     public private(set) var globalStore: GlobalStore?
     public private(set) var lastSaveOutcome = RuntimeStateSaveOutcome.none
+    /// The words of the in-game date line.
+    public var calendarTexts = CalendarTexts.vanilla
 
     let worldState: WorldStateStore
     weak var world: (any RuntimeStateWorld)?

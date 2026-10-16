@@ -47,6 +47,9 @@ final class WorldSessionWiring {
         wireMenuMovies(renderer: renderer)
         game.aiWorld.wireAIOverlay(renderer: renderer, streamer: streamer)
         game.runtimeState.attach(globals: (provider as? GlobalDataProviding)?.globalStore)
+        game.runtimeState.calendarTexts = (provider as? WorldDataStores).map {
+            CalendarTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         game.aiWorld.wireNPCMovement(renderer: renderer, streamer: streamer)
         streamer.bind(to: game.worldState)
         wireFrame(renderer: renderer, streamer: streamer)

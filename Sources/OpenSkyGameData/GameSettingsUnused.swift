@@ -15,7 +15,7 @@ nonisolated public enum GameSettingUnusedReason: String, CaseIterable, Sendable 
     /// Other Fallout 3 systems: karma, chems, the Pip-Boy, radio, repair, hacking, traits, and its
     /// sneak and lock texts.
     case falloutSystems
-    /// Oblivion leftovers: armour encumbrance, wortcraft, and its cursor.
+    /// Oblivion leftovers: armour encumbrance, wortcraft, its cursor, and its holidays.
     case oblivion
     /// Settings the Creation Kit wiki marks unused, and the `sHairColor` placeholders whose text is
     /// their own name.
@@ -253,6 +253,21 @@ nonisolated private let oblivionSettings = [
     "fMoveEncumEffectNoWeapon",
     "fWortFailSkillUseMagnitude",
     "iIngredientWortcraftUses",
+    "sHolidayEmperorsBirthday",
+    "sHolidayFirstPlanting",
+    "sHolidayHarvestsEnd",
+    "sHolidayJestersDay",
+    "sHolidayMerchantsFestival",
+    "sHolidayMidYearCelebration",
+    "sHolidayNewLifeFestival",
+    "sHolidayNorthWindsPrayer",
+    "sHolidayOldLifeFestival",
+    "sHolidaySecondPlanting",
+    "sHolidaySouthWindsPrayer",
+    "sHolidaySunsRest",
+    "sHolidayTalesAndTallows",
+    "sHolidayWarriorsFestival",
+    "sHolidayWitchesFestival",
     "sCursorFilename",
     "sMagicTypeWortcraft"
 ]

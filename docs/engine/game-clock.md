@@ -74,6 +74,25 @@ Dawn is not modelled. So a year is exactly 365 days, and all the math is whole n
 Days passed counts from 00:00 on the 17th of Last Seed, 4E 201. UESP says only "days passed since
 starting the game". Starting at midnight is OpenSky's choice. It needs no extra state.
 
+The weekday counts from the start date, which UESP "Skyrim:Calendar" gives as a Sundas. 0 is
+Sundas and 6 is Loredas, as `GetDayOfWeek` returns them.
+
+### The date line
+
+The Runtime State panel also shows the date as the game's wait menu writes it:
+`Sundas, 8:00 AM, 17th of Last Seed, 4E 201`. Every word comes from a string setting:
+
+| Part | Settings |
+| --- | --- |
+| Weekday | `sDaySunday` to `sDaySaturday` |
+| Month | `sMonthJanuary` to `sMonthDecember`; the game keeps the Tamriel names there |
+| Time | `sTimeAM`, `sTimePM`, on a 12-hour clock |
+| Day | `sFirstOrdSuffix`, `sSecondOrdSuffix`, `sThirdOrdSuffix`, `sDefaultOrdSuffix` |
+| Joiner | `sOf`, which holds its own spaces |
+
+The 11th to the 13th take the default suffix, by English rules. No source confirms what the game
+does there. The era, `4E`, is not a setting.
+
 ## Timescale
 
 `TimeScale` stays a normal global. The renderer reads it on every step, so a runtime change works

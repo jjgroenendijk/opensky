@@ -75,7 +75,7 @@ them, for example `sVDSGManual`: "Unused UI string from Fallout 3's loading scre
 | Action points | `fActionPointsReload` | Only V.A.T.S. spends them |
 | Firearms | `fGunSpreadArmBase`, `fWeaponConditionJam1` | Guns, grenades, and item condition are Fallout systems |
 | Fallout systems | `fKarmaModStealing`, `sRepairCost` | Karma, chems, repair, the Pip-Boy, radio, hacking, traits |
-| Oblivion | `fMoveEncumEffect` | The wiki marks them "Unused" |
+| Oblivion | `fMoveEncumEffect`, `sHolidayNewLifeFestival` | The wiki marks them "Unused". UESP "Skyrim:Calendar": "no holidays were specifically given" |
 | Marked unused | `sHeavyArmorSink` | The wiki says "Unused"; `sHairColor0` to `15` hold their own names |
 | Creations | `sReportModConfirm` | The Bethesda.net Creations manager. OpenSky does not connect to it |
 | Consoles | `sKinectCantInit`, `sNoDeviceSelected` | Xbox, Kinect, and console storage texts |

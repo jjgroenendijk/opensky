@@ -3,6 +3,7 @@
 // See docs/engine/runtime-state.md.
 
 import Foundation
+import OpenSkyGameData
 import OpenSkyWorldState
 
 /// Number spelling shared by runtime-state readouts, so every value reads the same way.
@@ -35,8 +36,14 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
     public let timescale: Float
     /// Whether the world simulation is paused, which freezes the clock.
     public let isPaused: Bool
+    /// 0 = Sundas through 6 = Loredas.
+    public let weekday: Int
+    /// The date line in the game's own words, as the wait menu shows it.
+    public let gameDateText: String
 
-    public init(clock: GameClock, timescale: Float, isPaused: Bool) {
+    public init(
+        clock: GameClock, timescale: Float, isPaused: Bool, calendar: CalendarTexts = .vanilla
+    ) {
         hourOfDay = clock.hourOfDay
         day = clock.day
         month = clock.month
@@ -45,6 +52,11 @@ nonisolated public struct RuntimeStateClockSnapshot: Equatable, Sendable {
         daysPassed = clock.daysPassed
         self.timescale = timescale
         self.isPaused = isPaused
+        weekday = clock.weekday
+        gameDateText = calendar.dateLine(
+            weekday: clock.weekday, hourOfDay: clock.hourOfDay,
+            day: clock.day, month: clock.month, year: clock.year
+        )
     }
 
     /// The vanilla start moment at the default timescale, running. Used as the
