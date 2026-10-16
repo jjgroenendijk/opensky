@@ -12,18 +12,30 @@ struct PackageProcedureReadoutTests {
         )
         _ = machine.start()
         #expect(AIPackageReadout
-            .procedureStateText(for: machine) == "Procedure: moving, point 1 of 3")
+            .procedureStateText(for: machine) == "Procedure: patrol, moving, point 1 of 3")
         _ = machine.handle(.arrived)
         #expect(AIPackageReadout
-            .procedureStateText(for: machine) == "Procedure: moving, point 2 of 3")
+            .procedureStateText(for: machine) == "Procedure: patrol, moving, point 2 of 3")
         _ = machine.handle(.movementFailed)
         #expect(AIPackageReadout
-            .procedureStateText(for: machine) == "Procedure: failed, point 2 of 3")
+            .procedureStateText(for: machine) == "Procedure: patrol, failed, point 2 of 3")
     }
 
     @Test func aTravelHasNoPoints() {
         var machine = PackageProcedureMachine(kind: .travel, center: .zero, radius: 0, seed: 1)
         _ = machine.start()
-        #expect(AIPackageReadout.procedureStateText(for: machine) == "Procedure: moving")
+        #expect(AIPackageReadout.procedureStateText(for: machine) == "Procedure: travel, moving")
+    }
+}
+
+struct PackageRunningReadoutTests {
+    @Test func proceduresThatRunTogetherAreListed() {
+        var sit = PackageProcedureMachine(kind: .sit, center: .zero, radius: 0, seed: 1)
+        var wait = PackageProcedureMachine(kind: .wait, center: .zero, radius: 0, seed: 1)
+        _ = sit.start()
+        _ = wait.start()
+        #expect(AIPackageReadout.runningText(for: [sit]) == nil)
+        #expect(AIPackageReadout.runningText(for: [sit, wait])
+            == "Running: sit (moving), wait (waiting)")
     }
 }

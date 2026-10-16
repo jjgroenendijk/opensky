@@ -62,6 +62,8 @@ nonisolated public struct AINavigationSnapshot: Equatable, Sendable {
     public let lastActionText: String
     /// The selected actor's procedure machine, when a scene or alias package holds it.
     public var procedure: PackageProcedureMachine?
+    /// Every procedure of that package's tree that runs now, in tree order.
+    public var runningProcedures: [PackageProcedureMachine] = []
     /// What the selected actor rides, such as a cart, or nil.
     public var carrier: ReferenceKey?
 

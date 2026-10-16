@@ -26,6 +26,8 @@ extension AgentWorldAdapter {
             "state": machine.map { .string("\($0.state)") } ?? .null,
             "pathIndex": machine.map { .init($0.pathIndex) } ?? .null,
             "pathCount": machine.map { .init($0.path.count) } ?? .null,
+            "running": .array((game.packages.executions[key]?.runner.runningMachines ?? [])
+                .map { .string("\($0.kind.name) \($0.state)") }),
             "carrier": game.vehicleWorld.vehicles.core.links[key]
                 .map { .string("\($0.carrier)") } ?? .null,
             "mover": mover.map {

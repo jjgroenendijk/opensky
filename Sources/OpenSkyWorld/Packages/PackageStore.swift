@@ -11,27 +11,16 @@ nonisolated public enum PackageResolveError: Error, Equatable {
     case templateCycle([FormID])
 }
 
-nonisolated public enum PackageProcedureKind: Equatable, Sendable {
-    case travel
-    /// Walks a chain of linked references from a start marker.
-    case patrol
-    case wander
-    case sandbox
-    case sleep
-    case eat
-    /// Walks to the furniture the package names and uses it.
-    case sit
-    /// Stays where it is and moves nowhere, as a rider in a cart does.
-    case wait
-    case unsupported(String)
-}
-
 nonisolated public struct ResolvedPackage: Equatable, Sendable {
     public let package: Package
     public let templateChain: [FormID]
+    /// The procedure the package is known by: the main one of its tree.
     public let procedure: PackageProcedureKind
     /// The template's "Ride Horse if possible?" input: Travel and Patrol both have one.
     public let ridesHorse: Bool
+    /// The last template of the chain, or the package itself; it holds the tree.
+    public let definition: Package
+    public let tree: PackageProcedureTree
 }
 
 nonisolated public struct PackageStore: Sendable {
@@ -102,11 +91,14 @@ nonisolated public struct PackageStore: Sendable {
             current = next
         }
         let definition = resolvedTemplate ?? concrete
+        let procedure = Self.procedure(for: definition)
         return ResolvedPackage(
             package: concrete,
             templateChain: chain,
-            procedure: Self.procedure(for: definition),
-            ridesHorse: Self.ridesHorse(concrete, template: definition)
+            procedure: procedure,
+            ridesHorse: Self.ridesHorse(concrete, template: definition),
+            definition: definition,
+            tree: PackageProcedureTree.of(definition, fallback: procedure)
         )
     }
 
@@ -129,10 +121,8 @@ nonisolated public struct PackageStore: Sendable {
         return false
     }
 
-    /// Procedure names, lowercased, that `procedure(for:)` maps to a kind an actor runs.
-    public static let runnableProcedures: Set = [
-        "eat", "sleep", "sandbox", "wander", "patrol", "travel", "sit", "wait"
-    ]
+    /// Procedure names, lowercased, that an actor runs.
+    public static let runnableProcedures = PackageProcedureKind.runnableNames
 
     private static func procedure(for package: Package) -> PackageProcedureKind {
         let names = package.procedureTypes.map { $0.lowercased() }
@@ -162,7 +152,9 @@ nonisolated public struct PackageStore: Sendable {
         if names.contains("wait") {
             return .wait
         }
-        let name = package.procedureTypes.first ?? package.editorID ?? package.formID.description
-        return .unsupported(name)
+        guard let name = package.procedureTypes.first else {
+            return .unsupported(package.editorID ?? package.formID.description)
+        }
+        return PackageProcedureKind(name: name)
     }
 }

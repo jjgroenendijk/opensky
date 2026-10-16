@@ -1,7 +1,9 @@
-// Minimal deterministic AI-package procedure machines. Movement commands feed
-// the NPC mover; animation commands are seams for the sleep and eat clips.
+// Deterministic AI procedure machines, one per running procedure. Movement commands
+// feed the NPC mover; other acts go to the world as `PackageAction`s.
+// docs/engine/package-schedules.md, "Procedure machines".
 
 import OpenSkyConditions
+import OpenSkyFormatsESM
 import simd
 
 nonisolated public enum PackageLoopClip: String, Equatable, Sendable {
@@ -16,8 +18,12 @@ nonisolated public enum PackageProcedureState: Equatable, Sendable {
     case looping(PackageLoopClip)
     /// The actor sits in its furniture. A sit package is done here.
     case seated
-    /// A wait package holds here until another package wins.
+    /// Holds here until a timer, a sense, or another package moves it on.
     case waiting
+    /// A find found nothing yet and looks again after this many seconds.
+    case searching(retrySeconds: Float)
+    /// Waits for the world to finish an act, such as a spoken line.
+    case acting(secondsRemaining: Float?)
     case complete
     case failed
 }
@@ -27,31 +33,115 @@ nonisolated public enum PackageProcedureCommand: Equatable, Sendable {
     case playLoop(PackageLoopClip)
     /// Seat the actor in the furniture its package names.
     case sit
+    case act(PackageAction)
+    /// Stop walking where the actor is.
+    case stop
 }
 
 nonisolated public enum PackageProcedureEvent: Equatable, Sendable {
     case arrived
     case movementFailed
     case tick(Float)
+    case acted(PackageActionResult)
+    case sensed(PackageSenses)
+}
+
+/// What one procedure needs, read from its parameters by `PackageProcedureInputs`.
+nonisolated public struct PackageProcedureSetup: Equatable, Sendable {
+    public var kind: PackageProcedureKind
+    public var center: SIMD3<Float>
+    public var destination: SIMD3<Float>?
+    public var radius: Float
+    /// Patrol points after the first, in walking order.
+    public var path: [SIMD3<Float>] = []
+    public var repeats = false
+    public var seed: UInt64 = 0
+    /// The references it acts on, in order. Acquire tries the next one when one fails.
+    public var targets: [ReferenceKey] = []
+    /// The reference it follows, flees, or greets.
+    public var watched: ReferenceKey?
+    public var topic: FormID?
+    /// The thing a find, a cast, or a shout selects.
+    public var selector: Package.Target?
+    /// A wait's time; zero waits for ever.
+    public var seconds: Float = 0
+    /// Follow's minimum radius; Escort's follow distance.
+    public var near: Float = 0
+    /// Follow's maximum radius, Flee's distance, Orbit's outer radius.
+    public var far: Float = 0
+    public var height: Float = 0
+    /// Lock rather than unlock; repeat fire; flee from a reference rather than to a place.
+    public var flag = false
+    /// UseWeapon's "Allow Combat Start" input.
+    public var startsCombat = false
+    /// False when the procedure has no place or target to walk to, so it acts where it is.
+    public var walks = true
+
+    public init(
+        kind: PackageProcedureKind, center: SIMD3<Float>, destination: SIMD3<Float>? = nil,
+        radius: Float = 0
+    ) {
+        self.kind = kind
+        self.center = center
+        self.destination = destination
+        self.radius = max(0, radius)
+    }
 }
 
 nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
-    private static let wanderIdleSeconds: Float = 1
-    private static let sandboxIdleSeconds: Float = 4
+    static let wanderIdleSeconds: Float = 1
+    static let sandboxIdleSeconds: Float = 4
+    static let findRetrySeconds: Float = 2
+    /// How far a watched reference may move before a follower walks again.
+    static let followSlack: Float = 128
+    /// How close a greeter walks to the player before it speaks.
+    static let greetDistance: Float = 150
 
-    public let kind: PackageProcedureKind
-    public let center: SIMD3<Float>
-    public let destination: SIMD3<Float>?
-    public let radius: Float
-    /// Patrol points after the first, in walking order.
-    public let path: [SIMD3<Float>]
-    /// A repeatable patrol walks back to its first point after its last, and never completes.
-    public let repeats: Bool
+    public let setup: PackageProcedureSetup
     /// Times a repeatable patrol went back to its first point.
-    public private(set) var laps = 0
-    public private(set) var state: PackageProcedureState = .ready
-    public private(set) var pathIndex = 0
-    private var random: ConditionRandom
+    public internal(set) var laps = 0
+    public internal(set) var state: PackageProcedureState = .ready
+    public internal(set) var pathIndex = 0
+    /// What a find found, for the object list it fills.
+    public internal(set) var found: [ReferenceKey] = []
+    var random: ConditionRandom
+    var timer: Float?
+    var targetIndex = 0
+    /// Where the last move went, so a follower walks again only when its target moved.
+    var lastGoal: SIMD3<Float>?
+
+    public var kind: PackageProcedureKind {
+        setup.kind
+    }
+
+    public var center: SIMD3<Float> {
+        setup.center
+    }
+
+    public var destination: SIMD3<Float>? {
+        setup.destination
+    }
+
+    public var radius: Float {
+        setup.radius
+    }
+
+    public var path: [SIMD3<Float>] {
+        setup.path
+    }
+
+    public var repeats: Bool {
+        setup.repeats
+    }
+
+    public var isFinished: Bool {
+        state == .complete || state == .failed
+    }
+
+    public init(setup: PackageProcedureSetup) {
+        self.setup = setup
+        random = ConditionRandom(seed: setup.seed)
+    }
 
     public init(
         kind: PackageProcedureKind,
@@ -62,99 +152,109 @@ nonisolated public struct PackageProcedureMachine: Equatable, Sendable {
         repeats: Bool = false,
         seed: UInt64
     ) {
-        self.kind = kind
-        self.center = center
-        self.destination = destination
-        self.radius = max(0, radius)
-        self.path = path
-        self.repeats = repeats
-        random = ConditionRandom(seed: seed)
-    }
-
-    public mutating func start() -> [PackageProcedureCommand] {
-        guard state == .ready else { return [] }
-        switch kind {
-        case .travel, .patrol, .sleep, .eat, .sit:
-            state = .moving
-            return [.move(to: destination ?? center)]
-        case .wander, .sandbox:
-            state = .moving
-            return [.move(to: nextWanderPoint())]
-        case .wait:
-            state = .waiting
-            return []
-        case .unsupported:
-            state = .failed
-            return []
-        }
+        var setup = PackageProcedureSetup(
+            kind: kind, center: center, destination: destination, radius: radius
+        )
+        setup.path = path
+        setup.repeats = repeats
+        setup.seed = seed
+        self.init(setup: setup)
     }
 
     public mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
+        guard !isFinished else { return [] }
         switch event {
         case .movementFailed:
+            guard state == .moving else { return [] }
             state = .failed
             return []
         case .arrived:
+            guard state == .moving else { return [] }
             return handleArrival()
         case let .tick(delta):
             return handleTick(max(0, delta))
+        case let .acted(result):
+            return handleResult(result)
+        case let .sensed(senses):
+            return handleSenses(senses)
         }
     }
 
-    private mutating func handleArrival() -> [PackageProcedureCommand] {
-        guard state == .moving else { return [] }
-        switch kind {
-        case .travel:
-            state = .complete
-            return []
-        case .patrol:
-            guard pathIndex < path.count else {
-                // A one-point patrol has nowhere to go back from, so it ends.
-                if repeats, !path.isEmpty, let first = destination {
-                    pathIndex = 0
-                    laps += 1
-                    return [.move(to: first)]
-                }
-                state = .complete
-                return []
-            }
-            pathIndex += 1
-            return [.move(to: path[pathIndex - 1])]
-        case .sleep:
-            state = .looping(.sleep)
-            return [.playLoop(.sleep)]
-        case .eat:
-            state = .looping(.eat)
-            return [.playLoop(.eat)]
-        case .sit:
-            state = .seated
-            return [.sit]
-        case .wander:
-            state = .idleStop(secondsRemaining: Self.wanderIdleSeconds)
-            return []
-        case .sandbox:
-            state = .idleStop(secondsRemaining: Self.sandboxIdleSeconds)
-            return []
-        case .wait:
-            return []
-        case .unsupported:
-            state = .failed
-            return []
-        }
+    mutating func move(to point: SIMD3<Float>) -> [PackageProcedureCommand] {
+        state = .moving
+        lastGoal = point
+        return [.move(to: point)]
+    }
+
+    mutating func act(_ action: PackageAction) -> [PackageProcedureCommand] {
+        state = .acting(secondsRemaining: nil)
+        return [.act(action)]
     }
 
     private mutating func handleTick(_ delta: Float) -> [PackageProcedureCommand] {
-        guard case let .idleStop(remaining) = state else { return [] }
-        let next = remaining - delta
-        guard next <= 0 else {
-            state = .idleStop(secondsRemaining: next)
+        switch state {
+        case let .idleStop(remaining):
+            guard remaining - delta <= 0 else {
+                state = .idleStop(secondsRemaining: remaining - delta)
+                return []
+            }
+            return move(to: nextWanderPoint())
+        case let .searching(retry):
+            guard retry - delta <= 0 else {
+                state = .searching(retrySeconds: retry - delta)
+                return []
+            }
+            return start()
+        case let .acting(remaining?):
+            state = remaining - delta <= 0 ? .complete :
+                .acting(secondsRemaining: remaining - delta)
+            return []
+        case .waiting:
+            guard let left = timer else { return [] }
+            timer = left - delta
+            if left - delta <= 0 {
+                state = .complete
+            }
+            return []
+        default:
             return []
         }
-        state = .moving
-        return [.move(to: nextWanderPoint())]
     }
 
-    private mutating func nextWanderPoint() -> SIMD3<Float> {
+    private mutating func handleResult(_ result: PackageActionResult) -> [PackageProcedureCommand] {
+        guard state == .acting(secondsRemaining: nil) else { return [] }
+        switch result {
+        case .done:
+            state = kind == .useWeapon && setup.flag ? .waiting : .complete
+            return []
+        case let .lasts(seconds):
+            state = seconds > 0 ? .acting(secondsRemaining: seconds) : .complete
+            return []
+        case let .found(references):
+            guard !references.isEmpty else {
+                state = .searching(retrySeconds: Self.findRetrySeconds)
+                return []
+            }
+            found = references
+            state = .complete
+            return []
+        case .failed:
+            return retryNextTarget()
+        }
+    }
+
+    /// Acquire takes the next item of its list when one cannot be picked up.
+    private mutating func retryNextTarget() -> [PackageProcedureCommand] {
+        guard kind == .acquire, targetIndex + 1 < setup.targets.count else {
+            state = .failed
+            return []
+        }
+        targetIndex += 1
+        state = .ready
+        return start()
+    }
+
+    mutating func nextWanderPoint() -> SIMD3<Float> {
         let angleUnit = Float(random.next() & 0xFFFF) / Float(UInt16.max)
         let radiusUnit = Float(random.next() & 0xFFFF) / Float(UInt16.max)
         let angle = angleUnit * 2 * Float.pi

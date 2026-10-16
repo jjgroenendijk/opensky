@@ -286,25 +286,30 @@ extension StoryWorldAdapter: SceneWorld {
     /// A speaker that is not loaded has no body to speak from, so its line is neither
     /// heard nor subtitled. The scene still times the line.
     func sceneLineSpoken(_ line: SceneLine) {
-        guard game.dialogueWorld.headPosition(of: line.speaker) != nil else { return }
-        game.audio.speak(voicePaths(of: line.info, speaker: line.speaker), speaker: line.speaker)
-        let info = game.dialogue.runtime?.dialogue.info(line.info)
-        if let target = line.lookAt {
-            game.headTracking.setLookTarget(target, for: line.speaker, seconds: line.seconds)
+        speak(info: line.info, speaker: line.speaker, lookAt: line.lookAt, seconds: line.seconds)
+    }
+
+    /// Voices, subtitles, and shows one dialogue line, as a scene or a Say procedure does.
+    func speak(info id: FormID, speaker: ReferenceKey, lookAt: ReferenceKey?, seconds: Float) {
+        guard game.dialogueWorld.headPosition(of: speaker) != nil else { return }
+        game.audio.speak(voicePaths(of: id, speaker: speaker), speaker: speaker)
+        let info = game.dialogue.runtime?.dialogue.info(id)
+        if let lookAt {
+            game.headTracking.setLookTarget(lookAt, for: speaker, seconds: seconds)
         }
         if
             let response = info?.responses.first,
-            let face = game.streamer?.referenceEntry(key: line.speaker)?.placedActor?.formID
+            let face = game.streamer?.referenceEntry(key: speaker)?.placedActor?.formID
         {
             game.faceMorphs.showEmotion(
                 response.emotion, value: response.emotionValue, on: face,
-                now: game.renderer?.animationTime ?? 0, seconds: line.seconds
+                now: game.renderer?.animationTime ?? 0, seconds: seconds
             )
         }
         let text = info
             .map { responseTexts(of: $0).compactMap(\.self).joined(separator: " ") } ?? ""
         game.subtitles.say(
-            text, kind: .general, seconds: Double(line.seconds),
+            text, kind: .general, seconds: Double(seconds),
             now: Date().timeIntervalSinceReferenceDate
         )
     }

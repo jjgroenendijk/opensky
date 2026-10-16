@@ -79,8 +79,7 @@ nonisolated public enum IdleCore {
     /// Sandbox and the use-idle-marker procedure send an actor to markers.
     public static func usesMarkers(_ procedure: PackageProcedureKind?) -> Bool {
         switch procedure {
-        case .sandbox: true
-        case let .unsupported(name): name.lowercased().contains("idlemarker")
+        case .sandbox, .useIdleMarker: true
         default: false
         }
     }
