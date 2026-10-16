@@ -67,11 +67,10 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         entries = OpenSkySaveDeltaMerge.merge(body.perks, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.factions, into: entries)
         entries = OpenSkySaveDeltaMerge.merge(body.relationships, into: entries)
-        // `PLGD` lays onto `PLVL`, the way `AVOV` lays onto `AVAL`.
-        let progress = OpenSkySaveProgressDecoder.mergeLegendary(
-            body.legendarySkills, into: body.playerProgress
+        // `PLGD` and `PTRN` lay onto `PLVL`, the way `AVOV` lays onto `AVAL`.
+        entries = OpenSkySaveDeltaMerge.merge(
+            OpenSkySaveProgressDecoder.progress(of: body), into: entries
         )
-        entries = OpenSkySaveDeltaMerge.merge(progress, into: entries)
         // `CRVG` splits the `CRIM` totals before those reach the deltas, the
         // way `AVOV` lays onto `AVAL`.
         let ledgers = OpenSkySaveCrimeDecoder.splittingViolent(
@@ -284,6 +283,9 @@ nonisolated public enum OpenSkySaveDecoder: Sendable {
         case OpenSkySaveFormat.ChunkTag.legendarySkills:
             body.legendarySkills = try OpenSkySaveProgressDecoder
                 .decodeLegendarySkills(payload)
+        case OpenSkySaveFormat.ChunkTag.trainingSessions:
+            body.trainingSessions = try OpenSkySaveProgressDecoder
+                .decodeTrainingSessions(payload)
         case OpenSkySaveFormat.ChunkTag.crimeLedgers:
             body.crimeLedgers = try OpenSkySaveCrimeDecoder.decodeCrimeLedgers(payload)
         case OpenSkySaveFormat.ChunkTag.stolenGoods:

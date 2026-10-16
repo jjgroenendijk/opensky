@@ -106,6 +106,9 @@ nonisolated public enum OpenSkySaveFormat: Sendable {
         /// Legendary counts per skill. A sibling of `PLVL`, whose entries have no
         /// length, so appending a field there would break older readers.
         public static let legendarySkills = "PLGD"
+        /// Training sessions bought since the last level-up. A sibling of `PLVL` for
+        /// the same reason as `PLGD`.
+        public static let trainingSessions = "PTRN"
 
         /// Crime ledgers: per faction, the bounty and four crime counts. An unwitnessed
         /// crime moves a count but not the gold (<https://en.uesp.net/wiki/Skyrim:Crime>).

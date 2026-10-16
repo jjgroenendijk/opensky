@@ -1,0 +1,59 @@
+---
+type: Subsystem
+title: Training
+description: How a trainer raises a skill for gold, what it costs, and when it refuses.
+tags: [engine, progression]
+---
+
+# Training
+
+A trainer sells skill points for gold. The trainer's class says which skill and up to which
+level. Source: UESP "Skyrim:Trainers" (<https://en.uesp.net/wiki/Skyrim:Trainers>).
+
+## Who trains what
+
+`CLAS` `DATA` byte `0x04` is the skill, as the actor value index minus 6. Byte `0x05` is the
+level the trainer teaches up to. A level of 0 means the class trains nothing
+([actor records](/formats/actors.md)). UESP lists three trainer levels: up to 50, 75, and 90.
+
+The panel's Train control in World > Progression > Skills trains with the nearest actor. The game
+opens training from dialogue instead; that path is not built yet.
+
+## Cost
+
+UESP gives the cost of `n` sessions from skill level `b`:
+
+| Skill level | Cost of `n` sessions |
+| --- | --- |
+| up to 50 | `n(10b + 5n + 45)` |
+| above 50 | `n(30b + 15n + 35)` |
+| above 75 | `n(50b + 25n + 25)` |
+
+One session (`n = 1`) costs `10b + 50`, `30b + 50`, or `50b + 50`. The factors 10, 30, and 50
+match `fTrainingMultCost` (10) times a tier of 1, `iTrainingExpertCost` (3), or
+`iTrainingMasterCost` (5). So OpenSky computes one session as
+`fTrainingMultCost * tier * b + 50`. The 50 is in no setting; it comes from the formulas.
+
+Example: Block at 20 costs `10 * 1 * 20 + 50 = 250` gold, the first term of UESP's example.
+
+The gold goes to the trainer's inventory. Speech and Fortify Barter do not change the price.
+
+## Limits
+
+- Five sessions per character level. A level-up resets the count. No setting holds the 5.
+- A trainer refuses at or above its level.
+
+Each refusal shows its notice on the HUD:
+
+| Refusal | Notice setting |
+| --- | --- |
+| Five sessions used | `sCanNotTrainAnymore` |
+| At the trainer's level | `sCanNotTrainHigher` |
+| Not enough gold | `sInsufficientGoldToTrain` |
+
+A session raises the skill one point, as `Game.IncrementSkill` does, and counts the
+"Training Sessions" misc stat. UESP says the game gives one level's worth of experience
+instead, which standing stones and rest bonuses can raise. OpenSky does not apply those bonuses
+to training.
+
+The session count is saved in its own `PTRN` chunk ([save format](/formats/opensky-save.md)).

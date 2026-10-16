@@ -171,6 +171,11 @@ public struct PlayerLevelRuntime {
         write(state.makingLegendary(skill: index))
     }
 
+    /// Counts one training session; a level-up resets the count.
+    public func noteTrainingSession() {
+        write(state.training())
+    }
+
     // MARK: - Private
 
     /// Stores `state`, dropping the slot once it says nothing, and republishes

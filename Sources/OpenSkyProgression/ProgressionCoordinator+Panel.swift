@@ -155,7 +155,7 @@ extension ProgressionCoordinator {
         }
     }
 
-    private static let noProgressionText = "Progression unavailable: no game data loaded."
+    static let noProgressionText = "Progression unavailable: no game data loaded."
     private static let noPerkText = "This box grants no perk."
 
     /// Spelled as the rule that refused.

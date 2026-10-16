@@ -1,5 +1,5 @@
 // CLAS record: the attribute and skill weights that spread an auto-calc actor's
-// per-level points, and the bleedout ratio. Trainer fields are skipped.
+// per-level points, the bleedout ratio, and what a trainer of the class teaches.
 // Named `CharacterClass` because `Class` reads badly at every use site.
 // Reference: UESP "Skyrim Mod:Mod File Format/CLAS".
 // Layout documented in docs/formats/actors.md.
@@ -78,6 +78,9 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
     /// enters bleedout (CK "Class"). Decoded here so 15.6 does not have to
     /// re-open the record; nothing in this issue reads it.
     public let bleedoutDefault: Float
+    /// DATA 0x04 and 0x05: the skill a trainer teaches and up to which level. Nil
+    /// for a class that trains nothing.
+    public let training: Training?
     /// DESC — class description.
     public let description: LString?
     public let skipped: FieldTally
@@ -115,6 +118,18 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         attributeWeights = data.attributeWeights
         skillWeights = data.skillWeights
         bleedoutDefault = data.bleedoutDefault
+        training = data.training
+    }
+
+    public struct Training: Equatable, Sendable {
+        /// The skill's actor value index. DATA stores it as the index minus 6.
+        public let skill: Int32
+        public let maximumLevel: Int
+
+        public init(skill: Int32, maximumLevel: Int) {
+            self.skill = skill
+            self.maximumLevel = maximumLevel
+        }
     }
 
     /// What one DATA field yields, gathered so the decoder can return more than
@@ -123,6 +138,7 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         var attributeWeights = AttributeWeights()
         var skillWeights = SkillWeights()
         var bleedoutDefault: Float = 0
+        var training: Training?
     }
 
     /// DATA, 36 bytes (UESP CLAS). A short DATA yields zero weights, not an
@@ -131,6 +147,7 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
     private static func decodeDATA(_ field: ESMField) throws -> DecodedData {
         var decoded = DecodedData()
         decoded.skillWeights = try decodeSkillWeights(field)
+        decoded.training = try decodeTraining(field)
         guard field.data.count >= 0x23 else { return decoded }
         var reader = BinaryReader(field.data)
         reader.skip(0x18)
@@ -140,6 +157,18 @@ nonisolated public struct CharacterClass: Equatable, Sendable {
         decoded.attributeWeights.magicka = try reader.readUInt8()
         decoded.attributeWeights.stamina = try reader.readUInt8()
         return decoded
+    }
+
+    /// DATA 0x04 and 0x05 (UESP CLAS): "Skill is provided using an actor value
+    /// index - 6", and a level of 0 means the class trains nothing.
+    private static func decodeTraining(_ field: ESMField) throws -> Training? {
+        guard field.data.count >= 0x06 else { return nil }
+        var reader = BinaryReader(field.data)
+        reader.skip(0x04)
+        let skill = try Int32(reader.readUInt8()) + 6
+        let level = try Int(reader.readUInt8())
+        guard level > 0, ActorValueIdentity.isSkill(index: skill) else { return nil }
+        return Training(skill: skill, maximumLevel: level)
     }
 
     /// DATA 0x06: the eighteen skill weight bytes. A DATA too short to hold all

@@ -146,8 +146,9 @@ location name (strings), and the real play time in seconds (float64, finite, not
 pixels, top row first. The save list reads only these two chunks and `CLOK`; it skips the
 others by their length ([title menu](/engine/main-menu.md)).
 
-The code also defines `SPLB`, `PRKS`, `PLVL`, and `PLGD` (layouts in `Sources/OpenSkySave/`).
-`PLGD` holds legendary skill counts, merged onto the `PLVL` record of the same key.
+The code also defines `SPLB`, `PRKS`, `PLVL`, `PLGD`, and `PTRN` (layouts in `Sources/OpenSkySave/`).
+`PLGD` holds legendary skill counts, merged onto the `PLVL` record of the same key. `PTRN` holds
+the training sessions bought since the last level-up: a count, then a key and a `uint32` per entry.
 `AVGN` is an old tag that `AVOV` replaced; it is now skipped.
 
 `GALC` is exactly 8 bytes: a uint64, the next number the generated-reference allocator gives

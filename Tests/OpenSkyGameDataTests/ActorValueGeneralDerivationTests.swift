@@ -57,6 +57,16 @@ struct ActorValueGeneralDerivationTests {
         #expect(ActorValueIdentity.name(at: ActorValueIndex.bowSpeedBonus) == "Bow Speed Bonus")
     }
 
+    /// UESP CLAS: byte 0x04 is the trained skill "using an actor value index - 6",
+    /// byte 0x05 the level; a level of 0 trains nothing.
+    @Test func aTrainerClassNamesItsSkillAndLevel() throws {
+        let trainer = try Self.classRecord(weights: [:], training: (skill: 3, level: 75))
+        #expect(trainer.training == CharacterClass.Training(skill: Self.block, maximumLevel: 75))
+        let plain = try Self.classRecord(weights: [:], training: (skill: 3, level: 0))
+        #expect(plain.training == nil)
+        #expect(try Self.classRecord(weights: [:], dataLength: 4).training == nil)
+    }
+
     /// The four record fields that are actor values by name: RACE DATA's carry
     /// weight, mass and unarmed damage, and ACBS's speed multiplier.
     @Test func theRecordAuthoredValuesComeFromTheirOwnFields() {
@@ -225,9 +235,12 @@ struct ActorValueGeneralDerivationTests {
     /// CLAS DATA, 36 bytes (UESP CLAS), with the eighteen weight bytes at 0x06.
     private static func classRecord(
         weights: [Int: UInt8],
-        dataLength: Int = 36
+        dataLength: Int = 36,
+        training: (skill: UInt8, level: UInt8) = (0, 0)
     ) throws -> CharacterClass {
-        var data = Data(count: 0x06)
+        var data = Data(count: 0x04)
+        data.append(training.skill)
+        data.append(training.level)
         for offset in 0 ..< CharacterClass.SkillWeights.count {
             data.append(weights[offset] ?? 0)
         }

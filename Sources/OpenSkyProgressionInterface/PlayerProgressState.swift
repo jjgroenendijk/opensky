@@ -34,6 +34,8 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
     /// How often each skill was made legendary, by actor-value index. The skills menu
     /// shows the count beside the legendary mark (<https://en.uesp.net/wiki/Skyrim:Skills>).
     public private(set) var legendaryCounts: [Int32: Int]
+    /// Training sessions bought since the last level-up. A level-up resets it.
+    public private(set) var trainingSessions: Int
 
     public static var componentKind: WorldStateComponentKind {
         .playerProgress
@@ -49,7 +51,8 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         pendingAttributePicks: Int = 0,
         attributePicks: [ActorValueKind] = [],
         skillIncreases: Int = 0,
-        legendaryCounts: [Int32: Int] = [:]
+        legendaryCounts: [Int32: Int] = [:],
+        trainingSessions: Int = 0
     ) {
         self.level = max(PlayerLevelSource.startingLevel, level)
         self.experience = experience.isFinite ? max(0, experience) : 0
@@ -58,6 +61,7 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         self.attributePicks = attributePicks
         self.skillIncreases = max(0, skillIncreases)
         self.legendaryCounts = legendaryCounts.filter { $0.value > 0 }
+        self.trainingSessions = max(0, trainingSessions)
     }
 
     /// True when the component says nothing a fresh session would not, which is
@@ -87,6 +91,14 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
         with { $0.legendaryCounts = counts.filter { $0.value > 0 } }
     }
 
+    public func withTrainingSessions(_ count: Int) -> PlayerProgressState {
+        with { $0.trainingSessions = max(0, count) }
+    }
+
+    public func training() -> PlayerProgressState {
+        with { $0.trainingSessions += 1 }
+    }
+
     /// Banks `amount` toward the next level without spending it.
     ///
     /// A non-finite or negative amount banks nothing, by the rule every runtime
@@ -107,6 +119,7 @@ nonisolated public struct PlayerProgressState: WorldStateComponent, Sendable {
             $0.experience = max(0, outcome.carriedExperience)
             $0.perkPoints = min(Self.maximumPerkPoints, $0.perkPoints + outcome.levelsGained)
             $0.pendingAttributePicks += outcome.levelsGained
+            $0.trainingSessions = 0
         }
     }
 

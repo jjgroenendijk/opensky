@@ -107,6 +107,11 @@ extension FakeWorldProviders {
         return record("Reset the selected tree.")
     }
 
+    @discardableResult
+    func trainWithNearestTrainer() -> String {
+        record("Trained with the nearest trainer.")
+    }
+
     /// Puts an action's outcome where the readout reads it, so a panel test
     /// sees the same line a session would.
     private func record(_ text: String) -> String {

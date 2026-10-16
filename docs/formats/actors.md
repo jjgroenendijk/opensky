@@ -228,7 +228,8 @@ The actor also reads the destruction, attack, and inventory groups; see
 | offset | type | meaning |
 | --- | --- | --- |
 | `0x00` | uint32 | unknown, "possibly flags" |
-| `0x04` | uint8 x 2 | trainer skill and level |
+| `0x04` | uint8 | trainer skill, as the actor value index minus 6 |
+| `0x05` | uint8 | trainer level: the skill level the trainer teaches up to; 0 trains nothing |
 | `0x06` | uint8 x 18 | skill weights, for actor values 6 to 23 |
 | `0x18` | float32 | bleedout default |
 | `0x1C` | uint32 | voice points |

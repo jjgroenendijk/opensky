@@ -18,6 +18,30 @@ nonisolated extension OpenSkySaveEncoder {
     ) {
         writePlayerProgress(entries, into: &writer)
         writeLegendarySkills(entries, into: &writer)
+        writeTrainingSessions(entries, into: &writer)
+    }
+
+    /// The `PTRN` chunk: training sessions since the last level-up. Written only
+    /// when the player trained this level.
+    public static func writeTrainingSessions(
+        _ entries: [WorldStateSnapshotEntry],
+        into writer: inout BinaryWriter
+    ) {
+        let saved = entries.compactMap { entry -> (ReferenceKey, Int)? in
+            guard
+                let sessions = entry.delta.component(PlayerProgressState.self)?.trainingSessions,
+                sessions > 0
+            else { return nil }
+            return (entry.key, sessions)
+        }
+        guard !saved.isEmpty else { return }
+        writeChunk(tag: OpenSkySaveFormat.ChunkTag.trainingSessions, into: &writer) { payload in
+            payload.writeUInt32(UInt32(clamping: saved.count))
+            for (key, sessions) in saved {
+                writeKey(key, into: &payload)
+                payload.writeUInt32(UInt32(clamping: sessions))
+            }
+        }
     }
 
     public static func writePlayerProgress(

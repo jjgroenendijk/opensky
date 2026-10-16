@@ -453,6 +453,11 @@ extension GameViewController: ProgressionControlProviding {
     }
 
     @discardableResult
+    func trainWithNearestTrainer() -> String {
+        progression.trainWithNearestTrainer()
+    }
+
+    @discardableResult
     func grantSelectedPerk() -> String {
         progression.grantSelectedPerk()
     }

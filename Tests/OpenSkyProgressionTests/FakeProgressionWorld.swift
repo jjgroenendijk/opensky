@@ -50,4 +50,33 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
     func conditionText(_ condition: Condition) -> String {
         "function \(condition.functionIndex)"
     }
+
+    var trainer: TrainerOffer?
+    var gold = 0
+    private(set) var paid: [Int] = []
+    private(set) var notices: [String] = []
+    private(set) var stats: [String] = []
+
+    func nearestTrainer() -> TrainerOffer? {
+        trainer
+    }
+
+    func playerGold() -> Int {
+        gold
+    }
+
+    func payTrainer(_ amount: Int, to _: ReferenceKey) -> Bool {
+        guard gold >= amount else { return false }
+        gold -= amount
+        paid.append(amount)
+        return true
+    }
+
+    func showNotification(_ text: String) {
+        notices.append(text)
+    }
+
+    func incrementStat(_ name: String) {
+        stats.append(name)
+    }
 }

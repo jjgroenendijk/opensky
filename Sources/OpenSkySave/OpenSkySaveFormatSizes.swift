@@ -208,6 +208,9 @@ nonisolated extension OpenSkySaveFormat {
     public static let minimumLegendaryEntrySize = 11
     /// One `PLGD` skill row: the actor-value index and the count, 4 bytes each.
     public static let legendarySkillRowSize = 8
+    /// One `PTRN` entry at its smallest: a plugin key with an empty name (1 + 2 + 4)
+    /// and the session count (4).
+    public static let minimumTrainingEntrySize = 11
     /// Smallest number of bytes a single `CRIM` entry can occupy: a plugin key
     /// with an empty name (1 + 2 + 4), the "no cell" tag (1) and a zero row
     /// count (4). An entry with contents is longer, so this is a lower bound.
