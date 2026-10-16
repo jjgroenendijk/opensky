@@ -40,6 +40,12 @@ public protocol PerceptionSessionWorld: AnyObject {
     /// The player, and nothing else: NPC-versus-NPC perception is out of scope.
     func perceptionTargets() -> [PerceptionTarget]
     func perceptionHasLineOfSight(from origin: SIMD3<Float>, to destination: SIMD3<Float>) -> Bool
+    /// Credits Sneak skill uses to an actor that stayed hidden.
+    func reportSneakSkillUse(_ amount: Float, by actor: ReferenceKey)
+}
+
+extension PerceptionSessionWorld {
+    public func reportSneakSkillUse(_: Float, by _: ReferenceKey) {}
 }
 
 nonisolated public enum PerceptionCore {
@@ -72,7 +78,15 @@ public final class PerceptionCoordinator {
     }
 
     public func advance(by delta: Float) {
-        runtime?.advance(by: delta)
+        guard let runtime else { return }
+        let steps = runtime.advance(by: delta)
+        guard steps > 0 else { return }
+        let seconds = Float(steps) * PerceptionRuntime.fixedStepSeconds
+        for target in runtime.hiddenSneakers() {
+            world?.reportSneakSkillUse(
+                runtime.settings.skillUsePerSecond.value * seconds, by: target
+            )
+        }
     }
 
     /// Every tracked pair plus every roster member's position, for condition

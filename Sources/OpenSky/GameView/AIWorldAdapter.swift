@@ -14,6 +14,8 @@ import OpenSkyGameData
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyQuestsInterface
 import OpenSkyRendering
 import OpenSkyScripting
@@ -450,5 +452,11 @@ extension AIWorldAdapter: PerceptionSessionWorld {
         else { return true }
         let shapes = streamer.staticCollisionCandidates(overlapping: ray.bounds)
         return InteractionRaycaster.nearestHit(ray: ray, shapes: shapes) == nil
+    }
+
+    func reportSneakSkillUse(_ amount: Float, by actor: ReferenceKey) {
+        _ = game.progression.reportSkillUse(
+            SkillUseEvent(actor: actor, action: .hidden, amount: amount)
+        )
     }
 }
