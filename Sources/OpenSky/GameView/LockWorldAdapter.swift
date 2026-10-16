@@ -7,6 +7,8 @@ import OpenSkyDiagnostics
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
+import OpenSkyInventoryInterface
+import OpenSkyMenus
 import OpenSkyProgression
 import OpenSkyProgressionInterface
 import OpenSkyRendering
@@ -29,6 +31,9 @@ final class LockWorldAdapter {
             locks.settings = data.lockpicking
             locks.lockpickItem = data.lockpickItem
         }
+        locks.texts = (provider as? WorldDataStores).map {
+            LockTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         streamer.activationGate.gate = { [weak locks] target in
             locks?.gate(target)
         }
@@ -53,6 +58,10 @@ final class LockWorldAdapter {
 }
 
 extension LockWorldAdapter: LockWorld {
+    func showLockNotice(_ text: String) {
+        game.hud.showNotification(text)
+    }
+
     var lockpickingSkill: Float {
         guard let index = ActorValueIdentity.index(named: "Lockpicking") else { return 0 }
         return game.actorValues.runtime?.value(at: index, on: .player) ?? 0

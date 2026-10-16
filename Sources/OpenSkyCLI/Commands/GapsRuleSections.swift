@@ -91,6 +91,7 @@ extension GapsGatherer {
         _ = SpeechCheckSettings.resolve(store: store)
         _ = HarvestRegrowth.resolve(store: store)
         _ = LockpickingSettings.resolve(store: store)
+        _ = LockTexts.resolve(store: store)
         _ = DetectionSettings.resolve(store: store)
         _ = PlayerMovementConfiguration.resolve(store: store)
         _ = RegenerationSettings.resolve(store: store)

@@ -86,6 +86,10 @@ nonisolated public struct ReferenceLockState: WorldStateComponent, Hashable, Sen
         LockDifficulty(level: level)
     }
 
+    public func difficulty(noviceMaximum: UInt8) -> LockDifficulty {
+        LockDifficulty(level: level, noviceMaximum: noviceMaximum)
+    }
+
     /// `delta` over `baseline`. Nil when neither exists: the reference has no lock.
     public static func resolve(
         baseline: LockData?,

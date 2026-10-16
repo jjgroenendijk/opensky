@@ -26,6 +26,12 @@ public protocol LockWorld: AnyObject, SkillUseReporting {
     func lockables() -> [PlacedInteraction]
     /// An item's display name, for the key a lock names.
     func itemName(_ item: FormID) -> String
+    /// Shows a lock notice on the HUD.
+    func showLockNotice(_ text: String)
+}
+
+extension LockWorld {
+    public func showLockNotice(_: String) {}
 }
 
 /// Why a lockpicking session did not start.
@@ -79,6 +85,7 @@ nonisolated struct LockpickingTarget: Sendable {
 public final class LockCoordinator {
     public private(set) var items: WorldItemRuntime?
     public var settings = LockpickingSettings.documentedDefaults
+    public var texts = LockTexts.vanilla
     /// The `LKPK` default object. Nil keeps every lock shut to picking.
     public var lockpickItem: FormID?
     /// Sidebar override: treat the player as carrying every lock's key.
@@ -138,13 +145,27 @@ public final class LockCoordinator {
             lastText = "Unlocked \(target.interaction.name) with its key."
             return nil
         case let .refuse(refusal):
-            lastText = "\(target.interaction.name) is locked (\(lock.state.difficulty.name))."
+            let band = texts.name(of: difficulty(of: lock.state))
+            lastText = "\(target.interaction.name) is locked (\(band))."
             return refusal
         }
     }
 
+    public func difficulty(of state: ReferenceLockState) -> LockDifficulty {
+        state.difficulty(noviceMaximum: settings.noviceMaximum)
+    }
+
+    /// The notice for a refused press that opens no minigame, or nil.
+    public func refusalNotice(level: UInt8) -> String? {
+        let band = LockDifficulty(level: level, noviceMaximum: settings.noviceMaximum)
+        return LockCore.refusalNotice(for: band, lockpicks: lockpickCount, texts: texts)
+    }
+
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
-        LockCore.labelled(interaction, lock: lock(of: interaction)?.state)
+        LockCore.labelled(
+            interaction, lock: lock(of: interaction)?.state,
+            texts: texts, noviceMaximum: settings.noviceMaximum
+        )
     }
 
     /// Forces the lock open or shut. The level and key stay as they are.
@@ -185,7 +206,7 @@ public final class LockCoordinator {
             throw .unknownReference(target.interaction.reference)
         }
         guard lock.state.isLocked else { throw .notLocked }
-        let difficulty = lock.state.difficulty
+        let difficulty = difficulty(of: lock.state)
         guard difficulty.isPickable else { throw .requiresKey }
         let picks = lockpickCount
         guard picks > 0 else { throw .noLockpicks }
@@ -206,7 +227,7 @@ public final class LockCoordinator {
         sessionTarget = target
         sessionLock = LockpickingTarget(key: lock.key, state: lock.state, perks: perks)
         sessionExperience = 0
-        lastText = "Picking \(target.interaction.name) (\(difficulty.name))."
+        lastText = "Picking \(target.interaction.name) (\(texts.name(of: difficulty)))."
     }
 
     private func perkValues(lock: ReferenceKey, level: UInt8) -> LockpickingPerkValues {

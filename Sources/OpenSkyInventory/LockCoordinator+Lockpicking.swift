@@ -54,7 +54,8 @@ extension LockCoordinator {
             open()
         case .outOfPicks:
             finish(opened: false, keyRewarded: false)
-            lastText = "Out of lockpicks."
+            lastText = texts.outOfLockpicks
+            world?.showLockNotice(texts.outOfLockpicks)
         case .cancelled:
             finish(opened: false, keyRewarded: false)
             lastText = "Stopped picking."
@@ -65,7 +66,7 @@ extension LockCoordinator {
         guard let target = sessionLock else { return }
         write(target.state, locked: false, for: target.key)
         sessionExperience += report(
-            uses: settings.successUses[target.state.difficulty] ?? 0, action: .lockpickSuccess
+            uses: settings.successUses[difficulty(of: target.state)] ?? 0, action: .lockpickSuccess
         )
         let rewarded = rewardKey(target)
         if let items {
@@ -97,7 +98,7 @@ extension LockCoordinator {
     private func finish(opened: Bool, keyRewarded: Bool) {
         guard let target = sessionLock else { return }
         lastOutcome = LockpickingOutcome(
-            difficulty: target.state.difficulty,
+            difficulty: difficulty(of: target.state),
             opened: opened,
             picksBroken: session?.picksBroken ?? 0,
             experience: sessionExperience,

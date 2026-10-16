@@ -28,6 +28,8 @@ nonisolated public struct LockpickingSettings: Equatable, Sendable {
     public var breakSkillMult: Float
     /// The pick's travel, in degrees either side of upright. UESP: "a 180 degree arc".
     public var halfArc: Float
+    /// `iLockLevelMaxVeryEasy`: the highest lock level that is still Novice.
+    public var noviceMaximum: UInt8 = 1
 
     public static let documentedDefaults = LockpickingSettings(
         sweetSpot: [.novice: 30, .apprentice: 15, .adept: 7.5, .expert: 3.75, .master: 1.875],
@@ -94,6 +96,13 @@ nonisolated public struct LockpickingSettings: Equatable, Sendable {
             ?? settings.partialSkillBase
         settings.partialSkillMult = float("fLockpickSkillPartialPickMult")
             ?? settings.partialSkillMult
+        if
+            case let .integer(value)? = store.setting(editorID: "iLockLevelMaxVeryEasy")?.setting
+                .value,
+            let maximum = UInt8(exactly: value)
+        {
+            settings.noviceMaximum = maximum
+        }
         return settings
     }
 }

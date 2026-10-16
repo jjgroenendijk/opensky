@@ -19,6 +19,7 @@ final class FakeLockWorld: LockWorld {
     var perks: [PerkEntryPoint: Float] = [:]
     private(set) var uses: [SkillUseEvent] = []
     private(set) var changes = 0
+    private(set) var notices: [String] = []
 
     func perkValue(
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
@@ -43,6 +44,10 @@ final class FakeLockWorld: LockWorld {
 
     func itemName(_ item: FormID) -> String {
         "Key \(item)"
+    }
+
+    func showLockNotice(_ text: String) {
+        notices.append(text)
     }
 }
 
@@ -96,7 +101,7 @@ struct LockCoordinatorTests {
         let target = Self.door(level: .adept)
         #expect(locks.gate(target) == .locked(level: 50, key: Self.key))
         let labelled = locks.labelled(target.interaction)
-        #expect(labelled.actionLabel == LockCore.unlockLabel)
+        #expect(labelled.actionLabel == LockTexts.vanilla.unlock)
         #expect(labelled.name == "Fixture Door (Adept)")
         withExtendedLifetime(rig) {}
     }
@@ -212,6 +217,7 @@ struct LockCoordinatorTests {
             )
         }
         #expect(events == [.pickBroke, .outOfPicks])
+        #expect(world.notices == [LockTexts.vanilla.outOfLockpicks])
         #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 0)
         #expect(world.uses.first?.amount == 0.25)
         #expect(locks.lastOutcome?.opened == false)

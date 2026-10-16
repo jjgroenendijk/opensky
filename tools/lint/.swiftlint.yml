@@ -130,7 +130,7 @@ custom_rules:
   game_setting_reader:
     name: "Game setting reader"
     regex: '(\.setting\(editorID:|func resolve\(store: GameSettingStore\))'
-    excluded: '(Tests/.*|Sources/OpenSky(CombatInterface/(Archery|Arrow|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|MenuRecordData|RegenerationSettings|SkillAdvancement|SocialSettings|SpeechCheckSettings|StaminaSettings|TrainingSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
+    excluded: '(Tests/.*|Sources/OpenSky(CombatInterface/(Archery|Arrow|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|MenuRecordData|RegenerationSettings|SkillAdvancement|SocialSettings|SpeechCheckSettings|StaminaSettings|TrainingSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings|LockTexts)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
 

@@ -118,7 +118,7 @@ extension LockCoordinator {
         return LockReadoutRow(
             reference: interaction.reference,
             name: interaction.name,
-            difficulty: state.difficulty.name,
+            difficulty: texts.name(of: difficulty(of: state)),
             key: state.key.map { world?.itemName($0) ?? $0.description } ?? "none",
             isLocked: state.isLocked
         )

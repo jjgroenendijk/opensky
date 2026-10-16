@@ -74,11 +74,11 @@ final class LockpickingMenuController {
 
     /// Opens the menu for a lock the gate refused, if the lock can be picked.
     func handle(_ refusal: ActivationRefusalEvent) {
-        guard
-            case let .locked(level, _) = refusal.refusal,
-            LockDifficulty(level: level).isPickable,
-            locks.lockpickCount > 0
-        else { return }
+        guard case let .locked(level, _) = refusal.refusal else { return }
+        if let notice = locks.refusalNotice(level: level) {
+            game.hud.showNotification(locks.note(notice))
+            return
+        }
         open(refusal.target)
     }
 

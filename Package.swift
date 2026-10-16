@@ -541,8 +541,8 @@ targets += feature(
         "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyConditions"
     ],
     tests: [
-        "OpenSkyFeaturesTesting", "OpenSkyFormatsTesting", "OpenSkyConditions",
-        "OpenSkyCrimeInterface",
+        "OpenSkyFeaturesTesting", "OpenSkyFormatsTesting", "OpenSkyEngineTesting",
+        "OpenSkyConditions", "OpenSkyCrimeInterface",
         "OpenSkyFactionsInterface", "OpenSkyFormatsCore", "OpenSkyFormatsESM",
         "OpenSkyGameData", "OpenSkyInventoryInterface", "OpenSkyMagicInterface",
         "OpenSkyProgressionInterface", "OpenSkyWorldInterface", "OpenSkyWorldState"
