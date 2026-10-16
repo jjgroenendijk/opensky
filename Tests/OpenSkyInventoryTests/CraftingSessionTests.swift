@@ -147,6 +147,8 @@ struct CraftingSessionTests {
             .action == .craft(skill: #require(ActorValueIdentity.index(named: "Smithing"))))
         #expect(use.actor == .player)
         #expect(outcome.experience == use.amount)
+        // The iron sword's value is 25: 25 + 3 × 25^0.65.
+        #expect(abs(use.amount - 49.31) < 0.01)
     }
 
     @Test func theCreatedCountIsHonored() throws {

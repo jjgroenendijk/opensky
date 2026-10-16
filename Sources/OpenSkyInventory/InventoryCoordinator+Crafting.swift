@@ -76,7 +76,8 @@ extension InventoryCoordinator {
             inventory: runtime.inventory,
             player: runtime.player,
             conditions: recipeConditions,
-            skills: skillUses
+            skills: skillUses,
+            skillUse: craftingSkillUse
         )
         let count = crafting?.recipes.count ?? 0
         return noteCraft("Opened \(event.interaction.name): \(count) recipes.")

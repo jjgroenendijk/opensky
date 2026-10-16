@@ -53,11 +53,12 @@ A craft removes every component and adds the created object at its `NAM1` count 
 absent). Both happen in one inventory write, so a failed step writes nothing. A recipe that is
 not eligible is refused before anything changes.
 
-After the write, the session reports one skill use for the station's `WBDT` skill. The amount
-is the base value of the made stack. UESP "Skyrim:Leveling" lists Smithing experience as based
-on the value of the item made. The `AVIF` skill-use multiplier and offset then turn the amount
-into experience ([skill advancement](/engine/skill-advancement.md)). A bench with no skill
-reports nothing.
+After the write, the session reports one skill use for the station's `WBDT` skill. UESP
+"Skyrim:Leveling" gives the amount as `count * (25 + 3 * value^0.65)`, where `value` is the
+base value of one made item. The three numbers are the settings `fConstructibleSkillUseConst`,
+`fConstructibleSkillUseMult`, and `fConstructibleSkilluseExp`. The `AVIF` skill-use
+multiplier and offset then turn the amount into experience
+([skill advancement](/engine/skill-advancement.md)). A bench with no skill reports nothing.
 
 ## Tempering
 
@@ -95,8 +96,12 @@ reads armor rating yet.
 Differences from the game:
 
 - A copy that leaves the player loses its quality. The game keeps it on the item.
-- The skill use amount is the base value times the rise in the UESP value multiplier
-  (`1 + level / 6`), not the UESP experience formula.
+- The skill use amount is `3.8 * sqrt(value gain) * sqrt(levels gained)`, times
+  `fTemperingSkillUseMult`. The value gain is the base value times the rise in the UESP
+  value multiplier (`1 + level / 6`). Players measured this formula (UESP "Skyrim
+  talk:Smithing"). It is uncertain: the settings `fTemperingSkillUseItemValConst`,
+  `...ItemValMult`, and `...ItemValExp` (25, 8, 0.6) do not fit it, and no source says how the
+  game uses them, so OpenSky does not read them.
 - The matching material perk, which doubles the skill above the offset, is not read.
 
 ## Not modeled yet

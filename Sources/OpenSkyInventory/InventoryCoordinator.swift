@@ -41,6 +41,8 @@ public final class InventoryCoordinator {
     public internal(set) var lastCraftText = "No crafting action yet."
     weak var recipeConditions: (any RecipeConditionChecking)?
     weak var skillUses: (any SkillUseReporting)?
+    /// The experience formulas a crafting session reports with.
+    public var craftingSkillUse = CraftingSkillUseSettings.vanilla
 
     weak var world: (any InventoryWorld)?
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.

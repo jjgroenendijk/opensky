@@ -47,6 +47,8 @@ final class InventoryWorldAdapter {
         coordinator.wireCrafting(
             catalog: items.craftingCatalog, conditions: self, skills: game.progression
         )
+        coordinator.craftingSkillUse = (provider as? WorldDataStores)
+            .map { CraftingSkillUseSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         streamer.onInteraction.add { [weak coordinator] event in
             coordinator?.handleInteraction(event.target.interaction.action)
         }
