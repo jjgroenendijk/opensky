@@ -18,17 +18,7 @@ nonisolated public struct CellVehicleCollision: Sendable {
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         let delta = pose * placement.inverse
-        return shapes.compactMap { shape in
-            let moved = shape.bounds.transformed(by: delta)
-            guard moved.overlaps(bounds) else { return nil }
-            return StaticCollisionShape(
-                reference: shape.reference,
-                transform: delta * shape.transform,
-                geometry: shape.geometry,
-                bounds: moved,
-                material: shape.material
-            )
-        }
+        return shapes.compactMap { $0.moved(by: delta, overlapping: bounds) }
     }
 
     /// Takes the shapes of each follower out of `set`.

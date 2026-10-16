@@ -76,6 +76,8 @@ nonisolated public struct ResolvedInstance {
     public var animated: ObjectBehaviorAsset?
     /// The colour of the reference's `XEMI` light, for external-emittance shapes.
     public var emittance: SIMD3<Float>?
+    /// A door whose `Open` and `Close` sequences move its leaves.
+    public var isSequenceDoor = false
 }
 
 /// A located CELL and its cell-children group; nil children means no references.
@@ -146,6 +148,8 @@ nonisolated public final class CellSceneBuilder {
     var faceTintTextures: [String: Data] = [:]
     /// Object behaviour sets by project path; nil inside records a failed load.
     var objectBehaviorAssets: [String: ObjectBehaviorAsset?] = [:]
+    /// Sequence door rigs by mesh key; nil inside records a mesh without one.
+    var sequenceDoorRigs: [String: SequenceDoorRig?] = [:]
     public let pluginName: String
     /// Built once, because `ESMFile.pluginHeader()` re-decodes on every call.
     public let formIDResolver: FormIDResolver
@@ -470,6 +474,7 @@ nonisolated extension CellSceneBuilder {
             return resolved?.isEditorMarker == false ? resolved?.modelPath : nil
         })
         defer { meshes.dropPredecoded() }
+        let doors = sequenceDoors(in: refs)
         var instances: [ResolvedInstance] = []
         for ref in refs where lightIndex[ref.base.rawValue] == nil {
             let id = ref.formID.description
@@ -502,12 +507,13 @@ nonisolated extension CellSceneBuilder {
             }
             let surface = surface(for: resolved.alternateTextures)
             if
-                let instance = loadInstance(
+                var instance = loadInstance(
                     ref: ref, modelPath: modelPath, surface: surface,
                     behavior: objectBehavior(recordType: resolved.recordType, modelPath: modelPath),
                     counts: &counts
                 )
             {
+                instance.isSequenceDoor = doors[ref.formID] != nil
                 instances.append(instance)
             }
         }

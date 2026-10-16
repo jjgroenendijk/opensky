@@ -41,6 +41,7 @@ extension CellStreamer {
     ) -> [StaticCollisionShape] {
         fixedCollisionCandidates(overlapping: bounds)
             + vehicleCollisionCandidates(overlapping: bounds)
+            + doorCollisionCandidates(overlapping: bounds)
     }
 
     /// Every candidate but the vehicles' moving collision, for an actor that rides
@@ -49,6 +50,7 @@ extension CellStreamer {
         overlapping bounds: ModelBounds
     ) -> [StaticCollisionShape] {
         fixedCollisionCandidates(overlapping: bounds)
+            + doorCollisionCandidates(overlapping: bounds)
             + dynamicBodies.placedShapes(overlapping: bounds)
     }
 
@@ -72,6 +74,19 @@ extension CellStreamer {
             vehicle.shapes(
                 at: npcMovementState.vehiclePoses[vehicle.reference] ?? vehicle.placement,
                 overlapping: bounds
+            )
+        }
+    }
+
+    /// Each sequence door's collision with its leaves where the door coordinator put them.
+    public func doorCollisionCandidates(
+        overlapping bounds: ModelBounds
+    ) -> [StaticCollisionShape] {
+        let doors = interiorScene.map(\.doorCollision)
+            ?? composition.cells.values.flatMap(\.doorCollision)
+        return doors.flatMap { door in
+            door.shapes(
+                leafDeltas: sequenceDoorLeaves[door.reference.rawValue], overlapping: bounds
             )
         }
     }

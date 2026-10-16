@@ -1,8 +1,8 @@
 ---
 type: Subsystem
 title: Object animation
-description: How traps, doors, and levers run the Havok behaviour graph their mesh names, and
-  how Papyrus drives it.
+description: How traps, doors, and levers run the Havok behaviour graph their mesh names, how
+  doors without a graph play their mesh's Open and Close sequences, and how Papyrus drives both.
 tags: [engine, animation, behavior, scripting, app-ui]
 ---
 
@@ -84,8 +84,55 @@ does not declare fails the native, so the script gets the default value.
   does.
 - `FURN`, `CONT`, and `MSTT` references are not checked for a graph.
 
+## Sequence doors
+
+Most doors have no behaviour graph. Their mesh moves its leaves with two
+`NiControllerSequence` blocks named `Open` and `Close` ([NIF sequences](/formats/nif-sequences.md)).
+Each sequence has one transform track per leaf node, and text keys such as
+`0.0 Sound: DRSWoodGateHelgenOpen`. The name after `Sound:` is the editor ID of an `SNDR`.
+Confirmed on the install: the Helgen gate `Clutter\Helgen\HelgenGate01.nif` moves `DoorLeft`
+and `DoorRight` over 4 seconds, and Solitude, Windhelm, Riften, Markarth, and Dwemer doors use
+the same two names.
+
+A cell build treats a `DOOR` reference as a sequence door when it has no `XTEL` teleport, its
+mesh names no behaviour graph, and its mesh has both sequences. Like an object with a graph, it
+draws its own node-skinned copy, with one root bone per leaf node.
+
+The open state is the reference's activation state in the world state, so a save keeps it.
+`ONAM` ("Open by Default") starts it open. The use key toggles it, unless the door is locked
+or its activation is blocked. `SetOpen` writes it, and `SetOpen(true)` also unlocks the door
+([SetOpen](https://ck.uesp.net/wiki/SetOpen_-_ObjectReference)).
+
+`SequenceDoorCoordinator` follows that state on the main actor, in reference order:
+
+- A door that loads is placed at the end of its open or close sequence, with no sound.
+- A changed state plays the other sequence. A door that turns back part way starts the other
+  sequence as far from its end as it was from its start.
+- Each text key the sequence passes goes to the animation event coordinator, which plays
+  `Sound:` keys ([animation events](/engine/animation-events.md)).
+- A rebuilt cell brings a new pose buffer. The door keeps its motion and poses the new buffer.
+
+`GetOpenState` answers 1 open, 2 opening, 3 closed, or 4 closing
+([GetOpenState](https://ck.uesp.net/wiki/GetOpenState_-_ObjectReference)). A door told to move
+answers opening or closing at once, before its next step.
+
+The cell build takes each sequence door's collision out of the static set. It places the
+door's solid bodies again and groups them by the leaf their node moves with. Each collision
+query moves a leaf's shapes by the leaf's move from rest, so an open gate does not block the
+path. A body on no leaf, such as a frame, stays where it is.
+
+### Where OpenSky differs for sequence doors
+
+- A load door does not play its sequences; the use key starts the transition.
+- `GetOpenState` answers 1 or 3 for any other reference, where the game answers 0 for a
+  reference that cannot open.
+- Text keys reach Papyrus `OnAnimationEvent` only through the graph path, not from sequence doors.
+
 ## Controls
 
 World > World > Animated Objects lists the running objects with their project, state, and
 events. It sends a chosen event, as a script's `PlayAnimation` does, and switches all object
-animation off. The switch is also on the launcher's Graphics page.
+animation off, sequence doors included. The switch is also on the launcher's Graphics page.
+
+World > World > Animated Doors lists the loaded sequence doors with their state, and opens or
+closes the chosen one, as `SetOpen` does.

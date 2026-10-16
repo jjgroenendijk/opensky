@@ -18,6 +18,7 @@ struct FakeLockTrapState {
     var lastTrap = "No trap action yet."
     var objectAnimationEnabled = true
     var objectEvents: [String] = []
+    var doorOpen = false
 }
 
 extension FakeWorldProviders {
@@ -110,6 +111,21 @@ extension FakeWorldProviders {
             return false
         }
         locksTraps.objectEvents.append(event)
+        return true
+    }
+}
+
+extension FakeWorldProviders {
+    var sequenceDoorRows: [SequenceDoorRow] {
+        [SequenceDoorRow(
+            reference: 0x0C00, modelPath: "Clutter\\Gate\\Gate01.nif",
+            phase: locksTraps.doorOpen ? .open : .closed
+        )]
+    }
+
+    func setSequenceDoorOpen(_ open: Bool, reference: UInt32) -> Bool {
+        guard reference == 0x0C00 else { return false }
+        locksTraps.doorOpen = open
         return true
     }
 }

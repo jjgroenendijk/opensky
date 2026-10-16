@@ -19,6 +19,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
     let triggerSection = TriggerVolumeSection()
     let trapSection = TrapSection()
     let objectAnimationSection = ObjectAnimationSection()
+    let sequenceDoorSection = SequenceDoorSection()
     let renderDebugSection = RenderDebugSection()
 
     /// Weak: the game controller owns this panel's parent and the renderer, so
@@ -77,6 +78,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
         didSet { objectAnimationSection.provider = objectAnimationProvider }
     }
 
+    /// Doors that open with mesh sequences, beside the graph-driven objects.
+    weak var sequenceDoorProvider: (any SequenceDoorControlProviding)? {
+        didSet { sequenceDoorSection.provider = sequenceDoorProvider }
+    }
+
     /// The render debug channel and the layer mask: both are views of the
     /// frame this panel reports on.
     weak var renderDebugProvider: (any RenderDebugControlProviding)? {
@@ -87,7 +93,7 @@ final class WorldPanelViewController: InspectorPanelViewController {
         [
             cameraSection, cinematicSection, firstPersonSection, frameSection, worldLoadSection,
             assetCacheSection, sceneSection, renderDebugSection, triggerSection, trapSection,
-            objectAnimationSection, loadingSection
+            objectAnimationSection, sequenceDoorSection, loadingSection
         ]
     }
 

@@ -21,6 +21,9 @@ public protocol PapyrusObjectAnimationBridge: AnyObject {
     /// False when the object runs no graph or the graph declares no such variable.
     func setAnimationVariable(_ name: String, to value: PapyrusValue, on reference: ReferenceKey)
         -> Bool
+    /// The `GetOpenState` code of a door whose mesh sequences move it, opening and
+    /// closing included. Nil for any other reference.
+    func openStateCode(of reference: ReferenceKey) -> Int32?
 }
 
 extension PapyrusNativeFunctions {

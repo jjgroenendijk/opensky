@@ -24,6 +24,8 @@ nonisolated public struct CellCollisionBuild: Sendable {
     public var dynamicBodies: [DynamicBodyPlacement] = []
     /// The collision of the references that ride a vehicle, moved with them each frame.
     public var vehicles: [CellVehicleCollision] = []
+    /// The sequence doors' collision, whose leaves move.
+    public var doors: [CellDoorCollision] = []
 }
 
 nonisolated extension CellSceneBuilder {
@@ -52,13 +54,15 @@ nonisolated extension CellSceneBuilder {
                     )
                 }
             )
+            let doors = splitDoorCollision(split.fixed, refs: resolved.references)
             return CellCollisionBuild(
-                staticCollision: split.fixed,
+                staticCollision: doors.fixed,
                 triggerVolumes: buildTriggerVolumes(
                     refs: resolved.references, entries: resolved.entries, location: location
                 ),
                 dynamicBodies: products.dynamicBodies,
-                vehicles: split.vehicles
+                vehicles: split.vehicles,
+                doors: doors.doors
             )
         }
     }
