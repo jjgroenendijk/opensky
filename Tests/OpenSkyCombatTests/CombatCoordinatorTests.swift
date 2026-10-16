@@ -7,6 +7,7 @@
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyPhysics
+import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import simd
 import Testing
@@ -92,6 +93,21 @@ struct CombatCoordinatorTests {
             .isSneakAttack)
         #expect(!coordinator.strike(from: Self.guardKey, handType: .dagger, on: .player)
             .isSneakAttack)
+    }
+
+    /// UESP "Skyrim:Sneak": a melee sneak attack gives 12 times the ranged experience.
+    @Test func aSneakAttackGivesSneakExperienceAndANotice() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        _ = coordinator.meleeStrike(handType: .dagger, on: Self.guardKey)
+        coordinator.applyProjectileDamage(5, to: Self.guardKey)
+
+        #expect(world.skillUses.map(\.action) == [.sneakAttack, .sneakAttack])
+        #expect(world.skillUses.map(\.amount) == [30, 2.5])
+        #expect(world.notices.first == "sSuccessfulSneakAttackMain3.0sSuccessfulSneakAttackEnd")
+        world.detects[Self.guardKey] = [.player]
+        _ = coordinator.meleeStrike(handType: .dagger, on: Self.guardKey)
+        #expect(world.skillUses.count == 2)
     }
 
     @Test func thePlayersWeaponSkillScalesTheStrike() throws {

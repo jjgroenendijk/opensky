@@ -79,7 +79,9 @@ extension CombatCoordinator: MeleeCombatWorld {
     }
 
     public func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike {
-        strike(from: meleeAttacker.key, handType: handType, on: target)
+        let strike = strike(from: meleeAttacker.key, handType: handType, on: target)
+        reportSneakAttack(strike, ranged: false)
+        return strike
     }
 
     /// The player's own swing: the melee runtime only ever swings for the player.
@@ -141,6 +143,7 @@ extension CombatCoordinator: ProjectileWorld {
     public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
         let shooter = projectileShooter.key
         let strike = strike(from: shooter, handType: .bow, on: target)
+        reportSneakAttack(strike, ranged: true)
         return applyHealthDamage(amount * strike.factor, to: target, attacker: shooter)
     }
 

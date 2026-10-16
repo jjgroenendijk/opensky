@@ -34,6 +34,14 @@ extension CombatCoordinator {
         return strike
     }
 
+    /// A sneak attack the player landed: Sneak experience and the HUD notice.
+    func reportSneakAttack(_ strike: WeaponStrike, ranged: Bool) {
+        guard strike.isSneakAttack else { return }
+        let amount = ranged ? weaponDamage.sneakSkillUseRanged : weaponDamage.sneakSkillUseMelee
+        _ = reportSkillUse(SkillUseEvent(actor: .player, action: .sneakAttack, amount: amount))
+        world?.showNotification(weaponDamage.sneakNotice(multiplier: strike.sneakMultiplier))
+    }
+
     /// The blow before the block, so a stronger hit costs more to stop.
     public func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
         let incoming = damage.base * damage.attackMultiplier * damage.strike.factor

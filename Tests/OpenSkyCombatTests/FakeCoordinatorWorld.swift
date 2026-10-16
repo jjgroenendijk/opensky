@@ -193,4 +193,16 @@ final class FakeCoordinatorWorld: CombatWorld {
     func applyWeaponEnchantment(_: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
         nil
     }
+
+    private(set) var skillUses: [SkillUseEvent] = []
+    private(set) var notices: [String] = []
+
+    func reportSkillUse(_ use: SkillUseEvent) -> Float {
+        skillUses.append(use)
+        return use.amount
+    }
+
+    func showNotification(_ text: String) {
+        notices.append(text)
+    }
 }

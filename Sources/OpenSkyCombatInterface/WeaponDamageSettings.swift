@@ -3,6 +3,7 @@
 // docs/engine/melee-damage.md, "Skill, sneak attacks and armour".
 
 import Foundation
+import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
@@ -35,12 +36,31 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
     public var maxArmorRating: Float = 80
     /// `fClothingArmorScale`: the factor on a clothing piece's rating.
     public var clothingArmorScale: Float = 1
+    /// `fSneakAttackSkillUsageMelee`: Sneak experience per melee sneak attack.
+    public var sneakSkillUseMelee: Float = 30
+    /// `sSuccessfulSneakAttackMain` and `sSuccessfulSneakAttackEnd`, around the multiplier.
+    public var sneakNoticeMain = "sSuccessfulSneakAttackMain"
+    public var sneakNoticeEnd = "sSuccessfulSneakAttackEnd"
+
+    /// UESP "Skyrim:Sneak": "Melee sneak attacks give 12x as much as ranged sneak
+    /// attacks." No setting holds the ranged amount.
+    public var sneakSkillUseRanged: Float {
+        sneakSkillUseMelee / 12
+    }
 
     public static let vanilla = Self()
 
     public init() {}
 
-    public static func resolve(store: GameSettingStore) -> Self {
+    /// The HUD notice, such as "Sneak attack for 3.0X damage!".
+    public func sneakNotice(multiplier: Float) -> String {
+        sneakNoticeMain + String(format: "%.1f", multiplier) + sneakNoticeEnd
+    }
+
+    /// `text` resolves a string setting through the plugin's string table.
+    public static func resolve(
+        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+    ) -> Self {
         var settings = vanilla
         store.read("fDamagePCSkillMax", into: &settings, \.playerSkillMax)
         store.read("fCombatSneak1HSwordMult", into: &settings, \.sneakOneHandedSword)
@@ -59,6 +79,13 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
         store.read("fArmorRatingPCMax", into: &settings, \.armorRatingPlayerMax)
         store.read("fMaxArmorRating", into: &settings, \.maxArmorRating)
         store.read("fClothingArmorScale", into: &settings, \.clothingArmorScale)
+        store.read("fSneakAttackSkillUsageMelee", into: &settings, \.sneakSkillUseMelee)
+        if let main = store.text("sSuccessfulSneakAttackMain").flatMap({ text($0.text) }) {
+            settings.sneakNoticeMain = main
+        }
+        if let end = store.text("sSuccessfulSneakAttackEnd").flatMap({ text($0.text) }) {
+            settings.sneakNoticeEnd = end
+        }
         return settings
     }
 }

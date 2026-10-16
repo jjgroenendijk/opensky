@@ -35,6 +35,9 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
     /// A lock picked open or a pick broken, credited to Lockpicking. The amount is the
     /// `fSkillUsageLockPick*` setting for the event.
     case lockpick
+    /// A sneak attack that landed, credited to Sneak. The amount is the
+    /// `fSneakAttackSkillUsageMelee` setting, or a twelfth of it at range.
+    case sneakAttack
 
     /// The skill this action always credits, or nil for `armorHit`, which depends
     /// on the target's armor. Unarmed, staff, torch and shield strikes credit
@@ -58,6 +61,8 @@ nonisolated public enum SkillUseAction: Equatable, Sendable {
             nil
         case .lockpick:
             ActorValueIdentity.index(named: "Lockpicking")
+        case .sneakAttack:
+            ActorValueIdentity.index(named: "Sneak")
         case let .spellEffect(skill), let .craft(skill):
             ActorValueIdentity.isSkill(index: skill) ? skill : nil
         }

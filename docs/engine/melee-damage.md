@@ -105,6 +105,12 @@ detection state toward an NPC. A target that is already fighting the player is n
 The perks that change these factors, such as Backstab, test the weapon in a condition tab that
 the perk evaluator does not bind yet, so they are not applied.
 
+A landed sneak attack gives Sneak experience: `fSneakAttackSkillUsageMelee` (30) for a melee hit.
+UESP "Skyrim:Sneak" says "Melee sneak attacks give 12x as much as ranged sneak attacks", and no
+setting holds the ranged amount, so an arrow gives 30 / 12 = 2.5. The HUD shows
+`sSuccessfulSneakAttackMain`, the multiplier with one decimal, and `sSuccessfulSneakAttackEnd`:
+"Sneak attack for 3.0X damage!".
+
 Armour. UESP "Skyrim:Armor":
 
 ```text

@@ -28,8 +28,10 @@ final class CombatWorldAdapter {
         let settings = data.combatSettings
         let combat = game.combat
         combat.difficultySettings = data.difficultySettings
-        combat.weaponDamage = (provider as? WorldDataStores)
-            .map { WeaponDamageSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        combat.weaponDamage = (provider as? WorldDataStores).map {
+            WeaponDamageSettings
+                .resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         combat.stamina = (provider as? WorldDataStores)
             .map { StaminaSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         combat.powerAttacks = (provider as? WorldDataStores)
