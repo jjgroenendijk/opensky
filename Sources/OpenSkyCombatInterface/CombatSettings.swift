@@ -37,6 +37,9 @@ nonisolated public struct CombatSettings: Equatable, Sendable {
     /// `fBlockPowerAttackMult` — what a blocked power attack multiplies the
     /// result by. 0.660, which is the one value both sources agree on.
     public let blockPowerAttackMult: MovementSetting
+    /// `fBlockAmountWeaponMult` — multiplies the weapon branch only. 1.000; its use
+    /// is read from its name, as no source documents it.
+    public let blockAmountWeaponMult: MovementSetting
 
     /// Values for synthetic scenes and tests: the numbers the install carries,
     /// stated explicitly so a test never depends on an install being present.
@@ -48,7 +51,8 @@ nonisolated public struct CombatSettings: Equatable, Sendable {
         shieldScalingFactor: MovementSetting(value: 0.2, source: "OpenSky synthetic"),
         blockSkillMult: MovementSetting(value: 2, source: "OpenSky synthetic"),
         blockMax: MovementSetting(value: 0.7, source: "OpenSky synthetic"),
-        blockPowerAttackMult: MovementSetting(value: 0.66, source: "OpenSky synthetic")
+        blockPowerAttackMult: MovementSetting(value: 0.66, source: "OpenSky synthetic"),
+        blockAmountWeaponMult: MovementSetting(value: 1, source: "OpenSky synthetic")
     )
 
     /// Reads every setting out of `store`, falling back to the value observed
@@ -62,7 +66,8 @@ nonisolated public struct CombatSettings: Equatable, Sendable {
             shieldScalingFactor: float("fShieldScalingFactor", store: store, fallback: 0.2),
             blockSkillMult: float("fBlockSkillMult", store: store, fallback: 2),
             blockMax: float("fBlockMax", store: store, fallback: 0.7),
-            blockPowerAttackMult: float("fBlockPowerAttackMult", store: store, fallback: 0.66)
+            blockPowerAttackMult: float("fBlockPowerAttackMult", store: store, fallback: 0.66),
+            blockAmountWeaponMult: float("fBlockAmountWeaponMult", store: store, fallback: 1)
         )
     }
 
@@ -77,7 +82,8 @@ nonisolated public struct CombatSettings: Equatable, Sendable {
             ("fShieldScalingFactor", shieldScalingFactor),
             ("fBlockSkillMult", blockSkillMult),
             ("fBlockMax", blockMax),
-            ("fBlockPowerAttackMult", blockPowerAttackMult)
+            ("fBlockPowerAttackMult", blockPowerAttackMult),
+            ("fBlockAmountWeaponMult", blockAmountWeaponMult)
         ]
     }
 

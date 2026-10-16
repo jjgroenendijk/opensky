@@ -61,6 +61,12 @@ extension CombatCoordinator: CombatLoopWorld {
         meleeBlockMultiplier(of: key)
     }
 
+    public func combatStrike(
+        from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
+    ) -> WeaponStrike {
+        strike(from: attacker, handType: handType, on: target)
+    }
+
     public func combatAwareness(
         of observer: ReferenceKey, toward target: ReferenceKey
     ) -> CombatAwareness {

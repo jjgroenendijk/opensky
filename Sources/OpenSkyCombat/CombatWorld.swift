@@ -60,6 +60,8 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile?
     /// The quality level of the player's best copy of `item`. Zero when plain.
     func temperLevel(of item: FormID) -> Int32
+    /// What `key` wears, each item with its tempering level. Empty when unknown.
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)]
     func hasReadiedSpell(in hand: SpellHand) -> Bool
     /// The items the player carries, in the inventory's stable stack order.
     func playerCarriedItems() -> [FormID]
@@ -112,5 +114,10 @@ extension CombatWorld {
     /// A session with no magic forces no behaviour.
     public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
         .none
+    }
+
+    /// A session with no equipment wears nothing, so no armour stops a blow.
+    public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        []
     }
 }

@@ -100,6 +100,9 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// and no blocking perk.
     func meleeBlockMultiplier(of target: ReferenceKey) -> Float
 
+    /// The skill, sneak-attack, and armour terms of the player's swing on `target`.
+    func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike
+
     /// Takes `amount` off `target`'s health.
     ///
     /// - Returns: true when the damage was actually applied, so a hit on a
@@ -129,6 +132,11 @@ nonisolated extension MeleeCombatWorld {
     /// formula, which is the value the term had before either existed.
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
         1
+    }
+
+    /// A session with no skills and no armour scales nothing.
+    public func meleeStrike(handType _: CombatHandType, on _: ReferenceKey) -> WeaponStrike {
+        .plain
     }
 }
 

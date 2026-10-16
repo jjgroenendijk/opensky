@@ -278,7 +278,8 @@ public final class MeleeCombatRuntime {
             block: world.meleeBlock(of: hit.target),
             settings: settings,
             bonusMultiplier: world.meleeBlockMultiplier(of: hit.target),
-            attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType)
+            attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType),
+            strike: world.meleeStrike(handType: weapon.handType, on: hit.target)
         )
         let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
         noteSkillUse(hit, damage: damage, landed: landed, world: world)

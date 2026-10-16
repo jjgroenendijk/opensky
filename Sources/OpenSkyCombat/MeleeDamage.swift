@@ -29,17 +29,21 @@ nonisolated public struct MeleeDamageResult: Equatable, Sendable {
     /// readout can show why the number is not the WEAP one. 1 for a character
     /// with no fortify effect.
     public let attackMultiplier: Float
+    /// Skill, sneak-attack, and armour terms.
+    public let strike: WeaponStrike
 
     public init(
         base: Float,
         blockedFraction: Float,
         applied: Float,
-        attackMultiplier: Float = 1
+        attackMultiplier: Float = 1,
+        strike: WeaponStrike = .plain
     ) {
         self.base = base
         self.blockedFraction = blockedFraction
         self.applied = applied
         self.attackMultiplier = attackMultiplier
+        self.strike = strike
     }
 
     public var wasBlocked: Bool {
@@ -67,7 +71,8 @@ nonisolated public enum MeleeDamage: Sendable {
         blockSkill: Float = defaultBlockSkill,
         isPowerAttack: Bool = false,
         bonusMultiplier: Float = 1,
-        attackMultiplier: Float = 1
+        attackMultiplier: Float = 1,
+        strike: WeaponStrike = .plain
     ) -> MeleeDamageResult {
         let base = weapon.damage.isFinite ? max(0, weapon.damage) : 0
         let attack = attackMultiplier.isFinite ? max(0, attackMultiplier) : 1
@@ -75,8 +80,9 @@ nonisolated public enum MeleeDamage: Sendable {
             return MeleeDamageResult(
                 base: base,
                 blockedFraction: 0,
-                applied: base * attack,
-                attackMultiplier: attack
+                applied: base * attack * strike.factor,
+                attackMultiplier: attack,
+                strike: strike
             )
         }
         let fraction = blockedFraction(
@@ -90,8 +96,9 @@ nonisolated public enum MeleeDamage: Sendable {
         return MeleeDamageResult(
             base: base,
             blockedFraction: fraction,
-            applied: base * attack * (1 - fraction),
-            attackMultiplier: attack
+            applied: base * attack * strike.factor * (1 - fraction),
+            attackMultiplier: attack,
+            strike: strike
         )
     }
 
@@ -108,8 +115,9 @@ nonisolated public enum MeleeDamage: Sendable {
         let skillTerm = 1 + skill * settings.blockSkillMult.value / 100
         let branch: Float = switch block {
         case .weapon:
-            settings.blockWeaponBase.value
-                + settings.blockWeaponScaling.value * max(0, attackerDamage) * skillTerm / 100
+            (settings.blockWeaponBase.value
+                + settings.blockWeaponScaling.value * max(0, attackerDamage) * skillTerm / 100)
+                * settings.blockAmountWeaponMult.value
         case let .shield(rating):
             settings.shieldBaseFactor.value
                 + settings.shieldScalingFactor.value

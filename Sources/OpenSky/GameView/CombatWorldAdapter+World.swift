@@ -156,6 +156,17 @@ extension CombatWorldAdapter: CombatWorld {
         return runtime.inventory.temperLevel(of: item, in: runtime.player)
     }
 
+    func equippedItems(of key: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {
+        guard
+            let runtime = game.inventory.runtime,
+            let equipment = game.inventory.equipment,
+            let holder = key == .player ? runtime.player : game.streamer?.inventoryHolder(of: key)
+        else { return [] }
+        return equipment.equipped(on: holder).map {
+            ($0, runtime.inventory.temperLevel(of: $0, in: holder))
+        }
+    }
+
     func hasReadiedSpell(in hand: SpellHand) -> Bool {
         game.magic.hasReadiedSpell(in: hand)
     }

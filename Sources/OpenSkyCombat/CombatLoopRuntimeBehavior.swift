@@ -183,7 +183,8 @@ extension CombatLoopRuntime {
             weapon: weapon,
             block: world.combatBlock(of: player),
             settings: settings,
-            bonusMultiplier: world.combatBlockMultiplier(of: player)
+            bonusMultiplier: world.combatBlockMultiplier(of: player),
+            strike: world.combatStrike(from: actor.key, handType: weapon.handType, on: player)
         )
         let landed = world.applyCombatDamage(damage.applied, to: player)
         noteSkillUse(from: actor, weapon: weapon, damage: damage, landed: landed, world: world)

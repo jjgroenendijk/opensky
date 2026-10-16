@@ -28,6 +28,8 @@ final class CombatWorldAdapter {
         let settings = data.combatSettings
         let combat = game.combat
         combat.difficultySettings = data.difficultySettings
+        combat.weaponDamage = (provider as? WorldDataStores)
+            .map { WeaponDamageSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         combat.attach(world: self)
         combat.wireMelee(
             settings: settings,

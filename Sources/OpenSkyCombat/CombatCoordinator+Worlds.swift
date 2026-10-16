@@ -78,6 +78,10 @@ extension CombatCoordinator: MeleeCombatWorld {
             * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 
+    public func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike {
+        strike(from: meleeAttacker.key, handType: handType, on: target)
+    }
+
     /// The player's own swing: the melee runtime only ever swings for the player.
     @discardableResult
     public func applyMeleeDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
@@ -135,7 +139,9 @@ extension CombatCoordinator: ProjectileWorld {
 
     @discardableResult
     public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
-        applyHealthDamage(amount, to: target, attacker: projectileShooter.key)
+        let shooter = projectileShooter.key
+        let strike = strike(from: shooter, handType: .bow, on: target)
+        return applyHealthDamage(amount * strike.factor, to: target, attacker: shooter)
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
