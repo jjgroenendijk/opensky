@@ -233,9 +233,9 @@ extension MagicCoordinator: CastingControlProviding {
         let hands = book.hands(of: spell.key)
         return KnownSpellReadout(
             name: spell.displayName,
-            typeName: spell.spellType.description,
-            castingName: (spell.data?.castingType).map(String.init(describing:)) ?? "unknown",
-            deliveryName: (spell.data?.delivery).map(String.init(describing:)) ?? "unknown",
+            typeName: magicTexts.name(of: spell.spellType),
+            castingName: (spell.data?.castingType).map(magicTexts.name(of:)) ?? "unknown",
+            deliveryName: (spell.data?.delivery).map(magicTexts.name(of:)) ?? "unknown",
             cost: spell.cost.cost,
             chargeTime: spell.data?.chargeTime ?? 0,
             readiedHands: SpellHand.allCases

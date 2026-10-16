@@ -82,6 +82,7 @@ extension GapsGatherer {
         _ = CraftingSkillUseSettings.resolve(store: store)
         _ = CalendarTexts.resolve(store: store)
         _ = TopicSubtypeTexts.resolve(store: store)
+        _ = MagicTexts.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)
