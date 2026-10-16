@@ -79,6 +79,7 @@ nonisolated public enum MeleeCombatReadout: Sendable {
         }
         line += hit.sound.map { ", \($0)" } ?? ", silent"
         line += hit.enchantment.map { ", \($0)" } ?? ""
+        line += hit.strike.map { ", \($0)" } ?? ""
         return line
     }
 

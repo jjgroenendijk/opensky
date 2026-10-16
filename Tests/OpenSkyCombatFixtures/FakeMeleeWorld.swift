@@ -18,6 +18,11 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
     /// The fortify multiplier the runtime asks for. 1 is what the
     /// formula reduces to for a character with no fortify effect.
     public var attackMultiplier: Float = 1
+    /// The player's stamina; nil pays for everything without counting.
+    public var stamina: Float?
+    public private(set) var staminaPaid: [Float] = []
+    public var ownsPowerBash = false
+    public var shieldRating: Float?
 
     /// Skill uses the runtime reported, recorded rather than
     /// converted.
@@ -92,6 +97,23 @@ public final class FakeMeleeWorld: MeleeCombatWorld {
         }
         raisedOnTarget[target, default: []].append(name)
         return true
+    }
+
+    public func payMeleeStamina(_ cost: Float) -> Bool {
+        if let current = stamina {
+            guard current >= 1 else { return false }
+            stamina = current - cost
+        }
+        staminaPaid.append(cost)
+        return true
+    }
+
+    public func canPowerBash() -> Bool {
+        ownsPowerBash
+    }
+
+    public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
+        (50, shieldRating)
     }
 
     public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {

@@ -18,11 +18,20 @@ nonisolated public enum CombatGraphNames: Sendable {
     public static let weapEquip = "WeapEquip"
     public static let magicEquip = "Magic_Equip"
     public static let unequip = "Unequip"
-    /// Swing start and the release that ends a held power attack. Directional power
-    /// attacks (`attackPowerStartForward` and seven more) are in the census but not bound.
+    /// Swing start and the release that ends a held power attack.
     public static let attackStart = "attackStart"
     public static let attackRelease = "attackRelease"
     public static let attackStop = "attackStop"
+    /// A held press past the power-attack delay, by the way the player moves.
+    public static let attackPowerStartInPlace = "attackPowerStartInPlace"
+    public static let attackPowerStartForward = "attackPowerStartForward"
+    public static let attackPowerStartBackward = "attackPowerStartBackward"
+    public static let attackPowerStartLeft = "attackPowerStartLeft"
+    public static let attackPowerStartRight = "attackPowerStartRight"
+    /// An attack press with the guard up, and the held one.
+    public static let bashStart = "bashStart"
+    public static let bashPowerStart = "bashPowerStart"
+    public static let bashStop = "bashStop"
     /// Raising and dropping the guard.
     public static let blockStart = "blockStart"
     public static let blockStop = "blockStop"
@@ -41,6 +50,9 @@ nonisolated public enum CombatGraphNames: Sendable {
         weaponDraw, weaponSheathe,
         weapEquip, magicEquip, unequip,
         attackStart, attackRelease, attackStop,
+        attackPowerStartInPlace, attackPowerStartForward, attackPowerStartBackward,
+        attackPowerStartLeft, attackPowerStartRight,
+        bashStart, bashPowerStart,
         blockStart, blockStop,
         staggerStart, staggerStop,
         recoilStart, recoilStop
@@ -68,12 +80,19 @@ nonisolated public enum CombatGraphNames: Sendable {
     /// impact off it.
     public static let blockHitStart = "blockHitStart"
 
+    /// Every event that starts a swing or a bash.
+    public static let strikeStarts: Set<String> = [
+        attackStart, bashStart, bashPowerStart,
+        attackPowerStartInPlace, attackPowerStartForward, attackPowerStartBackward,
+        attackPowerStartLeft, attackPowerStartRight
+    ]
+
     /// Every event the melee state machine acts on when the graph fires it.
     public static let observedEvents = [
         beginWeaponDraw, beginWeaponSheathe,
         weapEquipOut, unequipOut,
         weaponSwing, preHitFrame, hitFrame,
-        attackStart, attackStop, blockStart, blockStop,
+        attackStart, attackStop, bashStart, bashStop, blockStart, blockStop,
         staggerStart, staggerStop, blockHitStart
     ]
 

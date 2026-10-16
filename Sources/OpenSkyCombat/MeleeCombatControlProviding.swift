@@ -25,6 +25,8 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
     public let staggered: Bool
     /// What the weapon's enchantment did, or nil when it carries none.
     public let enchantment: String?
+    /// Power attack, bash, sneak attack, and armour terms, or nil for a plain hit.
+    public let strike: String?
 
     public init(
         target: String,
@@ -34,7 +36,8 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
         appliedDamage: Float,
         sound: String?,
         staggered: Bool,
-        enchantment: String? = nil
+        enchantment: String? = nil,
+        strike: String? = nil
     ) {
         self.target = target
         self.distance = distance
@@ -44,6 +47,7 @@ nonisolated public struct MeleeHitReadout: Equatable, Sendable {
         self.sound = sound
         self.staggered = staggered
         self.enchantment = enchantment
+        self.strike = strike
     }
 }
 
@@ -148,6 +152,10 @@ public protocol MeleeCombatControlProviding: AnyObject {
     /// - Returns: a human-readable outcome, which the panel shows verbatim.
     @discardableResult
     func requestMeleeAttack() -> String
+
+    /// Requests one held press: a power attack, or a power bash with the guard up.
+    @discardableResult
+    func requestMeleePowerAttack() -> String
 
     /// Empties the last-hit trace and both counts, without disturbing anything
     /// the player can feel.

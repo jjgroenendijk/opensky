@@ -29,12 +29,31 @@ nonisolated public struct MeleeIntent: Equatable, Sendable {
     public var block = false
     /// One draw/sheath press, consumed the same way as an attack.
     public var toggleWeaponDrawn = false
+    /// Attack button held, a level: a long hold turns the swing into a power attack.
+    public var attackHeld = false
+    /// Seconds since the previous frame, for the hold clock.
+    public var deltaTime: Float = 0
+    /// Movement axes, which pick the power attack's direction.
+    public var moveForward: Float = 0
+    public var moveRight: Float = 0
 
     public static let still = MeleeIntent()
 
-    public init(attack: Bool = false, block: Bool = false, toggleWeaponDrawn: Bool = false) {
+    public init(
+        attack: Bool = false,
+        block: Bool = false,
+        toggleWeaponDrawn: Bool = false,
+        attackHeld: Bool = false,
+        deltaTime: Float = 0,
+        moveForward: Float = 0,
+        moveRight: Float = 0
+    ) {
         self.attack = attack
         self.block = block
         self.toggleWeaponDrawn = toggleWeaponDrawn
+        self.attackHeld = attackHeld
+        self.deltaTime = deltaTime
+        self.moveForward = moveForward
+        self.moveRight = moveRight
     }
 }

@@ -105,7 +105,7 @@ custom_rules:
   game_view_controller_extension:
     name: "GameViewController extension"
     regex: '\bextension\s+GameViewController\b'
-    excluded: 'Sources/OpenSky/GameView/GameViewController(Panels)?\.swift$'
+    excluded: 'Sources/OpenSky/GameView/GameViewController([A-Za-z]*Panels)?\.swift$'
     message: "Put game logic in a coordinator in its feature module, not a GameViewController extension"
     severity: error
   perk_entry_point_literal:
@@ -130,7 +130,7 @@ custom_rules:
   game_setting_reader:
     name: "Game setting reader"
     regex: '(\.setting\(editorID:|func resolve\(store: GameSettingStore\))'
-    excluded: '(Tests/.*|Sources/OpenSky(CombatInterface/(Archery|Combat|Difficulty|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CharacterLeveling|MenuRecordData|RegenerationSettings|SkillAdvancement|SocialSettings|SpeechCheckSettings|StaminaSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
+    excluded: '(Tests/.*|Sources/OpenSky(CombatInterface/(Archery|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CharacterLeveling|MenuRecordData|RegenerationSettings|SkillAdvancement|SocialSettings|SpeechCheckSettings|StaminaSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
 

@@ -32,6 +32,8 @@ final class CombatWorldAdapter {
             .map { WeaponDamageSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         combat.stamina = (provider as? WorldDataStores)
             .map { StaminaSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        combat.powerAttacks = (provider as? WorldDataStores)
+            .map { PowerAttackSettings.resolve(store: $0.gameSettings) } ?? .vanilla
         combat.attach(world: self)
         combat.wireMelee(
             settings: settings,

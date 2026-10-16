@@ -391,7 +391,11 @@ nonisolated extension LocomotionBridge {
         meleeIntent = MeleeIntent(
             attack: input.attack,
             block: input.block,
-            toggleWeaponDrawn: input.toggleWeaponDrawn
+            toggleWeaponDrawn: input.toggleWeaponDrawn,
+            attackHeld: input.attackHeld,
+            deltaTime: input.dt,
+            moveForward: input.moveForward,
+            moveRight: input.moveRight
         )
         archeryIntent = ArcheryIntent(drawing: input.attackHeld, deltaTime: input.dt)
         if input.jump {

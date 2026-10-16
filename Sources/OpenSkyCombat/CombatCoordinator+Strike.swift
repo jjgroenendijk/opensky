@@ -40,6 +40,37 @@ extension CombatCoordinator {
         world?.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
     }
 
+    /// UESP "Skyrim:Combat": a power attack needs at least one point of stamina.
+    public func payMeleeStamina(_ cost: Float) -> Bool {
+        guard let world else { return true }
+        guard
+            let index = ActorValueIdentity.index(named: "Stamina"),
+            let stamina = world.actorValues(of: .player)?(index)
+        else { return true }
+        guard stamina >= 1 else { return false }
+        world.damageStamina(by: cost, of: .player)
+        return true
+    }
+
+    public func canPowerBash() -> Bool {
+        world?.ownsPerk(editorID: "PowerBash", on: .player) ?? false
+    }
+
+    /// UESP "Skyrim:Block": a shield bash uses the shield's base rating, without tempering.
+    public func meleeBashSource() -> (blockSkill: Float, shieldRating: Float?) {
+        guard let world else { return (MeleeDamage.defaultBlockSkill, nil) }
+        let skill = ActorValueIdentity.index(named: "Block")
+            .flatMap { world.actorValues(of: .player)?($0) } ?? MeleeDamage.defaultBlockSkill
+        let shield = world.equippedItems(of: .player).lazy.compactMap { worn -> Float? in
+            guard
+                let armor = self.items?.armor[worn.item.rawValue],
+                armor.bodyTemplate?.slots.contains(.shield) ?? false
+            else { return nil }
+            return Float(armor.armorRating & 0xFFFF) / 100
+        }.first
+        return (skill, shield)
+    }
+
     /// Only the player sneak attacks: the player has no detection state toward an
     /// NPC. A target already fighting the player knows where the player is.
     func isSneakAttack(by attacker: ReferenceKey, on target: ReferenceKey) -> Bool {

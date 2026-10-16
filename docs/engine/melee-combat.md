@@ -16,7 +16,8 @@ This page covers one swing, from the key press to the health that comes off. The
 
 ## The graph decides
 
-The engine raises `attackStart`. It does not decide that an attack began. The behavior graph
+The engine raises `attackStart`, a power attack, or a bash event
+([melee damage](/engine/melee-damage.md)). It does not decide that an attack began. The behavior graph
 decides whether an attack state was entered, how long the windup lasts, and which frame connects.
 It says so by firing events back. So every melee state is read from the graph, not timed beside
 it.

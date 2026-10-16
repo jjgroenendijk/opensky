@@ -32,6 +32,8 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
     /// The weapon's resolved enchantment, or nil. Fixed at equip time, so a swing applies
     /// what the weapon had when it started.
     public let enchantment: ItemEnchantmentProfile?
+    /// WEAP DATA carry weight, which sets a power attack's stamina cost.
+    public let weight: Float
 
     public init(
         damage: Float,
@@ -41,7 +43,8 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
         weapon: FormID? = nil,
         impactDataSet: FormID? = nil,
         handType: CombatHandType = .handToHand,
-        enchantment: ItemEnchantmentProfile? = nil
+        enchantment: ItemEnchantmentProfile? = nil,
+        weight: Float = 0
     ) {
         self.damage = damage
         self.reach = reach
@@ -51,6 +54,7 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
         self.impactDataSet = impactDataSet
         self.handType = handType
         self.enchantment = enchantment
+        self.weight = weight
     }
 
     /// The profile of a bare-handed swing on a session with no unarmed WEAP
@@ -64,15 +68,21 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
 
     /// This profile with the tempering bonus of a copy at `level` added.
     public func tempered(level: Int32) -> MeleeWeaponProfile {
+        dealing(damage: damage + Tempering.bonus(level: level, isBodyArmor: false))
+    }
+
+    /// This profile dealing `damage` instead of its own, for tempering and a bash.
+    public func dealing(damage: Float) -> MeleeWeaponProfile {
         MeleeWeaponProfile(
-            damage: damage + Tempering.bonus(level: level, isBodyArmor: false),
+            damage: damage,
             reach: reach,
             speed: speed,
             stagger: stagger,
             weapon: weapon,
             impactDataSet: impactDataSet,
             handType: handType,
-            enchantment: enchantment
+            enchantment: enchantment,
+            weight: weight
         )
     }
 
@@ -86,7 +96,8 @@ nonisolated public struct MeleeWeaponProfile: Equatable, Sendable {
             weapon: record.formID,
             impactDataSet: record.impactDataSet,
             handType: CombatHandType(weapon: record.animationType),
-            enchantment: enchantment
+            enchantment: enchantment,
+            weight: record.itemValue.weight.isFinite ? max(0, record.itemValue.weight) : 0
         )
     }
 }

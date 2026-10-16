@@ -14,6 +14,8 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public var sneakMultiplier: Float
     /// The fraction of damage the target's armour stops, after the cap.
     public var armorFraction: Float
+    /// `1 + fPowerAttackDefaultBonus` for a power attack.
+    public var powerMultiplier: Float = 1
 
     public static let plain = Self()
 
@@ -33,7 +35,7 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
 
     /// Every term as one factor on the damage.
     public var factor: Float {
-        let terms = [skillMultiplier, sneakMultiplier, 1 - armorFraction]
+        let terms = [skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier]
         return terms.reduce(1) { $0 * ($1.isFinite ? max(0, $1) : 1) }
     }
 }

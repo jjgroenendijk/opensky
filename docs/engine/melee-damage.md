@@ -118,3 +118,40 @@ armour      = rating * fArmorScalingFactor / 100 + fArmorBaseFactor * pieces
 The armour skill is Light Armor or Heavy Armor, by the piece's `BOD2` type. A clothing piece
 uses `fClothingArmorScale` as its factor and does not count as a piece. `armour` is capped at
 `fMaxArmorRating` percent (80). Arrows go through the same skill, sneak, and armour factors.
+
+## Power attacks and bashes
+
+A press of the attack button waits. Released before 0.3 seconds, it is a plain swing
+(`attackStart`). Held for 0.3 seconds, it is a power attack. The 0.3 seconds is the default of the
+INI setting `fInitialPowerAttackDelay`; OpenSky does not read the INI file. The power attack's
+event follows the movement keys: `attackPowerStartForward`, `attackPowerStartBackward`,
+`attackPowerStartLeft`, `attackPowerStartRight`, or `attackPowerStartInPlace`. All five are
+declared by `0_master.hkx` on the install.
+
+A power attack costs stamina when it starts (UESP "Skyrim:Combat"):
+
+```text
+cost   = (fStaminaAttackWeaponBase + weaponWeight * fStaminaAttackWeaponMult)
+         * fPowerAttackStaminaPenalty
+damage = normal damage * (1 + fPowerAttackDefaultBonus)
+```
+
+With the install's 20, 1, and 2, a 10-weight sword costs 60 stamina. Below one point of stamina,
+a held press plays the plain swing instead. After a power attack, the next one waits
+`fPowerAttackCoolDownTime` seconds (0 on the install). A blocked power attack also uses
+`fBlockPowerAttackMult`.
+
+With the guard up, a press is a bash (`bashStart`) and costs `fStaminaBashBase` (35). Held, it is
+a power bash (`bashPowerStart`, `fStaminaPowerBashBase`, 55), but only with the Power Bash perk.
+A bash reaches `fCombatBashReach` whatever the weapon. Its damage is from UESP "Skyrim:Block":
+
+```text
+bash      = source * 0.5 * (min + blockSkill / 100 * (max - min))
+power bash = 3 * bash
+```
+
+`source` is the shield's base armour rating, or the weapon's base damage without a shield. The
+pairs are `fShieldBashPCMin`/`fShieldBashPCMax` and `fWeaponBashPCMin`/`fWeaponBashPCMax` for the
+player, and the same names without `PC` for an NPC. `Skyrim.esm` carries only `fShieldBashMin`,
+`fShieldBashMax`, `fShieldBashPCMax`, and `fWeaponBashMax`. The others keep the values UESP lists.
+A bash is not scaled by fortify effects, which UESP states.

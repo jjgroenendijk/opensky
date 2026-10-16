@@ -119,6 +119,7 @@ nonisolated public enum CombatCore {
         var masked = intent
         if readied.right {
             masked.attack = false
+            masked.attackHeld = false
         }
         if readied.left {
             masked.block = false

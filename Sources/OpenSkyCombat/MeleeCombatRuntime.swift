@@ -51,6 +51,12 @@ public final class MeleeCombatRuntime {
     /// with the frame's intent, so releasing the button does not drop a guard
     /// a probe or a headless driver put up.
     public var panelBlocking = false
+    /// Power attack and bash damage, stamina, and reach.
+    public var powerAttacks = PowerAttackSettings.vanilla
+    /// What the swing in progress is, set when its start event is raised.
+    public internal(set) var strikeKind = MeleeStrikeKind.normal
+    var hold = MeleeHold()
+    var pendingPower = false
 
     private weak var world: (any MeleeCombatWorld)?
     /// Targets this swing has already landed on, cleared when the swing id
@@ -61,7 +67,7 @@ public final class MeleeCombatRuntime {
     /// Intent edges, so an event is raised on the change rather than every
     /// frame.
     private var wasBlocking = false
-    private var pendingAttack = false
+    var pendingAttack = false
     private var pendingToggle = false
 
     public init(settings: CombatSettings, world: (any MeleeCombatWorld)? = nil) {
@@ -95,6 +101,9 @@ public final class MeleeCombatRuntime {
         // let the graph read the previous hand's number.
         writeVariables()
         raiseIntentEvents(blocking: intent.block || panelBlocking)
+        if let world {
+            resolveHold(intent, world: world)
+        }
     }
 
     /// Latches one swing. What the panel's Attack button calls; the mouse
@@ -156,6 +165,9 @@ public final class MeleeCombatRuntime {
         wasBlocking = false
         pendingAttack = false
         pendingToggle = false
+        pendingPower = false
+        hold.reset()
+        strikeKind = .normal
     }
 
     // MARK: - Readout
@@ -192,8 +204,8 @@ public final class MeleeCombatRuntime {
             // Dropped rather than queued when the weapon is away: a press that
             // sat in a latch would fire a swing the moment the draw finished,
             // seconds after the player asked for it.
-            if state.drawState.canAttack, !state.attackPhase.isAttacking {
-                world.raiseCombatEvent(CombatGraphNames.attackStart, on: nil)
+            if state.drawState.canAttack, !state.attackPhase.isAttacking, hold.pending == nil {
+                hold.pressed(asBash: blocking)
             }
         }
     }
@@ -256,9 +268,7 @@ public final class MeleeCombatRuntime {
             feet: attacker.feet,
             capsule: attacker.capsule,
             facing: attacker.facing,
-            reach: MeleeSwing.reach(
-                weapon: weapon, settings: settings, actorScale: attacker.scale
-            )
+            reach: strikeReach(actorScale: attacker.scale)
         )
         let hits = MeleeHitDetector.hits(
             swing: volume,
@@ -273,14 +283,7 @@ public final class MeleeCombatRuntime {
     private func apply(_ hit: MeleeHit, world: any MeleeCombatWorld) -> MeleeHitRecord {
         hitThisSwing.insert(hit.target)
         hitCount += 1
-        let damage = MeleeDamage.resolve(
-            weapon: weapon,
-            block: world.meleeBlock(of: hit.target),
-            settings: settings,
-            bonusMultiplier: world.meleeBlockMultiplier(of: hit.target),
-            attackMultiplier: world.meleeAttackMultiplier(handType: weapon.handType),
-            strike: world.meleeStrike(handType: weapon.handType, on: hit.target)
-        )
+        let damage = resolveDamage(on: hit.target, world: world)
         let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
         if damage.wasBlocked {
             world.applyBlockStamina(damage, to: hit.target)
@@ -310,7 +313,8 @@ public final class MeleeCombatRuntime {
             damage: damage,
             sound: impact?.sound,
             staggered: staggered,
-            enchantment: enchantment
+            enchantment: enchantment,
+            kind: strikeKind
         )
         trace.append(record)
         if trace.count > Self.traceLimit {

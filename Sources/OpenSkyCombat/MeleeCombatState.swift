@@ -98,7 +98,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
     private mutating func handleAttack(_ event: String) -> MeleeStateChange? {
         var openedHitWindow = false
         switch event {
-        case CombatGraphNames.attackStart:
+        case let name where CombatGraphNames.strikeStarts.contains(name):
             guard drawState.canAttack, !isStaggering else { return nil }
             attackPhase = .windup
             swingID += 1
@@ -110,7 +110,7 @@ nonisolated public struct MeleeCombatState: Equatable, Sendable {
             attackPhase = .contact
             contactCount += 1
             openedHitWindow = true
-        case CombatGraphNames.attackStop:
+        case CombatGraphNames.attackStop, CombatGraphNames.bashStop:
             guard attackPhase != .idle else { return nil }
             attackPhase = .idle
         default:

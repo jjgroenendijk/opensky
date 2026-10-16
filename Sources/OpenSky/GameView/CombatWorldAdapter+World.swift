@@ -139,6 +139,14 @@ extension CombatWorldAdapter: CombatWorld {
         return true
     }
 
+    func ownsPerk(editorID: String, on key: ReferenceKey) -> Bool {
+        guard
+            let perk = game.perks.runtime?.perks.perk(editorID: editorID),
+            let owned = game.perks.ownership(of: key)
+        else { return false }
+        return owned.contains(ReferenceKey(resolved: perk.id))
+    }
+
     func damageStamina(by amount: Float, of key: ReferenceKey) {
         guard
             let runtime = game.actorValues.runtime,

@@ -52,6 +52,18 @@ extension CombatCoordinator: MeleeCombatControlProviding {
         return meleeActionText
     }
 
+    @discardableResult
+    public func requestMeleePowerAttack() -> String {
+        guard let melee else { return "Melee unavailable: no game data loaded." }
+        guard melee.state.drawState.canAttack else {
+            meleeActionText = "Cannot attack: weapon is \(melee.state.drawState.rawValue)."
+            return meleeActionText
+        }
+        melee.requestPowerAttack()
+        meleeActionText = "Requested one power attack."
+        return meleeActionText
+    }
+
     public func clearMeleeTrace() {
         melee?.clearTrace()
         meleeActionText = "Cleared the hit trace."
@@ -75,8 +87,30 @@ extension CombatCoordinator: MeleeCombatControlProviding {
             appliedDamage: record.damage.applied,
             sound: record.sound?.description,
             staggered: record.staggered,
-            enchantment: record.enchantment?.describedLine
+            enchantment: record.enchantment?.describedLine,
+            strike: strikeText(record)
         )
+    }
+
+    private static func strikeText(_ record: MeleeHitRecord) -> String? {
+        let strike = record.damage.strike
+        var parts: [String] = []
+        switch record.kind {
+        case .normal: break
+        case .power: parts.append("power attack")
+        case .bash: parts.append("bash")
+        case .powerBash: parts.append("power bash")
+        }
+        if strike.isSneakAttack {
+            parts.append(String(format: "sneak attack x%.1f", strike.sneakMultiplier))
+        }
+        if strike.skillMultiplier != 1 {
+            parts.append(String(format: "skill x%.2f", strike.skillMultiplier))
+        }
+        if strike.armorFraction > 0 {
+            parts.append(String(format: "armour stopped %.0f%%", strike.armorFraction * 100))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }
 
