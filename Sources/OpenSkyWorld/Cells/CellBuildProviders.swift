@@ -101,6 +101,8 @@ nonisolated public protocol MagicDataProviding {
     var magicItemPluginName: String? { get }
     /// Load-order SPEL and SCRL index, which the spellbook keys its spells against.
     var spellStore: SpellStore? { get }
+    /// Load-order SHOU index; each word carries the spell it casts.
+    var shoutStore: ShoutStore? { get }
     /// Load-order EQUP index, which answers which hands a readied spell takes.
     /// The load-order view rather than `EquipmentCatalog`'s single-plugin table,
     /// because a spell's ETYP is relative to whichever plugin authored the

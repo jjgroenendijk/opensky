@@ -20,6 +20,8 @@ nonisolated public struct CellProviderIndexes {
     struct MagicIndexes: Sendable {
         let effects: MagicEffectStore
         let spells: SpellStore
+        /// SHOU and WOOP, joined to the spell of each word.
+        let shouts: ShoutStore
         let equipSlots: EquipSlotStore
         let enchantments: EnchantmentStore
         /// PERK and AVIF ride the same index: perk effects join against the SPEL
@@ -30,11 +32,14 @@ nonisolated public struct CellProviderIndexes {
         init(plugins: [(name: String, file: ESMFile)]) {
             let index = RecordIndex(
                 plugins: plugins,
-                recordTypes: ["MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK", "AVIF"]
+                recordTypes: [
+                    "MGEF", "SPEL", "SCRL", "EQUP", "ENCH", "PERK", "AVIF", "SHOU", "WOOP"
+                ]
             )
             let effects = MagicEffectStore(index: index)
             self.effects = effects
             spells = SpellStore(index: index, effects: effects)
+            shouts = ShoutStore(index: index, spells: spells)
             equipSlots = EquipSlotStore(index: index)
             enchantments = EnchantmentStore(index: index, effects: effects)
             perks = PerkStore(index: index, spells: spells)
@@ -177,6 +182,7 @@ nonisolated public struct CellProviderIndexes {
             detectionSettings: tuning.detection
         )
         stores.craftingCatalog = craftingCatalog
+        stores.shoutStore = magic.shouts
         stores.placedRecords = placedRecords
         stores.lockTrapData = records.scripted.lockTrap
         stores.storyData = records.scripted.story

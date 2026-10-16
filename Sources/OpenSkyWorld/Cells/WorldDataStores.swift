@@ -86,6 +86,8 @@ nonisolated public struct WorldDataStores: WorldDataProviding, WeatherProviding,
     /// Load-order SPEL and SCRL index; nil on the same synthetic
     /// scenes, and then the spellbook reports itself unavailable.
     public var spellStore: SpellStore?
+    /// Load-order SHOU index, which an AI Shout procedure casts from.
+    public var shoutStore: ShoutStore?
     /// Load-order EQUP index, which answers which hands a readied
     /// spell takes.
     public var equipSlotStore: EquipSlotStore?
