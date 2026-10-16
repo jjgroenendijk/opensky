@@ -5,6 +5,7 @@
 import Foundation
 import OpenSkyBehavior
 import OpenSkyPhysics
+import simd
 
 nonisolated extension LocomotionBridge {
     /// Writes one variable to every attached graph, recording whether each one
@@ -33,6 +34,24 @@ nonisolated extension LocomotionBridge {
         } else {
             updateStatus { $0.noteEventMissing(name) }
         }
+    }
+}
+
+nonisolated extension LocomotionBridge {
+    /// The player's identity, the step, and its placement. Placement turns Havok's
+    /// model forward (+Y) onto OpenSky's yaw, which counts from +X.
+    func writeCharacterVariables(state: LocomotionStepState) {
+        write(.bool(true), to: LocomotionGraphNames.isPlayer)
+        write(.int(1), to: LocomotionGraphNames.isPlayerInt)
+        write(.bool(false), to: LocomotionGraphNames.isNPC)
+        write(.real(state.dt), to: LocomotionGraphNames.timeDelta)
+        write(.real(state.verticalVelocity), to: LocomotionGraphNames.velocityZ)
+        let context = BehaviorCharacterContext(
+            worldPosition: state.feetPosition,
+            worldRotation: simd_quatf(angle: state.yaw - .pi / 2, axis: SIMD3(0, 0, 1))
+        )
+        graph?.characterContext = context
+        firstPersonGraph?.characterContext = context
     }
 }
 

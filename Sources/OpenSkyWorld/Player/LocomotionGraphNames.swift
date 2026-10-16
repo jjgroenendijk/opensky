@@ -38,11 +38,23 @@ nonisolated public enum LocomotionGraphNames: Sendable {
     public static let firstPersonReal = "fIsFirstPerson"
 
     /// Every variable the bridge writes, in write order.
+    /// Which kind of actor runs the graph, as bool and int, for the player graph.
+    public static let isPlayer = "IsPlayer"
+    public static let isPlayerInt = "iIsPlayer"
+    public static let isNPC = "IsNPC"
+    /// Seconds in this step. Real; the graph's expressions integrate with it.
+    public static let timeDelta = "TimeDelta"
+    /// Vertical speed, units per second, positive up. Real.
+    public static let velocityZ = "VelocityZ"
+
     public static let variables = [
         speed, speedSampled, direction, turnDelta,
         isSprinting, isSneaking, isInSneak, inJumpState,
-        speedWalk, speedRun
+        speedWalk, speedRun, isPlayer, isPlayerInt, isNPC, timeDelta, velocityZ
     ]
+
+    /// The perspective variables, which differ between the two graphs.
+    public static let perspectiveVariables = [isFirstPerson, firstPersonInt, firstPersonReal]
 
     // MARK: - Events
 

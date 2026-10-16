@@ -67,7 +67,8 @@ extension GapsGatherer {
         ).union(footstepTags())
         let boundVariables = Set(
             (CombatGraphNames.variables + ArcheryGraphNames.variables
-                + LocomotionGraphNames.variables).map { $0.lowercased() }
+                + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables)
+                .map { $0.lowercased() }
         )
         let note = "\(census.fileCount) .hkx files, \(unread) did not read, "
             + "\(census.failures.total) did not decode"
@@ -86,9 +87,47 @@ extension GapsGatherer {
             GapSection(
                 title: "Behavior graph variables", unit: "variables",
                 counts: census.graphVariables,
-                handled: { boundVariables.contains($0.lowercased()) }, usesUnit: "graphs",
-                notes: ["done means engine code reads or sets it; the graph sets many itself"]
+                handled: { name in
+                    boundVariables.contains(name.lowercased())
+                        || !BehaviorVariableRoles.isEngineFacing(
+                            name, uses: census.variableUses[name] ?? []
+                        )
+                },
+                usesUnit: "graphs",
+                notes: Self.variableNotes(census, boundVariables: boundVariables)
             )
+        ]
+    }
+
+    /// How the done variables split: driven by the engine, computed by the graph,
+    /// or authored constants the graph only reads.
+    private static func variableNotes(
+        _ census: HKXGapCensus, boundVariables: Set<String>
+    ) -> [String] {
+        var engine = 0
+        var graph = 0
+        var constant = 0
+        for name in census.graphVariables.uses.keys {
+            let uses = census.variableUses[name] ?? []
+            if boundVariables.contains(name.lowercased()) {
+                engine += 1
+            } else if BehaviorVariableRoles.isEngineFacing(name, uses: uses) {
+                continue
+            } else if
+                BehaviorVariableRoles.isGraphWritten(
+                    uses: uses,
+                    assignedUse: HKXGapCensus.assignedUse
+                )
+            {
+                graph += 1
+            } else {
+                constant += 1
+            }
+        }
+        return [
+            "done means engine code reads or sets it, or only the graph uses it",
+            "\(engine) set by the engine, \(graph) computed by graph nodes, "
+                + "\(constant) authored constants"
         ]
     }
 

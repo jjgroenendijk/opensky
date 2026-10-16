@@ -134,8 +134,12 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   `SoundPlay.X` counts as `SoundPlay.*`. An event counts as done when combat, archery, or
   ragdoll code observes it, a footstep (`FSTP` `ANAM`) answers it, or it asks for a sound, a
   camera shake, or head tracking ([animation events](/engine/animation-events.md)). The graph itself
-  reacts to many events, so these rows need a check before they become an issue. The same
-  holds for graph variables: the graph sets many of them itself.
+  reacts to many events, so these rows need a check before they become an issue.
+- A graph variable counts as done when engine code sets or reads it, or when it does not face
+  the engine. It faces the engine when it is on the Creation Kit list of animation variables
+  (<https://ck.uesp.net/wiki/List_of_Animation_Variables>) or a graph binds it to a member that
+  takes a world position, such as `BSLookAtModifier.targetLocation`. The rest are computed by the
+  graph (an expression assignment or a modifier output) or are authored constants.
 - A voice `.fuz` counts by the audio inside it. Its lip data counts in the lip sync section.
 
 ### Rules

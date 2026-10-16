@@ -333,6 +333,7 @@ nonisolated public final class LocomotionBridge {
         write(.bool(isAirborneFromJump || !state.isGrounded), to: LocomotionGraphNames.inJumpState)
         write(.real(configuration.walkSpeed.value), to: LocomotionGraphNames.speedWalk)
         write(.real(configuration.runSpeed.value), to: LocomotionGraphNames.speedRun)
+        writeCharacterVariables(state: state)
     }
 
     /// Raises the transitions this step crossed, in a fixed order so a step
