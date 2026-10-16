@@ -101,6 +101,27 @@ nonisolated extension HKXObjectCursor {
         return bytes
     }
 
+    /// Elements of an `hkArray` of embedded structs, `stride` bytes each. An
+    /// unreadable element is skipped and recorded, the rest still decode.
+    public mutating func structArray<Value>(
+        at field: HKXField,
+        stride: Int,
+        _ read: (inout HKXObjectCursor, Int) -> Value
+    ) -> [Value] {
+        guard let view = array(at: field) else { return [] }
+        var values: [Value] = []
+        values.reserveCapacity(view.count)
+        for index in 0 ..< view.count {
+            guard var element = graph.element(of: view, index: index, stride: stride) else {
+                recordMiss(field, .outOfBounds)
+                continue
+            }
+            values.append(read(&element, index))
+            absorb(element)
+        }
+        return values
+    }
+
     /// Reads every element of a fixed-stride array through an element cursor,
     /// failing the whole array on the first unreadable element.
     private mutating func elements<Value>(
