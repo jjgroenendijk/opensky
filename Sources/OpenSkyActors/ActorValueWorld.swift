@@ -16,4 +16,17 @@ public protocol ActorValueWorld: AnyObject {
     func isCasting(_ key: ReferenceKey) -> Bool
     /// The player is in combat while any actor fights it.
     func isInCombat(_ key: ReferenceKey) -> Bool
+    /// The player's worn weight while it sprints, or nil while it does not.
+    func playerSprintLoad() -> Float?
+    /// An empty stamina bar turns the player's sprint into a run.
+    func setPlayerSprintAllowed(_ allowed: Bool)
+}
+
+extension ActorValueWorld {
+    /// A session with no locomotion never sprints.
+    public func playerSprintLoad() -> Float? {
+        nil
+    }
+
+    public func setPlayerSprintAllowed(_: Bool) {}
 }

@@ -103,6 +103,9 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// The skill, sneak-attack, and armour terms of the player's swing on `target`.
     func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike
 
+    /// Charges `blocker` the stamina a blocked blow costs.
+    func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
+
     /// Takes `amount` off `target`'s health.
     ///
     /// - Returns: true when the damage was actually applied, so a hit on a
@@ -138,6 +141,9 @@ nonisolated extension MeleeCombatWorld {
     public func meleeStrike(handType _: CombatHandType, on _: ReferenceKey) -> WeaponStrike {
         .plain
     }
+
+    /// A session with no stamina pays nothing to block.
+    public func applyBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}
 }
 
 /// Melee and archery read a struck actor's material through this one seam, so a

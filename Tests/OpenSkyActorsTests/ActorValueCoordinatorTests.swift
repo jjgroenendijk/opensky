@@ -14,6 +14,8 @@ final class FakeActorValueWorld: ActorValueWorld {
     var nearest: ActorValueHolder?
     var casting: Set<ReferenceKey> = []
     var fighting: Set<ReferenceKey> = []
+    var sprintLoad: Float?
+    private(set) var sprintAllowed = true
 
     func regeneratingHolders() -> [ActorValueHolder] {
         [.player] + residents
@@ -29,6 +31,14 @@ final class FakeActorValueWorld: ActorValueWorld {
 
     func isInCombat(_ key: ReferenceKey) -> Bool {
         fighting.contains(key)
+    }
+
+    func playerSprintLoad() -> Float? {
+        sprintLoad
+    }
+
+    func setPlayerSprintAllowed(_ allowed: Bool) {
+        sprintAllowed = allowed
     }
 }
 
@@ -91,6 +101,23 @@ struct ActorValueCoordinatorTests {
         }
 
         #expect(runtime.current(of: actor).magicka < runtime.current(of: .player).magicka)
+    }
+
+    /// 7 a second at 10 worn weight is 8.4 a second, so 60 stamina lasts about 7 s.
+    @Test func sprintingDrainsStaminaUntilTheSprintStops() throws {
+        let world = FakeActorValueWorld()
+        world.sprintLoad = 10
+        let coordinator = coordinator(world: world)
+        let runtime = try #require(coordinator.runtime)
+
+        coordinator.advance(delta: 1)
+        #expect(abs(runtime.current(of: .player).stamina - 51.6) < 1e-3)
+        #expect(world.sprintAllowed)
+        for _ in 0 ..< 7 {
+            coordinator.advance(delta: 1)
+        }
+        #expect(runtime.current(of: .player).stamina == 0)
+        #expect(!world.sprintAllowed)
     }
 
     @Test func damageReportsTheSelectedValueAfterwards() {

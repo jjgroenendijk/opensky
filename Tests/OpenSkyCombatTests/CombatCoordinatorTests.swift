@@ -107,6 +107,17 @@ struct CombatCoordinatorTests {
             .skillMultiplier == 1)
     }
 
+    @Test func aBlockCostsAQuarterOfTheIncomingBlow() {
+        let world = FakeCoordinatorWorld()
+        let coordinator = Self.coordinator(world)
+        let blocked = MeleeDamageResult(
+            base: 20, blockedFraction: 0.5, applied: 10, attackMultiplier: 2
+        )
+        coordinator.applyBlockStamina(blocked, to: .player)
+        #expect(world.staminaDamage.map(\.amount) == [10])
+        #expect(world.staminaDamage.map(\.key) == [.player])
+    }
+
     @Test func zeroDamageNeverReachesTheWorld() {
         let world = FakeCoordinatorWorld()
         let coordinator = Self.coordinator(world)

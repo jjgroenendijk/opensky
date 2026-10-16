@@ -61,6 +61,10 @@ extension CombatCoordinator: CombatLoopWorld {
         meleeBlockMultiplier(of: key)
     }
 
+    public func applyCombatBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
+        applyBlockStamina(damage, to: blocker)
+    }
+
     public func combatStrike(
         from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
     ) -> WeaponStrike {

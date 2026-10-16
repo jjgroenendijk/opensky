@@ -89,6 +89,7 @@ extension GapsGatherer {
         _ = DetectionSettings.resolve(store: store)
         _ = PlayerMovementConfiguration.resolve(store: store)
         _ = RegenerationSettings.resolve(store: store)
+        _ = StaminaSettings.resolve(store: store)
         return log.editorIDs
     }
 }

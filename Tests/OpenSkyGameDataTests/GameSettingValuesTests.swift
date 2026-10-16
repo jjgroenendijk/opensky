@@ -78,4 +78,15 @@ struct GameSettingValuesTests {
         #expect(settings.magickaDelay == 2)
         #expect(settings.npcMagickaDuringCast)
     }
+
+    @Test func staminaCostsComeFromTheLoadOrder() throws {
+        let store = try GameSettingFixture.store([
+            "fSprintStaminaDrainMult": .float(10),
+            "fStaminaBlockBase": .float(5)
+        ])
+        let settings = StaminaSettings.resolve(store: store)
+        #expect(abs(settings.sprintDrain(wornWeight: 50) - 20) < 1e-4)
+        #expect(settings.blockCost(incomingDamage: 40) == 15)
+        #expect(StaminaSettings.vanilla.sprintDrain(wornWeight: -3) == 7)
+    }
 }

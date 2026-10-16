@@ -164,6 +164,27 @@ missing. The pause is not saved. Casting stops magicka ([spellcasting](/engine/s
 Each step rewrites the whole component and keeps the override table, so a buff survives. Refill
 fills to the effective maximum and keeps the table. "Reset to records" drops it.
 
+## Stamina use
+
+UESP "Skyrim:Stamina" gives the costs. `StaminaSettings` reads them from the install.
+
+```text
+sprint, per second = fSprintStaminaDrainMult * (fSprintStaminaWeightBase
+                     + wornWeight * fSprintStaminaWeightMult)
+block              = fStaminaBlockBase + fStaminaBlockDmgMult * incomingDamage
+```
+
+With the vanilla 7, 1, and 0.02, a sprint costs 7 a second plus 2% for each unit of worn
+weight. Worn weight is the summed weight of every equipped item. A sprint costs nothing while the
+player stands still. When the bar is empty, the sprint key runs instead; it sprints again once
+regeneration refills the bar. Each drain is damage, so it also starts the pause after damage
+above.
+
+A blocked blow costs the blocker stamina, for the player and for an NPC. `incomingDamage` is the
+blow before the block: base damage, fortify bonus, skill, sneak, and armour
+([melee damage](/engine/melee-damage.md)). UESP says only that a block uses "a small amount" of
+stamina, so the meaning of `incomingDamage` is read from the setting's name.
+
 ## HUD bars
 
 The engine turns current values and maximums into HUD meter values and only sends them on a change,

@@ -10,13 +10,17 @@ import OpenSkyCombat
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventory
+import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMenus
 import OpenSkyPerceptionInterface
+import OpenSkyPhysics
 import OpenSkyQuests
 import OpenSkyRendering
 import OpenSkyWorld
 import OpenSkyWorldState
+import simd
 
 /// Answers `ActorValueWorld` and the resident-actor reads from the streamer.
 final class ActorWorldAdapter {
@@ -42,7 +46,8 @@ final class ActorWorldAdapter {
         let settings = (provider as? WorldDataStores)?.gameSettings
         coordinator.wire(
             baselines: baselines,
-            regeneration: settings.map(RegenerationSettings.resolve) ?? .vanilla
+            regeneration: settings.map(RegenerationSettings.resolve) ?? .vanilla,
+            stamina: settings.map(StaminaSettings.resolve) ?? .vanilla
         )
         // Chained after the Papyrus VM, so neither unhooks the other. The
         // renderer gates the delta, so a menu-paused frame regenerates nothing.
@@ -190,5 +195,23 @@ extension ActorWorldAdapter: ActorValueWorld {
     func isInCombat(_ key: ReferenceKey) -> Bool {
         guard let loop = game.combat.loop else { return false }
         return key == .player ? loop.isPlayerInCombat : loop.activity(of: key) != .notFighting
+    }
+
+    /// Standing still with the sprint key held costs nothing.
+    func playerSprintLoad() -> Float? {
+        guard
+            let status = game.renderer?.locomotion.status,
+            status.gait == .sprint,
+            simd_length(status.horizontalVelocity) > 1
+        else { return nil }
+        guard let equipment = game.inventory.equipment, let items = game.combat.items
+        else { return 0 }
+        return equipment.equipped(on: .player).reduce(Float(0)) {
+            $0 + (items.definition($1)?.weight ?? 0)
+        }
+    }
+
+    func setPlayerSprintAllowed(_ allowed: Bool) {
+        game.renderer?.locomotion.isSprintAllowed = allowed
     }
 }

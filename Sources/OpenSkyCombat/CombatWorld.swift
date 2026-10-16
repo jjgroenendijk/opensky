@@ -54,6 +54,7 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)?
     @discardableResult
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool
+    func damageStamina(by amount: Float, of key: ReferenceKey)
 
     /// The player's equipment. Nil without an equipment runtime.
     var equipment: (any EquipmentAccess)? { get }
@@ -115,6 +116,9 @@ extension CombatWorld {
     public func magicInfluence(of _: ReferenceKey) -> ActorMagicInfluence {
         .none
     }
+
+    /// A session with no stamina pays nothing to block.
+    public func damageStamina(by _: Float, of _: ReferenceKey) {}
 
     /// A session with no equipment wears nothing, so no armour stops a blow.
     public func equippedItems(of _: ReferenceKey) -> [(item: FormID, temperLevel: Int32)] {

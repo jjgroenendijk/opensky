@@ -34,6 +34,12 @@ extension CombatCoordinator {
         return strike
     }
 
+    /// The blow before the block, so a stronger hit costs more to stop.
+    public func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
+        let incoming = damage.base * damage.attackMultiplier * damage.strike.factor
+        world?.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
+    }
+
     /// Only the player sneak attacks: the player has no detection state toward an
     /// NPC. A target already fighting the player knows where the player is.
     func isSneakAttack(by attacker: ReferenceKey, on target: ReferenceKey) -> Bool {

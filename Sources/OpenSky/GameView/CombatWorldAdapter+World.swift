@@ -139,6 +139,14 @@ extension CombatWorldAdapter: CombatWorld {
         return true
     }
 
+    func damageStamina(by amount: Float, of key: ReferenceKey) {
+        guard
+            let runtime = game.actorValues.runtime,
+            let holder = game.actorWorld.actorValueHolder(for: key)
+        else { return }
+        runtime.damage(.stamina, by: amount, on: holder)
+    }
+
     var equipment: (any EquipmentAccess)? {
         game.inventory.equipment
     }

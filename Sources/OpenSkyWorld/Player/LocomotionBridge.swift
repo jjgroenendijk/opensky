@@ -72,6 +72,8 @@ nonisolated public final class LocomotionBridge {
     /// graph inputs and gait speed only; water, gravity and collision are untouched, so a
     /// forced `swim` swims on dry floor.
     public var forcedGait: LocomotionGait?
+    /// False while the stamina bar is empty: a held sprint key runs instead.
+    public var isSprintAllowed = true
 
     public private(set) var status: LocomotionStatus
     /// Third-person graph events awaiting consumers. Only that graph feeds it, or every
@@ -260,7 +262,7 @@ nonisolated public final class LocomotionBridge {
         if intent.sneak {
             return .sneak
         }
-        if intent.sprint {
+        if intent.sprint, isSprintAllowed {
             return .sprint
         }
         return intent.run ? .run : .walk

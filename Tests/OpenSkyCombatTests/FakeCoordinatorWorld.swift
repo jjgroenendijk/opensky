@@ -31,6 +31,7 @@ final class FakeCoordinatorWorld: CombatWorld {
     var trimmedBodies = CombatTransientCounts.none
 
     private(set) var damage: [(key: ReferenceKey, amount: Float)] = []
+    private(set) var staminaDamage: [(key: ReferenceKey, amount: Float)] = []
     private(set) var castingQueries: [ReferenceKey] = []
     private(set) var cancelledCasts: [ReferenceKey] = []
     private(set) var raisedEvents: [String] = []
@@ -91,6 +92,10 @@ final class FakeCoordinatorWorld: CombatWorld {
     func damageHealth(by amount: Float, of key: ReferenceKey) -> Bool {
         damage.append((key, amount))
         return true
+    }
+
+    func damageStamina(by amount: Float, of key: ReferenceKey) {
+        staminaDamage.append((key, amount))
     }
 
     func enchantmentProfile(of _: FormID) -> ItemEnchantmentProfile? {

@@ -282,6 +282,9 @@ public final class MeleeCombatRuntime {
             strike: world.meleeStrike(handType: weapon.handType, on: hit.target)
         )
         let landed = world.applyMeleeDamage(damage.applied, to: hit.target)
+        if damage.wasBlocked {
+            world.applyBlockStamina(damage, to: hit.target)
+        }
         noteSkillUse(hit, damage: damage, landed: landed, world: world)
         let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
@@ -363,23 +366,5 @@ public final class MeleeCombatRuntime {
             at: hit.position,
             candidates: world.meleeTargets()
         ))
-    }
-
-    /// Tells the target's graph to stagger, if the weapon carries any stagger
-    /// at all and the hit was not blocked away.
-    ///
-    /// `staggerMagnitude` is written before the event so the stagger behavior
-    /// reads this hit's magnitude rather than the previous one's, which is the
-    /// same write-then-raise order the locomotion bridge uses for every step.
-    private func stagger(
-        _ target: ReferenceKey,
-        damage: MeleeDamageResult,
-        world: any MeleeCombatWorld
-    ) -> Bool {
-        guard weapon.stagger > 0, damage.applied > 0 else { return false }
-        world.writeCombatVariable(
-            .real(weapon.stagger), named: CombatGraphNames.staggerMagnitude
-        )
-        return world.raiseCombatEvent(CombatGraphNames.staggerStart, on: target)
     }
 }

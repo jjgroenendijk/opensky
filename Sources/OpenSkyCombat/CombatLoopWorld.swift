@@ -139,6 +139,9 @@ public protocol CombatLoopWorld: ScriptHitReporting, SkillUseReporting {
         from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
     ) -> WeaponStrike
 
+    /// Charges `blocker` the stamina a blocked blow costs.
+    func applyCombatBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
+
     /// What `observer` currently makes of `target`, projected from 16.6's
     /// detection pair state.
     ///
@@ -254,6 +257,9 @@ nonisolated extension CombatLoopWorld {
     ) -> WeaponStrike {
         .plain
     }
+
+    /// A session with no stamina pays nothing to block.
+    public func applyCombatBlockStamina(_: MeleeDamageResult, to _: ReferenceKey) {}
 
     /// A session that resolves no combat styles fights with the base settings.
     public func combatStyle(of key: ReferenceKey) -> CombatStyleTuning? {
