@@ -36,7 +36,7 @@ Measured on 2026-10-16 by `make gaps`.
 | Magic effect archetypes | 21 | 16 | 37 | 56% |
 | Perk entry points | 9 | 59 | 68 | 13% |
 | Perk entry-point functions | 5 | 4 | 9 | 55% |
-| AI package procedures | 8 | 22 | 30 | 26% |
+| AI package procedures | 30 | 0 | 30 | 100% |
 | AI packages that do not resolve | - | 0 | - | - |
 | Behavior node classes | 52 | 2 | 54 | 96% |
 | Behavior features ignored | - | 256 | - | - |

@@ -27,7 +27,7 @@ struct IdleCoreTests {
 
     @Test func sandboxAndTheIdleMarkerProcedureUseMarkers() {
         #expect(IdleCore.usesMarkers(.sandbox))
-        #expect(IdleCore.usesMarkers(.unsupported("UseIdleMarker")))
+        #expect(IdleCore.usesMarkers(.useIdleMarker))
         #expect(!IdleCore.usesMarkers(.travel))
         #expect(!IdleCore.usesMarkers(nil))
     }

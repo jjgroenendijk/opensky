@@ -23,6 +23,7 @@ private final class FakePackageWorld: PackageWorld {
     var moverSlotsFull = false
     var drivesPlayer = false
     private(set) var scriptEvents: [PackageScriptEvent.Kind] = []
+    private(set) var actions: [PackageAction] = []
     static let place = SIMD3<Float>(100, 0, 0)
     static let patrol = [SIMD3<Float>(10, 0, 0), SIMD3<Float>(20, 0, 0)]
 
@@ -49,6 +50,11 @@ private final class FakePackageWorld: PackageWorld {
         from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
     ) -> [SIMD3<Float>]? {
         Self.patrol
+    }
+
+    func packageAction(_ action: PackageAction, actor _: ReferenceKey) -> PackageActionResult {
+        actions.append(action)
+        return .done
     }
 
     func mountPackageActor(_: ReferenceKey) -> ReferenceKey? {
@@ -186,7 +192,7 @@ struct PackageCoordinatorTests {
         coordinator.advance(by: 0.1)
         coordinator.advance(by: 0.1)
         #expect(world.moves == Array(repeating: FakePackageWorld.place, count: 3))
-        #expect(coordinator.executions[Self.guardKey]?.machine.state == .moving)
+        #expect(coordinator.executions[Self.guardKey]?.machine?.state == .moving)
     }
 
     /// A patrol that rides the actor's horse walks the horse, and the horse's arrival
@@ -237,6 +243,21 @@ struct PackageCoordinatorTests {
         #expect(coordinator.runOverride(override, actor: .player) == .done)
     }
 
+    /// A tree procedure's act goes to the world, and its success ends the package.
+    @Test func aLockDoorsProcedureLocksAndEndsThePackage() throws {
+        let (coordinator, world) = try Self.coordinator()
+        world.residents = try [PackageRuntimeFixture.residentActor(0x500, base: 0x600)]
+        coordinator.advance()
+        let owner = PackageOverrideOwner(source: FormID(0x4000), slot: 0)
+        let override = PackageOverride(packages: [FormID(0x105)], owner: owner, aliasQuest: nil)
+
+        #expect(coordinator.runOverride(override, actor: Self.guardKey) == .done)
+        #expect(world.actions == [
+            .setDoorsLocked(true, center: FakePackageWorld.place, radius: 0)
+        ])
+        #expect(world.moves.isEmpty)
+    }
+
     private static func coordinator() throws -> (PackageCoordinator, FakePackageWorld) {
         let morning = try PackageRuntimeFixture.package(
             id: 0x100,
@@ -262,11 +283,19 @@ struct PackageCoordinatorTests {
                 Package.DataInput(index: Int8(index + 1), type: "CNAM", value: .boolean(flag))
             }
         )
+        var lockUp = try PackageRuntimeFixture.package(
+            id: 0x105, editorID: "LockUp", procedureNames: ["LockDoors"],
+            dataInputs: walk.dataInputs
+        )
+        lockUp.details.branches = [PackageDetails.Branch(
+            type: "Procedure", procedureType: "LockDoors", successCompletesPackage: true,
+            dataInputIndexes: [0]
+        )]
         let actor = try PackageRuntimeFixture.actorBase(id: 0x600, packages: [0x100, 0x101])
         let player = try PackageRuntimeFixture.actorBase(id: 0x7, packages: [])
         let coordinator = PackageCoordinator()
         coordinator.wire(store: PackageStore(
-            packages: [morning, fallback, walk, ride, patrol],
+            packages: [morning, fallback, walk, ride, patrol, lockUp],
             actorTemplates: ActorTemplateResolver(
                 actors: [0x600: actor, 0x7: player], leveledActors: [:]
             )

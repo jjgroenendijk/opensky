@@ -104,25 +104,40 @@ nonisolated public enum AIPackageReadout: Sendable {
         let lines = [
             header, selectionText(for: package), scheduleText(for: package.schedule),
             snapshot.procedure.map(procedureStateText(for:)),
+            runningText(for: snapshot.runningProcedures),
             snapshot.carrier.map { "Riding: \($0)" }
         ]
         return lines.compactMap(\.self).joined(separator: "\n")
     }
 
-    /// Where a held package's procedure is, such as `Procedure: moving, point 3 of 32`.
+    /// Where a held package's procedure is, such as `Procedure: patrol, moving, point 3 of 32`.
     public static func procedureStateText(for machine: PackageProcedureMachine) -> String {
-        let state = switch machine.state {
+        let state = stateText(for: machine.state)
+        guard !machine.path.isEmpty else { return "Procedure: \(machine.kind.name), \(state)" }
+        return "Procedure: \(machine.kind.name), \(state), point \(machine.pathIndex + 1) of "
+            + "\(machine.path.count + 1)"
+    }
+
+    /// The tree's procedures that run at once, such as `Running: sit, wait`; nil for one.
+    public static func runningText(for machines: [PackageProcedureMachine]) -> String? {
+        guard machines.count > 1 else { return nil }
+        return "Running: " + machines.map { "\($0.kind.name) (\(stateText(for: $0.state)))" }
+            .joined(separator: ", ")
+    }
+
+    static func stateText(for state: PackageProcedureState) -> String {
+        switch state {
         case .ready: "ready"
         case .moving: "moving"
         case .idleStop: "pausing"
         case let .looping(clip): "looping \(clip.rawValue)"
         case .seated: "seated"
         case .waiting: "waiting"
+        case .searching: "searching"
+        case .acting: "acting"
         case .complete: "done"
         case .failed: "failed"
         }
-        guard !machine.path.isEmpty else { return "Procedure: \(state)" }
-        return "Procedure: \(state), point \(machine.pathIndex + 1) of \(machine.path.count + 1)"
     }
 
     /// Which package won for one actor, and which procedure it runs.
@@ -140,17 +155,10 @@ nonisolated public enum AIPackageReadout: Sendable {
     }
 
     public static func procedureText(for procedure: PackageProcedureKind) -> String {
-        switch procedure {
-        case .travel: "travel"
-        case .patrol: "patrol"
-        case .wander: "wander"
-        case .sandbox: "sandbox"
-        case .sleep: "sleep"
-        case .eat: "eat"
-        case .sit: "sit"
-        case .wait: "wait"
-        case let .unsupported(name): "unsupported (\(name))"
+        if case let .unsupported(name) = procedure {
+            return "unsupported (\(name))"
         }
+        return procedure.name
     }
 
     /// The authored schedule spelled out, because a row of signed bytes is not

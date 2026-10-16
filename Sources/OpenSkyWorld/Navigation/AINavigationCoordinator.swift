@@ -76,7 +76,9 @@ public final class AINavigationCoordinator: AINavigationControlProviding {
             selectedActorIsHostile: selected.map(world.isHostile) ?? false,
             lastActionText: lastActionText
         )
-        snapshot.procedure = selected.flatMap { packages.executions[$0]?.machine }
+        let runner = selected.flatMap { packages.executions[$0]?.runner }
+        snapshot.procedure = runner?.primary
+        snapshot.runningProcedures = runner?.runningMachines ?? []
         snapshot.carrier = selected.flatMap(world.vehicleCarrier(of:))
         return snapshot
     }

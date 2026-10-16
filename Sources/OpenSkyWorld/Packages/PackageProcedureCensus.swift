@@ -1,6 +1,5 @@
 // Which AI procedures the packages of the load order use, by packages, and which ones
-// an actor can run. A package whose tree holds several procedures runs only one, so
-// the others still count as left.
+// an actor can run. A held package runs its whole tree, so each procedure in it counts.
 
 import Foundation
 import OpenSkyFormatsCore

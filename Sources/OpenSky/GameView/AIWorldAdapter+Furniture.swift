@@ -16,11 +16,8 @@ struct SeatKey: Hashable {
 }
 
 extension AIWorldAdapter {
-    func packageSeat(
-        from target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
-    ) -> PackageSeat? {
+    func packageSeat(in furniture: ReferenceKey, actor: ReferenceKey) -> PackageSeat? {
         guard
-            let furniture = packageTargetKey(target, aliasQuest: aliasQuest),
             let streamer = game.streamer,
             let formID = streamer.referenceEntry(key: furniture)?.formID,
             let seats = streamer.residentInteraction(reference: formID)?.seats

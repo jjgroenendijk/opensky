@@ -99,8 +99,8 @@ OpenSky does not guess its value.
 After `XNAM`, a template lists its branches. Each branch starts with an `ANAM` branch
 type. Its conditions, `PRCB` root data (branch count and flags), `PNAM` procedure type,
 `FNAM` success flag, `PKC2` data input indexes, `PFO2` flag overrides, and `PFOR` follow.
-`PFOR` has no explained layout, so it stays raw. OpenSky recognizes travel, wander,
-sandbox, sleep, and eat. Patrol uses travel.
+`PFOR` has no explained layout, so it stays raw. AI runs this tree
+([package schedules](/engine/package-schedules.md#procedure-tree)).
 
 After the branches come the template's own data inputs. Each one is a `UNAM` index, a
 `BNAM` name, and a 4-byte `PNAM` public flag. The decoder tells this `PNAM` from a
@@ -119,8 +119,8 @@ A `PKDT`, `PSDT`, `PKCU`, `PLDT`, `PTDA`, or `PDTO` of the wrong size is an erro
 without `PKDT` or `PSDT` cannot be used and is an error.
 
 The header also holds the idle animations (`IDLF`, `IDLC`, `IDLT`, `IDLA`), the combat
-style (`CNAM`), and the owner quest (`QNAM`). AI does not run the branch graph, the idle
-animations, or the events yet; the decoder only reads them.
+style (`CNAM`), and the owner quest (`QNAM`). AI does not use the idle animations yet; the
+decoder only reads them.
 
 ## Whiterun example
 

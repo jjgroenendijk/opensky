@@ -1,6 +1,5 @@
-// Runs the procedure of a package that a scene or a quest alias gives an actor: a
-// travel package walks the actor to its place, a patrol walks its path, and a scene
-// action is done when the procedure is.
+// The procedure tree of a package that a scene or a quest alias gives an actor. A
+// scene action is done when the tree is.
 // See docs/engine/package-schedules.md, "Scene packages".
 
 import OpenSkyFormatsESM
@@ -16,49 +15,45 @@ nonisolated public enum PackageOverrideProgress: Equatable, Sendable {
     case notSimulated
 }
 
-/// The procedure machine of one overridden actor's current package.
+/// The procedure tree of one overridden actor's current package.
 nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
     public let package: FormID
-    public private(set) var machine: PackageProcedureMachine
-    /// True for a static-pathing patrol, which walks straight between its markers.
-    public let isDirect: Bool
+    public internal(set) var runner: PackageTreeRunner
     /// True for a package that rides the actor's horse when it has one.
     public let ridesHorse: Bool
-    /// The furniture seat a sit package walks to.
-    public let seat: PackageSeat?
+    /// The furniture seat the actor sat down in, which it leaves with the package.
+    public internal(set) var seat: PackageSeat?
     /// The package's preferred speed, when its flag turns it on.
     public let gait: LocomotionGait?
 
-    /// A patrol walks `path` and needs no place; a sit package walks to `seat`.
-    public init(
-        package: ResolvedPackage, start: SIMD3<Float>, place: PackagePlace?,
-        path: [SIMD3<Float>] = [], seat: PackageSeat? = nil
-    ) {
-        self.seat = seat
-        let place = seat.map { PackagePlace(point: $0.seat.position, radius: 0) } ?? place
+    public init(package: ResolvedPackage) {
         self.package = package.package.formID
-        let patrol = package.procedure == .patrol ? Self.patrolFlags(package.package) : []
-        let flags = patrol.count == 4 ? patrol : [false, false, false, false]
-        isDirect = flags[3]
         ridesHorse = package.ridesHorse
         gait = Self.gait(of: package.package.general)
-        let walk = flags[1] ? Self.startingAtNearest(path, to: start, loops: flags[0]) : path
-        machine = PackageProcedureMachine(
-            kind: package.procedure,
-            center: place?.point ?? start,
-            destination: place?.point ?? walk.first,
-            radius: Float(max(place?.radius ?? 0, 0)),
-            path: Array(walk.dropFirst()),
-            repeats: flags[0],
-            seed: UInt64(package.package.formID.rawValue)
+        runner = PackageTreeRunner(
+            tree: package.tree, seed: UInt64(package.package.formID.rawValue)
         )
+    }
+
+    /// The procedure the readout shows.
+    public var machine: PackageProcedureMachine? {
+        runner.primary
+    }
+
+    /// True while the walking procedure is a static-pathing patrol.
+    public var isDirect: Bool {
+        runner.mover.flatMap { runner.running[$0]?.setup.isDirect } ?? false
+    }
+
+    /// Package ends so far: completions, and laps of a repeatable patrol.
+    public var ends: Int {
+        runner.completions + runner.laps
     }
 
     /// A repeatable patrol is done after its first lap, though it keeps walking: a scene
     /// waits for the package to end, not for the actor to stop.
     public var isDone: Bool {
-        machine.state == .complete || machine.state == .failed || machine.state == .seated
-            || machine.laps > 0
+        runner.outcome != nil || ends > 0
     }
 
     /// Jog runs and fast walk walks, because an NPC has only the walk and run gaits.
@@ -68,27 +63,6 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         case .walk, .fastWalk: .walk
         case .jog, .run: .run
         case .unknown: nil
-        }
-    }
-
-    public mutating func start() -> [PackageProcedureCommand] {
-        machine.start()
-    }
-
-    public mutating func handle(_ event: PackageProcedureEvent) -> [PackageProcedureCommand] {
-        machine.handle(event)
-    }
-
-    /// The patrol procedure's Bool inputs after Patrol Start and Patrol Radius:
-    /// Repeatable?, Start At Nearest?, Ride Horse if Possible?, and Static Pathing?
-    /// (`PACK` `BNAM` names in the vanilla Patrol template). See
-    /// docs/engine/package-schedules.md.
-    public static func patrolFlags(_ package: Package) -> [Bool] {
-        package.dataInputs.compactMap { input -> Bool? in
-            if case let .boolean(value) = input.value {
-                return value
-            }
-            return nil
         }
     }
 

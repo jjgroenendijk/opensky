@@ -2,7 +2,7 @@
 type: Subsystem
 title: Actor package schedules
 description: How an actor's AI package is picked from its ordered stack, when it is picked
-  again, the simple procedure machines, and what is not done yet.
+  again, how its procedure tree and procedure machines run, and what is not done yet.
 tags: [engine, ai, actors, packages, schedules, navigation]
 ---
 
@@ -41,19 +41,51 @@ state without reaching into the live world state.
 
 ## Procedure machines
 
-A procedure machine is a small state machine. It sends commands to movement and animation. It
-does not own either system.
+A procedure machine is a small state machine for one procedure. It sends commands to movement
+and animation, and asks the world for every other act (`PackageAction`). It does not own any of
+these systems. The parameter order of each procedure is the one on its Creation Kit wiki page,
+for example <https://ck.uesp.net/wiki/Find_(Procedure)>. It was checked against the `BNAM`
+input names of the vanilla templates.
 
 | Procedure | Behavior |
 | --- | --- |
-| Travel | Move to the target, then finish |
+| Travel, FollowTo | Move to the target, then finish |
 | Patrol | Move to the start marker, then along its linked references, then finish |
+| Orbit | Walk eight points round a circle between the two radii, as a patrol |
+| Hover | Move to the place, raised by the height input, then finish |
 | Wander | Pick seeded random points in a radius, wait 1 second, repeat |
 | Sandbox | Pick seeded random points in a radius, wait 4 seconds, repeat |
 | Sleep | Move to the target, then ask for a sleep loop |
 | Eat | Move to the target, then ask for an eat loop |
 | Sit | Move to a free seat of the target furniture, then sit; done when seated |
-| Wait | Stay in place and send no move, until another package wins |
+| UseIdleMarker | Move to the marker, then finish; the idle marker plays as in sandbox |
+| Wait | Stay in place; with a time input, finish after it |
+| HoldPosition, Guard, KeepAnEyeOn, FlightGrab | Move to the place, then stay there |
+| LockDoors, UnlockDoors | Lock or unlock the load doors in the place that the actor owns |
+| Find | Look for matching references in the place; look again every 2 seconds |
+| Acquire | Walk to the item, pick it up; try the next item of the list when one fails |
+| Activate | Walk to the target, then activate it |
+| Say | Speak one line of the topic, and finish when the line ends |
+| ForceGreet | Wait for the player in the trigger place, walk up, open the conversation |
+| DialogueActivate | Walk to the target, then turn the head to it for 3 seconds |
+| Follow | Walk to the target each time it is out of range |
+| Escort | Walk to the place; stop while the escorted actor is too far behind |
+| Flee | Run to the place, or straight away from the threat until far enough |
+| UseWeapon | Walk to the place, then start combat with the target |
+| UseMagic, Shout | Walk to the place, then cast the spell, or the first word of the shout |
+
+Where OpenSky differs from the game:
+
+- ForceGreet opens the normal greeting. The package's own topic is not forced yet.
+- DialogueActivate only turns the head. OpenSky has no conversations between two NPCs.
+- UseWeapon can attack only by starting real combat, so it acts only when its
+  "Allow Combat Start" input is true. Otherwise it fails.
+- Guard, HoldPosition, KeepAnEyeOn, and FlightGrab hold the place. They do not watch for
+  intruders, look at the target, or carry anyone.
+- Find sees only references that are loaded now.
+- Find selects by object type with the `PTDA` object type codes. Their names are not in an
+  open spec. OpenSky reads them from how the vanilla templates use them: 10 furniture,
+  11 weapon, 15 food, 26 bed, 27 chair. This is an inference, not a confirmed table.
 
 A patrol walks each leg as a straight line when its "Static Pathing?" input is true, and on
 the navmesh otherwise. A straight leg ignores static walls, so a rock or a fallen log on the
@@ -76,9 +108,33 @@ with a travel package (`MQ101TulliusHoldPosition`) before their patrols start.
 A walk over an exterior cell whose terrain is not loaded slides along its path line instead of
 falling. Without this, an actor ahead of the loaded area falls through the world.
 
-A movement failure ends the machine as failed. An unsupported procedure also fails, on purpose.
+A movement failure ends a walking machine as failed. An unsupported procedure also fails, on
+purpose.
 Random points are even over the area (the radius is `sqrt` of a random number), and use the same
 seeded generator as conditions.
+
+## Procedure tree
+
+A template's branches form a tree ([packages](/formats/packages.md#procedure-tree)). OpenSky
+rebuilds it from the flat list and runs it. The branch rules come from the Creation Kit wiki
+page <https://ck.uesp.net/wiki/Category:Package_Templates>:
+
+- Sequence runs its children in order. It fails when a child fails.
+- Stacked runs the first child whose conditions are true.
+- Random runs one child with true conditions, picked with the package's seeded generator.
+- Simultaneous runs all its children at once. It ends when any child succeeds. A failed
+  child stops alone, and the branch fails only when every child failed.
+- A branch whose `PRCB` repeat flag is set starts again when it succeeds.
+- A procedure with `FNAM` set ends the whole package when it succeeds.
+
+Each procedure reads its parameters through its `PKC2` indexes. A Find writes what it found
+into its third parameter, an object list. A later procedure that names the same input, such
+as an Acquire, takes that list as its targets. A package with no branch list runs its own
+procedure, with its first location and its first target as inputs.
+
+Several procedures can run at once, but only one walks: the last one that asked for a move.
+A seated Sit counts as success only when it has `FNAM`, so the vanilla `SitTarget` tree is
+done once the actor sits.
 
 ## Furniture
 
@@ -114,7 +170,6 @@ Not done yet:
   the actor's own list. Only scene and alias packages run their machine.
 - Aliases and linked references as package locations. They are decoded, but need their quest
   and reference runtime first. A patrol start already resolves both.
-- The branch graph inside a procedure tree.
 
 A condition OpenSky cannot answer is false, with a reason. So an actor whose package depends on
 such a condition will not pick it. Example: Heimskr's jail package before the siege of Whiterun.
@@ -128,7 +183,7 @@ A scene's package action holds an actor ([scenes](/engine/scenes.md#package-acti
 it holds one, the selector picks from the action's packages, not from the actor's `PKID` list,
 and picks again at once. When the action ends, the actor picks from its own list again.
 
-Only a held actor runs its procedure machine. The machine's place is the package's first
+Only a held actor runs its procedure tree. A procedure's place is the package's first
 location input (`PLDT`). OpenSky can place these kinds: near a reference, in a cell (the cell
 reference), a reference alias of the scene's quest, near the actor itself, and the actor's
 editor location. The `move` command goes to the NPC mover. The mover's arrival or give-up ends
@@ -136,7 +191,7 @@ the move. At most eight actors walk a path at once, to bound the cost. A move th
 eight slots taken waits and is asked again on each tick; this limit is OpenSky's, not the
 game's. A move that cannot start for another reason, such as no path, fails the machine.
 
-The action is done when the machine completes or fails. Travel completes on arrival. Wander,
+The action is done when the tree completes or fails. Travel completes on arrival. Wander,
 sandbox, sleep, and eat never complete. An unsupported procedure fails at once.
 
 ### The player in a scene package

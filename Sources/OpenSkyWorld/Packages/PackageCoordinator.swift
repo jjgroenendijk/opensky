@@ -34,10 +34,8 @@ public protocol PackageWorld: AnyObject {
     func packagePatrolPath(
         from start: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
     ) -> [SIMD3<Float>]?
-    /// A free seat of the furniture a sit package names, or nil when none is loaded.
-    func packageSeat(
-        from target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
-    ) -> PackageSeat?
+    /// A free seat of the furniture, or nil when it has none or is not loaded.
+    func packageSeat(in furniture: ReferenceKey, actor: ReferenceKey) -> PackageSeat?
     /// The actor sits down in `seat`, or leaves it and frees it.
     func seatPackageActor(_ actor: ReferenceKey, in seat: PackageSeat)
     func unseatPackageActor(_ actor: ReferenceKey, from seat: PackageSeat)
@@ -48,6 +46,14 @@ public protocol PackageWorld: AnyObject {
     func dismountPackageActor(_ rider: ReferenceKey)
     /// True after `SetPlayerAIDriven(true)`: scene and alias packages move the player.
     var packageDrivesPlayer: Bool { get }
+    /// The reference a target input names, or nil when OpenSky cannot find it.
+    func packageReference(
+        _ target: Package.Target, actor: ReferenceKey, aliasQuest: FormID?
+    ) -> ReferenceKey?
+    /// Does one act of a procedure, such as locking doors or casting a spell.
+    func packageAction(_ action: PackageAction, actor: ReferenceKey) -> PackageActionResult
+    /// The actor stops walking where it is.
+    func stopPackageActor(_ actor: ReferenceKey)
 }
 
 extension PackageWorld {
@@ -61,9 +67,7 @@ extension PackageWorld {
         nil
     }
 
-    public func packageSeat(
-        from _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
-    ) -> PackageSeat? {
+    public func packageSeat(in _: ReferenceKey, actor _: ReferenceKey) -> PackageSeat? {
         nil
     }
 
@@ -82,6 +86,18 @@ extension PackageWorld {
     public var packageDrivesPlayer: Bool {
         false
     }
+
+    public func packageReference(
+        _: Package.Target, actor _: ReferenceKey, aliasQuest _: FormID?
+    ) -> ReferenceKey? {
+        nil
+    }
+
+    public func packageAction(_: PackageAction, actor _: ReferenceKey) -> PackageActionResult {
+        .failed
+    }
+
+    public func stopPackageActor(_: ReferenceKey) {}
 }
 
 /// The begin, end, or change of one actor's package, which runs the package's fragment.
@@ -143,7 +159,7 @@ public final class PackageCoordinator {
     /// Each simulated actor and the base it registered with.
     public private(set) var registeredActors: [ReferenceKey: FormID] = [:]
     /// The procedure of each actor a scene holds.
-    public private(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
+    public internal(set) var executions: [ReferenceKey: PackageOverrideExecution] = [:]
     /// Each rider's horse, which walks the rider's package for it.
     public private(set) var mounts: [ReferenceKey: ReferenceKey] = [:]
     /// Walks that found no free mover slot, by actor.
@@ -338,23 +354,9 @@ public final class PackageCoordinator {
         case .giveUp: event = .movementFailed
         default: return
         }
-        step(mounts.first { $0.value == actor }?.key ?? actor, with: event)
-    }
-
-    /// Feeds one event to the actor's machine. Finishing the procedure ends the package.
-    private func step(_ actor: ReferenceKey, with event: PackageProcedureEvent) {
-        guard var execution = executions[actor] else { return }
-        let wasComplete = execution.machine.state == .complete
-        let lapsBefore = execution.machine.laps
-        let commands = execution.handle(event)
-        executions[actor] = execution
-        // A repeatable patrol ends its package at the end of every lap, and walks on.
-        let ended = execution.machine.laps > lapsBefore
-            || (!wasComplete && execution.machine.state == .complete)
-        if ended, let package = try? store?.resolve(execution.package).package {
-            world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
-        }
-        apply(commands, actor: actor)
+        let rider = mounts.first { $0.value == actor }?.key ?? actor
+        guard let mover = executions[rider]?.runner.mover else { return }
+        step(rider, with: event, leaf: mover)
     }
 
     private func advanceOverrides(by delta: Float) {
@@ -365,45 +367,54 @@ public final class PackageCoordinator {
             if let point = waitingMoves[actor] {
                 requestMove(actor, to: point)
             }
-            step(actor, with: .tick(delta))
+            tick(actor, by: delta)
         }
     }
 
-    /// Starts a machine for the actor's current held package when it changed.
+    /// Starts the tree of the actor's current held package when the package changed.
     private func syncExecution(_ actor: ReferenceKey) {
         guard
-            let runtime, let world,
-            let hold = runtime.hold(for: actor),
+            let runtime, let world, runtime.hold(for: actor) != nil,
             let current = runtime.currentPackage(for: actor)
         else {
             leaveExecution(of: actor)
             return
         }
         guard executions[actor]?.package != current.package.formID else { return }
-        guard let start = world.packageActorPosition(actor) else { return }
-        leaveExecution(of: actor)
-        let place = PackageOverrideExecution.location(of: current.package).flatMap {
-            world.packagePlace(of: $0, actor: actor, aliasQuest: hold.aliasQuest)
+        guard world.packageActorPosition(actor) != nil, var session = session(for: actor) else {
+            return
         }
-        let target = PackageOverrideExecution.targetInput(of: current.package)
-        let path = current.procedure == .patrol
-            ? target.flatMap {
-                world.packagePatrolPath(from: $0, actor: actor, aliasQuest: hold.aliasQuest)
-            } : nil
-        let seat = current.procedure == .sit
-            ? target.flatMap {
-                world.packageSeat(from: $0, actor: actor, aliasQuest: hold.aliasQuest)
-            } : nil
-        var execution = PackageOverrideExecution(
-            package: current, start: start, place: place, path: path ?? [], seat: seat
-        )
+        leaveExecution(of: actor)
+        var execution = PackageOverrideExecution(package: current)
         updateMount(actor, rides: execution.ridesHorse)
-        let commands = execution.start()
+        let commands = execution.runner.start(host: &session)
         executions[actor] = execution
         world.packageProcedure(PackageScriptEvent(
             kind: .begin, actor: actor, package: current.package
         ))
-        apply(commands, actor: actor)
+        apply(commands, actor: actor, endsBefore: 0)
+    }
+
+    /// The session side of the actor's held package, or nil when nothing holds it.
+    func session(for actor: ReferenceKey) -> PackageTreeSession? {
+        guard
+            let runtime, let world, let clock = world.packageClock,
+            let hold = runtime.hold(for: actor),
+            let current = runtime.currentPackage(for: actor)
+        else { return nil }
+        return PackageTreeSession(
+            world: world, actor: actor, hold: hold, package: current, clock: clock,
+            translation: store?.translation(of: current.definition.formID)
+        )
+    }
+
+    /// Runs the end fragment once for each time the package ended since `before`.
+    func reportEnds(of actor: ReferenceKey, since before: Int) {
+        guard
+            let execution = executions[actor], execution.ends > before,
+            let package = try? store?.resolve(execution.package).package
+        else { return }
+        world?.packageProcedure(PackageScriptEvent(kind: .end, actor: actor, package: package))
     }
 
     private func updateMount(_ actor: ReferenceKey, rides: Bool) {
