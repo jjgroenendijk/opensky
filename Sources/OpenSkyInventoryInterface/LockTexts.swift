@@ -13,11 +13,19 @@ nonisolated public struct LockTexts: Equatable, Sendable {
     public var requiresKey = "sImpossibleLock"
     /// `sOutOfLockpicks`: a press with no lockpicks, or the last pick broken.
     public var outOfLockpicks = "sOutOfLockpicks"
+    /// `sOpenWithKey`: a door a carried key opened; `%s` is the key.
+    public var openedWithKey = "Unlocked with %s."
+    /// `sOpenedContainer`: a container a carried key opened.
+    public var openedContainer = "Opened the container with a key."
 
     public static let vanilla = Self()
 
     public init() {
         levelNames = Dictionary(uniqueKeysWithValues: LockDifficulty.allCases.map { ($0, $0.name) })
+    }
+
+    public func keyNotice(key: String, isContainer: Bool) -> String {
+        isContainer ? openedContainer : SettingTextFormat.fill(openedWithKey, [key])
     }
 
     public func name(of band: LockDifficulty) -> String {
@@ -39,6 +47,8 @@ nonisolated public struct LockTexts: Equatable, Sendable {
         settings.unlock = word("sUnlock") ?? settings.unlock
         settings.requiresKey = word("sImpossibleLock") ?? settings.requiresKey
         settings.outOfLockpicks = word("sOutOfLockpicks") ?? settings.outOfLockpicks
+        store.read("sOpenWithKey", into: &settings, \.openedWithKey, text: text)
+        store.read("sOpenedContainer", into: &settings, \.openedContainer, text: text)
         return settings
     }
 }

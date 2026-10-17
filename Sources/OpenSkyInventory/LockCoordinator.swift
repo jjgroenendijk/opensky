@@ -140,9 +140,13 @@ public final class LockCoordinator {
         switch LockCore.decide(lock: lock.state, carriesKey: carriesKey(lock.state.key)) {
         case .proceed:
             return nil
-        case .unlockWithKey:
+        case let .unlockWithKey(key):
             write(lock.state, locked: false, for: lock.key)
             lastText = "Unlocked \(target.interaction.name) with its key."
+            world?.showLockNotice(texts.keyNotice(
+                key: world?.itemName(key) ?? key.description,
+                isContainer: target.interaction.action == .search
+            ))
             return nil
         case let .refuse(refusal):
             let band = texts.name(of: difficulty(of: lock.state))

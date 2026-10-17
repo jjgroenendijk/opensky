@@ -50,6 +50,10 @@ opens or the container menu appears. Otherwise the HUD shows a notice: `sImpossi
 lock that needs a key, and `sOutOfLockpicks` without lockpicks. `sOutOfLockpicks` also shows
 when the last pick breaks in the menu.
 
+A carried key that opens a lock shows a notice too: `sOpenWithKey`, "Unlocked with %s.", with the
+key's name for a door, and `sOpenedContainer` for a container. Which of the two the game shows for
+which target is OpenSky's reading of their words.
+
 ## Papyrus
 
 `ObjectReference` natives read and write the same state as the gate:

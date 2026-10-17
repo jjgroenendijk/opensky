@@ -107,12 +107,14 @@ struct LockCoordinatorTests {
     }
 
     @Test func aCarriedKeyUnlocksAndTheDoorStaysOpen() throws {
-        let rig = try Self.coordinator()
+        let world = FakeLockWorld()
+        let rig = try Self.coordinator(world: world)
         let locks = rig.locks
         let harness = rig.harness
         _ = try harness.runtime.inventory.add(Self.key, count: 1, to: .player)
         let target = Self.door(level: .requiresKey)
         #expect(locks.gate(target) == nil)
+        #expect(world.notices == ["Unlocked with Key \(Self.key)."])
         let state = locks.lock(of: target.interaction)?.state
         #expect(state?.isLocked == false)
         #expect(state?.level == 255)
