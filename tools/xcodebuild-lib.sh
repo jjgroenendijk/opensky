@@ -14,6 +14,9 @@
 #   xcodebuild_summary ROOT          stdin -> each diagnostic once, errors capped
 #   opensky_build_lock               wait for a build slot and this build tree
 #   opensky_build_unlock             release both
+#   opensky_drop_failed_records ROOT LOG BUILD_DIR
+#                                    after a failed build, delete the driver
+#                                    records of the targets that failed
 #   xcodebuild_phase_marks FILE      stdin -> stdout, noting when each phase starts in FILE
 #   xcodebuild_phases FILE           print one line with the length of each phase
 # shellcheck shell=sh
@@ -125,6 +128,14 @@ opensky_build_unlock() {
         rm -rf "$held"
     done
     OPENSKY_BUILD_LOCK=""
+}
+
+# A failed compile leaves the driver record of its target claiming files are
+# current that it never compiled (tools/failed-build-records.sh).
+opensky_drop_failed_records() {
+    dropped="$("$1/tools/failed-build-records.sh" -d "$2" "$3" | tr '\n' ' ' | sed 's/ $//')"
+    [ -n "$dropped" ] || return 0
+    printf '[INFO] removed driver records of failed targets: %s\n' "$dropped"
 }
 
 # A run spends most of its time before the first compile, and the transcript

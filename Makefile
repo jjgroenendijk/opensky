@@ -481,6 +481,7 @@ test-package: link-shared $(SHADER_LIBRARY) ## Run one package test target with 
 		echo "[INFO] swift test --filter $$filter"; status=0; \
 		. ./tools/xcodebuild-lib.sh; opensky_build_lock; \
 		swift test --filter "$$filter" >"$$log" 2>&1 || status=$$?; opensky_build_unlock; \
+		[ "$$status" -eq 0 ] || opensky_drop_failed_records . "$$log" .build/out; \
 		grep -E '(error|warning): |^✘|Test run with' "$$log" || true; \
 		echo "[INFO] full transcript: $$log"; [ "$$status" -eq 0 ] || exit "$$status"; \
 		ran="$$(sed -n 's/.*Test run with \([0-9][0-9]*\) test.*/\1/p' "$$log" | tail -n 1)"; \

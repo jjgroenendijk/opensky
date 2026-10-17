@@ -94,6 +94,7 @@ fi
 # command line per failed file; the error lines alone say the same.
 xcodebuild_summary "$root" <"$log" |
     grep -vE '^[[:space:]]*\||nonzero exit code|^error: Build failed' || true
+[ "$status" -eq 0 ] || opensky_drop_failed_records "$root" "$log" "$root/.build/out"
 printf '[INFO] full transcript: %s\n' "$log"
 if [ "$status" -ne 0 ]; then
     echo "[ERROR] compile failed" >&2
