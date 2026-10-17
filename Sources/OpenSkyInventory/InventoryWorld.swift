@@ -2,9 +2,11 @@
 // from the running session. The app answers it; a test passes a fake.
 // See docs/engine/coordinators.md.
 
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
+import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -36,6 +38,35 @@ public protocol InventoryWorld: AnyObject {
     var gameDaysPassed: Float? { get }
     /// Republishes the crosshair target, so a changed prompt label shows at once.
     func refreshInteractionTarget()
+    /// The player's current Speech skill. Nil without actor values.
+    func playerSpeechSkill() -> Float?
+    /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
+    /// the live conditions.
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float
+}
+
+extension InventoryWorld {
+    /// A session with no actor values trades at the starting Speech skill.
+    public func playerSpeechSkill() -> Float? {
+        nil
+    }
+
+    /// A session with no perks leaves every value as it is.
+    public func perkModified(
+        _ value: Float,
+        at _: PerkEntryPoint,
+        on _: ReferenceKey,
+        subjects _: PerkEvaluationSubjects,
+        seams _: ConditionContext
+    ) -> Float {
+        value
+    }
 }
 
 /// One container-menu transaction, named by its direction.

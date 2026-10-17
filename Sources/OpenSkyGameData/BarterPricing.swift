@@ -23,7 +23,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     /// effect".
     public static let maximumSpeechSkill: Double = 100
 
-    /// The Speech value prices use: 15, the vanilla start. UESP gives it as a worked
+    /// The Speech value prices use without a live skill: 15, the vanilla start. UESP gives it as a
+    /// worked
     /// example ("At 15 skill and no perks, the final price factor is 3.10 for buying and
     /// 0.322 for selling"), so there is a published value to check.
     public static let defaultSpeechSkill: Double = 15
@@ -38,8 +39,8 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
     public let barterMin: Double
     public let barterMax: Double
     public let speechSkill: Double
-    /// The modified price factors that carry perks and Fortify Barter. Both are
-    /// 1 for this milestone; see the file comment.
+    /// The `Mod Buy Prices` and `Mod Sell Prices` results, which carry the perks and
+    /// Fortify Barter. 1 without perks.
     public let buyModifier: Double
     public let sellModifier: Double
 
@@ -69,6 +70,20 @@ nonisolated public struct BarterPricing: Equatable, Sendable {
         self.buyModifier = buyModifier
         self.sellModifier = sellModifier
         self.source = source
+    }
+
+    /// These settings at the trader's own Speech skill and perk modifiers.
+    public func trading(
+        speechSkill: Double, buyModifier: Double, sellModifier: Double
+    ) -> BarterPricing {
+        BarterPricing(
+            barterMin: barterMin,
+            barterMax: barterMax,
+            speechSkill: speechSkill,
+            buyModifier: buyModifier.isFinite ? max(0, buyModifier) : 1,
+            sellModifier: sellModifier.isFinite ? max(0, sellModifier) : 1,
+            source: source
+        )
     }
 
     // MARK: - The formula

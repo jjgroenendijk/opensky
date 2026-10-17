@@ -15,6 +15,8 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
@@ -133,6 +135,27 @@ extension InventoryWorldAdapter: InventoryWorld {
     /// lock label appends to the name, so labelling it twice would repeat the band.
     func refreshInteractionTarget() {
         game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
+    }
+
+    func playerSpeechSkill() -> Float? {
+        guard let speech = ActorValueIdentity.index(named: "Speechcraft") else { return nil }
+        return game.actorValues.runtime?.value(at: speech, on: .player)
+    }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float {
+        game.perks.modified(
+            value,
+            at: entryPoint,
+            on: key,
+            subjects: { _ in subjects },
+            seams: seams
+        )
     }
 
     /// The streamer's target with the runtime label, such as a harvested plant's.

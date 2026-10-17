@@ -6,6 +6,7 @@ import OpenSkyCrimeInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
+import OpenSkyProgressionInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
@@ -46,7 +47,8 @@ extension InventoryCoordinator {
         item: FormID,
         named name: String,
         container: InventoryHolder,
-        vendor: Vendor?
+        vendor: Vendor?,
+        merchant: ReferenceKey? = nil
     ) throws -> String {
         guard let runtime else { return InventoryCore.noRuntimeText }
         switch transfer {
@@ -66,7 +68,7 @@ extension InventoryCoordinator {
         case .buy:
             let bought: BarterTransaction
             do {
-                bought = try barterSession(runtime, container, vendor).buy(item)
+                bought = try barterSession(runtime, container, vendor, merchant).buy(item)
             } catch BarterError.playerCannotAfford {
                 return tradeTexts.tooExpensive
             }
@@ -77,7 +79,7 @@ extension InventoryCoordinator {
         case .sell:
             let sold: BarterTransaction
             do {
-                sold = try barterSession(runtime, container, vendor).sell(item)
+                sold = try barterSession(runtime, container, vendor, merchant).sell(item)
             } catch let BarterError.merchantCannotAfford(price, gold) {
                 return tradeTexts.merchantShortText(price: price, gold: gold)
             }
@@ -103,13 +105,32 @@ extension InventoryCoordinator {
     private func barterSession(
         _ runtime: WorldItemRuntime,
         _ container: InventoryHolder,
-        _ vendor: Vendor?
+        _ vendor: Vendor?,
+        _ merchant: ReferenceKey?
     ) -> BarterSession {
         BarterSession(
             runtime: runtime,
             merchant: container,
-            pricing: barterPricing,
+            pricing: barterPricing(with: merchant),
             rules: vendors?.rules(for: vendor) ?? .unrestricted
+        )
+    }
+
+    /// The prices the player trades at with `merchant`: the player's live Speech skill,
+    /// then the player's `Mod Buy Prices` and `Mod Sell Prices` with the merchant bound.
+    public func barterPricing(with merchant: ReferenceKey?) -> BarterPricing {
+        guard let world else { return barterPricing }
+        let subjects = PerkEvaluationSubjects(owner: .player, target: merchant)
+        let modifier = { (entryPoint: PerkEntryPoint) in
+            Double(world.perkModified(
+                1, at: entryPoint, on: .player, subjects: subjects, seams: ConditionContext()
+            ))
+        }
+        return barterPricing.trading(
+            speechSkill: world.playerSpeechSkill().map(Double.init)
+                ?? barterPricing.speechSkill,
+            buyModifier: modifier(.modBuyPrices),
+            sellModifier: modifier(.modSellPrices)
         )
     }
 }

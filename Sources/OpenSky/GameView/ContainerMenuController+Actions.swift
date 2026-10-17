@@ -101,7 +101,8 @@ extension ContainerMenuController {
             counterparty.holder,
             name: game.dialogueWorld.speakerLabel(for: actor),
             reference: game.streamer?.referenceEntry(key: counterparty.holder.key)?.formID,
-            vendor: counterparty.vendor
+            vendor: counterparty.vendor,
+            merchant: actor
         )
         setMode(.barter)
         open()
@@ -150,7 +151,8 @@ extension ContainerMenuController {
         }
         do {
             try note(game.inventory.transfer(
-                transfer, item: entry.item, named: entry.name, container: container, vendor: vendor
+                transfer, item: entry.item, named: entry.name, container: container,
+                vendor: vendor, merchant: merchant
             ))
         } catch {
             note("\(model.transferLabel) refused: \(String(describing: error))")
