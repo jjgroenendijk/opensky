@@ -16,11 +16,16 @@ nonisolated public struct SavePlayerPlace: Equatable, Sendable {
     public let feet: SIMD3<Float>
     /// Radians, the camera's yaw.
     public let yaw: Float
+    /// The exterior worldspace's editor ID; nil for an interior or an older save.
+    public let worldspace: String?
 
-    public init(cell: CellSceneLocation, feet: SIMD3<Float>, yaw: Float) {
+    public init(
+        cell: CellSceneLocation, feet: SIMD3<Float>, yaw: Float, worldspace: String? = nil
+    ) {
         self.cell = cell
         self.feet = feet
         self.yaw = yaw
+        self.worldspace = worldspace
     }
 }
 
@@ -30,6 +35,9 @@ nonisolated extension OpenSkySaveEncoder {
             writeCell(place.cell, into: &payload)
             for value in [place.feet.x, place.feet.y, place.feet.z, place.yaw] {
                 payload.writeFloat32(value)
+            }
+            if let worldspace = place.worldspace {
+                writeString(worldspace, into: &payload)
             }
         }
     }
@@ -50,8 +58,10 @@ nonisolated extension OpenSkySaveDecoder {
             }
             values.append(value)
         }
+        let worldspace = reader.isAtEnd ? nil : try reader.string("PLOC worldspace")
         return SavePlayerPlace(
-            cell: cell, feet: SIMD3(values[0], values[1], values[2]), yaw: values[3]
+            cell: cell, feet: SIMD3(values[0], values[1], values[2]), yaw: values[3],
+            worldspace: worldspace
         )
     }
 }

@@ -9,6 +9,7 @@ import OpenSkyWorld
 
 final class WorldPanelViewController: InspectorPanelViewController {
     let cameraSection = CameraSection()
+    let worldspaceSection = WorldspaceSection()
     let cinematicSection = CinematicCameraSection()
     let loadingSection = LoadingScreenSection()
     let firstPersonSection = FirstPersonSection()
@@ -31,6 +32,11 @@ final class WorldPanelViewController: InspectorPanelViewController {
     /// First-person arms, field of view, and their readout. Here because this
     /// panel selects the camera mode.
     /// Kill cams and camera shots, beside the camera mode they take over.
+    /// Where the camera is, by worldspace and cell, beside the camera it moves.
+    weak var worldspaceProvider: (any WorldspaceControlProviding)? {
+        didSet { worldspaceSection.provider = worldspaceProvider }
+    }
+
     weak var cinematicProvider: (any CinematicCameraControlProviding)? {
         didSet { cinematicSection.provider = cinematicProvider }
     }
@@ -91,7 +97,8 @@ final class WorldPanelViewController: InspectorPanelViewController {
 
     override func makeSections() -> [PanelSectionViewController] {
         [
-            cameraSection, cinematicSection, firstPersonSection, frameSection, worldLoadSection,
+            cameraSection, worldspaceSection, cinematicSection, firstPersonSection, frameSection,
+            worldLoadSection,
             assetCacheSection, sceneSection, renderDebugSection, triggerSection, trapSection,
             objectAnimationSection, sequenceDoorSection, loadingSection
         ]

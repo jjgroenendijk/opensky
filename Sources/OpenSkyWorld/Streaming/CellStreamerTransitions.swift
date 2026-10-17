@@ -148,6 +148,12 @@ extension CellStreamer {
             interiorScene = nil
             interiorSourceDoor = nil
             interiorMutationSequence = 0
+            // The runner already builds in the destination worldspace.
+            if let worldspace = transition.worldspaceEditorID, worldspace != worldspaceEditorID {
+                switchExterior(
+                    to: worldspace, at: transition.destinationPlacement.position
+                )
+            }
             let replaced = composition.setCell(transition.scene, at: coordinate)
             core.seedResident(coordinate)
             if let previousInterior {

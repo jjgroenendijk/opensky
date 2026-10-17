@@ -52,6 +52,15 @@ flags that say what to take from the parent:
 OpenSky follows parents by FormID and stops on a loop. If the parent has no value, there is
 no default. The `CELL` fields always win over the worldspace values.
 
+## Distant water
+
+Past the loaded cells, the sea is drawn at the `WRLD` LOD water height (`NAM4`) with the LOD
+water type (`NAM3`), both from the worldspace that gives the LOD data. Without `NAM4` the
+default water height applies. A worldspace with the `DATA` "no LOD water" bit (`0x08`) has
+none. The planes cover the area of the worldspace's `lodsettings` file, less the bounding box
+of the loaded cells, which draw their own water. Without these planes, the distant sea
+would show bare seabed.
+
 ## WATR colors and surface
 
 In Skyrim SE, `WATR DNAM` is 228 or 232 bytes. OpenSky reads only these two sizes and skips

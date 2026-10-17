@@ -319,7 +319,7 @@ extension MenuWorldAdapter {
         switch start {
         case .normal: return
         case let .cell(editorID): target = .cell(editorID)
-        case let .exterior(_, x, y): target = .grid(x: x, y: y)
+        case let .exterior(worldspace, x, y): target = .grid(x: x, y: y, worldspace: worldspace)
         }
         coverNextTeleport = true
         teleportPlayer(target, openingRaceMenu: false)

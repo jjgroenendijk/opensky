@@ -11,7 +11,13 @@ nonisolated public enum CellDirectoryEntry: Equatable, Sendable {
     /// `entryDoor` is a door REFR whose teleport ends inside the cell; nil
     /// when the cell has no teleport door at all.
     case interior(cell: FormID, entryDoor: FormID?)
-    case exterior(cell: FormID, grid: CellCoordinate)
+    case exterior(cell: FormID, worldspace: String, grid: CellCoordinate)
+}
+
+/// An exterior reference's spot and the worldspace that holds it.
+nonisolated public struct ExteriorPlacement: Equatable, Sendable {
+    public let placement: PlacedReference.Placement
+    public let worldspace: String
 }
 
 nonisolated public enum CellDirectory {
@@ -61,15 +67,51 @@ nonisolated public enum CellDirectory {
     private static func find(
         in file: ESMFile, matching: (ESMRecord) -> Bool
     ) -> CellDirectoryEntry? {
-        for type: FourCC in ["CELL", "WRLD"] {
-            guard let top = file.topGroup(of: type), let children = try? top.children() else {
-                continue
-            }
-            if let entry = search(children, matching: matching, localized: file.isLocalized) {
+        let localized = file.isLocalized
+        if
+            let top = file.topGroup(of: "CELL"), let children = try? top.children(),
+            let entry = search(children, matching: matching, worldspace: nil, localized: localized)
+        {
+            return entry
+        }
+        guard let top = file.topGroup(of: "WRLD"), let children = try? top.children() else {
+            return nil
+        }
+        for (world, group) in worldChildren(children, localized: localized) {
+            guard let nested = try? group.children() else { continue }
+            if
+                let entry = search(
+                    nested,
+                    matching: matching,
+                    worldspace: world,
+                    localized: localized
+                )
+            {
                 return entry
             }
         }
         return nil
+    }
+
+    /// Each world children group with the editor ID of the WRLD record before it.
+    private static func worldChildren(
+        _ children: [ESMGroup.Child], localized: Bool
+    ) -> [(String, ESMGroup)] {
+        var result: [(String, ESMGroup)] = []
+        var world: (formID: UInt32, editorID: String)?
+        for child in children {
+            switch child {
+            case let .record(record) where record.type == "WRLD":
+                world = (try? Worldspace(record: record, localized: localized))
+                    .flatMap { decoded in decoded.editorID.map { (record.formID, $0) } }
+            case let .group(group) where group.kind == .worldChildren:
+                guard let world, group.parentFormID == world.formID else { continue }
+                result.append((world.editorID, group))
+            default:
+                continue
+            }
+        }
+        return result
     }
 
     /// Where an exterior reference stands, in the last plugin that places it. A
@@ -77,15 +119,25 @@ nonisolated public enum CellDirectory {
     /// whole WRLD group is searched.
     public static func exteriorPlacement(
         of formID: FormID, in loadOrder: LoadOrderPlugins
-    ) -> PlacedReference.Placement? {
+    ) -> ExteriorPlacement? {
         guard let resolved = loadOrder.space.resolve(formID) else { return nil }
         for plugin in loadOrder.plugins.reversed() {
             guard
                 let top = plugin.file.topGroup(of: "WRLD"), let children = try? top.children(),
-                let local = plugin.translation.source.localFormID(of: resolved),
-                let found = plugin.decode({ placement(of: local, in: children) })
+                let local = plugin.translation.source.localFormID(of: resolved)
             else { continue }
-            return found
+            let found: ExteriorPlacement? = plugin.decode {
+                for (world, group) in worldChildren(children, localized: plugin.localized) {
+                    guard let nested = try? group.children() else { continue }
+                    if let placement = placement(of: local, in: nested) {
+                        return ExteriorPlacement(placement: placement, worldspace: world)
+                    }
+                }
+                return nil
+            }
+            if let found {
+                return found
+            }
         }
         return nil
     }
@@ -112,6 +164,7 @@ nonisolated public enum CellDirectory {
     private static func search(
         _ children: [ESMGroup.Child],
         matching: (ESMRecord) -> Bool,
+        worldspace: String?,
         localized: Bool
     ) -> CellDirectoryEntry? {
         for (index, child) in children.enumerated() {
@@ -121,10 +174,13 @@ nonisolated public enum CellDirectory {
                     matching(record),
                     let cell = try? Cell(record: record, localized: localized)
                 else { continue }
-                return entry(for: cell, childrenAfter: index, in: children)
+                return entry(for: cell, worldspace: worldspace, childrenAfter: index, in: children)
             case let .group(group):
                 guard let nested = try? group.children() else { continue }
-                if let entry = search(nested, matching: matching, localized: localized) {
+                let entry = search(
+                    nested, matching: matching, worldspace: worldspace, localized: localized
+                )
+                if let entry {
                     return entry
                 }
             case .record:
@@ -136,11 +192,17 @@ nonisolated public enum CellDirectory {
 
     private static func entry(
         for cell: Cell,
+        worldspace: String?,
         childrenAfter index: Int,
         in siblings: [ESMGroup.Child]
     ) -> CellDirectoryEntry {
-        if !cell.isInterior, let grid = cell.grid {
-            return .exterior(cell: cell.formID, grid: CellCoordinate(x: grid.x, y: grid.y))
+        if !cell.isInterior, let grid = cell.grid, let worldspace {
+            return .exterior(
+                cell: cell.formID, worldspace: worldspace, grid: CellCoordinate(
+                    x: grid.x,
+                    y: grid.y
+                )
+            )
         }
         let next = siblings.index(after: index)
         guard

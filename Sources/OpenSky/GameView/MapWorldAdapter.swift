@@ -25,7 +25,8 @@ import simd
 final class MapWorldAdapter {
     unowned let game: GameViewController
     /// Marker names and places are fixed for a session, so they resolve once.
-    private var baseSites: [MapMarkerSite]?
+    /// Marker sites per map worldspace, read once each.
+    private var baseSites: [ResolvedFormID: [MapMarkerSite]] = [:]
     private var strings: LocalizedStrings?
 
     init(game: GameViewController) {
@@ -44,15 +45,22 @@ final class MapWorldAdapter {
         return strings?.resolve(value, kind: kind)
     }
 
+    /// The map of the worldspace the player stands in, or of its map parent.
+    private var mapWorldspace: Worldspace? {
+        guard let records, let current = game.streamer?.worldspaceEditorID else { return nil }
+        return records.mapWorldspace(of: current)
+    }
+
     private func sites() -> [MapMarkerSite] {
-        if let baseSites {
-            return baseSites
+        guard
+            let name = mapWorldspace?.editorID,
+            let world = records?.worldspaceIDs[name]
+        else { return [] }
+        if let cached = baseSites[world] {
+            return cached
         }
-        guard let tamriel = records?.tamriel else { return [] }
-        let sites = baseSites(
-            in: ResolvedFormID(plugin: "Skyrim.esm", objectID: tamriel.formID.rawValue)
-        )
-        baseSites = sites
+        let sites = baseSites(in: world)
+        baseSites[world] = sites
         return sites
     }
 
@@ -97,9 +105,9 @@ extension MapWorldAdapter: MapMenuWorld {
 
     var mapMarkerWorldspaces: [MapWorldspaceChoice] {
         guard let records else { return [] }
+        let names = Dictionary(records.worldspaceIDs.map { ($1, $0) }) { first, _ in first }
         return records.markers.countsByWorldspace.keys.map { world in
-            let name = world.plugin == "Skyrim.esm"
-                ? records.worldspaceEditorIDs[world.objectID] : nil
+            let name = names[world]
             return MapWorldspaceChoice(
                 formID: world, name: name ?? "\(world.plugin) \(world.objectID)"
             )
@@ -119,7 +127,7 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     var worldMapLimits: WorldMapLimits? {
-        guard game.streamer?.interiorScene == nil, let map = records?.tamriel?.details.map else {
+        guard game.streamer?.interiorScene == nil, let map = mapWorldspace?.details.map else {
             return nil
         }
         return WorldMapLimits(map: map)
@@ -192,7 +200,10 @@ extension MapWorldAdapter: MapMenuWorld {
             position: marker.position,
             rotation: rotation
         ))
-        if streamer.interiorScene != nil {
+        // The markers belong to the map's worldspace, which can be the current one's parent.
+        if let world = mapWorldspace?.editorID, world != streamer.worldspaceEditorID {
+            streamer.enterWorldspace(world, camera: camera)
+        } else if streamer.interiorScene != nil {
             streamer.leaveInterior(camera: camera)
         } else {
             renderer.camera = camera

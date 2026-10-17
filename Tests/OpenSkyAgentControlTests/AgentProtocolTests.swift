@@ -69,6 +69,9 @@ struct AgentCommandParsingTests {
             == .teleport(.cell("RiverwoodSleepingGiantInn")))
         #expect(try AgentDebugCommand.parse("teleport", args(["x": 6, "y": "-2"]))
             == .teleport(.grid(x: 6, y: -2)))
+        #expect(try AgentDebugCommand.parse(
+            "teleport", args(["worldspace": "DLC2SolstheimWorld", "x": 7, "y": 8])
+        ) == .teleport(.grid(x: 7, y: 8, worldspace: "DLC2SolstheimWorld")))
         #expect(try AgentDebugCommand.parse("teleport", args(["pos": "1, 2.5, -3"]))
             == .teleport(.position(SIMD3(1, 2.5, -3))))
         #expect(throws: AgentFailure.self) { try AgentDebugCommand.parse("teleport", args([:])) }

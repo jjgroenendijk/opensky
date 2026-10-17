@@ -68,13 +68,13 @@ enum SkyrimSaveImportAdapter {
         game.hud.showNotification("Imported \(url.lastPathComponent): \(result.report.summary)")
     }
 
-    /// An interior by its editor ID; an exterior by position, in the current worldspace.
+    /// An interior by its editor ID; an exterior by position in its worldspace.
     nonisolated static func teleportTarget(_ placement: ESSImportedPlacement)
         -> AgentTeleportTarget?
     {
         if placement.isInterior {
             return placement.spaceEditorID.map(AgentTeleportTarget.cell)
         }
-        return .position(placement.position)
+        return .position(placement.position, worldspace: placement.spaceEditorID)
     }
 }

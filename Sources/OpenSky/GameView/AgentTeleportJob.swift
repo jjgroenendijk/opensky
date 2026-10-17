@@ -30,11 +30,13 @@ final class AgentTeleportJob {
     private var phase: Phase
     private var deadline: Double?
     private var lookup: Result<CellDirectoryEntry?, AgentFailure>?
-    private var referenceLookup: Result<PlacedReference.Placement?, AgentFailure>?
+    private var referenceLookup: Result<ExteriorPlacement?, AgentFailure>?
     /// Where a reference outside the loaded cells stands, once its cell has loaded.
     private var exactFeet: SIMD3<Float>?
     /// A saved facing; other moves keep the current one.
     private var exactYaw: Float?
+    /// The exterior worldspace to stand in; nil keeps the current one.
+    private var worldspace: String?
 
     private var game: GameViewController {
         adapter.game
@@ -49,16 +51,22 @@ final class AgentTeleportJob {
             throw AgentFailure(.notReady, "a door transition is still loading")
         }
         switch target {
-        case let .position(position):
+        case let .position(position, world):
+            worldspace = world
             phase = .settling(untilFrame: 0)
-            place(at: position, renderer: renderer, streamer: streamer, leavingInterior: false)
+            place(
+                at: position,
+                renderer: renderer,
+                streamer: streamer,
+                leavingInterior: world != nil
+            )
             phase = settling()
         case let .reference(text):
             let reference: AgentReference
             do throws(AgentFailure) {
                 reference = try adapter.resolveReference(text)
             } catch where error.code == .notFound {
-                guard let formID = Self.formID(text) else { throw error }
+                guard let formID = FormID(token: text) else { throw error }
                 phase = .lookingUp
                 try startReferenceLookup(formID)
                 return
@@ -74,7 +82,8 @@ final class AgentTeleportJob {
                 leavingInterior: false
             )
             phase = settling()
-        case let .grid(x, y):
+        case let .grid(x, y, world):
+            worldspace = world
             phase = .lookingUp
             enterGrid(CellCoordinate(x: x, y: y))
         case let .cell(editorID):
@@ -94,6 +103,7 @@ final class AgentTeleportJob {
         }
         exactFeet = place.feet
         exactYaw = place.yaw
+        worldspace = place.worldspace
         phase = .lookingUp
         switch place.cell {
         case .exterior:
@@ -172,14 +182,15 @@ final class AgentTeleportJob {
 
     private func finishLookup() throws(AgentFailure) {
         if let referenceLookup {
-            guard let placement = try referenceLookup.get() else {
+            guard let found = try referenceLookup.get() else {
                 throw AgentFailure(
                     .notFound,
                     "no exterior reference with that FormID in the load order"
                 )
             }
-            exactFeet = placement.position
-            enterGrid(CellCoordinate(containing: placement.position))
+            exactFeet = found.placement.position
+            worldspace = found.worldspace
+            enterGrid(CellCoordinate(containing: found.placement.position))
             return
         }
         guard let lookup else { return }
@@ -187,7 +198,8 @@ final class AgentTeleportJob {
             throw AgentFailure(.notFound, "no such cell in the load order")
         }
         switch entry {
-        case let .exterior(_, grid):
+        case let .exterior(_, world, grid):
+            worldspace = world
             enterGrid(grid)
         case let .interior(cell, entryDoor):
             guard let entryDoor else {
@@ -200,23 +212,6 @@ final class AgentTeleportJob {
         }
     }
 
-    @concurrent
-    nonisolated private static func findCell(
-        _ find: @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?,
-        in root: GameDataRoot
-    ) async -> Result<CellDirectoryEntry?, AgentFailure> {
-        do {
-            return try .success(find(loadOrder(root)))
-        } catch {
-            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
-        }
-    }
-
-    /// The same plugins and FormID space the session reads.
-    nonisolated private static func loadOrder(_ root: GameDataRoot) throws -> LoadOrderPlugins {
-        try ActiveLoadOrder.open(root: root).plugins
-    }
-
     // MARK: - References outside the loaded cells
 
     private func startReferenceLookup(_ formID: FormID) throws(AgentFailure) {
@@ -227,23 +222,6 @@ final class AgentTeleportJob {
             let result = await Self.findReference(formID, in: root)
             self?.referenceLookup = result
         }
-    }
-
-    @concurrent
-    nonisolated private static func findReference(
-        _ formID: FormID,
-        in root: GameDataRoot
-    ) async -> Result<PlacedReference.Placement?, AgentFailure> {
-        do {
-            return try .success(CellDirectory.exteriorPlacement(of: formID, in: loadOrder(root)))
-        } catch {
-            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
-        }
-    }
-
-    private static func formID(_ text: String) -> FormID? {
-        let digits = text.lowercased().hasPrefix("0x") ? String(text.dropFirst(2)) : text
-        return UInt32(digits, radix: 16).map { FormID($0) }
     }
 
     // MARK: - Moving the player
@@ -279,11 +257,44 @@ final class AgentTeleportJob {
     ) {
         let rotation = SIMD3<Float>(0, 0, exactYaw ?? renderer.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(position: feet, rotation: rotation))
-        if leavingInterior, streamer.interiorScene != nil {
+        if let worldspace, worldspace != streamer.worldspaceEditorID {
+            streamer.enterWorldspace(worldspace, camera: camera)
+        } else if leavingInterior, streamer.interiorScene != nil {
             streamer.leaveInterior(camera: camera)
         } else {
             renderer.camera = camera
             renderer.reseedMovement(camera: camera)
+        }
+    }
+}
+
+extension AgentTeleportJob {
+    @concurrent
+    nonisolated private static func findCell(
+        _ find: @Sendable (LoadOrderPlugins) -> CellDirectoryEntry?,
+        in root: GameDataRoot
+    ) async -> Result<CellDirectoryEntry?, AgentFailure> {
+        do {
+            return try .success(find(loadOrder(root)))
+        } catch {
+            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
+        }
+    }
+
+    /// The same plugins and FormID space the session reads.
+    nonisolated private static func loadOrder(_ root: GameDataRoot) throws -> LoadOrderPlugins {
+        try ActiveLoadOrder.open(root: root).plugins
+    }
+
+    @concurrent
+    nonisolated private static func findReference(
+        _ formID: FormID,
+        in root: GameDataRoot
+    ) async -> Result<ExteriorPlacement?, AgentFailure> {
+        do {
+            return try .success(CellDirectory.exteriorPlacement(of: formID, in: loadOrder(root)))
+        } catch {
+            return .failure(AgentFailure(.failed, "could not read the load order: \(error)"))
         }
     }
 
@@ -293,9 +304,7 @@ final class AgentTeleportJob {
             (Float(grid.y) + 0.5) * CellCoordinate.cellSize
         )
     }
-}
 
-extension AgentTeleportJob {
     /// Next to a loaded actor, where it stands now, or on a loaded reference.
     private static func standingSpot(of key: ReferenceKey, game: GameViewController)
         -> SIMD3<Float>?

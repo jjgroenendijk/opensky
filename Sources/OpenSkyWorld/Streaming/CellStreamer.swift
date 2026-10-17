@@ -31,6 +31,10 @@ public final class CellStreamer {
     )
 
     public var grid: CellGridManager
+    /// The worldspace the exterior cells come from. A door or a teleport changes it.
+    public private(set) var worldspaceEditorID: String
+    /// Fires with the new worldspace after the exterior switched to it.
+    public let onWorldspaceChanged = CallbackFanOut<String>()
     public var composition = CellSceneComposition()
     public var core = CellStreamCore()
     public let runner: any CellBuildRunning
@@ -175,16 +179,18 @@ public final class CellStreamer {
 
     /// - Parameters:
     ///   - center: grid center at launch (streaming starts on FirstRenderCell).
+    ///   - worldspace: the worldspace the runner's provider starts in.
     ///   - radius: rings around center (default 2 -> 5x5).
-    ///   - runner: off-main build executor (serial queue in the app, a fake in
-    ///     tests).
+    ///   - runner: off-main build executor (a serial queue, or a test fake).
     ///   - sink: recomposed-scene handoff (Renderer.setScene in the app).
     public init(
         center: CellCoordinate,
+        worldspace: String = FirstRenderCell.worldspaceEditorID,
         radius: Int32 = CellGridManager.defaultRadius,
         runner: any CellBuildRunning,
         sink: @escaping SceneSink
     ) {
+        worldspaceEditorID = worldspace
         grid = CellGridManager(
             initialPosition: CellGridManager.cellCenter(of: center),
             radius: radius
@@ -207,10 +213,10 @@ public final class CellStreamer {
     ) {
         let completed = runner.drainCompleted()
         if !completed.isEmpty {
-            pending.append(contentsOf: completed)
+            pending.append(contentsOf: completed.filter(builtHere))
             activeBuild = nil
         }
-        let completedLOD = runner.drainCompletedDistantLOD()
+        let completedLOD = runner.drainCompletedDistantLOD().filter(builtHere)
         if finishDoorTransition(runner.drainCompletedDoorTransitions()) {
             return
         }
@@ -377,7 +383,9 @@ public final class CellStreamer {
         }
         return false
     }
+}
 
+extension CellStreamer {
     private func log(
         coordinate: CellCoordinate,
         decision: CellStreamCore.IntegrationResult,
@@ -412,6 +420,87 @@ public final class CellStreamer {
         }
         sink(scene, camera)
         logFootprint()
+    }
+}
+
+// MARK: - Worldspace changes
+
+extension CellStreamer {
+    /// Moves the exterior to another worldspace at `camera`, for a teleport. The
+    /// runner switches after the builds it already holds, whose results are dropped.
+    public func enterWorldspace(_ editorID: String, camera: SceneCamera) {
+        if let previous = interiorScene {
+            interiorScene = nil
+            interiorSourceDoor = nil
+            interiorMutationSequence = 0
+            emitCellDetached(previous)
+            evictUnused(previous.assets)
+        }
+        updateInteractionTarget(ray: nil)
+        runner.enqueueWorldspaceChange(editorID)
+        switchExterior(to: editorID, at: camera.walkFeetPosition ?? camera.eye)
+        hasSeededCamera = true
+        sink(viewScene(), camera)
+        invalidateAmbienceContext()
+        invalidateMusicContext()
+    }
+
+    /// Drops every exterior cell, staged cell, and the distant ring, then
+    /// recenters the grid at `position` in `editorID`. The runner must already
+    /// build in `editorID`, or have that change queued.
+    func switchExterior(to editorID: String, at position: SIMD3<Float>) {
+        var departed = CellAssets()
+        for coordinate in composition.coordinates {
+            guard let removed = composition.removeCell(at: coordinate) else { continue }
+            emitCellDetached(removed)
+            departed.meshKeys.formUnion(removed.assets.meshKeys)
+            departed.textureKeys.formUnion(removed.assets.textureKeys)
+        }
+        let staged = Array(stagedCells.values)
+        stagedCells.removeAll()
+        if let lod = composition.setDistantLOD(nil) {
+            departed.meshKeys.formUnion(lod.assets.meshKeys)
+            departed.textureKeys.formUnion(lod.assets.textureKeys)
+        }
+        for scene in pending.compactMap({ try? $0.result.get() }) + staged {
+            departed.meshKeys.formUnion(scene.assets.meshKeys)
+            departed.textureKeys.formUnion(scene.assets.textureKeys)
+        }
+        pending.removeAll()
+        requests.removeAll()
+        rebuildRequests.removeAll()
+        cellMutationSequence.removeAll()
+        core = CellStreamCore()
+        requestedLODCenter = nil
+        settledLODCenter = nil
+        coverageTransitionActive = false
+        lastEmittedRegions = nil
+        grid = CellGridManager(initialPosition: position, radius: grid.radius)
+        worldspaceEditorID = editorID
+        evictUnused(departed)
+        onWorldspaceChanged(editorID)
+    }
+
+    /// False for a result built in a worldspace the exterior has left. Its
+    /// assets go back for eviction.
+    private func builtHere(_ entry: CellBuildResult) -> Bool {
+        guard let worldspace = entry.worldspaceEditorID, worldspace != worldspaceEditorID else {
+            return true
+        }
+        if case let .success(scene) = entry.result {
+            evictUnused(scene.assets)
+        }
+        return false
+    }
+
+    private func builtHere(_ entry: DistantLODBuildResult) -> Bool {
+        guard let worldspace = entry.worldspaceEditorID, worldspace != worldspaceEditorID else {
+            return true
+        }
+        if case let .success(scene?) = entry.result {
+            evictUnused(scene.assets)
+        }
+        return false
     }
 }
 

@@ -99,6 +99,8 @@ extension AgentWorldAdapter {
             "pitch": .init(camera.pitch * 180 / .pi),
             "movementMode": .string(String(describing: renderer.movementMode)),
             "cell": cellState(at: camera.position),
+            "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
+            "weather": renderer.weather?.currentWeatherEditorID.map(AgentJSON.string) ?? .null,
             "bodyFailure": .init(game.player.failureReason)
         ]
         if let values = game.actorValues.runtime {

@@ -78,7 +78,7 @@ typealias WorldControlProviders = AINavigationControlProviding & AIOverlayContro
     & TitleMenuControlProviding & TrapControlProviding
     & TriggerControlProviding
     & UILabControlProviding & VisualEffectControlProviding & WaterControlProviding
-    & WeatherControlProviding & WorldLoadReportProviding
+    & WeatherControlProviding & WorldLoadReportProviding & WorldspaceControlProviding
 
 /// Passed to a world-inspector factory so the panel can wire its providers.
 @MainActor
@@ -192,6 +192,7 @@ enum DestinationRegistry {
             content: .worldInspector { context in
                 let panel = WorldPanelViewController()
                 panel.cameraProvider = context.providers
+                panel.worldspaceProvider = context.providers
                 panel.cinematicProvider = context.providers
                 panel.loadingProvider = context.providers
                 panel.firstPersonProvider = context.providers

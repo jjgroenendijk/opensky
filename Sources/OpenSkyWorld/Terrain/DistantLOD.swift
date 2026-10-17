@@ -271,6 +271,21 @@ nonisolated public struct DistantLODScene: Sendable {
         self.missingTreeBlockCount = missingTreeBlockCount
         self.treeInstanceCount = treeInstanceCount
     }
+
+    /// The same ring with distant water planes added.
+    public func adding(water: [WaterDrawItem]) -> DistantLODScene {
+        DistantLODScene(
+            renderScene: RenderScene(merging: [
+                renderScene, RenderScene(instances: [], water: water)
+            ]),
+            assets: assets,
+            blockCount: blockCount,
+            missingBlockCount: missingBlockCount,
+            treeBlockCount: treeBlockCount,
+            missingTreeBlockCount: missingTreeBlockCount,
+            treeInstanceCount: treeInstanceCount
+        )
+    }
 }
 
 nonisolated public final class DistantLODBuilder {
@@ -375,6 +390,14 @@ nonisolated public final class DistantLODBuilder {
             receivesPointLights: false,
             receivesShadows: false,
             layer: .distantLOD
+        )
+    }
+
+    /// The cells the worldspace's LOD covers, from its `lodsettings` file.
+    public func area(worldspace: String) -> LODWaterLayout.Rectangle? {
+        guard let settings = try? settings(worldspace: worldspace) else { return nil }
+        return LODWaterLayout.Rectangle(
+            origin: settings.origin, width: settings.stride, height: settings.stride
         )
     }
 

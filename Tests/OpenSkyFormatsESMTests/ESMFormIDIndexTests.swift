@@ -48,6 +48,14 @@ struct ESMFormIDIndexTests {
         #expect(try index.record(withFormID: 0x3C)?.fields().first?.type == "EDID")
     }
 
+    @Test func namesTheWorldspaceThatHoldsARecord() throws {
+        let index = try ESMFormIDIndex(file: Self.plugin())
+        #expect(index.worldFormID(containing: 0x2B) == 0x1A)
+        #expect(index.worldFormID(containing: 0x3C) == 0x1A)
+        #expect(index.worldFormID(containing: 0x50) == nil)
+        #expect(index.worldFormID(containing: 0x1A) == nil)
+    }
+
     @Test func keepsTheFirstRecordOfADuplicatedFormID() throws {
         let index = try ESMFormIDIndex(file: Self.plugin())
         #expect(index.record(withFormID: 0x50)?.type == "DOOR")

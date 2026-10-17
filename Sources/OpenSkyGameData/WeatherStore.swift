@@ -52,7 +52,7 @@ nonisolated public final class WeatherStore {
     public let weathers: [UInt32: Weather]
     public let climates: [UInt32: Climate]
     public let regions: [UInt32: Region]
-    /// WRLD FormID -> CNAM climate FormID.
+    /// WRLD FormID -> CNAM climate FormID, from the parent when the PNAM flag says so.
     public let worldspaceClimate: [UInt32: FormID]
     /// WRLD editor ID -> FormID, to resolve the pinned worldspace by name.
     public let worldspaceByEditorID: [String: UInt32]
@@ -71,10 +71,12 @@ nonisolated public final class WeatherStore {
         let worlds = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
             try Worldspace(record: $0, localized: $1)
         }
+        let byID = Dictionary(worlds.map { ($0.formID.rawValue, $0) }) { _, new in new }
         var climateByWorld: [UInt32: FormID] = [:]
         var worldByEditorID: [String: UInt32] = [:]
-        for world in worlds {
-            if let climate = world.climate, !climate.isNull {
+        for world in byID.values {
+            let source = world.source(of: .useClimateData, in: byID)
+            if let climate = source.climate, !climate.isNull {
                 climateByWorld[world.formID.rawValue] = climate
             }
             if let editorID = world.editorID {

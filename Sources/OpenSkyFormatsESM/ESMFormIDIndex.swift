@@ -11,6 +11,14 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         let offset: UInt32
         /// CELL whose persistent or temporary children hold the record; 0 when none.
         let cell: UInt32
+        /// WRLD whose world children group holds the record; 0 when none.
+        let world: UInt32
+    }
+
+    /// The groups a walk is inside.
+    private struct Owners {
+        var cell: UInt32 = 0
+        var world: UInt32 = 0
     }
 
     private let data: Data
@@ -21,7 +29,7 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         data = file.data
         var found: [Entry] = []
         for group in file.topGroups {
-            Self.collect(group: group, cell: 0, into: &found)
+            Self.collect(group: group, owners: Owners(), into: &found)
         }
         let sorted = found.enumerated().sorted { lhs, rhs in
             lhs.element.formID == rhs.element.formID
@@ -60,6 +68,13 @@ nonisolated public struct ESMFormIDIndex: Sendable {
         return cell
     }
 
+    /// The WRLD whose world children group holds the record: an exterior CELL, or a
+    /// reference placed in one.
+    public func worldFormID(containing formID: UInt32) -> UInt32? {
+        guard let world = entry(for: formID)?.world, world != 0 else { return nil }
+        return world
+    }
+
     private func entry(for formID: UInt32) -> Entry? {
         var low = 0
         var high = entries.count
@@ -75,20 +90,24 @@ nonisolated public struct ESMFormIDIndex: Sendable {
     }
 
     /// A malformed group is skipped, as in `ESMWalk`.
-    private static func collect(group: ESMGroup, cell: UInt32, into found: inout [Entry]) {
+    private static func collect(group: ESMGroup, owners: Owners, into found: inout [Entry]) {
         guard let children = try? group.children() else { return }
-        let owner = switch group.kind {
-        case .cellPersistentChildren, .cellTemporaryChildren: group.header.label
-        default: cell
+        var owners = owners
+        switch group.kind {
+        case .cellPersistentChildren, .cellTemporaryChildren: owners.cell = group.header.label
+        case .worldChildren: owners.world = group.header.label
+        default: break
         }
         for child in children {
             switch child {
             case let .record(record):
                 let offset = record.dataRange.lowerBound - ESMRecord.Header.size
                 guard let stored = UInt32(exactly: offset) else { continue }
-                found.append(Entry(formID: record.formID, offset: stored, cell: owner))
+                found.append(Entry(
+                    formID: record.formID, offset: stored, cell: owners.cell, world: owners.world
+                ))
             case let .group(sub):
-                collect(group: sub, cell: owner, into: &found)
+                collect(group: sub, owners: owners, into: &found)
             }
         }
     }

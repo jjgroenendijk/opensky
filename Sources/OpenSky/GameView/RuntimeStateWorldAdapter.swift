@@ -307,12 +307,19 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     /// Interior coordinates are local to the cell, as the camera holds them there.
     /// The restore stands the player at these feet, so fly mode saves the camera.
     private func playerPlace() -> SavePlayerPlace? {
-        guard let cell = game.streamer?.currentCellLocation, let renderer = game.renderer else {
-            return nil
-        }
+        guard
+            let streamer = game.streamer, let cell = streamer.currentCellLocation,
+            let renderer = game.renderer
+        else { return nil }
         let feet = renderer.movementMode.isPlayerControlled
             ? renderer.walkController.feetPosition : renderer.freeFlyCamera.position
-        return SavePlayerPlace(cell: cell, feet: feet, yaw: renderer.freeFlyCamera.yaw)
+        let worldspace: String? = switch cell {
+        case .exterior: streamer.worldspaceEditorID
+        case .interior: nil
+        }
+        return SavePlayerPlace(
+            cell: cell, feet: feet, yaw: renderer.freeFlyCamera.yaw, worldspace: worldspace
+        )
     }
 }
 

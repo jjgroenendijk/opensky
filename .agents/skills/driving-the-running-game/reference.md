@@ -45,6 +45,7 @@ arrow keys.
 `state scenes`, `state scripts [--ref <ref or quest editorID>]`, `state packages --ref <ref>`,
 `state time`, `state frame`.
 
+- `state player` gives the exterior `worldspace` and the current `weather` editor ID.
 - `state player` also gives `firstPerson`: whether the arms graph and rig are attached and
   drawn, the failure reason, the arm model count, and the bones the last pose reached.
 - `state quest` also lists each reference alias with the reference that fills it, or null.
@@ -62,8 +63,8 @@ A `<ref>` is `player`, `target` (the crosshair), or a hex FormID of a loaded ref
 
 | Command | Example |
 | --- | --- |
-| `debug teleport --cell <editorID>` | `--cell WhiterunBanneredMare` (Skyrim.esm cells) |
-| `debug teleport --x <n> --y <n>` | an exterior cell grid |
+| `debug teleport --cell <editorID>` | `--cell WhiterunBanneredMare` (any cell in the load order) |
+| `debug teleport --x <n> --y <n> [--worldspace <editorID>]` | an exterior cell grid; `--worldspace DLC2SolstheimWorld` goes to another worldspace first |
 | `debug teleport --pos x,y,z` or `--ref <ref>` | inside the current cell; interior positions are local |
 | `debug time <hour>` | `debug time 13.5` |
 | `debug weather [<editorID>]` | no ID clears the forced weather |

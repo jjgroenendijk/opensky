@@ -94,11 +94,14 @@ one core busy the whole time.
 - References are named as `player`, `target` (the crosshair), or a hex FormID of a loaded
   reference. There is no editor-ID index for placed references.
 - `debug teleport --pos` stays in the current cell, because interior positions are local to
-  their cell. `--x --y` and `--cell` change cells.
+  their cell. `--x --y` and `--cell` change cells. `--worldspace <editorID>` with `--x --y` or
+  `--pos` goes to that worldspace first, such as `--worldspace DLC2SolstheimWorld --x 7 --y 8`.
 - `debug teleport --ref` with a loaded reference stays in the current cell. A form ID that is
-  not loaded is looked up in the exterior worldspaces of Skyrim.esm, and its cell loads first.
-- `debug teleport --cell` searches Skyrim.esm only. An interior is entered through one of its
-  doors, so the player arrives at that door's marker.
+  not loaded is looked up in the exterior worldspaces of the load order, and its worldspace
+  and cell load first.
+- `debug teleport --cell` searches the whole load order. An exterior cell loads its own
+  worldspace. An interior is entered through one of its doors, so the player arrives at that
+  door's marker.
 - `debug resurrect` clears the death record and refills the actor values; the ragdoll keeps
   its pose until the cell reloads.
 - Items can only be added to or removed from the player.
