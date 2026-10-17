@@ -17,7 +17,7 @@ struct FrameStatsTests {
             if frame < 119 {
                 #expect(flushed == nil, "window must not flush before 120 frames")
             } else {
-                summary = flushed
+                summary = flushed?.text
             }
         }
 
@@ -38,7 +38,7 @@ struct FrameStatsTests {
             let start = stats.beginFrame()
             if let line = stats.endFrame(cpuStartNS: start) {
                 flushCount += 1
-                summary = line
+                summary = line.text
             }
             // Polling mid-window is what the panel and the HUD do at 2 Hz.
             _ = stats.snapshot()

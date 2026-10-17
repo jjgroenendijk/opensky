@@ -90,7 +90,7 @@ extension AudioCoordinator: AudioControlProviding {
 
     public func forceMusicType(named name: String) -> String? {
         guard let musicDirector else { return "audio is not enabled" }
-        return musicDirector.forcePlayMusicType(named: name)
+        return musicDirector.forcePlayMusicType(named: name)?.text
     }
 
     public func stopMusic() {
