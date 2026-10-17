@@ -51,7 +51,7 @@ texture drawn in the wrong colour, needs a render check or a play test, not this
 | `behavior` | A Havok generator or modifier class in an actor behaviour graph | The sweep reached it and the evaluator noted no gap | Objects of the class |
 | `animations` | A Havok class in any `.hkx`, a clip annotation event, a graph variable | A decoder reads the class; engine code reacts to the event or binds the variable | Objects, clips, graphs |
 | `meshes` | A NIF block type, a lighting shader type, a shader flag | Engine code names the type; a draw term or draw state uses the shader type or flag | Blocks, shader blocks |
-| `textures` | A DDS variant: pixel format, cubemap, or unread kind | `DDSFile` reads it | Textures |
+| `textures` | A DDS variant: pixel format, cubemap, volume, or unread kind | `DDSFile` reads it | Textures |
 | `audio` | A sound file variant, and lip sync data | The engine opens and decodes it | Files |
 | `swf` | An interface movie that talks to the engine, and a SWF tag | A menu bridge drives the movie; a decoder reads the tag | GameDelegate names, tags |
 

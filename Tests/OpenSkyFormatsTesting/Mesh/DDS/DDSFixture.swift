@@ -53,6 +53,7 @@ public enum DDSFixture: Sendable {
         width: UInt32,
         height: UInt32,
         pitchOrLinearSize: UInt32 = 0,
+        depth: UInt32 = 0,
         mipCount: UInt32 = 0,
         pixelFormatSize: UInt32 = 32,
         pixelFlags: UInt32 = 0x4, // DDPF_FOURCC
@@ -72,7 +73,7 @@ public enum DDSFixture: Sendable {
         out.appendUInt32(height)
         out.appendUInt32(width)
         out.appendUInt32(pitchOrLinearSize)
-        out.appendUInt32(0) // dwDepth
+        out.appendUInt32(depth)
         out.appendUInt32(mipCount)
         out.append(Data(count: 11 * 4)) // dwReserved1
         // DDS_PIXELFORMAT

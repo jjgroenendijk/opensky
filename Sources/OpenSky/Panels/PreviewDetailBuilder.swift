@@ -196,13 +196,16 @@ nonisolated final class PreviewDetailBuilder {
     private func ddsDetail(header: String, path: String, data: Data) -> Detail {
         let file: DDSFile
         do {
-            file = try DDSFile(data: data)
+            file = try DDSFile(data: data, allowsVolume: true)
         } catch {
             return Detail(
                 text: header + "[ERROR] DDS parse failed: \(String(describing: error))"
             )
         }
         let text = header + AssetInfoText.dds(file: file, byteCount: data.count)
+        guard file.depth == 1 else {
+            return Detail(text: text + "\n[INFO] volume texture — no flat preview image")
+        }
         guard let device, let textures else {
             return Detail(text: text + Self.noGPUNote)
         }
