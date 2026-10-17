@@ -34,6 +34,17 @@ public enum StandardBenchmark {
         root: GameDataRoot, loadOrder: ActiveLoadOrder, files: any GameFileSource,
         device: MTLDevice, recorder: LoadPhaseRecorder?
     ) throws -> CellSceneBuilder {
+        try makeBuilder(
+            loadOrder: loadOrder, files: files, device: device, recorder: recorder,
+            terrainLOD: terrainLODStore(root: root, settings: PlayerSettingsFile.savedData())
+        )
+    }
+
+    /// The same builder off the main actor, with the terrain LOD settings read by the caller.
+    nonisolated public static func makeBuilder(
+        loadOrder: ActiveLoadOrder, files: any GameFileSource, device: MTLDevice,
+        recorder: LoadPhaseRecorder?, terrainLOD: TerrainLODConfigurationStore
+    ) throws -> CellSceneBuilder {
         let fileSystem: any GameFileSource = recorder
             .map { PhaseTimedFileSource(base: files, recorder: $0) } ?? files
         let textures = try TextureLibrary(fileSystem: fileSystem, device: device)
@@ -44,15 +55,19 @@ public enum StandardBenchmark {
             textures: textures,
             fileSystem: fileSystem,
             plugins: loadOrder.files,
-            terrainLODConfigurationStore: TerrainLODConfigurationStore(
-                snapshot: TerrainLODSettings.load(
-                    root: root,
-                    settings: PlayerSettingsFile.savedData()
-                )
-            )
+            terrainLODConfigurationStore: terrainLOD
         )
         builder.loadPhases = recorder
         return builder
+    }
+
+    nonisolated public static func terrainLODStore(
+        root: GameDataRoot, settings: Data?
+    ) -> TerrainLODConfigurationStore {
+        TerrainLODConfigurationStore(snapshot: TerrainLODSettings.load(
+            root: root,
+            settings: settings
+        ))
     }
 
     /// The benchmark with the saved settings and no options, as the Diagnostics page runs it.

@@ -166,18 +166,7 @@ enum GameScreenshotPath {
             return URL(filePath: out, relativeTo: current).standardizedFileURL
                 .path(percentEncoded: false)
         }
-        let stamp = Date()
-            .formatted(.iso8601.year().month().day().time(includingFractionalSeconds: false)
-                .timeSeparator(.omitted).dateSeparator(.omitted))
-        let base = current.appending(path: ".logs/game-screenshot")
-        let run = base.appending(path: stamp)
-        try FileManager.default.createDirectory(at: run, withIntermediateDirectories: true)
-        let latest = base.appending(path: "latest")
-        try? FileManager.default.removeItem(at: latest)
-        try? FileManager.default.createSymbolicLink(
-            atPath: latest.path(percentEncoded: false),
-            withDestinationPath: stamp
-        )
+        let run = try RunDirectory.create("game-screenshot")
         return run.appending(path: "screenshot.png").path(percentEncoded: false)
     }
 }

@@ -127,7 +127,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// Counts, indexes, and resolves the collected actors of one cell build.
-    nonisolated private func resolvedBuild(
+    nonisolated func resolvedBuild(
         _ collected: [CollectedActor],
         malformed: [String],
         parents: ActorEnableParents,

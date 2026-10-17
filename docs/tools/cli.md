@@ -84,6 +84,7 @@ prints its help and exits 2. `cell`, `screenshot`, and `render` default to the
 | `audio aac-check [--per-category n] [--out file]` | Encodes a fixed sample of each cached sound category as AAC and prints the AAC or ALAC verdict ([asset cache](/engine/asset-cache.md)) |
 | `effects census`, `effects imad <edid> [--at seconds]` | The effect records the runtimes read: `IMAD` timing, `IMGS` grading ranges, `SPGD` precipitation, `SOPM` output models, `REVB` reverbs, and explosions. `imad` samples one modifier ([image space](/rendering/image-space.md)) |
 | `screenshot --out <file> [...]` | Builds a cell, renders it offscreen, and writes a PNG. `render` is the same command |
+| `preview --record\|--ref\|--mesh\|--cell <id> [--stage studio\|cell] [--angles all] [...]` | One record, placed reference, mesh, or cell rendered offscreen from fixed angles, with a PNG and a JSON report per view. A blank view exits 1 ([preview render](/tools/preview-render.md)) |
 | `bench [...]` | A sustained offscreen render with a frame time budget |
 | `bench --fly-path [...]` | A scripted flight across cells through the real streamer, with memory, build, and update budgets |
 | `game <command> [...]` | Not a probe: drives the running app over its agent control socket. One JSON object per call, `--text` for lines. Commands, protocol, and a worked example: [agent control](/tools/agent-control.md) |

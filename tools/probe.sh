@@ -472,6 +472,17 @@ grep -E 'rain live [1-9][0-9]*, .*spgd RainParticles' "$log" >/dev/null \
   || fail "forced rain drew no SPGD-fed drops"
 echo "[ OK ] effects capture: $fx_png"
 
+# Preview gate: a studio render of one base record must draw every angle and
+# write a report per view. The images stay in the probe run directory.
+preview_dir="$log_dir/preview"
+run "preview (studio, all angles)" preview --mesh "meshes\\clutter\\bucket01.nif" \
+  --angles all --size 320x240 --out "$preview_dir"
+[ -s "$preview_dir/report.json" ] || fail "preview wrote no report.json"
+if grep -q '"blank" : true' "$preview_dir/report.json"; then
+  fail "preview drew a blank view"
+fi
+echo "[ OK ] preview output: $preview_dir"
+
 # M3.6 interior gate: find one teleport door near Whiterun, follow XTEL in,
 # render exact arrival pose, follow paired door back to exterior.
 interior_png="$log_dir/probe-interior.png"

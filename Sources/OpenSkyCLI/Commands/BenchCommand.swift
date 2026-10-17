@@ -154,7 +154,9 @@ enum BenchCommand {
             assets: assets
         )
         defer { try? assets.report(fastLoader: builder.textures.fastLoader) }
-        let weather = WeatherSystem(file: builder.file, worldspaceEditorID: options.worldspace)
+        let weather = WeatherSystem(
+            loadOrder: builder.pluginLoadOrder, worldspaceEditorID: options.worldspace
+        )
         let lodPrebuild = options.lodPrebuild
             ? builder.distantLODBuilder?.prebuild(worldspace: options.worldspace) : nil
         let provider = BuilderCellSceneProvider(

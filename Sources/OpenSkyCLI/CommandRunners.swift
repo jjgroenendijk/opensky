@@ -188,6 +188,12 @@ extension ScreenshotArguments: CLIRunnable {
     }
 }
 
+extension PreviewArguments: CLIRunnable {
+    func execute() throws {
+        try PreviewCommand.run(context: context(), arguments: self)
+    }
+}
+
 extension BenchArguments: CLIRunnable {
     func execute() throws {
         try BenchCommand.run(context: context(), arguments: self)
