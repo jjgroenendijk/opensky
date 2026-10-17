@@ -66,9 +66,9 @@ answered by `RagdollWorldAdapter`. It lives beside `RagdollRuntime`, and it is t
 `FaceMorphWorld`. `PlayerWorldAdapter` answers both ports.
 The dialogue domain has `DialogueCore`, `DialogueCoordinator`, and `DialogueWorld` in
 `Sources/OpenSkyDialogue/`, answered by `DialogueWorldAdapter`. The core's speaker focus is a
-state machine: it returns hold, face, and release effects, and the coordinator sends them
-through the port. The journal has `JournalCore`, `JournalCoordinator`, and `JournalWorld` in
-`Sources/OpenSkyQuests/`.
+state machine: it returns hold, face, and release effects, and the coordinator returns them
+as `DialogueCommand` values. The journal has `JournalCore`, `JournalCoordinator`, and
+`JournalWorld` in `Sources/OpenSkyQuests/`.
 The actor-value domain has `ActorValueCoordinator` and `ActorValueWorld` in
 `Sources/OpenSkyActors/`, answered by `ActorWorldAdapter`. That adapter also answers which
 actors are resident, through `actorValueHolder(for:)` and `combatActors()`, because every
@@ -114,10 +114,13 @@ adds the audio state and quitting. The view controller is the one `MenuInputCons
 routes each event by the top of the menu stack. Each menu coordinator conforms to its panel
 protocol directly. The shell, not a panel protocol, gives key focus back to the game view.
 
-A port is a protocol that names what the coordinator needs from outside, such as the streamed
-references or the game hour. A test passes a fake that returns plain values. The app passes
-itself or a small adapter. The coordinator holds the port `weak`, because the app owns the
-coordinator.
+A port is a protocol that names what the coordinator reads from outside, such as the streamed
+references or the game hour. A test passes a fake that returns plain values. The app passes a
+small adapter. The coordinator takes the port in its initializer and keeps it, so a coordinator
+is never half built. The adapter holds the session `unowned`, so there is no retain cycle.
+When the adapter owns the coordinator, or the port is the view controller itself, the
+coordinator keeps the port as `weak let`, and the app builds it in a `lazy var`. The lint rule
+`late_attached_world` fails an `attach(world:)` method in a package module.
 
 An adapter reads the session through its own host protocol, such as `CombatWorldHost`. The
 protocol lists only the coordinators and values that adapter reads. `GameViewController`
@@ -150,6 +153,32 @@ such as `text(training:)` or `text(texts:)`. A test compares outcomes, not Engli
 sentences. The lint rule `action_returns_text` fails a `@discardableResult` function that
 returns `String` in a package module.
 
+## Commands
+
+A coordinator does not change the world outside its domain through its port. It returns a
+command instead, and the app runs it. A command is a value of the domain's command enum, such
+as `InventoryCommand`. Example: an equip returns
+`InventoryResult(outcome, commands: [.equipmentChanged(holder)])`, and
+`InventoryWorldAdapter.run(_:)` asks magic to re-read the hands.
+
+- An action that changes the world returns its answer and its commands together, such as
+  `InventoryResult<Value>`. An action without an answer returns the command list.
+- Every caller in the app passes the result through the adapter's `run(_:)`. A panel protocol
+  whose action now returns commands is answered by the app, not by the coordinator.
+- A call that must answer at once, such as reporting skill use for the experience it gives,
+  stays a port member, because a command has no answer.
+- An effect that must land before the next line of the same step also stays a port member.
+  Examples: a loading screen pauses the world as a door transition starts, and a perk grant
+  applies its abilities before the next formula reads them.
+- A test compares the returned commands. It needs no fake that records calls.
+
+A frame step returns its commands. When other calls also raise commands, such as a panel
+action or a hit report, the coordinator collects them in `pendingCommands`, and the frame
+step returns them through `takeCommands()`. Such a command waits at most one frame. Crime,
+combat, magic, progression, scenes, and the social pass work this way. A frame step that
+only computes a pose returns a value instead: `CinematicCameraCoordinator.tick(realSeconds:)`
+returns a `CinematicFrame`, and the adapter writes it to the renderer.
+
 ## Pure core, thin shell
 
 Every coordinator splits into two parts:
@@ -157,7 +186,7 @@ Every coordinator splits into two parts:
 - The core decides. It is pure: values in, values out. It imports no AppKit, Metal, or audio,
   reads no clock, and calls no port. A test calls it with plain values and needs no fake.
 - The shell does the input and output. It holds the state and the port, reads the world,
-  calls the core, and runs what the core returns.
+  calls the core, and returns what the core decided, with its commands for the app.
 
 A core has one of two shapes:
 
@@ -165,8 +194,8 @@ A core has one of two shapes:
   takes the vendor and the stock the shell read, and returns the counterparty or a refusal.
 - A domain with state has a value-type state machine:
   `(state, input) -> (newState, [Effect])`. An effect is a value that names one action, such
-  as "play this sound" or "open this menu". The shell stores the new state and runs each
-  effect through a port.
+  as "play this sound" or "open this menu". The shell stores the new state and returns each
+  effect that leaves the domain as a command.
 
 Loaded plugin data, such as `VendorResolver`, may sit inside the core. It does not change
 while the game runs, so reading it keeps the core pure.
