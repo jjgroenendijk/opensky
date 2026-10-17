@@ -43,6 +43,8 @@ public final class InventoryCoordinator {
     weak var skillUses: (any SkillUseReporting)?
     /// The experience formulas a crafting session reports with.
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
+    /// The quality names of an improved item.
+    public var temperingTexts = TemperingTexts.vanilla
 
     weak var world: (any InventoryWorld)?
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.

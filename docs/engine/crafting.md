@@ -82,7 +82,10 @@ The formulas come from UESP "Skyrim:Smithing":
 | damage or rating bonus | `(3.6 * level - 1.6) * factor`; factor 1 for body armor, else 0.5 |
 
 Levels 1 to 6 are Fine, Superior, Exquisite, Flawless, Epic, and Legendary. Skill 15 reaches
-Fine and skill 100 reaches Flawless.
+Fine and skill 100 reaches Flawless. The names come from the string settings
+`sHealthDataPrefixWeap1` to `6` for weapons and `sHealthDataPrefixArmo1` to `6` for armour;
+without a string table the UESP names above stay. A level past the sixth reads as the sixth name
+with the extra levels, such as `Legendary +1`.
 
 Quality is stored per copy, apart from the item counts: per owner and item, one level for
 each improved copy. Copies past that list are plain. A reader uses only as many levels as
