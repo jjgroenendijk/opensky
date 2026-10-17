@@ -29,6 +29,8 @@ nonisolated public struct BountyReadout: Equatable, Sendable {
     public let counts: CrimeCounts
     /// What a guard of this faction does on seeing the player at this bounty.
     public let response: CrimeResponse
+    /// The crime names the counts are spelled with.
+    public let crimeTexts: CrimeTexts
 
     public var gold: Int32 {
         Int32(clamping: Int64(nonViolentGold) + Int64(violentGold))
@@ -39,13 +41,15 @@ nonisolated public struct BountyReadout: Equatable, Sendable {
         nonViolentGold: Int32,
         violentGold: Int32,
         counts: CrimeCounts,
-        response: CrimeResponse
+        response: CrimeResponse,
+        crimeTexts: CrimeTexts = .vanilla
     ) {
         self.faction = faction
         self.nonViolentGold = nonViolentGold
         self.violentGold = violentGold
         self.counts = counts
         self.response = response
+        self.crimeTexts = crimeTexts
     }
 }
 

@@ -62,6 +62,8 @@ public final class CrimeCoordinator {
     }
 
     public internal(set) var lastActionText = "No crime recorded yet."
+    /// The crime names the bounty readout uses.
+    public var crimeTexts = CrimeTexts.vanilla
     public internal(set) var lastGuardText = "No guard has acted yet."
     public var panel = CrimeFactionPanelState()
 

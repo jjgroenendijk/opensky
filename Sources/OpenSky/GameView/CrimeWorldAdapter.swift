@@ -37,6 +37,9 @@ final class CrimeWorldAdapter {
             let pluginName = (provider as? MagicDataProviding)?.magicItemPluginName
         else { return }
         game.crime.attach(world: self)
+        game.crime.crimeTexts = (provider as? WorldDataStores).map {
+            CrimeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         game.crime.wire(
             runtime: CrimeRuntime(store: game.worldState, factions: factionStore),
             locations: (provider as? LocationDataProviding)?.locationStore,

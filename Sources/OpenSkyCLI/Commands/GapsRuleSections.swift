@@ -3,6 +3,7 @@
 
 import Foundation
 import OpenSkyCombatInterface
+import OpenSkyCrimeInterface
 import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -83,6 +84,7 @@ extension GapsGatherer {
         _ = CalendarTexts.resolve(store: store)
         _ = TopicSubtypeTexts.resolve(store: store)
         _ = MagicTexts.resolve(store: store)
+        _ = CrimeTexts.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)
