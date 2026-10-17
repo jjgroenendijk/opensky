@@ -9,11 +9,11 @@ import OpenSkyFormatsTesting
 import Testing
 
 struct PerkGapCensusTests {
-    /// `Mod Buy Prices`, which no engine code reads.
-    private static let modBuyPrices: UInt8 = 8
-    /// Function raw values: 1 Set Value, 9 Add Activate Choice.
+    /// `Calculate Mine Explode Chance`, a Fallout leftover no engine code reads.
+    private static let mineExplodeChance: UInt8 = 3
+    /// Function raw values: 1 Set Value, 4 Add Range to Value.
     private static let setValue: UInt8 = 1
-    private static let addActivateChoice: UInt8 = 9
+    private static let addRangeToValue: UInt8 = 4
 
     private func perk(_ effects: [Data]) throws -> Perk {
         let fields = PerkFixture.fields(editorID: "Fixture", effects: effects)
@@ -25,11 +25,14 @@ struct PerkGapCensusTests {
         let perks = try [
             perk([
                 PerkFixture.entryPointEffect(entryPoint: read, function: Self.setValue),
-                PerkFixture.entryPointEffect(entryPoint: Self.modBuyPrices, function: Self.setValue)
+                PerkFixture.entryPointEffect(
+                    entryPoint: Self.mineExplodeChance,
+                    function: Self.setValue
+                )
             ]),
             perk([
                 PerkFixture.entryPointEffect(
-                    entryPoint: Self.modBuyPrices, function: Self.addActivateChoice
+                    entryPoint: Self.mineExplodeChance, function: Self.addRangeToValue
                 ),
                 PerkFixture.abilityEffect(spell: 0x100)
             ])
@@ -39,9 +42,10 @@ struct PerkGapCensusTests {
         #expect(census.effectTotal == 3)
         #expect(census.entryPoints.count == 2)
         #expect(census.unreadEntryPoints.map(\.count) == [2])
-        #expect(census.unreadEntryPoints.first?.name.hasPrefix("Mod Buy Prices") == true)
+        #expect(census.unreadEntryPoints.first?.name
+            .hasPrefix("Calculate Mine Explode Chance") == true)
         #expect(census.unsupportedFunctions.map(\.count) == [1])
-        #expect(census.unsupportedFunctions.first?.name == PerkFunction.addActivateChoice
+        #expect(census.unsupportedFunctions.first?.name == PerkFunction.addRangeToValue
             .description)
     }
 
@@ -50,6 +54,14 @@ struct PerkGapCensusTests {
         #expect(PerkEntryPointEvaluator.supports(.multiplyActorValueMultiplier))
         #expect(!PerkEntryPointEvaluator.supports(.addActivateChoice))
         #expect(!PerkEntryPointEvaluator.supports(.unknown(raw: 99)))
+    }
+
+    /// The four functions that pick something are carried out by a choice reader.
+    @Test func choiceReadersCarryThePickingFunctions() {
+        let picking: [PerkFunction] = [.selectSpell, .addActivateChoice, .selectText, .setText]
+        #expect(picking.allSatisfy(PerkEntryPointChoice.carries))
+        #expect(!PerkEntryPointChoice.carries(.addLeveledList))
+        #expect(!PerkEntryPointChoice.carries(.multiplyValue))
     }
 
     @Test func engineReadListsEveryNamedEntryPoint() {

@@ -197,10 +197,10 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
     /// The references hold the crosshair and every resident actor, so a
     /// combat-target run-on resolves.
     func conditionContext(
-        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
+        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution, indexing: [ReferenceKey]
     ) -> ConditionContext {
         let quests = game.scripts.bridge?.questRuntime
-        let references = references(crosshair: crosshair)
+        let references = references(crosshair: crosshair, indexing: indexing)
         var context = ConditionContext(
             globals: globals,
             quests: quests?.resolution() ?? .empty,
@@ -220,13 +220,17 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         return context
     }
 
-    private func references(crosshair: RuntimeReferenceEntry?) -> RuntimeReferenceIndex {
+    private func references(
+        crosshair: RuntimeReferenceEntry?, indexing: [ReferenceKey]
+    ) -> RuntimeReferenceIndex {
         var entries = crosshair.map { [$0] } ?? []
-        for observation in game.actorWorld.combatActors() {
+        var seen = Set(entries.map(\.key))
+        for key in game.actorWorld.combatActors().map(\.key) + indexing {
             guard
-                let entry = game.streamer?.referenceEntry(key: observation.key),
-                entry.key != crosshair?.key
+                !seen.contains(key),
+                let entry = game.streamer?.referenceEntry(key: key)
             else { continue }
+            seen.insert(key)
             entries.append(entry)
         }
         return RuntimeReferenceIndex(entries: entries)

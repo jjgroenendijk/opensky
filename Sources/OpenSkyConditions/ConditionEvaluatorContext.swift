@@ -81,6 +81,19 @@ nonisolated public struct ConditionContext: Sendable {
         get { resolutions[ObjectIdentifier(type)] as? Resolution ?? .empty }
         set { resolutions[ObjectIdentifier(type)] = newValue }
     }
+
+    /// Drops the resolution of `type`, so `overlaid(by:)` no longer carries it.
+    public mutating func clear(_ type: (some ConditionResolution).Type) {
+        resolutions[ObjectIdentifier(type)] = nil
+    }
+
+    /// This context with every resolution `other` holds laid over it. A perk lays the
+    /// spell or lock it is asked about over the live context. The random stream stays.
+    public func overlaid(by other: ConditionContext) -> ConditionContext {
+        var merged = self
+        merged.resolutions.merge(other.resolutions) { _, new in new }
+        return merged
+    }
 }
 
 /// One function invocation: the condition being evaluated plus the context it

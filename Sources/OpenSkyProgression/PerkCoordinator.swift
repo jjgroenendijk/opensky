@@ -93,8 +93,28 @@ public final class PerkCoordinator {
 
     // MARK: - Evaluating
 
-    /// What `holder`'s perks make of `value` at `entryPoint`. Every wired seam
-    /// goes through here, so the tally counts each evaluation once.
+    /// What `holder`'s perks make of `value` at `entryPoint`. Every wired seam goes
+    /// through here, so the tally counts each evaluation once. `seams` holds the
+    /// condition resolutions this one question adds, such as the lock being picked.
+    public func modified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on holder: ActorValueHolder,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> Float {
+        evaluate(on: holder, seams: seams) { runtime in
+            runtime.modify(
+                value,
+                at: entryPoint,
+                on: holder,
+                subjects: subjects,
+                actorValue: { [weak world] index in world?.actorValue(at: index, on: holder) }
+            ).value
+        } ?? value
+    }
+
+    /// `modified` with the owner and the placed references alone bound.
     public func modified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
@@ -102,19 +122,12 @@ public final class PerkCoordinator {
         target: ReferenceKey? = nil,
         attacker: ReferenceKey? = nil
     ) -> Float {
-        guard runtime != nil else { return value }
-        seed(holder)
-        refreshEffectPerks(on: holder)
-        guard var runtime else { return value }
-        let outcome = runtime.modify(
+        modified(
             value,
             at: entryPoint,
             on: holder,
-            subjects: PerkEvaluationSubjects(owner: holder.key, target: target, attacker: attacker),
-            actorValue: { [weak world] index in world?.actorValue(at: index, on: holder) }
+            subjects: PerkEvaluationSubjects(owner: holder.key, target: target, attacker: attacker)
         )
-        store(runtime)
-        return outcome.value
     }
 
     /// `modified` at a lockpicking entry point: `lock` is the locked reference, and
@@ -126,39 +139,29 @@ public final class PerkCoordinator {
         lock: ReferenceKey,
         level: UInt8
     ) -> Float {
-        guard runtime != nil else { return value }
-        seed(holder)
-        refreshEffectPerks(on: holder)
-        guard var runtime else { return value }
-        runtime.conditions.locks = LockConditionResolution(levels: [lock: level])
-        let outcome = runtime.modify(
+        var seams = ConditionContext()
+        seams.locks = LockConditionResolution(levels: [lock: level])
+        return modified(
             value,
             at: entryPoint,
             on: holder,
             subjects: PerkEvaluationSubjects(owner: holder.key, lockedReference: lock),
-            actorValue: { [weak world] index in world?.actorValue(at: index, on: holder) }
+            seams: seams
         )
-        runtime.conditions.locks = .empty
-        store(runtime)
-        return outcome.value
     }
 
     /// `Mod Skill Use` for one credited use of the player's skill: how much faster the
     /// skill improves. Rested, Lover's Comfort and the Guardian Stones work through it.
     public func skillUseMultiplier(_ usage: SkillUsageConditionResolution) -> Float {
-        guard runtime != nil else { return 1 }
-        refreshEffectPerks(on: .player)
-        guard var runtime else { return 1 }
-        runtime.conditions.skillUsage = usage
-        let outcome = runtime.modify(
+        var seams = ConditionContext()
+        seams.skillUsage = usage
+        return modified(
             1,
             at: Self.skillUseEntryPoint,
             on: .player,
-            actorValue: { [weak world] index in world?.actorValue(at: index, on: .player) }
+            subjects: PerkEvaluationSubjects(owner: ReferenceKey.player),
+            seams: seams
         )
-        runtime.conditions.skillUsage = .empty
-        store(runtime)
-        return outcome.value
     }
 
     /// `Mod Skill Use`, by its xEdit position.
@@ -174,6 +177,54 @@ public final class PerkCoordinator {
     ) -> Float {
         guard let holder = world?.actorValueHolder(for: key) else { return 1 }
         return modified(1, at: entryPoint, on: holder, target: target, attacker: attacker)
+    }
+
+    /// `modified` for an actor named by key. `value` comes back unchanged when `key`
+    /// has no actor values.
+    public func modified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: (ReferenceKey) -> PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> Float {
+        guard let holder = world?.actorValueHolder(for: key) else { return value }
+        return modified(value, at: entryPoint, on: holder, subjects: subjects(key), seams: seams)
+    }
+
+    /// The effects at `entryPoint` that pick a spell, a text, or a button, highest
+    /// priority first. Empty without a perk runtime.
+    public func choices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: (ReferenceKey) -> PerkEvaluationSubjects,
+        seams: ConditionContext = ConditionContext()
+    ) -> [PerkEntryPointChoice] {
+        guard let holder = world?.actorValueHolder(for: key) else { return [] }
+        return evaluate(on: holder, seams: seams) { runtime in
+            runtime.choices(at: entryPoint, on: holder, subjects: subjects(key))
+        } ?? []
+    }
+
+    /// Runs `body` on the runtime with `seams` laid over its conditions for this one
+    /// call, then stores what the evaluation counted.
+    private func evaluate<Result>(
+        on holder: ActorValueHolder,
+        seams: ConditionContext,
+        _ body: (inout PerkRuntime) -> Result
+    ) -> Result? {
+        guard runtime != nil else { return nil }
+        seed(holder)
+        refreshEffectPerks(on: holder)
+        guard var runtime else { return nil }
+        let base = runtime.conditions
+        runtime.conditions = base.overlaid(by: seams)
+        let result = body(&runtime)
+        let random = runtime.conditions.random
+        runtime.conditions = base
+        runtime.conditions.random = random
+        store(runtime)
+        return result
     }
 
     /// Nil without a perk runtime, which is what `Actor.HasPerk` reports

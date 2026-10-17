@@ -41,6 +41,9 @@ nonisolated public enum ConditionFunctions: Sendable {
             guard let parameter = call.parameter1 else {
                 return .failure(.unresolvedParameter(72))
             }
+            if let form = call.formSubject() {
+                return Self.formIsID(form, parameter, call: call)
+            }
             return call.reference().map { entry in
                 Self.isTrue(Self.baseForm(of: entry) == parameter.asFormID)
             }

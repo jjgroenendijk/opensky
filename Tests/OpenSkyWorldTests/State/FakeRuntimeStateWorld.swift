@@ -59,7 +59,7 @@ final class FakeRuntimeStateWorld: RuntimeStateWorld {
     }
 
     func conditionContext(
-        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
+        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution, indexing _: [ReferenceKey]
     ) -> ConditionContext {
         contextCrosshairs.append(crosshair?.key)
         return ConditionContext(globals: globals)

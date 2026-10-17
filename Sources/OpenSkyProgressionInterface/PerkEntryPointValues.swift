@@ -2,15 +2,17 @@
 // OpenSkyProgression.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFormatsESM
 
-/// Which world reference each condition-tab subject is, for one evaluation.
+/// What each condition-tab subject is, for one evaluation: a placed reference such as
+/// the target, or a base form such as the weapon or the spell.
 ///
-/// The caller binds what it knows. A melee formula knows the perk owner and the
-/// target; nothing in this engine can bind `weapon`, `item` or `enchantment`,
-/// because those name inventory records rather than placed references.
+/// The caller binds what it knows. A tab whose subject stays unbound is skipped and
+/// counted (docs/engine/perks.md).
 nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
     private var references: [PerkConditionSubject: ReferenceKey]
+    public private(set) var forms: [PerkConditionSubject: ConditionFormSubject] = [:]
 
     public init(
         owner: ReferenceKey,
@@ -24,11 +26,19 @@ nonisolated public struct PerkEvaluationSubjects: Equatable, Sendable {
         references[.lockedReference] = lockedReference
     }
 
+    /// The key a run-on names `subject` by: a placed reference or a base form.
     public subscript(subject: PerkConditionSubject) -> ReferenceKey? {
-        references[subject]
+        references[subject] ?? forms[subject]?.key
     }
 
-    /// Every bound reference, which is what the condition seam is built for.
+    /// This binding with `form` as `subject`. A nil form leaves the subject unbound.
+    public func binding(_ subject: PerkConditionSubject, to form: ConditionFormSubject?) -> Self {
+        var copy = self
+        copy.forms[subject] = form
+        return copy
+    }
+
+    /// Every bound placed reference, which the live condition context must index.
     public var boundReferences: [ReferenceKey] {
         Array(Set(references.values))
     }
