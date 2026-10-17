@@ -8,6 +8,8 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyInventoryInterface
+import OpenSkyMagic
+import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
@@ -35,6 +37,28 @@ final class PlayerWorldAdapter {
         }
         renderer.onFrame.add { [weak player] _ in
             player?.refreshBody()
+        }
+    }
+
+    /// Copies what combat, magic, and the head tracking setting report into the
+    /// actor-state graph inputs. Wired after melee, so a swing that started this
+    /// frame is already in it.
+    func wireActorState(renderer: Renderer) {
+        renderer.onFrame.add { [weak game, weak renderer] _ in
+            guard let game, let locomotion = renderer?.locomotion else { return }
+            var inputs = locomotion.actorState
+            if let melee = game.combat.melee {
+                inputs.weaponDrawn = melee.state.drawState.isWeaponInHand
+                inputs.isAttacking = melee.state.attackPhase.isAttacking
+                inputs.isPowerAttacking = melee.strikeKind.isPowerAttack
+                inputs.isBlocking = melee.state.isBlocking
+                inputs.rightHandType = melee.weapon.handType.rawValue
+            }
+            inputs.isBowDrawn = game.combat.archery?.state.phase.isFullyDrawn ?? false
+            inputs.castingLeft = game.magic.caster?.phase(of: .left).isCasting ?? false
+            inputs.castingRight = game.magic.caster?.phase(of: .right).isCasting ?? false
+            inputs.headTracking = game.headTracking.isEnabled
+            locomotion.actorState = inputs
         }
     }
 }

@@ -150,7 +150,19 @@ nonisolated enum LocomotionAcceptanceFixture {
         BehaviorVariableSpec(LocomotionGraphNames.isPlayerInt, .int32, 0),
         BehaviorVariableSpec(LocomotionGraphNames.isNPC, .bool, 0),
         BehaviorVariableSpec(LocomotionGraphNames.timeDelta, .real, 0),
-        BehaviorVariableSpec(LocomotionGraphNames.velocityZ, .real, 0)
+        BehaviorVariableSpec(LocomotionGraphNames.velocityZ, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.headTracking, .bool, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.targetLocation, .vector4, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.cameraFromX, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.cameraFromY, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.cameraFromZ, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.pitch, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.sprintOK, .bool, 1),
+        BehaviorVariableSpec(ActorStateGraphNames.wantBlock, .int32, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.wantCastLeft, .bool, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.wantCastRight, .bool, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.inCastState, .real, 0),
+        BehaviorVariableSpec(ActorStateGraphNames.state, .int32, 0)
     ]
 
     /// Every event the bridge can raise, in `LocomotionGraphNames` order, so an

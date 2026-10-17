@@ -49,6 +49,24 @@ struct PerkGapCensusTests {
             .description)
     }
 
+    /// EPFT 6 is a plain text payload: the graph variable's name.
+    @Test func collectsTheGraphVariablesPerksSet() throws {
+        let graphFlag = PerkEntryPoint.setBooleanGraphVariable.rawValue
+        let perks = try [
+            perk([
+                PerkFixture.entryPointEffect(
+                    entryPoint: graphFlag, function: Self.setValue, functionType: 6,
+                    functionData: ESMFixture.zstring("bPerkQuickShot")
+                ),
+                PerkFixture.entryPointEffect(
+                    entryPoint: Self.mineExplodeChance, function: Self.setValue,
+                    functionType: 6, functionData: ESMFixture.zstring("NotAGraphFlag")
+                )
+            ])
+        ]
+        #expect(PerkGapCensus(perks: perks).graphVariables == ["bPerkQuickShot"])
+    }
+
     @Test func evaluatorSupportMatchesItsFunctionTable() {
         #expect(PerkEntryPointEvaluator.supports(.setValue))
         #expect(PerkEntryPointEvaluator.supports(.multiplyActorValueMultiplier))

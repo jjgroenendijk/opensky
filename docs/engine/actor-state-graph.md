@@ -1,0 +1,87 @@
+---
+type: Subsystem
+title: Actor state graph variables
+description: The actor-state variables the engine writes into the player's behavior graphs each
+  step, the outputs it reads back, how iState is encoded, and the variables left unwritten.
+tags: [engine, animation, behavior, player]
+---
+
+# Actor state graph variables
+
+The behavior graphs share more than movement with the engine. The engine tells them what the actor
+does: an attack, a guard, a cast, where the camera looks. The graphs report back what the animation
+allows: whether the actor may turn, equip, or is in a recoil. The movement variables are on the
+[locomotion graph](/engine/locomotion-graph.md) page.
+
+Every name and direction comes from the install's character graphs, read with the census of
+[HKX behavior graph objects](/formats/hkx-behavior.md). The Creation Kit list of animation variables
+(<https://ck.uesp.net/wiki/List_of_Animation_Variables>) names many of them but gives no types.
+
+## Inputs the engine writes
+
+The locomotion bridge writes these each step, to both the third-person and the first-person graph.
+
+| Variable | Type | Written as | Bound in the graph to |
+| --- | --- | --- | --- |
+| `bHeadTracking` | bool | The Head tracking setting | `BSLookAtModifier.lookAtTarget` |
+| `TargetLocation` | quad | A point 1024 units along the camera view, world space | `BSLookAtModifier.targetLocation` |
+| `camerafromx`, `camerafromy`, `camerafromz` | real | The camera position | Look and aim modifiers |
+| `Pitch` | real | Camera pitch in radians, positive up | `hkbTwistModifier` in the bow aim |
+| `bSprintOK` | bool | False when the stamina gate refuses a sprint | Sprint transition conditions |
+| `iWantBlock` | int32 | 1 while the block key is held | Block and bow zoom conditions |
+| `bWantCastLeft`, `bWantCastRight` | bool | True while that hand casts | `BSEventOnFalseToTrueModifier` |
+| `IsInCastState` | real | 1 while either hand casts, else 0 | Cast blends |
+| `iState` | int32 | The value of one `iState_*` constant | State conditions |
+
+[WARNING] The sign of `Pitch` on the spine twist is not yet checked against the game. The look
+distance of `TargetLocation` is OpenSky's own.
+
+## How `iState` is encoded
+
+`0_master.hkx` declares one int32 variable per actor state, such as `iState_NPC1HM` and
+`iState_NPCSprinting`. Each holds the number that `iState` takes for that state. The engine reads the
+numbers from the graph instead of hard-coding them, so a graph with other numbers still works. When
+the graph declares no constant for the state, `iState` is not written.
+
+The state is picked in a fixed order. The first match wins:
+
+1. An attack: a power attack, a two-handed attack, or a plain attack.
+2. A guard (`iState_NPCBlocking`).
+3. A fully drawn bow (`iState_NPCBowDrawn`).
+4. A cast in either hand (`iState_NPCMagicCasting`).
+5. A sprint or sneak gait.
+6. A drawn weapon, by the right-hand type: one-handed, two-handed, bow or crossbow, or staff or
+   spell. The type uses the `iRightHandType` encoding ([combat graph names](/engine/combat-graph-names.md)).
+7. Otherwise `iState_NPCDefault`.
+
+[INFO] This order is OpenSky's own. No source states the game's order. Bleedout, horse riding,
+drunk, quick shot, and shield charge have no OpenSky system yet, so no step picks them.
+
+## Outputs the graph publishes
+
+The graph writes these through `BSIsActiveModifier`, a state machine's `isActive` or
+`currentStateId`, a sync variable ([behavior state machines](/engine/behavior-state-machines.md)),
+or an expression assignment. Examples: `bAnimationDriven`, `bAllowRotation`, `bEquipOK`,
+`IsRecoiling`, `bIsSynced`, `iSyncIdleLocomotion`. The engine reads them for the panel. No engine
+system acts on them yet.
+
+## Variables left unwritten
+
+These are on the Creation Kit list or bound to an engine-facing member, but no OpenSky system can
+supply them yet, or their encoding is unknown:
+
+- `iCombatStance` (used only by horse graphs), `iRightHandEquipped`, `iLeftHandEquipped`,
+  `iGetUpType`, `IsBeastRace`, `iCharacterSelector`, `bWantCastVoice` (no shout runtime).
+- Tuning values the graph reads but the game sets from data OpenSky does not know: `PitchOffset`,
+  `PitchLook`, `PitchAcc`, `PitchThresh`, `PitchDefault`, `TurnMin`, `RotMax`, `SpeedAcc`,
+  `fMinSpeed`, `attackIntroLength`, `attackPowerStartTime`, `attackComboStartFraction`,
+  `weapChangeStartFraction`, `IsInCastStateDamped`, `bIdlePlaying`, `iSyncTurnDirection`.
+
+Perk flags such as `bPerkQuickShot` come from the perk entry point Set Boolean Graph Variable; the
+combat runtime writes them while the perk applies.
+
+## The panel
+
+World > Player & Locomotion > Actor State shows `iState` with the constant that holds its value,
+every input with the value the graph holds, and every output. A name the graph does not declare
+reads `<not declared by the graph>`.

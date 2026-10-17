@@ -3,6 +3,7 @@
 // engine and no engine code handles it (docs/tools/gaps.md).
 
 import Foundation
+import OpenSkyFormatsAnimation
 
 nonisolated public enum BehaviorVariableRoles: Sendable {
     /// The variables the game exposes to Papyrus through `GetAnimationVariable*`,
@@ -54,7 +55,8 @@ nonisolated public enum BehaviorVariableRoles: Sendable {
         "hkbTransformVectorModifier.vectorOut", "BSIStateManagerModifier.iStateVar",
         "BSDirectAtModifier.active", "BSDirectAtModifier.currentHeadingOffset",
         "BSDirectAtModifier.currentPitchOffset", "BSLookAtModifier.targetOutsideLimits",
-        "hkbFootIkControlsModifier.errorOutTranslation"
+        "hkbFootIkControlsModifier.errorOutTranslation", "hkbStateMachine.isActive",
+        "hkbStateMachine.currentStateId", HKXGapCensus.syncUse
     ]
 
     /// Members that take a world position or rotation, which only the engine knows.

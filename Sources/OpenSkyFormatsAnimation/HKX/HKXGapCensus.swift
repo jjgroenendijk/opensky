@@ -20,6 +20,8 @@ nonisolated public struct HKXGapCensus: Sendable {
     public private(set) var fileCount = 0
 
     public static let assignedUse = "expression assignment"
+    /// A state machine writes its current state to its `m_syncVariableIndex`.
+    public static let syncUse = "hkbStateMachine.syncVariable"
 
     public init() {}
 
@@ -74,6 +76,13 @@ nonisolated public struct HKXGapCensus: Sendable {
                         variableUses[name, default: []].insert(Self.assignedUse)
                     }
                 }
+            }
+            if
+                let machine = object as? HKBStateMachine,
+                names.indices.contains(machine.syncVariableIndex),
+                let name = names[machine.syncVariableIndex]
+            {
+                variableUses[name, default: []].insert(Self.syncUse)
             }
             guard
                 let reference = object.references

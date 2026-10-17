@@ -25,6 +25,7 @@ struct FakeLocomotionState {
     var firstPersonActiveStates: [BehaviorActiveState] = []
     var variables: [LocomotionVariableSnapshot] = []
     var tally: BehaviorTally?
+    var actorState = ActorStateGraphSnapshot.empty
     /// Event names the fake's graph declares. A raise of anything else is
     /// answered false, exactly as a real graph answers it.
     var declaredEvents = Set(LocomotionGraphNames.events)
@@ -71,7 +72,8 @@ extension FakeWorldProviders {
             firstPersonActiveStates: locomotion.firstPersonActiveStates,
             variables: locomotion.variables,
             forcedGait: locomotion.forcedGait,
-            tally: locomotion.tally
+            tally: locomotion.tally,
+            actorState: locomotion.actorState
         )
     }
 

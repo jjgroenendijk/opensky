@@ -78,6 +78,7 @@ final class WorldSessionWiring {
         game.combatWorld.wireMelee(provider: provider, renderer: renderer)
         game.combatWorld.wireArchery(provider: provider, renderer: renderer)
         game.ragdollWorld.wireRagdoll(renderer: renderer)
+        game.playerWorld.wireActorState(renderer: renderer)
         wireLateWorldSystems(provider: provider, renderer: renderer, streamer: streamer)
         renderer.terrainSampler = { [weak streamer] position in
             streamer?.sampleTerrain(at: position)

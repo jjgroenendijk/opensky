@@ -122,7 +122,10 @@ struct LocomotionAcceptanceRealDataTests {
         let status = harness.bridge.status
         #expect(status.missingVariables.isEmpty)
         #expect(status.missingEvents.isEmpty)
-        #expect(status.boundVariables.count == LocomotionGraphNames.variables.count)
+        #expect(
+            status.boundVariables.count
+                == LocomotionGraphNames.variables.count + ActorStateGraphNames.inputs.count
+        )
         #expect(status.firstPersonMissingVariables.isEmpty)
         #expect(status.firstPersonMissingEvents.isEmpty)
         #expect(status.graphUpdates > 0)

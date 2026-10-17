@@ -1,7 +1,7 @@
-// World > Player & Locomotion (docs/engine/locomotion-graph.md). Sections
-// follow a session: where the player is, the graph state, the keys, the motion
-// source, then controls that force a hard-to-reach state. The camera-mode popup
-// is also here because it starts the simulation these readouts describe.
+// World > Player & Locomotion (docs/engine/locomotion-graph.md). Sections follow a
+// session: where the player is, the graph state, the actor state it shares with the
+// engine, the keys, the motion source, then controls that force a hard-to-reach
+// state. The camera-mode popup is here because it starts the simulation.
 
 import AppKit
 import OpenSkyWorld
@@ -9,6 +9,7 @@ import OpenSkyWorld
 final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     let stateSection = LocomotionStateSection()
     let graphSection = LocomotionGraphSection()
+    let actorStateSection = LocomotionActorStateSection()
     let bindingsSection = LocomotionBindingsSection()
     let motionSection = LocomotionMotionSection()
     let devSection = LocomotionDevSection()
@@ -19,6 +20,7 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
         didSet {
             stateSection.provider = provider
             graphSection.provider = provider
+            actorStateSection.provider = provider
             bindingsSection.provider = provider
             motionSection.provider = provider
             devSection.provider = provider
@@ -31,7 +33,7 @@ final class PlayerLocomotionPanelViewController: InspectorPanelViewController {
     }
 
     override func makeSections() -> [PanelSectionViewController] {
-        [stateSection, graphSection, bindingsSection, motionSection, devSection]
+        [stateSection, graphSection, actorStateSection, bindingsSection, motionSection, devSection]
     }
 
     /// Control forwards for the verification-surface tests, mirroring

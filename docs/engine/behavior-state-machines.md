@@ -35,6 +35,23 @@ A state whose generator is another `hkbStateMachine` runs it the same way. The r
 every machine the last update reached, in walk order with the outermost first: the machine name,
 the state name, and the crossfade weight. The locomotion panel shows this path.
 
+## What a machine publishes
+
+A machine writes three values back into graph variables. The engine reads some of them, such as
+`bIsSynced` and `iSyncIdleLocomotion` ([actor state](/engine/actor-state-graph.md)).
+
+| Member | Written |
+| --- | --- |
+| `isActive` (output binding) | True on each update that reaches the machine. False on the update that first misses it |
+| `currentStateId` (output binding) | The current state ID, on each update that reaches the machine |
+| `m_syncVariableIndex` | The current state ID, when the index names a variable |
+
+The sync variable is the same one that `m_startStateMode` 1 reads on entry. So two machines that
+share it enter the state that the other one last published.
+
+A deactivated machine does not overwrite `isActive` when another node wrote that variable in the
+same update. This keeps a machine that stopped from hiding the value of one that started.
+
 ## Transitions
 
 Candidates come from two places: the current state's `hkbStateMachineTransitionInfoArray`, then the

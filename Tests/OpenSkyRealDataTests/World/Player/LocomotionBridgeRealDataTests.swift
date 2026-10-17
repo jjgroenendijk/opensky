@@ -90,7 +90,10 @@ struct LocomotionBridgeRealDataTests {
         harness.note("graph updates: \(status.graphUpdates)")
         #expect(status.missingVariables.isEmpty)
         #expect(status.missingEvents.isEmpty)
-        #expect(status.boundVariables.count == LocomotionGraphNames.variables.count)
+        #expect(
+            status.boundVariables.count
+                == LocomotionGraphNames.variables.count + ActorStateGraphNames.inputs.count
+        )
         #expect(status.graphUpdates > 0)
     }
 
