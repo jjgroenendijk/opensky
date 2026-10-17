@@ -28,10 +28,17 @@ public protocol LockWorld: AnyObject, SkillUseReporting {
     func itemName(_ item: FormID) -> String
     /// Shows a lock notice on the HUD.
     func showLockNotice(_ text: String)
+    /// The player's Filter Activation perks with `reference` bound as the target.
+    /// Non-zero blocks the activation.
+    func activationFilter(of reference: ReferenceKey) -> Float
 }
 
 extension LockWorld {
     public func showLockNotice(_: String) {}
+
+    public func activationFilter(of _: ReferenceKey) -> Float {
+        0
+    }
 }
 
 /// Why a lockpicking session did not start.
@@ -134,8 +141,17 @@ public final class LockCoordinator {
         return items.inventory.count(of: key, in: items.player) > 0
     }
 
-    /// The use-key gate. A carried key unlocks the target and lets the press through.
+    /// The use-key gate. A Filter Activation perk blocks the press first, as a
+    /// werewolf cannot open doors. A carried key unlocks the target and lets it through.
     public func gate(_ target: InteractionTarget) -> ActivationRefusal? {
+        if
+            let entry = items?.references?.referenceEntry(formID: target.interaction.reference),
+            let value = world?.activationFilter(of: entry.key),
+            value != 0
+        {
+            lastText = "A perk blocks activating \(target.interaction.name)."
+            return .filteredByPerk
+        }
         guard let lock = lock(of: target.interaction) else { return nil }
         switch LockCore.decide(lock: lock.state, carriesKey: carriesKey(lock.state.key)) {
         case .proceed:

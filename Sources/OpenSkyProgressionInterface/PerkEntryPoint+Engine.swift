@@ -27,6 +27,13 @@ nonisolated extension PerkEntryPoint {
     public static let applyBashingSpell = PerkEntryPoint(rawValue: 52)
     public static let applyWeaponSwingSpell = PerkEntryPoint(rawValue: 67)
     public static let modArmorRating = PerkEntryPoint(rawValue: 85)
+    public static let modTemperingHealth = PerkEntryPoint(rawValue: 76)
+    public static let filterActivation = PerkEntryPoint(rawValue: 74)
+    public static let modArmorWeight = PerkEntryPoint(rawValue: 32)
+    public static let modIngredientsHarvested = PerkEntryPoint(rawValue: 87)
+    public static let modDetectionLight = PerkEntryPoint(rawValue: 47)
+    public static let modDetectionMovement = PerkEntryPoint(rawValue: 48)
+    public static let modDetectionSneakSkill = PerkEntryPoint(rawValue: 57)
     public static let modRecoverArrowChance = PerkEntryPoint(rawValue: 21)
     public static let modSkillUse = PerkEntryPoint(rawValue: 22)
     public static let modAttackDamage = PerkEntryPoint(rawValue: 35)
@@ -48,7 +55,9 @@ nonisolated extension PerkEntryPoint {
         modShieldDeflectArrowChance, setSweepAttack, applyCombatHitSpell, applyBashingSpell,
         applyWeaponSwingSpell, modArmorRating,
         modSpellMagnitude, modSpellDuration, modIncomingSpellMagnitude,
-        modBuyPrices, modSellPrices,
+        modBuyPrices, modSellPrices, modTemperingHealth,
+        modDetectionLight, modDetectionMovement, modDetectionSneakSkill, filterActivation,
+        modArmorWeight, modIngredientsHarvested,
         modRecoverArrowChance, modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked,
         modPlayerIntimidation,
         modBribeAmount, modLockpickSweetSpot,

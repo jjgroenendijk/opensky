@@ -126,6 +126,25 @@ struct InventoryCoordinatorTests {
         #expect(harness.world.refreshed == [.player, .player])
     }
 
+    @Test func wornArmourWeighsWhatTheArmourWeightPerksSay() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player))
+        try #require(coordinator.runtime?.inventory).add(Fixture.helmet, count: 1, to: .player)
+        #expect(coordinator.playerCarriedWeight == 35)
+        harness.world.perkFactors[.modArmorWeight] = 0.5
+        #expect(coordinator.playerCarriedWeight == 20)
+        #expect(coordinator.playerWornArmourWeight == 15)
+    }
+
+    @Test func theHarvestPerkSetsHowManyIngredientsAPlantGives() throws {
+        let harness = try Self.harness()
+        let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
+        #expect(harness.coordinator.harvestCount(of: plant) == 1)
+        harness.world.perkFactors[.modIngredientsHarvested] = 2
+        #expect(harness.coordinator.harvestCount(of: plant) == 2)
+    }
+
     @Test func aGrantGoesToTheChosenHolderAndKeepsItsOwnLine() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator

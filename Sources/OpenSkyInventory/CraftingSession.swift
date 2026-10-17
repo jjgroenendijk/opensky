@@ -23,6 +23,14 @@ public protocol RecipeConditionChecking: AnyObject {
     ) -> String?
     /// The player's level in the skill at this actor-value index. Nil when unknown.
     func skillLevel(at index: Int32) -> Float?
+    /// The player's Mod Tempering Health factor for `item`; 1 without perks.
+    func temperingFactor(for item: FormID) -> Float
+}
+
+extension RecipeConditionChecking {
+    public func temperingFactor(for _: FormID) -> Float {
+        1
+    }
 }
 
 nonisolated public enum CraftingError: Error, Equatable {

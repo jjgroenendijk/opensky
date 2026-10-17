@@ -127,8 +127,8 @@ nonisolated public struct InventoryMenuModel: Equatable, Sendable {
     public let categories: [InventoryMenuCategory]
     public private(set) var selectedCategoryIndex: Int
     public private(set) var selectedIndex: Int
-    /// Total carried weight across every row.
-    public let carriedWeight: Float
+    /// Total carried weight across every row. The app sets the perk-adjusted total.
+    public var carriedWeight: Float
     /// The owner's gold, which is an ordinary stack rather than a currency
     /// field — see `ItemDefinitionStore.vanillaGoldFormID`.
     public let gold: Int32

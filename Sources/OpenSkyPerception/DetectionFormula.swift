@@ -69,6 +69,7 @@ nonisolated public enum DetectionFormula: Sendable {
         let carried = max(0, settings.equippedWeightBase.value)
             + max(0, settings.equippedWeightMult.value) * weight * unmuffled
         let movement = carried * movementMultiplier(gait: inputs.gait, settings: settings)
+            * finiteNonNegative(traits.movementMultiplier)
         let action = finiteNonNegative(traits.actionSound) * settings.actionMult.value
         let occlusion = inputs.hasLineOfSight ? 1 : max(0, settings.soundLosMult.value)
         return settings.soundsMult.value * (movement + action) * occlusion

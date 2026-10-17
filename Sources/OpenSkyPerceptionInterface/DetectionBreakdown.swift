@@ -72,6 +72,8 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
     public var sneakSkill: Float
     /// An invisible target cannot be seen, but it can still be heard.
     public var isInvisible: Bool
+    /// The target's Mod Detection Movement perks, a factor on its movement noise.
+    public var movementMultiplier: Float
 
     public init(
         equippedWeight: Float = 0,
@@ -79,7 +81,8 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
         muffle: Float = 0,
         actionSound: Float = 0,
         sneakSkill: Float = startingSkill,
-        isInvisible: Bool = false
+        isInvisible: Bool = false,
+        movementMultiplier: Float = 1
     ) {
         self.equippedWeight = equippedWeight
         self.lightLevel = lightLevel
@@ -87,6 +90,7 @@ nonisolated public struct DetectionTargetTraits: Equatable, Sendable {
         self.actionSound = actionSound
         self.sneakSkill = sneakSkill
         self.isInvisible = isInvisible
+        self.movementMultiplier = movementMultiplier
     }
 }
 

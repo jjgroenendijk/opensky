@@ -3,6 +3,7 @@
 // (docs/engine/coordinators.md, docs/engine/locks.md).
 
 import OpenSkyActors
+import OpenSkyConditions
 import OpenSkyDiagnostics
 import OpenSkyFormatsESM
 import OpenSkyGameData
@@ -71,6 +72,16 @@ extension LockWorldAdapter: LockWorld {
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
     ) -> Float {
         game.perks.modified(value, at: entryPoint, on: .player, lock: lock, level: level)
+    }
+
+    func activationFilter(of reference: ReferenceKey) -> Float {
+        game.perks.modified(
+            0,
+            at: .filterActivation,
+            on: .player,
+            subjects: { _ in PerkEvaluationSubjects(owner: .player, target: reference) },
+            seams: ConditionContext()
+        )
     }
 
     func reportSkillUse(_ use: SkillUseEvent) -> Float {

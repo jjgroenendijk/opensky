@@ -78,7 +78,7 @@ The formulas come from UESP "Skyrim:Smithing":
 | what | formula |
 | --- | --- |
 | best quality level | `floor((effective skill + 38) * 3 / 103)` |
-| effective skill | `(skill - 13.29) * (1 + perk) + 13.29` |
+| effective skill | `(skill - 13.29) * (1 + perk) + 13.29`; `1 + perk` is the Mod Tempering Health value |
 | damage or rating bonus | `(3.6 * level - 1.6) * factor`; factor 1 for body armor, else 0.5 |
 
 Levels 1 to 6 are Fine, Superior, Exquisite, Flawless, Epic, and Legendary. Skill 15 reaches

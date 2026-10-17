@@ -80,8 +80,7 @@ bound as the spell. Its `HasKeyword` reads the keywords of its effects, so Catal
 `MagicAlchBeneficial` and `MagicAlchDurationBased` works. A potion skips Mod Incoming Spell
 Magnitude: the Atronach Stone's perk halves it with no condition, which would halve every drink.
 `EPMagic_SpellHasKeyword` reads the same keywords; the other `EPMagic_*` conditions fail on a
-potion. A worn or weapon
-enchantment and a perk ability apply as authored.
+potion. A worn or weapon enchantment and a perk ability apply as authored.
 
 ## Barter
 
@@ -91,3 +90,46 @@ enchantment and a perk ability apply as authored.
 | Mod Sell Prices | 60 | the sell modifier, merchant bound as the target |
 | Mod Player Intimidation | 43 | the intimidation check |
 | Mod Bribe Amount | 46 | the bribe price |
+
+## Crafting
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Tempering Health | 76 | a factor on the skill above the offset in the best quality level, item bound |
+| Mod Ingredients Harvested | 87 | how many times a plant's produce is granted, produce bound as the item |
+
+The entry point starts at 1. The steel and advanced smithing perks multiply it by 2 for their
+material, and Fortify Smithing multiplies it by `1 + Smithing Modifier / 100`. The result is the
+`1 + perk` term of the UESP effective skill (see [crafting](/engine/crafting.md)). UESP gives the
+perk term only; that Fortify Smithing enters the same term is read from `PerkSkillBoosts`.
+
+## Armour weight
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Armor Weight | 32 | each worn armour piece, item bound |
+
+Conditioning and Unhindered set worn heavy or light armour to 0. The perk weight counts in the
+carried total, which the inventory menus, `IsOverEncumbered` and fast travel read, and in the
+movement noise of detection. A carried piece that is not worn keeps its record weight.
+
+## Stealth
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Mod Detection Sneak Skill | 57 | the sneaker skill in the detection value |
+| Mod Detection Light | 47 | the target's light level, before the clamp to 1 |
+| Mod Detection Movement | 48 | the movement part of the sound term |
+
+These are the player's perks, evaluated once a frame with no observer bound. No vanilla perk at
+these entry points tests the observer, so the result is the same as per pair. NPCs sneaking
+against the player do not take their perks yet.
+
+## Activation
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Filter Activation | 74 | the use-key gate, before the lock check, activated reference bound as the target |
+
+A non-zero value blocks the press. No event follows, as for a locked door, but no lock notice
+shows. Vanilla uses it to stop a werewolf opening doors and containers.

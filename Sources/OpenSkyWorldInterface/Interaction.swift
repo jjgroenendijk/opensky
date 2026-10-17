@@ -165,6 +165,8 @@ nonisolated public struct InteractionEvent: Equatable, Sendable {
 nonisolated public enum ActivationRefusal: Equatable, Sendable {
     /// The target is locked and the player has no key. `level` is the XLOC byte.
     case locked(level: UInt8, key: FormID?)
+    /// A Filter Activation perk of the player blocks it.
+    case filteredByPerk
 }
 
 /// A use-key press the activation gate refused. No `InteractionEvent` follows it.

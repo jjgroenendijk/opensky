@@ -31,13 +31,29 @@ extension InventoryCoordinator {
     public func harvest(_ interaction: PlacedInteraction) -> String {
         guard let runtime else { return InventoryCore.noRuntimeText }
         do {
-            let outcome = try runtime.harvest(interaction, onDay: world?.gameDaysPassed)
+            let outcome = try runtime.harvest(
+                interaction, onDay: world?.gameDaysPassed, count: harvestCount(of: interaction)
+            )
             world?.refreshInteractionTarget()
             let items = outcome.granted.map { "\($0.count) × \(name(of: $0.item))" }
             return note("Harvested \(interaction.name): \(items.joined(separator: ", ")).")
         } catch {
             return note("Harvest failed: \(String(describing: error))")
         }
+    }
+
+    /// Green Thumb sets Mod Ingredients Harvested to 2, with the produce bound as the item.
+    func harvestCount(of interaction: PlacedInteraction) -> Int32 {
+        let produce = interaction.produce?.ingredient
+        let subject = runtime?.inventory.baselines.items.conditionSubject(of: produce)
+        let value = world?.perkModified(
+            1,
+            at: .modIngredientsHarvested,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
+            seams: ConditionContext()
+        ) ?? 1
+        return value.isFinite ? Int32(clamping: Int(max(1, value.rounded(.down)))) : 1
     }
 
     @discardableResult

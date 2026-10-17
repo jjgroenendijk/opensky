@@ -151,6 +151,7 @@ final class ContainerMenuController {
             runtime: inventory,
             categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
         )
+        refreshed.player.carriedWeight = game.inventory.playerCarriedWeight
         refreshed.restore(from: model)
         model = refreshed
         publishModel()

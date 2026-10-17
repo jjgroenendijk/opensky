@@ -191,6 +191,17 @@ extension InventoryWorldAdapter: RecipeConditionChecking {
         else { return nil }
         return runtime.value(at: index, on: holder)
     }
+
+    func temperingFactor(for item: FormID) -> Float {
+        let subject = game.inventory.runtime?.inventory.baselines.items.conditionSubject(of: item)
+        return perkModified(
+            1,
+            at: .modTemperingHealth,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
+            seams: ConditionContext()
+        )
+    }
 }
 
 extension InventoryWorldAdapter: VendorWorld {
