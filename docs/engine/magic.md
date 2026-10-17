@@ -195,5 +195,11 @@ health is only convincing next to the health.
   panel names. "No actor nearby" and "an actor with nothing running" read differently, so an NPC just
   hit by a spell and an empty cell cannot look the same.
 
+Each readout line names its source with the `sMagicTypePotion`, `sIngredient`, `sMagicTypeSpell`,
+and `sMagicTypeEnchantment` settings, and gives the time left in the units of the
+`sEffectsListDisplaySec(s)`, `Min(s)`, and `Hour(s)` settings. Below a minute it counts seconds,
+below an hour whole minutes rounded up, and above that whole hours rounded up, such as "2 mins".
+This is OpenSky's reading of the game's active effects list, not a measured rule.
+
 Effect visuals and sounds are not drawn or played. The `ALCH` consume sound is decoded and passed
 along for when they are.

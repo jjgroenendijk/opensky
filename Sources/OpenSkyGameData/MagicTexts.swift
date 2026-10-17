@@ -1,6 +1,6 @@
 // The words the magic menu uses for a spell's type, casting, and delivery, from the
-// `sMagicType*`, `sMagic<casting>`, and `sMagicDelivery*` string settings.
-// See docs/engine/spellcasting.md.
+// `sMagicType*`, `sMagic<casting>`, and `sMagicDelivery*` string settings, and the
+// effects list's time units. See docs/engine/spellcasting.md and docs/engine/magic.md.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -60,6 +60,23 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
 
     static let schools = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration"]
 
+    /// The word a setting resolved to, else `fallback`.
+    public func word(_ setting: String, or fallback: String) -> String {
+        words[setting] ?? fallback
+    }
+
+    /// "12 secs", "2 mins", "1 hour": seconds below a minute, then whole minutes,
+    /// then whole hours, each rounded up.
+    public func timeLeft(_ seconds: Float) -> String {
+        let (count, unit): (Int, String) = switch seconds {
+        case ..<60: (Int(seconds.rounded(.up)), "Sec")
+        case ..<3600: (Int((seconds / 60).rounded(.up)), "Min")
+        default: (Int((seconds / 3600).rounded(.up)), "Hour")
+        }
+        let name = count == 1 ? unit : unit + "s"
+        return "\(count) " + word("sEffectsListDisplay\(name)", or: name.lowercased())
+    }
+
     private func word(_ setting: String?) -> String? {
         setting.flatMap { words[$0] }
     }
@@ -70,6 +87,8 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         "sMagicConstantEffect", "sMagicFireAndForget", "sMagicConcentration"
     ] + ["Self", "Touch", "Aimed", "TargetActor", "TargetLocation"].map { "sMagicDelivery\($0)" }
         + schools.map { "sMagicSchool\($0)" }
+        + ["Potion", "Enchantment"].map { "sMagicType\($0)" } + ["sIngredient"]
+        + ["Sec", "Secs", "Min", "Mins", "Hour", "Hours"].map { "sEffectsListDisplay\($0)" }
 
     public static func resolve(
         store: GameSettingStore, text: (LString) -> String? = { _ in nil }

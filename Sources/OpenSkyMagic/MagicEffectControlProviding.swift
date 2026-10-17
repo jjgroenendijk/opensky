@@ -21,23 +21,30 @@ nonisolated public struct ActiveEffectReadout: Equatable, Sendable {
     public let valueNames: [String]
     /// The MGEF archetype, spelled as xEdit spells it: "calm", "cloak".
     public let archetype: String
+    /// The time left in the effects list's units, such as "2 mins".
+    public var timeLeftText = ""
 
     /// One line, the shape the readout joins with newlines. An archetype that
     /// acts on no actor value names itself instead.
     public var line: String {
         guard !valueNames.isEmpty else {
             return String(
-                format: "%@ (%@) %@ at magnitude %.1f, %.1fs of %.1fs left",
-                name, sourceName, archetype, magnitude, remaining, duration
+                format: "%@ (%@) %@ at magnitude %.1f, %.1fs of %.1fs left%@",
+                name, sourceName, archetype, magnitude, remaining, duration, timeLeftSuffix
             )
         }
         let direction = isDetrimental ? "damages" : "restores"
         let behaviour = mode == .modifier ? "held" : "per second"
         let values = valueNames.joined(separator: ", ")
         return String(
-            format: "%@ (%@) %@ %@ by %.1f %@, %.1fs of %.1fs left",
-            name, sourceName, direction, values, magnitude, behaviour, remaining, duration
+            format: "%@ (%@) %@ %@ by %.1f %@, %.1fs of %.1fs left%@",
+            name, sourceName, direction, values, magnitude, behaviour, remaining, duration,
+            timeLeftSuffix
         )
+    }
+
+    private var timeLeftSuffix: String {
+        timeLeftText.isEmpty ? "" : " (\(timeLeftText))"
     }
 
     public init(
