@@ -209,4 +209,18 @@ costliest effect's minimum skill: Novice below 25, Apprentice below 50, Adept be
 `sNoviceDisplayName`, `sApprenticeDisplayName`, `sJourneymanDisplayName` ("Adept"),
 `sExpertDisplayName`, and `sMasterDisplayName` settings.
 
+## Skill and cost
+
+A caster's skill in the spell's school lowers the cost before any perk acts. UESP's
+"Skyrim:Magic Overview" (Spell Cost) gives the player's multiplier as `1 − (skill / 400)^0.65`,
+about 0.5939 at skill 100. The two numbers are `fMagicCasterPCSkillCostBase` (0.0025, so 1/400)
+and `fMagicPCSkillCostScale` (0.65).
+
+For an NPC, OpenSky uses the same shape with the NPC settings: `1 − fMagicCasterSkillCostMult ×
+(skill × fMagicCasterSkillCostBase)^fMagicSkillCostScale`. `Skyrim.esm` has no
+`fMagicCasterSkillCostBase` record, so the Creation Kit default 0.005 applies. No source states the
+NPC formula; this is OpenSky's reading of the setting names.
+
+Dual casting is not built, so the `fMagicDualCasting*` settings stay unread.
+
 Casting animations, hand effects, and sounds are not done yet.

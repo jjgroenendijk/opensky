@@ -1,4 +1,5 @@
-// A spell's real cost: `Mod Spell Cost` and the SPIT half-cost perk, both only if owned.
+// A spell's real cost: the caster's school skill, then `Mod Spell Cost` and the SPIT
+// half-cost perk, both only if owned.
 // Vanilla often authors one discount twice (`Flames` 24 with `DestructionNovice00`
 // charges 12), so the SPIT halving applies only when that perk has no `Mod Spell Cost`.
 // A spell condition tab is skipped and counted (`PerkRuntimeEvaluation`).
@@ -18,10 +19,11 @@ extension CasterRuntime {
 
     /// What casting `spell` costs `caster` right now, in magicka.
     ///
-    /// The record's own cost when no perk runtime is wired, which is what every
-    /// synthetic session and every actor with no perks pays.
+    /// Without a perk runtime, the skill-lowered cost is all a caster pays.
     public func cost(of spell: ResolvedSpell, caster: ActorValueHolder) -> Float {
+        let skill = spell.magicSkill.flatMap { values.value(at: $0, on: caster) } ?? 0
         let authored = Float(spell.cost.cost)
+            * costSettings.skillMultiplier(skill: skill, isPlayer: caster.key == .player)
         guard var perks else { return authored }
         var cost = authored
         if

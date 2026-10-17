@@ -91,6 +91,7 @@ extension GapsGatherer {
         _ = SaveTexts.resolve(store: store)
         _ = TradeTexts.resolve(store: store)
         _ = SoulTexts.resolve(store: store)
+        _ = SpellCostSettings.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)
