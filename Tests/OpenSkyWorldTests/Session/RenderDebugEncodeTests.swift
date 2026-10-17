@@ -13,7 +13,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RenderDebugEncodeTests {
     // MARK: - Encode-level isolation (device gated)
 

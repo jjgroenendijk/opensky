@@ -29,7 +29,7 @@ private final class SyntheticBoneAnimation: RenderAnimation {
     }
 }
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct ActorAnimationRenderTests {
     private static let device: MTLDevice? = {
         guard

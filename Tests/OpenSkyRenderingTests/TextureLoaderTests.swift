@@ -9,7 +9,7 @@ import OpenSkyFormatsTesting
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct TextureLoaderTests {
     private static let device = MTLCreateSystemDefaultDevice()
 

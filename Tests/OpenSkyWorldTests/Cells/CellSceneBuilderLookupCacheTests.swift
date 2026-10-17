@@ -10,7 +10,7 @@ import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellSceneBuilderLookupCacheTests: CellSceneBuilderFixture {
     let dataURL: URL
 

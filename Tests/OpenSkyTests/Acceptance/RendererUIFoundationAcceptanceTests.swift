@@ -13,7 +13,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.acceptance, .gpu))
+@Suite(.tags(.acceptance, .gpu), .unlessPlanSkips(.gpu))
 struct RendererUIFoundationAcceptanceTests {
     private static let hasMetal4Device = OffscreenRendererFixture.hasMetal4Device
     private static let canvas = OffscreenCanvas(width: 480, height: 320, shaders: .appBundle)

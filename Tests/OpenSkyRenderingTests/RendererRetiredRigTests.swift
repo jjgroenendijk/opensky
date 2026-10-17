@@ -10,7 +10,7 @@ import OpenSkyTagsTesting
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererRetiredRigTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     @MainActor

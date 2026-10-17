@@ -10,7 +10,7 @@ import OpenSkyWorldFixtures
 import simd
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellSceneBuilderTests: CellSceneBuilderFixture {
     let dataURL: URL
 

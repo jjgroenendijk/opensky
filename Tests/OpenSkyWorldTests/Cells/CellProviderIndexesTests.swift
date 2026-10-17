@@ -9,7 +9,7 @@ import OpenSkyTagsTesting
 import Synchronization
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct CellProviderIndexesTests {
     @Test
     func buildsCompleteProviderFromSyntheticPlugin() async throws {

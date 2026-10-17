@@ -17,7 +17,7 @@ struct RagdollStabilityTests {
 
     /// Four minutes of simulated time over sixty collapses. At the 1/120 fixed
     /// step that is about 29,000 solver steps.
-    @Test(.tags(.slow))
+    @Test(.tags(.slow), .unlessPlanSkips(.slow))
     func survivesRepeatedCollapse() {
         var instance = RagdollFixture.limb()
         let world = RagdollFixture.floorWorld()

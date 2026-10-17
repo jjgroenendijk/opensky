@@ -14,7 +14,7 @@ import OpenSkyTagsTesting
 @testable import OpenSkyWorld
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererWorldSimTickTests {
     private static let device: MTLDevice? = {
         guard

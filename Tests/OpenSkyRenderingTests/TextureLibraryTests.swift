@@ -12,7 +12,7 @@ import OpenSkyFormatsTesting
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct TextureLibraryTests {
     /// nil when this machine cannot run BCn upload tests.
     private static let bcDevice: MTLDevice? = {

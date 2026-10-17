@@ -11,7 +11,7 @@ import MetalKit
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct GameViewControllerScreenshotTests {
     private static var hasMetal4Device: Bool {
         MTLCreateSystemDefaultDevice()?.supportsFamily(.metal4) ?? false

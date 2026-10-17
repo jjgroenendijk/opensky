@@ -7,7 +7,7 @@ import OpenSkyEngineTesting
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct ImageSpaceTileGradeTests {
     private static let size = 64

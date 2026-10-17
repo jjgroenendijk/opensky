@@ -9,7 +9,7 @@ import OpenSkyTagsTesting
 import OpenSkyWorldFixtures
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct RendererShadowQualityTests {
     private static var hasMetal4Device: Bool {
         ShadowSceneFixture.hasMetal4Device

@@ -8,7 +8,7 @@ import OpenSkyRendering
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct SparseASTCTextureTests {
     nonisolated private static let device: MTLDevice? = {
         guard

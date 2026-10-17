@@ -17,7 +17,7 @@ final class FakeSWFLayerWorld: SWFLayerWorld {
     }
 }
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 struct HUDCoordinatorTests {
     private static let canvas = OffscreenCanvas(width: 64, height: 64, shaders: .packageFixture)
 

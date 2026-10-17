@@ -101,7 +101,7 @@ struct DynamicBodySolverTests {
 
     /// The stress acceptance: dozens of bodies, a long run, no NaN, nothing
     /// through the floor, and the same resting state from the same inputs.
-    @Test(.tags(.slow))
+    @Test(.tags(.slow), .unlessPlanSkips(.slow))
     func aCrowdedSceneSettlesFiniteAndReproducibly() {
         let first = Self.runStressScene()
         let second = Self.runStressScene()

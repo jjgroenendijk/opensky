@@ -8,7 +8,7 @@ import OpenSkyEngineTesting
 import OpenSkyTagsTesting
 import Testing
 
-@Suite(.tags(.gpu))
+@Suite(.tags(.gpu), .unlessPlanSkips(.gpu))
 @MainActor
 struct PipelineCacheTests {
     private static let size = 32
