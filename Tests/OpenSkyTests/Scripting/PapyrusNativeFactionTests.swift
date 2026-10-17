@@ -42,6 +42,21 @@ struct PapyrusNativeFactionTests {
         #expect(member == .returned(.boolean(true)))
     }
 
+    /// "This function will return False for an Actor that has a rank of -1."
+    /// (<https://ck.uesp.net/wiki/IsInFaction_-_Actor>)
+    @Test func isInFactionIgnoresARankMinusOneListing() throws {
+        let fixture = try Self.fixture()
+        let guards = try handle(fixture, faction: Self.guards)
+        fixture.factions.join(fixture.actorKey, to: Self.guards, rank: -1)
+        let member = call(
+            "Actor", "IsInFaction", fixture,
+            receiver: fixture.actor,
+            arguments: [.object(guards)],
+            returnType: .boolean
+        )
+        #expect(member == .returned(.boolean(false)))
+    }
+
     /// "If the Actor is already in the faction, this function does nothing." —
     /// so a second add must not demote a promoted member back to rank 0.
     @Test func addToFactionDoesNotDemoteAnExistingMember() throws {

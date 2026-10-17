@@ -101,7 +101,7 @@ These sit on the faction model behind [hostility](/engine/hostility.md).
 | --- | --- | --- |
 | `AddToFaction(Faction)` | Joins at rank 0. Nothing if already a member | [AddToFaction - Actor](https://ck.uesp.net/wiki/AddToFaction_-_Actor) |
 | `RemoveFromFaction(Faction)` | Drops the membership | [RemoveFromFaction - Actor](https://ck.uesp.net/wiki/RemoveFromFaction_-_Actor) |
-| `bool IsInFaction(Faction)` | Membership | [IsInFaction - Actor](https://ck.uesp.net/wiki/IsInFaction_-_Actor) |
+| `bool IsInFaction(Faction)` | Membership at rank 0 or above | [IsInFaction - Actor](https://ck.uesp.net/wiki/IsInFaction_-_Actor) |
 | `int GetFactionRank(Faction)` | The rank. -2 for a non-member, -1 for a member ranked -1 | [GetFactionRank - Actor](https://ck.uesp.net/wiki/GetFactionRank_-_Actor) |
 | `SetFactionRank(Faction, int)` | Sets the rank, joining if needed | [SetFactionRank - Actor](https://ck.uesp.net/wiki/SetFactionRank_-_Actor) |
 | `ModFactionRank(Faction, int)` | Adds the change to a member's rank, held inside -128 to 127. A non-member stays out | [ModFactionRank - Actor](https://ck.uesp.net/wiki/ModFactionRank_-_Actor) |

@@ -41,7 +41,7 @@ nonisolated public struct FactionConditionResolution: Sendable {
     }
 
     public func isMember(_ actor: ReferenceKey, of faction: ReferenceKey) -> Bool? {
-        profile(of: actor)?.memberships.isMember(of: faction)
+        profile(of: actor)?.memberships.countsAsMember(of: faction)
     }
 
     /// Nil when `actor` is not a member. The condition function and the Papyrus
