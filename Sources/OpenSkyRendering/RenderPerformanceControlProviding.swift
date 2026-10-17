@@ -44,17 +44,20 @@ nonisolated public struct UpscaleStatus: Equatable, Sendable {
     public var historyResets = 0
     /// Why this GPU cannot upscale; nil when it can.
     public var unavailableReason: String?
+    /// MetalFX is still building the scaler, so the scene draws at full size.
+    public var buildingScaler = false
 
     public init(
         inputSize: SIMD2<Int>? = nil, outputSize: SIMD2<Int>? = nil,
         upscaler: UpscalerKind = .temporal, historyResets: Int = 0,
-        unavailableReason: String? = nil
+        unavailableReason: String? = nil, buildingScaler: Bool = false
     ) {
         self.upscaler = upscaler
         self.inputSize = inputSize
         self.outputSize = outputSize
         self.historyResets = historyResets
         self.unavailableReason = unavailableReason
+        self.buildingScaler = buildingScaler
     }
 }
 
@@ -147,6 +150,13 @@ nonisolated public enum RenderPerformanceReadout: Sendable {
     public static func upscalingText(scale: RenderScale, status: UpscaleStatus) -> String {
         if let reason = status.unavailableReason {
             return "Upscaling: unavailable\n\(reason)"
+        }
+        if scale.isOn, status.buildingScaler {
+            return """
+            Upscaling: \(scale.percent)%, \(status.upscaler)
+            Building the MetalFX scaler; the scene draws at full size until it is ready
+            History resets: \(status.historyResets)
+            """
         }
         guard scale.isOn, let input = status.inputSize, let output = status.outputSize else {
             return "Upscaling: off\nHistory resets: \(status.historyResets)"

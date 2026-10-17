@@ -29,6 +29,10 @@ struct RendererFrameInterpolationTests {
         return renderer
     }
 
+    private static func settle(_ renderer: Renderer) async throws {
+        try await renderer.settleUpscaler(width: width, height: height)
+    }
+
     private static func pixels(_ texture: MTLTexture) -> TexturePixels {
         TexturePixels(
             width: width, height: height, rgba: OffscreenRendererFixture.pixels(of: texture)
@@ -48,9 +52,10 @@ struct RendererFrameInterpolationTests {
     }
 
     /// The upscaled frame at `yaw`, after enough frames there to settle the history.
-    private static func settledFrame(yaw: Float) throws -> TexturePixels {
+    private static func settledFrame(yaw: Float) async throws -> TexturePixels {
         let renderer = try makeRenderer()
         renderer.freeFlyCamera.yaw += yaw
+        try await settle(renderer)
         var frame = try Self.frame(renderer)
         for _ in 0 ..< 12 {
             frame = try Self.frame(renderer)
@@ -64,6 +69,7 @@ struct RendererFrameInterpolationTests {
         let renderer = try Self.makeRenderer()
         try #require(renderer.upscale.resources.interpolatorUnavailableReason == nil)
         renderer.frameInterpolationEnabled = true
+        try await Self.settle(renderer)
         var start = try Self.frame(renderer)
         for _ in 0 ..< 12 {
             start = try Self.frame(renderer)
@@ -73,7 +79,7 @@ struct RendererFrameInterpolationTests {
         #expect(renderer.isFrameInterpolationRunning)
         #expect(renderer.upscale.interpolation.lastFrameInterpolated)
         let built = try Self.pixels(#require(renderer.upscale.interpolation.offscreenFrame))
-        let middle = try Self.settledFrame(yaw: Self.turn / 2)
+        let middle = try await Self.settledFrame(yaw: Self.turn / 2)
         let builtMatch = try Self.psnr(middle, built)
         let startMatch = try Self.psnr(middle, start)
         let endMatch = try Self.psnr(middle, end)
@@ -95,11 +101,13 @@ struct RendererFrameInterpolationTests {
         #expect(renderer.upscale.interpolation.offscreenFrame == nil)
         renderer.renderScale = RenderScale(percent: 67)
         renderer.upscaler = .spatial
+        try await Self.settle(renderer)
         _ = try Self.frame(renderer)
         #expect(!renderer.isFrameInterpolationRunning)
         #expect(renderer.upscale.targets?.interpolation == nil)
 
         renderer.upscaler = .temporal
+        try await Self.settle(renderer)
         _ = try Self.frame(renderer)
         _ = try Self.frame(renderer)
         #expect(renderer.isFrameInterpolationRunning)
@@ -107,7 +115,9 @@ struct RendererFrameInterpolationTests {
         let names = renderer.renderTargetMemory().entries.map(\.name)
         #expect(names.contains("Interpolated frame"))
         renderer.frameInterpolationEnabled = false
+        try await Self.settle(renderer)
         _ = try Self.frame(renderer)
+        #expect(renderer.upscale.targets != nil)
         #expect(renderer.upscale.targets?.interpolation == nil)
         #expect(!renderer.upscale.interpolation.lastFrameInterpolated)
     }

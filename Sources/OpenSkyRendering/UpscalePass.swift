@@ -21,8 +21,8 @@ public final class UpscaleResources {
     let spatialUnavailableReason: String?
     let interpolatorUnavailableReason: String?
 
-    static let motionFormat = MTLPixelFormat.rg16Float
-    static let outputFormat = MTLPixelFormat.rgba16Float
+    nonisolated static let motionFormat = MTLPixelFormat.rg16Float
+    nonisolated static let outputFormat = MTLPixelFormat.rgba16Float
     static let uniformStride = (MemoryLayout<UpscaleMotionUniforms>.size + 0xFF) & -0x100
 
     init(view: MTKView, library: MTLLibrary, compiler: PipelineCache) throws {
@@ -84,9 +84,18 @@ public final class UpscaleResources {
 }
 
 /// One of the two MetalFX scalers.
-enum UpscaleScaler {
+nonisolated enum UpscaleScaler {
     case temporal(any MTL4FXTemporalScaler)
     case spatial(any MTL4FXSpatialScaler)
+}
+
+/// The sizes and formats one scaler build needs, as values that cross to the build task.
+nonisolated struct UpscaleScalerRequest: Equatable, Sendable {
+    let kind: UpscalerKind
+    let input: SIMD2<Int>
+    let output: SIMD2<Int>
+    let colorFormat: MTLPixelFormat
+    let interpolates: Bool
 }
 
 /// The input and output targets of one input and output size, and their scaler.
@@ -99,6 +108,8 @@ final class UpscaleTargets {
     private(set) var output: MTLTexture
     let scaler: UpscaleScaler
     let interpolation: InterpolationTargets?
+    /// What was asked for, with `interpolates` false when MetalFX refused the interpolator.
+    let request: UpscaleScalerRequest
 
     var kind: UpscalerKind {
         if case .spatial = scaler {
@@ -127,39 +138,32 @@ final class UpscaleTargets {
     }
 
     init(
-        input: SIMD2<Int>,
-        output outputSize: SIMD2<Int>,
-        colorFormat: MTLPixelFormat,
-        kind: UpscalerKind,
-        interpolates: Bool,
-        compiler: PipelineCache
+        _ request: UpscaleScalerRequest,
+        scaler: UpscaleScaler,
+        interpolator: (any MTL4FXFrameInterpolator)?,
+        device: MTLDevice
     ) throws {
-        let device = compiler.device
+        let (input, outputSize, colorFormat) = (request.input, request.output, request.colorFormat)
         let usage: (color: MTLTextureUsage, output: MTLTextureUsage)
         var readUsage = MTLTextureUsage.shaderRead
-        var interpolator: (any MTL4FXFrameInterpolator)?
-        switch kind {
-        case .temporal:
-            let scaler = try Self.temporalScaler(
-                input: input, output: outputSize, colorFormat: colorFormat, compiler: compiler
-            )
-            self.scaler = .temporal(scaler)
-            usage = (scaler.colorTextureUsage, scaler.outputTextureUsage)
-            readUsage = scaler.depthTextureUsage.union(scaler.motionTextureUsage)
-            if interpolates {
-                let made = try InterpolationTargets.interpolator(
-                    input: input, output: outputSize, compiler: compiler
+        switch scaler {
+        case let .temporal(temporal):
+            usage = (temporal.colorTextureUsage, temporal.outputTextureUsage)
+            readUsage = temporal.depthTextureUsage.union(temporal.motionTextureUsage)
+            if let interpolator {
+                readUsage.formUnion(
+                    interpolator.depthTextureUsage.union(interpolator.motionTextureUsage)
                 )
-                readUsage.formUnion(made.depthTextureUsage.union(made.motionTextureUsage))
-                interpolator = made
             }
-        case .spatial:
-            let scaler = try Self.spatialScaler(
-                input: input, output: outputSize, colorFormat: colorFormat, compiler: compiler
-            )
-            self.scaler = .spatial(scaler)
-            usage = (scaler.colorTextureUsage, scaler.outputTextureUsage)
+        case let .spatial(spatial):
+            usage = (spatial.colorTextureUsage, spatial.outputTextureUsage)
         }
+        self.scaler = scaler
+        self.request = UpscaleScalerRequest(
+            kind: request.kind, input: input, output: outputSize, colorFormat: colorFormat,
+            interpolates: interpolator != nil
+        )
+        let kind = request.kind
         func texture(
             _ format: MTLPixelFormat, _ size: SIMD2<Int>, _ usage: MTLTextureUsage, _ label: String
         ) throws -> MTLTexture {
@@ -206,47 +210,5 @@ final class UpscaleTargets {
         }
         texture.label = label
         return texture
-    }
-
-    private static func temporalScaler(
-        input: SIMD2<Int>, output: SIMD2<Int>, colorFormat: MTLPixelFormat,
-        compiler: PipelineCache
-    ) throws -> any MTL4FXTemporalScaler {
-        let descriptor = MTLFXTemporalScalerDescriptor()
-        descriptor.colorTextureFormat = colorFormat
-        descriptor.depthTextureFormat = .depth32Float_stencil8
-        descriptor.motionTextureFormat = UpscaleResources.motionFormat
-        descriptor.outputTextureFormat = UpscaleResources.outputFormat
-        descriptor.inputWidth = input.x
-        descriptor.inputHeight = input.y
-        descriptor.outputWidth = output.x
-        descriptor.outputHeight = output.y
-        guard
-            let scaler = descriptor.makeTemporalScaler(
-                device: compiler.device, compiler: compiler.compiler
-            )
-        else { throw RendererError.upscalerUnavailable }
-        return scaler
-    }
-
-    private static func spatialScaler(
-        input: SIMD2<Int>, output: SIMD2<Int>, colorFormat: MTLPixelFormat,
-        compiler: PipelineCache
-    ) throws -> any MTL4FXSpatialScaler {
-        let descriptor = MTLFXSpatialScalerDescriptor()
-        // The spatial scaler rejects an sRGB input with a non-sRGB output.
-        descriptor.colorTextureFormat = colorFormat
-        descriptor.outputTextureFormat = colorFormat
-        descriptor.inputWidth = input.x
-        descriptor.inputHeight = input.y
-        descriptor.outputWidth = output.x
-        descriptor.outputHeight = output.y
-        descriptor.colorProcessingMode = .perceptual
-        guard
-            let scaler = descriptor.makeSpatialScaler(
-                device: compiler.device, compiler: compiler.compiler
-            )
-        else { throw RendererError.upscalerUnavailable }
-        return scaler
     }
 }

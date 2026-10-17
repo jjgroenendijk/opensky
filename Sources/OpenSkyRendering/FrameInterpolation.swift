@@ -36,26 +36,6 @@ final class InterpolationTargets {
         self.history = history
         self.frame = frame
     }
-
-    static func interpolator(
-        input: SIMD2<Int>, output: SIMD2<Int>, compiler: PipelineCache
-    ) throws -> any MTL4FXFrameInterpolator {
-        let descriptor = MTLFXFrameInterpolatorDescriptor()
-        descriptor.colorTextureFormat = UpscaleResources.outputFormat
-        descriptor.outputTextureFormat = UpscaleResources.outputFormat
-        descriptor.depthTextureFormat = .depth32Float_stencil8
-        descriptor.motionTextureFormat = UpscaleResources.motionFormat
-        descriptor.inputWidth = input.x
-        descriptor.inputHeight = input.y
-        descriptor.outputWidth = output.x
-        descriptor.outputHeight = output.y
-        guard
-            let interpolator = descriptor.makeFrameInterpolator(
-                device: compiler.device, compiler: compiler.compiler
-            )
-        else { throw RendererError.upscalerUnavailable }
-        return interpolator
-    }
 }
 
 /// The renderer's frame interpolation switch and counters.
