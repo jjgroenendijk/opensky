@@ -11,7 +11,9 @@ tags: [engine, animation, behavior, locomotion, player]
 
 The movement bridge is where input, the behavior graph, and the character controller meet. Its rules
 for moving the capsule are on the [walk mode](/engine/walk-mode.md) page. This page covers what it
-does to a graph instance ([behavior graph runtime](/engine/behavior-runtime.md)).
+does to a graph instance ([behavior graph runtime](/engine/behavior-runtime.md)). The same step
+also writes what the actor does, such as an attack or a cast
+([actor state graph variables](/engine/actor-state-graph.md)).
 
 ## One step
 
@@ -64,7 +66,7 @@ true on the first-person one ([first person](/engine/first-person.md)).
 ## The Player & Locomotion panel
 
 World > Player & Locomotion shows everything above, and every key the player can press is also a
-control. It has five sections.
+control. It has six sections.
 
 - State: where the capsule is, the resolved gait, which source moved it, and the gait speeds with
   their source. It repeats the camera mode selector from World > World > Camera, because the
@@ -75,6 +77,8 @@ control. It has five sections.
   events that came back, the names the graph does not declare, and the tally's coverage line. A
   variable the graph does not declare is listed as `<not declared by the graph>`, not hidden, so a
   spelling mismatch looks like a failure.
+- Actor State: `iState`, the other actor-state inputs, and the outputs the graph publishes
+  ([actor state graph variables](/engine/actor-state-graph.md)).
 - Bindings: every movement key and its live state. Sneak is a toggle. Jump requests exactly one
   jump, the same request the space bar makes. Run and sprint are held keys, so their rows turn
   active while held.

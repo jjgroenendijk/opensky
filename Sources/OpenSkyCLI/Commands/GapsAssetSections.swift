@@ -11,6 +11,7 @@ import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
 import OpenSkyFormatsSWF
 import OpenSkyGameData
+import OpenSkyProgression
 import OpenSkyWorld
 
 extension GapsGatherer {
@@ -66,8 +67,11 @@ extension GapsGatherer {
                 .map { $0.lowercased() }
         ).union(footstepTags())
         let boundVariables = Set(
-            (CombatGraphNames.variables + ArcheryGraphNames.variables
-                + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables)
+            (CombatGraphNames.variables + CombatGraphNames.loopVariables
+                + ArcheryGraphNames.variables
+                + LocomotionGraphNames.variables + LocomotionGraphNames.perspectiveVariables
+                + ActorStateGraphNames.inputs + ActorStateGraphNames.outputs
+                + ActorGraphState.allCases.map(\.variableName) + perkGraphVariables())
                 .map { $0.lowercased() }
         )
         let note = "\(census.fileCount) .hkx files, \(unread) did not read, "
@@ -190,6 +194,15 @@ extension GapsGatherer {
         } catch {
             return "fails: " + GapCounts.failureKind("\(error)")
         }
+    }
+
+    /// The graph variables perk effects set, which the combat runtime writes.
+    private func perkGraphVariables() -> [String] {
+        var skipped = SkippedRecords()
+        let perks = (try? requirePlugins().decodeRecords(of: "PERK", skipped: &skipped) {
+            try Perk(record: $0, localized: $1)
+        }) ?? []
+        return Array(PerkGapCensus(perks: perks).graphVariables)
     }
 
     /// Footstep tags (`FSTP` `ANAM`): annotation events the footstep sounds answer.

@@ -139,10 +139,10 @@ struct LocomotionBridgeFirstPersonTests {
         let bridge = LocomotionBridge(configuration: .synthetic, graph: Self.graph())
         bridge.attachFirstPerson(graph: sparse)
         _ = bridge.plan(Self.state())
-        #expect(bridge.status.missingVariables.isEmpty)
-        #expect(
-            bridge.status.firstPersonMissingVariables == LocomotionGraphNames.variables.sorted()
-        )
+        // Both graphs also miss the actor-state inputs; only the locomotion names differ.
+        let locomotion = Set(LocomotionGraphNames.variables)
+        #expect(locomotion.isDisjoint(with: bridge.status.missingVariables))
+        #expect(locomotion.isSubset(of: bridge.status.firstPersonMissingVariables))
     }
 
     // MARK: - Independence

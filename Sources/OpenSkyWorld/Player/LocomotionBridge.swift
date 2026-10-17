@@ -74,6 +74,9 @@ nonisolated public final class LocomotionBridge {
     public var forcedGait: LocomotionGait?
     /// False while the stamina bar is empty: a held sprint key runs instead.
     public var isSprintAllowed = true
+    /// What combat, magic, and the camera report this frame, for the actor-state
+    /// graph inputs (ActorStateGraphCore.swift).
+    public var actorState = ActorStateGraphInputs()
 
     public private(set) var status: LocomotionStatus
     /// Third-person graph events awaiting consumers. Only that graph feeds it, or every
@@ -336,6 +339,7 @@ nonisolated public final class LocomotionBridge {
         write(.real(configuration.walkSpeed.value), to: LocomotionGraphNames.speedWalk)
         write(.real(configuration.runSpeed.value), to: LocomotionGraphNames.speedRun)
         writeCharacterVariables(state: state)
+        writeActorState(gait: gait)
     }
 
     /// Raises the transitions this step crossed, in a fixed order so a step

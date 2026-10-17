@@ -44,6 +44,7 @@ nonisolated extension BehaviorGraphInstance {
             state.transition = transition.isFinished ? nil : transition
         }
         machineStates[target] = state
+        publishMachineOutputs(machine, at: target, currentStateId: state.currentStateId)
         // Reported before the pose walk rather than after it, so a machine
         // appears ahead of the machines nested below it.
         recordActiveState(machine, state: state)

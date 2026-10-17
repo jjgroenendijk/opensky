@@ -140,6 +140,10 @@ The font hinting tags (73, 74, 88) count as done, because OpenSky draws glyphs w
   (<https://ck.uesp.net/wiki/List_of_Animation_Variables>) or a graph binds it to a member that
   takes a world position, such as `BSLookAtModifier.targetLocation`. The rest are computed by the
   graph (an expression assignment or a modifier output) or are authored constants.
+  A variable a perk sets through Set Boolean Graph Variable counts as set, because the combat
+  runtime writes it. So does an `iState_*` constant the engine reads, and a variable a state
+  machine publishes through `isActive`, `currentStateId`, or its sync variable
+  ([actor state graph variables](/engine/actor-state-graph.md)).
 - A voice `.fuz` counts by the audio inside it. Its lip data counts in the lip sync section.
 
 ### Rules

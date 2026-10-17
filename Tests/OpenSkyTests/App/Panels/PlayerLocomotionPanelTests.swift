@@ -28,6 +28,7 @@ struct PlayerLocomotionPanelTests {
         panel.loadViewIfNeeded()
         #expect(panel.stateSection.sectionIdentifier == "locomotionState")
         #expect(panel.graphSection.sectionIdentifier == "locomotionGraph")
+        #expect(panel.actorStateSection.sectionIdentifier == "locomotionActorState")
         #expect(panel.bindingsSection.sectionIdentifier == "locomotionBindings")
         #expect(panel.motionSection.sectionIdentifier == "locomotionMotion")
         #expect(panel.devSection.sectionIdentifier == "locomotionDev")
@@ -54,6 +55,7 @@ struct PlayerLocomotionPanelTests {
 
         for identifier in [
             "LocomotionStateStatsLabel", "LocomotionGraphStatsLabel",
+            "LocomotionActorStateStatsLabel",
             "LocomotionBindingsStatsLabel", "LocomotionMotionStatsLabel",
             "LocomotionDevStatsLabel"
         ] {
@@ -314,4 +316,28 @@ struct PlayerLocomotionPanelTests {
 
 private enum PlayerLocomotionPanelTestError: Error {
     case notAWorldInspector
+}
+
+extension PlayerLocomotionPanelTests {
+    /// The Actor State readout names the state and lists both directions, with a
+    /// name the graph does not declare marked as such.
+    @Test @MainActor
+    func actorStateReadoutListsInputsAndOutputs() throws {
+        let providers = FakeWorldProviders()
+        providers.locomotion.actorState = ActorStateGraphSnapshot(
+            inputs: [LocomotionVariableSnapshot(name: "bSprintOK", value: "true")],
+            outputs: [LocomotionVariableSnapshot(name: "bAllowRotation", value: nil)],
+            state: "6 (NPC1HM)"
+        )
+        let panel = try Self.panel(providers: providers)
+        panel.startInspecting()
+        defer { panel.stopInspecting() }
+
+        let readout = try #require(
+            scriptsReadout("LocomotionActorStateStatsLabel", in: panel.view)
+        )
+        #expect(readout.contains("State: 6 (NPC1HM)"))
+        #expect(readout.contains("bSprintOK = true"))
+        #expect(readout.contains("bAllowRotation = <not declared by the graph>"))
+    }
 }

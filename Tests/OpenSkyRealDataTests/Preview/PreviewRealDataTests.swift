@@ -30,11 +30,10 @@ struct PreviewRealDataTests {
         let device = try #require(RealDataEnvironment.device)
         let root = try #require(RealDataEnvironment.dataRoot)
         let vfs = VirtualFileSystem(root: root)
-        let loaded = PreviewCatalog.load(
+        let catalog = PreviewCatalog.load(
             fileSystem: vfs,
-            esmURL: root.dataURL.appending(path: "Skyrim.esm")
+            loadOrder: Result { try ActiveLoadOrder.open(root: root).plugins }
         )
-        let catalog = loaded.catalog
 
         // Vanilla SSE: ~172k archive entries, ~870k Skyrim.esm records.
         #expect(catalog.fileCount > 100_000, "archives look under-enumerated")

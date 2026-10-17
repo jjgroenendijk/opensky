@@ -68,6 +68,8 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
     public let tally: BehaviorTally?
     /// Why the player has no third-person body, or nil when one is attached.
     public let bodyFailureReason: String?
+    /// The actor-state inputs and outputs of the third-person graph.
+    public let actorState: ActorStateGraphSnapshot
 
     public static let unavailable = PlayerLocomotionSnapshot(
         rendererAvailable: false,
@@ -93,7 +95,8 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
         variables: [LocomotionVariableSnapshot],
         forcedGait: LocomotionGait?,
         tally: BehaviorTally?,
-        bodyFailureReason: String? = nil
+        bodyFailureReason: String? = nil,
+        actorState: ActorStateGraphSnapshot = .empty
     ) {
         self.rendererAvailable = rendererAvailable
         self.walkModeActive = walkModeActive
@@ -106,6 +109,7 @@ nonisolated public struct PlayerLocomotionSnapshot: Equatable, Sendable {
         self.forcedGait = forcedGait
         self.tally = tally
         self.bodyFailureReason = bodyFailureReason
+        self.actorState = actorState
     }
 }
 

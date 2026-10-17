@@ -41,6 +41,7 @@ nonisolated extension BehaviorGraphInstance {
         state.isEntered = false
         state.transition = nil
         machineStates[target] = state
+        publishMachineDeactivation(at: target)
     }
 
     // MARK: - Conditions

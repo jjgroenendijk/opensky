@@ -12,14 +12,29 @@ nonisolated public struct PerkGapCensus: Equatable, Sendable {
     /// Entry-point effects per function, over every perk.
     public private(set) var functions: [PerkFunction: Int] = [:]
     public private(set) var effectTotal = 0
+    /// The graph variables `Set Boolean Graph Variable` effects name. The combat
+    /// runtime writes each one while its perk applies.
+    public private(set) var graphVariables: Set<String> = []
 
     public init(perks: [Perk]) {
         for perk in perks {
-            for case let .entryPoint(effect)? in perk.effects.map(\.data) {
+            for perkEffect in perk.effects {
+                guard case let .entryPoint(effect)? = perkEffect.data else { continue }
                 effectTotal += 1
                 entryPoints[effect.entryPoint, default: 0] += 1
                 functions[effect.function, default: 0] += 1
+                if effect.entryPoint == .setBooleanGraphVariable {
+                    graphVariables.formUnion(Self.text(of: perkEffect.functionData))
+                }
             }
+        }
+    }
+
+    private static func text(of data: PerkFunctionData?) -> [String] {
+        switch data {
+        case let .text(value)?: [value]
+        case let .localizedText(.inline(value))?: [value]
+        default: []
         }
     }
 

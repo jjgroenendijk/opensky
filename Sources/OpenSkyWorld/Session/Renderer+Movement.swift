@@ -147,6 +147,11 @@ extension Renderer {
     /// `.thirdPerson`: the same capsule, the same locomotion bridge, and the
     /// same behavior graph. Only where the eye ends up differs.
     private func advancePlayer(_ frameInput: CameraInput) {
+        locomotion.actorState.setCamera(
+            position: freeFlyCamera.position,
+            forward: freeFlyCamera.forward,
+            pitch: freeFlyCamera.pitch
+        )
         locomotion.acceptFrame(frameInput)
         walkController.update(
             camera: &freeFlyCamera,

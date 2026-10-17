@@ -26,7 +26,10 @@ extension PlayerCoordinator: PlayerLocomotionControlProviding {
             variables: PlayerCore.variables(of: bridge.graph),
             forcedGait: bridge.forcedGait,
             tally: bridge.graph?.tally,
-            bodyFailureReason: failureReason
+            bodyFailureReason: failureReason,
+            actorState: ActorStateGraphSnapshot.read(
+                bridge.graph, constants: bridge.actorStateConstants
+            )
         )
     }
 
