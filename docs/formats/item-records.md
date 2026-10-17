@@ -60,7 +60,9 @@ SLGM (line 5460):
 
 The enum is `wbSoulGemEnum` (`wbDefinitionsCommon.pas` line 8185). Record-header flag
 `0x20000` is "Can Hold NPC Soul", set on the black soul gems. OpenSky decodes the soul data
-only; filling and using a gem are not modeled.
+only; filling and using a gem are not modeled. The inventory readout names a gem's soul with the
+`sSoulLevelNamePetty` to `sSoulLevelNameGrand` settings, in the `sSoulLevel` line "Filled with %s
+Soul", and an empty gem with `sEmpty`.
 
 APPA (line 8251):
 

@@ -45,6 +45,7 @@ public final class InventoryCoordinator {
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
     public var menuTexts = InventoryMenuTexts.vanilla
     public var tradeTexts = TradeTexts.vanilla
+    public var soulTexts = SoulTexts.vanilla
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla
 
@@ -197,7 +198,7 @@ public final class InventoryCoordinator {
                 count: $0.count,
                 name: name(of: $0.item),
                 stolen: $0.stolen,
-                detail: runtime?.inventory.baselines.items.familyDetail($0.item)
+                detail: runtime?.inventory.baselines.items.familyDetail($0.item, souls: soulTexts)
             )
         }
     }
