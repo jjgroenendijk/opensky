@@ -67,6 +67,10 @@ struct CombatSpellcastingPanelTests {
         #expect(
             section.readTomeControl.accessibilityIdentifier() == "SpellcastingReadTomeControl"
         )
+        #expect(
+            section.readSkillBookControl.accessibilityIdentifier()
+                == "SpellcastingReadSkillBookControl"
+        )
         #expect(section.selectControl.accessibilityIdentifier() == "SpellcastingSelectControl")
         #expect(
             section.readyRightControl.accessibilityIdentifier()
@@ -92,8 +96,8 @@ struct CombatSpellcastingPanelTests {
         let section = panel.spellcastingSection
 
         for control in [
-            section.learnControl, section.readTomeControl, section.selectControl,
-            section.readyRightControl, section.readyLeftControl,
+            section.learnControl, section.readTomeControl, section.readSkillBookControl,
+            section.selectControl, section.readyRightControl, section.readyLeftControl,
             section.castRightControl, section.castLeftControl
         ] {
             _ = control.target?.perform(control.action, with: control)
@@ -101,6 +105,7 @@ struct CombatSpellcastingPanelTests {
 
         #expect(providers.casting.learnCount == 1)
         #expect(providers.casting.readTomeCount == 1)
+        #expect(providers.casting.readSkillBookCount == 1)
         #expect(providers.casting.selectCount == 1)
         #expect(providers.casting.readied == [.right, .left])
         #expect(providers.casting.cast == [.right, .left])

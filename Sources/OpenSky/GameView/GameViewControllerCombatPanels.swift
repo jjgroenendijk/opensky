@@ -122,6 +122,11 @@ extension GameViewController: CastingControlProviding {
     }
 
     @discardableResult
+    func readFirstUnreadSkillBook() -> String {
+        magic.readFirstUnreadSkillBook()
+    }
+
+    @discardableResult
     func selectNextKnownSpell() -> String {
         magic.selectNextKnownSpell()
     }

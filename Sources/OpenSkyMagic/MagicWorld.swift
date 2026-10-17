@@ -62,6 +62,10 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
         subjects: PerkEvaluationSubjects,
         seams: ConditionContext
     ) -> Float
+    /// Raises the player's skill at actor value index `skill` by `points` levels, for
+    /// a read skill book. Returns how many levels it rose.
+    @discardableResult
+    func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int
 }
 
 extension MagicWorld {
@@ -74,5 +78,11 @@ extension MagicWorld {
         seams _: ConditionContext
     ) -> Float {
         value
+    }
+
+    /// A session with no progression raises nothing.
+    @discardableResult
+    public func raiseSkillFromBook(_: Int32, points _: Int) -> Int {
+        0
     }
 }

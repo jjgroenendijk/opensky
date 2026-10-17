@@ -210,4 +210,17 @@ struct MagicCoordinatorTests {
         #expect(world.perkOwners[.modSpellMagnitude] == .player)
         #expect(world.perkOwners[.modIncomingSpellMagnitude] == nil)
     }
+
+    @Test func aSkillBookRaisesItsSkillOnceWithThePerkPoints() throws {
+        let world = FakeMagicWorld()
+        world.perkFactors[.adjustBookSkillPoints] = 2
+        let coordinator = try Self.castingWired(world)
+        let book = FormID(0x0700)
+
+        coordinator.readSkillBook(book, skill: 12)
+        #expect(coordinator.readSkillBook(book, skill: 12).hasSuffix("was already read."))
+
+        #expect(world.bookRaises.map(\.skill) == [12])
+        #expect(world.bookRaises.map(\.points) == [2])
+    }
 }

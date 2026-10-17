@@ -193,6 +193,12 @@ public protocol CastingControlProviding: AnyObject {
     @discardableResult
     func readFirstCarriedSpellTome() -> String
 
+    /// Reads the first skill book the player carries and has not read.
+    ///
+    /// - Returns: a human-readable outcome, which the panel shows verbatim.
+    @discardableResult
+    func readFirstUnreadSkillBook() -> String
+
     /// Moves the panel's selection to the next known spell, wrapping.
     ///
     /// - Returns: a human-readable outcome, which the panel shows verbatim.

@@ -43,6 +43,7 @@ struct FakeCastingState {
     var snapshot = CastingControlSnapshot.unavailable
     var learnCount = 0
     var readTomeCount = 0
+    var readSkillBookCount = 0
     var selectCount = 0
     /// Hands the panel asked to ready and to cast, in order, so a gate can
     /// assert that a button sent the hand it names.
@@ -69,6 +70,12 @@ extension FakeWorldProviders {
     func readFirstCarriedSpellTome() -> String {
         casting.readTomeCount += 1
         return "Read the first carried tome."
+    }
+
+    @discardableResult
+    func readFirstUnreadSkillBook() -> String {
+        casting.readSkillBookCount += 1
+        return "Read the first unread skill book."
     }
 
     @discardableResult

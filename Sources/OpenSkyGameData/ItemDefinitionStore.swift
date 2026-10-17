@@ -242,6 +242,12 @@ nonisolated public final class ItemDefinitionStore {
         return spell
     }
 
+    /// The skill's actor value index a skill book raises, or nil.
+    public func teachesSkill(_ id: FormID) -> Int32? {
+        guard case let .skill(skill) = books[id.rawValue]?.teaches else { return nil }
+        return skill
+    }
+
     public func definition(_ id: FormID) -> ItemDefinition? {
         definitions[id.rawValue]
     }

@@ -27,6 +27,7 @@ final class FakeMagicWorld: MagicWorld {
     /// Every actor's perks at an entry point, as a factor on the value.
     var perkFactors: [PerkEntryPoint: Float] = [:]
     private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
+    private(set) var bookRaises: [(skill: Int32, points: Int)] = []
     var undead: Set<ReferenceKey> = []
     private(set) var staggered: [ReferenceKey] = []
     private(set) var hazards: [(hazard: ReferenceKey, target: ReferenceKey)] = []
@@ -116,5 +117,10 @@ final class FakeMagicWorld: MagicWorld {
     ) -> Float {
         perkOwners[entryPoint] = key
         return value * (perkFactors[entryPoint] ?? 1)
+    }
+
+    func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {
+        bookRaises.append((skill: skill, points: points))
+        return points
     }
 }

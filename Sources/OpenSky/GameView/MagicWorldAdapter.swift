@@ -159,6 +159,12 @@ extension MagicWorldAdapter: MagicWorld {
         ConditionProbe.text(of: function, parameter1: parameter, in: context)
     }
 
+    func raiseSkillFromBook(_ skill: Int32, points: Int) -> Int {
+        (0 ..< max(0, points)).reduce(0) { raised, _ in
+            raised + (game.progression.incrementSkill(skill) ? 1 : 0)
+        }
+    }
+
     func perkModified(
         _ value: Float,
         at entryPoint: PerkEntryPoint,
