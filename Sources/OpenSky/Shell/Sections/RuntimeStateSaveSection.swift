@@ -1,8 +1,9 @@
 // World > Runtime State > Save & Load: write the store to a named slot and
-// read it back. Never overridden: "Reset all" must not delete saves. Errors
-// show verbatim so a screenshot of a failed save stays diagnosable.
+// read it back, or export the session as a Skyrim save. Never overridden: "Reset
+// all" must not delete saves. Errors show verbatim, so a failed save is diagnosable.
 
 import AppKit
+import OpenSkySave
 import OpenSkyWorld
 
 final class RuntimeStateSaveSection: PanelSectionViewController {
@@ -20,6 +21,15 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
     let slotControl = NSTextField(string: RuntimeStateSaveSection.defaultSlotName)
     let saveControl = NSButton(title: "Save", target: nil, action: nil)
     let loadControl = NSButton(title: "Load", target: nil, action: nil)
+    let exportControl = NSButton(title: "Export to Skyrim", target: nil, action: nil)
+
+    weak var exportProvider: (any SkyrimExportControlProviding)? {
+        didSet {
+            guard isViewLoaded else { return }
+            refreshReadout()
+        }
+    }
+
     private let statsLabel = PanelComponents.statsLabel(identifier: "RuntimeStateSaveStatsLabel")
 
     override var sectionTitle: String {
@@ -55,13 +65,18 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
             loadControl, target: self, action: #selector(load),
             identifier: "RuntimeStateLoadControl"
         )
+        PanelComponents.configureButton(
+            exportControl, target: self, action: #selector(exportSkyrim),
+            identifier: "RuntimeStateExportSkyrimControl"
+        )
+        exportControl.toolTip = "Writes a new .ess in the Skyrim saves folder."
         return [
             PanelComponents.group([
                 PanelComponents.labeledFieldRow(
                     caption: "Slot", captionWidth: 60, field: slotControl
                 )
             ]),
-            PanelComponents.buttonRow([saveControl, loadControl]),
+            PanelComponents.buttonRow([saveControl, loadControl, exportControl]),
             statsLabel
         ]
     }
@@ -76,16 +91,23 @@ final class RuntimeStateSaveSection: PanelSectionViewController {
         finishInteraction()
     }
 
+    @objc private func exportSkyrim() {
+        exportProvider?.startSkyrimExport()
+        finishInteraction()
+    }
+
     override func refreshReadout() {
+        exportControl.isEnabled = exportProvider != nil
         guard let provider else {
             statsLabel.stringValue = "Runtime state: unavailable"
             return
         }
         let slots = provider.runtimeStateSaveSlots
-        statsLabel.stringValue = [
+        let export = exportProvider?.lastSkyrimExport.lines ?? []
+        statsLabel.stringValue = ([
             Self.outcomeText(provider.lastSaveOutcome),
             "Slots: " + (slots.isEmpty ? "none" : slots.joined(separator: ", "))
-        ].joined(separator: "\n")
+        ] + export).joined(separator: "\n")
     }
 
     nonisolated static func outcomeText(_ outcome: RuntimeStateSaveOutcome) -> String {

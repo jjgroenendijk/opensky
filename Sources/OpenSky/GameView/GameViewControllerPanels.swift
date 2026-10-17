@@ -18,6 +18,7 @@ import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyRendering
+import OpenSkySave
 import OpenSkyScriptingInterface
 import OpenSkyWorld
 
@@ -571,5 +572,15 @@ extension GameViewController: WorldspaceControlProviding {
 
     func goToExterior(worldspace: String, x: Int32, y: Int32) {
         menuWorld.teleportPlayer(.grid(x: x, y: y, worldspace: worldspace), openingRaceMenu: false)
+    }
+}
+
+extension GameViewController: SkyrimExportControlProviding {
+    var lastSkyrimExport: SkyrimExportOutcome {
+        saveGames.lastSkyrimExport
+    }
+
+    func startSkyrimExport() {
+        saveGames.startSkyrimExport()
     }
 }

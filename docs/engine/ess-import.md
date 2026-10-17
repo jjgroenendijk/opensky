@@ -12,6 +12,7 @@ can onto OpenSky's own world state, and writes the result as an ordinary OpenSky
 it loads that save. So an import and a normal load share one restore path, and an import
 is never a second, half-tested way into the world.
 
+The reverse direction, a session written as a `.ess`, is [ESS export](/engine/ess-export.md).
 The file formats are on their own pages: [ESS](/formats/ess.md),
 [ESS change forms](/formats/ess-change-forms.md), and
 [ESS Papyrus](/formats/ess-papyrus.md). The OpenSky side is

@@ -8,6 +8,7 @@ import OpenSkyFormatsESS
 import OpenSkyFormatsTesting
 import OpenSkyGameData
 @testable import OpenSkySave
+import OpenSkyWorldState
 import Testing
 
 struct ESSPluginRecordsTests {
@@ -82,10 +83,31 @@ struct ESSPluginRecordsTests {
         #expect(records.race(editorID: "nordrace") == Self.skyrim(0x13746))
         #expect(records.editorID(of: Self.skyrim(0x3C)) == "Tamriel")
         #expect(records.signature(of: Self.skyrim(0x6000)) == "CONT")
-        #expect(records.signature(of: Self.skyrim(0x5001)) == nil)
+        #expect(records.signature(of: Self.skyrim(0x5001)) == "REFR")
+        #expect(records.placementSpace(of: Self.skyrim(0x5001)) == Self.skyrim(0x5000))
         #expect(index.referenceBases[ESSPluginIndex.Key(Self.skyrim(0x5001))] == Self
             .skyrim(0x6000))
         #expect(records.declaredVariables(ofScript: "MQ101Script") == nil)
+    }
+
+    @Test func exportIndexAnswersTheExportPort() throws {
+        let state = WorldStateSnapshotEntry(
+            key: ReferenceKey(resolved: Self.skyrim(0x5001)),
+            delta: ReferenceStateDelta(components: [.enableState: .enableState(.disabled)])
+        )
+        let contents = OpenSkySaveContents(
+            snapshot: WorldStateSnapshot(entries: [state], nextGeneratedSequence: 1),
+            metadata: SaveCreationMetadata(creationTimestamp: 0, appVersion: "test")
+        )
+        let index = try ESSPluginIndex.build(
+            forExport: contents, plugins: [("Skyrim.esm", Self.plugin())]
+        )
+        let records = ESSPluginRecords(index: index)
+        #expect(records.plugins == [ESSExportPlugin(name: "Skyrim.esm")])
+        #expect(records.recordFlags(of: Self.skyrim(0x5001)) == 0)
+        #expect(records.placementSpace(of: Self.skyrim(0x5001)) == Self.skyrim(0x5000))
+        #expect(records.form(editorID: "GameDaysPassed", signature: "GLOB") == Self.skyrim(0x39))
+        #expect(records.form(editorID: "Tamriel", signature: "WRLD") == Self.skyrim(0x3C))
     }
 
     @Test func cellLocationsSplitInteriorAndExterior() throws {

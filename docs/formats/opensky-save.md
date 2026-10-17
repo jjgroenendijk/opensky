@@ -13,7 +13,8 @@ tags: [format, save, io, world-state, determinism]
 say), the load order of the session, and a small header.
 
 This format is OpenSky's own, not Bethesda's `.ess`. Nothing in it is reverse engineered, so
-this page is the specification. OpenSky never writes a `.ess` file.
+this page is the specification. A `.ess` file is a separate export
+([ESS export](/engine/ess-export.md)); it is never a slot in the save store.
 
 All integers are little-endian. Floats are IEEE 754 bit patterns, little-endian. A string is
 a `UInt16` byte length followed by that many UTF-8 bytes. The chunk payloads are on

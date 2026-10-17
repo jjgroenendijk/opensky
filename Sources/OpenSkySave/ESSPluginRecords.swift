@@ -26,11 +26,24 @@ nonisolated public struct ESSPluginIndex: Sendable {
         var isExteriorCell = false
     }
 
+    /// A placed reference as its plugin stores it.
+    struct Placed: Sendable {
+        let signature: FourCC
+        let flags: UInt32
+        /// Its interior cell, or its exterior worldspace.
+        let space: ResolvedFormID?
+    }
+
     public let loadOrder: [String]
     var forms: [Key: Form] = [:]
     /// Placed reference -> its base form, for the references the save changed.
     var referenceBases: [Key: ResolvedFormID] = [:]
     var scriptVariables: [String: [String: String]] = [:]
+    var placedReferences: [Key: Placed] = [:]
+    /// Lowercased names of ESL-flagged plugins.
+    var lightPlugins: Set<String> = []
+    /// Lowercased script name -> its own variables, for an export.
+    var exportScripts: [String: ESSExportScript] = [:]
     let currentResolver: FormIDResolver
 
     init(loadOrder: [String]) {
@@ -62,7 +75,8 @@ nonisolated public struct ESSPluginRecords: ESSImportRecords {
     }
 
     public func signature(of form: ResolvedFormID) -> String? {
-        index.form(form).map { String(describing: $0.signature) }
+        (index.form(form)?.signature ?? index.placedReferences[ESSPluginIndex.Key(form)]?.signature)
+            .map { String(describing: $0) }
     }
 
     public func editorID(of form: ResolvedFormID) -> String? {
@@ -74,13 +88,7 @@ nonisolated public struct ESSPluginRecords: ESSImportRecords {
     }
 
     public func race(editorID: String) -> ResolvedFormID? {
-        let wanted = editorID.lowercased()
-        let match = index.forms.first { _, form in
-            form.signature == "RACE" && form.editorID?.lowercased() == wanted
-        }
-        return match.map {
-            ResolvedFormID(plugin: index.canonicalName($0.key.plugin), objectID: $0.key.objectID)
-        }
+        form(editorID: editorID, signature: "RACE")
     }
 
     /// Exterior cells are 4096 units wide, as in the plugins' `XCLC` grid.

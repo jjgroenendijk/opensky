@@ -29,6 +29,9 @@ public protocol SaveGameService: AnyObject {
     func saveGame(slot: String?) async throws -> String
     func loadGame(slot: String) async throws
     func deleteSave(slot: String) async throws
+    /// Writes the session as a Skyrim save under a new name; returns the file name.
+    @discardableResult
+    func exportSkyrimSave() async throws -> String
     /// The words the save pages and progress lines use.
     var saveTexts: SaveTexts { get }
 }
@@ -36,6 +39,10 @@ public protocol SaveGameService: AnyObject {
 extension SaveGameService {
     public var saveTexts: SaveTexts {
         .vanilla
+    }
+
+    public func exportSkyrimSave() async throws -> String {
+        throw CocoaError(.featureUnsupported)
     }
 }
 

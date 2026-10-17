@@ -24,6 +24,7 @@ final class SaveGameWorldAdapter: SaveGameService {
     /// The newest listing, so menus and autosave dates need no disk read.
     private var listings: [OpenSkySaveSlotListing] = []
     private(set) var saveRows: [SaveSlotRow] = []
+    private(set) var lastSkyrimExport = SkyrimExportOutcome.none
     private var hasListed = false
 
     init(game: GameViewController) {
@@ -56,6 +57,29 @@ final class SaveGameWorldAdapter: SaveGameService {
         )
         await refreshSaveRows()
         return name
+    }
+
+    /// The summary and picture are taken now, as for an OpenSky save.
+    @discardableResult
+    func exportSkyrimSave() async throws -> String {
+        let contents = game.runtimeStateWorld.sessionContents(
+            summary: summary(), thumbnail: thumbnail()
+        )
+        lastSkyrimExport = .running
+        do {
+            let (url, report) = try await SkyrimSaveExportAdapter.export(contents, game: game)
+            lastSkyrimExport = .exported(url.lastPathComponent, report.lines)
+            await refreshSaveRows()
+            return url.lastPathComponent
+        } catch {
+            lastSkyrimExport = .failed(error.localizedDescription)
+            throw error
+        }
+    }
+
+    func startSkyrimExport() {
+        guard lastSkyrimExport != .running else { return }
+        Task { _ = try? await exportSkyrimSave() }
     }
 
     /// Play time continues from the loaded save. A Skyrim save starts it from zero.

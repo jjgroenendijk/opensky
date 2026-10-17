@@ -82,6 +82,28 @@ nonisolated public struct ESSSaveFolder: Sendable {
         try listings()
     }
 
+    /// The first `OpenSky Export N.ess` not in the folder, so no save is replaced.
+    public func newExportURL() throws -> URL {
+        let taken = try Set(saveURLs().map { $0.lastPathComponent.lowercased() })
+        var number = 1
+        while taken.contains(Self.exportName(number).lowercased()) {
+            number += 1
+        }
+        return directory.appending(path: Self.exportName(number))
+    }
+
+    static func exportName(_ number: Int) -> String {
+        "OpenSky Export \(number).\(fileExtension)"
+    }
+
+    /// Fails rather than replace a file that appeared after the name was chosen.
+    @concurrent
+    public func writeExport(_ data: Data) async throws -> URL {
+        let url = try newExportURL()
+        try data.write(to: url, options: [.withoutOverwriting])
+        return url
+    }
+
     @concurrent
     public static func readFile(at url: URL) async throws -> ESSFile {
         try ESSFile(data: Data(contentsOf: url, options: .mappedIfSafe))
