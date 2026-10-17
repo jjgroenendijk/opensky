@@ -41,7 +41,8 @@ extension SystemMenuCoordinator {
             controlsPage = ControlsPageModel()
         case .save, .load:
             saveLoadPage = SaveLoadPageModel(
-                mode: page == .save ? .save : .load, rows: saves?.saveRows ?? []
+                mode: page == .save ? .save : .load, rows: saves?.saveRows ?? [],
+                texts: saveTexts
             )
             refreshSaveRows()
         case .quit:
@@ -90,8 +91,12 @@ extension SystemMenuCoordinator {
         model.isOpen && model.page == .controls && controlsPage.waitingForKey
     }
 
+    var saveTexts: SaveTexts {
+        saves?.saveTexts ?? .vanilla
+    }
+
     public func quicksave() {
-        perform("Saving", done: "Quicksave") {
+        perform(saveTexts.quickSaving, done: saveTexts.quickSaved) {
             _ = try await $0.saveGame(slot: AutosavePolicy.quicksaveSlot)
         }
     }
@@ -143,11 +148,13 @@ extension SystemMenuCoordinator {
         saveLoadPage = page
         switch action {
         case let .save(slot):
-            perform("Saving", done: "Saved") { _ = try await $0.saveGame(slot: slot) }
+            perform("Saving", done: saveTexts.saved) { _ = try await $0.saveGame(slot: slot) }
         case let .load(slot):
-            perform("Loading", done: "Loaded") { try await $0.loadGame(slot: slot) }
+            perform(saveTexts.loading, done: "Loaded", closes: true) {
+                try await $0.loadGame(slot: slot)
+            }
         case let .delete(slot):
-            perform("Deleting", done: "Deleted") { try await $0.deleteSave(slot: slot) }
+            perform("Deleting", done: saveTexts.deleted) { try await $0.deleteSave(slot: slot) }
         case .back:
             saveLoadPage = nil
             showPage(.main)
@@ -185,7 +192,7 @@ extension SystemMenuCoordinator {
 
     /// Shows `running` until the file work ends. A finished load closes the menu.
     func perform(
-        _ running: String, done: String,
+        _ running: String, done: String, closes: Bool = false,
         _ body: @escaping @MainActor (SaveGameService) async throws -> Void
     ) {
         guard let saves else {
@@ -198,11 +205,11 @@ extension SystemMenuCoordinator {
             do {
                 try await body(saves)
                 self.lastMessage = done
-                if done == "Loaded" {
+                if closes {
                     self.close()
                 }
             } catch {
-                self.lastMessage = "Failed: \(error)"
+                self.lastMessage = "\(self.saveTexts.saveFailed) \(error)"
             }
             self.saveWork = nil
             self.refreshSaveRows()

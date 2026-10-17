@@ -122,6 +122,13 @@ draws the button with that name. The engine reads the page's `iCurrentState` eac
 sidebar readout follows the page the movie shows. The X key deletes a save and T lists the
 characters, as in the movie's own key handler.
 
+The save and load pages, their questions, and the progress line read string settings:
+`sMenuDisplayNewSave` names the new-save row, `sSaveOverSaveGame` and `sDeleteSaveGame` ask before
+overwriting or deleting, and `sQuickSaving`, `sSaveSuccessful`, `sLoading`, `sDeleteSuccessful`, and
+`sSaveFailed` fill the progress line. A save's detail line uses `sMenuDisplayLevelString`, and its
+location uses `sDefaultCellName` for an exterior cell and `sMenuDisplayUnknownLocationString` when
+there is no cell. Without game data, the pages keep OpenSky's English words.
+
 The Settings page stays the engine's, because its values are the
 [player settings](/engine/settings.md).
 
