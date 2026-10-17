@@ -1,5 +1,5 @@
-// M17 acceptance, vanilla half: one conversation with Delphine in the user's
-// install, from the offered list to the voice file to the save. The stage is
+// M17 acceptance, vanilla half: one conversation with Sybille Stentor in the
+// user's install, from the offered list to the voice file to the save. The stage is
 // set through `QuestRuntime.setStage`, the call `SetStage` lands on; running
 // vanilla result scripts is covered elsewhere. Assertions are counts, editor
 // IDs, and FormIDs; the report goes to gitignored `.logs/`.
@@ -9,7 +9,6 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsAnimation
 @testable import OpenSkyFormatsAudio
 @testable import OpenSkyFormatsESM
@@ -25,12 +24,6 @@ import Testing
 
 @Suite(.tags(.acceptance))
 struct DialogueAcceptanceRealDataTests {
-    /// `Skyrim.esm`'s Delphine NPC_ record, and the synthetic placement key she
-    /// is selected against. The placement is this suite's own: selection needs
-    /// a `ReferenceKey` with a base form, not a loaded cell.
-    private static let delphineBase: UInt32 = 0x0001_3478
-    private static let delphineReference: UInt32 = 0x000A_0001
-
     /// The whole gate in one run, because every step reads what the one before
     /// it wrote.
     @MainActor
@@ -253,17 +246,19 @@ extension DialogueAcceptanceRealDataTests {
     /// lip slot is mapped or unmapped.
     private static let morphTargets = Set(LipCurveMapping.slotTargets.values)
 
+    /// `Skyrim.esm`'s Sybille Stentor NPC_ record. Under the baseline quest state her
+    /// topics pass their quests' dialogue conditions; Delphine's do not.
+    private static let speaker = DialogueSpeakerContext(base: 0x0001_32AA)
+
     private static var speakerKey: ReferenceKey {
-        .plugin(name: "skyrim.esm", objectID: delphineReference)
+        speaker.speakerKey
     }
 
+    @MainActor
     private static func conditionContext() throws -> ConditionContext {
-        try ConditionContext(
-            references: ConditionEvaluatorFixture.references([
-                (formID: delphineReference, base: delphineBase)
-            ]),
-            subject: speakerKey,
-            target: .player
+        let root = try #require(RealDataEnvironment.dataRoot)
+        return try speaker.context(
+            root: root, file: ESMFile(url: root.dataURL.appending(path: "Skyrim.esm"))
         )
     }
 
