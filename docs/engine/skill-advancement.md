@@ -147,6 +147,11 @@ the limit gains nothing and carries nothing.
 Each point raises the base skill by one, stored as a distance from the record value. So a trained
 skill survives a level change, a race change, or a new load order.
 
+A skill that gains a level shows a HUD notice from the `sSkillIncreased` setting, "%s Increased to
+%i", with the skill name and its new level. A character level gained the same way shows
+`sLevelUpAvailable`. The game's own level-up screen is not built, so this notice is OpenSky's
+reading of where that setting appears.
+
 ## Experience multipliers
 
 Rested, Well Rested, Lover's Comfort, and the Guardian Stones are not numbers in the engine.

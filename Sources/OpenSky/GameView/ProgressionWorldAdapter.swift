@@ -62,6 +62,9 @@ final class ProgressionWorldAdapter {
         game.progression.training = (provider as? WorldDataStores).map {
             TrainingSettings.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
+        game.progression.texts = (provider as? WorldDataStores).map {
+            ProgressionTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         game.progression.wireLeveling(
             values: values,
             settings: progression?.characterLevelSettings ?? .documentedDefaults,
