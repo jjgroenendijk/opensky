@@ -59,13 +59,15 @@ nonisolated public enum AssetInfoText: Sendable {
     /// DDS header + mip chain.
     public static func dds(file: DDSFile, byteCount: Int) -> String {
         var lines = [
-            "\(file.width)x\(file.height) \(file.format), "
+            "\(file.width)x\(file.height)" + (file.depth > 1 ? "x\(file.depth) volume" : "")
+                + " \(file.format), "
                 + "\(file.mipCount) mips, declares sRGB: \(file.declaresSRGB), "
                 + "\(byteCount) bytes total"
         ]
         for level in 0 ..< file.mipCount {
             lines.append(
-                "  mip \(level): \(file.width(level: level))x\(file.height(level: level)), "
+                "  mip \(level): \(file.width(level: level))x\(file.height(level: level))"
+                    + (file.depth > 1 ? "x\(file.depth(level: level))" : "") + ", "
                     + "\(file.mipData(level: level).count) bytes"
             )
         }

@@ -237,10 +237,10 @@ struct DDSFileTests {
             width: 4,
             height: 4,
             fourCC: "DX10",
-            dx10: .init(dxgiFormat: 98, resourceDimension: 4), // TEXTURE3D
+            dx10: .init(dxgiFormat: 98, resourceDimension: 2), // TEXTURE1D
             payload: Data(count: 16)
         )
-        #expect(throws: DDSError.unsupported("resource dimension 4")) { try DDSFile(data: data) }
+        #expect(throws: DDSError.unsupported("resource dimension 2")) { try DDSFile(data: data) }
     }
 
     @Test(arguments: [UInt32(0), 28, 81, 84, 87, 88])

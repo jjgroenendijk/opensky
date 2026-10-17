@@ -8,6 +8,7 @@ import OpenSkyCLIArguments
 import OpenSkyFormatsCore
 import OpenSkyFormatsMesh
 import OpenSkyGameData
+import OpenSkyPreview
 
 enum AssetCommand {
     static func runNIF(context: CLIContext, arguments: NIFArguments) throws {
@@ -104,17 +105,10 @@ enum AssetCommand {
         let file: DDSFile
         do {
             data = try context.makeFileSystem().contents(forPath: key)
-            file = try DDSFile(data: data)
+            file = try DDSFile(data: data, allowsVolume: true)
         } catch {
             throw CLIError.failure("cannot parse \(key): \(String(describing: error))")
         }
-
-        print("[INFO] \(file.width)x\(file.height) \(file.format), "
-            + "\(file.mipCount) mips, declares sRGB: \(file.declaresSRGB), "
-            + "\(data.count) bytes total")
-        for level in 0 ..< file.mipCount {
-            print("  mip \(level): \(file.width(level: level))x\(file.height(level: level)), "
-                + "\(file.mipData(level: level).count) bytes")
-        }
+        print("[INFO] " + AssetInfoText.dds(file: file, byteCount: data.count))
     }
 }

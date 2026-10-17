@@ -48,7 +48,7 @@ Measured on 2026-10-17 by `make gaps`.
 | Lighting shader flags | 38 | 0 | 38 | 100% |
 | Effect shader flags | 10 | 7 | 17 | 58% |
 | Mesh decode failures | - | 6 | - | - |
-| Texture variants | 9 | 1 | 10 | 90% |
+| Texture variants | 10 | 0 | 10 | 100% |
 | Sound file variants | 3 | 0 | 3 | 100% |
 | Lip sync data | 1 | 0 | 1 | 100% |
 | Menus with no bridge | 9 | 14 | 23 | 39% |

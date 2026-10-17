@@ -2,15 +2,16 @@
 type: File Format
 title: DDS texture container
 description: On-disk layout of Skyrim SE .dds textures and how OpenSky reads them.
-tags: [format, texture, dds, bcn, rgba8888, bgra8888, xrgb8888, rgb888, rendering]
+tags: [format, texture, dds, bcn, rgba8888, bgra8888, xrgb8888, rgb888, l8, volume, rendering]
 ---
 
 # DDS texture container
 
 DDS (DirectDraw Surface) is the file format of every Skyrim SE texture. OpenSky reads 2D
-textures in BC1 to BC5 and BC7, three 32-bit formats (xRGB8888, RGBA8888, and BGRA8888), and
-24-bit RGB. Each 32-bit or compressed format maps to a native Metal pixel format. Metal has
-no 24-bit format, so the parser widens each 24-bit texel to 4 bytes.
+textures in BC1 to BC5 and BC7, three 32-bit formats (xRGB8888, RGBA8888, and BGRA8888),
+24-bit RGB, and 8-bit luminance (L8). Each 32-bit or compressed format maps to a native Metal
+pixel format. Metal has no 24-bit or luminance format, so the parser widens each 24-bit or L8
+texel to 4 bytes. It also reads cubemaps and volume (3D) textures when the caller asks.
 
 Reference: the Microsoft
 [DDS programming guide](https://learn.microsoft.com/en-us/windows/win32/direct3ddds/dx-graphics-dds-pguide)
@@ -35,12 +36,12 @@ All integers are little-endian.
 | dwFlags | 4 | `DDSD_MIPMAPCOUNT` (`0x20000`) makes dwMipMapCount valid |
 | dwHeight, dwWidth | 4 + 4 | Height comes first |
 | dwPitchOrLinearSize | 4 | Checked for uncompressed formats only, see below |
-| dwDepth | 4 | Not used. Volumes are found through dwCaps2 |
+| dwDepth | 4 | Slice count, read only for a volume. Volumes are found through dwCaps2 |
 | dwMipMapCount | 4 | Used only with `DDSD_MIPMAPCOUNT`. Otherwise 1 level |
 | dwReserved1 | 44 | Skipped |
 | ddspf | 32 | `DDS_PIXELFORMAT`, below |
 | dwCaps | 4 | Skipped |
-| dwCaps2 | 4 | `0x200` cubemap, read only for a cube map use. `0x200000` volume is not supported |
+| dwCaps2 | 4 | `0x200` cubemap, read only for a cube map use. `0x200000` volume, read only for a volume use |
 | dwCaps3, dwCaps4, dwReserved2 | 12 | Skipped |
 
 ### DDS_PIXELFORMAT (32 bytes)
@@ -48,9 +49,9 @@ All integers are little-endian.
 | Field | Size | Notes |
 | --- | --- | --- |
 | dwSize | 4 | Must be 32 |
-| dwFlags | 4 | `DDPF_FOURCC` `0x4`, `DDPF_RGB` `0x40`, `DDPF_ALPHAPIXELS` `0x1` |
+| dwFlags | 4 | `DDPF_FOURCC` `0x4`, `DDPF_RGB` `0x40`, `DDPF_ALPHAPIXELS` `0x1`, `DDPF_LUMINANCE` `0x20000` |
 | dwFourCC | 4 | Table below |
-| dwRGBBitCount | 4 | 32 or 24 for the uncompressed formats |
+| dwRGBBitCount | 4 | 32 or 24 for the uncompressed RGB formats, 8 for L8 |
 | dwRBitMask, dwGBitMask, dwBBitMask, dwABitMask | 16 | Table below |
 
 FourCC to format: `DXT1` BC1, `DXT3` BC2, `DXT5` BC3, `ATI1` or `BC4U` BC4, `ATI2` or `BC5U`
@@ -74,6 +75,12 @@ masks names one byte of the 3-byte texel: `0xff`, `0xff00`, or `0xff0000`. The v
 masks use R `0xff0000`, G `0xff00`, B `0xff`, so the bytes are B, G, R. Rows have no padding.
 The parser hands out each level as xRGB8888 bytes (B, G, R, 255).
 
+8-bit luminance uses `DDPF_LUMINANCE` alone, bit count 8, and R mask `0xff`. Each byte is
+one grey texel. Direct3D samples L8 as (L, L, L, 1), so the parser hands out each level as
+xRGB8888 bytes (L, L, L, 255). Luminance with alpha (`DDPF_ALPHAPIXELS`) or a wider bit count
+is rejected; no vanilla file uses it. Source: Microsoft `DDS_PIXELFORMAT` and "Map Direct3D 9
+formats to Direct3D 10" (`D3DFMT_L8`).
+
 Uncompressed rows have no padding. The size field must match when its flag is set:
 `DDSD_PITCH` (`0x8`) needs `width * bytes per texel`, and `DDSD_LINEARSIZE` (`0x80000`) needs
 `width * height * bytes per texel`. The tint masks and four 32-bit lens flare and effect
@@ -85,7 +92,7 @@ still applies.
 | Field | Notes |
 | --- | --- |
 | dxgiFormat | See below |
-| resourceDimension | Must be 3 (`TEXTURE2D`) |
+| resourceDimension | 3 (`TEXTURE2D`), or 4 (`TEXTURE3D`) for a volume. Others are not supported |
 | miscFlag | `0x4` (`TEXTURECUBE`) marks a cubemap, read only for a cube map use |
 | arraySize | More than 1 is not supported |
 | miscFlags2 | Alpha mode. Skipped |
@@ -103,7 +110,11 @@ Level `i` is `max(1, w >> i)` by `max(1, h >> i)` pixels.
 - 32-bit formats: `w_i * h_i * 4` bytes, with `w_i * 4` bytes per row.
 - 24-bit RGB: `w_i * h_i * 3` bytes in the file, `w_i * 4` bytes per row after widening.
 
-A mip count above the full chain (`floor(log2(max(w, h))) + 1`) is an error. So is a chain
+A volume level `i` has `max(1, d >> i)` slices, where `d` is dwDepth. The level stores its
+slices one after another, front to back, so its size is the slice size times the slice count.
+Source: Microsoft, "DDS file layout for textures" (volume textures).
+
+A mip count above the full chain (`floor(log2(max(w, h, d))) + 1`) is an error. So is a chain
 that runs past the end of the file. Extra bytes at the end are allowed.
 
 ## Vanilla textures
@@ -115,9 +126,14 @@ A sweep of every `.dds` in the vanilla archives (about 33,000 files) found:
 - BCn files: mostly BC3, then BC1, and about 150 BC2.
 - About 10,000 uncompressed files: face `_msn` normal maps, tint masks, interface art, and
   LOD atlases. OpenSky reads the three 32-bit formats and 24-bit RGB (188 files).
-- 58 cubemaps, such as `textures\cubemaps\EyeCubeMap.dds`, and 1 volume texture. The
-  volume, and a cubemap used as a 2D texture, throw `unsupported` and get a placeholder.
-  Every other vanilla texture parses (census of 32,918 files, 2026-10-07).
+- 58 cubemaps, such as `textures\cubemaps\EyeCubeMap.dds`. A cubemap used as a 2D texture
+  throws `unsupported` and gets a placeholder.
+- 1 volume texture, `textures\effects\noisevolume.dds`: L8, 128 x 128 x 128, 8 mip levels,
+  no DX10 header, and `DDSD_DEPTH` (`0x800000`) set in dwFlags. The file is 2,396,873 bytes:
+  the 128-byte header plus the sum of `n * n * n` for n = 128, 64, ..., 1. This exact match
+  confirms the slices-per-level layout. The renderer has no volume use yet, so it still loads
+  only 2D and cube textures; the Preview panel and `openskycli dds` show the volume's levels.
+- Every vanilla texture parses (census of 32,918 files).
 
 ## Cubemaps
 
