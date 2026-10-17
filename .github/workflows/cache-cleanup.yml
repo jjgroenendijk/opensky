@@ -1,27 +1,35 @@
 name: Cache cleanup
 
-# A closed pull request cannot use its caches any more, so they go at once and leave
-# room for main's (docs/tools/ci.md). pull_request_target gives a token that may delete
-# them for a fork's pull request too. The job checks out nothing, so no fork code runs.
+# Only main and open pull requests can restore a cache, so every other entry goes and
+# leaves room for theirs (docs/tools/ci.md). A pull request's last CI run can save after
+# the pull request closed, so a daily sweep removes what the closing sweep missed.
+# pull_request_target gives a token that may delete a fork's caches too. The job checks
+# out nothing, so no fork code runs.
 on:
   pull_request_target:
     types: [closed]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
 
 permissions:
   actions: write
+  pull-requests: read
 
 jobs:
   delete:
-    name: Delete pull request caches
+    name: Delete unreachable caches
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          REF: refs/pull/${{ github.event.pull_request.number }}/merge
         run: |
-          gh cache list --ref "$REF" --limit 100 --json id,key --jq '.[] | "\(.id) \(.key)"' |
-            while read -r id key; do
-              gh cache delete "$id" >/dev/null && echo "[INFO] deleted cache $key"
+          open="$(gh pr list --state open --limit 200 --json number --jq '.[] | "refs/pull/\(.number)/merge"')"
+          gh cache list --limit 1000 --json id,key,ref --jq '.[] | "\(.id) \(.ref) \(.key)"' |
+            while read -r id ref key; do
+              [ "$ref" = refs/heads/main ] && continue
+              printf '%s\n' "$open" | grep -qxF "$ref" && continue
+              gh cache delete "$id" >/dev/null && echo "[INFO] deleted cache $key ($ref)"
             done
