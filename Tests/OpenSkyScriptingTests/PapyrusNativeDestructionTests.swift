@@ -10,7 +10,6 @@ import OpenSkyGameData
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 @testable import OpenSkyScriptingInterface
-import OpenSkyWorldState
 import Testing
 
 @MainActor

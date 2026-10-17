@@ -181,7 +181,7 @@ nonisolated extension PackageProcedureMachine {
         case .flee where setup.flag:
             return flee(from: target, actor: senses.actor, distance: distance)
         case .forceGreet:
-            return greet(target, actor: senses.actor, distance: distance)
+            return greet(target, distance: distance)
         default:
             return []
         }
@@ -229,7 +229,8 @@ nonisolated extension PackageProcedureMachine {
 
     /// Waits until the player is in the trigger place, then walks up and greets.
     private mutating func greet(
-        _ player: SIMD3<Float>, actor: SIMD3<Float>, distance: Float
+        _ player: SIMD3<Float>,
+        distance: Float
     ) -> [PackageProcedureCommand] {
         guard state == .waiting || state == .moving else { return [] }
         if distance <= Self.greetDistance {

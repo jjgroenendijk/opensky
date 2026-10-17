@@ -2,7 +2,6 @@
 // the world actions it queues, pulses cloaks, and answers the influence the
 // combat loop reads. See docs/engine/magic-archetypes.md.
 
-import OpenSkyActorsInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface

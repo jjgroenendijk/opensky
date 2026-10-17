@@ -124,6 +124,29 @@ struct PreviewRequestTests {
         let decoded = try JSONDecoder().decode(PreviewReport.self, from: report.json())
         #expect(decoded == report)
     }
+
+    @Test func eachViewReportsItsCameraBoundsAndStage() throws {
+        let view = PreviewAngle.front.view
+        var request = try PreviewRequest(target: .mesh("a.nif")).validated()
+        request.timeOfDay = 18.5
+        request.weather = "SkyrimStormRain"
+        let report = PreviewReport(
+            target: PreviewResolvedTarget(kind: "mesh"), stage: .studio, request: request,
+            focus: ModelBounds(min: SIMD3(-1, -2, 0), max: SIMD3(1, 2, 3)), failures: [],
+            measures: [PreviewViewMeasure(
+                view: view, distance: 300, drawCalls: 1, drawnInstances: 1, triangles: 12,
+                coverage: 0.5
+            )]
+        )
+        let only = try #require(report.views.first)
+        #expect([only.yaw, only.pitch, only.distance] == [view.yaw, view.pitch, 300])
+        #expect(only.boundsMin == [-1, -2, 0])
+        #expect(only.boundsMax == [1, 2, 3])
+        #expect(only.target == PreviewResolvedTarget(kind: "mesh"))
+        #expect(only.stage == PreviewStage.studio.rawValue)
+        #expect(only.timeOfDay == 18.5)
+        #expect(only.weather == "SkyrimStormRain")
+    }
 }
 
 struct PreviewSidebarOptionsTests {

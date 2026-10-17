@@ -35,7 +35,9 @@ struct ESSFileWriterTests {
                 variables: [.integer(5)]
             )]
         )
+        let stats = [ESSMiscStat(name: "Locations Discovered", category: 0, value: 12)]
         var table1 = try ESSGlobalData.group1Types.map(ESSGlobalData.empty)
+        table1[0] = try ESSMiscStat.table(stats)
         table1[1] = try location.table()
         table1[3] = try ESSGlobalVariable.table(globals)
         var table3 = try ESSGlobalData.group3Types.map(ESSGlobalData.empty)
@@ -70,6 +72,9 @@ struct ESSFileWriterTests {
         #expect(file.visitedWorldspaces == written.visitedWorldspaces)
         #expect(file.offsetBase == file.expectedOffsetBase)
         #expect(file.locationTable.counts.globalData3 == 5)
+        #expect(try file.miscStats() == [
+            ESSMiscStat(name: "Locations Discovered", category: 0, value: 12)
+        ])
         #expect(try file.playerLocation()?.cell == SIMD2(4, -2))
         #expect(try file.globalVariables().first?.value == 2.5)
         let papyrus = try #require(try file.papyrus())

@@ -205,13 +205,11 @@ struct LocomotionAcceptanceRealDataTests {
                 + "\(tally.modifiersEvaluated) modifiers over \(tally.updatesRun) updates",
             "[INFO] \(label): gaps \(tally.gapTotal)"
                 + "  unevaluated \(tally.unevaluatedGeneratorTotal)"
-                + "  partial \(tally.partialGeneratorTotal)"
                 + "  pass-through \(tally.passthroughModifierTotal)"
                 + "  unresolved clips \(tally.unresolvedClipTotal)"
                 + "  unapplied bindings \(tally.unappliedBindingTotal)"
                 + "  undecodable \(tally.undecodableObjectTotal)",
             "[INFO] \(label): unevaluated generators \(tally.rankedUnevaluatedGenerators)",
-            "[INFO] \(label): partial generators \(tally.rankedPartialGenerators)",
             "[INFO] \(label): pass-through modifiers \(tally.rankedPassthroughModifiers)",
             "[INFO] \(label): feature gaps \(tally.rankedFeatureGaps)",
             "[INFO] \(label): bound member paths \(tally.rankedBoundMemberPaths.prefix(10))"

@@ -9,7 +9,6 @@ import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import OpenSkyMagicInterface
 import OpenSkyProgressionInterface
-@testable import OpenSkyWorldState
 import simd
 import Testing
 

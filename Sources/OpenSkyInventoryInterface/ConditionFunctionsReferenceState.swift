@@ -44,10 +44,6 @@ nonisolated public struct ReferenceConditionResolution: ConditionResolution, Sen
         self.facts = facts
     }
 
-    public var isAvailable: Bool {
-        facts != nil
-    }
-
     public func facts(of key: ReferenceKey) -> ReferenceConditionFacts? {
         facts?[key]
     }

@@ -3,7 +3,6 @@
 // `ESSExporter`. See docs/engine/ess-export.md.
 
 import Foundation
-import OpenSkyFormatsESS
 import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMenus

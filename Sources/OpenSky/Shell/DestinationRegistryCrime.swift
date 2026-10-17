@@ -4,7 +4,6 @@
 
 import AppKit
 import OpenSkyCrime
-import OpenSkyWorld
 
 extension DestinationRegistry {
     static let crimeDestinations: [DestinationDescriptor] = [

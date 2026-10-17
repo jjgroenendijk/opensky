@@ -6,7 +6,6 @@ import OpenSkyFormatsESM
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
 import OpenSkyScriptingInterface
-import OpenSkyWorldState
 import Testing
 
 private final class FakeStoryBridge: PapyrusStoryBridge {

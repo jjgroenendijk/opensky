@@ -187,7 +187,6 @@ struct CombatAcceptanceRealDataTests {
                 + " \(tally.modifiersEvaluated) modifiers over \(tally.updatesRun) updates",
             "[INFO] tally: gaps \(tally.gapTotal)"
                 + "  unevaluated \(tally.unevaluatedGeneratorTotal)"
-                + "  partial \(tally.partialGeneratorTotal)"
                 + "  pass-through \(tally.passthroughModifierTotal)"
                 + "  unresolved clips \(tally.unresolvedClipTotal)"
                 + "  unapplied bindings \(tally.unappliedBindingTotal)"

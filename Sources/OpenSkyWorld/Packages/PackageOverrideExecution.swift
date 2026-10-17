@@ -79,28 +79,6 @@ nonisolated public struct PackageOverrideExecution: Equatable, Sendable {
         let tail = Array(path[nearest...])
         return loops ? tail + path[..<nearest] : tail
     }
-
-    /// The first location input, which is the place a travel, sandbox, or sleep
-    /// package names (UESP "Skyrim Mod:Mod File Format/PACK", `PLDT`).
-    public static func location(of package: Package) -> Package.Location? {
-        for input in package.dataInputs {
-            if case let .location(location) = input.value {
-                return location
-            }
-        }
-        return nil
-    }
-
-    /// The first single-reference input: the start marker a patrol names, or the
-    /// furniture a sit package names.
-    public static func targetInput(of package: Package) -> Package.Target? {
-        for input in package.dataInputs {
-            if case let .target(target) = input.value {
-                return target
-            }
-        }
-        return nil
-    }
 }
 
 /// Whether a package walk started. `busy` means every mover slot is taken.

@@ -3,7 +3,6 @@
 
 import Foundation
 import Metal
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyWorld

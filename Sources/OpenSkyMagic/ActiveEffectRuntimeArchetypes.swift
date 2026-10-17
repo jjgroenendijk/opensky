@@ -30,7 +30,6 @@ nonisolated public struct MagicWorldAction: Equatable, Sendable {
     /// The MGEF, whose associated item names the hazard, weapon, or spell.
     public let effect: ReferenceKey
     public let target: ActorValueHolder
-    public let caster: ReferenceKey?
     public let magnitude: Float
 
     public init(
@@ -38,14 +37,12 @@ nonisolated public struct MagicWorldAction: Equatable, Sendable {
         archetype: MagicWorldArchetype,
         effect: ReferenceKey,
         target: ActorValueHolder,
-        caster: ReferenceKey?,
         magnitude: Float
     ) {
         self.phase = phase
         self.archetype = archetype
         self.effect = effect
         self.target = target
-        self.caster = caster
         self.magnitude = magnitude
     }
 }
@@ -140,7 +137,6 @@ extension ActiveEffectRuntime {
                 archetype: archetype,
                 effect: application.effect,
                 target: target,
-                caster: caster,
                 magnitude: application.magnitude
             ))
         case .world, .carrier, .influence, .heldFlag, .accumulate:
@@ -232,7 +228,6 @@ extension ActiveEffectRuntime {
             archetype: archetype,
             effect: effect.effect,
             target: holder,
-            caster: effect.caster,
             magnitude: effect.peakMagnitude
         )
     }

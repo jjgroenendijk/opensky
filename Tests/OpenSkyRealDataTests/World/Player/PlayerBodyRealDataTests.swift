@@ -199,7 +199,6 @@ struct PlayerBodyRealDataTests {
                 + "\(tally.unresolvedClips.keys.sorted().prefix(12))",
             "unevaluated generators \(tally.unevaluatedGeneratorTotal): "
                 + "\(tally.unevaluatedGenerators)",
-            "partial generators \(tally.partialGeneratorTotal): \(tally.partialGenerators)",
             "passthrough modifiers \(tally.passthroughModifierTotal): "
                 + "\(tally.passthroughModifiers)",
             "feature gaps \(tally.featureGapTotal): \(tally.featureGaps)",

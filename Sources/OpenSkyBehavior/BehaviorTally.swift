@@ -17,13 +17,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     public private(set) var unevaluatedGenerators: [String: Int] = [:]
     public private(set) var unevaluatedGeneratorTotal = 0
 
-    /// Generator class name -> times it was evaluated only as far as one child,
-    /// with the rest of its semantics still owed. A `BSBoneSwitchGenerator`
-    /// that runs its default generator and ignores its per-bone children is
-    /// here, not in `unevaluatedGenerators`.
-    public private(set) var partialGenerators: [String: Int] = [:]
-    public private(set) var partialGeneratorTotal = 0
-
     /// Modifier class name -> times it passed its input through unmodified.
     public private(set) var passthroughModifiers: [String: Int] = [:]
     public private(set) var passthroughModifierTotal = 0
@@ -156,11 +149,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         Self.bump(&unevaluatedGenerators, className, limit: nameLimit)
     }
 
-    public mutating func notePartialGenerator(_ className: String) {
-        partialGeneratorTotal += 1
-        Self.bump(&partialGenerators, className, limit: nameLimit)
-    }
-
     public mutating func notePassthroughModifier(_ className: String) {
         passthroughModifierTotal += 1
         Self.bump(&passthroughModifiers, className, limit: nameLimit)
@@ -211,17 +199,13 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
 
     /// Every shortcut, miss, and pass-through, across all buckets.
     public var gapTotal: Int {
-        unevaluatedGeneratorTotal + partialGeneratorTotal + passthroughModifierTotal
+        unevaluatedGeneratorTotal + passthroughModifierTotal
             + unresolvedClipTotal + unappliedBindingTotal + undecodableObjectTotal
             + featureGapTotal
     }
 
     public var rankedUnevaluatedGenerators: [(name: String, count: Int)] {
         Self.ranked(unevaluatedGenerators)
-    }
-
-    public var rankedPartialGenerators: [(name: String, count: Int)] {
-        Self.ranked(partialGenerators)
     }
 
     public var rankedPassthroughModifiers: [(name: String, count: Int)] {
@@ -252,7 +236,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
     /// graphs reports one ledger. Totals add; capped tables stay capped.
     public mutating func merge(_ other: BehaviorTally) {
         unevaluatedGeneratorTotal += other.unevaluatedGeneratorTotal
-        partialGeneratorTotal += other.partialGeneratorTotal
         passthroughModifierTotal += other.passthroughModifierTotal
         unresolvedClipTotal += other.unresolvedClipTotal
         unappliedBindingTotal += other.unappliedBindingTotal
@@ -264,7 +247,6 @@ nonisolated public struct BehaviorTally: Equatable, Sendable {
         updatesRun += other.updatesRun
         let limit = nameLimit
         Self.merge(&unevaluatedGenerators, other.unevaluatedGenerators, limit: limit)
-        Self.merge(&partialGenerators, other.partialGenerators, limit: limit)
         Self.merge(&passthroughModifiers, other.passthroughModifiers, limit: limit)
         Self.merge(&unresolvedClips, other.unresolvedClips, limit: limit)
         Self.merge(&unappliedBindings, other.unappliedBindings, limit: limit)

@@ -9,7 +9,6 @@ import OpenSkyCombat
 import OpenSkyFactions
 import OpenSkyFormatsESM
 import OpenSkyGameData
-import OpenSkyMagic
 import OpenSkyWorld
 import simd
 

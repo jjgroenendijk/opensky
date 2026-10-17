@@ -4,7 +4,6 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyCombatInterface
 import OpenSkyConditions
 import OpenSkyCrimeInterface
 import OpenSkyDialogueInterface
@@ -13,7 +12,6 @@ import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
-import OpenSkyPerceptionInterface
 import OpenSkyQuestsInterface
 import OpenSkyScriptingInterface
 import OpenSkyWorldInterface

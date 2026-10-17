@@ -194,7 +194,7 @@ counters per class and per feature, name tables with a size limit and totals wit
 never crashes on something missing. It answers "which Havok Behavior classes does OpenSky still owe
 Skyrim?", and the real-data probe ranks it.
 
-Buckets: `unevaluatedGenerators`, `partialGenerators`, `passthroughModifiers`, `unresolvedClips`,
+Buckets: `unevaluatedGenerators`, `passthroughModifiers`, `unresolvedClips`,
 `unappliedBindings`, `undecodableObjects`, and `featureGaps`. The positive side is
 `boundMemberPaths` (which member paths the data drives), and the volume counters
 `generatorsEvaluated`, `modifiersEvaluated`, and `updatesRun`.

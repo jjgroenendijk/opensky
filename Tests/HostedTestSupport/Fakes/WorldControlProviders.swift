@@ -6,7 +6,6 @@ import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyDialogue
-import OpenSkyGameData
 import OpenSkyInventory
 import OpenSkyMagic
 import OpenSkyMenus

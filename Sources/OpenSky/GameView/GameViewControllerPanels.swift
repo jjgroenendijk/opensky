@@ -5,16 +5,11 @@
 import OpenSkyActors
 import OpenSkyActorsInterface
 import OpenSkyAgentControl
-import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
-import OpenSkyMagic
-import OpenSkyMagicInterface
 import OpenSkyMenus
-import OpenSkyPerception
-import OpenSkyPerceptionInterface
 import OpenSkyPhysics
 import OpenSkyProgression
 import OpenSkyRendering

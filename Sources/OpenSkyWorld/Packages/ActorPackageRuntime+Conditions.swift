@@ -2,7 +2,6 @@
 
 import Foundation
 import OpenSkyFormatsESM
-import OpenSkyWorldState
 
 nonisolated extension ActorPackageRuntime {
     /// `isWithin` answers whether the actor stands inside one location input.

@@ -3,7 +3,6 @@
 // walks the plugins; many lookups should build a `LoadOrderRecordIndex` instead.
 
 import Foundation
-import OpenSkyFormatsCore
 
 nonisolated extension LoadOrderPlugins {
     /// The winning record whose `EDID` matches, ignoring case.

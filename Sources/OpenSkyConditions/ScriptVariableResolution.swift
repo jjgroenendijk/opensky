@@ -7,20 +7,13 @@ import OpenSkyFormatsESM
 
 /// The number variables of each script-carrying object, by folded variable name.
 nonisolated public struct ScriptVariableResolution: ConditionResolution, Sendable {
-    public static let empty = ScriptVariableResolution()
+    public static let empty = ScriptVariableResolution(values: [:])
 
     private let values: [ReferenceKey: [String: Float]]
-    public let isAvailable: Bool
 
     /// `values` holds names already folded to lowercase.
     public init(values: [ReferenceKey: [String: Float]]) {
         self.values = values
-        isAvailable = true
-    }
-
-    private init() {
-        values = [:]
-        isAvailable = false
     }
 
     /// Nil when no script on `owner` declares `name`, or the variable is not a number.

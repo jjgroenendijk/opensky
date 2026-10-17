@@ -2,7 +2,6 @@
 // category comes from when parents chain.
 
 import Foundation
-@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 import OpenSkyTagsTesting

@@ -11,7 +11,6 @@ nonisolated extension LocomotionBridge {
         let state = ActorStateGraphCore.state(for: actorState, gait: gait)
         let writes = ActorStateGraphCore.writes(
             actorState,
-            gait: gait,
             sprintAllowed: isSprintAllowed,
             wantsBlock: meleeIntent.block,
             stateValue: actorStateConstants[state]

@@ -4,7 +4,6 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyScriptingInterface
-import OpenSkyWorldInterface
 
 extension PapyrusWorldStateBridge {
     /// Posts nothing for an NPC, or for a form with no name to show.
