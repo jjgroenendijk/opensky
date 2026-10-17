@@ -108,16 +108,16 @@ final class FakeCoordinatorWorld: CombatWorld {
 
     func perkChoices(
         at entryPoint: PerkEntryPoint,
-        on key: ReferenceKey,
+        on _: ReferenceKey,
         subjects: PerkEvaluationSubjects,
         seams _: ConditionContext
     ) -> [PerkEntryPointChoice] {
         perkQuestions[entryPoint] = subjects
         if let texts = perkTexts[entryPoint] {
-            return texts.map { PerkEntryPointChoice(perk: key, sourcePlugin: "Base.esm", text: $0) }
+            return texts.map { PerkEntryPointChoice(text: $0) }
         }
         guard let spell = perkSpells[entryPoint] else { return [] }
-        return [PerkEntryPointChoice(perk: key, sourcePlugin: "Base.esm", spell: spell)]
+        return [PerkEntryPointChoice(spell: spell)]
     }
 
     func health(of key: ReferenceKey) -> (current: Float, maximum: Float)? {

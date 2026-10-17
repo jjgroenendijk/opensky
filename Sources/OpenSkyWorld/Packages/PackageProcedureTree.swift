@@ -3,7 +3,6 @@
 // docs/formats/packages.md#procedure-tree; branch rules on the Creation Kit wiki
 // page "Category:Package Templates".
 
-import OpenSkyConditions
 import OpenSkyFormatsESM
 
 nonisolated public enum PackageTreeError: Error, Equatable, Sendable {

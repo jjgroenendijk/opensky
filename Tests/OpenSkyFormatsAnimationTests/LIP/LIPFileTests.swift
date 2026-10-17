@@ -11,10 +11,10 @@ import Testing
 struct LIPFileTests {
     @Test("header and grid decode")
     func headerAndGrid() throws {
-        let file = try LIPFile(data: LIPFixture.file(
-            body: LIPFixture.body(frameCount: 3, firstFrame: -1)
-        ))
+        let body = LIPFixture.body(frameCount: 3, firstFrame: -1)
+        let file = try LIPFile(data: LIPFixture.file(body: body))
 
+        #expect(file.header.expandedSize == body.count + 16)
         #expect(file.header.frameCount == 3)
         #expect(file.header.firstFrame == -1)
         #expect(file.header.targetCount == 16)

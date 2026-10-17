@@ -54,7 +54,7 @@ struct ActorStateGraphCoreTests {
         inputs.castingRight = true
         let writes = Dictionary(
             uniqueKeysWithValues: ActorStateGraphCore.writes(
-                inputs, gait: .walk, sprintAllowed: false, wantsBlock: true, stateValue: 10
+                inputs, sprintAllowed: false, wantsBlock: true, stateValue: 10
             ).map { ($0.name, $0.value) }
         )
         #expect(writes[ActorStateGraphNames.cameraFromY] == .real(2))
@@ -73,8 +73,7 @@ struct ActorStateGraphCoreTests {
 
     @Test func aGraphWithNoConstantGetsNoState() {
         let writes = ActorStateGraphCore.writes(
-            ActorStateGraphInputs(), gait: .walk, sprintAllowed: true, wantsBlock: false,
-            stateValue: nil
+            ActorStateGraphInputs(), sprintAllowed: true, wantsBlock: false, stateValue: nil
         )
         #expect(!writes.contains { $0.name == ActorStateGraphNames.state })
     }

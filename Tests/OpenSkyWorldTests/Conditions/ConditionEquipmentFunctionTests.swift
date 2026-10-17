@@ -23,14 +23,9 @@ struct ConditionEquipmentFunctionTests {
         ),
         hasShield: true,
         items: [
-            EquippedItemFacts(
-                item: FormID(0x12E4D), keywords: [FormID(helmetKeyword)], isApparel: true, value: 60
-            ),
-            EquippedItemFacts(
-                item: FormID(0x12E46), keywords: [FormID(cuirassKeyword)], isApparel: true,
-                value: 125
-            ),
-            EquippedItemFacts(item: FormID(0x12EB7), keywords: [], isApparel: false, value: 45)
+            EquippedItemFacts(keywords: [FormID(helmetKeyword)], isApparel: true, value: 60),
+            EquippedItemFacts(keywords: [FormID(cuirassKeyword)], isApparel: true, value: 125),
+            EquippedItemFacts(keywords: [], isApparel: false, value: 45)
         ]
     )
 

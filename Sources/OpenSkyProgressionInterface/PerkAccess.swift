@@ -30,12 +30,4 @@ public protocol PerkAccess {
         subjects: PerkEvaluationSubjects?,
         actorValue: (Int32) -> Float?
     ) -> PerkEntryPointOutcome
-
-    /// The effects at `entryPoint` that pick a spell, a text, or a button for `holder`,
-    /// highest priority first.
-    mutating func choices(
-        at entryPoint: PerkEntryPoint,
-        on holder: ActorValueHolder,
-        subjects: PerkEvaluationSubjects
-    ) -> [PerkEntryPointChoice]
 }

@@ -21,15 +21,13 @@ nonisolated public struct EquippedWeaponFacts: Equatable, Sendable {
 
 /// One worn or held item.
 nonisolated public struct EquippedItemFacts: Equatable, Sendable {
-    public var item: FormID
     /// KWDA, raw FormIDs as the item's plugin spells them.
     public var keywords: [FormID]
     /// An ARMO record: armour or clothing.
     public var isApparel: Bool
     public var value: Int32
 
-    public init(item: FormID, keywords: [FormID], isApparel: Bool, value: Int32) {
-        self.item = item
+    public init(keywords: [FormID], isApparel: Bool, value: Int32) {
         self.keywords = keywords
         self.isApparel = isApparel
         self.value = value

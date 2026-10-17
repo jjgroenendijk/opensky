@@ -3,7 +3,6 @@
 
 import Foundation
 import OpenSkyActorsInterface
-import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorld
 import OpenSkyWorldInterface

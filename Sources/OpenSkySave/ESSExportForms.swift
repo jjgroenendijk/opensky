@@ -5,7 +5,6 @@
 import Foundation
 import OpenSkyFormatsESM
 import OpenSkyFormatsESS
-import OpenSkyWorldState
 
 nonisolated public enum ESSExportError: Error, Equatable, Sendable {
     /// More full plugins than the save's one-byte plugin index can name.

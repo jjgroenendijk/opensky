@@ -2,7 +2,6 @@
 // "Skill multiplier = 1 − (skill / 400)^0.65". See docs/engine/spellcasting.md.
 
 import Foundation
-import OpenSkyFormatsESM
 
 nonisolated public struct SpellCostSettings: Equatable, Sendable {
     /// `fMagicCasterPCSkillCostBase`: 1/400 in the UESP formula.

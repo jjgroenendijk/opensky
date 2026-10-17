@@ -1,7 +1,6 @@
 // The quality names of an improved item, from the `sHealthDataPrefixWeap1` to `...6`
 // and `sHealthDataPrefixArmo1` to `...6` string settings. See docs/engine/crafting.md.
 
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct TemperingTexts: Equatable, Sendable {
@@ -22,12 +21,12 @@ nonisolated public struct TemperingTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         func names(_ kind: String, _ fallback: [String]) -> [String] {
             fallback.indices.map { index in
-                store.text("sHealthDataPrefix\(kind)\(index + 1)").flatMap { text($0.text) }
+                store.text("sHealthDataPrefix\(kind)\(index + 1)").flatMap { text($0) }
                     ?? fallback[index]
             }
         }

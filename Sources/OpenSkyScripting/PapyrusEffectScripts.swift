@@ -97,11 +97,6 @@ nonisolated public struct PapyrusEffectScripts: Equatable, Sendable {
         runsByInstance[instance]?.first.flatMap { runs[$0] }
     }
 
-    /// The runs on one actor, oldest first.
-    public func runs(on target: ReferenceKey) -> [PapyrusActiveEffectRun] {
-        runs.values.filter { $0.id.target == target }.sorted { $0.id < $1.id }
-    }
-
     /// Drops a retired instance. True when it served a magic effect.
     @discardableResult
     public mutating func forget(instance: PapyrusInstanceKey) -> Bool {

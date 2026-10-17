@@ -2,7 +2,6 @@
 // name stands, and how the player and the path-following actors move.
 
 import Foundation
-import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyWorld
 import OpenSkyWorldState

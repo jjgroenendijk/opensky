@@ -3,7 +3,6 @@
 // frame's intent; the runtime raises what it answers. See docs/engine/melee-combat.md.
 
 import Foundation
-import OpenSkyCombatInterface
 
 /// What the swing in progress is.
 nonisolated public enum MeleeStrikeKind: String, Equatable, Sendable {

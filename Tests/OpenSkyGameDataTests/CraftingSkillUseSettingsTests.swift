@@ -2,7 +2,6 @@
 // the settings that replace the defaults. UESP "Skyrim:Leveling".
 
 import OpenSkyEngineTesting
-@testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing

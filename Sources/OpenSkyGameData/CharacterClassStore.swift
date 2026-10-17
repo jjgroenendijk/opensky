@@ -101,9 +101,3 @@ nonisolated public struct CharacterClassStore: Equatable, Sendable {
         try CharacterClass(record: indexed.record, localized: indexed.localized)
     }
 }
-
-nonisolated public enum CharacterClassStoreLoader: Sendable {
-    public static func load(root: GameDataRoot, baseFile: ESMFile? = nil) -> CharacterClassStore {
-        CharacterClassStore(plugins: ActivePluginFiles.load(root: root, baseFile: baseFile))
-    }
-}

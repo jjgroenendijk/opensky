@@ -15,7 +15,6 @@ import simd
 /// One rendered view and what it drew.
 public struct PreviewFrame {
     public let measure: PreviewViewMeasure
-    public let camera: SceneCamera
     public let texture: any MTLTexture
 }
 
@@ -79,7 +78,7 @@ public enum PreviewRenderJob {
                 drawCalls: stats.drawCalls, drawnInstances: stats.drawnInstances,
                 triangles: triangles, coverage: coverage(of: texture)
             )
-            return PreviewFrame(measure: measure, camera: camera, texture: texture)
+            return PreviewFrame(measure: measure, texture: texture)
         }
     }
 

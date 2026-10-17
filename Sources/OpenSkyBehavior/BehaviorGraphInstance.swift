@@ -519,11 +519,6 @@ nonisolated extension BehaviorGraphInstance {
         variables.setValue(.int(Int32(truncatingIfNeeded: word)), at: index)
     }
 
-    /// The value of the variable at `index`, or nil when out of range.
-    public func variable(at index: Int) -> BehaviorVariableValue? {
-        variables.value(at: index)
-    }
-
     /// Raises an event by name, visible to the *next* update.
     @discardableResult
     public func raiseEvent(named name: String, payload: String? = nil) -> Bool {

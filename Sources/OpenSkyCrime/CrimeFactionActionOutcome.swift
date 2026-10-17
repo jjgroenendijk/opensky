@@ -1,8 +1,6 @@
 // What the last `World > Crime & Factions` control did, as a value. Only `text`
 // builds the line.
 
-import OpenSkyFormatsESM
-
 nonisolated public enum CrimeFactionActionOutcome: Equatable, Sendable {
     case idle
     case unavailable

@@ -6,7 +6,6 @@ import Foundation
 import OpenSkyInventoryInterface
 @testable import OpenSkyScripting
 import OpenSkyScriptingFixtures
-import OpenSkyScriptingInterface
 @testable import OpenSkyWorldState
 import Testing
 

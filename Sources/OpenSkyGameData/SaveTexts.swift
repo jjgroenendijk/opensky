@@ -1,8 +1,6 @@
 // The words of the save and load pages and their progress lines, from the `sSave*`,
 // `sMenuDisplay*`, and related string settings. See docs/engine/system-menu.md.
 
-import OpenSkyFormatsESM
-
 nonisolated public struct SaveTexts: Equatable, Sendable {
     public var quickSaving = "Saving"
     public var saved = "Saved"
@@ -26,7 +24,7 @@ nonisolated public struct SaveTexts: Equatable, Sendable {
     public init() {}
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var texts = vanilla
         store.read("sQuickSaving", into: &texts, \.quickSaving, text: text)

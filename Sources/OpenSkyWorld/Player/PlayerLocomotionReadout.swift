@@ -183,7 +183,6 @@ nonisolated public enum PlayerLocomotionReadout: Sendable {
         coverage += " over \(tally.updatesRun) updates"
         var gaps = "Gaps: \(tally.gapTotal) total"
         gaps += "  unevaluated \(tally.unevaluatedGeneratorTotal)"
-        gaps += "  partial \(tally.partialGeneratorTotal)"
         gaps += "  pass-through \(tally.passthroughModifierTotal)"
         gaps += "  unresolved clips \(tally.unresolvedClipTotal)"
         let top: String = ranked.isEmpty ? "none" : ranked.joined(separator: ", ")

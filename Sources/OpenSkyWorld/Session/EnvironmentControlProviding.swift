@@ -20,7 +20,6 @@ public protocol ShadowControlProviding: AnyObject {
     var shadowDrawStats: ShadowDrawStats { get }
     var shadowUpdateMS: Double { get }
     var shadowsActive: Bool { get }
-    func refocusGameView()
 }
 
 @MainActor

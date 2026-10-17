@@ -9,26 +9,15 @@ import OpenSkyGameData
 /// One owned, condition-passing effect at an entry point that picks a spell, a text,
 /// or an activation button.
 nonisolated public struct PerkEntryPointChoice: Sendable {
-    public let perk: ReferenceKey
-    /// The plugin the perk's FormIDs and string IDs are spelled in.
-    public let sourcePlugin: String
-    public let function: PerkFunction
     /// The SPEL a select-spell or activate-choice effect names, resolved.
     public let spell: ResolvedSpell?
     /// The `EPFD` text of a select-text or set-text effect.
     public let text: PerkFunctionData?
-    /// `EPF2`, the activate-choice button label.
-    public let buttonLabel: LString?
-    /// `EPF3`, the activate-choice flags and the perk fragment it runs.
-    public let scriptFlags: PerkScriptFlags?
 
     /// Nil when the effect's function computes a number.
-    public init?(perk: ReferenceKey, sourcePlugin: String, effect: ResolvedPerkEffect) {
+    public init?(effect: ResolvedPerkEffect) {
         guard case let .entryPoint(payload) = effect.effect.data, Self.carries(payload.function)
         else { return nil }
-        self.perk = perk
-        self.sourcePlugin = sourcePlugin
-        function = payload.function
         spell = effect.spell
         switch effect.effect.functionData {
         case .text?, .localizedText?:
@@ -36,30 +25,18 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
         default:
             text = nil
         }
-        buttonLabel = effect.effect.buttonLabel
-        scriptFlags = effect.effect.scriptFlags
     }
 
     /// A select-spell choice, as a fake world answers one.
-    public init(perk: ReferenceKey, sourcePlugin: String, spell: ResolvedSpell) {
-        self.perk = perk
-        self.sourcePlugin = sourcePlugin
-        function = .selectSpell
+    public init(spell: ResolvedSpell) {
         self.spell = spell
         text = nil
-        buttonLabel = nil
-        scriptFlags = nil
     }
 
     /// A select-text choice, as a fake world answers one.
-    public init(perk: ReferenceKey, sourcePlugin: String, text: String) {
-        self.perk = perk
-        self.sourcePlugin = sourcePlugin
-        function = .selectText
+    public init(text: String) {
         spell = nil
         self.text = .text(text)
-        buttonLabel = nil
-        scriptFlags = nil
     }
 
     /// Whether a choice reader carries out `function`. `Add Leveled List` is not one:

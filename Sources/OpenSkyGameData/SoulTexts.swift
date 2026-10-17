@@ -28,11 +28,11 @@ nonisolated public struct SoulTexts: Equatable, Sendable {
     ]
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var texts = vanilla
         for (level, suffix) in suffixes {
-            if let name = store.text("sSoulLevelName\(suffix)").flatMap({ text($0.text) }) {
+            if let name = store.text("sSoulLevelName\(suffix)").flatMap({ text($0) }) {
                 texts.names[level] = name
             }
         }

@@ -4,7 +4,6 @@
 // shapes and the fail-loud behavior match the app exactly.
 
 import Foundation
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 struct CLIContext {
@@ -31,12 +30,6 @@ struct CLIContext {
             root: root,
             settings: PlayerSettingsFile.savedData()
         ))
-    }
-
-    /// File name of the base plugin, which is what a record link inside it
-    /// resolves against in a load-order-wide store.
-    var skyrimESMName: String {
-        ActiveLoadOrder.baseFileName
     }
 
     /// Every active plugin. Commands read records through this, never one plugin alone.

@@ -2,7 +2,6 @@
 // keeps it in the fight. The rules are the Creation Kit wiki's Demoralize and
 // Rally archetypes, cited at `ActorMagicInfluence`.
 
-@testable import OpenSkyActorsInterface
 @testable import OpenSkyCombat
 import OpenSkyCombatFixtures
 @testable import OpenSkyCombatInterface

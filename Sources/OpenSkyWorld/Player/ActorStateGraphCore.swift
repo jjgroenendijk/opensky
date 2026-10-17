@@ -85,7 +85,6 @@ nonisolated public enum ActorStateGraphCore: Sendable {
     /// left out when the graph declares no constant for the state.
     public static func writes(
         _ inputs: ActorStateGraphInputs,
-        gait: LocomotionGait,
         sprintAllowed: Bool,
         wantsBlock: Bool,
         stateValue: Int32?

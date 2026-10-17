@@ -3,7 +3,6 @@
 // world state (a level, a skill, a perk), so "Reset all" must not touch it.
 
 import AppKit
-import OpenSkyWorld
 
 extension DestinationRegistry {
     static let progressionDestinations: [DestinationDescriptor] = [

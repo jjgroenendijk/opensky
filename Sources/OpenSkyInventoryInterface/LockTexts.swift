@@ -1,7 +1,6 @@
 // The words a lock shows: its level names, the prompt verb, and the two refusals.
 // See docs/engine/locks.md.
 
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct LockTexts: Equatable, Sendable {
@@ -33,11 +32,11 @@ nonisolated public struct LockTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         func word(_ editorID: String) -> String? {
-            store.text(editorID).flatMap { text($0.text) }
+            store.text(editorID).flatMap { text($0) }
         }
         for band in LockDifficulty.allCases {
             if let name = word("sLockLevelName\(band.settingSuffix)") {

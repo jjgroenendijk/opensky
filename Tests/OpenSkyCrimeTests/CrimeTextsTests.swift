@@ -14,7 +14,7 @@ struct CrimeTextsTests {
             "sCrimeTypeAttack": .text("Attack")
         ])
         let texts = CrimeTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.name(of: .theft) == "Steal")

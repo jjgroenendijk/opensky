@@ -17,10 +17,6 @@ nonisolated public struct ESSWriter: Sendable {
         writer.data
     }
 
-    public var count: Int {
-        writer.count
-    }
-
     public mutating func bytes(_ bytes: Data) {
         writer.write(bytes)
     }

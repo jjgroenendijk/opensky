@@ -4,7 +4,6 @@
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventoryInterface
-import OpenSkyWorldState
 
 extension InventoryCoordinator {
     /// Weapons, shield, and every equipped item of `key`. The hand types stay 0: the
@@ -25,7 +24,6 @@ extension InventoryCoordinator {
         let equipped = equipment.equipped(on: holder).map { item in
             let definition = items.definition(item)
             return EquippedItemFacts(
-                item: item,
                 keywords: definition?.keywords ?? [],
                 isApparel: definition?.family == .armor,
                 value: definition?.value ?? 0

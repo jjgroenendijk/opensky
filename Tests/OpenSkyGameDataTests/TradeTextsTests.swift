@@ -13,7 +13,7 @@ struct TradeTextsTests {
             "sItemTooExpensive": .text("Too dear.")
         ])
         let texts = TradeTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.merchantShortText(price: 8, gold: 1) == "Value: 8 gold. Vendor has 1 gold.")

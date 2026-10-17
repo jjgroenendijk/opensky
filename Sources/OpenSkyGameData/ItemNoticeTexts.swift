@@ -1,8 +1,6 @@
 // The HUD notices a script's item and spell changes show the player, from the
 // `sAddItemtoInventory` and related string settings. See docs/engine/papyrus-runtime.md.
 
-import OpenSkyFormatsESM
-
 nonisolated public struct ItemNoticeTexts: Equatable, Sendable {
     public var added = "added"
     public var removed = "removed"
@@ -20,7 +18,7 @@ nonisolated public struct ItemNoticeTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var texts = vanilla
         store.read("sAddItemtoInventory", into: &texts, \.added, text: text)

@@ -6,7 +6,6 @@ import OpenSkyFormatsAnimation
 
 /// `hkbExpressionData::m_eventMode` and `hkbEventRangeData::m_eventMode` values.
 nonisolated enum BehaviorExpressionEventMode {
-    static let sendOnce = 0
     static let sendOnTrue = 1
     static let sendOnFalseToTrue = 2
     static let sendEveryFrameOnceTrue = 3
@@ -79,6 +78,7 @@ nonisolated extension BehaviorGraphInstance {
             case BehaviorExpressionEventMode.sendOnTrue: truth
             case BehaviorExpressionEventMode.sendOnFalseToTrue: truth && !state.flags[slot]
             case BehaviorExpressionEventMode.sendEveryFrameOnceTrue: truth || state.sentFlags[slot]
+            // Mode 0, send once, and any unknown mode.
             default: truth && !state.sentFlags[slot]
             }
             state.flags[slot] = truth

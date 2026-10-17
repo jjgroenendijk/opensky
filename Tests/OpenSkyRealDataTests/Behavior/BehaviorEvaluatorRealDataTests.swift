@@ -169,7 +169,6 @@ struct BehaviorEvaluatorRealDataTests {
         ]
         lines += section("feature gaps", merged.rankedFeatureGaps)
         lines += section("unevaluated generators", merged.rankedUnevaluatedGenerators)
-        lines += section("partial generators", merged.rankedPartialGenerators)
         lines += section("pass-through modifiers", merged.rankedPassthroughModifiers)
         lines += section("unapplied bindings", merged.rankedUnappliedBindings)
         lines += section("unresolved clips", merged.rankedUnresolvedClips)

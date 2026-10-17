@@ -13,7 +13,7 @@ struct SoulTextsTests {
             "sSoulLevel": .text("Holds a %s soul")
         ])
         let texts = SoulTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.contents(.petty) == "Holds a Tiny soul")

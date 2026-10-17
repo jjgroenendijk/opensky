@@ -1,20 +1,9 @@
 // Fills the panel context from the live game: each seam names the object that
 // serves it, so a panel never sees the whole controller graph.
 
-import OpenSkyActorsInterface
-import OpenSkyAgentControl
-import OpenSkyCombat
-import OpenSkyCrime
 import OpenSkyDialogue
-import OpenSkyGameData
-import OpenSkyInventory
-import OpenSkyMagic
 import OpenSkyMenus
-import OpenSkyPerceptionInterface
-import OpenSkyPhysics
-import OpenSkyProgression
 import OpenSkyQuests
-import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
 

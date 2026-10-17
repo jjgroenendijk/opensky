@@ -1,7 +1,6 @@
 // The skill multiplier on a spell's cost: UESP's ~0.5939 at skill 100 for the player.
 
 import OpenSkyEngineTesting
-@testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
 @testable import OpenSkyGameData
 import Testing

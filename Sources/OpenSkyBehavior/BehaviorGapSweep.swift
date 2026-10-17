@@ -35,7 +35,6 @@ nonisolated public struct BehaviorGapSweep {
     /// Node class -> why the evaluator does not fully run it. The first reason wins.
     public var gapReasons: [String: String] {
         let gaps = tally.unevaluatedGenerators.keys.map { ($0, "not evaluated") }
-            + tally.partialGenerators.keys.map { ($0, "partly evaluated") }
             + tally.passthroughModifiers.keys.map { ($0, "passed through") }
             + tally.undecodableObjects.keys.map { ($0, "not decoded") }
         var reasons: [String: String] = [:]

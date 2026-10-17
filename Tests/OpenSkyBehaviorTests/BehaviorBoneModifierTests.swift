@@ -1,5 +1,5 @@
 // Bone modifiers and generators that work in model space: foot IK over a leg
-// rig, and the reference pose generator. All rigs are synthetic.
+// rig, the physics hand-offs, and the reference pose generator. All rigs are synthetic.
 
 import Foundation
 @testable import OpenSkyBehavior
@@ -78,6 +78,44 @@ struct BehaviorBoneModifierTests {
     @Test func footIkLiftsTheAnkleOntoRaisedGround() {
         let bones = legGraph(FlatGround(height: 10)).update(deltaTime: 1 / 30).bones
         #expect(simd_distance(ankle(bones), SIMD3(0, 0, 15)) < 0.05)
+    }
+
+    private func physicsRequests(after modifier: any HKBClass) -> BehaviorPhysicsRequests {
+        var table = BehaviorObjectTable()
+        let target = table.add(modifier, at: 0x100)
+        let root = table.add(
+            BehaviorFixture.modifierGenerator("root", modifier: target, generator: nil), at: 0x110
+        )
+        let graph = BehaviorFixture.instance(root: root, table: table)
+        _ = graph.update(deltaTime: 1 / 30)
+        return graph.physicsRequests
+    }
+
+    @Test func keyframeBonesRequestsOnlyValidBones() {
+        let info = { (bone: Int, valid: Bool) in
+            HKBKeyframeInfo(
+                keyframedPosition: SIMD4(), keyframedRotation: SIMD4(0, 0, 0, 1),
+                boneIndex: bone, isValid: valid
+            )
+        }
+        let requests = physicsRequests(after: HKBKeyframeBonesModifier(
+            modifier: BehaviorFixture.modifierHeader("keyframe"),
+            keyframeInfo: [info(2, true), info(1, false), info(0, true)],
+            keyframedBonesList: nil, unresolved: []
+        ))
+        #expect(requests.keyframedBones == [0, 2])
+    }
+
+    @Test func getUpHandsItsTimingToPhysics() throws {
+        let requests = physicsRequests(after: HKBGetUpModifier(
+            modifier: BehaviorFixture.modifierHeader("getUp"),
+            groundNormal: SIMD4(0, 0, 1, 0), duration: 1.5, alignWithGroundDuration: 0.5,
+            rootBoneIndex: 1, otherBoneIndex: -1, anotherBoneIndex: -1, unresolved: []
+        ))
+        let getUp = try #require(requests.getUp)
+        #expect(getUp.groundNormal == SIMD3(0, 0, 1))
+        #expect([getUp.duration, getUp.alignDuration] == [1.5, 0.5])
+        #expect(getUp.rootBoneIndex == 1)
     }
 
     @Test func referencePoseGeneratorGivesTheRestPose() {
