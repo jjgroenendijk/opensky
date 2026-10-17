@@ -46,13 +46,13 @@ nonisolated public struct NIFCollisionSweepResult: Sendable {
 
 nonisolated public enum NIFCollisionSweep: Sendable {
     public static func run(
-        file: ESMFile,
+        loadOrder: LoadOrderPlugins,
         fileSystem: any GameFileSource,
         worldspaceEditorID: String,
         gridX: Int32,
         gridY: Int32
     ) throws -> NIFCollisionSweepResult {
-        let paths = try ExteriorCellModelCatalog(file: file).modelPaths(
+        let paths = try ExteriorCellModelCatalog(loadOrder: loadOrder).modelPaths(
             worldspaceEditorID: worldspaceEditorID,
             gridX: gridX,
             gridY: gridY

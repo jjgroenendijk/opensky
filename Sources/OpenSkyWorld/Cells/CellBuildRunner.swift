@@ -31,11 +31,17 @@ nonisolated public protocol CellSceneProvider {
         hiddenCells: Set<CellCoordinate>
     ) throws -> DistantLODScene?
 
-    /// Resolves + builds the destination of one placed teleport door.
-    func buildDoorTransition(
+    /// Resolves + builds the destination of one placed teleport door. An exterior
+    /// destination in another worldspace makes that worldspace the current one.
+    mutating func buildDoorTransition(
         from sourceDoor: FormID,
         state: WorldStateSnapshot
     ) throws -> DoorTransition
+
+    /// The worldspace exterior builds read; nil for a provider without one.
+    var worldspaceEditorID: String? { get }
+    /// Makes later cell and distant LOD builds read `editorID`.
+    mutating func setWorldspace(_ editorID: String)
 
     /// Loads an idle prop bound to its bone of the rig at `request.skeletonPath`.
     func loadActorProp(_ request: ActorPropRequest) throws -> RenderModel
@@ -65,6 +71,12 @@ nonisolated extension CellSceneProvider {
         throw CellSceneError.doorReferenceNotFound(formID: sourceDoor)
     }
 
+    public var worldspaceEditorID: String? {
+        nil
+    }
+
+    public mutating func setWorldspace(_: String) {}
+
     public func loadActorProp(_: ActorPropRequest) throws -> RenderModel {
         throw ActorAssetFailure.missing
     }
@@ -82,16 +94,24 @@ nonisolated extension CellSceneProvider {
     }
 }
 
-/// Adapts `CellSceneBuilder` to the provider seam, pinning the worldspace so
-/// the streamer only passes grid coordinates. The runner takes it as `sending`,
+/// Adapts `CellSceneBuilder` to the provider seam. It holds the current worldspace,
+/// so the streamer only passes grid coordinates. The runner takes it as `sending`,
 /// so the builder and its libraries live only on the build queue.
 nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     public let builder: CellSceneBuilder
-    public let worldspaceEditorID: String
+    public private(set) var worldspace: String
+
+    public var worldspaceEditorID: String? {
+        worldspace
+    }
 
     public init(builder: CellSceneBuilder, worldspaceEditorID: String) {
         self.builder = builder
-        self.worldspaceEditorID = worldspaceEditorID
+        worldspace = worldspaceEditorID
+    }
+
+    public mutating func setWorldspace(_ editorID: String) {
+        worldspace = editorID
     }
 
     public func buildCell(
@@ -100,7 +120,7 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     ) throws -> CellScene {
         try builder.textures.batchLoads {
             try builder.buildScene(
-                worldspaceEditorID: worldspaceEditorID,
+                worldspaceEditorID: worldspace,
                 gridX: coordinate.x,
                 gridY: coordinate.y,
                 state: state
@@ -124,24 +144,29 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
     ) throws -> DistantLODScene? {
         try builder.textures.batchLoads {
             try builder.buildDistantLOD(
-                worldspaceEditorID: worldspaceEditorID,
+                worldspaceEditorID: worldspace,
                 center: center,
                 hiddenCells: hiddenCells
             )
         }
     }
 
-    public func buildDoorTransition(
+    public mutating func buildDoorTransition(
         from sourceDoor: FormID,
         state: WorldStateSnapshot
     ) throws -> DoorTransition {
-        try builder.textures.batchLoads {
+        let current = worldspace
+        let transition = try builder.textures.batchLoads {
             try builder.buildDoorTransition(
                 from: sourceDoor,
-                worldspaceEditorID: worldspaceEditorID,
+                worldspaceEditorID: current,
                 state: state
             )
         }
+        if let destination = transition.worldspaceEditorID {
+            worldspace = destination
+        }
+        return transition
     }
 
     public func attachTextureStreaming(_ mailbox: TextureStreamMailbox) {
@@ -170,13 +195,17 @@ nonisolated public struct BuilderCellSceneProvider: CellSceneProvider {
 nonisolated public struct CellBuildResult: Sendable {
     public let coordinate: CellCoordinate
     public let result: Result<CellScene, any Error>
+    /// The worldspace the build read; nil when the provider has none.
+    public let worldspaceEditorID: String?
 
     public init(
         coordinate: CellCoordinate,
-        result: Result<CellScene, any Error>
+        result: Result<CellScene, any Error>,
+        worldspaceEditorID: String? = nil
     ) {
         self.coordinate = coordinate
         self.result = result
+        self.worldspaceEditorID = worldspaceEditorID
     }
 }
 
@@ -219,6 +248,8 @@ nonisolated public struct CellBuildMetric: Equatable, Sendable {
 nonisolated public struct DistantLODBuildResult: Sendable {
     public let center: CellCoordinate
     public let result: Result<DistantLODScene?, any Error>
+    /// The worldspace the ring was built for; nil when the provider has none.
+    public var worldspaceEditorID: String?
 }
 
 nonisolated public struct DoorTransitionBuildResult: Sendable {
@@ -264,6 +295,8 @@ nonisolated public protocol CellBuildRunning: AnyObject {
     func startDistantLODPrebuild(center: CellCoordinate, hiddenCells: Set<CellCoordinate>) -> Bool
     func enqueueDoorTransition(from sourceDoor: FormID, state: WorldStateSnapshot)
     func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult]
+    /// Queued behind every build already queued, so only later builds read `editorID`.
+    func enqueueWorldspaceChange(_ editorID: String)
     func enqueueActorProp(_ request: ActorPropRequest)
     func drainCompletedActorProps() -> [ActorPropLoadResult]
 }
@@ -292,6 +325,8 @@ nonisolated extension CellBuildRunning {
     public func drainCompletedDoorTransitions() -> [DoorTransitionBuildResult] {
         []
     }
+
+    public func enqueueWorldspaceChange(_: String) {}
 
     public func enqueueActorProp(_: ActorPropRequest) {}
     public func drainCompletedActorProps() -> [ActorPropLoadResult] {
@@ -347,13 +382,18 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         guard isNew else { return }
         queue.async { [self] in
             bookkeeping.withLock { $0.buildCounts[coordinate, default: 0] += 1 }
-            let result = provider.withLock { provider in
-                Result { try provider.buildCell(at: coordinate, state: state) }
+            let (result, worldspace) = provider.withLock { provider in
+                (
+                    Result { try provider.buildCell(at: coordinate, state: state) },
+                    provider.worldspaceEditorID
+                )
             }
             if let metric = try? result.map(Self.metric(for:)).get() {
                 bookkeeping.withLock { $0.buildMetrics[coordinate] = metric }
             }
-            let entry = CellBuildResult(coordinate: coordinate, result: result)
+            let entry = CellBuildResult(
+                coordinate: coordinate, result: result, worldspaceEditorID: worldspace
+            )
             results.withLock { $0.cells.append(entry) }
         }
     }
@@ -404,10 +444,16 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         let isNew = bookkeeping.withLock { $0.pendingLOD.insert(center).inserted }
         guard isNew else { return false }
         queue.async { [self] in
-            let result = provider.withLock { provider in
-                Result { try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells) }
+            let (result, worldspace) = provider.withLock { provider in
+                (
+                    Result { try provider.buildDistantLOD(center: center, hiddenCells: hiddenCells)
+                    },
+                    provider.worldspaceEditorID
+                )
             }
-            let entry = DistantLODBuildResult(center: center, result: result)
+            let entry = DistantLODBuildResult(
+                center: center, result: result, worldspaceEditorID: worldspace
+            )
             results.withLock { $0.distantLOD.append(entry) }
         }
         return true
@@ -461,6 +507,12 @@ nonisolated public final class SerialCellBuildRunner: CellBuildRunning, Sendable
         }
         bookkeeping.withLock { $0.pendingDoorTransitions.subtract(out.map(\.sourceDoor)) }
         return out
+    }
+
+    public func enqueueWorldspaceChange(_ editorID: String) {
+        queue.async { [self] in
+            provider.withLock { $0.setWorldspace(editorID) }
+        }
     }
 
     /// Queued behind any cell build, so a prop never waits on more than one.

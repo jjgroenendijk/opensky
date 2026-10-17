@@ -36,14 +36,15 @@ struct CLIContext {
     /// File name of the base plugin, which is what a record link inside it
     /// resolves against in a load-order-wide store.
     var skyrimESMName: String {
-        "Skyrim.esm"
+        ActiveLoadOrder.baseFileName
     }
 
-    func loadSkyrimESM() throws -> ESMFile {
-        let url = root.dataURL.appending(path: "Skyrim.esm")
+    /// Every active plugin. Commands read records through this, never one plugin alone.
+    func loadOrder() throws -> ActiveLoadOrder {
         do {
-            return try ESMFile(url: url)
+            return try ActiveLoadOrder.open(root: root)
         } catch {
+            let url = root.dataURL.appending(path: ActiveLoadOrder.baseFileName)
             throw CLIError.failure(
                 "cannot read \(url.path(percentEncoded: false)): \(String(describing: error))"
             )

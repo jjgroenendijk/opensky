@@ -14,19 +14,17 @@ enum ActorValueCommand {
         let race = arguments.race
         let playerLevel = try int(arguments.playerLevel, name: "--player-level") ?? 1
 
-        let file = try context.loadSkyrimESM()
-        let localized = file.isLocalized
+        let loadOrder = try context.loadOrder()
         let settings = ActorValueLevelSettings.resolve(
-            store: GameSettingLoader.load(root: context.root, baseFile: file)
+            store: GameSettingStore(plugins: loadOrder.files)
         )
         print("[INFO] iAVDhmsLevelUp = \(settings.pointsPerLevel), "
             + "fNPCHealthLevelBonus = \(settings.healthBonusPerLevel), "
             + "iAVDSkillsLevelUp = \(settings.skillPointsPerLevel)")
         let resolver = ActorValueResolver.build(
-            from: file,
-            localized: localized,
-            pluginName: context.skyrimESMName,
-            classes: CharacterClassStoreLoader.load(root: context.root, baseFile: file),
+            from: loadOrder.plugins,
+            classes: CharacterClassStore(plugins: loadOrder.files),
+            pluginName: FormIDResolver.loadOrderSpaceName,
             settings: settings,
             playerLevel: PlayerLevelSource(playerLevel)
         )

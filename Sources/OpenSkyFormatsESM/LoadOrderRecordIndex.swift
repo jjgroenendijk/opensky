@@ -79,6 +79,16 @@ nonisolated public struct LoadOrderRecordIndex: Sendable {
         return found.source.plugin.translation(FormID(stored: cell))
     }
 
+    /// The load-order FormID of the WRLD whose world children hold the winning
+    /// record: an exterior CELL, or a reference placed in one.
+    public func worldFormID(containing formID: FormID) -> FormID? {
+        guard
+            let found = winner(of: formID),
+            let world = found.source.index.worldFormID(containing: found.local.rawValue)
+        else { return nil }
+        return found.source.plugin.translation(FormID(stored: world))
+    }
+
     /// The records the plugins after the first store under `cell`, lowest
     /// priority first. A later record with the same FormID overrides.
     public func laterChildren(ofCell cell: FormID) -> [CellChildRecord] {

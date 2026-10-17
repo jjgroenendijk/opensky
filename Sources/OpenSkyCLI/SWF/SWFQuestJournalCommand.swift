@@ -91,10 +91,9 @@ extension SWFQuestJournalCommand {
         let model: JournalMenuModel
 
         init(context: CLIContext, editorID: String, objectiveState: String?) throws {
-            let file = try context.loadSkyrimESM()
-            let store = QuestStore(file: file, pluginName: "Skyrim.esm")
+            let store = try QuestStore(plugins: context.loadOrder().files)
             guard let quest = store.quest(editorID: editorID) else {
-                throw CLIError.failure("Skyrim.esm defines no quest \"\(editorID)\"")
+                throw CLIError.failure("the load order defines no quest \"\(editorID)\"")
             }
             self.quest = quest
             strings = LocalizedStrings(

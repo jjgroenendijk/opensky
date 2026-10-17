@@ -13,7 +13,7 @@ nonisolated public struct WaterBuild {
     public let height: Float
 }
 
-nonisolated private struct ResolvedWorldWater {
+nonisolated struct ResolvedWorldWater {
     let height: Float?
     let type: FormID?
 }
@@ -155,7 +155,7 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// The cached 4096 x 4096 quad every water plane scales and moves.
-    nonisolated private func sharedWaterPlane() -> RenderMesh? {
+    nonisolated func sharedWaterPlane() -> RenderMesh? {
         if let waterPlaneMesh {
             return waterPlaneMesh
         }
@@ -169,35 +169,14 @@ nonisolated extension CellSceneBuilder {
         }
     }
 
-    /// Applies WRLD PNAM category inheritance recursively. Cycles are invalid
-    /// mod data -> stop at the first repeated FormID, keeping local values.
-    nonisolated private func resolvedWorldWater(
+    /// The water height follows the land flag and the water type the water flag.
+    nonisolated func resolvedWorldWater(
         for worldspace: Worldspace
     ) -> ResolvedWorldWater {
-        resolvedWorldWater(for: worldspace, visited: [])
-    }
-
-    nonisolated private func resolvedWorldWater(
-        for worldspace: Worldspace,
-        visited: Set<UInt32>
-    ) -> ResolvedWorldWater {
-        guard !visited.contains(worldspace.formID.rawValue) else {
-            return ResolvedWorldWater(
-                height: worldspace.defaultWaterHeight,
-                type: worldspace.waterType
-            )
-        }
-        var nextVisited = visited
-        nextVisited.insert(worldspace.formID.rawValue)
-        let parent = worldspace.parent.flatMap {
-            worldspaceIndexBuildingIfNeeded()[$0.rawValue]
-        }
-        let parentData = parent.map { resolvedWorldWater(for: $0, visited: nextVisited) }
+        let worlds = worldspaceIndexBuildingIfNeeded()
         return ResolvedWorldWater(
-            height: worldspace.parentFlags.contains(.useLandData)
-                ? parentData?.height : worldspace.defaultWaterHeight,
-            type: worldspace.parentFlags.contains(.useWaterData)
-                ? parentData?.type : worldspace.waterType
+            height: worldspace.source(of: .useLandData, in: worlds).defaultWaterHeight,
+            type: worldspace.source(of: .useWaterData, in: worlds).waterType
         )
     }
 
@@ -221,7 +200,7 @@ nonisolated extension CellSceneBuilder {
 
     /// Plausible fallback keeps water visible when XCWT/NAM2 is absent or a
     /// mod carries an unknown WATR DNAM variant.
-    nonisolated private func resolvedWaterLook(for formID: FormID?) -> WaterLook {
+    nonisolated func resolvedWaterLook(for formID: FormID?) -> WaterLook {
         guard
             let formID,
             let water = waterTypeIndexBuildingIfNeeded()[formID.rawValue],

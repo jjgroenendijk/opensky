@@ -254,7 +254,7 @@ enum RenderCommand {
             files = FolderOverlayFileSource(base: vfs, folder: looseFolder)
         }
         let builder = try StandardBenchmark.makeBuilder(
-            root: context.root, file: context.loadSkyrimESM(), files: files, device: device,
+            root: context.root, loadOrder: context.loadOrder(), files: files, device: device,
             recorder: recorder
         )
         try assets?.configure(builder, device: device)

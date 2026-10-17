@@ -160,7 +160,9 @@ nonisolated extension CellSceneBuilder {
                 }
             }
         }
-        if let height = worldspace?.defaultLandHeight {
+        let worlds = worldspaceIndexBuildingIfNeeded()
+        let landSource = worldspace?.source(of: .useLandData, in: worlds)
+        if let height = landSource?.defaultLandHeight {
             let field = TerrainHeightField(
                 coordinate: coordinate,
                 heights: [Float](repeating: height, count: Land.vertexCount)

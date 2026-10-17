@@ -38,6 +38,27 @@ landscape, `0x20` no sky, `0x40` fixed dimensions, `0x80` no grass. Not read: `R
 `MNAM`, `NAM0`/`NAM9`, climate, and LOD fields. A world children group with the exterior
 cells follows the record ([ESM](/formats/esm.md)).
 
+`PNAM` flags say which categories a child worldspace takes from its `WNAM` parent instead of
+its own fields. Source: xEdit `wbDefinitionsTES5.pas` (commit above), the `PNAM` flags of
+`WRLD`. The Creation Kit wiki page "World Spaces"
+(<https://ck.uesp.net/wiki/World_Spaces>) says a child uses its parent's landscape.
+
+| bit | meaning | what OpenSky takes from the parent |
+| --- | --- | --- |
+| `0x01` | use land data | default land and water height |
+| `0x02` | use LOD data | the distant LOD files, under the parent's name |
+| `0x04` | use map data | the world map, its markers, and fast travel |
+| `0x08` | use water data | the default water type |
+| `0x10` | use climate data | the climate, so the weather |
+| `0x20` | use image space data, which xEdit marks unused | not read |
+| `0x40` | use sky cell | not read |
+
+A parent can have its own parent, so OpenSky walks up while the flag is set, and stops at a
+cycle. The vanilla city worlds (`WhiterunWorld`, `SolitudeWorld`, `WindhelmWorld`) set
+`0x7F` under Tamriel, and have no LOD folder of their own under `meshes/terrain`.
+`MarkarthWorld` sets `0x44` and has its own LOD. A child's cells still carry their own `LAND`
+records, and OpenSky draws those.
+
 `Skyrim.esm` has 37 worldspaces. Tamriel has 11,187 cells.
 
 ## CELL

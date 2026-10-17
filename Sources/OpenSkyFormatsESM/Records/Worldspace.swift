@@ -16,7 +16,11 @@ nonisolated public struct Worldspace: Sendable {
         }
 
         public static let useLandData = ParentFlags(rawValue: 0x0001)
+        public static let useLODData = ParentFlags(rawValue: 0x0002)
+        public static let useMapData = ParentFlags(rawValue: 0x0004)
         public static let useWaterData = ParentFlags(rawValue: 0x0008)
+        public static let useClimateData = ParentFlags(rawValue: 0x0010)
+        public static let useSkyCell = ParentFlags(rawValue: 0x0040)
     }
 
     /// DATA field (uint8).
@@ -172,5 +176,27 @@ nonisolated public struct Worldspace: Sendable {
     private static func decodeNonNullFormID(_ data: Data) throws -> FormID? {
         guard let formID = try decodeFormID(data) else { return nil }
         return formID.isNull ? nil : formID
+    }
+}
+
+nonisolated extension Worldspace {
+    /// The worldspace whose `category` data this one uses: itself, or the nearest
+    /// parent reached through parents that set the `PNAM` flag. A missing parent
+    /// or a parent cycle stops the walk at the last worldspace reached.
+    public func source(
+        of category: ParentFlags,
+        in worldspaces: [UInt32: Worldspace]
+    ) -> Worldspace {
+        var current = self
+        var visited: Set<FormID> = [formID]
+        while
+            current.parentFlags.contains(category),
+            let parentID = current.parent,
+            let parent = worldspaces[parentID.rawValue],
+            visited.insert(parentID).inserted
+        {
+            current = parent
+        }
+        return current
     }
 }

@@ -185,6 +185,28 @@ build and wait off screen. Void and failed slots stay covered by LOD. When the m
 arrives, the waiting cells and the new LOD ring go live in one swap. Another move drops waiting
 cells outside the newest grid. Waiting cells keep their assets from eviction until the swap.
 
+## Changing worldspace
+
+The exterior streams one worldspace at a time. The build half holds its editor ID, and every
+built cell and LOD ring carries the worldspace it was built for. Three things change it:
+
+- A teleport or fast travel into another worldspace calls `enterWorldspace`. The streamer
+  queues the change on the build queue, so builds queued before it still finish in the old
+  worldspace.
+- A door whose destination sits in another worldspace switches the build half itself while it
+  builds the destination. The streamer then resets its exterior when the transition arrives.
+- A save restores its worldspace with the player place.
+
+On a change the streamer drops every exterior cell, staged cell, pending result, and the LOD
+ring, and centres a new grid on the destination. A result that arrives later from the old
+worldspace is dropped, and its assets are released. `onWorldspaceChanged` tells the weather,
+which picks a new weather from the new climate. The map and fast travel read the current
+worldspace when they open.
+
+A child worldspace takes some data from its parent, as its `PNAM` flags say
+([world records](/formats/world-records.md)). WhiterunWorld draws Tamriel's distant LOD and
+shows Tamriel's map.
+
 ## Interiors
 
 A door transition uses the same serial runner ([interiors](/engine/interiors.md)). The exterior

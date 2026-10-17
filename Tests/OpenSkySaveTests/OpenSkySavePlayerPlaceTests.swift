@@ -37,6 +37,12 @@ struct OpenSkySavePlayerPlaceTests {
                 feet: SIMD3(22468.2, -96140.9, 14293.3),
                 yaw: -2.35
             ),
+            SavePlayerPlace(
+                cell: .exterior(CellCoordinate(x: 7, y: 8)),
+                feet: SIMD3(30000, 34000, 200),
+                yaw: 1,
+                worldspace: "DLC2SolstheimWorld"
+            ),
             SavePlayerPlace(cell: .interior(FormID(0x1605E)), feet: SIMD3(10, -20, 64), yaw: 0.5)
         ]
         for place in places {

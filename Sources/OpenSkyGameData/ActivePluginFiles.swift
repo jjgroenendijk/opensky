@@ -41,3 +41,41 @@ nonisolated public enum ActivePluginFiles: Sendable {
         }
     }
 }
+
+/// The active plugins, opened once and numbered as the game numbers forms. Engine
+/// code and tools read records through this, so no reader sees one plugin alone.
+nonisolated public struct ActiveLoadOrder: Sendable {
+    /// `Skyrim.esm`, the master every other plugin builds on.
+    public let baseFile: ESMFile
+    public let plugins: LoadOrderPlugins
+
+    public init(baseFile: ESMFile, plugins: LoadOrderPlugins) {
+        self.baseFile = baseFile
+        self.plugins = plugins
+    }
+
+    /// Throws when `Skyrim.esm` cannot be read; another plugin that will not
+    /// open is logged and skipped.
+    public static func open(root: GameDataRoot) throws -> ActiveLoadOrder {
+        try ActiveLoadOrder(root: root, baseFile: openBaseFile(root: root))
+    }
+
+    /// The first half of `open`, for a loader that reports the two halves apart.
+    public static func openBaseFile(root: GameDataRoot) throws -> ESMFile {
+        try ESMFile(url: root.dataURL.appending(path: baseFileName))
+    }
+
+    /// Opens the other active plugins beside an already-open `Skyrim.esm`.
+    public init(root: GameDataRoot, baseFile: ESMFile) {
+        self.init(
+            baseFile: baseFile,
+            plugins: LoadOrderPlugins(ActivePluginFiles.load(root: root, baseFile: baseFile))
+        )
+    }
+
+    public static let baseFileName = "Skyrim.esm"
+
+    public var files: [(name: String, file: ESMFile)] {
+        plugins.files
+    }
+}

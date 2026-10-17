@@ -80,8 +80,8 @@ enum PanelComponents {
         return row
     }
 
-    /// Horizontal row of buttons (weather presets, apply/reset).
-    static func buttonRow(_ buttons: [NSButton]) -> NSStackView {
+    /// Horizontal row of buttons (weather presets, apply/reset), or of fields with their button.
+    static func buttonRow(_ buttons: [NSView]) -> NSStackView {
         let row = NSStackView(views: buttons)
         row.orientation = .horizontal
         row.alignment = .centerY

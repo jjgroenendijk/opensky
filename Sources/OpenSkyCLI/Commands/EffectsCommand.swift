@@ -17,11 +17,7 @@ enum EffectsCommand {
         guard (mode == "imad") == (editorID != nil) else {
             throw CLIError.usage("effects takes census, or imad <edid>")
         }
-        let file = try context.loadSkyrimESM()
-        let store = EffectRecordStore(plugins: ActivePluginFiles.load(
-            root: context.root,
-            baseFile: file
-        ))
+        let store = try EffectRecordStore(plugins: context.loadOrder().files)
         switch mode {
         case "census":
             printAdapters(store)

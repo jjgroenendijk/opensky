@@ -4,6 +4,7 @@
 
 import OpenSkyActors
 import OpenSkyActorsInterface
+import OpenSkyAgentControl
 import OpenSkyCombat
 import OpenSkyCrime
 import OpenSkyFormatsESM
@@ -552,5 +553,23 @@ extension GameViewController: FaceMorphControlProviding {
 
     func resetFaceMorphWeights() {
         faceMorphs.resetFaceMorphWeights()
+    }
+}
+
+extension GameViewController: WorldspaceControlProviding {
+    var currentWorldspace: String? {
+        streamer?.worldspaceEditorID
+    }
+
+    var worldspacePlayerCell: CellSceneLocation? {
+        streamer?.currentCellLocation
+    }
+
+    var worldspaceNames: [String] {
+        (worldData as? MenuDataProviding)?.menuRecords?.worldspaces.keys.sorted() ?? []
+    }
+
+    func goToExterior(worldspace: String, x: Int32, y: Int32) {
+        menuWorld.teleportPlayer(.grid(x: x, y: y, worldspace: worldspace), openingRaceMenu: false)
     }
 }

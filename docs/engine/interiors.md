@@ -42,11 +42,15 @@ The transition is built on the same serial queue as cells:
 
 1. Read the source `REFR` and its exact 32-byte `XTEL`.
 2. Read the target `REFR`. Its base must be a `DOOR`.
-3. Find the target's interior `CELL`, or work out the exterior cell from its position.
-4. Build that cell, and return the scene with the `XTEL` position and rotation.
+3. Find the target's interior `CELL`, or work out the exterior cell from its position. An
+   exterior target is built in the worldspace whose world children group holds it, so the
+   Whiterun gate leads into `WhiterunWorld` and back to `Tamriel`.
+4. Build that cell, and return the scene with the `XTEL` position and rotation, and the
+   worldspace of an exterior target.
 
-Transitions resolve inside the plugin being loaded. Doors across plugins wait for multi-plugin
-world loading.
+FormIDs resolve over the whole load order, so a door in one plugin may lead into a cell of
+another. A door into another worldspace changes the streamed worldspace
+([cell streaming](/engine/cell-streaming.md#changing-worldspace)).
 
 ## Activation and streaming
 

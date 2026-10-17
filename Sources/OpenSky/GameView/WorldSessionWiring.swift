@@ -88,6 +88,9 @@ final class WorldSessionWiring {
         renderer.locomotion.sampleWater = { [weak streamer] position in
             streamer?.sampleWaterHeight(at: position)
         }
+        streamer.onWorldspaceChanged.add { [weak renderer] editorID in
+            renderer?.weather?.setWorldspace(editorID: editorID)
+        }
         game.streamer = streamer
     }
 

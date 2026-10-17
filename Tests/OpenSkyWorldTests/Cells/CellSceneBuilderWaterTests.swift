@@ -95,11 +95,21 @@ extension CellSceneBuilderTests {
     @Test(.enabled(if: Self.hasDevice)) func noWaterSentinelSuppressesWRLDFallback() throws {
         let scene = try build(pluginData: plugin(
             cellFlags: 0x0002,
-            cellWaterHeightBits: 0x7F7F_FFFF,
+            cellWaterHeightBits: 0xCF00_0000,
             worldDefaultWaterHeight: -14000
         ))
         #expect(scene.renderScene.water.isEmpty)
         #expect(scene.summary.waterPlaneCount == 0)
+    }
+
+    @Test(.enabled(if: Self.hasDevice)) func floatMaxTakesTheWRLDHeight() throws {
+        let scene = try build(pluginData: plugin(
+            cellFlags: 0x0002,
+            cellWaterHeightBits: 0x7F7F_FFFF,
+            worldDefaultWaterHeight: -14000
+        ))
+        let water = try #require(scene.renderScene.water.first)
+        #expect(water.modelMatrix.columns.3.z == -14000)
     }
 
     @Test(.enabled(if: Self.hasDevice)) func noSkyWorldSuppressesSky() throws {

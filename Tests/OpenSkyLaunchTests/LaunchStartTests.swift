@@ -30,12 +30,17 @@ struct LaunchStartTests {
             "cell:",
             "cell:Bad Name",
             "exterior:Tamriel:6",
-            "exterior:Sovngarde:1:1",
+            "exterior:Bad World:1:1",
             "exterior:Tamriel:x:1",
             "teleport:somewhere"
         ] {
             #expect(LaunchStart(storedValue: text) == nil, "\(text)")
         }
+    }
+
+    @Test func anyWorldspaceIsAStoredStart() {
+        #expect(LaunchStart(storedValue: "exterior:DLC2SolstheimWorld:7:8")
+            == .exterior(worldspace: "DLC2SolstheimWorld", x: 7, y: 8))
     }
 
     @Test func aCellNeedsAnEditorID() {
@@ -46,12 +51,19 @@ struct LaunchStartTests {
             == .success(.cell("QASmoke")))
     }
 
-    @Test func anExteriorNeedsAStreamedWorldspaceAndWholeCoordinates() {
-        let form = LaunchStartForm(kind: .exterior, worldspace: "tamriel", x: "6", y: "-2")
+    @Test func anExteriorNeedsAWorldspaceNameAndWholeCoordinates() {
+        let form = LaunchStartForm(kind: .exterior, worldspace: " Tamriel ", x: "6", y: "-2")
         #expect(form.validate() == .success(.exterior(worldspace: "Tamriel", x: 6, y: -2)))
         var other = form
-        other.worldspace = "Sovngarde"
-        #expect(other.validate() == .failure(.worldspaceNotStreamed("Sovngarde")))
+        other.worldspace = "DLC2SolstheimWorld"
+        #expect(other.validate()
+            == .success(.exterior(worldspace: "DLC2SolstheimWorld", x: 6, y: -2)))
+        var empty = form
+        empty.worldspace = " "
+        #expect(empty.validate() == .failure(.emptyWorldspace))
+        var spaced = form
+        spaced.worldspace = "Solstheim World"
+        #expect(spaced.validate() == .failure(.badWorldspaceName))
         var badX = form
         badX.x = "6.5"
         #expect(badX.validate() == .failure(.badCoordinate("X")))
@@ -62,7 +74,7 @@ struct LaunchStartTests {
 
     @Test func everyProblemHasAReason() {
         let problems: [LaunchStartProblem] = [
-            .emptyCell, .badCellName, .worldspaceNotStreamed(""), .badCoordinate("X")
+            .emptyCell, .badCellName, .emptyWorldspace, .badWorldspaceName, .badCoordinate("X")
         ]
         for problem in problems {
             #expect(!problem.reason.isEmpty)

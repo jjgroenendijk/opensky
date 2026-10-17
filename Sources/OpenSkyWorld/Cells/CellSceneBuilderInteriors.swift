@@ -15,6 +15,8 @@ nonisolated public struct DoorTransition: Sendable {
     public let destinationDoor: FormID
     public let destinationPlacement: PlacedReference.Placement
     public let scene: CellScene
+    /// The worldspace of an exterior destination; nil for an interior.
+    public var worldspaceEditorID: String?
 }
 
 nonisolated extension CellSceneBuilder {
@@ -160,6 +162,8 @@ nonisolated extension CellSceneBuilder {
     }
 
     /// Source REFR XTEL -> destination door REFR -> owning CELL, then builds it.
+    /// An exterior destination builds in the worldspace that holds the door, and
+    /// `worldspaceEditorID` is only the fallback for a door outside any WRLD group.
     /// A door REFR that fails to decode throws `CellSceneError.malformedRecord`.
     nonisolated public func buildDoorTransition(
         from sourceDoor: FormID,
@@ -190,23 +194,37 @@ nonisolated extension CellSceneBuilder {
         }
 
         let scene: CellScene
+        var worldspace: String?
         if let interior = placedRecords.interiorCell(holding: destinationID) {
             scene = try buildInteriorScene(cellFormID: interior, state: state)
         } else {
+            let world = worldspaceName(holding: destinationID, in: index)
+                ?? worldspaceEditorID
             let grid = CellGridManager.cellCoordinate(for: destination.placement.position)
             scene = try buildScene(
-                worldspaceEditorID: worldspaceEditorID,
+                worldspaceEditorID: world,
                 gridX: grid.x,
                 gridY: grid.y,
                 state: state
             )
+            worldspace = world
         }
         return DoorTransition(
             sourceDoor: sourceDoor,
             destinationDoor: destinationID,
             destinationPlacement: teleport.placement,
-            scene: scene
+            scene: scene,
+            worldspaceEditorID: worldspace
         )
+    }
+
+    /// The editor ID of the WRLD whose world children hold `formID`.
+    nonisolated func worldspaceName(
+        holding formID: FormID,
+        in index: LoadOrderRecordIndex
+    ) -> String? {
+        index.worldFormID(containing: formID)
+            .flatMap { worldspaceIndexBuildingIfNeeded()[$0.rawValue]?.editorID }
     }
 }
 

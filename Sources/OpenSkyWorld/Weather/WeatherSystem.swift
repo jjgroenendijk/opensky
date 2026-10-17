@@ -20,7 +20,7 @@ nonisolated public final class WeatherSystem {
     }
 
     public let store: WeatherStore
-    public let worldspaceFormID: UInt32?
+    public private(set) var worldspaceFormID: UInt32?
 
     // MARK: Tuning constants (documented in docs/engine/weather.md)
 
@@ -137,6 +137,18 @@ nonisolated public final class WeatherSystem {
         currentRegions = regions
         guard forced == nil else { return }
         reroll(startTransition: true)
+    }
+
+    /// A new worldspace brings its own climate, so the weather snaps to a new pick
+    /// unless one is forced.
+    public func setWorldspace(editorID: String) {
+        let formID = store.worldspaceByEditorID[editorID]
+        guard formID != worldspaceFormID else { return }
+        worldspaceFormID = formID
+        currentRegions = []
+        guard forced == nil, let weather = pickAutomatic() else { return }
+        gameHoursSinceRoll = 0
+        beginTransition(to: weather, transition: .instant)
     }
 
     /// Adopts new global values and, unless a weather is forced, rerolls so the

@@ -54,8 +54,6 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
         case exterior
     }
 
-    /// Only Tamriel streams exterior cells; another worldspace has no cell streamer yet.
-    public static let streamedWorldspaces = ["Tamriel"]
     /// A grid bound wide enough for Tamriel, with room to spare.
     public static let gridRange: ClosedRange<Int32> = -64 ... 64
 
@@ -101,13 +99,13 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
             return .success(.cell(name))
         case .exterior:
             let name = worldspace.trimmingCharacters(in: .whitespaces)
-            guard
-                let streamed = Self.streamedWorldspaces
-                    .first(where: { $0.caseInsensitiveCompare(name) == .orderedSame })
-            else { return .failure(.worldspaceNotStreamed(name)) }
+            guard !name.isEmpty else { return .failure(.emptyWorldspace) }
+            guard name.unicodeScalars.allSatisfy(Self.isEditorIDScalar) else {
+                return .failure(.badWorldspaceName)
+            }
             guard let gridX = coordinate(x) else { return .failure(.badCoordinate("X")) }
             guard let gridY = coordinate(y) else { return .failure(.badCoordinate("Y")) }
-            return .success(.exterior(worldspace: streamed, x: gridX, y: gridY))
+            return .success(.exterior(worldspace: name, x: gridX, y: gridY))
         }
     }
 
@@ -126,7 +124,8 @@ nonisolated public struct LaunchStartForm: Equatable, Sendable {
 nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
     case emptyCell
     case badCellName
-    case worldspaceNotStreamed(String)
+    case emptyWorldspace
+    case badWorldspaceName
     case badCoordinate(String)
 
     public var reason: String {
@@ -135,8 +134,10 @@ nonisolated public enum LaunchStartProblem: Error, Equatable, Sendable {
             "Enter the editor ID of a cell, such as WhiterunBanneredMare"
         case .badCellName:
             "A cell editor ID has only letters, digits, and underscores"
-        case let .worldspaceNotStreamed(name):
-            "\(name.isEmpty ? "No worldspace" : name) cannot be a start: only Tamriel streams today"
+        case .emptyWorldspace:
+            "Enter the editor ID of a worldspace, such as DLC2SolstheimWorld"
+        case .badWorldspaceName:
+            "A worldspace editor ID has only letters, digits, and underscores"
         case let .badCoordinate(axis):
             "\(axis) must be a whole number from \(LaunchStartForm.gridRange.lowerBound) "
                 + "to \(LaunchStartForm.gridRange.upperBound)"

@@ -6,8 +6,8 @@ import Foundation
 import OpenSkyFormatsCore
 
 nonisolated public struct Cell: Sendable {
-    /// XCLW override. Missing field means use WRLD DNAM; three known bit
-    /// patterns mean explicitly no water and must not fall back to WRLD.
+    /// XCLW override. A missing field or FLT_MAX means use WRLD DNAM; three known
+    /// bit patterns mean explicitly no water and must not fall back to WRLD.
     public enum WaterHeight: Equatable, Sendable {
         case height(Float)
         case noWater
@@ -44,7 +44,7 @@ nonisolated public struct Cell: Sendable {
     public let flags: Flags
     /// Present on exterior cells, nil on interiors.
     public let grid: Grid?
-    /// XCLW. nil = inherit WRLD DNAM default water height.
+    /// XCLW. nil = inherit WRLD DNAM default water height, also for FLT_MAX.
     public let waterHeight: WaterHeight?
     /// XCWT per-cell WATR override. nil = use WRLD NAM2.
     public let waterType: FormID?
@@ -231,11 +231,11 @@ nonisolated public struct Cell: Sendable {
         guard data.count >= 4 else { return nil }
         var reader = BinaryReader(data)
         let bits = try reader.readUInt32()
-        // UESP CELL + xEdit wbDefinitionsTES5.pas. 0x7F7FFFFF is
-        // the documented default/no-water sentinel; the other two
-        // are known CK-bug encodings with the same meaning.
+        // xEdit writes FLT_MAX as "Default": the worldspace height applies. The
+        // rest are CK-bug encodings far outside the world (docs/formats/water.md).
         return switch bits {
-        case 0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000: .noWater
+        case 0x7F7F_FFFF: nil
+        case 0x4F7F_FFC9, 0xCF00_0000, 0xFF7F_FFFF: .noWater
         default: .height(Float(bitPattern: bits))
         }
     }

@@ -38,11 +38,12 @@ Exactly 8 bytes: float64 `totalGameSeconds`, game seconds since the calendar sta
 
 The cell, then float32 feet x, y, and z, and the float32 yaw in radians. The feet are the
 bottom of the player's capsule; in fly mode they are the camera position. Interior feet are
-local to their cell. A missing cell, or a value that is not finite, is `invalidValue`. A load
-enters the cell and stands the player there again, behind the loading screen and in walk
-mode. An exterior cell names no worldspace, so the place is read
-in the worldspace loaded at the time. Without `PLOC`, a load leaves the player where they
-stand.
+local to their cell. An exterior place then has a string: the worldspace editor ID, such as
+`DLC2SolstheimWorld`. A chunk that ends after the yaw has no worldspace, and the load keeps
+the worldspace loaded at the time. A missing cell, or a value that is not finite, is
+`invalidValue`. A load enters the worldspace and the cell, and stands the player there again,
+behind the loading screen and in walk mode. Without `PLOC`, a load leaves the player where
+they stand.
 
 ## PSCR: script instances
 

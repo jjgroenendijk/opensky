@@ -52,7 +52,6 @@ nonisolated public struct MenuMapSettings: Equatable, Sendable {
 
 nonisolated public struct MenuRecordData: Sendable {
     public static let playerBase = FormID(0x7)
-    public static let tamrielEditorID = "Tamriel"
     /// The menus read every setting that has this prefix, so `openskycli gaps` counts
     /// them as read.
     public static let statsPrefix = "fStats"
@@ -67,9 +66,10 @@ nonisolated public struct MenuRecordData: Sendable {
     /// RACE records with the playable flag, sorted by editor ID.
     public let playableRaces: [Race]
     public let markers: MapMarkerIndex
-    public let tamriel: Worldspace?
-    /// Editor IDs of the master's WRLD records, for the marker inspector.
-    public let worldspaceEditorIDs: [UInt32: String]
+    /// Every WRLD record by editor ID.
+    public let worldspaces: [String: Worldspace]
+    /// Each WRLD's plugin-relative identity, the key map markers are grouped by.
+    public let worldspaceIDs: [String: ResolvedFormID]
     public let mapSettings: MenuMapSettings
     /// String GMSTs the menus show, such as `sNoFastTravelCombat` and `sRSMBody`, by editor ID.
     public let menuTexts: [String: LString]
@@ -91,14 +91,18 @@ nonisolated public struct MenuRecordData: Sendable {
         let worldspaces = loadOrder.decodeRecords(of: "WRLD", skipped: &skipped) {
             try Worldspace(record: $0, localized: $1)
         }
-        let tamriel = worldspaces.first { $0.editorID == Self.tamrielEditorID }
-        worldspaceEditorIDs = worldspaces.reduce(into: [:]) { names, space in
-            names[space.formID.rawValue] = space.editorID
+        var byName: [String: Worldspace] = [:]
+        var ids: [String: ResolvedFormID] = [:]
+        for world in worldspaces {
+            guard let name = world.editorID else { continue }
+            byName[name] = world
+            ids[name] = loadOrder.space.resolve(world.formID)
         }
+        self.worldspaces = byName
+        worldspaceIDs = ids
         chargen = ChargenRecords(loadOrder: loadOrder, skipped: &skipped)
         self.player = player
         playableRaces = races.sorted { ($0.editorID ?? "") < ($1.editorID ?? "") }
-        self.tamriel = tamriel
         markers = MapMarkerIndex(plugins: loadOrder.files)
         mapSettings = MenuMapSettings(store: settings)
         menuTexts = settings.values.values.reduce(into: [:]) { texts, resolved in
@@ -116,5 +120,15 @@ nonisolated public struct MenuRecordData: Sendable {
             else { return }
             values[resolved.setting.editorID] = value
         }
+    }
+}
+
+nonisolated extension MenuRecordData {
+    /// The worldspace whose map a player in `editorID` sees. WhiterunWorld sets the
+    /// `PNAM` map flag, so it shows Tamriel's map.
+    public func mapWorldspace(of editorID: String) -> Worldspace? {
+        guard let world = worldspaces[editorID] else { return nil }
+        let byID = Dictionary(worldspaces.values.map { ($0.formID.rawValue, $0) }) { _, new in new }
+        return world.source(of: .useMapData, in: byID)
     }
 }

@@ -4,6 +4,7 @@
 
 import Foundation
 import OpenSkyCLIArguments
+import OpenSkyFormatsESM
 import OpenSkyFormatsSWF
 import OpenSkyGameData
 import OpenSkyInventory
@@ -93,8 +94,8 @@ enum SWFContainerMenuCommand {
         context: CLIContext,
         mode: ContainerMenuModel.Mode
     ) throws -> ProbeWorld {
-        let file = try context.loadSkyrimESM()
-        let baselines = InventoryBaselineResolver.build(from: file)
+        let loadOrder = try context.loadOrder()
+        let baselines = InventoryBaselineResolver.build(from: loadOrder.plugins)
         let inventory = InventoryRuntime(store: WorldStateStore(), baselines: baselines)
         let items = WorldItemRuntime(inventory: inventory)
         // `.generated` rather than `.container(base:)`: the probe's merchant is
@@ -107,7 +108,7 @@ enum SWFContainerMenuCommand {
         )
         try seed(inventory: inventory, baselines: baselines, container: container)
         let pricing = BarterPricing.resolve(
-            store: GameSettingLoader.load(root: context.root, baseFile: file)
+            store: GameSettingStore(plugins: loadOrder.files)
         )
         print("[INFO] swf container-menu pricing: \(describe(pricing))")
         return ProbeWorld(

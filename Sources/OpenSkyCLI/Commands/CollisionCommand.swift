@@ -6,7 +6,9 @@ import Foundation
 import Metal
 import OpenSkyCLIArguments
 import OpenSkyFormatsCore
+import OpenSkyFormatsESM
 import OpenSkyFormatsMesh
+import OpenSkyGameData
 import OpenSkyPhysics
 import OpenSkyWorld
 
@@ -18,10 +20,10 @@ enum CollisionCommand {
         let gridY = try int32(arguments.grid.y, name: "--y") ?? FirstRenderCell.gridY
         let radius = try gridRadius(arguments.radius)
 
-        let esm = try context.loadSkyrimESM()
-        let materials = MaterialTypeIndex(file: esm)
+        let loadOrder = try context.loadOrder().plugins
+        let materials = MaterialTypeIndex(loadOrder: loadOrder)
         let result = try NIFCollisionSweep.run(
-            file: esm,
+            loadOrder: loadOrder,
             fileSystem: context.makeFileSystem(),
             worldspaceEditorID: worldspace,
             gridX: gridX,

@@ -33,8 +33,7 @@ enum GMSTCommand {
     /// The settings `DetectionSettings` resolves, with the plugin or the
     /// documented fallback each came from.
     private static func runDetection(context: CLIContext) throws {
-        let file = try context.loadSkyrimESM()
-        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let store = try GameSettingStore(plugins: context.loadOrder().files)
         for row in DetectionSettings.resolve(store: store).report {
             print(Self.line(name: row.editorID, setting: row.setting, units: ""))
         }
@@ -46,8 +45,7 @@ enum GMSTCommand {
     /// number the shipped game actually carries, rather than against a wiki's
     /// transcription of it.
     private static func runList(context: CLIContext, prefix: String) throws {
-        let file = try context.loadSkyrimESM()
-        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let store = try GameSettingStore(plugins: context.loadOrder().files)
         let needle = prefix.lowercased()
         let matches = store.values
             .filter { needle.isEmpty || $0.key.hasPrefix(needle) }
@@ -71,8 +69,7 @@ enum GMSTCommand {
     /// The eight settings `CombatSettings` resolves, with the plugin or the
     /// documented fallback each came from.
     private static func runCombat(context: CLIContext) throws {
-        let file = try context.loadSkyrimESM()
-        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let store = try GameSettingStore(plugins: context.loadOrder().files)
         for row in CombatSettings.resolve(store: store).report {
             print(Self.line(name: row.editorID, setting: row.setting, units: ""))
         }
@@ -81,19 +78,17 @@ enum GMSTCommand {
     /// The three settings `ArcherySettings` resolves, with the plugin or the
     /// UESP-documented fallback each came from.
     private static func runArchery(context: CLIContext) throws {
-        let file = try context.loadSkyrimESM()
-        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let store = try GameSettingStore(plugins: context.loadOrder().files)
         for row in ArcherySettings.resolve(store: store).report {
             print(Self.line(name: row.editorID, setting: row.setting, units: ""))
         }
     }
 
     private static func runMovement(context: CLIContext) throws {
-        let file = try context.loadSkyrimESM()
-        let store = GameSettingLoader.load(root: context.root, baseFile: file)
+        let loadOrder = try context.loadOrder()
         let configuration = PlayerMovementConfiguration.resolve(
-            store: store,
-            movementTypes: MovementTypeLoader.load(root: context.root, baseFile: file)
+            store: GameSettingStore(plugins: loadOrder.files),
+            movementTypes: MovementTypeStore(plugins: loadOrder.files)
         )
         for row in [
             (name: "fMoveCharWalkBase", setting: configuration.walkSpeed, units: "units/s"),

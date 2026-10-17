@@ -1,7 +1,9 @@
 // A console-style teleport finds an interior by editor ID and enters through a
-// door that leads in, even when a later plugin overrides the cell.
+// door that leads in, even when a later plugin overrides the cell. An exterior
+// cell or reference names the worldspace that holds it.
 
 import Foundation
+@testable import OpenSkyFormatsCore
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyFormatsTesting
 @testable import OpenSkyWorld
@@ -46,5 +48,25 @@ struct CellDirectoryTests {
         let loadOrder = LoadOrderPlugins([("Skyrim.esm", base)])
         #expect(CellDirectory.find(editorID: "TestInterior", in: loadOrder)
             == .interior(cell: FormID(Self.cell), entryDoor: nil))
+    }
+
+    @Test
+    func anExteriorCellNamesItsWorldspace() throws {
+        let data = fixtures.plugin(worldspaceEditorID: "DLC2SolstheimWorld", grid: (7, 8))
+        let loadOrder = try LoadOrderPlugins([("Skyrim.esm", ESMFile(data: data))])
+        #expect(CellDirectory.find(editorID: "TestCell06", in: loadOrder) == .exterior(
+            cell: FormID(0x2B), worldspace: "DLC2SolstheimWorld", grid: CellCoordinate(x: 7, y: 8)
+        ))
+    }
+
+    @Test
+    func anExteriorReferenceNamesItsWorldspace() throws {
+        let data = fixtures.plugin(
+            worldspaceEditorID: "DLC2SolstheimWorld",
+            temporaryRefs: fixtures.refrRecord(formID: 0x300, base: 0x100)
+        )
+        let loadOrder = try LoadOrderPlugins([("Skyrim.esm", ESMFile(data: data))])
+        let found = CellDirectory.exteriorPlacement(of: FormID(0x300), in: loadOrder)
+        #expect(found?.worldspace == "DLC2SolstheimWorld")
     }
 }

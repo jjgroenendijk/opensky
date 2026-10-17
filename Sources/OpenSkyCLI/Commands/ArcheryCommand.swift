@@ -19,12 +19,9 @@ enum ArcheryCommand {
     static func run(context: CLIContext, arguments: ArcheryArguments) throws {
         let census = arguments.census
         let filter = arguments.ammo
-        let file = try context.loadSkyrimESM()
-        let localized = file.isLocalized
-        let projectiles = Self.projectiles(in: file)
-        let settings = ArcherySettings.resolve(
-            store: GameSettingLoader.load(root: context.root, baseFile: file)
-        )
+        let loadOrder = try context.loadOrder()
+        let projectiles = Self.projectiles(in: loadOrder.plugins)
+        let settings = ArcherySettings.resolve(store: GameSettingStore(plugins: loadOrder.files))
         for row in settings.report {
             print(String(
                 format: "%@ = %.3f [%@]",
@@ -37,13 +34,13 @@ enum ArcheryCommand {
         if census {
             printCensus(projectiles)
         }
-        printAmmunition(in: file, localized: localized, projectiles: projectiles, filter: filter)
+        printAmmunition(in: loadOrder.plugins, projectiles: projectiles, filter: filter)
     }
 
-    /// Every PROJ in the base plugin, keyed by raw FormID.
-    private static func projectiles(in file: ESMFile) -> [UInt32: Projectile] {
+    /// Every PROJ in the load order, keyed by load-order FormID.
+    private static func projectiles(in loadOrder: LoadOrderPlugins) -> [UInt32: Projectile] {
         var skipped = SkippedRecords()
-        let decoded = file.indexRecords(of: "PROJ", skipped: &skipped) {
+        let decoded = loadOrder.indexRecords(of: "PROJ", skipped: &skipped) {
             try Projectile(record: $0)
         }
         skipped.printWarnings()
@@ -84,14 +81,13 @@ enum ArcheryCommand {
     /// One row per AMMO that names a PROJ: the arrow's own damage, the flight
     /// numbers it inherits, and the drop each reading of `gravity` predicts.
     private static func printAmmunition(
-        in file: ESMFile,
-        localized: Bool,
+        in loadOrder: LoadOrderPlugins,
         projectiles: [UInt32: Projectile],
         filter: String?
     ) {
         var skipped = SkippedRecords()
-        let ammunition = file.decodeRecords(of: "AMMO", skipped: &skipped) {
-            try Ammunition(record: $0, localized: localized)
+        let ammunition = loadOrder.decodeRecords(of: "AMMO", skipped: &skipped) {
+            try Ammunition(record: $0, localized: $1)
         }
         skipped.printWarnings()
         for ammo in ammunition {

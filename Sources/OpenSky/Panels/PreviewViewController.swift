@@ -296,9 +296,11 @@ extension PreviewViewController {
         root: GameDataRoot,
         fileSystem: VirtualFileSystem
     ) async -> LoadedCatalog {
-        let esmURL = root.dataURL.appending(path: "Skyrim.esm")
-        let loaded = PreviewCatalog.load(fileSystem: fileSystem, esmURL: esmURL)
-        let plugins = ActivePluginFiles.load(root: root)
+        let loadOrder = Result { try ActiveLoadOrder.open(root: root) }
+        let catalog = PreviewCatalog.load(
+            fileSystem: fileSystem, loadOrder: loadOrder.map(\.plugins)
+        )
+        let plugins = (try? loadOrder.get())?.files ?? []
         let index = RecordIndex(
             plugins: plugins,
             recordTypes: RecordIndex.referenceRecordTypes
@@ -306,7 +308,7 @@ extension PreviewViewController {
                 .union(ReferenceRecordCatalog.browsedTypes)
         )
         return LoadedCatalog(
-            catalog: loaded.catalog,
+            catalog: catalog,
             references: ReferenceRecordCatalog(index: index, pluginNames: plugins.map(\.name)),
             inspector: ReferenceRecordInspector(index: index)
         )

@@ -64,6 +64,7 @@ struct SkyrimSavesPanelTests {
             space: space, isInterior: false, spaceEditorID: "Tamriel",
             position: SIMD3(1, 2, 3), heading: nil, cell: nil
         )
-        #expect(SkyrimSaveImportAdapter.teleportTarget(exterior) == .position(SIMD3(1, 2, 3)))
+        #expect(SkyrimSaveImportAdapter.teleportTarget(exterior)
+            == .position(SIMD3(1, 2, 3), worldspace: "Tamriel"))
     }
 }

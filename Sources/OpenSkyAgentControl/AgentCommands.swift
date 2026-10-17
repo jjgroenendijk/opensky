@@ -59,12 +59,12 @@ nonisolated public enum AgentStateQuery: Equatable, Sendable {
 nonisolated public enum AgentTeleportTarget: Equatable, Sendable {
     /// A cell by editor ID, like the console's `coc`.
     case cell(String)
-    /// An exterior cell by grid coordinates.
-    case grid(x: Int32, y: Int32)
+    /// An exterior cell by grid coordinates; a nil worldspace keeps the current one.
+    case grid(x: Int32, y: Int32, worldspace: String? = nil)
     /// Next to a placed reference.
     case reference(String)
-    /// A world position in game units, in the current worldspace.
-    case position(SIMD3<Float>)
+    /// A world position in game units; a nil worldspace keeps the current one.
+    case position(SIMD3<Float>, worldspace: String? = nil)
 }
 
 /// A debug change. Each follows the vanilla console command of the same
@@ -108,8 +108,9 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
         if args.has("ref") {
             return try .reference(args.string("ref"))
         }
+        let worldspace = try args.optionalString("worldspace")
         if args.has("pos") {
-            return try .position(args.vector("pos"))
+            return try .position(args.vector("pos"), worldspace: worldspace)
         }
         if args.has("x") || args.has("y") {
             let x = try args.int("x")
@@ -117,7 +118,7 @@ nonisolated public enum AgentDebugCommand: Equatable, Sendable {
             guard let gridX = Int32(exactly: x), let gridY = Int32(exactly: y) else {
                 throw args.invalid("x", "a cell grid number")
             }
-            return .grid(x: gridX, y: gridY)
+            return .grid(x: gridX, y: gridY, worldspace: worldspace)
         }
         throw AgentFailure(.invalidArgument, "debug.teleport: give cell, ref, pos, or x and y")
     }

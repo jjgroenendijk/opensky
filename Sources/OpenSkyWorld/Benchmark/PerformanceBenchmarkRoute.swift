@@ -44,9 +44,17 @@ nonisolated final class CellLoadLog: Sendable {
 
 /// Times each build of the wrapped provider.
 nonisolated struct TimedCellSceneProvider: CellSceneProvider {
-    let base: any CellSceneProvider
+    var base: any CellSceneProvider
     let worldspace: String
     let log: CellLoadLog
+
+    var worldspaceEditorID: String? {
+        base.worldspaceEditorID
+    }
+
+    mutating func setWorldspace(_ editorID: String) {
+        base.setWorldspace(editorID)
+    }
 
     func buildCell(at coordinate: CellCoordinate, state: WorldStateSnapshot) throws -> CellScene {
         try log.time(
@@ -77,11 +85,13 @@ nonisolated struct TimedCellSceneProvider: CellSceneProvider {
         }
     }
 
-    func buildDoorTransition(
+    mutating func buildDoorTransition(
         from sourceDoor: FormID,
         state: WorldStateSnapshot
     ) throws -> DoorTransition {
-        try log.time("door \(sourceDoor)") {
+        var base = base
+        defer { self.base = base }
+        return try log.time("door \(sourceDoor)") {
             try base.buildDoorTransition(from: sourceDoor, state: state)
         }
     }

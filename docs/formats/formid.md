@@ -68,6 +68,14 @@ its plugin. So each field of each record type is translated, such as a reference
 linked references, and its script properties, and no decoder needs its own renumbering.
 Outside a scope, a FormID stays as written.
 
+Every engine and CLI path reads plugins as one load order, as the game does. The one entry
+point is `ActiveLoadOrder.open(root:)`: it reads `plugins.txt` (or the vanilla fallback), opens
+each active plugin, and builds the FormID space. A tool that opened `Skyrim.esm` alone would
+miss every DLC and mod override, such as the Hearthfire edits to Whiterun's cells.
+`make load-order-only` fails on a single-file `ESMFile(url:)` outside the format modules.
+Assets follow the same rule through the virtual file system, where loose files win over
+archives.
+
 A plugin that lists its masters in load order and loads right after them keeps every FormID
 unchanged, so no renumbering is needed. Every official plugin does: `Update.esm` lists
 `Skyrim.esm`, the DLCs list both, and the Creation Club plugins checked

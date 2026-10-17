@@ -58,7 +58,7 @@ extension LaunchPageViewController: NSTextFieldDelegate {
             field.delegate = self
         }
         startCellField.toolTip = "The editor ID of a cell, as the console's coc takes it"
-        startWorldspaceField.toolTip = "Only Tamriel streams exterior cells today"
+        startWorldspaceField.toolTip = "The editor ID of the worldspace, such as DLC2SolstheimWorld"
         startXField.toolTip = "The grid X of the exterior cell"
         startYField.toolTip = "The grid Y of the exterior cell"
         startReasonLabel.textColor = LauncherStyle.warning

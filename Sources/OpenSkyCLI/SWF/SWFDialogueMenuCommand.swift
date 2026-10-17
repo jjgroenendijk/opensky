@@ -102,8 +102,7 @@ extension SWFDialogueMenuCommand {
         let model: DialogueMenuModel
 
         init(context: CLIContext, rowCount: Int) throws {
-            let file = try context.loadSkyrimESM()
-            let store = DialogueStore(file: file, pluginName: "Skyrim.esm")
+            let store = try DialogueStore(plugins: context.loadOrder().files)
             self.store = store
             strings = LocalizedStrings(
                 vfs: context.makeFileSystem(), pluginName: "Skyrim.esm"

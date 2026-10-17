@@ -21,6 +21,7 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
     public private(set) var enqueuedDoorTransitionStates: [WorldStateSnapshot] = []
     /// Distant-LOD centers the streamer asked for, in request order.
     public private(set) var enqueuedLODCenters: [CellCoordinate] = []
+    public private(set) var enqueuedWorldspaces: [String] = []
     private var ready: [CellBuildResult] = []
     private var readyDoorTransitions: [DoorTransitionBuildResult] = []
     private var readyLOD: [DistantLODBuildResult] = []
@@ -34,6 +35,21 @@ nonisolated public final class ManualCellBuildRunner: CellBuildRunning {
 
     public func complete(_ coordinate: CellCoordinate, with result: Result<CellScene, any Error>) {
         ready.append(CellBuildResult(coordinate: coordinate, result: result))
+    }
+
+    /// A result tagged with the worldspace the build half read.
+    public func complete(
+        _ coordinate: CellCoordinate,
+        worldspace: String,
+        with result: Result<CellScene, any Error>
+    ) {
+        ready.append(CellBuildResult(
+            coordinate: coordinate, result: result, worldspaceEditorID: worldspace
+        ))
+    }
+
+    public func enqueueWorldspaceChange(_ editorID: String) {
+        enqueuedWorldspaces.append(editorID)
     }
 
     public func drainCompleted() -> [CellBuildResult] {
