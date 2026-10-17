@@ -252,6 +252,22 @@ the struct in the class. The app read the new field past the old layout and cras
 `EXC_BAD_ACCESS` at a small address. Touch the files that store a struct whose stored properties
 changed before a local build.
 
+## A failed compile skips the files that depend on it
+
+Observed 2026-10-17 on Xcode 27.1 (27A9275), Swift 6.4. A build moved stored properties of
+`PapyrusWorldStateBridge` into nested structs and failed in another file of the same module.
+The driver compiled the changed files, logged `not scheduling dependents of
+PapyrusWorldStateBridge.swift; unknown changes`, and stopped. The next build, with the error
+fixed, compiled only the fixed file. The bridge's extension files kept their old field
+offsets, and the hosted tests crashed with `EXC_BAD_ACCESS`. A layout change in a build
+that does not fail recompiled every dependent file, in its own module and in the modules above.
+Reproduced by adding a stored property and a type error in one build, then removing the
+error. `tools/failed-build-records.sh` works around it
+([build system](/tools/build-system.md#driver-records-after-a-failed-build)).
+
+Retires when the driver keeps the skipped dependents in its record after a failed job: then the
+reproduction passes with the script's call removed from `tools/xcodebuild-run.sh`.
+
 ## A stopped signing step leaves a `.cstemp` file
 
 Observed 2026-10-04. When a build stops while `codesign` runs, it can leave a `<binary>.cstemp`

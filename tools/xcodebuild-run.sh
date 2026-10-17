@@ -10,7 +10,9 @@
 #
 # A build takes a build slot and its tree's lock first (tools/xcodebuild-lib.sh),
 # then removes stale module copies (tools/stale-modules.sh) and test bundles a
-# stopped build left unsigned (tools/unsigned-plugins.sh). When a failed build
+# stopped build left unsigned (tools/unsigned-plugins.sh). A failed build drops
+# the driver records of the targets that failed (tools/failed-build-records.sh),
+# so the next build compiles them whole. When a failed build
 # leaves new stale copies, it removes them and builds once more; the stale check
 # also removes the copies of the modules above, so one pass is enough.
 #
@@ -77,6 +79,9 @@ run_once() {
     fi
     mark end
     status="$(cat "$status_file")"
+    if [ "$status" -ne 0 ] && [ -n "$compiles" ]; then
+        opensky_drop_failed_records "$root" "$log" "${derived_data:-$OPENSKY_DERIVED_DATA}/Build"
+    fi
     printf '[INFO] phases: %s\n' "$(xcodebuild_phases "$phases")"
 }
 

@@ -287,6 +287,23 @@ the failed pass wrote, because xcodebuild refuses a path that exists. A test run
 skips all of this. A `removed stale module copies` line in a build's output is worth a `bug`
 issue with the transcript: it means a case the flag does not cover.
 
+### Driver records after a failed build
+
+The Swift driver compiles a target in waves. The first wave holds the changed files. When a
+file's declarations change, a second wave compiles the files that use them. After a failed
+compile job the driver starts no second wave, but it still saves the new dependency graph in
+`<Target>-primary.priors`. The next build then thinks those files are current and links their
+old objects. In a final class or a struct, every file reads a stored property at a fixed
+offset. So an old object reads the wrong field and crashes with `EXC_BAD_ACCESS`
+([environment](/tools/environment.md#a-failed-compile-skips-the-files-that-depend-on-it)).
+
+So after every failed build, `tools/failed-build-records.sh` reads the transcript and deletes
+the record of each target with a failed compile. The target is the folder of the failed file
+below `Sources/` or `Tests/`. A target without its record is compiled whole in the next
+build. `tools/xcodebuild-run.sh` does this for xcodebuild, in `$(DERIVED_DATA)/Build`.
+`make compile` and `make test-package` do it for `swift build`, in `.build/out`. The cost
+is one full compile of each failed target, and only after a failure.
+
 A build that stops before a test bundle is linked leaves that bundle unsigned inside
 `OpenSky.app/Contents/PlugIns/`. A later plan that does not build the bundle then fails the app's
 own `CodeSign` step with "code object is not signed at all". So `tools/xcodebuild-run.sh` also runs
