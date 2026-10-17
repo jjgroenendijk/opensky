@@ -18,15 +18,19 @@ struct PreviewCatalogTests {
         ]
     }
 
-    private func makeRecords() throws -> [ESMRecord] {
-        var plugin = ESMFixture.tes4()
+    private func makePlugin(masters: [String] = []) throws -> ESMFile {
         let stat = ESMFixture.record(
             "STAT",
             formID: 0x0000_ABCD,
             data: ESMFixture.field("EDID", ESMFixture.zstring("TestStatic"))
         )
-        plugin += ESMFixture.topGroup("STAT", contents: stat)
-        let file = try ESMFile(data: plugin)
+        return try ESMFile(
+            data: ESMFixture.tes4(masters: masters) + ESMFixture.topGroup("STAT", contents: stat)
+        )
+    }
+
+    private func makeRecords() throws -> [ESMRecord] {
+        let file = try makePlugin()
         var records: [ESMRecord] = []
         ESMWalk.forEachRecord(in: file) { record in
             records.append(record)
@@ -49,6 +53,18 @@ struct PreviewCatalogTests {
         let catalog = try PreviewCatalog(files: [], records: makeRecords())
         #expect(catalog.recordCount == 1)
         #expect(catalog.items(for: .records).map(\.display) == ["STAT 0000ABCD"])
+    }
+
+    @Test func loadOrderRowsNameThePluginBesideTheMaster() throws {
+        let loadOrder = try LoadOrderPlugins([
+            ("Skyrim.esm", makePlugin()),
+            ("Mod.esp", makePlugin(masters: ["Skyrim.esm"]))
+        ])
+        let catalog = PreviewCatalog(files: [], loadOrder: loadOrder)
+        #expect(catalog.items(for: .records).map(\.display) == [
+            "STAT 0000ABCD Skyrim.esm",
+            "STAT 0000ABCD Mod.esp"
+        ])
     }
 
     @Test func filterIsCaseInsensitiveSubstring() {
