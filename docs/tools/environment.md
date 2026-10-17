@@ -164,17 +164,18 @@ transcript.
 Observed 2026-10-13 on macOS 27.0.1. `ANECompilerService`, the system service that compiles
 models for the Neural Engine, ran at 99% CPU and answered nothing for at least two hours: runs
 at 10:46 and 12:32 UTC both hung on it. It recovered on its own by 12:45, with no restart.
-MetalFX builds its temporal scaler through it, and the renderer builds the scaler on the main
+MetalFX builds its temporal scaler through it, and the renderer then built the scaler on the main
 actor. So `RendererUpscaleTests` blocked the main actor, and every other main-actor test of the
 run waited behind it until one of them hit its 2-minute allowance. The spindump that
 `xcodebuild` attaches to that failure in the result bundle shows the stack:
 `newTemporalScalerWithDevice` waits on `aned`.
 
-`MetalFXCompilerProbe` asks the service off the main actor first, so only the MetalFX tests fail
-when it does not answer.
+The renderer now builds the scalers off the main actor and draws at full size until they arrive
+([upscaling](/rendering/upscaling.md#building-the-scaler)), so a stuck service no longer
+freezes the game. `MetalFXCompilerProbe` asks the service before the MetalFX tests run, so they
+fail with a clear message instead of waiting out their allowance.
 
-Retires when MetalFX builds its scalers without the Neural Engine, or the renderer stops
-building them on the main actor.
+Retires when MetalFX builds its scalers without the Neural Engine.
 
 ## Package framework variants warn about declared dependencies
 

@@ -73,6 +73,27 @@ in `RendererUpscaleTests`. The other choices lost 2 to 8 dB of peak signal-to-no
 | Motion scale | The input size, so MetalFX reads the motion in pixels |
 | Depth | Not reversed: near is 0, far is 1 |
 
+## Building the scaler
+
+MetalFX builds the temporal scaler and the frame interpolator through the Neural Engine
+compiler, a system service. The first build of a size takes seconds, and the service can stop
+answering for hours ([environment](/tools/environment.md)). So the renderer never builds a
+scaler inside a frame:
+
+1. A frame that needs a scaler it does not have starts a `@concurrent` build task and draws the
+   scene at full size.
+2. Later frames keep drawing at full size. The Upscaling readout says the scaler is still being
+   built, and frame interpolation reports that it waits for it.
+3. The task stores the scaler when MetalFX returns. The next frame takes it, makes the input
+   and output textures, and starts upscaling with a fresh history.
+
+A change of render scale, scaler, frame interpolation, or window size starts a new build, and
+the frame draws at full size until it lands. A stuck service leaves the game at full size.
+
+The benchmark and other offscreen loops render many frames without giving the main actor a
+turn, so the background task could not finish there. They call `buildUpscalerNow`, which builds
+on the calling thread before the loop starts.
+
 ## History resets
 
 The scaler forgets its history when the scene swaps, the output size changes, the render
@@ -94,6 +115,6 @@ of the old view.
 
 `Developer > Rendering Performance > Upscaling` has the render scale (`RenderScaleControl`)
 and the scaler (`UpscalerControl`), and a readout (`UpscalingStatsLabel`): the input and
-output sizes and the history resets. `make benchmark ARGS='--render-scale 67'` measures the
-GPU time against a native run, and `--upscaler spatial` picks the other scaler
-([benchmark](/tools/benchmark.md)).
+output sizes, the history resets, and whether the scaler is still being built.
+`make benchmark ARGS='--render-scale 67'` measures the GPU time against a native run, and
+`--upscaler spatial` picks the other scaler ([benchmark](/tools/benchmark.md)).

@@ -38,6 +38,9 @@ extension Renderer {
         guard upscale.renderScale.isOn, upscale.upscaler == .temporal else {
             return "Needs the temporal upscaler: pick a render scale"
         }
+        if upscale.isBuildingScaler {
+            return "Waiting for MetalFX to build the scaler"
+        }
         return upscale.unavailableReason
     }
 

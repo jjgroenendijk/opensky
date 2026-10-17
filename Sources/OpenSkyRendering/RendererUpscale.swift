@@ -15,6 +15,8 @@ public struct UpscaleState {
     /// Set when MetalFX refused the last scaler request; cleared by a new choice.
     var creationFailure: String?
     var targets: UpscaleTargets?
+    /// The scaler build for the latest request no targets matched.
+    var scalerBuild: UpscaleScalerBuild?
     var frame = 0
     var resetPending = true
     /// History resets since launch: scene swaps, camera cuts, and size changes.
@@ -48,10 +50,16 @@ public struct UpscaleState {
         targets.map { ($0.inputSize, $0.outputSize) }
     }
 
+    /// True while MetalFX builds the scaler the current settings ask for.
+    public var isBuildingScaler: Bool {
+        renderScale.isOn && scalerBuild.map { $0.scalers == nil } ?? false
+    }
+
     public var status: UpscaleStatus {
         UpscaleStatus(
             inputSize: targets?.inputSize, outputSize: targets?.outputSize,
-            upscaler: upscaler, historyResets: historyResets, unavailableReason: unavailableReason
+            upscaler: upscaler, historyResets: historyResets, unavailableReason: unavailableReason,
+            buildingScaler: isBuildingScaler
         )
     }
 }
@@ -285,30 +293,24 @@ extension Renderer {
     }
 
     private func upscaleTargets(output: SIMD2<Int>, color: MTLTexture) -> UpscaleTargets? {
-        let input = upscale.renderScale.inputSize(width: output.x, height: output.y)
-        if
-            let targets = upscale.targets, targets.inputSize == input,
-            targets.outputSize == output, targets.color.pixelFormat == color.pixelFormat,
-            targets.kind == upscale.upscaler,
-            (targets.interpolation != nil) == wantsFrameInterpolation
-        {
+        let request = upscaleScalerRequest(output: output, colorFormat: color.pixelFormat)
+        if let targets = upscale.targets, targets.request == request {
             return targets
         }
         releaseUpscaleTargets()
-        func make(interpolates: Bool) -> UpscaleTargets? {
-            try? UpscaleTargets(
-                input: input, output: output, colorFormat: color.pixelFormat,
-                kind: upscale.upscaler, interpolates: interpolates, compiler: pipelineCache
-            )
-        }
-        let sizes = "\(input.x) x \(input.y) to \(output.x) x \(output.y)"
-        var made = make(interpolates: wantsFrameInterpolation)
-        if made == nil, wantsFrameInterpolation {
+        guard let built = takeBuiltScalers(for: request) else { return nil }
+        let sizes = "\(request.input.x) x \(request.input.y) to \(output.x) x \(output.y)"
+        if request.interpolates, built.scaler != nil, built.interpolator == nil {
             upscale.interpolation.creationFailure =
                 "MetalFX refused a frame interpolator for \(sizes)"
-            made = make(interpolates: false)
         }
-        guard let targets = made else {
+        guard
+            let scaler = built.scaler,
+            let targets = try? UpscaleTargets(
+                request, scaler: scaler, interpolator: built.interpolator,
+                device: pipelineCache.device
+            )
+        else {
             upscale.creationFailure = "MetalFX refused a \(upscale.upscaler) scaler for \(sizes)"
             return nil
         }

@@ -1,6 +1,6 @@
 // MetalFX builds a temporal scaler through the Neural Engine compiler, a system
-// service that can stop answering. The renderer builds it on the main actor, so a
-// stuck service blocks every main-actor test of the run (docs/tools/environment.md).
+// service that can stop answering (docs/tools/environment.md). The probe fails the
+// MetalFX tests at once then, instead of letting each wait out its allowance.
 
 import Metal
 import MetalFX

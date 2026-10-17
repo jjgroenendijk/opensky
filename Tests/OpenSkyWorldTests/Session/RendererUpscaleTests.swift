@@ -55,6 +55,10 @@ struct RendererUpscaleTests {
         )
     }
 
+    private static func settle(_ renderer: Renderer) async throws {
+        try await renderer.settleUpscaler(width: width, height: height)
+    }
+
     private static func psnr(_ reference: TexturePixels, _ candidate: TexturePixels) throws
         -> Double
     {
@@ -76,6 +80,7 @@ struct RendererUpscaleTests {
 
         renderer.renderScale = RenderScale(percent: 67)
         renderer.freeFlyCamera = start
+        try await Self.settle(renderer)
         var upscaled = native
         for _ in 0 ..< 16 {
             upscaled = try Self.frame(renderer)
@@ -93,11 +98,31 @@ struct RendererUpscaleTests {
     }
 
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
-    func spatialUpscalingMatchesTheNativeFrameWithoutJitter() throws {
+    func framesDrawAtFullSizeWhileTheScalerBuilds() async throws {
+        try await MetalFXCompilerProbe.requireAnswer()
+        let renderer = try Self.makeRenderer()
+        let native = try Self.frame(renderer)
+        renderer.renderScale = RenderScale(percent: 67)
+        // Frames in a row never give the main actor a turn, so the build cannot land.
+        for _ in 0 ..< 3 {
+            let waiting = try Self.frame(renderer)
+            #expect(renderer.upscale.sizes == nil)
+            #expect(renderer.upscale.status.buildingScaler)
+            #expect(try Self.psnr(native, waiting) > 60)
+        }
+        await renderer.upscalerBuildFinished()
+        _ = try Self.frame(renderer)
+        #expect(renderer.upscale.sizes?.input == SIMD2(322, 214))
+        #expect(!renderer.upscale.status.buildingScaler)
+    }
+
+    @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
+    func spatialUpscalingMatchesTheNativeFrameWithoutJitter() async throws {
         let renderer = try Self.makeRenderer()
         let native = try Self.frame(renderer)
         renderer.renderScale = RenderScale(percent: 67)
         renderer.upscaler = .spatial
+        try await Self.settle(renderer)
         let first = try Self.frame(renderer)
         let second = try Self.frame(renderer)
         #expect(renderer.upscale.unavailableReason == nil)
@@ -122,8 +147,9 @@ struct RendererUpscaleTests {
         move(16)
         let native = try Self.frame(renderer)
         let sweep = try #require(Self.changedRegion(first, native))
+        renderer.renderScale = RenderScale(percent: 67)
+        try await Self.settle(renderer)
         func upscaledEnd(objectMotion: Bool, moving: Bool) throws -> TexturePixels {
-            renderer.renderScale = RenderScale(percent: 67)
             renderer.upscale.objectMotionEnabled = objectMotion
             renderer.resetUpscaleHistory()
             var upscaled = native
@@ -170,6 +196,7 @@ struct RendererUpscaleTests {
         try await MetalFXCompilerProbe.requireAnswer()
         let renderer = try Self.makeRenderer()
         renderer.renderScale = RenderScale(percent: 67)
+        try await Self.settle(renderer)
         let start = renderer.freeFlyCamera
         var cut = start
         cut.position += SIMD3(2000, 0, 0)
@@ -177,6 +204,7 @@ struct RendererUpscaleTests {
         let fresh = try Self.makeRenderer()
         fresh.renderScale = RenderScale(percent: 67)
         fresh.freeFlyCamera = cut
+        try await Self.settle(fresh)
         let freshCut = try Self.frame(fresh)
 
         for _ in 0 ..< 16 {

@@ -161,6 +161,8 @@ public enum PerformanceBenchmark {
         memory: inout GPUMemoryTracker
     ) throws -> BenchmarkFrameTime {
         try show(loaded: loaded, plan: plan, renderer: renderer)
+        // The loop below never gives the main actor a turn for the background build.
+        renderer.buildUpscalerNow(width: plan.frameWidth, height: plan.frameHeight)
         _ = try renderer.renderOffscreenSustained(
             width: plan.frameWidth, height: plan.frameHeight, frames: plan.warmupFrames
         )
