@@ -140,13 +140,21 @@ struct CellRecordTests {
     }
 
     @Test func recognizesAllNoWaterSentinels() throws {
-        for bits: UInt32 in [0x7F7F_FFFF, 0x4F7F_FFC9, 0xCF00_0000] {
+        for bits: UInt32 in [0x4F7F_FFC9, 0xCF00_0000, 0xFF7F_FFFF] {
             let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
                 "CELL", data: ESMFixture.field("XCLW", formID(bits))
             )), localized: false)
 
             #expect(cell.waterHeight == .noWater)
         }
+    }
+
+    /// Most of Tamriel's sea cells store FLT_MAX, which xEdit shows as "Default".
+    @Test func floatMaxUsesTheWorldspaceHeight() throws {
+        let cell = try Cell(record: ESMFixture.parseRecord(ESMFixture.record(
+            "CELL", data: ESMFixture.field("XCLW", formID(0x7F7F_FFFF))
+        )), localized: false)
+        #expect(cell.waterHeight == nil)
     }
 
     @Test func decodesRegionArray() throws {

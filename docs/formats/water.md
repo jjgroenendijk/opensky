@@ -29,10 +29,16 @@ Bit `0x0002` of `CELL DATA` means the cell has water. Without it, there is no pl
 | `XCLW` | float32 | Water height for this cell |
 | `XCWT` | FormID | Water type (`WATR`) for this cell |
 
-Three `XCLW` bit patterns mean "no water": `0x7F7FFFFF` (documented), and `0x4F7FFFC9` and
-`0xCF000000`, which the Creation Kit writes by mistake. These values do not fall back to the
-worldspace. Other values that are not finite numbers are rejected. A cell with no `XCLW`
-uses the worldspace water height.
+`XCLW` `0x7F7FFFFF` (the largest float) means "use the worldspace water height". xEdit shows
+it as `Default`, and its loader writes it for an exterior water cell with no `XCLW`, with the
+comment that the game then takes the height from the `WRLD`. The install agrees: 16,234
+exterior cells in `Skyrim.esm` set the has-water bit with this value, open sea cells among
+them, and their land crosses the worldspace's default water height at the coast.
+
+Three other patterns mean "no water": `0x4F7FFFC9` and `0xCF000000`, which the Creation Kit
+writes by mistake, and `0xFF7FFFFF` (the lowest float), which xEdit notes as an invalid
+value. These do not fall back to the worldspace. Other values that are not finite numbers
+are rejected. A cell with no `XCLW` uses the worldspace water height.
 
 ## WRLD defaults and parents
 
