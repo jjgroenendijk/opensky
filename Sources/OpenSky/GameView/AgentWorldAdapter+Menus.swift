@@ -45,17 +45,7 @@ extension AgentWorldAdapter {
                 selected: snapshot.selectedIndex
             )
         case TitleMenuCoordinator.identifier:
-            let snapshot = game.titleMenu.snapshot
-            guard snapshot.movie.isLoaded, !snapshot.isLoadPageOpen else {
-                return AgentMenuRows(
-                    menu: top.name, rows: snapshot.rows, selected: snapshot.selectedIndex
-                )
-            }
-            return AgentMenuRows(
-                menu: top.name,
-                rows: snapshot.movie.rows,
-                selected: snapshot.movie.selectedIndex ?? -1
-            )
+            return titleMenuRows(top)
         case RaceMenuCoordinator.identifier:
             let snapshot = game.raceMenu.snapshot
             return AgentMenuRows(
@@ -70,9 +60,30 @@ extension AgentWorldAdapter {
                 rows: snapshot.rows,
                 selected: snapshot.selectedIndex ?? -1
             )
+        case MessageCoordinator.identifier:
+            guard let box = game.messages.presentation else { return nil }
+            return AgentMenuRows(
+                menu: top.name,
+                rows: box.request.buttons.map(\.text),
+                selected: box.selection
+            )
         default:
             return nil
         }
+    }
+
+    private func titleMenuRows(_ top: MenuIdentifier) -> AgentMenuRows {
+        let snapshot = game.titleMenu.snapshot
+        guard snapshot.movie.isLoaded, !snapshot.isLoadPageOpen else {
+            return AgentMenuRows(
+                menu: top.name, rows: snapshot.rows, selected: snapshot.selectedIndex
+            )
+        }
+        return AgentMenuRows(
+            menu: top.name,
+            rows: snapshot.movie.rows,
+            selected: snapshot.movie.selectedIndex ?? -1
+        )
     }
 
     var menuState: AgentJSON {

@@ -52,6 +52,22 @@ struct FrameInterpolationSectionTests {
     }
 
     @Test
+    func theReadoutShowsHowEvenlyTheFramesShowed() {
+        let providers = FakeWorldProviders()
+        providers.frameInterpolationEnabled = true
+        let section = Self.section(providers, status: FrameInterpolationStatus(
+            enabled: true, interpolatedFrames: 42, realFPS: 30, presentLatencyMS: 51.25,
+            pacing: PresentPacing(averageGapMS: 16.7, longestGapMS: 33.4, hitches: 2)
+        ))
+        #expect(section.statsReadout == """
+        Frame interpolation: on, 42 frames built
+        Real: 30 fps  Shown: 60 fps
+        Frame gap: 16.7 ms, longest 33.4 ms, 2 hitches
+        Input to screen: 51.2 ms
+        """)
+    }
+
+    @Test
     func anUnsupportedGPUDisablesTheSwitchAndSaysWhy() {
         let providers = FakeWorldProviders()
         providers.frameInterpolationEnabled = true

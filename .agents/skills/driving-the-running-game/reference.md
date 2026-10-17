@@ -35,7 +35,9 @@ arrow keys.
 - `input press <action>`, `input release <action>`
 - `input hold <action> --frames <n>` or `--seconds <s>`; held actions only
 - `input look --dx <deg> --dy <deg>`; positive dx turns right, dy looks up
-- `input select <label>`: moves the open menu's selection to the row with that label
+- `input select <label>`: moves the open menu's selection to the row with that label; a
+  message box's buttons count as rows, so `input select No` then `input press menuAccept`
+  answers the survival mode prompt that blocks a new game
 - `input point --x <0..1> --y <0..1>`, `input click --x <0..1> --y <0..1>`: moves the cursor
   over the open menu, or clicks there; fractions of the game view, origin top left
 - `input text <text>`: types into the open menu that takes text, such as the race menu's

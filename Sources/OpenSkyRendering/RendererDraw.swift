@@ -12,11 +12,7 @@ extension Renderer: MTKViewDelegate {
     }
 
     public func draw(in view: MTKView) {
-        guard
-            let drawable = view.currentDrawable,
-            let passDescriptor = view.currentMTL4RenderPassDescriptor,
-            let metalLayer = view.layer as? CAMetalLayer
-        else { return }
+        guard let metalLayer = view.layer as? CAMetalLayer else { return }
 
         let cpuStart = frameStats.beginFrame()
         let frameStart = CACurrentMediaTime()
@@ -31,6 +27,15 @@ extension Renderer: MTKViewDelegate {
         // Audio.
         frameDriver?.finishLiveFrame()
         purgeRetiredResources()
+
+        // Taken after the simulation: a drawable still on screen frees up meanwhile.
+        let drawableWait = CACurrentMediaTime()
+        let drawable = view.currentDrawable
+        upscale.interpolation.drawableWait += CACurrentMediaTime() - drawableWait
+        guard let drawable, let passDescriptor = view.currentMTL4RenderPassDescriptor else {
+            frameStats.endFrame(cpuStartNS: cpuStart)
+            return
+        }
 
         endFrameEvent.wait(
             untilSignaledValue: UInt64(frameIndex - Self.maxFramesInFlight),
@@ -68,6 +73,12 @@ extension Renderer: MTKViewDelegate {
         commandBuffer.useResidencySet(metalLayer.residencySet)
         commandBuffer.endCommandBuffer()
 
+        commitLiveFrame(drawable, interpolated: interpolated)
+        present(drawable, interpolated: interpolated, view: view, frameStart: frameStart)
+        frameStats.endFrame(cpuStartNS: cpuStart)
+    }
+
+    private func commitLiveFrame(_ drawable: CAMetalDrawable, interpolated: InterpolatedDrawable?) {
         commandQueue.waitForDrawable(drawable)
         if let interpolated {
             commandQueue.waitForDrawable(interpolated.drawable)
@@ -79,7 +90,5 @@ extension Renderer: MTKViewDelegate {
         }
         commandQueue.signalEvent(endFrameEvent, value: UInt64(frameIndex))
         frameIndex += 1
-        present(drawable, interpolated: interpolated, view: view, frameStart: frameStart)
-        frameStats.endFrame(cpuStartNS: cpuStart)
     }
 }
