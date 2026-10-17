@@ -12,6 +12,16 @@ nonisolated public struct ESSPlacement: Equatable, Sendable {
     public let rotation: SIMD3<Float>
     /// The base object of a created reference, from initial type 5.
     public let createdBase: ESSRefID?
+
+    public init(
+        space: ESSRefID, position: SIMD3<Float>, rotation: SIMD3<Float>,
+        createdBase: ESSRefID? = nil
+    ) {
+        self.space = space
+        self.position = position
+        self.rotation = rotation
+        self.createdBase = createdBase
+    }
 }
 
 nonisolated public struct ESSInventoryItem: Equatable, Sendable {
@@ -21,6 +31,12 @@ nonisolated public struct ESSInventoryItem: Equatable, Sendable {
     /// One list per extra stack, such as a worn or enchanted copy.
     public let extraData: [ESSExtraDataList]
 
+    public init(item: ESSRefID, count: Int32, extraData: [ESSExtraDataList] = []) {
+        self.item = item
+        self.count = count
+        self.extraData = extraData
+    }
+
     public var isWorn: Bool {
         extraData.contains { $0.contains(22) || $0.contains(23) }
     }
@@ -29,13 +45,13 @@ nonisolated public struct ESSInventoryItem: Equatable, Sendable {
 nonisolated public struct ESSReferenceChange: Equatable, Sendable {
     public let form: ESSRefID
     public let isActor: Bool
-    public internal(set) var placement: ESSPlacement?
+    public var placement: ESSPlacement?
     /// The form's runtime flags: `0x800` disabled and `0x20` deleted, as in a plugin.
-    public internal(set) var formFlags: UInt32?
-    public internal(set) var baseObject: ESSRefID?
-    public internal(set) var scale: Float?
-    public internal(set) var extraData: ESSExtraDataList?
-    public internal(set) var inventory: [ESSInventoryItem]?
+    public var formFlags: UInt32?
+    public var baseObject: ESSRefID?
+    public var scale: Float?
+    public var extraData: ESSExtraDataList?
+    public var inventory: [ESSInventoryItem]?
     public internal(set) var status = ESSDecodeStatus.complete
 
     public static let disabledFlag: UInt32 = 0x0000_0800

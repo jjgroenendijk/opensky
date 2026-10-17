@@ -9,11 +9,22 @@ nonisolated public struct ESSPapyrusScript: Equatable, Sendable {
     /// The parent script, empty for a script with none.
     public let parent: String
     public let members: [ESSPapyrusMember]
+
+    public init(name: String, parent: String, members: [ESSPapyrusMember]) {
+        self.name = name
+        self.parent = parent
+        self.members = members
+    }
 }
 
 nonisolated public struct ESSPapyrusMember: Equatable, Sendable {
     public let name: String
     public let type: String
+
+    public init(name: String, type: String) {
+        self.name = name
+        self.type = type
+    }
 }
 
 nonisolated public struct ESSPapyrusInstance: Equatable, Sendable {
@@ -23,6 +34,15 @@ nonisolated public struct ESSPapyrusInstance: Equatable, Sendable {
     public let form: ESSRefID
     /// Filled from the instance's data block, in the order the save lists them.
     public internal(set) var variables: [ESSPapyrusValue] = []
+
+    public init(
+        id: UInt64, scriptName: String, form: ESSRefID, variables: [ESSPapyrusValue] = []
+    ) {
+        self.id = id
+        self.scriptName = scriptName
+        self.form = form
+        self.variables = variables
+    }
 }
 
 /// A struct-like object the VM keeps apart from scripts, such as a quest alias.

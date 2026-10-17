@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: Skyrim Save Papyrus Table
-description: Global data table 1001 of a Skyrim SE save, the Papyrus script engine's state, and what OpenSky reads from it.
+description: Global data table 1001 of a Skyrim SE save, the Papyrus script engine's state, and what OpenSky reads and writes in it.
 tags: [format, save, ess, papyrus]
 ---
 
@@ -84,6 +84,15 @@ opcode table; a call opcode adds a variadic count. A stack owner of type `QuestS
 Where UESP leaves the layout open, the stack read stops and the table records
 `partial(blockedBy:)` for the stacks only. Scripts, instances, and variables read before
 it stay complete.
+
+## Writing
+
+The writer writes VM version 4 with 4-byte ids. Strings go in the string table in the
+order first used. It writes the scripts and instances it is given, no references, arrays,
+or active scripts, and next active id 1. Each instance's two unknown words are 0 and its
+last byte is 0. After the data blocks come six zero words (function messages, the two
+suspended stack lists, an unknown word, unknown ids, and queued unbinds), the `int16` save
+file version 1, and 21 zero array counts. The save file version is not confirmed.
 
 ## Confirmed on real data
 

@@ -1,7 +1,7 @@
 ---
 type: File Format
 title: Skyrim Save Change Forms
-description: The change form section of a Skyrim SE save, and which change types OpenSky decodes for its import.
+description: The change form section of a Skyrim SE save, and which change types OpenSky decodes and writes.
 tags: [format, save, ess]
 ---
 
@@ -157,6 +157,21 @@ plugin `QUST DNAM` flags and is not confirmed for saves.
 ## Topic info (`INFO`)
 
 Flag `0x80000000` marks a line as said once. It carries no data.
+
+## Writing
+
+The writer encodes the parts the decoder reads, and sets each change flag from the fields
+that are present. It writes version 74, stores the data uncompressed, and picks the
+narrowest length size that holds it. A reference with a part it cannot write, such as an
+extra data entry with no documented layout, is refused with a typed error.
+
+- References: a created form's initial data; a move; for an actor, 8 zero bytes for the
+  actor header; then form flags, base object, scale, extra data, and inventory.
+- Actor base: form flags, faction ranks, the three spell lists, name, race (twice), face,
+  and sex.
+- Quests: flags, stages, and objectives. Topic infos: only the said-once flag.
+
+[ESS export](/engine/ess-export.md) lists what is not confirmed.
 
 ## Confirmed on real data
 
