@@ -283,7 +283,7 @@ jobs:
         run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
       - name: Build timing summary
         if: ${{ !cancelled() }}
-        run: tools/ci/build-timing.sh >>"$GITHUB_STEP_SUMMARY"
+        run: tools/ci/build-timing.sh | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload build and test logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

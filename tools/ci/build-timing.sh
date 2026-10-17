@@ -2,20 +2,20 @@
 # Print where the newest unit test run spent its build time, as Markdown for a
 # CI run summary: compilation cache hits, time per task kind, slowest tasks.
 # `xcodebuild test` ignores -showBuildTimingSummary, so this reads the build
-# log inside the result bundle instead.
+# log inside the result bundle instead. The log is kept in .logs/build-timing/,
+# which the CI job uploads, for a closer look at one run.
 #
-# Usage: tools/ci/build-timing.sh [DERIVED_DATA]
+# Usage: tools/ci/build-timing.sh [PLAN]   (default UnitTests)
 set -eu
-dd="${1:-DerivedData}"
-# Run directories are UTC timestamps, so the last name is the newest run.
-bundle="$(find "$dd/TestResults/unit" -maxdepth 2 -name unit.xcresult 2>/dev/null | sort | tail -n 1)"
+plan="${1:-UnitTests}"
+dd="${OPENSKY_DERIVED_DATA:-DerivedData}"
+bundle="$dd/TestResults/unit-$plan/latest/unit-$plan.xcresult"
 transcript=.logs/test-unit/latest/test-unit.log
-if [ -z "$bundle" ]; then
-    echo "[INFO] no unit result bundle under $dd/TestResults"
+if [ ! -d "$bundle" ]; then
+    echo "[INFO] no result bundle at $bundle"
     exit 0
 fi
-log="$(mktemp)"
-trap 'rm -f "$log"' EXIT
+log="$(tools/run-dir.sh build-timing)/build-log.json"
 xcrun xcresulttool get log --type build --path "$bundle" --compact >"$log"
 
 echo '### Build timing'

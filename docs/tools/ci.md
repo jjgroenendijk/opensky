@@ -108,9 +108,11 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
   the caches restore, and `wait` joins it before the build. It is not cached: it is 1.5 GB on disk,
   so a restore takes as long as the download and uses space the compilation cache needs.
 - **Timing.** `tools/ci/build-timing.sh` writes the build and test time, the compilation cache hit
-  rate, the time per task kind, and the slowest tasks to the run summary. It reads the build log in
-  the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`. The job uploads
-  `.logs/` on every run, not only on failure.
+  rate, the time per task kind, and the slowest tasks to the run summary and the job log. It reads
+  the build log in the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`,
+  and keeps a copy in `.logs/build-timing/`. The job uploads `.logs/` on every run, not only on
+  failure, so `gh run download <run> -n build-test-logs` gets the start time and duration of every
+  build task.
 
 ## Caches
 
