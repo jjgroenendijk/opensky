@@ -152,7 +152,9 @@ Each movie's constant pool gives its engine calls:
 `GetRawDealWarningString` returns the empty string. The only vanilla string behind a barter
 warning is `sNotEnoughVendorGold`, "Transaction value: %d gold. Vendor only has %d gold.". That
 warning belongs to the original's "sell for less" flow. OpenSky refuses such a sale
-(`merchantCannotAfford`) instead, so the warning is never needed.
+(`merchantCannotAfford`) instead, and shows this text as the refusal, because it states both
+numbers. A purchase the player cannot pay for shows `sItemTooExpensive`, "You don't have enough
+gold.". Without game data, both refusals use OpenSky's English lines.
 
 Measured on one full run of each movie at 1280x720, with a real two-sided inventory, one
 navigation step, and one transaction from each side:

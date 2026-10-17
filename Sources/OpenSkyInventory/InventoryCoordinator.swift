@@ -44,6 +44,7 @@ public final class InventoryCoordinator {
     /// The experience formulas a crafting session reports with.
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
     public var menuTexts = InventoryMenuTexts.vanilla
+    public var tradeTexts = TradeTexts.vanilla
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla
 

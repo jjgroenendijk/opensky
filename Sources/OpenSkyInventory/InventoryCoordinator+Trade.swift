@@ -64,13 +64,23 @@ extension InventoryCoordinator {
             ))
             return "Stored \(name)."
         case .buy:
-            let bought = try barterSession(runtime, container, vendor).buy(item)
+            let bought: BarterTransaction
+            do {
+                bought = try barterSession(runtime, container, vendor).buy(item)
+            } catch BarterError.playerCannotAfford {
+                return tradeTexts.tooExpensive
+            }
             storyEvents?.reportStoryEvent(.addItem(
                 item, from: container.key, owner: nil, how: .buy
             ))
             return "Bought \(name) for \(bought.gold) gold."
         case .sell:
-            let sold = try barterSession(runtime, container, vendor).sell(item)
+            let sold: BarterTransaction
+            do {
+                sold = try barterSession(runtime, container, vendor).sell(item)
+            } catch let BarterError.merchantCannotAfford(price, gold) {
+                return tradeTexts.merchantShortText(price: price, gold: gold)
+            }
             storyEvents?.reportStoryEvent(.removeItem(
                 item, reference: container.key, owner: nil, how: .given
             ))

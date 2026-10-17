@@ -52,6 +52,9 @@ final class InventoryWorldAdapter {
         coordinator.menuTexts = (provider as? WorldDataStores).map {
             InventoryMenuTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
+        coordinator.tradeTexts = (provider as? WorldDataStores).map {
+            TradeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         coordinator.temperingTexts = (provider as? WorldDataStores).map {
             TemperingTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla
