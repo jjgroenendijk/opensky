@@ -49,6 +49,17 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         return word(setting) ?? delivery.description
     }
 
+    /// The school a magic skill names, or nil for a skill that is not a school.
+    public func school(of skill: Int32) -> String? {
+        guard
+            let name = ActorValueIdentity.name(at: skill),
+            Self.schools.contains(name)
+        else { return nil }
+        return word("sMagicSchool\(name)") ?? name
+    }
+
+    static let schools = ["Alteration", "Conjuration", "Destruction", "Illusion", "Restoration"]
+
     private func word(_ setting: String?) -> String? {
         setting.flatMap { words[$0] }
     }
@@ -58,6 +69,7 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
     ].map { "sMagicType\($0)" } + [
         "sMagicConstantEffect", "sMagicFireAndForget", "sMagicConcentration"
     ] + ["Self", "Touch", "Aimed", "TargetActor", "TargetLocation"].map { "sMagicDelivery\($0)" }
+        + schools.map { "sMagicSchool\($0)" }
 
     public static func resolve(
         store: GameSettingStore, text: (LString) -> String? = { _ in nil }

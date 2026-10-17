@@ -11,7 +11,8 @@ struct MagicTextsTests {
         let store = try GameSettingFixture.store([
             "sMagicTypeVoicePower": .text("Shout"),
             "sMagicConcentration": .text("Held"),
-            "sMagicDeliveryTouch": .text("Contact")
+            "sMagicDeliveryTouch": .text("Contact"),
+            "sMagicSchoolDestruction": .text("Ruin")
         ])
         let texts = MagicTexts.resolve(store: store) { text in
             guard case let .inline(value) = text else { return nil }
@@ -21,6 +22,10 @@ struct MagicTextsTests {
         #expect(texts.name(of: MagicEffectCastingType.concentration) == "Held")
         #expect(texts.name(of: MagicEffectDelivery.touch) == "Contact")
         #expect(texts.name(of: MagicEffectDelivery.aimed) == MagicEffectDelivery.aimed.description)
-        #expect(MagicTexts.settings.count == 15)
+        #expect(MagicTexts.settings.count == 20)
+        let destruction = try #require(ActorValueIdentity.index(named: "Destruction"))
+        let health = try #require(ActorValueIdentity.index(named: "Health"))
+        #expect(texts.school(of: destruction) == "Ruin")
+        #expect(texts.school(of: health) == nil)
     }
 }

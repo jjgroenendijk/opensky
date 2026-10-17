@@ -199,7 +199,8 @@ World > Combat & Physics > Spellcasting, below Magic Effects, because that is wh
 
 The spellbook names each spell's type, casting, and delivery with the magic menu's own words: the
 `sMagicType*` settings (`sMagicTypeVoicePower` for a shout), `sMagicConstantEffect`,
-`sMagicFireAndForget`, `sMagicConcentration`, and the five `sMagicDelivery*` settings. Without a
+`sMagicFireAndForget`, `sMagicConcentration`, the five `sMagicDelivery*` settings, and the five
+`sMagicSchool*` settings for the school of the costliest effect. Without a
 string table, the record's own enum names stay.
 
 Casting animations, hand effects, and sounds are not done yet.

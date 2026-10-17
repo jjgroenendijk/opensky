@@ -240,7 +240,8 @@ extension MagicCoordinator: CastingControlProviding {
             chargeTime: spell.data?.chargeTime ?? 0,
             readiedHands: SpellHand.allCases
                 .filter { hands.contains($0.slots) }
-                .map(\.describedName)
+                .map(\.describedName),
+            schoolName: spell.magicSkill.flatMap(magicTexts.school(of:))
         )
     }
 }

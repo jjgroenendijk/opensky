@@ -22,15 +22,19 @@ nonisolated public struct KnownSpellReadout: Equatable, Sendable {
     public let chargeTime: Float
     /// Hands it is currently readied in, empty when it is not readied.
     public let readiedHands: [String]
+    /// The school of its costliest effect, nil when that is not a magic school.
+    public let schoolName: String?
 
     /// One line, the shape the readout joins with newlines.
     public var line: String {
         let readied = readiedHands.isEmpty
             ? ""
             : " — readied in \(readiedHands.joined(separator: " and "))"
+        let kinds = ([schoolName].compactMap(\.self) + [typeName, castingName, deliveryName])
+            .joined(separator: ", ")
         return String(
-            format: "%@ (%@, %@, %@) costs %d, charge %.2fs%@",
-            name, typeName, castingName, deliveryName, Int(cost), chargeTime, readied
+            format: "%@ (%@) costs %d, charge %.2fs%@",
+            name, kinds, Int(cost), chargeTime, readied
         )
     }
 
@@ -41,7 +45,8 @@ nonisolated public struct KnownSpellReadout: Equatable, Sendable {
         deliveryName: String,
         cost: UInt32,
         chargeTime: Float,
-        readiedHands: [String]
+        readiedHands: [String],
+        schoolName: String? = nil
     ) {
         self.name = name
         self.typeName = typeName
@@ -50,6 +55,7 @@ nonisolated public struct KnownSpellReadout: Equatable, Sendable {
         self.cost = cost
         self.chargeTime = chargeTime
         self.readiedHands = readiedHands
+        self.schoolName = schoolName
     }
 }
 
