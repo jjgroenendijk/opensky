@@ -40,9 +40,10 @@ struct PreviewRealDataTests {
         #expect(catalog.recordCount > 500_000, "record walk looks truncated")
         #expect(catalog.notes.isEmpty)
 
-        // Tamriel worldspace, FormID 0x3C (UESP "Skyrim Mod:FormIDs").
+        // Tamriel worldspace, FormID 0x3C (UESP "Skyrim Mod:FormIDs"). A row
+        // names its plugin, so an override lists beside the master's record.
         let world = try #require(
-            catalog.items(for: .records).first { $0.display == "WRLD 0000003C" }
+            catalog.items(for: .records).first { $0.display == "WRLD 0000003C Skyrim.esm" }
         )
         guard case let .record(record) = world.selection else {
             Issue.record("record row selects a non-record")
