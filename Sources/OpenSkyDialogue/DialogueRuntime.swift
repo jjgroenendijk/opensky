@@ -169,12 +169,15 @@ public struct DialogueRuntime: DialogueAccess {
                 }
             )
         }
-        guard questDialogueConditionsPass(topic, speaker: speaker, evaluator: &evaluator) else {
+        let questGate = questDialogueConditions(topic, speaker: speaker, evaluator: &evaluator)
+        if let questGate, !questGate.isTrue {
             return DialogueTopicOffer(
                 topic: topic.formID,
                 info: infos.first?.formID ?? FormID(0),
                 considered: infos.map {
-                    DialogueInfoTrace(info: $0.formID, outcome: nil, rejection: .conditionsFailed)
+                    DialogueInfoTrace(
+                        info: $0.formID, outcome: questGate, rejection: .conditionsFailed
+                    )
                 }
             )
         }
@@ -233,22 +236,23 @@ public struct DialogueRuntime: DialogueAccess {
     }
 
     /// The owning quest's dialogue conditions, which every response of the
-    /// quest must also pass. They often name the speaker's voice type or faction.
-    private func questDialogueConditionsPass(
+    /// quest must also pass, or nil when the quest has none. They often name
+    /// the speaker's voice type or faction.
+    private func questDialogueConditions(
         _ topic: DialogueTopic,
         speaker: ReferenceKey,
         evaluator: inout ConditionEvaluator
-    ) -> Bool {
+    ) -> ConditionOutcome? {
         guard
             let id = topic.owningQuest,
             let conditions = questStates.quest(id)?.dialogueConditions,
             !conditions.isEmpty
-        else { return true }
+        else { return nil }
         evaluator.context.subject = speaker
         evaluator.context.target = .player
         evaluator.context.aliasQuest = id
         evaluator.context.formIDTranslation = questStates.translation(of: id)
-        return evaluator.evaluate(conditions).isTrue
+        return evaluator.evaluate(conditions)
     }
 
     /// `GameDaysPassed`, or nil in a context with no clock.

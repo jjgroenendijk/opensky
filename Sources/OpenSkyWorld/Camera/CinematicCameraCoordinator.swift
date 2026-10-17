@@ -20,10 +20,22 @@ public protocol CinematicCameraWorld: AnyObject {
     /// Where an actor stands and faces, or nil when it is not loaded.
     func cinematicAnchor(of key: ReferenceKey) -> CinematicAnchor?
     var playerPosition: SIMD3<Float>? { get }
-    /// Writes this frame's override pose, shake, and world time scale.
-    func applyCinematicFrame(pose: CinematicCameraPose?, shake: SIMD3<Float>, timeScale: Float)
     @discardableResult
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool
+}
+
+/// One frame's override pose, shake, and world time scale, which the app writes.
+nonisolated public struct CinematicFrame: Equatable, Sendable {
+    /// Nil while no shot plays, so the player's own view shows.
+    public let pose: CinematicCameraPose?
+    public let shake: SIMD3<Float>
+    public let timeScale: Float
+
+    public init(pose: CinematicCameraPose?, shake: SIMD3<Float>, timeScale: Float) {
+        self.pose = pose
+        self.shake = shake
+        self.timeScale = timeScale
+    }
 }
 
 public final class CinematicCameraCoordinator {
@@ -37,11 +49,9 @@ public final class CinematicCameraCoordinator {
     public private(set) var time: Double = 0
     public private(set) var playedCount = 0
     private var random = ConditionRandom()
-    private(set) weak var world: (any CinematicCameraWorld)?
+    weak let world: (any CinematicCameraWorld)?
 
-    public init() {}
-
-    public func attach(world: any CinematicCameraWorld) {
+    public init(world: any CinematicCameraWorld) {
         self.world = world
     }
 
@@ -143,7 +153,7 @@ public final class CinematicCameraCoordinator {
     // MARK: - Frames
 
     /// Advances by real seconds, so a slowed world does not slow the shot.
-    public func tick(realSeconds: Double) {
+    public func tick(realSeconds: Double) -> CinematicFrame {
         time += max(0, realSeconds)
         var pose: CinematicCameraPose?
         if var current = player, !current.isFinished {
@@ -162,7 +172,7 @@ public final class CinematicCameraCoordinator {
         if let active = shake, active.isFinished(at: time) {
             shake = nil
         }
-        world?.applyCinematicFrame(
+        return CinematicFrame(
             pose: pose,
             shake: shake?.offset(at: time) ?? .zero,
             timeScale: isPlaying ? player?.worldTimeScale ?? 1 : 1

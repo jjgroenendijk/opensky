@@ -82,7 +82,7 @@ public protocol LockControlProviding: AnyObject {
 extension LockCoordinator {
     public var lockSnapshot: LockControlSnapshot {
         guard items != nil else { return .unavailable }
-        let rows = (world?.lockables() ?? []).compactMap(row).sorted {
+        let rows = world.lockables().compactMap(row).sorted {
             ($0.name, $0.reference.rawValue) < ($1.name, $1.reference.rawValue)
         }
         return LockControlSnapshot(
@@ -100,22 +100,24 @@ extension LockCoordinator {
     /// The selected lock while its cell is loaded.
     public var selectedInteraction: PlacedInteraction? {
         guard let selectedLock else { return nil }
-        return world?.lockables().first { $0.reference == selectedLock }
+        return world.lockables().first { $0.reference == selectedLock }
     }
 
     public func selectLock(_ reference: FormID?) {
         selectedLock = reference
     }
 
-    @discardableResult
-    public func setSelectedLockLocked(_ locked: Bool) -> LockActionOutcome {
-        guard let interaction = selectedInteraction else { return record(.noSelection) }
+    public func setSelectedLockLocked(_ locked: Bool) -> InventoryResult<LockActionOutcome> {
+        guard let interaction = selectedInteraction else {
+            return InventoryResult(record(.noSelection))
+        }
         return setLocked(interaction, locked: locked)
     }
 
-    public func setPlayerCarriesEveryKey(_ enabled: Bool) {
+    /// Asks for a prompt refresh, because a carried key changes the label.
+    public func setPlayerCarriesEveryKey(_ enabled: Bool) -> [InventoryCommand] {
         playerCarriesEveryKey = enabled
-        world?.lockStateChanged()
+        return [.refreshInteractionTarget]
     }
 
     private func row(_ interaction: PlacedInteraction) -> LockReadoutRow? {
@@ -124,7 +126,7 @@ extension LockCoordinator {
             reference: interaction.reference,
             name: interaction.name,
             difficulty: texts.name(of: difficulty(of: state)),
-            key: state.key.map { world?.itemName($0) ?? $0.description } ?? "none",
+            key: state.key.map { world.itemName($0) } ?? "none",
             isLocked: state.isLocked
         )
     }

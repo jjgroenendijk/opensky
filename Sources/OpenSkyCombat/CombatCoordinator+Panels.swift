@@ -233,7 +233,7 @@ extension CombatCoordinator: ArcheryControlProviding {
 extension CombatCoordinator: CombatLoopControlProviding {
     public var combatLoopSnapshot: CombatLoopSnapshot {
         guard let loop else { return .unavailable }
-        let selected = world?.selectedActor()
+        let selected = world.selectedActor()
         return CombatLoopSnapshot(
             isAvailable: true,
             isPlayerInCombat: loop.state.isPlayerInCombat,
@@ -261,7 +261,7 @@ extension CombatCoordinator: CombatLoopControlProviding {
 
     public var selectedActorIsHostile: Bool {
         get {
-            guard let loop, let key = world?.selectedActor() else { return false }
+            guard let loop, let key = world.selectedActor() else { return false }
             return loop.hostility(of: key) == .hostile
         }
         set { setSelectedActorHostile(newValue) }
@@ -277,7 +277,7 @@ extension CombatCoordinator: CombatLoopControlProviding {
     }
 
     public var selectedCombatStyle: CombatStyleReadout? {
-        guard let loop, let key = world?.selectedActor() else { return nil }
+        guard let loop, let key = world.selectedActor() else { return nil }
         return loop.styleReadout(of: key)
     }
 

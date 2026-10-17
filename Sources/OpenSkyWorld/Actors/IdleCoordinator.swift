@@ -99,13 +99,13 @@ public final class IdleCoordinator {
         + "character assets\\skeleton.nif"
     let random: (Int) -> Int
 
-    weak var world: (any IdleWorld)?
+    weak let world: (any IdleWorld)?
 
-    public init(random: @escaping (Int) -> Int = { Int.random(in: 0 ..< max($0, 1)) }) {
+    public init(
+        random: @escaping (Int) -> Int = { Int.random(in: 0 ..< max($0, 1)) },
+        world: (any IdleWorld)?
+    ) {
         self.random = random
-    }
-
-    public func attach(world: any IdleWorld) {
         self.world = world
     }
 

@@ -18,22 +18,22 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
 {
     @discardableResult
     public func reportScriptHit(_ hit: ScriptHitEvent) -> Int {
-        world?.reportScriptHit(hit) ?? 0
+        world.reportScriptHit(hit)
     }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        world?.reportSkillUse(use) ?? 0
+        world.reportSkillUse(use)
     }
 
     @discardableResult
     public func applySpellHit(_ hit: SpellHit) -> SpellHitReport {
-        world?.applySpellHit(hit) ?? .none
+        world.applySpellHit(hit)
     }
 
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        world?.applyWeaponEnchantment(hit)
+        world.applyWeaponEnchantment(hit)
     }
 
     /// Only the player carries a behavior graph, so an event on an NPC
@@ -41,26 +41,26 @@ extension CombatCoordinator: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     @discardableResult
     public func raiseCombatEvent(_ name: String, on target: ReferenceKey?) -> Bool {
         guard target == nil || target == .player else { return false }
-        return world?.raisePlayerGraphEvent(name) ?? false
+        return world.raisePlayerGraphEvent(name)
     }
 
     public func writeCombatVariable(_ value: BehaviorVariableValue, named name: String) {
-        world?.writePlayerGraphVariable(value, named: name)
+        world.writePlayerGraphVariable(value, named: name)
     }
 }
 
 extension CombatCoordinator: MeleeCombatWorld {
     public var meleeAttacker: MeleeAttacker {
-        world?.playerAttacker ?? MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
+        world.playerAttacker ?? MeleeAttacker(key: .player, feet: SIMD3<Float>(), facing: 0)
     }
 
     public func meleeAttackMultiplier(handType: CombatHandType) -> Float {
-        guard let world, let values = world.actorValues(of: .player) else { return 1 }
+        guard let values = world.actorValues(of: .player) else { return 1 }
         return CombatFortifyBonus.melee(handType: handType, reading: values)
     }
 
     public func meleeTargets() -> [MeleeTarget] {
-        (world?.residentActors() ?? []).map { MeleeTarget(key: $0.key, feet: $0.feet) }
+        world.residentActors().map { MeleeTarget(key: $0.key, feet: $0.feet) }
     }
 
     public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
@@ -75,7 +75,7 @@ extension CombatCoordinator: MeleeCombatWorld {
 
     /// The blocker's fortify term times `Mod Percent Blocked`.
     public func meleeBlockMultiplier(of target: ReferenceKey) -> Float {
-        guard let world, let values = world.actorValues(of: target) else { return 1 }
+        guard let values = world.actorValues(of: target) else { return 1 }
         return CombatFortifyBonus.block(reading: values)
             * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
@@ -124,7 +124,7 @@ extension CombatCoordinator: MeleeCombatWorld {
             amount, attackerIsPlayer: attacker == .player, targetIsPlayer: target == .player,
             multipliers: difficultyMultipliers
         )
-        let landed = world?.damageHealth(by: scaled, of: target) ?? false
+        let landed = world.damageHealth(by: scaled, of: target)
         if landed, attacker == .player, target != .player {
             playerStruckTarget = target
         }
@@ -132,21 +132,21 @@ extension CombatCoordinator: MeleeCombatWorld {
     }
 
     private func isEthereal(_ key: ReferenceKey) -> Bool {
-        world?.magicInfluence(of: key).isEthereal ?? false
+        world.magicInfluence(of: key).isEthereal
     }
 
     public func playMeleeImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
-        world?.playImpact(impact, at: position)
+        pendingCommands.append(.playImpact(impact, at: position))
     }
 
     public func impactMaterial(of target: ReferenceKey) -> FormID? {
-        world?.impactMaterial(of: target)
+        world.impactMaterial(of: target)
     }
 }
 
 extension CombatCoordinator: ProjectileWorld {
     public var projectileShooter: ProjectileShooter {
-        world?.playerShooter ?? ProjectileShooter(
+        world.playerShooter ?? ProjectileShooter(
             key: .player, origin: SIMD3(), aim: SIMD3(1, 0, 0),
             isFirstPerson: true, location: nil
         )
@@ -157,7 +157,7 @@ extension CombatCoordinator: ProjectileWorld {
     }
 
     public func sweepProjectile(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
-        world?.sweep(query)
+        world.sweep(query)
     }
 
     @discardableResult
@@ -177,13 +177,13 @@ extension CombatCoordinator: ProjectileWorld {
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {
-        world?.playImpact(impact, at: position)
+        pendingCommands.append(.playImpact(impact, at: position))
     }
 
     /// False on an empty quiver, which is ordinary play: the shot does not happen.
     @discardableResult
     public func consumeArrow(_ ammunition: FormID) -> Bool {
-        world?.removeOneFromPlayer(ammunition) ?? false
+        world.removeOneFromPlayer(ammunition)
     }
 
     /// A stuck arrow is a spawned AMMO model at the impact point. It does not
@@ -199,18 +199,18 @@ extension CombatCoordinator: ProjectileWorld {
             ),
             count: 1
         )
-        guard let key = world?.spawn(spawn, in: arrow.location) else { return nil }
+        guard let key = world.spawn(spawn, in: arrow.location) else { return nil }
         stuckKeys.insert(key)
         return key
     }
 
     public func removeStuckProjectile(_ key: ReferenceKey) {
         guard stuckKeys.remove(key) != nil else { return }
-        world?.resetReference(key)
+        pendingCommands.append(.removeReference(key))
     }
 
     public func residentProjectileCells() -> Set<CellSceneLocation> {
-        world?.residentCells() ?? []
+        world.residentCells()
     }
 
     @discardableResult
@@ -224,15 +224,15 @@ extension CombatCoordinator: ProjectileWorld {
 
     @discardableResult
     public func giveRecoveredArrow(_ ammunition: FormID, to target: ReferenceKey) -> Bool {
-        world?.addItem(ammunition, count: 1, to: target) ?? false
+        world.addItem(ammunition, count: 1, to: target)
     }
 
     public func showArcheryNotice(_ text: String) {
-        world?.showNotification(text)
+        pendingCommands.append(.showNotification(text))
     }
 
     /// Hunter's Discipline doubles the chance through this entry point.
     public func arrowRecoveryMultiplier(of shooter: ReferenceKey) -> Float {
-        world?.perkMultiplier(at: .modRecoverArrowChance, on: shooter) ?? 1
+        world.perkMultiplier(at: .modRecoverArrowChance, on: shooter)
     }
 }

@@ -200,12 +200,10 @@ struct SWFLabCoordinatorTests {
             fileSystem: makeFiles(movies: [("alpha.swf", Self.movieBytes())]),
             loadsImmediately: true
         )
-        let hud = HUDCoordinator(movies: movies)
-        let lab = SWFLabCoordinator(movies: movies, hud: hud)
         let canvas = OffscreenCanvas(width: 64, height: 64, shaders: .packageFixture)
         let world = try FakeSWFLayerWorld(renderer: canvas.makeRenderer())
-        hud.attach(world: world)
-        lab.attach(world: world)
+        let hud = HUDCoordinator(movies: movies, world: world)
+        let lab = SWFLabCoordinator(movies: movies, hud: hud, world: world)
 
         lab.select(path: "interface\\alpha.swf")
         lab.startRuntime()

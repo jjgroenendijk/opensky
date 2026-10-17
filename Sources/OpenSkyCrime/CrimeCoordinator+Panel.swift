@@ -11,7 +11,7 @@ import OpenSkyWorldState
 
 extension CrimeCoordinator {
     public var crimeFactionSnapshot: CrimeFactionControlSnapshot {
-        guard let reporter, let world, world.hasFactionData else { return .unavailable }
+        guard let reporter, world.hasFactionData else { return .unavailable }
         let store = reporter.runtime.factions
         let options = factionOptions(store)
         let subject = subjectReadout(panel.subject ?? .player, store: store)
@@ -69,8 +69,8 @@ extension CrimeCoordinator {
     /// cell's rather than the reference's own.
     private func targetOwner() -> ReferenceOwner? {
         guard
-            let interaction = world?.crosshairInteraction,
-            let entry = world?.references?.referenceEntry(formID: interaction.reference)
+            let interaction = world.crosshairInteraction,
+            let entry = world.references?.referenceEntry(formID: interaction.reference)
         else { return nil }
         return ownershipVerdict(on: entry.key).owner
     }
@@ -79,7 +79,7 @@ extension CrimeCoordinator {
         of key: ReferenceKey,
         store: FactionStore
     ) -> [MembershipReadout] {
-        (world?.factionMemberships(of: key)?.memberships ?? []).map {
+        (world.factionMemberships(of: key)?.memberships ?? []).map {
             MembershipReadout(
                 faction: CrimeCore.factionOption($0.faction, in: store), rank: $0.rank
             )
@@ -87,18 +87,18 @@ extension CrimeCoordinator {
     }
 
     private func subjectReadout(_ key: ReferenceKey, store: FactionStore) -> SocialSubjectReadout {
-        let profile = world?.socialProfile(of: key)
+        let profile = world.socialProfile(of: key)
         let policed = profile.flatMap {
             GuardRecognition.policedFaction(of: $0, guardFaction: store.guardFactionKey)
         }
         return SocialSubjectReadout(
             key: key,
-            name: key == .player ? "the player" : world?.actorName(key) ?? key.description,
+            name: key == .player ? "the player" : world.actorName(key),
             memberships: membershipReadouts(of: key, store: store),
-            towardPlayer: key == .player ? nil : profile.flatMap { world?.reactionTerms(of: $0) },
+            towardPlayer: key == .player ? nil : profile.flatMap { world.reactionTerms(of: $0) },
             crimeFaction: profile?.crimeFaction.map { CrimeCore.factionOption($0, in: store) },
             policedFaction: policed.map { CrimeCore.factionOption($0, in: store) },
-            vendor: world?.vendor(of: key)
+            vendor: world.vendor(of: key)
         )
     }
 }

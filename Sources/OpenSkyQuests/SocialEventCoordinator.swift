@@ -14,8 +14,6 @@ public protocol SocialEventWorld: AnyObject {
     func socialFrame() -> SocialFrame?
     /// Whether `observer` has a clear sight line to `body`.
     func socialCanSee(_ observer: SocialActor, _ body: SocialActor) -> Bool
-    /// Sends one event to the story manager, which fills in its location.
-    func reportSocialEvent(_ event: StoryEventData)
 }
 
 @MainActor
@@ -29,33 +27,37 @@ public final class SocialEventCoordinator {
     public private(set) var sentCounts: [FourCC: Int] = [:]
     private var state = SocialState()
     private var frames = 0
-    weak var world: (any SocialEventWorld)?
+    let world: any SocialEventWorld
+    private var pendingCommands: [SocialEventCommand] = []
 
-    public init() {}
-
-    public func attach(world: any SocialEventWorld) {
+    public init(world: any SocialEventWorld) {
         self.world = world
     }
 
     /// Called once per frame.
-    public func tick() {
+    /// - Returns: the events found since the last call, also by `runPass()`.
+    public func tick() -> [SocialEventCommand] {
         frames += 1
-        guard frames >= Self.frameInterval else { return }
-        frames = 0
-        runPass()
+        if frames >= Self.frameInterval {
+            frames = 0
+            runPass()
+        }
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
-    /// One pass now, whatever the frame count.
+    /// One pass now, whatever the frame count. The next `tick()` returns its events.
     public func runPass() {
-        guard let world, let frame = world.socialFrame() else { return }
+        guard let frame = world.socialFrame() else { return }
+        let world = world
         let events = SocialEventCore.events(frame, settings: settings, state: &state) {
             world.socialCanSee($0, $1)
         }
         for event in events {
             sentCounts[event.event, default: 0] += 1
-            world.reportSocialEvent(event)
         }
         recent = Array((recent + events).suffix(Self.historyLimit))
+        pendingCommands += events.map(SocialEventCommand.reportStoryEvent)
     }
 
     /// The readout: what each code sent, then the latest events.

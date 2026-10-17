@@ -20,9 +20,7 @@ struct ProjectileStuckArrowTests {
     }
 
     private static func runtime(world: FakeProjectileWorld) -> ProjectileRuntime {
-        let runtime = ProjectileRuntime(settings: .synthetic)
-        runtime.attach(world: world)
-        return runtime
+        ProjectileRuntime(settings: .synthetic, world: world)
     }
 
     private static func shot(profile: ProjectileProfile) -> ProjectileShot {

@@ -127,6 +127,21 @@ struct MeshLibraryTests {
         #expect(playbacks.count == 1)
     }
 
+    @Test(.enabled(if: Self.hasDevice)) func anAnimatedObjectKeepsItsParticles() throws {
+        let device = try #require(Self.device)
+        try writeLooseFile("meshes/fx/mill.nif", fireNIF())
+        let library = try library(device: device)
+        let surface = ModelSurfaceOverride(diffuseTexture: nil, normalTexture: nil, tint: nil)
+        _ = try library.animatedObjectModel(
+            path: "meshes\\fx\\mill.nif", bones: [], reference: 7, surface: surface
+        )
+        let playbacks = try library.particlePlaybacks(
+            path: "meshes\\fx\\mill.nif", surface: surface,
+            placementTransform: matrix_identity_float4x4, formID: 7
+        )
+        #expect(playbacks.count == 1)
+    }
+
     @Test(.enabled(if: Self.hasDevice)) func cachesModelByKey() throws {
         let device = try #require(Self.device)
         try writeLooseFile("meshes/clutter/cup.nif", staticNIF())

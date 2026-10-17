@@ -21,7 +21,6 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var hasFactionData = true
     var memberships: [ReferenceKey: ActorFactionState] = [:]
     var profiles: [ReferenceKey: ActorSocialProfile] = [:]
-    private(set) var guardHostility: GuardCrimeHostility?
     var inventory: (any InventoryAccess)?
     var gameSeconds: Double?
     var hourOfDay: Float?
@@ -36,7 +35,6 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
     var dialogueOpens = false
     var lastDialogueOutcome: String?
     private(set) var spokenTo: [ReferenceKey] = []
-    private(set) var notices: [String] = []
 
     func cellOwnership(at location: CellSceneLocation) -> RecordOwnership? {
         cellOwners[location]
@@ -64,10 +62,6 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
 
     func reactionTerms(of _: ActorSocialProfile) -> ReactionTermsReadout? {
         nil
-    }
-
-    func applyGuardHostility(_ hostility: GuardCrimeHostility) {
-        guardHostility = hostility
     }
 
     func joinFaction(_ faction: ReferenceKey, actor key: ReferenceKey, rank: Int8) -> Bool {
@@ -129,10 +123,6 @@ final class FakeCrimeSessionWorld: CrimeSessionWorld {
 
     func resumePackage(for key: ReferenceKey) {
         resumed.append(key)
-    }
-
-    func showCrimeNotice(_ text: String) {
-        notices.append(text)
     }
 
     func beginDialogue(with speaker: ReferenceKey) {

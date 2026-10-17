@@ -17,7 +17,7 @@ extension CrimeCoordinator {
         return CrimeConditionResolution(
             factions: reporter.runtime.factions,
             sourcePlugin: pluginName,
-            currentCrimeFaction: crimeFaction(in: world?.currentCellLocation),
+            currentCrimeFaction: crimeFaction(in: world.currentCellLocation),
             ledgers: ledger.isEmpty ? [:] : [.player: ledger],
             situation: situation(ledger: ledger, references: references)
         )

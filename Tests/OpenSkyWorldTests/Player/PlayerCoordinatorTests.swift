@@ -15,8 +15,7 @@ struct PlayerCoordinatorTests {
     private static func session() -> (PlayerCoordinator, FakePlayerWorld) {
         let input = CameraInputState()
         let world = FakePlayerWorld()
-        let player = PlayerCoordinator(input: input)
-        player.attach(world: world)
+        let player = PlayerCoordinator(input: input, world: world)
         return (player, world)
     }
 

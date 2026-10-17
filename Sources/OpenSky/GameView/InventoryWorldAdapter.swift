@@ -57,7 +57,6 @@ final class InventoryWorldAdapter {
         guard let baselines = provider.inventoryBaselines
         else { return }
         let coordinator = game.inventory
-        coordinator.attach(world: self)
         coordinator.wire(
             inventory: InventoryRuntime(store: game.worldState, baselines: baselines),
             references: streamer,
@@ -79,8 +78,9 @@ final class InventoryWorldAdapter {
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         coordinator.temperingTexts = TemperingTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
-        streamer.onInteraction.add { [weak coordinator] event in
-            coordinator?.handleInteraction(event.target.interaction.action)
+        streamer.onInteraction.add { [weak self] event in
+            guard let self else { return }
+            run(game.inventory.handleInteraction(event.target.interaction.action))
         }
     }
 
@@ -130,10 +130,6 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.crime.theftBounty(of: item, from: reference)
     }
 
-    func equipmentChanged(on holder: InventoryHolder) {
-        game.magic.equipmentChanged(on: holder)
-    }
-
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String? {
         game.magic.enchantmentLine(of: item, on: game.actorWorld.actorValueHolder(for: owner))
     }
@@ -144,12 +140,6 @@ extension InventoryWorldAdapter: InventoryWorld {
 
     var gameDaysPassed: Float? {
         game.renderer?.gameClock.daysPassed
-    }
-
-    /// Relabels the streamer's raw target. The HUD's copy is already labelled, and a
-    /// lock label appends to the name, so labelling it twice would repeat the band.
-    func refreshInteractionTarget() {
-        game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
     }
 
     func playerSpeechSkill() -> Float? {
@@ -195,6 +185,30 @@ extension InventoryWorldAdapter: InventoryWorld {
                 hitPosition: $0.hitPosition,
                 distance: $0.distance
             )
+        }
+    }
+}
+
+extension InventoryWorldAdapter {
+    /// Runs the commands an inventory or lock action returned, then hands back its answer.
+    @discardableResult
+    func run<Value>(_ result: InventoryResult<Value>) -> Value {
+        run(result.commands)
+        return result.value
+    }
+
+    func run(_ commands: [InventoryCommand]) {
+        for command in commands {
+            switch command {
+            case let .equipmentChanged(holder):
+                game.magic.equipmentChanged(on: holder)
+            case .refreshInteractionTarget:
+                // The streamer's raw target: the HUD's copy is already labelled, and a
+                // lock label appends to the name, so labelling it twice repeats the band.
+                game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
+            case let .showNotice(text):
+                game.hud.showNotification(text)
+            }
         }
     }
 }
@@ -267,19 +281,19 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
     func removeItem(
         _ item: FormID, count: Int32, from holder: ReferenceKey, to other: ReferenceKey?
     ) -> Bool {
-        game.inventory.scriptRemoveItem(item, count: count, from: holder, to: other)
+        run(game.inventory.scriptRemoveItem(item, count: count, from: holder, to: other))
     }
 
     func unequipSlot(_ slot: Int32, on actor: ReferenceKey) -> Bool {
-        game.inventory.scriptUnequipSlot(slot, on: actor)
+        run(game.inventory.scriptUnequipSlot(slot, on: actor))
     }
 
     func dropItem(_ item: FormID, count: Int32, from holder: ReferenceKey) -> ReferenceKey? {
-        game.inventory.scriptDropObject(item, count: count, from: holder)
+        run(game.inventory.scriptDropObject(item, count: count, from: holder))
     }
 
     func removeAllItems(from holder: ReferenceKey, to other: ReferenceKey?) -> Bool {
-        game.inventory.scriptRemoveAllItems(from: holder, to: other)
+        run(game.inventory.scriptRemoveAllItems(from: holder, to: other))
     }
 
     func baselineInventory(of holder: ReferenceKey) -> ReferenceInventoryState? {
@@ -291,15 +305,15 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
     }
 
     func equipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        game.inventory.scriptEquipItem(item, on: actor)
+        run(game.inventory.scriptEquipItem(item, on: actor))
     }
 
     func unequipItem(_ item: FormID, on actor: ReferenceKey) -> Bool {
-        game.inventory.scriptUnequipItem(item, on: actor)
+        run(game.inventory.scriptUnequipItem(item, on: actor))
     }
 
     func setOutfit(_ outfit: FormID, on actor: ReferenceKey) -> Bool {
-        game.inventory.scriptSetOutfit(outfit, on: actor)
+        run(game.inventory.scriptSetOutfit(outfit, on: actor))
     }
 
     func isEquipped(_ item: FormID, on actor: ReferenceKey) -> Bool? {
@@ -315,7 +329,7 @@ extension InventoryWorldAdapter: PapyrusInventoryBridge {
     }
 
     func unequipAll(on actor: ReferenceKey) -> Bool {
-        game.inventory.scriptUnequipAll(on: actor)
+        run(game.inventory.scriptUnequipAll(on: actor))
     }
 
     func goldValue(of item: FormID) -> Int32? {

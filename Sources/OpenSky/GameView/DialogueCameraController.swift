@@ -66,11 +66,14 @@ final class DialogueCameraController {
             let head = game.dialogueWorld.headPosition(of: speaker)
         else {
             renderer.setDialogueCameraFocus(nil)
-            game.dialogue.releaseSpeakerFocus()
+            game.dialogueWorld.run(game.dialogue.releaseSpeakerFocus())
             return
         }
         renderer.setDialogueCameraFocus(DialogueCameraFocus(headPosition: head))
-        game.dialogue.focus(on: speaker, playerEye: renderer.playerEyePosition)
+        game.dialogueWorld.run(game.dialogue.focus(
+            on: speaker,
+            playerEye: renderer.playerEyePosition
+        ))
     }
 
     /// The race menu shows the player's face from the front, at the player's eye height.

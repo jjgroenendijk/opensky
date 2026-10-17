@@ -39,12 +39,6 @@ public protocol MagicWorld: AnyObject, SkillUseReporting {
     func fireSpellProjectile(_ payload: SpellPayload) -> Bool
     /// What `caster`'s aim ray reaches, out to `range`.
     func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim
-    /// Plays a stagger on `key`. False when nothing could.
-    @discardableResult
-    func staggerActor(_ key: ReferenceKey, magnitude: Float) -> Bool
-    /// Places hazard `hazard` at `key`. False when it could not.
-    @discardableResult
-    func spawnHazard(_ hazard: ReferenceKey, at key: ReferenceKey) -> Bool
     /// Living actors hostile to `key` within `radius` world units of it.
     func cloakTargets(around key: ReferenceKey, radius: Float) -> [ReferenceKey]
     /// Whether `holder`'s base record or race carries the keyword `editorID`.

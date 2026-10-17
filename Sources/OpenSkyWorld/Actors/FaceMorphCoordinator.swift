@@ -20,7 +20,7 @@ public final class FaceMorphCoordinator {
         let until: Float?
     }
 
-    weak var world: (any FaceMorphWorld)?
+    weak let world: (any FaceMorphWorld)?
     public var automaticBlinkingEnabled = true
     public var dialogueExpressionsEnabled = true
     private var emotions: [FormID: HeldEmotion] = [:]
@@ -32,10 +32,6 @@ public final class FaceMorphCoordinator {
             automaticBlinkingEnabled = settings.bool(.characterBlinking)
             dialogueExpressionsEnabled = settings.bool(.characterDialogueExpressions)
         }
-    }
-
-    public func attach(world: any FaceMorphWorld) {
-        self.world = world
     }
 
     private var selectedPlayback: FaceMorphPlayback? {

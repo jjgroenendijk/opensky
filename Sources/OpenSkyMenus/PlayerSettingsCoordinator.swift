@@ -38,7 +38,7 @@ nonisolated public struct PlayerHUDSettings: Equatable, Sendable {
 
 public final class PlayerSettingsCoordinator {
     public let store: PlayerSettingsStore
-    private weak var world: PlayerSettingsWorld?
+    private weak let world: PlayerSettingsWorld?
     /// How many times each system was told a value, for the readout.
     public private(set) var applyCount = 0
     /// The install's keys plus the player's remaps.
@@ -50,8 +50,10 @@ public final class PlayerSettingsCoordinator {
     /// The group the sidebar table shows.
     public var inspectedGroup = PlayerSettingGroup.gameplay
 
-    public init(store: PlayerSettingsStore) {
+    /// Call `applyAll()` once the world can take the settings.
+    public init(store: PlayerSettingsStore, world: PlayerSettingsWorld? = nil) {
         self.store = store
+        self.world = world
         bindings.restore(store.model.keyBindings)
         store.observe { [weak self] id in
             self?.apply(id)
@@ -86,11 +88,6 @@ public final class PlayerSettingsCoordinator {
         next.restore(store.model.keyBindings)
         bindings = next
         world?.applyBindings(bindings)
-    }
-
-    public func attach(world: PlayerSettingsWorld) {
-        self.world = world
-        applyAll()
     }
 
     /// Look sensitivity 0.5 is OpenSky's own look speed, 1 doubles it.

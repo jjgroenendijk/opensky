@@ -48,7 +48,7 @@ public final class AudioCoordinator {
     public private(set) var assets: AudioAssetLoader?
     /// Voice line bytes for the lab trigger, read off the main actor.
     var voiceFiles: AssetLoader<String, Data>?
-    weak var world: (any AudioWorld)?
+    weak let world: (any AudioWorld)?
     /// Enumerating every archive entry is not free, so the list builds off the main actor.
     var musicFileNames: [String]?
     /// Set once the list is requested; a test awaits it.
@@ -56,9 +56,7 @@ public final class AudioCoordinator {
     var voice = VoiceLabState()
     var speech = SpeechState()
 
-    public init() {}
-
-    public func attach(world: any AudioWorld) {
+    public init(world: any AudioWorld) {
         self.world = world
     }
 

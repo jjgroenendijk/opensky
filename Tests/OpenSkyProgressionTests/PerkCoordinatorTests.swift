@@ -21,8 +21,7 @@ struct PerkCoordinatorTests {
         baselines: ActorPerkBaselineResolver? = nil
     ) throws -> PerkCoordinator {
         let index = try PerkRuntimeFixture.index()
-        let coordinator = PerkCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = PerkCoordinator(world: world)
         coordinator.wire(
             PerkRuntime(
                 store: WorldStateStore(),
@@ -40,8 +39,7 @@ struct PerkCoordinatorTests {
     }
 
     @Test func withoutARuntimeEveryEntryPointKeepsItsValue() {
-        let coordinator = PerkCoordinator()
-        coordinator.attach(world: FakeProgressionWorld())
+        let coordinator = PerkCoordinator(world: FakeProgressionWorld())
 
         #expect(coordinator.modified(10, at: PerkRuntimeFixture.percentBlocked, on: .player) == 10)
         #expect(coordinator.multiplier(at: PerkRuntimeFixture.percentBlocked, on: .player) == 1)

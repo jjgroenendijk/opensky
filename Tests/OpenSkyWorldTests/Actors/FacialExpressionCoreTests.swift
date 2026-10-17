@@ -49,8 +49,7 @@ struct FacialExpressionCoreTests {
             }
         }
         let world = World()
-        let coordinator = FaceMorphCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = FaceMorphCoordinator(world: world)
         coordinator.automaticBlinkingEnabled = false
         coordinator.showEmotion(.fear, value: 100, on: FormID(0x10), now: 0, seconds: 1)
         coordinator.tick(now: 0.5)

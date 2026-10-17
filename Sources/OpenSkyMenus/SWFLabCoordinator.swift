@@ -17,14 +17,11 @@ public final class SWFLabCoordinator {
 
     private let movies: SWFMovieSource
     private let hud: HUDCoordinator
-    private weak var world: SWFLayerWorld?
+    private weak let world: SWFLayerWorld?
 
-    public init(movies: SWFMovieSource, hud: HUDCoordinator) {
+    public init(movies: SWFMovieSource, hud: HUDCoordinator, world: SWFLayerWorld? = nil) {
         self.movies = movies
         self.hud = hud
-    }
-
-    public func attach(world: SWFLayerWorld) {
         self.world = world
     }
 

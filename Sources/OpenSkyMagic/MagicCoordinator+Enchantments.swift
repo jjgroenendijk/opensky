@@ -10,7 +10,7 @@ import OpenSkyMagicInterface
 extension MagicCoordinator: WeaponEnchantmentApplying {
     @discardableResult
     public func applyWeaponEnchantment(_ hit: WeaponEnchantmentHit) -> WeaponEnchantmentReport? {
-        guard let owner = world?.actorValueHolder(for: hit.attacker) else { return nil }
+        guard let owner = world.actorValueHolder(for: hit.attacker) else { return nil }
         let holders = residentHolders(of: hit.targets)
         return withEffects { runtime in
             WeaponEnchantmentApplication.apply(hit, owner: owner, holders: holders, using: &runtime)
@@ -28,7 +28,7 @@ extension MagicCoordinator {
     /// has no ENCH index. Cached after the first ask.
     public func enchantmentProfile(of item: FormID) -> ItemEnchantmentProfile? {
         let store = enchantmentStore
-        let items = world?.inventory?.baselines.items
+        let items = world.inventory?.baselines.items
         return profiles.profile(of: item) { item in
             guard let store, let definition = items?.definition(item) else { return nil }
             return ItemEnchantmentProfile.resolve(definition, using: store)
@@ -48,7 +48,7 @@ extension MagicCoordinator {
     /// leave the hands a worn item holds, then worn enchantments are re-read.
     @discardableResult
     public func equipmentChanged(on holder: InventoryHolder) -> WornEnchantmentReport {
-        if let caster, let values = world?.actorValueHolder(for: holder.key) {
+        if let caster, let values = world.actorValueHolder(for: holder.key) {
             caster.spellbook.releaseHands(wornBy: holder, on: values)
         }
         return refreshWornEnchantments(on: holder)
@@ -59,8 +59,8 @@ extension MagicCoordinator {
     @discardableResult
     public func refreshWornEnchantments(on holder: InventoryHolder) -> WornEnchantmentReport {
         guard
-            let equipment = world?.equipment,
-            let values = world?.actorValueHolder(for: holder.key)
+            let equipment = world.equipment,
+            let values = world.actorValueHolder(for: holder.key)
         else { return .none }
         let worn = equipment.equipped(on: holder).compactMap { enchantmentProfile(of: $0) }
         return withEffects { runtime in

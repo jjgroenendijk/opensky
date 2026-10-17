@@ -33,7 +33,7 @@ public final class InventoryCoordinator {
     /// Nil without a FACT and FLST index.
     public var vendors: VendorCoordinator?
     /// Lock state, keys, and lockpicking, over the same world-item runtime.
-    public let locks = LockCoordinator()
+    public let locks: LockCoordinator
     /// Nil without recipe data.
     public internal(set) var craftingCatalog: CraftingCatalog?
     /// At most one station is in use at a time.
@@ -49,16 +49,15 @@ public final class InventoryCoordinator {
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla
 
-    weak var world: (any InventoryWorld)?
+    let world: any InventoryWorld
     /// Takes `AIPL`, `REMP`, and `CRFT`. The lock coordinator has its own.
     public weak var storyEvents: (any StoryEventReporting)? {
         didSet { locks.storyEvents = storyEvents }
     }
 
-    public init() {}
-
-    public func attach(world: any InventoryWorld) {
+    public init(world: any InventoryWorld, locks: LockCoordinator) {
         self.world = world
+        self.locks = locks
     }
 
     public func wire(
@@ -82,21 +81,22 @@ public final class InventoryCoordinator {
 
     /// The use key: take a loose item, search a container, harvest a plant, or
     /// use a crafting station. Other actions belong to other domains and pass through.
-    public func handleInteraction(_ action: InteractionAction) {
+    public func handleInteraction(_ action: InteractionAction) -> [InventoryCommand] {
         switch action {
         case .take:
             note(takeInteractionTarget())
         case .search:
             note(openInteractionTargetContainer())
         case .harvest:
-            note(harvestInteractionTarget())
+            return harvestInteractionTarget().commands
         case .use:
-            if let station = world?.crosshairInteraction.flatMap(CraftingActivationEvent.init) {
+            if let station = world.crosshairInteraction.flatMap(CraftingActivationEvent.init) {
                 openCraftingSession(station)
             }
         default:
             break
         }
+        return []
     }
 
     // MARK: - Item actions
@@ -104,7 +104,7 @@ public final class InventoryCoordinator {
     @discardableResult
     public func takeInteractionTarget() -> ItemActionOutcome {
         guard let runtime else { return .unavailable }
-        guard let interaction = world?.crosshairInteraction else {
+        guard let interaction = world.crosshairInteraction else {
             return .nothingUnderCrosshair(verb: "take")
         }
         do {
@@ -121,7 +121,7 @@ public final class InventoryCoordinator {
     @discardableResult
     public func openInteractionTargetContainer() -> ItemActionOutcome {
         guard let runtime else { return .unavailable }
-        guard let interaction = world?.crosshairInteraction else {
+        guard let interaction = world.crosshairInteraction else {
             return .nothingUnderCrosshair(verb: "search")
         }
         // Closing first keeps one session live and leaves the previous
@@ -167,7 +167,7 @@ public final class InventoryCoordinator {
         guard let runtime else { return .unavailable }
         let carried = runtime.inventory.inventory(of: runtime.player).stacks
         guard let target = item ?? carried.first?.item else { return .nothingToDrop }
-        guard let placement = world?.dropPlacement() else { return .noDropCell }
+        guard let placement = world.dropPlacement() else { return .noDropCell }
         do {
             try runtime.drop(target, count: count, at: placement)
             storyEvents?.reportStoryEvent(.removeItem(

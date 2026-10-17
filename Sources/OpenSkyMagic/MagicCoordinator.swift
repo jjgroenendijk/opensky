@@ -32,7 +32,9 @@ public final class MagicCoordinator {
         didSet { profiles.invalidate() }
     }
 
-    weak var world: (any MagicWorld)?
+    let world: any MagicWorld
+    /// What the effects asked of the app. A frame step returns and empties it.
+    var pendingCommands: [MagicCommand] = []
     /// Takes `CAST`.
     public weak var storyEvents: (any StoryEventReporting)?
     /// Hears every cast, as spell then caster, for the `OnSpellCast` event.
@@ -57,9 +59,7 @@ public final class MagicCoordinator {
     public internal(set) var lastEffectAction = MagicEffectActionOutcome.idle
     public internal(set) var lastCastingAction = CastingActionOutcome.idle
 
-    public init() {}
-
-    public func attach(world: any MagicWorld) {
+    public init(world: any MagicWorld) {
         self.world = world
     }
 
@@ -84,12 +84,11 @@ public final class MagicCoordinator {
         spellPluginName: String?,
         baselines: ActorSpellBaselineResolver?
     ) {
-        let runtime = CasterRuntime(spellbook: spellbook, values: values)
+        let runtime = CasterRuntime(spellbook: spellbook, values: values, world: self)
         runtime.costSettings = spellCostSettings
         caster = runtime
         self.spellPluginName = spellPluginName
         spellBaselines = baselines
-        runtime.attach(world: self)
     }
 
     public func wireEnchantments(store: EnchantmentStore?) {
@@ -121,31 +120,42 @@ public final class MagicCoordinator {
 
     /// Whole effect steps for the delta this frame simulated, over the player
     /// and the resident actors. A menu-paused frame delivers delta 0.
-    public func advanceEffects(delta: Float) {
-        guard var runtime = effects else { return }
+    public func advanceEffects(delta: Float) -> [MagicCommand] {
+        guard var runtime = effects else { return takeCommands() }
         runtime.advance(
             delta: delta,
             accumulator: &accumulator,
-            over: world?.regeneratingHolders() ?? [.player]
+            over: world.regeneratingHolders()
         )
         effects = runtime
         performWorldActions()
         pulseCloaks(delta: delta)
+        return takeCommands()
+    }
+
+    /// Returns and empties what the effects asked of the app. A command raised
+    /// outside a frame step, such as by a script, also leaves with the next one.
+    public func takeCommands() -> [MagicCommand] {
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
     /// One frame of casting. A frame in a menu or in free-fly charges nothing
     /// for the player, but NPC casts still advance.
-    public func advanceCasting(_ intent: CastingIntent, isPlayerControlled: Bool) {
-        guard let caster else { return }
+    public func advanceCasting(
+        _ intent: CastingIntent, isPlayerControlled: Bool
+    ) -> [MagicCommand] {
+        guard let caster else { return takeCommands() }
         caster.acceptFrame(isPlayerControlled ? intent : .still, on: .player)
         advanceActorCasts(delta: intent.deltaTime)
+        return takeCommands()
     }
 
     /// Every NPC cast in flight, charged on the player's clock.
     func advanceActorCasts(delta: Float) {
         guard let caster, delta > 0 else { return }
         for key in caster.castingActors where key != .player {
-            guard let holder = world?.actorValueHolder(for: key) else { continue }
+            guard let holder = world.actorValueHolder(for: key) else { continue }
             caster.advance(delta: delta, on: holder)
         }
     }
@@ -160,7 +170,7 @@ public final class MagicCoordinator {
     /// and the panel both call this, and show the line of the outcome it returns.
     @discardableResult
     public func consumeMagicItem(_ item: FormID) -> MagicEffectActionOutcome {
-        guard effects != nil, let inventory = world?.inventory else {
+        guard effects != nil, let inventory = world.inventory else {
             return recordEffect(.unavailable)
         }
         let name = inventory.baselines.items.definition(item)?.editorID ?? item.description
@@ -213,7 +223,7 @@ public final class MagicCoordinator {
 
     /// The carried items, in FormID order, that `transform` maps to a value.
     func carriedItems<Value>(_ transform: (ItemDefinitionStore, FormID) -> Value?) -> [Value] {
-        guard let inventory = world?.inventory else { return [] }
+        guard let inventory = world.inventory else { return [] }
         let items = inventory.baselines.items
         return inventory.inventory(of: .player).stacks
             .map(\.item)
@@ -224,12 +234,12 @@ public final class MagicCoordinator {
 
 extension MagicCoordinator: CasterWorld {
     public var castingGameDay: Int32 {
-        MagicCore.gameDay(world?.gameDaysPassed ?? 0)
+        MagicCore.gameDay(world.gameDaysPassed)
     }
 
     @discardableResult
     public func reportSkillUse(_ use: SkillUseEvent) -> Float {
-        world?.reportSkillUse(use) ?? 0
+        world.reportSkillUse(use)
     }
 
     public func applyCastEffects(
@@ -252,11 +262,11 @@ extension MagicCoordinator: CasterWorld {
 
     @discardableResult
     public func fireSpellProjectile(_ payload: SpellPayload) -> Bool {
-        world?.fireSpellProjectile(payload) ?? false
+        world.fireSpellProjectile(payload)
     }
 
     public func aimedSpellTarget(within range: Float, for caster: ReferenceKey) -> SpellAim {
-        world?.aimedSpellTarget(within: range, for: caster) ?? .none
+        world.aimedSpellTarget(within: range, for: caster)
     }
 
     /// Casting breaks the caster's invisibility. The wiki says only the player's
@@ -299,7 +309,7 @@ extension MagicCoordinator: CasterWorld {
     func residentHolders(of targets: [SpellHitTarget]) -> [ReferenceKey: ActorValueHolder] {
         var holders: [ReferenceKey: ActorValueHolder] = [:]
         for target in targets {
-            holders[target.key] = world?.actorValueHolder(for: target.key)
+            holders[target.key] = world.actorValueHolder(for: target.key)
         }
         return holders
     }

@@ -29,8 +29,6 @@ final class FakeMagicWorld: MagicWorld {
     private(set) var perkOwners: [PerkEntryPoint: ReferenceKey] = [:]
     private(set) var bookRaises: [(skill: Int32, points: Int)] = []
     var undead: Set<ReferenceKey> = []
-    private(set) var staggered: [ReferenceKey] = []
-    private(set) var hazards: [(hazard: ReferenceKey, target: ReferenceKey)] = []
     private(set) var cloakRadii: [Float] = []
 
     @discardableResult
@@ -85,18 +83,6 @@ final class FakeMagicWorld: MagicWorld {
     ) -> String {
         probedFunctions.append(function)
         return "probed"
-    }
-
-    @discardableResult
-    func staggerActor(_ key: ReferenceKey, magnitude _: Float) -> Bool {
-        staggered.append(key)
-        return true
-    }
-
-    @discardableResult
-    func spawnHazard(_ hazard: ReferenceKey, at key: ReferenceKey) -> Bool {
-        hazards.append((hazard, key))
-        return true
     }
 
     func cloakTargets(around _: ReferenceKey, radius: Float) -> [ReferenceKey] {

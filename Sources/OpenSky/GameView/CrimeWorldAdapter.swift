@@ -56,7 +56,6 @@ final class CrimeWorldAdapter {
             let factionStore = provider.factionStore,
             let pluginName = provider.magicItemPluginName
         else { return }
-        game.crime.attach(world: self)
         game.crime.crimeTexts = CrimeTexts
             .resolve(store: provider.gameSettings) { [game] in game.mapWorld.text($0) }
         game.crime.wire(
@@ -65,6 +64,15 @@ final class CrimeWorldAdapter {
             pluginName: pluginName
         )
         game.inventory.runtime?.crime = game.crime.reporter
+    }
+
+    func run(_ commands: [CrimeCommand]) {
+        for command in commands {
+            switch command {
+            case let .showNotice(text): game.hud.showNotification(text)
+            case let .applyGuardHostility(hostility): game.factions.setCrimeHostility(hostility)
+            }
+        }
     }
 
     /// A witnessed crime is one the perception pass actually saw.
@@ -143,10 +151,6 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
             scriptedRank: derivation.scriptedRank(of: observer, toward: player),
             faction: derivation.factionReaction(of: observer, toward: player)
         )
-    }
-
-    func applyGuardHostility(_ hostility: GuardCrimeHostility) {
-        game.factions.setCrimeHostility(hostility)
     }
 
     func joinFaction(_ faction: ReferenceKey, actor key: ReferenceKey, rank: Int8) -> Bool {
@@ -243,10 +247,6 @@ extension CrimeWorldAdapter: CrimeSessionWorld {
 
     func resumePackage(for key: ReferenceKey) {
         game.packages.resume(key)
-    }
-
-    func showCrimeNotice(_ text: String) {
-        game.hud.showNotification(text)
     }
 
     var isDialogueOpen: Bool {

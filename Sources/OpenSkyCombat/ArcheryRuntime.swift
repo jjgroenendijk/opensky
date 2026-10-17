@@ -54,13 +54,6 @@ public final class ArcheryRuntime {
         self.world = world
     }
 
-    /// Attaches (or detaches) the world both halves resolve against.
-    public func attach(world: (any ProjectileWorld)?) {
-        self.world = world
-        projectiles.attach(world: world)
-        reset()
-    }
-
     // MARK: - Intent
 
     /// Takes one frame of archery intent and raises the events its edges imply.

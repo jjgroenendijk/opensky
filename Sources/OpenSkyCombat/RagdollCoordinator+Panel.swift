@@ -6,7 +6,7 @@ import OpenSkyFormatsESM
 import OpenSkyPhysics
 import simd
 
-extension RagdollCoordinator: RagdollControlProviding {
+extension RagdollCoordinator {
     public var ragdollStatsSnapshot: RagdollStatsSnapshot {
         runtime?.world.statsSnapshot ?? RagdollStatsSnapshot()
     }
@@ -15,7 +15,7 @@ extension RagdollCoordinator: RagdollControlProviding {
     /// skeleton carries no bodies.
     @discardableResult
     public func triggerRagdoll() -> Bool {
-        guard let runtime, let key = world?.selectedRagdollActor else { return false }
+        guard let runtime, let key = world.selectedRagdollActor else { return false }
         return runtime.trigger(key)
     }
 
@@ -28,9 +28,10 @@ extension RagdollCoordinator: RagdollControlProviding {
     }
 
     /// The deaths stand; only the simulated bodies go.
-    public func clearRagdolls() {
+    public func clearRagdolls() -> [RagdollCommand] {
         runtime?.reset()
-        world?.publishedRagdollPoses.removeAll()
+        hasPublishedPoses = false
+        return [.publishPoses([:])]
     }
 
     /// Opens the container menu over the nearest corpse. Nearest, not the
@@ -40,7 +41,6 @@ extension RagdollCoordinator: RagdollControlProviding {
     public func searchNearestCorpse() -> Bool {
         guard
             let runtime,
-            let world,
             let feet = world.playerFeetPosition,
             let nearest = world.ragdollResidents
                 .filter({ runtime.opensAsCorpse($0.key) })

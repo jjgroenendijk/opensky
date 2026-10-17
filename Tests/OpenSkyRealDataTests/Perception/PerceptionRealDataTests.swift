@@ -26,6 +26,8 @@ struct PerceptionRealDataTests {
     /// Fixed steps spent standing at each stride, which is what turns an
     /// approach into a sequence of states rather than one jump.
     private static let stepsPerStride = 20
+    /// The detection settings read from GMSTs, which the report lists first.
+    private static let loadOrderSettingCount = 12
 
     // MARK: - Provenance
 
@@ -35,10 +37,10 @@ struct PerceptionRealDataTests {
         let settings = DetectionSettings.resolve(
             store: GameSettingLoader.load(root: root)
         )
-        // The ten load-order settings must come from a plugin, not from the
+        // The twelve load-order settings must come from a plugin, not from the
         // fallback: a fallback here would mean the formula is running on
         // numbers this install does not actually carry.
-        let vanilla = settings.report.prefix(10)
+        let vanilla = settings.report.prefix(Self.loadOrderSettingCount)
         for row in vanilla {
             let source = row.setting.source.lowercased()
             #expect(
@@ -51,9 +53,9 @@ struct PerceptionRealDataTests {
         #expect(settings.maxDistance.value == 2500)
         #expect(settings.exteriorDistanceMult.value == 2.1)
         #expect(settings.soundLosMult.value == 0.3)
-        // Everything after those ten is ours and says so, which is the honesty
+        // Everything after those twelve is ours and says so, which is the honesty
         // rule the docs page states.
-        let ours = settings.report.dropFirst(10)
+        let ours = settings.report.dropFirst(Self.loadOrderSettingCount)
         #expect(ours.allSatisfy { $0.setting.source == "OpenSky constant" })
         for row in settings.report {
             print("[INFO] detection \(row.editorID) = \(row.setting.value) "

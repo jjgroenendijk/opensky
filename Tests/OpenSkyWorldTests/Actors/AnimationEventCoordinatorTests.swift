@@ -53,8 +53,7 @@ struct AnimationEventCoordinatorTests {
         let world = FakeAnimationEventWorld()
         world.positions = [actor: SIMD3(1, 2, 3), .player: SIMD3(0, 0, 0)]
         world.knownSounds = ["TestClap"]
-        let coordinator = AnimationEventCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = AnimationEventCoordinator(world: world)
         return (coordinator, world)
     }
 

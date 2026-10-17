@@ -60,9 +60,8 @@ struct AgentSocketTests {
     }
 
     @Test func aRequestRoundTripsAndTheSocketIsPrivate() async throws {
-        let coordinator = AgentControlCoordinator(socketPath: path)
         let world = FakeAgentWorld()
-        coordinator.attach(world: world)
+        let coordinator = AgentControlCoordinator(socketPath: path, world: { world })
         coordinator.setEnabled(true)
         defer { coordinator.setEnabled(false) }
 
@@ -86,8 +85,8 @@ struct AgentSocketTests {
     }
 
     @Test func aMalformedLineGetsAnErrorReplyAndTheConnectionLives() async throws {
-        let coordinator = AgentControlCoordinator(socketPath: path)
-        coordinator.attach(world: FakeAgentWorld())
+        let world = FakeAgentWorld()
+        let coordinator = AgentControlCoordinator(socketPath: path, world: { world })
         coordinator.setEnabled(true)
         defer { coordinator.setEnabled(false) }
 

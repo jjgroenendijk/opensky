@@ -67,7 +67,6 @@ extension MagicCoordinator {
         caster: ReferenceKey,
         on target: ReferenceKey?
     ) -> [MagicItemEffect] {
-        guard let world else { return entries }
         let cast = PerkEvaluationSubjects(owner: caster, target: target ?? caster)
             .binding(.spell, to: subject)
         return entries.map { entry in

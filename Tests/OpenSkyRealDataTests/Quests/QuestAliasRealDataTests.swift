@@ -42,11 +42,12 @@ struct QuestAliasRealDataTests {
 
         let census = Self.census(quests: quests)
         // The corpus is what makes the deferrals measurable rather than
-        // described: every alias is either filled or counted under a reason.
+        // described: every alias is filled, left for the world to create, or
+        // counted under a reason.
         // The two do not partition the set, because a "Force Into Alias When
         // Filled" target is counted as skipped for its own (absent) fill type
         // and then filled by its source — so the sum is a cover, not a split.
-        #expect(census.filled + census.skipped.total >= census.aliases)
+        #expect(census.filled + census.created + census.skipped.total >= census.aliases)
         #expect(census.filled <= census.aliases)
         #expect(census.aliases > 0)
 
@@ -69,6 +70,8 @@ struct QuestAliasRealDataTests {
         var questsWithAliases = 0
         var aliases = 0
         var filled = 0
+        /// Created by the world after the pass, so no reference is filled yet.
+        var created = 0
         var skipped = QuestAliasTally()
         /// Quests an implemented fill type would stop from starting.
         var blockedQuests: [String] = []
@@ -85,6 +88,7 @@ struct QuestAliasRealDataTests {
             census.aliases += quest.aliases.count
             let result = QuestAliasFiller.fill(quest, resolver: quests.resolver)
             census.filled += result.state.count
+            census.created += result.creations.count
             census.skipped.merge(result.skipped)
             if !result.canStartQuest {
                 census.blockedQuests.append(quest.editorID ?? quest.formID.description)
@@ -114,7 +118,8 @@ struct QuestAliasRealDataTests {
         }
         lines.append(
             "corpus: quests \(census.quests) with aliases \(census.questsWithAliases) "
-                + "aliases \(census.aliases) filled \(census.filled)"
+                + "aliases \(census.aliases) filled \(census.filled) "
+                + "created \(census.created)"
         )
         for entry in census.skipped.ranked {
             let share = Double(entry.count) / Double(max(census.aliases, 1)) * 100

@@ -20,9 +20,8 @@ struct ProjectileArrowAfterImpactTests {
         world: FakeProjectileWorld,
         arrows: ArrowSettings
     ) -> ProjectileRuntime {
-        let runtime = ProjectileRuntime(settings: .synthetic)
+        let runtime = ProjectileRuntime(settings: .synthetic, world: world)
         runtime.arrows = arrows
-        runtime.attach(world: world)
         return runtime
     }
 
@@ -125,9 +124,10 @@ struct ProjectileArrowAfterImpactTests {
     @Test func anEmptyQuiverShowsTheNoticeOncePerPressAndDoesNotDraw() {
         let world = FakeProjectileWorld()
         let runtime = ArcheryRuntime(
-            settings: .synthetic, projectiles: ProjectileRuntime(settings: .synthetic)
+            settings: .synthetic,
+            projectiles: ProjectileRuntime(settings: .synthetic, world: world),
+            world: world
         )
-        runtime.attach(world: world)
         runtime.bow = MeleeWeaponProfile(damage: 7, reach: 1, speed: 1, weapon: FormID(0x0001_397E))
         let press = ArcheryIntent(drawing: true, hasBowEquipped: true, deltaTime: 1.0 / 60)
         let release = ArcheryIntent(drawing: false, hasBowEquipped: true, deltaTime: 1.0 / 60)

@@ -45,9 +45,9 @@ final class MenuRouter {
         let menu = SystemMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
-            hud: game.hud
+            hud: game.hud,
+            world: game
         )
-        menu.attach(world: game)
         menu.attach(settings: game.playerSettings)
         menu.saves = game.saveGames
         return menu
@@ -57,37 +57,33 @@ final class MenuRouter {
         let menu = TitleMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
-            hud: game.hud
+            hud: game.hud,
+            world: game.menuWorld
         )
-        menu.attach(world: game.menuWorld)
         menu.saves = game.saveGames
         return menu
     }
 
     func makeRaceMenu() -> RaceMenuCoordinator {
-        let menu = RaceMenuCoordinator(
+        RaceMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
-            hud: game.hud
+            hud: game.hud,
+            world: game.menuWorld
         )
-        menu.attach(world: game.menuWorld)
-        return menu
     }
 
     func makeSkillsMenu() -> SkillsMenuCoordinator {
-        let menu = SkillsMenuCoordinator(
+        SkillsMenuCoordinator(
             menuMode: game.menuMode,
             movies: game.swfMovies,
-            hud: game.hud
+            hud: game.hud,
+            world: game.menuWorld
         )
-        menu.attach(world: game.menuWorld)
-        return menu
     }
 
     func makeMapMenu() -> MapMenuCoordinator {
-        let menu = MapMenuCoordinator(menuMode: game.menuMode)
-        menu.attach(world: game.mapWorld)
-        return menu
+        MapMenuCoordinator(menuMode: game.menuMode, world: game.mapWorld)
     }
 
     /// The bound keys that open a menu or save, outside any menu.
@@ -113,7 +109,7 @@ final class MenuRouter {
     /// the menu movies' late calls.
     func wire(renderer: Renderer) {
         game.playerSettings.loadControlMap(try? game.controlMapLoader?())
-        game.playerSettings.attach(world: game.menuWorld)
+        game.playerSettings.applyAll()
         game.audio.onEngineBuilt = { [weak game] in game?.playerSettings.applyAll() }
         if let labels = game.menuTextLoader?() {
             renderer.swfTextTranslator = { labels.label(for: $0) }

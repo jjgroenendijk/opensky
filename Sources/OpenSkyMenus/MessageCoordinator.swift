@@ -39,15 +39,12 @@ public final class MessageCoordinator {
     private var frame: UInt64 = 0
     private var nextToken: UInt64 = 1
     private let menuMode: MenuModeController
-    private(set) weak var world: (any MessageWorld)?
+    weak let world: (any MessageWorld)?
 
-    public init(menuMode: MenuModeController) {
+    /// Call `reloadHelpRecords()` once the world's records are loaded.
+    public init(menuMode: MenuModeController, world: (any MessageWorld)? = nil) {
         self.menuMode = menuMode
-    }
-
-    public func attach(world: any MessageWorld) {
         self.world = world
-        reloadHelpRecords()
     }
 
     /// Reads the help counts again, after a save loads.

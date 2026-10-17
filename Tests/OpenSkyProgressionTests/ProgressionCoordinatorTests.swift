@@ -23,7 +23,9 @@ struct ProgressionCoordinatorTests {
     // MARK: - Without game data
 
     @Test func withoutGameDataThePanelIsUnavailable() {
-        let coordinator = ProgressionCoordinator(perks: PerkCoordinator())
+        let coordinator = ProgressionCoordinator(
+            perks: PerkCoordinator(world: FakeProgressionWorld()), world: FakeProgressionWorld()
+        )
 
         #expect(coordinator.snapshot == .unavailable)
         #expect(coordinator.reportSkillUse(SkillUseEvent(
@@ -178,7 +180,12 @@ struct ProgressionCoordinatorTests {
         coordinator.awardCharacterExperience(100_000)
 
         let name = coordinator.skillName(oneHanded)
-        #expect(world.notices.first?.hasPrefix("\(name) rose to ") == true)
-        #expect(world.notices.last == ProgressionTexts.vanilla.levelUpAvailable)
+        let commands = coordinator.takeCommands()
+        guard case let .showNotification(first) = commands.first else {
+            Issue.record("no skill notice")
+            return
+        }
+        #expect(first.hasPrefix("\(name) rose to "))
+        #expect(commands.last == .showNotification(ProgressionTexts.vanilla.levelUpAvailable))
     }
 }

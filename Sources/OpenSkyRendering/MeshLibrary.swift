@@ -481,14 +481,20 @@ nonisolated extension MeshLibrary {
             throw MeshLibraryError.fileNotFound(path: pathKey)
         }
         let model: Model
+        let particles: [ParticleSystemDefinition]
         do {
-            model = try surface.applied(to: NIFFile(data: data).nodeSkinnedModel(bones: bones))
+            let file = try NIFFile(data: data)
+            model = try surface.applied(to: file.nodeSkinnedModel(bones: bones))
+            particles = try file.particleSystems()
         } catch {
             throw MeshLibraryError.parseFailed(path: pathKey, reason: String(describing: error))
         }
         guard !model.meshes.isEmpty else { throw MeshLibraryError.emptyModel(path: key) }
         let render = try makeRenderModel(model, key: key)
         cache[key] = render
+        // `particlePlaybacks` reads the plain key, so an animated windmill keeps its dust.
+        particleDefinitions[cacheKey(path: pathKey, terrainLODClipMask: nil, surface: surface)] =
+            particles
         skippedShapes[key] = model.skippedShapeCount
         modelBounds[key] = ModelBounds.containing(model: model)
         loadedCount += 1

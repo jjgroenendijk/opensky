@@ -1,5 +1,6 @@
 // The world side of the inventory domain: what `InventoryCoordinator` reads
-// from the running session. The app answers it; a test passes a fake.
+// from the running session. The app answers it; a test passes a fake. Changes
+// to the world go back to the app as `InventoryCommand` values.
 // See docs/engine/coordinators.md.
 
 import OpenSkyConditions
@@ -28,16 +29,11 @@ public protocol InventoryWorld: AnyObject {
     /// The bounty taking one `item` from `reference` would accrue. Zero
     /// without a crime runtime.
     func theftBounty(of item: FormID, from reference: ReferenceKey) -> Int32
-    /// Brings magic in line after an equip change on `holder`: readied spells
-    /// leave the hands it now fills, and worn enchantments are re-read.
-    func equipmentChanged(on holder: InventoryHolder)
     /// The enchantment `item` carries, as worn by `owner`.
     func enchantmentLine(of item: FormID, on owner: ReferenceKey) -> String?
     var enchantmentCacheReadout: EnchantmentCacheReadout { get }
     /// Game days passed, which harvest regrowth counts in. Nil without a clock.
     var gameDaysPassed: Float? { get }
-    /// Republishes the crosshair target, so a changed prompt label shows at once.
-    func refreshInteractionTarget()
     /// The player's current Speech skill. Nil without actor values.
     func playerSpeechSkill() -> Float?
     /// The text a passing Set Activate Label perk of the player puts on `reference`'s

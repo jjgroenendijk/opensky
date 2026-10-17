@@ -45,8 +45,8 @@ final class NPCAIAcceptanceChain {
     var navigation = RuntimeNavigationGraph()
     var movement = NPCMovementRuntime()
     var packages: ActorPackageRuntime
-    let perception: PerceptionRuntime
-    let combat: CombatLoopRuntime
+    lazy var perception = PerceptionRuntime(settings: .synthetic, world: self)
+    private(set) lazy var combat = CombatLoopRuntime(settings: .synthetic, world: self)
 
     /// The game clock the package schedule is read against. Advanced by the
     /// route, never by wall time.
@@ -79,9 +79,6 @@ final class NPCAIAcceptanceChain {
     init() throws {
         let store = try NPCAIAcceptanceFixture.packageStore()
         packages = ActorPackageRuntime(store: store)
-        perception = PerceptionRuntime(settings: .synthetic)
-        combat = CombatLoopRuntime(settings: .synthetic)
-        combat.behaviorSettings = .quick
 
         try installNavigation()
         try packages.register(actor: Self.guardKey, base: Self.guardBase)
@@ -94,8 +91,7 @@ final class NPCAIAcceptanceChain {
         movement.onPersist = { [weak self] persistence in
             self?.settlePoints.append(persistence)
         }
-        perception.attach(world: self)
-        combat.attach(world: self)
+        combat.behaviorSettings = .quick
     }
 
     // MARK: - Driving

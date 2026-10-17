@@ -87,7 +87,10 @@ protocol that has one conformer and no test fake.
 A coordinator owns the state and the logic of one game domain, such as inventory or combat.
 It lives in that domain's feature module and is tested there. It imports no AppKit, so the CLI
 and the package tests can use it. `GameViewController` keeps only the view, the input, the
-render loop, and the panel wiring. It holds the coordinators and forwards to them.
+render loop, and the panel wiring. It holds the coordinators and forwards to them. A
+coordinator takes its port in its initializer and returns the changes it wants outside its
+domain as commands, which the app runs. The lint rule `late_attached_world` fails an
+`attach(world:)` method in a package module.
 
 Where it applies: every game domain that has a `GameViewController+X` file today. Issues 30.24
 to 30.34 move them.

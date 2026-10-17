@@ -7,10 +7,11 @@ import Testing
 @MainActor
 struct AgentCommandRouterTests {
     private let world = FakeAgentWorld()
-    private let router = AgentCommandRouter()
+    private let router: AgentCommandRouter
 
     init() {
-        router.world = world
+        let world = world
+        router = AgentCommandRouter(world: { world })
     }
 
     private func run(_ command: String, _ args: [String: AgentJSON] = [:], now: Double = 0)
@@ -47,11 +48,16 @@ struct AgentCommandRouterTests {
     }
 
     @Test func statusAnswersWithoutAGame() throws {
-        router.world = nil
-        let status = try #require(try result(run("status"))?.get())
+        let router = AgentCommandRouter(world: { nil })
+        let status = try #require(try result(router.handle(
+            AgentRequest(command: "status"),
+            now: 0
+        ))?
+            .get())
         #expect(status["running"] == false)
         #expect(status["protocolVersion"]?.intValue == AgentProtocol.version)
-        #expect(failureCode(run("state.player")) == .notReady)
+        #expect(failureCode(router.handle(AgentRequest(command: "state.player"), now: 0))
+            == .notReady)
     }
 
     @Test func unknownCommandsAndArgumentsAreTypedFailures() {
@@ -177,10 +183,13 @@ struct AgentCommandRouterTests {
 @MainActor
 struct AgentControlProvidingTests {
     private let world = FakeAgentWorld()
-    private let coordinator = AgentControlCoordinator(socketPath: "/tmp/opensky-agent-unused.sock")
+    private let coordinator: AgentControlCoordinator
 
     init() {
-        coordinator.attach(world: world)
+        let world = world
+        coordinator = AgentControlCoordinator(
+            socketPath: "/tmp/opensky-agent-unused.sock", world: { world }
+        )
     }
 
     @Test func thePauseControlFreezesAndResumesTheWorld() {

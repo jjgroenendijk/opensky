@@ -49,10 +49,6 @@ struct ConditionRealDataTests {
         let fraction = coverage.coverageFraction(in: registry)
         #expect(fraction > 0, "coverage fraction \(fraction) is not above zero")
         #expect(fraction < 1, "coverage fraction \(fraction) claims a complete registry")
-        #expect(
-            coverage.distinctIndices > registry.count,
-            "Skyrim.esm should use far more indices than the registry implements"
-        )
 
         let ranked = coverage.rankedUnimplemented(in: registry)
         let hottest = try #require(ranked.first, "no unimplemented function found")

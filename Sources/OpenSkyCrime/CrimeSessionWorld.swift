@@ -37,7 +37,6 @@ public protocol CrimeSessionWorld: AnyObject {
     func socialProfile(of key: ReferenceKey) -> ActorSocialProfile?
     /// Every term of what `observer` makes of the player.
     func reactionTerms(of observer: ActorSocialProfile) -> ReactionTermsReadout?
-    func applyGuardHostility(_ hostility: GuardCrimeHostility)
     /// - Returns: true when the stored memberships changed.
     func joinFaction(_ faction: ReferenceKey, actor key: ReferenceKey, rank: Int8) -> Bool
     /// - Returns: true when the actor was a member.
@@ -73,8 +72,6 @@ public protocol CrimeSessionWorld: AnyObject {
     func stopActor(_ key: ReferenceKey)
     func suspendPackage(for key: ReferenceKey)
     func resumePackage(for key: ReferenceKey)
-    /// A HUD notice, such as a bounty added or cleared.
-    func showCrimeNotice(_ text: String)
     var isDialogueOpen: Bool { get }
     var lastDialogueOutcome: String? { get }
     func beginDialogue(with speaker: ReferenceKey)

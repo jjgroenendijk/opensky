@@ -33,7 +33,7 @@ extension InventoryCoordinator {
         interaction: PlacedInteraction,
         holder: InventoryHolder
     )] {
-        (world?.containerInteractions() ?? []).compactMap { interaction in
+        world.containerInteractions().compactMap { interaction in
             containerHolder(for: interaction).map { (interaction, $0) }
         }
     }
@@ -117,7 +117,7 @@ extension InventoryCoordinator {
     /// The prices the player trades at with `merchant`: the player's live Speech skill,
     /// then the player's `Mod Buy Prices` and `Mod Sell Prices` with the merchant bound.
     public func barterPricing(with merchant: ReferenceKey?) -> BarterPricing {
-        guard let world else { return barterPricing }
+        let world = world
         let subjects = PerkEvaluationSubjects(owner: .player, target: merchant)
         let modifier = { (entryPoint: PerkEntryPoint) in
             Double(world.perkModified(

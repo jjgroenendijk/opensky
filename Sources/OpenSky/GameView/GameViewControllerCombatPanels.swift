@@ -43,10 +43,12 @@ extension GameViewController: ArcheryControlProviding {
 
     func despawnProjectiles() {
         combat.despawnProjectiles()
+        combatWorld.run(combat.takeCommands())
     }
 
     func clearStuckProjectiles() {
         combat.clearStuckProjectiles()
+        combatWorld.run(combat.takeCommands())
     }
 
     func clearProjectileTrace() {
@@ -149,6 +151,6 @@ extension GameViewController: RagdollControlProviding {
     }
 
     func clearRagdolls() {
-        ragdoll.clearRagdolls()
+        ragdollWorld.run(ragdoll.clearRagdolls())
     }
 }

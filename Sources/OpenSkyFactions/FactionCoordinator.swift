@@ -23,13 +23,10 @@ public final class FactionCoordinator {
     public private(set) var relations: FactionRelationIndex?
 
     let store: WorldStateStore
-    weak var world: (any FactionWorld)?
+    let world: any FactionWorld
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, world: any FactionWorld) {
         self.store = store
-    }
-
-    public func attach(world: any FactionWorld) {
         self.world = world
     }
 
@@ -69,7 +66,7 @@ public final class FactionCoordinator {
 
     /// The runtime, with `key` seeded first so a read sees its authored run.
     public func seededRuntime(for key: ReferenceKey) -> FactionRuntime? {
-        if let holder = world?.actorValueHolder(for: key) {
+        if let holder = world.actorValueHolder(for: key) {
             seed(holder)
         }
         return runtime
@@ -82,7 +79,7 @@ public final class FactionCoordinator {
 
     /// Nil without faction data or for an actor that is not resident.
     public func profile(of key: ReferenceKey) -> ActorSocialProfile? {
-        guard let holder = world?.actorValueHolder(for: key) else { return nil }
+        guard let holder = world.actorValueHolder(for: key) else { return nil }
         seed(holder)
         return runtime?.profile(of: holder)
     }
@@ -111,7 +108,7 @@ public final class FactionCoordinator {
     public func conditionResolution() -> FactionConditionResolution {
         guard let runtime else { return .empty }
         var profiles: [ReferenceKey: ActorSocialProfile] = [:]
-        for key in [ReferenceKey.player] + (world?.residentActorKeys() ?? []) {
+        for key in [ReferenceKey.player] + world.residentActorKeys() {
             profiles[key] = profile(of: key)
         }
         return FactionConditionResolution(
@@ -127,7 +124,7 @@ public final class FactionCoordinator {
     public func relationshipBase(of key: ReferenceKey) -> ResolvedFormID? {
         guard
             let runtime,
-            let base = world?.placedActorBase(of: key),
+            let base = world.placedActorBase(of: key),
             let plugin = runtime.pluginName
         else { return nil }
         return runtime.derivation.relationships.resolvedID(base, fromPlugin: plugin)
@@ -137,7 +134,7 @@ public final class FactionCoordinator {
 
     /// What `key` makes of the player. Nil without a runtime or for the player.
     public func derivedHostilityDecision(of key: ReferenceKey) -> HostilityDecision? {
-        guard key != .player, let observer = world?.actorValueHolder(for: key) else { return nil }
+        guard key != .player, let observer = world.actorValueHolder(for: key) else { return nil }
         // Mutating, so it runs on the stored runtime instead of a copy of it.
         return runtime?.decide(observer, toward: .player)
     }
@@ -153,7 +150,7 @@ public final class FactionCoordinator {
     @discardableResult
     public func setHostility(_ hostility: ActorHostility, on key: ReferenceKey) -> Bool {
         store.set(
-            ActorCombatState(hostility: hostility), for: key, in: world?.cellLocation(of: key)
+            ActorCombatState(hostility: hostility), for: key, in: world.cellLocation(of: key)
         )
     }
 
@@ -167,7 +164,7 @@ public final class FactionCoordinator {
     /// - Returns: true when the stored memberships changed.
     @discardableResult
     public func join(_ faction: ReferenceKey, actor key: ReferenceKey, rank: Int8 = 0) -> Bool {
-        guard let holder = world?.actorValueHolder(for: key), runtime != nil else { return false }
+        guard let holder = world.actorValueHolder(for: key), runtime != nil else { return false }
         seed(holder)
         return runtime?.join(key, to: faction, rank: rank, in: holder.cell) ?? false
     }
@@ -175,7 +172,7 @@ public final class FactionCoordinator {
     /// - Returns: true when the actor was a member.
     @discardableResult
     public func leave(_ faction: ReferenceKey, actor key: ReferenceKey) -> Bool {
-        guard let holder = world?.actorValueHolder(for: key), runtime != nil else { return false }
+        guard let holder = world.actorValueHolder(for: key), runtime != nil else { return false }
         seed(holder)
         return runtime?.leave(key, from: faction, in: holder.cell) ?? false
     }

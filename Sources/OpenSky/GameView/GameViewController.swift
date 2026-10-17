@@ -66,27 +66,15 @@ final class GameViewController: NSViewController {
     /// The session's runtime world state. Every cell build reads a snapshot of it.
     let worldState = WorldStateStore()
     /// Reference mutations, save slots, game time, globals, and condition lists.
-    lazy var runtimeState: RuntimeStateCoordinator = {
-        let runtimeState = RuntimeStateCoordinator(store: worldState)
-        runtimeState.attach(world: runtimeStateWorld)
-        return runtimeState
-    }()
+    lazy var runtimeState = RuntimeStateCoordinator(store: worldState, world: runtimeStateWorld)
 
     lazy var runtimeStateWorld = RuntimeStateWorldAdapter(game: self)
     /// The Papyrus VM and its world bridge. Both stay nil without game data.
-    lazy var scripts: ScriptCoordinator = {
-        let scripts = ScriptCoordinator()
-        scripts.attach(world: scriptWorld)
-        return scripts
-    }()
+    lazy var scripts = ScriptCoordinator(world: scriptWorld)
 
     lazy var scriptWorld = ScriptWorldAdapter(game: self)
     /// The renderer and streamer controls of the World panels.
-    lazy var renderControls: WorldRenderControls = {
-        let controls = WorldRenderControls(runtimeState: runtimeState)
-        controls.attach(world: self)
-        return controls
-    }()
+    lazy var renderControls = WorldRenderControls(runtimeState: runtimeState, world: self)
 
     lazy var sessionWiring = WorldSessionWiring(game: self)
     /// Free-fly input shared with the renderer; the view writes it from
@@ -109,40 +97,25 @@ final class GameViewController: NSViewController {
     /// runner holds the builder half, so the two share nothing mutable.
     var worldData: WorldDataStores?
     /// The audio engine, the world directors and the World > Audio lab state.
-    lazy var audio: AudioCoordinator = {
-        let audio = AudioCoordinator()
-        audio.attach(world: audioWorld)
-        return audio
-    }()
+    lazy var audio = AudioCoordinator(world: audioWorld)
 
     lazy var audioWorld = AudioWorldAdapter(game: self)
     /// The SWF movie loader; the AppDelegate sets its factory.
     let swfMovies = SWFMovieSource()
-    lazy var hud: HUDCoordinator = {
-        let hud = HUDCoordinator(movies: swfMovies)
-        hud.attach(world: self)
-        return hud
-    }()
-
-    lazy var swfLab: SWFLabCoordinator = {
-        let swfLab = SWFLabCoordinator(movies: swfMovies, hud: hud)
-        swfLab.attach(world: self)
-        return swfLab
-    }()
-
-    lazy var uiLab: UILabCoordinator = {
-        let uiLab = UILabCoordinator(menuMode: menuMode)
-        uiLab.attach(world: self)
-        return uiLab
-    }()
+    lazy var hud = HUDCoordinator(movies: swfMovies, world: self)
+    lazy var swfLab = SWFLabCoordinator(movies: swfMovies, hud: hud, world: self)
+    lazy var uiLab = UILabCoordinator(menuMode: menuMode, world: self)
 
     lazy var systemMenu = menuRouter.makeSystemMenu()
 
     /// The INI defaults under the player's own values. The AppDelegate sets the catalog.
     var settingsCatalog = PlayerSettingsCatalog.vanilla
-    lazy var playerSettings = PlayerSettingsCoordinator(store: PlayerSettingsStore(
-        catalog: settingsCatalog, persistence: try? PlayerSettingsFile.defaultFile()
-    ))
+    lazy var playerSettings = PlayerSettingsCoordinator(
+        store: PlayerSettingsStore(
+            catalog: settingsCatalog, persistence: try? PlayerSettingsFile.defaultFile()
+        ),
+        world: menuWorld
+    )
     /// `interface\translations` for the `$` keys movies show; nil without game data.
     var menuTextLoader: (() -> LocalizedLabels)?
     var controlMapLoader: (() throws -> ControlMapFile)?
@@ -159,19 +132,11 @@ final class GameViewController: NSViewController {
     /// Inventory menu row list + presentation state.
     lazy var inventoryMenu = InventoryMenuController(game: self)
     /// The quest the journal panel names and the quest changes it runs.
-    lazy var journal: JournalCoordinator = {
-        let journal = JournalCoordinator()
-        journal.attach(world: journalMenu)
-        return journal
-    }()
+    lazy var journal = JournalCoordinator(world: journalMenu)
 
     lazy var journalMenu = JournalMenuController(game: self)
     /// The dialogue index, the open conversation, and the speaker focus.
-    lazy var dialogue: DialogueCoordinator = {
-        let dialogue = DialogueCoordinator(store: worldState)
-        dialogue.attach(world: dialogueWorld)
-        return dialogue
-    }()
+    lazy var dialogue = DialogueCoordinator(store: worldState, world: dialogueWorld)
 
     lazy var dialogueWorld = DialogueWorldAdapter(game: self)
     /// Owns the scene and story-manager coordinators.
@@ -182,7 +147,7 @@ final class GameViewController: NSViewController {
     lazy var containerMenu = ContainerMenuController(game: self)
     lazy var lockpickingMenu = LockpickingMenuController(game: self)
     /// Notifications, help messages, and message boxes for scripts and the sidebar.
-    lazy var messages = MessageCoordinator(menuMode: menuMode)
+    lazy var messages = MessageCoordinator(menuMode: menuMode, world: messageWorld)
     lazy var subtitles: SubtitleCoordinator = {
         let subtitles = SubtitleCoordinator()
         subtitles.attach(presenter: hud)
@@ -191,12 +156,14 @@ final class GameViewController: NSViewController {
 
     lazy var messageWorld = MessageWorldAdapter(game: self)
     /// Kill cams and camera shake.
-    lazy var cinematicCamera = CinematicCameraCoordinator()
+    lazy var cinematicCamera = CinematicCameraCoordinator(world: cinematicWorld)
     lazy var cinematicWorld = CinematicCameraWorldAdapter(game: self)
-    lazy var loadingScreens = LoadingScreenCoordinator()
+    lazy var loadingScreens = LoadingScreenCoordinator(world: loadingWorld)
     lazy var loadingWorld = LoadingScreenWorldAdapter(game: self)
     /// World items, equipment, vendors and trades. Its runtimes stay nil without game data.
-    let inventory = InventoryCoordinator()
+    lazy var inventory = InventoryCoordinator(
+        world: inventoryWorld, locks: LockCoordinator(world: lockWorld)
+    )
     lazy var inventoryWorld = InventoryWorldAdapter(game: self)
     lazy var lockWorld = LockWorldAdapter(game: self)
     lazy var hazards = HazardCoordinator()
@@ -215,11 +182,7 @@ final class GameViewController: NSViewController {
         streamer: { [unowned self] in streamer }
     ))
     /// The player graphs, the body, and the locomotion and first-person panels.
-    lazy var player: PlayerCoordinator = {
-        let player = PlayerCoordinator(input: cameraInput)
-        player.attach(world: playerWorld)
-        return player
-    }()
+    lazy var player = PlayerCoordinator(input: cameraInput, world: playerWorld)
 
     lazy var playerWorld = PlayerWorldAdapter(game: self)
     /// The Face Morphs panel, over the actor in conversation.
@@ -229,82 +192,54 @@ final class GameViewController: NSViewController {
         HeadTrackingCoordinator(world: playerWorld, settings: playerSettings.store)
 
     /// Actor values: damage, restore, regeneration, and the panel controls.
-    lazy var actorValues: ActorValueCoordinator = {
-        let actorValues = ActorValueCoordinator(store: worldState)
-        actorValues.attach(world: actorWorld)
-        return actorValues
-    }()
+    lazy var actorValues = ActorValueCoordinator(store: worldState, world: actorWorld)
 
     lazy var actorWorld = ActorWorldAdapter(game: self)
 
     /// Active effects, spellcasting and item enchantments. Its runtimes stay nil without game
     /// data.
-    let magic = MagicCoordinator()
+    lazy var magic = MagicCoordinator(world: magicWorld)
     lazy var magicWorld = MagicWorldAdapter(game: self)
 
     /// Perk ownership and the entry points every combat and magic seam folds in.
-    lazy var perks: PerkCoordinator = {
-        let perks = PerkCoordinator()
-        perks.attach(world: progressionWorld)
-        return perks
-    }()
+    lazy var perks = PerkCoordinator(world: progressionWorld)
 
     /// Memberships, relationship ranks and derived hostility. Its runtimes stay nil without
     /// game data.
-    lazy var factions = FactionCoordinator(store: worldState)
-    lazy var factionWorld = FactionWorldAdapter(FactionWorldDependencies(
-        factions: factions,
+    lazy var factions: FactionCoordinator = .init(store: worldState, world: factionWorld)
+    lazy var factionWorld: FactionWorldAdapter = .init(FactionWorldDependencies(
+        factions: { [unowned self] in factions },
         actors: actorWorld,
         streamer: { [unowned self] in streamer }
     ))
     /// Bounties, ownership, guard response and the Crime & Factions panel.
-    let crime = CrimeCoordinator()
+    lazy var crime = CrimeCoordinator(world: crimeWorld)
     lazy var crimeWorld = CrimeWorldAdapter(game: self)
 
     /// Skill advancement, character leveling, and the Progression panel.
-    lazy var progression: ProgressionCoordinator = {
-        let progression = ProgressionCoordinator(perks: perks)
-        progression.attach(world: progressionWorld)
-        return progression
-    }()
+    lazy var progression = ProgressionCoordinator(perks: perks, world: progressionWorld)
 
     lazy var progressionWorld = ProgressionWorldAdapter(game: self)
 
     /// Death and ragdoll. Its runtime stays nil without a renderer.
-    lazy var ragdoll: RagdollCoordinator = {
-        let ragdoll = RagdollCoordinator(store: worldState)
-        ragdoll.attach(world: ragdollWorld)
-        return ragdoll
-    }()
+    lazy var ragdoll = RagdollCoordinator(store: worldState, world: ragdollWorld)
 
     lazy var ragdollWorld = RagdollWorldAdapter(game: self)
 
     /// Melee, archery and the combat loop. Its runtimes stay nil without game data.
-    let combat = CombatCoordinator()
+    lazy var combat = CombatCoordinator(world: combatWorld)
     lazy var combatWorld = CombatWorldAdapter(game: self)
     /// Live resident-actor package selection.
     lazy var packages = PackageCoordinator(world: aiWorld)
 
     /// The perception pass: view cones, line of sight, and per-pair detection levels.
-    lazy var perception: PerceptionCoordinator = {
-        let perception = PerceptionCoordinator()
-        perception.attach(world: aiWorld)
-        return perception
-    }()
+    lazy var perception = PerceptionCoordinator(world: aiWorld)
 
     /// The AI & Navigation panel's shared actor selection and its last outcome line.
-    lazy var aiNavigation: AINavigationCoordinator = {
-        let aiNavigation = AINavigationCoordinator(packages: packages)
-        aiNavigation.attach(world: aiWorld)
-        return aiNavigation
-    }()
+    lazy var aiNavigation = AINavigationCoordinator(packages: packages, world: aiWorld)
 
     /// The gait clip each NPC mover plays.
-    lazy var npcAnimation: NPCAnimationCoordinator = {
-        let npcAnimation = NPCAnimationCoordinator()
-        npcAnimation.attach(world: aiWorld)
-        return npcAnimation
-    }()
+    lazy var npcAnimation = NPCAnimationCoordinator(world: aiWorld)
 
     lazy var aiWorld = AIWorldAdapter(game: self)
     /// What `openskycli game` drives. The app's `AgentControlHost` owns the server.
@@ -374,7 +309,10 @@ final class GameViewController: NSViewController {
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
             newRenderer.session.frameSteps.register(.hud) { [weak self] _ in
-                self?.hud.updateFrame()
+                guard let self else { return }
+                // Before the HUD draws, so a skill notice from this frame shows now.
+                progressionWorld.run(progression.takeCommands())
+                hud.updateFrame()
             }
         } catch {
             show(message: "Renderer setup failed: \(error)")

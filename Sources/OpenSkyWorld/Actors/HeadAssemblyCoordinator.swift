@@ -16,11 +16,9 @@ public protocol HeadAssemblyWorld: AnyObject {
 
 @MainActor
 public final class HeadAssemblyCoordinator: HeadAssemblyControlProviding {
-    weak var world: (any HeadAssemblyWorld)?
+    weak let world: (any HeadAssemblyWorld)?
 
-    public init() {}
-
-    public func attach(world: any HeadAssemblyWorld) {
+    public init(world: any HeadAssemblyWorld) {
         self.world = world
     }
 

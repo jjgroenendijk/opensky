@@ -53,8 +53,9 @@ public final class ObjectBehaviorCoordinator {
     /// Papyrus message tokens start at 1; animation waits use their own range.
     public static let firstToken: UInt64 = 1 << 48
 
-    weak var world: (any ObjectBehaviorWorld)?
-    private var files: (any GameFileSource)?
+    weak let world: (any ObjectBehaviorWorld)?
+    /// A closure, because the install is chosen after the app builds this coordinator.
+    private let files: () -> (any GameFileSource)?
     private(set) var running: [UInt32: Running] = [:]
     private var waits: [UInt32: [Wait]] = [:]
     private var nextToken = firstToken
@@ -66,15 +67,16 @@ public final class ObjectBehaviorCoordinator {
     public var onWaitFinished: ((UInt64, Bool) -> Void)?
 
     /// `settings` gives the persisted switch.
-    public init(settings: PlayerSettingsStore? = nil) {
+    public init(
+        settings: PlayerSettingsStore? = nil,
+        world: any ObjectBehaviorWorld,
+        files: @escaping () -> (any GameFileSource)?
+    ) {
+        self.world = world
+        self.files = files
         if let settings {
             isEnabled = settings.bool(.objectAnimation)
         }
-    }
-
-    public func attach(world: any ObjectBehaviorWorld, files: any GameFileSource) {
-        self.world = world
-        self.files = files
     }
 
     /// Starts graphs for new objects and drops departed ones. A rebuilt cell brings
@@ -160,7 +162,7 @@ public final class ObjectBehaviorCoordinator {
         var load: @Sendable (String) throws -> SplineBehaviorClip = { path in
             throw ObjectBehaviorAssetError.missing(path)
         }
-        if let files {
+        if let files = files() {
             load = InstallBehaviorClipSource.load(fileSystem: files)
         }
         let worker = SerialAssetLoadWorker<String, SplineBehaviorClip>(load: load)

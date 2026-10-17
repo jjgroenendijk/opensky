@@ -25,24 +25,24 @@ extension MagicCoordinator {
     /// Marks `item` read and raises `skill`. A book read before raises nothing.
     @discardableResult
     func readSkillBook(_ item: FormID, skill: Int32) -> CastingActionOutcome {
-        let name = world?.itemName(item) ?? item.description
+        let name = world.itemName(item)
         guard let caster, let key = bookKey(item) else {
             return recordCasting(.unresolvedBook(name))
         }
         guard !caster.spellbook.read(book: key, teaching: nil, on: .player).alreadyRead else {
             return recordCasting(.bookAlreadyRead(name))
         }
-        let subject = world?.inventory?.baselines.items.conditionSubject(of: item)
-        let points = world?.perkModified(
+        let subject = world.inventory?.baselines.items.conditionSubject(of: item)
+        let points = world.perkModified(
             1,
             at: .adjustBookSkillPoints,
             on: .player,
             subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
             seams: ConditionContext()
-        ) ?? 1
-        let raised = world?.raiseSkillFromBook(
+        )
+        let raised = world.raiseSkillFromBook(
             skill, points: points.isFinite ? Int(max(0, points.rounded(.down))) : 1
-        ) ?? 0
+        )
         return recordCasting(.readSkillBook(name, levelsRaised: raised))
     }
 

@@ -29,7 +29,7 @@ struct PapyrusNativeSignatureRealDataTests {
         }
     }
 
-    /// Every function `PapyrusNativeFaction.swift` installs, with the argument
+    /// Every faction function the native registry installs, with the argument
     /// count its body reads. `isNative` records the shipped script. Only
     /// `AddToFaction` is false; OpenSky registers it anyway with the wrapper's
     /// semantics, so it works without the game's script.
@@ -45,7 +45,8 @@ struct PapyrusNativeSignatureRealDataTests {
         Expected("Actor", "SetRelationshipRank", 2),
         Expected("Actor", "GetFactionReaction", 1),
         Expected("Actor", "IsHostileToActor", 1),
-        Expected("Faction", "GetReaction", 1)
+        Expected("Faction", "GetReaction", 1),
+        Expected("Faction", "SetReaction", 2)
     ]
 
     /// Functions this family deliberately leaves unregistered. Their absence
@@ -53,7 +54,6 @@ struct PapyrusNativeSignatureRealDataTests {
     /// each is reported, so the next implementation starts from an observation
     /// rather than from a guess.
     private static let unregistered = [
-        Expected("Faction", "SetReaction", 2),
         Expected("Faction", "ModReaction", 2)
     ]
 

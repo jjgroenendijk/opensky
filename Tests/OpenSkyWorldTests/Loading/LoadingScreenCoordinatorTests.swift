@@ -51,8 +51,7 @@ struct LoadingScreenCoordinatorTests {
 
     @Test func coversAtOnceAndHoldsTheMinimumAfterTheBuild() throws {
         let world = try Self.world()
-        let loading = LoadingScreenCoordinator()
-        loading.attach(world: world)
+        let loading = LoadingScreenCoordinator(world: world)
 
         loading.begin(at: 10)
         #expect(world.paused == [true])
@@ -75,8 +74,7 @@ struct LoadingScreenCoordinatorTests {
 
     @Test func aLoadShowsItsScreenUntilItFinishes() throws {
         let world = try Self.world()
-        let loading = LoadingScreenCoordinator()
-        loading.attach(world: world)
+        let loading = LoadingScreenCoordinator(world: world)
 
         loading.beginLoad(at: 0)
         #expect(world.paused == [true])
@@ -92,8 +90,7 @@ struct LoadingScreenCoordinatorTests {
 
     @Test func disabledLoadingScreensLeaveTheViewAlone() throws {
         let world = try Self.world()
-        let loading = LoadingScreenCoordinator()
-        loading.attach(world: world)
+        let loading = LoadingScreenCoordinator(world: world)
         loading.isEnabled = false
         loading.begin(at: 0)
         loading.destinationReady(location: nil, at: 1)
@@ -102,8 +99,7 @@ struct LoadingScreenCoordinatorTests {
 
     @Test func forcedScreenHoldsUntilReleased() throws {
         let world = try Self.world()
-        let loading = LoadingScreenCoordinator()
-        loading.attach(world: world)
+        let loading = LoadingScreenCoordinator(world: world)
 
         #expect(!loading.force(editorID: "Missing", at: 0))
         #expect(loading.force(editorID: "LoadScreenDragon", at: 0))

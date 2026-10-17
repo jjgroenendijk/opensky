@@ -35,13 +35,10 @@ public final class DialogueCoordinator {
     private var cachedStrings: LocalizedStrings?
     private var stringsResolved = false
 
-    weak var world: (any DialogueWorld)?
+    let world: any DialogueWorld
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, world: any DialogueWorld) {
         self.store = store
-    }
-
-    public func attach(world: any DialogueWorld) {
         self.world = world
     }
 
@@ -49,14 +46,14 @@ public final class DialogueCoordinator {
     public var strings: LocalizedStrings? {
         if !stringsResolved {
             stringsResolved = true
-            cachedStrings = world?.loadStrings()
+            cachedStrings = world.loadStrings()
         }
         return cachedStrings
     }
 
     /// Built per call, because every input is a live read. It is a cheap struct.
     public var runtime: DialogueRuntime? {
-        guard let index, let world, let quests = world.questStates() else { return nil }
+        guard let index, let quests = world.questStates() else { return nil }
         var context = world.conditionContext()
         context.dialogue = context.dialogue.talking(to: conversationSpeaker)
             .saying(spokenLine)
@@ -88,42 +85,43 @@ public final class DialogueCoordinator {
     /// A greeting is a delivered response, so a say-once greeting spends
     /// itself. Its topic links are dropped: the greeting is said over the
     /// offered topics, not instead of them.
-    public func recordGreeting(_ info: FormID, speaker: ReferenceKey) {
-        guard let runtime else { return }
+    public func recordGreeting(_ info: FormID, speaker: ReferenceKey) -> [DialogueCommand] {
+        guard let runtime else { return [] }
         do {
             _ = try runtime.choose(info, speaker: speaker)
-            world?.spokeToPlayer(speaker)
             spokenLine = Self.line(runtime.dialogue.info(info), speaker: speaker, greeting: true)
+            return [.spokeToPlayer(speaker)]
         } catch {
             lastOutcome = "greeting not recorded: \(String(describing: error))"
+            return []
         }
     }
 
     /// Says one response. Returns its record, or nil with the reason in
     /// `lastOutcome`.
-    public func choose(_ id: FormID, speaker: ReferenceKey) -> TopicInfo? {
+    public func choose(_ id: FormID, speaker: ReferenceKey) -> DialogueResult<TopicInfo?> {
         guard let runtime else {
             lastOutcome = "no dialogue index loaded"
-            return nil
+            return DialogueResult(nil)
         }
         guard let info = runtime.dialogue.info(id) else {
             lastOutcome = "no loaded plugin declares INFO \(id)"
-            return nil
+            return DialogueResult(nil)
         }
         do {
             let choice = try runtime.choose(id, speaker: speaker)
             selection = choice.next
             followUp = choice
             lastOutcome = DialogueCore.saidText(info: id, choice: choice)
-            world?.spokeToPlayer(speaker)
             spokenLine = Self.line(info, speaker: speaker, greeting: false)
+            var commands = [DialogueCommand.spokeToPlayer(speaker)]
             if let challenge = SpeechChallenge.won(by: info) {
-                world?.speechChallengeWon(challenge, speaker: speaker)
+                commands.append(.speechChallengeWon(challenge, speaker: speaker))
             }
-            return info
+            return DialogueResult(info, commands: commands)
         } catch {
             lastOutcome = "choose refused: \(String(describing: error))"
-            return nil
+            return DialogueResult(nil)
         }
     }
 
@@ -168,30 +166,25 @@ public final class DialogueCoordinator {
 
     /// Holds `speaker` and turns it towards `playerEye`. Call it every frame
     /// while the camera frames somebody.
-    public func focus(on speaker: ReferenceKey, playerEye: SIMD3<Float>) {
+    public func focus(on speaker: ReferenceKey, playerEye: SIMD3<Float>) -> [DialogueCommand] {
         apply(DialogueCore.focus(held: heldSpeaker, speaker: speaker), playerEye: playerEye)
     }
 
     /// Hands the held actor back to its package.
-    public func releaseSpeakerFocus() {
+    public func releaseSpeakerFocus() -> [DialogueCommand] {
         apply(DialogueCore.focus(held: heldSpeaker, speaker: nil), playerEye: .zero)
     }
 
     private func apply(
         _ step: (held: ReferenceKey?, effects: [DialogueFocusEffect]),
         playerEye: SIMD3<Float>
-    ) {
+    ) -> [DialogueCommand] {
         heldSpeaker = step.held
-        for effect in step.effects {
+        return step.effects.flatMap { effect -> [DialogueCommand] in
             switch effect {
-            case let .hold(actor):
-                world?.suspendPackage(for: actor)
-                world?.stopActor(actor)
-            case let .face(actor):
-                world?.faceActor(actor, towards: playerEye)
-            case let .release(actor):
-                world?.releaseFacing(of: actor)
-                world?.resumePackage(for: actor)
+            case let .hold(actor): [.suspendPackage(actor), .stopActor(actor)]
+            case let .face(actor): [.faceActor(actor, towards: playerEye)]
+            case let .release(actor): [.releaseFacing(actor), .resumePackage(actor)]
             }
         }
     }

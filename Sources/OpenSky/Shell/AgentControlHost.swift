@@ -13,12 +13,16 @@ final class AgentControlHost {
     /// Faster than the display, so a step reply leaves in the frame it finished.
     static let pollInterval = 1.0 / 240
 
-    let coordinator: AgentControlCoordinator
+    private(set) lazy var coordinator = AgentControlCoordinator(
+        socketPath: AgentSocketLocation.path(environment: environment),
+        world: { [weak self] in self?.game?.agentWorld }
+    )
+    private let environment: [String: String]
+    private weak var game: GameViewController?
     private var timer: Timer?
 
     init(environment: [String: String] = ProcessInfo.processInfo.environment) {
-        coordinator = AgentControlCoordinator(socketPath: AgentSocketLocation
-            .path(environment: environment))
+        self.environment = environment
         coordinator.appVersion = Bundle.main
             .object(forInfoDictionaryKey: "CFBundleShortVersionString")
             as? String ?? "dev"
@@ -38,7 +42,7 @@ final class AgentControlHost {
         game.agentWorld.dataRoot = root
         game.agentWorld.modeName = mode.rawValue
         game.agentControl = coordinator
-        coordinator.attach(world: game.agentWorld)
+        self.game = game
     }
 
     /// Removes the socket file on a normal quit.

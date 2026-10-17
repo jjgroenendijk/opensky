@@ -68,6 +68,12 @@ nonisolated public struct ActorFactionState: WorldStateComponent, Sendable {
         memberships.contains { $0.faction == faction }
     }
 
+    /// Rank -1 lists a potential member, such as a potential follower, which
+    /// `GetInFaction` and `IsInFaction` do not count (ck.uesp.net "IsInFaction - Actor").
+    public func countsAsMember(of faction: ReferenceKey) -> Bool {
+        (rank(in: faction) ?? -1) >= 0
+    }
+
     /// The rank the actor holds, or nil when it is not a member — which is not
     /// the same as rank 0, a rank vanilla authors freely.
     public func rank(in faction: ReferenceKey) -> Int8? {

@@ -93,10 +93,14 @@ final class CombatAcceptanceChain {
     let store = WorldStateStore()
     let actorValues: ActorValueRuntime
     let inventory: InventoryRuntime
-    let melee: MeleeCombatRuntime
-    let archery: ArcheryRuntime
+    private(set) lazy var melee = MeleeCombatRuntime(settings: .synthetic, world: self)
+    private(set) lazy var archery = ArcheryRuntime(
+        settings: .synthetic,
+        projectiles: ProjectileRuntime(settings: .synthetic, world: self),
+        world: self
+    )
     let ragdolls = RagdollRuntime()
-    let combat: CombatLoopRuntime
+    private(set) lazy var combat = CombatLoopRuntime(settings: .synthetic, world: self)
 
     private(set) var camera: FreeFlyCamera
     private(set) var controller: WalkController
@@ -159,11 +163,6 @@ final class CombatAcceptanceChain {
         inventory = try InventoryRuntime(
             store: store, baselines: InventoryBaselineFixture.resolver()
         )
-        melee = MeleeCombatRuntime(settings: .synthetic)
-        archery = ArcheryRuntime(
-            settings: .synthetic, projectiles: ProjectileRuntime(settings: .synthetic)
-        )
-        combat = CombatLoopRuntime(settings: .synthetic)
         view.input = input
         // A click captures the pointer. The cursor side effects are swapped out
         // so the gate cannot freeze the machine's own cursor.
@@ -171,16 +170,13 @@ final class CombatAcceptanceChain {
         try wire()
     }
 
-    /// Attaches every runtime to this chain as its world, seeds the two
+    /// Attaches the ragdolls to this chain as their seam, seeds the two
     /// inventories, and brings the start cell up the way the app does.
     private func wire() throws {
         bridge.attach(graph: graph)
         graph.activate()
         opponentGraph.activate()
-        melee.attach(world: self)
-        archery.attach(world: self)
         ragdolls.attach(seam: self)
-        combat.attach(world: self)
         // The block roll is pinned off, so the gate's fight is the cadence it
         // asserts on rather than one that spent a gap with its guard up. The
         // block half of the loop is `CombatLoopRuntimeTests`'.

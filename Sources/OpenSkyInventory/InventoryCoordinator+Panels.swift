@@ -10,10 +10,10 @@ import OpenSkyMagicInterface
 import OpenSkyWorldInterface
 import OpenSkyWorldState
 
-extension InventoryCoordinator: ItemControlProviding {
+extension InventoryCoordinator {
     public var itemControlSnapshot: ItemControlSnapshot {
         guard let runtime else { return .unavailable }
-        let interaction = world?.crosshairInteraction
+        let interaction = world.crosshairInteraction
         return ItemControlSnapshot(
             isAvailable: true,
             targetName: interaction?.name,
@@ -56,7 +56,7 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
             targetOwnership: targetOwnership(),
             equipTarget: inspectionTarget,
             equipInspection: equipInspection(),
-            enchantmentCache: world?.enchantmentCacheReadout ?? .empty,
+            enchantmentCache: world.enchantmentCacheReadout,
             lastActionText: lastGrant.text
         )
     }
@@ -88,7 +88,7 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
     /// `XOWN` and `XRNK` of the crosshair target. A target the resident index
     /// cannot resolve still reports, with unknown ownership.
     public func targetOwnership() -> ReferenceOwnershipReadout? {
-        guard let interaction = world?.crosshairInteraction else { return nil }
+        guard let interaction = world.crosshairInteraction else { return nil }
         let entry = runtime?.references?.referenceEntry(formID: interaction.reference)
         let placed = entry?.placedReference
         let verdict = entry.flatMap { runtime?.crime?.verdict(on: $0.key) } ?? .unowned
@@ -99,7 +99,7 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
             factionRank: placed?.ownerFactionRank,
             isTheft: verdict.isTheft,
             bounty: entry.map {
-                world?.theftBounty(of: interaction.base, from: $0.key) ?? 0
+                world.theftBounty(of: interaction.base, from: $0.key)
             } ?? 0
         )
     }
@@ -123,7 +123,7 @@ extension InventoryCoordinator: InventoryEquipmentControlProviding {
                 name: InventoryCore.actorName(holder),
                 equipped: equippedReadout(on: .nearestActor),
                 appearanceSkips: entry.map {
-                    world?.appearanceSkipReasons(forActor: $0.formID) ?? []
+                    world.appearanceSkipReasons(forActor: $0.formID)
                 } ?? [],
                 usesRuntimeEquipment: runtime?.inventory.hasRuntimeInventory(holder) ?? false
             )

@@ -249,10 +249,11 @@ struct ActorValueRealDataTests {
         #expect(values[ActorValueIndex.carryWeight] == 300)
         #expect(values[ActorValueIndex.mass] == 1)
         #expect(values[ActorValueIndex.unarmedDamage] == 4)
-        // Eighteen skills plus the four record-authored values, and nothing
-        // else: no resistance is derived from records, so every one of them
-        // reads the documented zero default.
-        #expect(values.count == 22)
+        #expect(values[ActorValueIndex.bowSpeedBonus] == 1) // fDefaultBowSpeedBonus
+        // Eighteen skills, the four record-authored values, and the bow speed
+        // base, and nothing else: no resistance is derived from records, so
+        // every one of them reads the documented zero default.
+        #expect(values.count == 23)
         #expect(values[ActorValueIndex.resistFire] == nil)
     }
 

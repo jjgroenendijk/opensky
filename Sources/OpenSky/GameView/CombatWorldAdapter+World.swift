@@ -228,10 +228,6 @@ extension CombatWorldAdapter: CombatWorld {
         return (try? runtime.inventory.add(item, count: count, to: holder)) != nil
     }
 
-    func showNotification(_ text: String) {
-        game.hud.showNotification(text)
-    }
-
     @discardableResult
     func removeOneFromPlayer(_ item: FormID) -> Bool {
         guard let runtime = game.inventory.runtime else { return false }
@@ -283,10 +279,6 @@ extension CombatWorldAdapter: CombatWorld {
         }
     }
 
-    func setCombatMusicActive(_ active: Bool) {
-        game.audio.musicDirector?.setCombatActive(active)
-    }
-
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit? {
         guard let streamer = game.streamer else { return nil }
         return ShapeSweeper.firstHit(
@@ -311,10 +303,6 @@ extension CombatWorldAdapter: CombatWorld {
 
     /// Dropping the whole delta, as `WorldItemRuntime.removeFromWorld` does,
     /// leaves nothing of a spawned object in the next save.
-    func resetReference(_ key: ReferenceKey) {
-        game.worldState.reset(key)
-    }
-
     var bodyTransients: CombatTransientCounts {
         CombatTransientCounts(
             activeRagdolls: game.ragdoll.runtime?.world.ragdollCount ?? 0,
@@ -328,9 +316,5 @@ extension CombatWorldAdapter: CombatWorld {
             awakeBodies: game.streamer?.dynamicBodies.sleepExcessBodies(over: limits.awakeBodies)
                 ?? 0
         )
-    }
-
-    func resetRagdolls() {
-        game.ragdoll.runtime?.reset()
     }
 }

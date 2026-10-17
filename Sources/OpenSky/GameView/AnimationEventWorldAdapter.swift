@@ -26,14 +26,15 @@ final class AnimationEventWorldAdapter {
     /// The player graph's events, read once per frame. The idle and object graph
     /// callbacks send theirs to the coordinator directly.
     func wire(renderer: Renderer) {
-        renderer.session.animationEvents.attach(world: self)
-        renderer.session.frameSteps.register(.animationEvents) { [weak renderer] _ in
+        let events = AnimationEventCoordinator(world: self)
+        renderer.session.animationEvents = events
+        renderer.session.frameSteps.register(.animationEvents) { [weak renderer, weak events] _ in
             guard let renderer else { return }
             let locomotion = renderer.locomotion
             let names = locomotion.graphEvents.drain(locomotion.animationEventConsumer)
             guard renderer.movementMode.isPlayerControlled else { return }
             for name in names {
-                renderer.session.animationEvents.handle(name, from: .player)
+                events?.handle(name, from: .player)
             }
         }
     }

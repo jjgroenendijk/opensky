@@ -25,8 +25,7 @@ struct CrimeCoordinatorTests {
     private static func coordinator(
         _ world: FakeCrimeSessionWorld
     ) throws -> CrimeCoordinator {
-        let coordinator = CrimeCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = CrimeCoordinator(world: world)
         try coordinator.wire(
             runtime: CrimeFixture.runtime(),
             locations: CrimeFixture.locationStore(),
@@ -37,6 +36,16 @@ struct CrimeCoordinatorTests {
         world.references = FakeCrimeReferences(cell: Self.shop)
         world.cellLinks[Self.shop] = FormID(CrimeFixture.Locations.shop)
         return coordinator
+    }
+
+    private static func hostility(_ commands: [CrimeCommand]) -> GuardCrimeHostility? {
+        commands.compactMap {
+            if case let .applyGuardHostility(hostility) = $0 {
+                hostility
+            } else {
+                nil
+            }
+        }.last
     }
 
     @Test func onlyTheFirstBlowOfAFightIsAnAssault() throws {
@@ -59,7 +68,7 @@ struct CrimeCoordinatorTests {
         let gold = coordinator.crimeGold(of: Self.hold)
         let name = coordinator.factionName(Self.hold)
 
-        #expect(world.notices == ["\(gold) bounty for \(name)"])
+        #expect(coordinator.takeCommands().contains(.showNotice("\(gold) bounty for \(name)")))
     }
 
     @Test func selfDefenseAndAnotherAggressorAreNoCrime() throws {
@@ -127,12 +136,12 @@ struct CrimeCoordinatorTests {
             memberships: CrimeFixture.state([(CrimeFixture.Factions.guards, 0)]),
             crimeFaction: Self.hold
         )
-        coordinator.advanceGuardResponse()
+        let commands = coordinator.advanceGuardResponse()
 
         #expect(world.spokenTo == [Self.guardKey])
         #expect(world.resumed == [Self.guardKey])
         #expect(coordinator.lastGuard.text.hasPrefix("Guard could not open"))
-        #expect(world.guardHostility?.bounties == [Self.hold: 100])
+        #expect(Self.hostility(commands)?.bounties == [Self.hold: 100])
     }
 
     @Test func aFarGuardPursuesAndRepathsOnlyWhenThePlayerMoves() throws {
@@ -148,7 +157,7 @@ struct CrimeCoordinatorTests {
             crimeFaction: Self.hold
         )
         #expect(!coordinator.isPlayerPursued)
-        coordinator.advanceGuardResponse()
+        _ = coordinator.advanceGuardResponse()
 
         #expect(coordinator.isPlayerPursued)
         #expect(world.moved[Self.guardKey] == .zero)
@@ -162,7 +171,7 @@ struct CrimeCoordinatorTests {
         coordinator.bountyFactionSelection = Self.hold
         coordinator.modifySelectedBounty(by: 1500, violent: true)
         #expect(coordinator.crimeGold(of: Self.hold) == 1500)
-        #expect(world.guardHostility?.bounties == [Self.hold: 1500])
+        #expect(Self.hostility(coordinator.takeCommands())?.bounties == [Self.hold: 1500])
 
         let text = coordinator.clearSelectedBounty().text
         #expect(text == "Cleared 1500 gold owed to CrimeFactionHold.")
@@ -175,7 +184,7 @@ struct CrimeCoordinatorTests {
         let text = coordinator.resistArrestWithSelectedFaction().text
         #expect(text == "Resisted arrest with CrimeFactionHold.")
         #expect(coordinator.guards.resisted == [Self.hold])
-        #expect(world.guardHostility?.resisted == [Self.hold])
+        #expect(Self.hostility(coordinator.takeCommands())?.resisted == [Self.hold])
     }
 
     @Test func joinAndLeaveActOnThePlayerByDefault() throws {

@@ -11,10 +11,10 @@ import Testing
 @MainActor
 struct ScriptCoordinatorTests {
     private let world = FakeScriptWorld()
-    private let coordinator = ScriptCoordinator()
+    private let coordinator: ScriptCoordinator
 
     init() {
-        coordinator.attach(world: world)
+        coordinator = ScriptCoordinator(world: world)
     }
 
     @Test func withoutAVMThePanelReadsEmpty() {

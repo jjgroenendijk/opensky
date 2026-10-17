@@ -40,12 +40,6 @@ public protocol PerceptionSessionWorld: AnyObject {
     /// The player, and nothing else: NPC-versus-NPC perception is out of scope.
     func perceptionTargets() -> [PerceptionTarget]
     func perceptionHasLineOfSight(from origin: SIMD3<Float>, to destination: SIMD3<Float>) -> Bool
-    /// Credits Sneak skill uses to an actor that stayed hidden.
-    func reportSneakSkillUse(_ amount: Float, by actor: ReferenceKey)
-}
-
-extension PerceptionSessionWorld {
-    public func reportSneakSkillUse(_: Float, by _: ReferenceKey) {}
 }
 
 nonisolated public enum PerceptionCore {
@@ -63,29 +57,24 @@ nonisolated public enum PerceptionCore {
 @MainActor
 public final class PerceptionCoordinator {
     public private(set) var runtime: PerceptionRuntime?
-    weak var world: (any PerceptionSessionWorld)?
+    let world: any PerceptionSessionWorld
 
-    public init() {}
-
-    public func attach(world: any PerceptionSessionWorld) {
+    public init(world: any PerceptionSessionWorld) {
         self.world = world
     }
 
     public func wire(settings: DetectionSettings) {
-        let runtime = PerceptionRuntime(settings: settings)
-        self.runtime = runtime
-        runtime.attach(world: self)
+        runtime = PerceptionRuntime(settings: settings, world: self)
     }
 
-    public func advance(by delta: Float) {
-        guard let runtime else { return }
+    /// - Returns: the Sneak skill uses earned by hiding during the steps run.
+    public func advance(by delta: Float) -> [PerceptionCommand] {
+        guard let runtime else { return [] }
         let steps = runtime.advance(by: delta)
-        guard steps > 0 else { return }
+        guard steps > 0 else { return [] }
         let seconds = Float(steps) * PerceptionRuntime.fixedStepSeconds
-        for target in runtime.hiddenSneakers() {
-            world?.reportSneakSkillUse(
-                runtime.settings.skillUsePerSecond.value * seconds, by: target
-            )
+        return runtime.hiddenSneakers().map { target in
+            .reportSneakSkillUse(runtime.settings.skillUsePerSecond.value * seconds, by: target)
         }
     }
 
@@ -105,18 +94,18 @@ public final class PerceptionCoordinator {
 
 extension PerceptionCoordinator: PerceptionWorld {
     public func perceptionObservers() -> [PerceptionObserver] {
-        PerceptionCore.observers(from: world?.perceptionCandidates() ?? [])
+        PerceptionCore.observers(from: world.perceptionCandidates())
     }
 
     public func perceptionTargets() -> [PerceptionTarget] {
-        world?.perceptionTargets() ?? []
+        world.perceptionTargets()
     }
 
     public func perceptionHasLineOfSight(
         from origin: SIMD3<Float>,
         to destination: SIMD3<Float>
     ) -> Bool {
-        world?.perceptionHasLineOfSight(from: origin, to: destination) ?? true
+        world.perceptionHasLineOfSight(from: origin, to: destination)
     }
 }
 

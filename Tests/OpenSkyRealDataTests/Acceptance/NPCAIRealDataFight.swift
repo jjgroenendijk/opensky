@@ -17,8 +17,10 @@ import simd
 
 @MainActor
 final class NPCAIRealDataFight {
-    let perception: PerceptionRuntime
-    let combat: CombatLoopRuntime
+    let detection: DetectionSettings
+    lazy var perception = PerceptionRuntime(settings: detection, world: self)
+    private let combatSettings: CombatSettings
+    private(set) lazy var combat = CombatLoopRuntime(settings: combatSettings, world: self)
     let actor: ReferenceKey
 
     var actorFeet: SIMD3<Float>
@@ -41,11 +43,9 @@ final class NPCAIRealDataFight {
     ) {
         self.actor = actor
         self.actorFeet = actorFeet
-        perception = PerceptionRuntime(settings: detection)
-        combat = CombatLoopRuntime(settings: settings)
+        self.detection = detection
+        combatSettings = settings
         combat.behaviorSettings = .quick
-        perception.attach(world: self)
-        combat.attach(world: self)
     }
 
     var phase: CombatBehaviorPhase? {

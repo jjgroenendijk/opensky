@@ -18,9 +18,9 @@ extension CombatCoordinator {
         on key: ReferenceKey,
         subjects: PerkEvaluationSubjects
     ) -> Float {
-        world?.perkModified(
+        world.perkModified(
             value, at: entryPoint, on: key, subjects: subjects, seams: ConditionContext()
-        ) ?? value
+        )
     }
 
     /// The attacker owns the perk; the weapon and the target are bound.
@@ -79,7 +79,7 @@ extension CombatCoordinator {
     ) {
         let critical = blow.weapon.flatMap { items?.weapon($0)?.criticalData }
         let base = ActorValueIdentity.index(named: "Critical Chance")
-            .flatMap { world?.actorValues(of: blow.attacker)?($0) } ?? 0
+            .flatMap { world.actorValues(of: blow.attacker)?($0) } ?? 0
         let chance = perkValue(
             base, at: .calculateCriticalChance, on: blow.attacker, subjects: subjects
         ) * (critical?.percentMultiplier ?? 1)
@@ -148,12 +148,12 @@ extension CombatCoordinator {
     /// `Set Boolean Graph Variable`: the player's graph flags that changed since the
     /// last frame. A perk that stops passing, as Ranger when sneaking, clears its flag.
     public func perkGraphFlagChanges() -> [String: Bool] {
-        let now = Set(world?.perkChoices(
+        let now = Set(world.perkChoices(
             at: .setBooleanGraphVariable,
             on: .player,
             subjects: PerkEvaluationSubjects(owner: .player),
             seams: ConditionContext()
-        ).compactMap(\.inlineText) ?? [])
+        ).compactMap(\.inlineText))
         defer { perkGraphFlags = now }
         var changes: [String: Bool] = [:]
         for name in now.subtracting(perkGraphFlags) {
@@ -179,7 +179,7 @@ extension CombatCoordinator {
     /// `Mod Shield Deflect Arrow Chance`, rolled when an arrow strikes an actor with a
     /// shield. The chance is capped at 100. The vanilla perk's own condition asks for a block.
     func deflectsArrow(_ target: ReferenceKey) -> Bool {
-        guard let world, let items else { return false }
+        guard let items else { return false }
         let hasShield = world.equippedItems(of: target).contains { worn in
             items.armor[worn.item.rawValue]?.bodyTemplate?.slots.contains(.shield) ?? false
         }
@@ -201,7 +201,6 @@ extension CombatCoordinator {
         on target: ReferenceKey
     ) -> SpellHitReport? {
         guard
-            let world,
             let spell = world.perkChoices(
                 at: entryPoint, on: owner, subjects: subjects, seams: ConditionContext()
             ).lazy.compactMap(\.spell).first

@@ -26,8 +26,7 @@ struct CasterRuntimeTests {
         let (spellbook, _) = try SpellbookFixture.runtime(store: store)
         let values = SpellbookFixture.values(store: store)
         let world = FakeCasterWorld()
-        let runtime = CasterRuntime(spellbook: spellbook, values: values)
-        runtime.attach(world: world)
+        let runtime = CasterRuntime(spellbook: spellbook, values: values, world: world)
         return Harness(runtime: runtime, world: world, spellbook: spellbook, values: values)
     }
 

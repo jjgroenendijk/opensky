@@ -39,7 +39,6 @@ final class CinematicCameraWorldAdapter {
     }
 
     func wire(renderer: Renderer) {
-        game.cinematicCamera.attach(world: self)
         wireTracks(renderer: renderer)
         // Frame steps run under a menu too; the shot keeps real time, so a
         // paused frame advances nothing.
@@ -49,7 +48,7 @@ final class CinematicCameraWorldAdapter {
             let seconds = renderer.worldSimPaused ? 0 : lastFrame
                 .map { now.timeIntervalSince($0) } ?? 0
             lastFrame = now
-            game.cinematicCamera.tick(realSeconds: min(seconds, 0.1))
+            apply(game.cinematicCamera.tick(realSeconds: min(seconds, 0.1)))
         }
     }
 
@@ -156,14 +155,14 @@ extension CinematicCameraWorldAdapter: CinematicCameraWorld {
         game.renderer?.locomotion.status.feetPosition
     }
 
-    func applyCinematicFrame(pose: CinematicCameraPose?, shake: SIMD3<Float>, timeScale: Float) {
+    func apply(_ frame: CinematicFrame) {
         guard let renderer = game.renderer else { return }
-        renderer.worldTimeScale = timeScale
+        renderer.worldTimeScale = frame.timeScale
         guard
-            pose != nil || shake != .zero || renderer.isCinematicCameraEngaged
+            frame.pose != nil || frame.shake != .zero || renderer.isCinematicCameraEngaged
             || renderer.cinematicCameraState.shakeOffset != .zero
         else { return }
-        renderer.setCinematicCamera(pose, shakeOffset: shake)
+        renderer.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {

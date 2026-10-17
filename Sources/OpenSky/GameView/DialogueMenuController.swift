@@ -89,7 +89,7 @@ final class DialogueMenuController {
         )
         isOpen = true
         if model.state == .greeting, let info = model.line?.info {
-            dialogue.recordGreeting(info, speaker: speaker)
+            game.dialogueWorld.run(dialogue.recordGreeting(info, speaker: speaker))
             speakCurrentRun()
         }
         game.headTracking.setLookTarget(.player, for: speaker)
@@ -189,7 +189,9 @@ final class DialogueMenuController {
             dialogue.lastOutcome = "no dialogue index loaded"
             return
         }
-        guard let info = dialogue.choose(entry.info, speaker: speaker) else { return }
+        let chosen = dialogue.choose(entry.info, speaker: speaker)
+        game.dialogueWorld.run(chosen.commands)
+        guard let info = chosen.value else { return }
         model.beginResponse(
             info: entry.info,
             runs: DialogueMenuModel.responseRuns(

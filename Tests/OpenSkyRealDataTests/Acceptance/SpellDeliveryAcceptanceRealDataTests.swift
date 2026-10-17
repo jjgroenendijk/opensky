@@ -41,7 +41,8 @@ struct SpellDeliveryAcceptanceRealDataTests {
     private final class AcceptanceWorld: CasterWorld, ProjectileWorld {
         var effects: ActiveEffectRuntime
         let items: ItemDefinitionStore
-        let projectiles: ProjectileRuntime
+        /// Built here, because it resolves against this world from the start.
+        lazy var projectiles = ProjectileRuntime(settings: .synthetic, world: self)
         let holder: ActorValueHolder
         var castingGameDay: Int32 = 0
         private(set) var reports: [SpellHitReport] = []
@@ -49,12 +50,10 @@ struct SpellDeliveryAcceptanceRealDataTests {
         init(
             effects: ActiveEffectRuntime,
             items: ItemDefinitionStore,
-            projectiles: ProjectileRuntime,
             holder: ActorValueHolder
         ) {
             self.effects = effects
             self.items = items
-            self.projectiles = projectiles
             self.holder = holder
         }
 
@@ -206,7 +205,6 @@ struct SpellDeliveryAcceptanceRealDataTests {
         spellbook.learn(spell.key, on: .player)
         try spellbook.equip(spell.key, in: .right, on: .player)
 
-        let projectiles = ProjectileRuntime(settings: .synthetic)
         let world = AcceptanceWorld(
             effects: ActiveEffectRuntime(
                 values: values,
@@ -214,18 +212,15 @@ struct SpellDeliveryAcceptanceRealDataTests {
                 conditionRegistry: .standard
             ),
             items: ItemDefinitionStore(file: file),
-            projectiles: projectiles,
             holder: holder
         )
-        projectiles.attach(world: world)
-        let caster = CasterRuntime(spellbook: spellbook, values: values)
-        caster.attach(world: world)
+        let caster = CasterRuntime(spellbook: spellbook, values: values, world: world)
         return Session(
             spell: spell,
             values: values,
             holder: holder,
             caster: caster,
-            projectiles: projectiles,
+            projectiles: world.projectiles,
             world: world
         )
     }

@@ -76,12 +76,6 @@ public final class CombatLoopRuntime: CombatControlling {
         self.world = world
     }
 
-    /// Attaches (or detaches) the world the loop runs over.
-    public func attach(world: (any CombatLoopWorld)?) {
-        self.world = world
-        reset()
-    }
-
     // MARK: - Hostility
 
     /// `key`'s stored regard for the player.

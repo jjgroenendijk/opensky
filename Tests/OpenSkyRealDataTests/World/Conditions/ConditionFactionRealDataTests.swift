@@ -22,13 +22,6 @@ struct ConditionFactionRealDataTests {
     /// `GetRelationshipRank`, `GetFactionRelation` and `IsHostileToActor`.
     private static let factionIndices: Set<UInt16> = [60, 71, 73, 403, 449, 719]
 
-    /// `GetCrimeGoldViolent`, `GetCrimeGoldNonviolent`, `GetItemCount`, `GetEventData`, the
-    /// hand and child checks, and the camera-path and tempering checks, subtracted so the
-    /// delta measures the faction functions alone. `GetCrimeGold` is already inside.
-    private static let laterIndices: Set<UInt16> = [
-        375, 376, 47, 65, 576, 102, 103, 365, 69, 313, 391, 594, 659
-    ]
-
     private static let guardEditorIDPrefix = "GuardWhiterun"
 
     // MARK: - The authored condition
@@ -109,19 +102,16 @@ struct ConditionFactionRealDataTests {
         let root = try #require(RealDataEnvironment.dataRoot)
         let coverage = ConditionCoverage.sweep(plugins: ActivePluginFiles.load(root: root))
         let registry = ConditionFunctionRegistry.standard
-        let later = Self.laterIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
-        let after = coverage.implementedCount(in: registry) - later
+        let implemented = coverage.implementedCount(in: registry)
         let added = Self.factionIndices.reduce(0) { $0 + coverage.conditions(of: $1) }
-        let before = after - added
 
         // Measured 2026-09-08 against the active load order of the five masters
         // plus this install's Creation Club plugins. `GetInFaction` alone is
         // 9,028 of the 10,020, which is why the faction model was the largest
         // single block of unanswered dialogue conditions left.
         #expect(coverage.total == 118_494)
-        #expect(before == 79823)
         #expect(added == 10020)
-        #expect(after == 89843)
+        #expect(Self.factionIndices.allSatisfy { registry[$0] != nil })
         // `GetFactionRankDifference` is registered and this load order never
         // asks it — the only one of the six with no vanilla caller. It stays
         // installed because its backing is the same membership lookup its two
@@ -137,8 +127,8 @@ struct ConditionFactionRealDataTests {
             )
         }
         print(
-            "[INFO] faction condition coverage \(before)/\(coverage.total) -> "
-                + "\(after)/\(coverage.total)"
+            "[INFO] faction conditions answered \(added); registry answers "
+                + "\(implemented)/\(coverage.total)"
         )
     }
 

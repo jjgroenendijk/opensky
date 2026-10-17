@@ -1,6 +1,6 @@
-// Dialogue selection against the user's install. The speaker is Delphine, who
-// has more player-facing INFO conditions than any other NPC in `Skyrim.esm`.
-// The quest state is the plugin baseline. The pinned numbers detect drift;
+// Dialogue selection against the user's install. The speaker is Sybille Stentor,
+// whose own branch topics and two shared ones pass their quests' dialogue
+// conditions under the plugin baseline quest state. The pinned numbers detect drift;
 // the branch rules behind them are in docs/engine/dialogue.md.
 // Assertions are counts, editor IDs, and FormIDs.
 
@@ -8,7 +8,6 @@ import Foundation
 @testable import OpenSkyConditions
 @testable import OpenSkyDialogue
 @testable import OpenSkyDialogueInterface
-import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
 @testable import OpenSkyQuestsInterface
@@ -17,22 +16,15 @@ import OpenSkyFeaturesTesting
 import Testing
 
 struct DialogueRuntimeRealDataTests {
-    /// `Skyrim.esm`'s Delphine NPC_ record, and the synthetic placement key she
-    /// is selected against. The placement is this test's own: selection needs a
-    /// `ReferenceKey` with a base form, not a loaded cell.
-    private static let delphineBase: UInt32 = 0x0001_3478
-    private static let delphineReference: UInt32 = 0x000A_0001
-
-    /// Offers observed on 2026-10-03 against the shipped `Skyrim.esm`. Branches
+    /// Offers observed on 2026-10-17 against the shipped `Skyrim.esm`. Branches
     /// scope the list: only top-level branch starting topics open a conversation.
     private static let expectedOfferCount = 4
-    /// The whole list, by editor ID. Her own MQ00 topics are inside their branches,
-    /// so only a link from a chosen response reaches them.
+    /// The whole list, by editor ID.
     private static let expectedTopics = [
-        "WEThalmorDialogueWhoAreYouTopic",
-        "DialogueGenericVigilantsOfStendarrWhoTopic",
-        "DialogueGenericVigilantsOfStendarrWhoStendarrTopic",
-        "DialogueGenericVigilantsOfStendarrDaedraTopic"
+        "MG01InitialBranchTopic",
+        "DialogueSolitudeSybilleBranchTopic",
+        "DialogueSolitudeSybille02Topic01",
+        "OffersTrainingTopic"
     ]
     /// The greeting she opens with under the same state.
     private static let expectedGreetingTopic: UInt32 = 0x0001_42B5
@@ -43,15 +35,6 @@ struct DialogueRuntimeRealDataTests {
     func selectsADeterministicTopicListForOneSpeaker() throws {
         let world = try Self.world()
         let selection = world.runtime.topics(for: Self.speakerKey)
-        print(
-            "SCRATCHOFFERS",
-            selection.offers
-                .map { "\(world.dialogue.topic($0.topic)?.editorID ?? "-")=\($0.topic)" },
-            selection.rejected.count,
-            selection.tally.conditionsEvaluated,
-            selection.tally.failureTotal
-        )
-
         #expect(selection.offers.count == Self.expectedOfferCount, "offered topic drift")
         let editorIDs = Set(selection.offers.compactMap {
             world.dialogue.topic($0.topic)?.editorID
@@ -138,8 +121,11 @@ struct DialogueRuntimeRealDataTests {
         let runtime: DialogueRuntime
     }
 
+    /// `Skyrim.esm`'s Sybille Stentor NPC_ record.
+    private static let speaker = DialogueSpeakerContext(base: 0x0001_32AA)
+
     private static var speakerKey: ReferenceKey {
-        .plugin(name: "skyrim.esm", objectID: delphineReference)
+        speaker.speakerKey
     }
 
     @MainActor
@@ -155,13 +141,7 @@ struct DialogueRuntimeRealDataTests {
             store: WorldStateStore(),
             dialogue: dialogue,
             questStates: QuestResolution(defaults: quests),
-            context: ConditionContext(
-                references: ConditionEvaluatorFixture.references([
-                    (formID: delphineReference, base: delphineBase)
-                ]),
-                subject: speakerKey,
-                target: .player
-            ),
+            context: speaker.context(root: root, file: file),
             registry: .standard
         )
         return World(dialogue: dialogue, runtime: runtime)

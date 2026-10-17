@@ -109,14 +109,16 @@ public final class TitleMenuCoordinator {
     private let menuMode: MenuModeController
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
-    private(set) weak var world: (any TitleMenuWorld)?
+    weak let world: (any TitleMenuWorld)?
 
     public init(
-        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil
+        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
+        world: (any TitleMenuWorld)? = nil
     ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+        self.world = world
     }
 
     lazy var movie = MenuMovieSession(
@@ -129,10 +131,6 @@ public final class TitleMenuCoordinator {
 
     public var movieError: String? {
         movie.error
-    }
-
-    public func attach(world: any TitleMenuWorld) {
-        self.world = world
     }
 
     /// Continue shows only when an OpenSky save exists, once the list has been read.

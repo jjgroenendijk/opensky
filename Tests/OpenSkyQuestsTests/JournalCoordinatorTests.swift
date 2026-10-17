@@ -35,11 +35,8 @@ struct JournalCoordinatorTests {
         ))
     }
 
-    /// The coordinator holds its world weakly, so each test keeps `world`.
     private func coordinator(_ world: FakeJournalWorld) -> JournalCoordinator {
-        let coordinator = JournalCoordinator()
-        coordinator.attach(world: world)
-        return coordinator
+        JournalCoordinator(world: world)
     }
 
     @Test func withoutAQuestRuntimeEveryControlRefuses() {

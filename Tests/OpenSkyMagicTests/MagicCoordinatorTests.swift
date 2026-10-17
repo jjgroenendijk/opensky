@@ -19,8 +19,7 @@ import Testing
 struct MagicCoordinatorTests {
     private static func effectsWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
         let file = try ActiveEffectFixture.plugin(records: ActiveEffectFixture.effectRecords)
-        let coordinator = MagicCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = MagicCoordinator(world: world)
         coordinator.wireEffects(
             values: FixedActorValues(),
             store: MagicEffectStore(plugins: [(ActiveEffectFixture.pluginName, file)]),
@@ -31,8 +30,7 @@ struct MagicCoordinatorTests {
     }
 
     private static func castingWired(_ world: FakeMagicWorld) throws -> MagicCoordinator {
-        let coordinator = MagicCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = MagicCoordinator(world: world)
         try coordinator.wireCasting(
             spellbook: SpellbookFixture.runtime().0,
             values: FixedActorValues(),
@@ -43,7 +41,7 @@ struct MagicCoordinatorTests {
     }
 
     @Test func anUnwiredCoordinatorReportsItselfUnavailable() {
-        let coordinator = MagicCoordinator()
+        let coordinator = MagicCoordinator(world: FakeMagicWorld())
         #expect(coordinator.magicEffectControlSnapshot == .unavailable)
         #expect(coordinator.castingControlSnapshot == .unavailable)
         #expect(coordinator.dispelPlayerMagicEffects().text == MagicCore.effectsUnavailableText)
@@ -59,17 +57,17 @@ struct MagicCoordinatorTests {
     /// tick that changed a throwaway copy would leave it at zero.
     @Test func tickingCarriesTheRemainderInTheAccumulator() throws {
         let coordinator = try Self.effectsWired(FakeMagicWorld())
-        coordinator.advanceEffects(delta: 0.004)
+        _ = coordinator.advanceEffects(delta: 0.004)
         #expect(coordinator.accumulator > 0.003)
         #expect(coordinator.accumulator < 0.005)
-        coordinator.advanceEffects(delta: 0.02)
+        _ = coordinator.advanceEffects(delta: 0.02)
         #expect(coordinator.accumulator < ActiveEffectRuntime.fixedStepSeconds)
         #expect(coordinator.accumulator > 0)
     }
 
     @Test func tickingWithoutARuntimeDoesNothing() {
-        let coordinator = MagicCoordinator()
-        coordinator.advanceEffects(delta: 0.004)
+        let coordinator = MagicCoordinator(world: FakeMagicWorld())
+        _ = coordinator.advanceEffects(delta: 0.004)
         #expect(coordinator.accumulator == 0)
     }
 
@@ -134,8 +132,7 @@ struct MagicCoordinatorTests {
         let world = FakeMagicWorld()
         let equipment = FakeHandEquipment()
         world.equipment = equipment
-        let coordinator = MagicCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = MagicCoordinator(world: world)
         try coordinator.wireCasting(
             spellbook: SpellbookFixture.runtime(equipment: equipment).0,
             values: FixedActorValues(),

@@ -146,9 +146,8 @@ struct ExplosionRuntimeTests {
     }
 
     @Test func aTimedProjectileDetonatesInTheAir() throws {
-        let runtime = ProjectileRuntime(settings: .synthetic)
         let world = FakeProjectileWorld()
-        runtime.attach(world: world)
+        let runtime = ProjectileRuntime(settings: .synthetic, world: world)
         let blast = FakeExplosionWorld()
         let explosions = try Self.runtime(world: blast)
         runtime.explosions = explosions
@@ -168,10 +167,9 @@ struct ExplosionRuntimeTests {
     }
 
     @Test func aProximityProjectileDetonatesNearATarget() throws {
-        let runtime = ProjectileRuntime(settings: .synthetic)
         let world = FakeProjectileWorld()
         world.targets = [MeleeTarget(key: Self.npc, feet: SIMD3(500, 0, 0))]
-        runtime.attach(world: world)
+        let runtime = ProjectileRuntime(settings: .synthetic, world: world)
         let blast = FakeExplosionWorld()
         blast.targets = world.targets
         let explosions = try Self.runtime(world: blast)

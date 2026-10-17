@@ -40,7 +40,9 @@ extension StoryWorldAdapter: SocialEventWorld {
         return game.aiWorld.perceptionHasLineOfSight(from: eye, to: chest)
     }
 
-    func reportSocialEvent(_ event: StoryEventData) {
-        reportStoryEvent(event)
+    func run(_ commands: [SocialEventCommand]) {
+        for case let .reportStoryEvent(event) in commands {
+            reportStoryEvent(event)
+        }
     }
 }

@@ -1,27 +1,18 @@
 // The shell of the vehicle rules in `VehicleCore`: reads live poses, bones, and
-// the ground from the session each frame and publishes the followers' live poses.
+// the ground from the session each frame and returns the followers' live poses.
 // The player rider is placed, not drawn. See docs/engine/vehicles.md.
 
 import OpenSkyFormatsESM
 import OpenSkyWorldState
 import simd
 
-/// What the vehicle coordinator reads from and writes to the session.
+/// What the vehicle coordinator reads from the session.
 @MainActor
 public protocol VehicleWorld: AnyObject {
     /// Where the reference is now: a walking actor's live pose, else its placed pose.
     func vehiclePose(of key: ReferenceKey) -> ReferenceTransformOverride?
     /// The FormID the reference is drawn under, while a loaded cell draws it.
     func vehicleFormID(of key: ReferenceKey) -> UInt32?
-    /// Placements by FormID; the renderer turns them into deltas against its build.
-    func publishVehiclePoses(_ poses: [UInt32: float4x4])
-    /// Every follower but the player, so other systems read where it rides.
-    func publishCarriedPoses(_ poses: [ReferenceKey: ReferenceTransformOverride])
-    func placePlayer(at pose: ReferenceTransformOverride)
-    /// A follower left its carrier and now rests at `pose`.
-    func vehicleFollowerRests(_ key: ReferenceKey, at pose: ReferenceTransformOverride)
-    /// A follower that is not the player is at `pose` this frame.
-    func vehicleFollowerMoved(_ key: ReferenceKey, to pose: ReferenceTransformOverride)
     /// A bone of the reference's live pose, in its root frame; nil while it loads.
     func vehicleBone(of key: ReferenceKey, named bone: String) -> SIMD3<Float>?
     /// The highest ground at or below `point`: terrain, or a road, bridge, or floor.
@@ -30,10 +21,6 @@ public protocol VehicleWorld: AnyObject {
     /// `VehicleWheels.contacts` of the reference's model: nil while it loads, empty
     /// when it has no wheels or no model.
     func vehicleWheels(of key: ReferenceKey) -> [SIMD2<Float>]?
-    /// Turns the follower's wheels for `distance` rolled since the link.
-    func spinVehicleWheels(of key: ReferenceKey, rolled distance: Float)
-    /// Every carrier and follower of a link, which do not collide with the vehicles.
-    func publishVehicleLinks(_ linked: Set<ReferenceKey>)
 }
 
 @MainActor
@@ -42,12 +29,10 @@ public final class VehicleCoordinator {
     public private(set) var lastPoses: [ReferenceKey: ReferenceTransformOverride] = [:]
     /// The horse the player sat on last, kept after they dismount.
     public private(set) var playersLastMount: ReferenceKey?
-    weak var world: (any VehicleWorld)?
+    weak let world: (any VehicleWorld)?
     private var hasDeltas = false
 
-    public init() {}
-
-    public func attach(world: any VehicleWorld) {
+    public init(world: any VehicleWorld) {
         self.world = world
     }
 
@@ -84,13 +69,12 @@ public final class VehicleCoordinator {
         )
     }
 
-    public func detach(_ follower: ReferenceKey) {
-        guard core.links[follower] != nil else { return }
-        if let pose = lastPoses[follower] {
-            world?.vehicleFollowerRests(follower, at: pose)
-        }
+    public func detach(_ follower: ReferenceKey) -> [VehicleCommand] {
+        guard core.links[follower] != nil else { return [] }
+        let commands = lastPoses[follower].map { [VehicleCommand.followerRests(follower, at: $0)] }
         core.detach(follower)
         lastPoses[follower] = nil
+        return commands ?? []
     }
 
     /// Every follower and carrier, read before `core` changes so the ground port
@@ -99,16 +83,12 @@ public final class VehicleCoordinator {
         Set(core.links.flatMap { [$0.key, $0.value.carrier] })
     }
 
-    public func advance() {
-        guard let world else { return }
+    public func advance() -> [VehicleCommand] {
+        guard let world else { return [] }
         guard !core.links.isEmpty else {
-            if hasDeltas {
-                world.publishVehiclePoses([:])
-                world.publishCarriedPoses([:])
-                world.publishVehicleLinks([])
-                hasDeltas = false
-            }
-            return
+            guard hasDeltas else { return [] }
+            hasDeltas = false
+            return [.publishVehiclePoses([:]), .publishCarriedPoses([:]), .publishLinks([])]
         }
         loadWheels(world: world)
         let linked = linkedReferences
@@ -117,24 +97,28 @@ public final class VehicleCoordinator {
             bone: { world.vehicleBone(of: $0, named: $1) },
             ground: { world.vehicleGround(at: $0, excluding: linked) }
         )
+        var commands: [VehicleCommand] = []
         var placements: [UInt32: float4x4] = [:]
         for (key, pose) in lastPoses {
             if key == .player {
-                world.placePlayer(at: pose)
+                commands.append(.placePlayer(pose))
             } else if let formID = world.vehicleFormID(of: key) {
-                world.vehicleFollowerMoved(key, to: pose)
+                commands.append(.followerMoved(key, to: pose))
                 placements[formID] = VehicleCore.matrix(pose)
             }
         }
         for (key, link) in core.links {
             if case let .towed(tow) = link.seat {
-                world.spinVehicleWheels(of: key, rolled: tow.rolled)
+                commands.append(.spinWheels(key, rolled: tow.rolled))
             }
         }
-        world.publishVehiclePoses(placements)
-        world.publishCarriedPoses(lastPoses.filter { $0.key != .player })
-        world.publishVehicleLinks(linked)
+        commands += [
+            .publishVehiclePoses(placements),
+            .publishCarriedPoses(lastPoses.filter { $0.key != .player }),
+            .publishLinks(linked)
+        ]
         hasDeltas = true
+        return commands
     }
 
     /// A towed cart rests on its wheels once its model has loaded.

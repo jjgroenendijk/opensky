@@ -22,7 +22,7 @@ struct TrainingTests {
         coordinator.trainWithNearestTrainer()
 
         #expect(world.paid == [200])
-        #expect(world.stats == ["Training Sessions"])
+        #expect(coordinator.takeCommands().contains(.incrementStat("Training Sessions")))
         #expect(coordinator.leveling?.state.trainingSessions == 1)
         #expect(coordinator.lastActionText.contains("Njada trained Block"))
     }
@@ -36,7 +36,7 @@ struct TrainingTests {
         let coordinator = try ProgressionCoordinatorFixture.make(world: world)
 
         #expect(try coordinator.train(with: #require(world.trainer)) == .refused(.insufficientGold))
-        #expect(world.notices == ["sInsufficientGoldToTrain"])
+        #expect(coordinator.takeCommands() == [.showNotification("sInsufficientGoldToTrain")])
         #expect(world.paid.isEmpty)
         #expect(coordinator.leveling?.state.trainingSessions == 0)
     }

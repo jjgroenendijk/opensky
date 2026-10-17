@@ -85,7 +85,7 @@ extension ProgressionCoordinator {
             isHidden: data?.isHidden ?? false,
             isOwned: perks.runtime?.owns(key, on: .player) ?? false,
             conditions: resolved.record.conditions.conditions.map {
-                world?.conditionText($0) ?? ""
+                world.conditionText($0)
             },
             effects: resolved.effects.map(Self.effectText)
         )

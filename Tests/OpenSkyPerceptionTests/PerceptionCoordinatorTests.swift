@@ -12,7 +12,6 @@ import Testing
 private final class FakePerceptionSessionWorld: PerceptionSessionWorld {
     var candidates: [PerceptionCandidate] = []
     var targets: [PerceptionTarget] = []
-    var sneakUses: [Float] = []
 
     func perceptionCandidates() -> [PerceptionCandidate] {
         candidates
@@ -24,10 +23,6 @@ private final class FakePerceptionSessionWorld: PerceptionSessionWorld {
 
     func perceptionHasLineOfSight(from _: SIMD3<Float>, to _: SIMD3<Float>) -> Bool {
         true
-    }
-
-    func reportSneakSkillUse(_ amount: Float, by _: ReferenceKey) {
-        sneakUses.append(amount)
     }
 }
 
@@ -65,7 +60,7 @@ struct PerceptionCoordinatorTests {
     }
 
     @Test func thePanelIsUnavailableUntilTheSettingsAreWired() {
-        let coordinator = PerceptionCoordinator()
+        let coordinator = PerceptionCoordinator(world: FakePerceptionSessionWorld())
         #expect(coordinator.perceptionSnapshot.isUnavailable)
         #expect(coordinator.perceptionLines(for: PerceptionFixture.guardKey).isEmpty)
     }
@@ -83,12 +78,11 @@ struct PerceptionCoordinatorTests {
             Self.candidate(9)
         ]
         world.targets = [PerceptionFixture.target(feet: SIMD3(200, 0, 0))]
-        let coordinator = PerceptionCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = PerceptionCoordinator(world: world)
         coordinator.wire(settings: .synthetic)
 
         for _ in 0 ..< 60 {
-            coordinator.advance(by: PerceptionRuntime.fixedStepSeconds)
+            _ = coordinator.advance(by: PerceptionRuntime.fixedStepSeconds)
         }
 
         let runtime = try #require(coordinator.runtime)
@@ -111,12 +105,16 @@ struct PerceptionCoordinatorTests {
         world.targets = [
             PerceptionFixture.target(feet: feet, gait: nil, isSneaking: isSneaking)
         ]
-        let coordinator = PerceptionCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = PerceptionCoordinator(world: world)
         coordinator.wire(settings: .synthetic)
+        var uses: Float = 0
         for _ in 0 ..< 60 {
-            coordinator.advance(by: PerceptionRuntime.fixedStepSeconds)
+            for case let .reportSneakSkillUse(amount, _) in coordinator.advance(
+                by: PerceptionRuntime.fixedStepSeconds
+            ) {
+                uses += amount
+            }
         }
-        #expect(abs(world.sneakUses.reduce(0, +) - expected) < 0.02)
+        #expect(abs(uses - expected) < 0.02)
     }
 }

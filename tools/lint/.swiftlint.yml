@@ -133,6 +133,12 @@ custom_rules:
     excluded: '(Tests/.*|Sources/OpenSky(CrimeInterface/CrimeTexts|CombatInterface/(Archery|Arrow|Combat|Difficulty|PowerAttack|WeaponDamage)Settings|GameData/(ActorValueDerivation|BarterPricing|CalendarTexts|CharacterLeveling|CraftingSkillUseSettings|InventoryMenuTexts|ItemNoticeTexts|MagicTexts|MenuRecordData|ProgressionTexts|RegenerationSettings|SaveTexts|SkillAdvancement|SocialSettings|SoulTexts|SpellCostSettings|SpeechCheckSettings|StaminaSettings|TopicSubtypeTexts|TradeTexts|TrainingSettings)|InventoryInterface/(HarvestRegrowth|LockpickingSettings|LockTexts|TemperingTexts)|PerceptionInterface/DetectionSettings|World/Player/PlayerMovementConfiguration)\.swift)$'
     message: "A new settings reader: call it in GapsGatherer.settingsRead and add its file to this rule, so openskycli gaps sees what it reads"
     severity: error
+  late_attached_world:
+    name: "Late-attached world"
+    regex: '\bfunc\s+attach\s*\(\s*(_\s+)?world\s*:'
+    included: 'Sources/OpenSky[A-Z][A-Za-z]*/.*\.swift$'
+    message: "Take the world port in the initializer and return commands (docs/engine/coordinators.md)"
+    severity: error
   adapter_holds_controller:
     name: "Adapter holds the controller"
     regex: '\b(let|var)\s+\w+\s*:\s*GameViewController\b'

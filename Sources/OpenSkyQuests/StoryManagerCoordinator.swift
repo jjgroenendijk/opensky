@@ -28,17 +28,16 @@ public final class StoryManagerCoordinator {
     public private(set) var firedCounts: [FourCC: Int] = [:]
     public var lastOutcome: String?
     /// NPC conversations, hellos, and found bodies, which fire through this coordinator.
-    public let social = SocialEventCoordinator()
-    weak var world: (any StoryManagerWorld)?
+    public let social: SocialEventCoordinator
+    let world: any StoryManagerWorld
 
-    public init() {}
-
-    public func attach(world: any StoryManagerWorld) {
+    public init(world: any StoryManagerWorld, social: SocialEventCoordinator) {
         self.world = world
+        self.social = social
     }
 
     public var runtime: StoryManagerRuntime? {
-        guard let story, let world, let quests = world.questRuntime else { return nil }
+        guard let story, let quests = world.questRuntime else { return nil }
         return StoryManagerRuntime(
             store: quests.store,
             quests: quests,
@@ -66,8 +65,8 @@ public final class StoryManagerCoordinator {
     /// Starts every quest the plugins' `.seq` lists name that has no state yet.
     @discardableResult
     public func runSessionStart(lists: [PluginQuestList]) -> SessionStartReport {
-        guard let quests = world?.questRuntime else { return sessionStart }
-        sessionStart = quests.runSessionStart(lists: lists, starter: world?.questStarter)
+        guard let quests = world.questRuntime else { return sessionStart }
+        sessionStart = quests.runSessionStart(lists: lists, starter: world.questStarter)
         return sessionStart
     }
 }

@@ -47,11 +47,9 @@ public final class LoadingScreenCoordinator {
     private var text: String?
     private var loadInFlight = false
     private var random = ConditionRandom()
-    private(set) weak var world: (any LoadingScreenWorld)?
+    weak let world: (any LoadingScreenWorld)?
 
-    public init() {}
-
-    public func attach(world: any LoadingScreenWorld) {
+    public init(world: any LoadingScreenWorld) {
         self.world = world
     }
 

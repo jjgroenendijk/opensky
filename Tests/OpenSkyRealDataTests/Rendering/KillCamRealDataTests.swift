@@ -58,11 +58,11 @@ private final class RealKillCamWorld: CinematicCameraWorld {
             : CinematicAnchor(position: SIMD3(900, 0, 0), yaw: .pi)
     }
 
-    func applyCinematicFrame(pose: CinematicCameraPose?, shake: SIMD3<Float>, timeScale: Float) {
-        lowestTimeScale = min(lowestTimeScale, timeScale)
-        posedFrames += pose == nil ? 0 : 1
-        renderer.worldTimeScale = timeScale
-        renderer.setCinematicCamera(pose, shakeOffset: shake)
+    func apply(_ frame: CinematicFrame) {
+        lowestTimeScale = min(lowestTimeScale, frame.timeScale)
+        posedFrames += frame.pose == nil ? 0 : 1
+        renderer.worldTimeScale = frame.timeScale
+        renderer.setCinematicCamera(frame.pose, shakeOffset: frame.shake)
     }
 
     func startImageSpaceModifier(_ key: ReferenceKey) -> Bool {
@@ -87,8 +87,7 @@ struct KillCamRealDataTests {
             paths: CameraPathStore(plugins: plugins),
             bow: CameraShotSelectionRealDataTests.firstBow(plugins: plugins)
         )
-        let camera = CinematicCameraCoordinator()
-        camera.attach(world: world)
+        let camera = CinematicCameraCoordinator(world: world)
         let target = ReferenceKey.plugin(name: "skyrim.esm", objectID: 0x0001_A67C)
         #expect(camera.playKillCam(
             attacker: .player,
@@ -100,11 +99,11 @@ struct KillCamRealDataTests {
         var moved = false
         var frames = 0
         while camera.isPlaying, frames < 60 * 30 {
-            camera.tick(realSeconds: 1.0 / 60)
+            world.apply(camera.tick(realSeconds: 1.0 / 60))
             moved = moved || simd_distance(renderer.freeFlyCamera.position, before.position) > 1
             frames += 1
         }
-        camera.tick(realSeconds: 1.0 / 60)
+        world.apply(camera.tick(realSeconds: 1.0 / 60))
         let after = renderer.freeFlyCamera
         let lines = [
             "[INFO] bow \(world.bow?.fields.editorID ?? "none"): \(camera.lastOutcome ?? "-")",

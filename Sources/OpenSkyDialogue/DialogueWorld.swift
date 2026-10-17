@@ -1,15 +1,14 @@
 // The world side of the dialogue domain: what `DialogueCoordinator` reads from
-// the running session, and the actor commands the speaker focus sends. The app
-// answers it; a test passes a fake. See docs/engine/coordinators.md.
+// the running session. The app answers it; a test passes a fake.
+// See docs/engine/coordinators.md.
 
 import OpenSkyConditions
 import OpenSkyDialogueInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyQuestsInterface
-import simd
 
-/// What `DialogueCoordinator` reads from and sends to the running world.
+/// What `DialogueCoordinator` reads from the running world.
 @MainActor
 public protocol DialogueWorld: AnyObject {
     /// Nil without a quest runtime. Then no conversation can run.
@@ -20,15 +19,4 @@ public protocol DialogueWorld: AnyObject {
     var fragments: (any DialogueFragmentDispatching)? { get }
     /// Walks the VFS, so the coordinator calls it once.
     func loadStrings() -> LocalizedStrings?
-
-    func suspendPackage(for actor: ReferenceKey)
-    /// Selects a package again for the world as it is now.
-    func resumePackage(for actor: ReferenceKey)
-    func stopActor(_ actor: ReferenceKey)
-    func faceActor(_ actor: ReferenceKey, towards point: SIMD3<Float>)
-    func releaseFacing(of actor: ReferenceKey)
-    /// The player said a line that wins a speech challenge against `speaker`.
-    func speechChallengeWon(_ challenge: SpeechChallenge, speaker: ReferenceKey)
-    /// `speaker` said a line to the player, which `GetTalkedToPC` reads.
-    func spokeToPlayer(_ speaker: ReferenceKey)
 }

@@ -10,28 +10,22 @@ import OpenSkyWorldInterface
 
 extension LockCoordinator {
     /// Advances the open session. Returns its events; empty without a session.
-    @discardableResult
-    public func stepLockpicking(_ seconds: Float, input: LockpickingInput) -> [LockpickingEvent] {
-        guard var current = session else { return [] }
+    public func stepLockpicking(
+        _ seconds: Float, input: LockpickingInput
+    ) -> InventoryResult<[LockpickingEvent]> {
+        guard var current = session else { return InventoryResult([]) }
         let events = current.step(seconds, input: input)
         session = current
         pickHealth = current.pickHealth
-        for event in events {
-            handle(event)
-        }
-        return events
+        return InventoryResult(events, commands: events.flatMap(handle))
     }
 
     /// Ends the open session without opening the lock.
-    @discardableResult
-    public func cancelLockpicking() -> [LockpickingEvent] {
-        guard var current = session else { return [] }
+    public func cancelLockpicking() -> InventoryResult<[LockpickingEvent]> {
+        guard var current = session else { return InventoryResult([]) }
         let events = current.cancel()
         session = current
-        for event in events {
-            handle(event)
-        }
-        return events
+        return InventoryResult(events, commands: events.flatMap(handle))
     }
 
     /// Drops a finished session, after the menu has shown its last frame.
@@ -42,7 +36,7 @@ extension LockCoordinator {
         sessionLock = nil
     }
 
-    private func handle(_ event: LockpickingEvent) {
+    private func handle(_ event: LockpickingEvent) -> [InventoryCommand] {
         switch event {
         case .pickBroke:
             if let items, let lockpickItem {
@@ -50,21 +44,23 @@ extension LockCoordinator {
             }
             sessionExperience += report(uses: settings.brokenUses, action: .lockpickBroken)
             lastAction = .pickBroke
+            return []
         case .opened:
-            open()
+            return open()
         case .outOfPicks:
             finish(opened: false, keyRewarded: false)
             lastAction = .notice(.outOfLockpicks)
-            world?.showLockNotice(texts.outOfLockpicks)
+            return [.showNotice(texts.outOfLockpicks)]
         case .cancelled:
             finish(opened: false, keyRewarded: false)
             lastAction = .stoppedPicking
+            return []
         }
     }
 
-    private func open() {
-        guard let target = sessionLock else { return }
-        write(target.state, locked: false, for: target.key)
+    private func open() -> [InventoryCommand] {
+        guard let target = sessionLock else { return [] }
+        let commands = write(target.state, locked: false, for: target.key)
         sessionExperience += report(
             uses: settings.successUses[difficulty(of: target.state)] ?? 0, action: .lockpickSuccess
         )
@@ -74,6 +70,7 @@ extension LockCoordinator {
         }
         finish(opened: true, keyRewarded: rewarded)
         lastAction = .picked(name: sessionTarget?.interaction.name)
+        return commands
     }
 
     /// `Mod Lockpicking Key Reward Chance` in percent. Wax Key sets 100.
@@ -89,7 +86,7 @@ extension LockCoordinator {
     }
 
     private func report(uses: Float, action: SkillAdvanceAction) -> Float {
-        guard uses > 0, let world, let items else { return 0 }
+        guard uses > 0, let items else { return 0 }
         return world.reportSkillUse(SkillUseEvent(
             actor: items.player.key, action: .lockpick, amount: uses, advanceAction: action
         ))

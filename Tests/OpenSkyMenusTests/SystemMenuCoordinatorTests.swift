@@ -69,9 +69,9 @@ private struct Harness {
     init() {
         let movies = SWFMovieSource()
         menu = SystemMenuCoordinator(
-            menuMode: menuMode, movies: movies, hud: HUDCoordinator(movies: movies)
+            menuMode: menuMode, movies: movies, hud: HUDCoordinator(movies: movies),
+            world: world
         )
-        menu.attach(world: world)
         menu.attach(settings: settings)
         menu.saves = saves
     }

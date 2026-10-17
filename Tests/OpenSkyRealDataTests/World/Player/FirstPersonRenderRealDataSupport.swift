@@ -23,6 +23,13 @@ extension FirstPersonRenderRealDataTests {
         feet: SIMD3<Float>,
         input: CameraInput
     ) {
+        // The app hands the graphs the eye pose before every step.
+        let eye = FreeFlyCamera(
+            position: feet + SIMD3(0, 0, PlayerCapsule.standard.eyeHeight), yaw: 0, pitch: 0
+        )
+        assembled.bridge.actorState.setCamera(
+            position: eye.position, forward: eye.forward, pitch: eye.pitch
+        )
         assembled.bridge.acceptFrame(input)
         _ = assembled.bridge.plan(LocomotionStepState(
             feetPosition: feet,
@@ -44,6 +51,12 @@ extension FirstPersonRenderRealDataTests {
         feet: SIMD3<Float>,
         handType: Int32
     ) {
+        // The bridge writes `iState` from this every step, as the app does from melee.
+        assembled.bridge.actorState.weaponDrawn = true
+        assembled.bridge.actorState.rightHandType = handType
+        // `PlayerCoordinator.refreshBody` does this in the app; drawn keeps the sword in hand.
+        assembled.body.animation.weaponsDrawn = true
+        assembled.arms.animation.weaponsDrawn = true
         assembled.bridge.write(.int(handType), to: CombatGraphNames.rightHandType)
         assembled.bridge.raise(CombatGraphNames.weaponDraw)
         assembled.bridge.raise(CombatGraphNames.weapEquip)

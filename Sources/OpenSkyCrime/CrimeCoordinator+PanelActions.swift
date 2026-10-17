@@ -54,9 +54,9 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
     public func checkGuardConfrontation() -> CrimeFactionActionOutcome {
         guard let runtime = reporter?.runtime else { return notePanel(.unavailable) }
         guard let subject = panel.subject else { return notePanel(.guardCheckNeedsSubject) }
-        let name = world?.actorName(subject) ?? subject.description
+        let name = world.actorName(subject)
         guard
-            let profile = world?.socialProfile(of: subject),
+            let profile = world.socialProfile(of: subject),
             let faction = GuardRecognition.policedFaction(
                 of: profile, guardFaction: runtime.factions.guardFactionKey
             )
@@ -67,8 +67,8 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
             values: runtime.factions.faction(key: faction)?.faction.crimeValues
         )
         var tick: String?
-        if world?.gameSeconds != nil {
-            advanceGuardResponse()
+        if world.gameSeconds != nil {
+            stepGuardResponse()
             tick = lastGuard.text
         }
         return notePanel(.guardChecked(
@@ -90,12 +90,12 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
     @discardableResult
     public func selectSocialSubjectFromCrosshair() -> CrimeFactionActionOutcome {
         guard
-            let interaction = world?.crosshairInteraction,
-            let entry = world?.references?.referenceEntry(formID: interaction.reference),
+            let interaction = world.crosshairInteraction,
+            let entry = world.references?.referenceEntry(formID: interaction.reference),
             entry.placedActor != nil
         else { return notePanel(.crosshairNotOnActor) }
         panel.subject = entry.key
-        return notePanel(.subjectSelected(world?.actorName(entry.key) ?? entry.key.description))
+        return notePanel(.subjectSelected(world.actorName(entry.key)))
     }
 
     @discardableResult
@@ -106,7 +106,7 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
 
     @discardableResult
     public func joinSelectedFaction(rank: Int8) -> CrimeFactionActionOutcome {
-        guard let world, world.hasFactionData else { return notePanel(.unavailable) }
+        guard world.hasFactionData else { return notePanel(.unavailable) }
         guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player
         let changed = world.joinFaction(faction, actor: key, rank: rank)
@@ -117,7 +117,7 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
 
     @discardableResult
     public func leaveSelectedFaction() -> CrimeFactionActionOutcome {
-        guard let world, world.hasFactionData else { return notePanel(.unavailable) }
+        guard world.hasFactionData else { return notePanel(.unavailable) }
         guard let faction = effectiveMembershipFaction else { return notePanel(.noFactions) }
         let key = panel.subject ?? .player
         return notePanel(.left(
@@ -131,8 +131,7 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
 
     @discardableResult
     public func barterWithSocialSubject() -> CrimeFactionActionOutcome {
-        guard let world else { return notePanel(.unavailable) }
-        return notePanel(.barter(world.openBarter(
+        notePanel(.barter(world.openBarter(
             with: panel.subject ?? .player,
             vendorFaction: panel.vendorOverride
         )))
@@ -141,7 +140,7 @@ extension CrimeCoordinator: CrimeFactionControlProviding {
     // MARK: - Private
 
     private func subjectName(_ key: ReferenceKey) -> String {
-        key == .player ? "The player" : world?.actorName(key) ?? key.description
+        key == .player ? "The player" : world.actorName(key)
     }
 
     private func notePanel(_ outcome: CrimeFactionActionOutcome) -> CrimeFactionActionOutcome {

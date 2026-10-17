@@ -56,8 +56,7 @@ struct AudioCoordinatorTests {
             "sound\\voice\\skyrim.esm\\femaleeventoned\\a.fuz": Data(),
             "sound\\voice\\skyrim.esm\\malenord\\b.fuz": Data()
         ])
-        let audio = AudioCoordinator()
-        audio.attach(world: world)
+        let audio = AudioCoordinator(world: world)
         return (audio, world)
     }
 

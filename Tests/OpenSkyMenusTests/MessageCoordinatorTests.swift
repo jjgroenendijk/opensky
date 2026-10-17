@@ -94,8 +94,7 @@ struct MessageCoordinatorTests {
     @Test func boxPausesTheWorldAndAnswersItsCaller() {
         let menuMode = MenuModeController()
         let world = Self.world()
-        let messages = MessageCoordinator(menuMode: menuMode)
-        messages.attach(world: world)
+        let messages = MessageCoordinator(menuMode: menuMode, world: world)
 
         let result = messages.showMessage(Self.question, arguments: [])
         #expect(result == .awaitingButton(token: 1))
@@ -113,8 +112,7 @@ struct MessageCoordinatorTests {
 
     @Test func notificationsReachTheHUDInOrder() {
         let world = Self.world()
-        let messages = MessageCoordinator(menuMode: MenuModeController())
-        messages.attach(world: world)
+        let messages = MessageCoordinator(menuMode: MenuModeController(), world: world)
 
         #expect(messages.showMessage(Self.note, arguments: []) == .posted)
         messages.postNotification("Second")
@@ -126,8 +124,7 @@ struct MessageCoordinatorTests {
 
     @Test func helpCountsPersistThroughTheWorld() {
         let world = Self.world()
-        let messages = MessageCoordinator(menuMode: MenuModeController())
-        messages.attach(world: world)
+        let messages = MessageCoordinator(menuMode: MenuModeController(), world: world)
         let request = PapyrusHelpMessageRequest(
             message: Self.note, event: "Jump", duration: 0, interval: 0, maxTimes: 1
         )
@@ -147,8 +144,7 @@ struct MessageCoordinatorTests {
     @Test func panelShowsAnyMessageEitherWayAndReadsBack() {
         let menuMode = MenuModeController()
         let world = Self.world()
-        let messages = MessageCoordinator(menuMode: menuMode)
-        messages.attach(world: world)
+        let messages = MessageCoordinator(menuMode: menuMode, world: world)
 
         #expect(messages.show(editorID: "Note", asBox: false).text == "Posted Note")
         #expect(messages.show(editorID: "Missing", asBox: false).text == "No message Missing")

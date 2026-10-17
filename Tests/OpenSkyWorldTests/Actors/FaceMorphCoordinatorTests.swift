@@ -26,8 +26,7 @@ struct FaceMorphCoordinatorTests {
     @Test
     func noSubjectGivesTheEmptySnapshot() {
         let world = World()
-        let coordinator = FaceMorphCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = FaceMorphCoordinator(world: world)
         #expect(coordinator.faceMorphSnapshot == .empty)
         world.faceMorphSubject = FormID(0x99)
         #expect(coordinator.faceMorphSnapshot == .empty)
@@ -37,8 +36,7 @@ struct FaceMorphCoordinatorTests {
     func theSubjectsPlaybackIsReadAndWritten() {
         let world = World()
         world.faceMorphSubject = world.playback.actor
-        let coordinator = FaceMorphCoordinator()
-        coordinator.attach(world: world)
+        let coordinator = FaceMorphCoordinator(world: world)
         coordinator.setFaceMorphWeight(0.5, target: "Aah")
         let snapshot = coordinator.faceMorphSnapshot
         #expect(snapshot.actor == world.playback.actor)

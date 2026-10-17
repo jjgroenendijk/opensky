@@ -132,12 +132,6 @@ public final class CasterRuntime {
         self.world = world
     }
 
-    public func attach(world: (any CasterWorld)?) {
-        self.world = world
-        casts = [:]
-        heldButtons = [:]
-    }
-
     /// Whether `caster`'s `hand` button was down on the previous frame.
     /// Internal so the input satellite can read it.
     public func wasHeld(_ hand: SpellHand, on caster: ReferenceKey = .player) -> Bool {

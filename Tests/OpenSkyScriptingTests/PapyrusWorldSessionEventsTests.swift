@@ -79,8 +79,7 @@ struct PapyrusWorldSessionEventsTests {
         try Self.attach(world, key: .player)
         Fixture.drain(world)
         let fake = FakePlayerWorld()
-        let coordinator = ScriptCoordinator()
-        coordinator.attach(world: fake)
+        let coordinator = ScriptCoordinator(world: fake)
         coordinator.install(runtime: world, bridge: nil)
 
         coordinator.restore(instances: [], timers: [])

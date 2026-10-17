@@ -23,14 +23,12 @@ struct CrimeFactionsAcceptancePanelTests {
         let controller = GameViewController()
         let factions = try CrimeFixture.factionStore()
         let file = try CrimeFixture.file()
-        controller.factions.attach(world: controller.factionWorld)
         controller.factions.wire(
             factions: factions,
             relationships: RelationshipStore(plugins: [(CrimeFixture.pluginName, file)]),
             baselines: nil,
             pluginName: CrimeFixture.pluginName
         )
-        controller.crime.attach(world: controller.crimeWorld)
         controller.crime.wire(
             runtime: CrimeRuntime(store: controller.worldState, factions: factions),
             locations: nil,

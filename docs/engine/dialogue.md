@@ -176,12 +176,13 @@ adds 4096.
 | 566 | 4662 | `GetIsAliasRef` | 5,320 |
 | 249 | 4345 | `IsInDialogueWithPlayer` | 428 |
 
-`GetIsVoiceType` reads an actor's `VTCK`. An actor with no resolved voice type fails with a
-reason, instead of a false "no match". `IsInDialogueWithPlayer` reads who the player talks to.
-Nobody talking is a real 0. Every condition context the session builds carries both facts: the
-voice type of each loaded actor after template inheritance, and the speaker from the moment the
-conversation opens. `GetIsAliasRef` compares the run-on reference with the filled alias
-table of the alias quest.
+`GetIsVoiceType` reads an actor's `VTCK`. The parameter may also be a form list of voice types
+([GetIsVoiceType](https://ck.uesp.net/wiki/GetIsVoiceType)); most quest dialogue conditions name
+one. An actor with no resolved voice type fails with a reason, instead of a false "no match".
+`IsInDialogueWithPlayer` reads who the player talks to. Nobody talking is a real 0. Every
+condition context the session builds carries both facts: the voice type of each loaded actor
+after template inheritance, and the speaker from the moment the conversation opens.
+`GetIsAliasRef` compares the run-on reference with the filled alias table of the alias quest.
 
 The faction functions that guard and vendor lines depend on are on the
 [condition evaluation](/engine/conditions.md) page.
@@ -206,21 +207,21 @@ decodes as 0 is dropped. So a loaded world compares equal to the saved one.
 
 ## Measured coverage
 
-Selecting for Delphine (named by more player-facing `INFO` conditions than any other NPC in
-`Skyrim.esm`), with only the quests that start enabled, and with branch scoping. Most topics are
-rejected as not a branch entry without their conditions being evaluated:
+Selecting for Sybille Stentor, with only the quests that start enabled, and with branch scoping.
+Delphine, who is named by more player-facing `INFO` conditions than any other NPC, is offered
+nothing in that state: her quests' dialogue conditions name the Thalmor and Vigilant factions and
+voice types she does not have. Most topics are rejected as not a branch entry without their
+conditions being evaluated:
 
 | Measure | Value |
 | --- | ---: |
 | Topics offered | 4 |
-| Topics rejected | 6,531 |
-| Conditions evaluated | 6,101 |
-| Conditions that could not be answered | 4,305 |
+| Conditions evaluated | 5,371 |
+| Conditions that could not be answered | 2,886 |
 
-The functions most often still missing, by Creation Kit number: 4725 (411 conditions), 4702
-(303), 4163 (61), 4351 (44), 4227 (25), 4180 (21). These are numbers, not names, because the
-sweep counts what the plugin stores. Each gets its name when it is implemented from a cited
-source. The full table goes to `.logs/dialogue-selection/<stamp>/`.
+Every function the selection meets is registered. The unanswered conditions read seams the test
+context does not supply, such as packages and scenes. The full table goes to
+`.logs/dialogue-selection/<stamp>/`.
 
 All 7,661 `INFO` fragment tails in the five masters decode, with 8,009 result script fragments,
 no record failures, and no bytes left over.

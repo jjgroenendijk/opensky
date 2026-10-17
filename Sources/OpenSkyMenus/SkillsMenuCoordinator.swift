@@ -56,14 +56,16 @@ public final class SkillsMenuCoordinator {
     let movies: SWFMovieSource?
     let hud: HUDCoordinator?
     private let menuMode: MenuModeController
-    private(set) weak var world: (any SkillsMenuWorld)?
+    weak let world: (any SkillsMenuWorld)?
 
     public init(
-        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil
+        menuMode: MenuModeController, movies: SWFMovieSource? = nil, hud: HUDCoordinator? = nil,
+        world: (any SkillsMenuWorld)? = nil
     ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+        self.world = world
     }
 
     /// Holds the layer across both movies, because the level-up pick and the
@@ -78,10 +80,6 @@ public final class SkillsMenuCoordinator {
 
     public var movieError: String? {
         movie.error
-    }
-
-    public func attach(world: any SkillsMenuWorld) {
-        self.world = world
     }
 
     /// False before a world with progression loads.

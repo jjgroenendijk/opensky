@@ -1,6 +1,7 @@
-// A crafting session at a vanilla forge for a fresh player: a non-empty recipe
-// list, `RecipeWeaponIronSword` eligible once its parts are added, and a craft
-// that consumes exactly its parts. Run with `make test-real T='CraftingRealDataTests'`.
+// A crafting session at a vanilla forge for a fresh player, who wears the `Player`
+// record's iron outfit: a non-empty recipe list, `RecipeWeaponIronSword` eligible
+// once its parts are added, and a craft that consumes exactly its parts. Run with `make test-real
+// T='CraftingRealDataTests'`.
 
 import Foundation
 @testable import OpenSkyConditions
@@ -99,6 +100,7 @@ struct CraftingRealDataTests {
         let recipe = bench.recipe
         #expect(!bench.session.recipes.isEmpty)
         #expect(!bench.session.eligibility(of: recipe).isEligible)
+        let before = counts(in: bench.inventory)
         try addParts(of: recipe, to: bench.inventory)
         let verdict = bench.session.eligibility(of: recipe)
         #expect(verdict.isEligible, "verdict: \(verdict)")
@@ -107,20 +109,22 @@ struct CraftingRealDataTests {
         let outcome = try bench.session.craft(recipe.id)
         #expect(outcome.consumed.map(\.item) == parts.compactMap(\.item))
         #expect(outcome.consumed.map(\.count) == parts.map(\.count))
-        #expect(bench.inventory.inventory(of: .player).stacks == [outcome.created])
+        var expected = before
+        expected[outcome.created.item, default: 0] += outcome.created.count
+        #expect(counts(in: bench.inventory) == expected)
         #expect(outcome.created.item == recipe.created)
         try writeReport(station: bench.stationName, recipes: bench.session.statuses)
     }
 
     /// `TemperArmorIronCuirass`: one iron ingot, gated by `EPTemperingItemIsEnchanted != 1`
-    /// or `HasPerk`. A plain cuirass passes the first condition.
+    /// or `HasPerk`. The outfit's plain cuirass passes the first condition.
     @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
     func anArmorTableImprovesACarriedIronCuirass() throws {
         let bench = try bench(offering: "TemperArmorIronCuirass")
         let cuirass = try #require(bench.recipe.created)
         #expect(bench.session.station.improves)
-        #expect(bench.session.statuses.isEmpty)
-        try bench.inventory.add(cuirass, count: 1, to: .player)
+        #expect(bench.inventory.count(of: cuirass, in: .player) == 1)
+        let before = counts(in: bench.inventory)
         try addParts(of: bench.recipe, to: bench.inventory)
         let status = try #require(bench.session.statuses.first { $0.recipe.id == bench.recipe.id })
         #expect(status.isReady, "verdict: \(status.eligibility)")
@@ -129,7 +133,12 @@ struct CraftingRealDataTests {
         #expect(outcome.improved == TemperStep(from: 0, to: 1))
         #expect(bench.inventory.count(of: cuirass, in: .player) == 1)
         #expect(bench.inventory.temperLevel(of: cuirass, in: .player) == 1)
-        #expect(bench.inventory.inventory(of: .player).stacks.map(\.item) == [cuirass])
+        #expect(counts(in: bench.inventory) == before)
+    }
+
+    private func counts(in inventory: InventoryRuntime) -> [FormID: Int32] {
+        inventory.inventory(of: .player).stacks
+            .reduce(into: [:]) { $0[$1.item, default: 0] += $1.count }
     }
 
     private func writeReport(station: String, recipes: [CraftingRecipeStatus]) throws {

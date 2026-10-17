@@ -16,6 +16,7 @@ import OpenSkyWorldInterface
 protocol LockpickingMenuHost: MenuInputConsumer, MenuSoundHost {
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var renderer: Renderer? { get }
     var streamer: CellStreamer? { get }
@@ -112,7 +113,7 @@ final class LockpickingMenuController {
         guard isOpen else { return }
         controls.handle(event)
         guard controls.cancelRequested else { return }
-        locks.cancelLockpicking()
+        game.inventoryWorld.run(locks.cancelLockpicking())
         close()
     }
 
@@ -128,7 +129,8 @@ final class LockpickingMenuController {
             play(intent.turning ? .cylinderTurn : .cylinderStop)
             wasTurning = intent.turning
         }
-        let events = locks.stepLockpicking(min(seconds, Self.longestStep), input: input)
+        let events = game.inventoryWorld
+            .run(locks.stepLockpicking(min(seconds, Self.longestStep), input: input))
         for event in events {
             switch event {
             case .pickBroke: play(.pickBreak)

@@ -9,6 +9,7 @@ import OpenSkyEngineTesting
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 import OpenSkyFormatsTesting
+@testable import OpenSkyGameData
 @testable import OpenSkyQuests
 @testable import OpenSkyWorld
 @testable import OpenSkyWorldState
@@ -75,6 +76,29 @@ struct DialogueConditionFunctionTests {
         #expect(!result.outcome.isTrue)
         // A mismatch is a real answer, so nothing is tallied as a coverage gap.
         #expect(result.outcome.isConclusive)
+    }
+
+    /// A FormList parameter answers whether the voice type is one of its entries.
+    @Test(arguments: [true, false])
+    func voiceTypeListAnswersMembership(listed: Bool) throws {
+        let entries = listed ? [otherVoice.rawValue, voiceType.rawValue] : [otherVoice.rawValue]
+        let file = try KeywordFixture.plugin(formLists: [
+            FormListFixture.recordBytes(formID: 0x0800, editorID: "Voices", entries: entries)
+        ])
+        var context = try populated(
+            dialogue: DialogueResolution(voiceTypes: [speaker: voiceType])
+        )
+        context.data = ConditionDataResolution(
+            formLists: FormListStore(plugins: [("Test.esm", file)]), sourcePlugin: "Test.esm"
+        )
+        let condition = try ConditionEvaluatorFixture.condition(
+            comparisonValue: Float(1).bitPattern,
+            functionIndex: 426,
+            parameter1: 0x0800
+        )
+        let outcome = evaluate(condition, context).outcome
+        #expect(outcome.isTrue == listed)
+        #expect(outcome.isConclusive)
     }
 
     /// An actor this session resolved no voice type for is a reason-tagged

@@ -13,7 +13,7 @@ struct IdleDependentsTests {
     }
 
     @Test func dependentsFollowTheirOwnerInOrderOnce() {
-        let idles = IdleCoordinator()
+        let idles = IdleCoordinator(world: nil)
         idles.addDependent(Self.actor(2), of: Self.actor(1))
         idles.addDependent(Self.actor(3), of: Self.actor(1))
         idles.addDependent(Self.actor(1), of: Self.actor(3))
@@ -24,7 +24,7 @@ struct IdleDependentsTests {
     }
 
     @Test func aSeatedActorsFurnitureIsTheConditionTarget() {
-        let idles = IdleCoordinator()
+        let idles = IdleCoordinator(world: nil)
         let block = Self.actor(9)
         #expect(idles.conditionContext(for: Self.actor(1)).target == nil)
         idles.furnitureUses[Self.actor(1)] = FurnitureUse(

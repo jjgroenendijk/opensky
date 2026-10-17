@@ -28,13 +28,10 @@ public final class ActorValueCoordinator {
     public private(set) var stamina = StaminaSettings.vanilla
 
     let store: WorldStateStore
-    weak var world: (any ActorValueWorld)?
+    weak let world: (any ActorValueWorld)?
 
-    public init(store: WorldStateStore) {
+    public init(store: WorldStateStore, world: (any ActorValueWorld)?) {
         self.store = store
-    }
-
-    public func attach(world: any ActorValueWorld) {
         self.world = world
     }
 

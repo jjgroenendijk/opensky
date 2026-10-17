@@ -53,7 +53,7 @@ public final class AgentControlCoordinator {
 
     public static let recentCommandLimit = 12
 
-    public let router = AgentCommandRouter()
+    public let router: AgentCommandRouter
     public let socketPath: String
     public private(set) var lastError: String?
     public private(set) var recentCommands: [String] = []
@@ -67,8 +67,14 @@ public final class AgentControlCoordinator {
     private var server: AgentSocketServer?
     private var connections: [Int: Connection] = [:]
 
-    public init(socketPath: String = AgentSocketLocation.path()) {
+    /// `world` names the running game's world each time a command needs it, because
+    /// the server outlives each game window.
+    public init(
+        socketPath: String = AgentSocketLocation.path(),
+        world: @escaping () -> (any AgentControlWorld)?
+    ) {
         self.socketPath = socketPath
+        router = AgentCommandRouter(world: world)
     }
 
     public var isEnabled: Bool {
@@ -96,10 +102,6 @@ public final class AgentControlCoordinator {
         } catch {
             lastError = error.message
         }
-    }
-
-    public func attach(world: any AgentControlWorld) {
-        router.world = world
     }
 
     public var snapshot: AgentControlSnapshot {

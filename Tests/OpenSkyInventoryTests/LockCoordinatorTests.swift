@@ -12,7 +12,8 @@ import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import Testing
 
-/// Records skill uses and answers perks from a table.
+/// Records skill uses and answers perks from a table. Notices and prompt refreshes
+/// come back as commands, so the fake does not record them.
 @MainActor
 final class FakeLockWorld: LockWorld {
     var lockpickingSkill: Float = 0
@@ -20,8 +21,6 @@ final class FakeLockWorld: LockWorld {
     var filter: Float = 0
     private(set) var filtered: [ReferenceKey] = []
     private(set) var uses: [SkillUseEvent] = []
-    private(set) var changes = 0
-    private(set) var notices: [String] = []
 
     func perkValue(
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
@@ -36,20 +35,12 @@ final class FakeLockWorld: LockWorld {
 
     var placed: [PlacedInteraction] = []
 
-    func lockStateChanged() {
-        changes += 1
-    }
-
     func lockables() -> [PlacedInteraction] {
         placed
     }
 
     func itemName(_ item: FormID) -> String {
         "Key \(item)"
-    }
-
-    func showLockNotice(_ text: String) {
-        notices.append(text)
     }
 
     func activationFilter(of reference: ReferenceKey) -> Float {
@@ -89,13 +80,12 @@ struct LockCoordinatorTests {
 
     static func coordinator(
         picks: Int32 = 0,
-        world: FakeLockWorld? = nil
+        world: FakeLockWorld = FakeLockWorld()
     ) throws -> Rig {
         let harness = try Items.harness(entries: [Items.entry(formID: door, base: doorBase)])
-        let locks = LockCoordinator()
+        let locks = LockCoordinator(world: world)
         locks.wire(items: harness.runtime)
         locks.lockpickItem = Fixture.lockpick
-        locks.world = world
         if picks > 0 {
             _ = try harness.runtime.inventory.add(Fixture.lockpick, count: picks, to: .player)
         }
@@ -106,7 +96,7 @@ struct LockCoordinatorTests {
         let rig = try Self.coordinator()
         let locks = rig.locks
         let target = Self.door(level: .adept)
-        #expect(locks.gate(target) == .locked(level: 50, key: Self.key))
+        #expect(locks.gate(target).value == .locked(level: 50, key: Self.key))
         let labelled = locks.labelled(target.interaction)
         #expect(labelled.actionLabel == LockTexts.vanilla.unlock)
         #expect(labelled.name == "Fixture Door (Adept)")
@@ -117,10 +107,11 @@ struct LockCoordinatorTests {
         let world = FakeLockWorld()
         let rig = try Self.coordinator(world: world)
         world.filter = 1
-        #expect(rig.locks.gate(Self.door(level: .adept)) == .filteredByPerk)
+        #expect(rig.locks.gate(Self.door(level: .adept)).value == .filteredByPerk)
         #expect(world.filtered.count == 1)
         world.filter = 0
-        #expect(rig.locks.gate(Self.door(level: .adept)) == .locked(level: 50, key: Self.key))
+        let refusal = rig.locks.gate(Self.door(level: .adept)).value
+        #expect(refusal == .locked(level: 50, key: Self.key))
         withExtendedLifetime(rig) {}
     }
 
@@ -131,13 +122,14 @@ struct LockCoordinatorTests {
         let harness = rig.harness
         _ = try harness.runtime.inventory.add(Self.key, count: 1, to: .player)
         let target = Self.door(level: .requiresKey)
-        #expect(locks.gate(target) == nil)
-        #expect(world.notices == ["Unlocked with Key \(Self.key)."])
+        #expect(locks.gate(target) == InventoryResult(nil, commands: [
+            .refreshInteractionTarget, .showNotice("Unlocked with Key \(Self.key).")
+        ]))
         let state = locks.lock(of: target.interaction)?.state
         #expect(state?.isLocked == false)
         #expect(state?.level == 255)
         _ = try harness.runtime.inventory.remove(Self.key, count: 1, from: .player)
-        #expect(locks.gate(target) == nil)
+        #expect(locks.gate(target).value == nil)
         withExtendedLifetime(rig) {}
     }
 
@@ -146,7 +138,7 @@ struct LockCoordinatorTests {
         let locks = rig.locks
         let harness = rig.harness
         _ = try harness.runtime.inventory.add(Fixture.gold, count: 1, to: .player)
-        #expect(locks.gate(Self.door(level: .novice)) != nil)
+        #expect(locks.gate(Self.door(level: .novice)).value != nil)
         withExtendedLifetime(rig) {}
     }
 
@@ -156,7 +148,7 @@ struct LockCoordinatorTests {
         let harness = rig.harness
         let open = Items.interaction(reference: Self.door, base: Self.doorBase, action: .open)
         let target = InteractionTarget(interaction: open, hitPosition: .zero, distance: 1)
-        #expect(locks.gate(target) == nil)
+        #expect(locks.gate(target).value == nil)
         #expect(locks.labelled(open) == open)
         let key = Items.entry(formID: Self.door, base: Self.doorBase).key
         #expect(harness.store.component(ReferenceLockState.self, for: key) == nil)
@@ -167,10 +159,12 @@ struct LockCoordinatorTests {
         let rig = try Self.coordinator()
         let locks = rig.locks
         let target = Self.door(level: .expert)
-        locks.setLocked(target.interaction, locked: false)
-        #expect(locks.gate(target) == nil)
-        locks.setLocked(target.interaction, locked: true)
-        #expect(locks.gate(target) == .locked(level: 75, key: Self.key))
+        #expect(locks.setLocked(target.interaction, locked: false).commands == [
+            .refreshInteractionTarget
+        ])
+        #expect(locks.gate(target).value == nil)
+        _ = locks.setLocked(target.interaction, locked: true)
+        #expect(locks.gate(target).value == .locked(level: 75, key: Self.key))
         withExtendedLifetime(rig) {}
     }
 
@@ -197,19 +191,19 @@ struct LockCoordinatorTests {
         try locks.beginLockpicking(target)
         let center = try #require(locks.session?.sweetSpotCenter)
         let start = try #require(locks.session?.pickAngle)
-        locks.stepLockpicking(
+        _ = locks.stepLockpicking(
             0.1,
             input: LockpickingInput(pickDelta: center - start, turning: false)
         )
-        var events: [LockpickingEvent] = []
-        for _ in 0 ..< 20 where events.isEmpty {
-            events = locks.stepLockpicking(
+        var step = InventoryResult<[LockpickingEvent]>([])
+        for _ in 0 ..< 20 where step.value.isEmpty {
+            step = locks.stepLockpicking(
                 0.1,
                 input: LockpickingInput(pickDelta: 0, turning: true)
             )
         }
-        #expect(events == [.opened])
-        #expect(locks.gate(target) == nil)
+        #expect(step == InventoryResult([.opened], commands: [.refreshInteractionTarget]))
+        #expect(locks.gate(target).value == nil)
         #expect(world.uses.map(\.action) == [.lockpick])
         #expect(world.uses.first?.amount == 2)
         #expect(locks.lastOutcome?.opened == true)
@@ -228,16 +222,17 @@ struct LockCoordinatorTests {
         let center = try #require(locks.session?.sweetSpotCenter)
         let start = try #require(locks.session?.pickAngle)
         let away: Float = center > 0 ? -90 - start : 90 - start
-        locks.stepLockpicking(0.01, input: LockpickingInput(pickDelta: away, turning: false))
-        var events: [LockpickingEvent] = []
-        for _ in 0 ..< 200 where events.isEmpty {
-            events = locks.stepLockpicking(
+        _ = locks.stepLockpicking(0.01, input: LockpickingInput(pickDelta: away, turning: false))
+        var step = InventoryResult<[LockpickingEvent]>([])
+        for _ in 0 ..< 200 where step.value.isEmpty {
+            step = locks.stepLockpicking(
                 0.05,
                 input: LockpickingInput(pickDelta: 0, turning: true)
             )
         }
-        #expect(events == [.pickBroke, .outOfPicks])
-        #expect(world.notices == [LockTexts.vanilla.outOfLockpicks])
+        #expect(step == InventoryResult(
+            [.pickBroke, .outOfPicks], commands: [.showNotice(LockTexts.vanilla.outOfLockpicks)]
+        ))
         #expect(harness.runtime.inventory.count(of: Fixture.lockpick, in: .player) == 0)
         #expect(world.uses.first?.amount == 0.25)
         #expect(locks.lastOutcome?.opened == false)
@@ -254,12 +249,12 @@ struct LockCoordinatorTests {
         try locks.beginLockpicking(Self.door(level: .novice))
         let center = try #require(locks.session?.sweetSpotCenter)
         let start = try #require(locks.session?.pickAngle)
-        locks.stepLockpicking(
+        _ = locks.stepLockpicking(
             0.1,
             input: LockpickingInput(pickDelta: center - start, turning: false)
         )
         for _ in 0 ..< 20 {
-            locks.stepLockpicking(0.1, input: LockpickingInput(pickDelta: 0, turning: true))
+            _ = locks.stepLockpicking(0.1, input: LockpickingInput(pickDelta: 0, turning: true))
         }
         #expect(harness.runtime.inventory.count(of: Self.key, in: .player) == 1)
         #expect(locks.lastOutcome?.keyRewarded == true)

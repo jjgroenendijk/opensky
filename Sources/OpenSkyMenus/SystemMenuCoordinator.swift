@@ -77,12 +77,18 @@ public final class SystemMenuCoordinator {
     private let menuMode: MenuModeController
     private let movies: SWFMovieSource
     private let hud: HUDCoordinator
-    weak var world: SystemMenuWorld?
+    weak let world: SystemMenuWorld?
 
-    public init(menuMode: MenuModeController, movies: SWFMovieSource, hud: HUDCoordinator) {
+    public init(
+        menuMode: MenuModeController,
+        movies: SWFMovieSource,
+        hud: HUDCoordinator,
+        world: SystemMenuWorld? = nil
+    ) {
         self.menuMode = menuMode
         self.movies = movies
         self.hud = hud
+        self.world = world
     }
 
     lazy var movie = MenuMovieSession(
@@ -95,10 +101,6 @@ public final class SystemMenuCoordinator {
 
     public var movieError: String? {
         movie.error
-    }
-
-    public func attach(world: SystemMenuWorld) {
-        self.world = world
     }
 
     public func attach(settings: PlayerSettingsCoordinator) {

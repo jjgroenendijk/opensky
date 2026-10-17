@@ -44,7 +44,7 @@ extension CrimeCoordinator: CrimeArrestSession {
 
     /// Nil without a ledger or an inventory.
     public func crimeArrest() -> CrimeArrest? {
-        guard let runtime = reporter?.runtime, let inventory = world?.inventory else { return nil }
+        guard let runtime = reporter?.runtime, let inventory = world.inventory else { return nil }
         return CrimeArrest(crime: runtime, inventory: inventory)
     }
 
@@ -52,11 +52,11 @@ extension CrimeCoordinator: CrimeArrestSession {
     /// is kept, and a baseline-free holder under the same key otherwise.
     private func evidenceHolder(of faction: ReferenceKey, arrest: CrimeArrest) -> InventoryHolder? {
         guard let key = arrest.evidenceChest(of: faction) else { return nil }
-        if let placed = world?.references?.referenceEntry(key: key)?.placedReference {
+        if let placed = world.references?.referenceEntry(key: key)?.placedReference {
             return InventoryHolder(
                 key: key,
                 owner: .container(base: placed.base),
-                cell: world?.references?.cellLocation(of: key)
+                cell: world.references?.cellLocation(of: key)
             )
         }
         return arrest.unresidentEvidence(of: faction)
@@ -67,17 +67,17 @@ extension CrimeCoordinator: CrimeArrestSession {
     /// left alone: there is no cross-cell teleport yet.
     private func serve(_ settlement: ArrestSettlement) {
         // Before the sentence passes: the cooldown counts from the arrest.
-        let now = world?.gameSeconds ?? 0
+        let now = world.gameSeconds ?? 0
         lastSentenceDays = settlement.sentenceDays
         if settlement.sentenceDays > 0 {
-            world?.passGameTime(days: settlement.sentenceDays)
+            world.passGameTime(days: settlement.sentenceDays)
         }
-        let moved = settlement.releaseMarker.map { world?.movePlayer(toMarker: $0) ?? false }
+        let moved = settlement.releaseMarker.map { world.movePlayer(toMarker: $0) }
             ?? false
         guards.forgive(settlement.faction)
         if case let .confront(guardKey, faction, _) = guards.active, faction == settlement.faction {
             guards.end(settled: true, now: now)
-            world?.resumePackage(for: guardKey)
+            world.resumePackage(for: guardKey)
         }
         refreshGuardHostility()
         lastGuard = .settled(settlement, faction: factionName(settlement.faction), moved: moved)

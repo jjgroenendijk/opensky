@@ -20,22 +20,16 @@ public protocol LockWorld: AnyObject, SkillUseReporting {
     func perkValue(
         _ value: Float, at entryPoint: PerkEntryPoint, lock: ReferenceKey, level: UInt8
     ) -> Float
-    /// A lock changed, so the crosshair prompt may read differently.
-    func lockStateChanged()
     /// The doors and containers with `XLOC` in the loaded cells.
     func lockables() -> [PlacedInteraction]
     /// An item's display name, for the key a lock names.
     func itemName(_ item: FormID) -> String
-    /// Shows a lock notice on the HUD.
-    func showLockNotice(_ text: String)
     /// The player's Filter Activation perks with `reference` bound as the target.
     /// Non-zero blocks the activation.
     func activationFilter(of reference: ReferenceKey) -> Float
 }
 
 extension LockWorld {
-    public func showLockNotice(_: String) {}
-
     public func activationFilter(of _: ReferenceKey) -> Float {
         0
     }
@@ -98,7 +92,7 @@ public final class LockCoordinator {
     /// Sidebar override: treat the player as carrying every lock's key.
     public var playerCarriesEveryKey = false
     public var random = LockpickingRandom(seed: 0x4F_7065_6E53_6B79)
-    public weak var world: (any LockWorld)?
+    let world: any LockWorld
     /// Takes `LOCK`.
     public weak var storyEvents: (any StoryEventReporting)?
     /// Health of the pick in hand. UESP: it carries over between locks.
@@ -112,7 +106,9 @@ public final class LockCoordinator {
     /// The lock the sidebar works on.
     public var selectedLock: FormID?
 
-    public init() {}
+    public init(world: any LockWorld) {
+        self.world = world
+    }
 
     public func wire(items: WorldItemRuntime) {
         self.items = items
@@ -143,32 +139,30 @@ public final class LockCoordinator {
 
     /// The use-key gate. A Filter Activation perk blocks the press first, as a
     /// werewolf cannot open doors. A carried key unlocks the target and lets it through.
-    public func gate(_ target: InteractionTarget) -> ActivationRefusal? {
+    public func gate(_ target: InteractionTarget) -> InventoryResult<ActivationRefusal?> {
         if
             let entry = items?.references?.referenceEntry(formID: target.interaction.reference),
-            let value = world?.activationFilter(of: entry.key),
-            value != 0
+            world.activationFilter(of: entry.key) != 0
         {
             lastAction = .blockedByPerk(name: target.interaction.name)
-            return .filteredByPerk
+            return InventoryResult(.filteredByPerk)
         }
-        guard let lock = lock(of: target.interaction) else { return nil }
+        guard let lock = lock(of: target.interaction) else { return InventoryResult(nil) }
         switch LockCore.decide(lock: lock.state, carriesKey: carriesKey(lock.state.key)) {
         case .proceed:
-            return nil
+            return InventoryResult(nil)
         case let .unlockWithKey(key):
-            write(lock.state, locked: false, for: lock.key)
+            let unlocked = write(lock.state, locked: false, for: lock.key)
             lastAction = .unlockedWithKey(name: target.interaction.name)
-            world?.showLockNotice(texts.keyNotice(
-                key: world?.itemName(key) ?? key.description,
-                isContainer: target.interaction.action == .search
-            ))
-            return nil
+            let notice = texts.keyNotice(
+                key: world.itemName(key), isContainer: target.interaction.action == .search
+            )
+            return InventoryResult(nil, commands: unlocked + [.showNotice(notice)])
         case let .refuse(refusal):
             lastAction = .refused(
                 name: target.interaction.name, difficulty: difficulty(of: lock.state)
             )
-            return refusal
+            return InventoryResult(refusal)
         }
     }
 
@@ -190,21 +184,27 @@ public final class LockCoordinator {
     }
 
     /// Forces the lock open or shut. The level and key stay as they are.
-    @discardableResult
-    public func setLocked(_ interaction: PlacedInteraction, locked: Bool) -> LockActionOutcome {
+    public func setLocked(
+        _ interaction: PlacedInteraction, locked: Bool
+    ) -> InventoryResult<LockActionOutcome> {
         guard let lock = lock(of: interaction) else {
-            return record(.noLock(name: interaction.name))
+            return InventoryResult(record(.noLock(name: interaction.name)))
         }
-        write(lock.state, locked: locked, for: lock.key)
-        return record(.lockChanged(name: interaction.name, locked: locked))
+        let commands = write(lock.state, locked: locked, for: lock.key)
+        return InventoryResult(
+            record(.lockChanged(name: interaction.name, locked: locked)), commands: commands
+        )
     }
 
-    func write(_ state: ReferenceLockState, locked: Bool, for key: ReferenceKey) {
-        guard let items else { return }
+    /// Asks for a prompt refresh, because the lock band in the label changed.
+    func write(
+        _ state: ReferenceLockState, locked: Bool, for key: ReferenceKey
+    ) -> [InventoryCommand] {
+        guard let items else { return [] }
         var updated = state
         updated.isLocked = locked
         items.store.set(updated, for: key, in: items.references?.cellLocation(of: key))
-        world?.lockStateChanged()
+        return [.refreshInteractionTarget]
     }
 
     @discardableResult
@@ -234,7 +234,7 @@ public final class LockCoordinator {
         let perks = perkValues(lock: lock.key, level: lock.state.level)
         let parameters = LockpickingParameters.make(
             difficulty: difficulty,
-            skill: world?.lockpickingSkill ?? 0,
+            skill: world.lockpickingSkill,
             settings: settings,
             perks: perks
         )
@@ -252,7 +252,6 @@ public final class LockCoordinator {
     }
 
     private func perkValues(lock: ReferenceKey, level: UInt8) -> LockpickingPerkValues {
-        guard let world else { return .none }
         func value(_ start: Float, _ point: PerkEntryPoint) -> Float {
             world.perkValue(start, at: point, lock: lock, level: level)
         }

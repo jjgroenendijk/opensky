@@ -54,8 +54,6 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
     var trainer: TrainerOffer?
     var gold = 0
     private(set) var paid: [Int] = []
-    private(set) var notices: [String] = []
-    private(set) var stats: [String] = []
 
     func nearestTrainer() -> TrainerOffer? {
         trainer
@@ -70,13 +68,5 @@ final class FakeProgressionWorld: PerkWorld, ProgressionWorld {
         gold -= amount
         paid.append(amount)
         return true
-    }
-
-    func showNotification(_ text: String) {
-        notices.append(text)
-    }
-
-    func incrementStat(_ name: String) {
-        stats.append(name)
     }
 }

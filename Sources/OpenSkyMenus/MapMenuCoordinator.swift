@@ -69,13 +69,10 @@ public final class MapMenuCoordinator {
     public private(set) var discoveredCount = 0
     private var lastDiscoveryPosition: SIMD3<Float>?
     private let menuMode: MenuModeController
-    private(set) weak var world: (any MapMenuWorld)?
+    weak let world: (any MapMenuWorld)?
 
-    public init(menuMode: MenuModeController) {
+    public init(menuMode: MenuModeController, world: (any MapMenuWorld)? = nil) {
         self.menuMode = menuMode
-    }
-
-    public func attach(world: any MapMenuWorld) {
         self.world = world
     }
 

@@ -37,18 +37,21 @@ public final class ProgressionCoordinator {
     public var training = TrainingSettings.vanilla
     public var texts = ProgressionTexts.vanilla
 
-    weak var world: (any ProgressionWorld)?
+    let world: any ProgressionWorld
+    var pendingCommands: [ProgressionCommand] = []
     private var cachedStrings: LocalizedStrings??
     /// Takes `SKIL` and `LEVL`.
     public weak var storyEvents: (any StoryEventReporting)?
 
-    public init(perks: PerkCoordinator) {
+    public init(perks: PerkCoordinator, world: any ProgressionWorld) {
         self.perks = perks
+        self.world = world
     }
 
-    public func attach(world: any ProgressionWorld) {
-        self.world = world
-        cachedStrings = nil
+    /// Notices and stats raised since the last call; the app runs them once a frame.
+    public func takeCommands() -> [ProgressionCommand] {
+        defer { pendingCommands = [] }
+        return pendingCommands
     }
 
     /// Loaded on first use, because loading reads every table file.
@@ -56,7 +59,7 @@ public final class ProgressionCoordinator {
         if let cachedStrings {
             return cachedStrings
         }
-        let loaded = world?.localizedStrings()
+        let loaded = world.localizedStrings()
         cachedStrings = .some(loaded)
         return loaded
     }
@@ -71,7 +74,7 @@ public final class ProgressionCoordinator {
             parameters: SkillUseParameterSource(store: information),
             settings: settings
         )
-        runtime.wornArmor = { [weak self] key in self?.world?.wornArmor(of: key) ?? .none }
+        runtime.wornArmor = { [weak self] key in self?.world.wornArmor(of: key) ?? .none }
         runtime.useMultiplier = { [weak self] usage in self?.perks.skillUseMultiplier(usage) ?? 1 }
         runtime.leveling = leveling
         skills = runtime
@@ -180,7 +183,7 @@ public final class ProgressionCoordinator {
             runtime: runtime, trees: trees, conditionRegistry: runtime.conditionRegistry
         )
         return validator.refusal(
-            for: perk, on: holder, conditions: world?.conditionContext() ?? ConditionContext()
+            for: perk, on: holder, conditions: world.conditionContext()
         )
     }
 
@@ -190,9 +193,9 @@ public final class ProgressionCoordinator {
         lastAdvance = report
         if report.didAdvance {
             storyEvents?.reportStoryEvent(.skillIncrease(skill: report.skill))
-            world?.showNotification(
+            pendingCommands.append(.showNotification(
                 texts.skillIncreasedText(skill: skillName(report.skill), level: Int(report.level))
-            )
+            ))
         }
         if let levelUp = report.levelUp {
             reportLevel(levelUp)
@@ -202,7 +205,7 @@ public final class ProgressionCoordinator {
     func reportLevel(_ report: PlayerLevelUpReport) {
         guard report.didLevel else { return }
         storyEvents?.reportStoryEvent(.levelIncrease(level: report.level))
-        world?.showNotification(texts.levelUpAvailable)
+        pendingCommands.append(.showNotification(texts.levelUpAvailable))
     }
 }
 

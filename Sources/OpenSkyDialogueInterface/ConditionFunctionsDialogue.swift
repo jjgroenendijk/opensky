@@ -7,11 +7,13 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     public static func installDialogue(_ registry: inout ConditionFunctionRegistry) {
         installDialogueLine(&registry)
         // "Returns true if the actor's voice type matches the specified voice type."
+        // A FormList parameter is true when the voice type is in the list.
         // (<https://ck.uesp.net/wiki/GetIsVoiceType>) An actor with no resolved voice
         // type is `.unavailableDialogue`, not 0.
         registry.register(ConditionFunction(
@@ -25,6 +27,9 @@ nonisolated extension ConditionFunctions {
             return call.referenceKey().flatMap { key in
                 guard let voice = call.context.dialogue.voiceType(of: key) else {
                     return .failure(.unavailableDialogue)
+                }
+                if let inList = Self.isVoice(voice, inList: parameter.asFormID, call.context) {
+                    return .success(Self.isTrue(inList))
                 }
                 return .success(Self.isTrue(voice == parameter.asFormID))
             }
@@ -59,5 +64,24 @@ nonisolated extension ConditionFunctions {
                 Self.isTrue(call.context.dialogue.isInDialogueWithPlayer($0))
             }
         })
+    }
+}
+
+nonisolated extension ConditionFunctions {
+    /// Nil when `list` names no FLST in the context's data seam, so the caller
+    /// compares it as a single voice type.
+    static func isVoice(
+        _ voice: FormID,
+        inList list: FormID,
+        _ context: ConditionContext
+    ) -> Bool? {
+        guard
+            let lists = context.data.formLists,
+            let plugin = context.data.sourcePlugin,
+            let listID = lists.resolvedID(list, fromPlugin: plugin),
+            lists.formList(listID) != nil,
+            let member = lists.resolvedID(voice, fromPlugin: plugin)
+        else { return nil }
+        return lists.contains(member, in: listID)
     }
 }

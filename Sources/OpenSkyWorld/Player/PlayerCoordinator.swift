@@ -15,7 +15,7 @@ public final class PlayerCoordinator {
     static let logger = EngineLogger(subsystem: "nl.jjgroenendijk.opensky", category: "CellStream")
 
     let input: CameraInputState
-    weak var world: (any PlayerWorld)?
+    weak let world: (any PlayerWorld)?
     private var source: (any PlayerRigSource)?
     /// Bumped by each rebuild, so a rig assembled for an older set is dropped.
     private var generation = 0
@@ -34,11 +34,8 @@ public final class PlayerCoordinator {
     /// third-person set and a broken `_1stperson` one.
     public private(set) var firstPersonFailureReason: String?
 
-    public init(input: CameraInputState) {
+    public init(input: CameraInputState, world: any PlayerWorld) {
         self.input = input
-    }
-
-    public func attach(world: any PlayerWorld) {
         self.world = world
     }
 

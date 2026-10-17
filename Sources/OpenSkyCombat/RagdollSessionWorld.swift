@@ -57,7 +57,6 @@ public protocol RagdollSessionWorld: AnyObject {
     /// Every resident cell. A ragdoll in any other cell stops simulating.
     var residentRagdollCells: Set<CellSceneLocation> { get }
     func hasZeroHealth(_ key: ReferenceKey) -> Bool
-    func reportMurder(of key: ReferenceKey)
     /// Nil where the actor has no animation playback.
     func ragdollPose(of key: ReferenceKey) -> RagdollActorPose?
     /// The animated pose by bone name, which a ragdoll blends from.
@@ -73,6 +72,4 @@ public protocol RagdollSessionWorld: AnyObject {
     var playerFeetPosition: SIMD3<Float>? { get }
     /// Points the container menu at a corpse. False when no inventory runs.
     func searchCorpse(_ key: ReferenceKey) -> Bool
-    /// Bone matrices by bone name, keyed by the ACHR form ID.
-    var publishedRagdollPoses: [UInt32: [String: float4x4]] { get set }
 }

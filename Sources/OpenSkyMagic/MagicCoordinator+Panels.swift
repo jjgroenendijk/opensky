@@ -13,11 +13,11 @@ extension MagicCoordinator: MagicEffectControlProviding {
     public var magicEffectControlSnapshot: MagicEffectControlSnapshot {
         guard let runtime = effects else { return .unavailable }
         let tally = runtime.tally
-        let nearest = world?.nearestActorValueHolder()
+        let nearest = world.nearestActorValueHolder()
         var snapshot = MagicEffectControlSnapshot(
             isAvailable: true,
             playerEffects: runtime.active(on: .player).map { readout(of: $0, runtime: runtime) },
-            nearestActorName: nearest.map { world?.actorName($0) ?? $0.key.description },
+            nearestActorName: nearest.map { world.actorName($0) },
             nearestActorEffects: nearest.map { holder in
                 runtime.active(on: holder).map { readout(of: $0, runtime: runtime) }
             } ?? [],
@@ -132,7 +132,7 @@ extension MagicCoordinator: CastingControlProviding {
     @discardableResult
     public func grantPlayerStartSpells() -> CastingActionOutcome {
         guard let caster else { return recordCasting(.unavailable) }
-        let race = caster.spellbook.resolve(world?.playerRaceSpells() ?? [], fromPlugin: pluginName)
+        let race = caster.spellbook.resolve(world.playerRaceSpells(), fromPlugin: pluginName)
         let granted = caster.spellbook.grantStartSpells(to: .player, additional: race)
         let held = caster.applyAbilities(on: .player)
         return recordCasting(.learnedStartSpells(granted: granted, held: held))
@@ -168,7 +168,7 @@ extension MagicCoordinator: CastingControlProviding {
         guard let spell = selectedKnownSpell() else { return recordCasting(.noSpellSelected) }
         do {
             let change = try caster.spellbook.equip(
-                spell.key, in: hand, on: .player, inventory: world?.inventory == nil ? nil : .player
+                spell.key, in: hand, on: .player, inventory: world.inventory == nil ? nil : .player
             )
             return recordCasting(.readied(
                 change, spell: spell.displayName, unequipped: change.unequippedItems.map(itemName)
@@ -214,7 +214,7 @@ extension MagicCoordinator: CastingControlProviding {
     }
 
     private func itemName(_ item: FormID) -> String {
-        world?.itemName(item) ?? item.description
+        world.itemName(item)
     }
 
     private func readout(_ spell: ResolvedSpell, book: SpellbookState) -> KnownSpellReadout {

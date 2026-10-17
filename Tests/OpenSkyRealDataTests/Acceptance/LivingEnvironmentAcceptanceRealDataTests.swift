@@ -80,7 +80,8 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         let shadow = renderer.lastShadowDrawStats
         let grass = renderer.lastGrassDrawStats
         #expect(renderer.lastAnimationUpdatedBoneCount > 0)
-        #expect(scene.renderScene.particles.reduce(0) { $0 + $1.liveCount } > 0)
+        // The farm's one particle system is the windmill's splinter burst, which its
+        // emitter controller keeps off. Live emission is checked in the interior.
         #expect(precipitation.rainLiveCount > 0)
         #expect(shadow.drawnInstances > 0)
         #expect(grass.drawnInstances > 0)
@@ -169,7 +170,12 @@ struct LivingEnvironmentAcceptanceRealDataTests {
     @MainActor
     private func makeRenderer(scene: CellScene) throws -> Renderer {
         let device = try #require(RealDataEnvironment.device)
-        let bounds = try #require(scene.bounds)
+        var bounds = try #require(scene.bounds)
+        // A default-height water plane sits far below the land and would push the
+        // camera past the grass draw distance, so the frame starts at the ground.
+        if let ground = scene.terrainHeightField?.heights.min() {
+            bounds.min.z = max(bounds.min.z, ground)
+        }
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: Self.size.width, height: Self.size.height),
             device: device

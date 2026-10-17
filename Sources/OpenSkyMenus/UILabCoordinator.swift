@@ -17,13 +17,10 @@ public final class UILabCoordinator {
     private var installLabelsResolved = false
 
     private let menuMode: MenuModeController
-    private weak var world: SWFLayerWorld?
+    private weak let world: SWFLayerWorld?
 
-    public init(menuMode: MenuModeController) {
+    public init(menuMode: MenuModeController, world: SWFLayerWorld? = nil) {
         self.menuMode = menuMode
-    }
-
-    public func attach(world: SWFLayerWorld) {
         self.world = world
     }
 

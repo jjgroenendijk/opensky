@@ -27,7 +27,7 @@ extension PapyrusWorldStateBridge {
 
     public func isInFaction(_ actor: ReferenceKey, faction: ReferenceKey) -> Bool? {
         guard let runtime = factionNatives.runtime(actor) else { return nil }
-        return runtime.isMember(actor, of: faction)
+        return (runtime.rank(of: actor, in: faction) ?? -1) >= 0
     }
 
     public func factionRank(of actor: ReferenceKey, in faction: ReferenceKey) -> Int8?? {

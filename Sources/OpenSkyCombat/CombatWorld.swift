@@ -1,5 +1,6 @@
 // The world side of the combat domain: what `CombatCoordinator` reads from and
-// does to the running session. The app answers it; a test passes a fake.
+// asks of the running session. The app answers it; a test passes a fake. Changes
+// nothing later in a step reads go back as `CombatCommand` values.
 // See docs/engine/combat.md and docs/engine/coordinators.md.
 
 import OpenSkyActorsInterface
@@ -109,29 +110,23 @@ public protocol CombatWorld: ScriptHitReporting, SkillUseReporting, SpellHitAppl
     func writePlayerGraphVariable(_ value: BehaviorVariableValue, named name: String)
     @discardableResult
     func playReaction(_ clip: CombatActorClip, on key: ReferenceKey) -> Bool
-    func playImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>)
     /// The MATT an actor's body counts as when struck: its race's `NAM4`.
     func impactMaterial(of actor: ReferenceKey) -> FormID?
-    func setCombatMusicActive(_ active: Bool)
 
     func sweep(_ query: ShapeSweepQuery) -> ShapeSweepHit?
     func residentCells() -> Set<CellSceneLocation>
     /// Spawns a stuck arrow. Nil when the store refused it.
     func spawn(_ reference: ReferenceSpawnState, in location: CellSceneLocation) -> ReferenceKey?
-    /// Drops every stored change for `key`, which removes a spawned reference.
-    func resetReference(_ key: ReferenceKey)
 
     /// Ragdoll and dynamic-body counts. The projectile fields stay zero.
     var bodyTransients: CombatTransientCounts { get }
     /// Trims ragdolls and awake bodies, and returns how many of each went.
     func trimBodyTransients(to limits: CombatTransientLimits) -> CombatTransientCounts
-    func resetRagdolls()
     /// What `key`'s running magic effects force on it, such as Calm or Etherealize.
     func magicInfluence(of key: ReferenceKey) -> ActorMagicInfluence
     /// Adds `count` of `item` to `key`'s inventory. False where it holds none.
     @discardableResult
     func addItem(_ item: FormID, count: Int32, to key: ReferenceKey) -> Bool
-    func showNotification(_ text: String)
 }
 
 extension CombatWorld {
@@ -147,8 +142,6 @@ extension CombatWorld {
     public func addItem(_: FormID, count _: Int32, to _: ReferenceKey) -> Bool {
         false
     }
-
-    public func showNotification(_: String) {}
 
     /// A session with no perks owns none.
     public func ownsPerk(editorID _: String, on _: ReferenceKey) -> Bool {

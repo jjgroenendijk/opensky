@@ -62,6 +62,11 @@ struct DialogueRuntimeTests {
         let speaker = DialogueRuntimeFixture.speakerKey
         #expect((runtime.greeting(for: speaker) != nil) == speakerMatches)
         #expect(runtime.topics(for: speaker).offers.isEmpty == !speakerMatches)
+        // A gated topic keeps the quest's outcome, so the reason stays visible.
+        let gated = runtime.topics(for: speaker).rejected
+            .flatMap(\.considered).filter { $0.rejection == .conditionsFailed }
+        #expect(gated.allSatisfy { $0.outcome?.isTrue == false })
+        #expect(gated.isEmpty == speakerMatches)
     }
 
     /// A topic whose owning quest is not running offers nothing, and says so

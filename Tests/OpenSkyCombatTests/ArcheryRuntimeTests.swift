@@ -20,9 +20,9 @@ struct ArcheryRuntimeTests {
     ) -> ArcheryRuntime {
         let runtime = ArcheryRuntime(
             settings: .synthetic,
-            projectiles: ProjectileRuntime(settings: .synthetic)
+            projectiles: ProjectileRuntime(settings: .synthetic, world: world),
+            world: world
         )
-        runtime.attach(world: world)
         runtime.bow = MeleeWeaponProfile(
             damage: bowDamage, reach: 1, speed: bowSpeed, weapon: FormID(0x0001_397E)
         )

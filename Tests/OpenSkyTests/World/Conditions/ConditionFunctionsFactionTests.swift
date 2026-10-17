@@ -46,6 +46,15 @@ struct ConditionFunctionsFactionTests {
         ).outcome == .false)
     }
 
+    /// Rank -1 marks a potential member, such as a potential follower, which
+    /// `GetInFaction` does not count.
+    @Test func aRankMinusOneListingIsNotAMember() throws {
+        let context = try Self.context(subjectMemberships: [(Fixture.Factions.guards, -1)])
+        #expect(try Self.evaluate(
+            Index.inFaction, parameter1: Fixture.Factions.guards, context: context
+        ).outcome == .false)
+    }
+
     /// The parameter has to name a FACT this load order actually carries. A
     /// FormID nothing defines is a gap rather than "not a member", because the
     /// two are different answers and only one is about the actor.

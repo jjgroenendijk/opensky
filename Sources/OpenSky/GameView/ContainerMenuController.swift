@@ -23,6 +23,7 @@ protocol ContainerMenuHost: MenuInputConsumer {
     var dialogueWorld: DialogueWorldAdapter { get }
     var hud: HUDCoordinator { get }
     var inventory: InventoryCoordinator { get }
+    var inventoryWorld: InventoryWorldAdapter { get }
     var menuMode: MenuModeController { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
@@ -271,8 +272,8 @@ final class ContainerMenuController {
     private func equipSelection() {
         guard let entry = model.selectedEntry else { return }
         lastActionText = entry.isEquipped
-            ? game.inventory.unequipItem(entry.item, on: .player).text
-            : game.inventory.equipItem(entry.item, on: .player).text
+            ? game.inventoryWorld.run(game.inventory.unequipItem(entry.item, on: .player)).text
+            : game.inventoryWorld.run(game.inventory.equipItem(entry.item, on: .player)).text
         refreshModel()
     }
 
