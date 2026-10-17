@@ -52,6 +52,17 @@ struct CommandLineTests {
         #expect(shot.effects.imadAt == "1")
     }
 
+    @Test func previewTakesATargetAStageAndAngles() throws {
+        let preview = try command(
+            ["preview", "--ref", "1A26F", "--stage", "cell", "--angles", "all", "--yaw", "-30"],
+            as: PreviewArguments.self
+        )
+        #expect(preview.reference == "1A26F")
+        #expect(preview.stage == "cell")
+        #expect(preview.angles == "all")
+        #expect(preview.yaw == "-30")
+    }
+
     @Test func benchKeepsItsBudgetAndCacheOptionNames() throws {
         let bench = try command(
             [

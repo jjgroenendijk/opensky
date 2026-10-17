@@ -16,6 +16,9 @@ a usage error.
 | `quit` | Quits the app after the reply |
 | `screenshot [--out <png>] [--offscreen] [--size WxH] [--world-only]` | The window's next presented frame, debug view included. `--offscreen`, `--size`, or `--world-only` render a second frame instead |
 
+To look at one record, reference, mesh, or cell without the game window, use
+`openskycli preview` instead (`docs/tools/preview-render.md`).
+
 ## Time
 
 `time pause`, `time resume`, `time step [n] [--seconds <s>]` (default 1/60 s per frame,

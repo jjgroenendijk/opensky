@@ -44,5 +44,17 @@
       "Uses make run-cli ARGS=\"record --type LAND ...\" instead of a script",
       "Falls back to a scratch suite in Tests/OpenSkyRealDataTests/ run by make test-real, and deletes it before committing"
     ]
+  },
+  {
+    "skills": [
+      "probing-real-game-data"
+    ],
+    "query": "Check that the bucket mesh renders with its textures.",
+    "files": [],
+    "expected_behavior": [
+      "Runs openskycli preview with --mesh or --record rather than writing a scratch probe",
+      "Reads the unresolved assets and the blank flag in report.json",
+      "Keeps the PNGs in .logs/ and links the run directory"
+    ]
   }
 ]

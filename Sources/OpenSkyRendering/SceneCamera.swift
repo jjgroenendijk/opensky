@@ -59,14 +59,24 @@ nonisolated public struct SceneCamera: Sendable {
     /// (near-point) bounds fall back to a minimum distance so the camera
     /// never sits on its target.
     public static func framing(bounds: (min: SIMD3<Float>, max: SIMD3<Float>)) -> SceneCamera {
+        framing(bounds: bounds, from: eyeDirection)
+    }
+
+    /// Frames the box from `direction` (from the box center toward the eye). A nil
+    /// `distance` fits the box as `framing(bounds:)` does.
+    public static func framing(
+        bounds: (min: SIMD3<Float>, max: SIMD3<Float>),
+        from direction: SIMD3<Float>,
+        distance: Float? = nil
+    ) -> SceneCamera {
         let center = (bounds.min + bounds.max) * 0.5
         let radius = simd_length(bounds.max - bounds.min) * 0.5
         let fitDistance = radius / sinf(fovYRadians * 0.5) * 1.1
         // 64 units ~ 0.9 m (docs/decisions/coordinates.md scale) — clears the
         // 10-unit near plane with room to spare.
-        let distance = max(fitDistance, 64)
+        let distance = max(distance ?? fitDistance, 64)
         return SceneCamera(
-            eye: center + eyeDirection * distance,
+            eye: center + simd_normalize(direction) * distance,
             target: center,
             sunDirection: DemoScene.sunDirection,
             sunColor: DemoScene.sunColor,

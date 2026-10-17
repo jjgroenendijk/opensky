@@ -43,7 +43,7 @@ struct EffectCaptureOptions {
         return options
     }
 
-    private static func shadingSettings(_ value: String?) throws -> [SurfaceShadingSetting] {
+    static func shadingSettings(_ value: String?) throws -> [SurfaceShadingSetting] {
         guard let value else { return [] }
         if value == "all" {
             return SurfaceShadingSetting.allCases
@@ -93,7 +93,7 @@ struct MembraneSubject {
 /// Where a capture's records come from, and the actor a membrane covers.
 struct EffectCaptureScene {
     let context: CLIContext
-    let file: ESMFile
+    let builder: CellSceneBuilder
     let worldspace: String
     let membraneOwner: UInt32?
 }
@@ -103,7 +103,7 @@ extension RenderCommand {
     static func applyEffects(
         _ options: EffectCaptureOptions, to renderer: Renderer, scene: EffectCaptureScene
     ) throws {
-        let file = scene.file
+        let file = scene.builder.file
         renderer.imageSpace.passEnabled = !options.imageSpaceOff
         renderer.imageSpace.toneMapping.enabled = !options.toneMappingOff
         for setting in options.shadingOff {
@@ -117,7 +117,10 @@ extension RenderCommand {
             records: records,
             weatherPlugin: "skyrim.esm"
         )
-        try applyWeather(options.weather, to: renderer, file: file, worldspace: scene.worldspace)
+        try applyWeather(
+            options.weather, to: renderer, loadOrder: scene.builder.pluginLoadOrder,
+            worldspace: scene.worldspace
+        )
         renderer.skyClouds = try SkyClouds(
             fileSystem: scene.context.makeFileSystem(), device: renderer.device, immediate: true
         )
@@ -146,9 +149,10 @@ extension RenderCommand {
     }
 
     private static func applyWeather(
-        _ name: String?, to renderer: Renderer, file: ESMFile, worldspace: String
+        _ name: String?, to renderer: Renderer, loadOrder: LoadOrderPlugins, worldspace: String
     ) throws {
-        guard let system = WeatherSystem(file: file, worldspaceEditorID: worldspace) else { return }
+        guard let system = WeatherSystem(loadOrder: loadOrder, worldspaceEditorID: worldspace)
+        else { return }
         renderer.weather = system
         guard let name else { return }
         guard let weather = system.store.weathers.values.first(where: { $0.editorID == name })

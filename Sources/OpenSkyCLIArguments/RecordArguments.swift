@@ -65,7 +65,7 @@ public struct VFSArguments: ParsableCommand, Sendable {
 public struct RecordArguments: CLICommandArguments {
     public static let configuration = CommandConfiguration(
         commandName: "record",
-        abstract: "Dump one Skyrim.esm record: header, decoded view, and fields."
+        abstract: "Dump the winning record of the load order: header, decoded view, and fields."
     )
     @OptionGroup public var global: GlobalOptions
     @Argument(help: ArgumentHelp(valueName: "formid-or-editorid"))

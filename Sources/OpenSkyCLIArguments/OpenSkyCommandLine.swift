@@ -41,7 +41,7 @@ public struct OpenSkyCommandLine: ParsableCommand {
             NIFArguments.self, DDSArguments.self, HKXArguments.self, HKTArguments.self,
             EffectsArguments.self, SkeletonArguments.self, AnimationArguments.self,
             LODArguments.self, SWFArguments.self, AudioArguments.self,
-            ScreenshotArguments.self, BenchArguments.self,
+            ScreenshotArguments.self, PreviewArguments.self, BenchArguments.self,
             LaunchBenchArguments.self, AssetCacheArguments.self, BenchmarkArguments.self,
             GameArguments.self
         ]

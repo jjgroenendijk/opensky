@@ -17,7 +17,7 @@ and the CLI subcommand reference (`docs/tools/cli.md`).
 
 ## Prefer openskycli when it already covers the question
 
-`vfs ls|cat`, `record`, `cell`, `nif`, `dds`, `render`, `bench` cover most lookups:
+`vfs ls|cat`, `record`, `cell`, `nif`, `dds`, `preview`, `render`, `bench` cover most lookups:
 `make run-cli ARGS="record --type LAND ..."` beats writing a probe. A probe that recurs
 across sessions gets promoted to an `openskycli` subcommand (rules in `Sources/OpenSkyCLI/AGENTS.md`;
 `Sources/OpenSkyCLI/Commands/GMSTCommand.swift` is a small model).
@@ -38,10 +38,16 @@ modules, and it does not get the data root or the memory watchdog.
 Reliable paths, in order. Captures stay in `.logs/`, because a rendered frame is game
 content (root `AGENTS.md`, Legal & IP boundary).
 
-1. `Renderer.renderOffscreen` from a scratch test class — deterministic pixel assertions
+1. To look at one record, placed reference, mesh, or cell, use
+   `openskycli preview --record <id> --angles all` (or `--ref`, `--mesh`, `--cell`). It
+   writes a PNG and a JSON report per angle into `.logs/preview/<UTC>/`, lists unresolved
+   assets, and exits 1 on a blank view. `--cell <id>` next to `--record` stands the record
+   in that cell with its lighting (`docs/tools/preview-render.md`).
+2. `Renderer.renderOffscreen` from a scratch test class — deterministic pixel assertions
    first, with an optional local temp capture for human review (`RendererOffscreenTests`).
-2. `make run-cli ARGS="render --out .logs/<run dir>/frame.png ..."`.
-3. Ask the user to look at the running app; they see launched apps.
+3. `make run-cli ARGS="render --out .logs/<run dir>/frame.png ..."` for a cell view
+   with streaming, effects, or the UI overlay.
+4. Ask the user to look at the running app; they see launched apps.
 
 Output belongs to one run, not to `.logs/` at large: allocate a run directory with
 `tools/run-dir.sh <name>` (or write into the one a script already printed, such as

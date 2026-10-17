@@ -46,6 +46,8 @@ nonisolated public final class TextureLibrary {
     public private(set) var loadedCount = 0
     /// Distinct paths the VFS could not resolve (each fell back to placeholder).
     public private(set) var missingCount = 0
+    /// The paths behind `missingCount`, for reports that name each miss.
+    public private(set) var missingPaths: Set<String> = []
     /// Books each upload to `LoadPhase.texture` when a benchmark attaches one.
     public var loadPhases: LoadPhaseRecorder?
     /// Converted textures, read before the archive when current.
@@ -152,6 +154,7 @@ nonisolated public final class TextureLibrary {
     private func loadDirect(path: String, usage: TextureUsage) -> MTLTexture {
         guard let data = try? fileSystem.contents(forPath: path) else {
             missingCount += 1
+            missingPaths.insert(path)
             return loader.missingTexture(usage: usage, label: path)
         }
         loadedCount += 1

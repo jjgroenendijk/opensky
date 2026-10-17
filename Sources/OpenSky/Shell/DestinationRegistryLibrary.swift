@@ -39,6 +39,17 @@ extension DestinationRegistry {
                 controller.gameDataRoot = context.gameDataRoot
                 return controller
             }
+        ),
+        DestinationDescriptor(
+            id: "renderPreview",
+            title: "Render Preview",
+            section: .library,
+            symbolName: "camera.viewfinder",
+            content: .fullContent { context in
+                let controller = RenderPreviewViewController()
+                controller.gameDataRoot = context.gameDataRoot
+                return controller
+            }
         )
     ]
 }

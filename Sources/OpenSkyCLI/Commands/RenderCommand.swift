@@ -61,7 +61,7 @@ enum RenderCommand {
             frames: options.effects.frames,
             configure: { renderer in
                 try applyEffects(options.effects, to: renderer, scene: EffectCaptureScene(
-                    context: context, file: builder.file,
+                    context: context, builder: builder,
                     worldspace: options.worldspace, membraneOwner: membrane?.owner
                 ))
             },
