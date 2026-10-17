@@ -87,6 +87,7 @@ extension GapsGatherer {
         _ = CrimeTexts.resolve(store: store)
         _ = InventoryMenuTexts.resolve(store: store)
         _ = ProgressionTexts.resolve(store: store)
+        _ = ItemNoticeTexts.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)

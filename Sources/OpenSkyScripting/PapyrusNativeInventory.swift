@@ -1,10 +1,11 @@
 // The item natives: `AddItem`, `RemoveItem`, `RemoveAllItems`, `GetItemCount`
 // (<https://ck.uesp.net/wiki/ObjectReference_Script>), and `EquipItem`, `UnequipItem`,
 // `SetOutfit` (<https://ck.uesp.net/wiki/Actor_Script>). The app answers them through
-// `PapyrusInventoryBridge`. The `abSilent` flags are ignored: no item message shows.
+// `PapyrusInventoryBridge`. Without `abSilent`, a change to the player shows a notice.
 
 import Foundation
 import OpenSkyFormatsESM
+import OpenSkyGameData
 import OpenSkyInventoryInterface
 import OpenSkyScriptingInterface
 
@@ -41,16 +42,26 @@ extension PapyrusNativeFunctions {
     public static func installInventory(into registry: inout PapyrusNativeRegistry) {
         // A call on an `Actor` variable looks the native up under `Actor`.
         for script in ["ObjectReference", "Actor"] {
-            withItem(script, "AddItem", into: &registry) { call, _, bridge, holder, item in
+            withItem(script, "AddItem", into: &registry) { call, world, bridge, holder, item in
                 let count = integer(call, at: 1) ?? 1
-                return bridge.addItem(item, count: count, to: holder)
-                    ? .returned(.none) : failure(call, "AddItem could not add the item")
+                guard bridge.addItem(item, count: count, to: holder) else {
+                    return failure(call, "AddItem could not add the item")
+                }
+                if !boolean(call, at: 2, default: false) {
+                    world.postItemNotice(item, count: count, to: holder, word: \.added)
+                }
+                return .returned(.none)
             }
             withItem(script, "RemoveItem", into: &registry) { call, world, bridge, holder, item in
                 let count = integer(call, at: 1) ?? 1
                 let other = objectArgument(call, at: 3).flatMap { world.referenceKey(for: $0) }
-                return bridge.removeItem(item, count: count, from: holder, to: other)
-                    ? .returned(.none) : failure(call, "RemoveItem could not remove the item")
+                guard bridge.removeItem(item, count: count, from: holder, to: other) else {
+                    return failure(call, "RemoveItem could not remove the item")
+                }
+                if !boolean(call, at: 2, default: false) {
+                    world.postItemNotice(item, count: count, to: holder, word: \.removed)
+                }
+                return .returned(.none)
             }
             withItem(script, "GetItemCount", into: &registry) { call, _, bridge, holder, item in
                 guard let count = bridge.itemCount(item, in: holder) else {
@@ -61,14 +72,7 @@ extension PapyrusNativeFunctions {
             installRemoveAllItems(on: script, into: &registry)
             installDropObject(on: script, into: &registry)
         }
-        withItem("Actor", "EquipItem", into: &registry) { call, _, bridge, actor, item in
-            bridge.equipItem(item, on: actor)
-                ? .returned(.none) : failure(call, "EquipItem could not equip the item")
-        }
-        withItem("Actor", "UnequipItem", into: &registry) { call, _, bridge, actor, item in
-            bridge.unequipItem(item, on: actor)
-                ? .returned(.none) : failure(call, "UnequipItem needs an inventory")
-        }
+        installEquipNatives(into: &registry)
         withItem("Actor", "IsEquipped", into: &registry) { call, _, bridge, actor, item in
             guard let equipped = bridge.isEquipped(item, on: actor) else {
                 return failure(call, "IsEquipped needs an inventory")
@@ -99,6 +103,28 @@ extension PapyrusNativeFunctions {
             }
             return bridge.setOutfit(outfit, on: actor)
                 ? .returned(.none) : failure(call, "SetOutfit needs an outfit and an actor")
+        }
+    }
+
+    /// `EquipItem` and `UnequipItem`; `abSilent` is argument 2 of both.
+    private static func installEquipNatives(into registry: inout PapyrusNativeRegistry) {
+        withItem("Actor", "EquipItem", into: &registry) { call, world, bridge, actor, item in
+            guard bridge.equipItem(item, on: actor) else {
+                return failure(call, "EquipItem could not equip the item")
+            }
+            if !boolean(call, at: 2, default: false) {
+                world.postItemNotice(item, to: actor, word: \.equipped)
+            }
+            return .returned(.none)
+        }
+        withItem("Actor", "UnequipItem", into: &registry) { call, world, bridge, actor, item in
+            guard bridge.unequipItem(item, on: actor) else {
+                return failure(call, "UnequipItem needs an inventory")
+            }
+            if !boolean(call, at: 2, default: false) {
+                world.postItemNotice(item, to: actor, word: \.unequipped)
+            }
+            return .returned(.none)
         }
     }
 

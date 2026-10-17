@@ -119,6 +119,13 @@ Papyrus scripts change inventories through `AddItem`, `RemoveItem`, `RemoveAllIt
 wiki pages for `ObjectReference Script` and `Actor Script`. The receiver can be the player, a placed
 actor, or any other placed reference, which then holds items as a container.
 
+A change to the player shows a HUD notice unless the call passes `abSilent` (`AddSpell` passes
+`abVerbose = false` instead). The words come from `sAddItemtoInventory`,
+`sRemoveItemfromInventory`, `sEquipItemOnPlayer`, `sUnequipItemOnPlayer`, and
+`sAddItemtoSpellList`. The wiki pages do not give the full line. OpenSky writes the name, the count
+in brackets when it is more than one, and then the word: "Iron Arrow (12) added". A change to an NPC
+shows nothing, as the `AddSpell` page states for spells.
+
 Scripts read equipment through `IsEquipped`, `GetEquippedWeapon`, and `GetEquippedShield`,
 and take everything off with `UnequipAll`. `UnequipItemSlot(aiSlot)` takes off every worn item
 that covers biped slot `aiSlot`, 30 to 61; a slot outside that range fails.
