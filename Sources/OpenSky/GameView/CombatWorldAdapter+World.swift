@@ -7,6 +7,7 @@ import OpenSkyAudio
 import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyCombatInterface
+import OpenSkyConditions
 import OpenSkyCrime
 import OpenSkyFactions
 import OpenSkyFormatsESM
@@ -107,6 +108,31 @@ extension CombatWorldAdapter: CombatWorld {
 
     func perkMultiplier(at entryPoint: PerkEntryPoint, on key: ReferenceKey) -> Float {
         game.perks.multiplier(at: entryPoint, on: key)
+    }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float {
+        game.perks.modified(
+            value,
+            at: entryPoint,
+            on: key,
+            subjects: { _ in subjects },
+            seams: seams
+        )
+    }
+
+    func perkChoices(
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> [PerkEntryPointChoice] {
+        game.perks.choices(at: entryPoint, on: key, subjects: { _ in subjects }, seams: seams)
     }
 
     /// ZNAM after template inheritance, read through the load-order CSTY store.

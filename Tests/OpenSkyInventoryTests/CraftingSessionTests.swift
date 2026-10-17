@@ -26,6 +26,8 @@ struct CraftingSessionTests {
         var failing: String?
         var smithing: Float = 15
         var temperingEnchanted: [Bool?] = []
+        var temperingFactor: Float = 1
+        private(set) var temperedItems: [FormID] = []
 
         func failingFunction(
             in _: ConditionList,
@@ -38,6 +40,11 @@ struct CraftingSessionTests {
 
         func skillLevel(at _: Int32) -> Float? {
             smithing
+        }
+
+        func temperingFactor(for item: FormID) -> Float {
+            temperedItems.append(item)
+            return temperingFactor
         }
     }
 

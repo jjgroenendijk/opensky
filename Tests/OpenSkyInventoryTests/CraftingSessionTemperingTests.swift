@@ -57,6 +57,16 @@ extension CraftingSessionTests {
         let outcome = try harness.session.craft(Self.swordRecipe)
         #expect(outcome.improved == TemperStep(from: 1, to: 4))
     }
+
+    /// The matching smithing perk doubles the skill above the offset.
+    @Test func theTemperingPerkRaisesTheCapForItsItem() throws {
+        let harness = try Self.harness(bench: .smithingWeapon)
+        try harness.inventory.add(Items.sword, count: 1, to: .player)
+        harness.conditions.smithing = 100
+        harness.conditions.temperingFactor = 2
+        #expect(harness.session.statuses.first?.temper?.maximum == 6)
+        #expect(harness.conditions.temperedItems.last == Items.sword)
+    }
 }
 
 struct TemperingTests {

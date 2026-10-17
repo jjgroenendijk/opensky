@@ -6,6 +6,7 @@ import OpenSkyBehavior
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
 import OpenSkyGameData
+import OpenSkyInventoryInterface
 import OpenSkyMagicInterface
 import OpenSkyPhysics
 import OpenSkyProgressionInterface
@@ -56,7 +57,6 @@ extension CombatCoordinator: MeleeCombatWorld {
     public func meleeAttackMultiplier(handType: CombatHandType) -> Float {
         guard let world, let values = world.actorValues(of: .player) else { return 1 }
         return CombatFortifyBonus.melee(handType: handType, reading: values)
-            * world.perkMultiplier(at: CombatCore.attackDamageEntryPoint, on: .player)
     }
 
     public func meleeTargets() -> [MeleeTarget] {
@@ -64,9 +64,11 @@ extension CombatCoordinator: MeleeCombatWorld {
     }
 
     public func meleeBlock(of target: ReferenceKey) -> MeleeBlockKind? {
-        CombatCore.block(
+        let isBlocking = target == .player && melee?.state.isBlocking == true
+        return CombatCore.block(
             of: target,
-            playerIsBlocking: melee?.state.isBlocking == true,
+            playerIsBlocking: isBlocking,
+            playerShieldRating: isBlocking ? meleeBashSource().shieldRating : nil,
             machineBlock: target == .player ? nil : loop?.blockKind(of: target)
         )
     }
@@ -78,10 +80,29 @@ extension CombatCoordinator: MeleeCombatWorld {
             * world.perkMultiplier(at: CombatCore.percentBlockedEntryPoint, on: target)
     }
 
-    public func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike {
-        let strike = strike(from: meleeAttacker.key, handType: handType, on: target)
+    public func meleeStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
+        let strike = strike(blow, on: target)
         reportSneakAttack(strike, ranged: false)
         return strike
+    }
+
+    public func meleeSweeps(_ blow: CombatBlow) -> Bool {
+        perkSweeps(blow)
+    }
+
+    public func applyMeleeHitSpell(_ blow: CombatBlow, on target: ReferenceKey) {
+        applyPerkHitSpell(blow, on: target)
+    }
+
+    /// `Mod Power Attack Stamina`, with the swung weapon bound.
+    public func meleePowerAttackStamina(_ cost: Float, weapon: FormID?) -> Float {
+        perkValue(
+            cost,
+            at: .modPowerAttackStamina,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player)
+                .binding(.weapon, to: items?.conditionSubject(of: weapon))
+        )
     }
 
     /// The player's own swing: the melee runtime only ever swings for the player.
@@ -142,9 +163,17 @@ extension CombatCoordinator: ProjectileWorld {
     @discardableResult
     public func applyProjectileDamage(_ amount: Float, to target: ReferenceKey) -> Bool {
         let shooter = projectileShooter.key
-        let strike = strike(from: shooter, handType: .bow, on: target)
+        guard !deflectsArrow(target) else { return false }
+        let blow = CombatBlow(
+            attacker: shooter, weapon: playerWeapon()?.formID, handType: .bow, baseDamage: amount
+        )
+        let strike = strike(blow, on: target)
         reportSneakAttack(strike, ranged: true)
-        return applyHealthDamage(amount * strike.factor, to: target, attacker: shooter)
+        let landed = applyHealthDamage(strike.damage(base: amount), to: target, attacker: shooter)
+        if landed {
+            applyPerkHitSpell(blow, on: target)
+        }
+        return landed
     }
 
     public func playProjectileImpact(_ impact: ResolvedMeleeImpact, at position: SIMD3<Float>) {

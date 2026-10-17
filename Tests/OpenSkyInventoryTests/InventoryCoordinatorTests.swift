@@ -11,6 +11,7 @@ import OpenSkyFeaturesTesting
 @testable import OpenSkyInventory
 @testable import OpenSkyInventoryInterface
 @testable import OpenSkyMagicInterface
+import OpenSkyProgressionInterface
 @testable import OpenSkyWorldInterface
 @testable import OpenSkyWorldState
 import Testing
@@ -19,51 +20,6 @@ import Testing
 struct InventoryCoordinatorTests {
     private typealias Fixture = InventoryBaselineFixture
     private typealias Items = WorldItemRuntimeTests
-
-    private final class FakeWorld: InventoryWorld {
-        var crosshairInteraction: PlacedInteraction?
-        var placement: DropPlacement?
-        var bounty: Int32 = 0
-        var refreshed: [InventoryHolder] = []
-        var refreshCount = 0
-        var gameDaysPassed: Float?
-
-        func dropPlacement() -> DropPlacement? {
-            placement
-        }
-
-        func nearestActorEntry() -> RuntimeReferenceEntry? {
-            nil
-        }
-
-        func containerInteractions() -> [PlacedInteraction] {
-            []
-        }
-
-        func appearanceSkipReasons(forActor _: FormID) -> [String] {
-            []
-        }
-
-        func theftBounty(of _: FormID, from _: ReferenceKey) -> Int32 {
-            bounty
-        }
-
-        func equipmentChanged(on holder: InventoryHolder) {
-            refreshed.append(holder)
-        }
-
-        func enchantmentLine(of _: FormID, on _: ReferenceKey) -> String? {
-            nil
-        }
-
-        var enchantmentCacheReadout: EnchantmentCacheReadout {
-            .empty
-        }
-
-        func refreshInteractionTarget() {
-            refreshCount += 1
-        }
-    }
 
     /// The coordinator, its world and the reference index, all retained,
     /// because the coordinator holds both of the last two weakly.
@@ -93,6 +49,23 @@ struct InventoryCoordinatorTests {
 
     private static var chest: PlacedInteraction {
         Items.interaction(reference: Items.chestReference, base: Fixture.chest, action: .search)
+    }
+
+    /// The live Speech skill sets the factor; the price perks name the merchant.
+    @Test func barterPricesReadSpeechAndThePricePerks() throws {
+        let harness = try Self.harness()
+        let merchant = ReferenceKey.generated(5)
+        harness.world.speech = 100
+        harness.world.perkFactors[.modBuyPrices] = 0.8
+        harness.world.perkFactors[.modSellPrices] = 1.25
+
+        let pricing = harness.coordinator.barterPricing(with: merchant)
+
+        #expect(pricing.speechSkill == 100)
+        #expect(pricing.buyModifier == Double(Float(0.8)))
+        #expect(pricing.sellModifier == 1.25)
+        #expect(harness.world.perkTargets[.modBuyPrices] == merchant)
+        #expect(harness.coordinator.barterPricing(with: nil).speechSkill == 100)
     }
 
     @Test func withoutGameDataEveryActionSaysSo() {
@@ -151,6 +124,33 @@ struct InventoryCoordinatorTests {
         #expect(harness.coordinator.equippedReadout(on: .player).count == 1)
         #expect(harness.coordinator.unequipItem(nil, on: .player).hasPrefix("Unequipped "))
         #expect(harness.world.refreshed == [.player, .player])
+    }
+
+    @Test func wornArmourWeighsWhatTheArmourWeightPerksSay() throws {
+        let harness = try Self.harness()
+        let coordinator = harness.coordinator
+        #expect(coordinator.scriptEquipItem(Fixture.cuirass, on: .player))
+        try #require(coordinator.runtime?.inventory).add(Fixture.helmet, count: 1, to: .player)
+        #expect(coordinator.playerCarriedWeight == 35)
+        harness.world.perkFactors[.modArmorWeight] = 0.5
+        #expect(coordinator.playerCarriedWeight == 20)
+        #expect(coordinator.playerWornArmourWeight == 15)
+    }
+
+    @Test func theHarvestPerkSetsHowManyIngredientsAPlantGives() throws {
+        let harness = try Self.harness()
+        let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
+        #expect(harness.coordinator.harvestCount(of: plant) == 1)
+        harness.world.perkFactors[.modIngredientsHarvested] = 2
+        #expect(harness.coordinator.harvestCount(of: plant) == 2)
+    }
+
+    @Test func aPerkActivateLabelReplacesTheAuthoredOne() throws {
+        let harness = try Self.harness()
+        let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
+        #expect(harness.coordinator.labelled(plant).actionLabel == "Harvest")
+        harness.world.activateLabel = "Feed"
+        #expect(harness.coordinator.labelled(plant).actionLabel == "Feed")
     }
 
     @Test func aGrantGoesToTheChosenHolderAndKeepsItsOwnLine() throws {
@@ -277,5 +277,76 @@ struct InventoryCoordinatorTests {
             action: .search
         )
         #expect(harness.coordinator.containerHolder(for: stray) == nil)
+    }
+}
+
+extension InventoryCoordinatorTests {
+    private final class FakeWorld: InventoryWorld {
+        var activateLabel: String?
+        var crosshairInteraction: PlacedInteraction?
+        var placement: DropPlacement?
+        var bounty: Int32 = 0
+        var refreshed: [InventoryHolder] = []
+        var refreshCount = 0
+        var gameDaysPassed: Float?
+
+        func perkActivateLabel(for _: FormID) -> String? {
+            activateLabel
+        }
+
+        func dropPlacement() -> DropPlacement? {
+            placement
+        }
+
+        func nearestActorEntry() -> RuntimeReferenceEntry? {
+            nil
+        }
+
+        func containerInteractions() -> [PlacedInteraction] {
+            []
+        }
+
+        func appearanceSkipReasons(forActor _: FormID) -> [String] {
+            []
+        }
+
+        func theftBounty(of _: FormID, from _: ReferenceKey) -> Int32 {
+            bounty
+        }
+
+        func equipmentChanged(on holder: InventoryHolder) {
+            refreshed.append(holder)
+        }
+
+        func enchantmentLine(of _: FormID, on _: ReferenceKey) -> String? {
+            nil
+        }
+
+        var enchantmentCacheReadout: EnchantmentCacheReadout {
+            .empty
+        }
+
+        func refreshInteractionTarget() {
+            refreshCount += 1
+        }
+
+        var speech: Float?
+        var perkFactors: [PerkEntryPoint: Float] = [:]
+        private(set) var perkTargets: [PerkEntryPoint: ReferenceKey] = [:]
+
+        func playerSpeechSkill() -> Float? {
+            speech
+        }
+
+        func perkModified(
+            _ value: Float,
+            at entryPoint: PerkEntryPoint,
+            on _: ReferenceKey,
+            subjects: PerkEvaluationSubjects,
+            seams _: ConditionContext
+        ) -> Float {
+            perkTargets[entryPoint] = subjects[.target]
+            return value * (perkFactors[entryPoint] ?? 1)
+        }
     }
 }

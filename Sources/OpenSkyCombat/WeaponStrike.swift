@@ -1,6 +1,6 @@
 // The terms a weapon hit is scaled by beyond its base damage and the block:
-// the attacker's weapon skill, a sneak attack, and the target's worn armour.
-// Sources and the order of the terms: docs/engine/melee-damage.md.
+// the attacker's weapon skill, a sneak attack, the target's worn armour, and the
+// perks of both sides. Sources and the order of the terms: docs/engine/melee-damage.md.
 
 import Foundation
 import OpenSkyActorsInterface
@@ -16,6 +16,17 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
     public var armorFraction: Float
     /// `1 + fPowerAttackDefaultBonus` for a power attack.
     public var powerMultiplier: Float = 1
+    /// `Mod Attack Damage` of the attacker times `Mod Incoming Damage` of the target.
+    public var perkMultiplier: Float = 1
+    /// What `Calculate Weapon Damage` adds to the base damage.
+    public var weaponDamageBonus: Float = 0
+    /// The critical damage, added after every factor. Tempering does not raise it.
+    public var criticalDamage: Float = 0
+    public var isCritical = false
+    /// `Mod Target Stagger` of the attacker times `Mod Incoming Stagger` of the target.
+    public var staggerMultiplier: Float = 1
+    /// `Mod Bashing Damage`, which scales a bash.
+    public var bashMultiplier: Float = 1
 
     public static let plain = Self()
 
@@ -35,8 +46,42 @@ nonisolated public struct WeaponStrike: Equatable, Sendable {
 
     /// Every term as one factor on the damage.
     public var factor: Float {
-        let terms = [skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier]
+        let terms = [
+            skillMultiplier, sneakMultiplier, 1 - armorFraction, powerMultiplier, perkMultiplier
+        ]
         return terms.reduce(1) { $0 * ($1.isFinite ? max(0, $1) : 1) }
+    }
+
+    /// The damage of a blow with `base` damage, before the block.
+    public func damage(base: Float, attack: Float = 1) -> Float {
+        let bonus = weaponDamageBonus.isFinite ? weaponDamageBonus : 0
+        let critical = criticalDamage.isFinite ? max(0, criticalDamage) : 0
+        return max(0, base + bonus) * attack * factor + critical
+    }
+}
+
+/// Who strikes with what. The perk terms of a hit read it.
+nonisolated public struct CombatBlow: Equatable, Sendable {
+    public var attacker: ReferenceKey
+    /// The WEAP, nil for an unarmed blow.
+    public var weapon: FormID?
+    public var handType: CombatHandType
+    public var kind: MeleeStrikeKind
+    /// The base damage `Calculate Weapon Damage` starts from.
+    public var baseDamage: Float
+
+    public init(
+        attacker: ReferenceKey,
+        weapon: FormID? = nil,
+        handType: CombatHandType,
+        kind: MeleeStrikeKind = .normal,
+        baseDamage: Float = 0
+    ) {
+        self.attacker = attacker
+        self.weapon = weapon
+        self.handType = handType
+        self.kind = kind
+        self.baseDamage = baseDamage
     }
 }
 

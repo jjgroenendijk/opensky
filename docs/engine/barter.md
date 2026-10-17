@@ -43,10 +43,12 @@ Choices on top of the formula:
   that changes barter changes OpenSky. Only a missing, non-finite, or non-positive setting falls
   back to the vanilla default. A zero factor would divide the sell price by zero, and a negative
   one would pay the player to buy. The panel shows which plugin each value came from.
-- Speech is fixed at 15, the vanilla starting skill and the value UESP lists. It is a parameter,
-  so reading the real skill later changes one call.
-- The buy and sell modifiers are 1. They carry the Haggling and Allure perks and Fortify Barter,
-  which are not applied yet.
+- Speech is the player's live Speech skill. Without actor values it is 15, the vanilla starting
+  skill and the value UESP lists.
+- The buy and sell modifiers are the player's `Mod Buy Prices` and `Mod Sell Prices` perk results,
+  with the merchant as the target ([perk entry points](/engine/perk-entry-points.md)). They carry
+  Haggling, Allure, the vendor perks such as Enthir's, and Fortify Barter, which vanilla authors
+  as a perk effect on `Speechcraft Modifier`. The menu prices each row with the same modifiers.
 - A stack is priced per item and then multiplied. Vanilla shows one price per row. Pricing the
   stack as a whole would round once instead of once per item, and disagree with the row.
 
@@ -171,7 +173,6 @@ navigation step, and one transaction from each side:
 - Every transfer and trade moves one item. The vanilla `QuantitySlider` is built but never
   driven, and neither is the `ShowConfirmMessage` step.
 - There is no "sell for less". A sale the merchant cannot pay for is refused.
-- Speech, perks, and Fortify Barter are fixed values.
 - Category changes are made by the engine, as in the inventory menu, for the same measured
   reason.
 

@@ -17,6 +17,8 @@ import Testing
 final class FakeLockWorld: LockWorld {
     var lockpickingSkill: Float = 0
     var perks: [PerkEntryPoint: Float] = [:]
+    var filter: Float = 0
+    private(set) var filtered: [ReferenceKey] = []
     private(set) var uses: [SkillUseEvent] = []
     private(set) var changes = 0
     private(set) var notices: [String] = []
@@ -48,6 +50,11 @@ final class FakeLockWorld: LockWorld {
 
     func showLockNotice(_ text: String) {
         notices.append(text)
+    }
+
+    func activationFilter(of reference: ReferenceKey) -> Float {
+        filtered.append(reference)
+        return filter
     }
 }
 
@@ -103,6 +110,17 @@ struct LockCoordinatorTests {
         let labelled = locks.labelled(target.interaction)
         #expect(labelled.actionLabel == LockTexts.vanilla.unlock)
         #expect(labelled.name == "Fixture Door (Adept)")
+        withExtendedLifetime(rig) {}
+    }
+
+    @Test func aFilterActivationPerkBlocksBeforeTheLock() throws {
+        let world = FakeLockWorld()
+        let rig = try Self.coordinator(world: world)
+        world.filter = 1
+        #expect(rig.locks.gate(Self.door(level: .adept)) == .filteredByPerk)
+        #expect(world.filtered.count == 1)
+        world.filter = 0
+        #expect(rig.locks.gate(Self.door(level: .adept)) == .locked(level: 50, key: Self.key))
         withExtendedLifetime(rig) {}
     }
 

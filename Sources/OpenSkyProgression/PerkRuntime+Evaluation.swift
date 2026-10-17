@@ -74,19 +74,60 @@ extension PerkRuntime {
         on holder: ActorValueHolder,
         subjects: PerkEvaluationSubjects
     ) -> [PerkEntryPointOperand] {
+        passingEffects(at: entryPoint, on: holder, subjects: subjects).compactMap { passing in
+            guard case let .entryPoint(payload) = passing.effect.effect.data else { return nil }
+            return PerkEntryPointOperand(
+                function: payload.function,
+                data: passing.effect.effect.functionData,
+                priority: passing.priority
+            )
+        }
+    }
+
+    /// The owned, condition-passing effects at `entryPoint` whose function picks a spell,
+    /// a text, or an activation button, highest priority first.
+    public mutating func choices(
+        at entryPoint: PerkEntryPoint,
+        on holder: ActorValueHolder,
+        subjects: PerkEvaluationSubjects
+    ) -> [PerkEntryPointChoice] {
+        tally.noteEvaluation()
+        return passingEffects(at: entryPoint, on: holder, subjects: subjects)
+            .compactMap { passing in
+                PerkEntryPointChoice(
+                    perk: ReferenceKey(resolved: passing.perk.id),
+                    sourcePlugin: passing.perk.sourcePlugin,
+                    effect: passing.effect
+                )
+            }
+    }
+
+    private mutating func passingEffects(
+        at entryPoint: PerkEntryPoint,
+        on holder: ActorValueHolder,
+        subjects: PerkEvaluationSubjects
+    ) -> [PassingPerkEffect] {
         let state = state(of: holder)
         let granted = effectPerks[holder.key] ?? []
         guard !state.isEmpty || !granted.isEmpty else { return [] }
-        var context = conditions
-        let owned = ownership(of: subjects.boundReferences + [holder.key])
-        var operands: [PerkEntryPointOperand] = []
-        for match in perks.matches(at: entryPoint) {
+        let candidates = perks.matches(at: entryPoint).compactMap { match in
             let key = ReferenceKey(resolved: match.perk)
             guard
                 state.owns(key) || granted.contains(key),
                 let owner = perks.perk(match.perk),
                 let effect = perks.effect(match)
-            else { continue }
+            else { return nil as PassingPerkEffect? }
+            return PassingPerkEffect(perk: owner, effect: effect, priority: match.priority)
+        }
+        guard !candidates.isEmpty else { return [] }
+        let bound = subjects.boundReferences + [holder.key]
+        var context = liveConditions.map { $0(bound).overlaid(by: conditions) } ?? conditions
+        context.random = conditions.random
+        context.formSubjects = FormSubjectResolution(forms: Array(subjects.forms.values))
+        let owned = ownership(of: bound)
+        var passing: [PassingPerkEffect] = []
+        for candidate in candidates {
+            let owner = candidate.perk
             // A condition's FormID parameter is spelled against the plugin that
             // authored the *record it was read from*, so the seam is rebuilt per
             // perk rather than once per evaluation: `HasPerk` in a patch's perk
@@ -94,17 +135,19 @@ extension PerkRuntime {
             context.perks = PerkConditionResolution(
                 store: perks, sourcePlugin: owner.sourcePlugin, owned: owned
             )
-            guard passes(effect.effect, at: entryPoint, subjects: subjects, context: &context)
+            context.formIDTranslation = perks.translation(ofPlugin: owner.sourcePlugin)
+            guard
+                passes(
+                    candidate.effect.effect,
+                    at: entryPoint,
+                    subjects: subjects,
+                    context: &context
+                )
             else { continue }
-            guard case let .entryPoint(payload) = effect.effect.data else { continue }
-            operands.append(PerkEntryPointOperand(
-                function: payload.function,
-                data: effect.effect.functionData,
-                priority: match.priority
-            ))
+            passing.append(candidate)
         }
         conditions.random = context.random
-        return operands
+        return passing
     }
 
     // MARK: - Private
@@ -141,4 +184,11 @@ extension PerkRuntime {
         }
         return true
     }
+}
+
+/// One owned effect at an entry point, with the perk that carries it.
+nonisolated private struct PassingPerkEffect {
+    let perk: ResolvedPerk
+    let effect: ResolvedPerkEffect
+    let priority: UInt8
 }

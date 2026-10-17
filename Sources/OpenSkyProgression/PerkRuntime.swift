@@ -35,6 +35,9 @@ public struct PerkRuntime: PerkAccess {
     /// Perks an active magic effect applies (MGEF "Perk to Apply"), per holder. Owned
     /// while the effect lasts and never saved: the effects come back from the save.
     public var effectPerks: [ReferenceKey: Set<ReferenceKey>] = [:]
+    /// The live condition context around the references one evaluation binds, with
+    /// `conditions` laid over it. Nil keeps `conditions` alone, which a test passes.
+    public var liveConditions: (@MainActor ([ReferenceKey]) -> ConditionContext)?
 
     private let worldState: WorldStateStore
 

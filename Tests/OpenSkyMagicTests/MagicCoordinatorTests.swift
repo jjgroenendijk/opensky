@@ -11,6 +11,7 @@ import OpenSkyInventoryInterface
 @testable import OpenSkyMagic
 import OpenSkyMagicFixtures
 @testable import OpenSkyMagicInterface
+import OpenSkyProgressionInterface
 @testable import OpenSkyWorldState
 import Testing
 
@@ -163,5 +164,63 @@ struct MagicCoordinatorTests {
         #expect(lines.count == 8)
         #expect(world.probedFunctions == [214, 223, 264, 570, 571, 572, 632, 699])
         #expect(lines.first == "HasMagicEffect(first effect of no readied spell) -> probed")
+    }
+
+    /// The caster's magnitude and duration perks and the target's incoming perk all
+    /// scale a cast spell's entries.
+    @Test func spellPerksScaleTheEntriesACastLands() throws {
+        let world = FakeMagicWorld()
+        world.perkFactors[.modSpellMagnitude] = 1.5
+        world.perkFactors[.modIncomingSpellMagnitude] = 0.5
+        world.perkFactors[.modSpellDuration] = 2
+        let coordinator = try Self.castingWired(world)
+        let firebolt = SpellbookFixture.key(SpellbookFixture.Spell.firebolt)
+        let spell = try #require(coordinator.caster?.spellbook.spells.spell(key: firebolt))
+        let target = ReferenceKey.generated(7)
+
+        let scaled = coordinator.perkScaled(
+            spell.record.effects, of: firebolt, caster: .player, on: target
+        )
+
+        let authored = try #require(spell.record.effects.first)
+        #expect(scaled.first?.magnitude == authored.magnitude * 0.75)
+        #expect(scaled.first?.duration == authored.duration * 2)
+        #expect(world.perkOwners[.modSpellMagnitude] == .player)
+        #expect(world.perkOwners[.modIncomingSpellMagnitude] == target)
+    }
+
+    @Test func potionsTakeTheDrinkersSpellPerksButNotIncomingOnes() throws {
+        let world = FakeMagicWorld()
+        world.perkFactors[.modSpellMagnitude] = 1.5
+        world.perkFactors[.modSpellDuration] = 1.5
+        world.perkFactors[.modIncomingSpellMagnitude] = 0.5
+        let coordinator = try Self.effectsWired(world)
+        let potion = ReferenceKey.plugin(name: "base.esm", objectID: 0x500)
+        let entry = MagicItemEffect(
+            effect: FormID(ActiveEffectFixture.restoreHealth), magnitude: 20, area: 0,
+            duration: 10, conditions: ConditionList()
+        )
+
+        let scaled = coordinator.perkScaledPotion(
+            [entry], of: potion, fromPlugin: ActiveEffectFixture.pluginName, drinker: .player
+        )
+
+        #expect(scaled.first?.magnitude == 30)
+        #expect(scaled.first?.duration == 15)
+        #expect(world.perkOwners[.modSpellMagnitude] == .player)
+        #expect(world.perkOwners[.modIncomingSpellMagnitude] == nil)
+    }
+
+    @Test func aSkillBookRaisesItsSkillOnceWithThePerkPoints() throws {
+        let world = FakeMagicWorld()
+        world.perkFactors[.adjustBookSkillPoints] = 2
+        let coordinator = try Self.castingWired(world)
+        let book = FormID(0x0700)
+
+        coordinator.readSkillBook(book, skill: 12)
+        #expect(coordinator.readSkillBook(book, skill: 12).hasSuffix("was already read."))
+
+        #expect(world.bookRaises.map(\.skill) == [12])
+        #expect(world.bookRaises.map(\.points) == [2])
     }
 }

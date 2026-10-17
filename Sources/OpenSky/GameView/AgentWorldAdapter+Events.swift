@@ -90,6 +90,8 @@ extension AgentWorldAdapter {
             if case let .locked(level, _) = event.refusal {
                 data["reason"] = "locked"
                 data["lockLevel"] = .init(Int(level))
+            } else if event.refusal == .filteredByPerk {
+                data["reason"] = "perk"
             }
             self?.tap.append(AgentEventKind.activationRefused, data)
         }

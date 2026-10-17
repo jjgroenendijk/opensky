@@ -13,8 +13,8 @@ import simd
 /// here would grow a tally the panel never sees.
 @MainActor
 public enum SpellHitApplication {
-    /// Applies `hit` to every actor it reached, scaling hostile magnitudes by
-    /// that actor's own resistances.
+    /// Applies `hit` to every actor it reached, scaling each entry by `perkScaling` and
+    /// hostile magnitudes by that actor's own resistances.
     ///
     /// - Parameter holders: the actor-value holder for each target key. A key
     ///   with no holder is an actor that stopped being resident between the
@@ -25,12 +25,17 @@ public enum SpellHitApplication {
         holders: [ReferenceKey: ActorValueHolder],
         using runtime: inout ActiveEffectRuntime,
         settings: MagicAreaSettings = .documentedDefaults,
-        resistances: ActorResistanceSettings = .documentedDefaults
+        resistances: ActorResistanceSettings = .documentedDefaults,
+        perkScaling: ([MagicItemEffect], ReferenceKey) -> [MagicItemEffect] = { entries, _ in
+            entries
+        }
     ) -> SpellHitReport {
         var report = SpellHitReport()
         for target in hit.targets {
             guard let holder = holders[target.key] else { continue }
-            let reaching = entries(of: hit.payload, reaching: target, settings: settings)
+            let reaching = perkScaling(
+                entries(of: hit.payload, reaching: target, settings: settings), target.key
+            )
             guard !reaching.isEmpty else { continue }
             let scaled = scale(
                 reaching,

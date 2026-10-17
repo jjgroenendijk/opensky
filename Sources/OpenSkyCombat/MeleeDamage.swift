@@ -80,7 +80,7 @@ nonisolated public enum MeleeDamage: Sendable {
             return MeleeDamageResult(
                 base: base,
                 blockedFraction: 0,
-                applied: base * attack * strike.factor,
+                applied: strike.damage(base: base, attack: attack),
                 attackMultiplier: attack,
                 strike: strike
             )
@@ -96,7 +96,7 @@ nonisolated public enum MeleeDamage: Sendable {
         return MeleeDamageResult(
             base: base,
             blockedFraction: fraction,
-            applied: base * attack * strike.factor * (1 - fraction),
+            applied: strike.damage(base: base, attack: attack) * (1 - fraction),
             attackMultiplier: attack,
             strike: strike
         )

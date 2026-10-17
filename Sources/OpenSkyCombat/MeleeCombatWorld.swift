@@ -104,8 +104,14 @@ public protocol MeleeCombatWorld: ScriptHitReporting, SkillUseReporting, WeaponE
     /// and no blocking perk.
     func meleeBlockMultiplier(of target: ReferenceKey) -> Float
 
-    /// The skill, sneak-attack, and armour terms of the player's swing on `target`.
-    func meleeStrike(handType: CombatHandType, on target: ReferenceKey) -> WeaponStrike
+    /// The skill, sneak-attack, armour, and perk terms of the player's `blow` on `target`.
+    func meleeStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike
+    /// Whether `blow` strikes every actor in its arc rather than the nearest one.
+    func meleeSweeps(_ blow: CombatBlow) -> Bool
+    /// Lands the spell a perk applies when `blow` hits `target`.
+    func applyMeleeHitSpell(_ blow: CombatBlow, on target: ReferenceKey)
+    /// The stamina a power attack with `weapon` costs, after perks.
+    func meleePowerAttackStamina(_ cost: Float, weapon: FormID?) -> Float
 
     /// Charges `blocker` the stamina a blocked blow costs.
     func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey)
@@ -149,8 +155,19 @@ nonisolated extension MeleeCombatWorld {
     }
 
     /// A session with no skills and no armour scales nothing.
-    public func meleeStrike(handType _: CombatHandType, on _: ReferenceKey) -> WeaponStrike {
+    public func meleeStrike(_: CombatBlow, on _: ReferenceKey) -> WeaponStrike {
         .plain
+    }
+
+    /// Without perks a swing strikes the nearest actor alone.
+    public func meleeSweeps(_: CombatBlow) -> Bool {
+        false
+    }
+
+    public func applyMeleeHitSpell(_: CombatBlow, on _: ReferenceKey) {}
+
+    public func meleePowerAttackStamina(_ cost: Float, weapon _: FormID?) -> Float {
+        cost
     }
 
     /// A session with no stamina pays nothing to block.

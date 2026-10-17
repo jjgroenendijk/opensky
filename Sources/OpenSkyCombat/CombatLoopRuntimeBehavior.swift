@@ -99,6 +99,7 @@ extension CombatLoopRuntime {
         ))
         if step.startedAttack {
             world.playCombatClip(.attack, on: actor.key)
+            world.applyCombatSwingSpell(blow(by: actor.key, weapon: weapon), at: player.key)
         }
         resolveCast(step, actor: actor.key, world: world)
         if step.reachedContact, !influence.isEthereal {
@@ -179,14 +180,18 @@ extension CombatLoopRuntime {
         to player: ReferenceKey,
         world: any CombatLoopWorld
     ) {
+        let blow = blow(by: actor.key, weapon: weapon)
         let damage = MeleeDamage.resolve(
             weapon: weapon,
             block: world.combatBlock(of: player),
             settings: settings,
             bonusMultiplier: world.combatBlockMultiplier(of: player),
-            strike: world.combatStrike(from: actor.key, handType: weapon.handType, on: player)
+            strike: world.combatStrike(blow, on: player)
         )
         let landed = world.applyCombatDamage(damage.applied, to: player)
+        if landed {
+            world.applyCombatHitSpell(blow, on: player)
+        }
         if damage.wasBlocked {
             world.applyCombatBlockStamina(damage, to: player)
         }
@@ -209,6 +214,15 @@ extension CombatLoopRuntime {
             playedReaction: played,
             attackID: nextAttackID()
         ))
+    }
+
+    private func blow(by actor: ReferenceKey, weapon: MeleeWeaponProfile) -> CombatBlow {
+        CombatBlow(
+            attacker: actor,
+            weapon: weapon.weapon,
+            handType: weapon.handType,
+            baseDamage: weapon.damage
+        )
     }
 
     /// The reverse of the player's own swing report: attacker weapon skill, player Block,

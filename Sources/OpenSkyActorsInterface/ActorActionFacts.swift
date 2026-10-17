@@ -29,10 +29,13 @@ nonisolated public struct ActorActionFacts: Equatable, Sendable {
     public var isStaggered: Bool
     /// The actor runs from the fight at low health.
     public var isFleeing: Bool
-    /// OpenSky has no power attacks, no recoil, and no knock-down outside death, so
-    /// these stay false until those systems exist.
+    /// Only the player power attacks. OpenSky has no recoil and no knock-down
+    /// outside death, so `isRecoiling` stays false.
     public var isPowerAttacking = false
     public var isRecoiling = false
+    /// The editor ID of the attack's type keyword, such as `PowerAttackTypeSide`, which
+    /// `IsAttackType` reads. Nil for a plain swing.
+    public var attackTypeKeyword: String?
 
     public init(
         attackState: ActorAttackState = .none,

@@ -28,9 +28,12 @@ nonisolated public struct PerkGapCensus: Equatable, Sendable {
         Self.ranked(entryPoints.filter { !PerkEntryPoint.engineRead.contains($0.key) })
     }
 
-    /// Functions `PerkEntryPointEvaluator` does not compute, most effects first.
+    /// Functions neither `PerkEntryPointEvaluator` computes nor a choice reader carries
+    /// out, most effects first.
     public var unsupportedFunctions: [(name: String, count: Int)] {
-        Self.ranked(functions.filter { !PerkEntryPointEvaluator.supports($0.key) })
+        Self.ranked(functions.filter {
+            !PerkEntryPointEvaluator.supports($0.key) && !PerkEntryPointChoice.carries($0.key)
+        })
     }
 
     private static func ranked(

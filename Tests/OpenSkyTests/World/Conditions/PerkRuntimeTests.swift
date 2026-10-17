@@ -2,6 +2,7 @@
 // gating, seeding from an authored list, and the ability grant.
 
 import Foundation
+import OpenSkyConditions
 import OpenSkyFeaturesTesting
 @testable import OpenSkyFormatsESM
 @testable import OpenSkyGameData
@@ -123,6 +124,50 @@ struct PerkRuntimeTests {
         _ = perks.modify(10, at: PerkRuntimeFixture.attackDamage, on: .player)
 
         #expect(perks.tally.unboundConditionSubjects == [.weapon: 1])
+    }
+
+    /// A bound weapon tab runs its `HasKeyword`. With no keyword data it is false, so the
+    /// effect does not apply and nothing is counted as unbound.
+    @Test func aBoundWeaponTabIsEvaluatedRatherThanSkipped() throws {
+        var (perks, _) = try PerkRuntimeFixture.runtime()
+        perks.add(PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.damageRank1), to: .player)
+        let sword = ConditionFormSubject(
+            id: ResolvedFormID(plugin: PerkRuntimeFixture.pluginName, objectID: 0x0F00)
+        )
+
+        let outcome = perks.modify(
+            10,
+            at: PerkRuntimeFixture.attackDamage,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player).binding(.weapon, to: sword)
+        )
+
+        #expect(outcome.value == 10)
+        #expect(perks.tally.unboundConditionSubjects.isEmpty)
+        #expect(perks.tally.conditionsFailed == 1)
+    }
+
+    /// The live context is built around the owner and every bound reference.
+    @Test func theLiveContextIndexesTheBoundReferences() throws {
+        var (perks, _) = try PerkRuntimeFixture.runtime()
+        perks.add(PerkRuntimeFixture.key(PerkRuntimeFixture.Perk.blocking), to: .player)
+        let target = ReferenceKey.plugin(name: "perkruntime.esm", objectID: 0x0900)
+        var indexed: [[ReferenceKey]] = []
+        perks.liveConditions = { keys in
+            indexed.append(keys)
+            return ConditionContext()
+        }
+
+        let outcome = perks.modify(
+            1,
+            at: PerkRuntimeFixture.percentBlocked,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player, target: target)
+        )
+
+        #expect(outcome.value == 1.25)
+        #expect(indexed.count == 1)
+        #expect(Set(indexed.first ?? []) == [.player, target])
     }
 
     /// An actor-value function reads through the caller's closure, so the same

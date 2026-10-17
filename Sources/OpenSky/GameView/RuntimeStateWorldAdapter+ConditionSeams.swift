@@ -115,13 +115,13 @@ extension RuntimeStateWorldAdapter {
     /// Nil without an inventory or actor values, which `IsOverEncumbered` reports.
     func playerIsOverEncumbered() -> Bool? {
         guard
-            let items = game.inventory.runtime,
+            game.inventory.runtime != nil,
             let capacity = game.actorValues.runtime?.value(
                 at: ActorValueIdentity.carryWeightIndex, on: .player
             )
         else { return nil }
         return FastTravelRule.isOverencumbered(
-            carried: items.inventory.carriedWeight(of: items.player), capacity: capacity
+            carried: game.inventory.playerCarriedWeight, capacity: capacity
         )
     }
 

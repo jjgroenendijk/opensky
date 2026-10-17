@@ -18,7 +18,8 @@ struct ConditionSpellPropertyTests {
     private static func evaluate(
         _ function: UInt16, equals value: Float,
         parameter1: UInt32 = 0, parameter2: UInt32 = 0,
-        evaluating spell: UInt32? = nil
+        evaluating spell: UInt32? = nil,
+        potionKeywords: Set<ReferenceKey>? = nil
     ) throws -> ConditionOutcome {
         let index = try SpellbookFixture.index()
         let effects = SpellbookFixture.effectStore(index: index)
@@ -32,7 +33,8 @@ struct ConditionSpellPropertyTests {
             )]
         )
         context.spellEvaluation = SpellEvaluationResolution(
-            spell: spell.flatMap { spells.spell(key: SpellbookFixture.key($0)) }
+            spell: spell.flatMap { spells.spell(key: SpellbookFixture.key($0)) },
+            potionKeywords: potionKeywords
         )
         var registry = ConditionFunctionRegistry()
         ConditionFunctions.installMagic(&registry)
@@ -58,6 +60,15 @@ struct ConditionSpellPropertyTests {
         #expect(try Self.evaluate(696, equals: 1, parameter1: 20, evaluating: bolt) == .true)
         #expect(try Self.evaluate(693, equals: 0, parameter1: Self.keyword).failures
             == [.unavailableMagic(.equippedSpell)])
+    }
+
+    @Test func aDrunkPotionAnswersKeywordFromItsEffects() throws {
+        let restoration = SpellbookFixture.key(Self.keyword)
+        #expect(try Self.evaluate(
+            693, equals: 1, parameter1: Self.keyword, potionKeywords: [restoration]
+        ) == .true)
+        #expect(try Self.evaluate(693, equals: 0, parameter1: Self.keyword, potionKeywords: [])
+            == .true)
     }
 
     @Test func singleHandAndNoWard() throws {

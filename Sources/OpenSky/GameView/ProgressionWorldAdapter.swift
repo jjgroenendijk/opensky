@@ -31,6 +31,9 @@ final class ProgressionWorldAdapter {
             store: game.worldState, perks: store, conditionRegistry: .standard
         )
         runtime.conditions = ConditionContext(globals: game.runtimeState.globalResolution())
+        runtime.liveConditions = { [weak game] references in
+            game?.runtimeState.conditionContext(indexing: references) ?? ConditionContext()
+        }
         game.perks.wire(
             runtime,
             baselines: (provider as? ActorValueDataProviding)?.actorValueBaselines?.resolver

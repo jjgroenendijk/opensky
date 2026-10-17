@@ -34,6 +34,8 @@ final class ContainerMenuController {
     private(set) var containerReference: FormID?
     /// Nil for a nominated or looted container, which trades anything.
     private(set) var vendor: Vendor?
+    /// The actor the player barters with, whom the price perks name.
+    private(set) var merchant: ReferenceKey?
     /// On by default, so play mode draws the menu. The HUD is suspended while
     /// the movie holds the single SWF layer.
     private(set) var movieEnabled = true
@@ -107,12 +109,14 @@ final class ContainerMenuController {
         _ holder: InventoryHolder,
         name: String,
         reference: FormID?,
-        vendor: Vendor? = nil
+        vendor: Vendor? = nil,
+        merchant: ReferenceKey? = nil
     ) {
         container = holder
         containerName = name
         containerReference = reference
         self.vendor = vendor
+        self.merchant = merchant
     }
 
     func noteAction(_ text: String) {
@@ -143,10 +147,11 @@ final class ContainerMenuController {
             container: container,
             containerName: containerName ?? "Container",
             mode: mode,
-            pricing: game.inventory.barterPricing,
+            pricing: game.inventory.barterPricing(with: merchant),
             runtime: inventory,
             categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
         )
+        refreshed.player.carriedWeight = game.inventory.playerCarriedWeight
         refreshed.restore(from: model)
         model = refreshed
         publishModel()

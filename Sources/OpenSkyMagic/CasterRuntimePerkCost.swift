@@ -2,7 +2,7 @@
 // half-cost perk, both only if owned.
 // Vanilla often authors one discount twice (`Flames` 24 with `DestructionNovice00`
 // charges 12), so the SPIT halving applies only when that perk has no `Mod Spell Cost`.
-// A spell condition tab is skipped and counted (`PerkRuntimeEvaluation`).
+// The spell condition tab runs on the spell, through its effects' keywords.
 // See docs/engine/perks.md and docs/engine/spellcasting.md.
 
 import Foundation
@@ -39,10 +39,11 @@ extension CasterRuntime {
             cost,
             at: Self.spellCostEntryPoint,
             on: caster,
-            subjects: PerkEvaluationSubjects(owner: caster.key),
+            subjects: PerkEvaluationSubjects(owner: caster.key)
+                .binding(.spell, to: spellbook.spells.conditionSubject(of: spell)),
             actorValue: { [values] index in values.value(at: index, on: caster) }
         )
-        perks.conditions.spellEvaluation = .empty
+        perks.conditions.clear(SpellEvaluationResolution.self)
         // The tally advanced inside the copy, so hand it back rather than
         // dropping what the evaluation counted.
         self.perks = perks

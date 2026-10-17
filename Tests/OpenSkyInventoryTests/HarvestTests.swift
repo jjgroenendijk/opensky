@@ -61,6 +61,13 @@ struct HarvestTests {
         )
     }
 
+    @Test func aGreenThumbHarvestGrantsTheCountItIsGiven() throws {
+        let harness = try Self.harness()
+        let target = Self.flora(Self.plant, produce: Fixture.lockpick)
+        let outcome = try harness.runtime.harvest(target, onDay: Self.day, count: 2)
+        #expect(outcome.granted == [InventoryStack(item: Fixture.lockpick, count: 2)])
+    }
+
     @Test func aSecondHarvestIsRefusedAndWritesNothing() throws {
         let harness = try Self.harness()
         let target = Self.flora(Self.plant, produce: Fixture.lockpick)

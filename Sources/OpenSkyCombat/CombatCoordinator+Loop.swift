@@ -65,10 +65,16 @@ extension CombatCoordinator: CombatLoopWorld {
         applyBlockStamina(damage, to: blocker)
     }
 
-    public func combatStrike(
-        from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
-    ) -> WeaponStrike {
-        strike(from: attacker, handType: handType, on: target)
+    public func combatStrike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
+        strike(blow, on: target)
+    }
+
+    public func applyCombatHitSpell(_ blow: CombatBlow, on target: ReferenceKey) {
+        applyPerkHitSpell(blow, on: target)
+    }
+
+    public func applyCombatSwingSpell(_ blow: CombatBlow, at target: ReferenceKey) {
+        applyPerkSwingSpell(blow, at: target)
     }
 
     public func combatAwareness(

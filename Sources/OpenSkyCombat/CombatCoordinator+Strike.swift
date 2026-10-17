@@ -1,6 +1,6 @@
 // The skill, sneak-attack, and armour terms of one weapon hit, read from the
-// world. The arithmetic lives in `WeaponStrikeRules`. Perks that change these
-// terms need the weapon and armour condition tabs, which are not bound yet.
+// world. The arithmetic lives in `WeaponStrikeRules`; the perk terms are in
+// `CombatCoordinator+Perks.swift`.
 
 import OpenSkyActorsInterface
 import OpenSkyCombatInterface
@@ -10,27 +10,30 @@ import OpenSkyInventoryInterface
 import OpenSkyProgressionInterface
 
 extension CombatCoordinator {
-    /// The terms of a hit by `attacker` with `handType` on `target`.
-    public func strike(
-        from attacker: ReferenceKey, handType: CombatHandType, on target: ReferenceKey
-    ) -> WeaponStrike {
+    /// The terms of `blow` on `target`, perks of both sides included.
+    public func strike(_ blow: CombatBlow, on target: ReferenceKey) -> WeaponStrike {
         guard let world else { return .plain }
         var strike = WeaponStrike()
+        let attack = attackSubjects(blow, on: target)
         if
-            attacker == .player,
-            let index = SkillUseAction.weaponHit(handType).skillIndex,
+            blow.attacker == .player,
+            let index = SkillUseAction.weaponHit(blow.handType).skillIndex,
             let skill = world.actorValues(of: .player)?(index)
         {
             strike.skillMultiplier = WeaponStrikeRules.playerSkillMultiplier(
                 skill: skill, settings: weaponDamage
             )
         }
-        if isSneakAttack(by: attacker, on: target) {
-            strike.sneakMultiplier = WeaponStrikeRules.sneakMultiplier(
-                handType: handType, settings: weaponDamage
+        if isSneakAttack(by: blow.attacker, on: target) {
+            let family = WeaponStrikeRules.sneakMultiplier(
+                handType: blow.handType, settings: weaponDamage
+            )
+            strike.sneakMultiplier = perkValue(
+                family, at: .modSneakAttackMult, on: blow.attacker, subjects: attack
             )
         }
-        strike.armorFraction = armorFraction(of: target)
+        strike.armorFraction = armorFraction(of: target, against: blow)
+        applyPerkTerms(to: &strike, blow: blow, on: target)
         return strike
     }
 
@@ -44,7 +47,7 @@ extension CombatCoordinator {
 
     /// The blow before the block, so a stronger hit costs more to stop.
     public func applyBlockStamina(_ damage: MeleeDamageResult, to blocker: ReferenceKey) {
-        let incoming = damage.base * damage.attackMultiplier * damage.strike.factor
+        let incoming = damage.strike.damage(base: damage.base, attack: damage.attackMultiplier)
         world?.damageStamina(by: stamina.blockCost(incomingDamage: incoming), of: blocker)
     }
 
@@ -89,8 +92,9 @@ extension CombatCoordinator {
         return !world.awareness(of: target, toward: attacker).isDetected
     }
 
-    /// The fraction of a blow `target`'s worn armour stops.
-    public func armorFraction(of target: ReferenceKey) -> Float {
+    /// The fraction of a blow `target`'s worn armour stops. Each piece passes the
+    /// wearer's `Mod Armor Rating`, and the sum the attacker's `Mod Target Damage Resistance`.
+    public func armorFraction(of target: ReferenceKey, against blow: CombatBlow? = nil) -> Float {
         guard let world, let items else { return 0 }
         let pieces = world.equippedItems(of: target).compactMap { worn -> WornArmorPiece? in
             guard
@@ -98,21 +102,36 @@ extension CombatCoordinator {
                 let type = armor.bodyTemplate?.armorType
             else { return nil }
             let isBody = armor.bodyTemplate?.slots.contains(.body) ?? false
-            let rating = Float(armor.armorRating & 0xFFFF) / 100
+            let tempered = Float(armor.armorRating & 0xFFFF) / 100
                 + Tempering.bonus(level: worn.temperLevel, isBodyArmor: isBody)
+            let rating = perkValue(
+                tempered,
+                at: .modArmorRating,
+                on: target,
+                subjects: PerkEvaluationSubjects(owner: target)
+                    .binding(.item, to: items.conditionSubject(of: worn.item))
+            )
             return WornArmorPiece(rating: rating, type: type)
         }
         let values = world.actorValues(of: target)
         let read = { (name: String) -> Float in
             ActorValueIdentity.index(named: name).flatMap { values?($0) } ?? 0
         }
-        let rating = WeaponStrikeRules.armorRating(
+        var rating = WeaponStrikeRules.armorRating(
             pieces: pieces,
             skills: ArmorSkills(light: read("Light Armor"), heavy: read("Heavy Armor")),
             isPlayer: target == .player,
             extra: read("Damage Resist"),
             settings: weaponDamage
         )
+        if let blow {
+            rating = perkValue(
+                rating,
+                at: .modTargetDamageResistance,
+                on: blow.attacker,
+                subjects: attackSubjects(blow, on: target)
+            )
+        }
         return WeaponStrikeRules.armorFraction(
             rating: rating,
             pieces: pieces,

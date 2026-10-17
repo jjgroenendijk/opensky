@@ -24,8 +24,9 @@ shield: blocked = fShieldBaseFactor
                     * (1 + blockSkill * fBlockSkillMult / 100) / 100
 ```
 
-Then it is multiplied by the perk, enchantment, and potion terms, and by `fBlockPowerAttackMult`
-for a power attack, and capped at `fBlockMax`.
+The shield branch applies when the blocker holds a shield, the player as well as an NPC. Then it
+is multiplied by the perk, enchantment, and potion terms, and by `fBlockPowerAttackMult` for a
+power attack, and capped at `fBlockMax`.
 
 The numbers come from the install, and they are not the ones UESP prints. From `Skyrim.esm`, with
 `openskycli gmst combat`:
@@ -64,7 +65,7 @@ Block skill is fixed at 15, the starting value UESP gives.
   ([perks](/engine/perks.md)).
 - The attacker's term follows UESP "Skyrim:Weapons":
   `... * (1 + perk effects) * (1 + item effects) * (1 + potion effect)`. It reads the one-handed,
-  two-handed, or archery values for the weapon's family, and `Mod Attack Damage`.
+  two-handed, or archery values for the weapon's family. The perks are in the strike terms below.
 
 They are separate because they act on opposite sides. One term would let the target's ring change
 the attacker's damage. The attacker's term applies after the blocked fraction, because the block
@@ -80,8 +81,12 @@ After the block and the bonus terms, three more factors scale the hit. They mult
 order does not matter.
 
 ```text
-applied = base * attackBonus * (1 - blocked) * skill * sneak * (1 - armour)
+applied = ((base + weaponBonus) * attackBonus * skill * sneak * (1 - armour) * perks
+           + critical) * (1 - blocked)
 ```
+
+The perk terms are the attacker's and the target's perk entry points
+([perk entry points](/engine/perk-entry-points.md)).
 
 Skill. UESP "Skyrim:Weapons" gives the player's damage as `base * (1 + skill / 200)`. This is
 `1 + (fDamagePCSkillMax - 1) * skill / 100` with the install's 1.5. The skill is One-Handed,
@@ -102,8 +107,7 @@ multiplies by the weapon family's setting.
 documented use. A Nexus combat mod lowers it on hard difficulty levels, so OpenSky reads it as a
 percent scale on the same product. Only the player sneak attacks, because the player has no
 detection state toward an NPC. A target that is already fighting the player is never surprised.
-The perks that change these factors, such as Backstab, test the weapon in a condition tab that
-the perk evaluator does not bind yet, so they are not applied.
+The `Mod Sneak Attack Mult` perks, such as Backstab, change the factor.
 
 A landed sneak attack gives Sneak experience: `fSneakAttackSkillUsageMelee` (30) for a melee hit.
 UESP "Skyrim:Sneak" says "Melee sneak attacks give 12x as much as ranged sneak attacks", and no

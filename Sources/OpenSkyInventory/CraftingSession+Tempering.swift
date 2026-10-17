@@ -60,7 +60,9 @@ extension CraftingSession {
         return TemperTarget(
             item: item,
             copies: inventory.temperedItems(of: player).copies(of: item, held: held),
-            maximum: Tempering.maximumLevel(smithing: skill)
+            maximum: Tempering.maximumLevel(
+                smithing: skill, perk: (conditions?.temperingFactor(for: item) ?? 1) - 1
+            )
         )
     }
 

@@ -192,6 +192,43 @@ struct ConditionFunctionsDataTests {
         ])
     }
 
+    /// A perk's weapon tab runs on a base form, not a placed reference.
+    @Test func aBaseFormSubjectAnswersKeywordIdentityAndListMembership() throws {
+        var context = try makeFixture().context()
+        let form = ConditionFormSubject(id: resolved(FixtureID.subjectBase))
+        context.subject = form.key
+        context.formSubjects = FormSubjectResolution(forms: [form])
+
+        let answers = try [
+            DataCase(560, FixtureID.keyword), DataCase(560, FixtureID.otherKeyword),
+            DataCase(72, FixtureID.subjectBase), DataCase(72, FixtureID.targetBase),
+            DataCase(372, FixtureID.outerList), DataCase(372, FixtureID.emptyList)
+        ].map { try evaluate($0, context: context) }
+
+        let truths = answers.map(\.isTrue)
+        let conclusive = answers.allSatisfy(\.isConclusive)
+        #expect(truths == [true, false, true, false, true, false])
+        #expect(conclusive)
+    }
+
+    /// A spell has no `KWDA`, so its effects' keywords answer `HasKeyword`.
+    @Test func aMagicItemSubjectReadsItsEffectKeywords() throws {
+        var context = try makeFixture().context()
+        let keyword = ReferenceKey(resolved: resolved(FixtureID.otherKeyword))
+        let form = ConditionFormSubject(
+            id: resolved(FixtureID.targetBase), effectKeywords: [keyword]
+        )
+        context.subject = form.key
+        context.formSubjects = FormSubjectResolution(forms: [form])
+
+        let carried = try evaluate(DataCase(560, FixtureID.otherKeyword), context: context)
+        let missing = try evaluate(DataCase(560, FixtureID.keyword), context: context)
+
+        #expect(carried.isTrue)
+        #expect(!missing.isTrue)
+        #expect(missing.isConclusive)
+    }
+
     private func evaluate(
         _ item: DataCase,
         context: ConditionContext

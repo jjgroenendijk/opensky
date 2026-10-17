@@ -7,6 +7,7 @@
 import Foundation
 import OpenSkyConditions
 import OpenSkyFormatsESM
+import OpenSkyGameData
 
 nonisolated extension ConditionFunctions {
     static func installActorSituation(_ registry: inout ConditionFunctionRegistry) {
@@ -28,15 +29,33 @@ nonisolated extension ConditionFunctions {
                 }
             }
         })
-        // OpenSky has no injured walk, no attack data on an attack, no item use by an
-        // actor, no reaction to a player action, and no bump reaction, so these read 0.
+        installAttackType(&registry)
+        // OpenSky has no injured walk, no item use by an actor, no reaction to a
+        // player action, and no bump reaction, so these read 0.
         for function in [
-            unmodelled(645, "GetIsInjured"), unmodelled(697, "IsAttackType", .formID),
+            unmodelled(645, "GetIsInjured"),
             unmodelled(247, "GetIsUsedItemType", .integer), unmodelled(305, "GetPlayerAction"),
             unmodelled(274, "IsSmallBump"), unmodelled(642, "GetLastBumpDirection")
         ] {
             registry.register(function)
         }
+    }
+
+    /// The keyword parameter matched by editor ID against the attack in progress.
+    private static func installAttackType(_ registry: inout ConditionFunctionRegistry) {
+        registry.register(ConditionFunction(
+            index: 697, name: "IsAttackType", parameter1: .formID
+        ) { call in
+            guard
+                let store = call.context.data.keywords,
+                let plugin = call.context.data.sourcePlugin,
+                let parameter = call.parameter1,
+                let keyword = store.resolve(parameter.asFormID, fromPlugin: plugin)
+            else { return .failure(.unavailableData(.keyword)) }
+            return Self.action(call) { action in
+                Self.isTrue(action.attackTypeKeyword == keyword.keyword.editorID)
+            }
+        })
     }
 
     private static func unmodelled(

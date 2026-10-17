@@ -55,12 +55,13 @@ extension WorldItemRuntime {
     }
 
     /// Grants the produce of the plant behind `interaction` and marks it harvested
-    /// on game day `day`. A plant that grew back can be harvested again.
+    /// on game day `day`, `count` times over. A plant that grew back can be harvested again.
     /// - Throws: `HarvestError`, or `InventoryError.countOverflow`. Nothing is written then.
     @discardableResult
     public func harvest(
         _ interaction: PlacedInteraction,
-        onDay day: Float?
+        onDay day: Float?,
+        count: Int32 = 1
     ) throws -> HarvestOutcome {
         guard interaction.action == .harvest else {
             throw HarvestError.notHarvestable(interaction.reference)
@@ -73,7 +74,8 @@ extension WorldItemRuntime {
         }
         let baselines = inventory.baselines
         let granted = interaction.produce?.ingredient.map {
-            baselines.expanded($0, count: 1).filter { baselines.items.definition($0.item) != nil }
+            baselines.expanded($0, count: max(1, count))
+                .filter { baselines.items.definition($0.item) != nil }
         } ?? []
         guard !granted.isEmpty else { throw HarvestError.noProduce(interaction.base) }
         try inventory.apply(removing: [], adding: granted, on: player)

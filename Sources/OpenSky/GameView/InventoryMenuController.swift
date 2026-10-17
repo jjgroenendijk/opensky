@@ -80,6 +80,7 @@ final class InventoryMenuController {
             holder: .player, runtime: inventory,
             categories: InventoryMenuCategory.tabs(texts: game.inventory.menuTexts)
         )
+        refreshed.carriedWeight = game.inventory.playerCarriedWeight
         refreshed.selectCategory(model.selectedCategoryIndex)
         refreshed.select(model.selectedIndex)
         model = refreshed

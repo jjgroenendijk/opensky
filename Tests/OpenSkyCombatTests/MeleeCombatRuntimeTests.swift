@@ -1,5 +1,5 @@
 // The melee runtime end to end: a hit-frame event drives a sweep that hits a
-// target capsule, damage matches WEAP data, blocking reduces it, and a swing
+// target capsule, damage matches WEAP data, blocking reduces it, and a sweep
 // through two targets hits each once. The graph is stood in for by the event
 // names it would fire; `MeleeCombatRealDataTests` uses the vanilla graph.
 
@@ -29,18 +29,24 @@ struct MeleeCombatRuntimeTests {
         #expect(runtime.trace.last?.damage.applied == 24)
     }
 
-    @Test func aSwingThroughTwoOverlappingTargetsHitsEachOnce() {
-        let world = FakeMeleeWorld()
-        world.targets = [
-            MeleeTarget(key: .generated(1), feet: SIMD3(80, 0, 0)),
-            MeleeTarget(key: .generated(2), feet: SIMD3(96, 0, 0))
-        ]
-        let runtime = Self.runtime(world: world, damage: 10)
+    /// A plain swing strikes the nearest actor; a sweep strikes each once.
+    @Test func aSweepThroughTwoOverlappingTargetsHitsEachOnce() {
+        for sweeps in [false, true] {
+            let world = FakeMeleeWorld()
+            world.sweeps = sweeps
+            world.targets = [
+                MeleeTarget(key: .generated(1), feet: SIMD3(80, 0, 0)),
+                MeleeTarget(key: .generated(2), feet: SIMD3(96, 0, 0))
+            ]
+            let runtime = Self.runtime(world: world, damage: 10)
 
-        Self.drawAndSwing(runtime)
+            Self.drawAndSwing(runtime)
 
-        #expect(runtime.hitCount == 2)
-        #expect(world.damage == [.generated(1): 10, .generated(2): 10])
+            let expected: [ReferenceKey: Float] = sweeps
+                ? [.generated(1): 10, .generated(2): 10] : [.generated(1): 10]
+            #expect(runtime.hitCount == expected.count)
+            #expect(world.damage == expected)
+        }
     }
 
     @Test func twoHitFramesInOneSwingStillLandOneHitPerTarget() {

@@ -15,6 +15,8 @@ import OpenSkyInventoryInterface
 import OpenSkyMagic
 import OpenSkyMagicInterface
 import OpenSkyMenus
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import OpenSkyScripting
 import OpenSkyWorld
@@ -135,6 +137,41 @@ extension InventoryWorldAdapter: InventoryWorld {
         game.hud.updateTarget(labelled(game.streamer?.interactionTarget))
     }
 
+    func playerSpeechSkill() -> Float? {
+        guard let speech = ActorValueIdentity.index(named: "Speechcraft") else { return nil }
+        return game.actorValues.runtime?.value(at: speech, on: .player)
+    }
+
+    func perkModified(
+        _ value: Float,
+        at entryPoint: PerkEntryPoint,
+        on key: ReferenceKey,
+        subjects: PerkEvaluationSubjects,
+        seams: ConditionContext
+    ) -> Float {
+        game.perks.modified(
+            value,
+            at: entryPoint,
+            on: key,
+            subjects: { _ in subjects },
+            seams: seams
+        )
+    }
+
+    func perkActivateLabel(for reference: FormID) -> String? {
+        guard let key = game.streamer?.referenceEntry(formID: reference)?.key else { return nil }
+        let choice = game.perks.choices(
+            at: .setActivateLabel,
+            on: .player,
+            subjects: { _ in PerkEvaluationSubjects(owner: .player, target: key) },
+            seams: ConditionContext()
+        ).first
+        if case let .localizedText(text)? = choice?.text {
+            return game.mapWorld.text(text)
+        }
+        return choice?.inlineText
+    }
+
     /// The streamer's target with the runtime label, such as a harvested plant's.
     func labelled(_ target: InteractionTarget?) -> InteractionTarget? {
         target.map {
@@ -167,6 +204,17 @@ extension InventoryWorldAdapter: RecipeConditionChecking {
             let holder = game.actorWorld.actorValueHolder(for: .player)
         else { return nil }
         return runtime.value(at: index, on: holder)
+    }
+
+    func temperingFactor(for item: FormID) -> Float {
+        let subject = game.inventory.runtime?.inventory.baselines.items.conditionSubject(of: item)
+        return perkModified(
+            1,
+            at: .modTemperingHealth,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player).binding(.item, to: subject),
+            seams: ConditionContext()
+        )
     }
 }
 

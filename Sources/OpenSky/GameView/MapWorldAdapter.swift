@@ -163,9 +163,9 @@ extension MapWorldAdapter: MapMenuWorld {
         context.hostilesNear = combat.hostileCount > 0
         context.inAir = !(game.renderer?.walkController.isGrounded ?? true)
         context.alarmed = game.crime.isPlayerPursued
-        if let items = game.inventory.runtime {
+        if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
-                carried: items.inventory.carriedWeight(of: items.player),
+                carried: game.inventory.playerCarriedWeight,
                 capacity: game.actorValues.runtime?.value(
                     at: ActorValueIdentity.carryWeightIndex, on: .player
                 )

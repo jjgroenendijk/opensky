@@ -65,7 +65,7 @@ struct ConditionActorSituationFunctionTests {
         let set = { (context: inout ConditionContext) in
             context.actors = ActorStateResolution(states: [Self.subject: Self.actor()])
         }
-        for function: UInt16 in [645, 697, 247, 305, 274, 642] {
+        for function: UInt16 in [645, 247, 305, 274, 642] {
             #expect(try Self.evaluate(function, equals: 0, set) == .true)
         }
     }

@@ -26,9 +26,10 @@ public protocol RuntimeStateWorld: AnyObject {
     func applyGlobalResolution(_ resolution: GlobalResolution, reroll: Bool)
 
     var musicStore: MusicRecordStore? { get }
-    /// The live condition context, with the crosshair as subject and target.
+    /// The live condition context, with the crosshair as subject and target. `indexing`
+    /// adds resident references a run-on must find, such as a perk's target.
     func conditionContext(
-        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution
+        crosshair: RuntimeReferenceEntry?, globals: GlobalResolution, indexing: [ReferenceKey]
     ) -> ConditionContext
 
     /// The file work runs off the main actor. The state is read before the first

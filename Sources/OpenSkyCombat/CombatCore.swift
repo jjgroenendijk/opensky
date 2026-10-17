@@ -71,9 +71,6 @@ nonisolated public struct CombatSpellCandidate: Equatable, Sendable {
 
 /// The combat rules over plain values. It reads no world state.
 nonisolated public enum CombatCore {
-    /// `Mod Attack Damage` (35): Armsman, Barbarian and Overdraw
-    /// (docs/formats/perks.md).
-    public static let attackDamageEntryPoint = PerkEntryPoint.modAttackDamage
     /// `Mod Percent Blocked` (39): Shield Wall.
     public static let percentBlockedEntryPoint = PerkEntryPoint.modPercentBlocked
 
@@ -167,14 +164,16 @@ nonisolated public enum CombatCore {
         )
     }
 
-    /// The player answers from its melee guard, every other actor from its
-    /// combat behavior machine.
+    /// The player answers from its melee guard, with its shield's base rating when it
+    /// holds one. Every other actor answers from its combat behavior machine.
     public static func block(
         of target: ReferenceKey,
         playerIsBlocking: Bool,
+        playerShieldRating: Float? = nil,
         machineBlock: MeleeBlockKind?
     ) -> MeleeBlockKind? {
         guard target == .player else { return machineBlock }
-        return playerIsBlocking ? .weapon : nil
+        guard playerIsBlocking else { return nil }
+        return playerShieldRating.map { .shield(baseArmorRating: $0) } ?? .weapon
     }
 }

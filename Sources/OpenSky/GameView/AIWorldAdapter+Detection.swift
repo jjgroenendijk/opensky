@@ -5,6 +5,7 @@
 
 import OpenSkyActors
 import OpenSkyCombat
+import OpenSkyConditions
 import OpenSkyFormatsESM
 import OpenSkyGameData
 import OpenSkyInventory
@@ -14,6 +15,8 @@ import OpenSkyMagicInterface
 import OpenSkyPerception
 import OpenSkyPerceptionInterface
 import OpenSkyPhysics
+import OpenSkyProgression
+import OpenSkyProgressionInterface
 import OpenSkyRendering
 import simd
 
@@ -29,14 +32,29 @@ extension AIWorldAdapter {
         actorValue(Self.sneakIndex, of: actor) ?? DetectionTargetTraits.startingSkill
     }
 
+    /// The player's detection perks apply once a frame, with no observer bound:
+    /// no vanilla perk at these entry points tests the observer tab.
     func playerDetectionTraits(at feet: SIMD3<Float>, eyeHeight: Float) -> DetectionTargetTraits {
         DetectionTargetTraits(
-            equippedWeight: playerArmourWeight(),
-            lightLevel: lightLevel(at: feet + SIMD3(0, 0, eyeHeight * 0.5)),
+            equippedWeight: game.inventory.playerWornArmourWeight,
+            lightLevel: playerPerk(
+                lightLevel(at: feet + SIMD3(0, 0, eyeHeight * 0.5)), at: .modDetectionLight
+            ),
             muffle: actorValue(Self.movementNoiseMultIndex, of: .player) ?? 0,
             actionSound: playerActionSound(),
-            sneakSkill: sneakSkill(of: .player),
-            isInvisible: (actorValue(Self.invisibilityIndex, of: .player) ?? 0) > 0
+            sneakSkill: playerPerk(sneakSkill(of: .player), at: .modDetectionSneakSkill),
+            isInvisible: (actorValue(Self.invisibilityIndex, of: .player) ?? 0) > 0,
+            movementMultiplier: playerPerk(1, at: .modDetectionMovement)
+        )
+    }
+
+    private func playerPerk(_ value: Float, at entryPoint: PerkEntryPoint) -> Float {
+        game.perks.modified(
+            value,
+            at: entryPoint,
+            on: .player,
+            subjects: { _ in PerkEvaluationSubjects(owner: .player) },
+            seams: ConditionContext()
         )
     }
 
@@ -46,19 +64,6 @@ extension AIWorldAdapter {
             let holder = game.actorWorld.actorValueHolder(for: actor)
         else { return nil }
         return runtime.value(at: index, on: holder)
-    }
-
-    /// UESP counts armour weight only; a carried sword makes no movement noise.
-    private func playerArmourWeight() -> Float {
-        guard let equipment = game.inventory.equipment, let items = game.combat.items else {
-            return 0
-        }
-        return equipment.equipped(on: InventoryHolder.player).reduce(0) { total, item in
-            guard let definition = items.definition(item), definition.family == .armor else {
-                return total
-            }
-            return total + max(0, definition.weight)
-        }
     }
 
     /// A swing sounds at its weapon's `VNAM` level and a cast at its first
@@ -74,11 +79,34 @@ extension AIWorldAdapter {
         }
         if let caster = game.magic.caster {
             for hand in SpellHand.allCases where caster.phase(of: hand).isCasting {
-                let level = castingSoundLevel(caster.state(of: hand).spell, caster: caster)
-                loudest = max(loudest, settings.actionSound(for: level))
+                let spell = caster.state(of: hand).spell
+                let level = castingSoundLevel(spell, caster: caster)
+                loudest = max(
+                    loudest,
+                    settings.actionSound(for: level) * castingSoundFactor(spell, caster: caster)
+                )
             }
         }
         return loudest
+    }
+
+    /// Quiet Casting sets Mod Spell Casting Sound Event to 0, which silences the cast.
+    private func castingSoundFactor(_ spell: ReferenceKey?, caster: CasterRuntime) -> Float {
+        let spells = caster.spellbook.spells
+        let resolved = spell.flatMap { spells.spell(key: $0) }
+        var seams = ConditionContext()
+        seams.spellEvaluation = SpellEvaluationResolution(spell: resolved)
+        let factor = game.perks.modified(
+            1,
+            at: .modSpellCastingSoundEvent,
+            on: .player,
+            subjects: { _ in
+                PerkEvaluationSubjects(owner: .player)
+                    .binding(.spell, to: resolved.map(spells.conditionSubject(of:)))
+            },
+            seams: seams
+        )
+        return factor.isFinite ? max(0, factor) : 1
     }
 
     private func castingSoundLevel(

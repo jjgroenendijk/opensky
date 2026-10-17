@@ -18,6 +18,7 @@ final class CombatSpellcastingSection: PanelSectionViewController {
 
     let learnControl = NSButton(title: "Learn start spells", target: nil, action: nil)
     let readTomeControl = NSButton(title: "Read carried tome", target: nil, action: nil)
+    let readSkillBookControl = NSButton(title: "Read skill book", target: nil, action: nil)
     let selectControl = NSButton(title: "Next spell", target: nil, action: nil)
     let readyRightControl = NSButton(title: "Ready right", target: nil, action: nil)
     let readyLeftControl = NSButton(title: "Ready left", target: nil, action: nil)
@@ -39,12 +40,14 @@ final class CombatSpellcastingSection: PanelSectionViewController {
     override func makeContentViews() -> [NSView] {
         learnControl.toolTip = "Teaches Flames, Healing, and the race spells."
         readTomeControl.toolTip = "Reads the first spell tome the player carries."
+        readSkillBookControl.toolTip = "Reads the first unread skill book the player carries."
         castRightControl.toolTip = "Casts one spell. Only self spells cast."
         castLeftControl.toolTip = "Casts one spell. Only self spells cast."
         configureControls()
         return [
             PanelComponents.group([
-                PanelComponents.buttonRow([learnControl, readTomeControl, selectControl]),
+                PanelComponents.buttonRow([learnControl, readTomeControl, readSkillBookControl]),
+                PanelComponents.buttonRow([selectControl]),
                 PanelComponents.buttonRow([readyRightControl, readyLeftControl]),
                 PanelComponents.buttonRow([castRightControl, castLeftControl])
             ]),
@@ -55,7 +58,7 @@ final class CombatSpellcastingSection: PanelSectionViewController {
     override func syncControls() {
         let available = provider != nil
         for control in [
-            learnControl, readTomeControl, selectControl,
+            learnControl, readTomeControl, readSkillBookControl, selectControl,
             readyRightControl, readyLeftControl, castRightControl, castLeftControl
         ] {
             control.isEnabled = available
@@ -92,6 +95,11 @@ final class CombatSpellcastingSection: PanelSectionViewController {
                 control: readTomeControl,
                 action: #selector(readTome),
                 identifier: "SpellcastingReadTomeControl"
+            ),
+            Wiring(
+                control: readSkillBookControl,
+                action: #selector(readSkillBook),
+                identifier: "SpellcastingReadSkillBookControl"
             ),
             Wiring(
                 control: selectControl,
@@ -136,6 +144,11 @@ final class CombatSpellcastingSection: PanelSectionViewController {
 
     @objc private func readTome() {
         provider?.readFirstCarriedSpellTome()
+        finishInteraction()
+    }
+
+    @objc private func readSkillBook() {
+        provider?.readFirstUnreadSkillBook()
         finishInteraction()
     }
 

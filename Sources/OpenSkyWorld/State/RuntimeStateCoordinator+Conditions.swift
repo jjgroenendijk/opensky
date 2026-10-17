@@ -36,11 +36,14 @@ extension RuntimeStateCoordinator {
     }
 
     /// The live context with the crosshair as subject and target. Dialogue and
-    /// perks use it too, and override what they need.
-    public func conditionContext() -> ConditionContext {
+    /// perks use it too, and override what they need. `indexing` adds the resident
+    /// references a perk's condition tabs run on.
+    public func conditionContext(indexing keys: [ReferenceKey] = []) -> ConditionContext {
         let globals = globalResolution()
         guard let world else { return ConditionContext(globals: globals) }
-        return world.conditionContext(crosshair: entry(for: .currentTarget), globals: globals)
+        return world.conditionContext(
+            crosshair: entry(for: .currentTarget), globals: globals, indexing: keys
+        )
     }
 
     private func conditionSources() -> [String: FormID] {

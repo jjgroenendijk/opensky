@@ -122,6 +122,14 @@ extension CombatCoordinator: MeleeCombatControlProviding {
         if strike.armorFraction > 0 {
             parts.append(String(format: "armour stopped %.0f%%", strike.armorFraction * 100))
         }
+        if strike.perkMultiplier != 1 || strike.weaponDamageBonus != 0 {
+            parts.append(String(
+                format: "perks x%.2f %+.0f", strike.perkMultiplier, strike.weaponDamageBonus
+            ))
+        }
+        if strike.isCritical {
+            parts.append(String(format: "critical +%.0f", strike.criticalDamage))
+        }
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 }

@@ -30,4 +30,13 @@ struct CombatActionFactsTests {
         #expect(CombatBehaviorPhase.windup.actionFacts.attackState == .draw)
         #expect(CombatBehaviorPhase.approaching.actionFacts == .still)
     }
+
+    /// The side keyword covers both sides.
+    @Test func eachPowerAttackDirectionNamesItsAttackType() {
+        #expect(MeleePowerDirection.inPlace.attackTypeKeyword == "PowerAttackTypeStanding")
+        #expect(MeleePowerDirection.forward.attackTypeKeyword == "PowerAttackTypeForward")
+        #expect(MeleePowerDirection.backward.attackTypeKeyword == "PowerAttackTypeBack")
+        #expect(MeleePowerDirection.left.attackTypeKeyword == "PowerAttackTypeSide")
+        #expect(MeleePowerDirection.right.attackTypeKeyword == "PowerAttackTypeSide")
+    }
 }

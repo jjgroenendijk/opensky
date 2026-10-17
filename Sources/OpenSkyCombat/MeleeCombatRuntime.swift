@@ -55,6 +55,8 @@ public final class MeleeCombatRuntime {
     public var powerAttacks = PowerAttackSettings.vanilla
     /// What the swing in progress is, set when its start event is raised.
     public internal(set) var strikeKind = MeleeStrikeKind.normal
+    /// The direction of the power attack in progress, nil for any other strike.
+    public internal(set) var powerDirection: MeleePowerDirection?
     var hold = MeleeHold()
     var pendingPower = false
 
@@ -62,7 +64,7 @@ public final class MeleeCombatRuntime {
     /// Targets this swing has already landed on, cleared when the swing id
     /// changes. Keyed by reference rather than by index, so a target that
     /// leaves and re-enters the list mid-swing is still only hit once.
-    private var hitThisSwing: Set<ReferenceKey> = []
+    var hitThisSwing: Set<ReferenceKey> = []
     private var hitSwingID = 0
     /// Intent edges, so an event is raised on the change rather than every
     /// frame.
@@ -168,6 +170,7 @@ public final class MeleeCombatRuntime {
         pendingPower = false
         hold.reset()
         strikeKind = .normal
+        powerDirection = nil
     }
 
     // MARK: - Readout
@@ -276,7 +279,7 @@ public final class MeleeCombatRuntime {
             attacker: attacker.key,
             alreadyHit: hitThisSwing
         )
-        return hits.map { apply($0, world: world) }
+        return struck(hits, world: world).map { apply($0, world: world) }
     }
 
     /// Damage, stagger, enchantment and impact sound for one hit.
@@ -289,6 +292,9 @@ public final class MeleeCombatRuntime {
             world.applyBlockStamina(damage, to: hit.target)
         }
         noteSkillUse(hit, damage: damage, landed: landed, world: world)
+        if landed {
+            world.applyMeleeHitSpell(blow(world: world), on: hit.target)
+        }
         let enchantment = applyEnchantment(hit, world: world)
         // After the damage, so an `OnHit` script sees the new health. `abHitBlocked`
         // comes from the damage formula's block term.

@@ -40,9 +40,11 @@ OpenSky uses the authored level.
 Every press of the use key goes through one gate before any listener hears it
 ([interaction](/engine/interaction.md)):
 
-1. No lock, or unlocked: the press goes on.
-2. Locked, and the player carries the key: the lock opens, it stays open, and the press goes on.
-3. Locked otherwise: the press is refused. Audio, scripts, and the inventory never hear it.
+1. A Filter Activation perk of the player passes on the target: the press is refused
+   ([perk entry points](/engine/perk-entry-points.md)).
+2. No lock, or unlocked: the press goes on.
+3. Locked, and the player carries the key: the lock opens, it stays open, and the press goes on.
+4. Locked otherwise: the press is refused. Audio, scripts, and the inventory never hear it.
 
 A refused pickable lock opens the lockpicking menu when the player has at least one lockpick
 (the `LKPK` default object). When the lock opens, the original press runs again, so the door

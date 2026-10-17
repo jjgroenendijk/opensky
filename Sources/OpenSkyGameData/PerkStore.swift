@@ -75,6 +75,8 @@ nonisolated public struct PerkStore: Sendable {
     /// Each perk that is somebody's `NNAM` target, mapped back to the record naming
     /// it: the reverse of `rankChain(from:)`, so buying a rank finds the one before.
     private var previousRanks: [ResolvedFormID: ResolvedFormID] = [:]
+    /// Each perk plugin's FormIDs into the load-order space, built once.
+    private var translations: [String: FormIDTranslation] = [:]
 
     /// Every winning PERK identity in the load order.
     public var records: [ResolvedFormID: ResolvedPerk] {
@@ -146,6 +148,12 @@ nonisolated public struct PerkStore: Sendable {
         table.value(editorID: editorID)
     }
 
+    /// From `pluginName`'s FormIDs to the load-order space the live condition stores
+    /// read. Nil when the two are the same, or either plugin is not indexed.
+    public func translation(ofPlugin pluginName: String) -> FormIDTranslation? {
+        translations[pluginName.lowercased()]
+    }
+
     public func resolvedID(_ id: FormID, fromPlugin pluginName: String) -> ResolvedFormID? {
         index.resolvedID(id, fromPlugin: pluginName)
     }
@@ -203,6 +211,17 @@ nonisolated public struct PerkStore: Sendable {
     }
 
     private mutating func add(_ resolved: ResolvedPerk) {
+        let plugin = resolved.sourcePlugin.lowercased()
+        if
+            translations[plugin] == nil,
+            let source = index.resolver(ofPlugin: plugin),
+            let target = index.resolver(ofPlugin: FormIDResolver.loadOrderSpaceName)
+        {
+            let translation = FormIDTranslation(source: source, target: target)
+            if !translation.isIdentity {
+                translations[plugin] = translation
+            }
+        }
         recordsByKey[ReferenceKey(resolved: resolved.id)] = resolved
         if let next = resolved.nextPerk, previousRanks[next] == nil {
             previousRanks[next] = resolved.id

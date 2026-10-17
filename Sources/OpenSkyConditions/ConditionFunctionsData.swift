@@ -35,6 +35,9 @@ nonisolated extension ConditionFunctions {
                 let keyword = store.resolvedID(parameter.asFormID, fromPlugin: sourcePlugin),
                 store.keyword(keyword) != nil
             else { return .failure(.unavailableData(.keyword)) }
+            if let form = call.formSubject() {
+                return Self.formHasKeyword(form, keyword: keyword, store: store)
+            }
             return call.reference().flatMap { entry in
                 guard
                     let base = store.resolvedID(
@@ -65,6 +68,9 @@ nonisolated extension ConditionFunctions {
                 let listID = store.resolvedID(parameter.asFormID, fromPlugin: sourcePlugin),
                 store.formList(listID) != nil
             else { return .failure(.unavailableData(.formList)) }
+            if let form = call.formSubject() {
+                return .success(Self.isTrue(store.contains(form.id, in: listID)))
+            }
             return call.reference().flatMap { entry in
                 guard
                     let base = store.resolvedID(
