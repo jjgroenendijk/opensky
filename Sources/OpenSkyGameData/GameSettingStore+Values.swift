@@ -60,6 +60,16 @@ nonisolated extension GameSettingStore {
         }
     }
 
+    /// A string setting, resolved through `text`; nil from `text` keeps the field.
+    public func read<Settings>(
+        _ editorID: String, into settings: inout Settings,
+        _ keyPath: WritableKeyPath<Settings, String>, text: (LString) -> String?
+    ) {
+        if let value = self.text(editorID).flatMap({ text($0.text) }) {
+            settings[keyPath: keyPath] = value
+        }
+    }
+
     public func read<Settings>(
         _ editorID: String, into settings: inout Settings,
         _ keyPath: WritableKeyPath<Settings, Bool>

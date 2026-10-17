@@ -20,15 +20,8 @@ nonisolated public struct ProgressionTexts: Equatable, Sendable {
         store: GameSettingStore, text: (LString) -> String? = { _ in nil }
     ) -> Self {
         var texts = vanilla
-        let settings: [(String, WritableKeyPath<Self, String>)] = [
-            ("sSkillIncreased", \.skillIncreased),
-            ("sLevelUpAvailable", \.levelUpAvailable)
-        ]
-        for (editorID, keyPath) in settings {
-            if let value = store.text(editorID).flatMap({ text($0.text) }) {
-                texts[keyPath: keyPath] = value
-            }
-        }
+        store.read("sSkillIncreased", into: &texts, \.skillIncreased, text: text)
+        store.read("sLevelUpAvailable", into: &texts, \.levelUpAvailable, text: text)
         return texts
     }
 }

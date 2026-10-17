@@ -23,18 +23,11 @@ nonisolated public struct ItemNoticeTexts: Equatable, Sendable {
         store: GameSettingStore, text: (LString) -> String? = { _ in nil }
     ) -> Self {
         var texts = vanilla
-        let settings: [(String, WritableKeyPath<Self, String>)] = [
-            ("sAddItemtoInventory", \.added),
-            ("sRemoveItemfromInventory", \.removed),
-            ("sEquipItemOnPlayer", \.equipped),
-            ("sUnequipItemOnPlayer", \.unequipped),
-            ("sAddItemtoSpellList", \.spellAdded)
-        ]
-        for (editorID, keyPath) in settings {
-            if let value = store.text(editorID).flatMap({ text($0.text) }) {
-                texts[keyPath: keyPath] = value
-            }
-        }
+        store.read("sAddItemtoInventory", into: &texts, \.added, text: text)
+        store.read("sRemoveItemfromInventory", into: &texts, \.removed, text: text)
+        store.read("sEquipItemOnPlayer", into: &texts, \.equipped, text: text)
+        store.read("sUnequipItemOnPlayer", into: &texts, \.unequipped, text: text)
+        store.read("sAddItemtoSpellList", into: &texts, \.spellAdded, text: text)
         return texts
     }
 }
