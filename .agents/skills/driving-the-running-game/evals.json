@@ -1,6 +1,8 @@
 [
   {
-    "skills": ["driving-the-running-game"],
+    "skills": [
+      "driving-the-running-game"
+    ],
     "query": "Walk the player forward for one second in the running game and show me what they see.",
     "files": [],
     "expected_behavior": [
@@ -10,7 +12,9 @@
     ]
   },
   {
-    "skills": ["driving-the-running-game"],
+    "skills": [
+      "driving-the-running-game"
+    ],
     "query": "Check that activating the door in front of the player loads the interior.",
     "files": [],
     "expected_behavior": [
@@ -20,7 +24,9 @@
     ]
   },
   {
-    "skills": ["driving-the-running-game"],
+    "skills": [
+      "driving-the-running-game"
+    ],
     "query": "openskycli game status says notRunning. Fix it.",
     "files": [],
     "expected_behavior": [
@@ -29,7 +35,9 @@
     ]
   },
   {
-    "skills": ["driving-the-running-game"],
+    "skills": [
+      "driving-the-running-game"
+    ],
     "query": "Write a repeatable check that setting Health to 50 on the player sticks.",
     "files": [],
     "expected_behavior": [
@@ -53,6 +61,17 @@
     "expected_behavior": [
       "Uses the offscreen openskycli screenshot path from probing-real-game-data, not the live game",
       "Does not launch the app"
+    ]
+  },
+  {
+    "skills": [
+      "driving-the-running-game"
+    ],
+    "query": "Show me what Lydia looks like from every side.",
+    "files": [],
+    "expected_behavior": [
+      "Uses openskycli preview --record HousecarlWhiterun --angles all instead of launching the game",
+      "Points the user to the run directory under .logs/preview/ and does not commit the images"
     ]
   }
 ]

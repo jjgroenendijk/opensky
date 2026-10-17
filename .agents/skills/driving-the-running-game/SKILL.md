@@ -18,6 +18,11 @@ Build first with `make build-app` and `make build-cli` (background shell, root `
 Run the CLI as `"$(make -s app-path | xargs dirname)/openskycli" game ...` or through
 `make run-cli ARGS="game ..."`.
 
+To only look at an asset, an NPC, or a cell, do not launch the game:
+`openskycli preview --record <id> --angles all` renders it offscreen and writes a PNG and a
+JSON report per angle (`docs/tools/preview-render.md`). Launch the game when the question
+needs time, input, or game state.
+
 ## Workflow
 
 1. Tell the user a game window will open, then start it:
