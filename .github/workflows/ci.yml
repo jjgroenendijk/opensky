@@ -132,7 +132,8 @@ jobs:
 
   # Decides whether Build & test runs. A pull request that changes only Markdown, docs,
   # skills, the Python tools, the markdownlint config, or the Renovate config skips it.
-  # Static checks still lint and test those. Any other event always builds.
+  # Static checks still lint and test those. So does a run that starts after its pull
+  # request merged: the push to main builds the same tree. Any other event always builds.
   changes:
     name: Changes
     runs-on: ubuntu-latest
@@ -149,7 +150,12 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: |
           build=true
-          if [ -n "$PR" ] && files="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
+          state=OPEN
+          if [ -n "$PR" ]; then state="$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json state --jq .state)"; fi
+          if [ "$state" != OPEN ]; then
+            echo "[INFO] pull request #$PR is $state"
+            build=false
+          elif [ -n "$PR" ] && files="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
             build=false
             for file in $files; do
               case "$file" in
@@ -172,6 +178,7 @@ jobs:
     permissions:
       contents: read
       actions: write
+      pull-requests: read
     env:
       # Signing, then CI-only speed settings: no index data, which nothing in CI reads,
       # and no plugin or macro trust prompt.
@@ -179,8 +186,8 @@ jobs:
         CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= COMPILER_INDEX_STORE_ENABLE=NO
         -skipPackagePluginValidation -skipMacroValidation
       # A restored compilation cache only grows. Main starts over above this size.
-      # One cold build alone is about 1.6 GB, so the limit must stay well above that.
-      CAS_MAX_MB: 3072
+      # One cold build alone is about 2 GB, so the limit must stay well above that.
+      CAS_MAX_MB: 5120
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
@@ -269,8 +276,19 @@ jobs:
             .cache/DerivedData/ModuleCache.noindex
             .cache/DerivedData/SDKStatCaches.noindex
           key: ${{ steps.sdk.outputs.cache-primary-key }}
+      # A pull request that closed during the build saves nothing, and the next step then
+      # deletes its older caches, because nothing can restore them any more.
+      - name: Check the pull request is still open
+        id: pr
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          state="$(gh pr view "$PR" --json state --jq .state)"
+          echo "[INFO] pull request #$PR is $state"
+          [ "$state" = OPEN ] || echo "closed=true" >>"$GITHUB_OUTPUT"
       # Saved after a failed test too, because the compiled tasks are still valid.
-      - if: ${{ !cancelled() && steps.cas.outcome == 'success' }}
+      - if: ${{ !cancelled() && steps.cas.outcome == 'success' && steps.pr.outputs.closed != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: .cache/CompilationCache.noindex
@@ -283,7 +301,7 @@ jobs:
         run: tools/ci/cache-prune.sh "$GITHUB_REF" "$PREFIX" "$KEEP"
       - name: Build timing summary
         if: ${{ !cancelled() }}
-        run: tools/ci/build-timing.sh >>"$GITHUB_STEP_SUMMARY"
+        run: tools/ci/build-timing.sh | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload build and test logs
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

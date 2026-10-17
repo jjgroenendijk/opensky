@@ -108,9 +108,11 @@ ad hoc signing (`CODE_SIGN_IDENTITY=-`), because a runner has no signing identit
   the caches restore, and `wait` joins it before the build. It is not cached: it is 1.5 GB on disk,
   so a restore takes as long as the download and uses space the compilation cache needs.
 - **Timing.** `tools/ci/build-timing.sh` writes the build and test time, the compilation cache hit
-  rate, the time per task kind, and the slowest tasks to the run summary. It reads the build log in
-  the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`. The job uploads
-  `.logs/` on every run, not only on failure.
+  rate, the time per task kind, and the slowest tasks to the run summary and the job log. It reads
+  the build log in the result bundle, because `xcodebuild test` ignores `-showBuildTimingSummary`,
+  and keeps a copy in `.logs/build-timing/`. The job uploads `.logs/` on every run, not only on
+  failure, so `gh run download <run> -n build-test-logs` gets the start time and duration of every
+  build task.
 
 ## Caches
 
@@ -130,15 +132,19 @@ The compilation cache roughly halves the build:
   a low-level module since the last run, most tasks miss even though the pull request did not
   change. That is a real source change, not a broken cache: the same sources hit 601 of 601.
 - After each save, `tools/ci/cache-prune.sh` deletes the older entries of the same scope.
-- The `Cache cleanup` workflow deletes a pull request's entries when it closes.
+- Only `main` and open pull requests can restore an entry. The `Cache cleanup` workflow deletes
+  every other entry when a pull request closes and once a day. The daily sweep is needed because
+  a run can still be building when its pull request merges. Such a run saves nothing and skips
+  the build if it has not started yet, but a save a few seconds before the merge still leaks.
+  On 2026-10-17, ten leaked entries held 8.7 GB of the 10 GB, and GitHub evicted live entries.
 - The cache is saved after a failed test too, because the compiled tasks are still valid.
 - A restored store only grows. `COMPILATION_CACHE_LIMIT_SIZE` does not shrink it
   ([build system](/tools/build-system.md)). So a push to `main` deletes the store before the build
   when it is over `CAS_MAX_MB`. That run builds cold and saves a fresh entry.
-- One cold build makes a store of about 1.6 GB on disk, or 470 MB compressed (measured
-  2026-10-04). `CAS_MAX_MB` is 3072, so a store holds about one more full rebuild before it
-  starts over. A limit below one cold build would delete the store on every push to `main`.
-  Every build on `main` would then be cold.
+- One cold build makes a store of about 1.9 GB on disk (measured 2026-10-17). Each push to
+  `main` adds 0.4 to 0.8 GB, and a 2.8 GB store is 890 MB compressed. `CAS_MAX_MB` is 5120, so
+  about every fifth push to `main` builds cold. At 3072 it was every third. A limit below one cold
+  build would delete the store on every push to `main`. Every build on `main` would then be cold.
 
 ## Weekly
 
