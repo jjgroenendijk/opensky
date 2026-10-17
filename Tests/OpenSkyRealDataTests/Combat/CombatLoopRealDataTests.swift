@@ -31,9 +31,15 @@ struct CombatLoopRealDataTests {
     private static let budgetSteps = 600
 
     /// An OpenSky budget for one fixed loop step, in milliseconds. The loop runs
-    /// beside physics, animation, and Papyrus, and does little work, so a
-    /// generous tenth of a millisecond is tripped only by a real regression.
-    private static let stepBudgetMS = 0.1
+    /// beside physics, animation, and Papyrus, and does little work. Measured
+    /// 0.027 ms optimized, and 0.12 to 0.23 ms in Debug with another build running.
+    private static var stepBudgetMS: Double {
+        #if OPENSKY_OPTIMIZED
+            0.1
+        #else
+            0.5
+        #endif
+    }
 
     // MARK: - The graph
 
@@ -99,7 +105,7 @@ struct CombatLoopRealDataTests {
     ///
     /// The report goes to gitignored `.logs/` and is linked from the PR; item
     /// 15.9 reads the number beside the 15.2 physics gate.
-    @Test(.enabled(if: RealDataEnvironment.hasDataRoot))
+    @Test(.enabled(if: RealDataEnvironment.hasDataRoot), .tags(.perf))
     @MainActor
     func theLoopStepStaysInsideItsBudgetWithACrowd() throws {
         let root = try #require(RealDataEnvironment.dataRoot)
