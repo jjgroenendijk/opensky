@@ -167,6 +167,9 @@ struct CasterAcceptanceRealDataTests {
         values.damage(.health, by: 200, on: .player)
         let healthBefore = values.current(of: .player).health
         let magickaBefore = values.current(of: .player).magicka
+        // The caster's school skill lowers the authored cost, so the charge is below it.
+        let charged = caster.cost(of: spell, caster: .player)
+        #expect(charged < Float(spell.cost.cost))
         #expect(caster.begin(.right, on: .player).failure == nil)
         try caster.advance(delta: #require(spell.data?.chargeTime), on: .player)
         #expect(caster.phase(of: .right) == .ready)
@@ -175,7 +178,7 @@ struct CasterAcceptanceRealDataTests {
         #expect(outcome.isCast)
         let healthAfter = values.current(of: .player).health
         let magickaAfter = values.current(of: .player).magicka
-        #expect(magickaAfter == magickaBefore - Float(spell.cost.cost))
+        #expect(magickaAfter == magickaBefore - charged)
         #expect(healthAfter > healthBefore)
 
         try writeSummary(
