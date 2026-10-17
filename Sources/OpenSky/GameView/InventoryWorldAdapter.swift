@@ -49,6 +49,9 @@ final class InventoryWorldAdapter {
         )
         coordinator.craftingSkillUse = (provider as? WorldDataStores)
             .map { CraftingSkillUseSettings.resolve(store: $0.gameSettings) } ?? .vanilla
+        coordinator.menuTexts = (provider as? WorldDataStores).map {
+            InventoryMenuTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
+        } ?? .vanilla
         coordinator.temperingTexts = (provider as? WorldDataStores).map {
             TemperingTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
         } ?? .vanilla

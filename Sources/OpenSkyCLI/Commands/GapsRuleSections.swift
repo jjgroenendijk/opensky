@@ -85,6 +85,7 @@ extension GapsGatherer {
         _ = TopicSubtypeTexts.resolve(store: store)
         _ = MagicTexts.resolve(store: store)
         _ = CrimeTexts.resolve(store: store)
+        _ = InventoryMenuTexts.resolve(store: store)
         _ = DifficultySettings.resolve(store: store)
         _ = ActorValueLevelSettings.resolve(store: store)
         _ = BarterPricing.resolve(store: store)

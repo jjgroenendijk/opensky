@@ -165,12 +165,17 @@ extension ContainerMenuModel {
         containerName: String,
         mode: Mode,
         pricing: BarterPricing,
-        runtime: any InventoryAccess
+        runtime: any InventoryAccess,
+        categories: [InventoryMenuCategory] = InventoryMenuCategory.engineOrder
     ) -> ContainerMenuModel {
         ContainerMenuModel(
             mode: mode,
-            container: InventoryMenuModel.build(holder: container, runtime: runtime),
-            player: InventoryMenuModel.build(holder: .player, runtime: runtime),
+            container: InventoryMenuModel.build(
+                holder: container, runtime: runtime, categories: categories
+            ),
+            player: InventoryMenuModel.build(
+                holder: .player, runtime: runtime, categories: categories
+            ),
             pricing: pricing,
             containerName: containerName
         )

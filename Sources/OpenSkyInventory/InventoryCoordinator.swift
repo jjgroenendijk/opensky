@@ -43,6 +43,7 @@ public final class InventoryCoordinator {
     weak var skillUses: (any SkillUseReporting)?
     /// The experience formulas a crafting session reports with.
     public var craftingSkillUse = CraftingSkillUseSettings.vanilla
+    public var menuTexts = InventoryMenuTexts.vanilla
     /// The quality names of an improved item.
     public var temperingTexts = TemperingTexts.vanilla
 

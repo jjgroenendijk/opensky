@@ -30,6 +30,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
     /// How many of `count` are stolen. Honest and stolen copies share one row,
     /// because two identical rows could not be told apart.
     public let stolenCount: Int32
+    /// An `ALCH` with the food flag, which the Food tab takes instead of Potions.
+    public let isFood: Bool
 
     public init(
         item: FormID,
@@ -39,7 +41,8 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         value: Int32,
         isEquipped: Bool,
         family: ItemDefinition.Family?,
-        stolenCount: Int32 = 0
+        stolenCount: Int32 = 0,
+        isFood: Bool = false
     ) {
         self.item = item
         self.name = name
@@ -49,6 +52,7 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
         self.isEquipped = isEquipped
         self.family = family
         self.stolenCount = stolenCount
+        self.isFood = isFood
     }
 
     /// Whether any copy in this row is stolen, which is what the "Stolen"
@@ -73,30 +77,46 @@ nonisolated public struct InventoryMenuEntry: Equatable, Sendable {
 nonisolated public struct InventoryMenuCategory: Equatable, Sendable {
     public let label: String
     public let families: Set<ItemDefinition.Family>
+    /// Splits `ALCH` rows: true takes only food, false only potions, nil both.
+    public let food: Bool?
+
+    public init(label: String, families: Set<ItemDefinition.Family>, food: Bool? = nil) {
+        self.label = label
+        self.families = families
+        self.food = food
+    }
 
     /// Whether `entry` belongs in this category. An empty family set is the
     /// "All" tab and takes everything.
     public func accepts(_ entry: InventoryMenuEntry) -> Bool {
         guard !families.isEmpty else { return true }
+        guard food == nil || food == entry.isFood else { return false }
         return families.contains(entry.family ?? .miscellaneous)
     }
 
-    /// The tabs the menu presents, in order. One tab per decoded family group,
-    /// plus the leading "All" tab; a family OpenSky does not decode yet cannot
-    /// appear, which is why the list is derived from `Family` rather than
-    /// mirroring the vanilla tab strip position for position.
-    public static let engineOrder: [InventoryMenuCategory] = [
-        InventoryMenuCategory(label: "All", families: []),
-        InventoryMenuCategory(label: "Weapons", families: [.weapon, .ammunition]),
-        InventoryMenuCategory(label: "Armor", families: [.armor]),
-        InventoryMenuCategory(label: "Potions", families: [.ingestible]),
-        InventoryMenuCategory(label: "Ingredients", families: [.ingredient]),
-        InventoryMenuCategory(label: "Books", families: [.book]),
-        InventoryMenuCategory(
-            label: "Misc",
-            families: [.miscellaneous, .key, .soulGem, .apparatus]
-        )
-    ]
+    /// The tabs in the game's order, named by `texts`. A family OpenSky does not
+    /// decode yet, such as scrolls, has no tab.
+    public static func tabs(texts: InventoryMenuTexts) -> [InventoryMenuCategory] {
+        func tab(
+            _ tab: InventoryMenuTexts.Tab, _ families: Set<ItemDefinition.Family>,
+            food: Bool? = nil
+        ) -> InventoryMenuCategory {
+            InventoryMenuCategory(label: texts.label(tab), families: families, food: food)
+        }
+        return [
+            tab(.all, []),
+            tab(.weapons, [.weapon, .ammunition]),
+            tab(.apparel, [.armor]),
+            tab(.potions, [.ingestible], food: false),
+            tab(.food, [.ingestible], food: true),
+            tab(.ingredients, [.ingredient]),
+            tab(.books, [.book]),
+            tab(.keys, [.key]),
+            tab(.misc, [.miscellaneous, .soulGem, .apparatus])
+        ]
+    }
+
+    public static let engineOrder = tabs(texts: .vanilla)
 }
 
 /// The whole list one owner presents: its categories, the rows inside the
