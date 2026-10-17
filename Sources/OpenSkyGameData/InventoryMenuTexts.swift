@@ -1,8 +1,6 @@
 // The inventory menu's tab names, from the `sAllItems`, `sWeapons`, and other tab string
 // settings. See docs/engine/inventory-menu.md.
 
-import OpenSkyFormatsESM
-
 nonisolated public struct InventoryMenuTexts: Equatable, Sendable {
     /// The tabs in the order the game's menu lists them.
     public enum Tab: CaseIterable, Sendable {
@@ -30,11 +28,11 @@ nonisolated public struct InventoryMenuTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var texts = vanilla
         for (tab, name) in settings {
-            if let label = store.text(name).flatMap({ text($0.text) }) {
+            if let label = store.text(name).flatMap({ text($0) }) {
                 texts.labels[tab] = label
             }
         }

@@ -3,7 +3,6 @@
 // docs/engine/melee-damage.md, "Skill, sneak attacks and armour".
 
 import Foundation
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
@@ -59,7 +58,7 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
 
     /// `text` resolves a string setting through the plugin's string table.
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         store.read("fDamagePCSkillMax", into: &settings, \.playerSkillMax)
@@ -80,10 +79,10 @@ nonisolated public struct WeaponDamageSettings: Equatable, Sendable {
         store.read("fMaxArmorRating", into: &settings, \.maxArmorRating)
         store.read("fClothingArmorScale", into: &settings, \.clothingArmorScale)
         store.read("fSneakAttackSkillUsageMelee", into: &settings, \.sneakSkillUseMelee)
-        if let main = store.text("sSuccessfulSneakAttackMain").flatMap({ text($0.text) }) {
+        if let main = store.text("sSuccessfulSneakAttackMain").flatMap({ text($0) }) {
             settings.sneakNoticeMain = main
         }
-        if let end = store.text("sSuccessfulSneakAttackEnd").flatMap({ text($0.text) }) {
+        if let end = store.text("sSuccessfulSneakAttackEnd").flatMap({ text($0) }) {
             settings.sneakNoticeEnd = end
         }
         return settings

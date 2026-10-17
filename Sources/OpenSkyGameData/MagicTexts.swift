@@ -104,11 +104,11 @@ nonisolated public struct MagicTexts: Equatable, Sendable {
         + levels.map { "s\($0.0)DisplayName" }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         for editorID in Self.settings {
-            if let word = store.text(editorID).flatMap({ text($0.text) }) {
+            if let word = store.text(editorID).flatMap({ text($0) }) {
                 settings.words[editorID] = word
             }
         }

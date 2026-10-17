@@ -15,7 +15,7 @@ struct MagicTextsTests {
             "sMagicSchoolDestruction": .text("Ruin")
         ])
         let texts = MagicTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.name(of: SpellType.voice) == "Shout")
@@ -32,7 +32,7 @@ struct MagicTextsTests {
     @Test func timeLeftCountsInTheLargestUnitRoundedUp() throws {
         let store = try GameSettingFixture.store(["sEffectsListDisplayMins": .text("minutes")])
         let texts = MagicTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.timeLeft(0.4) == "1 sec")

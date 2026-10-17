@@ -22,7 +22,7 @@ struct TopicSubtypeTextsTests {
             "sTopicSubtypeTextMiscellaneousHello": .text("Greeting")
         ])
         let texts = TopicSubtypeTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         #expect(texts.name(of: "HELO") == "Greeting")

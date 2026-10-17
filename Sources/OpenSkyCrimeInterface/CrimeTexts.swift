@@ -3,7 +3,6 @@
 // names pickpocketing, escaping jail, and werewolf transformation, which OpenSky
 // does not count yet. See docs/engine/crime.md.
 
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct CrimeTexts: Equatable, Sendable {
@@ -34,11 +33,11 @@ nonisolated public struct CrimeTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         for kind in CrimeKind.allCases {
-            if let name = store.text(setting(for: kind)).flatMap({ text($0.text) }) {
+            if let name = store.text(setting(for: kind)).flatMap({ text($0) }) {
                 settings.names[kind] = name
             }
         }

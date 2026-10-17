@@ -2,7 +2,6 @@
 // from the string settings. See docs/engine/game-clock.md.
 
 import Foundation
-import OpenSkyFormatsESM
 
 nonisolated public struct CalendarTexts: Equatable, Sendable {
     /// `sMonthJanuary` to `sMonthDecember`; the game names the Tamriel months there.
@@ -52,11 +51,11 @@ nonisolated public struct CalendarTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         func word(_ editorID: String) -> String {
-            store.text(editorID).flatMap { text($0.text) } ?? editorID
+            store.text(editorID).flatMap { text($0) } ?? editorID
         }
         settings.months = monthSettings.map(word)
         settings.weekdays = weekdaySettings.map(word)

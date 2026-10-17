@@ -19,7 +19,7 @@ struct LockTextsTests {
             "iLockLevelMaxVeryEasy": .integer(10)
         ])
         let texts = LockTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         let settings = LockpickingSettings.resolve(store: store)

@@ -2,7 +2,6 @@
 // refusal notices. UESP "Skyrim:Trainers". See docs/engine/training.md.
 
 import Foundation
-import OpenSkyFormatsESM
 
 nonisolated public struct TrainingSettings: Equatable, Sendable {
     /// `fTrainingMultCost`: gold per skill level for one session.
@@ -59,7 +58,7 @@ nonisolated public struct TrainingSettings: Equatable, Sendable {
 
     /// `text` resolves a string setting through the plugin's string table.
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         store.read("fTrainingMultCost", into: &settings, \.costMult)
@@ -71,7 +70,7 @@ nonisolated public struct TrainingSettings: Equatable, Sendable {
             ("sInsufficientGoldToTrain", \.insufficientGoldText)
         ]
         for (editorID, keyPath) in texts {
-            if let value = store.text(editorID).flatMap({ text($0.text) }) {
+            if let value = store.text(editorID).flatMap({ text($0) }) {
                 settings[keyPath: keyPath] = value
             }
         }

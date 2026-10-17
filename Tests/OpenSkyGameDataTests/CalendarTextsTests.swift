@@ -18,7 +18,7 @@ struct CalendarTextsTests {
             "sOf": .text(" of ")
         ]
         return try CalendarTexts.resolve(store: GameSettingFixture.store(words)) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
     }

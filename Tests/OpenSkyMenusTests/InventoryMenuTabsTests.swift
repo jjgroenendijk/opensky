@@ -23,7 +23,7 @@ struct InventoryMenuTabsTests {
             "sKeys": .text("KEYS")
         ])
         let texts = InventoryMenuTexts.resolve(store: store) { text in
-            guard case let .inline(value) = text else { return nil }
+            guard case let .inline(value) = text.text else { return nil }
             return value
         }
         let labels = InventoryMenuCategory.tabs(texts: texts).map(\.label)

@@ -3,7 +3,6 @@
 // wrongly typed record keeps the vanilla value. See docs/formats/gmst.md.
 
 import Foundation
-import OpenSkyFormatsCore
 import OpenSkyFormatsESM
 
 nonisolated extension GameSettingStore {
@@ -63,9 +62,9 @@ nonisolated extension GameSettingStore {
     /// A string setting, resolved through `text`; nil from `text` keeps the field.
     public func read<Settings>(
         _ editorID: String, into settings: inout Settings,
-        _ keyPath: WritableKeyPath<Settings, String>, text: (LString) -> String?
+        _ keyPath: WritableKeyPath<Settings, String>, text: GameTextResolver
     ) {
-        if let value = self.text(editorID).flatMap({ text($0.text) }) {
+        if let value = self.text(editorID).flatMap({ text($0) }) {
             settings[keyPath: keyPath] = value
         }
     }
@@ -90,3 +89,6 @@ nonisolated public struct ResolvedGameText: Equatable, Sendable {
         self.sourcePlugin = sourcePlugin
     }
 }
+
+/// Resolves a string setting through the string table of its own plugin.
+public typealias GameTextResolver = (ResolvedGameText) -> String?

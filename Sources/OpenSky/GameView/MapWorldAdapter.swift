@@ -59,10 +59,19 @@ final class MapWorldAdapter {
 
     /// `DESC` text lives in the `.dlstrings` table, names in `.strings`.
     func text(_ value: LString?, kind: StringTable.Kind = .strings) -> String? {
+        loadedStrings?.resolve(value, kind: kind)
+    }
+
+    /// A plugin that overrides a string setting brings its own string table.
+    func text(_ setting: ResolvedGameText) -> String? {
+        loadedStrings?.scoped(to: setting.sourcePlugin).resolve(setting.text)
+    }
+
+    private var loadedStrings: LocalizedStrings? {
         if strings == nil {
             strings = game.localizedStringsLoader?()
         }
-        return strings?.resolve(value, kind: kind)
+        return strings
     }
 
     /// The map of the worldspace the player stands in, or of its map parent.

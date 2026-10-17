@@ -1,8 +1,6 @@
 // The refusals of a barter the player or the merchant cannot pay for, from the
 // `sItemTooExpensive` and `sNotEnoughVendorGold` string settings. See docs/engine/barter.md.
 
-import OpenSkyFormatsESM
-
 nonisolated public struct TradeTexts: Equatable, Sendable {
     public var tooExpensive = "You do not have enough gold."
     /// `%d` is the price, then the merchant's gold.
@@ -17,7 +15,7 @@ nonisolated public struct TradeTexts: Equatable, Sendable {
     }
 
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var texts = vanilla
         store.read("sItemTooExpensive", into: &texts, \.tooExpensive, text: text)

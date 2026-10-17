@@ -2,7 +2,6 @@
 // See docs/engine/projectiles.md, "After the impact".
 
 import Foundation
-import OpenSkyFormatsESM
 import OpenSkyGameData
 
 nonisolated public struct ArrowSettings: Equatable, Sendable {
@@ -22,16 +21,16 @@ nonisolated public struct ArrowSettings: Equatable, Sendable {
 
     /// `text` resolves a string setting through the plugin's string table.
     public static func resolve(
-        store: GameSettingStore, text: (LString) -> String? = { _ in nil }
+        store: GameSettingStore, text: GameTextResolver = { _ in nil }
     ) -> Self {
         var settings = vanilla
         store.read("fCombatMissileStickDepth", into: &settings, \.stickDepth)
         store.read("fAttachedArrowAgeMax", into: &settings, \.attachedAgeMax)
         store.read("iArrowInventoryChance", into: &settings, \.inventoryChance)
-        if let value = store.text("sNoArrows").flatMap({ text($0.text) }) {
+        if let value = store.text("sNoArrows").flatMap({ text($0) }) {
             settings.noArrowsText = value
         }
-        if let value = store.text("sNoBolts").flatMap({ text($0.text) }) {
+        if let value = store.text("sNoBolts").flatMap({ text($0) }) {
             settings.noBoltsText = value
         }
         return settings
