@@ -31,6 +31,10 @@ nonisolated extension PerkEntryPoint {
     public static let filterActivation = PerkEntryPoint(rawValue: 74)
     public static let modArmorWeight = PerkEntryPoint(rawValue: 32)
     public static let modIngredientsHarvested = PerkEntryPoint(rawValue: 87)
+    public static let modSpellCastingSoundEvent = PerkEntryPoint(rawValue: 55)
+    public static let applySneakingSpell = PerkEntryPoint(rawValue: 69)
+    public static let setBooleanGraphVariable = PerkEntryPoint(rawValue: 54)
+    public static let setActivateLabel = PerkEntryPoint(rawValue: 81)
     public static let modDetectionLight = PerkEntryPoint(rawValue: 47)
     public static let modDetectionMovement = PerkEntryPoint(rawValue: 48)
     public static let modDetectionSneakSkill = PerkEntryPoint(rawValue: 57)
@@ -57,7 +61,8 @@ nonisolated extension PerkEntryPoint {
         modSpellMagnitude, modSpellDuration, modIncomingSpellMagnitude,
         modBuyPrices, modSellPrices, modTemperingHealth,
         modDetectionLight, modDetectionMovement, modDetectionSneakSkill, filterActivation,
-        modArmorWeight, modIngredientsHarvested,
+        modArmorWeight, modIngredientsHarvested, modSpellCastingSoundEvent,
+        applySneakingSpell, setBooleanGraphVariable, setActivateLabel,
         modRecoverArrowChance, modSkillUse, modAttackDamage, modSpellCost, modPercentBlocked,
         modPlayerIntimidation,
         modBribeAmount, modLockpickSweetSpot,

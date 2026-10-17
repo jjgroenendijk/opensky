@@ -51,6 +51,17 @@ nonisolated public struct PerkEntryPointChoice: Sendable {
         scriptFlags = nil
     }
 
+    /// A select-text choice, as a fake world answers one.
+    public init(perk: ReferenceKey, sourcePlugin: String, text: String) {
+        self.perk = perk
+        self.sourcePlugin = sourcePlugin
+        function = .selectText
+        spell = nil
+        self.text = .text(text)
+        buttonLabel = nil
+        scriptFlags = nil
+    }
+
     /// Whether a choice reader carries out `function`. `Add Leveled List` is not one:
     /// no vanilla entry point uses it.
     public static func carries(_ function: PerkFunction) -> Bool {

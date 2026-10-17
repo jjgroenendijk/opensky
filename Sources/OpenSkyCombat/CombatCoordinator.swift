@@ -43,6 +43,10 @@ public final class CombatCoordinator {
     public internal(set) var playerStruckTarget: ReferenceKey?
     /// The critical-hit and arrow-deflect rolls.
     var strikeRandom = ConditionRandom()
+    /// The player's crouch last frame, so a sneak entry casts its perk spell once.
+    var wasPlayerSneaking = false
+    /// The graph flags the player's perks set true last frame.
+    var perkGraphFlags: Set<String> = []
 
     public init() {}
 

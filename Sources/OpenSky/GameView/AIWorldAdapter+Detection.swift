@@ -79,11 +79,34 @@ extension AIWorldAdapter {
         }
         if let caster = game.magic.caster {
             for hand in SpellHand.allCases where caster.phase(of: hand).isCasting {
-                let level = castingSoundLevel(caster.state(of: hand).spell, caster: caster)
-                loudest = max(loudest, settings.actionSound(for: level))
+                let spell = caster.state(of: hand).spell
+                let level = castingSoundLevel(spell, caster: caster)
+                loudest = max(
+                    loudest,
+                    settings.actionSound(for: level) * castingSoundFactor(spell, caster: caster)
+                )
             }
         }
         return loudest
+    }
+
+    /// Quiet Casting sets Mod Spell Casting Sound Event to 0, which silences the cast.
+    private func castingSoundFactor(_ spell: ReferenceKey?, caster: CasterRuntime) -> Float {
+        let spells = caster.spellbook.spells
+        let resolved = spell.flatMap { spells.spell(key: $0) }
+        var seams = ConditionContext()
+        seams.spellEvaluation = SpellEvaluationResolution(spell: resolved)
+        let factor = game.perks.modified(
+            1,
+            at: .modSpellCastingSoundEvent,
+            on: .player,
+            subjects: { _ in
+                PerkEvaluationSubjects(owner: .player)
+                    .binding(.spell, to: resolved.map(spells.conditionSubject(of:)))
+            },
+            seams: seams
+        )
+        return factor.isFinite ? max(0, factor) : 1
     }
 
     private func castingSoundLevel(

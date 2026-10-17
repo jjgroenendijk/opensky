@@ -40,6 +40,9 @@ public protocol InventoryWorld: AnyObject {
     func refreshInteractionTarget()
     /// The player's current Speech skill. Nil without actor values.
     func playerSpeechSkill() -> Float?
+    /// The text a passing Set Activate Label perk of the player puts on `reference`'s
+    /// prompt, such as a werewolf's "Feed". Nil keeps the authored label.
+    func perkActivateLabel(for reference: FormID) -> String?
     /// What `key`'s perks make of `value`, with `subjects` bound and `seams` laid over
     /// the live conditions.
     func perkModified(
@@ -54,6 +57,10 @@ public protocol InventoryWorld: AnyObject {
 extension InventoryWorld {
     /// A session with no actor values trades at the starting Speech skill.
     public func playerSpeechSkill() -> Float? {
+        nil
+    }
+
+    public func perkActivateLabel(for _: FormID) -> String? {
         nil
     }
 

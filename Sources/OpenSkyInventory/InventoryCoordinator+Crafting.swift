@@ -22,9 +22,15 @@ extension InventoryCoordinator {
 
     // MARK: - Harvest
 
-    /// `interaction` with its runtime label: a harvested plant, or a locked target.
+    /// `interaction` with its runtime label: a harvested plant, a locked target, or a
+    /// perk's activate label, which wins.
     public func labelled(_ interaction: PlacedInteraction) -> PlacedInteraction {
-        locks.labelled(runtime?.labelled(interaction, onDay: world?.gameDaysPassed) ?? interaction)
+        let labelled = locks
+            .labelled(runtime?.labelled(interaction, onDay: world?.gameDaysPassed) ?? interaction)
+        guard let label = world?.perkActivateLabel(for: interaction.reference) else {
+            return labelled
+        }
+        return labelled.relabelled(label)
     }
 
     @discardableResult

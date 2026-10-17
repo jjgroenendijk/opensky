@@ -138,6 +138,34 @@ struct CombatPerkTermsTests {
         #expect(world.spellHits.first?.payload.caster == .player)
     }
 
+    /// Only the frame that enters sneak casts; staying crouched does not cast again.
+    @Test func enteringSneakCastsTheSneakingSpellOnce() throws {
+        let world = Self.detected()
+        world.perkSpells[.applySneakingSpell] = try Self.spell()
+        let coordinator = Self.coordinator(world)
+
+        coordinator.notePlayerSneaking(false)
+        coordinator.notePlayerSneaking(true)
+        coordinator.notePlayerSneaking(true)
+        #expect(world.spellHits.map(\.targets.first?.key) == [.player])
+        coordinator.notePlayerSneaking(false)
+        coordinator.notePlayerSneaking(true)
+        #expect(world.spellHits.count == 2)
+    }
+
+    @Test func graphFlagsFollowThePassingPerksFrameByFrame() {
+        let world = Self.detected()
+        let coordinator = Self.coordinator(world)
+        world.perkTexts[.setBooleanGraphVariable] = ["bPerkQuickShot", "bPerkQuickdraw"]
+        #expect(coordinator.perkGraphFlagChanges() == [
+            "bPerkQuickShot": true,
+            "bPerkQuickdraw": true
+        ])
+        #expect(coordinator.perkGraphFlagChanges().isEmpty)
+        world.perkTexts[.setBooleanGraphVariable] = ["bPerkQuickdraw"]
+        #expect(coordinator.perkGraphFlagChanges() == ["bPerkQuickShot": false])
+    }
+
     private static func spell() throws -> ResolvedSpell {
         let file = try SpellStoreFixture.plugin(records: SpellStoreFixture.effectRecords + [
             ESMFixture.record("SPEL", formID: 0x42, data: SpellStoreFixture.spellFields(

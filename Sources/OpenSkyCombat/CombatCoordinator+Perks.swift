@@ -130,6 +130,41 @@ extension CombatCoordinator {
         )
     }
 
+    /// `Apply Sneaking Spell`: entering sneak casts the chosen spell on the player,
+    /// as Shadow Warrior's invisibility in combat.
+    @discardableResult
+    public func notePlayerSneaking(_ isSneaking: Bool) -> SpellHitReport? {
+        defer { wasPlayerSneaking = isSneaking }
+        guard isSneaking, !wasPlayerSneaking else { return nil }
+        return applyChosenSpell(
+            at: .applySneakingSpell,
+            owner: .player,
+            subjects: PerkEvaluationSubjects(owner: .player),
+            caster: .player,
+            on: .player
+        )
+    }
+
+    /// `Set Boolean Graph Variable`: the player's graph flags that changed since the
+    /// last frame. A perk that stops passing, as Ranger when sneaking, clears its flag.
+    public func perkGraphFlagChanges() -> [String: Bool] {
+        let now = Set(world?.perkChoices(
+            at: .setBooleanGraphVariable,
+            on: .player,
+            subjects: PerkEvaluationSubjects(owner: .player),
+            seams: ConditionContext()
+        ).compactMap(\.inlineText) ?? [])
+        defer { perkGraphFlags = now }
+        var changes: [String: Bool] = [:]
+        for name in now.subtracting(perkGraphFlags) {
+            changes[name] = true
+        }
+        for name in perkGraphFlags.subtracting(now) {
+            changes[name] = false
+        }
+        return changes
+    }
+
     /// `Set Sweep Attack`: a swing that sweeps strikes every actor in its arc.
     public func perkSweeps(_ blow: CombatBlow) -> Bool {
         perkValue(

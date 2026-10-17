@@ -145,6 +145,14 @@ struct InventoryCoordinatorTests {
         #expect(harness.coordinator.harvestCount(of: plant) == 2)
     }
 
+    @Test func aPerkActivateLabelReplacesTheAuthoredOne() throws {
+        let harness = try Self.harness()
+        let plant = HarvestTests.flora(HarvestTests.plant, produce: Fixture.lockpick)
+        #expect(harness.coordinator.labelled(plant).actionLabel == "Harvest")
+        harness.world.activateLabel = "Feed"
+        #expect(harness.coordinator.labelled(plant).actionLabel == "Feed")
+    }
+
     @Test func aGrantGoesToTheChosenHolderAndKeepsItsOwnLine() throws {
         let harness = try Self.harness()
         let coordinator = harness.coordinator
@@ -274,12 +282,17 @@ struct InventoryCoordinatorTests {
 
 extension InventoryCoordinatorTests {
     private final class FakeWorld: InventoryWorld {
+        var activateLabel: String?
         var crosshairInteraction: PlacedInteraction?
         var placement: DropPlacement?
         var bounty: Int32 = 0
         var refreshed: [InventoryHolder] = []
         var refreshCount = 0
         var gameDaysPassed: Float?
+
+        func perkActivateLabel(for _: FormID) -> String? {
+            activateLabel
+        }
 
         func dropPlacement() -> DropPlacement? {
             placement

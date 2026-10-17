@@ -27,6 +27,7 @@ final class FakeCoordinatorWorld: CombatWorld {
     var perkAddends: [PerkEntryPoint: Float] = [:]
     /// The spell each picking entry point chooses.
     var perkSpells: [PerkEntryPoint: ResolvedSpell] = [:]
+    var perkTexts: [PerkEntryPoint: [String]] = [:]
     /// The owner and subjects of the last question at each entry point.
     private(set) var perkQuestions: [PerkEntryPoint: PerkEvaluationSubjects] = [:]
     private(set) var spellHits: [SpellHit] = []
@@ -112,6 +113,9 @@ final class FakeCoordinatorWorld: CombatWorld {
         seams _: ConditionContext
     ) -> [PerkEntryPointChoice] {
         perkQuestions[entryPoint] = subjects
+        if let texts = perkTexts[entryPoint] {
+            return texts.map { PerkEntryPointChoice(perk: key, sourcePlugin: "Base.esm", text: $0) }
+        }
         guard let spell = perkSpells[entryPoint] else { return [] }
         return [PerkEntryPointChoice(perk: key, sourcePlugin: "Base.esm", spell: spell)]
     }

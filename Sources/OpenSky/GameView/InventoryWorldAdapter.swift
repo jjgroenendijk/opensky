@@ -158,6 +158,20 @@ extension InventoryWorldAdapter: InventoryWorld {
         )
     }
 
+    func perkActivateLabel(for reference: FormID) -> String? {
+        guard let key = game.streamer?.referenceEntry(formID: reference)?.key else { return nil }
+        let choice = game.perks.choices(
+            at: .setActivateLabel,
+            on: .player,
+            subjects: { _ in PerkEvaluationSubjects(owner: .player, target: key) },
+            seams: ConditionContext()
+        ).first
+        if case let .localizedText(text)? = choice?.text {
+            return game.mapWorld.text(text)
+        }
+        return choice?.inlineText
+    }
+
     /// The streamer's target with the runtime label, such as a harvested plant's.
     func labelled(_ target: InteractionTarget?) -> InteractionTarget? {
         target.map {

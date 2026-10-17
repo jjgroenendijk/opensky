@@ -3,6 +3,7 @@
 // in the coordinator (docs/engine/coordinators.md).
 
 import OpenSkyActorsInterface
+import OpenSkyBehavior
 import OpenSkyCombat
 import OpenSkyCombatInterface
 import OpenSkyFormatsESM
@@ -43,9 +44,15 @@ final class CombatWorldAdapter {
             impacts: Self.impacts(provider)
         )
         // `onFrame`, not the audio tick: a swing must resolve with audio off.
-        renderer.onFrame.add { [weak combat, weak renderer] _ in
+        renderer.onFrame.add { [weak combat, weak renderer, weak game = self.game] _ in
             guard let combat, let renderer else { return }
             let locomotion = renderer.locomotion
+            if renderer.movementMode.isPlayerControlled, let game {
+                combat.notePlayerSneaking(game.player.isSneaking)
+            }
+            for (name, value) in combat.perkGraphFlagChanges() {
+                locomotion.write(.bool(value), to: name)
+            }
             combat.advanceMelee(
                 events: locomotion.graphEvents.drain(locomotion.meleeEventConsumer),
                 intent: locomotion.meleeIntent,

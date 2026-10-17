@@ -103,6 +103,16 @@ material, and Fortify Smithing multiplies it by `1 + Smithing Modifier / 100`. T
 `1 + perk` term of the UESP effective skill (see [crafting](/engine/crafting.md)). UESP gives the
 perk term only; that Fortify Smithing enters the same term is read from `PerkSkillBoosts`.
 
+## Animation
+
+| Entry point | Id | Where |
+| --- | --- | --- |
+| Set Boolean Graph Variable | 54 | each passing perk's text names a player graph variable set true |
+
+The perks are read every frame. A variable whose perk stops passing goes back to false: Ranger's
+`bPerkQuickShot` holds only while the player does not sneak. Vanilla uses `bPerkShieldCharge`,
+`bPerkQuickdraw` and `bPerkQuickShot`.
+
 ## Armour weight
 
 | Entry point | Id | Where |
@@ -120,16 +130,23 @@ movement noise of detection. A carried piece that is not worn keeps its record w
 | Mod Detection Sneak Skill | 57 | the sneaker skill in the detection value |
 | Mod Detection Light | 47 | the target's light level, before the clamp to 1 |
 | Mod Detection Movement | 48 | the movement part of the sound term |
+| Mod Spell Casting Sound Event | 55 | a factor on a cast's action sound, spell bound |
+| Apply Sneaking Spell | 69 | the chosen spell, cast on the player on the frame sneak starts |
 
 These are the player's perks, evaluated once a frame with no observer bound. No vanilla perk at
 these entry points tests the observer, so the result is the same as per pair. NPCs sneaking
 against the player do not take their perks yet.
+
+Quiet Casting sets Mod Spell Casting Sound Event to 0. The value is read as a factor on the
+cast's action sound, so 0 silences it, which is what the perk text says. Whether the game also
+changes the cast's sound is not known; OpenSky plays it unchanged.
 
 ## Activation
 
 | Entry point | Id | Where |
 | --- | --- | --- |
 | Filter Activation | 74 | the use-key gate, before the lock check, activated reference bound as the target |
+| Set Activate Label | 81 | the prompt label of the crosshair target, target bound |
 
-A non-zero value blocks the press. No event follows, as for a locked door, but no lock notice
-shows. Vanilla uses it to stop a werewolf opening doors and containers.
+A non-zero Filter Activation value blocks the press. No event follows, as for a locked door,
+but no lock notice shows. Vanilla uses it to stop a werewolf opening doors and containers.
