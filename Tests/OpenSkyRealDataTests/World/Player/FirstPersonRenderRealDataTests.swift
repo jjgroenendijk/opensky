@@ -155,15 +155,16 @@ struct FirstPersonRenderRealDataTests {
         report: inout [String]
     ) throws {
         let renderer = gameSession.renderer
+        // The renderer reads the mode the session handed it at the last frame.
         place(assembled, gameSession: gameSession, feet: feet)
+        let firstPerson = try frame(renderer)
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
-        let firstPerson = try frame(renderer)
 
         gameSession.setMovementMode(.thirdPerson)
+        let thirdPerson = try frame(renderer)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
-        let thirdPerson = try frame(renderer)
         report.append(
             "third person vs first person: "
                 + "\(changedPixels(firstPerson, thirdPerson)) changed pixels"
@@ -171,15 +172,16 @@ struct FirstPersonRenderRealDataTests {
         #expect(thirdPerson != firstPerson, "the camera mode changed nothing")
 
         gameSession.setMovementMode(.walk)
+        let returned = try frame(renderer)
         #expect(renderer.areFirstPersonArmsVisible)
         #expect(!renderer.isPlayerBodyVisible)
-        let returned = try frame(renderer)
         #expect(returned == firstPerson, "the mode round trip changed the frame")
         report.append("mode round trip: byte-identical")
 
         // Fly shows the body too, so a developer can look at the character; it
         // never shows the arms.
         gameSession.setMovementMode(.fly)
+        _ = try frame(renderer)
         #expect(!renderer.areFirstPersonArmsVisible)
         #expect(renderer.isPlayerBodyVisible)
         gameSession.setMovementMode(.walk)

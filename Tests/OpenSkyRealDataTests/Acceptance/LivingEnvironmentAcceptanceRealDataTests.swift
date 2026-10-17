@@ -72,6 +72,7 @@ struct LivingEnvironmentAcceptanceRealDataTests {
         gameSession.weather = weather
         gameSession.timeOfDay = 13
         gameSession.updateWeather(deltaTime: 0)
+        renderer.adoptFrameInput(gameSession.frameInput)
         renderer.seekParticles(to: 1.25)
         for _ in 0 ..< 45 {
             renderer.updatePrecipitation(deltaTime: 1 / 30)

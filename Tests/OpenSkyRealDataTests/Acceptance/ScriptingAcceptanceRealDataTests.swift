@@ -125,14 +125,13 @@ extension ScriptingAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let gameSession = try GameSession(
-            view: view,
+        // No session drives this renderer, so no weather runs.
+        let renderer = try Renderer(
+            rendering: view,
             scene: scene.renderScene,
             camera: scene.bounds.map(SceneCamera.framing)
         )
-        let renderer = gameSession.renderer
         renderer.actorAnimationsEnabled = false
-        gameSession.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false
