@@ -24,8 +24,8 @@ nonisolated public struct ESSFile: Equatable, Sendable {
     /// Length of the decompressed body, which the section ranges were checked against.
     public let bodyLength: Int
     /// What the location table's offsets count from, derived from where the first
-    /// global table really starts. `expectedOffsetBase` is the file offset of the body;
-    /// the docs page records whether real saves agree.
+    /// global table really starts. `expectedOffsetBase` is where the body starts in an
+    /// uncompressed file; the docs page records whether real saves agree.
     public let offsetBase: Int
     public let expectedOffsetBase: Int
 
@@ -79,7 +79,7 @@ nonisolated public struct ESSFile: Equatable, Sendable {
     }
 
     /// The bytes after the screenshot, decompressed. `base` is the file offset the
-    /// location table counts from for those bytes.
+    /// body would have uncompressed, which the location table counts from.
     private static func body(
         of data: Data, summary: ESSSummary
     ) throws(ESSError) -> (data: Data, base: Int) {
@@ -99,7 +99,7 @@ nonisolated public struct ESSFile: Equatable, Sendable {
             case .lz4: try LZ4.decompressRawBlock(packed, decompressedSize: uncompressed)
             case .zlib, .none: try Zlib.decompress(packed, decompressedSize: uncompressed)
             }
-            return (unpacked, summary.bodyOffset + 8)
+            return (unpacked, summary.bodyOffset)
         } catch {
             throw .decompressionFailed(
                 context: "\(summary.header.compression.name) body: \(error)"

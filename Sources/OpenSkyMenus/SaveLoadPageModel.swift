@@ -78,6 +78,8 @@ nonisolated public enum SaveLoadAction: Equatable, Sendable {
     case save(slot: String?)
     case load(slot: String)
     case delete(slot: String)
+    /// Writes the session as a Skyrim `.ess` under a new name.
+    case exportSkyrim
     case back
 }
 
@@ -100,9 +102,15 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
         rows.sorted { ($0.savedAt, $1.slot) > ($1.savedAt, $0.slot) }
     }
 
-    /// The Save page starts with a New Save row before the files.
+    /// The Save page starts with a New Save row and ends with the export row.
     public var titles: [String] {
-        (mode == .save ? [texts.newSave] : []) + rows.map(\.listText)
+        mode == .save
+            ? [texts.newSave] + rows.map(\.listText) + [texts.exportSkyrim]
+            : rows.map(\.listText)
+    }
+
+    private var isExportSelected: Bool {
+        mode == .save && selectedIndex == rows.count + 1
     }
 
     public var selectedRow: SaveSlotRow? {
@@ -156,7 +164,7 @@ nonisolated public struct SaveLoadPageModel: Equatable, Sendable {
     private mutating func activate() -> SaveLoadAction? {
         switch (mode, selectedRow) {
         case (.save, nil):
-            return .save(slot: nil)
+            return isExportSelected ? .exportSkyrim : .save(slot: nil)
         case let (.save, .some(row)):
             ask(
                 SettingTextFormat.fill(texts.overwriteQuestion, [row.title]),

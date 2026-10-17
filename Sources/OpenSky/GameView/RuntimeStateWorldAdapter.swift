@@ -244,12 +244,18 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
         try await saveSession(slot: slot, summary: nil, thumbnail: nil)
     }
 
-    /// Arrows in flight and falling corpses are dropped first: neither survives
-    /// a reload, and a save that kept them would freeze an arrow in the air.
     func saveSession(slot: String, summary: SaveSummary?, thumbnail: SaveThumbnail?) async throws {
+        let contents = sessionContents(summary: summary, thumbnail: thumbnail)
+        let store = try await store()
+        try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
+    }
+
+    /// The session as a save holds it. Arrows in flight and falling corpses are
+    /// dropped first: a save that kept them would freeze an arrow in the air.
+    func sessionContents(summary: SaveSummary?, thumbnail: SaveThumbnail?) -> OpenSkySaveContents {
         game.streamer?.persistNPCMovementForSave()
         game.combat.loop?.prepareForPersistence()
-        let contents = OpenSkySaveContents(
+        return OpenSkySaveContents(
             snapshot: game.worldState.snapshot(),
             metadata: SaveCreationMetadata(
                 creationTimestamp: UInt64(max(0, Date().timeIntervalSince1970)),
@@ -262,8 +268,6 @@ extension RuntimeStateWorldAdapter: RuntimeStateWorld {
             thumbnail: thumbnail,
             playerPlace: playerPlace()
         )
-        let store = try await store()
-        try await store.write(contents, fingerprint: pluginFingerprint(), toSlot: slot)
     }
 
     /// An imported Skyrim save is written as an ordinary slot, so it loads through

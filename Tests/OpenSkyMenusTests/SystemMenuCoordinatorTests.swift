@@ -33,6 +33,7 @@ private final class FakeSaves: SaveGameService {
     var saved: [String?] = []
     var loaded: [String] = []
     var deleted: [String] = []
+    var exports = 0
 
     func refreshSaveRows() async -> [SaveSlotRow] {
         saveRows
@@ -49,6 +50,11 @@ private final class FakeSaves: SaveGameService {
 
     func deleteSave(slot: String) async throws {
         deleted.append(slot)
+    }
+
+    func exportSkyrimSave() async throws -> String {
+        exports += 1
+        return "OpenSky Export \(exports).ess"
     }
 }
 
@@ -190,6 +196,19 @@ struct SystemMenuCoordinatorTests {
         harness.menu.route(.button(.accept))
         await harness.menu.saveWork?.value
         #expect(harness.saves.saved == [nil, "Old"])
+    }
+
+    @Test @MainActor
+    func savePageEndsWithTheSkyrimExportRow() async {
+        let harness = Harness()
+        harness.open(.save)
+        #expect(harness.menu.saveLoadPage?.titles.last == SaveTexts.vanilla.exportSkyrim)
+        harness.menu.route(.move(.up))
+        harness.menu.route(.button(.accept))
+        await harness.menu.saveWork?.value
+        #expect(harness.saves.exports == 1)
+        #expect(harness.saves.saved.isEmpty)
+        #expect(harness.menu.lastMessage == "Exported")
     }
 
     @Test @MainActor

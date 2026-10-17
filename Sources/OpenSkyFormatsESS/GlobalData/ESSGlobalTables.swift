@@ -9,6 +9,12 @@ nonisolated public struct ESSMiscStat: Equatable, Sendable {
     public let category: UInt8
     public let value: Int32
 
+    public init(name: String, category: UInt8, value: Int32) {
+        self.name = name
+        self.category = category
+        self.value = value
+    }
+
     public static func decodeAll(_ data: Data) throws(ESSError) -> [Self] {
         var reader = ESSReader(data)
         let count = try reader.count32("misc stats", minimumElementSize: 7)
@@ -34,6 +40,17 @@ nonisolated public struct ESSPlayerLocation: Equatable, Sendable {
     public let space: ESSRefID
     public let position: SIMD3<Float>
 
+    public init(
+        nextObjectID: UInt32, worldspace: ESSRefID, cell: SIMD2<Int32>, space: ESSRefID,
+        position: SIMD3<Float>
+    ) {
+        self.nextObjectID = nextObjectID
+        self.worldspace = worldspace
+        self.cell = cell
+        self.space = space
+        self.position = position
+    }
+
     public static func decode(_ data: Data) throws(ESSError) -> Self {
         var reader = ESSReader(data)
         return try Self(
@@ -49,6 +66,11 @@ nonisolated public struct ESSPlayerLocation: Equatable, Sendable {
 nonisolated public struct ESSGlobalVariable: Equatable, Sendable {
     public let global: ESSRefID
     public let value: Float
+
+    public init(global: ESSRefID, value: Float) {
+        self.global = global
+        self.value = value
+    }
 
     public static func decodeAll(_ data: Data) throws(ESSError) -> [Self] {
         var reader = ESSReader(data)
@@ -122,6 +144,18 @@ nonisolated public struct ESSWeather: Equatable, Sendable {
     public let currentHour: Float
     /// How far the transition to `weather` has gone, 0 to 1.
     public let transition: Float
+
+    public init(
+        climate: ESSRefID, weather: ESSRefID, previousWeather: ESSRefID,
+        regionWeather: ESSRefID, currentHour: Float, transition: Float
+    ) {
+        self.climate = climate
+        self.weather = weather
+        self.previousWeather = previousWeather
+        self.regionWeather = regionWeather
+        self.currentHour = currentHour
+        self.transition = transition
+    }
 
     public static func decode(_ data: Data) throws(ESSError) -> Self {
         var reader = ESSReader(data)

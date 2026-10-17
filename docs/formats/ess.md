@@ -1,16 +1,16 @@
 ---
 type: File Format
 title: Skyrim Save (.ess)
-description: The container of a Skyrim SE save, its ref ids, and its global data tables, as OpenSky reads them for a read-only import.
+description: The container of a Skyrim SE save, its ref ids, and its global data tables, as OpenSky reads and writes them.
 tags: [format, save, ess, lz4]
 ---
 
 # Skyrim save (`.ess`)
 
-A `.ess` file is a save the game wrote. OpenSky reads it, never writes it, and imports what
-it can into its own save format ([ESS import](/engine/ess-import.md)). A save holds the
-user's game data, so no save, part of a save, or save screenshot is ever committed. Tests
-build saves in code.
+A `.ess` file is a Skyrim save. OpenSky reads one and imports what it can into its own save
+format ([ESS import](/engine/ess-import.md)). It also writes one from a session
+([ESS export](/engine/ess-export.md)). A save holds the user's game data, so no save, part
+of a save, or save screenshot is ever committed. Tests build saves in code.
 
 References: UESP
 [Save File Format](https://en.uesp.net/wiki/Skyrim_Mod:Save_File_Format) and
@@ -112,13 +112,20 @@ Six `uint32` offsets, four `uint32` counts, and fifteen unused `uint32` words.
 | 8 | globalDataTable3Count |
 | 9 | changeFormCount |
 
-UESP gives the offsets as file offsets. In a compressed save the offsets count from a base
-that UESP does not state. OpenSky does not guess it: global data table 1 starts right after
-the location table, so the base is `globalDataTable1Offset` minus that position. Every
-other offset is moved by the same base, then checked: each section must start at or after
-the one before it and inside the body. A table that fails the check stops the read with a
-typed error, never a crash. The file keeps both the derived base and the expected one
-(the body's file offset) so a real-data run can show whether they agree.
+UESP gives the offsets as file offsets. In a compressed save they count as if the file were
+not compressed: the body starts right after the screenshot, and the two length words are
+not counted. ReSaver reads them that way: its `ESS` reader rebuilds an uncompressed file
+and then reads `FileLocationTable` at the same positions
+([FallrimTools](https://github.com/mdfairch/FallrimTools), `resaver/ess/ESS.java` and
+`FileLocationTable.java`, Apache-2.0, read as a format reference only). The writer writes
+offsets on this base.
+
+The reader still does not trust it: global data table 1 starts right after the location
+table, so the base is `globalDataTable1Offset` minus that position. Every other offset is
+moved by the same base, then checked: each section must start at or after the one before it
+and inside the body. A table that fails the check stops the read with a typed error, never
+a crash. The file keeps both the derived base and the expected one, so a real-data run can
+show whether they agree.
 
 `globalDataTable3Count` is one less than the entries present. UESP calls this a known bug.
 OpenSky reads table 3 by position, up to the form id array, and ignores its count.

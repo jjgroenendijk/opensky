@@ -7,6 +7,11 @@ import Foundation
 nonisolated public struct ESSFactionRank: Equatable, Sendable {
     public let faction: ESSRefID
     public let rank: Int8
+
+    public init(faction: ESSRefID, rank: Int8) {
+        self.faction = faction
+        self.rank = rank
+    }
 }
 
 nonisolated public struct ESSFace: Equatable, Sendable {
@@ -17,25 +22,37 @@ nonisolated public struct ESSFace: Equatable, Sendable {
     /// Empty when the save stores no morph data.
     public let morphs: [Float]
     public let presets: [Int32]
+
+    public init(
+        hairColor: ESSRefID, skinTone: SIMD4<UInt8> = .zero, skin: ESSRefID = ESSRefID(raw: 0),
+        headParts: [ESSRefID], morphs: [Float], presets: [Int32]
+    ) {
+        self.hairColor = hairColor
+        self.skinTone = skinTone
+        self.skin = skin
+        self.headParts = headParts
+        self.morphs = morphs
+        self.presets = presets
+    }
 }
 
 nonisolated public struct ESSActorBaseChange: Equatable, Sendable {
     public let form: ESSRefID
-    public private(set) var formFlags: UInt32?
+    public internal(set) var formFlags: UInt32?
     /// The 24-byte `ACBS` block, laid out as in the `NPC_` record.
-    public private(set) var baseData: Data?
-    public private(set) var factions: [ESSFactionRank]?
-    public private(set) var spells: [ESSRefID]?
-    public private(set) var leveledSpells: [ESSRefID]?
-    public private(set) var shouts: [ESSRefID]?
-    public private(set) var name: String?
+    public internal(set) var baseData: Data?
+    public var factions: [ESSFactionRank]?
+    public var spells: [ESSRefID]?
+    public var leveledSpells: [ESSRefID]?
+    public var shouts: [ESSRefID]?
+    public var name: String?
     /// The 52-byte `DNAM` block: 18 skill values, then 18 offsets, then more.
-    public private(set) var skills: Data?
-    public private(set) var npcClass: ESSRefID?
-    public private(set) var race: ESSRefID?
-    public private(set) var face: ESSFace?
-    public private(set) var isFemale: Bool?
-    public private(set) var status = ESSDecodeStatus.complete
+    public internal(set) var skills: Data?
+    public internal(set) var npcClass: ESSRefID?
+    public var race: ESSRefID?
+    public var face: ESSFace?
+    public var isFemale: Bool?
+    public internal(set) var status = ESSDecodeStatus.complete
 
     /// The player's base `NPC_`, in `Skyrim.esm`.
     public static let playerBase = ESSRefID(kind: .default, value: 0x7)

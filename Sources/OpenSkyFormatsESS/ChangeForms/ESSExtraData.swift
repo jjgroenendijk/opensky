@@ -35,6 +35,11 @@ nonisolated public enum ESSExtraData: Equatable, Sendable {
 nonisolated public struct ESSAliasInstance: Equatable, Sendable {
     public let quest: ESSRefID
     public let aliasID: UInt32
+
+    public init(quest: ESSRefID, aliasID: UInt32) {
+        self.quest = quest
+        self.aliasID = aliasID
+    }
 }
 
 nonisolated public struct ESSExtraDataList: Equatable, Sendable {

@@ -64,7 +64,7 @@ public struct ESSFixture {
         let pixels = screenshotSize.width * screenshotSize.height
         file.write(Data((0 ..< pixels * bytesPerPixel).map { UInt8($0 & 0xFF) }))
         let lengthsSize = version >= 12 && compression != 0 ? 8 : 0
-        let body = bodyBytes(base: file.count + lengthsSize)
+        let body = bodyBytes(base: file.count)
         guard lengthsSize > 0 else {
             file.write(body)
             return file.data
@@ -97,7 +97,7 @@ public struct ESSFixture {
         }
     }
 
-    /// `base` is the file offset the body would start at uncompressed.
+    /// `base` is the file offset the body starts at uncompressed, before the lengths.
     private func bodyBytes(base: Int) -> Data {
         let lists = pluginBytes()
         let tableStart = 1 + 4 + lists.count

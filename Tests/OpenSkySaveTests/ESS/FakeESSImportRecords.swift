@@ -1,4 +1,4 @@
-// A load order of named forms in place of real plugins, for import tests.
+// A load order of named forms in place of real plugins, for import and export tests.
 
 import Foundation
 import OpenSkyFormatsESM
@@ -18,6 +18,10 @@ struct FakeESSImportRecords: ESSImportRecords {
     var forms: [String: Form] = [:]
     var baselines: [ReferenceKey: ReferenceInventoryState] = [:]
     var scripts: [String: [String: String]] = [:]
+    /// Export side: placed references by lowercased plugin and object id.
+    var placed: [String: (flags: UInt32, space: ResolvedFormID)] = [:]
+    var exportScripts: [String: ESSExportScript] = [:]
+    var lightPlugins: Set<String> = []
 
     mutating func add(
         _ plugin: String, _ objectID: UInt32, _ signature: String, editorID: String? = nil,
@@ -28,7 +32,7 @@ struct FakeESSImportRecords: ESSImportRecords {
         )
     }
 
-    private static func name(_ plugin: String, _ objectID: UInt32) -> String {
+    static func name(_ plugin: String, _ objectID: UInt32) -> String {
         "\(plugin.lowercased()):\(objectID)"
     }
 
@@ -49,12 +53,7 @@ struct FakeESSImportRecords: ESSImportRecords {
     }
 
     func race(editorID: String) -> ResolvedFormID? {
-        forms.first { $0.value.signature == "RACE" && $0.value.editorID == editorID }
-            .flatMap { entry in
-                let parts = entry.key.split(separator: ":")
-                return UInt32(parts[1])
-                    .map { ResolvedFormID(plugin: String(parts[0]), objectID: $0) }
-            }
+        form(editorID: editorID, signature: "RACE")
     }
 
     func cellLocation(space: ResolvedFormID, position: SIMD3<Float>) -> CellSceneLocation? {

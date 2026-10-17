@@ -4,6 +4,7 @@
 // change-and-restore sections.
 
 import AppKit
+import OpenSkySave
 import OpenSkyWorld
 
 final class RuntimeStatePanelViewController: InspectorPanelViewController {
@@ -26,6 +27,7 @@ final class RuntimeStatePanelViewController: InspectorPanelViewController {
             changeSection.provider = provider
             resetSection.provider = provider
             saveSection.provider = provider
+            saveSection.exportProvider = provider as? any SkyrimExportControlProviding
         }
     }
 

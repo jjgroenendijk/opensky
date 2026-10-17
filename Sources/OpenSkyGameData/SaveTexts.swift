@@ -11,6 +11,8 @@ nonisolated public struct SaveTexts: Equatable, Sendable {
     public var deleted = "Deleted"
     public var saveFailed = "Failed:"
     public var newSave = "New Save"
+    /// OpenSky's own row; the game has no export.
+    public var exportSkyrim = "Export to Skyrim"
     /// `%s` is the save's title; the game's own question names no save.
     public var overwriteQuestion = "Save over %s?"
     public var deleteQuestion = "Delete %s?"

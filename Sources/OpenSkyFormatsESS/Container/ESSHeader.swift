@@ -42,6 +42,34 @@ nonisolated public struct ESSHeader: Equatable, Sendable {
     /// Largest screenshot side accepted, far above what the game writes.
     public static let maximumScreenshotSide = 4096
 
+    public init(
+        version: UInt32, saveNumber: UInt32, playerName: String, playerLevel: UInt32,
+        playerLocation: String, gameDate: String, playerRaceEditorID: String, isFemale: Bool,
+        experience: Float, experienceForNextLevel: Float, fileTime: UInt64,
+        screenshotWidth: Int, screenshotHeight: Int, compression: ESSCompression
+    ) {
+        self.version = version
+        self.saveNumber = saveNumber
+        self.playerName = playerName
+        self.playerLevel = playerLevel
+        self.playerLocation = playerLocation
+        self.gameDate = gameDate
+        self.playerRaceEditorID = playerRaceEditorID
+        self.isFemale = isFemale
+        self.experience = experience
+        self.experienceForNextLevel = experienceForNextLevel
+        self.fileTime = fileTime
+        self.screenshotWidth = screenshotWidth
+        self.screenshotHeight = screenshotHeight
+        self.compression = compression
+    }
+
+    /// The `FILETIME` of `date`, the form the header stores.
+    public static func fileTime(of date: Date) -> UInt64 {
+        let ticks = (date.timeIntervalSince1970 + 11_644_473_600) * 10_000_000
+        return ticks > 0 && ticks < 1e19 ? UInt64(ticks) : 0
+    }
+
     public var isSpecialEdition: Bool {
         version >= Self.specialEditionVersion
     }

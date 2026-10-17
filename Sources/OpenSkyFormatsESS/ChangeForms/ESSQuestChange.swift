@@ -7,24 +7,34 @@ nonisolated public struct ESSQuestStage: Equatable, Sendable {
     public let index: Int16
     /// The stage's stored status byte; UESP calls it a boolean.
     public let isDone: Bool
+
+    public init(index: Int16, isDone: Bool) {
+        self.index = index
+        self.isDone = isDone
+    }
 }
 
 /// An objective's two stored words. UESP does not name them.
 nonisolated public struct ESSQuestObjective: Equatable, Sendable {
     public let first: UInt32
     public let second: UInt32
+
+    public init(first: UInt32, second: UInt32) {
+        self.first = first
+        self.second = second
+    }
 }
 
 nonisolated public struct ESSQuestChange: Equatable, Sendable {
     public let form: ESSRefID
-    public private(set) var formFlags: UInt32?
+    public internal(set) var formFlags: UInt32?
     /// The quest's runtime flags. UESP does not document their meaning.
-    public private(set) var questFlags: UInt16?
-    public private(set) var scriptDelay: Float?
-    public private(set) var stages: [ESSQuestStage]?
-    public private(set) var objectives: [ESSQuestObjective]?
-    public private(set) var alreadyRun: Bool?
-    public private(set) var status = ESSDecodeStatus.complete
+    public var questFlags: UInt16?
+    public internal(set) var scriptDelay: Float?
+    public var stages: [ESSQuestStage]?
+    public internal(set) var objectives: [ESSQuestObjective]?
+    public internal(set) var alreadyRun: Bool?
+    public internal(set) var status = ESSDecodeStatus.complete
 
     private typealias Flag = ESSChangeFlag.Quest
 

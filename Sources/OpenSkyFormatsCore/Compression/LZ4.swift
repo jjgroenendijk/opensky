@@ -12,6 +12,7 @@ nonisolated public enum LZ4Error: Error, Equatable, Sendable {
     case truncatedFrame
     case truncatedBlock
     case blockDecodeFailed
+    case blockEncodeFailed
     case invalidOffset(Int)
     case outputOverflow(limit: Int)
 }

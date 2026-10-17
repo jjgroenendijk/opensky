@@ -121,4 +121,20 @@ struct LZ4Tests {
             try LZ4.decompressFrame(frame, sizeLimit: 64)
         }
     }
+
+    /// The spec-strict local decoder reads the encoder's block, so the block is plain
+    /// LZ4 and not an Apple-specific stream.
+    @Test func rawBlockEncodeIsStandardAndStable() throws {
+        let pattern: [UInt8] = (0 ..< 70000).map { (index: Int) -> UInt8 in
+            UInt8(truncatingIfNeeded: index * 7 + index / 300)
+        }
+        let plain = Data(pattern) + Data(repeating: 0x41, count: 5000)
+        let block = try LZ4.compressRawBlock(plain)
+        #expect(block.count < plain.count)
+        var strict: [UInt8] = []
+        try LZ4.decompressBlock(block, into: &strict, sizeLimit: plain.count)
+        #expect(Data(strict) == plain)
+        #expect(try LZ4.decompressRawBlock(block, decompressedSize: plain.count) == plain)
+        #expect(try LZ4.compressRawBlock(plain) == block)
+    }
 }
