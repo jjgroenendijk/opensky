@@ -51,12 +51,12 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
         _ actor: ReferenceKey, awayFrom source: ReferenceKey,
         along direction: SIMD3<Float>?, speed: Float
     ) -> Bool {
-        guard actor == .player, speed > 0, let renderer = game.renderer else { return false }
-        let feet = renderer.walkController.feetPosition
+        guard actor == .player, speed > 0, let gameSession = game.gameSession else { return false }
+        let feet = gameSession.walkController.feetPosition
         let away = direction ?? trapPosition(of: source).map { feet - $0 } ?? .zero
         let flat = SIMD3(away.x, away.y, 0)
         guard simd_length(flat) > 0 else { return false }
-        renderer.walkController.knock(simd_normalize(flat) * speed)
+        gameSession.walkController.knock(simd_normalize(flat) * speed)
         return true
     }
 
@@ -72,7 +72,7 @@ extension EffectsWorldAdapter: PapyrusTrapWorldBridge {
 
     private func trapPosition(of reference: ReferenceKey) -> SIMD3<Float>? {
         if reference == .player {
-            return game.renderer?.walkController.feetPosition
+            return game.gameSession?.walkController.feetPosition
         }
         return game.scripts.bridge?.referenceState(for: reference)?.transform.position
     }

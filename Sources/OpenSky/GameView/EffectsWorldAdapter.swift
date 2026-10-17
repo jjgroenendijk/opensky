@@ -30,6 +30,7 @@ protocol EffectsWorldHost: AnyObject {
     var magic: MagicCoordinator { get }
     var playerSettings: PlayerSettingsCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
 }
@@ -59,9 +60,10 @@ final class EffectsWorldAdapter {
         game.combat.explosions
     }
 
-    func wireEffects(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
+    func wireEffects(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
+        let renderer = gameSession.renderer
         guard let records = provider.effectRecords else { return }
-        renderer.session.imageSpaceLinks = ImageSpaceLinks(
+        gameSession.imageSpaceLinks = ImageSpaceLinks(
             records: records, weatherPlugin: Self.basePlugin
         )
         effects.wire(records: records, meshes: Self.meshes(provider: provider, renderer: renderer))
@@ -69,15 +71,15 @@ final class EffectsWorldAdapter {
         explosions.records = records
         explosions.itemPlugin = Self.basePlugin
         explosions.world = self
-        game.magic.onSpellHit = { [weak self, weak renderer] event in
-            guard let self, let renderer else { return }
-            effects.handleSpellHit(event, imageSpace: &renderer.imageSpace)
+        game.magic.onSpellHit = { [weak self, weak gameSession] event in
+            guard let self, let gameSession else { return }
+            effects.handleSpellHit(event, imageSpace: &gameSession.imageSpace)
         }
-        let frameSteps = renderer.session.frameSteps
-        frameSteps.register(.effects) { [weak self, weak renderer, weak streamer] position in
-            guard let self, let renderer else { return }
+        let frameSteps = gameSession.frameSteps
+        frameSteps.register(.effects) { [weak self, weak gameSession, weak streamer] position in
+            guard let self, let gameSession else { return }
             cameraPosition = position
-            tick(renderer: renderer, streamer: streamer)
+            tick(gameSession: gameSession, streamer: streamer)
         }
     }
 
@@ -95,11 +97,12 @@ final class EffectsWorldAdapter {
 
     /// Steps by wall-clock time, and not at all while a menu pauses the world. The
     /// interior's image space and the effect draw lists update every frame.
-    private func tick(renderer: Renderer, streamer: CellStreamer?, now: Date = Date()) {
-        renderer.session.imageSpaceLinks?.interior = streamer?.interiorScene.map {
+    private func tick(gameSession: GameSession, streamer: CellStreamer?, now: Date = Date()) {
+        let renderer = gameSession.renderer
+        gameSession.imageSpaceLinks?.interior = streamer?.interiorScene.map {
             InteriorImageSpace(imageSpace: $0.imageSpace, plugin: Self.basePlugin)
         }
-        let paused = renderer.worldSimPaused
+        let paused = gameSession.worldSimPaused
         let elapsed = lastFrame.map { Float(now.timeIntervalSince($0)) } ?? 0
         let seconds = paused ? 0 : min(elapsed, Self.longestStep)
         lastFrame = paused ? nil : now
@@ -181,8 +184,8 @@ extension EffectsWorldAdapter: ExplosionWorld {
     }
 
     func startExplosionImageSpace(_ modifier: ReferenceKey, strength: Float) {
-        guard let renderer = game.renderer else { return }
-        effects.startModifier(modifier, strength: strength, on: &renderer.imageSpace)
+        guard let gameSession = game.gameSession else { return }
+        effects.startModifier(modifier, strength: strength, on: &gameSession.imageSpace)
     }
 
     func placeExplosionHazard(_ hazard: ReferenceKey, at position: SIMD3<Float>) -> Bool {
@@ -204,10 +207,12 @@ extension EffectsWorldAdapter: EffectsWorld {
     /// An actor's feet turned to its facing; the player's turn with the camera.
     func effectTransform(of actor: ReferenceKey) -> float4x4? {
         if actor == .player {
-            guard let renderer = game.renderer else { return nil }
+            guard
+                let renderer = game.renderer,
+                let gameSession = game.gameSession else { return nil }
             let look = renderer.camera.target - renderer.camera.eye
             return Self.transform(
-                feet: renderer.locomotion.status.feetPosition,
+                feet: gameSession.locomotion.status.feetPosition,
                 yaw: atan2(look.y, look.x)
             )
         }
@@ -277,6 +282,10 @@ extension EffectsWorldAdapter: EffectsControlForwarding, ExplosionControlForward
 
     var renderer: Renderer? {
         game.renderer
+    }
+
+    var gameSession: GameSession? {
+        game.gameSession
     }
 
     var effectsSelectedActor: ReferenceKey? {

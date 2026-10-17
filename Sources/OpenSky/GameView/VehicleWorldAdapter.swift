@@ -21,6 +21,7 @@ protocol VehicleWorldHost: AnyObject {
     var idleWorld: IdleWorldAdapter { get }
     var packages: PackageCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldData: WorldDataStores? { get }
@@ -44,14 +45,14 @@ final class VehicleWorldAdapter {
     }
 
     /// After the idles and packages, so a follower reads where its carrier ended up.
-    func wireVehicles(renderer: Renderer) {
+    func wireVehicles(gameSession: GameSession) {
         game.scripts.bridge?.actorAI = self
         let scripts = game.scripts
         let idles = game.idleWorld.idles
-        idles.onAnimationEvent = { [weak self, weak scripts, weak renderer] actor, name in
+        idles.onAnimationEvent = { [weak self, weak scripts, weak gameSession] actor, name in
             // The player's idles run on its graph, whose events arrive through the bridge.
             if actor != .player {
-                renderer?.session.animationEvents?.handle(name, from: actor)
+                gameSession?.animationEvents?.handle(name, from: actor)
             }
             if name == VehicleCore.exitEvent {
                 self?.detach(actor)
@@ -61,17 +62,17 @@ final class VehicleWorldAdapter {
             }
             scripts?.runtime?.queueAnimationEvent(sender: actor, name: name)
         }
-        wireWheels(renderer: renderer)
-        renderer.session.worldTick.register(.vehicles) { [weak self, weak renderer] _ in
+        wireWheels(gameSession: gameSession)
+        gameSession.worldTick.register(.vehicles) { [weak self, weak gameSession] _ in
             guard let self else { return }
             run(vehicles.advance())
             if vehicles.lastPoses[.player] == nil {
-                renderer?.session.playerSeat = nil
+                gameSession?.playerSeat = nil
             }
         }
     }
 
-    private func wireWheels(renderer: Renderer) {
+    private func wireWheels(gameSession: GameSession) {
         guard let files = game.worldData?.scriptFileSystem else {
             return
         }
@@ -79,14 +80,14 @@ final class VehicleWorldAdapter {
             try VehicleWheels.contacts(in: NIFFile(data: files.contents(forPath: path)))
         }
         self.wheels = wheels
-        renderer.session.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
+        gameSession.assetDrains.register(.vehicleWheels) { _ in wheels.drain() }
     }
 }
 
 extension VehicleWorldAdapter: VehicleWorld {
     func vehiclePose(of key: ReferenceKey) -> ReferenceTransformOverride? {
         if key == .player {
-            return game.renderer
+            return game.gameSession
                 .map { ReferenceTransformOverride(position: $0.walkController.feetPosition) }
         }
         return game.streamer?.npcTransform(for: key)
@@ -100,7 +101,8 @@ extension VehicleWorldAdapter: VehicleWorld {
     func run(_ commands: [VehicleCommand]) {
         for command in commands {
             switch command {
-            case let .publishVehiclePoses(poses): game.renderer?.vehicleInstancePoses = poses
+            case let .publishVehiclePoses(poses): game.gameSession?.instancePoses
+                .vehiclePoses = poses
             case let .publishCarriedPoses(poses): game.streamer?.npcMovementState.carried = poses
             case let .publishLinks(linked):
                 game.streamer?.npcMovementState.vehicleLinkedActors = linked
@@ -119,27 +121,27 @@ extension VehicleWorldAdapter: VehicleWorld {
     /// The player's root sits on the vehicle, as every rider's does. While the player
     /// plays a seat idle, the eye goes to the clip's head bone, so the view sits in the seat.
     func placePlayer(at pose: ReferenceTransformOverride) {
-        guard let renderer = game.renderer else { return }
+        guard let gameSession = game.gameSession else { return }
         guard
             let head = game.idleWorld.idles.idleBone(
                 of: .player, named: DialogueCamera.headBoneName
             )
         else {
-            renderer.session.playerSeat = nil
-            renderer.placePlayerFeet(at: pose.position)
+            gameSession.playerSeat = nil
+            gameSession.placePlayerFeet(at: pose.position)
             return
         }
         let root = MatrixMath.placement(position: pose.position, rotation: pose.rotation, scale: 1)
-        renderer.session.playerSeat = root
+        gameSession.playerSeat = root
         let eye = root * SIMD4(head, 1)
-        let height = renderer.walkController.capsule.eyeHeight
-        renderer.placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - height))
-        faceSeat(root: root, renderer: renderer)
+        let height = gameSession.walkController.capsule.eyeHeight
+        gameSession.placePlayerFeet(at: SIMD3(eye.x, eye.y, eye.z - height))
+        faceSeat(root: root, gameSession: gameSession)
     }
 
     /// A new seat idle turns the view the way the seat's head faces, once; the player
     /// may look around after.
-    private func faceSeat(root: float4x4, renderer: Renderer) {
+    private func faceSeat(root: float4x4, gameSession: GameSession) {
         let idles = game.idleWorld.idles
         guard
             let start = idles.idleStart(of: .player), start != facedIdleStart,
@@ -148,7 +150,7 @@ extension VehicleWorldAdapter: VehicleWorld {
         facedIdleStart = start
         let world = root * SIMD4(forward, 0)
         guard abs(world.x) + abs(world.y) > 0.001 else { return }
-        renderer.freeFlyCamera.yaw = atan2(world.y, world.x)
+        gameSession.freeFlyCamera.yaw = atan2(world.y, world.x)
     }
 
     /// A follower drawn by a cell it left moves into the cell it is now in, so it does
@@ -270,7 +272,7 @@ extension VehicleWorldAdapter: PapyrusActorAIBridge {
     func setPlayerAIDriven(_ driven: Bool) {
         isPlayerAIDriven = driven
         if !driven {
-            game.renderer?.session.playerWalkPath = []
+            game.gameSession?.playerWalkPath = []
         }
     }
 }

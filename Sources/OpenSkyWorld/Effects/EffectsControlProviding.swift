@@ -19,6 +19,8 @@ public protocol ImageSpaceControlProviding: AnyObject {
     func startImageSpaceModifier(named name: String, strength: Float) -> Bool
     func stopImageSpaceModifiers()
     var imageSpaceState: ImageSpaceState { get }
+    /// The exposure the renderer's eye has adapted to.
+    var eyeAdaptation: EyeAdaptation { get }
 }
 
 @MainActor
@@ -96,20 +98,22 @@ public protocol EffectsControlForwarding: ImageSpaceControlProviding, VisualEffe
     /// Where the impact and decal switches are saved.
     var playerSettingsStore: PlayerSettingsStore { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     /// The actor the panels act on, nil when none is resident.
     var effectsSelectedActor: ReferenceKey? { get }
 }
 
 extension EffectsControlForwarding {
     public var imageSpacePassEnabled: Bool {
-        get { renderer?.imageSpace.passEnabled ?? true }
-        set { renderer?.imageSpace.passEnabled = newValue }
+        get { gameSession?.imageSpace.passEnabled ?? true }
+        set { gameSession?.imageSpace.passEnabled = newValue }
     }
 
     public var toneMappingEnabled: Bool {
-        get { renderer?.imageSpace.toneMapping.enabled ?? playerSettingsStore.bool(.toneMapping) }
+        get { gameSession?.imageSpace.toneMapping.enabled ?? playerSettingsStore.bool(.toneMapping)
+        }
         set {
-            renderer?.imageSpace.toneMapping.enabled = newValue
+            gameSession?.imageSpace.toneMapping.enabled = newValue
             playerSettingsStore.set(.toneMapping, to: newValue ? 1 : 0)
         }
     }
@@ -119,10 +123,10 @@ extension EffectsControlForwarding {
     }
 
     public var forcedImageSpaceName: String? {
-        get { renderer?.imageSpace.forcedBaseline?.record.editorID }
+        get { gameSession?.imageSpace.forcedBaseline?.record.editorID }
         set {
             let resolved = newValue.flatMap { effects.records.imageSpaces.record(editorID: $0) }
-            renderer?.imageSpace.forcedBaseline = resolved.map {
+            gameSession?.imageSpace.forcedBaseline = resolved.map {
                 ResolvedImageSpace(key: ReferenceKey(resolved: $0.id), record: $0.record)
             }
         }
@@ -134,20 +138,24 @@ extension EffectsControlForwarding {
 
     public func startImageSpaceModifier(named name: String, strength: Float) -> Bool {
         guard
-            let renderer,
+            let gameSession,
             let adapter = effects.records.imageSpaceAdapters.record(editorID: name)
         else { return false }
         return effects.startModifier(
-            ReferenceKey(resolved: adapter.id), strength: strength, on: &renderer.imageSpace
+            ReferenceKey(resolved: adapter.id), strength: strength, on: &gameSession.imageSpace
         )
     }
 
     public func stopImageSpaceModifiers() {
-        renderer?.imageSpace.modifiers.stopAll()
+        gameSession?.imageSpace.modifiers.stopAll()
+    }
+
+    public var eyeAdaptation: EyeAdaptation {
+        renderer?.eyeAdaptation ?? EyeAdaptation()
     }
 
     public var imageSpaceState: ImageSpaceState {
-        renderer?.imageSpace ?? ImageSpaceState()
+        gameSession?.imageSpace ?? ImageSpaceState()
     }
 
     public var visualEffectNames: [String] {

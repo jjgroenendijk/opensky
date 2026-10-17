@@ -39,7 +39,8 @@ final class LockWorldAdapter {
     }
 
     /// After `wireWorldItems`, which wires the coordinator's item runtime.
-    func wireLocks(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
+    func wireLocks(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
+        let renderer = gameSession.renderer
         let locks = game.inventory.locks
         locks.settings = provider.lockTrapData.lockpicking
         locks.lockpickItem = provider.lockTrapData.lockpickItem
@@ -54,7 +55,7 @@ final class LockWorldAdapter {
             menu?.handle(refusal)
         }
         // Frame steps run while the menu pauses the world; the menu keeps its own clock.
-        renderer.session.frameSteps.register(.lockpicking) { [weak menu] _ in
+        gameSession.frameSteps.register(.lockpicking) { [weak menu] _ in
             menu?.tick()
         }
         renderer.worldOverlaySources

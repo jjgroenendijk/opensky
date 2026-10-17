@@ -258,7 +258,7 @@ extension Renderer {
     private func finishUpscaleFrame(_ frame: UpscaleFrame) {
         frame.targets.swapInterpolationHistory()
         upscale.previousViewProjection = frame.viewProjection
-        upscale.previousView = freeFlyCamera.viewMatrix()
+        upscale.previousView = frameInput.view.viewMatrix()
         upscale.previousBonePrepared = frameBonePrepared
         upscale.resetPending = false
     }

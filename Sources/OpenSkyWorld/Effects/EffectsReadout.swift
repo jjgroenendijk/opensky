@@ -9,7 +9,7 @@ nonisolated public enum EffectsReadout {
     /// Rows shown per list; the rest are counted.
     public static let listedRows = 6
 
-    public static func imageSpace(_ state: ImageSpaceState) -> String {
+    public static func imageSpace(_ state: ImageSpaceState, eye: EyeAdaptation) -> String {
         let baseline = state.forcedBaseline.map { "\($0.record.editorID ?? "forced") (forced)" }
             ?? state.baseline.dominantName
         let sources = state.baseline.sources
@@ -23,7 +23,7 @@ nonisolated public enum EffectsReadout {
                 + " · contrast \(number(values.contrast))",
             "Tint: \(number(values.tint.x)) \(number(values.tint.y)) \(number(values.tint.z))"
                 + " at \(number(values.tint.w))",
-            toneMapping(state.toneMapping, hdr: values.hdr),
+            toneMapping(state.toneMapping, eye: eye, hdr: values.hdr),
             "Modifiers: \(state.modifiers.instances.count)"
         ]
         lines += state.modifiers.instances.prefix(listedRows).map { instance in
@@ -36,9 +36,10 @@ nonisolated public enum EffectsReadout {
         return lines.joined(separator: "\n")
     }
 
-    public static func toneMapping(_ state: ToneMappingState, hdr: ImageSpaceHDR) -> String {
+    public static func toneMapping(
+        _ state: ToneMappingState, eye: EyeAdaptation, hdr: ImageSpaceHDR
+    ) -> String {
         guard state.enabled else { return "Tone mapping: off" }
-        let eye = state.eye
         let exposure = number(eye.exposure(strength: hdr.eyeAdaptStrength))
         let scene = eye.measuredLuminance.map(number) ?? "-"
         let adapted = eye.adaptedLuminance.map(number) ?? "-"

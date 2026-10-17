@@ -50,6 +50,7 @@ protocol AIWorldHost: AnyObject {
     var perks: PerkCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
@@ -89,7 +90,7 @@ final class AIWorldAdapter {
                 radius: $0.capsule.radius * max($0.scale, 0)
             )
         }
-        if links[.player] == nil, let feet = game.renderer?.locomotion.status.feetPosition {
+        if links[.player] == nil, let feet = game.gameSession?.locomotion.status.feetPosition {
             actors.append(NPCNeighbour(
                 key: .player, position: SIMD2(feet.x, feet.y),
                 radius: PlayerCapsule.standard.radius
@@ -98,19 +99,19 @@ final class AIWorldAdapter {
         return actors
     }
 
-    func wireNPCMovement(renderer: Renderer, streamer: CellStreamer) {
-        streamer.npcMovementConfiguration = renderer.locomotion.configuration
+    func wireNPCMovement(gameSession: GameSession, streamer: CellStreamer) {
+        streamer.npcMovementConfiguration = gameSession.locomotion.configuration
         let worldState = game.worldState
         let packages = game.packages
         streamer.onNPCMovementPersist = { [weak packages] persistence in
             worldState.set(persistence.transform, for: persistence.actor, in: persistence.cell)
             packages?.movementSettled(actor: persistence.actor, reason: persistence.reason)
         }
-        renderer.session.onPlayerWalkArrived = { [weak packages] in
+        gameSession.onPlayerWalkArrived = { [weak packages] in
             packages?.movementSettled(actor: .player, reason: .arrival)
         }
-        streamer.onNPCPosesChanged = { [weak renderer] deltas in
-            renderer?.npcInstanceDeltas = deltas
+        streamer.onNPCPosesChanged = { [weak gameSession] deltas in
+            gameSession?.instancePoses.npcDeltas = deltas
         }
         streamer.npcStandingActors = { [weak self] in self?.standingActors() ?? [] }
         // A walker drawn by the cell it left would vanish when that cell unloads, so
@@ -129,22 +130,23 @@ final class AIWorldAdapter {
         }
     }
 
-    func wirePackages(provider: WorldDataStores, renderer: Renderer) {
+    func wirePackages(provider: WorldDataStores, gameSession: GameSession) {
         guard let store = provider.packageStore else { return }
         game.packages.wire(store: store)
         let packages = game.packages
-        renderer.session.worldTick.register(.packages) { [weak packages] delta in
+        gameSession.worldTick.register(.packages) { [weak packages] delta in
             packages?.advance(by: Float(delta))
         }
     }
 
     /// Runs after NPC movement and the combat loop, because the pass reads
     /// where actors ended up this frame and which of them are hostile.
-    func wirePerception(provider: WorldDataStores, renderer: Renderer) {
+    func wirePerception(provider: WorldDataStores, gameSession: GameSession) {
+        let renderer = gameSession.renderer
         let settings = provider.detectionSettings
         let perception = game.perception
         perception.wire(settings: settings)
-        renderer.session.worldTick.register(.perception) { [weak self] delta in
+        gameSession.worldTick.register(.perception) { [weak self] delta in
             guard let self else { return }
             run(game.perception.advance(by: delta))
             // After the pass, so a trespass is judged against this frame's detection.
@@ -170,7 +172,7 @@ extension AIWorldAdapter: PackageWorld {
     }
 
     var packageClock: GameClock? {
-        game.renderer?.gameClock
+        game.gameSession?.gameClock
     }
 
     func packageConditionContext(clock: GameClock) -> ConditionContext {
@@ -192,7 +194,7 @@ extension AIWorldAdapter: PackageWorld {
 
 extension AIWorldAdapter {
     func packageActorPosition(_ actor: ReferenceKey) -> SIMD3<Float>? {
-        guard actor != .player else { return game.renderer?.locomotion.status.feetPosition }
+        guard actor != .player else { return game.gameSession?.locomotion.status.feetPosition }
         guard let streamer = game.streamer else { return nil }
         if let live = streamer.npcTransform(for: actor) {
             return live.position
@@ -258,20 +260,20 @@ extension AIWorldAdapter {
     /// The player has no NPC mover, so the renderer walks the navmesh path. Without
     /// a path the player walks straight, as a direct move does.
     private func walkPlayer(to point: SIMD3<Float>, direct: Bool) -> Bool {
-        guard let renderer = game.renderer else { return false }
+        guard let gameSession = game.gameSession else { return false }
         let query = NavigationPathQuery(
-            start: renderer.walkController.feetPosition, target: point,
+            start: gameSession.walkController.feetPosition, target: point,
             capsuleRadius: PlayerCapsule.standard.radius
         )
-        renderer.session.playerWalkIgnoresStatics = direct
+        gameSession.playerWalkIgnoresStatics = direct
         let found = direct ? NavigationPathResult.path(.straight(to: point))
             : game.streamer?.findPath(query) ?? .miss(.disconnected)
         switch found {
         case let .path(path):
-            renderer.session.playerWalkPath = path.waypoints + [point]
+            gameSession.playerWalkPath = path.waypoints + [point]
             game.packages.recordMove(.started, for: .player)
         case let .miss(reason):
-            renderer.session.playerWalkPath = [point]
+            gameSession.playerWalkPath = [point]
             game.packages.recordMove(.noPath(reason), for: .player)
         }
         return true
@@ -372,7 +374,7 @@ extension AIWorldAdapter: AINavigationWorld {
     }
 
     var camera: AICameraPose? {
-        game.renderer.map {
+        game.gameSession.map {
             AICameraPose(position: $0.freeFlyCamera.position, forward: $0.freeFlyCamera.forward)
         }
     }
@@ -451,8 +453,8 @@ extension AIWorldAdapter: PerceptionSessionWorld {
     }
 
     func perceptionTargets() -> [PerceptionTarget] {
-        guard let renderer = game.renderer else { return [] }
-        let status = renderer.locomotion.status
+        guard let gameSession = game.gameSession else { return [] }
+        let status = gameSession.locomotion.status
         let isMoving = simd_length_squared(status.lastPlan.horizontalDisplacement) > 0
         return [PerceptionTarget(
             key: .player,

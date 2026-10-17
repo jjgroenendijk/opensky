@@ -110,7 +110,7 @@ struct RendererCullingTests {
         device: MTLDevice,
         camera: SceneCamera
     ) throws -> Renderer {
-        try OffscreenRendererFixture.makeSessionRenderer(
+        try OffscreenRendererFixture.makeRenderer(
             device: device, width: width, height: height,
             scene: twoCrateScene(device: device),
             camera: camera,

@@ -25,6 +25,7 @@ protocol MessageWorldHost: MenuInputConsumer {
     var mapWorld: MapWorldAdapter { get }
     var messages: MessageCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var subtitles: SubtitleCoordinator { get }
@@ -41,7 +42,7 @@ final class MessageWorldAdapter {
     }
 
     /// Gives the Papyrus bridge its presenter, once the VM exists.
-    func wire(renderer: Renderer) {
+    func wire(gameSession: GameSession) {
         game.scripts.bridge?.presenter = game.messages
         game.scripts.bridge?.itemNotices = game.worldData.map {
             ItemNoticeTexts.resolve(store: $0.gameSettings) { [game] in game.mapWorld.text($0) }
@@ -51,7 +52,7 @@ final class MessageWorldAdapter {
         // Frame steps run under a menu too, so notifications keep real time.
         let messages = game.messages
         let subtitles = game.subtitles
-        renderer.session.frameSteps.register(.messages) { [weak messages, weak subtitles] _ in
+        gameSession.frameSteps.register(.messages) { [weak messages, weak subtitles] _ in
             let now = Date().timeIntervalSinceReferenceDate
             messages?.tick(time: now)
             subtitles?.advance(to: now)
@@ -86,6 +87,19 @@ final class MessageWorldAdapter {
 extension MessageWorldAdapter: MessageWorld {
     var renderer: Renderer? {
         game.renderer
+    }
+
+    var gameSession: GameSession? {
+        game.gameSession
+    }
+
+    var viewCamera: FreeFlyCamera? {
+        game.gameSession?.freeFlyCamera
+    }
+
+    var uiScene: UIScene {
+        get { game.gameSession?.uiScene ?? .empty }
+        set { game.gameSession?.uiScene = newValue }
     }
 
     func buildMessage(_ key: ReferenceKey, arguments: [Float]) -> BuiltMessage? {
@@ -128,9 +142,9 @@ extension MessageWorldAdapter: MessageWorld {
 
     func forceCameraMode(firstPerson: Bool) -> Bool {
         guard
-            let renderer = game.renderer,
-            renderer.movementMode.isPlayerControlled else { return false }
-        renderer.setMovementMode(firstPerson ? .walk : .thirdPerson)
+            let gameSession = game.gameSession,
+            gameSession.movementMode.isPlayerControlled else { return false }
+        gameSession.setMovementMode(firstPerson ? .walk : .thirdPerson)
         return true
     }
 

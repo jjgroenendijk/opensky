@@ -150,11 +150,12 @@ struct PrecipitationAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view, scene: scene.renderScene, camera: SceneCamera.framing(bounds: bounds)
         )
-        renderer.weather = weather
-        renderer.timeOfDay = 13
+        let renderer = gameSession.renderer
+        gameSession.weather = weather
+        gameSession.timeOfDay = 13
         return try Harness(
             renderer: renderer,
             weather: weather,

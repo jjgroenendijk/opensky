@@ -11,17 +11,17 @@ import OpenSkyRendering
 
 @MainActor
 public enum StandardBenchmark {
-    /// A renderer that draws offscreen at the plan's size, with the saved pipelines.
-    public static func makeRenderer(
+    /// A session whose renderer draws offscreen at the plan's size, with the saved pipelines.
+    public static func makeSession(
         device: MTLDevice, plan: PerformanceBenchmarkPlan, store: PlayerSettingsStore
-    ) throws -> Renderer {
+    ) throws -> GameSession {
         let view = MTKView(
             frame: CGRect(x: 0, y: 0, width: plan.frameWidth, height: plan.frameHeight),
             device: device
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(
+        return try GameSession(
             view: view,
             scene: RenderScene(instances: []),
             movementConfiguration: .synthetic,
@@ -77,10 +77,10 @@ public enum StandardBenchmark {
     ) throws -> PerformanceBenchmarkResult {
         let store = PlayerSettingsStore(persistence: try? PlayerSettingsFile.defaultFile())
         let plan = PerformanceBenchmarkPlan.standard
-        let renderer = try makeRenderer(device: device, plan: plan, store: store)
+        let gameSession = try makeSession(device: device, plan: plan, store: store)
         let loadOrder = try ActiveLoadOrder.open(root: root)
         return try PerformanceBenchmark.run(
-            plan: plan, machine: .current(gpu: device.name), renderer: renderer
+            plan: plan, machine: .current(gpu: device.name), gameSession: gameSession
         ) { recorder in
             try makeBuilder(
                 root: root, loadOrder: loadOrder, files: VirtualFileSystem(root: root),

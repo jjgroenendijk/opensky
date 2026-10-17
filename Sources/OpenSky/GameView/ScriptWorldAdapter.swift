@@ -46,6 +46,7 @@ protocol ScriptWorldHost: AnyObject {
     var progression: ProgressionCoordinator { get }
     var ragdoll: RagdollCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
@@ -66,7 +67,7 @@ final class ScriptWorldAdapter {
     /// so the engine never depends on it. Without compiled scripts there is no VM.
     func wirePapyrus(
         provider: WorldDataStores,
-        renderer: Renderer,
+        gameSession: GameSession,
         streamer: CellStreamer
     ) {
         guard
@@ -76,7 +77,7 @@ final class ScriptWorldAdapter {
             worldState: game.worldState, references: streamer,
             globals: game.runtimeState.globalStore
         )
-        bridge.sessionNatives.clockSource = { [weak renderer] in renderer?.gameClock }
+        bridge.sessionNatives.clockSource = { [weak gameSession] in gameSession?.gameClock }
         wireActorNatives(bridge: bridge)
         wireLineOfSight(bridge: bridge)
         wireSpellNatives(bridge: bridge, provider: provider)
@@ -116,7 +117,7 @@ final class ScriptWorldAdapter {
         streamer.onCellDetached = { [weak world] location in
             world?.detach(cell: location)
         }
-        renderer.session.worldTick.register(.scripts) { [weak self] delta in
+        gameSession.worldTick.register(.scripts) { [weak self] delta in
             self?.game.scripts.advance(delta: delta)
         }
     }
@@ -175,17 +176,18 @@ final class ScriptWorldAdapter {
         }
         bridge.sessionNatives.publishTranslationPoses = { [weak game] poses in
             guard let game else { return }
-            game.renderer?.scriptedInstancePoses = poses.reduce(into: [:]) { matrices, entry in
-                guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
-                else { return }
-                matrices[formID.rawValue] = MatrixMath.placement(
-                    position: entry.value.position, rotation: entry.value.rotation, scale: 1
-                )
-            }
+            game.gameSession?.instancePoses.scriptedPoses = poses
+                .reduce(into: [:]) { matrices, entry in
+                    guard let formID = game.streamer?.referenceEntry(key: entry.key)?.formID
+                    else { return }
+                    matrices[formID.rawValue] = MatrixMath.placement(
+                        position: entry.value.position, rotation: entry.value.rotation, scale: 1
+                    )
+                }
         }
         bridge.perceptionNatives.livePosition = { [weak game] key in
             guard let game else { return nil }
-            guard key != .player else { return game.renderer?.locomotion.status.feetPosition }
+            guard key != .player else { return game.gameSession?.locomotion.status.feetPosition }
             return game.actorWorld.combatActors().first { $0.key == key }?.feet
         }
     }
@@ -254,7 +256,7 @@ extension ScriptWorldAdapter: ScriptWorld {
     }
 
     var gameClock: GameClock? {
-        game.renderer?.gameClock
+        game.gameSession?.gameClock
     }
 
     var playerLocation: ResolvedFormID?? {

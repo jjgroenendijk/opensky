@@ -13,7 +13,8 @@ nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
     public var windSpeed: Float = 0
 
     @MainActor
-    public mutating func capture(_ renderer: Renderer) {
+    public mutating func capture(_ gameSession: GameSession) {
+        let renderer = gameSession.renderer
         grassDrawStats.formMaximum(renderer.lastGrassDrawStats)
         shadowDrawStats.formMaximum(renderer.combinedShadowDrawStats)
         animationUpdatedBoneCount = max(
@@ -27,10 +28,10 @@ nonisolated public struct LivingEnvironmentFlyEvidence: Sendable {
             particles.reduce(0) { $0 + $1.liveCount }
         )
         rainLiveCount = max(rainLiveCount, renderer.precipitation.snapshot.rainLiveCount)
-        if renderer.currentResolvedWeather != nil {
-            weatherName = renderer.weather?.currentWeatherEditorID ?? "selected rain"
+        if gameSession.currentResolvedWeather != nil {
+            weatherName = gameSession.weather?.currentWeatherEditorID ?? "selected rain"
         }
-        windSpeed = max(windSpeed, renderer.currentWind.speed)
+        windSpeed = max(windSpeed, gameSession.wind.speed)
     }
 
     public func validated(animatedActorCount: Int) throws -> LivingEnvironmentFlyEvidence {

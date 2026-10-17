@@ -69,7 +69,11 @@ Where it applies:
   order does not have is `nil`. A test builds a `WorldDataStores` with only the stores it
   needs; the rest keep their synthetic defaults.
 - The frame loop. `RenderFrameDriver` is what the renderer needs from the simulation. The
-  renderer calls it at fixed points in the frame and never imports the game systems.
+  renderer calls it at fixed points in the frame and never imports the game systems. Each
+  frame the driver returns one `RenderFrameInput` value, built after every system has run:
+  the view, the weather, the moved references, the player rigs, and the UI. The renderer
+  reads game state only from that value, so nothing changes half way through an encode. A
+  renderer without a driver draws the input its caller sets.
 - Controls. `AudioControlProviding` is what the audio sidebar section needs.
   `AudioVoiceSection` holds `any AudioControlProviding`, not the audio engine.
 - Files. Code reads game files through `any GameFileSource`. `VirtualFileSystem` is the

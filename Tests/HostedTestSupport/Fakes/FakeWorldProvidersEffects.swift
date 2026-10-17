@@ -89,6 +89,10 @@ extension FakeWorldProviders {
         effectsState.imageSpace
     }
 
+    var eyeAdaptation: EyeAdaptation {
+        EyeAdaptation()
+    }
+
     var visualEffectNames: [String] {
         ["GlowEffect"]
     }

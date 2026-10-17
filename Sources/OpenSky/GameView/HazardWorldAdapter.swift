@@ -12,13 +12,13 @@ import OpenSkyPhysics
 import OpenSkyRendering
 import OpenSkyWorld
 
-/// What the hazard adapter reads. The renderer is a closure, because a reload
+/// What the hazard adapter reads. The session is a closure, because a reload
 /// replaces it.
 struct HazardWorldDependencies {
     let hazards: HazardCoordinator
     let combat: CombatCoordinator
     let magic: MagicCoordinator
-    let renderer: () -> Renderer?
+    let gameSession: () -> GameSession?
 }
 
 /// Answers `HazardWorld` from the session systems it is given.
@@ -38,14 +38,14 @@ final class HazardWorldAdapter {
         dependencies.hazards
     }
 
-    func wireHazards(provider: WorldDataStores, streamer: CellStreamer, renderer: Renderer) {
+    func wireHazards(provider: WorldDataStores, streamer: CellStreamer, gameSession: GameSession) {
         store = provider.lockTrapData.hazards
         hazards.world = self
         streamer.cellHazards.add { [weak self] event in
             self?.load(event)
         }
-        renderer.session.frameSteps.register(.hazards) { [weak self, weak renderer] _ in
-            self?.tick(paused: renderer?.worldSimPaused ?? true)
+        gameSession.frameSteps.register(.hazards) { [weak self, weak gameSession] _ in
+            self?.tick(paused: gameSession?.worldSimPaused ?? true)
         }
     }
 
@@ -71,7 +71,7 @@ extension HazardWorldAdapter: HazardWorld {
         var targets = dependencies.combat.projectileTargets()
         if
             !targets.contains(where: { $0.key == .player }),
-            let feet = dependencies.renderer()?.locomotion.status.feetPosition
+            let feet = dependencies.gameSession()?.locomotion.status.feetPosition
         {
             targets.append(MeleeTarget(key: .player, feet: feet))
         }

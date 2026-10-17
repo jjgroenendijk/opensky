@@ -123,7 +123,7 @@ struct ParticlePlaybackTests {
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 256, height: 256), device: device)
         view.isPaused = true
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: scene,
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)

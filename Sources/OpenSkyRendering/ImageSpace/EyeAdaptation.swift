@@ -45,10 +45,9 @@ nonisolated public struct EyeAdaptation: Equatable, Sendable {
     }
 }
 
-/// The tone-mapping stage's switch and its eye.
+/// The tone-mapping stage's switch. The eye it adapts lives in the renderer.
 nonisolated public struct ToneMappingState: Equatable, Sendable {
     public var enabled = true
-    public var eye = EyeAdaptation()
 
     public init() {}
 

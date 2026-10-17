@@ -125,13 +125,14 @@ extension ScriptingAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(
+        let gameSession = try GameSession(
             view: view,
             scene: scene.renderScene,
             camera: scene.bounds.map(SceneCamera.framing)
         )
+        let renderer = gameSession.renderer
         renderer.actorAnimationsEnabled = false
-        renderer.weatherEnabled = false
+        gameSession.weatherEnabled = false
         renderer.particlesEnabled = false
         renderer.precipitationEnabled = false
         renderer.grassEnabled = false

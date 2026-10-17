@@ -45,6 +45,7 @@ protocol StoryWorldHost: AnyObject {
     var packages: PackageCoordinator { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
@@ -80,7 +81,7 @@ final class StoryWorldAdapter {
     }
 
     /// After `wireDialogue`, because scenes speak through the dialogue index.
-    func wireStory(provider: WorldDataStores, renderer: Renderer) {
+    func wireStory(provider: WorldDataStores, gameSession: GameSession) {
         let data = provider.storyData
         // The quest store's space, so a DLC scene names its quest as the runtime does.
         let questStore = provider.questStore
@@ -117,7 +118,7 @@ final class StoryWorldAdapter {
             }
             runSessionStart(lists: sessionStartLists)
         }
-        renderer.session.worldTick.register(.story) { [weak self] _ in
+        gameSession.worldTick.register(.story) { [weak self] _ in
             self?.voiceTimer?.drain()
             self?.run(self?.scenes.tick() ?? [])
             self?.run(self?.storyManager.social.tick() ?? [])
@@ -261,8 +262,8 @@ extension StoryWorldAdapter: SceneWorld {
     }
 
     var sceneSeconds: Double {
-        guard let clock = game.renderer?.gameClock else { return 0 }
-        let timescale = game.renderer?.currentTimescale ?? GameClock.defaultTimescale
+        guard let clock = game.gameSession?.gameClock else { return 0 }
+        let timescale = game.gameSession?.currentTimescale ?? GameClock.defaultTimescale
         return clock.totalGameSeconds / Double(max(timescale, 1))
     }
 

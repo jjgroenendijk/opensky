@@ -177,7 +177,11 @@ extension Renderer {
             recordAtlasStats(into: &stats)
             return
         }
-        let list = uiScene.resolve(viewportPixels: viewportPixels, scale: uiScale, atlas: atlas)
+        let list = frameInput.ui.resolve(
+            viewportPixels: viewportPixels,
+            scale: uiScale,
+            atlas: atlas
+        )
         uploadUIAtlasIfNeeded()
         recordAtlasStats(into: &stats)
         let budgeted = list.budgeted(maxQuads: Self.uiQuadBudget)

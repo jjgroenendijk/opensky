@@ -22,10 +22,14 @@ struct GrassRenderingAcceptanceRealDataTests {
     private static let channelNoiseFloor = 4
 
     private struct Harness {
-        let renderer: Renderer
+        let gameSession: GameSession
         let weather: WeatherSystem
         let windyWeather: Weather
         let placementCount: Int
+
+        @MainActor var renderer: Renderer {
+            gameSession.renderer
+        }
     }
 
     @Test(.enabled(if: RealDataEnvironment.canRender))
@@ -33,7 +37,7 @@ struct GrassRenderingAcceptanceRealDataTests {
     func whiterunGrassBatchesFadesAndMovesWithWeatherWind() throws {
         let harness = try makeHarness()
         harness.weather.forceWeather(harness.windyWeather.formID, transition: .instant)
-        harness.renderer.timeOfDay = 13
+        harness.gameSession.timeOfDay = 13
         harness.renderer.grassWindScale = GrassRenderPolicy.maximumWindScale
 
         harness.renderer.grassEnabled = false
@@ -105,11 +109,12 @@ struct GrassRenderingAcceptanceRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene.renderScene, camera: camera)
-        renderer.weather = weather
+        let gameSession = try GameSession(view: view, scene: scene.renderScene, camera: camera)
+        let renderer = gameSession.renderer
+        gameSession.weather = weather
         renderer.shadowQuality = .off
         return Harness(
-            renderer: renderer,
+            gameSession: gameSession,
             weather: weather,
             windyWeather: windy,
             placementCount: scene.grassPlacements.count

@@ -20,6 +20,7 @@ protocol AudioWorldHost: AnyObject {
     var dialogueWorld: DialogueWorldAdapter { get }
     var effects: EffectsCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var runtimeStateWorld: RuntimeStateWorldAdapter { get }
     var streamer: CellStreamer? { get }
@@ -66,20 +67,20 @@ extension AudioWorldAdapter: AudioWorld {
     }
 
     var audioListenerPose: (position: SIMD3<Float>, yaw: Float) {
-        let camera = game.renderer?.freeFlyCamera
+        let camera = game.gameSession?.freeFlyCamera
         return (camera?.position ?? .zero, camera?.yaw ?? 0)
     }
 
     var playerFeetArmatures: [FormID]? {
-        game.renderer?.playerBody?.feetArmatures
+        game.gameSession?.playerBody?.feetArmatures
     }
 
     var playerGait: LocomotionGait? {
-        game.renderer?.locomotion.status.gait
+        game.gameSession?.locomotion.status.gait
     }
 
     var playerFeetPosition: SIMD3<Float>? {
-        game.renderer?.walkController.feetPosition
+        game.gameSession?.walkController.feetPosition
     }
 
     var audioAnimationTime: Float {
@@ -117,10 +118,10 @@ extension AudioWorldAdapter: AudioWorld {
         music: WorldMusicDirector,
         footsteps: WorldAudioFootstepDirector
     ) {
-        game.renderer?.worldAudio = engine
-        game.renderer?.soundDirector = sounds
-        game.renderer?.musicDirector = music
-        game.renderer?.footstepDirector = footsteps
+        game.gameSession?.worldAudio = engine
+        game.gameSession?.soundDirector = sounds
+        game.gameSession?.musicDirector = music
+        game.gameSession?.footstepDirector = footsteps
         let store = game.worldData?.footstepStore
         footsteps.onImpact = { [weak game] impact, position in
             game?.effects.showImpact(

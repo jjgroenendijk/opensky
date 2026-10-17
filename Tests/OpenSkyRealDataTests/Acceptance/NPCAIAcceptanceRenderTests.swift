@@ -37,9 +37,10 @@ struct NPCAIAcceptanceRenderTests {
         let bounds = try #require(scene.bounds, "no cell bounds — nothing drew")
         #expect(!scene.navmeshes.isEmpty, "the farm cell decoded no navmesh to draw")
 
-        let renderer = try FirstPersonRenderRealDataTests.renderer(
+        let gameSession = try FirstPersonRenderRealDataTests.makeSession(
             device: device, scene: scene, bounds: bounds
         )
+        let renderer = gameSession.renderer
         var route = try RealNavigationFixture.route(root: root)
         let corridor = route.graph.findPath(NavigationPathQuery(
             start: route.start, target: route.target

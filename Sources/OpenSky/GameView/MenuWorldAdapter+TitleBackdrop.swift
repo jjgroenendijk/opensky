@@ -15,37 +15,38 @@ extension MenuWorldAdapter {
 
     func showTitleBackdrop(_ shown: Bool) {
         titleLogoView = nil
-        guard let renderer = game.renderer else { return }
-        place(shown ? logo(renderer: renderer) : nil, renderer: renderer)
+        guard let gameSession = game.gameSession else { return }
+        place(shown ? logo(gameSession: gameSession) : nil, gameSession: gameSession)
     }
 
     /// The camera settles after the title opens, so the logo follows it.
     func refreshTitleBackdrop() {
-        guard let view = titleLogoView, let renderer = game.renderer else { return }
-        let camera = renderer.freeFlyCamera
+        guard let view = titleLogoView, let gameSession = game.gameSession else { return }
+        let camera = gameSession.freeFlyCamera
         guard view.eye != camera.position || view.forward != camera.forward else { return }
-        place(logo(renderer: renderer), renderer: renderer)
+        place(logo(gameSession: gameSession), gameSession: gameSession)
     }
 
     /// A logo that fails to load still hides the world behind a dark screen.
-    private func logo(renderer: Renderer) -> [RenderPlacement] {
+    private func logo(gameSession: GameSession) -> [RenderPlacement] {
         do {
-            return try logoPlacements(renderer: renderer)
+            return try logoPlacements(gameSession: gameSession)
         } catch {
             Self.logger.error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
             return []
         }
     }
 
-    private func place(_ placements: [RenderPlacement]?, renderer: Renderer) {
+    private func place(_ placements: [RenderPlacement]?, gameSession: GameSession) {
         do {
-            try renderer.setLoadingCover(placements)
+            try gameSession.renderer.setLoadingCover(placements)
         } catch {
             Self.logger.error("[ERROR] title logo: \(String(describing: error), privacy: .public)")
         }
     }
 
-    private func logoPlacements(renderer: Renderer) throws -> [RenderPlacement] {
+    private func logoPlacements(gameSession: GameSession) throws -> [RenderPlacement] {
+        let renderer = gameSession.renderer
         if
             titleMeshes == nil,
             let fileSystem = game.worldData?.scriptFileSystem
@@ -59,7 +60,7 @@ extension MenuWorldAdapter {
         guard let meshes = titleMeshes else { return [] }
         let model = try meshes.model(path: path)
         guard let bounds = meshes.bounds(forPath: path) else { return [] }
-        let camera = renderer.freeFlyCamera
+        let camera = gameSession.freeFlyCamera
         titleLogoView = (camera.position, camera.forward)
         let transform = TitleBackdrop.transform(
             eye: camera.position, forward: camera.forward, right: camera.right,

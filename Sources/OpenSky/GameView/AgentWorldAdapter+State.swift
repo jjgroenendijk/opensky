@@ -91,16 +91,16 @@ extension AgentWorldAdapter {
     }
 
     private func playerState() throws(AgentFailure) -> AgentJSON {
-        guard let renderer = game.renderer else { throw notReady() }
-        let camera = renderer.freeFlyCamera
+        guard let gameSession = game.gameSession else { throw notReady() }
+        let camera = gameSession.freeFlyCamera
         var result: [String: AgentJSON] = [
             "position": .init(camera.position),
             "yaw": .init(remainder(camera.yaw * 180 / .pi, 360)),
             "pitch": .init(camera.pitch * 180 / .pi),
-            "movementMode": .string(String(describing: renderer.movementMode)),
+            "movementMode": .string(String(describing: gameSession.movementMode)),
             "cell": cellState(at: camera.position),
             "worldspace": game.streamer.map { .string($0.worldspaceEditorID) } ?? .null,
-            "weather": renderer.weather?.currentWeatherEditorID.map(AgentJSON.string) ?? .null,
+            "weather": gameSession.weather?.currentWeatherEditorID.map(AgentJSON.string) ?? .null,
             "bodyFailure": .init(game.player.failureReason)
         ]
         if let values = game.actorValues.runtime {
@@ -110,23 +110,23 @@ extension AgentWorldAdapter {
             result["magicka"] = ["current": .init(current.magicka), "max": .init(maximum.magicka)]
             result["stamina"] = ["current": .init(current.stamina), "max": .init(maximum.stamina)]
         }
-        result["firstPerson"] = firstPersonState(renderer: renderer)
-        let status = renderer.locomotion.status
+        result["firstPerson"] = firstPersonState(gameSession: gameSession)
+        let status = gameSession.locomotion.status
         result["graph"] = [
             "attached": .bool(status.graphAvailable),
             "raisedEvents": .array(status.raisedEvents.map(AgentJSON.string)),
             "missingEvents": .array(status.missingEvents.map(AgentJSON.string)),
             "recentEvents": .array(status.recentGraphEvents.map(AgentJSON.string)),
-            "activeStates": .array((renderer.locomotion.graph?.activeStates ?? []).map {
+            "activeStates": .array((gameSession.locomotion.graph?.activeStates ?? []).map {
                 .string("\($0.machineName ?? "?") / \($0.stateName ?? "?")")
             })
         ]
         return .object(result)
     }
 
-    private func firstPersonState(renderer: Renderer) -> AgentJSON {
+    private func firstPersonState(gameSession: GameSession) -> AgentJSON {
         let snapshot = game.player.firstPersonSnapshot
-        let rig = renderer.playerFirstPersonRig
+        let rig = gameSession.playerFirstPersonRig
         return [
             "graphAttached": .bool(snapshot.graphAttached),
             "rigAttached": .bool(snapshot.rigAttached),
@@ -166,8 +166,8 @@ extension AgentWorldAdapter {
     }
 
     private func actorsState(radius: Float) throws(AgentFailure) -> AgentJSON {
-        guard let renderer = game.renderer else { throw notReady() }
-        let origin = renderer.freeFlyCamera.position
+        guard let gameSession = game.gameSession else { throw notReady() }
+        let origin = gameSession.freeFlyCamera.position
         let rows: [(Float, AgentJSON)] = game.actorWorld.combatActors().compactMap { actor in
             let distance = simd_distance(actor.feet, origin)
             guard distance <= radius else { return nil }

@@ -106,7 +106,7 @@ public enum PerformanceBenchmarkRoute {
     /// Walks the shared route with `provider`, which should start with empty caches.
     /// Throws when the walk misses one of its gates.
     public static func run(
-        renderer: Renderer,
+        gameSession: GameSession,
         provider: sending any CellSceneProvider,
         worldspace: String,
         plan: PerformanceBenchmarkPlan,
@@ -114,7 +114,7 @@ public enum PerformanceBenchmarkRoute {
     ) throws -> BenchmarkRoute {
         let log = CellLoadLog()
         let walk = try CellStreamingWalkBenchmark.run(
-            renderer: renderer,
+            gameSession: gameSession,
             provider: TimedCellSceneProvider(base: provider, worldspace: worldspace, log: log),
             configuration: CellStreamingWalkBenchmarkConfiguration(
                 size: (plan.frameWidth, plan.frameHeight),

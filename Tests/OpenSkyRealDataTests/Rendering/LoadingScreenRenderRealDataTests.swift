@@ -45,16 +45,15 @@ struct LoadingScreenRenderRealDataTests {
             text: text, opacity: 1, drawsObject: true
         )
 
-        let renderer = try RenderedPixels.offscreenRenderer(
-            device: install.device,
-            width: Self.width,
-            height: Self.height
+        let gameSession = try RenderedPixels.offscreenSession(
+            device: install.device, width: Self.width, height: Self.height
         )
+        let renderer = gameSession.renderer
         let dark = try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
         let renderModel = try install.meshes.model(path: model)
         let radius = install.meshes.bounds(forPath: model)
             .map { simd_length($0.max - $0.min) / 2 } ?? 64
-        let view = renderer.freeFlyCamera
+        let view = gameSession.freeFlyCamera
         try renderer.setLoadingCover([RenderPlacement(
             model: renderModel,
             transform: frame.objectTransform(
@@ -63,7 +62,7 @@ struct LoadingScreenRenderRealDataTests {
             castsShadows: false,
             layer: .loadingCover
         )])
-        renderer.uiScene = frame.overlay
+        gameSession.uiScene = frame.overlay
         let shown = try RenderedPixels.renderFrame(renderer, width: Self.width, height: Self.height)
         let changed = RenderedPixels.changedCount(dark.pixels, shown.pixels, tolerance: 8)
 

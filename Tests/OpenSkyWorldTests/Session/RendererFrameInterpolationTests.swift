@@ -19,14 +19,14 @@ struct RendererFrameInterpolationTests {
     private static let height = 320
     private static let turn: Float = 0.08
 
-    private static func makeRenderer() throws -> Renderer {
+    private static func makeSession() throws -> GameSession {
         let device = try #require(OffscreenRendererFixture.device)
-        let renderer = try OffscreenRendererFixture.makeSessionRenderer(
+        let gameSession = try OffscreenRendererFixture.makeSession(
             device: device, width: width, height: height, scene: DemoScene.build(device: device),
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
-        renderer.renderScale = RenderScale(percent: 100)
-        return renderer
+        gameSession.renderer.renderScale = RenderScale(percent: 100)
+        return gameSession
     }
 
     private static func settle(_ renderer: Renderer) async throws {
@@ -53,8 +53,9 @@ struct RendererFrameInterpolationTests {
 
     /// The upscaled frame at `yaw`, after enough frames there to settle the history.
     private static func settledFrame(yaw: Float) async throws -> TexturePixels {
-        let renderer = try makeRenderer()
-        renderer.freeFlyCamera.yaw += yaw
+        let gameSession = try makeSession()
+        let renderer = gameSession.renderer
+        gameSession.freeFlyCamera.yaw += yaw
         try await settle(renderer)
         var frame = try Self.frame(renderer)
         for _ in 0 ..< 12 {
@@ -66,7 +67,8 @@ struct RendererFrameInterpolationTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func theBuiltFrameLiesBetweenTheTwoRealFrames() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         try #require(renderer.upscale.resources.interpolatorUnavailableReason == nil)
         renderer.frameInterpolationEnabled = true
         try await Self.settle(renderer)
@@ -74,7 +76,7 @@ struct RendererFrameInterpolationTests {
         for _ in 0 ..< 12 {
             start = try Self.frame(renderer)
         }
-        renderer.freeFlyCamera.yaw += Self.turn
+        gameSession.freeFlyCamera.yaw += Self.turn
         let end = try Self.frame(renderer)
         #expect(renderer.isFrameInterpolationRunning)
         #expect(renderer.upscale.interpolation.lastFrameInterpolated)
@@ -92,7 +94,8 @@ struct RendererFrameInterpolationTests {
     @Test(.enabled(if: OffscreenRendererFixture.hasMetal4Device))
     func itRunsOnlyWithTheTemporalUpscaler() async throws {
         try await MetalFXCompilerProbe.requireAnswer()
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         try #require(renderer.upscale.resources.interpolatorUnavailableReason == nil)
         renderer.frameInterpolationEnabled = true
         renderer.renderScale = .off

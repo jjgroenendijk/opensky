@@ -17,14 +17,14 @@ extension EffectsWorldAdapter: PapyrusEffectPresenting {
     }
 
     func applyImageSpaceModifier(_ modifier: ReferenceKey, strength: Float, held: Bool) -> Bool {
-        guard let renderer = game.renderer else { return false }
+        guard let gameSession = game.gameSession else { return false }
         return effects.startModifier(
-            modifier, strength: strength, looping: held, on: &renderer.imageSpace
+            modifier, strength: strength, looping: held, on: &gameSession.imageSpace
         )
     }
 
     func removeImageSpaceModifier(_ modifier: ReferenceKey) {
-        guard let renderer = game.renderer else { return }
-        effects.stopModifier(modifier, on: &renderer.imageSpace)
+        guard let gameSession = game.gameSession else { return }
+        effects.stopModifier(modifier, on: &gameSession.imageSpace)
     }
 }

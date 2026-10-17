@@ -95,7 +95,7 @@ extension Renderer {
         interpolator.deltaTime = upscale.interpolation.deltaTime
         interpolator.nearPlane = Self.nearPlane
         interpolator.farPlane = Self.farPlane
-        interpolator.fieldOfView = activeFOVYRadians * 180 / .pi
+        interpolator.fieldOfView = frameInput.fovYRadians * 180 / .pi
         interpolator.aspectRatio = Float(output.x) / Float(output.y)
         interpolator.shouldResetHistory = frame.reset || !interpolation.historyValid
         interpolator.encode(commandBuffer: commandBuffer)

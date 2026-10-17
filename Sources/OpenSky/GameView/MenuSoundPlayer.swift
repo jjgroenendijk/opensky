@@ -11,15 +11,15 @@ import OpenSkyWorld
 @MainActor
 protocol MenuSoundHost: AnyObject {
     var audio: AudioCoordinator { get }
-    var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var worldData: WorldDataStores? { get }
 }
 
-/// What a menu sound needs. Closures, because a reload replaces the renderer and
+/// What a menu sound needs. Closures, because a reload replaces the session and
 /// the data.
 struct MenuSoundDependencies {
     let audio: AudioCoordinator
-    let renderer: () -> Renderer?
+    let gameSession: () -> GameSession?
     let worldData: () -> WorldDataStores?
 }
 
@@ -27,7 +27,7 @@ extension MenuSoundDependencies {
     init(game: any MenuSoundHost) {
         self.init(
             audio: game.audio,
-            renderer: { [unowned game] in game.renderer },
+            gameSession: { [unowned game] in game.gameSession },
             worldData: { [unowned game] in game.worldData }
         )
     }
@@ -49,8 +49,8 @@ final class MenuSoundPlayer {
     /// main actor, so the first play of a sound may start late.
     func play(editorID: String) {
         guard
-            let renderer = dependencies.renderer(),
-            let engine = renderer.worldAudio, engine.isRunning,
+            let gameSession = dependencies.gameSession(),
+            let engine = gameSession.worldAudio, engine.isRunning,
             let assets = dependencies.audio.assets,
             let sounds = dependencies.worldData()?.soundStore,
             let formID = soundID(editorID, in: sounds),
@@ -60,7 +60,7 @@ final class MenuSoundPlayer {
         let request = AudioPlayRequest(
             name: path,
             category: resolved.audioCategory ?? .effects,
-            worldPosition: renderer.freeFlyCamera.position
+            worldPosition: gameSession.freeFlyCamera.position
         )
         assets.request(path) { result in
             _ = try? engine.playPositional(asset: result.get(), request: request)

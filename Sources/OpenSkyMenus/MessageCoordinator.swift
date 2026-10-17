@@ -156,7 +156,7 @@ public final class MessageCoordinator {
     }
 
     private func publish() {
-        world?.renderer?.uiScene = presentation?.scene ?? .empty
+        world?.uiScene = presentation?.scene ?? .empty
     }
 }
 

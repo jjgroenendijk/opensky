@@ -59,8 +59,8 @@ enum RenderCommand {
                 ? makeNavigationGraph(cellScenes) : nil,
             detectionOverlay: detection?.runtime,
             frames: options.effects.frames,
-            configure: { renderer in
-                try applyEffects(options.effects, to: renderer, scene: EffectCaptureScene(
+            configure: { gameSession in
+                try applyEffects(options.effects, to: gameSession, scene: EffectCaptureScene(
                     context: context, builder: builder,
                     worldspace: options.worldspace, membraneOwner: membrane?.owner
                 ))

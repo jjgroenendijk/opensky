@@ -21,6 +21,7 @@ protocol ObjectAnimationWorldHost: AnyObject {
     var playerSettings: PlayerSettingsCoordinator { get }
     var playerSettingsStore: PlayerSettingsStore { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var scripts: ScriptCoordinator { get }
     var streamer: CellStreamer? { get }
     var worldState: WorldStateStore { get }
@@ -48,7 +49,7 @@ final class ObjectAnimationWorldAdapter {
     }
 
     /// After the vehicles, so a cart's events and an object's events keep one order.
-    func wire(renderer: Renderer) {
+    func wire(gameSession: GameSession) {
         guard game.audioFileSystem != nil else { return }
         game.scripts.bridge?.objectAnimation = self
         objects.onAnimationEvent = { [weak self] reference, name in
@@ -57,7 +58,7 @@ final class ObjectAnimationWorldAdapter {
         objects.onWaitFinished = { [weak self] token, fired in
             self?.pendingAnswers[token] = fired
         }
-        renderer.session.worldTick.register(.objectAnimation) { [weak self] delta in
+        gameSession.worldTick.register(.objectAnimation) { [weak self] delta in
             self?.advance(delta)
         }
     }
@@ -89,7 +90,7 @@ final class ObjectAnimationWorldAdapter {
         guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key else {
             return
         }
-        game.renderer?.session.animationEvents?.handle(name, from: key)
+        game.gameSession?.animationEvents?.handle(name, from: key)
         game.scripts.runtime?.queueAnimationEvent(sender: key, name: name)
     }
 
@@ -161,7 +162,7 @@ extension ObjectAnimationWorldAdapter: SequenceDoorWorld {
             case let .textKey(name, reference):
                 guard let key = game.streamer?.referenceEntry(formID: FormID(reference))?.key
                 else { continue }
-                game.renderer?.session.animationEvents?.handle(name, from: key)
+                game.gameSession?.animationEvents?.handle(name, from: key)
             case let .setLeaves(deltas, reference):
                 game.streamer?.sequenceDoorLeaves[reference] = deltas
             }

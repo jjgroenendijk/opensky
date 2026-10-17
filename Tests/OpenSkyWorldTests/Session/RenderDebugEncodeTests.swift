@@ -134,7 +134,7 @@ struct RenderDebugEncodeTests {
     private static func headlessRenderer() throws -> Renderer? {
         guard let device else { return nil }
         return try Renderer(
-            view: makeView(device: device),
+            rendering: makeView(device: device),
             shaderLibrary: ShaderLibraryFixture.library(device: device)
         )
     }
@@ -146,7 +146,7 @@ struct RenderDebugEncodeTests {
     private static func twoLayerRenderer() throws -> Renderer? {
         guard let device else { return nil }
         return try Renderer(
-            view: makeView(device: device),
+            rendering: makeView(device: device),
             scene: twoLayerScene(device: device),
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)

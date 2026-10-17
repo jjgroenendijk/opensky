@@ -163,11 +163,11 @@ extension Renderer {
         lastShadowDrawStats = ShadowDrawStats()
 
         let cascades = frameCascades(projection: projection)
-        updateRoomVisibility(viewProjection: projection * freeFlyCamera.viewMatrix())
+        updateRoomVisibility(viewProjection: projection * frameInput.view.viewMatrix())
         // The cull runs here, before any pass draws, for the camera and each cascade.
         encodeGPUCulling(
             slot: slot,
-            viewProjections: [projection * freeFlyCamera.viewMatrix()]
+            viewProjections: [projection * frameInput.view.viewMatrix()]
                 + cascades.map(\.viewProjection)
         )
         guard !cascades.isEmpty else { return true }
@@ -189,7 +189,7 @@ extension Renderer {
         guard hasCasters else { return [] }
         let (fovY, aspect) = Self.fovAspect(from: projection)
         return ShadowCascadeMath.makeCascades(ShadowCascadeRequest(
-            cameraToWorld: freeFlyCamera.viewMatrix().inverse,
+            cameraToWorld: frameInput.view.viewMatrix().inverse,
             fovYRadians: fovY,
             aspectRatio: aspect,
             nearPlane: Self.nearPlane,

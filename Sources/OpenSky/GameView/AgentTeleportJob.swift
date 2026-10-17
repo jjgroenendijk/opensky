@@ -44,7 +44,10 @@ final class AgentTeleportJob {
 
     init(adapter: AgentWorldAdapter, target: AgentTeleportTarget) throws(AgentFailure) {
         self.adapter = adapter
-        guard let renderer = adapter.game.renderer, let streamer = adapter.game.streamer else {
+        guard
+            let gameSession = adapter.game.gameSession,
+            let streamer = adapter.game.streamer
+        else {
             throw adapter.notReady()
         }
         guard streamer.transitionInFlight == nil else {
@@ -56,7 +59,7 @@ final class AgentTeleportJob {
             phase = .settling(untilFrame: 0)
             place(
                 at: position,
-                renderer: renderer,
+                gameSession: gameSession,
                 streamer: streamer,
                 leavingInterior: world != nil
             )
@@ -77,7 +80,7 @@ final class AgentTeleportJob {
             phase = .settling(untilFrame: 0)
             place(
                 at: feet,
-                renderer: renderer,
+                gameSession: gameSession,
                 streamer: streamer,
                 leavingInterior: false
             )
@@ -149,8 +152,13 @@ final class AgentTeleportJob {
                 streamer.transitionInFlight == nil,
                 streamer.interiorScene?.location == .interior(cell)
             else { return .wait }
-            if let exactFeet, let renderer = game.renderer {
-                place(at: exactFeet, renderer: renderer, streamer: streamer, leavingInterior: false)
+            if let exactFeet, let gameSession = game.gameSession {
+                place(
+                    at: exactFeet,
+                    gameSession: gameSession,
+                    streamer: streamer,
+                    leavingInterior: false
+                )
             }
             phase = settling()
         case let .settling(untilFrame):
@@ -227,35 +235,36 @@ final class AgentTeleportJob {
     // MARK: - Moving the player
 
     private func enterGrid(_ grid: CellCoordinate) {
-        guard let renderer = game.renderer, let streamer = game.streamer else { return }
+        guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
         let center = Self.center(of: grid)
         // The height is a guess until the cell's terrain loads; then the
         // player is put on the ground.
         let height = streamer.sampleTerrain(at: center)?.height ?? 0
-        place(at: SIMD3(center, height), renderer: renderer, streamer: streamer)
+        place(at: SIMD3(center, height), gameSession: gameSession, streamer: streamer)
         phase = .loadingGrid(grid)
     }
 
     private func snapToGround(in grid: CellCoordinate) {
-        guard let renderer = game.renderer, let streamer = game.streamer else { return }
+        guard let gameSession = game.gameSession, let streamer = game.streamer else { return }
         if let exactFeet {
-            place(at: exactFeet, renderer: renderer, streamer: streamer)
+            place(at: exactFeet, gameSession: gameSession, streamer: streamer)
             return
         }
         let center = Self.center(of: grid)
         guard let ground = streamer.sampleTerrain(at: center) else { return }
-        place(at: SIMD3(center, ground.height), renderer: renderer, streamer: streamer)
+        place(at: SIMD3(center, ground.height), gameSession: gameSession, streamer: streamer)
     }
 
     /// A position or a reference stays in the current cell, because interior
     /// coordinates are local to their cell. A grid teleport leaves the interior.
     private func place(
         at feet: SIMD3<Float>,
-        renderer: Renderer,
+        gameSession: GameSession,
         streamer: CellStreamer,
         leavingInterior: Bool = true
     ) {
-        let rotation = SIMD3<Float>(0, 0, exactYaw ?? renderer.freeFlyCamera.yaw)
+        let renderer = gameSession.renderer
+        let rotation = SIMD3<Float>(0, 0, exactYaw ?? gameSession.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(position: feet, rotation: rotation))
         if let worldspace, worldspace != streamer.worldspaceEditorID {
             streamer.enterWorldspace(worldspace, camera: camera)
@@ -263,7 +272,7 @@ final class AgentTeleportJob {
             streamer.leaveInterior(camera: camera)
         } else {
             renderer.camera = camera
-            renderer.reseedMovement(camera: camera)
+            gameSession.reseedMovement(camera: camera)
         }
     }
 }

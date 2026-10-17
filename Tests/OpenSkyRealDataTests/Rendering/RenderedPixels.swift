@@ -22,7 +22,19 @@ enum RenderedPixels {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view)
+        return try Renderer(rendering: view)
+    }
+
+    /// The same view driven by a `GameSession`, for suites that change game state.
+    @MainActor
+    static func offscreenSession(device: MTLDevice, width: Int, height: Int) throws -> GameSession {
+        let view = MTKView(
+            frame: CGRect(x: 0, y: 0, width: width, height: height),
+            device: device
+        )
+        view.isPaused = true
+        view.enableSetNeedsDisplay = false
+        return try GameSession(view: view)
     }
 
     /// One movie frame at a fixed animation time, rendered and read back —

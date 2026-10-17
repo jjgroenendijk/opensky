@@ -57,8 +57,12 @@ final class GameViewController: NSViewController {
         )
     )
 
-    /// Only this file assigns it.
-    private(set) var renderer: Renderer?
+    /// The simulation and the renderer it drives. Only this file assigns it.
+    private(set) var gameSession: GameSession?
+
+    var renderer: Renderer? {
+        gameSession?.renderer
+    }
 
     /// Holds the build runner and the provider for the window's lifetime.
     /// `WorldSessionWiring` assigns it.
@@ -171,7 +175,7 @@ final class GameViewController: NSViewController {
         hazards: hazards,
         combat: combat,
         magic: magic,
-        renderer: { [unowned self] in renderer }
+        gameSession: { [unowned self] in gameSession }
     ))
     lazy var effects = EffectsCoordinator()
     lazy var effectsWorld = EffectsWorldAdapter(game: self)
@@ -281,8 +285,8 @@ final class GameViewController: NSViewController {
         let provider = session?.data
 
         do {
-            let newRenderer = try sessionStart.measure(.renderer) {
-                try Renderer(
+            let newGameSession = try sessionStart.measure(.renderer) {
+                try GameSession(
                     view: mtkView,
                     scene: provider != nil ? RenderScene(instances: []) : nil,
                     camera: nil,
@@ -292,23 +296,24 @@ final class GameViewController: NSViewController {
                     wallClock: simulationClock
                 )
             }
+            let newRenderer = newGameSession.renderer
             newRenderer.shadowQuality = ShadowQualitySettings.load()
-            newRenderer.applyGraphicsSettings(playerSettings.store)
+            newGameSession.applyGraphicsSettings(playerSettings.store)
             effects.applyGraphicsSettings(playerSettings.store)
-            newRenderer.timeOfDay = TimeOfDaySettings.load()
-            try newRenderer.attachWeather(from: provider)
+            newGameSession.timeOfDay = TimeOfDaySettings.load()
+            try newGameSession.attachWeather(from: provider)
             newRenderer.mtkView(mtkView, drawableSizeWillChange: mtkView.drawableSize)
             mtkView.delegate = newRenderer
-            renderer = newRenderer
+            gameSession = newGameSession
             sessionStart.measure(.systems) {
-                wireSystems(session: session, renderer: newRenderer)
+                wireSystems(session: session, gameSession: newGameSession)
             }
             sessionStart.waitForFirstFrame()
-            newRenderer.session.frameSteps.register(.sessionStartTiming) { [weak sessionStart] _ in
+            newGameSession.frameSteps.register(.sessionStartTiming) { [weak sessionStart] _ in
                 sessionStart?.frameDidDraw()
             }
             // After streaming, so the HUD reads the streamer's update of this frame.
-            newRenderer.session.frameSteps.register(.hud) { [weak self] _ in
+            newGameSession.frameSteps.register(.hud) { [weak self] _ in
                 guard let self else { return }
                 // Before the HUD draws, so a skill notice from this frame shows now.
                 progressionWorld.run(progression.takeCommands())
@@ -325,13 +330,13 @@ extension GameViewController {
         sessionStart.timing
     }
 
-    private func wireSystems(session: CellSession?, renderer newRenderer: Renderer) {
+    private func wireSystems(session: CellSession?, gameSession newGameSession: GameSession) {
         hud.start()
-        menuRouter.wire(renderer: newRenderer)
-        wireMenuMode(renderer: newRenderer)
+        menuRouter.wire(gameSession: newGameSession)
+        wireMenuMode(gameSession: newGameSession)
         if let session {
             worldData = session.data
-            sessionWiring.wireStreaming(session: session, renderer: newRenderer)
+            sessionWiring.wireStreaming(session: session, gameSession: newGameSession)
         }
         // The engine reads the world's sound records once, so it starts after they load.
         audio.audioEnabled = playerSettings.store.bool(.audioEnabled)
@@ -382,9 +387,9 @@ extension GameViewController {
 
     /// Menu mode drives the renderer's world-sim pause and clears held world
     /// input on entry, so no key sticks while the menu owns input.
-    private func wireMenuMode(renderer: Renderer) {
-        menuMode.onModeChange = { [weak self, weak renderer, weak cameraInput] route, paused in
-            renderer?.worldSimPaused = paused
+    private func wireMenuMode(gameSession: GameSession) {
+        menuMode.onModeChange = { [weak self, weak gameSession, weak cameraInput] route, paused in
+            gameSession?.worldSimPaused = paused
             self?.menuRouter.modeChanged(to: route)
             // Released on the route flip, not the pause: the dialogue menu
             // captures input without stopping the world.
@@ -448,6 +453,15 @@ extension GameViewController {
 extension GameViewController: WorldLoadReportProviding, AssetCacheControlProviding {}
 
 extension GameViewController: @MainActor SystemMenuWorld {
+    var viewCamera: FreeFlyCamera? {
+        gameSession?.freeFlyCamera
+    }
+
+    var uiScene: UIScene {
+        get { gameSession?.uiScene ?? .empty }
+        set { gameSession?.uiScene = newValue }
+    }
+
     var audioEnabled: Bool {
         audio.audioEnabled
     }

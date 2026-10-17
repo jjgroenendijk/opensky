@@ -135,7 +135,7 @@ nonisolated public enum WalkBenchmarkStateMachine: Sendable {
 extension CellStreamingWalkDriver {
     public func drive(toward target: SIMD2<Float>, routeIndex: Int) {
         updateNavigationProgress(distance: distance(to: target), routeIndex: routeIndex)
-        renderer.freeFlyCamera.yaw = WalkPathRoute.yaw(from: currentXY, to: target)
+        gameSession.freeFlyCamera.yaw = WalkPathRoute.yaw(from: currentXY, to: target)
         if navigationState.avoidanceFrames > 0 {
             updateController(moveForward: 0.5, moveRight: navigationState.avoidanceDirection)
             navigationState.avoidanceFrames -= 1
@@ -149,8 +149,8 @@ extension CellStreamingWalkDriver {
     }
 
     public func updateController(moveForward: Float, moveRight: Float = 0) {
-        renderer.walkController.update(
-            camera: &renderer.freeFlyCamera,
+        gameSession.walkController.update(
+            camera: &gameSession.freeFlyCamera,
             input: CameraInput(
                 moveForward: moveForward,
                 moveRight: moveRight,
@@ -163,15 +163,15 @@ extension CellStreamingWalkDriver {
     }
 
     public func validateController() throws {
-        let position = renderer.walkController.feetPosition
+        let position = gameSession.walkController.feetPosition
         try controllerState.validate(
             phase: phase,
             snapshot: WalkBenchmarkControllerSnapshot(
                 position: position,
-                isGrounded: renderer.walkController.isGrounded,
-                hasUnresolvedPenetration: renderer.walkController.hasUnresolvedPenetration
+                isGrounded: gameSession.walkController.isGrounded,
+                hasUnresolvedPenetration: gameSession.walkController.hasUnresolvedPenetration
             ),
-            capsule: renderer.walkController.capsule
+            capsule: gameSession.walkController.capsule
         )
     }
 
@@ -194,7 +194,7 @@ extension CellStreamingWalkDriver {
             phaseFrames: phaseFrames,
             limit: limit,
             phase: phase,
-            position: renderer.walkController.feetPosition
+            position: gameSession.walkController.feetPosition
         )
     }
 
@@ -205,7 +205,7 @@ extension CellStreamingWalkDriver {
     }
 
     public var currentXY: SIMD2<Float> {
-        let position = renderer.walkController.feetPosition
+        let position = gameSession.walkController.feetPosition
         return SIMD2(position.x, position.y)
     }
 

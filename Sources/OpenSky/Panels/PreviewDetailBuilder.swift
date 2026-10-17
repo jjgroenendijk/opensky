@@ -67,7 +67,11 @@ final class PreviewDetailLoader {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         guard
-            let renderer = try? Renderer(view: view, scene: render.scene, camera: render.camera),
+            let renderer = try? Renderer(
+                rendering: view,
+                scene: render.scene,
+                camera: render.camera
+            ),
             let texture = try? renderer.renderOffscreen(width: render.width, height: render.height)
         else { return nil }
         return FrameScreenshot.image(from: texture)

@@ -30,12 +30,15 @@ struct RendererWorldSimTickTests {
     private static let step = 1.0 / 30.0
 
     @MainActor
-    private static func makeRenderer() throws -> Renderer {
+    private static func makeSession() throws -> GameSession {
         let device = try #require(Self.device)
         let view = MTKView(frame: CGRect(x: 0, y: 0, width: 64, height: 64), device: device)
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, shaderLibrary: ShaderLibraryFixture.library(device: device))
+        return try GameSession(
+            view: view,
+            shaderLibrary: ShaderLibraryFixture.library(device: device)
+        )
     }
 
     /// A script whose `OnLoad` waits one second and then records a note, so
@@ -72,17 +75,17 @@ struct RendererWorldSimTickTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aLatentWaitResumesAfterTheRightNumberOfFixedSteps() throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
         let probe = PapyrusWorldProbeDispatch()
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
-        renderer.session.worldTick.register(.scripts) { delta in
-            _ = world.advance(delta: delta, gameClock: renderer.gameClock)
+        gameSession.worldTick.register(.scripts) { delta in
+            _ = world.advance(delta: delta, gameClock: gameSession.gameClock)
         }
 
         // One step delivers OnLoad, which suspends; 30 more steps of 1/30 s
         // satisfy Utility.Wait(1.0).
-        let hook = renderer.session.worldTick
+        let hook = gameSession.worldTick
         hook(Float(Self.step))
         #expect(probe.notes.isEmpty)
         for _ in 0 ..< 29 {
@@ -96,7 +99,7 @@ struct RendererWorldSimTickTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPartialDeltaAdvancesNothingUntilItAccumulatesAStep() throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
         let probe = PapyrusWorldProbeDispatch()
         let world = PapyrusWorldFixture.worldRuntime(
             objects: [PapyrusWorldFixture.fullEventScript("Waiter")],
@@ -109,8 +112,8 @@ struct RendererWorldSimTickTests {
             functionName: "OnLoad",
             arguments: []
         ))
-        renderer.session.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
-        let hook = renderer.session.worldTick
+        gameSession.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
+        let hook = gameSession.worldTick
 
         hook(Float(Self.step) / 2)
         #expect(probe.notes.isEmpty)
@@ -123,14 +126,15 @@ struct RendererWorldSimTickTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func offscreenFramesDriveTheWorldTickAndAPausedFrameDoesNot() throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         var deltas: [Float] = []
-        renderer.session.worldTick.register(.scripts) { deltas.append($0) }
+        gameSession.worldTick.register(.scripts) { deltas.append($0) }
 
         _ = try renderer.renderOffscreen(width: 64, height: 64)
         #expect(deltas == [Float(Self.step)])
 
-        renderer.worldSimPaused = true
+        gameSession.worldSimPaused = true
         _ = try renderer.renderOffscreen(width: 64, height: 64)
         #expect(deltas == [Float(Self.step), 0])
     }
@@ -138,19 +142,20 @@ struct RendererWorldSimTickTests {
     @Test(.enabled(if: Self.hasMetal4Device))
     @MainActor
     func aPausedWorldTickAdvancesNoScript() throws {
-        let renderer = try Self.makeRenderer()
+        let gameSession = try Self.makeSession()
+        let renderer = gameSession.renderer
         let probe = PapyrusWorldProbeDispatch()
         let world = Self.waitingWorld(probe)
         try Self.seedInstance(world)
-        renderer.session.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
-        renderer.worldSimPaused = true
+        gameSession.worldTick.register(.scripts) { _ = world.advance(delta: $0) }
+        gameSession.worldSimPaused = true
 
         for _ in 0 ..< 60 {
             _ = try renderer.renderOffscreen(width: 64, height: 64)
         }
         #expect(probe.notes.isEmpty)
 
-        renderer.worldSimPaused = false
+        gameSession.worldSimPaused = false
         for _ in 0 ..< 31 {
             _ = try renderer.renderOffscreen(width: 64, height: 64)
         }

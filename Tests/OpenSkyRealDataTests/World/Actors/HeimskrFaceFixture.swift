@@ -92,7 +92,7 @@ struct HeimskrFace {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        return try Renderer(view: view, scene: scene, camera: camera(transform: transform))
+        return try Renderer(rendering: view, scene: scene, camera: camera(transform: transform))
     }
 
     private static func camera(transform: float4x4) -> SceneCamera {

@@ -1,7 +1,7 @@
 // The locomotion gate's route, driven by key events through the shipping path:
 // `GameMetalView.keyDown` -> `CameraInputState` -> `LocomotionBridge` ->
 // `WalkController` -> `BehaviorGraphInstance`. The frame loop follows
-// `Renderer.advanceCamera`. Streaming and doors use the real `CellStreamer`.
+// `GameSession.advanceCamera`. Streaming and doors use the real `CellStreamer`.
 
 import AppKit
 @testable import OpenSky
@@ -200,7 +200,7 @@ final class LocomotionAcceptanceChain {
 
     // MARK: - Frames
 
-    /// One rendered frame, in `Renderer.advanceCamera`'s order: drain the
+    /// One rendered frame, in `GameSession.advanceCamera`'s order: drain the
     /// input, hand it to the bridge, step the controller with the bridge as its
     /// planner, then let the streamer see where the player ended up.
     func frame(dt: Float = LocomotionAcceptanceChain.frameTime) {
@@ -280,7 +280,7 @@ final class LocomotionAcceptanceChain {
     }
 
     /// Completes the pending door transition and re-seats the player where the
-    /// destination placed them, which is what `Renderer.reseedMovement` does
+    /// destination placed them, which is what `GameSession.reseedMovement` does
     /// after a scene swap.
     func completeDoorTransition(
         from source: UInt32,

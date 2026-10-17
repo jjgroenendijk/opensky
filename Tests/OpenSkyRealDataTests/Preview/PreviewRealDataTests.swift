@@ -220,7 +220,7 @@ struct PreviewRealDataTests {
         )
         view.isPaused = true
         view.enableSetNeedsDisplay = false
-        let renderer = try Renderer(view: view, scene: scene, camera: camera)
+        let renderer = try Renderer(rendering: view, scene: scene, camera: camera)
         let texture = try renderer.renderOffscreen(width: width, height: height)
         return try #require(FrameScreenshot.image(from: texture))
     }

@@ -13,13 +13,13 @@ extension Renderer {
 
     public func updatePrecipitation(deltaTime: Float) {
         precipitation.update(PrecipitationUpdate(
-            cameraPosition: freeFlyCamera.position,
-            state: currentResolvedWeather?.precipitation ?? .none,
-            wind: currentWind,
+            cameraPosition: frameInput.view.position,
+            state: frameInput.weather?.precipitation ?? .none,
+            wind: frameInput.wind,
             deltaTime: deltaTime,
             exterior: scene.sky != nil && scene.lighting == nil,
             enabled: precipitationEnabled,
-            collisionQuery: collisionQuery
+            collisionQuery: frameInput.collisionQuery
         ))
     }
 }

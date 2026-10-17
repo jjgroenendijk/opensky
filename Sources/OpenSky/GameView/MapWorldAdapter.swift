@@ -34,6 +34,7 @@ protocol MapWorldHost: MenuInputConsumer {
     var localizedStringsLoader: (() -> LocalizedStrings)? { get }
     var progression: ProgressionCoordinator { get }
     var renderer: Renderer? { get }
+    var gameSession: GameSession? { get }
     var runtimeState: RuntimeStateCoordinator { get }
     var saveGames: SaveGameWorldAdapter { get }
     var scripts: ScriptCoordinator { get }
@@ -121,7 +122,7 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     var playerPosition: SIMD3<Float>? {
-        game.renderer?.locomotion.status.feetPosition
+        game.gameSession?.locomotion.status.feetPosition
     }
 
     var playerCell: CellSceneLocation? {
@@ -163,13 +164,13 @@ extension MapWorldAdapter: MapMenuWorld {
     }
 
     func setMapView(eye: SIMD3<Float>, lookAt: SIMD3<Float>) {
-        game.renderer?.setCinematicCamera(
+        game.gameSession?.setCinematicCamera(
             CinematicCameraPose(eye: eye, lookAt: lookAt, avoidsGeometry: false)
         )
     }
 
     func clearMapView() {
-        game.renderer?.setCinematicCamera(nil)
+        game.gameSession?.setCinematicCamera(nil)
     }
 
     var localMapFog: LocalMapFogState {
@@ -198,7 +199,7 @@ extension MapWorldAdapter: MapMenuWorld {
         let combat = game.combat.combatLoopSnapshot
         context.inCombat = combat.isPlayerInCombat
         context.hostilesNear = combat.hostileCount > 0
-        context.inAir = !(game.renderer?.walkController.isGrounded ?? true)
+        context.inAir = !(game.gameSession?.walkController.isGrounded ?? true)
         context.alarmed = game.crime.isPlayerPursued
         if game.inventory.runtime != nil {
             context.overencumbered = FastTravelRule.isOverencumbered(
@@ -213,18 +214,21 @@ extension MapWorldAdapter: MapMenuWorld {
 
     /// The trip takes game time for the walk, then lands at the marker.
     func travel(to marker: MapMarkerSite) -> Bool {
-        guard let renderer = game.renderer, let streamer = game.streamer else { return false }
-        let from = renderer.locomotion.status.feetPosition
+        guard
+            let renderer = game.renderer, let gameSession = game.gameSession,
+            let streamer = game.streamer else { return false }
+        let from = gameSession.locomotion.status.feetPosition
         let walk = game.worldData?
             .movementConfiguration.travelSpeed.value ?? 80
         let seconds = FastTravelRule.gameSeconds(
             distance: simd_distance(from, marker.position), walkSpeed: walk,
             speedMultiplier: mapSettings.fastTravelSpeedMultiplier,
-            timeScale: renderer.currentTimescale
+            timeScale: gameSession.currentTimescale
         )
-        renderer
-            .gameClock = GameClock(totalGameSeconds: renderer.gameClock.totalGameSeconds + seconds)
-        let rotation = SIMD3<Float>(0, 0, renderer.freeFlyCamera.yaw)
+        gameSession
+            .gameClock = GameClock(totalGameSeconds: gameSession.gameClock
+                .totalGameSeconds + seconds)
+        let rotation = SIMD3<Float>(0, 0, gameSession.freeFlyCamera.yaw)
         let camera = SceneCamera.teleport(placement: .init(
             position: marker.position,
             rotation: rotation
@@ -236,7 +240,7 @@ extension MapWorldAdapter: MapMenuWorld {
             streamer.leaveInterior(camera: camera)
         } else {
             renderer.camera = camera
-            renderer.reseedMovement(camera: camera)
+            gameSession.reseedMovement(camera: camera)
         }
         game.scripts.runtime?.queuePlayerFastTravelEnd(gameHours: Float(seconds / 3600))
         game.saveGames.autosave(.travel)

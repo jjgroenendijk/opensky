@@ -107,7 +107,8 @@ final class MenuRouter {
 
     /// Settings, key bindings, menu text, the menu natives, map discovery, and
     /// the menu movies' late calls.
-    func wire(renderer: Renderer) {
+    func wire(gameSession: GameSession) {
+        let renderer = gameSession.renderer
         game.playerSettings.loadControlMap(try? game.controlMapLoader?())
         game.playerSettings.applyAll()
         game.audio.onEngineBuilt = { [weak game] in game?.playerSettings.applyAll() }
@@ -116,7 +117,7 @@ final class MenuRouter {
         }
         let sounds = MenuSoundPlayer(MenuSoundDependencies(game: game))
         renderer.swfSoundPlayer = { sounds.play(editorID: $0 ?? MenuSoundPlayer.okSound) }
-        renderer.session.frameSteps.register(.menuRouting) { [weak game] _ in
+        gameSession.frameSteps.register(.menuRouting) { [weak game] _ in
             game?.mapMenu.tick()
             let now = Date().timeIntervalSinceReferenceDate
             game?.titleMenu.tick(now: now)

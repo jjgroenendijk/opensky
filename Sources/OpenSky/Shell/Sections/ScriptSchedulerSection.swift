@@ -1,7 +1,7 @@
 // World > Scripts > Scheduler section: the Papyrus VM transport. Pause freezes
 // the VM tick; the step buttons run fixed steps, to walk a `Utility.Wait` or a
 // `RegisterForUpdate` timer one edge at a time. A paused VM is this
-// destination's override. The pause never writes `Renderer.worldSimPaused`,
+// destination's override. The pause never writes `GameSession.worldSimPaused`,
 // which belongs to menu mode.
 
 import AppKit

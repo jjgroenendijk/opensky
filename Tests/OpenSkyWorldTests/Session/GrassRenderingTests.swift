@@ -85,7 +85,7 @@ struct GrassRenderingTests {
         view.isPaused = true
         view.enableSetNeedsDisplay = false
         let renderer = try Renderer(
-            view: view,
+            rendering: view,
             scene: scene,
             camera: camera,
             shaderLibrary: ShaderLibraryFixture.library(device: device)
